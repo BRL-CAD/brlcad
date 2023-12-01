@@ -11,7 +11,9 @@
 #  include <unistd.h>
 #endif
 
-void getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit) {
+void
+getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
+{
     //Run RTArea to get surface area
     std::string command = opt->getTemppath() + "rtarea -u " + unit + " -a " + az + " -e " + el + " " + opt->getFilepath() + " " + comp + " 2>&1";
     char buffer[128];
@@ -182,7 +184,8 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     }
 }
 
-std::string formatDouble(double d)
+std::string
+formatDouble(double d)
 {
     std::stringstream ss;
     ss << std::setprecision(2) << std::fixed << d;
@@ -203,7 +206,9 @@ std::string formatDouble(double d)
 }
 
 
-double InformationGatherer::getVolume(std::string component) {
+double
+InformationGatherer::getVolume(std::string component)
+{
     // Gather dimensions
     const char* cmd[3] = { "bb", component.c_str(), NULL };
     ged_exec(g, 2, cmd);
@@ -223,7 +228,9 @@ double InformationGatherer::getVolume(std::string component) {
     return 0;
 }
 
-int InformationGatherer::getNumEntities(std::string component) {
+int
+InformationGatherer::getNumEntities(std::string component)
+{
     // Find number of entities
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
     ged_exec(g, 7, cmd);
@@ -236,7 +243,9 @@ int InformationGatherer::getNumEntities(std::string component) {
     return entities;
 }
 
-void InformationGatherer::getMainComp() {
+void
+InformationGatherer::getMainComp()
+{
     if (opt->getTopComp() != "") {
         std::cout << "User input top: " << opt->getTopComp() << std::endl;
         // check if main comp exists
@@ -301,7 +310,9 @@ void InformationGatherer::getMainComp() {
     }
 }
 
-int InformationGatherer::getEntityData(char* buf) {
+int
+InformationGatherer::getEntityData(char* buf)
+{
     std::stringstream ss(buf);
     std::string token;
     int count = 0;
@@ -312,7 +323,9 @@ int InformationGatherer::getEntityData(char* buf) {
 }
 
 
-void InformationGatherer::getSubComp() {
+void
+InformationGatherer::getSubComp()
+{
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
 
     if (!bu_file_exists((opt->getTemppath() + "mged").c_str(), NULL) && !bu_file_exists((opt->getTemppath() + "mged.exe").c_str(), NULL)) {
@@ -699,7 +712,9 @@ bool InformationGatherer::gatherInformation(std::string name)
 	return true;
 }
 
-void GetFullNameOrUsername(std::string& name) {
+void
+GetFullNameOrUsername(std::string& name)
+{
     char buffer[1024];
 
     #if defined(_WIN32) || defined(_WIN64) // Windows systems
@@ -742,12 +757,14 @@ void GetFullNameOrUsername(std::string& name) {
     #endif
 }
 
-std::string InformationGatherer::getInfo(std::string key)
+std::string
+InformationGatherer::getInfo(std::string key)
 {
 	return infoMap[key];
 }
 
-std::string InformationGatherer::getFormattedInfo(std::string key)
+std::string
+InformationGatherer::getFormattedInfo(std::string key)
 {
     auto it = unitsMap.find(key);
     if (it != unitsMap.end()) { // if units are mapped
@@ -763,7 +780,8 @@ std::string InformationGatherer::getFormattedInfo(std::string key)
 	return infoMap[key];
 }
 
-Unit InformationGatherer::getUnit(std::string name)
+Unit
+InformationGatherer::getUnit(std::string name)
 {
     auto it = unitsMap.find(name);
     if (it != unitsMap.end()) {
@@ -773,7 +791,8 @@ Unit InformationGatherer::getUnit(std::string name)
     throw std::runtime_error("Unit not found for key: " + name);
 }
 
-bool InformationGatherer::dimensionSizeCondition()
+bool
+InformationGatherer::dimensionSizeCondition()
 {
     if (std::stod(infoMap["dimX"]) > 200) return true;
     if (std::stod(infoMap["dimY"]) > 200) return true;
@@ -817,7 +836,8 @@ void InformationGatherer::correctDefaultUnitsLength()
     }
 }
 
-void InformationGatherer::correctDefaultUnitsMass()
+void
+InformationGatherer::correctDefaultUnitsMass()
 {
     // mass conditionals
     bool isGrams = unitsMap["mass"].unit == "g";
@@ -841,7 +861,9 @@ void InformationGatherer::correctDefaultUnitsMass()
     unit.unit = toUnits;
 }
 
-void InformationGatherer::checkScientificNotation() {
+void
+InformationGatherer::checkScientificNotation()
+{
     for (auto& pair : unitsMap) {
         const std::string& key = pair.first;
         Unit& unit = pair.second;

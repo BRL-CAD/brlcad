@@ -15,7 +15,8 @@ LayoutChoice::LayoutChoice(std::string l_map, bool l_lockRows)
 	}
 }
 
-void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight)
+void
+LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight)
 {
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
@@ -545,7 +546,8 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 	coordinates[coordinates.size() - 1].push_back(secHeight);
 }
 
-std::vector<int> LayoutChoice::getCoordinates(int mapIndex)
+std::vector<int>
+LayoutChoice::getCoordinates(int mapIndex)
 {
 	std::vector<int> output;
 	if (mapIndex == -1)
@@ -563,7 +565,8 @@ std::vector<int> LayoutChoice::getCoordinates(int mapIndex)
 	return output;
 }
 
-double LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
+double
+LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 {
 	double sum = 0;
 	for (int i = 0; i < map.size(); ++i)
@@ -604,12 +607,14 @@ double LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 	return sum;
 }
 
-int LayoutChoice::getMapSize()
+int
+LayoutChoice::getMapSize()
 {
 	return map.size();
 }
 
-char LayoutChoice::getMapChar(int index)
+char
+LayoutChoice::getMapChar(int index)
 {
 	return map[index];
 }
@@ -617,7 +622,8 @@ char LayoutChoice::getMapChar(int index)
 
 
 
-std::vector<LayoutChoice> initLayouts()
+std::vector<LayoutChoice>
+initLayouts()
 {
 	// create layout encodings
 	std::vector<LayoutChoice> layouts;
@@ -644,7 +650,8 @@ std::vector<LayoutChoice> initLayouts()
 	return layouts;
 }
 
-LayoutChoice selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
+LayoutChoice
+selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
 {
 	std::vector<LayoutChoice> allLayouts = initLayouts();
 
@@ -674,7 +681,8 @@ LayoutChoice selectLayoutFromHeuristic(int secWidth, int secHeight, double model
 	return *bestLayout;
 }
 
-LayoutChoice genLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
+LayoutChoice
+genLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
 {
 	double lengthHeight = modelLength / modelHeight;
 	double lengthDepth = modelLength / modelDepth;
@@ -707,7 +715,8 @@ LayoutChoice genLayout(int secWidth, int secHeight, double modelLength, double m
 	return selectLayoutFromHeuristic(secWidth, secHeight, modelLength, modelDepth, modelHeight, ambientDims);
 }
 
-void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
+void
+makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
 	// harvest model dimensions
 	double modelDepth = std::stod(info.getInfo("dimX"));

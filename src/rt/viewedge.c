@@ -866,7 +866,8 @@ void view_setup(struct rt_i *UNUSED(rtip))
 /**
  * end of a frame, called after rt_clean()
  */
-void view_cleanup(struct rt_i *UNUSED(rtip))
+void
+view_cleanup(struct rt_i *UNUSED(rtip))
 {
 }
 
@@ -879,7 +880,7 @@ void draw_pixel(const double x, const double y, const RGBpixel pixel)
         (void)fb_write(fbp, x, y, pixel, 1);
     }
     else if (bif != FB_NULL) {
-        (void)icv_writepixel(bif, x, y, pixel, 1);
+        (void)icv_writepixel(bif, x, y, pixel);
     }
 }
 
@@ -930,7 +931,8 @@ void draw_z_label(const double x, const double y, const unsigned int lineLength,
 /**
  * end of each frame, draws axis aligned axes and origin if "draw_axes" is enabled
  */
-void view_end(struct application* ap)
+void
+view_end(struct application* ap)
 {
     if (!draw_axes || (fbp == NULL && bif == NULL)) {
         return;
@@ -944,7 +946,7 @@ void view_end(struct application* ap)
     if (modelCenter[0] < 0 || modelCenter[0] >= width || modelCenter[1] < 0 || modelCenter[1] >= height) {
         return;
     }
-    
+
     const double EPSILON = 1e-9;
     const unsigned int HALF_AXES_LENGTH = 10;
     const unsigned int POSITIVE_AXES_EXTRA_LENGTH = 5;
@@ -953,7 +955,7 @@ void view_end(struct application* ap)
     const unsigned int OFFSET = 5;
 
     // front view
-    if (abs(azimuth) <= EPSILON && abs(elevation) <= EPSILON)
+    if (fabs(azimuth) <= EPSILON && fabs(elevation) <= EPSILON)
     {
         // drawing positive axis labels (+X, +Y, +Z).
         // The added magic numbers are used to offset the space taken up by the label.
@@ -966,7 +968,7 @@ void view_end(struct application* ap)
         }
     }
     // top view
-    else if (abs(azimuth) <= EPSILON && abs(elevation - 90.0) <= EPSILON)
+    else if (fabs(azimuth) <= EPSILON && fabs(elevation - 90.0) <= EPSILON)
     {
         draw_x_label(modelCenter[0] - AXES_END - OFFSET - 7, modelCenter[1] - 5, 10, pixel);
         draw_y_label(modelCenter[0], modelCenter[1] - AXES_END - OFFSET - 10, 6, pixel);
@@ -976,7 +978,7 @@ void view_end(struct application* ap)
         }
     }
     // left view
-    else if (abs(azimuth - 270.0) <= EPSILON && abs(elevation) <= EPSILON) {
+    else if (fabs(azimuth - 270.0) <= EPSILON && fabs(elevation) <= EPSILON) {
         draw_z_label(modelCenter[0] - 5, modelCenter[1] + AXES_END + OFFSET, 10, pixel);
         draw_x_label(modelCenter[0] - AXES_END - OFFSET - 7, modelCenter[1] - 5, 10, pixel);
         for (int i = 1; i <= POSITIVE_AXES_EXTRA_LENGTH; i++) {

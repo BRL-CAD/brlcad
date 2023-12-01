@@ -17,7 +17,8 @@ IFPainter::~IFPainter()
 {
 }
 
-std::pair<int, int> IFPainter::getCroppedImageDims(std::string imgPath)
+std::pair<int, int>
+IFPainter::getCroppedImageDims(std::string imgPath)
 {
 	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
 	// Convert the image to grayscale for creating the mask
@@ -38,7 +39,8 @@ std::pair<int, int> IFPainter::getCroppedImageDims(std::string imgPath)
 }
 
 
-void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
+void
+IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
 {
 	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
 	cv::Mat resized_image;
@@ -56,7 +58,8 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	resized_image.copyTo(destRoi);
 }
 
-void IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold)
+void
+IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold)
 {
 	cv::Mat imageRaw = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
 	// Convert the image to grayscale for creating the mask
@@ -108,7 +111,8 @@ void IFPainter::drawTransparentImage(int x, int y, int width, int height, std::s
     }
 }
 
-void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
+void
+IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
 	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
 	// Convert the image to grayscale for creating the mask
@@ -162,7 +166,8 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
 	resized_image.copyTo(destRoi);
 }
 
-void IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::string imgPath)
+void
+IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::string imgPath)
 {
 	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
 	// Convert the image to grayscale for creating the mask
@@ -216,7 +221,8 @@ void IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, 
     }
 }
 
-int IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
+int
+IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
 {
 	y += 65;
 	height -= 65;
@@ -292,7 +298,8 @@ int IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::strin
 }
 
 //Helper funciton to support getting the width of a text
-int IFPainter::getTextWidth(int height, int width, std::string text, int flags)
+int
+IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 {
 	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
@@ -300,7 +307,8 @@ int IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 	return textWidth;
 }
 
-int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text)
+int
+IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text)
 {
 	if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end())
 	{
@@ -319,7 +327,8 @@ int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string 
 	return fontSize;
 }
 
-void IFPainter::drawText(int x, int y, int height, int width, std::string text, int flags)
+void
+IFPainter::drawText(int x, int y, int height, int width, std::string text, int flags)
 {
 	// for now, italic text is omitted
 	int fontWeight = standardTextWeight;
@@ -352,7 +361,8 @@ void IFPainter::drawText(int x, int y, int height, int width, std::string text, 
     }
 }
 
-void IFPainter::drawTextCentered(int x, int y, int height, int width, std::string text, int flags)
+void
+IFPainter::drawTextCentered(int x, int y, int height, int width, std::string text, int flags)
 {
 	// for now, italic text is omitted
 	int fontWeight = standardTextWeight;
@@ -388,7 +398,8 @@ void IFPainter::drawTextCentered(int x, int y, int height, int width, std::strin
 }
 
 
-void IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string text, int flags)
+void
+IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string text, int flags)
 {
 	// for now, italic text is omitted
 	int fontWeight = standardTextWeight;
@@ -425,7 +436,8 @@ void IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::s
 
 /*This function will evenly space out all of the texts in the header and footer. The algorithm is to get the total lenght of all of the words combined and then the spacing is the total
 length divided by how many words there are*/
-int IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
+int
+IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
 	int totalTextWidth = 0;
 	for (size_t i = 0; i < text.size(); i++) {
@@ -492,7 +504,8 @@ void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::
 }
 
 //This is a text wrapping function. If a text goes beyond the set x or y, it will wrap around to the next line. It also has ellipsis fucntion.
-void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
+void
+IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
 {
 	if (ellipsis == TO_ELLIPSIS) {
 		if (numOfCharactersBeforeEllipsis < text.length()) {
@@ -533,7 +546,8 @@ void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int heig
 	}
 }
 
-void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
+void
+IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
 	int lineType = cv::LINE_8;
 	cv::Point start(x1, y1);
@@ -546,7 +560,8 @@ void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 		lineType);
 }
 
-void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
+void
+IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
 	cv::Point topLeft(x1, y1);
 	cv::Point bottomRight(x2, y2);
@@ -558,7 +573,8 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 			  cv::LINE_8);
 }
 
-void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
+void
+IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 {
     circle(img, cv::Point(x,y), radius, color, width, cv::LINE_8);
     // ellipse(img, cv::Point(x,y), cv::Size(radius, radius), 0, 0, 180, color, width, cv::LINE_8);
@@ -573,7 +589,8 @@ void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 //     }
 // }
 
-void IFPainter::openInGUI()
+void
+IFPainter::openInGUI()
 {
 	cv::namedWindow("Report", cv::WINDOW_AUTOSIZE);
 	cv::imshow("Report", this->img);
@@ -589,7 +606,8 @@ void IFPainter::openInGUI()
 	}
 }
 
-void IFPainter::exportToFile(std::string filePath)
+void
+IFPainter::exportToFile(std::string filePath)
 {
 	cv::imwrite(filePath, this->img);
 }

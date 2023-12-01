@@ -1,7 +1,9 @@
 #include "FactsHandler.h"
 #include "RenderHandler.h"
 
-void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+void
+makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
+{
 	//scalar color order is BGR
 	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(51, 122, 0));
@@ -18,38 +20,32 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	else {	//Draw black rectangle
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
+
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
 	std::vector<std::string> text;
 	std::vector<std::string> text2;
-	std::string concatFile = info.getInfo("file");
-	std::string concatOwner = info.getInfo("owner");
-	/*
-	if (info.getInfo("file").size() > 20) {
-        concatFile = info.getInfo("file").substr(0,15) + "... .g";
-    }
-	if (info.getInfo("owner").size() > 20) {
-        concatOwner = info.getInfo("owner").substr(0,15) + "...";
-    }
-	*/
+
 	int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
-		text.push_back("Owner: " + concatOwner);
+		text.push_back("Owner: " + info.getInfo("owner"););
 		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 		text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
-		text2.push_back("Source File: " + concatFile);
+		text2.push_back("Source File: " + info.getInfo("file"););
 		img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
 	}
 	else {
 		text.push_back("Owner: " + info.getInfo("owner"));
 		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 		text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
-		text.push_back("Source File: " + concatFile);
+		text.push_back("Source File: " + info.getInfo("file"););
 		endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
 }
 
-void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+void
+makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
+{
 	//scalar color order is BGR
 	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(51, 122, 0));
@@ -72,7 +68,6 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	std::vector<std::string> text;
 	std::vector<std::string> text2;
 
-	//int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
 		text.push_back("Preparer: " + info.getInfo("preparer"));
 		text2.push_back("Date Generated : " + info.getInfo("dateGenerated"));
@@ -85,7 +80,9 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	}
 }
 
-void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
+void
+makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt)
+{
 
 	// draw bounding rectangle
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
@@ -96,7 +93,7 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	int textYOffset = textHeight * 8 / 5;
 
 	// Verification Calculations
-	 // Calculate column offsets
+	// Calculate column offsets
 	int col1Offset = (offsetX + width / 4) - textOffset;
 	int col2Offset = offsetX + width / 2;
 	int col3Offset = (offsetX + (width*3) / 4) + textOffset;
@@ -136,7 +133,9 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 
 }
 
-void makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
+void
+makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
+{
 
 	int textOffset = width / 10;
 	int textHeight = height / 20;
