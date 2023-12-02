@@ -187,20 +187,11 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
 std::string
 formatDouble(double d)
 {
-    std::stringstream ss;
-    ss << std::setprecision(2) << std::fixed << d;
-    std::string str = ss.str();
+    int precision = 2; // arbitrary
 
-    // size_t dotPos = str.find('.');
-    // if (dotPos != std::string::npos) { // string has decimal point
-    //     // remove trailing zeroes
-    //     str = str.substr(0, str.find_last_not_of('0')+1);
-    //     // if the decimal point is now the last character, remove that as well
-    //     if(str.find('.') == str.size()-1)
-    //     {
-    //         str = str.substr(0, str.size()-1);
-    //     }
-    // }
+    std::stringstream ss;
+    ss << std::setprecision(precision) << std::fixed << d;
+    std::string str = ss.str();
 
     return str;
 }
@@ -794,9 +785,10 @@ InformationGatherer::getUnit(std::string name)
 bool
 InformationGatherer::dimensionSizeCondition()
 {
-    if (std::stod(infoMap["dimX"]) > 200) return true;
-    if (std::stod(infoMap["dimY"]) > 200) return true;
-    if (std::stod(infoMap["dimZ"]) > 200) return true;
+    int size = 200; // arbitrary value
+    if (std::stod(infoMap["dimX"]) > size) return true;
+    if (std::stod(infoMap["dimY"]) > size) return true;
+    if (std::stod(infoMap["dimZ"]) > size) return true;
     return false;
 }
 
@@ -839,13 +831,14 @@ void InformationGatherer::correctDefaultUnitsLength()
 void
 InformationGatherer::correctDefaultUnitsMass()
 {
-    // mass conditionals
-    bool isGrams = unitsMap["mass"].unit == "g";
+    int size = 20000;
     std::string toUnits = "";
+
+    bool isGrams = unitsMap["mass"].unit == "g";
 
     if (isGrams) {
         if (unitsMap["mass"].power != 0) { // mass exists
-            if (std::stod(infoMap["mass"]) > 20000) { // mass greater than 20,000 g
+            if (std::stod(infoMap["mass"]) > size) { // mass greater than 20,000 g
                 toUnits = "lbs";
             }
         }
@@ -864,12 +857,15 @@ InformationGatherer::correctDefaultUnitsMass()
 void
 InformationGatherer::checkScientificNotation()
 {
+    int size = 15; // arbitrary
+    int precision = 2; // arbitrarty
+
     for (auto& pair : unitsMap) {
         const std::string& key = pair.first;
         Unit& unit = pair.second;
 
         if (unit.power == 0) continue;
-        if (getInfo(key).size() < 15) continue;
+        if (getInfo(key).size() < size) continue;
 
         double value;
 
@@ -882,7 +878,7 @@ InformationGatherer::checkScientificNotation()
         }
 
         std::stringstream ss;
-        ss << std::scientific << std::setprecision(2) << value;
+        ss << std::scientific << std::setprecision(precision) << value;
         infoMap[key] = ss.str();
 
     }

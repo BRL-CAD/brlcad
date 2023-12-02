@@ -28,17 +28,17 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
 
 	int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
-		text.push_back("Owner: " + info.getInfo("owner"););
+		text.push_back("Owner: " + info.getInfo("owner"));
 		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 		text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
-		text2.push_back("Source File: " + info.getInfo("file"););
+		text2.push_back("Source File: " + info.getInfo("file"));
 		img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
 	}
 	else {
 		text.push_back("Owner: " + info.getInfo("owner"));
 		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 		text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
-		text.push_back("Source File: " + info.getInfo("file"););
+		text.push_back("Source File: " + info.getInfo("file"));
 		endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
 }

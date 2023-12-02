@@ -29,8 +29,6 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     std::string fileInput = extractFileName(pathToInput);
     std::string pathToOutput = "output/";
     std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
-    // std::cout << "Path to input: " << pathToInput << " " << fileOutput << std::endl;
-    // std::cout << "Component: " << component << std::endl;
 
     // do directory traversal checks
     if (fileOutput.find("../") != std::string::npos) {
@@ -38,12 +36,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
         return "";
     }
 
-    // std::cout << "Path to output: " << pathToOutput << std::endl;
-    // std::cout << "Processing file: " << fileInput << std::endl;
-
     std::string fileString = component.substr(0, component.find("."));
     fileString = fileString.substr(0, fileString.find("/"));
-    // std::cout << "File string: " << fileString << std::endl;
     std::string outputname = pathToOutput + fileOutput + "_" + fileString;
     std::replace(outputname.begin(), outputname.end(), ' ', '_');
     if (outputname.size() > 150) {
@@ -92,15 +86,11 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             a = 35, e = 25;
             outputname += "_ghost.png";
             render = opt.getTemppath() + "rtwizard -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
-            // render2 = "../../../build/bin/rtwizard -s 1024 -a " + a + " -e " + e + " -i " + pathToInput + " -g " + ghost + " -G 3 -o " + outputname;
             break;
         default:
             std::cerr<< "mark added this\n";
             break;
     }
-
-    // std::cout << render << std::endl;
-
 
     if (opt.getOverrideImages() || std::remove(outputname.c_str()) != 0) {
        std::cerr << "Did not remove " << outputname << std::endl;
