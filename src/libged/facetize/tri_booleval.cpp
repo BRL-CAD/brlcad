@@ -30,6 +30,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <queue>
 
 #include <string.h>
 
@@ -337,6 +338,17 @@ manifold_do_bool(
     return 0;
 }
 
+class DpCompare
+{
+    public:
+	bool operator()(struct directory *dp1, struct directory *dp2) {
+	    // C++ priority queues return the largest element, but
+	    // we want to start with the smaller elements - so we
+	    // invert the large/small reporting
+	    return (dp1->d_len > dp2->d_len);
+	}
+};
+
 int
 _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname)
 {
@@ -360,15 +372,20 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     struct bu_vls wfilename = BU_VLS_INIT_ZERO;
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls dname = BU_VLS_INIT_ZERO;
+    char rfname[MAXPATHLEN];
+    bu_file_realpath(gedp->dbip->dbi_filename, rfname);
+
     // Get the root filename, so we can give the working file a relatable name
-    bu_path_component(&bname, gedp->dbip->dbi_filename, BU_PATH_BASENAME);
+    bu_path_component(&bname, rfname, BU_PATH_BASENAME);
+
     // Hash the path to the .g file
-    bu_path_component(&dname, gedp->dbip->dbi_filename, BU_PATH_DIRNAME);
+    bu_path_component(&dname, rfname, BU_PATH_DIRNAME);
     unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(&dname), bu_vls_strlen(&dname));
     bu_vls_free(&dname);
+
     // Avoid collisions between .g files with the same name in different directories by
     // using both the basename and the path hash for the working filename
-    bu_vls_sprintf(&wfilename, "%lld_%s_tess.g", hash_num, bu_vls_cstr(&bname));
+    bu_vls_sprintf(&wfilename, "%llu_tess_%s", hash_num, bu_vls_cstr(&bname));
     bu_vls_free(&bname);
 
     // Have filename, get a location in the cache directory
@@ -376,18 +393,32 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     bu_dir(wfile, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&wfilename), NULL);
     bu_vls_free(&wfilename);
 
-    /* TODO - If we're resuming, see if we already have an appropriately named
-     * .g file.  If we don't, or we're not resuming, make the working copy. */
-    // Copy current .g file to a temp file name for processing
-    std::ifstream orig_file(gedp->dbip->dbi_filename, std::ios::binary);
-    std::ofstream work_file(wfile, std::ios::binary);
-    if (!orig_file.is_open() || !work_file.is_open())
-	return BRLCAD_ERROR;
-    work_file << orig_file.rdbuf();
-    orig_file.close();
-    work_file.close();
+    /* If we're resuming and we already have an appropriately named .g file, we
+     * don't overwrite it.  Otherwise we need to prepare the working copy. */
+    if (!s->resume || (s->resume && !bu_file_exists(wfile, NULL))) {
+	// If we need to clear an old working copy, do it now
+	bu_file_delete(wfile);
 
-    // TODO - Sort out dp objects by d_len and type
+	// Populate the working copy with original .g data
+	// (TODO - should use the dbip's FILE pointer for this rather than
+	// opening it again if we can (see FIO24-C), but that's a private entry
+	// in db_i per the header.  Maybe need a function to return a FILE *
+	// from a struct db_i?)
+	std::ifstream orig_file(gedp->dbip->dbi_filename, std::ios::binary);
+	std::ofstream work_file(wfile, std::ios::binary);
+	if (!orig_file.is_open() || !work_file.is_open())
+	    return BRLCAD_ERROR;
+	work_file << orig_file.rdbuf();
+	orig_file.close();
+	work_file.close();
+    }
+
+    // Sort dp objects by d_len using a priority queue
+    std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> pq;
+    for (size_t i = 0; i < BU_PTBL_LEN(&leaf_dps); i++) {
+	struct directory *ldp = (struct directory *)BU_PTBL_GET(&leaf_dps, i);
+	pq.push(ldp);
+    }
 
     // Build up the path to the ged_tessellate executable
     char tess_exec[MAXPATHLEN];
@@ -417,8 +448,9 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     tess_cmd[ 8] = "-O";
     tess_cmd[ 9] = wfile;
 
-    for (size_t i = 0; i < BU_PTBL_LEN(&leaf_dps); i++) {
-	struct directory *ldp = (struct directory *)BU_PTBL_GET(&leaf_dps, i);
+    while (!pq.empty()) {
+	struct directory *ldp = pq.top();
+	pq.pop();
 	tess_cmd[10] = ldp->d_namep;
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
