@@ -273,14 +273,14 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
 }
 
 unsigned long long
-bu_str_hash(const char *str)
+bu_data_hash(void *data, size_t len)
 {
-    if (!str)
+    if (!data || !len)
 	return 0;
 
     XXH64_state_t h_state;
     XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, str, strlen(str)*sizeof(char));
+    XXH64_update(&h_state, (const char *)data, len);
     XXH64_hash_t hash_val;
     hash_val = XXH64_digest(&h_state);
     unsigned long long hash = (unsigned long long)hash_val;

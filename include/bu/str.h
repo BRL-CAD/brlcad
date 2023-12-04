@@ -364,7 +364,7 @@ BU_EXPORT size_t
 bu_editdist(const char *s1, const char *s2);
 
 /**
- * Given a string, return and unsigned long long value based on a hashing
+ * Given data, return an unsigned long long value based on a hashing
  * calculation.  We are deliberately not documenting the hashing algorithm used
  * to allow for "under the hood" improvements to its properties over time, and
  * there should be no assumption of the equality of the hashed value between
@@ -374,7 +374,7 @@ bu_editdist(const char *s1, const char *s2);
  * based universally unique identifier, similarly to how Git uses SHA1 hashes
  * as UUIDs for commits. */
 BU_EXPORT unsigned long long
-bu_str_hash(const char *str);
+bu_data_hash(void *data, size_t len);
 
 __END_DECLS
 
