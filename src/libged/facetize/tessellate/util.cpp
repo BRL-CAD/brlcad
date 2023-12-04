@@ -93,6 +93,13 @@ _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const c
     intern.idb_meth = &OBJ[ID_BOT];
     intern.idb_ptr = (void *)bot;
 
+    // Delete a conflicting object name, if present
+    struct directory *odp = db_lookup(dbip, name, LOOKUP_QUIET);
+    if (odp) {
+	db_delete(dbip, odp);
+	db_dirdelete(dbip, odp);
+    }
+
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_log("Cannot add %s to directory\n", name);
