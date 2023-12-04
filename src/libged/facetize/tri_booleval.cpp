@@ -490,6 +490,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	    // materially contribute to the final object shape, but for some
 	    // applications like visualization there are cases where "something is
 	    // better than nothing" applies
+	    bu_file_delete(wfile);
 	    return -1;
 	}
     }
@@ -498,11 +499,17 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     // the tree walk to set up Manifold data.  Using the working copy
     // means we will be getting the correct triangle data for each solid
     struct db_i *wdbip = db_open(wfile, DB_OPEN_READONLY);
-    if (!wdbip)
+    if (!wdbip) {
+	bu_file_delete(wfile);
 	return BRLCAD_ERROR;
-    if (db_dirbuild(wdbip) < 0)
+    }
+    if (db_dirbuild(wdbip) < 0) {
+	bu_file_delete(wfile);
 	return BRLCAD_ERROR;
+    }
     db_update_nref(wdbip, &rt_uniresource);
+
+    // Need wdbp in the next two stages for tolerances
     struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* Second stage is to prepare Manifold versions of the instances of the BoT
@@ -540,6 +547,8 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 
 	if (i < 0) {
 	    bu_free(av, "av");
+	    db_close(wdbip);
+	    bu_file_delete(wfile);
 	    return -1;
 	}
 	bu_free(av, "av");
@@ -547,12 +556,16 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 
     // TODO - We don't have a tree - whether that's an error or not depends
     if (!s->facetize_tree) {
+	db_close(wdbip);
+	bu_file_delete(wfile);
 	return 0;
     }
 
     // Third stage is to execute the boolean operations
     union tree *ftree = rt_booltree_evaluate(s->facetize_tree, &RTG.rtg_vlfree, &wwdbp->wdb_tol, &rt_uniresource, &manifold_do_bool, 0, (void *)s);
     if (!ftree) {
+	db_close(wdbip);
+	bu_file_delete(wfile);
 	return -1;
     }
 
