@@ -360,14 +360,18 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     struct bu_vls wfilename = BU_VLS_INIT_ZERO;
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls dname = BU_VLS_INIT_ZERO;
+    // Get the root filename, so we can give the working file a relatable name
     bu_path_component(&bname, gedp->dbip->dbi_filename, BU_PATH_BASENAME);
+    // Hash the path to the .g file
     bu_path_component(&dname, gedp->dbip->dbi_filename, BU_PATH_DIRNAME);
     unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(&dname), bu_vls_strlen(&dname));
     bu_vls_free(&dname);
-    // TODO - Hash the path to the .g file - the filename and path in combination should be unique, so we
-    // can avoid collisions between .g files with the same name in different directories
+    // Avoid collisions between .g files with the same name in different directories by
+    // using both the basename and the path hash for the working filename
     bu_vls_sprintf(&wfilename, "%lld_%s_tess.g", hash_num, bu_vls_cstr(&bname));
     bu_vls_free(&bname);
+
+    // Have filename, get a location in the cache directory
     char wfile[MAXPATHLEN];
     bu_dir(wfile, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&wfilename), NULL);
     bu_vls_free(&wfilename);
