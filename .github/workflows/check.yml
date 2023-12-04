@@ -47,7 +47,7 @@ jobs:
           cache: 'true'
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Add github workspace to path
         # https://github.community/t/deprecated-add-path/136621
@@ -97,7 +97,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Add github workspace to path
         # https://github.community/t/deprecated-add-path/136621
@@ -144,7 +144,7 @@ jobs:
           cache: 'true'
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure
         run: |
@@ -181,7 +181,7 @@ jobs:
           cache: 'true'
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure
         run: |
@@ -218,7 +218,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure
         run: |

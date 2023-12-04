@@ -1,7 +1,7 @@
 /*
  * C code from the article
  * "An Implicit Surface Polygonizer"
- * http::www.unchainedgeometry.com/jbloom/papers/polygonizer.pdf
+ * https://www.bloomenthal.com/JBloom/pdf/polygonizer.pdf
  * by Jules Bloomenthal, jules@bloomenthal.com
  * in "Graphics Gems IV", Academic Press, 1994
 

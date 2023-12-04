@@ -636,7 +636,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     if(opt->getName() == "N/A"){
         infoMap["preparer"] = owner;
     }else{
-        infoMap["preparer"] = name;
+        infoMap["preparer"] = opt->getName();
     }
 
     //Gather last date updated
