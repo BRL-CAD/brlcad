@@ -455,6 +455,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     while (!pq.empty()) {
 	struct directory *ldp = pq.top();
 	pq.pop();
+	bu_log("Processing %s\n", ldp->d_namep);
 	tess_cmd[10] = ldp->d_namep;
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
