@@ -452,12 +452,12 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 	/* We're staring a new object, so we want to write out the header in the
 	 * log file the first time we get an NMG logging event.  (Re)set the flag
 	 * so the logger knows to do so. */
-	s->log_s->nmg_log_print_header = 1;
-	bu_vls_sprintf(s->log_s->nmg_log_header, "NMG: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, ocnt, max_cnt, s->tol->abs, s->tol->rel, s->tol->norm);
+	//s->log_s->nmg_log_print_header = 1;
+	//bu_vls_sprintf(s->log_s->nmg_log_header, "NMG: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, ocnt, max_cnt, s->tol->abs, s->tol->rel, s->tol->norm);
 
 	/* Let the user know what's going on, unless output is suppressed */
 	if (!s->quiet) {
-	    bu_log("%s", bu_vls_addr(s->log_s->nmg_log_header));
+	    //bu_log("%s", bu_vls_addr(s->log_s->nmg_log_header));
 	}
 
 	//ret = _ged_facetize_booleval(s, 1, (const char **)&oname, sname);
@@ -1040,9 +1040,9 @@ ged_facetize_regions_memfree:
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    if (bu_vls_strlen(s->log_s->nmg_log) && s->method_flags & FACETIZE_METHOD_NMG && s->verbosity > 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(s->log_s->nmg_log));
-    }
+    //if (bu_vls_strlen(s->log_s->nmg_log) && s->method_flags & FACETIZE_METHOD_NMG && s->verbosity > 1) {
+	//bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(s->log_s->nmg_log));
+    //}
 
     /* Final report */
     bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", (int)(to_convert - BU_PTBL_LEN(ar)), to_convert);
