@@ -341,7 +341,7 @@ manifold_do_bool(
 }
 
 int
-tess_run(const char **tess_cmd, int tess_cmd_cnt, struct _ged_facetize_state *s)
+tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 {
     int aborted = 0, timeout = 0;
     int64_t start = bu_gettime();
@@ -353,7 +353,7 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, struct _ged_facetize_state *s)
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
-	if (seconds > s->max_time) {
+	if (seconds > max_time) {
 	    bu_terminate(bu_process_pid(p));
 	    timeout = 1;
 	}
@@ -363,10 +363,10 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, struct _ged_facetize_state *s)
 }
 
 int
-bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, struct _ged_facetize_state *s);
+bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time);
 
 int
-bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, struct _ged_facetize_state *s)
+bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time)
 {
     std::vector<struct directory *> left_inputs;
     std::vector<struct directory *> right_inputs;
@@ -375,13 +375,13 @@ bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<stru
     for (size_t i =  inputs.size()/2; i < inputs.size(); i++)
 	right_inputs.push_back(inputs[i]);
 
-    int lret = bisect_run(bad_dps, left_inputs, orig_cmd, cmd_cnt, s);
-    int rret = bisect_run(bad_dps, right_inputs, orig_cmd, cmd_cnt, s);
+    int lret = bisect_run(bad_dps, left_inputs, orig_cmd, cmd_cnt, max_time);
+    int rret = bisect_run(bad_dps, right_inputs, orig_cmd, cmd_cnt, max_time);
     return lret + rret;
 }
 
 int
-bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, struct _ged_facetize_state *s)
+bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time)
 {
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     // The initial part of the re-run is the same.
@@ -399,10 +399,10 @@ bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct director
     bu_log("%s\n", bu_vls_cstr(&cmd));
     bu_vls_free(&cmd);
 
-    int ret = tess_run(tess_cmd, cmd_cnt+inputs.size(), s);
+    int ret = tess_run(tess_cmd, cmd_cnt+inputs.size(), max_time);
     if (ret) {
 	if (inputs.size() > 1) {
-	    return bisect_failing_inputs(bad_dps, inputs, tess_cmd, cmd_cnt, s);
+	    return bisect_failing_inputs(bad_dps, inputs, tess_cmd, cmd_cnt, max_time);
 	}
 	bad_dps.push_back(inputs[0]);
 	return 1;
@@ -567,14 +567,14 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	int err_cnt = 0;
 	while (tess_cmd[7]) {
 	    if (BU_STR_EQUAL(tess_cmd[7], "--nmg")) {
-		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, s);
+		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, s->max_time);
 	    } else {
 		// If we're in fallback territory, process individually rather
 		// than doing the bisect - at least for now, those methods are
 		// much more expensive and likely to fail as compared to NMG.
 		for (size_t i = 0; i < dps.size(); i++) {
 		    tess_cmd[10] = dps[i]->d_namep;
-		    int tess_ret = tess_run(tess_cmd, 11, s);
+		    int tess_ret = tess_run(tess_cmd, 11, s->max_time);
 		    if (tess_ret)
 			bad_dps.push_back(dps[i]);
 		}
