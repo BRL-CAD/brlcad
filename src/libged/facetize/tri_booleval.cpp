@@ -340,6 +340,78 @@ manifold_do_bool(
     return 0;
 }
 
+int
+tess_exec(const char **tess_cmd, int tess_cmd_cnt, struct _ged_facetize_state *s)
+{
+    int aborted = 0, timeout = 0;
+    int64_t start = bu_gettime();
+    int64_t elapsed = 0;
+    fastf_t seconds = 0.0;
+    struct bu_process *p = NULL;
+    bu_process_exec(&p, tess_cmd[0], tess_cmd_cnt, tess_cmd, 0, 0);
+    while (!timeout && p && (bu_process_pid(p) != -1)) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	elapsed = bu_gettime() - start;
+	seconds = elapsed / 1000000.0;
+	if (seconds > s->max_time) {
+	    bu_terminate(bu_process_pid(p));
+	    timeout = 1;
+	}
+    }
+    int w_rc = bu_process_wait(&aborted, p, 0);
+    return (timeout) ? 1 : w_rc;
+}
+
+int
+bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, struct _ged_facetize_state *s);
+
+int
+bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, struct _ged_facetize_state *s)
+{
+    std::vector<struct directory *> left_inputs;
+    std::vector<struct directory *> right_inputs;
+    for (size_t i = 0; i < inputs.size()/2; i++)
+	left_inputs.push_back(inputs[i]);
+    for (size_t i =  inputs.size()/2; i < inputs.size(); i++)
+	right_inputs.push_back(inputs[i]);
+
+    int lret = bisect_run(bad_dps, left_inputs, orig_cmd, cmd_cnt, s);
+    int rret = bisect_run(bad_dps, right_inputs, orig_cmd, cmd_cnt, s);
+    return lret + rret;
+}
+
+int
+bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, struct _ged_facetize_state *s)
+{
+    const char *tess_cmd[MAXPATHLEN] = {NULL};
+    // The initial part of the re-run is the same.
+    for (int i = 0; i < cmd_cnt; i++) {
+	tess_cmd[i] = orig_cmd[i];
+    }
+    for (size_t i = 0; i < inputs.size(); i++) {
+	tess_cmd[cmd_cnt+i] = inputs[i]->d_namep;
+    }
+
+    // Debugging
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    for (size_t i = 0; i < (size_t)cmd_cnt+inputs.size() ; i++)
+	bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
+    bu_log("%s\n", bu_vls_cstr(&cmd));
+    bu_vls_free(&cmd);
+
+    int ret = tess_exec(tess_cmd, cmd_cnt+inputs.size(), s);
+    if (ret) {
+	if (inputs.size() > 1) {
+	    return bisect_failing_inputs(bad_dps, inputs, tess_cmd, cmd_cnt, s);
+	}
+	bad_dps.push_back(inputs[0]);
+	return 1;
+    }
+    return 0;
+}
+
+
+
 class DpCompare
 {
     public:
@@ -462,15 +534,21 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     tess_cmd[ 7] = NULL;
     tess_cmd[ 8] = "-O";
     tess_cmd[ 9] = wfile;
+    int cmd_fixed_cnt = 10;
     while (!pq.empty()) {
 
+	// There are a number of methods that can be tried.  We try them in priority
+	// order, timing out if one of them goes too long.
+	method_flags = s->method_flags;
+	tess_cmd[7] = method_opt(&method_flags);
+
+	std::vector<struct directory *> dps;
+	std::vector<struct directory *> bad_dps;
 	struct bu_vls cmd = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < cmd_fixed_cnt; i++)
 	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	int o_offset = 10;
-	int objcnt = 0;
 	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
-	    if (pq.empty() || o_offset+objcnt == MAXPATHLEN)
+	    if (pq.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
 		break;
 	    struct directory *ldp = pq.top();
 	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
@@ -478,47 +556,25 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 		break;
 	    }
 	    pq.pop();
-	    bu_log("Processing %s\n", ldp->d_namep);
-	    tess_cmd[o_offset+objcnt] = ldp->d_namep;
-	    bu_vls_printf(&cmd, "%s ", tess_cmd[o_offset+objcnt]);
-	    objcnt++;
+	    dps.push_back(ldp);
+	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
 	}
-	bu_log("%s\n", bu_vls_cstr(&cmd));
 	bu_vls_free(&cmd);
-	// There are a number of methods that can be tried.  We try them in priority
-	// order, timing out if one of them goes too long.
-	int rc = -1;
-	method_flags = s->method_flags;
-	tess_cmd[7] = method_opt(&method_flags);
+
+	// We have the list of objects to feed the process - now, trigger
+	// the runs with as many methods as it takes to facetize all the
+	// primitives
+	int err_cnt = 0;
 	while (tess_cmd[7]) {
-	    int aborted = 0, timeout = 0;
-	    int64_t start = bu_gettime();
-	    int64_t elapsed = 0;
-	    fastf_t seconds = 0.0;
-	    struct bu_process *p = NULL;
-
-
-	    bu_process_exec(&p, tess_cmd[0], 10+objcnt, tess_cmd, 0, 0);
-	    while (!timeout && p && (bu_process_pid(p) != -1)) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		elapsed = bu_gettime() - start;
-		seconds = elapsed / 1000000.0;
-		if (seconds > s->max_time) {
-		    bu_terminate(bu_process_pid(p));
-		    timeout = 1;
-		}
-	    }
-	    int w_rc = bu_process_wait(&aborted, p, 0);
-	    rc = (timeout) ? -1 : w_rc;
-
-	    if (rc == BRLCAD_OK)
+	    err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, s);
+	    if (!err_cnt)
 		break;
-
 	    tess_cmd[7] = method_opt(&method_flags);
+	    dps = bad_dps;
 	}
 
-	if (rc != BRLCAD_OK) {
-	    // If we tried all the methods and didn't get any successes, we have an
+	if (err_cnt) {
+	    // If we tried all the active methods and still had failures, we have an
 	    // error.  We can either terminate the whole conversion based on this
 	    // failure, or ignore this object and process the remainder of the
 	    // tree.  The latter will be incorrect if this object was supposed to
@@ -550,6 +606,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
      * obj conversions generated by stage 1.  This is where matrix placement
      * is handled. */
     {
+	bu_log("Preparing Manifold inputs...\n");
 	// Prepare argc/argv array for db_walk_tree
 	const char **av = (const char **)bu_calloc(argc+1, sizeof(char *), "av");
 	for (int i = 0; i < argc; i++) {
@@ -585,6 +642,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	    goto tri_booleval_cleanup;
 	}
 	bu_free(av, "av");
+	bu_log("Preparing Manifold inputs... done.\n");
     }
 
     // TODO - We don't have a tree - whether that's an error or not depends
@@ -594,11 +652,13 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     }
 
     // Third stage is to execute the boolean operations
+    bu_log("Evaluating Boolean expressions...\n");
     ftree = rt_booltree_evaluate(s->facetize_tree, &RTG.rtg_vlfree, &wwdbp->wdb_tol, &rt_uniresource, &manifold_do_bool, 0, (void *)s);
     if (!ftree) {
 	ret = BRLCAD_ERROR;
 	goto tri_booleval_cleanup;
     }
+    bu_log("Evaluating Boolean expressions... done.\n");
 
     if (ftree->tr_d.td_d) {
 	manifold::Manifold *om = (manifold::Manifold *)ftree->tr_d.td_d;
