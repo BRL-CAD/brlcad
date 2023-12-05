@@ -341,7 +341,7 @@ manifold_do_bool(
 }
 
 int
-tess_exec(const char **tess_cmd, int tess_cmd_cnt, struct _ged_facetize_state *s)
+tess_run(const char **tess_cmd, int tess_cmd_cnt, struct _ged_facetize_state *s)
 {
     int aborted = 0, timeout = 0;
     int64_t start = bu_gettime();
@@ -399,7 +399,7 @@ bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct director
     bu_log("%s\n", bu_vls_cstr(&cmd));
     bu_vls_free(&cmd);
 
-    int ret = tess_exec(tess_cmd, cmd_cnt+inputs.size(), s);
+    int ret = tess_run(tess_cmd, cmd_cnt+inputs.size(), s);
     if (ret) {
 	if (inputs.size() > 1) {
 	    return bisect_failing_inputs(bad_dps, inputs, tess_cmd, cmd_cnt, s);
@@ -566,7 +566,19 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	// primitives
 	int err_cnt = 0;
 	while (tess_cmd[7]) {
-	    err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, s);
+	    if (BU_STR_EQUAL(tess_cmd[7], "--nmg")) {
+		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, s);
+	    } else {
+		// If we're in fallback territory, process individually rather
+		// than doing the bisect - at least for now, those methods are
+		// much more expensive and likely to fail as compared to NMG.
+		for (size_t i = 0; i < dps.size(); i++) {
+		    tess_cmd[10] = dps[i]->d_namep;
+		    int tess_ret = tess_run(tess_cmd, 11, s);
+		    if (tess_ret)
+			bad_dps.push_back(dps[i]);
+		}
+	    }
 	    if (!err_cnt)
 		break;
 	    tess_cmd[7] = method_opt(&method_flags);
