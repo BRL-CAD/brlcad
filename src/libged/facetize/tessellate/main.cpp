@@ -129,6 +129,191 @@ method_enablement_check(struct tess_opts *s)
     }
 }
 
+static int
+dp_tessellate(struct rt_bot_internal **obot, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
+{
+    if (!obot || !dbip || !dp)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	bu_log("rt_db_get_internal failed for %s\n", dp->d_namep);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_pnts_internal *pnts = NULL;
+    struct rt_bot_internal *bot = NULL;
+    struct rt_bot_internal *nbot = NULL;
+    int propVal;
+    int ret = BRLCAD_OK;
+
+    switch (intern.idb_minor_type) {
+	// If we've got no-volume objects, they get an empty Manifold -
+	// they can be safely treated as a no-op in any of the booleans
+	case ID_ANNOT:
+	case ID_BINUNIF:
+	case ID_CONSTRAINT:
+	case ID_DATUM:
+	case ID_GRIP:
+	case ID_JOINT:
+	case ID_MATERIAL:
+	case ID_SCRIPT:
+	case ID_SKETCH:
+	    return BRLCAD_OK;
+	case ID_PNTS:
+	    // At this low level, allow point processing methods to have a
+	    // crack at a point primitive to wrap it in a mesh.  If we don't
+	    // want facetize generating a mesh from a pnts object during a
+	    // general tree walk, we should skip point objects at the higher
+	    // level.  Even if we don't want to have facetize turn pnts objects
+	    // into meshes (which we probably don't), that is a capability we
+	    // will most likely want to expose through the pnts command - which
+	    // will make this executable useful to more than just facetize.
+	    if (!s->Co3Ne && !s->ball_pivot && !s->screened_poisson)
+		return BRLCAD_OK;
+
+	    // If we are going to try a pnts wrapping, there are only a few
+	    // candidates in the fallback methods list that we can use.
+	    s->nmg = 0;
+	    s->continuation = 0;
+	    s->instant_mesh = 0; // TODO - can this handle a point cloud?
+
+	    // point the pnts arguments to the internal point data
+	    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
+
+	    goto pnt_sampling_methods;
+	case ID_HALF:
+	    // Halfspace objects get a large arb.
+	    ret = half_to_bot(obot, &intern, s->ttol, s->tol);
+	    break;
+	case ID_BOT:
+	    bot = (struct rt_bot_internal *)(intern.idb_ptr);
+	    propVal = (int)rt_bot_propget(bot, "type");
+	    // Surface meshes are zero volume, and thus no-op
+	    if (propVal == RT_BOT_SURFACE)
+		return BRLCAD_OK;
+	    // Plate mode BoTs need an explicit volume representation
+	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
+		ret = plate_eval(obot, bot, s->ttol, s->tol);
+	    }
+	    // Volumetric bot - if it can be manifold we're good, but if
+	    // not we need to try and repair it.
+	    if (!bot_is_manifold(nbot)) {
+		// Nope - try repairing
+		ret = bot_repair(obot, bot, s->ttol, s->tol);
+	    } else {
+		// Passed - we're good to go.  If no renaming is expected, we're done
+		if (s->overwrite_obj)
+		    return BRLCAD_OK;
+
+		/* Change object name in the in-memory directory. */
+		struct bu_vls obot_name = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
+		if (db_rename(dbip, dp, bu_vls_cstr(&obot_name)) < 0) {
+		    rt_db_free_internal(&intern);
+		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", bu_vls_cstr(&obot_name));
+		    bu_vls_free(&obot_name);
+		    return BRLCAD_ERROR;
+		}
+
+		/* Re-write to the database.  New name is applied on the way out. */
+		if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", bu_vls_cstr(&obot_name));
+		    bu_vls_free(&obot_name);
+		    return BRLCAD_ERROR;
+		}
+		bu_vls_free(&obot_name);
+
+		return BRLCAD_OK;
+	    }
+	case ID_DSP:
+	    // TODO - need to create a Triangulated Irregular Network for these - the
+	    // current NMG routine apparently fails even on the sample terra.g solid.
+	    //
+	    // Would be VERY interesting to try and port the following code to
+	    // work with DSP data:
+	    // http://mgarland.org/software/terra.html
+	    // http://mgarland.org/software/scape.html
+	    //
+	    // Note that the CM methodology actually seems to succeed fairly
+	    // well and quickly with terra.g, so it might be worth defaulting
+	    // the tessellate call in the parent facetize command to just using
+	    // CM for dsp objects rather than trying the long and unsuccessful
+	    // NMG algorithm.  We need to allow all the various methods to have a crack
+	    // at the data here - unlike ID_PNTS, in THEORY nmg should successfully
+	    // produce output, so there's no justification for disabling it.
+	case ID_BREP:
+	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
+	default:
+	    break;
+    }
+
+    if (ret == BRLCAD_OK && *obot) {
+	// If we already have the output bot, return
+	return BRLCAD_OK;
+    }
+
+    // If we got this far, it's not a special case.  Start trying whatever tessellation methods
+    // are enabled
+
+    if (s->nmg) {
+	// NMG is best, if it works
+	ret = _nmg_tessellate(obot, &intern, s->ttol, s->tol);
+	if (ret == BRLCAD_OK)
+	    return BRLCAD_OK;
+    }
+
+    if (s->continuation) {
+	// The continuation method (CM) is a marching algorithm using an
+	// inside/outside test, building from a seed point on the surface.
+	//
+	// CM needs some awareness of properties of the solid, so we use the
+	// raytrace interrogation to build up that data.  Unlike the sampling
+	// methods we don't make direct use of the points beyond using one of
+	// them for the seed, but we do use information collected during the
+	// sampling process.
+	if (!pnts) {
+	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	}
+	struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
+	ret = continuation_mesh(obot, dbip, dp->d_namep, s, seed->v);
+	if (ret == BRLCAD_OK)
+	    return BRLCAD_OK;
+    }
+
+pnt_sampling_methods:
+
+    if (s->Co3Ne) {
+	if (!pnts) {
+	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	}
+	//ret = co3ne_mesh(obot, &intern, s->ttol, s->tol);
+	if (ret == BRLCAD_OK)
+	    return ret;
+    }
+
+    if (s->ball_pivot) {
+	if (!pnts) {
+	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	}
+	//ret = ball_pivot_mesh(obot, &intern, s->ttol, s->tol);
+	if (ret == BRLCAD_OK)
+	    return ret;
+    }
+
+    if (s->screened_poisson) {
+	if (!pnts) {
+	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	}
+	//ret = spsr_mesh(obot, &intern, s->ttol, s->tol);
+	if (ret == BRLCAD_OK)
+	    return ret;
+    }
+
+    return BRLCAD_ERROR;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -140,9 +325,8 @@ main(int argc, const char **argv)
     // Done with prog name
     argc--; argv++;
 
-    static const char *usage = "Usage: ged_tessellate [options] file.g input_obj [output_obj]\n";
+    static const char *usage = "Usage: ged_tessellate [options] file.g input_obj [input_object_2 ...]\n";
     int print_help = 0;
-    struct rt_pnts_internal *pnts = NULL;
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
     struct bn_tol tol = BN_TOL_INIT_TOL;
     struct tess_opts s = TESS_OPTS_DEFAULT;
@@ -205,190 +389,37 @@ main(int argc, const char **argv)
     if (!gedp)
 	return BRLCAD_ERROR;
 
-    struct directory *dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
-    if (!dp)
-	return BRLCAD_ERROR;
-
-    struct rt_db_internal intern;
-    RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
-	bu_log("rt_db_get_internal failed for %s\n", argv[1]);
-	return BRLCAD_ERROR;
+    struct bu_ptbl dps = BU_PTBL_INIT_ZERO;
+    for (int i = 1; i < argc; i++) {
+	struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
+	if (!dp)
+	    return BRLCAD_ERROR;
+	bu_ptbl_ins(&dps, (long *)dp);
     }
-
-    struct rt_bot_internal *bot = NULL;
-    struct rt_bot_internal *nbot = NULL;
-    struct rt_bot_internal *obot = NULL;
-    int propVal;
-    int ret = BRLCAD_OK;
-
-    switch (intern.idb_minor_type) {
-	// If we've got no-volume objects, they get an empty Manifold -
-	// they can be safely treated as a no-op in any of the booleans
-	case ID_ANNOT:
-	case ID_BINUNIF:
-	case ID_CONSTRAINT:
-	case ID_DATUM:
-	case ID_GRIP:
-	case ID_JOINT:
-	case ID_MATERIAL:
-	case ID_SCRIPT:
-	case ID_SKETCH:
-	    return BRLCAD_OK;
-	case ID_PNTS:
-	    // At this low level, allow point processing methods to have a
-	    // crack at a point primitive to wrap it in a mesh.  If we don't
-	    // want facetize generating a mesh from a pnts object during a
-	    // general tree walk, we should skip point objects at the higher
-	    // level.  Even if we don't want to have facetize turn pnts objects
-	    // into meshes (which we probably don't), that is a capability we
-	    // will most likely want to expose through the pnts command - which
-	    // will make this executable useful to more than just facetize.
-	    if (!s.Co3Ne && !s.ball_pivot && !s.screened_poisson)
-		return BRLCAD_OK;
-
-	    // If we are going to try a pnts wrapping, there are only a few
-	    // candidates in the fallback methods list that we can use.
-	    s.nmg = 0;
-	    s.continuation = 0;
-	    s.instant_mesh = 0; // TODO - can this handle a point cloud?
-
-	    // point the pnts arguments to the internal point data
-	    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
-
-	    goto pnt_sampling_methods;
-	case ID_HALF:
-	    // Halfspace objects get a large arb.
-	    ret = half_to_bot(&obot, &intern, &ttol, &tol);
-	    break;
-	case ID_BOT:
-	    bot = (struct rt_bot_internal *)(intern.idb_ptr);
-	    propVal = (int)rt_bot_propget(bot, "type");
-	    // Surface meshes are zero volume, and thus no-op
-	    if (propVal == RT_BOT_SURFACE)
-		return BRLCAD_OK;
-	    // Plate mode BoTs need an explicit volume representation
-	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
-		ret = plate_eval(&obot, bot, &ttol, &tol);
-	    }
-	    // Volumetric bot - if it can be manifold we're good, but if
-	    // not we need to try and repair it.
-	    if (!bot_is_manifold(nbot)) {
-		// Nope - try repairing
-		ret = bot_repair(&obot, bot, &ttol, &tol);
-	    } else {
-		// Passed - we're good to go. For this case we should rename
-		// rather than writing it out again - no need for two of the
-		// same object
-
-		/* Change object name in the in-memory directory. */
-		if (db_rename(gedp->dbip, dp, argv[2]) < 0) {
-		    rt_db_free_internal(&intern);
-		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", argv[2]);
-		    return BRLCAD_ERROR;
-		}
-
-		/* Re-write to the database.  New name is applied on the way out. */
-		if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
-		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", argv[2]);
-		    return BRLCAD_ERROR;
-		}
-
-		return BRLCAD_OK;
-	    }
-	case ID_DSP:
-	    // TODO - need to create a Triangulated Irregular Network for these - the
-	    // current NMG routine apparently fails even on the sample terra.g solid.
-	    //
-	    // Would be VERY interesting to try and port the following code to
-	    // work with DSP data:
-	    // http://mgarland.org/software/terra.html
-	    // http://mgarland.org/software/scape.html
-	    //
-	    // Note that the CM methodology actually seems to succeed fairly
-	    // well and quickly with terra.g, so it might be worth defaulting
-	    // the tessellate call in the parent facetize command to just using
-	    // CM for dsp objects rather than trying the long and unsuccessful
-	    // NMG algorithm.  We need to allow all the various methods to have a crack
-	    // at the data here - unlike ID_PNTS, in THEORY nmg should successfully
-	    // produce output, so there's no justification for disabling it.
-	case ID_BREP:
-	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
-	default:
-	    break;
-    }
-
-    if (ret == BRLCAD_OK && obot) {
-	// Already have the output bot?  Write it to disk and return
-	goto write_obot;
-    }
-
-    // If we got this far, it's not a special case.  Start trying whatever tessellation methods
-    // are enabled
-
-    if (s.nmg) {
-	// NMG is best, if it works
-	ret = _nmg_tessellate(&obot, &intern, &ttol, &tol);
-	if (ret == BRLCAD_OK)
-	    goto write_obot;
-    }
-
-    if (s.continuation) {
-	// The continuation method (CM) is a marching algorithm using an
-	// inside/outside test, building from a seed point on the surface.
-	//
-	// CM needs some awareness of properties of the solid, so we use the
-	// raytrace interrogation to build up that data.  Unlike the sampling
-	// methods we don't make direct use of the points beyond using one of
-	// them for the seed, but we do use information collected during the
-	// sampling process.
-	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
-	}
-	struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
-	ret = continuation_mesh(&obot, gedp->dbip, dp->d_namep, &s, seed->v);
-	if (ret == BRLCAD_OK)
-	    goto write_obot;
-    }
-
-pnt_sampling_methods:
-
-    if (s.Co3Ne) {
-	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
-	}
-	//ret = co3ne_mesh(&obot, &intern, &ttol, &tol);
-	if (ret == BRLCAD_OK)
-	    goto write_obot;
-    }
-
-    if (s.ball_pivot) {
-	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
-	}
-	//ret = ball_pivot_mesh(&obot, &intern, &ttol, &tol);
-	if (ret == BRLCAD_OK)
-	    goto write_obot;
-    }
-
-    if (s.screened_poisson) {
-	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
-	}
-	//ret = spsr_mesh(&obot, &intern, &ttol, &tol);
-	if (ret == BRLCAD_OK)
-	    goto write_obot;
-    }
-
-write_obot:
 
     struct bu_vls obot_name = BU_VLS_INIT_ZERO;
-    if (s.overwrite_obj) {
-	bu_vls_sprintf(&obot_name, "%s", dp->d_namep);
-    } else {
-	bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
+    struct rt_bot_internal *obot = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&dps); i++) {
+	struct directory *dp = (struct directory *)BU_PTBL_GET(&dps, i);
+	if (dp_tessellate(&obot, gedp->dbip, dp, &s) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+
+	if (s.overwrite_obj) {
+	    bu_vls_sprintf(&obot_name, "%s", dp->d_namep);
+	} else {
+	    bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
+	}
+
+	if (_tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name)) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+   
+	// _tess_facetize_write_bot frees obot - set to NULL
+	obot = NULL;
     }
-    return _tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name));
+
+    bu_vls_free(&obot_name);
+
+    return BRLCAD_OK;
 }
 
 // Local Variables:

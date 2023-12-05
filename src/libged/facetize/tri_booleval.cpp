@@ -48,8 +48,9 @@
 // Translate flags to ged_tessellate opts.  These need to match the options
 // used by that executable to specify algorithms.
 static const char *
-method_opt(int *method_flags, struct directory *dp)
+method_opt(int *method_flags)
 {
+#if 0
     switch (dp->d_minor_type) {
 	case ID_DSP:
 	    // DSP primitives need to avoid the methodology, since NMG
@@ -61,6 +62,7 @@ method_opt(int *method_flags, struct directory *dp)
 	default:
 	    break;
     }
+#endif
 
     // NMG is best, when it works
     static const char *nmg_opt = "--nmg";
@@ -419,8 +421,15 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 
     // Sort dp objects by d_len using a priority queue
     std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> pq;
+    std::queue<struct directory *> q_dsp;
     for (size_t i = 0; i < BU_PTBL_LEN(&leaf_dps); i++) {
 	struct directory *ldp = (struct directory *)BU_PTBL_GET(&leaf_dps, i);
+	// ID_DSP objects, for the moment, need to avoid NMG processing - set
+	// up to handle separately
+	if (ldp->d_minor_type == ID_DSP) {
+	    q_dsp.push(ldp);
+	    continue;
+	}
 	pq.push(ldp);
     }
 
@@ -451,24 +460,38 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     tess_cmd[ 7] = NULL;
     tess_cmd[ 8] = "-O";
     tess_cmd[ 9] = wfile;
-
     while (!pq.empty()) {
-	struct directory *ldp = pq.top();
-	pq.pop();
-	bu_log("Processing %s\n", ldp->d_namep);
-	tess_cmd[10] = ldp->d_namep;
+	int o_offset = 10;
+	int objcnt = 0;
+	for (size_t i = 0; i < 10*bu_avail_cpus(); i++) {
+	    if (pq.empty() || i == MAXPATHLEN)
+		break;
+	    struct directory *ldp = pq.top();
+	    pq.pop();
+	    bu_log("Processing %s\n", ldp->d_namep);
+	    tess_cmd[o_offset+i] = ldp->d_namep;
+	    objcnt++;
+	}
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
 	int rc = -1;
 	method_flags = s->method_flags;
-	tess_cmd[7] = method_opt(&method_flags, ldp);
+	tess_cmd[7] = method_opt(&method_flags);
 	while (tess_cmd[7]) {
 	    int aborted = 0, timeout = 0;
 	    int64_t start = bu_gettime();
 	    int64_t elapsed = 0;
 	    fastf_t seconds = 0.0;
 	    struct bu_process *p = NULL;
-	    bu_process_exec(&p, tess_cmd[0], 11, tess_cmd, 0, 0);
+
+	    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+	    for (int i = 0; i < 10+objcnt; i++) {
+		bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
+	    }
+	    bu_log("%s\n", bu_vls_cstr(&cmd));
+	    bu_vls_free(&cmd);
+
+	    bu_process_exec(&p, tess_cmd[0], 10+objcnt, tess_cmd, 0, 0);
 	    while (!timeout && p && (bu_process_pid(p) != -1)) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		elapsed = bu_gettime() - start;
@@ -484,7 +507,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	    if (rc == BRLCAD_OK)
 		break;
 
-	    tess_cmd[7] = method_opt(&method_flags, ldp);
+	    tess_cmd[7] = method_opt(&method_flags);
 	}
 
 	if (rc != BRLCAD_OK) {
