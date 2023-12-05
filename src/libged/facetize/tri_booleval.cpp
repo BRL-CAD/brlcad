@@ -351,6 +351,8 @@ class DpCompare
 	}
 };
 
+#define CMD_LEN_MAX 8000
+
 int
 _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname)
 {
@@ -461,17 +463,28 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     tess_cmd[ 8] = "-O";
     tess_cmd[ 9] = wfile;
     while (!pq.empty()) {
+
+	struct bu_vls cmd = BU_VLS_INIT_ZERO;
+	for (int i = 0; i < 10; i++)
+	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
 	int o_offset = 10;
 	int objcnt = 0;
-	for (size_t i = 0; i < 10*bu_avail_cpus(); i++) {
-	    if (pq.empty() || i == MAXPATHLEN)
+	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
+	    if (pq.empty() || o_offset+objcnt == MAXPATHLEN)
 		break;
 	    struct directory *ldp = pq.top();
+	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
+		// This would be too long -  we've listed all we can
+		break;
+	    }
 	    pq.pop();
 	    bu_log("Processing %s\n", ldp->d_namep);
-	    tess_cmd[o_offset+i] = ldp->d_namep;
+	    tess_cmd[o_offset+objcnt] = ldp->d_namep;
+	    bu_vls_printf(&cmd, "%s ", tess_cmd[o_offset+objcnt]);
 	    objcnt++;
 	}
+	bu_log("%s\n", bu_vls_cstr(&cmd));
+	bu_vls_free(&cmd);
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
 	int rc = -1;
@@ -484,12 +497,6 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	    fastf_t seconds = 0.0;
 	    struct bu_process *p = NULL;
 
-	    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-	    for (int i = 0; i < 10+objcnt; i++) {
-		bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	    }
-	    bu_log("%s\n", bu_vls_cstr(&cmd));
-	    bu_vls_free(&cmd);
 
 	    bu_process_exec(&p, tess_cmd[0], 10+objcnt, tess_cmd, 0, 0);
 	    while (!timeout && p && (bu_process_pid(p) != -1)) {
