@@ -343,6 +343,19 @@ manifold_do_bool(
 int
 tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 {
+    std::string wfile(tess_cmd[9]);
+    std::string wfilebak = wfile + std::string(".bak");
+    {
+	// Before the run, prepare a backup file
+	std::ifstream workfile(wfile, std::ios::binary);
+	std::ofstream bakfile(wfilebak, std::ios::binary);
+	if (!workfile.is_open() || !bakfile.is_open())
+	    return BRLCAD_ERROR;
+	bakfile << workfile.rdbuf();
+	workfile.close();
+	bakfile.close();
+    }
+
     int aborted = 0, timeout = 0;
     int64_t start = bu_gettime();
     int64_t elapsed = 0;
@@ -359,6 +372,24 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 	}
     }
     int w_rc = bu_process_wait(&aborted, p, 0);
+
+    if (timeout) {
+	// Because we had to kill the process, there's no way of knowing
+	// whether we interrupted I/O in a state that could result in a
+	// corrupted .g file.  Restore the pre-run state of the .g file -
+	// we may have to redo some work, but this at least ensures we
+	// won't have strange garbage corrupting subsequent processing.
+	std::ifstream bakfile(wfilebak, std::ios::binary);
+	std::ofstream workfile(wfile, std::ios::binary);
+	if (!workfile.is_open() || !bakfile.is_open())
+	    return BRLCAD_ERROR;
+	workfile << bakfile.rdbuf();
+	workfile.close();
+	bakfile.close();
+    }
+
+    bu_file_delete(wfilebak.c_str());
+
     return (timeout) ? 1 : w_rc;
 }
 
