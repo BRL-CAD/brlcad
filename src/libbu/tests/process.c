@@ -86,16 +86,28 @@ main(int ac, char *av[])
 
 	bu_terminate(bu_process_pid(p));
 
-	if (!bu_process_wait(&aborted, p, 1)) {
-	    fprintf(stderr, "bu_process_test - subprocess didn't abort correctly\n");
-	    return 1;
-	}
-
+	bu_process_wait(&aborted, p, 1);
 	if (!aborted) {
 	    fprintf(stderr, "bu_process_test - bu_process didn't correctly report an aborted subprocess\n");
 	    return 1;
 	}
     }
+
+    if (BU_STR_EQUAL(av[2], "error")) {
+	const char *pav[3];
+	int aborted = 0;
+	pav[0] = av[1];
+	pav[1] = av[2];
+	pav[2] = NULL;
+	bu_process_exec(&p, av[1], 2, (const char **)pav, 0, 0);
+
+	int ret = bu_process_wait(&aborted, p, 120);
+	if (WEXITSTATUS(ret) != 2) {
+	    fprintf(stderr, "bu_process_test - unexpected return code %d\n", WEXITSTATUS(ret));
+	    return 1;
+	}
+    }
+
 
     return 0;
 }

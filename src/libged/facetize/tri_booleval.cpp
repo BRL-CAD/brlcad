@@ -41,6 +41,7 @@
 
 #include "bu/app.h"
 #include "bu/path.h"
+#include "bu/snooze.h"
 #include "bu/time.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
@@ -372,6 +373,8 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 	}
     }
     int w_rc = bu_process_wait(&aborted, p, 0);
+    if (WIFEXITED(w_rc))
+	w_rc = WEXITSTATUS(w_rc);
 
     if (timeout) {
 	// Because we had to kill the process, there's no way of knowing
@@ -390,7 +393,7 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 
     bu_file_delete(wfilebak.c_str());
 
-    return (timeout) ? 1 : w_rc;
+    return (timeout || w_rc) ? 1 : 0;
 }
 
 int
