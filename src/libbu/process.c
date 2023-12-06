@@ -490,18 +490,39 @@ bu_process_wait(
 {
     int rc = 0;
 #ifndef _WIN32
-    int rpid;
     int retcode = 0;
 
     if (!pinfo)
 	return -1;
 
+    // Waiting now, should be done with input
     close(pinfo->fd_in);
+#if 0
+    // Per exit codes below, closing these was causing a SIGPIPE
+    // failure and resulting in our not getting the return code
     close(pinfo->fd_out);
     close(pinfo->fd_err);
+#endif
 
-    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1) {
+    // Debugging per https://stackoverflow.com/a/35471612/2037687
+    if (waitpid(pinfo->pid, &retcode, 0) != -1) {
+	if ( WIFEXITED(retcode) ) {
+	    int returned = WEXITSTATUS(retcode);
+	    printf("Exited normally with return code %d\n", returned);
+	}
+	else if ( WIFSIGNALED(retcode) ) {
+	    int signum = WTERMSIG(retcode);
+	    printf("Exited due to receiving signal %d\n", signum);
+	}
+	else if ( WIFSTOPPED(retcode) ) {
+	    int signum = WSTOPSIG(retcode);
+	    printf("Stopped due to receiving signal %d\n", signum);
+	}
+	else {
+	    printf("Something strange just happened.\n");
+	}
     }
+
     rc = retcode;
     if (rc) {
 	pinfo->aborted = 1;
