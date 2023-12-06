@@ -154,12 +154,6 @@ bu_process_pid(struct bu_process *pinfo)
     if (!pinfo)
 	return -1;
 
-    // Check if the process is defunct.  If so, return -1
-#ifdef HAVE_SYS_WAIT_H
-    int status;
-    waitpid(pinfo->pid, &status, WNOHANG);
-#endif
-
     // Check if the process is still running.  If not, return -1
 #ifdef HAVE_UNISTD_H
     if ((kill(pinfo->pid, 0) == -1) && (errno == ESRCH))
