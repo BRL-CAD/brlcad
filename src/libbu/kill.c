@@ -42,14 +42,20 @@ extern int kill(pid_t, int);
 static int
 _bu_terminate(int process)
 {
-    int successful = 0;
+    int sm = 0;
+    int sc = 0;
 
-    /* kill process and all children (negative pid, sysv extension) */
-    successful = kill((pid_t)-process, SIGKILL);
-    /* kill() returns 0 for success */
-    successful = !successful;
+    /* kill all children (negative pid, sysv extension) */
+    int npid = -1 * process;
+    sc = kill((pid_t)npid, SIGKILL);
 
-    return successful;
+    /* The above doesn't kill the primary process (at least on Ubuntu Linux) so
+     * also directly kill the process in question.
+     *
+     * kill() returns 0 for success */
+    sm = kill((pid_t)process, SIGKILL);
+
+    return (!sm && !sc) ? 1 : 0;
 }
 
 #else /* !HAVE_KILL */

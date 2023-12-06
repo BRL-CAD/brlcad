@@ -53,14 +53,12 @@ main(int argc, const char *argv[])
     }
 
     if (BU_STR_EQUAL(argv[1], "abort")) {
-	// https://stackoverflow.com/a/11276503
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
 	fprintf(stderr, "Not aborted!\n");
 	return 0;
     }
 
     if (BU_STR_EQUAL(argv[1], "error")) {
-	// https://stackoverflow.com/a/11276503
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	fprintf(stdout, "Returning error!\n");
 	return 2;
