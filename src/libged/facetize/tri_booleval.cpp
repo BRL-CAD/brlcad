@@ -45,6 +45,7 @@
 #include "bu/time.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
+#include "./subprocess.h"
 
 // Translate flags to ged_tessellate opts.  These need to match the options
 // used by that executable to specify algorithms.
@@ -357,24 +358,31 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 	bakfile.close();
     }
 
-    int aborted = 0, timeout = 0;
+    int timeout = 0;
     int64_t start = bu_gettime();
     int64_t elapsed = 0;
     fastf_t seconds = 0.0;
-    struct bu_process *p = NULL;
-    bu_process_exec(&p, tess_cmd[0], tess_cmd_cnt, tess_cmd, 0, 0);
-    while (!timeout && p && (bu_process_pid(p) != -1)) {
+    tess_cmd[tess_cmd_cnt] = NULL; // Make sure we're NULL terminated
+    struct subprocess_s p;
+    if (subprocess_create(tess_cmd, subprocess_option_no_window, &p)) {
+	// Unable to create subprocess??
+	return 1;
+    }
+    while (!timeout && subprocess_alive(&p)) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
 	if (seconds > max_time) {
-	    bu_terminate(bu_process_pid(p));
+	    subprocess_terminate(&p);
+	    subprocess_destroy(&p);
 	    timeout = 1;
 	}
     }
-    int w_rc = bu_process_wait(&aborted, p, 0);
-    if (WIFEXITED(w_rc))
-	w_rc = WEXITSTATUS(w_rc);
+    int w_rc;
+    if (subprocess_join(&p, &w_rc)) {
+	// Unable to join??
+	return 1;
+    }
 
     if (timeout) {
 	// Because we had to kill the process, there's no way of knowing

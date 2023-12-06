@@ -43,6 +43,7 @@ add_dependencies(ged-facetize ged_tessellate)
 CMAKEFILES(
   CMakeLists.txt
   ged_facetize.h
+  subprocess.h
   ${FACETIZE_SRCS}
   )
 
