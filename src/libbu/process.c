@@ -508,7 +508,11 @@ bu_process_wait(
     close(pinfo->fd_err);
 
     rc = retcode;
-    if (rc) {
+
+    // Rather than using a non-zero retcode, we should check WIFSIGNALED to
+    // determine if the process was aborted - a non-zero return code may be an
+    // expected return for some programs.
+    if (WIFSIGNALED(retcode)) {
 	pinfo->aborted = 1;
     }
 #else

@@ -90,7 +90,11 @@ main(int ac, char *av[])
 	    exit_info(ret);
 	    return 1;
 	}
-
+	if (aborted) {
+	    fprintf(stderr, "bu_process_test - process unexpectedly aborted\n");
+	    exit_info(ret);
+	    return 1;
+	}
 	exit_info(ret);
     }
 
@@ -126,6 +130,11 @@ main(int ac, char *av[])
 	int ret = bu_process_wait(&aborted, p, 120);
 	if (WEXITSTATUS(ret) != 2) {
 	    fprintf(stderr, "bu_process_test - unexpected return code %d\n", WEXITSTATUS(ret));
+	    exit_info(ret);
+	    return 1;
+	}
+	if (aborted) {
+	    fprintf(stderr, "bu_process_test - process unexpectedly aborted\n");
 	    exit_info(ret);
 	    return 1;
 	}
