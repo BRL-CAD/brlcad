@@ -32,6 +32,22 @@
 
 #include "bu.h"
 
+static void
+exit_info(int retcode)
+{
+    if ( WIFEXITED(retcode) ) {
+	int rc = WEXITSTATUS(retcode);
+	bu_log("Normal exit, return code %d\n", rc);
+    } else if (WIFSIGNALED(retcode) ) {
+	int signum = WTERMSIG(retcode);
+	printf("Exited due to receiving signal %d\n", signum);
+    } else if (WIFSTOPPED(retcode) ) {
+	int signum = WSTOPSIG(retcode);
+	printf("Stopped due to receiving signal %d\n", signum);
+    }
+}
+
+
 int
 main(int ac, char *av[])
 {
@@ -68,10 +84,14 @@ main(int ac, char *av[])
 	} else {
 	    fprintf(stdout, "got: %s\n", line);
 	}
-	if (bu_process_wait(&aborted, p, 120) == -1) {
+	int ret = bu_process_wait(&aborted, p, 120);
+	if (ret == -1) {
 	    fprintf(stderr, "bu_process_test - wait failed\n");
+	    exit_info(ret);
 	    return 1;
 	}
+
+	exit_info(ret);
     }
 
     if (BU_STR_EQUAL(av[2], "abort")) {
@@ -86,11 +106,13 @@ main(int ac, char *av[])
 
 	bu_terminate(bu_process_pid(p));
 
-	bu_process_wait(&aborted, p, 1);
+	int ret = bu_process_wait(&aborted, p, 1);
 	if (!aborted) {
 	    fprintf(stderr, "bu_process_test - bu_process didn't correctly report an aborted subprocess\n");
+	    exit_info(ret);
 	    return 1;
 	}
+	exit_info(ret);
     }
 
     if (BU_STR_EQUAL(av[2], "error")) {
@@ -104,8 +126,10 @@ main(int ac, char *av[])
 	int ret = bu_process_wait(&aborted, p, 120);
 	if (WEXITSTATUS(ret) != 2) {
 	    fprintf(stderr, "bu_process_test - unexpected return code %d\n", WEXITSTATUS(ret));
+	    exit_info(ret);
 	    return 1;
 	}
+	exit_info(ret);
     }
 
 
