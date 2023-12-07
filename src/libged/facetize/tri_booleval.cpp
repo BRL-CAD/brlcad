@@ -408,6 +408,8 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 
     bu_file_delete(wfilebak.c_str());
 
+    bu_log("result: %d\n", w_rc);
+
     return (timeout || w_rc) ? 1 : 0;
 }
 
