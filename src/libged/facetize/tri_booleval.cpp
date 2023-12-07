@@ -358,6 +358,13 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 	bakfile.close();
     }
 
+    // Debugging
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    for (int i = 0; i < tess_cmd_cnt ; i++)
+	bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
+    bu_log("%s\n", bu_vls_cstr(&cmd));
+    bu_vls_free(&cmd);
+
     int timeout = 0;
     int64_t start = bu_gettime();
     int64_t elapsed = 0;
@@ -433,13 +440,6 @@ bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct director
     for (size_t i = 0; i < inputs.size(); i++) {
 	tess_cmd[cmd_cnt+i] = inputs[i]->d_namep;
     }
-
-    // Debugging
-    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-    for (size_t i = 0; i < (size_t)cmd_cnt+inputs.size() ; i++)
-	bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-    bu_log("%s\n", bu_vls_cstr(&cmd));
-    bu_vls_free(&cmd);
 
     int ret = tess_run(tess_cmd, cmd_cnt+inputs.size(), max_time);
     if (ret) {
