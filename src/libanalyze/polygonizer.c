@@ -850,7 +850,7 @@ analyze_polygonize(
 	testface(c.i, c.j, c.k-1, &c, N, LBN, LTN, RBN, RTN, &p);
 	testface(c.i, c.j, c.k+1, &c, F, LBF, LTF, RBF, RTF, &p);
 
-	if (((bu_gettime() - timestamp)/1e6) > mt) {
+	if (mt > 0 && ((bu_gettime() - timestamp)/1e6) > mt) {
 	    /* Taking too long, bail */
 	    ret = 2;
 	    goto analyze_polygonizer_memfree;
