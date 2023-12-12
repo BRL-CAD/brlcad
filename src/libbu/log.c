@@ -38,6 +38,7 @@
  * that is woefully thread-unsafe.
  */
 static struct bu_hook_list log_hook_list = BU_HOOK_LIST_INIT_ZERO;
+static int log_call_hooks_semaphore = -1;
 
 static int log_first_time = 1;
 static int log_hooks_called = 0;
@@ -63,6 +64,12 @@ void
 bu_log_add_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_add(&log_hook_list, func, clientdata);
+
+    if(LIKELY(log_call_hooks_semaphore == -1))
+    {
+        /* initialize log_call_hooks_semaphore */
+        log_call_hooks_semaphore = bu_semaphore_register("log_call_hooks_semaphore");
+    }
 }
 
 
@@ -76,10 +83,13 @@ bu_log_delete_hook(bu_hook_t func, void *clientdata)
 static void
 log_call_hooks(void *buf)
 {
+    if(LIKELY(log_call_hooks_semaphore != -1))
+        bu_semaphore_acquire(log_call_hooks_semaphore);
 
-    log_hooks_called = 1;
     bu_hook_call(&log_hook_list, buf);
-    log_hooks_called = 0;
+
+    if(LIKELY(log_call_hooks_semaphore != -1))
+        bu_semaphore_release(log_call_hooks_semaphore);
 }
 
 
