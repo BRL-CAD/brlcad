@@ -35,7 +35,6 @@
  *
  * FIXME: this would be better returned to the caller as a logging
  * context instead of as a library-stateful set of callback functions
- * that is woefully thread-unsafe.
  */
 static struct bu_hook_list log_hook_list = BU_HOOK_LIST_INIT_ZERO;
 static int log_call_hooks_semaphore = -1;
