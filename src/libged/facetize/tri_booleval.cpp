@@ -642,6 +642,48 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	}
     }
 
+    while (!q_dsp.empty()) {
+	tess_cmd[7] = "--cm";
+	std::vector<struct directory *> dps;
+	struct bu_vls cmd = BU_VLS_INIT_ZERO;
+	for (int i = 0; i < cmd_fixed_cnt; i++)
+	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
+	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
+	    if (q_dsp.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
+		break;
+	    struct directory *ldp = q_dsp.front();
+	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
+		// This would be too long -  we've listed all we can
+		break;
+	    }
+	    q_dsp.pop();
+	    dps.push_back(ldp);
+	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
+	}
+	bu_vls_free(&cmd);
+
+	// We have the list of objects to feed the process - now, trigger
+	// the runs with as many methods as it takes to facetize all the
+	// primitives
+	int err_cnt = 0;
+	for (size_t i = 0; i < dps.size(); i++) {
+	    tess_cmd[10] = dps[i]->d_namep;
+	    err_cnt += tess_run(tess_cmd, 11, s->max_time);
+	}
+
+	if (err_cnt) {
+	    // If we tried all the active methods and still had failures, we have an
+	    // error.  We can either terminate the whole conversion based on this
+	    // failure, or ignore this object and process the remainder of the
+	    // tree.  The latter will be incorrect if this object was supposed to
+	    // materially contribute to the final object shape, but for some
+	    // applications like visualization there are cases where "something is
+	    // better than nothing" applies
+	    bu_file_delete(wfile);
+	    return BRLCAD_ERROR;
+	}
+    }
+
     // Re-open working .g copy after BoTs have replaced CSG solids and perform
     // the tree walk to set up Manifold data.
     struct db_i *wdbip = db_open(wfile, DB_OPEN_READONLY);
