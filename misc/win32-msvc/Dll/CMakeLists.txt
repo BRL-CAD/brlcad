@@ -38,6 +38,7 @@ target_link_libraries(BrlcadCore
   libbn-static
   libbrep-static
   libbu-static
+  libbv-static
   libged-static
   regex-static
   librt-static
@@ -101,6 +102,7 @@ if(MSVC)
   )
 
   set(COREINTERFACE_MSVC_LIBRARIES
+    shlwapi
     Ws2_32
     Psapi
     Rpcrt4
@@ -117,6 +119,7 @@ target_link_libraries(brlcad
   libbn-static
   libbrep-static
   libbu-static
+  libbv-static
   libged-static
   regex-static
   librt-static
