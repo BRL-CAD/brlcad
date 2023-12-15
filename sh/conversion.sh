@@ -640,14 +640,23 @@ EOF
 	    prim_count=`expr $prim_count + 1`
 	fi
 
-	nmg_facetize ${obj}
+	if ([ $TEST_NMG -eq 1 ]) ;
+	then
+	    nmg_facetize ${obj}
+	fi
 
-	bot_facetize ${obj}
+	if ([ $TEST_BOT -eq 1 ]) ;
+	then
+	    bot_facetize ${obj}
+	fi
 
-	brep_facetize ${obj}
+	if ([ $TEST_BREP -eq 1 ]) ;
+	then
+	    brep_facetize ${obj}
+	fi
 
 	# calculate stats for this object
-	if test "x$nmg" = "x$pass" && test "x$bot" = "x$pass" && test "x$brep" = "x$pass" ; then
+	if ( ( ([ $TEST_NMG -eq 0 ]) || test "x$nmg" = "x$pass" ) && ( ([ $TEST_BOT -eq 0 ]) || test "x$bot" = "x$pass" ) && ( ([ $TEST_BREP -eq 0 ]) || test "x$brep" = "x$pass" ) ) ; then
 	    status=$pass
 	    pass_count=`expr $pass_count + 1`
 	    if test "x$object_type" = "xcomb" ; then
