@@ -93,7 +93,7 @@ method_opt(int *method_flags)
 }
 
 static int
-bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip)
+bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip, int flip)
 {
     if (!out || !tsp || !ip)
 	return BRLCAD_ERROR;
@@ -103,6 +103,16 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
 	return BRLCAD_ERROR;
 
     struct rt_bot_internal *nbot = (struct rt_bot_internal *)ip->idb_ptr;
+
+    if (flip) {
+	switch (nbot->orientation) {
+	    case RT_BOT_CCW:
+		nbot->orientation = RT_BOT_CW;
+		break;
+	    default:
+		nbot->orientation = RT_BOT_CCW;
+	}
+    }
 
     if (nbot->num_vertices < 3)
 	return BRLCAD_ERROR;
@@ -129,6 +139,40 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
     return 0;
 }
 
+// We need to see if the matrix is turning the BoT inside out.  Make a
+// test face, with a setup that will report non-flipping with an IDN
+// matrix, and see what the currently active matrix does to it.
+static int bot_flipped(mat_t *m)
+{
+    point_t oorigin = {-0.4, 0.5, 0.4};
+    point_t othit = {-0.301, 0.581, 0.28};
+    point_t ov[3] = {{0, 1, 1}, {-1, 1, 0}, {0, 0, 0}};
+
+    point_t origin, thit;
+    point_t v[3];
+
+    for (int i = 0; i < 3; i++)
+	MAT4X3PNT(v[i], *m, ov[i]);
+    MAT4X3PNT(origin, *m, oorigin);
+    MAT4X3PNT(thit, *m, othit);
+
+    vect_t raydir;
+    VSUB2(raydir, thit, origin);
+
+    vect_t edges[2];
+    VSUB2(edges[0], v[1], v[0]);
+    VSUB2(edges[1], v[2], v[1]);
+
+    vect_t ecross;
+    VCROSS(ecross, edges[0], edges[1]);
+
+    fastf_t vedot = VDOT(ecross, raydir);
+    if (vedot > 0)
+	return 1;
+
+    return 0;
+}
+
 // Customized version of rt_booltree_leaf_tess for Manifold processing
 static union tree *
 _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(data))
@@ -151,9 +195,12 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
+    // Observed in Goliath example model with SKTRACKdrivewheel2.c comb - due
+    // to the values in ts_mat, the BoT ends up inside-out when read in.
+    int flip = bot_flipped(&tsp->ts_mat);
 
     void *odata = NULL;
-    ts_status = bot_to_manifold(&odata, tsp, ip);
+    ts_status = bot_to_manifold(&odata, tsp, ip, flip);
     if (ts_status < 0) {
 	// If we failed, return TREE_NULL
 	return TREE_NULL;
