@@ -388,6 +388,139 @@ if test ! -f "$SGED" ; then
     exit 1
 fi
 
+###########################
+# define method functions #
+###########################
+nmg_facetize ( ) {
+    obj="$1" ; shift
+
+    # start the limit timer.  this will kill the upcoming facetize
+    # job if more than MAXTIME seconds have elapsed.  in order for
+    # this to work while still ECHO'ing a message and without
+    # leaving orphaned 'sleep' processes that accumulate, this
+    # method had to be executed in the current shell environment.
+
+    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && rm -f "./${obj}.nmg.timeout" && touch "./${obj}.nmg.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+    spid=$!
+
+    # convert NMG
+    nmg=$fail
+    cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
+    $VERBOSE_ECHO "\$ $cmd"
+    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+
+    # stop the limit timer.  when we get here, see if there is a
+    # sleep process still running.  if any found, the sleep
+    # processes are killed and waited for so that we successfully
+    # avoid the parent shell reporting a "Terminated" process kill
+    # message.
+
+    for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+        # must kill sleep children first or they can continue running orphaned
+        kill $pid >/dev/null 2>&1
+        wait $pid >/dev/null 2>&1
+    done
+    # must wait in order to suppress kill messages
+    kill -9 $spid >/dev/null 2>&1
+    wait $spid >/dev/null 2>&1
+
+    $VERBOSE_ECHO "$output"
+    real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
+
+    # verify NMG
+    found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+    if test "x$found" = "x${object}.nmg" ; then
+        nmg=$pass
+        nmg_pass_count=`expr $nmg_pass_count + 1`
+    elif [ -e "./${obj}.nmg.timeout" ] ; then
+        rm -f "./${obj}.nmg.timeout"
+        nmg=$time
+        nmg_time_count=`expr $nmg_time_count + 1`
+    fi
+}
+
+bot_facetize ( ) {
+    obj="$1" ; shift
+
+    # start the limit timer
+    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && rm -f "./${obj}.bot.timeout" && touch "./${obj}.bot.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+    spid=$!
+
+    # convert BoT
+    bot=$fail
+    cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
+    $VERBOSE_ECHO "\$ $cmd"
+    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+
+    # stop the limit timer
+    for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+        # must kill sleep children first or they can continue running orphaned
+        kill $pid >/dev/null 2>&1
+        wait $pid >/dev/null 2>&1
+    done
+    # must wait in order to suppress kill messages
+    kill -9 $spid >/dev/null 2>&1
+    wait $spid >/dev/null 2>&1
+
+    $VERBOSE_ECHO "$output"
+    real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
+
+    # verify BoT
+    found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+    if test "x$found" = "x${object}.bot" ; then
+        bot=$pass
+        bot_pass_count=`expr $bot_pass_count + 1`
+    elif [ -e "./${obj}.bot.timeout" ] ; then
+        rm -f "./${obj}.bot.timeout"
+        bot=$time
+        bot_time_count=`expr $bot_time_count + 1`
+    fi
+}
+
+brep_facetize ( ) {
+    obj="$1" ; shift
+
+    # start the limit timer
+    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && rm -f "./${obj}.brep.timeout" && touch "./${obj}.brep.timeout" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+    spid=$!
+
+    # convert Brep
+    brep=$fail
+    cmd="$GED -c \"$work\" brep \"${obj}\" brep \"${obj}.brep\""
+    $VERBOSE_ECHO "\$ $cmd"
+    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+
+    # stop the limit timer
+    for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+        # must kill sleep children first or they can continue running orphaned
+        kill $pid >/dev/null 2>&1
+        wait $pid >/dev/null 2>&1
+    done
+    # must wait in order to suppress kill messages
+    kill -9 $spid >/dev/null 2>&1
+    wait $spid >/dev/null 2>&1
+
+    $VERBOSE_ECHO "$output"
+    real_brep="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
+
+    # verify Brep
+    found=`$SGED -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
+    if [ -e "./${obj}.brep.timeout" ] ; then
+        rm -f "./${obj}.brep.timeout"
+        brep=$time
+        brep_time_count=`expr $brep_time_count + 1`
+    elif test "x$found" = "x${object}.brep" ; then
+        brep=$pass
+        brep_pass_count=`expr $brep_pass_count + 1`
+    else
+        # (unconfirmed) what results when brep-evaluating comb objects
+        found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
+        if test "x$found2" = "x${object}.${object}.brep" ; then
+           brep=$pass
+           brep_pass_count=`expr $brep_pass_count + 1`
+        fi
+    fi
+}
 
 ################
 # start output #
@@ -483,124 +616,11 @@ EOF
 	    prim_count=`expr $prim_count + 1`
 	fi
 
-	# start the limit timer.  this will kill the upcoming facetize
-	# job if more than MAXTIME seconds have elapsed.  in order for
-	# this to work while still ECHO'ing a message and without
-	# leaving orphaned 'sleep' processes that accumulate, this
-	# method had to be executed in the current shell environment.
+	nmg_facetize ${obj}
 
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && rm -f "./${obj}.nmg.timeout" && touch "./${obj}.nmg.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-	spid=$!
+	bot_facetize ${obj}
 
-	# convert NMG
-	nmg=$fail
-	cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
-	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
-
-	# stop the limit timer.  when we get here, see if there is a
-	# sleep process still running.  if any found, the sleep
-	# processes are killed and waited for so that we successfully
-	# avoid the parent shell reporting a "Terminated" process kill
-	# message.
-
-	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
-	    # must kill sleep children first or they can continue running orphaned
-	    kill $pid >/dev/null 2>&1
-	    wait $pid >/dev/null 2>&1
-	done
-	# must wait in order to suppress kill messages
-	kill -9 $spid >/dev/null 2>&1
-	wait $spid >/dev/null 2>&1
-
-	$VERBOSE_ECHO "$output"
-	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
-
-	# verify NMG
-	found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
-	if test "x$found" = "x${object}.nmg" ; then
-	    nmg=$pass
-	    nmg_pass_count=`expr $nmg_pass_count + 1`
-	elif [ -e "./${obj}.nmg.timeout" ] ; then
-	    rm -f "./${obj}.nmg.timeout"
-	    nmg=$time
-	    nmg_time_count=`expr $nmg_time_count + 1`
-	fi
-
-	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && rm -f "./${obj}.bot.timeout" && touch "./${obj}.bot.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-	spid=$!
-
-	# convert BoT
-	bot=$fail
-	cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
-	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
-
-	# stop the limit timer, same as above.
-	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
-	    # must kill sleep children first or they can continue running orphaned
-	    kill $pid >/dev/null 2>&1
-	    wait $pid >/dev/null 2>&1
-	done
-	# must wait in order to suppress kill messages
-	kill -9 $spid >/dev/null 2>&1
-	wait $spid >/dev/null 2>&1
-
-	$VERBOSE_ECHO "$output"
-	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
-
-	# verify BoT
-	found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
-	if test "x$found" = "x${object}.bot" ; then
-	    bot=$pass
-	    bot_pass_count=`expr $bot_pass_count + 1`
-	elif [ -e "./${obj}.bot.timeout" ] ; then
-	    rm -f "./${obj}.bot.timeout"
-	    bot=$time
-	    bot_time_count=`expr $bot_time_count + 1`
-	fi
-
-	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && rm -f "./${obj}.brep.timeout" && touch "./${obj}.brep.timeout" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-	spid=$!
-
-	# convert Brep
-	brep=$fail
-	cmd="$GED -c \"$work\" brep \"${obj}\" brep \"${obj}.brep\""
-	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
-
-	# stop the limit timer, same as above.
-	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
-	    # must kill sleep children first or they can continue running orphaned
-	    kill $pid >/dev/null 2>&1
-	    wait $pid >/dev/null 2>&1
-	done
-	# must wait in order to suppress kill messages
-	kill -9 $spid >/dev/null 2>&1
-	wait $spid >/dev/null 2>&1
-
-	$VERBOSE_ECHO "$output"
-	real_brep="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
-
-	# verify Brep
-	found=`$SGED -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
-	if [ -e "./${obj}.brep.timeout" ] ; then
-	    rm -f "./${obj}.brep.timeout"
-	    brep=$time
-	    brep_time_count=`expr $brep_time_count + 1`
-	elif test "x$found" = "x${object}.brep" ; then
-	    brep=$pass
-	    brep_pass_count=`expr $brep_pass_count + 1`
-	else
-	    # (unconfirmed) what results when brep-evaluating comb objects
-	    found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
-	    if test "x$found2" = "x${object}.${object}.brep" ; then
-		brep=$pass
-		brep_pass_count=`expr $brep_pass_count + 1`
-	    fi
-	fi
+	brep_facetize ${obj}
 
 	# calculate stats for this object
 	if test "x$nmg" = "x$pass" && test "x$bot" = "x$pass" && test "x$brep" = "x$pass" ; then
@@ -624,7 +644,7 @@ EOF
 	obj_count=`expr $obj_count + 1`
 
 	# | awk '{print ($1+$2+$3)}'`
-	
+
 	# print result for this object
 	seconds=`echo "$real_nmg $real_bot $real_brep" | awk '{print ($1+$2+$3)}'`
 	$ECHO "%-4s %6.1fs  nmg: %-4s %2.1fs  bot: %-4s %2.1fs  brep: %-4s %2.1fs %*s%.0f %-7s %s:%s" \
