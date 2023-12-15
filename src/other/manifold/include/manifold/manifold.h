@@ -117,15 +117,15 @@ class Manifold {
    *  Constructors
    */
   ///@{
-  MANIFOLD_EXPORT Manifold();
-  MANIFOLD_EXPORT ~Manifold();
-  MANIFOLD_EXPORT Manifold(const Manifold& other);
-  MANIFOLD_EXPORT Manifold& operator=(const Manifold& other);
-  MANIFOLD_EXPORT Manifold(Manifold&&) noexcept;
-  MANIFOLD_EXPORT Manifold& operator=(Manifold&&) noexcept;
+  Manifold();
+  ~Manifold();
+  Manifold(const Manifold& other);
+  Manifold& operator=(const Manifold& other);
+  Manifold(Manifold&&) noexcept;
+  Manifold& operator=(Manifold&&) noexcept;
 
   Manifold(const MeshGL&, const std::vector<float>& propertyTolerance = {});
-  MANIFOLD_EXPORT Manifold(const Mesh&);
+  Manifold(const Mesh&);
 
   static Manifold Smooth(const MeshGL&,
                          const std::vector<Smoothness>& sharpenedEdges = {});
@@ -157,7 +157,7 @@ class Manifold {
    *  Details of the manifold
    */
   ///@{
-  MANIFOLD_EXPORT Mesh GetMesh() const;
+  Mesh GetMesh() const;
   MeshGL GetMeshGL(glm::ivec3 normalIdx = glm::ivec3(0)) const;
   bool IsEmpty() const;
   enum class Error {
@@ -174,7 +174,7 @@ class Manifold {
     FaceIDWrongLength,
     InvalidConstruction,
   };
-  MANIFOLD_EXPORT Error Status() const;
+  Error Status() const;
   int NumVert() const;
   int NumEdge() const;
   int NumTri() const;
@@ -218,7 +218,7 @@ class Manifold {
    *  Combine two manifolds
    */
   ///@{
-  MANIFOLD_EXPORT Manifold Boolean(const Manifold& second, OpType op) const;
+  Manifold Boolean(const Manifold& second, OpType op) const;
   static Manifold BatchBoolean(const std::vector<Manifold>& manifolds,
                                OpType op);
   // Boolean operation shorthand
@@ -234,9 +234,20 @@ class Manifold {
   Manifold TrimByPlane(glm::vec3 normal, float originOffset) const;
   ///@}
 
+  /** @name 2D from 3D
+   */
+  ///@{
+  CrossSection Slice(float height = 0) const;
+  CrossSection Project() const;
+  ///@}
+
+  /** @name Convex hull
+   */
+  ///@{
   Manifold Hull() const;
   static Manifold Hull(const std::vector<Manifold>& manifolds);
   static Manifold Hull(const std::vector<glm::vec3>& pts);
+  ///@}
 
   /** @name Testing hooks
    *  These are just for internal testing.

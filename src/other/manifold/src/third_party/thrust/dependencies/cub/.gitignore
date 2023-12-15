@@ -1,0 +1,5 @@
+.p4config
+*~
+\#*
+/build
+.cache

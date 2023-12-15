@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed asc2g/g2asc support for brep primitives - Cliff Yapp
 * fixed dsp terrain file data loading for relative paths - Cliff Yapp
 
 
