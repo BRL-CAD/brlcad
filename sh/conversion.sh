@@ -91,6 +91,30 @@ log ( ) {
     fi
 }
 
+# See if we have any format enablers
+TEST_NMG=0
+TEST_BOT=0
+TEST_BREP=0
+for i in "${@}";
+do
+   if [ "$i" = "--nmg" ]; then
+      TEST_NMG=1
+   fi
+   if [ "$i" = "--bot" ]; then
+      TEST_BOT=1
+   fi
+   if [ "$i" = "--brep" ]; then
+      TEST_BREP=1
+   fi
+done
+
+if ([ $TEST_NMG -eq 0 ] && [ $TEST_BOT -eq 0 ] && [ $TEST_BREP -eq 0 ]) ;
+then
+    TEST_NMG=1
+    TEST_BOT=1
+    TEST_BREP=1
+fi
+
 
 ##############################
 # ensure a 0|1 boolean value #
