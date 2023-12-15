@@ -58,12 +58,12 @@ struct ExportOptions {
   Material mat = {};
 };
 
-Mesh ImportMesh(const std::string& filename, bool forceCleanup = false);
+Mesh MANIFOLD_EXPORT ImportMesh(const std::string& filename, bool forceCleanup = false);
 
-void ExportMesh(const std::string& filename, const Mesh& mesh,
+void MANIFOLD_EXPORT ExportMesh(const std::string& filename, const Mesh& mesh,
                 const ExportOptions& options);
 
-void ExportMesh(const std::string& filename, const MeshGL& mesh,
+void MANIFOLD_EXPORT ExportMesh(const std::string& filename, const MeshGL& mesh,
                 const ExportOptions& options);
 /** @} */
 }  // namespace manifold
