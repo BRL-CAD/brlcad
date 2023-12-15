@@ -104,11 +104,19 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
 
     struct rt_bot_internal *nbot = (struct rt_bot_internal *)ip->idb_ptr;
 
+    if (nbot->num_vertices < 3)
+	return BRLCAD_ERROR;
+
     manifold::Mesh bot_mesh;
     for (size_t j = 0; j < nbot->num_vertices ; j++)
 	bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
-    for (size_t j = 0; j < nbot->num_faces; j++)
-	bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
+    if (nbot->orientation == RT_BOT_CW) {
+	for (size_t j = 0; j < nbot->num_faces; j++)
+	    bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+2], nbot->faces[3*j+1]));
+    } else {
+	for (size_t j = 0; j < nbot->num_faces; j++)
+	    bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
+    }
 
     manifold::Manifold bot_manifold = manifold::Manifold(bot_mesh);
     if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
@@ -245,6 +253,9 @@ manifold_do_bool(
 	failed = 1;
     }
     if (!failed) {
+
+	bu_log("Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
+
 	manifold::Manifold bool_out;
 	try {
 	    bool_out = lm->Boolean(*rm, manifold_op);
@@ -271,7 +282,7 @@ manifold_do_bool(
 	// If we're debugging and need to capture glb for a "successful" case, these can be uncommented
 	manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMesh(), {});
 	manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMesh(), {});
-	manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".glb"), bool_out.GetMesh(), {});
+	manifold::ExportMesh(std::string("out-") + std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".glb"), bool_out.GetMesh(), {});
 #endif
 
 	if (!failed)
