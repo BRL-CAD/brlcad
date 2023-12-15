@@ -491,11 +491,6 @@ src/third_party/quickhull/Structs/Vector3.hpp
 src/third_party/quickhull/Structs/VertexDataSource.hpp
 src/third_party/thrust/LICENSE
 src/third_party/thrust/README.md
-src/third_party/thrust/dependencies/cub/.clang-format
-src/third_party/thrust/dependencies/cub/.clang-tidy
-src/third_party/thrust/dependencies/cub/.clangd
-src/third_party/thrust/dependencies/cub/.git-blame-ignore-revs
-src/third_party/thrust/dependencies/cub/.gitignore
 src/third_party/thrust/dependencies/cub/LICENSE.TXT
 src/third_party/thrust/dependencies/cub/cub/agent/agent_adjacent_difference.cuh
 src/third_party/thrust/dependencies/cub/cub/agent/agent_batch_memcpy.cuh
