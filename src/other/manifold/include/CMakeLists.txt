@@ -8,7 +8,7 @@ set(MANIFOLD_HDRS
 if (ASSETIMPORT_LIBRARY)
   set(MANIFOLD_HDRS
     ${MANIFOLD_HDRS}
-    ../meshIO/include/meshIO.h
+    ../meshIO/include/manifold/meshIO.h
     )
 endif (ASSETIMPORT_LIBRARY)
 
