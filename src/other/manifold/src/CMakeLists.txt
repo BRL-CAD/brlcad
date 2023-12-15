@@ -64,6 +64,9 @@ target_include_directories(manifold PUBLIC
   )
 target_compile_options(manifold PRIVATE ${MANIFOLD_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP)
 target_compile_features(manifold PUBLIC cxx_std_17)
+if (ASSETIMPORT_LIBRARY)
+  target_link_libraries(manifold ${ASSETIMPORT_LIBRARY})
+endif (ASSETIMPORT_LIBRARY)
 
 install(
   TARGETS manifold
