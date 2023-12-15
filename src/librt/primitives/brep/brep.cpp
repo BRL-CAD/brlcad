@@ -2396,7 +2396,10 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	RT_BREP_CK_MAGIC(bi);
 	model.Read(archive, &log);
 	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
-	ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(model.ImageFromIndex(0).ExclusiveModelComponent());
+
+	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
+	ON_ModelComponentReference cr = it.FirstComponentReference();
+	const ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->Geometry(nullptr)));
     }
     return BRLCAD_OK;

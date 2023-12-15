@@ -144,6 +144,7 @@ set(G_BENCHMARK_MODELS
 
 set(G_SAMPLE_MODELS
   aet.asc
+  annual_gift_man.asc
   axis.asc
   bearing.asc
   boolean-ops.asc
