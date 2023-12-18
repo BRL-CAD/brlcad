@@ -689,7 +689,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 		// than doing the bisect - at least for now, those methods are
 		// much more expensive and likely to fail as compared to NMG.
 		for (size_t i = 0; i < dps.size(); i++) {
-		    tess_cmd[12] = dps[i]->d_namep;
+		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
 		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time);
 		    if (tess_ret)
 			bad_dps.push_back(dps[i]);
@@ -740,8 +740,8 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	// primitives
 	int err_cnt = 0;
 	for (size_t i = 0; i < dps.size(); i++) {
-	    tess_cmd[10] = dps[i]->d_namep;
-	    err_cnt += tess_run(tess_cmd, 11, s->max_time);
+	    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
+	    err_cnt += tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time);
 	}
 
 	if (err_cnt) {
