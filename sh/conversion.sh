@@ -770,13 +770,65 @@ $ECHO "Summary\n"
 $ECHO "=======\n"
 $ECHO "Converted: %3.1f%%  ( %0.f of %.0f objects, %0.f files )\n" $rate $pass_count $obj_count $file_count
 $ECHO "\n"
-$ECHO "   Passed: %3.0f   ( %.0f NMG, %.0f BoT, %.0f Brep )\n" $pass_count $nmg_pass_count $bot_pass_count $brep_pass_count
-$ECHO "   Failed: %3.0f   ( %.0f NMG, %.0f BoT, %.0f Brep )\n" $fail_count $nmg_fail_count $bot_fail_count $brep_fail_count
-$ECHO "  Timeout: %3.0f   ( %.0f NMG, %.0f BoT, %.0f Brep )\n" $time_count $nmg_time_count $bot_time_count $brep_time_count
+$ECHO "   Passed: %3.0f   ( " $pass_count
+if ([ $TEST_NMG -eq 1 ]) ;
+then
+    $ECHO "%.0f NMG " $nmg_pass_count
+fi
+
+if ([ $TEST_BOT -eq 1 ]) ;
+then
+    $ECHO "%.0f BoT " $bot_pass_count
+fi
+
+if ([ $TEST_BREP -eq 1 ]) ;
+then
+    $ECHO "%.0f Brep " $brep_pass_count
+fi
+$ECHO ")\n"
+$ECHO "   Failed: %3.0f   ( " $fail_count
+if ([ $TEST_NMG -eq 1 ]) ;
+then
+    $ECHO "%.0f NMG " $nmg_fail_count
+fi
+
+if ([ $TEST_BOT -eq 1 ]) ;
+then
+    $ECHO "%.0f BoT " $bot_fail_count
+fi
+
+if ([ $TEST_BREP -eq 1 ]) ;
+then
+    $ECHO "%.0f Brep " $brep_fail_count
+fi
+$ECHO ")\n"
+$ECHO "  Timeout: %3.0f   ( " $time_count
+if ([ $TEST_NMG -eq 1 ]) ;
+then
+    $ECHO "%.0f NMG " $nmg_time_count
+fi
+if ([ $TEST_BOT -eq 1 ]) ;
+then
+    $ECHO "%.0f BoT " $bot_time_count
+fi
+if ([ $TEST_BREP -eq 1 ]) ;
+then
+    $ECHO "%.0f Brep " $brep_time_count
+fi
+$ECHO ")\n"
 $ECHO "\n"
-$ECHO " NMG rate: %3.1f%%  ( %.0f of %.0f )\n" $nmg_percent $nmg_pass_count $obj_count
-$ECHO " BoT rate: %3.1f%%  ( %.0f of %.0f )\n" $bot_percent $bot_pass_count $obj_count
-$ECHO "Brep rate: %3.1f%%  ( %.0f of %.0f )\n" $brep_percent $brep_pass_count $obj_count
+if ([ $TEST_NMG -eq 1 ]) ;
+then
+    $ECHO " NMG rate: %3.1f%%  ( %.0f of %.0f )\n" $nmg_percent $nmg_pass_count $obj_count
+fi
+if ([ $TEST_BOT -eq 1 ]) ;
+then
+    $ECHO " BoT rate: %3.1f%%  ( %.0f of %.0f )\n" $bot_percent $bot_pass_count $obj_count
+fi
+if ([ $TEST_BREP -eq 1 ]) ;
+then
+    $ECHO "Brep rate: %3.1f%%  ( %.0f of %.0f )\n" $brep_percent $brep_pass_count $obj_count
+fi
 $ECHO "\n"
 $ECHO "Prim rate: %3.1f%%  ( %.0f of %.0f )\n" $prim_percent $prim_pass_count $prim_count
 $ECHO " Reg rate: %3.1f%%  ( %.0f of %.0f )\n" $reg_percent $reg_pass_count $reg_count
@@ -787,7 +839,6 @@ $ECHO "\n"
 $ECHO "Finished running $THIS on `date`\n"
 $ECHO "Output was saved to $LOGFILE from `pwd`\n"
 $ECHO "Conversion testing complete.\n"
-
 
 # Local Variables:
 # tab-width: 8
