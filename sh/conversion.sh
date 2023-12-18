@@ -82,15 +82,41 @@ log ( ) {
     fi
 
     if test ! "x$LOGFILE" = "x" ; then
-	action="printf \"$format\n\" $* >> \"$LOGFILE\""
+	action="printf \"$format\" $* >> \"$LOGFILE\""
 	eval "$action"
     fi
     if test ! "x$QUIET" = "x1" ; then
-	action="printf \"$format\n\" $*"
+	action="printf \"$format\" $*"
 	eval "$action"
     fi
 }
 
+# See if we have any format enablers (must come before .g filenames)
+TEST_NMG=0
+TEST_BOT=0
+TEST_BREP=0
+for i in "${@}";
+do
+   if [ "$i" = "--nmg" ]; then
+      TEST_NMG=1
+      shift;
+   fi
+   if [ "$i" = "--bot" ]; then
+      TEST_BOT=1
+      shift;
+   fi
+   if [ "$i" = "--brep" ]; then
+      TEST_BREP=1
+      shift;
+   fi
+done
+
+if ([ $TEST_NMG -eq 0 ] && [ $TEST_BOT -eq 0 ] && [ $TEST_BREP -eq 0 ]) ;
+then
+    TEST_NMG=1
+    TEST_BOT=1
+    TEST_BREP=1
+fi
 
 ##############################
 # ensure a 0|1 boolean value #
@@ -388,19 +414,152 @@ if test ! -f "$SGED" ; then
     exit 1
 fi
 
+###########################
+# define method functions #
+###########################
+nmg_facetize ( ) {
+    obj="$1" ; shift
+
+    # start the limit timer.  this will kill the upcoming facetize
+    # job if more than MAXTIME seconds have elapsed.  in order for
+    # this to work while still ECHO'ing a message and without
+    # leaving orphaned 'sleep' processes that accumulate, this
+    # method had to be executed in the current shell environment.
+
+    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && rm -f "./${obj}.nmg.timeout" && touch "./${obj}.nmg.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+    spid=$!
+
+    # convert NMG
+    nmg=$fail
+    cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
+    $VERBOSE_ECHO "\$ $cmd"
+    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+
+    # stop the limit timer.  when we get here, see if there is a
+    # sleep process still running.  if any found, the sleep
+    # processes are killed and waited for so that we successfully
+    # avoid the parent shell reporting a "Terminated" process kill
+    # message.
+
+    for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+        # must kill sleep children first or they can continue running orphaned
+        kill $pid >/dev/null 2>&1
+        wait $pid >/dev/null 2>&1
+    done
+    # must wait in order to suppress kill messages
+    kill -9 $spid >/dev/null 2>&1
+    wait $spid >/dev/null 2>&1
+
+    $VERBOSE_ECHO "$output"
+    real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
+
+    # verify NMG
+    found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+    if test "x$found" = "x${object}.nmg" ; then
+        nmg=$pass
+        nmg_pass_count=`expr $nmg_pass_count + 1`
+    elif [ -e "./${obj}.nmg.timeout" ] ; then
+        rm -f "./${obj}.nmg.timeout"
+        nmg=$time
+        nmg_time_count=`expr $nmg_time_count + 1`
+    fi
+}
+
+bot_facetize ( ) {
+    obj="$1" ; shift
+
+    # start the limit timer
+    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && rm -f "./${obj}.bot.timeout" && touch "./${obj}.bot.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+    spid=$!
+
+    # convert BoT
+    bot=$fail
+    cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
+    $VERBOSE_ECHO "\$ $cmd"
+    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+
+    # stop the limit timer
+    for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+        # must kill sleep children first or they can continue running orphaned
+        kill $pid >/dev/null 2>&1
+        wait $pid >/dev/null 2>&1
+    done
+    # must wait in order to suppress kill messages
+    kill -9 $spid >/dev/null 2>&1
+    wait $spid >/dev/null 2>&1
+
+    $VERBOSE_ECHO "$output"
+    real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
+
+    # verify BoT
+    found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+    if test "x$found" = "x${object}.bot" ; then
+        bot=$pass
+        bot_pass_count=`expr $bot_pass_count + 1`
+    elif [ -e "./${obj}.bot.timeout" ] ; then
+        rm -f "./${obj}.bot.timeout"
+        bot=$time
+        bot_time_count=`expr $bot_time_count + 1`
+    fi
+}
+
+brep_facetize ( ) {
+    obj="$1" ; shift
+
+    # start the limit timer
+    { sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && rm -f "./${obj}.brep.timeout" && touch "./${obj}.brep.timeout" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+    spid=$!
+
+    # convert Brep
+    brep=$fail
+    cmd="$GED -c \"$work\" brep \"${obj}\" brep \"${obj}.brep\""
+    $VERBOSE_ECHO "\$ $cmd"
+    output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+
+    # stop the limit timer
+    for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+        # must kill sleep children first or they can continue running orphaned
+        kill $pid >/dev/null 2>&1
+        wait $pid >/dev/null 2>&1
+    done
+    # must wait in order to suppress kill messages
+    kill -9 $spid >/dev/null 2>&1
+    wait $spid >/dev/null 2>&1
+
+    $VERBOSE_ECHO "$output"
+    real_brep="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
+
+    # verify Brep
+    found=`$SGED -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
+    if [ -e "./${obj}.brep.timeout" ] ; then
+        rm -f "./${obj}.brep.timeout"
+        brep=$time
+        brep_time_count=`expr $brep_time_count + 1`
+    elif test "x$found" = "x${object}.brep" ; then
+        brep=$pass
+        brep_pass_count=`expr $brep_pass_count + 1`
+    else
+        # (unconfirmed) what results when brep-evaluating comb objects
+        found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
+        if test "x$found2" = "x${object}.${object}.brep" ; then
+           brep=$pass
+           brep_pass_count=`expr $brep_pass_count + 1`
+        fi
+    fi
+}
 
 ################
 # start output #
 ################
 
-$ECHO "B R L - C A D   C O N V E R S I O N"
-$ECHO "==================================="
-$ECHO "Running $THIS on `date`"
-$ECHO "Logging output to $LOGFILE"
-$ECHO "`uname -a 2>&1`"
-$ECHO "Using [${MGED}] for GED"
-$ECHO "Using [${MAXTIME}] for MAXTIME"
-$ECHO
+$ECHO "B R L - C A D   C O N V E R S I O N\n"
+$ECHO "===================================\n"
+$ECHO "Running $THIS on `date`\n"
+$ECHO "Logging output to $LOGFILE\n"
+$ECHO "`uname -a 2>&1`\n"
+$ECHO "Using [${MGED}] for GED\n"
+$ECHO "Using [${MAXTIME}] for MAXTIME\n"
+$ECHO "\n"
 
 # aggregate stats
 obj_count=0
@@ -431,7 +590,40 @@ pass=ok
 fail=FAIL
 time=time
 
+
+##############################
+# report data for object #
+##############################
+obj_report ( ) {
+
+	# calculate total seconds for all methods
+	seconds=`echo "$real_nmg $real_bot $real_brep" | awk '{print ($1+$2+$3)}'`
+	# print result for this object
+
+	$ECHO "%-4s %6.1fs  " \"$status\" \"$seconds\"
+
+	if ([ $TEST_NMG -eq 1 ]) ;
+	then
+	    $ECHO "nmg: %-4s %2.1fs  " \"$nmg\" \"$real_nmg\"
+	fi
+
+	if ([ $TEST_BOT -eq 1 ]) ;
+	then
+	    $ECHO "bot: %-4s %2.1fs  " \"$bot\" \"$real_bot\"
+	fi
+
+	if ([ $TEST_BREP -eq 1 ]) ;
+	then
+	    $ECHO "brep: %-4s %2.1fs  " \"$brep\" \"$real_brep\"
+	fi
+
+
+	$ECHO "%*s%.0f %-7s %s:%s\n" \"`expr 7 - $obj_count : '.*'`\" \"\" $obj_count \"$object_type\" \"$file\" \"$object\"
+}
+
+
 $ECHO "%s" "-=-"
+$ECHO "\n"
 begin=`elapsed` # start elapsed runtime timer
 while test $# -gt 0 ; do
     # iterates over every specified geometry file
@@ -468,7 +660,7 @@ EOF
 	obj="`basename \"$object\"`"
 	found=`$SGED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
-	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
+	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])\n"
 	    continue
 	fi
 	object_type=`$SGED -c "$work" db get_type \"${obj}\" 2>&1 | grep -v Using`
@@ -483,127 +675,23 @@ EOF
 	    prim_count=`expr $prim_count + 1`
 	fi
 
-	# start the limit timer.  this will kill the upcoming facetize
-	# job if more than MAXTIME seconds have elapsed.  in order for
-	# this to work while still ECHO'ing a message and without
-	# leaving orphaned 'sleep' processes that accumulate, this
-	# method had to be executed in the current shell environment.
-
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && rm -f "./${obj}.nmg.timeout" && touch "./${obj}.nmg.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-	spid=$!
-
-	# convert NMG
-	nmg=$fail
-	cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
-	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
-
-	# stop the limit timer.  when we get here, see if there is a
-	# sleep process still running.  if any found, the sleep
-	# processes are killed and waited for so that we successfully
-	# avoid the parent shell reporting a "Terminated" process kill
-	# message.
-
-	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
-	    # must kill sleep children first or they can continue running orphaned
-	    kill $pid >/dev/null 2>&1
-	    wait $pid >/dev/null 2>&1
-	done
-	# must wait in order to suppress kill messages
-	kill -9 $spid >/dev/null 2>&1
-	wait $spid >/dev/null 2>&1
-
-	$VERBOSE_ECHO "$output"
-	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
-
-	# verify NMG
-	found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
-	if test "x$found" = "x${object}.nmg" ; then
-	    nmg=$pass
-	    nmg_pass_count=`expr $nmg_pass_count + 1`
-	elif [ -e "./${obj}.nmg.timeout" ] ; then
-	    rm -f "./${obj}.nmg.timeout"
-	    nmg=$time
-	    nmg_time_count=`expr $nmg_time_count + 1`
+	if ([ $TEST_NMG -eq 1 ]) ;
+	then
+	    nmg_facetize ${obj}
 	fi
 
-	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && rm -f "./${obj}.bot.timeout" && touch "./${obj}.bot.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-	spid=$!
-
-	# convert BoT
-	bot=$fail
-	cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
-	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
-
-	# stop the limit timer, same as above.
-	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
-	    # must kill sleep children first or they can continue running orphaned
-	    kill $pid >/dev/null 2>&1
-	    wait $pid >/dev/null 2>&1
-	done
-	# must wait in order to suppress kill messages
-	kill -9 $spid >/dev/null 2>&1
-	wait $spid >/dev/null 2>&1
-
-	$VERBOSE_ECHO "$output"
-	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
-
-	# verify BoT
-	found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
-	if test "x$found" = "x${object}.bot" ; then
-	    bot=$pass
-	    bot_pass_count=`expr $bot_pass_count + 1`
-	elif [ -e "./${obj}.bot.timeout" ] ; then
-	    rm -f "./${obj}.bot.timeout"
-	    bot=$time
-	    bot_time_count=`expr $bot_time_count + 1`
+	if ([ $TEST_BOT -eq 1 ]) ;
+	then
+	    bot_facetize ${obj}
 	fi
 
-	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && rm -f "./${obj}.brep.timeout" && touch "./${obj}.brep.timeout" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-	spid=$!
-
-	# convert Brep
-	brep=$fail
-	cmd="$GED -c \"$work\" brep \"${obj}\" brep \"${obj}.brep\""
-	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
-
-	# stop the limit timer, same as above.
-	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
-	    # must kill sleep children first or they can continue running orphaned
-	    kill $pid >/dev/null 2>&1
-	    wait $pid >/dev/null 2>&1
-	done
-	# must wait in order to suppress kill messages
-	kill -9 $spid >/dev/null 2>&1
-	wait $spid >/dev/null 2>&1
-
-	$VERBOSE_ECHO "$output"
-	real_brep="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
-
-	# verify Brep
-	found=`$SGED -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
-	if [ -e "./${obj}.brep.timeout" ] ; then
-	    rm -f "./${obj}.brep.timeout"
-	    brep=$time
-	    brep_time_count=`expr $brep_time_count + 1`
-	elif test "x$found" = "x${object}.brep" ; then
-	    brep=$pass
-	    brep_pass_count=`expr $brep_pass_count + 1`
-	else
-	    # (unconfirmed) what results when brep-evaluating comb objects
-	    found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
-	    if test "x$found2" = "x${object}.${object}.brep" ; then
-		brep=$pass
-		brep_pass_count=`expr $brep_pass_count + 1`
-	    fi
+	if ([ $TEST_BREP -eq 1 ]) ;
+	then
+	    brep_facetize ${obj}
 	fi
 
 	# calculate stats for this object
-	if test "x$nmg" = "x$pass" && test "x$bot" = "x$pass" && test "x$brep" = "x$pass" ; then
+	if ( ( ([ $TEST_NMG -eq 0 ]) || ( test "x$nmg" = "x$pass" ) ) && ( ([ $TEST_BOT -eq 0 ]) || ( test "x$bot" = "x$pass" ) ) && ( ([ $TEST_BREP -eq 0 ]) || ( test "x$brep" = "x$pass" ) ) ) ; then
 	    status=$pass
 	    pass_count=`expr $pass_count + 1`
 	    if test "x$object_type" = "xcomb" ; then
@@ -624,11 +712,9 @@ EOF
 	obj_count=`expr $obj_count + 1`
 
 	# | awk '{print ($1+$2+$3)}'`
-	
+
 	# print result for this object
-	seconds=`echo "$real_nmg $real_bot $real_brep" | awk '{print ($1+$2+$3)}'`
-	$ECHO "%-4s %6.1fs  nmg: %-4s %2.1fs  bot: %-4s %2.1fs  brep: %-4s %2.1fs %*s%.0f %-7s %s:%s" \
-	       \"$status\" \"$seconds\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"`expr 7 - $obj_count : '.*'`\" \"#\" $obj_count \"$object_type\" \"$file\" \"$object\"
+	obj_report
 
     done
 
@@ -646,6 +732,7 @@ EOF
 done
 end=`elapsed` # stop elapsed runtime timer
 $ECHO "%s" "-=-"
+$ECHO "\n"
 
 # calculate summary statistics
 elp=`echo $begin $end | awk '{print $2-$1}'`
@@ -670,37 +757,88 @@ else
     rate=`echo $pass_count $obj_count | awk '{print ($1/$2)*100.0}'`
     avg=`echo $elp $obj_count | awk '{print $1/$2}'`
 fi
-# $ECHO "obj is $obj_count ; brep_pass is $brep_pass_count ; nmg_time is $brep_time_count"
+# $ECHO "obj is $obj_count ; brep_pass is $brep_pass_count ; nmg_time is $brep_time_count\n"
 nmg_fail_count=`echo $obj_count $nmg_pass_count $nmg_time_count | awk '{print ($1-$2-$3)}'`
 bot_fail_count=`echo $obj_count $bot_pass_count $bot_time_count | awk '{print ($1-$2-$3)}'`
 brep_fail_count=`echo $obj_count $brep_pass_count $brep_time_count | awk '{print ($1-$2-$3)}'`
 
 # print summary
-$ECHO
-$ECHO "... Done."
-$ECHO
-$ECHO "Summary"
-$ECHO "======="
-$ECHO "Converted: %3.lf%%  ( %0.f of %.0f objects, %0.f files )" $rate $pass_count $obj_count $file_count
-$ECHO
-$ECHO "   Passed: %3.0f   ( %.0f NMG, %.0f BoT, %.0f Brep )" $pass_count $nmg_pass_count $bot_pass_count $brep_pass_count
-$ECHO "   Failed: %3.0f   ( %.0f NMG, %.0f BoT, %.0f Brep )" $fail_count $nmg_fail_count $bot_fail_count $brep_fail_count
-$ECHO "  Timeout: %3.0f   ( %.0f NMG, %.0f BoT, %.0f Brep )" $time_count $nmg_time_count $bot_time_count $brep_time_count
-$ECHO
-$ECHO " NMG rate: %3.1f%%  ( %.0f of %.0f )" $nmg_percent $nmg_pass_count $obj_count
-$ECHO " BoT rate: %3.1f%%  ( %.0f of %.0f )" $bot_percent $bot_pass_count $obj_count
-$ECHO "Brep rate: %3.1f%%  ( %.0f of %.0f )" $brep_percent $brep_pass_count $obj_count
-$ECHO
-$ECHO "Prim rate: %3.1f%%  ( %.0f of %.0f )" $prim_percent $prim_pass_count $prim_count
-$ECHO " Reg rate: %3.1f%%  ( %.0f of %.0f )" $reg_percent $reg_pass_count $reg_count
-$ECHO
-$ECHO "  Elapsed: %3.1f seconds" $elp
-$ECHO "  Average: %3.1f seconds per object" $avg
-$ECHO
-$ECHO "Finished running $THIS on `date`"
-$ECHO "Output was saved to $LOGFILE from `pwd`"
-$ECHO "Conversion testing complete."
+$ECHO "\n"
+$ECHO "... Done.\n"
+$ECHO "\n"
+$ECHO "Summary\n"
+$ECHO "=======\n"
+$ECHO "Converted: %3.1f%%  ( %0.f of %.0f objects, %0.f files )\n" $rate $pass_count $obj_count $file_count
+$ECHO "\n"
+$ECHO "   Passed: %3.0f   ( " $pass_count
+if ([ $TEST_NMG -eq 1 ]) ;
+then
+    $ECHO "%.0f NMG " $nmg_pass_count
+fi
 
+if ([ $TEST_BOT -eq 1 ]) ;
+then
+    $ECHO "%.0f BoT " $bot_pass_count
+fi
+
+if ([ $TEST_BREP -eq 1 ]) ;
+then
+    $ECHO "%.0f Brep " $brep_pass_count
+fi
+$ECHO ")\n"
+$ECHO "   Failed: %3.0f   ( " $fail_count
+if ([ $TEST_NMG -eq 1 ]) ;
+then
+    $ECHO "%.0f NMG " $nmg_fail_count
+fi
+
+if ([ $TEST_BOT -eq 1 ]) ;
+then
+    $ECHO "%.0f BoT " $bot_fail_count
+fi
+
+if ([ $TEST_BREP -eq 1 ]) ;
+then
+    $ECHO "%.0f Brep " $brep_fail_count
+fi
+$ECHO ")\n"
+$ECHO "  Timeout: %3.0f   ( " $time_count
+if ([ $TEST_NMG -eq 1 ]) ;
+then
+    $ECHO "%.0f NMG " $nmg_time_count
+fi
+if ([ $TEST_BOT -eq 1 ]) ;
+then
+    $ECHO "%.0f BoT " $bot_time_count
+fi
+if ([ $TEST_BREP -eq 1 ]) ;
+then
+    $ECHO "%.0f Brep " $brep_time_count
+fi
+$ECHO ")\n"
+$ECHO "\n"
+if ([ $TEST_NMG -eq 1 ]) ;
+then
+    $ECHO " NMG rate: %3.1f%%  ( %.0f of %.0f )\n" $nmg_percent $nmg_pass_count $obj_count
+fi
+if ([ $TEST_BOT -eq 1 ]) ;
+then
+    $ECHO " BoT rate: %3.1f%%  ( %.0f of %.0f )\n" $bot_percent $bot_pass_count $obj_count
+fi
+if ([ $TEST_BREP -eq 1 ]) ;
+then
+    $ECHO "Brep rate: %3.1f%%  ( %.0f of %.0f )\n" $brep_percent $brep_pass_count $obj_count
+fi
+$ECHO "\n"
+$ECHO "Prim rate: %3.1f%%  ( %.0f of %.0f )\n" $prim_percent $prim_pass_count $prim_count
+$ECHO " Reg rate: %3.1f%%  ( %.0f of %.0f )\n" $reg_percent $reg_pass_count $reg_count
+$ECHO "\n"
+$ECHO "  Elapsed: %3.1f seconds\n" $elp
+$ECHO "  Average: %3.1f seconds per object\n" $avg
+$ECHO "\n"
+$ECHO "Finished running $THIS on `date`\n"
+$ECHO "Output was saved to $LOGFILE from `pwd`\n"
+$ECHO "Conversion testing complete.\n"
 
 # Local Variables:
 # tab-width: 8
