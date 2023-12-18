@@ -545,8 +545,8 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     const char *sfilter = "! -type comb";
     struct bu_ptbl leaf_dps = BU_PTBL_INIT_ZERO;
     if (db_search(&leaf_dps, DB_SEARCH_RETURN_UNIQ_DP, sfilter, argc, dpa, gedp->dbip, NULL) < 0) {
-	// Empty input - nothing to facetize;
-	return BRLCAD_ERROR;
+	// Empty input - nothing to facetize.
+	return BRLCAD_OK;
     }
 
     /* OK, we have work to do. Figure out the working .g filename */
@@ -600,6 +600,11 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     std::queue<struct directory *> q_dsp;
     for (size_t i = 0; i < BU_PTBL_LEN(&leaf_dps); i++) {
 	struct directory *ldp = (struct directory *)BU_PTBL_GET(&leaf_dps, i);
+
+	// If this isn't a proper BRL-CAD object, tessellation is a no-op
+	if (ldp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+	    continue;
+
 	// ID_DSP objects, for the moment, need to avoid NMG processing - set
 	// up to handle separately
 	if (ldp->d_minor_type == ID_DSP) {
@@ -607,6 +612,11 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	    continue;
 	}
 	pq.push(ldp);
+    }
+
+    if (pq.empty() && q_dsp.empty()) {
+	bu_log("No viable objects for tessellation found.\n");
+	return BRLCAD_OK;
     }
 
     // Build up the path to the ged_tessellate executable

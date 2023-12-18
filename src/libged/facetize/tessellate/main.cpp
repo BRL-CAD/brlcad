@@ -401,6 +401,11 @@ main(int argc, const char **argv)
     struct rt_bot_internal *obot = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(&dps); i++) {
 	struct directory *dp = (struct directory *)BU_PTBL_GET(&dps, i);
+
+	// If this isn't a proper BRL-CAD object, tessellation is a no-op
+	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+	    continue;
+
 	if (dp_tessellate(&obot, gedp->dbip, dp, &s) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
 
