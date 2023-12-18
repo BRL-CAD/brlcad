@@ -161,10 +161,10 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
     }
 
     if (!(s->feature_size > 0)) {
-	s->feature_size = 2*avg_thickness;
+	s->feature_size = 0.1*avg_thickness;
     }
     if (!(s->target_feature_size > 0)) {
-	s->target_feature_size = 2*avg_thickness;
+	s->target_feature_size = 0.1*s->feature_size;
     }
 
     return pnts;

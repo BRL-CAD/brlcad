@@ -130,8 +130,8 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
     params.verbosity = 1;
     params.minimum_free_mem = FACETIZE_MEMORY_THRESHOLD;
 
+    double timestamp = bu_gettime();
     while (feature_size > 0.9*s->target_feature_size) {
-	double timestamp = bu_gettime();
 	struct rt_bot_internal *candidate = NULL;
 	pret = bot_gen(&candidate, feature_size, seed, objname, dbip, &params);
 	fastf_t delta = (int)((bu_gettime() - timestamp)/1e6);
