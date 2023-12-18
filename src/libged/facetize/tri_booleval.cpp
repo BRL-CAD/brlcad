@@ -403,7 +403,7 @@ manifold_do_bool(
 int
 tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 {
-    std::string wfile(tess_cmd[9]);
+    std::string wfile(tess_cmd[11]);
     std::string wfilebak = wfile + std::string(".bak");
     {
 	// Before the run, prepare a backup file
@@ -631,9 +631,11 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     struct bu_vls abs_str = BU_VLS_INIT_ZERO;
     struct bu_vls rel_str = BU_VLS_INIT_ZERO;
     struct bu_vls norm_str = BU_VLS_INIT_ZERO;
+    struct bu_vls max_time_str = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&abs_str, "%0.17f", wdbp->wdb_ttol.abs);
     bu_vls_sprintf(&rel_str, "%0.17f", wdbp->wdb_ttol.rel);
     bu_vls_sprintf(&norm_str, "%0.17f", wdbp->wdb_ttol.norm);
+    bu_vls_sprintf(&max_time_str, "%d", (int)(0.5*s->max_time));
     int method_flags = s->method_flags;
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[ 0] = tess_exec;
@@ -644,9 +646,11 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     tess_cmd[ 5] = "--tol-norm";
     tess_cmd[ 6] = bu_vls_cstr(&norm_str);
     tess_cmd[ 7] = NULL;
-    tess_cmd[ 8] = "-O";
-    tess_cmd[ 9] = wfile;
-    int cmd_fixed_cnt = 10;
+    tess_cmd[ 8] = "--max-time";
+    tess_cmd[ 9] = bu_vls_cstr(&max_time_str);
+    tess_cmd[10] = "-O";
+    tess_cmd[11] = wfile;
+    int cmd_fixed_cnt = 12;
     while (!pq.empty()) {
 
 	// There are a number of methods that can be tried.  We try them in priority
@@ -685,14 +689,15 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 		// than doing the bisect - at least for now, those methods are
 		// much more expensive and likely to fail as compared to NMG.
 		for (size_t i = 0; i < dps.size(); i++) {
-		    tess_cmd[10] = dps[i]->d_namep;
-		    int tess_ret = tess_run(tess_cmd, 11, s->max_time);
+		    tess_cmd[12] = dps[i]->d_namep;
+		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time);
 		    if (tess_ret)
 			bad_dps.push_back(dps[i]);
 		}
 	    }
 	    if (!err_cnt)
 		break;
+	    err_cnt = 0;
 	    tess_cmd[7] = method_opt(&method_flags);
 	    dps = bad_dps;
 	}
