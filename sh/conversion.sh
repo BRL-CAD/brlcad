@@ -641,7 +641,7 @@ while test $# -gt 0 ; do
 
     # execute in a coprocess
     if test "x$OBJECTS" = "x" ; then OBJECTS='-print' ; fi
-    cmd="$SGED -c \"$work\" search ! \( -type comb -and \( -nnodes 0 -or -above \( -type comb -and -nnodes 0 \) \) \) $OPATH $OBJECTS"
+    cmd="$SGED -c \"$work\" search \( ! \( -type comb -and \( -nnodes 0 -or -above \( -type comb -and -nnodes 0 \) \) \) -and \( ! \( ! -type shape ! -type comb \) \) \) $OPATH $OBJECTS"
     objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
