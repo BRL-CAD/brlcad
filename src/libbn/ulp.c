@@ -51,7 +51,7 @@ extern int isinf(double x);
 
 
 double
-bn_epsilon(void)
+bn_dbl_epsilon(void)
 {
 #if defined(DBL_EPSILON)
     return DBL_EPSILON;
@@ -61,7 +61,7 @@ bn_epsilon(void)
         long long ll;
     } val;
     val.d = 1.0;
-    val.ll += 1;
+    val.ll += 1LL;
     return val.d - 1.0;
 #else
     /* static for computed epsilon so it's only calculated once. */
@@ -82,7 +82,7 @@ bn_epsilon(void)
 
 
 float
-bn_epsilonf(void)
+bn_flt_epsilon(void)
 {
 #if defined(FLT_EPSILON)
     return FLT_EPSILON;
@@ -92,7 +92,7 @@ bn_epsilonf(void)
         long long ll;
     } val;
     val.f = 1.0;
-    val.ll += 1;
+    val.ll += 1LL;
     return val.f - 1.0;
 #else
     /* static for computed epsilon so it's only calculated once. */
@@ -137,9 +137,13 @@ bn_dbl_max(void)
 #if defined(DBL_MAX)
     return DBL_MAX;
 #elif defined(INFINITY)
-    static const double val = INFINITY;
-    long long next = *(long long*)&val - 1;
-    return *(double *)&next;
+    union {
+        double d;
+        long long ll;
+    } val;
+    val.d = INFINITY;
+    val.ll -= 1LL;
+    return val.d;
 #else
     static double max_val = 0.0;
 
