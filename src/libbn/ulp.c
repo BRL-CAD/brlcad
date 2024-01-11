@@ -29,13 +29,6 @@
  * In this context, ULP is the distance to the next normalized
  * floating point value larger than a given input value.
  *
- * TODO: handle NaN, +-Inf, underflow, overflow, non-IEEE, float.h
- *
- * This file is completely in flux, incomplete, limited, and subject
- * to drastic changes.  Do NOT use it for anything.
- *
- * It also assumes an IEEE 754 compliant floating point
- * representation.
  */
 
 #include "common.h"
@@ -97,8 +90,19 @@ bn_epsilonf(void)
 double
 bn_dbl_min(void)
 {
-    long long val = (1LL<<52);
-    return *(double *)&val;
+#if defined(DBL_MIN)
+    return DBL_MIN;
+#else
+    union {
+        double d;
+        unsigned long long ull;
+    } minVal;
+
+    // set exponent to min non-subnormal value (i.e., 1)
+    minVal.ull = 1ULL << 52; // 52 zeros for the fraction
+
+    return minVal.d;
+#endif
 }
 
 
