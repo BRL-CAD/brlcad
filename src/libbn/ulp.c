@@ -121,15 +121,26 @@ bn_dbl_max(void)
 }
 
 
-double
+float
 bn_flt_min(void)
 {
-    long val = (1LL<<23);
-    return *(float *)&val;
+#if defined(FLT_MIN)
+    return FLT_MIN;
+#else
+    union {
+        float f;
+        long long ll;
+    } minVal;
+
+    // set exponent to min non-subnormal value (i.e., 1)
+    minVal.ll = 1LL << 23; // 23 zeros for the fraction
+
+    return minVal.f;
+#endif
 }
 
 
-double
+float
 bn_flt_max(void)
 {
 #if defined(FLT_MAX)
@@ -144,14 +155,14 @@ bn_flt_max(void)
 }
 
 
-double
+float
 bn_flt_min_sqrt(void)
 {
     return sqrt(bn_flt_min());
 }
 
 
-double
+float
 bn_flt_max_sqrt(void)
 {
     return sqrt(bn_flt_max());
