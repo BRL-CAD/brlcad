@@ -37,7 +37,9 @@
 #include <limits.h>
 #include <float.h>
 
-/* #define HAVE_IEEE754 1 */
+#if defined(__STDC_IEC_559__)
+#  define HAVE_IEEE754 1
+#endif
 
 #if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
 extern int isnan(double x);
@@ -47,21 +49,33 @@ extern int isnan(double x);
 extern int isinf(double x);
 #endif
 
+
 double
 bn_epsilon(void)
 {
 #if defined(DBL_EPSILON)
     return DBL_EPSILON;
 #elif defined(HAVE_IEEE754)
-    static const double val = 1.0;
-    long long next = *(long long*)&val + 1;
-    return val - *(double *)&next;
+    union {
+        double d;
+        long long ll;
+    } val;
+    val.d = 1.0;
+    val.ll += 1;
+    return val.d - 1.0;
 #else
-    /* must be volatile to avoid long registers */
-    volatile double tol = 1.0;
-    while (1.0 + (tol * 0.5) > 1.0) {
-	tol *= 0.5;
+    /* static for computed epsilon so it's only calculated once. */
+    static double tol = 0.0;
+
+    if (tol == 0.0) {
+        /* volatile to avoid long registers and compiler optimizing away the loop */
+        volatile double temp_tol = 1.0;
+        while (1.0 + (temp_tol * 0.5) > 1.0) {
+            temp_tol *= 0.5;
+        }
+        tol = temp_tol;
     }
+
     return tol;
 #endif
 }
@@ -73,15 +87,26 @@ bn_epsilonf(void)
 #if defined(FLT_EPSILON)
     return FLT_EPSILON;
 #elif defined(HAVE_IEEE754)
-    static const float val = 1.0;
-    long next = *(long*)&val + 1;
-    return val - *(float *)&next;
+    union {
+        float f;
+        long long ll;
+    } val;
+    val.f = 1.0;
+    val.ll += 1;
+    return val.f - 1.0;
 #else
-    /* must be volatile to avoid long registers */
-    volatile float tol = 1.0f;
-    while (1.0f + (tol * 0.5f) > 1.0f) {
-	tol *= 0.5f;
+    /* static for computed epsilon so it's only calculated once. */
+    static float tol = 0.0;
+
+    if (tol == 0.0) {
+        /* volatile to avoid long registers and compiler optimizing away the loop */
+        volatile float temp_tol = 1.0f;
+        while (1.0f + (temp_tol * 0.5f) > 1.0f) {
+            temp_tol *= 0.5f;
+        }
+        tol = temp_tol;
     }
+
     return tol;
 #endif
 }
@@ -98,8 +123,8 @@ bn_dbl_min(void)
         unsigned long long ull;
     } minVal;
 
-    // set exponent to min non-subnormal value (i.e., 1)
-    minVal.ull = 1ULL << 52; // 52 zeros for the fraction
+    /* set exponent to min non-subnormal value (i.e., 1) */
+    minVal.ull = 1ULL << 52; /* 52 zeros for the fraction*/
 
     return minVal.d;
 #endif
@@ -116,7 +141,22 @@ bn_dbl_max(void)
     long long next = *(long long*)&val - 1;
     return *(double *)&next;
 #else
-    return 1.0/bn_dbl_min();
+    static double max_val = 0.0;
+
+    if (max_val == 0.0) {
+        double val = 1.0;
+        double prev_val;
+
+	/* double until it no longer doubles */
+        do {
+            prev_val = val;
+            val *= 2.0;
+        } while (!isinf(val) && val > prev_val);
+
+        max_val = prev_val;
+    }
+
+    return max_val;
 #endif
 }
 
