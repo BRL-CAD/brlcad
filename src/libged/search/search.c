@@ -307,7 +307,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
     int wflag = 0; /* flag controlling whether to fail quietly or not */
-    int sflag = 0; /* flag controlling whether search results count printing is silenced or not */
+    int cflag = 0; /* flag controlling whether search results count is printed */
     int flags = 0;
     int want_help = 0;
     int plan_argv = 1;
@@ -346,26 +346,26 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* Options have to come before paths and search expressions, so don't look
      * any further than the max possible option count */
     bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhsv")) != -1)) {
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?acQhv")) != -1)) {
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		aflag = 1;
 		flags |= DB_SEARCH_HIDDEN;
 		break;
-	    case 's':
-		sflag = 1;
+	    case 'c':
+		cflag = 1;
 		break;
 	    case 'v':
 		print_verbose_info |= DB_FP_PRINT_BOOL;
 		print_verbose_info |= DB_FP_PRINT_TYPE;
-		sflag = 0;
+		cflag = 1;
 		break;
 
 	    case 'Q':
 		wflag = 1;
 		flags |= DB_SEARCH_QUIET;
-		sflag = 1;
+		cflag = 0;
 		break;
 	    case 'h':
 		want_help = 1;
@@ -670,7 +670,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	BU_PUT(sdata, struct fp_cmp_vls);
     }
 
-    if (!sflag)
+    if (cflag)
 	bu_vls_printf(gedp->ged_result_str, "[%d] items found in search\n", search_cnt);
 
     /* Done - free memory */
