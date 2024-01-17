@@ -78,43 +78,12 @@ extern "C" {
 #define CACHE_INHERIT_FLAG "if"
 #define CACHE_COLOR "c"
 
-static void
-dbi_dir(char *dir)
-{
-#ifdef HAVE_WINDOWS_H
-    CreateDirectory(dir, NULL);
-#else
-    /* mode: 775 */
-    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
-}
-
 struct ged_draw_cache {
     MDB_env *env;
     MDB_txn *txn;
     MDB_dbi dbi;
     struct bu_vls *fname;
 };
-
-static void
-dbi_dirclear(const char *d)
-{
-    if (bu_file_directory(d)) {
-	char **filenames;
-	size_t nfiles = bu_file_list(d, "*", &filenames);
-	for (size_t i = 0; i < nfiles; i++) {
-	    if (BU_STR_EQUAL(filenames[i], "."))
-		continue;
-	    if (BU_STR_EQUAL(filenames[i], ".."))
-		continue;
-	    char cdir[MAXPATHLEN] = {0};
-	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
-	    dbi_dirclear((const char *)cdir);
-	}
-	bu_argv_free(nfiles, filenames);
-    }
-    bu_file_delete(d);
-}
 
 void
 dbi_cache_clear(struct ged_draw_cache *c)
@@ -123,7 +92,7 @@ dbi_cache_clear(struct ged_draw_cache *c)
 	return;
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, bu_vls_cstr(c->fname));
-    dbi_dirclear((const char *)dir);
+    bu_dirclear((const char *)dir);
 }
 
 struct ged_draw_cache *
@@ -170,10 +139,10 @@ dbi_cache_open(const char *name)
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
     if (!bu_file_exists(dir, NULL))
-	dbi_dir(dir);
+	bu_mkdir(dir);
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL)) {
-	dbi_dir(dir);
+	bu_mkdir(dir);
     }
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, "format", NULL);
     if (!bu_file_exists(dir, NULL)) {
@@ -210,7 +179,7 @@ dbi_cache_open(const char *name)
       // Create the specific LMDB cache dir, if not already present
       bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, bu_vls_cstr(&fname), NULL);
       if (!bu_file_exists(dir, NULL))
-          dbi_dir(dir);
+          bu_mkdir(dir);
 
       // Need to call mdb_env_sync() at appropriate points.
       if (mdb_env_open(c->env, dir, MDB_NOSYNC, 0664))

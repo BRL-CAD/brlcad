@@ -356,6 +356,17 @@ typedef enum {
  */
 BU_EXPORT extern const char *bu_dir(char *result, size_t len, .../*, NULL */);
 
+/**
+ * Create a directory specified by the string "path". Default mode on platforms
+ * using mkdir will be "775"
+ */
+BU_EXPORT extern void bu_mkdir(const char *path);
+
+/**
+ * Recursively delete all files and subfolders in directory d
+ */
+BU_EXPORT extern void bu_dirclear(const char *d);
+
 /** @} */
 
 __END_DECLS

@@ -19,7 +19,7 @@
  */
 /** @file dir.c
  *
- * Implementation of path-finding functions for general app use.
+ * Implementation of path related functions for general app use.
  *
  * TODO: make sure returned paths are absolute and exist
  * TODO: check for trailing path separator (e.g., temp)
@@ -35,6 +35,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h> /* for mkdir */
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -45,7 +48,6 @@
 #ifdef HAVE_WINDOWS_H
 #  include <ShlObj.h>
 #endif
-
 #include "whereami.h"
 
 #include "bu/app.h"
@@ -667,6 +669,36 @@ bu_dir(char *result, size_t len, .../*, NULL */)
     return ret;
 }
 
+void
+bu_mkdir(const char *path)
+{
+#ifdef HAVE_WINDOWS_H
+    CreateDirectory(path, NULL);
+#else
+    /* mode: 775 */
+    mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
+}
+
+void
+bu_dirclear(const char *d)
+{
+    if (bu_file_directory(d)) {
+	char **filenames;
+	size_t nfiles = bu_file_list(d, "*", &filenames);
+	for (size_t i = 0; i < nfiles; i++) {
+	    if (BU_STR_EQUAL(filenames[i], "."))
+		continue;
+	    if (BU_STR_EQUAL(filenames[i], ".."))
+		continue;
+	    char cdir[MAXPATHLEN] = {0};
+	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
+	    bu_dirclear((const char *)cdir);
+	}
+	bu_argv_free(nfiles, filenames);
+    }
+    bu_file_delete(d);
+}
 
 /*
  * Local Variables:
