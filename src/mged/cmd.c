@@ -223,6 +223,13 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata)
 
     Tcl_ResetResult((Tcl_Interp *)userdata);
 
+    /* NOTE: Tcl_Eval saves the last -exec result to GEDP->ged_result_str 
+       this causes a duplicate print of the last 'search -exec' in mged (since
+       we're bu_logging here and then the ged_result_str is later flushed).
+       To fix this, we need to clear the ged_result_str
+    */
+    bu_vls_trunc(GEDP->ged_result_str, 0);
+
     return TCL_OK == ret;
 }
 

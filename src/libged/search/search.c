@@ -307,6 +307,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
     int wflag = 0; /* flag controlling whether to fail quietly or not */
+    int sflag = 0; /* flag controlling whether search results count printing is silenced or not */
     int flags = 0;
     int want_help = 0;
     int plan_argv = 1;
@@ -314,6 +315,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int path_found = 0;
     int all_local = 1;
     int print_verbose_info = DB_FP_PRINT_COMB_INDEX;
+    int search_ret = 0; /* capture return code from db_search(..) */
+    int search_cnt = 0; /* used to keep a running total of all items found in search */
     struct bu_vls prefix = BU_VLS_INIT_ZERO;
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
@@ -343,21 +346,26 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* Options have to come before paths and search expressions, so don't look
      * any further than the max possible option count */
     bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv")) != -1)) {
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhsv")) != -1)) {
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		aflag = 1;
 		flags |= DB_SEARCH_HIDDEN;
 		break;
+	    case 's':
+		sflag = 1;
+		break;
 	    case 'v':
 		print_verbose_info |= DB_FP_PRINT_BOOL;
 		print_verbose_info |= DB_FP_PRINT_TYPE;
+		sflag = 0;
 		break;
 
 	    case 'Q':
 		wflag = 1;
 		flags |= DB_SEARCH_QUIET;
+		sflag = 1;
 		break;
 	    case 'h':
 		want_help = 1;
@@ -540,7 +548,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 	    while (path_cnt < search->path_cnt) {
 		flags |= DB_SEARCH_RETURN_UNIQ_DP;
-		(void)db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
+		search_ret = db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
+		if (search_ret > 0) search_cnt += search_ret;
 		path_cnt++;
 		curr_path = search->paths[path_cnt];
 	    }
@@ -585,7 +594,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			struct directory *dp;
 			for (dp = gedp->dbip->dbi_Head[k]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 			    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->dbip, ctx);
+				search_ret = db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->dbip, ctx);
+				if (search_ret > 0) search_cnt += search_ret;
 			    }
 			}
 		    }
@@ -611,7 +621,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			switch (search->search_type) {
 			    case 0:
 				flags &= ~DB_SEARCH_RETURN_UNIQ_DP;
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
+				search_ret = db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
+				if (search_ret > 0) search_cnt += search_ret;
 
 				sr_len = j = BU_PTBL_LEN(search_results);
 				if (sr_len > 0) {
@@ -631,7 +642,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 				break;
 			    case 1:
 				flags |= DB_SEARCH_RETURN_UNIQ_DP;
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
+				search_ret = db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
+				if (search_ret > 0) search_cnt += search_ret;
 
 				search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
@@ -657,6 +669,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	BU_PUT(sdata->right, struct bu_vls);
 	BU_PUT(sdata, struct fp_cmp_vls);
     }
+
+    if (!sflag)
+	bu_vls_printf(gedp->ged_result_str, "[%d] items found in search\n", search_cnt);
 
     /* Done - free memory */
     bu_vls_free(&bname);

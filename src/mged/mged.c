@@ -1538,14 +1538,7 @@ main(int argc, char *argv[])
 	 * access to Tcl/Tk is possible.
 	 */
 	for (argc -= 1, argv += 1; argc; --argc, ++argv) {
-	    /* in order to process interactively, an old optional y/n argument
-	    * intended for f_opendb must be filtered out here to remove
-	    * garbage "unrecognized command" line prints
-	    */
-	    if (!BU_STR_EQUAL("y", argv[0]) && !BU_STR_EQUAL("Y", argv[0])
-	     && !BU_STR_EQUAL("n", argv[0]) && !BU_STR_EQUAL("N", argv[0])) {
 	    bu_vls_printf(&input_str, "%s ", *argv);
-	    }
 	}
 
 	cmdline(&input_str, TRUE);

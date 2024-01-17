@@ -148,7 +148,7 @@ rtwizard_settings_create(void)
     VSETALL(s->eye_pt, DBL_MAX);
 
     s->occlusion = 1;
-    s->ghosting_intensity = 12.0;
+    s->ghosting_intensity = 6.0;
     s->width = RTWIZARD_SIZE_DEFAULT;
     s->width_set = 0;
     s->height = RTWIZARD_SIZE_DEFAULT;
