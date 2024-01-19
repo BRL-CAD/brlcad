@@ -173,11 +173,16 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple objects not currently supported for boolean subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *dp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
     if (argc != 4) {
 	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname1> bool <op> <objname2> <output_objname>\n");
 	return BRLCAD_ERROR;
     }
-
 
     // We've already looked up the first sold, get the second
     struct directory *dp2 = db_lookup(gedp->dbip, argv[2], LOOKUP_NOISY);
@@ -185,7 +190,7 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", argv[3]);
 	return BRLCAD_ERROR;
     } else {
-	int real_flag = (gb->dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	int real_flag = (dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
 	if (!real_flag) {
 	    /* solid doesn't exist */
 	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", argv[2]);
@@ -316,8 +321,14 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple object specification not currently supported for bots subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *gdp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
     const char **obj_names = (const char **)bu_calloc(argc, sizeof(char *), "new argv");
-    obj_names[0] = gb->dp->d_namep;
+    obj_names[0] = gdp->d_namep;
     for (int iav = 0; iav < argc; iav++) {
 	obj_names[iav+1] = argv[iav];
     }
@@ -430,6 +441,12 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
 
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple object specification not currently supported for brep subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *gdp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
     argc--;argv++;
 
     int no_evaluation = 0;
@@ -465,7 +482,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	// brep_conversion_comb frees the intern, so make a new copy specifically for it to avoid
 	// a double-free with the top level cleanup of gb->intern
 	struct rt_db_internal intern;
-	GED_DB_GET_INTERNAL(gedp, &intern, gb->dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, gdp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -526,6 +543,13 @@ _brep_cmd_csg(void *bs, int argc, const char **argv)
     }
 
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple object specification not currently supported for brep subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *gdp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
     struct ged *gedp = gb->gedp;
 
     struct bu_vls bname_csg;
@@ -538,7 +562,7 @@ _brep_cmd_csg(void *bs, int argc, const char **argv)
     }
     bu_vls_free(&bname_csg);
 
-    return _ged_brep_to_csg(gedp, gb->dp->d_namep, gb->verbosity);
+    return _ged_brep_to_csg(gedp, gdp->d_namep, gb->verbosity);
 }
 
 extern "C" int
@@ -552,6 +576,12 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
 
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     struct ged *gedp = gb->gedp;
+
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple object specification not currently supported for dump subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *gdp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
 
     argc--; argv++;
 
@@ -575,7 +605,7 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
     db_update_nref(gedp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gb->dp, gedp->dbip, NULL);
+    (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gdp, gedp->dbip, NULL);
     for (size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct db_full_path *fp = (struct db_full_path *)BU_PTBL_GET(&breps, i);
 	mat_t m;
@@ -725,6 +755,13 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     }
 
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple object specification not currently supported for intersect subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *gdp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -750,7 +787,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", argv[3]);
 	return BRLCAD_ERROR;
     } else {
-	int real_flag = (gb->dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	int real_flag = (gdp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
 	if (!real_flag) {
 	    /* solid doesn't exist */
 	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", argv[1]);
@@ -827,6 +864,13 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
 
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple object specification not currently supported for plate_mode subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *gdp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return BRLCAD_ERROR;
@@ -860,14 +904,14 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
     double local2base = gb->gedp->dbip->dbi_local2base;
 
     // Make sure we can get attributes
-    if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
+    if (db5_get_attributes(gb->gedp->dbip, &avs, gdp)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	return BRLCAD_ERROR;
     };
 
     if (BU_STR_EQUIV(val, "cos")) {
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "0");
-	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
+	if (db5_replace_attributes(gdp, &avs, gb->gedp->dbip)) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	    return BRLCAD_ERROR;
 	} else {
@@ -878,7 +922,7 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUIV(val, "nocos")) {
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "1");
-	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
+	if (db5_replace_attributes(gdp, &avs, gb->gedp->dbip)) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	    return BRLCAD_ERROR;
 	} else {
@@ -904,7 +948,7 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
     ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
     std::string sd = ss.str();
     (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
-    if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
+    if (db5_replace_attributes(gdp, &avs, gb->gedp->dbip)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	return BRLCAD_ERROR;
     } else {
@@ -973,6 +1017,13 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
     }
 
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple object specification not currently supported for selection subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *gdp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -1087,7 +1138,7 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 		return BRLCAD_ERROR;
 	    }
 	}
-	GED_DB_PUT_INTERNAL(gedp, gb->dp, &gb->intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, gdp, &gb->intern, &rt_uniresource, BRLCAD_ERROR);
     }
     return BRLCAD_OK;
 }
@@ -1156,6 +1207,13 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     struct ged *gedp = gb->gedp;
+
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": multiple object specification not currently supported for split subcommand\n");
+	return BRLCAD_ERROR;
+    }
+    struct directory *gdp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
 
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -1244,7 +1302,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 		    bu_vls_free(&ocomb);
 		    return BRLCAD_ERROR;
 		}
-		if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
+		if (db5_get_attributes(gb->gedp->dbip, &avs, gdp)) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from face brep  %s", bu_vls_cstr(&fbrep_name));
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
@@ -1290,7 +1348,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 		bu_vls_free(&ocomb);
 		return BRLCAD_ERROR;
 	    }
-	    if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
+	    if (db5_get_attributes(gb->gedp->dbip, &avs, gdp)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from brep");
 		bu_vls_free(&ocomb);
 		return BRLCAD_ERROR;
@@ -1539,15 +1597,15 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     gb.cmds = _brep_cmds;
     gb.solid_name = std::string(argv[0]);
-    gb.dp = db_lookup(gedp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
-    if (gb.dp == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
-	if (color) {
-	    BU_PUT(color, struct bu_color);
-	}
-	return BRLCAD_ERROR;
-    } else {
-	int real_flag = (gb.dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+
+    // TODO - we need to allow for specifying a glob pattern of multiple objects
+    // here.
+    bu_ptbl_init(&gb.dps, 8, "dp table");
+
+    // First, see if we have an exact match for a database name.
+    struct directory *gdp = db_lookup(gedp->dbip, gb.solid_name.c_str(), LOOKUP_QUIET);
+    if (gdp != RT_DIR_NULL) {
+	int real_flag = (gdp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
 	if (!real_flag) {
 	    /* solid doesn't exist */
 	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", gb.solid_name.c_str());
@@ -1556,10 +1614,14 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    return BRLCAD_ERROR;
 	}
-    }
+	bu_ptbl_ins(&gb.dps, (long *)gdp);
 
-    GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
-    RT_CK_DB_INTERNAL(&gb.intern);
+	// Single object - go ahead and do the intern unpack now.
+	GED_DB_GET_INTERNAL(gedp, &gb.intern, gdp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	RT_CK_DB_INTERNAL(&gb.intern);
+    } else {
+	// TODO - Not an object name - see if we got a glob pattern
+    }
 
     gb.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
     gb.color = color;
@@ -1571,6 +1633,9 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 
     int ret;
     if (bu_cmd(_brep_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
+	bv_vlblock_free(gb.vbp);
+	gb.vbp = (struct bv_vlblock *)NULL;
+	bu_ptbl_free(&gb.dps);
 	rt_db_free_internal(&gb.intern);
 	return ret;
     } else {
@@ -1579,6 +1644,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 
     bv_vlblock_free(gb.vbp);
     gb.vbp = (struct bv_vlblock *)NULL;
+    bu_ptbl_free(&gb.dps);
     rt_db_free_internal(&gb.intern);
     return BRLCAD_ERROR;
 }
