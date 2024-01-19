@@ -182,11 +182,12 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 	bu_log("CM: successfully polygonized BoT with %d faces at feature size %g\n", (int)bot->num_faces, successful_feature_size);
     }
 
-    if (!bot->faces) {
+    if (!bot || !bot->faces) {
 	bu_log("CM: surface reconstruction failed: %s\n", objname);
-	if (bot->vertices) bu_free(bot->vertices, "verts");
-	if (bot->faces) bu_free(bot->faces, "verts");
-	BU_PUT(bot, struct rt_bot_internal *);
+	if (bot && bot->vertices) bu_free(bot->vertices, "verts");
+	if (bot && bot->faces) bu_free(bot->faces, "verts");
+	if (bot)
+	    BU_PUT(bot, struct rt_bot_internal *);
 	return BRLCAD_ERROR;
     }
 
