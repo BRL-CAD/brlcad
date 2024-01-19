@@ -134,6 +134,12 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
     struct ged *gedp = gb->gedp;
     struct rt_brep_internal *brep_ip = NULL;
 
+    if (BU_PTBL_LEN(&gb->dps) != 1) {
+	bu_log("tikz subcommand currently supports processing only a single object at a time.");
+	return BRLCAD_ERROR;
+    }
+    struct directory *dp = (struct directory *)BU_PTBL_GET(&gb->dps, 0);
+
     bu_vls_printf(&tikz, "\\documentclass{article}\n");
     bu_vls_printf(&tikz, "\\usepackage{tikz}\n");
     bu_vls_printf(&tikz, "\\usepackage{tikz-3dplot}\n\n");
@@ -151,7 +157,7 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
     db_update_nref(gedp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &gb->dp, gedp->dbip, NULL);
+    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &dp, gedp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct rt_db_internal bintern;
 	struct rt_brep_internal *b_ip = NULL;
@@ -169,14 +175,14 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
 
     bu_vls_printf(&tikz, "\\begin{tikzpicture}[scale=%f,tdplot_main_coords]\n", scale);
 
-    if (gb->dp->d_flags & RT_DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 	// Assign a default color
 	bu_vls_sprintf(&color, "color={rgb:red,255;green,0;blue,0}");
-	tikz_comb(gedp, &tikz, gb->dp, &color, &cnt);
+	tikz_comb(gedp, &tikz, dp, &color, &cnt);
     } else {
 	ON_String s;
 	if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
-	    bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", gb->dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
 	    return 1;
 	} else {
 	    brep_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
