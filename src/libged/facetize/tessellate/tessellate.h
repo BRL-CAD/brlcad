@@ -60,9 +60,10 @@ struct tess_opts {
     double obj_bbox_vol;
     double pnts_bbox_vol;
     fastf_t target_feature_size;
+    fastf_t avg_thickness;
 };
 
-#define TESS_OPTS_DEFAULT {0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 50000, BG_3D_SPSR_OPTS_DEFAULT, NULL, NULL, 0.0, 0.0, 0.0}
+#define TESS_OPTS_DEFAULT {0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 50000, BG_3D_SPSR_OPTS_DEFAULT, NULL, NULL, 0.0, 0.0, 0.0, 0.0}
 
 extern int
 half_to_bot(struct rt_bot_internal **obot, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);

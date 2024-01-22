@@ -332,6 +332,7 @@ main(int argc, const char **argv)
     struct tess_opts s = TESS_OPTS_DEFAULT;
     s.ttol = &ttol;
     s.tol = &tol;
+    s.feature_scale = 0.15;  // Set default.
 
     struct bu_opt_desc d[20];
     BU_OPT(d[ 0],  "h",                  "help",  "",            NULL,                  &print_help, "Print help and exit");

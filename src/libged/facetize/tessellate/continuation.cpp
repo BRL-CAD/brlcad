@@ -111,12 +111,13 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
     int first_run = 1;
     int fatal_error_cnt = 0;
     double successful_feature_size = 0.0;
+    unsigned long int successful_bot_count = 1000;
     int decimation_succeeded = 0;
     struct rt_bot_internal *bot = NULL;
     struct rt_bot_internal *dbot = NULL;
-    int pret = -1;
+    int pret = 0;
     struct analyze_polygonize_params params = ANALYZE_POLYGONIZE_PARAMS_DEFAULT;
-    double feature_size = s->feature_size;
+    double feature_size = (s->feature_size > 0) ? s->feature_size : 2*s->avg_thickness;
 
     /* Run the polygonize routine.  Because it is quite simple to accidentally
      * specify inputs that will take huge amounts of time to run, we will
@@ -130,52 +131,65 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
     params.verbosity = 1;
     params.minimum_free_mem = FACETIZE_MEMORY_THRESHOLD;
 
-    double timestamp = bu_gettime();
-    while (feature_size > 0.9*s->target_feature_size) {
+    while (!pret && (feature_size > 0.9*s->target_feature_size) && fatal_error_cnt < 8 ) {
 	struct rt_bot_internal *candidate = NULL;
+	double timestamp = bu_gettime();
 	pret = bot_gen(&candidate, feature_size, seed, objname, dbip, &params);
 	fastf_t delta = (int)((bu_gettime() - timestamp)/1e6);
-	if (s->max_time > 0 && delta > s->max_time)
-	    break;
 
-	if (!pret && candidate->num_faces) {
-	    // Success - check output
-	    if (!bot) {
-		bot = candidate;
-		successful_feature_size = feature_size;
-	    } else {
-		if (bot->num_faces == candidate->num_faces) {
-		    // Stable answer - breaking out of loop
-		    free_bot_internal(candidate);
-		    break;
-		}
-		if (bot->num_faces < candidate->num_faces) { 
-		    free_bot_internal(bot);
-		    bot = candidate;
-		    successful_feature_size = feature_size;
-		} else {
-		    // Lost faces compared to prior output - rejecting
-		    free_bot_internal(candidate);
+	if (pret || candidate->num_faces < successful_bot_count || delta < 2) {
+	    if (pret == 3)
+		break;
+	    if (pret == 2) {
+		bu_log("CM: timed out after %d seconds with size %g\n", s->max_time, feature_size);
+		/* If we still haven't had a successful run, back the feature size out and try again */
+		if (first_run) {
+		    pret = 0;
+		    feature_size = feature_size * 5;
+		    fatal_error_cnt++;
+		    continue;
 		}
 	    }
-	}
 
-	if (pret) {
-	    fatal_error_cnt++;
-	    if (first_run) {
+	    if (pret != 2 && !(s->feature_size > 0)) {
+		/* Something about the previous size didn't work - nudge the feature size and try again
+		 * unless we've had multiple fatal errors. */
 		pret = 0;
-		feature_size = feature_size * 5;
+		bu_log("CM: error at size %g\n", feature_size);
+		/* If we've had a successful first run, just nudge the feature
+		 * size down and retry.  If we haven't succeeded yet, and we've
+		 * got just this one error, try dropping the feature size down
+		 * by an order of magnitude.  If we haven't succeed yet *and*
+		 * we've got multiple fatal errors, try dropping it by half. */
+		feature_size = feature_size * ((!first_run) ? 0.95 : ((fatal_error_cnt) ? 0.5 : 0.1));
+		bu_log("CM: retrying with size %g\n", feature_size);
+		fatal_error_cnt++;
+		continue;
 	    }
+
+	    feature_size = successful_feature_size;
+	    if (bot->faces) {
+		if (s->feature_size <= 0) {
+		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n",  s->target_feature_size, (int)bot->num_faces, successful_feature_size);
+		} else {
+		    bu_log("CM: successfully created %d faces, feature size %g\n", (int)bot->num_faces, successful_feature_size);
+		}
+	    }
+
+	} else {
+	    /* if we have had a fatal error in the past, reset on subsequent success */
+	    fatal_error_cnt = 0;
+	    successful_feature_size = feature_size;
+	    bu_log("CM: completed in %g seconds with size %g\n", delta, feature_size);
+	    feature_size = feature_size * ((delta < 5) ? 0.7 : 0.9);
+	    successful_bot_count = candidate->num_faces;
+	    if (bot)
+		free_bot_internal(bot);
+	    bot = candidate;
 	}
 
+	// If we got this far, we've had a successful first run
 	first_run = 0;
-	if (pret == 2 || pret == 3) 
-	    break;
-
-	/* Nudge the feature size and try again */
-	pret = 0;
-	feature_size = feature_size * ((!first_run) ? 0.95 : ((fatal_error_cnt) ? 0.5 : 0.1));
-	bu_log("CM: retrying with size %g\n", feature_size);
     }
 
     if (bot && bot->num_faces) {

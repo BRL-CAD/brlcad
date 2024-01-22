@@ -105,9 +105,8 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
     pnts->point = NULL;
 
     /* Shoot - we need both the avg thickness of the hit partitions and seed points */
-    double avg_thickness = 0.0;
     struct bn_tol btol = BN_TOL_INIT_TOL;
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, dbip, oname, &btol, flags, s->max_pnts, s->max_time, 1) || pnts->count <= 0) {
+    if (analyze_obj_to_pnts(pnts, &s->avg_thickness, dbip, oname, &btol, flags, s->max_pnts, s->max_time, 1) || pnts->count <= 0) {
 	struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
 	if (rpnt) {
 	    struct pnt_normal *entry;
@@ -152,7 +151,7 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
      * size for the polygonizer and the decimation routine */
     double min_len = (xlen < ylen) ? xlen : ylen;
     min_len = (min_len < zlen) ? min_len : zlen;
-    min_len = (min_len < avg_thickness) ? min_len : avg_thickness;
+    min_len = (min_len < s->avg_thickness) ? min_len : s->avg_thickness;
 
     if (s->feature_size > 0) {
 	s->target_feature_size = 0.5*s->feature_size;
@@ -160,12 +159,9 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
 	s->target_feature_size = min_len * s->feature_scale;
     }
 
-    if (!(s->feature_size > 0)) {
-	s->feature_size = 0.1*avg_thickness;
-    }
-    if (!(s->target_feature_size > 0)) {
-	s->target_feature_size = 0.1*s->feature_size;
-    }
+    bu_log("feature_size: %f\n", s->feature_size);
+    bu_log("feature_scale: %f\n", s->feature_scale);
+    bu_log("target_feature_size: %f\n", s->target_feature_size);
 
     return pnts;
 }

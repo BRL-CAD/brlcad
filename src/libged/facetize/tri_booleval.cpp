@@ -743,9 +743,15 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 		// If we're in fallback territory, process individually rather
 		// than doing the bisect - at least for now, those methods are
 		// much more expensive and likely to fail as compared to NMG.
+		//
+		// CM can be quite time intensive as it does multiple
+		// iterations trying to optimize quality.  For now, we bump the
+		// specified time by an order of magnitude, but we need a
+		// better way to propagate a hard overall max_time to the CM
+		// code and do something intelligent with it on that end.
 		for (size_t i = 0; i < dps.size(); i++) {
 		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time);
+		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time * 10);
 		    if (tess_ret)
 			bad_dps.push_back(dps[i]);
 		}
