@@ -298,6 +298,49 @@ search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
     }
 }
 
+/* -v can be supplied multiple times for growing verbosity
+ * first v: will print search totals
+ * next  v: will print boolean operations
+ * next  v: will print types
+ */
+static void
+_handle_verbosity(int* search_flags, int* fp_flags)
+{
+    if (bu_optarg) {
+	// unless succeeded by another flag, bu_getopt assumes -v is either supplied
+	// an argument or is at the end of the string, neither of which are likely
+	// for search - filter out a following arg from the optarg if it's not a 'v'
+	if (bu_optarg[0] != 'v')
+	    bu_optind--;
+	else {
+	    // handle -vv, -vvv, -vvvv..
+	    switch (strnlen(bu_optarg, 2)) {
+	        case 2:
+		    *fp_flags |= DB_FP_PRINT_TYPE;
+	        case 1:
+		    *fp_flags |= DB_FP_PRINT_BOOL;
+	        default:
+		    *search_flags |= DB_SEARCH_PRINT_TOTAL;
+		    break;
+	    }
+	    return;
+	}
+    }
+
+    // else - handle separate instance of -v (ie -v -v -v)
+    if (!(*search_flags & DB_SEARCH_PRINT_TOTAL)) {
+	*search_flags |= DB_SEARCH_PRINT_TOTAL;
+	return;					// first time, just add totals
+    }
+
+    if (!(*fp_flags & DB_FP_PRINT_BOOL)) {
+	*fp_flags |= DB_FP_PRINT_BOOL;
+	return;					// second time, just add bools
+    }
+
+    *fp_flags |= DB_FP_PRINT_TYPE;		// max verbosity
+}
+
 
 int
 ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
@@ -307,7 +350,6 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
     int wflag = 0; /* flag controlling whether to fail quietly or not */
-    int cflag = 0; /* flag controlling whether search results count is printed */
     int flags = 0;
     int want_help = 0;
     int plan_argv = 1;
@@ -336,7 +378,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
      * toplevel path specifiers, etc. */
     optcnt = 0;
     for (i = 1; i < (size_t)argc; i++) {
-	if ((argv_orig[i][0] == '-') && (strlen(argv_orig[i]) == 2)) {
+	if ((argv_orig[i][0] == '-')) {
 	    optcnt++;
 	} else {
 	    break;
@@ -346,26 +388,20 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* Options have to come before paths and search expressions, so don't look
      * any further than the max possible option count */
     bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?acQhv")) != -1)) {
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv::")) != -1)) {
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		aflag = 1;
 		flags |= DB_SEARCH_HIDDEN;
 		break;
-	    case 'c':
-		cflag = 1;
-		break;
 	    case 'v':
-		print_verbose_info |= DB_FP_PRINT_BOOL;
-		print_verbose_info |= DB_FP_PRINT_TYPE;
-		cflag = 1;
+		_handle_verbosity(&flags, &print_verbose_info);
 		break;
 
 	    case 'Q':
 		wflag = 1;
 		flags |= DB_SEARCH_QUIET;
-		cflag = 0;
 		break;
 	    case 'h':
 		want_help = 1;
@@ -670,7 +706,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	BU_PUT(sdata, struct fp_cmp_vls);
     }
 
-    if (cflag)
+    if (flags & DB_SEARCH_PRINT_TOTAL)
 	bu_vls_printf(gedp->ged_result_str, "[%d] items found in search\n", search_cnt);
 
     /* Done - free memory */

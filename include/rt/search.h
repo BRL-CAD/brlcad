@@ -148,6 +148,7 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
 #define DB_SEARCH_HIDDEN           0x2   /**< @brief Search using hidden objects */
 #define DB_SEARCH_RETURN_UNIQ_DP   0x4   /**< @brief Return the set of unique directory pointers instead of full paths */
 #define DB_SEARCH_QUIET            0x8   /**< @brief Silence all warnings */
+#define DB_SEARCH_PRINT_TOTAL	   0x10	 /**< @brief Print total number of items found in search */
 
 /**
  * Properly free the table contents returned by db_search.  The bu_ptbl
