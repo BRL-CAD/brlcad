@@ -317,8 +317,10 @@ _handle_verbosity(int* search_flags, int* fp_flags)
 	    switch (strnlen(bu_optarg, 2)) {
 	        case 2:
 		    *fp_flags |= DB_FP_PRINT_TYPE;
+		    /* fallthrough */
 	        case 1:
 		    *fp_flags |= DB_FP_PRINT_BOOL;
+		    /* fallthrough */
 	        default:
 		    *search_flags |= DB_SEARCH_PRINT_TOTAL;
 		    break;
