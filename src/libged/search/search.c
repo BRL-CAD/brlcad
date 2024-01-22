@@ -332,15 +332,15 @@ _handle_verbosity(int* search_flags, int* fp_flags)
     // else - handle separate instance of -v (ie -v -v -v)
     if (!(*search_flags & DB_SEARCH_PRINT_TOTAL)) {
 	*search_flags |= DB_SEARCH_PRINT_TOTAL;
-	return;					// first time, just add totals
+	return;					// first time, enable totals
     }
 
     if (!(*fp_flags & DB_FP_PRINT_BOOL)) {
 	*fp_flags |= DB_FP_PRINT_BOOL;
-	return;					// second time, just add bools
+	return;					// second time, enable bools
     }
 
-    *fp_flags |= DB_FP_PRINT_TYPE;		// max verbosity
+    *fp_flags |= DB_FP_PRINT_TYPE;		// max verbosity, enable types (everything else is already on)
 }
 
 
