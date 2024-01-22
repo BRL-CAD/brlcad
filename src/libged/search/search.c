@@ -363,7 +363,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
     struct bu_ptbl *search_set;
-    const char *usage = "[-a] [-v] [-Q] [-h] [path] [expressions...]\n";
+    const char *usage = "[-a] [-v[v..]] [-Q] [-h] [path] [expressions...]\n";
     /* COPY argv_orig to argv; */
     char **argv = NULL;
     struct db_search_context *ctx = db_search_context_create();
