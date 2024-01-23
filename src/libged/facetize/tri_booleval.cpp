@@ -462,7 +462,6 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
     bu_log("%s\n", bu_vls_cstr(&cmd));
     bu_vls_free(&cmd);
 
-    int timeout = 0;
     int64_t start = bu_gettime();
     int64_t elapsed = 0;
     fastf_t seconds = 0.0;
@@ -470,44 +469,43 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
     struct subprocess_s p;
     if (subprocess_create(tess_cmd, subprocess_option_no_window, &p)) {
 	// Unable to create subprocess??
-	return 1;
+	return BRLCAD_ERROR;
     }
-    while (!timeout && subprocess_alive(&p)) {
+    while (subprocess_alive(&p)) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
 	if (seconds > max_time) {
+	    // if we timeout, cleanup and return error
 	    subprocess_terminate(&p);
 	    subprocess_destroy(&p);
-	    timeout = 1;
+	    // Because we had to kill the process, there's no way of knowing
+	    // whether we interrupted I/O in a state that could result in a
+	    // corrupted .g file.  Restore the pre-run state of the .g file -
+	    // we may have to redo some work, but this at least ensures we
+	    // won't have strange garbage corrupting subsequent processing.
+	    std::ifstream bakfile(wfilebak, std::ios::binary);
+	    std::ofstream workfile(wfile, std::ios::binary);
+	    if (!workfile.is_open() || !bakfile.is_open())
+		return BRLCAD_ERROR;
+	    workfile << bakfile.rdbuf();
+	    workfile.close();
+	    bakfile.close();
+
+	    return BRLCAD_ERROR;
 	}
     }
     int w_rc;
     if (subprocess_join(&p, &w_rc)) {
 	// Unable to join??
-	return 1;
-    }
-
-    if (timeout) {
-	// Because we had to kill the process, there's no way of knowing
-	// whether we interrupted I/O in a state that could result in a
-	// corrupted .g file.  Restore the pre-run state of the .g file -
-	// we may have to redo some work, but this at least ensures we
-	// won't have strange garbage corrupting subsequent processing.
-	std::ifstream bakfile(wfilebak, std::ios::binary);
-	std::ofstream workfile(wfile, std::ios::binary);
-	if (!workfile.is_open() || !bakfile.is_open())
-	    return BRLCAD_ERROR;
-	workfile << bakfile.rdbuf();
-	workfile.close();
-	bakfile.close();
+	return BRLCAD_ERROR;
     }
 
     bu_file_delete(wfilebak.c_str());
 
     bu_log("result: %d\n", w_rc);
 
-    return (timeout || w_rc) ? 1 : 0;
+    return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
 }
 
 int
