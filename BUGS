@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* TGC tess fails when we have a near-zero c axis and a larger d
+  axis, or vice versa.
+
 * MGED crashes trying to open the repository file
   doc/docbook/resources/other/standard/xsl/images/important.tif
   It is mis-identified as a v4 .g file due to the file header's
