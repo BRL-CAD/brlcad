@@ -70,8 +70,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct rt_tgc_internal *tip;
     fastf_t radius;		/* bounding sphere radius */
     fastf_t max_radius; /* max of a, b, c, d */
-    fastf_t h, a, b, c, d;	/* lengths of TGC vectors */
-    fastf_t inv_length;	/* 1.0/length of a vector */
+    fastf_t h, a_axis_len, b_axis_len, c_axis_len, d_axis_len;	/* lengths of TGC vectors */
     vect_t unit_a, unit_b, unit_c, unit_d; /* units vectors in a, b, c, d directions */
     fastf_t rel, absolute, norm;	/* interpreted tolerances */
     fastf_t alpha_tol;	/* final tolerance for ellipse parameter */
@@ -110,55 +109,55 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     h = MAGNITUDE(tip->h);
-    a = MAGNITUDE(tip->a);
-    if (2.0*a <= tol->dist)
-	a = 0.0;
-    b = MAGNITUDE(tip->b);
-    if (2.0*b <= tol->dist)
-	b = 0.0;
-    c = MAGNITUDE(tip->c);
-    if (2.0*c <= tol->dist)
-	c = 0.0;
-    d = MAGNITUDE(tip->d);
-    if (2.0*d <= tol->dist)
-	d = 0.0;
+    a_axis_len = MAGNITUDE(tip->a);
+    if (2.0*a_axis_len <= tol->dist)
+	a_axis_len = 0.0;
+    b_axis_len = MAGNITUDE(tip->b);
+    if (2.0*b_axis_len <= tol->dist)
+	b_axis_len = 0.0;
+    c_axis_len = MAGNITUDE(tip->c);
+    if (2.0*c_axis_len <= tol->dist)
+	c_axis_len = 0.0;
+    d_axis_len = MAGNITUDE(tip->d);
+    if (2.0*d_axis_len <= tol->dist)
+	d_axis_len = 0.0;
 
-    if (ZERO(a) && ZERO(b) && (ZERO(c) || ZERO(d))) {
+    if (ZERO(a_axis_len) && ZERO(b_axis_len) && (ZERO(c_axis_len) || ZERO(d_axis_len))) {
 	bu_log("Illegal TGC a, b, and c or d less than tolerance\n");
 	return -1;
-    } else if (ZERO(c) && ZERO(d) && (ZERO(a) || ZERO(b))) {
+    } else if (ZERO(c_axis_len) && ZERO(d_axis_len) && (ZERO(a_axis_len) || ZERO(b_axis_len))) {
 	bu_log("Illegal TGC c, d, and a or b less than tolerance\n");
 	return -1;
     }
 
-    if (a > 0.0) {
-	inv_length = 1.0/a;
+    if (a_axis_len > 0.0) {
+	fastf_t inv_length = 1.0/a_axis_len;
 	VSCALE(unit_a, tip->a, inv_length);
     }
-    if (b > 0.0) {
-	inv_length = 1.0/b;
+    if (b_axis_len > 0.0) {
+	fastf_t inv_length = 1.0/b_axis_len;
 	VSCALE(unit_b, tip->b, inv_length);
     }
-    if (c > 0.0) {
-	inv_length = 1.0/c;
+    if (c_axis_len > 0.0) {
+	fastf_t inv_length = 1.0/c_axis_len;
 	VSCALE(unit_c, tip->c, inv_length);
     }
-    if (d > 0.0) {
-	inv_length = 1.0/d;
+    if (d_axis_len > 0.0) {
+	fastf_t inv_length = 1.0/d_axis_len;
 	VSCALE(unit_d, tip->d, inv_length);
     }
 
     /* get bounding sphere radius for relative tolerance */
     radius = h/2.0;
     max_radius = 0.0;
-    if (a > max_radius)
-	max_radius = a;
-    if (b > max_radius)
-	max_radius = b;
-    if (c > max_radius)
-	max_radius = c;
-    if (d > max_radius)
-	max_radius = d;
+    if (a_axis_len > max_radius)
+	max_radius = a_axis_len;
+    if (b_axis_len > max_radius)
+	max_radius = b_axis_len;
+    if (c_axis_len > max_radius)
+	max_radius = c_axis_len;
+    if (d_axis_len > max_radius)
+	max_radius = d_axis_len;
 
     if (max_radius > radius)
 	radius = max_radius;
@@ -186,15 +185,15 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if (ttol->norm > 0.0) {
 	    fastf_t norm_top, norm_bot;
 
-	    if (a<b)
-		norm_bot = 2.0 * atan(tan(ttol->norm) * (a/b));
+	    if (a_axis_len < b_axis_len)
+		norm_bot = 2.0 * atan(tan(ttol->norm) * (a_axis_len / b_axis_len));
 	    else
-		norm_bot = 2.0 * atan(tan(ttol->norm) * (b/a));
+		norm_bot = 2.0 * atan(tan(ttol->norm) * (b_axis_len / a_axis_len));
 
-	    if (c<d)
-		norm_top = 2.0 * atan(tan(ttol->norm) * (c/d));
+	    if (c_axis_len < d_axis_len)
+		norm_top = 2.0 * atan(tan(ttol->norm) * (c_axis_len / d_axis_len));
 	    else
-		norm_top = 2.0 * atan(tan(ttol->norm) * (d/c));
+		norm_top = 2.0 * atan(tan(ttol->norm) * (d_axis_len / c_axis_len));
 
 	    if (norm_bot < norm_top)
 		norm = norm_bot;
@@ -414,18 +413,18 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    cos_alpha = cos(alpha);
 
 	    /* vertex geometry */
-	    if (i == 0 && ZERO(a) && ZERO(b)) {
+	    if (i == 0 && ZERO(a_axis_len) && ZERO(b_axis_len)) {
 		VMOVE(pts[i][j].pt, tip->v);
-	    } else if (i == nells-1 && ZERO(c) && ZERO(d)) {
+	    } else if (i == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		VADD2(pts[i][j].pt, tip->v, tip->h);
 	    } else {
 		VJOIN3(pts[i][j].pt, tip->v, h_factor, tip->h, cos_alpha, A[i], sin_alpha, B[i]);
 	    }
 
 	    /* Storing the tangent here while sines and cosines are available */
-	    if (i == 0 && ZERO(a) && ZERO(b)) {
+	    if (i == 0 && ZERO(a_axis_len) && ZERO(b_axis_len)) {
 		VCOMB2(pts[0][j].tan_axb, -sin_alpha, unit_c, cos_alpha, unit_d);
-	    } else if (i == nells-1 && ZERO(c) && ZERO(d)) {
+	    } else if (i == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		VCOMB2(pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b);
 	    } else {
 		VCOMB2(pts[i][j].tan_axb, -sin_alpha, A[i], cos_alpha, B[i]);
@@ -439,9 +438,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	point_t curr_pt;
 	vect_t edge_vect;
 
-	if (i == 0 && (ZERO(a) || ZERO(b)))
+	if (i == 0 && (ZERO(a_axis_len) || ZERO(b_axis_len)))
 	    continue;
-	else if (i == nells-1 && (ZERO(c) || ZERO(d)))
+	else if (i == nells-1 && (ZERO(c_axis_len) || ZERO(d_axis_len)))
 	    continue;
 
 	VMOVE(curr_pt, pts[i][0].pt);
@@ -466,7 +465,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_ptbl_init(&verts, 64, " &verts ");
     bu_ptbl_init(&faces, 64, " &faces ");
     /* Make bottom face */
-    if (a > 0.0 && b > 0.0) {
+    if (a_axis_len > 0.0 && b_axis_len > 0.0) {
 	for (i=nsegs; i>0; i--) {
 	    /* reverse order to get outward normal */
 	    if (!pts[0][i-1].dont_use)
@@ -483,7 +482,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
     /* Make top face */
-    if (c > 0.0 && d > 0.0) {
+    if (c_axis_len > 0.0 && d_axis_len > 0.0) {
 	bu_ptbl_reset(&verts);
 	for (i=0; i<nsegs; i++) {
 	    if (!pts[nells-1][i].dont_use)
@@ -515,11 +514,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    k = j+1;
 	    if (k == nsegs)
 		k = 0;
-	    if (i != 0 || a > 0.0 || b > 0.0) {
+	    if (i != 0 || a_axis_len > 0.0 || b_axis_len > 0.0) {
 		if (!pts[i][k].dont_use) {
 		    v[0] = curr_bot;
 		    v[1] = &pts[i][k].v;
-		    if (i+1 == nells-1 && ZERO(c) && ZERO(d))
+		    if (i+1 == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len))
 			v[2] = &pts[i+1][0].v;
 		    else
 			v[2] = curr_top;
@@ -529,11 +528,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	    }
 
-	    if (i != nells-2 || c > 0.0 || d > 0.0) {
+	    if (i != nells-2 || c_axis_len > 0.0 || d_axis_len > 0.0) {
 		if (!pts[i+1][k].dont_use) {
 		    v[0] = &pts[i+1][k].v;
 		    v[1] = curr_top;
-		    if (i == 0 && ZERO(a) && ZERO(b))
+		    if (i == 0 && ZERO(a_axis_len) && ZERO(b_axis_len))
 			v[2] = &pts[i][0].v;
 		    else
 			v[2] = curr_bot;
@@ -559,10 +558,10 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    cos_alpha = cos(alpha);
 
 	    /* vertex geometry */
-	    if (i == 0 && ZERO(a) && ZERO(b)) {
+	    if (i == 0 && ZERO(a_axis_len) && ZERO(b_axis_len)) {
 		if (j == 0)
 		    nmg_vertex_gv(pts[0][0].v, tip->v);
-	    } else if (i == nells-1 && ZERO(c) && ZERO(d)) {
+	    } else if (i == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		if (j == 0) {
 		    VADD2(pt_geom, tip->v, tip->h);
 		    nmg_vertex_gv(pts[i][0].v, pt_geom);
@@ -571,9 +570,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		nmg_vertex_gv(pts[i][j].v, pts[i][j].pt);
 
 	    /* Storing the tangent here while sines and cosines are available */
-	    if (i == 0 && ZERO(a) && ZERO(b)) {
+	    if (i == 0 && ZERO(a_axis_len) && ZERO(b_axis_len)) {
 		VCOMB2(pts[0][j].tan_axb, -sin_alpha, unit_c, cos_alpha, unit_d);
-	    } else if (i == nells-1 && ZERO(c) && ZERO(d)) {
+	    } else if (i == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		VCOMB2(pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b);
 	    } else {
 		VCOMB2(pts[i][j].tan_axb, -sin_alpha, A[i], cos_alpha, B[i]);
@@ -608,24 +607,24 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	    /* normal at vertex */
 	    if (i == nells - 1) {
-		if (ZERO(c) && ZERO(d)) {
+		if (ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		    VSUB2(tan_h, pts[i][0].pt, pts[k][j].pt);
-		} else if (k == 0 && ZERO(c) && ZERO(d)) {
+		} else if (k == 0 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		    VSUB2(tan_h, pts[i][j].pt, pts[k][0].pt);
 		} else {
 		    VSUB2(tan_h, pts[i][j].pt, pts[k][j].pt);
 		}
 	    } else if (i == 0) {
-		if (ZERO(a) && ZERO(b)) {
+		if (ZERO(a_axis_len) && ZERO(b_axis_len)) {
 		    VSUB2(tan_h, pts[k][j].pt, pts[i][0].pt);
-		} else if (k == nells-1 && ZERO(c) && ZERO(d)) {
+		} else if (k == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		    VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
 		} else {
 		    VSUB2(tan_h, pts[k][j].pt, pts[i][j].pt);
 		}
-	    } else if (k == 0 && ZERO(a) && ZERO(b)) {
+	    } else if (k == 0 && ZERO(a_axis_len) && ZERO(b_axis_len)) {
 		VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
-	    } else if (k == nells-1 && ZERO(c) && ZERO(d)) {
+	    } else if (k == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
 	    } else {
 		VSUB2(tan_h, pts[k][j].pt, pts[i][j].pt);
@@ -635,8 +634,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    VUNITIZE(normal);
 	    VREVERSE(rev_norm, normal);
 
-	    if (!(i == 0 && ZERO(a) && ZERO(b)) &&
-		!(i == nells-1 && ZERO(c) && ZERO(d)) &&
+	    if (!(i == 0 && ZERO(a_axis_len) && ZERO(b_axis_len)) &&
+		!(i == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) &&
 		pts[i][j].v)
 	    {
 		for (BU_LIST_FOR(vu, vertexuse, &pts[i][j].v->vu_hd)) {
