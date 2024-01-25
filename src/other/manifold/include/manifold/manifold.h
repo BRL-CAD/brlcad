@@ -100,10 +100,10 @@ struct MeshGL {
   /// edge shorter than precision may be collapsed.
   float precision = 0;
 
-  MeshGL() = default;
-  MeshGL(const Mesh& mesh);
+  MANIFOLD_EXPORT MeshGL() = default;
+  MANIFOLD_EXPORT MeshGL(const Mesh& mesh);
 
-  bool Merge();
+  MANIFOLD_EXPORT bool Merge();
 };
 /** @} */
 
@@ -124,7 +124,7 @@ class Manifold {
   MANIFOLD_EXPORT Manifold(Manifold&&) noexcept;
   MANIFOLD_EXPORT Manifold& operator=(Manifold&&) noexcept;
 
-  Manifold(const MeshGL&, const std::vector<float>& propertyTolerance = {});
+  MANIFOLD_EXPORT Manifold(const MeshGL&, const std::vector<float>& propertyTolerance = {});
   MANIFOLD_EXPORT Manifold(const Mesh&);
 
   static Manifold Smooth(const MeshGL&,
@@ -158,7 +158,7 @@ class Manifold {
    */
   ///@{
   MANIFOLD_EXPORT Mesh GetMesh() const;
-  MeshGL GetMeshGL(glm::ivec3 normalIdx = glm::ivec3(0)) const;
+  MANIFOLD_EXPORT MeshGL GetMeshGL(glm::ivec3 normalIdx = glm::ivec3(0)) const;
   bool IsEmpty() const;
   enum class Error {
     NoError,
