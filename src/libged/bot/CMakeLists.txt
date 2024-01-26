@@ -73,6 +73,7 @@ set(BOT_SRCS
   check.cpp
   decimate.cpp
   extrude.cpp
+  manifold.cpp
   remesh.cpp
   smooth.cpp
   subdivide.cpp
