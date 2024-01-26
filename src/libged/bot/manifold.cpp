@@ -267,14 +267,8 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    // GEO::initialize needs to be called once.  TODO - this probably
-    // should happen once for all of libged, if we use geogram in
-    // multiple commands...
-    static int geo_inited = 0;
-    if (!geo_inited) {
-	GEO::initialize();
-	geo_inited = 1;
-    }
+    // Make sure geogram is initialized
+    GEO::initialize();
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
