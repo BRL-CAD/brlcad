@@ -178,9 +178,16 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
 	}
     }
 
-    // Do the hole filling, trying to fill all holes (1e30 is
-    // a value used in the Geogram code for a large hole size -
-    // there may be a better default...)
+    // Do the hole filling.
+    //
+    // TODO: Right now we're basically trying to fill in ALL holes (1e30 is a
+    // value used in the Geogram code for a large hole size. That large a value
+    // may not be a good default for automatic processing - we might be better
+    // off starting with something like a percentage of the surface area of the
+    // mesh, so we don't end up "repairing" something with a giant hole in such
+    // a way that it is unlikely to represent the original modeling intent.  We
+    // could then let the user override that default with something more
+    // extreme manually if they deem the result useful.
     GEO::fill_holes(gm, 1e30);
 
     // Make sure we're still repaired post filling
