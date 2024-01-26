@@ -49,9 +49,8 @@
 #include "manifold/meshIO.h"
 #endif
 
-extern "C" {
-#include "fort.h"
-}
+#include "geogram/basic/process.h"
+#include "geogram/mesh/mesh.h"
 
 #include "bu/cmd.h"
 #include "bu/color.h"
@@ -71,6 +70,13 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
     const char *purpose_string = "Check if Manifold thinks the BoT is a manifold mesh.  If not, if an outobj name has been supplied apply MeshGL Merge to see if can be automatically repaired.  If it can be, the result will be written to outobj.";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
+    }
+
+    // GEO::initialize needs to be called once.
+    static int geo_inited = 0;
+    if (!geo_inited) {
+	GEO::initialize();
+	geo_inited = 1;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
