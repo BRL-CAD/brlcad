@@ -191,14 +191,19 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
 	gmm.triVerts.push_back(glm::vec3(tri_verts[0], tri_verts[1], tri_verts[2]));
     }
 
+#if 1
     manifold::Manifold gmanifold(gmm);
     if (gmanifold.Status() != manifold::Manifold::Error::NoError) {
 	// Repair failed
 	return NULL;
     }
-
-    // If output is manifold, make a new bot
+    // Output is manifold, make a new bot
     manifold::Mesh omesh = gmanifold.GetMesh();
+#else
+    // output the mesh, good or bad (used for debugging)
+    manifold::Mesh omesh = gmm;
+#endif
+
     struct rt_bot_internal *nbot;
     BU_GET(nbot, struct rt_bot_internal);
     nbot->magic = RT_BOT_INTERNAL_MAGIC;
