@@ -54,6 +54,7 @@
 #include <geogram/basic/command_line_args.h>
 #include "geogram/mesh/mesh.h"
 #include "geogram/mesh/mesh_geometry.h"
+#include "geogram/mesh/mesh_preprocessing.h"
 #include "geogram/mesh/mesh_repair.h"
 #include "geogram/mesh/mesh_fill_holes.h"
 
@@ -144,6 +145,7 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
 
     // Use the default hole filling algorithm
     GEO::CmdLine::set_arg("algo:hole_filling", "loop_split");
+    GEO::CmdLine::set_arg("algo:nn_search", "BNN");
 
     GEO::Mesh gm;
     gm.vertices.assign_points((double *)bot->vertices, 3, bot->num_vertices);
@@ -156,7 +158,25 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
 
     // After the initial raw load, do a repair pass to set up
     // Geogram's internal mesh data
-    GEO::mesh_repair(gm, GEO::MeshRepairMode(GEO::MESH_REPAIR_DEFAULT));
+    double epsilon = 1e-6 * (0.01 * GEO::bbox_diagonal(gm));
+
+    GEO::mesh_repair(gm, GEO::MeshRepairMode(GEO::MESH_REPAIR_DEFAULT), epsilon);
+
+    // Per the geobox "mesh repair" function, we need to do some
+    // small connected component removal ahead of the fill_holes
+    // call  - that was the behavior difference observed between
+    // the raw bot manifold run and exporting the mesh into geobox
+    // for processing
+    double area = GEO::Geom::mesh_area(gm,3);
+    double min_comp_area = 0.03 * area;
+    if (min_comp_area > 0.0) {
+	double nb_f_removed = gm.facets.nb();
+	GEO::remove_small_connected_components(gm, min_comp_area);
+	nb_f_removed -= gm.facets.nb();
+	if(nb_f_removed > 0 || nb_f_removed < 0) {
+	    GEO::mesh_repair(gm, GEO::MESH_REPAIR_DEFAULT, epsilon);
+	}
+    }
 
     // Do the hole filling, trying to fill all holes (1e30 is
     // a value used in the Geogram code for a large hole size -
