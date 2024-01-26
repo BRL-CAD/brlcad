@@ -143,6 +143,9 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
     if (!bot)
 	return NULL;
 
+    // Make sure geogram is initialized
+    GEO::initialize();
+
     // Use the default hole filling algorithm
     GEO::CmdLine::set_arg("algo:hole_filling", "loop_split");
     GEO::CmdLine::set_arg("algo:nn_search", "BNN");
@@ -266,9 +269,6 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
-
-    // Make sure geogram is initialized
-    GEO::initialize();
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
