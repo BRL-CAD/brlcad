@@ -146,24 +146,12 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
     GEO::CmdLine::set_arg("algo:hole_filling", "loop_split");
 
     GEO::Mesh gm;
-    std::unordered_map<size_t, GEO::index_t> vmap;
-    for (size_t i = 0; i < bot->num_vertices; i++) {
-	double vpnt[3];
-	vpnt[0] = bot->vertices[3*i+0];
-	vpnt[1] = bot->vertices[3*i+1];
-	vpnt[2] = bot->vertices[3*i+2];
-	GEO::index_t v = gm.vertices.create_vertex();
-	double* p = gm.vertices.point_ptr(v);
-	for(int j = 0; j < 3; j++)
-	    p[j] = vpnt[j];
-	vmap[i] = v;
-    }
-
+    gm.vertices.assign_points((double *)bot->vertices, 3, bot->num_vertices);
     for (size_t i = 0; i < bot->num_faces; i++) {
 	GEO::index_t f = gm.facets.create_polygon(3);
-	gm.facets.set_vertex(f, 0, vmap[bot->faces[3*i+0]]);
-	gm.facets.set_vertex(f, 1, vmap[bot->faces[3*i+1]]);
-	gm.facets.set_vertex(f, 2, vmap[bot->faces[3*i+2]]);
+	gm.facets.set_vertex(f, 0, bot->faces[3*i+0]);
+	gm.facets.set_vertex(f, 1, bot->faces[3*i+1]);
+	gm.facets.set_vertex(f, 2, bot->faces[3*i+2]);
     }
 
     // After the initial raw load, do a repair pass to set up
