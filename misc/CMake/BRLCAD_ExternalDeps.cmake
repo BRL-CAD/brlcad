@@ -969,6 +969,11 @@ find_package_reset(MANIFOLD RESET_TP)
 set(MANIFOLD_ROOT "${CMAKE_BINARY_DIR}")
 find_package(MANIFOLD)
 
+# Geogram - a programming library with geometric algorithms
+# https://github.com/BrunoLevy/geogram
+find_package_reset(GEOGRAM RESET_TP)
+set(GEOGRAM_ROOT "${CMAKE_BINARY_DIR}")
+find_package(Geogram)
 
 # openNURBS Non-Uniform Rational BSpline library
 # https://github.com/mcneel/opennurbs

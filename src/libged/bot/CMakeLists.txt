@@ -6,8 +6,6 @@ set(BOT_INCLUDE_DIRS
   ${GED_INCLUDE_DIRS}
   )
 
-find_package(Geogram REQUIRED) 
-
 set(BOT_LOCAL_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
   ${GEOGRAM_INCLUDE_DIR}
