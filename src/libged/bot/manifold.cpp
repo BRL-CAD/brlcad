@@ -49,6 +49,7 @@
 #include "manifold/meshIO.h"
 #endif
 
+#ifdef USE_GEOGRAM
 #include "geogram/basic/process.h"
 #include <geogram/basic/command_line.h>
 #include <geogram/basic/command_line_args.h>
@@ -57,6 +58,7 @@
 #include "geogram/mesh/mesh_preprocessing.h"
 #include "geogram/mesh/mesh_repair.h"
 #include "geogram/mesh/mesh_fill_holes.h"
+#endif
 
 #include "bu/cmd.h"
 #include "bu/color.h"
@@ -137,6 +139,7 @@ manifold_process(struct rt_bot_internal *bot, int repair)
     return nbot;
 }
 
+#ifdef USE_GEOGRAM
 static struct rt_bot_internal *
 geogram_mesh_repair(struct rt_bot_internal *bot)
 {
@@ -258,6 +261,7 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
     }
     return nbot;
 }
+#endif
 
 //#define IN_PLACE_REPAIR
 
@@ -344,9 +348,11 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
+#ifdef USE_GEOGRAM
     // Not manifold, not fixed by the first pass, and we want to repair it.
     // Time to attempt mesh repair
     mbot = geogram_mesh_repair(bot);
+#endif
 
     if (!mbot) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Unable to repair BoT %s", gb->dp->d_namep);
