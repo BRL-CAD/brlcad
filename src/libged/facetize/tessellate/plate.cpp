@@ -85,6 +85,14 @@ plate_eval(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const str
     // using unioned CSG elements
     manifold::Manifold c;
 
+    // TODO - right now, the edge processing in particular results in high memory
+    // consumption, compared to the size of the final bot.  I'm wondering if this
+    // is because the face additions clear a lot of the edge triangles, and we might
+    // do better to march over the faces, keep the "already processed" verts and
+    // edges in unordered sets, and just add any verts and edges from each new face
+    // that we've not already seen before.  This will "cull as we go" when it comes
+    // to the edge cylinders.
+
     // Collect the active vertices and edges
     std::set<int> verts;
     std::map<int, double> verts_thickness;
