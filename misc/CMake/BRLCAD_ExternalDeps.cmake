@@ -974,6 +974,9 @@ find_package(MANIFOLD)
 find_package_reset(GEOGRAM RESET_TP)
 set(GEOGRAM_ROOT "${CMAKE_BINARY_DIR}")
 find_package(Geogram)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} geogram)
+list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} geogram CACHE STRING "Bundled system include dirs" FORCE)
 
 # openNURBS Non-Uniform Rational BSpline library
 # https://github.com/mcneel/opennurbs

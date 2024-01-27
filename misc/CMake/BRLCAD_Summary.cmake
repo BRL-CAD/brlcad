@@ -251,6 +251,7 @@ function(BRLCAD_Summary)
     set(BUNDLED_LABELS
       "Asset Import Library"
       "Eigen"
+      "Geogram"
       "Geospatial Data Abstraction Library"
       "Lightning Memory-Mapped Database"
       "Netpbm"
@@ -281,6 +282,7 @@ function(BRLCAD_Summary)
     set(BUNDLED_VARS
       ASSETIMPORT_LIBRARY
       EIGEN3_INCLUDE_DIRS
+      GEOGRAM_LIBRARY
       GDAL_LIBRARY
       LMDB_LIBRARY
       NETPBM_LIBRARY
