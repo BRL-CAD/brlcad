@@ -263,7 +263,15 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
 }
 #endif
 
-//#define IN_PLACE_REPAIR
+static void
+manifold_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
+    char *option_help = bu_opt_describe(d, NULL);
+    bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
+    if (option_help) {
+	bu_vls_printf(str, "Options:\n%s\n", option_help);
+	bu_free(option_help, "help str");
+    }
+}
 
 extern "C" int
 _bot_cmd_manifold(void *bs, int argc, const char **argv)
@@ -276,13 +284,31 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
+    // We know we're the manifold command - start processing args
     argc--; argv++;
 
-#ifdef IN_PLACE_REPAIR
-    if (argc != 1) {
-#else
-    if (argc != 1 && argc != 2) {
-#endif
+    int print_help = 0;
+    int in_place_repair = 0;
+
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,      "Print help");
+    BU_OPT(d[1], "i",  "in-place",     "",            NULL, &in_place_repair, "Alter BoTs (if necessary) in place");
+    BU_OPT_NULL(d[2]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    argc = ac;
+
+    if (print_help || !argc) {
+	manifold_usage(gb->gedp->ged_result_str, "bot manifold", d);
+	return GED_HELP;
+    }
+
+    if (in_place_repair && argc != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    if (!in_place_repair && argc != 1 && argc != 2) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
 	return BRLCAD_ERROR;
     }
@@ -297,11 +323,7 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-#ifdef IN_PLACE_REPAIR
-    int repair_flag = 1;
-#else
-    int repair_flag = (argc == 2) ?  1 : 0;
-#endif
+    int repair_flag = (in_place_repair || argc == 2) ?  1 : 0;
 
     struct rt_bot_internal *mbot = manifold_process(bot, repair_flag);
 
@@ -326,18 +348,19 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
 	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (void *)mbot;
 
-#ifdef IN_PLACE_REPAIR
-	const char *rname = gb->dp->d_namep;
-	struct directory *dp = gb->dp;
-#else
-	const char *rname = argv[1];
-
-	struct directory *dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-	if (dp == RT_DIR_NULL) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
-	    return BRLCAD_ERROR;
+	const char *rname;
+	struct directory *dp;
+	if (in_place_repair) {
+	    rname = gb->dp->d_namep;
+	    dp = gb->dp;
+	} else {
+	    rname = argv[1];
+	    dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	    if (dp == RT_DIR_NULL) {
+		bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
+		return BRLCAD_ERROR;
+	    }
 	}
-#endif
 
 	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
@@ -366,18 +389,19 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
     intern.idb_meth = &OBJ[ID_BOT];
     intern.idb_ptr = (void *)mbot;
 
-
-#ifdef IN_PLACE_REPAIR
-    const char *rname = gb->dp->d_namep;
-    struct directory *dp = gb->dp;
-#else
-    const char *rname = argv[1];
-    struct directory *dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-    if (dp == RT_DIR_NULL) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
-	return BRLCAD_ERROR;
+    const char *rname;
+    struct directory *dp;
+    if (in_place_repair) {
+	rname = gb->dp->d_namep;
+	dp = gb->dp;
+    } else {
+	rname = argv[1];
+	dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
+	    return BRLCAD_ERROR;
+	}
     }
-#endif
 
     if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
