@@ -54,6 +54,7 @@
 #include "icv.h"
 #include "dm.h"
 
+
 struct fb *fb_get(void)
 {
     struct fb *new_fb = FB_NULL;
@@ -76,31 +77,36 @@ struct fb *fb_raw(const char *type)
     return new_fb;
 }
 
+
 void fb_put(struct fb *ifp)
 {
-    if (ifp != FB_NULL) {
-	BU_PUT(ifp->i, struct fb_impl);
-	BU_PUT(ifp, struct fb);
-    }
+    if (!ifp)
+	return;
+    BU_PUT(ifp->i, struct fb_impl);
+    BU_PUT(ifp, struct fb);
 }
 
 void
 fb_set_standalone(struct fb *ifp, int val)
 {
-    if (!ifp) return;
+    if (!ifp)
+	return 0;
     ifp->i->stand_alone = val;
 }
 
 int
 fb_get_standalone(struct fb *ifp)
 {
-    if (!ifp) return 0;
+    if (!ifp)
+	return 0;
     return ifp->i->stand_alone;
 }
 
 void
 fb_setup_existing(struct fb *fbp, int width, int height, struct fb_platform_specific *fb_p)
 {
+    if (!ifp)
+	return 0;
     if (fbp->i->if_open_existing) fbp->i->if_open_existing(fbp, width, height, fb_p);
 }
 
@@ -119,6 +125,8 @@ fb_open_existing(const char *file, int width, int height, struct fb_platform_spe
 int
 fb_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
+    if (!ifp)
+	return 0;
     return ifp->i->if_refresh(ifp, x, y, w, h);
 }
 
@@ -134,154 +142,216 @@ fb_configure_window(struct fb *ifp, int width, int height)
 
 const char *fb_get_name(const struct fb *ifp)
 {
-    if (!ifp) return NULL;
+    if (!ifp)
+	return NULL;
     return ifp->i->if_name;
 }
 
 long fb_get_pagebuffer_pixel_size(struct fb *ifp)
 {
-    if (!ifp) return 0;
+    if (!ifp)
+	return 0;
     return ifp->i->if_ppixels;
 }
 
 int fb_is_set_fd(struct fb *ifp, fd_set *infds)
 {
-    if (!ifp) return 0;
-    if (!infds) return 0;
-    if (!ifp->i->if_selfd) return 0;
-    if (ifp->i->if_selfd <= 0) return 0;
+    if (!ifp)
+	return 0;
+    if (!infds)
+	return 0;
+    if (!ifp->i->if_selfd)
+	return 0;
+    if (ifp->i->if_selfd <= 0)
+	return 0;
     return FD_ISSET(ifp->i->if_selfd, infds);
 }
 
 int fb_set_fd(struct fb *ifp, fd_set *select_list)
 {
-    if (!ifp) return 0;
-    if (!select_list) return 0;
-    if (!ifp->i->if_selfd) return 0;
-    if (ifp->i->if_selfd <= 0) return 0;
+    if (!ifp)
+	return 0;
+    if (!select_list)
+	return 0;
+    if (!ifp->i->if_selfd)
+	return 0;
+    if (ifp->i->if_selfd <= 0)
+	return 0;
     FD_SET(ifp->i->if_selfd, select_list);
     return ifp->i->if_selfd;
 }
 
 int fb_clear_fd(struct fb *ifp, fd_set *list)
 {
-    if (!ifp) return 0;
-    if (!list) return 0;
-    if (!ifp->i->if_selfd) return 0;
-    if (ifp->i->if_selfd <= 0) return 0;
+    if (!ifp)
+	return 0;
+    if (!list)
+	return 0;
+    if (!ifp->i->if_selfd)
+	return 0;
+    if (ifp->i->if_selfd <= 0)
+	return 0;
     FD_CLR(ifp->i->if_selfd, list);
     return ifp->i->if_selfd;
 }
 
 void fb_set_magic(struct fb *ifp, uint32_t magic)
 {
-    if (!ifp) return;
+    if (!ifp)
+	return 0;
     ifp->i->if_magic = magic;
 }
 
 
 struct dm *fb_get_dm(struct fb *ifp)
 {
-    if (!ifp) return NULL;
+    if (!ifp)
+	return 0;
     return ifp->i->dmp;
 }
 
 const char *fb_gettype(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return ifp->i->if_type;
 }
 
 int fb_getwidth(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return ifp->i->if_width;
 }
 int fb_getheight(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return ifp->i->if_height;
 }
 
 int fb_get_max_width(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return ifp->i->if_max_width;
 }
 int fb_get_max_height(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return ifp->i->if_max_height;
 }
 
 
 int fb_poll(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_poll)(ifp);
 }
 
 long fb_poll_rate(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return ifp->i->if_poll_refresh_rate;
 }
 
 int fb_help(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_help)(ifp);
 }
 int fb_free(struct fb *ifp)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_free)(ifp);
 }
 int fb_clear(struct fb *ifp, unsigned char *pp)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_clear)(ifp, pp);
 }
 ssize_t fb_read(struct fb *ifp, int x, int y, unsigned char *pp, size_t count)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_read)(ifp, x, y, pp, count);
 }
 ssize_t fb_write(struct fb *ifp, int x, int y, const unsigned char *pp, size_t count)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_write)(ifp, x, y, pp, count);
 }
 int fb_rmap(struct fb *ifp, ColorMap *cmap)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_rmap)(ifp, cmap);
 }
 int fb_wmap(struct fb *ifp, const ColorMap *cmap)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_wmap)(ifp, cmap);
 }
 int fb_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_view)(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 int fb_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_getview)(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 int fb_setcursor(struct fb *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_setcursor)(ifp, bits, xb, yb, xo, yo);
 }
 int fb_cursor(struct fb *ifp, int mode, int x, int y)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_cursor)(ifp, mode, x, y);
 }
 int fb_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_getcursor)(ifp, mode, x, y);
 }
 int fb_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_readrect)(ifp, xmin, ymin, width, height, pp);
 }
 int fb_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_writerect)(ifp, xmin, ymin, width, height, pp);
 }
 int fb_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_bwreadrect)(ifp, xmin, ymin, width, height, pp);
 }
 int fb_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
+    if (!ifp)
+	return 0;
     return (*ifp->i->if_bwwriterect)(ifp, xmin, ymin, width, height, pp);
 }
 
@@ -327,6 +397,9 @@ int
 fb_close(struct fb *ifp)
 {
     int i;
+
+    if (!ifp)
+	return 0;
 
     FB_CK_FB(ifp->i);
     fb_flush(ifp);
@@ -378,9 +451,12 @@ fb_is_linear_cmap(register const ColorMap *cmap)
     register int i;
 
     for (i=0; i<256; i++) {
-	if (cmap->cm_red[i]>>8 != i) return 0;
-	if (cmap->cm_green[i]>>8 != i) return 0;
-	if (cmap->cm_blue[i]>>8 != i) return 0;
+	if (cmap->cm_red[i]>>8 != i)
+	    return 0;
+	if (cmap->cm_green[i]>>8 != i)
+	    return 0;
+	if (cmap->cm_blue[i]>>8 != i)
+	    return 0;
     }
     return 1;
 }
