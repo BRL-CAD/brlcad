@@ -90,7 +90,7 @@ void
 fb_set_standalone(struct fb *ifp, int val)
 {
     if (!ifp)
-	return 0;
+	return;
     ifp->i->stand_alone = val;
 }
 
@@ -103,11 +103,11 @@ fb_get_standalone(struct fb *ifp)
 }
 
 void
-fb_setup_existing(struct fb *fbp, int width, int height, struct fb_platform_specific *fb_p)
+fb_setup_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     if (!ifp)
-	return 0;
-    if (fbp->i->if_open_existing) fbp->i->if_open_existing(fbp, width, height, fb_p);
+	return;
+    if (ifp->i->if_open_existing) ifp->i->if_open_existing(ifp, width, height, fb_p);
 }
 
 struct fb *
@@ -198,7 +198,7 @@ int fb_clear_fd(struct fb *ifp, fd_set *list)
 void fb_set_magic(struct fb *ifp, uint32_t magic)
 {
     if (!ifp)
-	return 0;
+	return;
     ifp->i->if_magic = magic;
 }
 
@@ -206,14 +206,14 @@ void fb_set_magic(struct fb *ifp, uint32_t magic)
 struct dm *fb_get_dm(struct fb *ifp)
 {
     if (!ifp)
-	return 0;
+	return NULL;
     return ifp->i->dmp;
 }
 
 const char *fb_gettype(struct fb *ifp)
 {
     if (!ifp)
-	return 0;
+	return NULL;
     return ifp->i->if_type;
 }
 
