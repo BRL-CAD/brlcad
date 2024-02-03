@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed rt crash rendering to -F/dev/null - Sean Morrison
 * fix double printing of last 'search -exec' result - Chris McGregor
 * improve 'search -v' to support multiple levels - Chris McGregor
 * update 'search -v' to report # of objects found - Chris McGregor
