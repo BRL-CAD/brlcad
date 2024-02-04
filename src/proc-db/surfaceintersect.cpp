@@ -797,7 +797,8 @@ FaceFaceIntersect(
     }
 
     int i, j;
-    ON_Curve *out1, *out2;
+    ON_Curve *out1 = NULL;
+    ON_Curve *out2 = NULL;
     ON_2dPoint start1, start2;
 
     for (i = 0; i < start_points1.Count(); i++) {
@@ -948,6 +949,11 @@ BrepBrepIntersect(
     for (i = 0; i < brep2->m_F.Count(); i++) {
 	MakeLoops(&brep2->m_F[i], intersection_curves2[i], trim_curves2[i], tol);
     }
+
+    /* FIXME: we allocated a lot of entities and stashed them in our
+     * 'x' Face_X_Face array, but never delete them (and there's no
+     * destructor).  The memory needs to be released before returning.
+     */
 
     /* XXX - unused */
     return false;
