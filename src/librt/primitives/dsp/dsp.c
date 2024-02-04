@@ -2035,8 +2035,8 @@ dsp_in_rpp(struct isect_stuff *isect,
     register fastf_t sv;
     register fastf_t rmin = -INFINITY;
     register fastf_t rmax =  INFINITY;
-    int dmin = -1;
-    int dmax = -1;
+    int dmin = XMIN;
+    int dmax = XMAX;
 
     /* Start with infinite ray, and trim it down */
 
