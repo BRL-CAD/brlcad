@@ -54,16 +54,18 @@ static ON_2dPoint
 incenter(const ON_2dPoint a, const ON_2dPoint b, const ON_2dPoint c)
 {
     fastf_t a_b, a_c, b_c, sum;
-    ON_2dPoint incenter;
+    ON_2dPoint incenter_pnt(0.0, 0.0);
 
     a_b = a.DistanceTo(b);
     a_c = a.DistanceTo(c);
     b_c = b.DistanceTo(c);
     sum = a_b + a_c + b_c;
 
-    incenter.x = (b_c * a.x + a_c * b.x + a_b * c.x) / sum;
-    incenter.y = (b_c * a.y + a_c * b.y + a_b * c.y) / sum;
-    return incenter;
+    if (sum > 0.0) {
+	incenter_pnt.x = (b_c * a.x + a_c * b.x + a_b * c.x) / sum;
+	incenter_pnt.y = (b_c * a.y + a_c * b.y + a_b * c.y) / sum;
+    }
+    return incenter_pnt;
 }
 
 
