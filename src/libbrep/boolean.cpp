@@ -1415,6 +1415,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 		LinkedCurve new_curve;
 		new_curve.Append(*c1);
 		if (dist > ON_ZERO_TOLERANCE) {
+		    /* FIXME: memory leak, we never delete the ON_LineCurve */
 		    new_curve.Append(SSICurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart())));
 		}
 		new_curve.Append(*c2);
@@ -1425,6 +1426,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 	    // Check whether tmp[i] is closed within a tolerance
 	    if (tmp[i].PointAtStart().DistanceTo(tmp[i].PointAtEnd()) < INTERSECTION_TOL && !tmp[i].IsClosed()) {
 		// make IsClosed() true
+		/* FIXME: memory leak, we never delete the ON_LineCurve */
 		tmp[i].Append(SSICurve(new ON_LineCurve(tmp[i].PointAtEnd(), tmp[i].PointAtStart())));
 	    }
 	}
