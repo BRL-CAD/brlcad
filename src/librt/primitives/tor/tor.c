@@ -146,10 +146,10 @@ const struct bu_structparse rt_tor_parse[] = {
 
 struct tor_specific {
     fastf_t tor_alpha;	/* 0 < (R2/R1) <= 1 */
-    fastf_t tor_r1;		/* for inverse scaling of k values. */
-    fastf_t tor_r2;		/* for curvature */
-    vect_t tor_V;		/* Vector to center of torus */
-    vect_t tor_N;		/* unit normal to plane of torus */
+    fastf_t tor_r1;	/* for inverse scaling of k values. */
+    fastf_t tor_r2;	/* for curvature */
+    vect_t tor_V;	/* Vector to center of torus */
+    vect_t tor_N;	/* unit normal to plane of torus */
     mat_t tor_SoR;	/* Scale(Rot(vect)) */
     mat_t tor_invR;	/* invRot(vect') */
 };
@@ -287,10 +287,15 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;		/* BAD */
     }
 
-    /* Validate that 0 < r2 <= r1 for alpha computation */
-    if (0.0 >= tip->r_h  || tip->r_h > tip->r_a) {
+    /* validate radii > 0 */
+    if (!(tip->r_a > 0.0) || !(tip->r_h > 0.0)) {
+	if (!(tip->r_a > 0.0)) {
+	    bu_log("tor(%s):  r1 > 0 is not true\n", stp->st_name);
+	}
+	if (!(tip->r_h > 0.0)) {
+	    bu_log("tor(%s):  r2 > 0 is not true\n", stp->st_name);
+	}
 	bu_log("r1 = %f, r2 = %f\n", tip->r_a, tip->r_h);
-	bu_log("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
 	return 1;		/* BAD */
     }
 
@@ -341,6 +346,29 @@ rt_tor_print(register const struct soltab *stp)
     VPRINT("N", tor->tor_N);
     bn_mat_print("S o R", tor->tor_SoR);
     bn_mat_print("invR", tor->tor_invR);
+}
+
+
+
+void matXvec(double result[3], const mat_t mat, const double vec[3]) {
+    for (int i = 0; i < 3; i++) {
+        result[i] = mat[i] * vec[0] + mat[i + 4] * vec[1] + mat[i + 8] * vec[2];
+    }
+}
+
+
+static int
+inside_overlapping_region(struct tor_specific *tor, point_t hp)
+{
+    fastf_t sq_dist = DIST_PNT_PNT_SQ(tor->tor_V, hp);
+    fastf_t sq_overlap_size = (tor->tor_r2 * tor->tor_r2) - (tor->tor_r1 * tor->tor_r1);
+
+    /* inside overlapping region's bounding sphere? */
+    if (sq_dist < sq_overlap_size) {
+        return 1;
+    }
+
+    return 0;
 }
 
 
@@ -533,8 +561,18 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    break;
     }
 
+    /* torus self-intersects, eliminate interior points */
+    if (tor->tor_r2 > tor->tor_r1) {
+	point_t hp = VINIT_ZERO;
+	VJOIN1(hp, rp->r_pt, k[1]*tor->tor_r1, rp->r_dir);
+	if (inside_overlapping_region(tor, hp)) {
+	    k[1] = k[3];
+	    i = 2;
+	}
+    }
+
     /* Now, t[0] > t[npts-1] */
-    /* k[1] is entry point, and k[0] is farthest exit point */
+    /* k[1] is entry point, and k[0] is next exit point */
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
     segp->seg_in.hit_dist = k[1]*tor->tor_r1;
@@ -549,7 +587,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	return 2;			/* HIT */
 
     /* 4 points */
-    /* k[3] is entry point, and k[2] is exit point */
+    /* k[3] is entry point, and k[2] is last exit point */
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
     segp->seg_in.hit_dist = k[3]*tor->tor_r1;
