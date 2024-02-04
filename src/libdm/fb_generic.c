@@ -450,6 +450,9 @@ fb_is_linear_cmap(register const ColorMap *cmap)
 {
     register int i;
 
+    if (!cmap)
+	return 0;
+
     for (i=0; i<256; i++) {
 	if (cmap->cm_red[i]>>8 != i)
 	    return 0;
@@ -467,6 +470,9 @@ fb_make_linear_cmap(register ColorMap *cmap)
 {
     register int i;
 
+    if (!cmap)
+	return 0;
+
     for (i=0; i<256; i++) {
 	cmap->cm_red[i] = i<<8;
 	cmap->cm_green[i] = i<<8;
@@ -477,6 +483,9 @@ fb_make_linear_cmap(register ColorMap *cmap)
 static void
 fb_cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap)
 {
+    if (!cmap)
+	return 0;
+
     unsigned short	*rp = cmap->cm_red;
     unsigned short	*gp = cmap->cm_green;
     unsigned short	*bp = cmap->cm_blue;
