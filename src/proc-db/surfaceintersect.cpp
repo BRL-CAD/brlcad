@@ -1040,6 +1040,12 @@ main(int UNUSED(argc), const char **argv)
     brep1.Create(surf1);
     brep2.Create(surf2);
     BrepBrepIntersect(&brep1, &brep2, 1e-3, 1e-9);
+
+    delete curve1;
+    delete curve2;
+    delete bezier1;
+    delete bezier2;
+
     return 0;
 }
 
