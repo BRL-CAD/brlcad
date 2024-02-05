@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Running"mged -c test.g" exits automatically on default prompt:
+  ...
+  Create new database (y|n)[n]? 
+  Warning: no database is currently open!
+  morrison@Miniagua .build %
+
 * TGC tess fails when we have a near-zero c axis and a larger d
   axis, or vice versa.
 
