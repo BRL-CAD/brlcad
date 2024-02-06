@@ -381,7 +381,10 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     optcnt = 0;
     for (i = 1; i < (size_t)argc; i++) {
 	if ((argv_orig[i][0] == '-')) {
-	    optcnt++;
+	    int len = strlen(argv_orig[i]);
+	    if ((len == 2) || (len > 1 && argv_orig[i][1] == 'v'))
+		// ugly, but verbosity is currently the only option that can have more than 1 character
+		optcnt++;
 	} else {
 	    break;
 	}
