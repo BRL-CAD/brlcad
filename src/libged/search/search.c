@@ -279,13 +279,13 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
 }
 
 
-static void
+static int
 search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
 {
     size_t len;
 
     if (!objs || !out)
-	return;
+	return 0;
 
     len = BU_PTBL_LEN(objs);
     if (len > 0) {
@@ -296,6 +296,8 @@ search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
 	    bu_vls_printf(out, "%s\n", uniq_dp->d_namep);
 	}
     }
+
+    return BU_PTBL_LEN(objs);
 }
 
 /* -v can be supplied multiple times for growing verbosity
@@ -359,8 +361,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int path_found = 0;
     int all_local = 1;
     int print_verbose_info = DB_FP_PRINT_COMB_INDEX;
-    int search_ret = 0; /* capture return code from db_search(..) */
-    int search_cnt = 0; /* used to keep a running total of all items found in search */
+    int search_cnt = 0; /* used to keep a running total of all items printed from search */
     struct bu_vls prefix = BU_VLS_INIT_ZERO;
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
@@ -589,14 +590,13 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 	    while (path_cnt < search->path_cnt) {
 		flags |= DB_SEARCH_RETURN_UNIQ_DP;
-		search_ret = db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
-		if (search_ret > 0) search_cnt += search_ret;
+		(void)db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
 		path_cnt++;
 		curr_path = search->paths[path_cnt];
 	    }
 	}
 
-	search_print_objs_to_vls(uniq_db_objs, gedp->ged_result_str);
+	search_cnt += search_print_objs_to_vls(uniq_db_objs, gedp->ged_result_str);
 
 	bu_ptbl_free(uniq_db_objs);
 	bu_free(uniq_db_objs, "free unique object container");
@@ -635,13 +635,12 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			struct directory *dp;
 			for (dp = gedp->dbip->dbi_Head[k]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 			    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-				search_ret = db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->dbip, ctx);
-				if (search_ret > 0) search_cnt += search_ret;
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->dbip, ctx);
 			    }
 			}
 		    }
 
-		    search_print_objs_to_vls(search_results, gedp->ged_result_str);
+		    search_cnt += search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
 		    db_search_free(search_results);
 		    bu_free(search_results, "free search container");
@@ -662,8 +661,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			switch (search->search_type) {
 			    case 0:
 				flags &= ~DB_SEARCH_RETURN_UNIQ_DP;
-				search_ret = db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
-				if (search_ret > 0) search_cnt += search_ret;
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
 
 				sr_len = j = BU_PTBL_LEN(search_results);
 				if (sr_len > 0) {
@@ -679,14 +677,15 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 					    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&fullpath_string));
 					}
 				    }
+
+				    search_cnt += sr_len;
 				}
 				break;
 			    case 1:
 				flags |= DB_SEARCH_RETURN_UNIQ_DP;
-				search_ret = db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
-				if (search_ret > 0) search_cnt += search_ret;
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
 
-				search_print_objs_to_vls(search_results, gedp->ged_result_str);
+				search_cnt += search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
 				break;
 			    default:
