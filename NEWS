@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* improved rtwizard command-line option reporting - Sean Morrison
 * added self-intersecting torus ray tracing support - Sean Morrison
 * fixed rt crash rendering to -F/dev/null - Sean Morrison
 * fix double printing of last 'search -exec' result - Chris McGregor
