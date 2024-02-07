@@ -59,7 +59,7 @@ if {![info exists ::RtWizard::wizard_state(ne_color)]} { set ::RtWizard::wizard_
 # Occlusion mode
 if {![info exists ::RtWizard::wizard_state(occmode)]} { set ::RtWizard::wizard_state(occmode) 1 }
 # Ghost intensity
-if {![info exists ::RtWizard::wizard_state(ghosting_intensity)]} { set ::RtWizard::wizard_state(ghosting_intensity) 12 }
+if {![info exists ::RtWizard::wizard_state(ghost_intensity)]} { set ::RtWizard::wizard_state(ghost_intensity) 12 }
 # Pix width
 if {![info exists ::RtWizard::wizard_state(width)]} { set ::RtWizard::wizard_state(width) 512 }
 # Pix height (number of scan lines)
@@ -208,7 +208,7 @@ if {[info exists ::use_gui]} {
        _ecolor $::RtWizard::wizard_state(e_color) \
        _necolor $::RtWizard::wizard_state(ne_color)\
        _occmode $::RtWizard::wizard_state(occmode) \
-       _gamma $::RtWizard::wizard_state(ghosting_intensity) \
+       _gamma $::RtWizard::wizard_state(ghost_intensity) \
        _color_objects  $::RtWizard::wizard_state(color_objlist) \
        _ghost_objects  $::RtWizard::wizard_state(ghost_objlist) \
        _edge_objects  $::RtWizard::wizard_state(line_objlist) \
