@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <bu.h>
 #include <ged.h>
 
@@ -122,6 +123,7 @@ main(int ac, char *av[]) {
 	    ret_code += run_search_check_count(dbp, 3, 2, "-type", "region");
 	    break;
 	case 3:
+	{
 	    // verbosity
 	    const char *cmd[6] = {"search", "-v", ".", "-type", "region", NULL};
 	    ged_exec(dbp, 5, cmd);
@@ -152,6 +154,7 @@ main(int ac, char *av[]) {
 		break;
 	    }
 	    break;
+	}
 	default:
 	    goto finish_tests;
 	    break;
