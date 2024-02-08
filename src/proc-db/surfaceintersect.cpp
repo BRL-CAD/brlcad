@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2023 United States Government as represented by
+ * Copyright (c) 2009-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -797,7 +797,8 @@ FaceFaceIntersect(
     }
 
     int i, j;
-    ON_Curve *out1, *out2;
+    ON_Curve *out1 = NULL;
+    ON_Curve *out2 = NULL;
     ON_2dPoint start1, start2;
 
     for (i = 0; i < start_points1.Count(); i++) {
@@ -949,6 +950,11 @@ BrepBrepIntersect(
 	MakeLoops(&brep2->m_F[i], intersection_curves2[i], trim_curves2[i], tol);
     }
 
+    /* FIXME: we allocated a lot of entities and stashed them in our
+     * 'x' Face_X_Face array, but never delete them (and there's no
+     * destructor).  The memory needs to be released before returning.
+     */
+
     /* XXX - unused */
     return false;
 }
@@ -1040,6 +1046,12 @@ main(int UNUSED(argc), const char **argv)
     brep1.Create(surf1);
     brep2.Create(surf2);
     BrepBrepIntersect(&brep1, &brep2, 1e-3, 1e-9);
+
+    delete curve1;
+    delete curve2;
+    delete bezier1;
+    delete bezier2;
+
     return 0;
 }
 

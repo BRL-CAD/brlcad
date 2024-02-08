@@ -41,6 +41,7 @@ set(bu_headers
   tc.h
   time.h
   units.h
+  user.h
   uuid.h
   version.h
   vfont.h

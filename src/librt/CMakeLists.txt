@@ -213,6 +213,8 @@ set(LIBRT_SOURCES
   primitives/tgc/tgc.c
   primitives/tgc/tgc_brep.cpp
   primitives/tgc/tgc_mirror.c
+  primitives/tgc/tgc_tess.c
+  primitives/tgc/tgc_tnurb.c
   primitives/tor/tor.c
   primitives/tor/tor_brep.cpp
   primitives/tor/tor_mirror.c

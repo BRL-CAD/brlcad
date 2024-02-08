@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2023 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,8 +50,8 @@
 #include <stddef.h>
 #include <math.h>
 #include <string.h>
+#include <stdbool.h>
 #include "bio.h"
-
 
 #include "bu/parallel.h"
 #include "bu/cv.h"
@@ -705,6 +705,35 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 
+#if 0
+static bool
+arb_is_concave(const struct arb_specific *arbp, const struct bn_tol *tol)
+{
+    /* iterate over all plane equation face pairings */
+    for (int i = 0; i < arbp->arb_nmfaces; i++) {
+        for (int j = i + 1; j < arbp->arb_nmfaces; j++) {
+            /* check whether any vertices are in front of a given face */
+            for (int k = 0; k < arbp->arb_nmfaces; k++) {
+                if (k != i && k != j) {
+		    /* positive means point is in front of the face */
+		    fastf_t dist = DIST_PNT_PLANE(arbp->arb_face[k].A, arbp->arb_face[i].peqn);
+		    // bu_log("dist = %lf\n", dist);
+                    if (dist > tol->dist) {
+			// bu_log("DIST > %.16lf = %.16lf\n", tol->dist, dist);
+
+			/* concave */
+			return true;
+                    }
+                }
+            }
+        }
+    }
+
+    /* convex */
+    return false;
+}
+#endif
+
 /**
  * This is packaged as a separate function, so that it can also be
  * called "on the fly" from the UV mapper.
@@ -718,6 +747,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 {
     register int i;
     struct prep_arb pa;
+    struct arb_specific *arbp = NULL;;
 
     RT_ARB_CK_MAGIC(aip);
 
@@ -735,7 +765,6 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
      * exact number of faces.
      */
     {
-	register struct arb_specific *arbp;
 	if ((arbp = (struct arb_specific *)stp->st_specific) == 0) {
 	    arbp = (struct arb_specific *)bu_malloc(
 		sizeof(struct arb_specific) +
@@ -764,6 +793,10 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	    arbp->arb_opt = (struct oface *)0;
 	}
     }
+
+#if 0
+    bu_log("ARB IS CONCAVE == %d\n", arb_is_concave(arbp, &rtip->rti_tol));
+#endif
 
     /*
      * Compute bounding sphere which contains the bounding RPP.

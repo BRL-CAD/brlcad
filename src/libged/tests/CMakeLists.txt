@@ -21,6 +21,10 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/ged_test_material.g)
 BRLCAD_ADDEXEC(ged_test_select test_select.c libged TEST)
 add_dependencies(ged_test_select ged_plugins)
 
+BRLCAD_ADDEXEC(ged_test_search test_search.c libged TEST)
+add_dependencies(ged_test_search ged_plugins)
+BRLCAD_ADD_TEST(NAME ged_test_search COMMAND ged_test_search "${CMAKE_CURRENT_SOURCE_DIR}/search_tests.g")
+
 add_subdirectory(bot)
 add_subdirectory(draw)
 
@@ -29,6 +33,7 @@ add_subdirectory(draw)
 # breaking commands.
 CMAKEFILES(
   lint_tests.g
+  search_tests.g
   obb_tests.g
   ged_tests.g
   pnts_in_out.g

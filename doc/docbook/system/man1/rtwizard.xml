@@ -250,7 +250,7 @@
       </varlistentry>
       <varlistentry>
         <term><option>-G</option> <replaceable>value</replaceable></term>
-        <term><option>--ghosting-intensity</option> <replaceable>value</replaceable></term>
+        <term><option>--ghost-intensity</option> <replaceable>value</replaceable></term>
         <listitem>
           <para>
             Control the degree of visibility to use when rendering
@@ -335,7 +335,7 @@
             produced by <command>rtwizard</command> are categorized by
             <emphasis remap="I">picture type</emphasis>.  There are
             six picture types built on full color raytracing,
-            ghosting, and edge line renderings.
+            ghost, and edge line renderings.
           </para>
           <para>
             NOTE: If a type is specified and insufficient information
@@ -528,7 +528,7 @@
   <refsection xml:id="copyright">
     <title>COPYRIGHT</title>
 
-    <para>This software is Copyright (c) 2001-2023 United States
+    <para>This software is Copyright (c) 2001-2024 United States
     Government as represented by the U.S. Army Research
     Laboratory.</para>
   </refsection>

@@ -96,10 +96,12 @@ d2.r
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis remap="B" role="bold">-v</emphasis></term>
+	<term><emphasis remap="B" role="bold">-v[v..]</emphasis></term>
 	<listitem>
 	  <para>
-	    Prints extra information in full path results.
+	    Prints extra (verbose) information in results. Can be stacked up to 3 times for
+	    increasingly verbose printing. (See <link linkend="v_examples">Example 22</link>
+	    for in-depth usage)
 	  </para>
 	</listitem>
       </varlistentry>
@@ -970,10 +972,60 @@ d2.r
       </para>
     </example>
     
-    <example><title>Verbose Reporting of Search Information </title>
+    <example xml:id="v_examples"><title>Verbose Reporting of Search Information </title>
+      <para>
+	  Search allows for multiple levels of verbose reporting. The first level will report the 
+	  total number of items found. The second level will report the boolean operator used at each step
+	  along the path. The next, and final level, will report the primitive type of each object along
+	  the path. Increased verbosity can be supplied two different ways; as a single flag with
+	  each 'v' indicating an elevated level (search -vv.. ), as well as stacked -v flags (search -v -v ..).
+      </para>
 
       <para>
         <prompt>mged&gt; </prompt><userinput>search -v /all.g ! -type comb</userinput>
+	<literallayout class="normal">
+/all.g/box.r/box.s
+/all.g/cone.r/cone.s
+/all.g/ellipse.r/ellipse.s
+/all.g/light.r/LIGHT
+/all.g/platform.r/platform.s
+/all.g/tor.r/tor
+[6] items found in search
+	</literallayout>
+      </para>
+      <para>
+	First level of verbosity will print the total number of items found in the search. This is especially
+	useful when coupled with the '-exec' flag which may or may not print the number of items effected by
+	the exec.
+      </para>
+
+      <para>
+	  <literallayout class="normal">
+<prompt>mged&gt; </prompt><userinput>search -vv /all.g ! -type comb</userinput>
+    OR
+<prompt>mged&gt; </prompt><userinput>search -v -v /all.g ! -type comb</userinput>
+	  </literallayout>
+	<literallayout class="normal">
+/u all.g/u box.r/u box.s
+/u all.g/u cone.r/u cone.s
+/u all.g/u ellipse.r/u ellipse.s
+/u all.g/u light.r/u LIGHT
+/u all.g/u platform.r/u platform.s
+/u all.g/u tor.r/u tor
+[6] items found in search
+	</literallayout>
+      </para>
+      <para>
+	Second level of verbosity will print the total number of items found in the search as well as the
+	boolean operators at each step along the path.
+      </para>
+
+      <para>
+	<literallayout class="normal">
+<prompt>mged&gt; </prompt><userinput>search -vvv /all.g ! -type comb</userinput>
+    OR
+<prompt>mged&gt; </prompt><userinput>search -v -v -v /all.g ! -type comb</userinput>
+	</literallayout>
 	<literallayout class="normal">
 /u all.g(c)/u platform.r(r)/u platform.s(arb8)
 /u all.g(c)/u box.r(r)/u box.s(arb8)
@@ -981,12 +1033,12 @@ d2.r
 /u all.g(c)/u ellipse.r(r)/u ellipse.s(ell)
 /u all.g(c)/u tor.r(r)/u tor(tor)
 /u all.g(c)/u light.r(r)/u LIGHT(ell)
+[6] items found in search
 	</literallayout>
       </para>
       <para>
-	Report all paths ending in an object that is not a comb using "verbose" output style. The
-	verbose form of path reporting reports not just the path, but the boolean operator used at
-	each setp along the path and the primitive type of each object along the path.
+	At max verbosity, print the total number of items found in the search, the boolean operators, and
+	finally	the primitive type of each object along the path.
       </para>
     </example>
 
@@ -1063,7 +1115,7 @@ d2.r
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
-      This software is Copyright (c) 2008-2023 United States Government as
+      This software is Copyright (c) 2008-2024 United States Government as
       represented by the U.S. Army Research Laboratory.
       Portions Copyright 1990, 1993, 1994 The Regents of the University of California,
       per copyright and license information from OpenBSD and NetBSD.  For more details
