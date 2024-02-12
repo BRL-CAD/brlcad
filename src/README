@@ -1,16 +1,8 @@
-Contained in this directory are the sources to BRL-CAD.  This
-presently includes over 400+ tools and more than two dozen libraries
-across more than a million lines of source code.  The contents of the
-individual directories are briefly described below.
-	It is part of BRL-CAD's intentional build infrastructure
-design consideration to not require the installation of minor 3rd
-party external codes in order for the package to compile or operate
-correctly.  As part of this philosophy, the majority of BRL-CAD's
-required and optional dependencies are preconfigured and bundled with
-the package in the "other" directory.  For those components of BRL-CAD
-that have library dependencies that are not easily bundled in a
-cross-platform sustainable manner, such as linkages to commercial
-libraries, said components are included in the "external" directory.
+BRL-CAD's source code is more than a million lines of logic spanning
+over 400+ tools and more than two dozen libraries.  Most of BRL-CAD's
+3rd-party dependencies are preconfigured and bundled in the "other"
+subdirectory.  Public interface headers to BRL-CAD's libraries are
+alongside this 'src' directory in the top-level 'include' directory.
 
 Contents
 --------
