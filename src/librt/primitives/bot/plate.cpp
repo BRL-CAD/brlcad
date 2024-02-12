@@ -31,6 +31,7 @@
 #include "manifold/manifold.h"
 
 #include "vmath.h"
+#include "bu/time.h"
 #include "bn/tol.h"
 #include "bg/defines.h"
 #include "rt/defines.h"
@@ -177,6 +178,10 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     bu_log("Processing %zd vertices... done.\n" , verts.size());
 
     std::set<std::pair<int, int>>::iterator e_it;
+    size_t ecnt = 0;
+    int64_t start = bu_gettime();
+    int64_t elapsed = 0;
+    fastf_t seconds = 0.0;
     bu_log("Processing %zd edges... \n" , edges.size());
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
@@ -239,6 +244,15 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	manifold::Manifold left = c;
 	manifold::Manifold right(rcc_m);
 	c = left.Boolean(right, manifold::OpType::Add);
+
+	ecnt++;
+	elapsed = bu_gettime() - start;
+	seconds = elapsed / 1000000.0;
+
+	if (seconds > 5) {
+	    start = bu_gettime();
+	    bu_log("Processed %zd of %zd edges\n", ecnt, edges.size());
+	}
     }
     bu_log("Processing %zd edges... done.\n" , edges.size());
 
