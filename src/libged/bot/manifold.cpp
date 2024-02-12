@@ -313,6 +313,11 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    if (!in_place_repair && db_lookup(gb->gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file extrude.cpp
+/** @file plate.cpp
  *
  * Given a plate mode bot, represent its volumetric thickness with
  * individual CSG primitives, then tessellate and combine them to
@@ -31,9 +31,15 @@
 #include "manifold/manifold.h"
 
 #include "vmath.h"
-#include "raytrace.h"
-#include "../../ged_private.h"
-#include "./tessellate.h"
+#include "bn/tol.h"
+#include "bg/defines.h"
+#include "rt/defines.h"
+#include "rt/db5.h"
+#include "rt/db_internal.h"
+#include "rt/functab.h"
+#include "rt/global.h"
+#include "rt/nmg_conv.h"
+#include "rt/primitives/bot.h"
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
@@ -58,7 +64,7 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 }
 
 int
-plate_eval(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     if (!obot || !bot || !ttol || !tol)
 	return 1;
@@ -84,14 +90,6 @@ plate_eval(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const str
     // OK, we have volume.  Now we need to build up the manifold definition
     // using unioned CSG elements
     manifold::Manifold c;
-
-    // TODO - right now, the edge processing in particular results in high memory
-    // consumption, compared to the size of the final bot.  I'm wondering if this
-    // is because the face additions clear a lot of the edge triangles, and we might
-    // do better to march over the faces, keep the "already processed" verts and
-    // edges in unordered sets, and just add any verts and edges from each new face
-    // that we've not already seen before.  This will "cull as we go" when it comes
-    // to the edge cylinders.
 
     // Collect the active vertices and edges
     std::set<int> verts;

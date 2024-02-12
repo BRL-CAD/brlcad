@@ -129,8 +129,6 @@ method_opt(int *method_flags)
     return NULL;
 }
 
-// TODO - investigate Merge function in Manifold -
-// https://manifoldcad.org/docs/html/structmanifold_1_1_mesh_g_l.html
 static int
 bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip, int flip)
 {
@@ -574,7 +572,6 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	return BRLCAD_ERROR;
 
     struct ged *gedp = s->gedp;
-    struct rt_bot_internal *bot;
     struct rt_wdb *wwdbp;
     union tree *ftree;
 
@@ -652,6 +649,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     // Sort dp objects by d_len using a priority queue
     std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> pq;
     std::queue<struct directory *> q_dsp;
+    std::queue<struct directory *> q_pbot;
     for (size_t i = 0; i < BU_PTBL_LEN(&leaf_dps); i++) {
 	struct directory *ldp = (struct directory *)BU_PTBL_GET(&leaf_dps, i);
 
@@ -665,10 +663,33 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	    q_dsp.push(ldp);
 	    continue;
 	}
+
+	// Plate mode bots only have a realistic chance of being handled by
+	// the plate to vol conversion method, but they can be quite slow
+	// and will run into max-time limitations if they are large.  Separate
+	// them out - we will treat their handling like a fallback method and
+	// be more tolerant of time
+	if (ldp->d_minor_type == ID_BOT) {
+	    struct rt_db_internal intern;
+	    RT_DB_INTERNAL_INIT(&intern);
+	    if (rt_db_get_internal(&intern, ldp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+		pq.push(ldp);
+		continue;
+	    }
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)(intern.idb_ptr);
+	    int propVal = (int)rt_bot_propget(bot, "type");
+	    // Plate mode BoTs need an explicit volume representation
+	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
+		q_pbot.push(ldp);
+		continue;
+	    }
+	}
+
+	// Standard case
 	pq.push(ldp);
     }
 
-    if (pq.empty() && q_dsp.empty()) {
+    if (pq.empty() && q_dsp.empty() && q_pbot.empty()) {
 	bu_log("No viable objects for tessellation found.\n");
 	bu_dirclear(wdir);
 	return BRLCAD_OK;
@@ -818,6 +839,27 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	}
     }
 
+    while (!q_pbot.empty()) {
+	tess_cmd[7] = "--nmg";
+	if (q_pbot.empty())
+	    break;
+	struct directory *ldp = q_pbot.front();
+	tess_cmd[cmd_fixed_cnt] = ldp->d_namep;
+	q_pbot.pop();
+
+	// Plate mode to vol evaluation can be slow, so be generous about time
+	bu_vls_sprintf(&max_time_str, "%d", (int)(s->max_time));
+	
+	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time);
+	if (err_cnt) {
+	    // If we couldn't handle the plate mode conversion, we can't do the
+	    // boolean evaluation
+	    bu_log("Plate mode conversion wasn't able to complete in %d seconds - recommend larger max-time value\n", (int)s->max_time);
+	    bu_dirclear(wdir);
+	    return BRLCAD_ERROR;
+	}
+    }
+
     // Re-open working .g copy after BoTs have replaced CSG solids and perform
     // the tree walk to set up Manifold data.
     struct db_i *wdbip = db_open(wfile, DB_OPEN_READONLY);
@@ -895,6 +937,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     if (ftree->tr_d.td_d) {
 	manifold::Manifold *om = (manifold::Manifold *)ftree->tr_d.td_d;
 	manifold::Mesh rmesh = om->GetMesh();
+	struct rt_bot_internal *bot;
 	BU_GET(bot, struct rt_bot_internal);
 	bot->magic = RT_BOT_INTERNAL_MAGIC;
 	bot->mode = RT_BOT_SOLID;

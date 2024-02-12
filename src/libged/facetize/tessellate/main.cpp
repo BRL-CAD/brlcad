@@ -29,7 +29,7 @@
 
 #include "bu/app.h"
 #include "bu/opt.h"
-
+#include "rt/primitives/bot.h"
 #include "ged.h"
 #include "./tessellate.h"
 
@@ -195,7 +195,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct db_i *dbip, struct directory
 		return BRLCAD_OK;
 	    // Plate mode BoTs need an explicit volume representation
 	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
-		ret = plate_eval(obot, bot, s->ttol, s->tol);
+		return rt_bot_plate_to_vol(obot, bot, s->ttol, s->tol);
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.

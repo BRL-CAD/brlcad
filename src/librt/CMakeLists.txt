@@ -22,6 +22,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
   ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
   ${REGEX_INCLUDE_DIRS}
+  ${MANIFOLD_INCLUDE_DIRS}
   )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
@@ -106,6 +107,7 @@ set(LIBRT_SOURCES
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/bot/decimate.c
+  primitives/bot/plate.cpp
   primitives/brep/brep.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
@@ -382,7 +384,7 @@ if(BRLCAD_ENABLE_SPR)
 endif(BRLCAD_ENABLE_SPR)
 
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${librt_deps};${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${librt_deps};${OPENNURBS_LIBRARIES};${MANIFOLD_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
