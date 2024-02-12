@@ -968,6 +968,10 @@ endif (BRLCAD_ENABLE_OPENMESH)
 find_package_reset(MANIFOLD RESET_TP)
 set(MANIFOLD_ROOT "${CMAKE_BINARY_DIR}")
 find_package(MANIFOLD)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} manifold)
+list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} manifold CACHE STRING "Bundled system include dirs" FORCE)
+
 
 # Geogram - a programming library with geometric algorithms
 # https://github.com/BrunoLevy/geogram
