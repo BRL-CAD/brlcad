@@ -168,6 +168,7 @@ set(G_SAMPLE_MODELS
   prim.asc
   radialgrid.asc
   rounds.asc
+  shipping_container.asc
   tank_car.asc
   terra.asc
   toyjeep.asc
