@@ -125,8 +125,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	edges_fcnt[std::make_pair(e31, e32)]++;
     }
 
-    int ecnt = 0;
     std::set<int>::iterator v_it;
+    bu_log("Processing %zd vertices... \n" , verts.size());
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	point_t v;
 	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
@@ -173,12 +173,11 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	manifold::Manifold left = c;
 	manifold::Manifold right(sph_m);
 	c = left.Boolean(right, manifold::OpType::Add);
-	bu_log("Vert %d\n" , ecnt);
-	ecnt++;
     }
+    bu_log("Processing %zd vertices... done.\n" , verts.size());
 
-    ecnt = 0;
     std::set<std::pair<int, int>>::iterator e_it;
+    bu_log("Processing %zd edges... \n" , edges.size());
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
 	// Make an rcc along the edge a radius based on the thickness
@@ -240,11 +239,11 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	manifold::Manifold left = c;
 	manifold::Manifold right(rcc_m);
 	c = left.Boolean(right, manifold::OpType::Add);
-	bu_log("Edge %d\n" , ecnt);
-	ecnt++;
     }
+    bu_log("Processing %zd edges... done.\n" , edges.size());
 
     // Now, handle the primary arb faces
+    bu_log("Processing %zd faces...\n" , bot->num_faces);
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t pnts[6];
 	point_t pf[3];
@@ -329,8 +328,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	manifold::Manifold left = c;
 	manifold::Manifold right(arb_m);
 	c = left.Boolean(right, manifold::OpType::Add);
-	bu_log("Face %zd\n" , i);
     }
+    bu_log("Processing %zd faces... done.\n" , bot->num_faces);
 
     manifold::Mesh rmesh = c.GetMesh();
     struct rt_bot_internal *rbot;
