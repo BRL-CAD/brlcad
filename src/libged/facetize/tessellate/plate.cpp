@@ -158,6 +158,8 @@ plate_eval(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const str
 	if (!sbot)
 	    continue;
 
+	nmg_km(m);
+
 	manifold::Mesh sph_m;
 	for (size_t j = 0; j < sbot->num_vertices ; j++)
 	    sph_m.vertPos.push_back(glm::vec3(sbot->vertices[3*j], sbot->vertices[3*j+1], sbot->vertices[3*j+2]));
@@ -222,6 +224,8 @@ plate_eval(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const str
 	struct rt_bot_internal *cbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
 	if (!cbot)
 	    continue;
+
+	nmg_km(m);
 
 	manifold::Mesh rcc_m;
 	for (size_t j = 0; j < cbot->num_vertices; j++)
@@ -309,6 +313,8 @@ plate_eval(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const str
 	struct rt_bot_internal *abot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
 	if (!abot)
 	    continue;
+
+	nmg_km(m);
 
 	manifold::Mesh arb_m;
 	for (size_t j = 0; j < abot->num_vertices; j++)
