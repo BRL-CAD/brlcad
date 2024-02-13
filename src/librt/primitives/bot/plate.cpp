@@ -28,7 +28,13 @@
 
 #include <set>
 
+// flag to enable writing debugging output in case of boolean failure
+#define CHECK_INTERMEDIATES 1
+
 #include "manifold/manifold.h"
+#ifdef CHECK_INTERMEDIATES
+#  include "manifold/meshIO.h"
+#endif
 
 #include "vmath.h"
 #include "bu/time.h"
@@ -173,7 +179,22 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	manifold::Manifold left = c;
 	manifold::Manifold right(sph_m);
-	c = left.Boolean(right, manifold::OpType::Add);
+
+	try {
+	    c = left.Boolean(right, manifold::OpType::Add);
+#if defined(CHECK_INTERMEDIATES)
+	    c.GetMesh();
+#endif
+	} catch (const std::exception &e) {
+	    bu_log("Vertices - manifold boolean op failure\n");
+	    std::cerr << e.what() << "\n";
+#if defined(CHECK_INTERMEDIATES)
+	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
+	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
+	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
+#endif
+	    return -1;
+	}
     }
     bu_log("Processing %zd vertices... done.\n" , verts.size());
 
@@ -243,7 +264,21 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	manifold::Manifold left = c;
 	manifold::Manifold right(rcc_m);
-	c = left.Boolean(right, manifold::OpType::Add);
+	try {
+	    c = left.Boolean(right, manifold::OpType::Add);
+#if defined(CHECK_INTERMEDIATES)
+	    c.GetMesh();
+#endif
+	} catch (const std::exception &e) {
+	    bu_log("Edges - manifold boolean op failure\n");
+	    std::cerr << e.what() << "\n";
+#if defined(CHECK_INTERMEDIATES)
+	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
+	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
+	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
+#endif
+	    return -1;
+	}
 
 	ecnt++;
 	elapsed = bu_gettime() - start;
@@ -341,7 +376,22 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	manifold::Manifold left = c;
 	manifold::Manifold right(arb_m);
-	c = left.Boolean(right, manifold::OpType::Add);
+
+	try {
+	    c = left.Boolean(right, manifold::OpType::Add);
+#if defined(CHECK_INTERMEDIATES)
+	    c.GetMesh();
+#endif
+	} catch (const std::exception &e) {
+	    bu_log("Faces - manifold boolean op failure\n");
+	    std::cerr << e.what() << "\n";
+#if defined(CHECK_INTERMEDIATES)
+	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
+	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
+	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
+#endif
+	    return -1;
+	}
     }
     bu_log("Processing %zd faces... done.\n" , bot->num_faces);
 
