@@ -244,6 +244,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
 	    continue;
 
+	// TODO - cylinders produced by this method sometimes are resulting in
+	// very nasty bots.  Visual inspection suggests the NMG form is more
+	// properly structured, so unclear what is happening when producing the BoT
 	struct rt_bot_internal *cbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
 	if (!cbot)
 	    continue;
@@ -271,6 +274,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 #endif
 	} catch (const std::exception &e) {
 	    bu_log("Edges - manifold boolean op failure\n");
+	    bu_log("v: %g %g %g\n", V3ARGS(tgc.v));
+	    bu_log("h: %g %g %g\n", V3ARGS(tgc.h));
+	    bu_log("r: %g\n", r);
 	    std::cerr << e.what() << "\n";
 #if defined(CHECK_INTERMEDIATES)
 	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
