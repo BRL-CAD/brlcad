@@ -708,10 +708,12 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     struct bu_vls rel_str = BU_VLS_INIT_ZERO;
     struct bu_vls norm_str = BU_VLS_INIT_ZERO;
     struct bu_vls max_time_str = BU_VLS_INIT_ZERO;
+    struct bu_vls debug_str = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&abs_str, "%0.17f", wdbp->wdb_ttol.abs);
     bu_vls_sprintf(&rel_str, "%0.17f", wdbp->wdb_ttol.rel);
     bu_vls_sprintf(&norm_str, "%0.17f", wdbp->wdb_ttol.norm);
     bu_vls_sprintf(&max_time_str, "%d", (int)(0.5*s->max_time));
+    bu_vls_sprintf(&debug_str, "0x%08lx", (unsigned long)NMG_DEBUG_TRI);
     int method_flags = s->method_flags;
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[ 0] = tess_exec;
@@ -726,7 +728,9 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     tess_cmd[ 9] = bu_vls_cstr(&max_time_str);
     tess_cmd[10] = "-O";
     tess_cmd[11] = wfile;
-    int cmd_fixed_cnt = 12;
+    tess_cmd[12] = "--nmg-debug";
+    tess_cmd[13] = bu_vls_cstr(&debug_str);
+    int cmd_fixed_cnt = 14;
     while (!pq.empty()) {
 
 	// There are a number of methods that can be tried.  We try them in priority

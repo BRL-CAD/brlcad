@@ -330,11 +330,12 @@ main(int argc, const char **argv)
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
     struct bn_tol tol = BN_TOL_INIT_TOL;
     struct tess_opts s = TESS_OPTS_DEFAULT;
+    struct bu_vls nmg_debug_str = BU_VLS_INIT_ZERO;
     s.ttol = &ttol;
     s.tol = &tol;
     s.feature_scale = 0.15;  // Set default.
 
-    struct bu_opt_desc d[20];
+    struct bu_opt_desc d[21];
     BU_OPT(d[ 0],  "h",                  "help",  "",            NULL,                  &print_help, "Print help and exit");
     BU_OPT(d[ 1],  "O",             "overwrite",  "",            NULL,           &(s.overwrite_obj), "Replace original object with BoT");
     BU_OPT(d[ 2],   "",               "tol-abs", "#", &bu_opt_fastf_t,                  &(ttol.abs), "Absolute distance tolerance");
@@ -354,7 +355,8 @@ main(int argc, const char **argv)
     BU_OPT(d[16],   "",            "spsr-depth", "#",     &bu_opt_int,            &(s.s_opts.depth), "Maximum reconstruction depth (default 8)");
     BU_OPT(d[17],  "w",      "spsr-interpolate", "#", &bu_opt_fastf_t,     &(s.s_opts.point_weight), "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
     BU_OPT(d[18],   "", "spsr-samples-per-node", "#", &bu_opt_fastf_t, &(s.s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
-    BU_OPT_NULL(d[19]);
+    BU_OPT(d[19],   "",             "nmg-debug", "#",     &bu_opt_vls,               &nmg_debug_str, "libnmg debug flags");
+    BU_OPT_NULL(d[20]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
@@ -362,6 +364,7 @@ main(int argc, const char **argv)
     if (argc < 0) {
 	bu_log("Option parsing error: %s\n", bu_vls_cstr(&omsg));
 	bu_vls_free(&omsg);
+	bu_vls_free(&nmg_debug_str);
 	bu_exit(BRLCAD_ERROR, "%s failed", bu_getprogname());
     }
     bu_vls_free(&omsg);
@@ -379,8 +382,15 @@ main(int argc, const char **argv)
 
 	bu_log("%s\n", bu_vls_cstr(&str));
 	bu_vls_free(&str);
+	bu_vls_free(&nmg_debug_str);
         return BRLCAD_OK;
     }
+
+    if (bu_vls_strlen(&nmg_debug_str)) {
+	long l = std::stol(bu_vls_cstr(&nmg_debug_str), nullptr, 16);
+	nmg_debug |= l;
+    }
+    bu_vls_free(&nmg_debug_str);
 
 
     // If no method(s) were specified, try everything
