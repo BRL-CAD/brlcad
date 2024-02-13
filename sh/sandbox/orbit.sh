@@ -35,44 +35,37 @@
 #
 ###
 #
-# Create an animation orbiting a given geometry.
+# Create a simple animated visualization orbiting around geometry.
+#
+# The script passes all supplied arguments to rt, with each call also
+# passing -a azimuth options from 0 to 359.  The output is either an
+# mpg movie.
+#
 
 
-FILE="$1"
-WIDTH=512
-HEIGHT=512
-ELEVATION=35
-
-
-if test "$2" = "" ; then
-    echo "Usage: orbit.sh [-w <width>] [-n <height>] [-e <elevation>] filename.g obj1 obj2..."
+if test $# -lt 2 ; then
+    echo "Usage: orbit.sh [-e <elevation>] [...other rt options...] filename.g obj1 obj2..."
     exit 1
 fi
 
-set -- `getopt e:s:S:w:n:W:N: $*`
-while : ; do
-    case $1 in
-	-e)
-	    ELEVATION=$2; shift;;
-	-s|-S)
-	    WIDTH=$2; HEIGHT=$2; shift;;
-	-w|-W)
-	    WIDTH=$2; shift;;
-	-n|-N)
-	    HEIGHT=$2; shift;;
-	--)
-	    break;
-    esac
-    shift
+for arg in "$@" ; do
+    echo arg=$arg
+    match="`echo $arg | grep -e '\.g$'`"
+    if ! test "x$match" = "x" ; then
+	file="$arg"
+	break
+    fi
 done
-shift
 
-mkdir -p orbit.$$
-for frame in `jot 360 0`
+base="`basename \"$file\"`"
+dir="orbit.$base.$$"
+mkdir -p "$dir"
+for frame in `jot -w %03d - 0 359 10`
 do
     echo "Frame $frame (`echo $frame*100/360 | bc`%)"
-    rt -o orbit.$$/orbit.$frame.png -w$WIDTH -n$HEIGHT -a $frame -e$ELEVATION $* 2>/dev/null
-done && ffmpeg -i orbit.$$/orbit.%d.png orbit.$$.mp4 && rm -rf orbit.$$
+    echo rt -o $dir/$base.$frame.png -a $frame "$*"
+    rt -o $dir/$base.$frame.png -a $frame "$@" 2>/dev/null
+done && ffmpeg -i $dir/$base.%d.png $base.$$.mp4 && rm -rf "$dir"
 
 exit 0
 
