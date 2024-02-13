@@ -59,7 +59,7 @@ done
 base="`basename \"$file\"`"
 dir="orbit.$base.$$"
 mkdir -p "$dir"
-for frame in `jot -w %03d - 0 359 10`
+for frame in `jot -w %03d - 0 359 3`
 do
     echo "Frame $frame (`echo $frame*100/360 | bc`%)"
     # echo rt -o $dir/$base.$frame.png -a $frame "$*"
