@@ -49,7 +49,6 @@ if test $# -lt 2 ; then
 fi
 
 for arg in "$@" ; do
-    echo arg=$arg
     match="`echo $arg | grep -e '\.g$'`"
     if ! test "x$match" = "x" ; then
 	file="$arg"
@@ -63,9 +62,12 @@ mkdir -p "$dir"
 for frame in `jot -w %03d - 0 359 10`
 do
     echo "Frame $frame (`echo $frame*100/360 | bc`%)"
-    echo rt -o $dir/$base.$frame.png -a $frame "$*"
+    # echo rt -o $dir/$base.$frame.png -a $frame "$*"
     rt -o $dir/$base.$frame.png -a $frame "$@" 2>/dev/null
-done && ffmpeg -i $dir/$base.%d.png $base.$$.mp4 && rm -rf "$dir"
+done
+
+convert $dir/$base.%03d.png $base.%%.gif
+# ffmpeg -i $dir/$base.%d.png $base.$$.mp4 && rm -rf "$dir"
 
 exit 0
 
