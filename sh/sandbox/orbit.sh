@@ -66,7 +66,7 @@ do
     rt -o $dir/$base.$frame.png -a $frame "$@" 2>/dev/null
 done
 
-convert $dir/$base.%03d.png $base.%%.gif
+convert $dir/$base.*.png $base.$$.gif
 # ffmpeg -i $dir/$base.%d.png $base.$$.mp4 && rm -rf "$dir"
 
 exit 0
