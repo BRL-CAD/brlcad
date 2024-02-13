@@ -2,7 +2,7 @@
 #                          O R B I T . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2019 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,6 @@ WIDTH=512
 HEIGHT=512
 ELEVATION=35
 
-echo "DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n"
-sleep 1
 
 if test "$2" = "" ; then
     echo "Usage: orbit.sh [-w <width>] [-n <height>] [-e <elevation>] filename.g obj1 obj2..."
