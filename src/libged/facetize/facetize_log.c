@@ -93,7 +93,7 @@ _ged_facetize_log_nmg(struct _ged_facetize_state *o)
 void
 _ged_facetize_log_default(struct _ged_facetize_state *o)
 {
-    if (fileno(stderr) < 0)
+    if (fileno(stderr) < 0 || !o || !o->log_s)
 	return;
 
     /* Put stderr back */
