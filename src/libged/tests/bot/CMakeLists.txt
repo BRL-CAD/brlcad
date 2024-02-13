@@ -1,5 +1,6 @@
 CMAKEFILES(
   manifold_fixable.g
+  tgc.g
   )
 
 CMAKEFILES(CMakeLists.txt)
