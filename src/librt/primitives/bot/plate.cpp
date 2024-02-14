@@ -178,8 +178,20 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
 	bu_log("face[%d]: %d %d %d\n", i, faces[i*3], faces[i*3+1], faces[i*3+2]);
     }
 
+    struct rt_bot_internal *bot;
+    BU_GET(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = RT_BOT_SOLID;
+    bot->orientation = RT_BOT_CCW;
+    bot->thickness = NULL;
+    bot->face_mode = (struct bu_bitv *)NULL;
+    bot->bot_flags = 0;
+    bot->num_vertices = (steps-1) * nsegs + 2;
+    bot->num_faces = nsegs + nsegs + (steps-1) * 2*nsegs;
+    bot->vertices = (double *)verts;
+    bot->faces = faces;
 
-    return NULL;
+    return bot ;
 }
 
 int
@@ -320,12 +332,11 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
 	// Make an rcc along the edge a radius based on the thickness
 	point_t base, v;
-	vect_t h;
 	VMOVE(base, &bot->vertices[3*(*e_it).first]);
 	VMOVE(v, &bot->vertices[3*(*e_it).second]);
 
-	edge_cyl(base, v, r);
-
+#if 0
+	vect_t h;
 	VSUB2(h, v, base);
 
 	vect_t cross1, cross2;
@@ -367,6 +378,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    continue;
 
 	nmg_km(m);
+#else
+	struct rt_bot_internal *cbot = edge_cyl(base, v, r);
+#endif
 
 	manifold::Mesh rcc_m;
 	for (size_t j = 0; j < cbot->num_vertices; j++)
@@ -389,9 +403,11 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 #endif
 	} catch (const std::exception &e) {
 	    bu_log("Edges - manifold boolean op failure\n");
+#if 0
 	    bu_log("v: %g %g %g\n", V3ARGS(tgc.v));
 	    bu_log("h: %g %g %g\n", V3ARGS(tgc.h));
 	    bu_log("r: %g\n", r);
+#endif
 	    std::cerr << e.what() << "\n";
 #if defined(CHECK_INTERMEDIATES)
 	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
