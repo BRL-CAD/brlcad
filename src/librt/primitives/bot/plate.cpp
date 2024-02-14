@@ -246,6 +246,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t eind;
 	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
+	if (NEAR_ZERO(fthickness, SMALL_FASTF))
+	    continue;
 	for (int j = 0; j < 3; j++) {
 	    verts.insert(bot->faces[i*3+j]);
 	    verts_thickness[bot->faces[i*3+j]] += fthickness;
@@ -399,6 +401,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     elapsed = 0;
     bu_log("Processing %zd faces...\n" , bot->num_faces);
     for (size_t i = 0; i < bot->num_faces; i++) {
+	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
+	if (NEAR_ZERO(fthickness, SMALL_FASTF))
+	    continue;
 	point_t pnts[6];
 	point_t pf[3];
 	vect_t pv1[3], pv2[3];
@@ -408,11 +413,11 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	for (int j = 0; j < 3; j++) {
 	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
 	    if (BU_BITTEST(bot->face_mode, i)) {
-		VSCALE(pv1[j], n, bot->thickness[i]);
-		VSCALE(pv2[j], n, -1*bot->thickness[i]);
+		VSCALE(pv1[j], n, fthickness);
+		VSCALE(pv2[j], n, -1*fthickness);
 	    } else {
-		VSCALE(pv1[j], n, 0.5*bot->thickness[i]);
-		VSCALE(pv2[j], n, -0.5*bot->thickness[i]);
+		VSCALE(pv1[j], n, 0.5*fthickness);
+		VSCALE(pv2[j], n, -0.5*fthickness);
 	    }
 	}
 
