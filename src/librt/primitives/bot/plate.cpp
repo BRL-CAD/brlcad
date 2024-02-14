@@ -70,6 +70,118 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
     return true;
 }
 
+#define MAX_CYL_STEPS 1000
+static struct rt_bot_internal *
+edge_cyl(point_t p1, point_t p2, fastf_t r)
+{
+    int nsegs = 8;
+    vect_t h;
+    VSUB2(h, p2, p1);
+
+    // Find axis to use for point generation on circles
+    vect_t cross1, cross2, xaxis, yaxis;
+    bn_vec_ortho(cross1, h);
+    VUNITIZE(cross1);
+    VCROSS(cross2, cross1, h);
+    VSCALE(xaxis, cross1, r);
+    VSCALE(yaxis, cross2, r);
+
+    // Figure out the step we take for each ring in the cylinder
+    double seg_len = M_PI * r * r / (double)nsegs;
+    fastf_t e_len = MAGNITUDE(h);
+    int steps = 1;
+    fastf_t h_len = (e_len < 2*seg_len) ? e_len : -1.0;
+    if (h_len < 0) {
+	steps = (int)(e_len / seg_len);
+	// Ideally we want the height of the triangles up the cylinder to be on
+	// the same order as the segment size, but that's likely to make for a
+	// huge number of triangles if we have a long edge.
+	if (steps > MAX_CYL_STEPS)
+	    steps = MAX_CYL_STEPS;
+	h_len = e_len / (double)steps;
+    }
+    vect_t h_step;
+    VMOVE(h_step, h);
+    VUNITIZE(h_step);
+    VSCALE(h_step, h_step, h_len);
+
+    // Generated the vertices
+    point_t *verts = (point_t *)bu_calloc(steps * nsegs + 2, sizeof(point_t), "verts");
+    for (int i = 0; i < steps; i++) {
+	for (int j = 0; j < nsegs; j++) {
+	    double alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
+	    double sin_alpha = sin(alpha);
+	    double cos_alpha = cos(alpha);
+	    /* vertex geometry */
+	    VJOIN3(verts[i*nsegs+j], p1, (double)i, h_step, cos_alpha, xaxis, sin_alpha, yaxis);
+	}
+    }
+
+    // The two center points of the end caps are the last two points
+    VMOVE(verts[steps * nsegs], p1);
+    VMOVE(verts[steps * nsegs + 1], p2);
+
+    // Next, we define the faces.  The two end caps each have one triangle for each segment.
+    // Each step defines 2*nseg triangles.
+    int *faces = (int *)bu_calloc(nsegs + nsegs + (steps-1) * 2*nsegs, 3*sizeof(int), "triangles");
+
+    // For the steps, we process in quads - each segment gets two triangles
+    for (int i = 0; i < steps - 1; i++) {
+	for (int j = 0; j < nsegs; j++) {
+	    int pnts[4];
+	    pnts[0] = nsegs * i + j;
+	    pnts[1] = (j < nsegs - 1) ? nsegs * i + j + 1 : nsegs * i;
+	    pnts[2] = nsegs * (i + 1) + j;
+	    pnts[3] = (j < nsegs - 1) ? nsegs * (i + 1) + j + 1 : nsegs * (i + 1);
+	    int offset = 3 * (i * nsegs * 2 + j * 2);
+	    faces[offset + 0] = pnts[0];
+	    faces[offset + 1] = pnts[2];
+	    faces[offset + 2] = pnts[1];
+	    faces[offset + 3] = pnts[2];
+	    faces[offset + 4] = pnts[3];
+	    faces[offset + 5] = pnts[1];
+	}
+    }
+
+    // Define the end caps.  The first set of triangles uses the base
+    // point (stored at verts[steps*nsegs] and the points of the first
+    // circle (stored at the beginning of verts)
+    int offset = 3 * ((steps-1) * nsegs * 2);
+    for (int j = 0; j < nsegs; j++){
+	int pnts[3];
+	pnts[0] = steps * nsegs;
+	pnts[1] = j;
+	pnts[2] = (j < nsegs - 1) ? j + 1 : 0;
+	faces[offset + 3*j + 0] = pnts[0];
+	faces[offset + 3*j + 1] = pnts[1];
+	faces[offset + 3*j + 2] = pnts[2];
+    }
+    // The second set of cap triangles uses the second edge point
+    // point (stored at verts[steps*nsegs+1] and the points of the last
+    // circle (stored at the end of verts = (steps-1) * nsegs)
+    offset = 3 * (((steps-1) * nsegs * 2) + nsegs);
+    for (int j = 0; j < nsegs; j++){
+	int pnts[3];
+	pnts[0] = steps * nsegs + 1;
+	pnts[1] = (steps - 1) * nsegs + j;
+	pnts[2] = (j < nsegs - 1) ? (steps - 1) * nsegs + j + 1 : (steps - 1) * nsegs;
+	faces[offset + 3*j + 0] = pnts[0];
+	faces[offset + 3*j + 1] = pnts[2];
+	faces[offset + 3*j + 2] = pnts[1];
+    }
+
+    for (int i = 0; i < (steps-1) * nsegs + 2; i++) {
+	bu_log("vert[%d]: %g %g %g\n", i, V3ARGS(verts[i]));
+    }
+
+    for (int i = 0; i < nsegs + nsegs + (steps-1) * 2*nsegs; i++) {
+	bu_log("face[%d]: %d %d %d\n", i, faces[i*3], faces[i*3+1], faces[i*3+2]);
+    }
+
+
+    return NULL;
+}
+
 int
 rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
@@ -211,6 +323,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	vect_t h;
 	VMOVE(base, &bot->vertices[3*(*e_it).first]);
 	VMOVE(v, &bot->vertices[3*(*e_it).second]);
+
+	edge_cyl(base, v, r);
+
 	VSUB2(h, v, base);
 
 	vect_t cross1, cross2;
