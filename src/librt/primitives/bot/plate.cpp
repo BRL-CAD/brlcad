@@ -77,6 +77,8 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     int nsegs = 8;
     vect_t h;
     VSUB2(h, p2, p1);
+    if (MAGNITUDE(h) < VUNITIZE_TOL)
+	return NULL;
 
     // Find axis to use for point generation on circles
     vect_t cross1, cross2, xaxis, yaxis;
@@ -346,53 +348,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	point_t base, v;
 	VMOVE(base, &bot->vertices[3*(*e_it).first]);
 	VMOVE(v, &bot->vertices[3*(*e_it).second]);
-
-#if 0
-	vect_t h;
-	VSUB2(h, v, base);
-
-	vect_t cross1, cross2;
-	vect_t a, b;
-	if (MAGSQ(h) <= SQRT_SMALL_FASTF)
-	    continue;;
-	/* Create two mutually perpendicular vectors, perpendicular to H */
-	bn_vec_ortho(cross1, h);
-	VCROSS(cross2, cross1, h);
-	VUNITIZE(cross2);
-	VSCALE(a, cross1, r);
-	VSCALE(b, cross2, r);
-	struct rt_tgc_internal tgc;
-	tgc.magic = RT_TGC_INTERNAL_MAGIC;
-	VMOVE(tgc.v, base);
-	VMOVE(tgc.h, h);
-	VMOVE(tgc.a, a);
-	VMOVE(tgc.b, b);
-	VMOVE(tgc.c, a);
-	VMOVE(tgc.d, b);
-
-	struct rt_db_internal intern;
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_TGC;
-	intern.idb_ptr = &tgc;
-	intern.idb_meth = &OBJ[ID_TGC];
-
-	struct nmgregion *r1 = NULL;
-	struct model *m = nmg_mm();
-	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
-	    continue;
-
-	// TODO - cylinders produced by this method sometimes are resulting in
-	// very nasty bots.  Visual inspection suggests the NMG form is more
-	// properly structured, so unclear what is happening when producing the BoT
-	struct rt_bot_internal *cbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
+	struct rt_bot_internal *cbot = edge_cyl(base, v, r);
 	if (!cbot)
 	    continue;
-
-	nmg_km(m);
-#else
-	struct rt_bot_internal *cbot = edge_cyl(base, v, r);
-#endif
 
 	manifold::Mesh rcc_m;
 	for (size_t j = 0; j < cbot->num_vertices; j++)
@@ -415,11 +373,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 #endif
 	} catch (const std::exception &e) {
 	    bu_log("Edges - manifold boolean op failure\n");
-#if 0
-	    bu_log("v: %g %g %g\n", V3ARGS(tgc.v));
-	    bu_log("h: %g %g %g\n", V3ARGS(tgc.h));
-	    bu_log("r: %g\n", r);
-#endif
 	    std::cerr << e.what() << "\n";
 #if defined(CHECK_INTERMEDIATES)
 	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
@@ -441,6 +394,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     bu_log("Processing %zd edges... done.\n" , edges.size());
 
     // Now, handle the primary arb faces
+    size_t fcnt = 0;
+    start = bu_gettime();
+    elapsed = 0;
     bu_log("Processing %zd faces...\n" , bot->num_faces);
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t pnts[6];
@@ -540,6 +496,15 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
 #endif
 	    return -1;
+	}
+
+	fcnt++;
+	elapsed = bu_gettime() - start;
+	seconds = elapsed / 1000000.0;
+
+	if (seconds > 5) {
+	    start = bu_gettime();
+	    bu_log("Processed %zd of %zd faces\n", fcnt, bot->num_faces);
 	}
     }
     bu_log("Processing %zd faces... done.\n" , bot->num_faces);
