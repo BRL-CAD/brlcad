@@ -35,6 +35,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#define PLOT_PREFIX_STR bg_plot3_ // needed by RTree.h and plot3.h
+
 #include "RTree.h"
 #include "clipper.hpp"
 
