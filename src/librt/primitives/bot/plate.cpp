@@ -425,7 +425,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    VMOVE(pnts[j+3], npnt2);
 	}
 
-	// For arb6 creation, we need a specific point order
+	// Use arb6 point order
 	fastf_t pts[3*6];
 	/* 1 */ pts[0] = pnts[4][X]; pts[1] = pnts[4][Y]; pts[2] = pnts[4][Z];
 	/* 2 */ pts[3] = pnts[3][X]; pts[4] = pnts[3][Y]; pts[5] = pnts[3][Z];
@@ -434,38 +434,47 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	/* 5 */ pts[12] = pnts[5][X]; pts[13] = pnts[5][Y]; pts[14] = pnts[5][Z];
 	/* 6 */ pts[15] = pnts[2][X]; pts[16] = pnts[2][Y]; pts[17] = pnts[2][Z];
 
-	point_t pt8[8];
-	VMOVE(pt8[0], &pts[0*3]);
-	VMOVE(pt8[1], &pts[1*3]);
-	VMOVE(pt8[2], &pts[2*3]);
-	VMOVE(pt8[3], &pts[3*3]);
-	VMOVE(pt8[4], &pts[4*3]);
-	VMOVE(pt8[5], &pts[4*3]);
-	VMOVE(pt8[6], &pts[5*3]);
-	VMOVE(pt8[7], &pts[5*3]);
+	int faces[24];
+	faces[ 0] = 0; faces[ 1] = 1; faces[ 2] = 4;  // 1 2 5
+	faces[ 3] = 2; faces[ 4] = 3; faces[ 5] = 5;  // 3 4 6
+	faces[ 6] = 1; faces[ 7] = 0; faces[ 8] = 3;  // 2 1 4
+	faces[ 9] = 3; faces[10] = 2; faces[11] = 1;  // 4 3 2
+	faces[12] = 3; faces[13] = 0; faces[14] = 4;  // 4 1 5
+	faces[15] = 4; faces[16] = 5; faces[17] = 3;  // 5 6 4
+	faces[18] = 5; faces[19] = 4; faces[20] = 1;  // 6 5 2
+	faces[21] = 1; faces[22] = 2; faces[23] = 5;  // 2 3 6
 
-	struct rt_arb_internal arb;
-	arb.magic = RT_ARB_INTERNAL_MAGIC;
-	for (int j = 0; j < 8; j++)
-	    VMOVE(arb.pt[j], pt8[j]);
+#if 0
+	bu_log("title {face}\n");
+	bu_log("units mm\n");
+	struct bu_vls vstr = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&vstr, "put {face.bot} bot mode volume orient rh flags {} V { ");
+	for (int il = 0; il < 6; il++) {
+	    bu_vls_printf(&vstr, " { %g %g %g } ", V3ARGS(((point_t *)pts)[il]));
+	}
+	bu_vls_printf(&vstr, "} F { ");
+	for (int il = 0; il < 8; il++) {
+	    bu_vls_printf(&vstr, " { %d %d %d } ", faces[il*3], faces[il*3+1], faces[il*3+2]);
+	}
+	bu_vls_printf(&vstr, "}\n");
+	bu_log("%s\n", bu_vls_cstr(&vstr));
+	bu_vls_free(&vstr);
 
-	struct rt_db_internal intern;
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_ARB8;
-	intern.idb_ptr = &arb;
-	intern.idb_meth = &OBJ[ID_ARB8];
+	bu_exit(EXIT_FAILURE, "test");
+#endif
 
-	struct nmgregion *r1 = NULL;
-	struct model *m = nmg_mm();
-	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
-	    continue;
-
-	struct rt_bot_internal *abot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
-	if (!abot)
-	    continue;
-
-	nmg_km(m);
+	struct rt_bot_internal *abot;
+	BU_GET(abot, struct rt_bot_internal);
+	abot->magic = RT_BOT_INTERNAL_MAGIC;
+	abot->mode = RT_BOT_SOLID;
+	abot->orientation = RT_BOT_CCW;
+	abot->thickness = NULL;
+	abot->face_mode = (struct bu_bitv *)NULL;
+	abot->bot_flags = 0;
+	abot->num_vertices = 6;
+	abot->num_faces =  8;
+	abot->vertices = (double *)pts;
+	abot->faces = faces;
 
 	manifold::Mesh arb_m;
 	for (size_t j = 0; j < abot->num_vertices; j++)
@@ -473,10 +482,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	for (size_t j = 0; j < abot->num_faces; j++)
 	    arb_m.triVerts.push_back(glm::vec3(abot->faces[3*j], abot->faces[3*j+1], abot->faces[3*j+2]));
 
-	if (abot->vertices)
-	    bu_free(abot->vertices, "verts");
-	if (abot->faces)
-	    bu_free(abot->faces, "faces");
 	BU_FREE(abot, struct rt_bot_internal);
 
 	manifold::Manifold left = c;
