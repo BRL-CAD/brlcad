@@ -70,7 +70,7 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
     return true;
 }
 
-#define MAX_CYL_STEPS 1000
+#define MAX_CYL_STEPS 100
 static struct rt_bot_internal *
 edge_cyl(point_t p1, point_t p2, fastf_t r)
 {
@@ -83,6 +83,7 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     bn_vec_ortho(cross1, h);
     VUNITIZE(cross1);
     VCROSS(cross2, cross1, h);
+    VUNITIZE(cross2);
     VSCALE(xaxis, cross1, r);
     VSCALE(yaxis, cross2, r);
 
@@ -106,8 +107,8 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     VSCALE(h_step, h_step, h_len);
 
     // Generated the vertices
-    point_t *verts = (point_t *)bu_calloc(steps * nsegs + 2, sizeof(point_t), "verts");
-    for (int i = 0; i < steps; i++) {
+    point_t *verts = (point_t *)bu_calloc((steps+1) * nsegs + 2, sizeof(point_t), "verts");
+    for (int i = 0; i <= steps; i++) {
 	for (int j = 0; j < nsegs; j++) {
 	    double alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
 	    double sin_alpha = sin(alpha);
@@ -118,15 +119,15 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     }
 
     // The two center points of the end caps are the last two points
-    VMOVE(verts[steps * nsegs], p1);
-    VMOVE(verts[steps * nsegs + 1], p2);
+    VMOVE(verts[(steps+1) * nsegs], p1);
+    VMOVE(verts[(steps+1) * nsegs + 1], p2);
 
     // Next, we define the faces.  The two end caps each have one triangle for each segment.
     // Each step defines 2*nseg triangles.
-    int *faces = (int *)bu_calloc(nsegs + nsegs + (steps-1) * 2*nsegs, 3*sizeof(int), "triangles");
+    int *faces = (int *)bu_calloc(steps * 2*nsegs + 2*nsegs, 3*sizeof(int), "triangles");
 
     // For the steps, we process in quads - each segment gets two triangles
-    for (int i = 0; i < steps - 1; i++) {
+    for (int i = 0; i < steps; i++) {
 	for (int j = 0; j < nsegs; j++) {
 	    int pnts[4];
 	    pnts[0] = nsegs * i + j;
@@ -146,10 +147,10 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     // Define the end caps.  The first set of triangles uses the base
     // point (stored at verts[steps*nsegs] and the points of the first
     // circle (stored at the beginning of verts)
-    int offset = 3 * ((steps-1) * nsegs * 2);
+    int offset = 3 * (steps * nsegs * 2);
     for (int j = 0; j < nsegs; j++){
 	int pnts[3];
-	pnts[0] = steps * nsegs;
+	pnts[0] = (steps+1) * nsegs;
 	pnts[1] = j;
 	pnts[2] = (j < nsegs - 1) ? j + 1 : 0;
 	faces[offset + 3*j + 0] = pnts[0];
@@ -159,24 +160,35 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     // The second set of cap triangles uses the second edge point
     // point (stored at verts[steps*nsegs+1] and the points of the last
     // circle (stored at the end of verts = (steps-1) * nsegs)
-    offset = 3 * (((steps-1) * nsegs * 2) + nsegs);
+    offset = 3 * ((steps * nsegs * 2) + nsegs);
     for (int j = 0; j < nsegs; j++){
 	int pnts[3];
-	pnts[0] = steps * nsegs + 1;
-	pnts[1] = (steps - 1) * nsegs + j;
-	pnts[2] = (j < nsegs - 1) ? (steps - 1) * nsegs + j + 1 : (steps - 1) * nsegs;
+	pnts[0] = (steps+1) * nsegs + 1;
+	pnts[1] = steps * nsegs + j;
+	pnts[2] = (j < nsegs - 1) ? steps * nsegs + j + 1 : steps * nsegs;
 	faces[offset + 3*j + 0] = pnts[0];
 	faces[offset + 3*j + 1] = pnts[2];
 	faces[offset + 3*j + 2] = pnts[1];
     }
 
-    for (int i = 0; i < (steps-1) * nsegs + 2; i++) {
-	bu_log("vert[%d]: %g %g %g\n", i, V3ARGS(verts[i]));
+#if 0
+    bu_log("title {edge}\n");
+    bu_log("units mm\n");
+    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vstr, "put {edge.bot} bot mode volume orient rh flags {} V { ");
+    for (int i = 0; i < (steps+1) * nsegs + 2; i++) {
+	bu_vls_printf(&vstr, " { %g %g %g } ", V3ARGS(verts[i]));
     }
+    bu_vls_printf(&vstr, "} F { ");
+    for (int i = 0; i < steps * 2*nsegs + 2*nsegs; i++) {
+	bu_vls_printf(&vstr, " { %d %d %d } ", faces[i*3], faces[i*3+1], faces[i*3+2]);
+    }
+    bu_vls_printf(&vstr, "}\n");
+    bu_log("%s\n", bu_vls_cstr(&vstr));
+    bu_vls_free(&vstr);
 
-    for (int i = 0; i < nsegs + nsegs + (steps-1) * 2*nsegs; i++) {
-	bu_log("face[%d]: %d %d %d\n", i, faces[i*3], faces[i*3+1], faces[i*3+2]);
-    }
+    bu_exit(EXIT_FAILURE, "test");
+#endif
 
     struct rt_bot_internal *bot;
     BU_GET(bot, struct rt_bot_internal);
@@ -186,8 +198,8 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     bot->thickness = NULL;
     bot->face_mode = (struct bu_bitv *)NULL;
     bot->bot_flags = 0;
-    bot->num_vertices = (steps-1) * nsegs + 2;
-    bot->num_faces = nsegs + nsegs + (steps-1) * 2*nsegs;
+    bot->num_vertices = (steps+1) * nsegs + 2;
+    bot->num_faces =  steps * 2*nsegs + 2*nsegs;
     bot->vertices = (double *)verts;
     bot->faces = faces;
 
