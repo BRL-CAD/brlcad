@@ -48,6 +48,7 @@ if test $# -lt 2 ; then
     exit 1
 fi
 
+# find the .g in our argument list
 for arg in "$@" ; do
     match="`echo $arg | grep -e '\.g$'`"
     if ! test "x$match" = "x" ; then
@@ -55,20 +56,41 @@ for arg in "$@" ; do
 	break
     fi
 done
+if test "x$file" = "x" ; then
+    echo "ERROR: .g file name not specified"
+    echo "Usage: orbit.sh [-e <elevation>] [...other rt options...] filename.g obj1 obj2..."
+    exit 1
+fi
 
+# render our frames, 360 every 3 degrees (120 images)
 base="`basename \"$file\"`"
 dir="orbit.$base.$$"
 mkdir -p "$dir"
-for frame in `jot -w %03d - 0 359 3`
-do
+for frame in `jot -w %03d - 0 359 3` ; do
     echo "Frame $frame (`echo $frame*100/360 | bc`%)"
     # echo rt -o $dir/$base.$frame.png -a $frame "$*"
-    rt -o $dir/$base.$frame.png -a $frame "$@" 2>/dev/null
+    if ! test -f $dir/$base.$frame.png ; then
+	rt -o $dir/$base.$frame.png -a $frame "$@" 2>/dev/null
+    fi
 done
 
-convert $dir/$base.*.png $base.$$.gif
-# ffmpeg -i $dir/$base.%d.png $base.$$.mp4 && rm -rf "$dir"
+# ImageMagick for animated .gif
+echo "Creating animated .gif"
+rm -f $base.$$.gif
+convert $dir/$base.*.png $base.$$.gif >/dev/null 2>&1
 
+# FFMPEG for .mp4 movie
+echo "Creating .mp4 movie"
+rm -f $base.$$.mp4
+ffmpeg -framerate 25 -pattern_type glob -i "$dir/$base.*.png" -c:v libx264 -pix_fmt yuv420p -r 25 $base.$$.mp4 >/dev/null 2>&1
+
+# clean up
+if test -f $base.$$.gif && test -f $base.$$.mp4 ; then
+    echo "Run this to remove intermediate render frames:  rm -rf "$dir"
+fi
+
+echo "---"
+echo "Orbit rendering complete."
 exit 0
 
 # Local Variables:
