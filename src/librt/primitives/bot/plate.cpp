@@ -204,7 +204,7 @@ edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1,
 }
 
 int
-rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol, int no_outer_edges)
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol, int round_outer_edges)
 {
     if (!obot || !bot || !ttol || !tol)
 	return 1;
@@ -283,7 +283,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     bu_log("Processing %zd vertices... \n" , verts.size());
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 
-	if (no_outer_edges) {
+	if (!round_outer_edges) {
 	    if (exterior_verts.find(*v_it) != exterior_verts.end())
 		continue;
 	}
@@ -358,7 +358,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     bu_log("Processing %zd edges... \n" , edges.size());
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 
-	if (no_outer_edges) {
+	if (!round_outer_edges) {
 	    if (edges_fcnt[*e_it] == 1)
 		continue;
 	}

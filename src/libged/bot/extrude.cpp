@@ -163,7 +163,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
 	struct bn_tol tol = BN_TOL_INIT_TOL;
 	struct rt_bot_internal *obot;
-	int ret = rt_bot_plate_to_vol(&obot, bot, &ttol, &tol, !round_edges);
+	int ret = rt_bot_plate_to_vol(&obot, bot, &ttol, &tol, round_edges);
 	if (ret != BRLCAD_OK) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
 	    return BRLCAD_ERROR;
