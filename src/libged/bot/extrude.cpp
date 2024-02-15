@@ -102,13 +102,15 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     int extrude_in_place = 0;
     int round_edges = 0;
     int comb_tree = 0;
+    int quiet_mode = 0;
 
-    struct bu_opt_desc d[5];
+    struct bu_opt_desc d[6];
     BU_OPT(d[0], "h",        "help",     "",            NULL, &print_help,       "Print help");
-    BU_OPT(d[1], "i",    "in-place",     "",            NULL, &extrude_in_place, "Overwrite input BoT");
-    BU_OPT(d[2], "R", "round-edges",     "",            NULL, &round_edges,      "Apply rounding to outer BoT edges");
-    BU_OPT(d[3], "C",        "comb",     "",            NULL, &comb_tree,        "Write out a CSG tree rather than a volumetric BoT");
-    BU_OPT_NULL(d[4]);
+    BU_OPT(d[1], "q",       "quiet",     "",            NULL, &quiet_mode,       "Suppress output messages");
+    BU_OPT(d[2], "i",    "in-place",     "",            NULL, &extrude_in_place, "Overwrite input BoT");
+    BU_OPT(d[3], "R", "round-edges",     "",            NULL, &round_edges,      "Apply rounding to outer BoT edges");
+    BU_OPT(d[4], "C",        "comb",     "",            NULL, &comb_tree,        "Write out a CSG tree rather than a volumetric BoT");
+    BU_OPT_NULL(d[5]);
 
     int ac = bu_opt_parse(NULL, argc, argv, d);
     argc = ac;
@@ -143,11 +145,11 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (bot->mode == RT_BOT_PLATE_NOCOS) {
-	bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using NOCOS mode, which means reported hit thicknesses are view independent.  A solid conversion of this primitive will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
+    if (bot->mode == RT_BOT_PLATE_NOCOS && !quiet_mode) {
+	bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using NOCOS mode, which means reported hit thicknesses are view independent.\n\nA solid conversion of this primitive will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
     }
 
-    if (bot->face_mode) {
+    if (bot->face_mode && !quiet_mode) {
 	bool append_mode = false;
 	for (size_t i = 0; i < bot->num_faces; i++) {
 	    if (BU_BITTEST(bot->face_mode, i)) {
@@ -156,8 +158,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (append_mode) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set, which instruct librt to append shotline distance rather than centering it on the hit point provided by the plate mode surface.  bot extrude does not currently support generating volumentric BoTs for this mode.\n", gb->solid_name.c_str());
-	    return BRLCAD_ERROR;
+	    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set, which instructs librt to append shotline distance rather than centering it on the hit point provided by the plate mode surface.\n\nA solid conversion of this primitive will generally report longer thicknesses when those faces are raytraced.  The output BoT will be constructed to claim space both above and below the mesh triangles (those are the volumes that will, depending on the interrogating direction of the ray, report as solid in plate mode).\n\nA ray interrogation of the solid BoT will thus end up returning both the \"above\" and \"below\" thickness for all ray directions.\n", gb->solid_name.c_str());
 	}
     }
 
@@ -169,7 +170,8 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	}
     }
     if (!have_solid) {
-	bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
+	if (!quiet_mode)
+	    bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
 	return BRLCAD_OK;
     }
 
@@ -177,9 +179,10 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
 	struct bn_tol tol = BN_TOL_INIT_TOL;
 	struct rt_bot_internal *obot;
-	int ret = rt_bot_plate_to_vol(&obot, bot, &ttol, &tol, round_edges);
+	int ret = rt_bot_plate_to_vol(&obot, bot, &ttol, &tol, round_edges, quiet_mode);
 	if (ret != BRLCAD_OK) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
+	    if (!quiet_mode)
+		bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
 	    return BRLCAD_ERROR;
 	}
 
@@ -199,13 +202,15 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	    rname = argv[1];
 	    dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
 	    if (dp == RT_DIR_NULL) {
-		bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
+		if (!quiet_mode)
+		    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
 		return BRLCAD_ERROR;
 	    }
 	}
 
 	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
+	    if (!quiet_mode)
+		bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
 	    return BRLCAD_ERROR;
 	}
 	return BRLCAD_OK;
@@ -223,7 +228,8 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
 
     if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&comb_name), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&comb_name));
+	if (!quiet_mode)
+	    bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&comb_name));
 	bu_vls_free(&comb_name);
 	return BRLCAD_ERROR;
     }
@@ -370,7 +376,6 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     bu_vls_free(&prim_name);
 
     return BRLCAD_OK;
-
 }
 
 

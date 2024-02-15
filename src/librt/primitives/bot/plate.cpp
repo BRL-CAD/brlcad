@@ -204,7 +204,7 @@ edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1,
 }
 
 int
-rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol, int round_outer_edges)
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol, int round_outer_edges, int quiet_mode)
 {
     if (!obot || !bot || !ttol || !tol)
 	return 1;
@@ -241,6 +241,12 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     std::set<std::pair<int, int>> edges;
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t eind;
+	// face_mode is a view dependent reporting option, where the full thickness is appended to the
+	// hit point reported from the BoT.  Because a volumetric BoT cannot exhibit view dependent
+	// behavior, we instead use the full thickness to encompass the maximal volume that might be
+	// claimed by the plate mode raytracing depending on the direction of the ray.  This will change
+	// the shotline thickness reported for any given ray, but provides a volume representative of
+	// the space the plate mode may claim as part of its solidity.
 	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
 	if (NEAR_ZERO(fthickness, SMALL_FASTF))
 	    continue;
@@ -280,7 +286,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     }
 
     std::set<int>::iterator v_it;
-    bu_log("Processing %zd vertices... \n" , verts.size());
+    if (!quiet_mode)
+	bu_log("Processing %zd vertices... \n" , verts.size());
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 
 	if (!round_outer_edges) {
@@ -339,8 +346,10 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    c.GetMesh();
 #endif
 	} catch (const std::exception &e) {
-	    bu_log("Vertices - manifold boolean op failure\n");
-	    std::cerr << e.what() << "\n";
+	    if (!quiet_mode) {
+		bu_log("Vertices - manifold boolean op failure\n");
+		std::cerr << e.what() << "\n";
+	    }
 #if defined(CHECK_INTERMEDIATES)
 	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
 	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
@@ -349,13 +358,15 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    return -1;
 	}
     }
-    bu_log("Processing %zd vertices... done.\n" , verts.size());
+    if (!quiet_mode)
+	bu_log("Processing %zd vertices... done.\n" , verts.size());
 
     size_t ecnt = 0;
     int64_t start = bu_gettime();
     int64_t elapsed = 0;
     fastf_t seconds = 0.0;
-    bu_log("Processing %zd edges... \n" , edges.size());
+    if (!quiet_mode)
+	bu_log("Processing %zd edges... \n" , edges.size());
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 
 	if (!round_outer_edges) {
@@ -394,8 +405,10 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    c.GetMesh();
 #endif
 	} catch (const std::exception &e) {
-	    bu_log("Edges - manifold boolean op failure\n");
-	    std::cerr << e.what() << "\n";
+	    if (!quiet_mode) {
+		bu_log("Edges - manifold boolean op failure\n");
+		std::cerr << e.what() << "\n";
+	    }
 #if defined(CHECK_INTERMEDIATES)
 	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
 	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
@@ -410,16 +423,19 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	if (seconds > 5) {
 	    start = bu_gettime();
-	    bu_log("Processed %zd of %zd edges\n", ecnt, edges.size());
+	    if (!quiet_mode)
+		bu_log("Processed %zd of %zd edges\n", ecnt, edges.size());
 	}
     }
-    bu_log("Processing %zd edges... done.\n" , edges.size());
+    if (!quiet_mode)
+	bu_log("Processing %zd edges... done.\n" , edges.size());
 
     // Now, handle the primary arb faces
     size_t fcnt = 0;
     start = bu_gettime();
     elapsed = 0;
-    bu_log("Processing %zd faces...\n" , bot->num_faces);
+    if (!quiet_mode)
+	bu_log("Processing %zd faces...\n" , bot->num_faces);
     for (size_t i = 0; i < bot->num_faces; i++) {
 	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
 	if (NEAR_ZERO(fthickness, SMALL_FASTF))
@@ -498,8 +514,10 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    c.GetMesh();
 #endif
 	} catch (const std::exception &e) {
-	    bu_log("Faces - manifold boolean op failure\n");
-	    std::cerr << e.what() << "\n";
+	    if (!quiet_mode) {
+		bu_log("Faces - manifold boolean op failure\n");
+		std::cerr << e.what() << "\n";
+	    }
 #if defined(CHECK_INTERMEDIATES)
 	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
 	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
@@ -514,10 +532,12 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	if (seconds > 5) {
 	    start = bu_gettime();
-	    bu_log("Processed %zd of %zd faces\n", fcnt, bot->num_faces);
+	    if (!quiet_mode)
+		bu_log("Processed %zd of %zd faces\n", fcnt, bot->num_faces);
 	}
     }
-    bu_log("Processing %zd faces... done.\n" , bot->num_faces);
+    if (!quiet_mode)
+	bu_log("Processing %zd faces... done.\n" , bot->num_faces);
 
     manifold::Mesh rmesh = c.GetMesh();
     struct rt_bot_internal *rbot;
