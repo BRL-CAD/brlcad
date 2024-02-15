@@ -143,6 +143,10 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    if (bot->mode == RT_BOT_PLATE_NOCOS) {
+	bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using NOCOS mode, which means reported hit thicknesses are view independent.  A solid conversion of this primitive will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
+    }
+
     // Check for at least 1 non-zero thickness, or there's no volume to define
     bool have_solid = false;
     for (size_t i = 0; i < bot->num_faces; i++) {
