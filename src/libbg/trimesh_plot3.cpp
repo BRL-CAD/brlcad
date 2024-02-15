@@ -32,6 +32,8 @@
 #include "bu/malloc.h"
 #include "bu/color.h"
 #include "bu/sort.h"
+#define PLOT_PREFIX_STR bg_plot3_
+#define PLOT3_IMPLEMENTATION
 #include "bv/plot3.h"
 #include "bg/trimesh.h"
 #include "bg/plane.h"

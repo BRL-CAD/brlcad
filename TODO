@@ -17,7 +17,10 @@ tasks as they are completed.
 
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
+
 * sanity check windows bext size
+
+* complete preliminary concave arb8 support
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -27,6 +30,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* add rt* option to output reusable view specification similar to
+  saveview scripts, but perhaps just the command portion.  this would
+  be similar to what 'art' does, so a given rendering can be reloaded.
+
+* make saveview and loadview work with and output rt command scripts,
+  not shell scripts.  to work, rt command scripts will need to bake in
+  the entire view specification including perspective, ambient, and
+  append/overwrite properly when writing out to the same file
+  (currently appends additional invocations).  primary use case will
+  be to save out multiple view iterations that render the sequence to
+  multiple files.
 
 * explore whether we can write a command to replace bad brep
   3d edge curves with ON_BezierCurve::Loft approximations of
