@@ -71,14 +71,17 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 }
 
 #define MAX_CYL_STEPS 100
-static struct rt_bot_internal *
-edge_cyl(point_t p1, point_t p2, fastf_t r)
+static int
+edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1, point_t p2, fastf_t r)
 {
+    if (!verts || !faces || !vert_cnt || !face_cnt || NEAR_ZERO(r, SMALL_FASTF))
+	return -1;
+
     int nsegs = 8;
     vect_t h;
     VSUB2(h, p2, p1);
     if (MAGNITUDE(h) < VUNITIZE_TOL)
-	return NULL;
+	return -1;
 
     // Find axis to use for point generation on circles
     vect_t cross1, cross2, xaxis, yaxis;
@@ -109,24 +112,24 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     VSCALE(h_step, h_step, h_len);
 
     // Generated the vertices
-    point_t *verts = (point_t *)bu_calloc((steps+1) * nsegs + 2, sizeof(point_t), "verts");
+    (*verts) = (point_t *)bu_calloc((steps+1) * nsegs + 2, sizeof(point_t), "verts");
     for (int i = 0; i <= steps; i++) {
 	for (int j = 0; j < nsegs; j++) {
 	    double alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
 	    double sin_alpha = sin(alpha);
 	    double cos_alpha = cos(alpha);
 	    /* vertex geometry */
-	    VJOIN3(verts[i*nsegs+j], p1, (double)i, h_step, cos_alpha, xaxis, sin_alpha, yaxis);
+	    VJOIN3((*verts)[i*nsegs+j], p1, (double)i, h_step, cos_alpha, xaxis, sin_alpha, yaxis);
 	}
     }
 
     // The two center points of the end caps are the last two points
-    VMOVE(verts[(steps+1) * nsegs], p1);
-    VMOVE(verts[(steps+1) * nsegs + 1], p2);
+    VMOVE((*verts)[(steps+1) * nsegs], p1);
+    VMOVE((*verts)[(steps+1) * nsegs + 1], p2);
 
     // Next, we define the faces.  The two end caps each have one triangle for each segment.
     // Each step defines 2*nseg triangles.
-    int *faces = (int *)bu_calloc(steps * 2*nsegs + 2*nsegs, 3*sizeof(int), "triangles");
+    (*faces) = (int *)bu_calloc(steps * 2*nsegs + 2*nsegs, 3*sizeof(int), "triangles");
 
     // For the steps, we process in quads - each segment gets two triangles
     for (int i = 0; i < steps; i++) {
@@ -137,12 +140,12 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
 	    pnts[2] = nsegs * (i + 1) + j;
 	    pnts[3] = (j < nsegs - 1) ? nsegs * (i + 1) + j + 1 : nsegs * (i + 1);
 	    int offset = 3 * (i * nsegs * 2 + j * 2);
-	    faces[offset + 0] = pnts[0];
-	    faces[offset + 1] = pnts[2];
-	    faces[offset + 2] = pnts[1];
-	    faces[offset + 3] = pnts[2];
-	    faces[offset + 4] = pnts[3];
-	    faces[offset + 5] = pnts[1];
+	    (*faces)[offset + 0] = pnts[0];
+	    (*faces)[offset + 1] = pnts[2];
+	    (*faces)[offset + 2] = pnts[1];
+	    (*faces)[offset + 3] = pnts[2];
+	    (*faces)[offset + 4] = pnts[3];
+	    (*faces)[offset + 5] = pnts[1];
 	}
     }
 
@@ -155,9 +158,9 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
 	pnts[0] = (steps+1) * nsegs;
 	pnts[1] = j;
 	pnts[2] = (j < nsegs - 1) ? j + 1 : 0;
-	faces[offset + 3*j + 0] = pnts[0];
-	faces[offset + 3*j + 1] = pnts[1];
-	faces[offset + 3*j + 2] = pnts[2];
+	(*faces)[offset + 3*j + 0] = pnts[0];
+	(*faces)[offset + 3*j + 1] = pnts[1];
+	(*faces)[offset + 3*j + 2] = pnts[2];
     }
     // The second set of cap triangles uses the second edge point
     // point (stored at verts[steps*nsegs+1] and the points of the last
@@ -168,21 +171,24 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
 	pnts[0] = (steps+1) * nsegs + 1;
 	pnts[1] = steps * nsegs + j;
 	pnts[2] = (j < nsegs - 1) ? steps * nsegs + j + 1 : steps * nsegs;
-	faces[offset + 3*j + 0] = pnts[0];
-	faces[offset + 3*j + 1] = pnts[2];
-	faces[offset + 3*j + 2] = pnts[1];
+	(*faces)[offset + 3*j + 0] = pnts[0];
+	(*faces)[offset + 3*j + 1] = pnts[2];
+	(*faces)[offset + 3*j + 2] = pnts[1];
     }
+
+    (*vert_cnt) = (steps+1) * nsegs + 2;
+    (*face_cnt) = steps * 2*nsegs + 2*nsegs;
 
 #if 0
     bu_log("title {edge}\n");
     bu_log("units mm\n");
     struct bu_vls vstr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&vstr, "put {edge.bot} bot mode volume orient rh flags {} V { ");
-    for (int i = 0; i < (steps+1) * nsegs + 2; i++) {
-	bu_vls_printf(&vstr, " { %g %g %g } ", V3ARGS(verts[i]));
+    for (int i = 0; i < vert_cnt; i++) {
+	bu_vls_printf(&vstr, " { %g %g %g } ", V3ARGS((*verts)[i]));
     }
     bu_vls_printf(&vstr, "} F { ");
-    for (int i = 0; i < steps * 2*nsegs + 2*nsegs; i++) {
+    for (int i = 0; i < face_cnt; i++) {
 	bu_vls_printf(&vstr, " { %d %d %d } ", faces[i*3], faces[i*3+1], faces[i*3+2]);
     }
     bu_vls_printf(&vstr, "}\n");
@@ -192,20 +198,7 @@ edge_cyl(point_t p1, point_t p2, fastf_t r)
     bu_exit(EXIT_FAILURE, "test");
 #endif
 
-    struct rt_bot_internal *bot;
-    BU_GET(bot, struct rt_bot_internal);
-    bot->magic = RT_BOT_INTERNAL_MAGIC;
-    bot->mode = RT_BOT_SOLID;
-    bot->orientation = RT_BOT_CCW;
-    bot->thickness = NULL;
-    bot->face_mode = (struct bu_bitv *)NULL;
-    bot->bot_flags = 0;
-    bot->num_vertices = (steps+1) * nsegs + 2;
-    bot->num_faces =  steps * 2*nsegs + 2*nsegs;
-    bot->vertices = (double *)verts;
-    bot->faces = faces;
-
-    return bot ;
+    return 0;
 }
 
 int
@@ -350,21 +343,23 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	point_t base, v;
 	VMOVE(base, &bot->vertices[3*(*e_it).first]);
 	VMOVE(v, &bot->vertices[3*(*e_it).second]);
-	struct rt_bot_internal *cbot = edge_cyl(base, v, r);
-	if (!cbot)
+
+	point_t *vertices = NULL;
+	int *faces = NULL;
+	int vert_cnt, face_cnt;
+	if (edge_cyl(&vertices, &faces, &vert_cnt, &face_cnt, base, v, r))
 	    continue;
 
 	manifold::Mesh rcc_m;
-	for (size_t j = 0; j < cbot->num_vertices; j++)
-	    rcc_m.vertPos.push_back(glm::vec3(cbot->vertices[3*j], cbot->vertices[3*j+1], cbot->vertices[3*j+2]));
-	for (size_t j = 0; j < cbot->num_faces; j++)
-	    rcc_m.triVerts.push_back(glm::vec3(cbot->faces[3*j], cbot->faces[3*j+1], cbot->faces[3*j+2]));
+	for (int j = 0; j < vert_cnt; j++)
+	    rcc_m.vertPos.push_back(glm::vec3(vertices[j][X], vertices[j][Y], vertices[j][Z]));
+	for (int j = 0; j < face_cnt; j++)
+	    rcc_m.triVerts.push_back(glm::vec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
 
-	if (cbot->vertices)
-	    bu_free(cbot->vertices, "verts");
-	if (cbot->faces)
-	    bu_free(cbot->faces, "faces");
-	BU_FREE(cbot, struct rt_bot_internal);
+	if (vertices)
+	    bu_free(vertices, "verts");
+	if (faces)
+	    bu_free(faces, "faces");
 
 	manifold::Manifold left = c;
 	manifold::Manifold right(rcc_m);
@@ -468,26 +463,11 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	bu_exit(EXIT_FAILURE, "test");
 #endif
 
-	struct rt_bot_internal *abot;
-	BU_GET(abot, struct rt_bot_internal);
-	abot->magic = RT_BOT_INTERNAL_MAGIC;
-	abot->mode = RT_BOT_SOLID;
-	abot->orientation = RT_BOT_CCW;
-	abot->thickness = NULL;
-	abot->face_mode = (struct bu_bitv *)NULL;
-	abot->bot_flags = 0;
-	abot->num_vertices = 6;
-	abot->num_faces =  8;
-	abot->vertices = (double *)pts;
-	abot->faces = faces;
-
 	manifold::Mesh arb_m;
-	for (size_t j = 0; j < abot->num_vertices; j++)
-	    arb_m.vertPos.push_back(glm::vec3(abot->vertices[3*j], abot->vertices[3*j+1], abot->vertices[3*j+2]));
-	for (size_t j = 0; j < abot->num_faces; j++)
-	    arb_m.triVerts.push_back(glm::vec3(abot->faces[3*j], abot->faces[3*j+1], abot->faces[3*j+2]));
-
-	BU_FREE(abot, struct rt_bot_internal);
+	for (size_t j = 0; j < 6; j++)
+	    arb_m.vertPos.push_back(glm::vec3(pts[3*j], pts[3*j+1], pts[3*j+2]));
+	for (size_t j = 0; j < 8; j++)
+	    arb_m.triVerts.push_back(glm::vec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
 
 	manifold::Manifold left = c;
 	manifold::Manifold right(arb_m);
