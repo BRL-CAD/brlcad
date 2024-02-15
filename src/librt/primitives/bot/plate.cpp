@@ -289,7 +289,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	}
 
 	point_t v;
-	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
+	double r = 0.5*((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
 	// Make a sph at the vertex point with a radius based on the thickness
 	VMOVE(v, &bot->vertices[3**v_it]);
 
