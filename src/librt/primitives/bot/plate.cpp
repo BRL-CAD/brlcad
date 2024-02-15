@@ -26,7 +26,9 @@
 
 #include "common.h"
 
+#include <map>
 #include <set>
+#include <unordered_set>
 
 // flag to enable writing debugging output in case of boolean failure
 #define CHECK_INTERMEDIATES 1
@@ -202,7 +204,7 @@ edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1,
 }
 
 int
-rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol, int no_outer_edges)
 {
     if (!obot || !bot || !ttol || !tol)
 	return 1;
@@ -235,6 +237,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     std::map<int, int> verts_fcnt;
     std::map<std::pair<int, int>, double> edges_thickness;
     std::map<std::pair<int, int>, int> edges_fcnt;
+    std::map<std::pair<int, int>, int> edges_fmode;
     std::set<std::pair<int, int>> edges;
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t eind;
@@ -265,9 +268,26 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	edges_fcnt[std::make_pair(e31, e32)]++;
     }
 
+    // Any edge with only one face associated with it is an outer
+    // edge.  Vertices on those edges are exterior vertices
+    std::unordered_set<int> exterior_verts;
+    std::set<std::pair<int, int>>::iterator e_it;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	if (edges_fcnt[*e_it] == 1) {
+	    exterior_verts.insert(e_it->first);
+	    exterior_verts.insert(e_it->second);
+	}
+    }
+
     std::set<int>::iterator v_it;
     bu_log("Processing %zd vertices... \n" , verts.size());
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+
+	if (no_outer_edges) {
+	    if (exterior_verts.find(*v_it) != exterior_verts.end())
+		continue;
+	}
+
 	point_t v;
 	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
 	// Make a sph at the vertex point with a radius based on the thickness
@@ -331,15 +351,20 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     }
     bu_log("Processing %zd vertices... done.\n" , verts.size());
 
-    std::set<std::pair<int, int>>::iterator e_it;
     size_t ecnt = 0;
     int64_t start = bu_gettime();
     int64_t elapsed = 0;
     fastf_t seconds = 0.0;
     bu_log("Processing %zd edges... \n" , edges.size());
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
+
+	if (no_outer_edges) {
+	    if (edges_fcnt[*e_it] == 1)
+		continue;
+	}
+
 	// Make an rcc along the edge a radius based on the thickness
+	double r = 0.5*((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
 	point_t base, v;
 	VMOVE(base, &bot->vertices[3*(*e_it).first]);
 	VMOVE(v, &bot->vertices[3*(*e_it).second]);
