@@ -713,7 +713,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     bu_vls_sprintf(&rel_str, "%0.17f", wdbp->wdb_ttol.rel);
     bu_vls_sprintf(&norm_str, "%0.17f", wdbp->wdb_ttol.norm);
     bu_vls_sprintf(&max_time_str, "%d", (int)(0.5*s->max_time));
-    bu_vls_sprintf(&debug_str, "0x%08lx", (unsigned long)NMG_DEBUG_TRI);
+    bu_vls_sprintf(&debug_str, "0x%08lx", (unsigned long)nmg_debug);
     int method_flags = s->method_flags;
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[ 0] = tess_exec;
