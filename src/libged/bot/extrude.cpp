@@ -147,6 +147,20 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using NOCOS mode, which means reported hit thicknesses are view independent.  A solid conversion of this primitive will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
     }
 
+    if (bot->face_mode) {
+	bool append_mode = false;
+	for (size_t i = 0; i < bot->num_faces; i++) {
+	    if (BU_BITTEST(bot->face_mode, i)) {
+		append_mode = true;
+		break;
+	    }
+	}
+	if (append_mode) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set, which instruct librt to append shotline distance rather than centering it on the hit point provided by the plate mode surface.  bot extrude does not currently support generating volumentric BoTs for this mode.\n", gb->solid_name.c_str());
+	    return BRLCAD_ERROR;
+	}
+    }
+
     // Check for at least 1 non-zero thickness, or there's no volume to define
     bool have_solid = false;
     for (size_t i = 0; i < bot->num_faces; i++) {
