@@ -289,7 +289,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	}
 
 	point_t v;
-	double r = 0.5*((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
+	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
 	// Make a sph at the vertex point with a radius based on the thickness
 	VMOVE(v, &bot->vertices[3**v_it]);
 
@@ -364,7 +364,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	}
 
 	// Make an rcc along the edge a radius based on the thickness
-	double r = 0.5*((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
+	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
 	point_t base, v;
 	VMOVE(base, &bot->vertices[3*(*e_it).first]);
 	VMOVE(v, &bot->vertices[3*(*e_it).second]);
@@ -432,13 +432,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	for (int j = 0; j < 3; j++) {
 	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
-	    if (BU_BITTEST(bot->face_mode, i)) {
-		VSCALE(pv1[j], n, fthickness);
-		VSCALE(pv2[j], n, -1*fthickness);
-	    } else {
-		VSCALE(pv1[j], n, 0.5*fthickness);
-		VSCALE(pv2[j], n, -0.5*fthickness);
-	    }
+	    VSCALE(pv1[j], n, fthickness);
+	    VSCALE(pv2[j], n, -1*fthickness);
 	}
 
 	for (int j = 0; j < 3; j++) {
