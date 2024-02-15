@@ -44,6 +44,7 @@
 #include <sstream>
 #include <string>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 #include "vmath.h"
@@ -256,8 +257,25 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	edges_fcnt[std::make_pair(e31, e32)]++;
     }
 
+    // Any edge with only one face associated with it is an outer
+    // edge.  Vertices on those edges are exterior vertices
+    std::unordered_set<int> exterior_verts;
+    std::set<std::pair<int, int>>::iterator e_it;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	if (edges_fcnt[*e_it] == 1) {
+	    exterior_verts.insert(e_it->first);
+	    exterior_verts.insert(e_it->second);
+	}
+    }
+
+
     std::set<int>::iterator v_it;
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	if (!round_edges) {
+	    if (exterior_verts.find(*v_it) != exterior_verts.end())
+		continue;
+	}
+
 	point_t v;
 	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
 	// Make a sph at the vertex point with a radius based on the thickness
@@ -267,8 +285,12 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
     }
 
-    std::set<std::pair<int, int>>::iterator e_it;
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	if (!round_edges) {
+	    if (edges_fcnt[*e_it] == 1)
+		continue;
+	}
+
 	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
 	// Make an rcc along the edge a radius based on the thickness
 	point_t b, v;
