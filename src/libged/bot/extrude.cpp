@@ -158,7 +158,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (append_mode) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set, which instructs librt to append shotline distance rather than centering it on the hit point provided by the plate mode surface.\n\nA solid conversion of this primitive will generally report longer thicknesses when those faces are raytraced.  The output BoT will be constructed to claim space both above and below the mesh triangles (those are the volumes that will, depending on the interrogating direction of the ray, report as solid in plate mode).\n\nA ray interrogation of the solid BoT will thus end up returning both the \"above\" and \"below\" thickness for all ray directions.\n", gb->solid_name.c_str());
+	    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set, which instructs librt to append shotline distance rather than centering it on the hit point provided by the plate mode surface.\n\nA solid conversion of this primitive will result in hit points with different locations than those reported in the original plate mode intersections.\n", gb->solid_name.c_str());
 	}
     }
 
@@ -256,7 +256,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     std::set<std::pair<int, int>> edges;
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t eind;
-	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
+	double fthickness = 0.5*bot->thickness[i];
 	for (int j = 0; j < 3; j++) {
 	    verts.insert(bot->faces[i*3+j]);
 	    verts_thickness[bot->faces[i*3+j]] += fthickness;
@@ -337,13 +337,8 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
 	for (int j = 0; j < 3; j++) {
 	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
-	    if (BU_BITTEST(bot->face_mode, i)) {
-		VSCALE(pv1[j], n, bot->thickness[i]);
-		VSCALE(pv2[j], n, -1*bot->thickness[i]);
-	    } else {
-		VSCALE(pv1[j], n, 0.5*bot->thickness[i]);
-		VSCALE(pv2[j], n, -0.5*bot->thickness[i]);
-	    }
+	    VSCALE(pv1[j], n, 0.5*bot->thickness[i]);
+	    VSCALE(pv2[j], n, -0.5*bot->thickness[i]);
 	}
 
 	for (int j = 0; j < 3; j++) {

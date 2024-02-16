@@ -247,7 +247,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	// claimed by the plate mode raytracing depending on the direction of the ray.  This will change
 	// the shotline thickness reported for any given ray, but provides a volume representative of
 	// the space the plate mode may claim as part of its solidity.
-	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
+	double fthickness = 0.5*bot->thickness[i];
 	if (NEAR_ZERO(fthickness, SMALL_FASTF))
 	    continue;
 	for (int j = 0; j < 3; j++) {
@@ -437,7 +437,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     if (!quiet_mode)
 	bu_log("Processing %zd faces...\n" , bot->num_faces);
     for (size_t i = 0; i < bot->num_faces; i++) {
-	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
+	double fthickness = 0.5*bot->thickness[i];
 	if (NEAR_ZERO(fthickness, SMALL_FASTF))
 	    continue;
 	point_t pnts[6];
