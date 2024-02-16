@@ -156,7 +156,7 @@ if (NOT ENV_HOME)
 endif (NOT ENV_HOME)
 
 # Check common location(s) in home directory
-set(EXT_CANDIDATES bext_output brlcad_ext)
+set(EXT_CANDIDATES bext_output)
 foreach(EC ${EXT_CANDIDATES})
   if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
     set(BRLCAD_EXT_DIR "${ENV_HOME}/${EC}")
@@ -185,7 +185,7 @@ endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXIST
 # installed.
 if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
   if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-    message(FATAL_ERROR "BRL-CAD requires a source for external components - please set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals). By default this location is ${ENV_HOME}/brlcad_ext but it can be overridden.  In lieu of setting BRLCAD_EXT_DIR, it is also possible to directly set BRLCAD_EXT_INSTALL_DIR and BRLCAD_EXT_NOINSTALL_DIR to custom indivdiaul folders holding the necessary dependencies.")
+    message(WARNING "BRL-CAD requires a source for external components.  By default this location is ${ENV_HOME}/brlcad_ext but it can be overridden by setting BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals). In lieu of setting BRLCAD_EXT_DIR, it is also possible to directly set BRLCAD_EXT_INSTALL_DIR and BRLCAD_EXT_NOINSTALL_DIR to custom indivdiaul folders holding the necessary dependencies.\nIf no support libs are found and none of these variables is set, BRL-CAD will attempt to download, configure and build its own copy locally during the configure process.")
   endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
@@ -606,11 +606,6 @@ if(BRLCAD_PRINT_MSGS)
   message("*     Stage 3 of 9 - Check for Compiler Characteristics   *")
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
-
-# TODO - the Ninja single config generator in Release build uses the O3
-# and other optimization flags, but they don't seem to make it to the
-# step-g sources in MultiConfig release build???
-
 # load our compiler testing macro definitions
 include(CompilerFlags)
 

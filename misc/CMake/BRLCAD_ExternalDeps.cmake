@@ -40,14 +40,11 @@
 # we add those patterns to the SYS_INCLUDE_PATTERNS list
 mark_as_advanced(SYS_INCLUDE_PATTERNS)
 
-
-if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
-  message(WARNING "BRLCAD_EXT_INSTALL_DIR is set to ${BRLCAD_EXT_INSTALL_DIR} but that location does not exist.  This will result in only system libraries being used for compilation, with no external dependencies being bundled into installers.")
-endif (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
-
-if (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
-  message(WARNING "BRLCAD_EXT_NOINSTALL_DIR is set to ${BRLCAD_EXT_NOINSTALL_DIR} but that location does not exist.  This means BRL-CAD's build will be dependent on system versions of build tools such as patchelf and astyle being present.")
-endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+  message("Attempting to prepare our own version of the bext dependencies\n")
+  include(BRLCAD_BEXT_Setup)
+  bext_setup()
+endif ()
 
 # If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to expand it so
 # we can spot the path that would have been used in ${BRLCAD_EXT_DIR}/install files
