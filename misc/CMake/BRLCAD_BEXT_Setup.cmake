@@ -84,9 +84,9 @@ function(bext_setup)
     execute_process(COMMAND ${CMAKE_COMMAND} --build ${BEXT_BUILD_DIR} --parallel 8 WORKING_DIRECTORY ${BEXT_BUILD_DIR})
   endif (CMAKE_CONFIGURATION_TYPES)
 
-  set(BRLCAD_EXT_DIR ${BEXT_INSTALL_DIR}/bext_output CACHE FORCE "Local bext install")
-  set(BRLCAD_EXT_INSTALL_DIR ${BRLCAD_EXT_DIR}/install CACHE FORCE "Local bext install")
-  set(BRLCAD_EXT_NOINSTALL_DIR ${BRLCAD_EXT_DIR}/noinstall CACHE FORCE "Local bext install")
+  set(BRLCAD_EXT_DIR ${BEXT_INSTALL_DIR}/bext_output CACHE PATH "Local bext install" FORCE)
+  set(BRLCAD_EXT_INSTALL_DIR ${BRLCAD_EXT_DIR}/install CACHE PATH "Local bext install" FORCE)
+  set(BRLCAD_EXT_NOINSTALL_DIR ${BRLCAD_EXT_DIR}/noinstall CACHE PATH "Local bext install" FORCE)
 endfunction(bext_setup)
 
 # Local Variables:
