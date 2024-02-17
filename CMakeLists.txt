@@ -150,42 +150,36 @@ include(BRLCAD_Environment_Setup)
 # Populate these early, even though their main use is in
 # misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
 # may also make use of them, particularly BRLCAD_EXT_NOINSTALL_DIR
-set(ENV_HOME "$ENV{HOME}")
-if (NOT ENV_HOME)
-  set(ENV_HOME "$ENV{USERPROFILE}")
-endif (NOT ENV_HOME)
+set(BRLCAD_EXT_DIR_ENV "$ENV{BRLCAD_EXT_DIR}")
+if (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
+  set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR_ENV})
+endif (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
 
-# Check common location(s) in home directory
-set(EXT_CANDIDATES bext_output brlcad_ext)
-foreach(EC ${EXT_CANDIDATES})
-  if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
-    set(BRLCAD_EXT_DIR "${ENV_HOME}/${EC}")
-  endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
-endforeach(EC ${EXT_CANDIDATES})
+if (DEFINED BRLCAD_EXT_DIR)
+  if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+    set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
+  endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+  # Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
+  # is, we need to expand the symlink in order for the tar tricks we use
+  # later for file copying to work...
+  if (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+    file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
+    set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
+  endif (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
 
-if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
-  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
-endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
-# Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
-# is, we need to expand the symlink in order for the tar tricks we use
-# later for file copying to work...
-if (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
-  file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
-  set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
-endif (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
-
-# For noinstall we don't need to worry about symlinks since we'll be using
-# the contents in place.
-if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
-  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
-endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+  # For noinstall we don't need to worry about symlinks since we'll be using
+  # the contents in place.
+  if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+    set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
+  endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+endif (DEFINED BRLCAD_EXT_DIR)
 
 # If we're doing the non-src-other build, we've got to have brlcad_externals
 # for at least a few custom components no matter how many system packages got
 # installed.
 if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
   if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-    message(FATAL_ERROR "BRL-CAD requires a source for external components - please set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals). By default this location is ${ENV_HOME}/brlcad_ext but it can be overridden.  In lieu of setting BRLCAD_EXT_DIR, it is also possible to directly set BRLCAD_EXT_INSTALL_DIR and BRLCAD_EXT_NOINSTALL_DIR to custom indivdiaul folders holding the necessary dependencies.")
+    message(WARNING "BRL-CAD requires a source for external components, but no BRLCAD_EXT_DIR is set.  To use a pre-compiled set of components, set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals).\nBecause no BRLCAD_EXT_DIR was successfully configured, BRL-CAD will attempt to download, configure and build its own bext copy locally during the configure process.")
   endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
@@ -606,11 +600,6 @@ if(BRLCAD_PRINT_MSGS)
   message("*     Stage 3 of 9 - Check for Compiler Characteristics   *")
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
-
-# TODO - the Ninja single config generator in Release build uses the O3
-# and other optimization flags, but they don't seem to make it to the
-# step-g sources in MultiConfig release build???
-
 # load our compiler testing macro definitions
 include(CompilerFlags)
 

@@ -40,14 +40,11 @@
 # we add those patterns to the SYS_INCLUDE_PATTERNS list
 mark_as_advanced(SYS_INCLUDE_PATTERNS)
 
-
-if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
-  message(WARNING "BRLCAD_EXT_INSTALL_DIR is set to ${BRLCAD_EXT_INSTALL_DIR} but that location does not exist.  This will result in only system libraries being used for compilation, with no external dependencies being bundled into installers.")
-endif (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
-
-if (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
-  message(WARNING "BRLCAD_EXT_NOINSTALL_DIR is set to ${BRLCAD_EXT_NOINSTALL_DIR} but that location does not exist.  This means BRL-CAD's build will be dependent on system versions of build tools such as patchelf and astyle being present.")
-endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+  message("Attempting to prepare our own version of the bext dependencies\n")
+  include(BRLCAD_BEXT_Setup)
+  bext_setup()
+endif ()
 
 # If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to expand it so
 # we can spot the path that would have been used in ${BRLCAD_EXT_DIR}/install files
@@ -1050,11 +1047,21 @@ endif (RESET_TP)
 
 set(TCL_ROOT "${CMAKE_BINARY_DIR}")
 find_package(TCL)
-set(HAVE_TK 1)
-set(ITK_VERSION "3.4")
-set(IWIDGETS_VERSION "4.1.1")
-CONFIG_H_APPEND(BRLCAD "#define ITK_VERSION \"${ITK_VERSION}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
+if (TK_LIBRARY)
+  set(HAVE_TK 1)
+endif (TK_LIBRARY)
+if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
+  set(ITCL_VERSION "3.4")
+  CONFIG_H_APPEND(BRLCAD "#define ITCL_VERSION \"${ITCL_VERSION}\"\n")
+endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
+if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
+  set(ITK_VERSION "3.4")
+  CONFIG_H_APPEND(BRLCAD "#define ITK_VERSION \"${ITK_VERSION}\"\n")
+endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
+if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
+  set(IWIDGETS_VERSION "4.1.1")
+  CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
+endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
 
 # A lot of code depends on knowing about Tk being active,
 # so we set a flag in the configuration header to pass
