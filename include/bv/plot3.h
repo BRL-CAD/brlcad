@@ -112,8 +112,6 @@ __BEGIN_DECLS
 #define PL_ADD_PREFIX(b) PL_CONCAT(PLOT_PREFIX_STR,b)
 
 /* All linked symbols */
-#define pd               PL_ADD_PREFIX(pd)
-#define pd_3             PL_ADD_PREFIX(pd_3)
 #define pd_3box          PL_ADD_PREFIX(pd_3box)
 #define pd_3cont         PL_ADD_PREFIX(pd_3cont)
 #define pd_3line         PL_ADD_PREFIX(pd_3line)
@@ -128,7 +126,6 @@ __BEGIN_DECLS
 #define pd_move          PL_ADD_PREFIX(pd_move)
 #define pd_point         PL_ADD_PREFIX(pd_point)
 #define pd_space         PL_ADD_PREFIX(pd_space)
-#define pdv_3            PL_ADD_PREFIX(pdv_3)
 #define pdv_3box         PL_ADD_PREFIX(pdv_3box)
 #define pdv_3cont        PL_ADD_PREFIX(pdv_3cont)
 #define pdv_3line        PL_ADD_PREFIX(pdv_3line)
@@ -136,7 +133,6 @@ __BEGIN_DECLS
 #define pdv_3point       PL_ADD_PREFIX(pdv_3point)
 #define pdv_3ray         PL_ADD_PREFIX(pdv_3ray)
 #define pdv_3space       PL_ADD_PREFIX(pdv_3space)
-#define pl_3             PL_ADD_PREFIX(pl_3)
 #define pl_3box          PL_ADD_PREFIX(pl_3box)
 #define pl_3cont         PL_ADD_PREFIX(pl_3cont)
 #define pl_3line         PL_ADD_PREFIX(pl_3line)
@@ -357,7 +353,7 @@ static int pl_outputMode = PL_OUTPUT_MODE_BINARY;
 #define putsi(a)	putc(a, plotfp); putc((a>>8), plotfp)
 
 /* Making a common pd_3 to be used in pd_3cont and pd_3move */
-void
+static void
 pd_3(FILE *plotfp, double x, double y, double z, char c)
 {
     size_t ret;
@@ -381,7 +377,7 @@ pd_3(FILE *plotfp, double x, double y, double z, char c)
 }
 
 /* Making a common pdv_3 to be used in pdv_3cont and pdv_3move */
-void
+static void
 pdv_3(FILE *plotfp, const fastf_t *pt, char c)
 {
     size_t ret;
@@ -401,8 +397,8 @@ pdv_3(FILE *plotfp, const fastf_t *pt, char c)
 }
 
 /* Making a common pd to be used in pd_cont and pd_move */
-void
-pd(FILE *plotfp, double x, double y, char c)
+static void
+common_pd(FILE *plotfp, double x, double y, char c)
 {
     size_t ret;
     double in[2];
@@ -424,7 +420,7 @@ pd(FILE *plotfp, double x, double y, char c)
 }
 
 /* Making a common pl_3 to be used in pl_3cont and pl_3move */
-void
+static void
 pl_3(FILE *plotfp, int x, int y, int z, char c)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
@@ -718,7 +714,7 @@ pl_3box(FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int pz2)
 void
 pd_point(FILE *plotfp, double x, double y)
 {
-    pd( plotfp, x, y, 'x'); /* calling common function pd */
+    common_pd( plotfp, x, y, 'x'); /* calling common function pd */
 }
 
 void
@@ -750,13 +746,13 @@ pd_line(FILE *plotfp, double px1, double py1, double px2, double py2)
 void
 pd_move(FILE *plotfp, double x, double y)
 {
-    pd( plotfp, x, y, 'o'); /* calling common function pd */
+    common_pd( plotfp, x, y, 'o'); /* calling common function pd */
 }
 
 void
 pd_cont(FILE *plotfp, double x, double y)
 {
-    pd( plotfp, x, y, 'q'); /* calling common function pd */
+    common_pd( plotfp, x, y, 'q'); /* calling common function pd */
 }
 
 void
