@@ -32,6 +32,10 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 
+// TODO - pinewood.asc exposes a defect in this importer - we need to be able
+// to support multi-line quoted strings as well as multi-line bracket commands.
+// The brep object serializations are spread over many lines, but are part of a
+// single command...
 
 static int
 check_bracket_balance(int *ocnt, int *ccnt, std::string &s)
