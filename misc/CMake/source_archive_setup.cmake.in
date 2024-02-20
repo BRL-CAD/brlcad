@@ -94,6 +94,21 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
     execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${extra_file})
   endforeach(extra_file ${pre_existing_files})
 
+  # If we're instructed to, populate the ext directory to make a self contained
+  # tarball
+  if (CPACK_INCLUDE_EXT)
+    find_program(GIT_EXEC git REQUIRED)
+    execute_process(
+      COMMAND ${GIT_EXEC} clone --recursive https://github.com/BRL-CAD/bext.git
+      WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src/ext"
+    )
+    file(GLOB_RECURSE gcontents "@CMAKE_BINARY_DIR@/source_archive_contents/src/ext/.*")
+    foreach(SF ${gcontents})
+      execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r ${SF})
+    endforeach(SF ${gcontents})
+  endif (CPACK_INCLUDE_EXT)
+
+
   # Scrub any empty directories the above may have introduced
   file(GLOB remaining_files "@CMAKE_BINARY_DIR@/source_archive_contents")
   foreach(candidate ${remaining_files})
