@@ -1024,49 +1024,51 @@ set(POLY2TRI_ROOT "${CMAKE_BINARY_DIR}")
 find_package(POLY2TRI REQUIRED)
 
 
-# TCL - scripting language.  For Tcl/Tk builds we want
-# static lib building on so we get the stub libraries.
-if (BRLCAD_ENABLE_TK)
-  # For FindTCL.cmake
-  set(TCL_ENABLE_TK ON CACHE BOOL "enable tk")
-endif (BRLCAD_ENABLE_TK)
-mark_as_advanced(TCL_ENABLE_TK)
+if (BRLCAD_ENABLE_TCL)
+  # TCL - scripting language.  For Tcl/Tk builds we want
+  # static lib building on so we get the stub libraries.
+  if (BRLCAD_ENABLE_TK)
+    # For FindTCL.cmake
+    set(TCL_ENABLE_TK ON CACHE BOOL "enable tk")
+  endif (BRLCAD_ENABLE_TK)
+  mark_as_advanced(TCL_ENABLE_TK)
 
-find_package_reset(TCL RESET_TP)
-find_package_reset(TK RESET_TP)
-if (RESET_TP)
-  unset(TCL_INCLUDE_PATH CACHE)
-  unset(TCL_STUB_LIBRARY CACHE)
-  unset(TCL_TCLSH CACHE)
-  unset(TK_INCLUDE_PATH CACHE)
-  unset(TK_STUB_LIBRARY CACHE)
-  unset(TK_WISH CACHE)
-  unset(TK_X11_GRAPHICS CACHE)
-  unset(TTK_STUB_LIBRARY CACHE)
-endif (RESET_TP)
+  find_package_reset(TCL RESET_TP)
+  find_package_reset(TK RESET_TP)
+  if (RESET_TP)
+    unset(TCL_INCLUDE_PATH CACHE)
+    unset(TCL_STUB_LIBRARY CACHE)
+    unset(TCL_TCLSH CACHE)
+    unset(TK_INCLUDE_PATH CACHE)
+    unset(TK_STUB_LIBRARY CACHE)
+    unset(TK_WISH CACHE)
+    unset(TK_X11_GRAPHICS CACHE)
+    unset(TTK_STUB_LIBRARY CACHE)
+  endif (RESET_TP)
 
-set(TCL_ROOT "${CMAKE_BINARY_DIR}")
-find_package(TCL)
-if (TK_LIBRARY)
-  set(HAVE_TK 1)
-endif (TK_LIBRARY)
-if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
-  set(ITCL_VERSION "3.4")
-  CONFIG_H_APPEND(BRLCAD "#define ITCL_VERSION \"${ITCL_VERSION}\"\n")
-endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
-if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
-  set(ITK_VERSION "3.4")
-  CONFIG_H_APPEND(BRLCAD "#define ITK_VERSION \"${ITK_VERSION}\"\n")
-endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
-if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
-  set(IWIDGETS_VERSION "4.1.1")
-  CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
-endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
+  set(TCL_ROOT "${CMAKE_BINARY_DIR}")
+  find_package(TCL)
+  if (TK_LIBRARY)
+    set(HAVE_TK 1)
+  endif (TK_LIBRARY)
+  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
+    set(ITCL_VERSION "3.4")
+    CONFIG_H_APPEND(BRLCAD "#define ITCL_VERSION \"${ITCL_VERSION}\"\n")
+  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
+  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
+    set(ITK_VERSION "3.4")
+    CONFIG_H_APPEND(BRLCAD "#define ITK_VERSION \"${ITK_VERSION}\"\n")
+  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
+  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
+    set(IWIDGETS_VERSION "4.1.1")
+    CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
+  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
 
-# A lot of code depends on knowing about Tk being active,
-# so we set a flag in the configuration header to pass
-# on that information.
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
+  # A lot of code depends on knowing about Tk being active,
+  # so we set a flag in the configuration header to pass
+  # on that information.
+  CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
+endif (BRLCAD_ENABLE_TCL)
 
 
 # Qt - cross-platform user interface/application development toolkit
