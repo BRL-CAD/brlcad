@@ -140,6 +140,7 @@ manifold_process(struct rt_bot_internal *bot, int repair)
 }
 
 #ifdef USE_GEOGRAM
+
 static struct rt_bot_internal *
 geogram_mesh_repair(struct rt_bot_internal *bot)
 {
@@ -148,6 +149,9 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
 
     // Make sure geogram is initialized
     GEO::initialize();
+
+     // Quell logging messages
+    GEO::Logger::instance()->unregister_all_clients();
 
     // Use the default hole filling algorithm
     GEO::CmdLine::set_arg("algo:hole_filling", "loop_split");
