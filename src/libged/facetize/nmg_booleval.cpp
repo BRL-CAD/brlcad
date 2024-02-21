@@ -25,12 +25,96 @@
 
 #include "common.h"
 
+#include <string.h>
+
+#include "bio.h"
+
+#include "bu/hook.h"
+#include "bu/vls.h"
+#include "bu/log.h"
+
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
 extern "C" {
-void _ged_facetize_log_nmg(struct _ged_facetize_state *s);
-void _ged_facetize_log_default(struct _ged_facetize_state *s);
+static int
+_facetize_bomb_hook(void *cdata, void *str)
+{
+    struct _ged_facetize_state *o = (struct _ged_facetize_state *)cdata;
+    if (o->log_s->nmg_log_print_header) {
+       bu_vls_printf(o->log_s->nmg_log, "%s\n", bu_vls_addr(o->log_s->nmg_log_header));
+       o->log_s->nmg_log_print_header = 0;
+    }
+    bu_vls_printf(o->log_s->nmg_log, "%s\n", (const char *)str);
+    return 0;
+}
+
+static int
+_facetize_nmg_logging_hook(void *data, void *str)
+{
+    struct _ged_facetize_state *o = (struct _ged_facetize_state *)data;
+    if (o->log_s->nmg_log_print_header) {
+       bu_vls_printf(o->log_s->nmg_log, "%s\n", bu_vls_addr(o->log_s->nmg_log_header));
+       o->log_s->nmg_log_print_header = 0;
+    }
+    bu_vls_printf(o->log_s->nmg_log, "%s\n", (const char *)str);
+    return 0;
+}
+
+static void
+_facetize_log_nmg(struct _ged_facetize_state *o)
+{
+    if (fileno(stderr) < 0)
+       return;
+
+    /* Seriously, bu_bomb, we don't want you blathering
+     * to stderr... shut down stderr temporarily, assuming
+     * we can find /dev/null or something similar */
+    o->log_s->fnull = open("/dev/null", O_WRONLY);
+    if (o->log_s->fnull == -1) {
+       /* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
+       o->log_s->fnull = open("nul", O_WRONLY);
+    }
+    if (o->log_s->fnull != -1) {
+       o->log_s->serr = fileno(stderr);
+       o->log_s->stderr_stashed = dup(o->log_s->serr);
+       dup2(o->log_s->fnull, o->log_s->serr);
+       close(o->log_s->fnull);
+    }
+
+    /* Set bu_log logging to capture in nmg_log, rather than the
+     * application defaults */
+    bu_log_hook_delete_all();
+    bu_log_add_hook(_facetize_nmg_logging_hook, (void *)o);
+
+    /* Also engage the nmg bomb hooks */
+    bu_bomb_delete_all_hooks();
+    bu_bomb_add_hook(_facetize_bomb_hook, (void *)o);
+}
+
+static void
+_facetize_log_default(struct _ged_facetize_state *o)
+{
+    if (fileno(stderr) < 0 || !o || !o->log_s)
+       return;
+
+    /* Put stderr back */
+    if (o->log_s->fnull != -1) {
+       fflush(stderr);
+       dup2(o->log_s->stderr_stashed, o->log_s->serr);
+       close(o->log_s->stderr_stashed);
+       o->log_s->fnull = -1;
+    }
+
+    /* Restore bu_bomb hooks to the application defaults */
+    bu_bomb_delete_all_hooks();
+    bu_bomb_restore_hooks(o->log_s->saved_bomb_hooks);
+
+    /* Restore bu_log hooks to the application defaults */
+    bu_log_hook_delete_all();
+    bu_log_hook_restore_all(o->log_s->saved_log_hooks);
+}
+
 }
 
 static union tree *
@@ -77,7 +161,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     struct model *nmg_model;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
-    //_ged_facetize_log_nmg(s);
+    _facetize_log_nmg(s);
 
     db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
 
@@ -102,13 +186,13 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	_ged_facetize_log_default(s);
+	_facetize_log_default(s);
 	return NULL;
     } BU_UNSETJUMP;
 
     if (i < 0) {
 	/* Destroy NMG */
-	_ged_facetize_log_default(s);
+	_facetize_log_default(s);
 	return NULL;
     }
 
@@ -119,7 +203,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
-	    _ged_facetize_log_default(s);
+	    _facetize_log_default(s);
 	    return NULL;
 	} BU_UNSETJUMP;
 
@@ -136,7 +220,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 	db_free_tree(facetize_tree, &rt_uniresource);
     }
 
-    _ged_facetize_log_default(s);
+    _facetize_log_default(s);
     return (failed) ? NULL : nmg_model;
 }
 

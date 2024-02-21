@@ -23,7 +23,6 @@ add_subdirectory(tessellate)
 set(FACETIZE_SRCS
   brep.cpp
   facetize.cpp
-  facetize_log.c
   nmg_booleval.cpp
   regions.cpp
   tri_booleval.cpp
