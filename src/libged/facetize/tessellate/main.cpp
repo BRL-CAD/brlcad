@@ -201,7 +201,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct db_i *dbip, struct directory
 	    // not we need to try and repair it.
 	    if (!bot_is_manifold(nbot)) {
 		// Nope - try repairing
-		ret = bot_repair(obot, bot, s->ttol, s->tol);
+		ret = rt_bot_repair(obot, bot);
 	    } else {
 		// Passed - we're good to go.  If no renaming is expected, we're done
 		if (s->overwrite_obj)

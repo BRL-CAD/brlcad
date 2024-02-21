@@ -1,7 +1,6 @@
 set(GED_TESS_SRCS
   continuation.cpp
   half.cpp
-  repair.cpp
   sample.cpp
   spsr.cpp
   main.cpp

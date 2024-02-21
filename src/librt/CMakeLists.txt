@@ -15,6 +15,10 @@ if(ASSETIMPORT_LIBRARIES)
   add_definitions(-DUSE_ASSETIMPORT)
 endif(ASSETIMPORT_LIBRARIES)
 
+if(GEOGRAM_LIBRARY)
+  add_definitions(-DUSE_GEOGRAM)
+endif(GEOGRAM_LIBRARY)
+
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
   set(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
@@ -26,6 +30,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
   ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
   ${REGEX_INCLUDE_DIRS}
+  ${GEOGRAM_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
   ${ASSETIMPORT_INCLUDE_DIR}
   )
@@ -113,6 +118,7 @@ set(LIBRT_SOURCES
   primitives/bot/btgf.c
   primitives/bot/decimate.c
   primitives/bot/plate.cpp
+  primitives/bot/repair.cpp
   primitives/brep/brep.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
@@ -390,7 +396,7 @@ if(BRLCAD_ENABLE_SPR)
 endif(BRLCAD_ENABLE_SPR)
 
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${librt_deps};${OPENNURBS_LIBRARIES};${MANIFOLD_LIBRARIES};${ASSETIMPORT_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${librt_deps};${OPENNURBS_LIBRARIES};${MANIFOLD_LIBRARIES};${ASSETIMPORT_LIBRARIES};${GEOGRAM_LIBRARY};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
