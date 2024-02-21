@@ -23,9 +23,9 @@ add_subdirectory(tessellate)
 set(FACETIZE_SRCS
   brep.cpp
   facetize.cpp
-  nmg_booleval.cpp
+  nmg.cpp
   regions.cpp
-  tri_booleval.cpp
+  tri.cpp
   util.cpp
   )
 

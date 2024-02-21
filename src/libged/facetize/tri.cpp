@@ -1,4 +1,4 @@
-/*               T R I _ B O O L E V A L . C P P
+/*                         T R I . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2024 United States Government as represented by
@@ -19,8 +19,7 @@
  */
 /** @file libged/facetize/tri_booleval.cpp
  *
- * The core evaluation logic of the facetize command when targeting
- * triangle output.
+ * Triangle centric boolean evaluation logic using Manifold library.
  */
 
 #include "common.h"

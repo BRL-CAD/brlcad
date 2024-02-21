@@ -1,4 +1,4 @@
-/*                N M G _ B O O L E V A L . C P P
+/*                        N M G  . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2024 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/facetize/nmg_booleval.cpp
+/** @file libged/facetize/nmg.cpp
  *
  * Classic NMG boolean evaluation path.
  *
