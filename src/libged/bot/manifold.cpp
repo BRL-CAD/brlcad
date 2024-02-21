@@ -147,11 +147,43 @@ geogram_mesh_repair(struct rt_bot_internal *bot)
     if (!bot)
 	return NULL;
 
+    // Geogram libraries like to print a lot - shut down
+    // the I/O channels until we can clear the logger
+    int serr;
+    int sout;
+    int stderr_stashed;
+    int stdout_stashed;
+    int fnull = open("/dev/null", O_WRONLY);
+    if (fnull == -1) {
+	/* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
+	fnull = open("nul", O_WRONLY);
+    }
+    if (fnull != -1) {
+	serr = fileno(stderr);
+	sout = fileno(stdout);
+	stderr_stashed = dup(serr);
+	stdout_stashed = dup(sout);
+	dup2(fnull, serr);
+	dup2(fnull, sout);
+	close(fnull);
+    }
+
     // Make sure geogram is initialized
     GEO::initialize();
 
      // Quell logging messages
     GEO::Logger::instance()->unregister_all_clients();
+
+    // Put I/O channels back where they belong
+    if (fnull != -1) {
+	fflush(stderr);
+	dup2(stderr_stashed, serr);
+	close(stderr_stashed);
+	fflush(stdout);
+	dup2(stdout_stashed, sout);
+	close(stdout_stashed);
+	fnull = -1;
+    }
 
     // Use the default hole filling algorithm
     GEO::CmdLine::set_arg("algo:hole_filling", "loop_split");
