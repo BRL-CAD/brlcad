@@ -86,6 +86,7 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
       message("${processed} of ${file_count} files copied.")
     endif(${skip_msg} EQUAL 0)
   endforeach(source_file ${final_list})
+  message("Copying files... done.")
 
   # Remove anything already in the destination dir that should no longer be there
   message("Removing any leftover files from previous runs...")
@@ -93,8 +94,10 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
   foreach(extra_file ${pre_existing_files})
     execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${extra_file})
   endforeach(extra_file ${pre_existing_files})
+  message("Removing any leftover files from previous runs... done.")
 
   # Scrub any empty directories the above may have introduced
+  message("Removing empty directories...")
   file(GLOB remaining_files "@CMAKE_BINARY_DIR@/source_archive_contents")
   foreach(candidate ${remaining_files})
     if(IS_DIRECTORY "${candidate}")
@@ -120,12 +123,14 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
       endif(NOT dir_contents)
     endforeach(candidate ${dir_list})
   endwhile(HAVE_EMPTY_DIRS)
+  message("Removing empty directories... done.")
 
   # If we're instructed to, populate the ext directory to make a self contained
   # tarball
   set(CPACK_INCLUDE_EXT @CPACK_INCLUDE_EXT@)
   if (CPACK_INCLUDE_EXT)
     if (NOT EXISTS "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext")
+      message("Populating src/bext...")
       find_program(GIT_EXEC git REQUIRED)
       execute_process(
 	COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git
@@ -144,6 +149,7 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
       foreach(SF ${gcontents})
 	execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/${SF}")
       endforeach(SF ${gcontents})
+      message("Populating src/bext... done.")
     endif (NOT EXISTS "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext")
   endif (CPACK_INCLUDE_EXT)
 
