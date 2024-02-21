@@ -1,11 +1,11 @@
 set(cmake_ignore_files
   BRLCAD_API_Flag.cmake
-  BRLCAD_BEXT_Setup.cmake
   BRLCAD_Build_Types.cmake
   BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
   BRLCAD_Environment_Setup.cmake
+  BRLCAD_EXT_Setup.cmake
   BRLCAD_ExternalDeps.cmake
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake

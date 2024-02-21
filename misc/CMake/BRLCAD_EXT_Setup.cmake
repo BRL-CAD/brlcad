@@ -33,61 +33,61 @@ include(CMakeParseArguments)
 
 # Build a local copy of bext if we were unable to locate one
 
-function(bext_setup)
+function(brlcad_ext_setup)
 
-  set(BEXT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_build)
-  set(BEXT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR})
+  set(BRLCAD_EXT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_build)
+  set(BRLCAD_EXT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
   # If we don't have
-  if (NOT DEFINED BEXT_SOURCE_DIR)
-    set(BEXT_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext)
-    if (NOT EXISTS ${BEXT_SOURCE_DIR})
+  if (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
+    set(BRLCAD_EXT_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext)
+    if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
       find_program(GIT_EXEC git REQUIRED)
       execute_process(COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git)
-    endif (NOT EXISTS ${BEXT_SOURCE_DIR})
-  endif (NOT DEFINED BEXT_SOURCE_DIR)
-  if (NOT EXISTS ${BEXT_SOURCE_DIR})
-    message(FATAL_ERROR "bext directory ${BEXT_SOURCE_DIR} is not present")
-  endif (NOT EXISTS ${BEXT_SOURCE_DIR})
+    endif (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
+  endif (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
+  if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
+    message(FATAL_ERROR "bext directory ${BRLCAD_EXT_SOURCE_DIR} is not present")
+  endif (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
 
-  if (NOT EXISTS ${BEXT_BUILD_DIR})
-    file(MAKE_DIRECTORY ${BEXT_BUILD_DIR})
-  endif (NOT EXISTS ${BEXT_BUILD_DIR})
+  if (NOT EXISTS ${BRLCAD_EXT_BUILD_DIR})
+    file(MAKE_DIRECTORY ${BRLCAD_EXT_BUILD_DIR})
+  endif (NOT EXISTS ${BRLCAD_EXT_BUILD_DIR})
 
   # TODO - Need to control options for this based on BRL-CAD configure
   # settings.  Unlike an independent bext build, we know for this one what
   # we can turn on and off
-  set(BEXT_CMAKE_OPTS)
+  set(BRLCAD_EXT_CMAKE_OPTS)
   if ("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
-    set(BEXT_CMAKE_OPTS ${BEXT_CMAKE_OPTS} "-DENABLE_ALL=ON")
+    set(BRLCAD_EXT_CMAKE_OPTS ${BRLCAD_EXT_CMAKE_OPTS} "-DENABLE_ALL=ON")
   endif ("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
   if (NOT BRLCAD_ENABLE_GDAL)
-    set(BEXT_CMAKE_OPTS ${BEXT_CMAKE_OPTS} "-DUSE_GDAL=OFF")
+    set(BRLCAD_EXT_CMAKE_OPTS ${BRLCAD_EXT_CMAKE_OPTS} "-DUSE_GDAL=OFF")
   endif (NOT BRLCAD_ENABLE_GDAL)
   if (NOT BRLCAD_ENABLE_QT)
-    set(BEXT_CMAKE_OPTS ${BEXT_CMAKE_OPTS} "-DUSE_QT=OFF")
+    set(BRLCAD_EXT_CMAKE_OPTS ${BRLCAD_EXT_CMAKE_OPTS} "-DUSE_QT=OFF")
   endif (NOT BRLCAD_ENABLE_QT)
   if (NOT BRLCAD_ENABLE_TCL)
-    set(BEXT_CMAKE_OPTS ${BEXT_CMAKE_OPTS} "-DUSE_TCL=OFF")
+    set(BRLCAD_EXT_CMAKE_OPTS ${BRLCAD_EXT_CMAKE_OPTS} "-DUSE_TCL=OFF")
   endif (NOT BRLCAD_ENABLE_TCL)
 
-  execute_process(COMMAND ${CMAKE_COMMAND} ${BEXT_SOURCE_DIR}
-    ${BEXT_CMAKE_OPTS}
+  execute_process(COMMAND ${CMAKE_COMMAND} ${BRLCAD_EXT_SOURCE_DIR}
+    ${BRLCAD_EXT_CMAKE_OPTS}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_INSTALL_PREFIX=${BEXT_INSTALL_DIR}
-    WORKING_DIRECTORY ${BEXT_BUILD_DIR}
+    -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}
+    WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR}
     )
 
   if (CMAKE_CONFIGURATION_TYPES)
-    execute_process(COMMAND ${CMAKE_COMMAND} --build ${BEXT_BUILD_DIR} --parallel 8 --config ${CMAKE_BUILD_TYPE} WORKING_DIRECTORY ${BEXT_BUILD_DIR})
+    execute_process(COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel 8 --config ${CMAKE_BUILD_TYPE} WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR})
   else (CMAKE_CONFIGURATION_TYPES)
-    execute_process(COMMAND ${CMAKE_COMMAND} --build ${BEXT_BUILD_DIR} --parallel 8 WORKING_DIRECTORY ${BEXT_BUILD_DIR})
+    execute_process(COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel 8 WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR})
   endif (CMAKE_CONFIGURATION_TYPES)
 
-  set(BRLCAD_EXT_DIR ${BEXT_INSTALL_DIR}/bext_output CACHE PATH "Local bext install" FORCE)
+  set(BRLCAD_EXT_DIR ${BRLCAD_EXT_INSTALL_DIR}/bext_output CACHE PATH "Local bext install" FORCE)
   set(BRLCAD_EXT_INSTALL_DIR ${BRLCAD_EXT_DIR}/install CACHE PATH "Local bext install" FORCE)
   set(BRLCAD_EXT_NOINSTALL_DIR ${BRLCAD_EXT_DIR}/noinstall CACHE PATH "Local bext install" FORCE)
-endfunction(bext_setup)
+endfunction(brlcad_ext_setup)
 
 # Local Variables:
 # tab-width: 8

@@ -42,8 +42,8 @@ mark_as_advanced(SYS_INCLUDE_PATTERNS)
 
 if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   message("Attempting to prepare our own version of the bext dependencies\n")
-  include(BRLCAD_BEXT_Setup)
-  bext_setup()
+  include(BRLCAD_EXT_Setup)
+  brlcad_ext_setup()
 endif ()
 
 # If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to expand it so
