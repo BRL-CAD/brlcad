@@ -89,6 +89,11 @@ endif(DEFINED BRLCAD_VERSION_AMEND)
 project(BRLCAD VERSION ${BRLCAD_VERSION} DESCRIPTION "Open Source Solid Modeling" HOMEPAGE_URL "https://brlcad.org" LANGUAGES C CXX)
 #######
 
+# Policy CMP0009: FILE GLOB_RECURSE calls should not follow symlinks by default
+if (POLICY CMP0009)
+  cmake_policy(SET CMP0009 NEW)
+endif (POLICY CMP0009)
+
 # Policy CMP0060 tells CMake to use full paths in link specifications
 if (POLICY CMP0060)
   cmake_policy(SET CMP0060 NEW)
@@ -155,6 +160,12 @@ if (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
   set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR_ENV})
 endif (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
 
+# For a full tarball of the repo and its dependencies, look in the
+# location package_source would place a bext copy
+if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/src/bext")
+  set(BRLCAD_EXT_DIR "${CMAKE_SOURCE_DIR}/src/bext")
+endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/src/bext")
+
 if (DEFINED BRLCAD_EXT_DIR)
   if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
     set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
@@ -181,6 +192,9 @@ if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
   if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
     message(WARNING "BRL-CAD requires a source for external components, but no BRLCAD_EXT_DIR is set.  To use a pre-compiled set of components, set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals).\nBecause no BRLCAD_EXT_DIR was successfully configured, BRL-CAD will attempt to download, configure and build its own bext copy locally during the configure process.")
   endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+
+  # Tell CPack to bundle bext into the source tarball
+  set(CPACK_INCLUDE_EXT 1)
 endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
 #---------------------------------------------------------------------

@@ -94,21 +94,6 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
     execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${extra_file})
   endforeach(extra_file ${pre_existing_files})
 
-  # If we're instructed to, populate the ext directory to make a self contained
-  # tarball
-  if (CPACK_INCLUDE_EXT)
-    find_program(GIT_EXEC git REQUIRED)
-    execute_process(
-      COMMAND ${GIT_EXEC} clone --recursive https://github.com/BRL-CAD/bext.git
-      WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src/ext"
-    )
-    file(GLOB_RECURSE gcontents "@CMAKE_BINARY_DIR@/source_archive_contents/src/ext/.*")
-    foreach(SF ${gcontents})
-      execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r ${SF})
-    endforeach(SF ${gcontents})
-  endif (CPACK_INCLUDE_EXT)
-
-
   # Scrub any empty directories the above may have introduced
   file(GLOB remaining_files "@CMAKE_BINARY_DIR@/source_archive_contents")
   foreach(candidate ${remaining_files})
@@ -135,6 +120,32 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
       endif(NOT dir_contents)
     endforeach(candidate ${dir_list})
   endwhile(HAVE_EMPTY_DIRS)
+
+  # If we're instructed to, populate the ext directory to make a self contained
+  # tarball
+  set(CPACK_INCLUDE_EXT @CPACK_INCLUDE_EXT@)
+  if (CPACK_INCLUDE_EXT)
+    if (NOT EXISTS "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext")
+      find_program(GIT_EXEC git REQUIRED)
+      execute_process(
+	COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git
+	WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src"
+	)
+      execute_process(
+	COMMAND ${CMAKE_COMMAND} -E make_directory "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build"
+	)
+      execute_process(
+	COMMAND ${CMAKE_COMMAND} .. -DENABLE_ALL=ON -DUSE_APPLESEED=ON -DUSE_OSPRAY=ON
+	WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build"
+	)
+      execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/.git")
+      file(GLOB_RECURSE gcontents RELATIVE "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext" ".git*")
+      foreach(SF ${gcontents})
+	execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/${SF}")
+      endforeach(SF ${gcontents})
+    endif (NOT EXISTS "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext")
+  endif (CPACK_INCLUDE_EXT)
 
 endif(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
 
