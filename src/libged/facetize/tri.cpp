@@ -198,6 +198,26 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     // to the values in ts_mat, the BoT ends up inside-out when read in.
     int flip = bot_flipped(&tsp->ts_mat);
 
+
+    // Infinite half spaces get special handling in the boolean evaluation
+    if (ip->idb_minor_type == ID_HALF) {
+	// TODO - support flip for these...
+
+	BU_GET(curtree, union tree);
+	RT_TREE_INIT(curtree);
+	curtree->tr_op = OP_TESS;
+	curtree->tr_d.td_name = bu_strdup(dp->d_namep);
+	curtree->tr_d.td_r = NULL;
+	curtree->tr_d.td_d = NULL;
+	curtree->tr_d.td_i = ip;
+
+	if (RT_G_DEBUG&RT_DEBUG_TREEWALK)
+	    bu_log("_booltree_leaf_tess(%s) OK\n", dp->d_namep);
+
+	return curtree;
+    }
+
+
     void *odata = NULL;
     ts_status = bot_to_manifold(&odata, tsp, ip, flip);
     if (ts_status < 0) {
@@ -211,6 +231,7 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
     curtree->tr_d.td_r = NULL;
     curtree->tr_d.td_d = odata;
+    curtree->tr_d.td_i = NULL;
 
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK)
 	bu_log("_booltree_leaf_tess(%s) OK\n", dp->d_namep);

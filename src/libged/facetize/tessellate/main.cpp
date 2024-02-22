@@ -144,7 +144,6 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 
     struct rt_pnts_internal *pnts = NULL;
     struct rt_bot_internal *bot = NULL;
-    struct rt_bot_internal *nbot = NULL;
     int propVal;
     int ret = BRLCAD_OK;
 
@@ -199,33 +198,13 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.
-	    if (!bot_is_manifold(nbot)) {
+	    if (!bot_is_manifold(bot)) {
 		// Nope - try repairing
 		*method_flag = FACETIZE_METHOD_REPAIR;
 		ret = rt_bot_repair(obot, bot);
 	    } else {
-		// Passed - we're good to go.  If no renaming is expected, we're done
-		if (s->overwrite_obj)
-		    return BRLCAD_OK;
-
-		/* Change object name in the in-memory directory. */
-		struct bu_vls obot_name = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
-		if (db_rename(dbip, dp, bu_vls_cstr(&obot_name)) < 0) {
-		    rt_db_free_internal(&intern);
-		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", bu_vls_cstr(&obot_name));
-		    bu_vls_free(&obot_name);
-		    return BRLCAD_ERROR;
-		}
-
-		/* Re-write to the database.  New name is applied on the way out. */
-		if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", bu_vls_cstr(&obot_name));
-		    bu_vls_free(&obot_name);
-		    return BRLCAD_ERROR;
-		}
-		bu_vls_free(&obot_name);
-
+		// Already a valid BoT - tessellate is a no-op.
+		*obot = NULL;
 		return BRLCAD_OK;
 	    }
 	case ID_DSP:
@@ -425,9 +404,15 @@ main(int argc, const char **argv)
 	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 	    continue;
 
+	// Trigger the core tessellation routines
 	if (dp_tessellate(&obot, &method_flag, gedp->dbip, dp, &s) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
 
+	// If we didn't get anything and we had an OK code, just keep going
+	if (!obot)
+	    continue;
+
+	// If we've got something to write, handle it
 	if (s.overwrite_obj) {
 	    bu_vls_sprintf(&obot_name, "%s", dp->d_namep);
 	} else {
