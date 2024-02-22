@@ -51,20 +51,6 @@
 static const char *
 method_opt(int *method_flags)
 {
-#if 0
-    switch (dp->d_minor_type) {
-	case ID_DSP:
-	    // DSP primitives need to avoid the methodology, since NMG
-	    // doesn't seem to work very well
-	    // TODO - revisit this if we get a better NMG facetize, perhaps
-	    // using http://mgarland.org/software/terra.html
-	    *method_flags = *method_flags & ~(FACETIZE_METHOD_NMG);
-	    break;
-	default:
-	    break;
-    }
-#endif
-
     // NMG is best, when it works
     static const char *nmg_opt = "--nmg";
     if (*method_flags & FACETIZE_METHOD_NMG) {
@@ -194,29 +180,40 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
-    // Observed in Goliath example model with SKTRACKdrivewheel2.c comb - due
-    // to the values in ts_mat, the BoT ends up inside-out when read in.
-    int flip = bot_flipped(&tsp->ts_mat);
-
-
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
+    curtree->tr_op = OP_TESS;
+    curtree->tr_d.td_name = bu_strdup(dp->d_namep);
+    curtree->tr_d.td_r = NULL;
+    curtree->tr_d.td_d = NULL;
+    curtree->tr_d.td_i = NULL;
+	
     // Infinite half spaces get special handling in the boolean evaluation
     if (ip->idb_minor_type == ID_HALF) {
-	// TODO - support flip for these...
+	struct rt_db_internal *hintern;
+	BU_GET(hintern, struct rt_db_internal);
+	RT_DB_INTERNAL_INIT(hintern);
+	hintern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	hintern->idb_type = ID_HALF;
+	hintern->idb_meth = &OBJ[ID_HALF];
+	struct rt_half_internal *hf_cp;
+	BU_GET(hf_cp, struct rt_half_internal);
+	hintern->idb_ptr = (void *)hf_cp;
 
-	BU_GET(curtree, union tree);
-	RT_TREE_INIT(curtree);
-	curtree->tr_op = OP_TESS;
-	curtree->tr_d.td_name = bu_strdup(dp->d_namep);
-	curtree->tr_d.td_r = NULL;
-	curtree->tr_d.td_d = NULL;
-	curtree->tr_d.td_i = ip;
-
-	if (RT_G_DEBUG&RT_DEBUG_TREEWALK)
-	    bu_log("_booltree_leaf_tess(%s) OK\n", dp->d_namep);
-
+	struct rt_half_internal *hf_ip= (struct rt_half_internal *)ip->idb_ptr;
+	hf_cp->magic = hf_ip->magic;
+	HMOVE(hf_cp->eqn, hf_ip->eqn);
+	curtree->tr_d.td_i = hintern;
 	return curtree;
     }
 
+    // Anything else that's not a BoT is a no-op for booleans
+    if (ip->idb_minor_type != ID_BOT) 
+	return curtree;
+
+    // Observed in Goliath example model with SKTRACKdrivewheel2.c comb - due
+    // to the values in ts_mat, the BoT ends up inside-out when read in.
+    int flip = bot_flipped(&tsp->ts_mat);
 
     void *odata = NULL;
     ts_status = bot_to_manifold(&odata, tsp, ip, flip);
@@ -298,107 +295,121 @@ manifold_do_bool(
 	    manifold_op = manifold::OpType::Add;
     };
 
-    // By this point we should have prepared our Manifold inputs - now
-    // it's a question of doing the evaluation
+    // If we have a left half space, bail - that's not well defined for producing
+    // a Manifold closed volume
+    if (tl->tr_d.td_i) {
+	bu_log("Error - internal pointer on left boolean input\n");
+	return -1;
+    }
 
-    // We're either working with the results of CSG NMG tessellations,
-    // or we have prior manifold_mesh results - figure out which.
-    // If it's the NMG results, we need to make manifold_meshes for
-    // processing.
+    // By this point we should have prepared our Manifold inputs - now
+    // it's a question of doing the evaluation.
     manifold::Manifold *lm = (manifold::Manifold *)tl->tr_d.td_d;
     manifold::Manifold *rm = (manifold::Manifold *)tr->tr_d.td_d;
     manifold::Manifold *result = NULL;
     int failed = 0;
-    if (!lm || lm->Status() != manifold::Manifold::Error::NoError) {
-	bu_log("Error - left manifold invalid\n");
-	lm = NULL;
-	failed = 1;
-    }
-    if (!rm || rm->Status() != manifold::Manifold::Error::NoError) {
-	bu_log("Error - right manifold invalid\n");
-	rm = NULL;
-	failed = 1;
-    }
-    if (!failed) {
+    bool delete_left = false;
+    // On the right we can either have a Manifold, or a half space.  If it's
+    // the latter, we need special handling.
+    bool delete_right = false;
+    if (tr->tr_d.td_i) {
+	if (tr->tr_d.td_i->idb_minor_type != ID_HALF) {
+	    return -1;
+	}
+	if (!rm) {
+	    rm = new manifold::Manifold();
+	    delete_right = true;
+	}
+	struct rt_half_internal *hf_ip= (struct rt_half_internal *)tr->tr_d.td_i->idb_ptr;
+	if (manifold_op != manifold::OpType::Add) {
 
-	bu_log("Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
+	    // Intersections and Subtractions with half spaces are handled
+	    // by Manifold routines
+	    vect_t pn;
+	    pn[0] = hf_ip->eqn[0];
+	    pn[1] = hf_ip->eqn[1];
+	    pn[2] = hf_ip->eqn[2];
+	    if (op == OP_INTERSECT)
+		VSCALE(pn, pn, -1);
+	    manifold::Manifold trimmed = rm->TrimByPlane(glm::vec3(pn[0], pn[1], pn[2]), hf_ip->eqn[3]);
+	    result = new manifold::Manifold(trimmed);
+	}
 
-	manifold::Manifold bool_out;
-	try {
-	    bool_out = lm->Boolean(*rm, manifold_op);
-	    if (bool_out.Status() != manifold::Manifold::Error::NoError) {
-		bu_log("Error - bool result invalid\n");
-		failed = 1;
-	    }
-	} catch (...) {
-	    bu_log("Manifold boolean library threw failure\n");
-#ifdef USE_ASSETIMPORT
-	    const char *evar = getenv("GED_MANIFOLD_DEBUG");
-	    // write out the failing inputs to files to aid in debugging
-	    if (evar && strlen(evar)) {
-		std::cerr << "Manifold op: " << (int)manifold_op << "\n";
-		manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMesh(), {});
-		manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMesh(), {});
-		bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
-	    }
-#endif
+	BU_PUT(hf_ip, struct rt_half_internal);
+	BU_PUT(tr->tr_d.td_i, struct rt_db_internal);
+	tr->tr_d.td_i = NULL;
+    }
+
+    // Anything not already set up or handled is a no-op
+    if (!lm) {
+	lm = new manifold::Manifold();
+	delete_left = true;
+    }
+    if (!rm) {
+	rm = new manifold::Manifold();
+	delete_right = true;
+    }
+
+    if (!result) {
+
+	// Before we try a boolean, validate that our inputs satisfy Manifold's
+	// criteria.
+	if (!lm || lm->Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Error - left manifold invalid\n");
+	    lm = NULL;
+	    failed = 1;
+	}
+	if (!rm || rm->Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Error - right manifold invalid\n");
+	    rm = NULL;
 	    failed = 1;
 	}
 
-#if 0
-	// If we're debugging and need to capture glb for a "successful" case, these can be uncommented
-	manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMesh(), {});
-	manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMesh(), {});
-	manifold::ExportMesh(std::string("out-") + std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".glb"), bool_out.GetMesh(), {});
+	if (!failed) {
+	    // We should have valid inputs - proceed
+
+	    bu_log("Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
+
+	    manifold::Manifold bool_out;
+	    try {
+		bool_out = lm->Boolean(*rm, manifold_op);
+		if (bool_out.Status() != manifold::Manifold::Error::NoError) {
+		    bu_log("Error - bool result invalid\n");
+		    failed = 1;
+		}
+	    } catch (...) {
+		bu_log("Manifold boolean library threw failure\n");
+#ifdef USE_ASSETIMPORT
+		const char *evar = getenv("GED_MANIFOLD_DEBUG");
+		// write out the failing inputs to files to aid in debugging
+		if (evar && strlen(evar)) {
+		    std::cerr << "Manifold op: " << (int)manifold_op << "\n";
+		    manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMesh(), {});
+		    manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMesh(), {});
+		    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
+		}
 #endif
-
-	if (!failed)
-	    result = new manifold::Manifold(bool_out);
-    }
-
-    if (failed) {
-	// TODO - we may want to try an NMG boolean op (or possibly
-	// even geogram) here as a fallback
-#if 0
-	manifold::Mesh lmesh = lm->GetMesh();
-	Mesh -> NMG
-	    manifold::Mesh rmesh = rm->GetMesh();
-	Mesh -> NMG
-	    int nmg_op = NMG_BOOL_ADD;
-	switch (op) {
-	    case OP_UNION:
-		nmg_op = NMG_BOOL_ADD;
-		break;
-	    case OP_INTERSECT:
-		nmg_op = NMG_BOOL_ISECT;
-		break;
-	    case OP_SUBTRACT:
-		nmg_op = NMG_BOOL_SUB;
-		break;
-	    default:
-		nmg_op = NMG_BOOL_ADD;
-	}
-	struct nmgregion *reg;
-	if (!BU_SETJUMP) {
-	    /* try */
-
-	    /* move operands into the same model */
-	    if (td_l->m_p != td_r->m_p)
-		nmg_merge_models(td_l->m_p, td_r->m_p);
-	    reg = nmg_do_bool(td_l, td_r, nmg_op, &RTG.rtg_vlfree, &wdbp->wdb_tol);
-	    if (reg) {
-		nmg_r_radial_check(reg, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+		failed = 1;
 	    }
-	    result = nmg_to_manifold(reg);
-	} else {
-	    /* catch */
-	    BU_UNSETJUMP;
-	    return 1;
-	} BU_UNSETJUMP;
+
+#if 0
+	    // If we're debugging and need to capture glb for a "successful" case, these can be uncommented
+	    manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMesh(), {});
+	    manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMesh(), {});
+	    manifold::ExportMesh(std::string("out-") + std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".glb"), bool_out.GetMesh(), {});
 #endif
+
+	    if (!failed)
+		result = new manifold::Manifold(bool_out);
+	}
     }
 
     // Memory cleanup
+    if (delete_left)
+	delete lm;
+    if (delete_right)
+	delete rm;
+
     if (tl->tr_d.td_d) {
 	manifold::Manifold *m = (manifold::Manifold *)tl->tr_d.td_d;
 	delete m;

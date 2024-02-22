@@ -183,9 +183,8 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 
 	    goto pnt_sampling_methods;
 	case ID_HALF:
-	    // Halfspace objects get a large arb.
-	    ret = half_to_bot(obot, &intern, s->ttol, s->tol);
-	    break;
+	    // Halfspace objects are handled specially by BRL-CAD.
+	    return BRLCAD_OK;
 	case ID_BOT:
 	    bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	    propVal = (int)rt_bot_propget(bot, "type");
@@ -382,29 +381,33 @@ main(int argc, const char **argv)
     // If no method(s) were specified, try everything
     method_enablement_check(&s);
 
+    // Open the database
     struct ged *gedp = ged_open("db", argv[0], 1);
     if (!gedp)
 	return BRLCAD_ERROR;
 
+    // Translate specified object names to directory pointers
     struct bu_ptbl dps = BU_PTBL_INIT_ZERO;
     for (int i = 1; i < argc; i++) {
-	struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
+	struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY);
 	if (!dp)
 	    return BRLCAD_ERROR;
 	bu_ptbl_ins(&dps, (long *)dp);
     }
 
-    struct bu_vls obot_name = BU_VLS_INIT_ZERO;
-    struct rt_bot_internal *obot = NULL;
-    int method_flag = FACETIZE_METHOD_NULL;
+    // Tessellate each object.  Note that we're doing this in series rather
+    // than parallel because of the risks of high memory consumption and/or
+    // CPU utilization for individual object operations.
     for (size_t i = 0; i < BU_PTBL_LEN(&dps); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(&dps, i);
 
 	// If this isn't a proper BRL-CAD object, tessellation is a no-op
+	struct directory *dp = (struct directory *)BU_PTBL_GET(&dps, i);
 	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 	    continue;
 
 	// Trigger the core tessellation routines
+	struct rt_bot_internal *obot = NULL;
+	int method_flag = FACETIZE_METHOD_NULL;
 	if (dp_tessellate(&obot, &method_flag, gedp->dbip, dp, &s) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
 
@@ -413,20 +416,19 @@ main(int argc, const char **argv)
 	    continue;
 
 	// If we've got something to write, handle it
+	struct bu_vls obot_name = BU_VLS_INIT_ZERO;
 	if (s.overwrite_obj) {
 	    bu_vls_sprintf(&obot_name, "%s", dp->d_namep);
 	} else {
 	    bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
 	}
-
-	if (_tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name), method_flag) != BRLCAD_OK)
+	// NOTE: _tess_facetize_write_bot frees obot
+	int ret = _tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name), method_flag);
+	bu_vls_free(&obot_name);
+	if (ret != BRLCAD_OK)
 	    return BRLCAD_ERROR;
 
-	// _tess_facetize_write_bot frees obot - set to NULL
-	obot = NULL;
     }
-
-    bu_vls_free(&obot_name);
 
     return BRLCAD_OK;
 }
