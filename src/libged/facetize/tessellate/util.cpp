@@ -82,8 +82,22 @@ _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
     }
 }
 
+static const char *
+method_str(int method)
+{
+    static const char *nmg = "NMG";
+    static const char *continuation = "CM";
+    static const char *spsr = "SPSR";
+    static const char *repair = "REPAIR";
+    if (method == FACETIZE_METHOD_NMG) return nmg;
+    if (method == FACETIZE_METHOD_CONTINUATION) return continuation;
+    if (method == FACETIZE_METHOD_SPSR) return spsr;
+    if (method == FACETIZE_METHOD_REPAIR) return repair;
+    return NULL;
+}
+
 int
-_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name)
+_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, int method)
 {
     /* Export BOT as a new solid */
     struct rt_db_internal intern;
@@ -100,11 +114,23 @@ _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const c
 	db_dirdelete(dbip, odp);
     }
 
+    struct bu_attribute_value_set avs;
+    bu_avs_init_empty(&avs);
+    const char *mstr = method_str(method);
+    if (mstr)
+	(void)bu_avs_add(&avs, "facetize_method", mstr);
+
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_log("Cannot add %s to directory\n", name);
+	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     }
+
+    if (db5_update_attributes(dp, &avs, dbip))
+	bu_log("WARNING: couldn't set facetize method attribute\n");
+
+    bu_avs_free(&avs);
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	bu_log("Failed to write %s to database\n", name);

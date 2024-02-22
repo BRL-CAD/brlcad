@@ -130,9 +130,9 @@ method_enablement_check(struct tess_opts *s)
 }
 
 static int
-dp_tessellate(struct rt_bot_internal **obot, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
+dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
 {
-    if (!obot || !dbip || !dp)
+    if (!obot || !method_flag || !dbip || !dp)
 	return BRLCAD_ERROR;
 
     struct rt_db_internal intern;
@@ -201,6 +201,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct db_i *dbip, struct directory
 	    // not we need to try and repair it.
 	    if (!bot_is_manifold(nbot)) {
 		// Nope - try repairing
+		*method_flag = FACETIZE_METHOD_REPAIR;
 		ret = rt_bot_repair(obot, bot);
 	    } else {
 		// Passed - we're good to go.  If no renaming is expected, we're done
@@ -260,8 +261,10 @@ dp_tessellate(struct rt_bot_internal **obot, struct db_i *dbip, struct directory
     if (s->nmg) {
 	// NMG is best, if it works
 	ret = _nmg_tessellate(obot, &intern, s->ttol, s->tol);
-	if (ret == BRLCAD_OK)
+	if (ret == BRLCAD_OK) {
+	    *method_flag = FACETIZE_METHOD_NMG;
 	    return BRLCAD_OK;
+	}
     }
 
     if (s->continuation) {
@@ -278,8 +281,10 @@ dp_tessellate(struct rt_bot_internal **obot, struct db_i *dbip, struct directory
 	}
 	struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
 	ret = continuation_mesh(obot, dbip, dp->d_namep, s, seed->v);
-	if (ret == BRLCAD_OK)
+	if (ret == BRLCAD_OK) {
+	    *method_flag = FACETIZE_METHOD_CONTINUATION;
 	    return BRLCAD_OK;
+	}
     }
 
 pnt_sampling_methods:
@@ -307,8 +312,10 @@ pnt_sampling_methods:
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
 	}
 	//ret = spsr_mesh(obot, &intern, s->ttol, s->tol);
-	if (ret == BRLCAD_OK)
+	if (ret == BRLCAD_OK) {
+	    *method_flag = FACETIZE_METHOD_SPSR;
 	    return ret;
+	}
     }
 
     return BRLCAD_ERROR;
@@ -410,6 +417,7 @@ main(int argc, const char **argv)
 
     struct bu_vls obot_name = BU_VLS_INIT_ZERO;
     struct rt_bot_internal *obot = NULL;
+    int method_flag = FACETIZE_METHOD_NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(&dps); i++) {
 	struct directory *dp = (struct directory *)BU_PTBL_GET(&dps, i);
 
@@ -417,7 +425,7 @@ main(int argc, const char **argv)
 	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 	    continue;
 
-	if (dp_tessellate(&obot, gedp->dbip, dp, &s) != BRLCAD_OK)
+	if (dp_tessellate(&obot, &method_flag, gedp->dbip, dp, &s) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
 
 	if (s.overwrite_obj) {
@@ -426,9 +434,9 @@ main(int argc, const char **argv)
 	    bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
 	}
 
-	if (_tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name)) != BRLCAD_OK)
+	if (_tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name), method_flag) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
-   
+
 	// _tess_facetize_write_bot frees obot - set to NULL
 	obot = NULL;
     }

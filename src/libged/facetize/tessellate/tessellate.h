@@ -40,6 +40,12 @@
 
 __BEGIN_DECLS
 
+#define FACETIZE_METHOD_NULL          0x0
+#define FACETIZE_METHOD_NMG           0x1
+#define FACETIZE_METHOD_CONTINUATION  0x2
+#define FACETIZE_METHOD_SPSR          0x4
+#define FACETIZE_METHOD_REPAIR        0x8
+
 struct tess_opts {
     int nmg;
     int instant_mesh;
@@ -78,7 +84,7 @@ extern struct rt_bot_internal *
 _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size);
 
 extern int
-_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name);
+_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, int method_flag);
 
 extern struct rt_pnts_internal *
 _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s);
