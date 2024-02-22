@@ -199,6 +199,12 @@ extern int
 _ged_facetize_working_file_setup(char *wfile, char *wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume);
 
 extern int
+_ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps);
+
+extern int
+_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *newname);
+
+extern int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n);
 
 extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv);
