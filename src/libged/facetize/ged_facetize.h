@@ -196,6 +196,9 @@ extern int
 _ged_facetize_write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const char *name);
 
 extern int
+_ged_facetize_working_file_setup(char *wfile, char *wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume);
+
+extern int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n);
 
 extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv);
