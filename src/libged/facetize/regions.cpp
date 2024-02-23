@@ -47,7 +47,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct ged *gedp = s->gedp;
     int newobj_cnt = 0;
     int ret = BRLCAD_OK;
-    struct directory **dpa = NULL;
     struct db_i *dbip = gedp->dbip;
 
     /* Used the libged tolerances */
@@ -56,14 +55,14 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
     if (!argc) return BRLCAD_ERROR;
 
-    dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
+    struct directory **dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
     if (_ged_validate_objs_list(s, argc, argv, newobj_cnt) == BRLCAD_ERROR) {
 	bu_free(dpa, "free dpa");
 	return BRLCAD_ERROR;
     }
 
-    const char *active_regions = "( -type r ! -below -type r ) -or ( ! -below -type r ! -type comb )";
+    const char *active_regions = "( -type r ! -below -type r )";
     struct bu_ptbl *ar = NULL;
     BU_ALLOC(ar, struct bu_ptbl);
     if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
@@ -79,15 +78,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	/* No active regions (unlikely but technically possible), nothing to do */
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
-	bu_free(dpa, "free dpa");
+	bu_free(dpa, "dpa");
 	return BRLCAD_OK;
-    }
-
-    /* First stage is to process the primitive instances - get the primitives from the regions */
-    bu_free(dpa, "dpa");
-    dpa = (struct directory **)bu_calloc(BU_PTBL_LEN(ar), sizeof(struct directory *), "dp array");
-    for (size_t i = 0; i < BU_PTBL_LEN(ar); i++) {
-	dpa[i] = (struct directory *)BU_PTBL_GET(ar, i);
     }
 
     // For the working file setup, we need to check the solids to see if any
@@ -95,7 +87,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *active_solids = "! -type comb";
     struct bu_ptbl *as = NULL;
     BU_ALLOC(as, struct bu_ptbl);
-    if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, BU_PTBL_LEN(ar), dpa, dbip, NULL) < 0) {
+    if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, newobj_cnt, dpa, dbip, NULL) < 0) {
 	if (s->verbosity) {
 	    bu_log("Problem searching for active solids - aborting.\n");
 	}
@@ -157,7 +149,32 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_ptbl_free(as);
     bu_free(as, "as table");
 
+
+    // If we have any solids in the hierarchies with only combs above them,
+    // they are "implicit" regions and must be facetized individually.
+    const char *implicit_regions = "( ! -below -type r ! -type comb )";
+    struct bu_ptbl *ir = NULL;
+    BU_ALLOC(ir, struct bu_ptbl);
+    if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
+	if (s->verbosity) {
+	    bu_log("Problem searching for implicit regions - aborting.\n");
+	}
+	bu_ptbl_free(ar);
+	bu_free(ar, "ar table");
+	bu_free(dpa, "free dpa");
+	return BRLCAD_OK;
+    }
     bool have_failure = false;
+    if (BU_PTBL_LEN(ir)) {
+	if (_ged_facetize_leaves_tri(s, wfile, wdir, dbip, ir) != BRLCAD_OK) {
+	    have_failure = true;
+	}
+    }
+    bu_ptbl_free(ir);
+    bu_free(ir, "ir table");
+
+    // For proper regions, we're reducing the CSG tree to a single BoT and
+    // swapping that BoT in under the region comb
     for (size_t i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(ar, i);
@@ -170,12 +187,12 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	}
     }
 
-    // If any of the regions failed, don't keep or dbconcat - the operation
-    // wasn't a full success.
+    // If any of the regions failed (implicit or explicit), don't keep or
+    // dbconcat - the operation wasn't a full success.
     if (have_failure) {
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
-	bu_free(dpa, "dpa array");
+	bu_free(dpa, "free dpa");
 	return BRLCAD_ERROR;
     }
 
@@ -184,13 +201,12 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.
 
-
     /* Done changing stuff - update nref. */
     db_update_nref(dbip, &rt_uniresource);
 
     bu_ptbl_free(ar);
     bu_free(ar, "ar table");
-    bu_free(dpa, "dpa array");
+    bu_free(dpa, "free dpa");
     return ret;
 }
 
