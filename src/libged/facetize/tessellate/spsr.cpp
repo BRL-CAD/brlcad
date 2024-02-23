@@ -26,9 +26,50 @@
 
 #include "common.h"
 
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "bg/spsr.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
+
+std::string
+spsr_opts::about_method()
+{
+    std::string msg = "Screened Poisson Surface Reconstruction\n";
+    return msg;
+}
+
+std::string
+spsr_opts::print_options_help()
+{
+    std::string spsr_opt_str = print_sample_options_help();
+    spsr_opt_str.append("depth		Maximum reconstruction depth. (Default is 8)\n");
+    spsr_opt_str.append("interpolate	Lower values (down to 0.0) bias towards a smoother\n");
+    spsr_opt_str.append("			mesh, higher values bias towards interpolation\n");
+    spsr_opt_str.append("		       	accuracy.  (Default is 2.0)\n");
+    spsr_opt_str.append("samples_per_node	How many samples should go into a cell before it is\n");
+    spsr_opt_str.append("			refined. (Default is 1.5)\n");
+    return spsr_opt_str;
+}
+
+int
+spsr_opts::set_var(std::string &ostr)
+{
+    // Split string on equal sign
+    std::stringstream ostream(ostr);
+    std::string s;
+    std::vector<std::string> key_val;
+    while (std::getline(ostream, s, '=')) {
+	key_val.push_back(s);
+    }
+    if (key_val.size() != 2)
+	return -1;
+    return 0;
+}
+
+
 
 static int
 _db_uniq_test(struct bu_vls *n, void *data)

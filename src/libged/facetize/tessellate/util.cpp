@@ -30,6 +30,24 @@
 #include "../../ged_private.h"
 #include "./tessellate.h"
 
+std::string
+sample_opts::print_sample_options_help()
+{
+    std::string msg;
+    msg.append("feature_scale	Percentage of the average thickness observed by\n");
+    msg.append("		the raytracer to use for a targeted feature size\n");
+    msg.append("		with sampling based methods.\n");
+    msg.append("feature_size	Explicit feature length to try for sampling\n");
+    msg.append("		based methods - overrides feature_scale.\n");
+    msg.append("d_feature_size	Initial feature length to try for decimation\n");
+    msg.append("		in sampling based methods.  By default, this\n");
+    msg.append("		value is set to 1.5x the feature size.\n");
+    msg.append("max_sample_time	Maximum time to allow point sampling to continue\n");
+    msg.append("max_pnts	Maximum number of points to sample\n");
+
+    return msg;
+}
+
 struct rt_bot_internal *
 _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
 {

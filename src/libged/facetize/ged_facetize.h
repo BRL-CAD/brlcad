@@ -98,7 +98,6 @@ struct _ged_facetize_state {
     // Processing
     int regions;
     int resume;
-    int retry;
     int in_place;
 
     // Enabled Meshing Methodologies (FACETIZE_METHOD_* flags)
@@ -109,12 +108,9 @@ struct _ged_facetize_state {
 
     // Settings
     int max_time;
-    fastf_t feature_size;
-    fastf_t feature_scale;
-    fastf_t d_feature_size;
-    struct bg_tess_tol *tol;
     int max_pnts;
-    struct bg_3d_spsr_opts s_opts;  // Screened Poisson specific settings
+    struct bg_tess_tol *tol;
+    struct bu_vls *froot;
 
     /* Brep specific options */
     double nonovlp_threshold;
@@ -127,11 +123,6 @@ struct _ged_facetize_state {
     struct bu_attribute_value_set *c_map; // TODO - this should probably be a std::map
     struct bu_attribute_value_set *s_map; // TODO - this should probably be a std::map
     struct _ged_facetize_logging_state *log_s;
-    struct bu_vls *froot;
-    struct bu_vls *manifold_comb;
-    struct bu_vls *nmg_comb;
-    struct bu_vls *continuation_comb;
-    struct bu_vls *spsr_comb;
 
     /* Internal - any C++ containers should be hidden here so
      * the C logging file doesn't choke on them */

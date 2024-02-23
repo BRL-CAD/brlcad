@@ -24,6 +24,10 @@
 
 #include "common.h"
 
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "vmath.h"
 #include "bu/time.h"
 #include "bg/trimesh.h"
@@ -33,6 +37,38 @@
 #include "./tessellate.h"
 
 #define FACETIZE_MEMORY_THRESHOLD 150000000
+
+std::string
+cm_opts::about_method()
+{
+    std::string msg = "Continuation Method\n";
+    return msg;
+}
+
+std::string
+cm_opts::print_options_help()
+{
+    std::string cm_opt_str = print_sample_options_help();
+    cm_opt_str.append("max_time		Maximum reconstruction depth. (Default is 8)\n");
+    return cm_opt_str;
+}
+
+int
+cm_opts::set_var(std::string &ostr)
+{
+    // Split string on equal sign
+    std::stringstream ostream(ostr);
+    std::string s;
+    std::vector<std::string> key_val;
+    while (std::getline(ostream, s, '=')) {
+	key_val.push_back(s);
+    }
+    if (key_val.size() != 2)
+	return -1;
+
+    return 0;
+}
+
 
 static void
 _pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)

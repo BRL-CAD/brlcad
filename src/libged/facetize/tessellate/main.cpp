@@ -27,6 +27,10 @@
 
 #include "common.h"
 
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "bu/app.h"
 #include "bu/opt.h"
 #include "rt/primitives/bot.h"
@@ -299,6 +303,37 @@ pnt_sampling_methods:
     return BRLCAD_ERROR;
 }
 
+void
+print_tess_methods()
+{
+    fprintf(stdout, "NMG CM SPSR\n");
+}
+
+struct method_options_t {
+    std::set<std::string> methods;
+    std::map<std::string, std::set<std::string>> options_map;
+};
+
+int
+_tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    method_options_t *m = (method_options_t *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_tess_method_opts");
+
+    std::string av0 = std::string(argv[0]);
+    std::stringstream astream(av0);
+    std::string s;
+    std::vector<std::string> opts;
+    while (std::getline(astream, s, ' ')) {
+	opts.push_back(s);
+    }
+
+    for (size_t i = 1; i < opts.size(); i++) {
+	m->options_map[opts[0]].insert(opts[i]);
+    }
+    return 1;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -320,28 +355,19 @@ main(int argc, const char **argv)
     s.tol = &tol;
     s.feature_scale = 0.15;  // Set default.
 
-    struct bu_opt_desc d[21];
-    BU_OPT(d[ 0],  "h",                  "help",  "",            NULL,                  &print_help, "Print help and exit");
-    BU_OPT(d[ 1],  "O",             "overwrite",  "",            NULL,           &(s.overwrite_obj), "Replace original object with BoT");
-    BU_OPT(d[ 2],   "",               "tol-abs", "#", &bu_opt_fastf_t,                  &(ttol.abs), "Absolute distance tolerance");
-    BU_OPT(d[ 3],   "",               "tol-rel", "#", &bu_opt_fastf_t,                  &(ttol.rel), "Relative distance tolerance");
-    BU_OPT(d[ 4],   "",              "tol-norm", "#", &bu_opt_fastf_t,                 &(ttol.norm), "Normal tolerance");
-    BU_OPT(d[ 5],   "",                   "nmg",  "",            NULL,                     &(s.nmg), "Enable use of the N-Manifold Geometry (NMG) meshing method");
-    BU_OPT(d[ 6],   "",          "instant-mesh",  "",            NULL,            &(s.instant_mesh), "Enable use of the Instant Mesh remeshing method");
-    BU_OPT(d[ 7],   "",                    "cm",  "",            NULL,            &(s.continuation), "Enable use of the Continuation Method (CM) meshing method");
-    BU_OPT(d[ 8],   "",            "ball-pivot",  "",            NULL,              &(s.ball_pivot), "Enable use of the Ball Pivot (BP) sampling-based meshing method");
-    BU_OPT(d[ 9],   "",                 "co3ne",  "",            NULL,                   &(s.Co3Ne), "Enable use of the Co3Ne sampling-based meshing method");
-    BU_OPT(d[10],   "",                  "spsr",  "",            NULL,        &(s.screened_poisson), "Enable Screened Poisson Surface Reconstruction (SPSR) sampling-based meshing method");
-    BU_OPT(d[11],  "F",                "fscale", "#", &bu_opt_fastf_t,           &(s.feature_scale), "Percentage of the average thickness observed by the raytracer to use for a targeted feature size with sampling based methods.  Defaults to 0.15, overridden   by --fsize");
-    BU_OPT(d[12],   "",                 "fsize", "#", &bu_opt_fastf_t,            &(s.feature_size), "Explicit feature length to try for sampling based methods - overrides feature-scale.");
-    BU_OPT(d[13],   "",                "fsized", "#", &bu_opt_fastf_t,          &(s.d_feature_size), "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
-    BU_OPT(d[14],   "",              "max-time", "#",     &bu_opt_int,                &(s.max_time), "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to   completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!.");
-    BU_OPT(d[15],   "",              "max-pnts", "#",     &bu_opt_int,                &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT(d[16],   "",            "spsr-depth", "#",     &bu_opt_int,            &(s.s_opts.depth), "Maximum reconstruction depth (default 8)");
-    BU_OPT(d[17],  "w",      "spsr-interpolate", "#", &bu_opt_fastf_t,     &(s.s_opts.point_weight), "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
-    BU_OPT(d[18],   "", "spsr-samples-per-node", "#", &bu_opt_fastf_t, &(s.s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
-    BU_OPT(d[19],   "",             "nmg-debug", "#",     &bu_opt_vls,               &nmg_debug_str, "libnmg debug flags");
-    BU_OPT_NULL(d[20]);
+    method_options_t method_options;
+
+    int list_methods = 0;
+    struct bu_vls active_methods_str = BU_VLS_INIT_ZERO;
+
+    struct bu_opt_desc d[ 7];
+    BU_OPT(d[ 0],  "h",         "help",                         "",               NULL,           &print_help, "Print help and exit");
+    BU_OPT(d[ 1],   "", "list-methods",                         "",               NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
+    BU_OPT(d[ 2],  "O",    "overwrite",                         "",               NULL,    &(s.overwrite_obj), "Replace original object with BoT");
+    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...",        &bu_opt_vls,   &active_methods_str, "List of active methods to use for this tessellation attempt");
+    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...", &_tess_method_opts,       &method_options, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
+    BU_OPT(d[ 5],   "",     "max-pnts",                        "#",        &bu_opt_int,         &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT_NULL(d[ 6]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
