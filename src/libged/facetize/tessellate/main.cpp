@@ -311,7 +311,7 @@ print_tess_methods()
 
 struct method_options_t {
     std::set<std::string> methods;
-    std::map<std::string, std::set<std::string>> options_map;
+    std::map<std::string, std::vector<std::string>> options_map;
 };
 
 int
@@ -329,7 +329,7 @@ _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_
     }
 
     for (size_t i = 1; i < opts.size(); i++) {
-	m->options_map[opts[0]].insert(opts[i]);
+	m->options_map[opts[0]].push_back(opts[i]);
     }
     return 1;
 }

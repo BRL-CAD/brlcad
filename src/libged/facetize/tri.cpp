@@ -868,7 +868,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 }
 
 int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname)
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname, char *pwdir, char *pwfile)
 {
     int ret = BRLCAD_OK;
 
@@ -889,24 +889,45 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	return BRLCAD_OK;
     }
 
-    /* OK, we have work to do. Set up a working copy of the .g file */
-    char wdir[MAXPATHLEN], wfile[MAXPATHLEN];
-    if (_ged_facetize_working_file_setup((char *)wfile, (char *)wdir, gedp->dbip, &leaf_dps, s->resume) != BRLCAD_OK) {
-	return BRLCAD_ERROR;
+    /* OK, we have work to do. Set up a working copy of the .g file, if the
+     * parent function hasn't already taken care of that for us. */
+    char *wdir = pwdir;
+    char *wfile = pwfile;
+    if (!wdir || !wfile) {
+	if (_ged_facetize_working_file_setup(&wfile, &wdir, gedp->dbip, &leaf_dps, s->resume) != BRLCAD_OK) {
+	    if (wdir && wdir != pwdir)
+		bu_free(wdir, "wdir");
+	    if (wfile && wfile != pwfile)
+		bu_free(wfile, "wfile");
+	    return BRLCAD_ERROR;
+	}
     }
 
 
-    if (_ged_facetize_leaves_tri(s, wfile, wdir, gedp->dbip, &leaf_dps))
+    if (_ged_facetize_leaves_tri(s, wfile, wdir, gedp->dbip, &leaf_dps)) {
+	if (wdir != pwdir)
+	    bu_free(wdir, "wdir");
+	if (wfile != pwfile)
+	    bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
+    }
 
     // Re-open working .g copy after BoTs have replaced CSG solids and perform
     // the tree walk to set up Manifold data.
     struct db_i *wdbip = db_open(wfile, DB_OPEN_READONLY);
     if (!wdbip) {
 	bu_dirclear(wdir);
+	if (wdir != pwdir)
+	    bu_free(wdir, "wdir");
+	if (wfile != pwfile)
+	    bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
     }
     if (db_dirbuild(wdbip) < 0) {
+	if (wdir != pwdir)
+	    bu_free(wdir, "wdir");
+	if (wfile != pwfile)
+	    bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
     }
     db_update_nref(wdbip, &rt_uniresource);
@@ -932,6 +953,10 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     bu_free(av, "av");
     db_close(wdbip);
     bu_dirclear(wdir);
+    if (wdir != pwdir)
+	bu_free(wdir, "wdir");
+    if (wfile != pwfile)
+	bu_free(wfile, "wfile");
     return ret;
 }
 

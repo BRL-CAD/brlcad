@@ -25,6 +25,12 @@
 
 #include "common.h"
 
+#include <charconv>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "bu/opt.h"
 
 #include "../ged_private.h"
@@ -171,7 +177,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
     }
 
     // If we're not doing NMG, use the Manifold booleval
-    ret = _ged_facetize_booleval(s, newobj_cnt, dpa, newname);
+    ret = _ged_facetize_booleval(s, newobj_cnt, dpa, newname, NULL, NULL);
 
     // Check for the in-place flag
     if (ret == BRLCAD_OK && s->in_place)
@@ -183,13 +189,46 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 
 struct method_options_t {
     std::set<std::string> methods;
-    std::map<std::string, std::map<std::string, std::string>> options_map;
+    std::map<std::string, std::vector<std::string>> options_map;
     // Most of the method options need to be passed through to the subprocess,
     // but the time each method is allowed to process is ultimately managed by
     // the parent command.  Some methods may be able to respect a time limit,
     // but for those that cannot the subprocess may need to be killed.
     std::map<std::string, int> max_time;
 };
+
+int
+_facetize_mopts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    method_options_t *m = (method_options_t *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_facetize_mopts");
+
+    std::string av0 = std::string(argv[0]);
+    std::stringstream astream(av0);
+    std::string s;
+    std::vector<std::string> opts;
+    while (std::getline(astream, s, ' ')) {
+	opts.push_back(s);
+    }
+
+    for (size_t i = 1; i < opts.size(); i++) {
+	m->options_map[opts[0]].push_back(opts[i]);
+	if (opts[i].length() < 8)
+	    continue;
+	if (!std::strncmp(opts[i].c_str(), "max_time", 8)) {
+	    std::string val = opts[i].substr(8);
+	    int ival;
+	    auto [ptr, ec] = std::from_chars(val.data(), val.data() + val.size(), ival);
+	    if (ec != std::errc{}) {
+		bu_log("Error parsing max_time value\n");
+		continue;
+	    }
+	    m->max_time[std::string("max_time")] = ival;
+	}
+    }
+    return 1;
+}
+
 
 extern "C" int
 ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
@@ -267,17 +306,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     if (screened_poisson)
 	s->method_flags |= FACETIZE_METHOD_SPSR;
 
-    if (s->method_flags & FACETIZE_METHOD_SPSR) {
-	/* Parse Poisson specific options, if that method is enabled */
-	argc = bu_opt_parse(NULL, argc, argv, pd);
-
-	if (argc < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
-	    ret = BRLCAD_ERROR;
-	    goto ged_facetize_memfree;
-	}
-    }
-
     /* We can only resume in region mode - validate options */
     if (s->resume && !s->regions) {
 	bu_vls_printf(gedp->ged_result_str, "--resume is only supported with with region (-r) mode\n");
@@ -290,9 +318,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     need_help += (argc < 2 && !s->in_place && !s->resume && !s->nonovlp_brep);
     if (print_help || need_help || argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
-	if (s->method_flags & FACETIZE_METHOD_SPSR) {
-	    _ged_cmd_help(gedp, usage, pd);
-	}
 	ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;
 	goto ged_facetize_memfree;
     }

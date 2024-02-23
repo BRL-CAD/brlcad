@@ -175,7 +175,7 @@ extern int
 _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
 
 extern int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname);
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname, char *pwdir, char *pwfile);
 
 extern int
 _ged_continuation_obj(struct _ged_facetize_state *s, const char *objname, const char *newname);
@@ -187,7 +187,7 @@ extern int
 _ged_facetize_write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const char *name);
 
 extern int
-_ged_facetize_working_file_setup(char *wfile, char *wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume);
+_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume);
 
 extern int
 _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps);

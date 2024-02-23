@@ -334,39 +334,43 @@ dsp_data_cpy(struct db_i *dbip, struct rt_dsp_internal *dsp_ip, const char *dirp
 }
 
 int
-_ged_facetize_working_file_setup(char *wfile, char *wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume)
+_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume)
 {
     if (!dbip || !wfile || !wdir)
 	return BRLCAD_ERROR;
 
-    /* Figure out the working .g filename */
-    struct bu_vls wfilename = BU_VLS_INIT_ZERO;
-    struct bu_vls bname = BU_VLS_INIT_ZERO;
-    struct bu_vls dname = BU_VLS_INIT_ZERO;
-    char rfname[MAXPATHLEN];
-    bu_file_realpath(dbip->dbi_filename, rfname);
+    if (!*wfile || !*wdir) {
+	(*wfile) = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wfile");
+	(*wdir) = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wdir");
+	/* Figure out the working .g filename */
+	struct bu_vls wfilename = BU_VLS_INIT_ZERO;
+	struct bu_vls bname = BU_VLS_INIT_ZERO;
+	struct bu_vls dname = BU_VLS_INIT_ZERO;
+	char rfname[MAXPATHLEN];
+	bu_file_realpath(dbip->dbi_filename, rfname);
 
-    // Get the root filename, so we can give the working file a relatable name
-    bu_path_component(&bname, rfname, BU_PATH_BASENAME);
+	// Get the root filename, so we can give the working file a relatable name
+	bu_path_component(&bname, rfname, BU_PATH_BASENAME);
 
-    // Hash the path string and construct
-    unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(&bname), bu_vls_strlen(&bname));
-    bu_vls_sprintf(&dname, "facetize_%llu", hash_num);
-    bu_vls_sprintf(&wfilename, "facetize_%s", bu_vls_cstr(&bname));
-    bu_vls_free(&bname);
+	// Hash the path string and construct
+	unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(&bname), bu_vls_strlen(&bname));
+	bu_vls_sprintf(&dname, "facetize_%llu", hash_num);
+	bu_vls_sprintf(&wfilename, "facetize_%s", bu_vls_cstr(&bname));
+	bu_vls_free(&bname);
 
-    // Have filename, get a location in the cache directory
-    bu_dir(wdir, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), NULL);
-    bu_dir(wfile, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), bu_vls_cstr(&wfilename), NULL);
-    bu_vls_free(&dname);
-    bu_vls_free(&wfilename);
+	// Have filename, get a location in the cache directory
+	bu_dir(*wdir, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), NULL);
+	bu_dir(*wfile, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), bu_vls_cstr(&wfilename), NULL);
+	bu_vls_free(&dname);
+	bu_vls_free(&wfilename);
+    }
 
     /* If we're resuming and we already have an appropriately named .g file, we
      * don't overwrite it.  Otherwise we need to prepare the working copy. */
-    if (!resume || (resume && !bu_file_exists(wfile, NULL))) {
+    if (!resume || (resume && !bu_file_exists(*wfile, NULL))) {
 	// If we need to clear an old working copy, do it now
-	bu_dirclear(wdir);
-	bu_mkdir(wdir);
+	bu_dirclear(*wdir);
+	bu_mkdir(*wdir);
 
 	// Populate the working copy with original .g data
 	// (TODO - should use the dbip's FILE pointer for this rather than
@@ -374,7 +378,7 @@ _ged_facetize_working_file_setup(char *wfile, char *wdir, struct db_i *dbip, str
 	// in db_i per the header.  Maybe need a function to return a FILE *
 	// from a struct db_i?)
 	std::ifstream orig_file(dbip->dbi_filename, std::ios::binary);
-	std::ofstream work_file(wfile, std::ios::binary);
+	std::ofstream work_file(*wfile, std::ios::binary);
 	if (!orig_file.is_open() || !work_file.is_open())
 	    return BRLCAD_ERROR;
 	work_file << orig_file.rdbuf();
@@ -392,7 +396,7 @@ _ged_facetize_working_file_setup(char *wfile, char *wdir, struct db_i *dbip, str
 		struct rt_db_internal intern;
 		if (rt_db_get_internal(&intern, ldp, dbip, NULL, &rt_uniresource) < 0)
 		    continue;
-		dsp_data_cpy(dbip, (struct rt_dsp_internal *)intern.idb_ptr, wdir);
+		dsp_data_cpy(dbip, (struct rt_dsp_internal *)intern.idb_ptr, *wdir);
 		rt_db_free_internal(&intern);
 	    }
 
@@ -400,7 +404,7 @@ _ged_facetize_working_file_setup(char *wfile, char *wdir, struct db_i *dbip, str
 	}
     }
 
-    if (!bu_file_exists(wfile, NULL))
+    if (!bu_file_exists(*wfile, NULL))
 	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
