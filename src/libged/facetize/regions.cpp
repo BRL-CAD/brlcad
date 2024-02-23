@@ -166,6 +166,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     }
     bool have_failure = false;
     if (BU_PTBL_LEN(ir)) {
+
 	if (_ged_facetize_leaves_tri(s, wfile, wdir, dbip, ir) != BRLCAD_OK) {
 	    have_failure = true;
 	}
@@ -181,7 +182,30 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
 	bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	if (_ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), wdir, wfile) == BRLCAD_OK) {
-	    // TODO - replace the region's comb tree with the new BoT
+	    // Replace the region's comb tree with the new BoT
+	    struct db_i *wdbip = db_open(wfile, DB_OPEN_READWRITE);
+	    struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
+	    struct rt_db_internal intern;
+	    struct rt_comb_internal *comb;
+	    rt_db_get_internal(&intern, wdp, wdbip, NULL, &rt_uniresource);
+	    comb = (struct rt_comb_internal *)(&intern)->idb_ptr;
+	    RT_CK_COMB(comb);
+	    db_free_tree(comb->tree, &rt_uniresource);
+	    union tree *tp;
+	    struct rt_tree_array *tree_list;
+	    BU_GET(tree_list, struct rt_tree_array);
+	    tree_list[0].tl_op = OP_UNION;
+	    BU_GET(tp, union tree);
+	    RT_TREE_INIT(tp);
+	    tree_list[0].tl_tree = tp;
+	    tp->tr_l.tl_op = OP_DB_LEAF;
+	    tp->tr_l.tl_name = bu_strdup(bu_vls_cstr(&bname));
+	    tp->tr_l.tl_mat = NULL;
+	    comb->tree = (union tree *)db_mkgift_tree(tree_list, 1, &rt_uniresource);
+	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
+	    wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
+	    db_update_nref(wdbip, &rt_uniresource);
+	    db_close(wdbip);
 	} else {
 	    have_failure = true;
 	}
