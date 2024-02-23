@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 #include <time.h>
 
 #include "bu.h"
@@ -46,21 +47,23 @@ main(int argc, const char *argv[])
     bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "basic")) {
-	// https://stackoverflow.com/a/11276503
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	fprintf(stdout, "Hello world!\n");
+	fprintf(stdout, "Howdy from stdout!\n");
+	fprintf(stderr, "Howdy from stderr!\n");
 	return 0;
     }
 
-    if (BU_STR_EQUAL(argv[1], "abort")) {
-	// https://stackoverflow.com/a/11276503
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	fprintf(stderr, "Not aborted!\n");
+    if (BU_STR_EQUAL(argv[1], "echo")) {
+	char line[25];
+	std::cin.get(line, 25);
+
+	// echo on stdout and stderr
+	fprintf(stdout, line);
+	fprintf(stderr, line);
 	return 0;
     }
 
 
-    return 1;
+    return 0;
 }
 
 
