@@ -146,7 +146,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
 
     if (bot->mode == RT_BOT_PLATE_NOCOS && !quiet_mode) {
-	bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using NOCOS mode, which means reported hit thicknesses are view independent.\n\nA solid conversion of this primitive will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
+	bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using NOCOS mode\n\nConversion will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
     }
 
     if (bot->face_mode && !quiet_mode) {
@@ -158,7 +158,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (append_mode) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set, which instructs librt to append shotline distance rather than centering it on the hit point provided by the plate mode surface.\n\nA solid conversion of this primitive will result in hit points with different locations than those reported in the original plate mode intersections.\n", gb->solid_name.c_str());
+	    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set.\n\nConversion will report different in/out hit points.\n", gb->solid_name.c_str());
 	}
     }
 
