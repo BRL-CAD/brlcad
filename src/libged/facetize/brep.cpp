@@ -186,15 +186,15 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	bu_log("Initializing copies of combinations...\n");
     }
     for (d_it = comb_objs.begin(); d_it != comb_objs.end(); d_it++) {
-	struct directory *n = *d_it;
 
+#if 0
+	struct directory *n = *d_it;
 	if (_ged_facetize_cpcomb(s, n->d_namep) != BRLCAD_OK) {
 	    if (s->verbosity) {
 		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(s->c_map, n->d_namep), n->d_namep);
 	    }
 	    continue;
 	}
-
 	/* Add the members from the map with the settings from the original
 	 * comb */
 	if (_ged_facetize_add_children(s, n) != BRLCAD_OK) {
@@ -203,6 +203,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	    }
 	    continue;
 	}
+#endif
     }
 
     /* Now, actually trigger the facetize logic. */
