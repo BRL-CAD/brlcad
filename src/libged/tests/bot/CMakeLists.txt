@@ -1,6 +1,7 @@
 CMAKEFILES(
   manifold_fixable.g
   tgc.g
+  half_subtracts.g
   )
 
 CMAKEFILES(CMakeLists.txt)
