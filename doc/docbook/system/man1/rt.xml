@@ -677,6 +677,34 @@
   maximum amount of image detail.</para>
   </refsection>
 
+  <refsection xml:id="examples">
+    <title>EXAMPLES</title>
+    <example><title>Render a very high-quality, high-resolution image, very slowly</title>
+    <para>
+      <userinput>rt -H8 -R -A1.3 -c "set ambSamples=512 gamma=2.2" -C234/245/255 -s4096 -o render_4k.png file.g object</userinput>
+    </para>
+    <para>
+      This command renders with 8x512=4096 additional rays-per-pixel
+      to average color results and determine whether a given hit point
+      is partially shadowed.  Ambient occlusion rendering is a simple
+      brute force global illumination method.  Hypersampling smooths
+      out edges.
+    </para>
+    <para>
+      Lower ambient samples for a more "grainy" surface appearance.
+      Depending on geometry, the -A ambient light value may be
+      increased (e.g., if there are very heavy shadows) or decreased
+      if too bright.  The gamma setting also affects overall image
+      brightness (and color).
+    </para>
+    <para>
+      Note: for optimal results, rendering may be performed at 2X or
+      higher resolution (e.g., -s4096 for 2048x2048 resolution), then
+      reduced and potentially color-corrected in post-processing.
+    </para>
+    </example>
+  </refsection>
+
   <refsection xml:id="see_also"><title>SEE ALSO</title>
   <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
