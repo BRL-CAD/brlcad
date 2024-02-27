@@ -107,10 +107,22 @@
       <varlistentry>
 	<term><option>-c "script_command"</option></term>
 	<listitem>
-	  <para>supplies, on the command line, any command that can
-	  appear in a <option>-M</option> command script.  For
-	  example, <option>-c "set"</option> will print the values of
-	  all settable variables.</para>
+	  <para>is for specifying commands for rt to run prior to ray
+	  tracing.  The "script_command" can be a single command or a
+	  semi-colon separated list of commands.  The commands
+	  available are the same commands that may appear in a
+	  <option>-M</option> command script.</para>
+
+          <para>Some common script commands include start, viewsize,
+          eye_pt, lookat_pt, viewrot, orientation, multiview, anim,
+          tree, draw, erase, prep, clean, set, ae, start, and end.
+          Running the <command>saveview</command> in MGED will produce
+          an rt script for the current view.</para>
+
+          <para>Some common <command>set</command> variables include
+          ambSamples, overlay, a_onehit, a_no_booleans.  Running
+          <option>-c "set"</option> will print values for all settable
+          variables.</para>
 	</listitem>
       </varlistentry>
 
