@@ -111,7 +111,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     BU_OPT(d[2], "i",    "in-place",     "",            NULL, &extrude_in_place, "Overwrite input BoT");
     BU_OPT(d[3], "R", "round-edges",     "",            NULL, &round_edges,      "Apply rounding to outer BoT edges");
     BU_OPT(d[4], "C",        "comb",     "",            NULL, &comb_tree,        "Write out a CSG tree rather than a volumetric BoT");
-    BU_OPT(d[5], "F",       "force",     "",            NULL, &force_mode,       "Generate BoTs even if source bot has face_mode set.");
+    BU_OPT(d[5], "F",       "force",     "",            NULL, &force_mode,       "Generate output even if source bot is view dependent.");
     BU_OPT_NULL(d[6]);
 
     int ac = bu_opt_parse(NULL, argc, argv, d);
