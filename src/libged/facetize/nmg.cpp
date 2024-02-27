@@ -36,16 +36,28 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
+struct _ged_facetize_logging_state {
+    struct bu_hook_list *saved_bomb_hooks;
+    struct bu_hook_list *saved_log_hooks;
+    struct bu_vls *nmg_log;
+    struct bu_vls *nmg_log_header;
+    int nmg_log_print_header;
+    int stderr_stashed;
+    int serr;
+    int fnull;
+};
+
 extern "C" {
 static int
 _facetize_bomb_hook(void *cdata, void *str)
 {
     struct _ged_facetize_state *o = (struct _ged_facetize_state *)cdata;
-    if (o->log_s->nmg_log_print_header) {
-       bu_vls_printf(o->log_s->nmg_log, "%s\n", bu_vls_addr(o->log_s->nmg_log_header));
-       o->log_s->nmg_log_print_header = 0;
+    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
+    if (log_s->nmg_log_print_header) {
+       bu_vls_printf(log_s->nmg_log, "%s\n", bu_vls_addr(log_s->nmg_log_header));
+       log_s->nmg_log_print_header = 0;
     }
-    bu_vls_printf(o->log_s->nmg_log, "%s\n", (const char *)str);
+    bu_vls_printf(log_s->nmg_log, "%s\n", (const char *)str);
     return 0;
 }
 
@@ -53,11 +65,12 @@ static int
 _facetize_nmg_logging_hook(void *data, void *str)
 {
     struct _ged_facetize_state *o = (struct _ged_facetize_state *)data;
-    if (o->log_s->nmg_log_print_header) {
-       bu_vls_printf(o->log_s->nmg_log, "%s\n", bu_vls_addr(o->log_s->nmg_log_header));
-       o->log_s->nmg_log_print_header = 0;
+    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
+    if (log_s->nmg_log_print_header) {
+       bu_vls_printf(log_s->nmg_log, "%s\n", bu_vls_addr(log_s->nmg_log_header));
+       log_s->nmg_log_print_header = 0;
     }
-    bu_vls_printf(o->log_s->nmg_log, "%s\n", (const char *)str);
+    bu_vls_printf(log_s->nmg_log, "%s\n", (const char *)str);
     return 0;
 }
 
@@ -70,16 +83,17 @@ _facetize_log_nmg(struct _ged_facetize_state *o)
     /* Seriously, bu_bomb, we don't want you blathering
      * to stderr... shut down stderr temporarily, assuming
      * we can find /dev/null or something similar */
-    o->log_s->fnull = open("/dev/null", O_WRONLY);
-    if (o->log_s->fnull == -1) {
+    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
+    log_s->fnull = open("/dev/null", O_WRONLY);
+    if (log_s->fnull == -1) {
        /* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
-       o->log_s->fnull = open("nul", O_WRONLY);
+       log_s->fnull = open("nul", O_WRONLY);
     }
-    if (o->log_s->fnull != -1) {
-       o->log_s->serr = fileno(stderr);
-       o->log_s->stderr_stashed = dup(o->log_s->serr);
-       dup2(o->log_s->fnull, o->log_s->serr);
-       close(o->log_s->fnull);
+    if (log_s->fnull != -1) {
+       log_s->serr = fileno(stderr);
+       log_s->stderr_stashed = dup(log_s->serr);
+       dup2(log_s->fnull, log_s->serr);
+       close(log_s->fnull);
     }
 
     /* Set bu_log logging to capture in nmg_log, rather than the
@@ -99,20 +113,21 @@ _facetize_log_default(struct _ged_facetize_state *o)
        return;
 
     /* Put stderr back */
-    if (o->log_s->fnull != -1) {
+    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
+    if (log_s->fnull != -1) {
        fflush(stderr);
-       dup2(o->log_s->stderr_stashed, o->log_s->serr);
-       close(o->log_s->stderr_stashed);
-       o->log_s->fnull = -1;
+       dup2(log_s->stderr_stashed, log_s->serr);
+       close(log_s->stderr_stashed);
+       log_s->fnull = -1;
     }
 
     /* Restore bu_bomb hooks to the application defaults */
     bu_bomb_delete_all_hooks();
-    bu_bomb_restore_hooks(o->log_s->saved_bomb_hooks);
+    bu_bomb_restore_hooks(log_s->saved_bomb_hooks);
 
     /* Restore bu_log hooks to the application defaults */
     bu_log_hook_delete_all();
-    bu_log_hook_restore_all(o->log_s->saved_log_hooks);
+    bu_log_hook_restore_all(log_s->saved_log_hooks);
 }
 
 }
@@ -161,9 +176,14 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     struct model *nmg_model;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
+    struct _ged_facetize_logging_state *log_s;
+    BU_GET(log_s, struct _ged_facetize_logging_state);
+    s->log_s = log_s;
+
     _facetize_log_nmg(s);
 
     db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
+
 
     /* Establish tolerances */
     init_state.ts_ttol = &wdbp->wdb_ttol;
@@ -187,12 +207,16 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 	/* catch */
 	BU_UNSETJUMP;
 	_facetize_log_default(s);
+	BU_PUT(log_s, struct _ged_facetize_logging_state);
+	s->log_s = NULL;
 	return NULL;
     } BU_UNSETJUMP;
 
     if (i < 0) {
 	/* Destroy NMG */
 	_facetize_log_default(s);
+	BU_PUT(log_s, struct _ged_facetize_logging_state);
+	s->log_s = NULL;
 	return NULL;
     }
 
@@ -204,6 +228,8 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 	    /* catch */
 	    BU_UNSETJUMP;
 	    _facetize_log_default(s);
+	    BU_PUT(log_s, struct _ged_facetize_logging_state);
+	    s->log_s = NULL;
 	    return NULL;
 	} BU_UNSETJUMP;
 
@@ -221,6 +247,8 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     }
 
     _facetize_log_default(s);
+    BU_PUT(log_s, struct _ged_facetize_logging_state);
+    s->log_s = NULL;
     return (failed) ? NULL : nmg_model;
 }
 

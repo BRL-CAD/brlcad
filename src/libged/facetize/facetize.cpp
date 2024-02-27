@@ -187,16 +187,6 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
     return ret;
 }
 
-struct method_options_t {
-    std::set<std::string> methods;
-    std::map<std::string, std::vector<std::string>> options_map;
-    // Most of the method options need to be passed through to the subprocess,
-    // but the time each method is allowed to process is ultimately managed by
-    // the parent command.  Some methods may be able to respect a time limit,
-    // but for those that cannot the subprocess may need to be killed.
-    std::map<std::string, int> max_time;
-};
-
 int
 _facetize_mopts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {

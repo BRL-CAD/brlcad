@@ -76,17 +76,6 @@ __BEGIN_DECLS
 // option.  Anyone both interested in and able to work on that code will be
 // able to set up what they need to trigger it...
 
-struct _ged_facetize_logging_state {
-    struct bu_hook_list *saved_bomb_hooks;
-    struct bu_hook_list *saved_log_hooks;
-    struct bu_vls *nmg_log;
-    struct bu_vls *nmg_log_header;
-    int nmg_log_print_header;
-    int stderr_stashed;
-    int serr;
-    int fnull;
-};
-
 struct _ged_facetize_state {
 
     // Output
@@ -122,20 +111,22 @@ struct _ged_facetize_state {
 
     struct bu_attribute_value_set *c_map; // TODO - this should probably be a std::map
     struct bu_attribute_value_set *s_map; // TODO - this should probably be a std::map
-    struct _ged_facetize_logging_state *log_s;
 
-    /* Internal - any C++ containers should be hidden here so
-     * the C logging file doesn't choke on them */
-    void *iptr;
+    void *log_s;
 };
 __END_DECLS
 
 #ifdef __cplusplus
 #include <unordered_set>
-struct facetize_maps {
-    // Half spaces are handled differently depending on the boolean
-    // op, so we need to ID them specifically.
-    std::unordered_set<manifold::Manifold *> half_spaces;
+
+struct method_options_t {
+    std::set<std::string> methods;
+    std::map<std::string, std::vector<std::string>> options_map;
+    // Most of the method options need to be passed through to the subprocess,
+    // but the time each method is allowed to process is ultimately managed by
+    // the parent command.  Some methods may be able to respect a time limit,
+    // but for those that cannot the subprocess may need to be killed.
+    std::map<std::string, int> max_time;
 };
 
 #endif

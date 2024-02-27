@@ -315,6 +315,22 @@ struct method_options_t {
 };
 
 int
+_tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    method_options_t *m = (method_options_t *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_tess_active_methods");
+
+    std::string av0 = std::string(argv[0]);
+    std::stringstream astream(av0);
+    std::string s;
+    std::vector<std::string> opts;
+    while (std::getline(astream, s, ',')) {
+	m->methods.insert(s);
+    }
+    return 1;
+}
+
+int
 _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     method_options_t *m = (method_options_t *)set_var;
@@ -358,15 +374,14 @@ main(int argc, const char **argv)
     method_options_t method_options;
 
     int list_methods = 0;
-    struct bu_vls active_methods_str = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc d[ 7];
-    BU_OPT(d[ 0],  "h",         "help",                         "",               NULL,           &print_help, "Print help and exit");
-    BU_OPT(d[ 1],   "", "list-methods",                         "",               NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
-    BU_OPT(d[ 2],  "O",    "overwrite",                         "",               NULL,    &(s.overwrite_obj), "Replace original object with BoT");
-    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...",        &bu_opt_vls,   &active_methods_str, "List of active methods to use for this tessellation attempt");
-    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...", &_tess_method_opts,       &method_options, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
-    BU_OPT(d[ 5],   "",     "max-pnts",                        "#",        &bu_opt_int,         &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
+    BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
+    BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
+    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...", &_tess_active_methods,       &method_options, "List of active methods to use for this tessellation attempt");
+    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,       &method_options, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
+    BU_OPT(d[ 5],   "",     "max-pnts",                        "#",           &bu_opt_int,         &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT_NULL(d[ 6]);
 
     /* parse options */
@@ -379,6 +394,11 @@ main(int argc, const char **argv)
 	bu_exit(BRLCAD_ERROR, "%s failed", bu_getprogname());
     }
     bu_vls_free(&omsg);
+
+    if (list_methods) {
+	print_tess_methods();
+	return BRLCAD_OK;
+    }
 
     if (print_help) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
