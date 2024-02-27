@@ -29,6 +29,7 @@
 #include "rt/search.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
+#include "../tess_opts.h"
 
 std::string
 sample_opts::print_sample_options_help()
@@ -132,23 +133,16 @@ _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const c
 	db_dirdelete(dbip, odp);
     }
 
-    struct bu_attribute_value_set avs;
-    bu_avs_init_empty(&avs);
+    bu_avs_init_empty(&intern.idb_avs);
     const char *mstr = method_str(method);
     if (mstr)
-	(void)bu_avs_add(&avs, "facetize_method", mstr);
+	(void)bu_avs_add(&intern.idb_avs, "facetize_method", mstr);
 
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_log("Cannot add %s to directory\n", name);
-	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     }
-
-    if (db5_update_attributes(dp, &avs, dbip))
-	bu_log("WARNING: couldn't set facetize method attribute\n");
-
-    bu_avs_free(&avs);
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	bu_log("Failed to write %s to database\n", name);
