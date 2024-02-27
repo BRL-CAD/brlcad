@@ -649,17 +649,6 @@
   frame 0, xy=1516,2466 on cpu 0, samp=0</para>
   </refsection>
 
-  <refsection xml:id="animation_scripts"><title>ANIMATION SCRIPTS</title>
-  <para>For information on the animation script language accepted by
-  <command>rt</command>, please refer to the manual pages for
-  <citerefentry><refentrytitle>tabinterp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-  and
-  <citerefentry><refentrytitle>anim_script</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-  Also please consult the HTML documentation for a complete animation
-  tutorial.</para>
-  </refsection>
-
   <refsection xml:id="ntsc_animation_tips"><title>NTSC ANIMATION TIPS</title>
   <para>When using <command>rt</command> to create an animation
   sequence destined for NTSC video, it is useful to give all these
