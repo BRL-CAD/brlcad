@@ -44,6 +44,7 @@
 #include "bu/time.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
+#include "./tess_opts.h"
 #include "./subprocess.h"
 
 // Translate flags to ged_tessellate opts.  These need to match the options
@@ -52,14 +53,14 @@ static const char *
 method_opt(int *method_flags)
 {
     // NMG is best, when it works
-    static const char *nmg_opt = "--nmg";
+    static const char *nmg_opt = "NMG";
     if (*method_flags & FACETIZE_METHOD_NMG) {
 	*method_flags = *method_flags & ~(FACETIZE_METHOD_NMG);
 	return nmg_opt;
     }
 
     // CM is currently the best bet fallback
-    static const char *cm_opt = "--cm";
+    static const char *cm_opt = "CM";
     if (*method_flags & FACETIZE_METHOD_CONTINUATION) {
 	*method_flags = *method_flags & ~(FACETIZE_METHOD_CONTINUATION);
 	return cm_opt;
@@ -67,7 +68,7 @@ method_opt(int *method_flags)
 
     // SPSR via point sampling is currently our only option for a non-manifold
     // input
-    static const char *spsr_opt = "--spsr";
+    static const char *spsr_opt = "SPSR";
     if (*method_flags & FACETIZE_METHOD_SPSR) {
 	*method_flags = *method_flags & ~(FACETIZE_METHOD_SPSR);
 	return spsr_opt;
@@ -187,7 +188,7 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     curtree->tr_d.td_r = NULL;
     curtree->tr_d.td_d = NULL;
     curtree->tr_d.td_i = NULL;
-	
+
     // Infinite half spaces get special handling in the boolean evaluation
     if (ip->idb_minor_type == ID_HALF) {
 	struct rt_db_internal *hintern;
@@ -208,7 +209,7 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     }
 
     // Anything else that's not a BoT is a no-op for booleans
-    if (ip->idb_minor_type != ID_BOT) 
+    if (ip->idb_minor_type != ID_BOT)
 	return curtree;
 
     // Observed in Goliath example model with SKTRACKdrivewheel2.c comb - due
@@ -316,9 +317,9 @@ manifold_do_bool(
 	if (tr->tr_d.td_i->idb_minor_type != ID_HALF) {
 	    return -1;
 	}
-	if (!rm) {
-	    rm = new manifold::Manifold();
-	    delete_right = true;
+	if (!lm) {
+	    lm = new manifold::Manifold();
+	    delete_left = true;
 	}
 	struct rt_half_internal *hf_ip= (struct rt_half_internal *)tr->tr_d.td_i->idb_ptr;
 	if (manifold_op != manifold::OpType::Add) {
@@ -331,7 +332,7 @@ manifold_do_bool(
 	    pn[2] = hf_ip->eqn[2];
 	    if (op == OP_INTERSECT)
 		VSCALE(pn, pn, -1);
-	    manifold::Manifold trimmed = rm->TrimByPlane(glm::vec3(pn[0], pn[1], pn[2]), hf_ip->eqn[3]);
+	    manifold::Manifold trimmed = lm->TrimByPlane(glm::vec3(pn[0], pn[1], pn[2]), hf_ip->eqn[3]);
 	    result = new manifold::Manifold(trimmed);
 	}
 
@@ -434,7 +435,7 @@ manifold_do_bool(
 int
 tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 {
-    std::string wfile(tess_cmd[11]);
+    std::string wfile(tess_cmd[2]);
     std::string wfilebak = wfile + std::string(".bak");
     {
 	// Before the run, prepare a backup file
@@ -616,40 +617,34 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     // into groupings that can be fed to ged_tessellate for parallel
     // processing, with fallback to individual if parallel fails
     // Build up the command to run
-    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct bu_vls abs_str = BU_VLS_INIT_ZERO;
-    struct bu_vls rel_str = BU_VLS_INIT_ZERO;
-    struct bu_vls norm_str = BU_VLS_INIT_ZERO;
+    struct bu_vls method_str = BU_VLS_INIT_ZERO;
     struct bu_vls max_time_str = BU_VLS_INIT_ZERO;
-    struct bu_vls debug_str = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&abs_str, "%0.17f", wdbp->wdb_ttol.abs);
-    bu_vls_sprintf(&rel_str, "%0.17f", wdbp->wdb_ttol.rel);
-    bu_vls_sprintf(&norm_str, "%0.17f", wdbp->wdb_ttol.norm);
     bu_vls_sprintf(&max_time_str, "%d", (int)(0.5*s->max_time));
-    bu_vls_sprintf(&debug_str, "0x%08lx", (unsigned long)nmg_debug);
     int method_flags = s->method_flags;
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[ 0] = tess_exec;
-    tess_cmd[ 1] = "--tol-abs";
-    tess_cmd[ 2] = bu_vls_cstr(&abs_str);
-    tess_cmd[ 3] = "--tol-rel";
-    tess_cmd[ 4] = bu_vls_cstr(&rel_str);
-    tess_cmd[ 5] = "--tol-norm";
-    tess_cmd[ 6] = bu_vls_cstr(&norm_str);
-    tess_cmd[ 7] = NULL;
-    tess_cmd[ 8] = "--max-time";
-    tess_cmd[ 9] = bu_vls_cstr(&max_time_str);
-    tess_cmd[10] = "-O";
-    tess_cmd[11] = wfile;
-    tess_cmd[12] = "--nmg-debug";
-    tess_cmd[13] = bu_vls_cstr(&debug_str);
-    int cmd_fixed_cnt = 14;
+    tess_cmd[ 1] = "-O";
+    tess_cmd[ 2] = wfile;
+    tess_cmd[ 3] = "--max-time";
+    tess_cmd[ 4] = bu_vls_cstr(&max_time_str);
+    tess_cmd[ 5] = "--methods";
+    tess_cmd[ 6] = NULL;
+    tess_cmd[ 7] = "--method-opts";
+    tess_cmd[ 8] = NULL;
+    int cmd_fixed_cnt = 9;
     while (!pq.empty()) {
 
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
 	method_flags = s->method_flags;
-	tess_cmd[7] = method_opt(&method_flags);
+	tess_cmd[6] = method_opt(&method_flags);
+	method_options_t *mo = (method_options_t*)s->method_opts;
+	std::string tc6str = std::string(tess_cmd[6]);
+	mo->methods.clear();
+	mo->methods.insert(tc6str);
+	bu_vls_sprintf(&method_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
+	tess_cmd[8] = bu_vls_cstr(&method_str);
+
 
 	std::vector<struct directory *> dps;
 	std::vector<struct directory *> bad_dps;
@@ -675,7 +670,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// primitives
 	int err_cnt = 0;
 	while (tess_cmd[7]) {
-	    if (BU_STR_EQUAL(tess_cmd[7], "--nmg")) {
+	    if (BU_STR_EQUAL(tess_cmd[7], "NMG")) {
 		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, s->max_time);
 	    } else {
 		// If we're in fallback territory, process individually rather

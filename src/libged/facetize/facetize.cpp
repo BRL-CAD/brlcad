@@ -34,6 +34,9 @@
 #include "bu/opt.h"
 
 #include "../ged_private.h"
+
+#define TESS_OPTS_IMPLEMENTATION
+#include "./tess_opts.h"
 #include "./ged_facetize.h"
 
 struct _ged_facetize_state *
@@ -187,39 +190,6 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
     return ret;
 }
 
-int
-_facetize_mopts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    method_options_t *m = (method_options_t *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_facetize_mopts");
-
-    std::string av0 = std::string(argv[0]);
-    std::stringstream astream(av0);
-    std::string s;
-    std::vector<std::string> opts;
-    while (std::getline(astream, s, ' ')) {
-	opts.push_back(s);
-    }
-
-    for (size_t i = 1; i < opts.size(); i++) {
-	m->options_map[opts[0]].push_back(opts[i]);
-	if (opts[i].length() < 8)
-	    continue;
-	if (!std::strncmp(opts[i].c_str(), "max_time", 8)) {
-	    std::string val = opts[i].substr(8);
-	    int ival;
-	    auto [ptr, ec] = std::from_chars(val.data(), val.data() + val.size(), ival);
-	    if (ec != std::errc{}) {
-		bu_log("Error parsing max_time value\n");
-		continue;
-	    }
-	    m->max_time[std::string("max_time")] = ival;
-	}
-    }
-    return 1;
-}
-
-
 extern "C" int
 ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -230,28 +200,26 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     int no_nmg = 0;
     int no_continuation = 0;
     int screened_poisson = 0;
-    method_options_t method_options;
-    // TODO - populated methods set from subprocess
-
+    method_options_t *method_options = new method_options_t;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
     s->gedp = gedp;
-    struct bu_vls methods_str = BU_VLS_INIT_ZERO;
+    s->method_opts = method_options;
 
     /* General options */
     struct bu_opt_desc d[14];
-    BU_OPT(d[ 0], "h", "help",                                      "",             NULL,           &print_help, "Print help and exit");
-    BU_OPT(d[ 1], "v", "verbose",                                   "",       &_ged_vopt,       &(s->verbosity), "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[ 2], "q", "quiet",                                     "",             NULL,           &(s->quiet), "Suppress all output (overrides verbose flag)");
-    BU_OPT(d[ 3], "n", "nmg-output",                                "",             NULL,        &(s->make_nmg), "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh).  Note that this will disable most other processing options and may reduce the conversion success rate.");
-    BU_OPT(d[ 4], "r", "regions",                                   "",             NULL,         &(s->regions), "For combs, walk the trees and create new copies of the hierarchies with each region's CSG tree replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
-    BU_OPT(d[ 5],  "", "in-place",                                  "",             NULL,        &(s->in_place), "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT(d[ 6],  "", "max-time",                                 "#",      &bu_opt_int,        &(s->max_time), "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!");
-    BU_OPT(d[ 7],  "", "max-pnts",                                 "#",      &bu_opt_int,        &(s->max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT(d[ 8],  "", "resume",                                    "",             NULL,          &(s->resume), "Resume an interrupted conversion (region mode only)");
-    BU_OPT(d[ 9],  "", "methods",                          "m1,m2,...",      &bu_opt_vls,        &(methods_str), "Specify methods to use when tessellating primitives.  If given no options and used with -h, print available methods");
-    BU_OPT(d[10],  "", "method-opts",    "METHOD opt1=val opt2=val...", &_facetize_mopts,     &(method_options), "For the specified method, set the specified options.  If no options are specified and -h is used, print available method options.");
-    BU_OPT(d[11], "B", "",                                          "",             NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[12], "t",  "threshold",                               "#",  &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
+    BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
+    BU_OPT(d[ 1], "v", "verbose",                                   "",            &_ged_vopt,       &(s->verbosity), "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,           &(s->quiet), "Suppress all output (overrides verbose flag)");
+    BU_OPT(d[ 3], "n", "nmg-output",                                "",                  NULL,        &(s->make_nmg), "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh).  Note that this will disable most other processing options and may reduce the conversion success rate.");
+    BU_OPT(d[ 4], "r", "regions",                                   "",                  NULL,         &(s->regions), "For combs, walk the trees and create new copies of the hierarchies with each region's CSG tree replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
+    BU_OPT(d[ 5],  "", "in-place",                                  "",                  NULL,        &(s->in_place), "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
+    BU_OPT(d[ 6],  "", "max-time",                                 "#",           &bu_opt_int,        &(s->max_time), "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!");
+    BU_OPT(d[ 7],  "", "max-pnts",                                 "#",           &bu_opt_int,        &(s->max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT(d[ 8],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion (region mode only)");
+    BU_OPT(d[ 9],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives.  If given no options and used with -h, print available methods");
+    BU_OPT(d[10],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.  If no options are specified and -h is used, print available method options.");
+    BU_OPT(d[11], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
+    BU_OPT(d[12], "t",  "threshold",                               "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
     BU_OPT_NULL(d[13]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -331,6 +299,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 
 ged_facetize_memfree:
     _ged_facetize_state_destroy(s);
+    delete method_options;
 
     return ret;
 }

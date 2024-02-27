@@ -33,6 +33,7 @@
 #include "bg/spsr.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
+#include "../tess_opts.h"
 
 std::string
 spsr_opts::about_method()
@@ -55,20 +56,16 @@ spsr_opts::print_options_help()
 }
 
 int
-spsr_opts::set_var(std::string &ostr)
+spsr_opts::set_var(std::string &key, std::string &val)
 {
-    // Split string on equal sign
-    std::stringstream ostream(ostr);
-    std::string s;
-    std::vector<std::string> key_val;
-    while (std::getline(ostream, s, '=')) {
-	key_val.push_back(s);
-    }
-    if (key_val.size() != 2)
+    if (key.length() == 0)
 	return -1;
+
+    if (val.length() == 0)
+	bu_log("Clearing value\n");
+
     return 0;
 }
-
 
 
 static int

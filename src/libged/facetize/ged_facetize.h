@@ -112,24 +112,10 @@ struct _ged_facetize_state {
     struct bu_attribute_value_set *c_map; // TODO - this should probably be a std::map
     struct bu_attribute_value_set *s_map; // TODO - this should probably be a std::map
 
+    void *method_opts;
     void *log_s;
 };
 __END_DECLS
-
-#ifdef __cplusplus
-#include <unordered_set>
-
-struct method_options_t {
-    std::set<std::string> methods;
-    std::map<std::string, std::vector<std::string>> options_map;
-    // Most of the method options need to be passed through to the subprocess,
-    // but the time each method is allowed to process is ultimately managed by
-    // the parent command.  Some methods may be able to respect a time limit,
-    // but for those that cannot the subprocess may need to be killed.
-    std::map<std::string, int> max_time;
-};
-
-#endif
 
 extern int
 bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol);

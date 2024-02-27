@@ -35,6 +35,8 @@
 #include "bu/opt.h"
 #include "rt/primitives/bot.h"
 #include "ged.h"
+#define TESS_OPTS_IMPLEMENTATION
+#include "../tess_opts.h"
 #include "./tessellate.h"
 
 // TODO - this needs to be a util function - it's probably what we should
@@ -112,30 +114,20 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern,  c
 static void
 method_enablement_check(struct tess_opts *s)
 {
-    if (!s)
+    if (!s || !s->method_opts)
 	return;
-    bool e = false;
-    if (s->Co3Ne) e = true;
-    if (s->ball_pivot) e = true;
-    if (s->continuation) e = true;
-    if (s->instant_mesh) e = true;
-    if (s->nmg) e = true;
-    if (s->screened_poisson) e = true;
 
-    // If nothing was specified, try everything
-    if (!e) {
-	s->Co3Ne = 1;
-	s->ball_pivot = 1;
-	s->continuation = 1;
-	s->instant_mesh = 1;
-	s->nmg = 1;
-	s->screened_poisson = 1;
+    if (!s->method_opts->methods.size()) {
+	s->method_opts->methods.insert(std::string("NMG"));
+	s->method_opts->methods.insert(std::string("CM"));
+	s->method_opts->methods.insert(std::string("SPSR"));
     }
 }
 
 static int
 dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
 {
+    std::set<std::string> &mset = s->method_opts->methods;
     if (!obot || !method_flag || !dbip || !dp)
 	return BRLCAD_ERROR;
 
@@ -173,14 +165,13 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 	    // into meshes (which we probably don't), that is a capability we
 	    // will most likely want to expose through the pnts command - which
 	    // will make this executable useful to more than just facetize.
-	    if (!s->Co3Ne && !s->ball_pivot && !s->screened_poisson)
+	    if (mset.find(std::string("SPSR")) == mset.end())
 		return BRLCAD_OK;
 
 	    // If we are going to try a pnts wrapping, there are only a few
 	    // candidates in the fallback methods list that we can use.
-	    s->nmg = 0;
-	    s->continuation = 0;
-	    s->instant_mesh = 0; // TODO - can this handle a point cloud?
+	    mset.erase(std::string("NMG"));
+	    mset.erase(std::string("CM"));
 
 	    // point the pnts arguments to the internal point data
 	    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
@@ -240,7 +231,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
     // If we got this far, it's not a special case.  Start trying whatever tessellation methods
     // are enabled
 
-    if (s->nmg) {
+    if (mset.find(std::string("NMG")) != mset.end()) {
 	// NMG is best, if it works
 	ret = _nmg_tessellate(obot, &intern, s->ttol, s->tol);
 	if (ret == BRLCAD_OK) {
@@ -249,7 +240,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 	}
     }
 
-    if (s->continuation) {
+    if (mset.find(std::string("CM")) != mset.end()) {
 	// The continuation method (CM) is a marching algorithm using an
 	// inside/outside test, building from a seed point on the surface.
 	//
@@ -271,7 +262,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 
 pnt_sampling_methods:
 
-    if (s->Co3Ne) {
+    if (mset.find(std::string("Co3Ne")) != mset.end()) {
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
 	}
@@ -280,7 +271,7 @@ pnt_sampling_methods:
 	    return ret;
     }
 
-    if (s->ball_pivot) {
+    if (mset.find(std::string("BALL_PIVOT")) != mset.end()) {
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
 	}
@@ -289,7 +280,7 @@ pnt_sampling_methods:
 	    return ret;
     }
 
-    if (s->screened_poisson) {
+    if (mset.find(std::string("SPSR")) != mset.end()) {
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
 	}
@@ -307,47 +298,6 @@ void
 print_tess_methods()
 {
     fprintf(stdout, "NMG CM SPSR\n");
-}
-
-struct method_options_t {
-    std::set<std::string> methods;
-    std::map<std::string, std::vector<std::string>> options_map;
-};
-
-int
-_tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    method_options_t *m = (method_options_t *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_tess_active_methods");
-
-    std::string av0 = std::string(argv[0]);
-    std::stringstream astream(av0);
-    std::string s;
-    std::vector<std::string> opts;
-    while (std::getline(astream, s, ',')) {
-	m->methods.insert(s);
-    }
-    return 1;
-}
-
-int
-_tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    method_options_t *m = (method_options_t *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_tess_method_opts");
-
-    std::string av0 = std::string(argv[0]);
-    std::stringstream astream(av0);
-    std::string s;
-    std::vector<std::string> opts;
-    while (std::getline(astream, s, ' ')) {
-	opts.push_back(s);
-    }
-
-    for (size_t i = 1; i < opts.size(); i++) {
-	m->options_map[opts[0]].push_back(opts[i]);
-    }
-    return 1;
 }
 
 int
@@ -371,18 +321,20 @@ main(int argc, const char **argv)
     s.tol = &tol;
     s.feature_scale = 0.15;  // Set default.
 
-    method_options_t method_options;
+    method_options_t *method_options = new method_options_t;
+    s.method_opts = method_options;
 
     int list_methods = 0;
 
-    struct bu_opt_desc d[ 7];
+    struct bu_opt_desc d[ 8];
     BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
     BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
-    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...", &_tess_active_methods,       &method_options, "List of active methods to use for this tessellation attempt");
-    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,       &method_options, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
-    BU_OPT(d[ 5],   "",     "max-pnts",                        "#",           &bu_opt_int,         &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT_NULL(d[ 6]);
+    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...", &_tess_active_methods,        method_options, "List of active methods to use for this tessellation attempt");
+    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,        method_options, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
+    BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,         &(s.max_time), "Maximum number of seconds to allow for runtime (not supported by all methods).");
+    BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,         &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT_NULL(d[ 7]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;

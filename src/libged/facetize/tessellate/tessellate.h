@@ -37,22 +37,12 @@
 #include "bn/tol.h"
 #include "bg/spsr.h"
 #include "raytrace.h"
+#include "../tess_opts.h"
 
 __BEGIN_DECLS
 
-#define FACETIZE_METHOD_NULL          0x0
-#define FACETIZE_METHOD_NMG           0x1
-#define FACETIZE_METHOD_CONTINUATION  0x2
-#define FACETIZE_METHOD_SPSR          0x4
-#define FACETIZE_METHOD_REPAIR        0x8
-
 struct tess_opts {
-    int nmg;
-    int instant_mesh;
-    int continuation;
-    int ball_pivot;
-    int Co3Ne;
-    int screened_poisson;
+    method_options_t *method_opts;
     fastf_t feature_size;
     fastf_t fsize;
     fastf_t feature_scale;
@@ -69,57 +59,7 @@ struct tess_opts {
     fastf_t avg_thickness;
 };
 
-#define TESS_OPTS_DEFAULT {0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 50000, BG_3D_SPSR_OPTS_DEFAULT, NULL, NULL, 0.0, 0.0, 0.0, 0.0}
-
-class method_opts {
-    public:
-	virtual std::string about_method() = 0;
-	virtual std::string print_options_help() = 0;
-	virtual int set_var(std::string &ostr) = 0;
-};
-
-class sample_opts : public method_opts {
-    public:
-	std::string print_sample_options_help();
-
-	fastf_t feature_scale = 0.15; // Percentage of the average thickness observed by the raytracer to use for a targeted feature size with sampling based methods.
-	fastf_t feature_size = 0.0; // Explicit feature length to try for sampling based methods - overrides feature-scale.
-	fastf_t d_feature_size = 0.0; // Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.
-	int max_sample_time = 30;
-	int max_pnts = 200000;
-};
-
-class nmg_opts : public method_opts {
-    public:
-	std::string about_method();
-	std::string print_options_help();
-	int set_var(std::string &ostr);
-
-	fastf_t tol_abs = 0.0;
-	fastf_t tol_rel = 0.0;
-	fastf_t tol_norm = 0.0;
-	long nmg_debug = 0;
-};
-
-class cm_opts : public sample_opts {
-    public:
-	std::string about_method();
-	std::string print_options_help();
-	int set_var(std::string &ostr);
-
-	int max_time = 30; // Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!
-};
-
-class spsr_opts : public sample_opts {
-    public:
-	std::string about_method();
-	std::string print_options_help();
-	int set_var(std::string &ostr);
-
-	int depth = 8; // Maximum reconstruction depth s_opts.depth
-	fastf_t interpolate = 2.0; // Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. s_opts.point_weight
-	fastf_t samples_per_node = 1.5; // How many samples should go into a cell before it is refined. s_opts.samples_per_node
-};
+#define TESS_OPTS_DEFAULT {NULL, 0.0, 0.0, 0.0, 0.0, 0, 0, 50000, BG_3D_SPSR_OPTS_DEFAULT, NULL, NULL, 0.0, 0.0, 0.0, 0.0}
 
 
 extern struct rt_bot_internal *
