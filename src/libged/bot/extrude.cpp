@@ -88,7 +88,7 @@ extrude_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
 extern "C" int
 _bot_cmd_extrude(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] extrude [-i] <objname> [output_obj]";
+    const char *usage_string = "bot extrude [options] <objname> [output_obj]";
     const char *purpose_string = "generate a volumetric BoT or CSG tree from the specified plate mode BoT object";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -103,14 +103,16 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     int round_edges = 0;
     int comb_tree = 0;
     int quiet_mode = 0;
+    int force_mode = 0;
 
-    struct bu_opt_desc d[6];
+    struct bu_opt_desc d[7];
     BU_OPT(d[0], "h",        "help",     "",            NULL, &print_help,       "Print help");
     BU_OPT(d[1], "q",       "quiet",     "",            NULL, &quiet_mode,       "Suppress output messages");
     BU_OPT(d[2], "i",    "in-place",     "",            NULL, &extrude_in_place, "Overwrite input BoT");
     BU_OPT(d[3], "R", "round-edges",     "",            NULL, &round_edges,      "Apply rounding to outer BoT edges");
     BU_OPT(d[4], "C",        "comb",     "",            NULL, &comb_tree,        "Write out a CSG tree rather than a volumetric BoT");
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[5], "F",       "force",     "",            NULL, &force_mode,       "Generate BoTs even if source bot has face_mode set.");
+    BU_OPT_NULL(d[6]);
 
     int ac = bu_opt_parse(NULL, argc, argv, d);
     argc = ac;
@@ -145,20 +147,34 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (bot->mode == RT_BOT_PLATE_NOCOS && !quiet_mode) {
-	bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using NOCOS mode\n\nConversion will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
+    if (bot->mode == RT_BOT_PLATE_NOCOS) {
+	if (!force_mode) {
+	    if (!quiet_mode)
+		bu_vls_printf(gb->gedp->ged_result_str, "bot %s is using RT_BOT_PLATE_NOCOS mode.\n\nCannot be accurately represented as a volume.  To force volumetric BoT generation, use the -F flag.\n", gb->solid_name.c_str());
+	    return BRLCAD_ERROR;
+	} else {
+	    if (!quiet_mode)
+		bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using RT_BOT_PLATE_NOCOS mode\n\nConversion will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
+	}
     }
 
-    if (bot->face_mode && !quiet_mode) {
-	bool append_mode = false;
+    if (bot->face_mode) {
+	bool view_dependent = false;
 	for (size_t i = 0; i < bot->num_faces; i++) {
 	    if (BU_BITTEST(bot->face_mode, i)) {
-		append_mode = true;
+		view_dependent = true;
 		break;
 	    }
 	}
-	if (append_mode) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set.\n\nConversion will report different in/out hit points.\n", gb->solid_name.c_str());
+	if (view_dependent) {
+	    if (!force_mode) {
+		if (!quiet_mode)
+		    bu_vls_printf(gb->gedp->ged_result_str, "bot %s has face_mode set (i.e. it exhibits view-dependent shotline behavior).\n\nCannot be accurately represented as a volume.  To force volumetric BoT generation, use the -F flag.\n", gb->solid_name.c_str());
+		return BRLCAD_ERROR;
+	    } else {
+		if (!quiet_mode)
+		    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set.\n\nVolumetric BoT will report different in/out hit points than the original.\n", gb->solid_name.c_str());
+	    }
 	}
     }
 
