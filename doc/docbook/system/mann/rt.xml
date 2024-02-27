@@ -50,16 +50,8 @@
 
   <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The first example shows the use of the <command>rt</command>
-  command to run the rt program to produce a color-shaded image of the
-  current view. The second example shows the use of the
-  <command>rt</command> command to produce a color-shaded image of an
-  object using MGED's current viewing parameters.
-  </para>
-
   <example><title>Run the <emphasis>rt</emphasis> program to produce a
   color-shaded image of the current view in MGED.</title>
-
   <para>
     <prompt>mged&gt; </prompt><userinput>rt -s1024 -F/dev/Xl</userinput>
   </para>
@@ -73,15 +65,30 @@
   <example><title>Run the <emphasis>rt</emphasis> program to produce a
   color-shaded image of an object using MGED's current viewing
   parameters.</title>
-
   <para>
-    <prompt>mged&gt; </prompt><userinput>rt -C 200/200/255 -- roof</userinput>
+    <prompt>mged&gt; </prompt><userinput>rt -C 234/245/255 -- roof</userinput>
   </para>
   <para>Runs the <emphasis>rt</emphasis> program to produce a
   color-shaded image of the object <emphasis>roof</emphasis> using
   MGED's current viewing parameters. The image will have a sky-blue
   background and will be displayed on the framebuffer specified by
   the FB_FILE shell variable.
+  </para>
+  </example>
+
+  <example><title>Run <emphasis>rt</emphasis> to produce a
+  color-shaded image with increased ambient lighting and ambient
+  occlusion enabled.</title>
+  <para>
+    <prompt>mged&gt; </prompt><userinput>rt -A1.2 -c "set ambSamples=64"</userinput>
+  </para>
+  <para>Runs the <emphasis>rt</emphasis> program to produce a ambient
+  occlusion color-shaded image of the currently display object(s)
+  using MGED's current viewing parameters.  Image brightness is
+  increased with the -A ambient 1.2 value (default is typically 0.8).
+  Brightness in dark shadowed sections of the model are then
+  attenuated with the ambient occlusion ambSamples setting which
+  specifies the number of sample rays to shoot.
   </para>
   </example>
 
