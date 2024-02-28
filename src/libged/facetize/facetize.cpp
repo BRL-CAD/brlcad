@@ -136,6 +136,7 @@ _ged_facetize_failure_msg(struct bu_vls *msg, int type, const char *prefix, stru
     }
 }
 
+
 const char *
 _ged_facetize_attr(int method)
 {
@@ -150,6 +151,7 @@ _ged_facetize_attr(int method)
     return NULL;
 }
 
+
 int
 _ged_facetize_attempted(struct ged *gedp, const char *oname, int method)
 {
@@ -162,6 +164,7 @@ _ged_facetize_attempted(struct ged *gedp, const char *oname, int method)
     bu_avs_free(&avs);
     return ret;
 }
+
 
 struct _ged_facetize_opts * _ged_facetize_opts_create()
 {
@@ -272,6 +275,7 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
     BU_PUT(o, struct _ged_facetize_opts);
 }
 
+
 static db_op_t
 _int_to_opt(int op)
 {
@@ -281,6 +285,7 @@ _int_to_opt(int op)
     return DB_OP_NULL;
 }
 
+
 static int
 _db_uniq_test(struct bu_vls *n, void *data)
 {
@@ -288,6 +293,7 @@ _db_uniq_test(struct bu_vls *n, void *data)
     if (db_lookup(gedp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
     return 0;
 }
+
 
 static double
 _bbox_vol(point_t b_min, point_t b_max)
@@ -300,6 +306,7 @@ _bbox_vol(point_t b_min, point_t b_max)
     bbox_vol = b_xlen * b_ylen * b_zlen;
     return bbox_vol; 
 }
+
 
 static void
 _rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
@@ -327,6 +334,7 @@ _pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
 	VMINMAX(rpp_min, rpp_max, pnts[i]);
     }
 }
+
 
 static void
 _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const char *n, int type)
@@ -361,6 +369,7 @@ _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const ch
 
     bu_vls_free(&incr_template);
 }
+
 
 static int
 _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _ged_facetize_opts *o, int newobj_cnt)
@@ -408,6 +417,7 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _
     }
     return BRLCAD_OK;
 }
+
 
 static
 int
@@ -466,6 +476,7 @@ ged_facetize_solid_objs_memfree:
     return ret;
 }
 
+
 static int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
 {
@@ -508,6 +519,7 @@ ged_facetize_obj_swap_memfree:
     return ret;
 }
 
+
 static union tree *
 facetize_region_end(struct db_tree_state *tsp,
 		    const struct db_full_path *pathp,
@@ -540,6 +552,7 @@ facetize_region_end(struct db_tree_state *tsp,
     return TREE_NULL;
 }
 
+
 static struct model *
 _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs, struct _ged_facetize_opts *o)
 {
@@ -566,14 +579,14 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	/* try */
 	i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
 			 1,
-			&init_state,
+			 &init_state,
 			 0,			/* take all regions */
 			 facetize_region_end,
 			 nmg_use_tnurbs ?
 			 nmg_booltree_leaf_tnurb :
 			 rt_booltree_leaf_tess,
 			 (void *)&facetize_tree
-			);
+	    );
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -615,6 +628,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     return (failed) ? NULL : nmg_model;
 }
 
+
 static int
 _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_opts *o)
 {
@@ -634,6 +648,7 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_face
     _ged_facetize_log_default(o);
     return BRLCAD_OK;
 }
+
 
 static struct rt_bot_internal *
 _try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_opts *o)
@@ -711,6 +726,7 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_fac
     }
 }
 
+
 static int
 _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, struct _ged_facetize_opts *opts)
 {
@@ -744,6 +760,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, stru
     return BRLCAD_OK;
 }
 
+
 static int
 _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _ged_facetize_opts *opts)
 {
@@ -776,6 +793,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
 
     return BRLCAD_OK;
 }
+
 
 static int
 _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
@@ -875,7 +893,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 		   (int *)&(bot->num_vertices),
 		   (const point_t *)input_points_3d,
 		   (const vect_t *)input_normals_3d,
-		   pnts->count, &(opts->s_opts)) ) {
+		   pnts->count, &(opts->s_opts))) {
 	r->failure_mode = FACETIZE_FAILURE_SPSR_SURFACE;
 	ret = FACETIZE_FAILURE;
 	goto ged_facetize_spsr_memfree;
@@ -1023,7 +1041,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    r->failure_mode = FACETIZE_FAILURE_NMG;
 	    goto ged_facetize_spsr_memfree;
 	} else {
-	    /* OK,have NMG now - write it out */
+	    /* OK, have NMG now - write it out */
 	    ret = _write_nmg(gedp, m, newname, opts);
 	    rt_db_free_internal(&intern);
 	}
@@ -1037,6 +1055,7 @@ ged_facetize_spsr_memfree:
 
     return ret;
 }
+
 
 static int
 _ged_check_plate_mode(struct ged *gedp, struct directory *dp)
@@ -1073,6 +1092,7 @@ ged_check_plate_mode_memfree:
     bu_free(bot_dps, "bot directory pointer table");
     return ret;
 }
+
 
 static int
 _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
@@ -1424,7 +1444,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    r->failure_mode = FACETIZE_FAILURE_NMG;
 	    goto ged_facetize_continuation_memfree;
 	} else {
-	    /* OK,have NMG now - write it out */
+	    /* OK, have NMG now - write it out */
 	    ret = _write_nmg(gedp, m, newname, opts);
 	    rt_db_free_internal(&intern);
 	}
@@ -1509,12 +1529,14 @@ ged_nmg_obj_memfree:
     return ret;
 }
 
+
 struct manifold_mesh {
     int num_vertices;
     int num_faces;
     fastf_t *vertices;
     unsigned int *faces;
 };
+
 
 static
 struct manifold_mesh *
@@ -1535,25 +1557,26 @@ bot_to_mmesh(struct rt_bot_internal *bot)
     return omesh;
 }
 
+
 #ifndef USE_MANIFOLD
 long
 bool_meshes(
-	double **UNUSED(o_coords), int *UNUSED(o_ccnt), unsigned int **UNUSED(o_tris), int *UNUSED(o_tricnt),
-	int UNUSED(b_op),
-	double *UNUSED(a_coords), int UNUSED(a_ccnt), unsigned int *UNUSED(a_tris), int UNUSED(a_tricnt),
-	double *UNUSED(b_coords), int UNUSED(b_ccnt), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt),
-	const char *UNUSED(lname), const char *UNUSED(rname))
+    double **UNUSED(o_coords), int *UNUSED(o_ccnt), unsigned int **UNUSED(o_tris), int *UNUSED(o_tricnt),
+    int UNUSED(b_op),
+    double *UNUSED(a_coords), int UNUSED(a_ccnt), unsigned int *UNUSED(a_tris), int UNUSED(a_tricnt),
+    double *UNUSED(b_coords), int UNUSED(b_ccnt), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt),
+    const char *UNUSED(lname), const char *UNUSED(rname))
 {
     return -1;
 }
 #else
 long
 bool_meshes(
-	double **o_coords, int *o_ccnt, unsigned int **o_tris, int *o_tricnt,
-	manifold::OpType b_op,
-	double *a_coords, int a_ccnt, unsigned int *a_tris, int a_tricnt,
-	double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt,
-	const char *lname, const char *rname)
+    double **o_coords, int *o_ccnt, unsigned int **o_tris, int *o_tricnt,
+    manifold::OpType b_op,
+    double *a_coords, int a_ccnt, unsigned int *a_tris, int a_tricnt,
+    double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt,
+    const char *lname, const char *rname)
 {
     if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
 	return -1;
@@ -1648,9 +1671,9 @@ bool_meshes(
 
 static int
 _manifold_do_bool(
-        union tree *tp, union tree *tl, union tree *tr,
-        //int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *data)
-        int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *UNUSED(data))
+    union tree *tp, union tree *tl, union tree *tr,
+    //int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *data)
+    int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *UNUSED(data))
 {
 #ifdef USE_MANIFOLD
     struct rt_bot_internal *lbot = NULL;
@@ -1658,24 +1681,6 @@ _manifold_do_bool(
     struct manifold_mesh *lmesh = NULL;
     struct manifold_mesh *rmesh = NULL;
     struct manifold_mesh *omesh = NULL;
-    //struct _ged_facetize_opts *s = (struct _ged_facetize_opts *)data;
-    //_ged_facetize_log_default(s);
-
-    // Translate op for MANIFOLD
-    manifold::OpType manifold_op = manifold::OpType::Add;
-    switch (op) {
-	case OP_UNION:
-	    manifold_op = manifold::OpType::Add;
-	    break;
-	case OP_INTERSECT:
-	    manifold_op = manifold::OpType::Intersect;
-	    break;
-	case OP_SUBTRACT:
-	    manifold_op = manifold::OpType::Subtract;
-	    break;
-	default:
-	    manifold_op = manifold::OpType::Add;
-    };
 
     // We're either working with the results of CSG NMG tessellations,
     // or we have prior manifold_mesh results - figure out which.
@@ -1705,6 +1710,7 @@ _manifold_do_bool(
     } else {
 	lmesh = (struct manifold_mesh *)tl->tr_d.td_d;
     }
+
     if (tr->tr_d.td_r) {
 
 	if (!BU_SETJUMP) {
@@ -1731,19 +1737,37 @@ _manifold_do_bool(
     } else {
 	rmesh = (struct manifold_mesh *)tr->tr_d.td_d;
     }
+
     int failed = 0;
     if (!lmesh || !rmesh) {
 	failed = 1;
     } else {
+
+	// Translate op for MANIFOLD
+	manifold::OpType manifold_op = manifold::OpType::Add;
+	switch (op) {
+	    case OP_UNION:
+		manifold_op = manifold::OpType::Add;
+		break;
+	    case OP_INTERSECT:
+		manifold_op = manifold::OpType::Intersect;
+		break;
+	    case OP_SUBTRACT:
+		manifold_op = manifold::OpType::Subtract;
+		break;
+	    default:
+		manifold_op = manifold::OpType::Add;
+	};
+
 	BU_GET(omesh, struct manifold_mesh);
 	int mret = bool_meshes(
-		(double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
-		manifold_op,
-		(double *)lmesh->vertices, lmesh->num_vertices, lmesh->faces, lmesh->num_faces,
-		(double *)rmesh->vertices, rmesh->num_vertices, rmesh->faces, rmesh->num_faces,
-		tl->tr_d.td_name,
-		tr->tr_d.td_name
-		);
+	    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
+	    manifold_op,
+	    (double *)lmesh->vertices, lmesh->num_vertices, lmesh->faces, lmesh->num_faces,
+	    (double *)rmesh->vertices, rmesh->num_vertices, rmesh->faces, rmesh->num_faces,
+	    tl->tr_d.td_name,
+	    tr->tr_d.td_name
+	    );
 
 	failed = (mret < 0) ? 1 : 0;
 
@@ -1798,6 +1822,7 @@ _manifold_do_bool(
 #endif
 }
 
+
 static struct manifold_mesh *
 _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *o)
 {
@@ -1820,12 +1845,12 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	/* try */
 	i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
 			 1,
-			&init_state,
+			 &init_state,
 			 0,			/* take all regions */
 			 facetize_region_end,
 			 rt_booltree_leaf_tess,
 			 (void *)&facetize_tree
-			);
+	    );
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -1879,6 +1904,7 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     _ged_facetize_log_default(o);
     return omesh;
 }
+
 
 // For MANIFOLD, we do a tree walk.  Each solid is individually triangulated, and
 // then the boolean op is applied with the result of the mesh generated thus
@@ -1938,6 +1964,7 @@ ged_manifold_obj_memfree:
 
     return ret;
 }
+
 
 int
 _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
@@ -2106,6 +2133,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
     return ret;
 }
 
+
 int
 _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts *opts)
 {
@@ -2157,6 +2185,7 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
     return ret;
 }
 
+
 int
 _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const char *objname, int method)
 {
@@ -2204,6 +2233,7 @@ _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     bu_vls_free(&method_cname);
     return ret;
 }
+
 
 void
 _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const char *rcname, int method, struct _ged_facetize_report_info *info)
@@ -2298,6 +2328,7 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 
     bu_vls_free(&anum);
 }
+
 
 int
 _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod, struct _ged_facetize_report_info *cinfo)
@@ -2409,6 +2440,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 
     return FACETIZE_FAILURE;
 }
+
 
 int
 _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
@@ -2613,6 +2645,7 @@ ged_facetize_regions_resume_memfree:
     return ret;
 }
 
+
 int
 _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_facetize_opts *opts)
 {
@@ -2706,6 +2739,7 @@ ged_facetize_add_children_memfree:
     return ret;
 }
 
+
 int
 _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
@@ -2725,7 +2759,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
      * Also, facetize will need all "active" regions that will define shapes.
      * Construct searches to get these sets. */
     const char *preserve_combs = "-type c ! -type r ! -below -type r";
-    const char *active_regions = "( -type r ! -below -type r ) -or ( ! -below -type r ! -type comb )";
+    const char *active_regions = "(-type r ! -below -type r) -or (! -below -type r ! -type comb)";
 
     /* Used the libged tolerances */
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -2817,7 +2851,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
     }
-
 
 
     /* First, add the new toplevel comb to hold all the new geometry */
@@ -3060,6 +3093,7 @@ ged_facetize_regions_memfree:
     return ret;
 }
 
+
 int
 _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
@@ -3105,7 +3139,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	return BRLCAD_ERROR;
     }
 
-    /* Find breps (need full paths to do uniqueness checking )*/
+    /* Find breps (need full paths to do uniqueness checking)*/
     const char *active_breps = "-type brep";
     BU_ALLOC(br, struct bu_ptbl);
     if (db_search(br, DB_SEARCH_TREE, active_breps, newobj_cnt, dpa, dbip, NULL) < 0) {
@@ -3175,7 +3209,6 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     }
     bu_free(br, "brep results");
     bu_free(ac, "comb results");
-
 
 
     newname = (char *)argv[argc-1];
@@ -3422,10 +3455,10 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	opts->method_flags |= FACETIZE_NMGBOOL;
 	opts->method_flags |= FACETIZE_CONTINUATION;
     } else {
-	if (opts->manifold)          opts->method_flags |= FACETIZE_MANIFOLD;
-	if (opts->nmgbool)          opts->method_flags |= FACETIZE_NMGBOOL;
+	if (opts->manifold) opts->method_flags |= FACETIZE_MANIFOLD;
+	if (opts->nmgbool) opts->method_flags |= FACETIZE_NMGBOOL;
 	if (opts->screened_poisson) opts->method_flags |= FACETIZE_SPSR;
-	if (opts->continuation)    opts->method_flags |= FACETIZE_CONTINUATION;
+	if (opts->continuation) opts->method_flags |= FACETIZE_CONTINUATION;
     }
 
     if (opts->method_flags & FACETIZE_SPSR) {
@@ -3503,21 +3536,19 @@ ged_facetize_memfree:
 }
 
 
-
-
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-struct ged_cmd_impl facetize_cmd_impl = { "facetize", ged_facetize_core, GED_CMD_DEFAULT };
-const struct ged_cmd facetize_cmd = { &facetize_cmd_impl };
-const struct ged_cmd *facetize_cmds[] = { &facetize_cmd,  NULL };
+    struct ged_cmd_impl facetize_cmd_impl = { "facetize", ged_facetize_core, GED_CMD_DEFAULT };
+    const struct ged_cmd facetize_cmd = { &facetize_cmd_impl };
+    const struct ged_cmd *facetize_cmds[] = { &facetize_cmd,  NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  facetize_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  facetize_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
+    {
+	return &pinfo;
+    }
 }
 #endif
 
