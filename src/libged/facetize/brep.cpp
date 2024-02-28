@@ -33,6 +33,41 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
+static void
+_ged_facetize_mkname(struct _ged_facetize_state *s, const char *n, int type)
+{
+    struct ged *gedp = s->gedp;
+    struct bu_vls incr_template = BU_VLS_INIT_ZERO;
+
+    if (type == SOLID_OBJ_NAME) {
+	bu_vls_sprintf(&incr_template, "%s%s", n, bu_vls_addr(s->faceted_suffix));
+    }
+    if (type == COMB_OBJ_NAME) {
+	if (s->in_place) {
+	    bu_vls_sprintf(&incr_template, "%s_orig", n);
+	} else {
+	    bu_vls_sprintf(&incr_template, "%s", n);
+	}
+    }
+    if (!bu_vls_strlen(&incr_template)) {
+	bu_vls_free(&incr_template);
+	return;
+    }
+    if (db_lookup(gedp->dbip, bu_vls_addr(&incr_template), LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(&incr_template, "-0");
+	bu_vls_incr(&incr_template, NULL, NULL, &_db_uniq_test, (void *)gedp);
+    }
+
+    if (type == SOLID_OBJ_NAME) {
+	bu_avs_add(s->s_map, n, bu_vls_addr(&incr_template));
+    }
+    if (type == COMB_OBJ_NAME) {
+	bu_avs_add(s->c_map, n, bu_vls_addr(&incr_template));
+    }
+
+    bu_vls_free(&incr_template);
+}
+
 int
 _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 {
@@ -154,9 +189,6 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 
     newname = (char *)argv[argc-1];
     argc--;
-
-    /* Use the new name for the root */
-    bu_vls_sprintf(s->froot, "%s", newname);
 
     /* Set up all the names we will need */
     std::set<struct directory *>::iterator d_it;

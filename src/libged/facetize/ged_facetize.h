@@ -56,26 +56,20 @@ struct _ged_facetize_state {
     int resume;
     int in_place;
 
-    // Output Naming
-    struct bu_vls *faceted_suffix;
-
     // Settings
     int max_time;
     int max_pnts;
-    struct bg_tess_tol *tol;
-    struct bu_vls *froot;
 
-    /* Brep specific options */
+    /* Brep specific */
+    struct bg_tess_tol *tol;
     double nonovlp_threshold;
+    struct bu_attribute_value_set *c_map; // TODO - this should probably be a std::map
+    struct bu_attribute_value_set *s_map; // TODO - this should probably be a std::map
+    struct bu_vls *faceted_suffix;
 
     /* Implementation */
     struct ged *gedp;
-
     union tree *facetize_tree;
-
-    struct bu_attribute_value_set *c_map; // TODO - this should probably be a std::map
-    struct bu_attribute_value_set *s_map; // TODO - this should probably be a std::map
-
     void *method_opts;
     void *log_s;
 };
@@ -91,6 +85,7 @@ extern int
 manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *data);
 
 __BEGIN_DECLS
+
 extern int _db_uniq_test(struct bu_vls *n, void *data);
 
 extern int
@@ -98,7 +93,6 @@ _ged_manifold_do_bool(
         union tree *tp, union tree *tl, union tree *tr,
         int op, struct bu_list *vlfree, const struct bn_tol *tol, void *data);
 
-extern void _ged_facetize_mkname(struct _ged_facetize_state *s, const char *n, int type);
 extern int _ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *argv[], int newobj_cnt);
 extern int _ged_facetize_verify_solid(struct _ged_facetize_state *s, int argc, struct directory **dpa);
 

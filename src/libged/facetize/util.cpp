@@ -46,41 +46,6 @@ _db_uniq_test(struct bu_vls *n, void *data)
     return 0;
 }
 
-void
-_ged_facetize_mkname(struct _ged_facetize_state *s, const char *n, int type)
-{
-    struct ged *gedp = s->gedp;
-    struct bu_vls incr_template = BU_VLS_INIT_ZERO;
-
-    if (type == SOLID_OBJ_NAME) {
-	bu_vls_sprintf(&incr_template, "%s%s", n, bu_vls_addr(s->faceted_suffix));
-    }
-    if (type == COMB_OBJ_NAME) {
-	if (s->in_place) {
-	    bu_vls_sprintf(&incr_template, "%s_orig", n);
-	} else {
-	    bu_vls_sprintf(&incr_template, "%s", n);
-	}
-    }
-    if (!bu_vls_strlen(&incr_template)) {
-	bu_vls_free(&incr_template);
-	return;
-    }
-    if (db_lookup(gedp->dbip, bu_vls_addr(&incr_template), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&incr_template, "-0");
-	bu_vls_incr(&incr_template, NULL, NULL, &_db_uniq_test, (void *)gedp);
-    }
-
-    if (type == SOLID_OBJ_NAME) {
-	bu_avs_add(s->s_map, n, bu_vls_addr(&incr_template));
-    }
-    if (type == COMB_OBJ_NAME) {
-	bu_avs_add(s->c_map, n, bu_vls_addr(&incr_template));
-    }
-
-    bu_vls_free(&incr_template);
-}
-
 int
 _ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *argv[], int newobj_cnt)
 {

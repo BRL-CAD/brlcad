@@ -40,7 +40,6 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
-
 int
 _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv)
 {

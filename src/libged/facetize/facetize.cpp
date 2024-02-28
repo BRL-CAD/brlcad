@@ -59,9 +59,8 @@ _ged_facetize_state_create()
 
     s->max_time = 30;
     s->max_pnts = 0;
-    s->tol = NULL;
-    //s->s_opts = s_opts;
 
+    s->tol = NULL;
     s->nonovlp_threshold = 0;
 
     s->gedp = NULL;
@@ -70,9 +69,6 @@ _ged_facetize_state_create()
     BU_ALLOC(s->s_map, struct bu_attribute_value_set);
     bu_avs_init_empty(s->c_map);
     bu_avs_init_empty(s->s_map);
-
-    BU_GET(s->froot, struct bu_vls);
-    bu_vls_init(s->froot);
 
     return s;
 }
@@ -90,9 +86,6 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
     bu_avs_free(s->s_map);
     bu_free(s->c_map, "comb map");
     bu_free(s->s_map, "solid map");
-
-    bu_vls_free(s->froot);
-    BU_PUT(s->froot, struct bu_vls);
 
     BU_PUT(s, struct _ged_facetize_state);
 }
