@@ -68,7 +68,7 @@ extern int
 continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed);
 
 extern int
-_ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname);
+spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, struct tess_opts *s);
 
 extern bool
 bot_is_manifold(struct rt_bot_internal *bot);

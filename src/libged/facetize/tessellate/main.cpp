@@ -252,7 +252,7 @@ pnt_sampling_methods:
 		pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
 	    }
 	}
-	///ret = spsr_mesh(obot, &intern, s->ttol, s->tol);
+	ret = spsr_mesh(obot, dbip, pnts, s);
 	if (ret == BRLCAD_OK) {
 	    *method_flag = FACETIZE_METHOD_SPSR;
 	    return ret;
