@@ -236,6 +236,331 @@ _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_
     return 1;
 }
 
+std::string
+sample_opts::print_options_help()
+{
+    std::string h;
+    h.append("feature_scale    -  Percentage of the average thickness observed by\n");
+    h.append("                    the raytracer to use for a targeted feature size\n");
+    h.append("                    with sampling based methods.\n");
+    h.append("feature_size     -  Explicit feature length to try for sampling\n");
+    h.append("                    based methods - overrides feature_scale.\n");
+    h.append("d_feature_size   -  Initial feature length to try for decimation\n");
+    h.append("                    in sampling based methods.  By default, this\n");
+    h.append("                    value is set to 1.5x the feature size.\n");
+    h.append("max_sample_time  -  Maximum time to allow point sampling to continue\n");
+    h.append("max_pnts         -  Maximum number of points to sample\n");
+    return h;
+}
+
+int
+sample_opts::set_var(const std::string &key, const std::string &val)
+{
+    if (key.length() == 0)
+	return BRLCAD_ERROR;
+
+    const char *cstr[2];
+    cstr[0] = val.c_str();
+    cstr[1] = NULL;
+
+    if (key == std::string("feature_scale")) {
+	if (!val.length()) {
+	    feature_scale = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&feature_scale) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("feature_size")) {
+	if (!val.length()) {
+	    feature_size = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&feature_size) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("d_feature_size")) {
+	if (!val.length()) {
+	    d_feature_size = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&d_feature_size) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("max_sample_time")) {
+	if (!val.length()) {
+	    max_sample_time = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_sample_time) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("max_pnts")) {
+	if (!val.length()) {
+	    max_pnts = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_pnts) < 0)
+	    return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_ERROR;
+}
+
+void
+sample_opts::sync(sample_opts &o)
+{
+    feature_scale = o.feature_scale;
+    feature_size = o.feature_size;
+    d_feature_size = o.d_feature_size;
+    max_sample_time = o.max_sample_time;
+    max_pnts = o.max_pnts;
+    obj_bbox_vol = o.obj_bbox_vol;
+    pnts_bbox_vol = o.pnts_bbox_vol;
+    target_feature_size = o.target_feature_size;
+    avg_thickness = o.avg_thickness;
+}
+
+bool
+sample_opts::equals(sample_opts &o)
+{
+    if (!NEAR_EQUAL(feature_scale, o.feature_scale, VUNITIZE_TOL))
+	return false;
+    if (!NEAR_EQUAL(feature_size, o.feature_size, VUNITIZE_TOL))
+	return false;
+    if (!NEAR_EQUAL(d_feature_size, o.d_feature_size, VUNITIZE_TOL))
+	return false;
+    if (max_sample_time != o.max_sample_time)
+	return false;
+    if (max_pnts != o.max_pnts)
+	return false;
+
+    return true;
+}
+
+std::string
+cm_opts::about_method()
+{
+    std::string msg = "Continuation Method (Bloomenthal polygonizer)\n";
+    return msg;
+}
+
+std::string
+cm_opts::print_options_help()
+{
+    std::string h = std::string("Continuation Options:\n") + sample_opts::print_options_help();
+    h.append("max_cycle_time   - Maximum time to take for one processing cycle\n");
+    h.append("                   Default is 30.  Zero means run until the target\n");
+    h.append("                   size is met or other termination criteria kick\n");
+    h.append("                   in.  Be careful when specifying zero - it can\n");
+    h.append("                   produce very long runs!\n");
+    return h;
+}
+
+int
+cm_opts::set_var(const std::string &key, const std::string &val)
+{
+      if (key.length() == 0)
+          return BRLCAD_ERROR;
+
+      const char *cstr[2];
+      cstr[0] = val.c_str();
+      cstr[1] = NULL;
+
+      if (key == std::string("max_cycle_time")) {
+	  if (!val.length()) {
+	      max_cycle_time = 0;
+	      return BRLCAD_OK;
+	  }
+	  if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_cycle_time) < 0)
+	      return BRLCAD_ERROR;
+      }
+
+      // If it's not a CM setting directly, it may be for sampling
+      return sample_opts::set_var(key, val);
+}
+
+void
+cm_opts::sync(method_options_t &o)
+{
+    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
+    o_it = o.options_map.find(std::string("CM"));
+    if (o_it == o.options_map.end())
+	return;
+
+    std::map<std::string,std::string>::iterator m_it;
+    for (m_it = o_it->second.begin(); m_it != o_it->second.end(); m_it++) {
+	set_var(m_it->first, m_it->second);
+    }
+}
+
+void
+cm_opts::sync(sample_opts &opts)
+{
+    sample_opts::sync(opts);
+}
+
+std::string
+nmg_opts::about_method()
+{
+    std::string msg = "N-Manifold Geometry (NMG) Method\n";
+    return msg;
+}
+
+std::string
+nmg_opts::print_options_help()
+{
+    std::string h;
+    h.append("Available NMG method settings:\n");
+    h.append("tol_rel   - relative distance tolerance.  Default is 0.01\n");
+    h.append("tol_abs   - absolute distance tolerance.  Default is 0\n");
+    h.append("tol_norm  - normal tolerance.  Default is 0\n");
+    h.append("nmg_debug - NMG debugging flag.  Default is 0x00000000. See 'debug -l NMG' in MGED for available values.\n");
+    return h;
+}
+
+int
+nmg_opts::set_var(const std::string &key, const std::string &val)
+{
+    if (key.length() == 0)
+	return BRLCAD_ERROR;
+
+    const char *cstr[2];
+    cstr[0] = val.c_str();
+    cstr[1] = NULL;
+
+    if (key == std::string("tol_rel")) {
+	if (!val.length()) {
+	    ttol.rel = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.rel) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("tol_abs")) {
+	if (!val.length()) {
+	    ttol.abs = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.abs) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("tol_norm")) {
+	if (!val.length()) {
+	    ttol.norm = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&ttol.norm) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("nmg_debug")) {
+	if (!val.length()) {
+	    nmg_debug = 0;
+	    return BRLCAD_OK;
+	}
+	long ndebug = 0;
+	if (bu_opt_long(NULL, 1, (const char **)cstr, (void *)&ndebug) < 0)
+	    return BRLCAD_ERROR;
+	nmg_debug = ndebug;
+    }
+
+    return BRLCAD_OK;
+}
+
+void
+nmg_opts::sync(method_options_t &o)
+{
+    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
+    o_it = o.options_map.find(std::string("NMG"));
+    if (o_it == o.options_map.end())
+	return;
+
+    std::map<std::string,std::string>::iterator m_it;
+    for (m_it = o_it->second.begin(); m_it != o_it->second.end(); m_it++) {
+	set_var(m_it->first, m_it->second);
+    }
+}
+
+std::string
+spsr_opts::about_method()
+{
+    std::string msg = "Screened Poisson Surface Reconstruction\n";
+    return msg;
+}
+
+std::string
+spsr_opts::print_options_help()
+{
+    std::string h = std::string("Screened Poisson Surface Reconstruction Options:\n") + sample_opts::print_options_help();
+    h.append("depth            -     Maximum reconstruction depth. (Default is 8)\n");
+    h.append("interpolate      -     Lower values (down to 0.0) bias towards a smoother\n");
+    h.append("                       mesh, higher values bias towards interpolation\n");
+    h.append("                       accuracy.  (Default is 2.0)\n");
+    h.append("samples_per_node -     How many samples should go into a cell before it is\n");
+    h.append("                       refined. (Default is 1.5)\n");
+    return h;
+}
+
+int
+spsr_opts::set_var(const std::string &key, const std::string &val)
+{
+    if (key.length() == 0)
+	return BRLCAD_ERROR;
+
+    const char *cstr[2];
+    cstr[0] = val.c_str();
+    cstr[1] = NULL;
+
+    if (key == std::string("depth")) {
+	if (!val.length()) {
+	    s_opts.depth = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&s_opts.depth) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("interpolate")) {
+	if (!val.length()) {
+	    s_opts.point_weight = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&s_opts.point_weight) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("samples_per_node")) {
+	if (!val.length()) {
+	    s_opts.samples_per_node = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&s_opts.samples_per_node) < 0)
+	    return BRLCAD_ERROR;
+    }
+
+    // If it's not a SPSR setting directly, it may be for sampling
+    return sample_opts::set_var(key, val);
+}
+
+void
+spsr_opts::sync(method_options_t &o)
+{
+    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
+    o_it = o.options_map.find(std::string("SPSR"));
+    if (o_it == o.options_map.end())
+	return;
+
+    std::map<std::string,std::string>::iterator m_it;
+    for (m_it = o_it->second.begin(); m_it != o_it->second.end(); m_it++) {
+	set_var(m_it->first, m_it->second);
+    }
+}
+
+void
+spsr_opts::sync(sample_opts &opts)
+{
+    sample_opts::sync(opts);
+}
+
+
 
 #endif // TESS_OPTS_IMPLEMENTATION
 
