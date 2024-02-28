@@ -232,8 +232,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * default tops to undecorated, deprecate -n, add tops -p
 
-* document tops options in man page
-
 * default ls to undecorated, deprecate -n, add ls -p
 
 * make mv and mvall not accept slashes on destination:
@@ -489,9 +487,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * drawing with origin, axes, and overall dimensions for rt/rtedge/etc.
 
-* gather v&v docs on configuration management process, user manuals,
-  process documentation, software documentation, model descriptions.
-
 * STIX 2.0 fonts are released, using OpenType - check to see whether
   we can upgrade to these for our DocBook processing
 
@@ -690,10 +685,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * import CTRI material information in fast4-g as per-face data.
 
 * Integrate ADRT into Archer as a visualization mode.
-
-* Document a GUI feature list (prioritized).
-
-* Document a CLI feature list (prioritized).
 
 * high-performance VOL for medical data visualization.  consider
   leveraging OpenVDB, PCL, Paraview/VTK, etc.
@@ -2546,6 +2537,12 @@ GEOMETRY MODELS
 DOCUMENTATION
 -------------
 
+* document rt script commands
+
+* Document a GUI feature list (prioritized).
+
+* Document a CLI feature list (prioritized).
+
 * HTML docs that display in MGED via menu are way out of date and look
   bad per modern standards. Needs to be updated/replaced with doxygen
   docs and/or clean presentation layout with overview, tutorials, and
@@ -2725,6 +2722,11 @@ DOCUMENTATION
   list of things we might need to consider when writing converters.
 
 * document the saveview/loadview options.
+
+* document tops options in man page
+
+* gather v&v docs on configuration management process, user manuals,
+  process documentation, software documentation, model descriptions.
 
 * BRL-CAD Overview Diagram
 	Completed, but not integrated

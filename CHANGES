@@ -1701,3 +1701,4 @@ s/-ghosting-intensity/-ghost-intensity/g
 s/pl_mat_idn/MAT_IDN/g
 s/pl_mat_zero/MAT_ZERO/g
 s/pl_mat_copy/MAT_COPY/g
+s/ambSlow=[0-9]*//g
