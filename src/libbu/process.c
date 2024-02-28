@@ -43,6 +43,10 @@
 extern pid_t wait(int *);
 #endif
 
+#if defined(HAVE_KILL) && !defined(HAVE_DECL_KILL) && !defined(kill)
+extern int kill(pid_t, int);
+#endif
+
 
 int
 bu_process_id(void)
