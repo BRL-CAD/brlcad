@@ -96,10 +96,9 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
     struct ged *gedp = s->gedp;
     int ret = BRLCAD_ERROR;
     int newobj_cnt;
-    char *newname;
+    const char *oname;
     struct directory **dpa = NULL;
     struct db_i *dbip = gedp->dbip;
-    struct bu_vls oname = BU_VLS_INIT_ZERO;
 
     RT_CHECK_DBI(dbip);
 
@@ -113,31 +112,23 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
     }
 
     if (!s->in_place) {
-	newname = (char *)argv[argc-1];
+	oname = argv[argc-1];
 	argc--;
     } else {
-	/* Find a new name for the original object - that's also our working
-	 * "newname" for the initial processing, until we swap at the end. */
-	bu_vls_sprintf(&oname, "%s_original", argv[0]);
-	if (db_lookup(dbip, bu_vls_cstr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_printf(&oname, "-0");
-	    bu_vls_incr(&oname, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	}
-	newname = (char *)bu_vls_cstr(&oname);
+	oname = argv[0];
     }
 
     /* If we're doing an NMG output, use the old-school libnmg booleval */
     if (s->make_nmg) {
-	ret = _ged_facetize_nmgeval(s, argc, argv, newname);
+	ret = _ged_facetize_nmgeval(s, argc, argv, oname);
 	goto booleval_cleanup;
     }
 
     // If we're not doing NMG, use the Manifold booleval
-    ret = _ged_facetize_booleval(s, newobj_cnt, dpa, newname, NULL, NULL);
+    ret = _ged_facetize_booleval(s, newobj_cnt, dpa, oname, NULL, NULL);
 
 booleval_cleanup:
     bu_free(dpa, "dp array");
-    bu_vls_free(&oname);
     return ret;
 }
 

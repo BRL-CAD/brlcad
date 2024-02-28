@@ -286,7 +286,7 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
     return BRLCAD_OK;
 }
 int
-_ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
+_ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *oname)
 {
     int ret = BRLCAD_OK;
     struct model *nmg_model = NULL;
@@ -294,22 +294,18 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
     nmg_model = _try_nmg_facetize(s, argc, argv);
     if (nmg_model == NULL) {
 	if (s->verbosity > 1) {
-	    bu_log("NMG(%s):  no resulting region, aborting\n", newname);
+	    bu_log("NMG(%s):  no resulting region, aborting\n", oname);
 	}
 	ret = BRLCAD_ERROR;
 	goto ged_nmg_obj_memfree;
     }
 
     /* Write the NMG */
-    if (s->in_place) {
-	ret = _write_nmg(s, nmg_model, argv[0]);
-    } else {
-	ret = _write_nmg(s, nmg_model, newname);
-    }
+    ret = _write_nmg(s, nmg_model, oname);
 
 ged_nmg_obj_memfree:
     if (!s->quiet && ret != BRLCAD_OK) {
-	bu_log("NMG: failed to generate %s\n", newname);
+	bu_log("NMG: failed to generate %s\n", oname);
     }
 
     return ret;

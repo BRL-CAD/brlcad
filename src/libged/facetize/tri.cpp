@@ -824,10 +824,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 }
 
 int
-_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *newname)
+_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname)
 {
     union tree *ftree;
-    if (!dbip || !wdbp || !argv || !newname)
+    if (!dbip || !wdbp || !argv || !oname)
 	return BRLCAD_ERROR;
 
     bu_log("Preparing Manifold inputs...\n");
@@ -902,14 +902,8 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	ftree->tr_d.td_d = NULL;
 
 	// If we have a manifold_mesh, write it out as a bot
-	if (s->in_place) {
-	    if (_ged_facetize_write_bot(s, bot, argv[0]) != BRLCAD_OK) {
-		return BRLCAD_ERROR;
-	    }
-	} else {
-	    if (_ged_facetize_write_bot(s, bot, newname) != BRLCAD_OK) {
-		return BRLCAD_ERROR;
-	    }
+	if (_ged_facetize_write_bot(s, bot, oname) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -917,7 +911,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 }
 
 int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname, char *pwdir, char *pwfile)
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *oname, char *pwdir, char *pwfile)
 {
     int ret = BRLCAD_OK;
 
@@ -993,9 +987,9 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	av[i] = dpa[i]->d_namep;
     }
 
-    if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, newname) != BRLCAD_OK) {
+    if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, oname) != BRLCAD_OK) {
 	if (!s->quiet) {
-	    bu_log("FACETIZE: failed to generate %s\n", newname);
+	    bu_log("FACETIZE: failed to generate %s\n", oname);
 	}
     }
 
