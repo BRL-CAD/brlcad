@@ -67,8 +67,8 @@ class method_opts {
 	virtual int set_var(std::string &key, std::string &val) = 0;
 	virtual void sync(method_options_t &mopts) = 0;
 	int max_time = 0;
-	struct bg_tess_tol *ttol = NULL;
-	struct bn_tol *tol = NULL;
+	//struct bg_tess_tol *ttol = NULL;
+	//struct bn_tol *tol = NULL;
 };
 
 class sample_opts : public method_opts {
@@ -77,6 +77,7 @@ class sample_opts : public method_opts {
 	std::string print_options_help();
 	int set_var(std::string &key, std::string &val);
 	void sync(method_options_t &mopts);
+	void sync(sample_opts &sopts);
 
 	std::string print_sample_options_help();
 	bool equals(sample_opts &other);
@@ -112,6 +113,7 @@ class cm_opts : public sample_opts {
 	std::string print_options_help();
 	int set_var(std::string &key, std::string &val);
 	void sync(method_options_t &mopts);
+	void sync(sample_opts &sopts);
 
 	int max_time = 30; // Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!
 };
@@ -122,6 +124,7 @@ class spsr_opts : public sample_opts {
 	std::string print_options_help();
 	int set_var(std::string &key, std::string &val);
 	void sync(method_options_t &mopts);
+	void sync(sample_opts &sopts);
 
 	struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
 	int depth = 8; // Maximum reconstruction depth s_opts.depth

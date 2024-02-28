@@ -72,6 +72,11 @@ spsr_opts::sync(method_options_t&)
 {
 }
 
+void
+spsr_opts::sync(sample_opts&)
+{
+}
+
 static int
 _db_uniq_test(struct bu_vls *n, void *data)
 {

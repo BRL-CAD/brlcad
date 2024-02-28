@@ -93,7 +93,6 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, st
     } else {
 	BU_UNSETJUMP;
 	status = -1;
-	nbot = NULL;
     } BU_UNSETJUMP;
 
     if (status <= -1)

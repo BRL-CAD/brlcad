@@ -42,6 +42,7 @@
 static void
 method_setup(struct tess_opts *s)
 {
+    std::map<std::string,std::string>::iterator m_it;
     if (!s)
 	return;
 
@@ -50,6 +51,29 @@ method_setup(struct tess_opts *s)
 	s->method_opts.methods.insert(std::string("CM"));
 	s->method_opts.methods.insert(std::string("SPSR"));
     }
+
+    // If we have the key word "SAMPLING" present in methods, it
+    // signals that we have global pre-configured settings to
+    // use as defaults for all sampling methods.  Process them
+    // first
+    std::map<std::string, std::map<std::string,std::string>>::iterator o_it = s->method_opts.options_map.find(std::string("SAMPLING"));
+    if (o_it != s->method_opts.options_map.end()) {
+	std::map<std::string,std::string> &s_opts = o_it->second;
+	for (m_it = s_opts.begin(); m_it != s_opts.end(); m_it++) {
+	    std::string key = m_it->first;
+	    std::string val = m_it->second;
+	    s->pnt_options.set_var(key, val);
+	}
+
+	s->cm_options.sync(s->pnt_options);
+	s->spsr_options.sync(s->pnt_options);
+    }
+
+    // Now that we've set any default overrides for multiple types, get the
+    // method specific options for each method set up
+    s->nmg_options.sync(s->method_opts);
+    s->cm_options.sync(s->method_opts);
+    s->spsr_options.sync(s->method_opts);
 }
 
 static int

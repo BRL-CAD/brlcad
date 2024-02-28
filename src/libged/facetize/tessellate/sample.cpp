@@ -51,6 +51,13 @@ sample_opts::sync(method_options_t &)
 {
 }
 
+void
+sample_opts::sync(sample_opts &)
+{
+}
+
+
+
 static void
 _rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
 {

@@ -71,6 +71,11 @@ cm_opts::sync(method_options_t&)
 {
 }
 
+void
+cm_opts::sync(sample_opts&)
+{
+}
+
 static void
 _pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
 {
