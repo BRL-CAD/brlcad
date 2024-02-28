@@ -121,7 +121,6 @@ static int buf_mode=0;
 vect_t kut_norm = VINIT_ZERO;
 struct soltab *kut_soltab = NULL;
 
-int ambSlow = 0;
 int ambSamples = 0;
 double ambRadius = 0.0;
 double ambOffset = 0.0;
@@ -883,22 +882,12 @@ ambientOcclusion(struct application *ap, struct partition *pp)
 	vect_t randScale;
 
 	/* pick a random direction in the unit sphere */
-	if (ambSlow) {
-	    /* use bn_randmt() which is slow but not noisy */
-	    do {
-		/* less noisy but much slower */
-		randScale[X] = (bn_randmt() - 0.5) * 2.0;
-		randScale[Y] = (bn_randmt() - 0.5) * 2.0;
-		randScale[Z] = bn_randmt();
-	    } while (MAGSQ(randScale) > 1.0);
-	} else {
-	    do {
-		/* faster by a factor of 2 but noisy */
-		randScale[X] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
-		randScale[Y] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
-		randScale[Z] = bn_rand_half(ap->a_resource->re_randptr) + 0.5;
-	    } while (MAGSQ(randScale) > 1.0);
-	}
+	do {
+	    /* less noisy but much slower */
+	    randScale[X] = (bn_randmt() - 0.5) * 2.0;
+	    randScale[Y] = (bn_randmt() - 0.5) * 2.0;
+	    randScale[Z] = bn_randmt();
+	} while (MAGSQ(randScale) > 1.0);
 
 	VJOIN3(amb_ap.a_ray.r_dir, origin,
 	       randScale[X], uAxis,
