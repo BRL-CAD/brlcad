@@ -1,9 +1,9 @@
 set(GED_TESS_SRCS
   continuation.cpp
-  half.cpp
   sample.cpp
   spsr.cpp
   main.cpp
+  nmg.cpp
   util.cpp
   )
 

@@ -39,95 +39,23 @@
 #include "../tess_opts.h"
 #include "./tessellate.h"
 
-// TODO - this needs to be a util function - it's probably what we should
-// be using instead of the solid2 check to determine if an input will
-// work for boolean processing.
-static bool
-bot_is_manifold(struct rt_bot_internal *bot)
-{
-    if (!bot)
-	return false;
-
-    manifold::Mesh bot_mesh;
-    manifold::Manifold bot_manifold;
-
-    // We have a BoT, but make sure we can get a Manifold before we accept it
-    for (size_t j = 0; j < bot->num_vertices ; j++)
-	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
-    for (size_t j = 0; j < bot->num_faces; j++)
-	bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
-    bot_manifold = manifold::Manifold(bot_mesh);
-    if (bot_manifold.Status() != manifold::Manifold::Error::NoError)
-	return false;
-    return true;
-}
-
-static int
-_nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern,  const struct bg_tess_tol *ttol, const struct bn_tol *tol)
-{
-    int status = -1;
-
-    if (!nbot || !intern || !intern->idb_meth || !ttol || !tol)
-	return BRLCAD_ERROR;
-
-    (*nbot) = NULL;
-
-    struct model *m = nmg_mm();
-    struct nmgregion *r1 = (struct nmgregion *)NULL;
-    // Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
-    if (!BU_SETJUMP) {
-	status = intern->idb_meth->ft_tessellate(&r1, m, intern, ttol, tol);
-    } else {
-	BU_UNSETJUMP;
-	status = -1;
-	nbot = NULL;
-    } BU_UNSETJUMP;
-
-    if (status <= -1)
-	return BRLCAD_ERROR;
-
-    // NMG reports success, now get a BoT
-    if (!BU_SETJUMP) {
-	(*nbot) = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
-    } else {
-	BU_UNSETJUMP;
-	(*nbot) = NULL;
-    } BU_UNSETJUMP;
-
-    if (!(*nbot))
-	return BRLCAD_ERROR;
-
-    if (!bot_is_manifold(*nbot)) {
-	bu_log("We got an NMG mesh, but it's no good for a Manifold(!?)\n");
-	if ((*nbot)->vertices)
-	    bu_free((*nbot)->vertices, "verts");
-	if ((*nbot)->faces)
-	    bu_free((*nbot)->faces, "faces");
-	BU_FREE((*nbot), struct rt_bot_internal);
-	(*nbot) = NULL;
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
 static void
-method_enablement_check(struct tess_opts *s)
+method_setup(struct tess_opts *s)
 {
-    if (!s || !s->method_opts)
+    if (!s)
 	return;
 
-    if (!s->method_opts->methods.size()) {
-	s->method_opts->methods.insert(std::string("NMG"));
-	s->method_opts->methods.insert(std::string("CM"));
-	s->method_opts->methods.insert(std::string("SPSR"));
+    if (!s->method_opts.methods.size()) {
+	s->method_opts.methods.insert(std::string("NMG"));
+	s->method_opts.methods.insert(std::string("CM"));
+	s->method_opts.methods.insert(std::string("SPSR"));
     }
 }
 
 static int
 dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
 {
-    std::set<std::string> &mset = s->method_opts->methods;
+    std::set<std::string> &mset = s->method_opts.methods;
     if (!obot || !method_flag || !dbip || !dp)
 	return BRLCAD_ERROR;
 
@@ -188,7 +116,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 		return BRLCAD_OK;
 	    // Plate mode BoTs need an explicit volume representation
 	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
-		return rt_bot_plate_to_vol(obot, bot, s->ttol, s->tol, 0, 0);
+		return rt_bot_plate_to_vol(obot, bot, 0, 0);
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.
@@ -233,7 +161,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 
     if (mset.find(std::string("NMG")) != mset.end()) {
 	// NMG is best, if it works
-	ret = _nmg_tessellate(obot, &intern, s->ttol, s->tol);
+	ret = _nmg_tessellate(obot, &intern, s);
 	if (ret == BRLCAD_OK) {
 	    *method_flag = FACETIZE_METHOD_NMG;
 	    return BRLCAD_OK;
@@ -313,27 +241,20 @@ main(int argc, const char **argv)
 
     static const char *usage = "Usage: ged_tessellate [options] file.g input_obj [input_object_2 ...]\n";
     int print_help = 0;
-    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
-    struct bn_tol tol = BN_TOL_INIT_TOL;
-    struct tess_opts s = TESS_OPTS_DEFAULT;
-    struct bu_vls nmg_debug_str = BU_VLS_INIT_ZERO;
-    s.ttol = &ttol;
-    s.tol = &tol;
-    s.feature_scale = 0.15;  // Set default.
-
-    method_options_t *method_options = new method_options_t;
-    s.method_opts = method_options;
+    struct tess_opts s;
 
     int list_methods = 0;
+    int max_time = 0;
+    int max_pnts = 0;
 
     struct bu_opt_desc d[ 8];
     BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
     BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
-    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...", &_tess_active_methods,        method_options, "List of active methods to use for this tessellation attempt");
-    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,        method_options, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
-    BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,         &(s.max_time), "Maximum number of seconds to allow for runtime (not supported by all methods).");
-    BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,         &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...", &_tess_active_methods,        &s.method_opts, "List of active methods to use for this tessellation attempt");
+    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,        &s.method_opts, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
+    BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,             &max_time, "Maximum number of seconds to allow for runtime (not supported by all methods).");
+    BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,             &max_pnts, "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT_NULL(d[ 7]);
 
     /* parse options */
@@ -342,7 +263,6 @@ main(int argc, const char **argv)
     if (argc < 0) {
 	bu_log("Option parsing error: %s\n", bu_vls_cstr(&omsg));
 	bu_vls_free(&omsg);
-	bu_vls_free(&nmg_debug_str);
 	bu_exit(BRLCAD_ERROR, "%s failed", bu_getprogname());
     }
     bu_vls_free(&omsg);
@@ -365,19 +285,11 @@ main(int argc, const char **argv)
 
 	bu_log("%s\n", bu_vls_cstr(&str));
 	bu_vls_free(&str);
-	bu_vls_free(&nmg_debug_str);
         return BRLCAD_OK;
     }
 
-    if (bu_vls_strlen(&nmg_debug_str)) {
-	long l = std::stol(bu_vls_cstr(&nmg_debug_str), nullptr, 16);
-	nmg_debug |= l;
-    }
-    bu_vls_free(&nmg_debug_str);
-
-
-    // If no method(s) were specified, try everything
-    method_enablement_check(&s);
+    // Do the setup for the various methods
+    method_setup(&s);
 
     // Open the database
     struct ged *gedp = ged_open("db", argv[0], 1);

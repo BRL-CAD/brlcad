@@ -41,26 +41,16 @@
 
 __BEGIN_DECLS
 
-struct tess_opts {
-    method_options_t *method_opts;
-    fastf_t feature_size;
-    fastf_t fsize;
-    fastf_t feature_scale;
-    fastf_t d_feature_size;
-    int overwrite_obj;
-    int max_time;
-    int max_pnts;
-    struct bg_3d_spsr_opts s_opts;
-    struct bg_tess_tol *ttol;
-    struct bn_tol *tol;
-    double obj_bbox_vol;
-    double pnts_bbox_vol;
-    fastf_t target_feature_size;
-    fastf_t avg_thickness;
+class tess_opts {
+    public:
+	method_options_t method_opts;
+	sample_opts pnt_options; // Holds initial assignments intended for use in all sampling methods.
+	nmg_opts nmg_options;
+	cm_opts cm_options;
+	spsr_opts spsr_options;
+
+	int overwrite_obj = 0;
 };
-
-#define TESS_OPTS_DEFAULT {NULL, 0.0, 0.0, 0.0, 0.0, 0, 0, 50000, BG_3D_SPSR_OPTS_DEFAULT, NULL, NULL, 0.0, 0.0, 0.0, 0.0}
-
 
 extern struct rt_bot_internal *
 _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size);
@@ -72,10 +62,16 @@ extern struct rt_pnts_internal *
 _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s);
 
 extern int
+_nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, struct tess_opts *s);
+
+extern int
 continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed);
 
 extern int
 _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname);
+
+extern bool
+bot_is_manifold(struct rt_bot_internal *bot);
 
 __END_DECLS
 

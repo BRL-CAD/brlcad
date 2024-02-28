@@ -153,6 +153,26 @@ _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const c
     return BRLCAD_OK;
 }
 
+bool
+bot_is_manifold(struct rt_bot_internal *bot)
+{
+    if (!bot)
+	return false;
+
+    manifold::Mesh bot_mesh;
+    manifold::Manifold bot_manifold;
+
+    // We have a BoT, but make sure we can get a Manifold before we accept it
+    for (size_t j = 0; j < bot->num_vertices ; j++)
+	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
+    for (size_t j = 0; j < bot->num_faces; j++)
+	bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
+    bot_manifold = manifold::Manifold(bot_mesh);
+    if (bot_manifold.Status() != manifold::Manifold::Error::NoError)
+	return false;
+    return true;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

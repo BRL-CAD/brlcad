@@ -67,6 +67,10 @@ spsr_opts::set_var(std::string &key, std::string &val)
     return 0;
 }
 
+void
+spsr_opts::sync(method_options_t&)
+{
+}
 
 static int
 _db_uniq_test(struct bu_vls *n, void *data)
@@ -82,7 +86,6 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
     int ret = BRLCAD_OK;
     struct directory *dp;
     int decimation_succeeded = 0;
-    int max_time = 0; // TODO - pass in
     struct rt_db_internal in_intern;
     struct bn_tol btol = BN_TOL_INIT_TOL;
     double avg_thickness = 0.0;
@@ -167,7 +170,7 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
      * from the original shape, if we know the avg. thickness of the original object raytrace
      * the candidate BoT and compare the avg. thicknesses */
     if (avg_thickness > 0) {
-	int max_pnts = s->max_pnts; // old value 200000;
+	//int max_pnts = s->max_pnts; // old value 200000;
 	double navg_thickness = 0.0;
 	struct bu_vls tmpname = BU_VLS_INIT_ZERO;
 	struct rt_bot_internal *tbot = NULL;
@@ -198,7 +201,7 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 	    goto ged_facetize_spsr_memfree;
 	}
 
-	if (analyze_obj_to_pnts(NULL, &navg_thickness, dbip, bu_vls_cstr(&tmpname), &btol, flags, max_pnts, max_time, 1)) {
+	if (analyze_obj_to_pnts(NULL, &navg_thickness, dbip, bu_vls_cstr(&tmpname), &btol, flags, s->spsr_options.max_pnts, s->spsr_options.max_time, 1)) {
 	    bu_log("SPSR: could not raytrace temporary BoT %s\n", bu_vls_cstr(&tmpname));
 	    ret = BRLCAD_ERROR;
 	}

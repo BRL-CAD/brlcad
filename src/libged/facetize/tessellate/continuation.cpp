@@ -66,6 +66,10 @@ cm_opts::set_var(std::string &key, std::string &val)
     return 0;
 }
 
+void
+cm_opts::sync(method_options_t&)
+{
+}
 
 static void
 _pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
@@ -150,7 +154,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
     struct rt_bot_internal *dbot = NULL;
     int pret = 0;
     struct analyze_polygonize_params params = ANALYZE_POLYGONIZE_PARAMS_DEFAULT;
-    double feature_size = (s->feature_size > 0) ? s->feature_size : 2*s->avg_thickness;
+    double feature_size = (s->cm_options.feature_size > 0) ? s->cm_options.feature_size : 2*s->cm_options.avg_thickness;
 
     /* Run the polygonize routine.  Because it is quite simple to accidentally
      * specify inputs that will take huge amounts of time to run, we will
@@ -160,11 +164,11 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
      * max_time has been explicitly set to 0 by the caller this will run
      * unbounded, but the algorithm is n**2 and we're trying the finest level
      * first so may run a *very* long time... */
-    params.max_time = s->max_time;
+    params.max_time = s->cm_options.max_time;
     params.verbosity = 1;
     params.minimum_free_mem = FACETIZE_MEMORY_THRESHOLD;
 
-    while (!pret && (feature_size > 0.9*s->target_feature_size) && fatal_error_cnt < 8 ) {
+    while (!pret && (feature_size > 0.9*s->cm_options.target_feature_size) && fatal_error_cnt < 8 ) {
 	struct rt_bot_internal *candidate = NULL;
 	double timestamp = bu_gettime();
 	pret = bot_gen(&candidate, feature_size, seed, objname, dbip, &params);
@@ -174,7 +178,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 	    if (pret == 3)
 		break;
 	    if (pret == 2) {
-		bu_log("CM: timed out after %d seconds with size %g\n", s->max_time, feature_size);
+		bu_log("CM: timed out after %d seconds with size %g\n", s->cm_options.max_time, feature_size);
 		/* If we still haven't had a successful run, back the feature size out and try again */
 		if (first_run) {
 		    pret = 0;
@@ -184,7 +188,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 		}
 	    }
 
-	    if (pret != 2 && !(s->feature_size > 0)) {
+	    if (pret != 2 && !(s->cm_options.feature_size > 0)) {
 		/* Something about the previous size didn't work - nudge the feature size and try again
 		 * unless we've had multiple fatal errors. */
 		pret = 0;
@@ -202,8 +206,8 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 
 	    feature_size = successful_feature_size;
 	    if (bot->faces) {
-		if (s->feature_size <= 0) {
-		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n",  s->target_feature_size, (int)bot->num_faces, successful_feature_size);
+		if (s->cm_options.feature_size <= 0) {
+		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n",  s->cm_options.target_feature_size, (int)bot->num_faces, successful_feature_size);
 		} else {
 		    bu_log("CM: successfully created %d faces, feature size %g\n", (int)bot->num_faces, successful_feature_size);
 		}
@@ -240,7 +244,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 
     /* do decimation */
     {
-	double d_feature_size = (s->d_feature_size > 0) ? s->d_feature_size : 1.5 * feature_size;
+	double d_feature_size = (s->cm_options.d_feature_size > 0) ? s->cm_options.d_feature_size : 1.5 * feature_size;
 	*obot = bot;
 
 	bu_log("CM: decimating with feature size %g\n", d_feature_size);
@@ -266,7 +270,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
     /* Check the BoT bbox vol against the bounding box
      * of the point cloud - a large difference means something probably isn't
      * right.  For the moment, use >50% difference. */
-    if (fabs(s->pnts_bbox_vol - bot_bbox_vol) > s->pnts_bbox_vol * 0.5) {
+    if (fabs(s->cm_options.pnts_bbox_vol - bot_bbox_vol) > s->cm_options.pnts_bbox_vol * 0.5) {
 	if (bot->vertices) bu_free(bot->vertices, "verts");
 	if (bot->faces) bu_free(bot->faces, "verts");
 	BU_PUT(bot, struct rt_bot_internal);

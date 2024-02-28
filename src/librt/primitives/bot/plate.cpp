@@ -204,9 +204,9 @@ edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1,
 }
 
 int
-rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol, int round_outer_edges, int quiet_mode)
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode)
 {
-    if (!obot || !bot || !ttol || !tol)
+    if (!obot || !bot)
 	return 1;
 
     if (bot->mode != RT_BOT_PLATE)
@@ -316,10 +316,12 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	struct nmgregion *r1 = NULL;
 	struct model *m = nmg_mm();
-	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
+	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL; // TODO - may need to adjust this based on plate mode thickness setting.
+	const struct bn_tol tol = BN_TOL_INIT_TOL;
+	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, &ttol, &tol))
 	    continue;
 
-	struct rt_bot_internal *sbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
+	struct rt_bot_internal *sbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, &tol);
 	if (!sbot)
 	    continue;
 

@@ -34,6 +34,23 @@
 
 #define FACETIZE_MEMORY_THRESHOLD 150000000
 
+std::string
+sample_opts::print_options_help()
+{
+    return std::string("");
+}
+
+int
+sample_opts::set_var(std::string &, std::string &)
+{
+    return 0;
+}
+
+void
+sample_opts::sync(method_options_t &)
+{
+}
+
 static void
 _rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
 {
@@ -106,7 +123,7 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
 
     /* Shoot - we need both the avg thickness of the hit partitions and seed points */
     struct bn_tol btol = BN_TOL_INIT_TOL;
-    if (analyze_obj_to_pnts(pnts, &s->avg_thickness, dbip, oname, &btol, flags, s->max_pnts, s->max_time, 1) || pnts->count <= 0) {
+    if (analyze_obj_to_pnts(pnts, &s->pnt_options.avg_thickness, dbip, oname, &btol, flags, s->pnt_options.max_pnts, s->pnt_options.max_sample_time, 1) || pnts->count <= 0) {
 	struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
 	if (rpnt) {
 	    struct pnt_normal *entry;
@@ -129,9 +146,9 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
 	VSETALL(p_min, INFINITY);
 	VSETALL(p_max, -INFINITY);
 	_rt_pnts_bbox(p_min, p_max, pnts);
-	s->pnts_bbox_vol = _bbox_vol(p_min, p_max);
-	s->obj_bbox_vol = _bbox_vol(rpp_min, rpp_max);
-	if (fabs(s->obj_bbox_vol - s->pnts_bbox_vol)/s->obj_bbox_vol > 1) {
+	s->pnt_options.pnts_bbox_vol = _bbox_vol(p_min, p_max);
+	s->pnt_options.obj_bbox_vol = _bbox_vol(rpp_min, rpp_max);
+	if (fabs(s->pnt_options.obj_bbox_vol - s->pnt_options.pnts_bbox_vol)/s->pnt_options.obj_bbox_vol > 1) {
 	    struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
 	    if (rpnt) {
 		struct pnt_normal *entry;
@@ -151,17 +168,17 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
      * size for the polygonizer and the decimation routine */
     double min_len = (xlen < ylen) ? xlen : ylen;
     min_len = (min_len < zlen) ? min_len : zlen;
-    min_len = (min_len < s->avg_thickness) ? min_len : s->avg_thickness;
+    min_len = (min_len < s->pnt_options.avg_thickness) ? min_len : s->pnt_options.avg_thickness;
 
-    if (s->feature_size > 0) {
-	s->target_feature_size = 0.5*s->feature_size;
+    if (s->pnt_options.feature_size > 0) {
+	s->pnt_options.target_feature_size = 0.5*s->pnt_options.feature_size;
     } else {
-	s->target_feature_size = min_len * s->feature_scale;
+	s->pnt_options.target_feature_size = min_len * s->pnt_options.feature_scale;
     }
 
-    bu_log("feature_size: %f\n", s->feature_size);
-    bu_log("feature_scale: %f\n", s->feature_scale);
-    bu_log("target_feature_size: %f\n", s->target_feature_size);
+    bu_log("feature_size: %f\n", s->pnt_options.feature_size);
+    bu_log("feature_scale: %f\n", s->pnt_options.feature_scale);
+    bu_log("target_feature_size: %f\n", s->pnt_options.target_feature_size);
 
     return pnts;
 }
