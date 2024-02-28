@@ -75,9 +75,6 @@ class method_opts {
 	virtual std::string print_options_help() = 0;
 	virtual int set_var(const std::string &key, const std::string &val) = 0;
 	virtual void sync(method_options_t &mopts) = 0;
-	int max_time = 0;
-	//struct bg_tess_tol *ttol = NULL;
-	//struct bn_tol *tol = NULL;
 };
 
 class sample_opts : public method_opts {
@@ -112,6 +109,7 @@ class nmg_opts : public method_opts {
 	struct bn_tol tol = BN_TOL_INIT_TOL;
 	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
 	long nmg_debug = 0;
+	int max_time = 30;
 };
 
 class cm_opts : public sample_opts {
@@ -123,6 +121,7 @@ class cm_opts : public sample_opts {
 	void sync(sample_opts &sopts);
 
 	int max_cycle_time = 30;  // Maximum length of a processing cycle to allow before finalizing
+	int max_time = 600;  // Maximum overall time
 };
 
 class spsr_opts : public sample_opts {
@@ -137,6 +136,7 @@ class spsr_opts : public sample_opts {
 	int depth = 8; // Maximum reconstruction depth s_opts.depth
 	fastf_t interpolate = 2.0; // Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. s_opts.point_weight
 	fastf_t samples_per_node = 1.5; // How many samples should go into a cell before it is refined. s_opts.samples_per_node
+	int max_time = 600;  // Maximum overall time
 };
 
 
@@ -360,6 +360,7 @@ cm_opts::print_options_help()
     h.append("                    size is met or other termination criteria kick\n");
     h.append("                    in.  Be careful when specifying zero - it can\n");
     h.append("                    produce very long runs!\n");
+    h.append("max_time         -  Maximum overall run time for object conversion\n");
     return h;
 }
 
@@ -379,6 +380,15 @@ cm_opts::set_var(const std::string &key, const std::string &val)
 	      return BRLCAD_OK;
 	  }
 	  if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_cycle_time) < 0)
+	      return BRLCAD_ERROR;
+      }
+
+      if (key == std::string("max_time")) {
+	  if (!val.length()) {
+	      max_time = 0;
+	      return BRLCAD_OK;
+	  }
+	  if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
 	      return BRLCAD_ERROR;
       }
 
@@ -418,11 +428,12 @@ nmg_opts::print_options_help()
 {
     std::string h;
     h.append("NMG method settings:\n");
-    h.append("tol_rel          -  relative distance tolerance.  Default is 0.01\n");
-    h.append("tol_abs          -  absolute distance tolerance.  Default is 0\n");
-    h.append("tol_norm         -  normal tolerance.  Default is 0\n");
+    h.append("max_time         -  Maximum overall run time for object conversion\n");
     h.append("nmg_debug        -  NMG debugging flag.  Default is 0x00000000.\n");
     h.append("                    See 'debug -l NMG' in MGED for available values.\n");
+    h.append("tol_abs          -  absolute distance tolerance.  Default is 0\n");
+    h.append("tol_norm         -  normal tolerance.  Default is 0\n");
+    h.append("tol_rel          -  relative distance tolerance.  Default is 0.01\n");
     return h;
 }
 
@@ -471,6 +482,15 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	nmg_debug = ndebug;
     }
 
+    if (key == std::string("max_time")) {
+	if (!val.length()) {
+	    max_time = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
+	    return BRLCAD_ERROR;
+    }
+
     return BRLCAD_OK;
 }
 
@@ -503,6 +523,7 @@ spsr_opts::print_options_help()
     h.append("interpolate      -  Lower values (down to 0.0) bias towards a smoother\n");
     h.append("                    mesh, higher values bias towards interpolation\n");
     h.append("                    accuracy.  (Default is 2.0)\n");
+    h.append("max_time         -  Maximum overall run time for object conversion\n");
     h.append("samples_per_node -  How many samples should go into a cell before it is\n");
     h.append("                    refined. (Default is 1.5)\n");
     return h;
@@ -540,6 +561,15 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
 	    return BRLCAD_OK;
 	}
 	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&s_opts.samples_per_node) < 0)
+	    return BRLCAD_ERROR;
+    }
+
+    if (key == std::string("max_time")) {
+	if (!val.length()) {
+	    max_time = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
 	    return BRLCAD_ERROR;
     }
 
