@@ -1674,34 +1674,33 @@ static struct manifold_mesh *
 do_mesh(union tree *tree, const struct bn_tol *tol)
 {
     struct rt_bot_internal *bot = NULL;
-    struct manifold_mesh *mesh = NULL;
 
-    if (tree->tr_d.td_r) {
-	if (!BU_SETJUMP) {
-	    /* try */
-	    bot = (struct rt_bot_internal *)nmg_mdl_to_bot(tree->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
-	} else {
-	    /* catch */
-	    BU_UNSETJUMP;
-	    bot = NULL;
-	    mesh = NULL;
-	} BU_UNSETJUMP;
-
-	if (bot) {
-	    mesh = bot_to_mmesh(bot);
-	    // We created this locally if it wasn't originally a BoT - clean up
-	    if (bot->vertices)
-		bu_free(bot->vertices, "verts");
-	    if (bot->faces)
-		bu_free(bot->faces, "faces");
-	    BU_FREE(bot, struct rt_bot_internal);
-	    bot = NULL;
-	}
-    } else {
-	mesh = (struct manifold_mesh *)tree->tr_d.td_d;
+    if (!tree->tr_d.td_r) {
+	return (struct manifold_mesh *)tree->tr_d.td_d;
     }
 
-    return mesh;
+    if (!BU_SETJUMP) {
+	/* try */
+	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(tree->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
+    } else {
+	/* catch */
+	BU_UNSETJUMP;
+	bot = NULL;
+    } BU_UNSETJUMP;
+    
+    if (bot) {
+	struct manifold_mesh *mesh = bot_to_mmesh(bot);
+	// We created this locally if it wasn't originally a BoT - clean up
+	if (bot->vertices)
+	    bu_free(bot->vertices, "verts");
+	if (bot->faces)
+	    bu_free(bot->faces, "faces");
+	BU_FREE(bot, struct rt_bot_internal);
+	bot = NULL;
+	return mesh;
+    }
+
+    return (struct manifold_mesh *)tree->tr_d.td_d;
 }
 #endif
 
