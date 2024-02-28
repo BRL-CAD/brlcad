@@ -30,7 +30,6 @@
 
 #include "common.h"
 
-#include <algorithm>
 #include <map>
 #include <set>
 #include <vector>
@@ -38,6 +37,7 @@
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
+#include "bg/defines.h"
 #include "bg/spsr.h"
 #include "raytrace.h"
 
@@ -51,6 +51,10 @@ class method_options_t {
 	// but for those that cannot the subprocess may need to be killed.
 	std::map<std::string, int> max_time;
 
+	// Routine to assemble an argument from an option_map entry.
+	// May supplement information found there with info from a
+	// .g database instance, if supplied.  Info in options_map
+	// will take precedence
 	std::string method_optstr(std::string &method, struct db_i *dbip);
 };
 
@@ -137,6 +141,8 @@ class spsr_opts : public sample_opts {
 
 
 #if defined(TESS_OPTS_IMPLEMENTATION)
+
+#include "bu/opt.h"
 
 std::string
 method_options_t::method_optstr(std::string &method, struct db_i *dbip)
