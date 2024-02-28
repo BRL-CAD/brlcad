@@ -62,15 +62,6 @@ _ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *arg
 
     }
 
-    if (s->in_place && argc > 1) {
-	bu_vls_printf(gedp->ged_result_str, "In place conversion specified, but multiple objects listed:\n");
-	for (i = 0; i < argc; i++) {
-	    bu_vls_printf(gedp->ged_result_str, "       %s\n", argv[i]);
-	}
-	bu_vls_printf(gedp->ged_result_str, "\nAborting.  An in-place conversion replaces the specified object (or regions in a hierarchy in -r mode) with a faceted approximation.  Because a single object is generated, in-place conversion has no clear interpretation when m  ultiple input objects are specified.\n");
-	return BRLCAD_ERROR;
-    }
-
     if (!s->in_place) {
 	if (newobj_cnt < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "all objects listed already exist, aborting.  (Need new object name to write out results to.)\n");
@@ -91,6 +82,7 @@ _ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *arg
 	    return BRLCAD_ERROR;
 	}
     }
+
     return BRLCAD_OK;
 }
 

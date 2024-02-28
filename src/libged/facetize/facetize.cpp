@@ -95,9 +95,11 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 {
     struct ged *gedp = s->gedp;
     int ret = BRLCAD_ERROR;
-    int newobj_cnt;
-    const char *oname;
+    int newobj_cnt, i;
+    const char *oname = NULL;
+    const char *av[2];
     struct directory **dpa = NULL;
+    struct directory *idpa[2];
     struct db_i *dbip = gedp->dbip;
 
     RT_CHECK_DBI(dbip);
@@ -114,18 +116,37 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
     if (!s->in_place) {
 	oname = argv[argc-1];
 	argc--;
-    } else {
-	oname = argv[0];
     }
 
     /* If we're doing an NMG output, use the old-school libnmg booleval */
     if (s->make_nmg) {
-	ret = _ged_facetize_nmgeval(s, argc, argv, oname);
-	goto booleval_cleanup;
+	if (!s->in_place) {
+	    ret = _ged_facetize_nmgeval(s, argc, argv, oname);
+	    goto booleval_cleanup;
+	} else {
+	    for (i = 0; i < argc; i++) {
+		av[0] = argv[i];
+		av[1] = NULL;
+		ret = _ged_facetize_nmgeval(s, 1, av, argv[i]);
+		if (ret == BRLCAD_ERROR)
+		    goto booleval_cleanup;
+	    }
+	    goto booleval_cleanup;
+	}
     }
 
     // If we're not doing NMG, use the Manifold booleval
-    ret = _ged_facetize_booleval(s, newobj_cnt, dpa, oname, NULL, NULL);
+    if (!s->in_place) {
+	ret = _ged_facetize_booleval(s, newobj_cnt, dpa, oname, NULL, NULL);
+    } else {
+	for (i = 0; i < argc; i++) {
+	    idpa[0] = dpa[i];
+	    idpa[1] = NULL;
+	    ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], NULL, NULL);
+	    if (ret == BRLCAD_ERROR)
+		goto booleval_cleanup;
+	}
+    }
 
 booleval_cleanup:
     bu_free(dpa, "dp array");
