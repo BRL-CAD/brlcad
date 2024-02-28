@@ -1669,6 +1669,7 @@ bool_meshes(
 #endif
 
 
+#ifdef USE_MANIFOLD
 static struct manifold_mesh *
 do_mesh(union tree *tree, const struct bn_tol *tol)
 {
@@ -1702,6 +1703,7 @@ do_mesh(union tree *tree, const struct bn_tol *tol)
 
     return mesh;
 }
+#endif
 
 
 static int
