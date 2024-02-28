@@ -266,6 +266,22 @@ pnt_sampling_methods:
 }
 
 void
+print_methods_info()
+{
+    nmg_opts nopts;
+    cm_opts cmopts;
+    spsr_opts spsropts;
+
+    std::string info;
+    info.append(nopts.print_options_help());
+    info.append(std::string("\n"));
+    info.append(cmopts.print_options_help());
+    info.append(std::string("\n"));
+    info.append(spsropts.print_options_help());
+    fprintf(stdout, "%s\n", info.c_str());
+}
+
+void
 print_tess_methods()
 {
     fprintf(stdout, "NMG CM SPSR\n");
@@ -309,6 +325,11 @@ main(int argc, const char **argv)
 	bu_exit(BRLCAD_ERROR, "%s failed", bu_getprogname());
     }
     bu_vls_free(&omsg);
+
+    if (list_methods && print_help) {
+	print_methods_info();
+	return BRLCAD_OK;
+    }
 
     if (list_methods) {
 	print_tess_methods();

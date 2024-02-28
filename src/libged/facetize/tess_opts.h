@@ -354,12 +354,12 @@ cm_opts::about_method()
 std::string
 cm_opts::print_options_help()
 {
-    std::string h = std::string("Continuation Options:\n") + sample_opts::print_options_help();
-    h.append("max_cycle_time   - Maximum time to take for one processing cycle\n");
-    h.append("                   Default is 30.  Zero means run until the target\n");
-    h.append("                   size is met or other termination criteria kick\n");
-    h.append("                   in.  Be careful when specifying zero - it can\n");
-    h.append("                   produce very long runs!\n");
+    std::string h = std::string("Continuation (CM) Method Options:\n") + sample_opts::print_options_help();
+    h.append("max_cycle_time   -  Maximum time to take for one processing cycle\n");
+    h.append("                    Default is 30.  Zero means run until the target\n");
+    h.append("                    size is met or other termination criteria kick\n");
+    h.append("                    in.  Be careful when specifying zero - it can\n");
+    h.append("                    produce very long runs!\n");
     return h;
 }
 
@@ -417,11 +417,12 @@ std::string
 nmg_opts::print_options_help()
 {
     std::string h;
-    h.append("Available NMG method settings:\n");
-    h.append("tol_rel   - relative distance tolerance.  Default is 0.01\n");
-    h.append("tol_abs   - absolute distance tolerance.  Default is 0\n");
-    h.append("tol_norm  - normal tolerance.  Default is 0\n");
-    h.append("nmg_debug - NMG debugging flag.  Default is 0x00000000. See 'debug -l NMG' in MGED for available values.\n");
+    h.append("NMG method settings:\n");
+    h.append("tol_rel          -  relative distance tolerance.  Default is 0.01\n");
+    h.append("tol_abs          -  absolute distance tolerance.  Default is 0\n");
+    h.append("tol_norm         -  normal tolerance.  Default is 0\n");
+    h.append("nmg_debug        -  NMG debugging flag.  Default is 0x00000000.\n");
+    h.append("                    See 'debug -l NMG' in MGED for available values.\n");
     return h;
 }
 
@@ -497,13 +498,13 @@ spsr_opts::about_method()
 std::string
 spsr_opts::print_options_help()
 {
-    std::string h = std::string("Screened Poisson Surface Reconstruction Options:\n") + sample_opts::print_options_help();
-    h.append("depth            -     Maximum reconstruction depth. (Default is 8)\n");
-    h.append("interpolate      -     Lower values (down to 0.0) bias towards a smoother\n");
-    h.append("                       mesh, higher values bias towards interpolation\n");
-    h.append("                       accuracy.  (Default is 2.0)\n");
-    h.append("samples_per_node -     How many samples should go into a cell before it is\n");
-    h.append("                       refined. (Default is 1.5)\n");
+    std::string h = std::string("Screened Poisson Surface Reconstruction (SPSR) Options:\n") + sample_opts::print_options_help();
+    h.append("depth            -  Maximum reconstruction depth. (Default is 8)\n");
+    h.append("interpolate      -  Lower values (down to 0.0) bias towards a smoother\n");
+    h.append("                    mesh, higher values bias towards interpolation\n");
+    h.append("                    accuracy.  (Default is 2.0)\n");
+    h.append("samples_per_node -  How many samples should go into a cell before it is\n");
+    h.append("                    refined. (Default is 1.5)\n");
     return h;
 }
 

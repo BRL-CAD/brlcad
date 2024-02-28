@@ -31,6 +31,8 @@
 #include <string>
 #include <vector>
 
+#include "bu/app.h"
+#include "bu/path.h"
 #include "bu/opt.h"
 
 #include "../ged_private.h"
@@ -38,6 +40,45 @@
 #define TESS_OPTS_IMPLEMENTATION
 #include "./tess_opts.h"
 #include "./ged_facetize.h"
+#include "./subprocess.h"
+
+void
+_facetize_methods_help(struct ged *gedp)
+{
+        // Build up the path to the ged_tessellate executable
+      char tess_exec[MAXPATHLEN];
+      bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
+
+      const char *tess_cmd[MAXPATHLEN] = {NULL};
+      tess_cmd[ 0] = tess_exec;
+      tess_cmd[ 1] = "--list-methods";
+      tess_cmd[ 2] = NULL;
+
+      struct subprocess_s mp;
+      if (subprocess_create(tess_cmd, subprocess_option_no_window, &mp))
+          return; // Unable to create subprocess??
+      int w_rc;
+      if (subprocess_join(&mp, &w_rc))
+          return ; // Unable to join??
+      char mraw[MAXPATHLEN] = {'\0'};
+      subprocess_read_stdout(&mp, mraw, MAXPATHLEN);
+      std::string method_list(mraw);
+
+      tess_cmd[ 2] = "-h";
+      tess_cmd[ 3] = NULL;
+
+      struct subprocess_s mop;
+      if (subprocess_create(tess_cmd, subprocess_option_no_window, &mop))
+          return; // Unable to create subprocess??
+      if (subprocess_join(&mop, &w_rc))
+          return ; // Unable to join??
+      char moraw[MAXPATHLEN*10] = {'\0'};
+      subprocess_read_stdout(&mop, moraw, MAXPATHLEN*10);
+      std::string method_options(moraw);
+
+      bu_vls_printf(gedp->ged_result_str, "Available BoT tessellation methods: %s\n", method_list.c_str());
+      bu_vls_printf(gedp->ged_result_str, "Method specific options:\n%s\n", method_options.c_str());
+}
 
 struct _ged_facetize_state *
 _ged_facetize_state_create()
@@ -157,7 +198,7 @@ extern "C" int
 ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = BRLCAD_OK;
-    static const char *usage = "Usage: facetize [options] [old_obj1 ...] new_obj\n";
+    static const char *usage = "Usage: facetize [options] [old_obj1 ...] [new_obj]\n";
     int print_help = 0;
     int need_help = 0;
     method_options_t *method_options = new method_options_t;
@@ -176,8 +217,8 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[ 6],  "", "max-time",                                 "#",           &bu_opt_int,        &(s->max_time), "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!");
     BU_OPT(d[ 7],  "", "max-pnts",                                 "#",           &bu_opt_int,        &(s->max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[ 8],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion (region mode only)");
-    BU_OPT(d[ 9],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives.  If given no options and used with -h, print available methods");
-    BU_OPT(d[10],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.  If no options are specified and -h is used, print available method options.");
+    BU_OPT(d[ 9],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
+    BU_OPT(d[10],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
     BU_OPT(d[11], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
     BU_OPT(d[12], "t",  "threshold",                               "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
     BU_OPT_NULL(d[13]);
@@ -227,6 +268,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     need_help += (argc < 2 && !s->in_place && !s->resume && !s->nonovlp_brep);
     if (print_help || need_help || argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
+	_facetize_methods_help(gedp);
 	ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;
 	goto ged_facetize_memfree;
     }
