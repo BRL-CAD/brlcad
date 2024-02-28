@@ -2743,7 +2743,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
      * Also, facetize will need all "active" regions that will define shapes.
      * Construct searches to get these sets. */
     const char *preserve_combs = "-type c ! -type r ! -below -type r";
-    const char *active_regions = "(-type r ! -below -type r) -or (! -below -type r ! -type comb)";
+    const char *active_regions = "( -type r ! -below -type r ) -or ( ! -below -type r ! -type comb )";
 
     /* Used the libged tolerances */
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
