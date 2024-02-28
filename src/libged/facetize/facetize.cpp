@@ -128,27 +128,15 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 
     /* If we're doing an NMG output, use the old-school libnmg booleval */
     if (s->make_nmg) {
-
-	/* Done with dpa */
-	bu_free(dpa, "dp array");
-
 	ret = _ged_facetize_nmgeval(s, argc, argv, newname);
-	bu_vls_free(&oname);
-
-	// Check for the in-place flag
-	if (ret == BRLCAD_OK && s->in_place)
-	    ret = _ged_facetize_obj_swap(gedp, argv[0], newname);
-
-	return ret;
+	goto booleval_cleanup;
     }
 
     // If we're not doing NMG, use the Manifold booleval
     ret = _ged_facetize_booleval(s, newobj_cnt, dpa, newname, NULL, NULL);
 
-    // Check for the in-place flag
-    if (ret == BRLCAD_OK && s->in_place)
-	ret = _ged_facetize_obj_swap(gedp, argv[0], newname);
-
+booleval_cleanup:
+    bu_free(dpa, "dp array");
     bu_vls_free(&oname);
     return ret;
 }

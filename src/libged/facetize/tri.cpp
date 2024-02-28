@@ -902,8 +902,14 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	ftree->tr_d.td_d = NULL;
 
 	// If we have a manifold_mesh, write it out as a bot
-	if (_ged_facetize_write_bot(s, bot, newname) != BRLCAD_OK) {
-	    return BRLCAD_ERROR;
+	if (s->in_place) {
+	    if (_ged_facetize_write_bot(s, bot, argv[0]) != BRLCAD_OK) {
+		return BRLCAD_ERROR;
+	    }
+	} else {
+	    if (_ged_facetize_write_bot(s, bot, newname) != BRLCAD_OK) {
+		return BRLCAD_ERROR;
+	    }
 	}
     }
 

@@ -95,48 +95,6 @@ _ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *arg
 }
 
 int
-_ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
-{
-    int ret = BRLCAD_OK;
-    const char *mav[3];
-    const char *cmdname = "facetize";
-    /* o or n may point to a d_namep location, which will change with
-     * moves, so copy them up front for consistent values */
-    struct bu_vls oname = BU_VLS_INIT_ZERO;
-    struct bu_vls nname = BU_VLS_INIT_ZERO;
-    struct bu_vls tname = BU_VLS_INIT_ZERO;
-    mav[0] = cmdname;
-    bu_vls_sprintf(&oname, "%s", o);
-    bu_vls_sprintf(&nname, "%s", n);
-    bu_vls_sprintf(&tname, "%s", o);
-    bu_vls_incr(&tname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
-    mav[1] = bu_vls_addr(&oname);
-    mav[2] = bu_vls_addr(&tname);
-    if (ged_exec(gedp, 3, (const char **)mav) != BRLCAD_OK) {
-	ret = BRLCAD_ERROR;
-	goto ged_facetize_obj_swap_memfree;
-    }
-    mav[1] = bu_vls_addr(&nname);
-    mav[2] = bu_vls_addr(&oname);
-    if (ged_exec(gedp, 3, (const char **)mav) != BRLCAD_OK) {
-	ret = BRLCAD_ERROR;
-	goto ged_facetize_obj_swap_memfree;
-    }
-    mav[1] = bu_vls_addr(&tname);
-    mav[2] = bu_vls_addr(&nname);
-    if (ged_exec(gedp, 3, (const char **)mav) != BRLCAD_OK) {
-	ret = BRLCAD_ERROR;
-	goto ged_facetize_obj_swap_memfree;
-    }
-
-ged_facetize_obj_swap_memfree:
-    bu_vls_free(&oname);
-    bu_vls_free(&nname);
-    bu_vls_free(&tname);
-    return ret;
-}
-
-int
 _ged_facetize_write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const char *name)
 {
     struct ged *gedp = s->gedp;

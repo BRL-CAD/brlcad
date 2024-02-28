@@ -33,6 +33,9 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
+#define SOLID_OBJ_NAME 1
+#define COMB_OBJ_NAME 2
+
 static void
 _ged_facetize_mkname(struct _ged_facetize_state *s, const char *n, int type)
 {

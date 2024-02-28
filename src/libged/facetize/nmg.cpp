@@ -301,7 +301,11 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
     }
 
     /* Write the NMG */
-    ret = _write_nmg(s, nmg_model, newname);
+    if (s->in_place) {
+	ret = _write_nmg(s, nmg_model, argv[0]);
+    } else {
+	ret = _write_nmg(s, nmg_model, newname);
+    }
 
 ged_nmg_obj_memfree:
     if (!s->quiet && ret != BRLCAD_OK) {
