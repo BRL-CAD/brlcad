@@ -27,6 +27,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <queue>
@@ -401,6 +402,47 @@ manifold_do_bool(
     return 0;
 }
 
+std::vector<std::string>
+tess_avail_methods()
+{
+
+    // Build up the path to the ged_tessellate executable
+    char tess_exec[MAXPATHLEN];
+    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
+
+    const char *tess_cmd[MAXPATHLEN] = {NULL};
+    tess_cmd[ 0] = tess_exec;
+    tess_cmd[ 1] = "--list-methods";
+    tess_cmd[ 2] = NULL;
+
+    struct subprocess_s p;
+    if (subprocess_create(tess_cmd, subprocess_option_no_window, &p)) {
+	// Unable to create subprocess??
+	std::vector<std::string> empty;
+	return empty;
+    }
+
+    int w_rc;
+    if (subprocess_join(&p, &w_rc)) {
+	// Unable to join??
+	std::vector<std::string> empty;
+	return empty;
+    }
+
+    char mraw[MAXPATHLEN] = {'\0'};
+    subprocess_read_stdout(&p, mraw, MAXPATHLEN);
+
+    std::string mstr = std::string((const char *)mraw);
+    std::stringstream mstream(mstr);
+    std::string m;
+    std::vector<std::string> methods;
+    while (std::getline(mstream, m, ' ')) {
+	methods.push_back(m);
+    }
+
+    return methods;
+}
+
 int
 tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 {
@@ -583,16 +625,33 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
 
     // Set up a priority order of methods to try when processing primitives.
-    std::queue<std::string> method_flags;
-    for (size_t i = 0; i < ((method_options_t*)s->method_opts)->methods.size(); i++)
-	method_flags.push(((method_options_t*)s->method_opts)->methods[i]);
+    std::vector<std::string> avail_methods = tess_avail_methods();
+    if (avail_methods.size() == 0) {
+	bu_log("No methods for tessellation found.\n");
+	bu_dirclear(wdir);
+	return BRLCAD_ERROR;
+    }
 
-    if (method_flags.size() == 0) {
-	// TODO - ask ged_tessellate for a list of available methods.  Should also validate
-	// user requested methods against the reported available methods.
-	method_flags.push(std::string("NMG"));
-	method_flags.push(std::string("CM"));
-	method_flags.push(std::string("SPSR"));
+    std::queue<std::string> method_flags;
+    for (size_t i = 0; i < ((method_options_t*)s->method_opts)->methods.size(); i++) {
+	std::string cmethod = ((method_options_t*)s->method_opts)->methods[i];
+	if (std::find(avail_methods.begin(), avail_methods.end(), cmethod) != avail_methods.end()) {
+	    method_flags.push(cmethod);
+	} else {
+	    bu_log("Warning: user requested %s tessellation method not found.\n", cmethod.c_str());
+	}
+    }
+
+    if (((method_options_t*)s->method_opts)->methods.size() && !method_flags.size()) {
+	bu_log("Error: all user requested tessellation methods unsupported.\n");
+	bu_dirclear(wdir);
+	return BRLCAD_ERROR;
+    }
+
+    if (!method_flags.size() && avail_methods.size()) {
+	for (size_t i = 0; i < avail_methods.size(); i++) {
+	    method_flags.push(avail_methods[i]);
+	}
     }
 
     // Call ged_tessellate to produce evaluated solids - TODO batch

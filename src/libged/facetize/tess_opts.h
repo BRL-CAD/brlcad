@@ -203,7 +203,6 @@ _tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *s
     std::string av0 = std::string(argv[0]);
     std::stringstream astream(av0);
     std::string s;
-    std::vector<std::string> opts;
     while (std::getline(astream, s, ',')) {
 	m->methods.push_back(s);
     }
