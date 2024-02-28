@@ -41,40 +41,7 @@
 #define SOLID_OBJ_NAME 1
 #define COMB_OBJ_NAME 2
 
-#define FACETIZE_METHOD_NULL          0x0
-#define FACETIZE_METHOD_NMG           0x1
-#define FACETIZE_METHOD_CONTINUATION  0x2
-#define FACETIZE_METHOD_SPSR          0x4
-
-#define FACETIZE_SUCCESS 0
-#define FACETIZE_FAILURE 1
-#define FACETIZE_FAILURE_PNTGEN 2
-#define FACETIZE_FAILURE_PNTBBOX 3
-#define FACETIZE_FAILURE_BOTBBOX 4
-#define FACETIZE_FAILURE_BOTINVALID 5
-#define FACETIZE_FAILURE_DECIMATION 6
-#define FACETIZE_FAILURE_NMG 7
-#define FACETIZE_FAILURE_CONTINUATION_SURFACE 10
-#define FACETIZE_FAILURE_SPSR_SURFACE 11
-#define FACETIZE_FAILURE_SPSR_NONMATCHING 12
-
-/* size of available memory (in bytes) below which we can't continue */
-#define FACETIZE_MEMORY_THRESHOLD 150000000
-
 __BEGIN_DECLS
-
-/* Ideally all of this could be in facetize.cpp, but the open() calls
- * used by the logging routines are problematic in C++ with Visual C++. */
-
-// NOTE - probably don't need the T/triangles option - it produces a
-// triangles-only NMG, but to do that you could just facetize a BoT and then
-// run facetize on that bot with the NMG output flag.  Normal usage is to
-// produce a BoT anyway, so this almost certainly shouldn't be a toplevel
-// option.
-
-// NMG tnurbs aren't actively developed at this time - shouldn't expose as an
-// option.  Anyone both interested in and able to work on that code will be
-// able to set up what they need to trigger it...
 
 struct _ged_facetize_state {
 
@@ -88,9 +55,6 @@ struct _ged_facetize_state {
     int regions;
     int resume;
     int in_place;
-
-    // Enabled Meshing Methodologies (FACETIZE_METHOD_* flags)
-    int method_flags;
 
     // Output Naming
     struct bu_vls *faceted_suffix;

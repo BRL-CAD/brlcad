@@ -30,6 +30,11 @@
 
 #include "common.h"
 
+#include <algorithm>
+#include <map>
+#include <set>
+#include <vector>
+
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
@@ -38,7 +43,7 @@
 
 class method_options_t {
     public:
-	std::set<std::string> methods;
+	std::vector<std::string> methods;
 	std::map<std::string, std::map<std::string,std::string>> options_map;
 	// Most of the method options need to be passed through to the subprocess,
 	// but the time each method is allowed to process is ultimately managed by
@@ -140,7 +145,7 @@ method_options_t::method_optstr(std::string &method, struct db_i *dbip)
 {
     if (!method.length())
 	return std::string("");
-    if (methods.find(method) == methods.end())
+    if (std::find(methods.begin(), methods.end(), method) == methods.end())
 	return std::string("");
     if (options_map.find(method) == options_map.end() || options_map[method].size() == 0)
 	if (method != std::string("NMG"))
@@ -200,7 +205,7 @@ _tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *s
     std::string s;
     std::vector<std::string> opts;
     while (std::getline(astream, s, ',')) {
-	m->methods.insert(s);
+	m->methods.push_back(s);
     }
     return 1;
 }

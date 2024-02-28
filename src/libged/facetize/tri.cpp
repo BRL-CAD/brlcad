@@ -47,37 +47,6 @@
 #include "./tess_opts.h"
 #include "./subprocess.h"
 
-// Translate flags to ged_tessellate opts.  These need to match the options
-// used by that executable to specify algorithms.
-static const char *
-method_opt(int *method_flags)
-{
-    // NMG is best, when it works
-    static const char *nmg_opt = "NMG";
-    if (*method_flags & FACETIZE_METHOD_NMG) {
-	*method_flags = *method_flags & ~(FACETIZE_METHOD_NMG);
-	return nmg_opt;
-    }
-
-    // CM is currently the best bet fallback
-    static const char *cm_opt = "CM";
-    if (*method_flags & FACETIZE_METHOD_CONTINUATION) {
-	*method_flags = *method_flags & ~(FACETIZE_METHOD_CONTINUATION);
-	return cm_opt;
-    }
-
-    // SPSR via point sampling is currently our only option for a non-manifold
-    // input
-    static const char *spsr_opt = "SPSR";
-    if (*method_flags & FACETIZE_METHOD_SPSR) {
-	*method_flags = *method_flags & ~(FACETIZE_METHOD_SPSR);
-	return spsr_opt;
-    }
-
-    // If we've exhausted the methods available, no option is available
-    return NULL;
-}
-
 static int
 bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip, int flip)
 {
@@ -613,14 +582,20 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     char tess_exec[MAXPATHLEN];
     bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
 
+    // TODO - ask ged_tessellate for a list of available methods.
+    std::vector<std::string> method_flags;
+    method_flags.push_back(std::string("NMG"));
+    method_flags.push_back(std::string("CM"));
+    method_flags.push_back(std::string("SPSR"));
+
     // Call ged_tessellate to produce evaluated solids - TODO batch
     // into groupings that can be fed to ged_tessellate for parallel
     // processing, with fallback to individual if parallel fails
     // Build up the command to run
     struct bu_vls method_str = BU_VLS_INIT_ZERO;
+    struct bu_vls method_opts_str = BU_VLS_INIT_ZERO;
     struct bu_vls max_time_str = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&max_time_str, "%d", (int)(0.5*s->max_time));
-    int method_flags = s->method_flags;
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[ 0] = tess_exec;
     tess_cmd[ 1] = "-O";
@@ -636,15 +611,13 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
-	method_flags = s->method_flags;
-	tess_cmd[6] = method_opt(&method_flags);
-	method_options_t *mo = (method_options_t*)s->method_opts;
+	bu_vls_sprintf(&method_str, "%s", method_flags[0].c_str());
+	method_flags.erase(method_flags.begin());
+	tess_cmd[6] = bu_vls_cstr(&method_str);
 	std::string tc6str = std::string(tess_cmd[6]);
-	mo->methods.clear();
-	mo->methods.insert(tc6str);
-	bu_vls_sprintf(&method_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
-	tess_cmd[8] = bu_vls_cstr(&method_str);
-
+	method_options_t *mo = (method_options_t*)s->method_opts;
+	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
+	tess_cmd[8] = bu_vls_cstr(&method_opts_str);
 
 	std::vector<struct directory *> dps;
 	std::vector<struct directory *> bad_dps;
@@ -669,8 +642,8 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// the runs with as many methods as it takes to facetize all the
 	// primitives
 	int err_cnt = 0;
-	while (tess_cmd[7]) {
-	    if (BU_STR_EQUAL(tess_cmd[7], "NMG")) {
+	while (tess_cmd[6]) {
+	    if (BU_STR_EQUAL(tess_cmd[6], "NMG")) {
 		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, s->max_time);
 	    } else {
 		// If we're in fallback territory, process individually rather
@@ -692,7 +665,16 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	    if (!err_cnt)
 		break;
 	    err_cnt = 0;
-	    tess_cmd[7] = method_opt(&method_flags);
+	    if (method_flags.size()) {
+		bu_vls_sprintf(&method_str, "%s", method_flags[0].c_str());
+		method_flags.erase(method_flags.begin());
+		tess_cmd[6] = bu_vls_cstr(&method_str);
+		tc6str = std::string(tess_cmd[6]);
+		bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
+		tess_cmd[8] = bu_vls_cstr(&method_opts_str);
+	    } else {
+		tess_cmd[6] = NULL;
+	    }
 	    dps = bad_dps;
 	}
 

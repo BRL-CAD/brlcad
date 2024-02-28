@@ -47,9 +47,9 @@ method_setup(struct tess_opts *s)
 	return;
 
     if (!s->method_opts.methods.size()) {
-	s->method_opts.methods.insert(std::string("NMG"));
-	s->method_opts.methods.insert(std::string("CM"));
-	s->method_opts.methods.insert(std::string("SPSR"));
+	s->method_opts.methods.push_back(std::string("NMG"));
+	s->method_opts.methods.push_back(std::string("CM"));
+	s->method_opts.methods.push_back(std::string("SPSR"));
     }
 
     // If we have the key word "SAMPLING" present in methods, it
@@ -79,9 +79,13 @@ method_setup(struct tess_opts *s)
 static int
 dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
 {
-    std::set<std::string> &mset = s->method_opts.methods;
-    if (!obot || !method_flag || !dbip || !dp)
+    if (!s || !obot || !method_flag || !dbip || !dp)
 	return BRLCAD_ERROR;
+
+    std::set<std::string> mset;
+    for (size_t i = 0; i < s->method_opts.methods.size(); i++) {
+	mset.insert(s->method_opts.methods[i]);
+    }
 
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);

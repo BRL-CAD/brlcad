@@ -288,7 +288,7 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
 int
 _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
 {
-    int ret = FACETIZE_SUCCESS;
+    int ret = BRLCAD_OK;
     struct model *nmg_model = NULL;
 
     nmg_model = _try_nmg_facetize(s, argc, argv);
@@ -296,7 +296,7 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
 	if (s->verbosity > 1) {
 	    bu_log("NMG(%s):  no resulting region, aborting\n", newname);
 	}
-	ret = FACETIZE_FAILURE;
+	ret = BRLCAD_ERROR;
 	goto ged_nmg_obj_memfree;
     }
 

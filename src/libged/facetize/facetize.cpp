@@ -42,7 +42,6 @@
 struct _ged_facetize_state *
 _ged_facetize_state_create()
 {
-    //struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
     struct _ged_facetize_state *s = NULL;
     BU_GET(s, struct _ged_facetize_state);
     s->quiet= 0;
@@ -53,8 +52,6 @@ _ged_facetize_state_create()
     s->regions = 0;
     s->resume = 0;
     s->in_place = 0;
-
-    s->method_flags = 0;
 
     BU_GET(s->faceted_suffix, struct bu_vls);
     bu_vls_init(s->faceted_suffix);
@@ -77,20 +74,6 @@ _ged_facetize_state_create()
     BU_GET(s->froot, struct bu_vls);
     bu_vls_init(s->froot);
 
-#if 0
-    BU_GET(s->nmg_comb, struct bu_vls);
-    bu_vls_init(s->nmg_comb);
-
-    BU_GET(s->manifold_comb, struct bu_vls);
-    bu_vls_init(s->manifold_comb);
-
-    BU_GET(s->continuation_comb, struct bu_vls);
-    bu_vls_init(s->continuation_comb);
-
-    BU_GET(s->spsr_comb, struct bu_vls);
-    bu_vls_init(s->spsr_comb);
-#endif
-
     return s;
 }
 void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
@@ -111,19 +94,6 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
     bu_vls_free(s->froot);
     BU_PUT(s->froot, struct bu_vls);
 
-#if 0
-    bu_vls_free(s->nmg_comb);
-    BU_PUT(s->nmg_comb, struct bu_vls);
-
-    bu_vls_free(s->manifold_comb);
-    BU_PUT(s->manifold_comb, struct bu_vls);
-
-    bu_vls_free(s->continuation_comb);
-    BU_PUT(s->continuation_comb, struct bu_vls);
-
-    bu_vls_free(s->spsr_comb);
-    BU_PUT(s->spsr_comb, struct bu_vls);
-#endif
     BU_PUT(s, struct _ged_facetize_state);
 }
 
@@ -197,9 +167,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "Usage: facetize [options] [old_obj1 ...] new_obj\n";
     int print_help = 0;
     int need_help = 0;
-    int no_nmg = 0;
-    int no_continuation = 0;
-    int screened_poisson = 0;
     method_options_t *method_options = new method_options_t;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
     s->gedp = gedp;
@@ -254,15 +221,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     if (!s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->faceted_suffix), ".nmg")) {
 	bu_vls_sprintf(s->faceted_suffix, ".bot");
     }
-
-    /* Sort out which methods we can try */
-    s->method_flags = 0;
-    if (!no_nmg)
-	s->method_flags |= FACETIZE_METHOD_NMG;
-    if (!no_continuation)
-	s->method_flags |= FACETIZE_METHOD_CONTINUATION;
-    if (screened_poisson)
-	s->method_flags |= FACETIZE_METHOD_SPSR;
 
     /* We can only resume in region mode - validate options */
     if (s->resume && !s->regions) {
