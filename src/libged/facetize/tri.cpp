@@ -582,11 +582,18 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     char tess_exec[MAXPATHLEN];
     bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
 
-    // TODO - ask ged_tessellate for a list of available methods.
-    std::vector<std::string> method_flags;
-    method_flags.push_back(std::string("NMG"));
-    method_flags.push_back(std::string("CM"));
-    method_flags.push_back(std::string("SPSR"));
+    // Set up a priority order of methods to try when processing primitives.
+    std::queue<std::string> method_flags;
+    for (size_t i = 0; i < ((method_options_t*)s->method_opts)->methods.size(); i++)
+	method_flags.push(((method_options_t*)s->method_opts)->methods[i]);
+
+    if (method_flags.size() == 0) {
+	// TODO - ask ged_tessellate for a list of available methods.  Should also validate
+	// user requested methods against the reported available methods.
+	method_flags.push(std::string("NMG"));
+	method_flags.push(std::string("CM"));
+	method_flags.push(std::string("SPSR"));
+    }
 
     // Call ged_tessellate to produce evaluated solids - TODO batch
     // into groupings that can be fed to ged_tessellate for parallel
@@ -611,8 +618,8 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
-	bu_vls_sprintf(&method_str, "%s", method_flags[0].c_str());
-	method_flags.erase(method_flags.begin());
+	bu_vls_sprintf(&method_str, "%s", method_flags.front().c_str());
+	method_flags.pop();
 	tess_cmd[6] = bu_vls_cstr(&method_str);
 	std::string tc6str = std::string(tess_cmd[6]);
 	method_options_t *mo = (method_options_t*)s->method_opts;
@@ -666,8 +673,8 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 		break;
 	    err_cnt = 0;
 	    if (method_flags.size()) {
-		bu_vls_sprintf(&method_str, "%s", method_flags[0].c_str());
-		method_flags.erase(method_flags.begin());
+		bu_vls_sprintf(&method_str, "%s", method_flags.front().c_str());
+		method_flags.pop();
 		tess_cmd[6] = bu_vls_cstr(&method_str);
 		tc6str = std::string(tess_cmd[6]);
 		bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
