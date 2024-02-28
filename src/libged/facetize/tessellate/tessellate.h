@@ -44,12 +44,12 @@ __BEGIN_DECLS
 class tess_opts {
     public:
 	method_options_t method_opts;
-	sample_opts pnt_options; // Holds initial assignments intended for use in all sampling methods.
 	nmg_opts nmg_options;
 	cm_opts cm_options;
 	spsr_opts spsr_options;
 
 	int overwrite_obj = 0;
+	sample_opts pnt_options; // Values used by sample.cpp
 };
 
 extern struct rt_bot_internal *

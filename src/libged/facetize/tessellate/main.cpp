@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -42,31 +43,14 @@
 static void
 method_setup(struct tess_opts *s)
 {
-    std::map<std::string,std::string>::iterator m_it;
     if (!s)
 	return;
 
-    if (!s->method_opts.methods.size()) {
-	s->method_opts.methods.push_back(std::string("NMG"));
-	s->method_opts.methods.push_back(std::string("CM"));
-	s->method_opts.methods.push_back(std::string("SPSR"));
-    }
-
-    // If we have the key word "SAMPLING" present in methods, it
-    // signals that we have global pre-configured settings to
-    // use as defaults for all sampling methods.  Process them
-    // first
-    std::map<std::string, std::map<std::string,std::string>>::iterator o_it = s->method_opts.options_map.find(std::string("SAMPLING"));
-    if (o_it != s->method_opts.options_map.end()) {
-	std::map<std::string,std::string> &s_opts = o_it->second;
-	for (m_it = s_opts.begin(); m_it != s_opts.end(); m_it++) {
-	    std::string key = m_it->first;
-	    std::string val = m_it->second;
-	    s->pnt_options.set_var(key, val);
-	}
-
-	s->cm_options.sync(s->pnt_options);
-	s->spsr_options.sync(s->pnt_options);
+    std::vector<std::string> *methods = &s->method_opts.methods;
+    if (!methods->size()) {
+	methods->push_back(std::string("NMG"));
+	methods->push_back(std::string("CM"));
+	methods->push_back(std::string("SPSR"));
     }
 
     // Now that we've set any default overrides for multiple types, get the
@@ -74,6 +58,16 @@ method_setup(struct tess_opts *s)
     s->nmg_options.sync(s->method_opts);
     s->cm_options.sync(s->method_opts);
     s->spsr_options.sync(s->method_opts);
+
+    // Set the sampling options.  If CM is active we will be using its settings
+    // to sample first, so default to those values.
+    bool sample_sync = false;
+    if (std::find(methods->begin(), methods->end(), std::string("CM")) != methods->end()) {
+	s->pnt_options.sync(s->cm_options);
+    }
+    if (!sample_sync && std::find(methods->begin(), methods->end(), std::string("SPSR")) != methods->end()) {
+	s->pnt_options.sync(s->spsr_options);
+    }
 }
 
 static int

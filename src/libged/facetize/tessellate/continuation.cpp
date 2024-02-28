@@ -42,38 +42,63 @@
 std::string
 cm_opts::about_method()
 {
-    std::string msg = "Continuation Method\n";
+    std::string msg = "Continuation Method (Bloomenthal polygonizer)\n";
     return msg;
 }
 
 std::string
 cm_opts::print_options_help()
 {
-    std::string cm_opt_str = print_sample_options_help();
-    cm_opt_str.append("max_time		Maximum reconstruction depth. (Default is 8)\n");
-    return cm_opt_str;
+    std::string h = std::string("Continuation Options:\n") + sample_opts::print_options_help();
+    h.append("max_cycle_time   - Maximum time to take for one processing cycle\n");
+    h.append("                   Default is 30.  Zero means run until the target\n");
+    h.append("                   size is met or other termination criteria kick\n");
+    h.append("                   in.  Be careful when specifying zero - it can\n");
+    h.append("                   produce very long runs!\n");
+    return h;
 }
 
 int
-cm_opts::set_var(std::string &key, std::string &val)
+cm_opts::set_var(const std::string &key, const std::string &val)
 {
-    if (key.length() == 0)
-	return -1;
+      if (key.length() == 0)
+          return BRLCAD_ERROR;
 
-    if (val.length() == 0)
-	bu_log("Clearing value\n");
+      const char *cstr[2];
+      cstr[0] = val.c_str();
+      cstr[1] = NULL;
 
-    return 0;
+      if (key == std::string("max_cycle_time")) {
+	  if (!val.length()) {
+	      max_cycle_time = 0;
+	      return BRLCAD_OK;
+	  }
+	  if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_cycle_time) < 0)
+	      return BRLCAD_ERROR;
+      }
+
+      // If it's not a CM setting directly, it may be for sampling
+      return sample_opts::set_var(key, val);
 }
 
 void
-cm_opts::sync(method_options_t&)
+cm_opts::sync(method_options_t &o)
 {
+    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
+    o_it = o.options_map.find(std::string("CM"));
+    if (o_it == o.options_map.end())
+	return;
+
+    std::map<std::string,std::string>::iterator m_it;
+    for (m_it = o_it->second.begin(); m_it != o_it->second.end(); m_it++) {
+	set_var(m_it->first, m_it->second);
+    }
 }
 
 void
-cm_opts::sync(sample_opts&)
+cm_opts::sync(sample_opts &opts)
 {
+    sample_opts::sync(opts);
 }
 
 static void

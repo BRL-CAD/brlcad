@@ -45,36 +45,73 @@ spsr_opts::about_method()
 std::string
 spsr_opts::print_options_help()
 {
-    std::string spsr_opt_str = print_sample_options_help();
-    spsr_opt_str.append("depth		Maximum reconstruction depth. (Default is 8)\n");
-    spsr_opt_str.append("interpolate	Lower values (down to 0.0) bias towards a smoother\n");
-    spsr_opt_str.append("			mesh, higher values bias towards interpolation\n");
-    spsr_opt_str.append("		       	accuracy.  (Default is 2.0)\n");
-    spsr_opt_str.append("samples_per_node	How many samples should go into a cell before it is\n");
-    spsr_opt_str.append("			refined. (Default is 1.5)\n");
-    return spsr_opt_str;
+    std::string h = std::string("Screened Poisson Surface Reconstruction Options:\n") + sample_opts::print_options_help();
+    h.append("depth            -     Maximum reconstruction depth. (Default is 8)\n");
+    h.append("interpolate      -     Lower values (down to 0.0) bias towards a smoother\n");
+    h.append("                       mesh, higher values bias towards interpolation\n");
+    h.append("                       accuracy.  (Default is 2.0)\n");
+    h.append("samples_per_node -     How many samples should go into a cell before it is\n");
+    h.append("                       refined. (Default is 1.5)\n");
+    return h;
 }
 
 int
-spsr_opts::set_var(std::string &key, std::string &val)
+spsr_opts::set_var(const std::string &key, const std::string &val)
 {
     if (key.length() == 0)
-	return -1;
+	return BRLCAD_ERROR;
 
-    if (val.length() == 0)
-	bu_log("Clearing value\n");
+    const char *cstr[2];
+    cstr[0] = val.c_str();
+    cstr[1] = NULL;
 
-    return 0;
+    if (key == std::string("depth")) {
+	if (!val.length()) {
+	    s_opts.depth = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&s_opts.depth) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("interpolate")) {
+	if (!val.length()) {
+	    s_opts.point_weight = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&s_opts.point_weight) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("samples_per_node")) {
+	if (!val.length()) {
+	    s_opts.samples_per_node = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&s_opts.samples_per_node) < 0)
+	    return BRLCAD_ERROR;
+    }
+
+    // If it's not a SPSR setting directly, it may be for sampling
+    return sample_opts::set_var(key, val);
 }
 
 void
-spsr_opts::sync(method_options_t&)
+spsr_opts::sync(method_options_t &o)
 {
+    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
+    o_it = o.options_map.find(std::string("SPSR"));
+    if (o_it == o.options_map.end())
+	return;
+
+    std::map<std::string,std::string>::iterator m_it;
+    for (m_it = o_it->second.begin(); m_it != o_it->second.end(); m_it++) {
+	set_var(m_it->first, m_it->second);
+    }
 }
 
 void
-spsr_opts::sync(sample_opts&)
+spsr_opts::sync(sample_opts &opts)
 {
+    sample_opts::sync(opts);
 }
 
 static int

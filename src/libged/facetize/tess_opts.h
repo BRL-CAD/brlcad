@@ -69,7 +69,7 @@ class method_opts {
     public:
 	virtual std::string about_method() = 0;
 	virtual std::string print_options_help() = 0;
-	virtual int set_var(std::string &key, std::string &val) = 0;
+	virtual int set_var(const std::string &key, const std::string &val) = 0;
 	virtual void sync(method_options_t &mopts) = 0;
 	int max_time = 0;
 	//struct bg_tess_tol *ttol = NULL;
@@ -80,11 +80,9 @@ class sample_opts : public method_opts {
     public:
 	std::string about_method() { return std::string(""); }
 	std::string print_options_help();
-	int set_var(std::string &key, std::string &val);
-	void sync(method_options_t &mopts);
-	void sync(sample_opts &sopts);
-
-	std::string print_sample_options_help();
+	int set_var(const std::string &key, const std::string &val);
+	void sync(method_options_t &) {};
+	void sync(sample_opts &o);
 	bool equals(sample_opts &other);
 
 	fastf_t feature_scale = 0.15; // Percentage of the average thickness observed by the raytracer to use for a targeted feature size with sampling based methods.
@@ -104,7 +102,7 @@ class nmg_opts : public method_opts {
     public:
 	std::string about_method();
 	std::string print_options_help();
-	int set_var(std::string &key, std::string &val);
+	int set_var(const std::string &key, const std::string &val);
 	void sync(method_options_t &mopts);
 
 	struct bn_tol tol = BN_TOL_INIT_TOL;
@@ -116,18 +114,18 @@ class cm_opts : public sample_opts {
     public:
 	std::string about_method();
 	std::string print_options_help();
-	int set_var(std::string &key, std::string &val);
+	int set_var(const std::string &key, const std::string &val);
 	void sync(method_options_t &mopts);
 	void sync(sample_opts &sopts);
 
-	int max_time = 30; // Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!
+	int max_cycle_time = 30;  // Maximum length of a processing cycle to allow before finalizing
 };
 
 class spsr_opts : public sample_opts {
     public:
 	std::string about_method();
 	std::string print_options_help();
-	int set_var(std::string &key, std::string &val);
+	int set_var(const std::string &key, const std::string &val);
 	void sync(method_options_t &mopts);
 	void sync(sample_opts &sopts);
 

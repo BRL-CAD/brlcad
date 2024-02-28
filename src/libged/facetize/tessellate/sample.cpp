@@ -37,26 +37,104 @@
 std::string
 sample_opts::print_options_help()
 {
-    return std::string("");
+    std::string h;
+    h.append("feature_scale    -  Percentage of the average thickness observed by\n");
+    h.append("                    the raytracer to use for a targeted feature size\n");
+    h.append("                    with sampling based methods.\n");
+    h.append("feature_size     -  Explicit feature length to try for sampling\n");
+    h.append("                    based methods - overrides feature_scale.\n");
+    h.append("d_feature_size   -  Initial feature length to try for decimation\n");
+    h.append("                    in sampling based methods.  By default, this\n");
+    h.append("                    value is set to 1.5x the feature size.\n");
+    h.append("max_sample_time  -  Maximum time to allow point sampling to continue\n");
+    h.append("max_pnts         -  Maximum number of points to sample\n");
+    return h;
 }
 
 int
-sample_opts::set_var(std::string &, std::string &)
+sample_opts::set_var(const std::string &key, const std::string &val)
 {
-    return 0;
+    if (key.length() == 0)
+	return BRLCAD_ERROR;
+
+    const char *cstr[2];
+    cstr[0] = val.c_str();
+    cstr[1] = NULL;
+
+    if (key == std::string("feature_scale")) {
+	if (!val.length()) {
+	    feature_scale = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&feature_scale) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("feature_size")) {
+	if (!val.length()) {
+	    feature_size = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&feature_size) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("d_feature_size")) {
+	if (!val.length()) {
+	    d_feature_size = 0.0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&d_feature_size) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("max_sample_time")) {
+	if (!val.length()) {
+	    max_sample_time = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_sample_time) < 0)
+	    return BRLCAD_ERROR;
+    }
+    if (key == std::string("max_pnts")) {
+	if (!val.length()) {
+	    max_pnts = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_pnts) < 0)
+	    return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_ERROR;
 }
 
 void
-sample_opts::sync(method_options_t &)
+sample_opts::sync(sample_opts &o)
 {
+    feature_scale = o.feature_scale;
+    feature_size = o.feature_size;
+    d_feature_size = o.d_feature_size;
+    max_sample_time = o.max_sample_time;
+    max_pnts = o.max_pnts;
+    obj_bbox_vol = o.obj_bbox_vol;
+    pnts_bbox_vol = o.pnts_bbox_vol;
+    target_feature_size = o.target_feature_size;
+    avg_thickness = o.avg_thickness;
 }
 
-void
-sample_opts::sync(sample_opts &)
+bool
+sample_opts::equals(sample_opts &o)
 {
+    if (!NEAR_EQUAL(feature_scale, o.feature_scale, VUNITIZE_TOL))
+	return false;
+    if (!NEAR_EQUAL(feature_size, o.feature_size, VUNITIZE_TOL))
+	return false;
+    if (!NEAR_EQUAL(d_feature_size, o.d_feature_size, VUNITIZE_TOL))
+	return false;
+    if (max_sample_time != o.max_sample_time)
+	return false;
+    if (max_pnts != o.max_pnts)
+	return false;
+
+    return true;
 }
-
-
 
 static void
 _rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
