@@ -98,7 +98,7 @@ _ged_facetize_state_create()
     bu_vls_init(s->faceted_suffix);
     bu_vls_sprintf(s->faceted_suffix, ".bot");
 
-    s->max_time = 30;
+    s->max_time = 0;
     s->max_pnts = 0;
 
     s->tol = NULL;
@@ -202,6 +202,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     method_options_t *method_options = new method_options_t;
+    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
     s->gedp = gedp;
     s->method_opts = method_options;
@@ -243,6 +244,19 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
     bu_vls_free(&omsg);
+
+    // If we got a max-time top level arg, override any times that aren't specifically set
+    // by method options
+    if (s->max_time) {
+	for (o_it = method_options->options_map.begin(); o_it != method_options->options_map.end(); o_it++) {
+	    std::map<std::string,std::string>::iterator m_it = o_it->second.find(std::string("max_time"));
+	    if (m_it == o_it->second.end()) {
+		// max-time wasn't explicitly set by a method, and we have an option - override
+		method_options->max_time[o_it->first] = s->max_time;
+		o_it->second[std::string("max_time")] = std::to_string(s->max_time);
+	    }
+	}
+    }
 
     /* Sync -q and -v options */
     if (s->quiet && s->verbosity)

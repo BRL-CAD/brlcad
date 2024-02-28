@@ -661,7 +661,6 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     struct bu_vls method_str = BU_VLS_INIT_ZERO;
     struct bu_vls method_opts_str = BU_VLS_INIT_ZERO;
     struct bu_vls max_time_str = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&max_time_str, "%d", (int)(0.5*s->max_time));
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[ 0] = tess_exec;
     tess_cmd[ 1] = "-O";
@@ -669,9 +668,9 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     tess_cmd[ 3] = "--max-time";
     tess_cmd[ 4] = bu_vls_cstr(&max_time_str);
     tess_cmd[ 5] = "--methods";
-    tess_cmd[ 6] = NULL;
+    tess_cmd[ 6] = bu_vls_cstr(&method_str);
     tess_cmd[ 7] = "--method-opts";
-    tess_cmd[ 8] = NULL;
+    tess_cmd[ 8] = bu_vls_cstr(&method_opts_str);
     int cmd_fixed_cnt = 9;
     while (!pq.empty()) {
 
@@ -679,11 +678,11 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// order, timing out if one of them goes too long.
 	bu_vls_sprintf(&method_str, "%s", method_flags.front().c_str());
 	method_flags.pop();
-	tess_cmd[6] = bu_vls_cstr(&method_str);
 	std::string tc6str = std::string(tess_cmd[6]);
 	method_options_t *mo = (method_options_t*)s->method_opts;
+	int l_max_time = mo->max_time[tc6str];
 	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
-	tess_cmd[8] = bu_vls_cstr(&method_opts_str);
+	bu_vls_sprintf(&max_time_str, "%d", l_max_time);
 
 	std::vector<struct directory *> dps;
 	std::vector<struct directory *> bad_dps;
@@ -709,8 +708,8 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// primitives
 	int err_cnt = 0;
 	while (tess_cmd[6]) {
-	    if (BU_STR_EQUAL(tess_cmd[6], "NMG")) {
-		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, s->max_time);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&method_str), "NMG")) {
+		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time);
 	    } else {
 		// If we're in fallback territory, process individually rather
 		// than doing the bisect - at least for now, those methods are
@@ -723,7 +722,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 		// code and do something intelligent with it on that end.
 		for (size_t i = 0; i < dps.size(); i++) {
 		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time * 10);
+		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
 		    if (tess_ret)
 			bad_dps.push_back(dps[i]);
 		}
@@ -734,10 +733,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	    if (method_flags.size()) {
 		bu_vls_sprintf(&method_str, "%s", method_flags.front().c_str());
 		method_flags.pop();
-		tess_cmd[6] = bu_vls_cstr(&method_str);
-		tc6str = std::string(tess_cmd[6]);
+		tc6str = std::string(bu_vls_cstr(&method_str));
+		l_max_time = mo->max_time[tc6str];
 		bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
-		tess_cmd[8] = bu_vls_cstr(&method_opts_str);
+		bu_vls_sprintf(&max_time_str, "%d", l_max_time);
 	    } else {
 		tess_cmd[6] = NULL;
 	    }
