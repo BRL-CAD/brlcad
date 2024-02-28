@@ -43,6 +43,10 @@
 
 class method_options_t {
     public:
+
+	method_options_t();
+	~method_options_t();
+
 	std::vector<std::string> methods;
 	std::map<std::string, std::map<std::string,std::string>> options_map;
 	// Most of the method options need to be passed through to the subprocess,
@@ -144,6 +148,21 @@ class spsr_opts : public sample_opts {
 
 #include "bu/opt.h"
 
+method_options_t::method_options_t()
+{
+    nmg_opts n;
+    cm_opts c;
+    spsr_opts s;
+
+    max_time[std::string("NMG")] = n.max_time;
+    max_time[std::string("CM")] = c.max_time;
+    max_time[std::string("SPSR")] = s.max_time;
+}
+
+method_options_t::~method_options_t()
+{
+}
+
 std::string
 method_options_t::method_optstr(std::string &method, struct db_i *dbip)
 {
@@ -238,6 +257,15 @@ _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_
 	    continue;
 	}
 	m->options_map[opts[0]][key_val[0]] = key_val[1];
+	if (key_val[0] == std::string("max_time")) {
+	    int max_time_val = 0;
+	    const char *cstr[2];
+	    cstr[0] = key_val[1].c_str();
+	    cstr[1] = NULL;
+	    if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time_val) < 0)
+		continue;
+	    m->max_time[opts[0]] = max_time_val;
+	}
     }
     return 1;
 }
