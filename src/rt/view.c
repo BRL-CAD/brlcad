@@ -121,6 +121,7 @@ static int buf_mode=0;
 vect_t kut_norm = VINIT_ZERO;
 struct soltab *kut_soltab = NULL;
 
+int ambSlow = 0;
 int ambSamples = 0;
 double ambRadius = 0.0;
 double ambOffset = 0.0;
@@ -770,6 +771,55 @@ hit_nothing(struct application *ap)
 }
 
 
+static struct partition *
+do_kut(const struct application *ap, struct partition *pp, struct partition *PartHeadp)
+{
+    fastf_t slant_factor;
+    fastf_t dist;
+    fastf_t norm_dist;
+
+    if (UNLIKELY(!ap || !PartHeadp))
+	return NULL;
+
+    norm_dist = DIST_PNT_PLANE(ap->a_ray.r_pt, kut_plane);
+
+    slant_factor = -VDOT(kut_plane, ap->a_ray.r_dir);
+    if (slant_factor < -1.0e-10) {
+	/* exit point, ignore everything before "dist" */
+	dist = norm_dist/slant_factor;
+	for (; pp != PartHeadp; pp = pp->pt_forw) {
+	    if (pp->pt_outhit->hit_dist >= dist) {
+		if (pp->pt_inhit->hit_dist < dist) {
+		    pp->pt_inhit->hit_dist = dist;
+		    pp->pt_inflip = 0;
+		    pp->pt_inseg->seg_stp = kut_soltab;
+		}
+		break;
+	    }
+	}
+	if (pp == PartHeadp) {
+	    /* we ignored everything, this is now a miss */
+	    return pp;
+	}
+    } else if (slant_factor > 1.0e-10) {
+	/* entry point, ignore everything after "dist" */
+	dist = norm_dist/slant_factor;
+	if (pp->pt_inhit->hit_dist > dist) {
+	    /* everything is after kut plane, this is now a miss */
+	    return NULL;
+	}
+    } else {
+	/* ray is parallel to plane when dir.N == 0.
+	 * If it is inside the solid, this is a miss */
+	if (norm_dist < 0.0) {
+	    return NULL;
+	}
+    }
+
+    return pp;
+}
+
+
 /*
  * hit routine for ambient occlusion
  */
@@ -778,20 +828,32 @@ ao_rayhit(register struct application *ap,
 	  struct partition *PartHeadp,
 	  struct seg *UNUSED(segp))
 {
-    struct partition *pp;
+    struct partition *pp = PartHeadp->pt_forw;
+    fastf_t dist = ap->a_rt_i->rti_tol.dist;
+
+    if (do_kut_plane) {
+	pp = do_kut(ap, pp, PartHeadp);
+	if (!pp || pp == PartHeadp) {
+	    /* we ignored everything, this is now a miss */
+	    ap->a_miss(ap);
+	    return 0;
+	}
+    }
 
     /* if we don't have a radius, then any hit is ambient occlusion */
-    if (NEAR_ZERO(ambRadius, ap->a_rt_i->rti_tol.dist)) {
+    if (NEAR_ZERO(ambRadius, dist)) {
 	ap->a_user = 1;
 	ap->a_flag = 1;
 	return 1;
     }
 
+
     /* find the first hit that is in front */
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 
-	if (pp->pt_inhit->hit_dist > 0.0) {
-	    if (pp->pt_inhit->hit_dist < ambRadius) {
+	dist = pp->pt_inhit->hit_dist;
+	if (dist > 0.0) {
+	    if (dist < ambRadius) {
 		/* first hit is inside radius, so this is occlusion */
 		ap->a_user = 1;
 		ap->a_flag = 1;
@@ -949,46 +1011,13 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     }
 
     if (do_kut_plane) {
-	fastf_t slant_factor;
-	fastf_t dist;
-	fastf_t norm_dist = DIST_PNT_PLANE(ap->a_ray.r_pt, kut_plane);
+	pp = do_kut(ap, pp, PartHeadp);
 
-	if ((slant_factor = -VDOT(kut_plane, ap->a_ray.r_dir)) < -1.0e-10) {
-	    /* exit point, ignore everything before "dist" */
-	    dist = norm_dist/slant_factor;
-	    for (; pp != PartHeadp; pp = pp->pt_forw) {
-		if ((pp->pt_outhit->hit_dist >= dist) && (pp->pt_inhit->hit_dist < dist)) {
-		    pp->pt_inhit->hit_dist = dist;
-		    pp->pt_inflip = 0;
-		    pp->pt_inseg->seg_stp = kut_soltab;
-		    break;
-		} else if (pp->pt_inhit->hit_dist > dist) {
-		    break;
-		}
-	    }
-	    if (pp == PartHeadp) {
-		/* we ignored everything, this is now a miss */
-		ap->a_miss(ap);
-		return 0;
-	    }
-	} else if (slant_factor > 1.0e-10) {
-	    /* entry point, ignore everything after "dist" */
-	    dist = norm_dist/slant_factor;
-	    if (pp->pt_inhit->hit_dist > dist) {
-		/* everything is after kut plane, this is now a miss */
-		ap->a_miss(ap);
-		return 0;
-	    }
-	} else {
-	    /* ray is parallel to plane when dir.N == 0.  If it is
-	     * inside the solid, this is a miss
-	     */
-	    if (norm_dist < 0.0) {
-		ap->a_miss(ap);
-		return 0;
-	    }
+	if (!pp || pp == PartHeadp) {
+	    /* we ignored everything, this is now a miss */
+	    ap->a_miss(ap);
+	    return 0;
 	}
-
     }
 
 
@@ -1187,46 +1216,12 @@ viewit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     }
 
     if (do_kut_plane) {
-	fastf_t slant_factor;
-	fastf_t dist;
-	fastf_t norm_dist = DIST_PNT_PLANE(ap->a_ray.r_pt, kut_plane);
-
-	if ((slant_factor = -VDOT(kut_plane, ap->a_ray.r_dir)) < -1.0e-10) {
-	    /* exit point, ignore everything before "dist" */
-	    dist = norm_dist/slant_factor;
-	    for (; pp != PartHeadp; pp = pp->pt_forw) {
-		if (pp->pt_outhit->hit_dist >= dist) {
-		    if (pp->pt_inhit->hit_dist < dist) {
-			pp->pt_inhit->hit_dist = dist;
-			pp->pt_inflip = 0;
-			pp->pt_inseg->seg_stp = kut_soltab;
-			RT_HIT_NORMAL(normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
-		    }
-		    break;
-		}
-	    }
-	    if (pp == PartHeadp) {
-		/* we ignored everything, this is now a miss */
-		ap->a_miss(ap);
-		return 0;
-	    }
-	} else if (slant_factor > 1.0e-10) {
-	    /* entry point, ignore everything after "dist" */
-	    dist = norm_dist/slant_factor;
-	    if (pp->pt_inhit->hit_dist > dist) {
-		/* everything is after kut plane, this is now a miss */
-		ap->a_miss(ap);
-		return 0;
-	    }
-	} else {
-	    /* ray is parallel to plane when dir.N == 0.
-	     * If it is inside the solid, this is a miss */
-	    if (norm_dist < 0.0) {
-		ap->a_miss(ap);
-		return 0;
-	    }
+	pp = do_kut(ap, pp, PartHeadp);
+	if (!pp || pp == PartHeadp) {
+	    /* we ignored everything, this is now a miss */
+	    ap->a_miss(ap);
+	    return 0;
 	}
-
     }
 
     hitp = pp->pt_inhit;
