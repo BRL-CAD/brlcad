@@ -118,6 +118,12 @@
 
 /* #define CPP11THREAD */
 
+
+#if defined(HAVE_SYSCALL) && !defined(HAVE_DECL_SYSCALL)
+long syscall(long number, ...);
+#endif
+
+
 #if defined(CPP11THREAD)
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
@@ -151,7 +157,7 @@ struct thread_data {
 int
 bu_thread_id(void)
 {
-    #if defined(HAVE_SYS_SYSCALL_H)
+    #if defined(HAVE_SYSCALL)
 	return syscall(SYS_gettid);
     #elif defined(_WIN32)
 	return GetCurrentThreadId();
