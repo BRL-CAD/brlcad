@@ -145,8 +145,6 @@ method_options_t::method_optstr(std::string &method, struct db_i *dbip)
 {
     if (!method.length())
 	return std::string("");
-    if (std::find(methods.begin(), methods.end(), method) == methods.end())
-	return std::string("");
     if (options_map.find(method) == options_map.end() || options_map[method].size() == 0)
 	if (method != std::string("NMG"))
 	    return method;
