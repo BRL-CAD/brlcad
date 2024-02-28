@@ -41,6 +41,21 @@
 #include "./tessellate.h"
 
 static void
+rt_pnts_free(struct rt_pnts_internal *pnts)
+{
+    struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
+    if (rpnt) {
+	struct pnt_normal *entry;
+	while (BU_LIST_WHILE(entry, pnt_normal, &(rpnt->l))) {
+	    BU_LIST_DEQUEUE(&(entry->l));
+	    BU_PUT(entry, struct pnt_normal);
+	}
+	BU_PUT(rpnt, struct pnt_normal);
+    }
+    BU_PUT(pnts, struct rt_pnts_internal);
+}
+
+static void
 method_setup(struct tess_opts *s)
 {
     if (!s)
@@ -215,17 +230,14 @@ pnt_sampling_methods:
     if (mset.find(std::string("Co3Ne")) != mset.end()) {
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
-	}
+	} //else {
+	// if (!s->co3ne_options.equals(s->pnt_options)) {
+	//	s->pnt_options.sync(s->co3ne_options);
+	//      rt_pnts_free(pnts);
+	//	pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	//    }
+	//}
 	//ret = co3ne_mesh(obot, &intern, s->ttol, s->tol);
-	if (ret == BRLCAD_OK)
-	    return ret;
-    }
-
-    if (mset.find(std::string("BALL_PIVOT")) != mset.end()) {
-	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
-	}
-	//ret = ball_pivot_mesh(obot, &intern, s->ttol, s->tol);
 	if (ret == BRLCAD_OK)
 	    return ret;
     }
@@ -233,13 +245,22 @@ pnt_sampling_methods:
     if (mset.find(std::string("SPSR")) != mset.end()) {
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	} else {
+	    if (!s->spsr_options.equals(s->pnt_options)) {
+		s->pnt_options.sync(s->spsr_options);
+		rt_pnts_free(pnts);
+		pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	    }
 	}
-	//ret = spsr_mesh(obot, &intern, s->ttol, s->tol);
+	///ret = spsr_mesh(obot, &intern, s->ttol, s->tol);
 	if (ret == BRLCAD_OK) {
 	    *method_flag = FACETIZE_METHOD_SPSR;
 	    return ret;
 	}
     }
+
+    if (pnts)
+	rt_pnts_free(pnts);
 
     return BRLCAD_ERROR;
 }
