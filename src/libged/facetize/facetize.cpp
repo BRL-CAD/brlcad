@@ -1771,7 +1771,7 @@ _manifold_do_bool(
 
 	failed = (mret < 0) ? 1 : 0;
 
-	if (failed) {
+	if (failed && omesh) {
 	    // TODO - we should be able to try an NMG boolean op here as a
 	    // fallback, but we may need to translate one or both of the inputs
 	    // into NMG
@@ -1828,7 +1828,6 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 {
     int i;
     union tree *ftree = NULL;
-    struct manifold_mesh *omesh = NULL;
 
     _ged_facetize_log_nmg(o);
 
@@ -1871,9 +1870,8 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	    return NULL;
 	}
 	if (ftree->tr_d.td_d) {
-	    omesh = (struct manifold_mesh *)ftree->tr_d.td_d;
 	    _ged_facetize_log_default(o);
-	    return omesh;
+	    return (struct manifold_mesh *)ftree->tr_d.td_d;
 	} else if (ftree->tr_d.td_r) {
 	    // If we had only one NMG mesh, there was no bool
 	    // operation - we need to set up a mesh
@@ -1885,11 +1883,10 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 		/* catch */
 		BU_UNSETJUMP;
 		bot = NULL;
-		omesh = NULL;
 	    } BU_UNSETJUMP;
 
 	    if (bot) {
-		omesh = bot_to_mmesh(bot);
+		struct manifold_mesh *omesh = bot_to_mmesh(bot);
 		// We created this locally if it wasn't originally a BoT - clean up
 		if (bot->vertices)
 		    bu_free(bot->vertices, "verts");
@@ -1897,12 +1894,14 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 		    bu_free(bot->faces, "faces");
 		BU_FREE(bot, struct rt_bot_internal);
 		bot = NULL;
+		_ged_facetize_log_default(o);
+		return omesh;
 	    }
 	}
     }
 
     _ged_facetize_log_default(o);
-    return omesh;
+    return NULL;
 }
 
 
