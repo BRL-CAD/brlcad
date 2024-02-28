@@ -119,7 +119,7 @@
 /* #define CPP11THREAD */
 
 
-#if defined(HAVE_SYSCALL) && !defined(HAVE_DECL_SYSCALL)
+#if defined(HAVE_SYSCALL) && !defined(HAVE_DECL_SYSCALL) && !defined(syscall)
 long syscall(long number, ...);
 #endif
 
