@@ -132,7 +132,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
      * max_time has been explicitly set to 0 by the caller this will run
      * unbounded, but the algorithm is n**2 and we're trying the finest level
      * first so may run a *very* long time... */
-    params.max_time = s->cm_options.max_time;
+    params.max_time = s->cm_options.max_cycle_time;
     params.verbosity = 1;
     params.minimum_free_mem = FACETIZE_MEMORY_THRESHOLD;
 
@@ -146,7 +146,6 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 	    if (pret == 3)
 		break;
 	    if (pret == 2) {
-		bu_log("CM: timed out after %d seconds with size %g\n", s->cm_options.max_time, feature_size);
 		/* If we still haven't had a successful run, back the feature size out and try again */
 		if (first_run) {
 		    pret = 0;

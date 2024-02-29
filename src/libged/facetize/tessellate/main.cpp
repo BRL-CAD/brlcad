@@ -217,6 +217,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
 	}
+	s->cm_options.sync(s->pnt_options);
 	struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
 	ret = continuation_mesh(obot, dbip, dp->d_namep, s, seed->v);
 	if (ret == BRLCAD_OK) {
@@ -237,6 +238,7 @@ pnt_sampling_methods:
 	//	pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
 	//    }
 	//}
+	//s->co3ne_options.sync(s->pnt_options);
 	//ret = co3ne_mesh(obot, &intern, s->ttol, s->tol);
 	if (ret == BRLCAD_OK)
 	    return ret;
@@ -252,6 +254,7 @@ pnt_sampling_methods:
 		pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
 	    }
 	}
+	s->spsr_options.sync(s->pnt_options);
 	ret = spsr_mesh(obot, dbip, pnts, s);
 	if (ret == BRLCAD_OK) {
 	    *method_flag = FACETIZE_METHOD_SPSR;
