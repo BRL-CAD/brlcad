@@ -56,7 +56,7 @@ extern struct rt_bot_internal *
 _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size);
 
 extern int
-_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, int method_flag);
+_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, const char *method);
 
 extern struct rt_pnts_internal *
 _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s);

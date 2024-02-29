@@ -66,13 +66,6 @@ class method_options_t {
 int _tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 int _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
-
-#define FACETIZE_METHOD_NULL          0x0
-#define FACETIZE_METHOD_NMG           0x1
-#define FACETIZE_METHOD_CONTINUATION  0x2
-#define FACETIZE_METHOD_SPSR          0x4
-#define FACETIZE_METHOD_REPAIR        0x8
-
 class method_opts {
     public:
 	virtual std::string about_method() = 0;

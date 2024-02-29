@@ -86,7 +86,7 @@ method_setup(struct tess_opts *s)
 }
 
 static int
-dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
+dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
 {
     if (!s || !obot || !method_flag || !dbip || !dp)
 	return BRLCAD_ERROR;
@@ -159,7 +159,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 	    // not we need to try and repair it.
 	    if (!bot_is_manifold(bot)) {
 		// Nope - try repairing
-		*method_flag = FACETIZE_METHOD_REPAIR;
+		bu_vls_sprintf(method_flag, "REPAIR");
 		ret = rt_bot_repair(obot, bot);
 	    } else {
 		// Already a valid BoT - tessellate is a no-op.
@@ -200,7 +200,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 	// NMG is best, if it works
 	ret = _nmg_tessellate(obot, &intern, s);
 	if (ret == BRLCAD_OK) {
-	    *method_flag = FACETIZE_METHOD_NMG;
+	    bu_vls_sprintf(method_flag, "NMG");
 	    return BRLCAD_OK;
 	}
     }
@@ -221,7 +221,7 @@ dp_tessellate(struct rt_bot_internal **obot, int *method_flag, struct db_i *dbip
 	struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
 	ret = continuation_mesh(obot, dbip, dp->d_namep, s, seed->v);
 	if (ret == BRLCAD_OK) {
-	    *method_flag = FACETIZE_METHOD_CONTINUATION;
+	    bu_vls_sprintf(method_flag, "CM");
 	    return BRLCAD_OK;
 	}
     }
@@ -257,7 +257,7 @@ pnt_sampling_methods:
 	s->spsr_options.sync(s->pnt_options);
 	ret = spsr_mesh(obot, dbip, pnts, s);
 	if (ret == BRLCAD_OK) {
-	    *method_flag = FACETIZE_METHOD_SPSR;
+	    bu_vls_sprintf(method_flag, "SPSR");
 	    return ret;
 	}
     }
@@ -384,13 +384,17 @@ main(int argc, const char **argv)
 
 	// Trigger the core tessellation routines
 	struct rt_bot_internal *obot = NULL;
-	int method_flag = FACETIZE_METHOD_NULL;
-	if (dp_tessellate(&obot, &method_flag, gedp->dbip, dp, &s) != BRLCAD_OK)
+	struct bu_vls method_flag = BU_VLS_INIT_ZERO;
+	if (dp_tessellate(&obot, &method_flag, gedp->dbip, dp, &s) != BRLCAD_OK) {
+	    bu_vls_free(&method_flag);
 	    return BRLCAD_ERROR;
+	}
 
 	// If we didn't get anything and we had an OK code, just keep going
-	if (!obot)
+	if (!obot) {
+	    bu_vls_free(&method_flag);
 	    continue;
+	}
 
 	// If we've got something to write, handle it
 	struct bu_vls obot_name = BU_VLS_INIT_ZERO;
@@ -400,7 +404,8 @@ main(int argc, const char **argv)
 	    bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
 	}
 	// NOTE: _tess_facetize_write_bot frees obot
-	int ret = _tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name), method_flag);
+	int ret = _tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name), bu_vls_cstr(&method_flag));
+	bu_vls_free(&method_flag);
 	bu_vls_free(&obot_name);
 	if (ret != BRLCAD_OK)
 	    return BRLCAD_ERROR;

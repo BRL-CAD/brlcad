@@ -83,22 +83,8 @@ _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
     }
 }
 
-static const char *
-method_str(int method)
-{
-    static const char *nmg = "NMG";
-    static const char *continuation = "CM";
-    static const char *spsr = "SPSR";
-    static const char *repair = "REPAIR";
-    if (method == FACETIZE_METHOD_NMG) return nmg;
-    if (method == FACETIZE_METHOD_CONTINUATION) return continuation;
-    if (method == FACETIZE_METHOD_SPSR) return spsr;
-    if (method == FACETIZE_METHOD_REPAIR) return repair;
-    return NULL;
-}
-
 int
-_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, int method)
+_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, const char *method)
 {
     /* Export BOT as a new solid */
     struct rt_db_internal intern;
@@ -116,9 +102,8 @@ _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const c
     }
 
     bu_avs_init_empty(&intern.idb_avs);
-    const char *mstr = method_str(method);
-    if (mstr)
-	(void)bu_avs_add(&intern.idb_avs, "facetize_method", mstr);
+    if (method)
+	(void)bu_avs_add(&intern.idb_avs, "facetize_method", method);
 
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {

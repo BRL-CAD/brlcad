@@ -153,7 +153,7 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 	    bu_vls_printf(&tmpname, "-0");
 	    bu_vls_incr(&tmpname, NULL, NULL, &_db_uniq_test, (void *)dbip);
 	}
-	if (_tess_facetize_write_bot(dbip, tbot, bu_vls_addr(&tmpname), FACETIZE_METHOD_SPSR) & BRLCAD_ERROR) {
+	if (_tess_facetize_write_bot(dbip, tbot, bu_vls_addr(&tmpname), "SPSR") & BRLCAD_ERROR) {
 	    bu_log("SPSR: could not write BoT to temporary name %s\n", bu_vls_addr(&tmpname));
 	    bu_vls_free(&tmpname);
 	    ret = BRLCAD_ERROR;
