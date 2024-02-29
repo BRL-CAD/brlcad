@@ -87,6 +87,7 @@ _ged_facetize_state_create()
     BU_GET(s, struct _ged_facetize_state);
     s->quiet= 0;
     s->verbosity = 0;
+    s->no_empty = 0;
     s->make_nmg = 0;
     s->nonovlp_brep = 0;
 
@@ -220,8 +221,9 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[ 8],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion");
     BU_OPT(d[ 9],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
     BU_OPT(d[10],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
-    BU_OPT(d[11], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[12], "t",  "threshold",                               "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
+    BU_OPT(d[12],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
+    BU_OPT(d[12], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
+    BU_OPT(d[13], "t",  "threshold",                               "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
     BU_OPT_NULL(d[13]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);

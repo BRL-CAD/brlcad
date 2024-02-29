@@ -60,6 +60,12 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
 
     struct rt_bot_internal *nbot = (struct rt_bot_internal *)ip->idb_ptr;
 
+    if (!nbot->num_vertices) {
+	// Trivial case
+        (*out) = new manifold::Manifold();
+	return 0;
+    }
+
     if (flip) {
 	switch (nbot->orientation) {
 	    case RT_BOT_CCW:
@@ -860,6 +866,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	return BRLCAD_ERROR;
 
     bu_log("Preparing Manifold inputs...\n");
+    s->error_flag = 0;
     struct db_tree_state init_state;
     db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
     /* Establish tolerances */
@@ -884,13 +891,30 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	i = -1;
     } BU_UNSETJUMP;
 
-    if (i < 0)
+    // Something went wrong - not just empty geometry, but an actual error.
+    // Do not generate a BoT, empty or otherwise.
+    if (i < 0 || s->error_flag)
 	return BRLCAD_ERROR;
-    
+
     bu_log("Preparing Manifold inputs... done.\n");
 
-    // TODO - We don't have a tree - whether that's an error or not depends
-    if (!s->facetize_tree) {
+    // We don't have a tree - unless we've been told not to, prepare an empty BoT
+    if (!s->facetize_tree && !s->no_empty) {
+	struct rt_bot_internal *bot;
+	BU_GET(bot, struct rt_bot_internal);
+	bot->magic = RT_BOT_INTERNAL_MAGIC;
+	bot->mode = RT_BOT_SOLID;
+	bot->orientation = RT_BOT_CCW;
+	bot->thickness = NULL;
+	bot->face_mode = (struct bu_bitv *)NULL;
+	bot->bot_flags = 0;
+	bot->num_vertices = 0;
+	bot->num_faces = 0;
+	bot->vertices = NULL;
+	bot->faces = NULL;
+	if (_ged_facetize_write_bot(s, bot, oname) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
+	}
 	return BRLCAD_OK;
     }
 
@@ -915,7 +939,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	bot->bot_flags = 0;
 	bot->num_vertices = (int)rmesh.vertPos.size();
 	bot->num_faces = (int)rmesh.triVerts.size();
-	bot->vertices = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));;
+	bot->vertices = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));
 	bot->faces = (int *)calloc(rmesh.triVerts.size()*3, sizeof(int));
 	for (size_t j = 0; j < rmesh.vertPos.size(); j++) {
 	    bot->vertices[3*j] = rmesh.vertPos[j].x;
@@ -933,6 +957,27 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	// If we have a manifold_mesh, write it out as a bot
 	if (_ged_facetize_write_bot(s, bot, oname) != BRLCAD_OK) {
 	    return BRLCAD_ERROR;
+	}
+    } else {
+	// Evaluation didn't produce a tree - unless we've been told not to,
+	// prepare an empty BoT
+	if (!s->no_empty) {
+	    struct rt_bot_internal *bot;
+	    BU_GET(bot, struct rt_bot_internal);
+	    bot->magic = RT_BOT_INTERNAL_MAGIC;
+	    bot->mode = RT_BOT_SOLID;
+	    bot->orientation = RT_BOT_CCW;
+	    bot->thickness = NULL;
+	    bot->face_mode = (struct bu_bitv *)NULL;
+	    bot->bot_flags = 0;
+	    bot->num_vertices = 0;
+	    bot->num_faces = 0;
+	    bot->vertices = NULL;
+	    bot->faces = NULL;
+	    if (_ged_facetize_write_bot(s, bot, oname) != BRLCAD_OK) {
+		return BRLCAD_ERROR;
+	    }
+	    return BRLCAD_OK;
 	}
     }
 

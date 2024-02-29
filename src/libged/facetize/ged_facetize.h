@@ -42,6 +42,7 @@ struct _ged_facetize_state {
     // Output
     int quiet;
     int verbosity;
+    int no_empty;
     int make_nmg;
     int nonovlp_brep;
 
@@ -62,6 +63,7 @@ struct _ged_facetize_state {
     struct bu_vls *faceted_suffix;
 
     /* Implementation */
+    int error_flag;
     struct ged *gedp;
     union tree *facetize_tree;
     void *method_opts;
