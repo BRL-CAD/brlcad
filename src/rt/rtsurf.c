@@ -119,6 +119,13 @@ initialize_resources(size_t cnt, struct resource *resp, struct rt_i *rtip)
 
 
 static void
+init_random(void)
+{
+    srand((unsigned int)time(NULL));
+}
+
+
+static void
 initialize(struct application *ap, const char *db, const char *obj[])
 {
     static struct rt_i *rtip = NULL;
@@ -156,14 +163,9 @@ initialize(struct application *ap, const char *db, const char *obj[])
     /* shoot through? */
     ap->a_onehit = 1;
 
+    init_random();
+
     return;
-}
-
-
-static void
-init_random(void)
-{
-    srand((unsigned int)time(NULL));
 }
 
 
@@ -184,12 +186,15 @@ random_point_on_sphere(double radius, point_t point) {
 
 
 static double
-estimate_surface_area(struct application *ap, size_t samples)
+estimate_surface_area(const char *db, const char *obj[], size_t samples)
 {
-    double radius = ap->a_rt_i->rti_radius;
+    struct application ap;
+    initialize(&ap, db, obj);
+
+    double radius = ap.a_rt_i->rti_radius;
     point_t center = VINIT_ZERO;
 
-    VADD2SCALE(center, ap->a_rt_i->mdl_max, ap->a_rt_i->mdl_min, 0.5);
+    VADD2SCALE(center, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min, 0.5);
 
     //printf("Radius: %lf\n", radius);
     //VPRINT("Center:", center);
@@ -203,20 +208,24 @@ estimate_surface_area(struct application *ap, size_t samples)
 
         //printf("Point %zu: (%f, %f, %f)\n", i+1, point[0], point[1], point[2]);
 
-	VMOVE(ap->a_ray.r_pt, point);
-	VSUB2(ap->a_ray.r_dir, center, point);
+	VMOVE(ap.a_ray.r_pt, point);
+	VSUB2(ap.a_ray.r_dir, center, point);
 
-	//VPRINT("Pnt", ap->a_ray.r_pt);
-	//VPRINT("Dir", ap->a_ray.r_dir);
+	//VPRINT("Pnt", ap.a_ray.r_pt);
+	//VPRINT("Dir", ap.a_ray.r_dir);
 	printf("in pnt%zu.sph sph %lf %lf %lf %lf\n", i, V3ARGS(point), 1.0);
-	printf("in dir%zu.sph rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), 0.5);
+	printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
 
 	/* unitize before firing */
-	VUNITIZE(ap->a_ray.r_dir);
+	VUNITIZE(ap.a_ray.r_dir);
 
 	/* Shoot the ray. */
-	(void)rt_shootray(ap);
+	(void)rt_shootray(&ap);
     }
+
+    /* release our raytracing instance */
+    rt_free_rti(ap.a_rt_i);
+    ap.a_rt_i = NULL;
 
     double estimate = 0.0;
 
@@ -230,7 +239,6 @@ main(int argc, char **argv)
     int samples = 100;
 
     bu_setprogname(argv[0]);
-    init_random();
 
     /* Make sure we have at least a geometry file and one geometry
      * object on the command line.
@@ -239,10 +247,7 @@ main(int argc, char **argv)
 	bu_exit(1, "Usage: %s model.g objects...\n", argv[0]);
     }
 
-    struct application ap;
-    initialize(&ap, argv[1], (const char **)argv+2);
-
-    double estimate = estimate_surface_area(&ap, samples);
+    double estimate = estimate_surface_area(argv[1], (const char **)argv+2, samples);
     bu_log("Estimated exterior surface area: %lf\n", estimate);
 
     return 0;
