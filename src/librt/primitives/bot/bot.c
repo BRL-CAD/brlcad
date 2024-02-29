@@ -1367,7 +1367,6 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     if (bip->vertices == NULL || bip->faces == NULL) {
 	bu_log("WARNING: BoT contains %zu vertices, %zu faces\n", bip->num_vertices, bip->num_faces);
-	return -1;
     }
 
     if (mat == NULL)
