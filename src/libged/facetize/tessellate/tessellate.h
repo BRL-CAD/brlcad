@@ -47,6 +47,9 @@ class tess_opts {
 	nmg_opts nmg_options;
 	cm_opts cm_options;
 	spsr_opts spsr_options;
+#ifdef USE_GEOGRAM
+	co3ne_opts co3ne_options;
+#endif
 
 	int overwrite_obj = 0;
 	sample_opts pnt_options; // Values used by sample.cpp

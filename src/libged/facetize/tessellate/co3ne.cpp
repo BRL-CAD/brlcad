@@ -66,8 +66,8 @@ co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inte
     }
 
     *obot = bot;
-    return BRLCAD_OK;
 #endif
+    return BRLCAD_ERROR;
 #else
     return BRLCAD_ERROR;
 #endif
