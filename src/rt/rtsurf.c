@@ -45,6 +45,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     point_t pt;
     vect_t inormal;
     vect_t onormal;
+    double radius = ap->a_user;
 
     static size_t cnt = 0;
 
@@ -72,7 +73,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	//rt_pr_hit("  In", hitp);
 	//VPRINT(   "  Ipoint", pt);
 	//VPRINT(   "  Inormal", inormal);
-	printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
+	if (hitp->hit_dist < radius) {
+	    printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
+	} else {
+	    printf("in past%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 2.0);
+	}
 
 	/* out hit point */
 	hitp = pp->pt_outhit;
@@ -185,6 +190,20 @@ random_point_on_sphere(double radius, point_t point) {
 }
 
 
+static void
+points_on_sphere(size_t count, point_t pnts[], double radius, point_t center)
+{
+    for (size_t i = 0; i < count; ++i) {
+	point_t point;
+
+        //printf("Point %zu: (%f, %f, %f)\n", i+1, point[0], point[1], point[2]);
+
+        random_point_on_sphere(radius, point);
+	VADD2(pnts[i], point, center);
+    }
+}
+
+
 static double
 estimate_surface_area(const char *db, const char *obj[], size_t samples)
 {
@@ -193,37 +212,38 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples)
 
     double radius = ap.a_rt_i->rti_radius;
     point_t center = VINIT_ZERO;
+    ap.a_user = radius;
 
     VADD2SCALE(center, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min, 0.5);
 
     //printf("Radius: %lf\n", radius);
     //VPRINT("Center:", center);
-    printf("in center.sph sph %lf %lf %lf %lf\n", V3ARGS(center), 2.0);
+    printf("in center.sph sph %lf %lf %lf %lf\n", V3ARGS(center), 5.0);
     printf("in bounding.sph sph %lf %lf %lf %lf\n", V3ARGS(center), radius);
 
+    /* get sample points */
+    point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
+    points_on_sphere(samples, points, radius, center);
+
     for (size_t i = 0; i < samples; ++i) {
-	point_t point;
-        random_point_on_sphere(radius, point);
-	VADD2(point, point, center);
+	VMOVE(ap.a_ray.r_pt, points[i]);
+	VSUB2(ap.a_ray.r_dir, center, points[i]); // point back at origin
 
-        //printf("Point %zu: (%f, %f, %f)\n", i+1, point[0], point[1], point[2]);
-
-	VMOVE(ap.a_ray.r_pt, point);
-	VSUB2(ap.a_ray.r_dir, center, point);
-
-	//VPRINT("Pnt", ap.a_ray.r_pt);
-	//VPRINT("Dir", ap.a_ray.r_dir);
-	printf("in pnt%zu.sph sph %lf %lf %lf %lf\n", i, V3ARGS(point), 1.0);
+	printf("in pnt%zu.sph sph %lf %lf %lf %lf\n", i, V3ARGS(points[i]), 1.0);
 	printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
 
 	/* unitize before firing */
 	VUNITIZE(ap.a_ray.r_dir);
 
+	//VPRINT("Pnt", ap.a_ray.r_pt);
+	//VPRINT("Dir", ap.a_ray.r_dir);
+
 	/* Shoot the ray. */
 	(void)rt_shootray(&ap);
     }
 
-    /* release our raytracing instance */
+    /* release our raytracing instance and points */
+    bu_free(points, "points");
     rt_free_rti(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
