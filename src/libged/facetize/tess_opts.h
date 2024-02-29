@@ -121,6 +121,19 @@ class cm_opts : public sample_opts {
 	int max_time = 600;  // Maximum overall time
 };
 
+#ifdef USE_GEOGRAM
+class co3ne_opts : public sample_opts {
+    public:
+	std::string about_method();
+	std::string print_options_help();
+	int set_var(const std::string &key, const std::string &val);
+	void sync(method_options_t &mopts);
+	void sync(sample_opts &sopts);
+
+	int max_time = 300;  // Maximum overall time
+};
+#endif
+
 class spsr_opts : public sample_opts {
     public:
 	std::string about_method();
@@ -528,6 +541,66 @@ nmg_opts::sync(method_options_t &o)
 	set_var(m_it->first, m_it->second);
     }
 }
+
+#ifdef USE_GEOGRAM
+std::string
+co3ne_opts::about_method()
+{
+    std::string msg = "Co3Ne reconstruction (Concurrent Co-Cones)\n";
+    return msg;
+}
+
+std::string
+co3ne_opts::print_options_help()
+{
+    std::string h = std::string("Concurrent Co-Cones (CO3NE) Options:\n") + sample_opts::print_options_help();
+    h.append("max_time         -  Maximum overall run time for object conversion\n");
+    return h;
+}
+
+int
+co3ne_opts::set_var(const std::string &key, const std::string &val)
+{
+    if (key.length() == 0)
+	return BRLCAD_ERROR;
+
+    const char *cstr[2];
+    cstr[0] = val.c_str();
+    cstr[1] = NULL;
+
+    if (key == std::string("max_time")) {
+	if (!val.length()) {
+	    max_time = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
+	    return BRLCAD_ERROR;
+    }
+
+    // If it's not a Co3Ne setting directly, it may be for sampling
+    return sample_opts::set_var(key, val);
+}
+
+void
+co3ne_opts::sync(method_options_t &o)
+{
+    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
+    o_it = o.options_map.find(std::string("SPSR"));
+    if (o_it == o.options_map.end())
+	return;
+
+    std::map<std::string,std::string>::iterator m_it;
+    for (m_it = o_it->second.begin(); m_it != o_it->second.end(); m_it++) {
+	set_var(m_it->first, m_it->second);
+    }
+}
+
+void
+co3ne_opts::sync(sample_opts &opts)
+{
+    sample_opts::sync(opts);
+}
+#endif // USE_GEOGRAM
 
 std::string
 spsr_opts::about_method()
