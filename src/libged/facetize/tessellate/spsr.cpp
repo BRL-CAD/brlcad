@@ -57,6 +57,8 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
     int flags = 0;
     int i = 0;
     struct bg_3d_spsr_opts *s_opts = &s->spsr_options.s_opts;
+    double feature_size = (s->spsr_options.feature_size > 0) ? s->spsr_options.feature_size : 2*s->spsr_options.avg_thickness;
+    double d_feature_size = (s->spsr_options.d_feature_size > 0) ? s->spsr_options.d_feature_size : 1.5 * feature_size;
     point_t *input_points_3d = NULL;
     vect_t *input_normals_3d = NULL;
     point_t rpp_min, rpp_max;
@@ -96,17 +98,9 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
     /* do decimation */
     {
 	*obot = bot;
-	fastf_t feature_size = s->spsr_options.d_feature_size;
-	fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
-	fastf_t ylen = fabs(rpp_max[Y] - rpp_min[Y]);
-	fastf_t zlen = fabs(rpp_max[Z] - rpp_min[Z]);
-	feature_size = (xlen < ylen) ? xlen : ylen;
-	feature_size = (feature_size < zlen) ? feature_size : zlen;
-	feature_size = feature_size * 0.15;
+	bu_log("SPSR: decimating with feature size: %g\n", d_feature_size);
 
-	bu_log("SPSR: decimating with feature size: %g\n", feature_size);
-
-	bot = _tess_facetize_decimate(bot, feature_size);
+	bot = _tess_facetize_decimate(bot, d_feature_size);
 
 	if (bot == *obot) {
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
