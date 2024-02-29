@@ -52,7 +52,37 @@ co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inte
 	return BRLCAD_ERROR;
 
 #ifdef USE_GEOGRAM
+    GEO::Mesh gm;
+    GEO::Attribute<double> normals;
+    normals.bind_if_is_defined(gm.vertices.attributes(), "normal");
+    if(!normals.is_bound())
+	normals.create_vector_attribute(gm.vertices.attributes(), "normal", 3);
+
+    point_t *input_points_3d = (point_t *)bu_calloc(pnts->count, sizeof(point_t), "points");
+    vect_t *input_normals_3d = (vect_t *)bu_calloc(pnts->count, sizeof(vect_t), "normals");
+    struct pnt_normal *pn;
+    struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
+    int i = 0;
+    for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
+        VMOVE(input_points_3d[i], pn->v);
+        VMOVE(input_normals_3d[i], pn->n);
+        i++;
+    }
+
+    gm.vertices.assign_points((double *)input_points_3d, 3, pnts->count);
+
+    i = 0;
+    for(GEO::index_t v=0; v < gm.vertices.nb(); ++v) {
+	normals[3*v] = input_normals_3d[i][X];
+	normals[3*v+1] = input_normals_3d[i][Y];
+	normals[3*v+2] = input_normals_3d[i][Z];
+	i++;
+    }
+
+    GEO::Co3Ne_reconstruct(gm, 0.0); // maximum distance used to connect neighbors with triangles - should we use ANN to get that value?  need to check what geogram does...
+
 #if 0
+
     /* Check validity - do not return an invalid BoT */
     {
 	int not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
