@@ -651,6 +651,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 
     method_options_t *mo = (method_options_t*)s->method_opts;
     std::queue<std::string> method_flags;
+    std::queue<std::string> method_flags_bak;
     for (size_t i = 0; i < mo->methods.size(); i++) {
 	std::string cmethod = mo->methods[i];
 	if (std::find(avail_methods.begin(), avail_methods.end(), cmethod) != avail_methods.end()) {
@@ -672,10 +673,14 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	}
     }
 
+    method_flags_bak = method_flags;
+
+
     // Call ged_tessellate to produce evaluated solids - TODO batch
     // into groupings that can be fed to ged_tessellate for parallel
     // processing, with fallback to individual if parallel fails
     // Build up the command to run
+    std::vector<struct directory *> failed_dps;
     std::string mstrpp;
     int l_max_time;
     struct bu_vls method_str = BU_VLS_INIT_ZERO;
@@ -692,6 +697,9 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     tess_cmd[ 6] = NULL;
     int cmd_fixed_cnt = 7;
     while (!pq.empty()) {
+	// Starting a new round of object processing - reset method flags
+	method_flags = method_flags_bak;
+
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
 	mstrpp = method_flags.front();
@@ -769,25 +777,20 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 
 	if (err_cnt || bad_dps.size() > 0) {
 	    // If we tried all the active methods and still had failures, we have an
-	    // error.  We can either terminate the whole conversion based on this
-	    // failure, or ignore this object and process the remainder of the
-	    // tree.  The latter will be incorrect if this object was supposed to
-	    // materially contribute to the final object shape, but for some
-	    // applications like visualization there are cases where "something is
-	    // better than nothing" applies
-
-	    // Don't do cleanup here, since we may want to do a resume...
-	    //bu_dirclear(wdir);
-
-	    return BRLCAD_ERROR;
+	    // error.  We'll keep trying to process all the leaves, since we want to
+	    // get a full picture of what the issues with the conversion are, but
+	    // we need to record these as a full-on failure.
+	    failed_dps.insert(failed_dps.end(), bad_dps.begin(), bad_dps.end());
 	}
     }
 
     while (!q_dsp.empty()) {
 	bu_vls_sprintf(&method_str, "CM");
+	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
 	mstrpp = std::string("CM");
 	l_max_time = mo->max_time[mstrpp];
 	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 	std::vector<struct directory *> dps;
 	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 	for (int i = 0; i < cmd_fixed_cnt; i++)
@@ -809,30 +812,21 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// We have the list of objects to feed the process - now, trigger
 	// the runs with as many methods as it takes to facetize all the
 	// primitives
-	int err_cnt = 0;
 	for (size_t i = 0; i < dps.size(); i++) {
 	    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-	    err_cnt += tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
-	}
-
-	if (err_cnt) {
-	    // If we tried all the active methods and still had failures, we have an
-	    // error.  We can either terminate the whole conversion based on this
-	    // failure, or ignore this object and process the remainder of the
-	    // tree.  The latter will be incorrect if this object was supposed to
-	    // materially contribute to the final object shape, but for some
-	    // applications like visualization there are cases where "something is
-	    // better than nothing" applies
-	    bu_dirclear(wdir);
-	    return BRLCAD_ERROR;
+	    int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
+	    if (err_cnt)
+		failed_dps.push_back(dps[i]);
 	}
     }
 
     while (!q_pbot.empty()) {
 	bu_vls_sprintf(&method_str, "NMG");
+	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
 	mstrpp = std::string("NMG");
 	l_max_time = mo->max_time[mstrpp];
 	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 	if (q_pbot.empty())
 	    break;
 	struct directory *ldp = q_pbot.front();
@@ -840,16 +834,20 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	q_pbot.pop();
 
 	// Plate mode to vol evaluation can be very slow, so be generous about time
+	// TODO - this should really be based on the size of the mesh and how long
+	// it takes to do a boolean on some baseline test case...
 	int p2v_time = 600;
 	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, p2v_time);
 	if (err_cnt) {
 	    // If we couldn't handle the plate mode conversion, we can't do the
 	    // boolean evaluation
-	    bu_log("Plate mode conversion wasn't able to complete in %d seconds\n", p2v_time);
-	    bu_dirclear(wdir);
-	    return BRLCAD_ERROR;
+	    bu_log("Plate mode conversion wasn't able to complete\n");
+	    failed_dps.push_back(ldp);
 	}
     }
+
+    if (failed_dps.size())
+	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
 }
