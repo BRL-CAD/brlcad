@@ -46,15 +46,17 @@ _db_uniq_test(struct bu_vls *n, void *data)
 int
 spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, struct tess_opts *s)
 {
+    if (!obot || !dbip || !pnts || !s)
+	return BRLCAD_ERROR;
+
     int ret = BRLCAD_OK;
     struct directory *dp;
     int decimation_succeeded = 0;
-    struct rt_db_internal in_intern;
     struct bn_tol btol = BN_TOL_INIT_TOL;
     double avg_thickness = 0.0;
     int flags = 0;
     int i = 0;
-    struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
+    struct bg_3d_spsr_opts *s_opts = &s->spsr_options.s_opts;
     point_t *input_points_3d = NULL;
     vect_t *input_normals_3d = NULL;
     point_t rpp_min, rpp_max;
@@ -86,7 +88,7 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 		   (int *)&(bot->num_vertices),
 		   (const point_t *)input_points_3d,
 		   (const vect_t *)input_normals_3d,
-		   pnts->count, &s_opts) ) {
+		   pnts->count, s_opts) ) {
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_spsr_memfree;
     }
@@ -94,7 +96,7 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
     /* do decimation */
     {
 	*obot = bot;
-	fastf_t feature_size = 0.0; // TODO - pass in
+	fastf_t feature_size = s->spsr_options.d_feature_size;
 	fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
 	fastf_t ylen = fabs(rpp_max[Y] - rpp_min[Y]);
 	fastf_t zlen = fabs(rpp_max[Z] - rpp_min[Z]);
@@ -195,7 +197,6 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 ged_facetize_spsr_memfree:
     if (input_points_3d) bu_free(input_points_3d, "3d pnts");
     if (input_normals_3d) bu_free(input_normals_3d, "3d pnts");
-    rt_db_free_internal(&in_intern);
 
     *obot = bot;
 
