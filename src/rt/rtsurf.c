@@ -46,7 +46,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     vect_t inormal;
     vect_t onormal;
 
-    static int cnt = 0;
+    static size_t cnt = 0;
 
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 
@@ -72,7 +72,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	//rt_pr_hit("  In", hitp);
 	//VPRINT(   "  Ipoint", pt);
 	//VPRINT(   "  Inormal", inormal);
-	printf("in hit%d.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
+	printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
 
 	/* out hit point */
 	hitp = pp->pt_outhit;
@@ -183,11 +183,9 @@ random_point_on_sphere(double radius, point_t point) {
 }
 
 
-static void
-surface(struct application *ap)
+static double
+estimate_surface_area(struct application *ap, size_t samples)
 {
-    static const int SAMPLES = 100;
-
     double radius = ap->a_rt_i->rti_radius;
     point_t center = VINIT_ZERO;
 
@@ -198,20 +196,20 @@ surface(struct application *ap)
     printf("in center.sph sph %lf %lf %lf %lf\n", V3ARGS(center), 2.0);
     printf("in bounding.sph sph %lf %lf %lf %lf\n", V3ARGS(center), radius);
 
-    for (int i = 0; i < SAMPLES; ++i) {
+    for (size_t i = 0; i < samples; ++i) {
 	point_t point;
         random_point_on_sphere(radius, point);
 	VADD2(point, point, center);
 
-        //printf("Point %d: (%f, %f, %f)\n", i+1, point[0], point[1], point[2]);
+        //printf("Point %zu: (%f, %f, %f)\n", i+1, point[0], point[1], point[2]);
 
 	VMOVE(ap->a_ray.r_pt, point);
 	VSUB2(ap->a_ray.r_dir, center, point);
 
 	//VPRINT("Pnt", ap->a_ray.r_pt);
 	//VPRINT("Dir", ap->a_ray.r_dir);
-	printf("in pnt%d.sph sph %lf %lf %lf %lf\n", i, V3ARGS(point), 1.0);
-	printf("in dir%d.sph rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), 0.5);
+	printf("in pnt%zu.sph sph %lf %lf %lf %lf\n", i, V3ARGS(point), 1.0);
+	printf("in dir%zu.sph rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), 0.5);
 
 	/* unitize before firing */
 	VUNITIZE(ap->a_ray.r_dir);
@@ -219,12 +217,18 @@ surface(struct application *ap)
 	/* Shoot the ray. */
 	(void)rt_shootray(ap);
     }
+
+    double estimate = 0.0;
+
+    return estimate;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    int samples = 100;
+
     bu_setprogname(argv[0]);
     init_random();
 
@@ -238,7 +242,8 @@ main(int argc, char **argv)
     struct application ap;
     initialize(&ap, argv[1], (const char **)argv+2);
 
-    surface(&ap);
+    double estimate = estimate_surface_area(&ap, samples);
+    bu_log("Estimated exterior surface area: %lf\n", estimate);
 
     return 0;
 }
