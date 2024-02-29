@@ -175,7 +175,6 @@ method_options_t::method_optstr(std::string &method, struct db_i *dbip)
     std::string moptstr = method;
     std::map<std::string,std::string>::iterator m_it;
     for (m_it = options_map[method].begin(); m_it != options_map[method].end(); m_it++) {
-	moptstr.append(std::string(" "));
 	std::string kvalstr = std::string(" ") + m_it->first + std::string("=") + m_it->second;
 	moptstr.append(kvalstr);
     }
