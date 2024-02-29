@@ -99,7 +99,7 @@ bot_gen(struct rt_bot_internal **obot, fastf_t feature_size, point_t seed, const
 	bu_log("CM: Too little available memory to continue, aborting\n");
 
     if (ret == 2)
-	bu_log("CM: timed out after %d seconds with size %g\n", params->max_time, feature_size);
+	bu_log("CM: timed out after %d seconds with size %g\n", params->max_cycle_time, feature_size);
 
     if (!ret) {
 	*obot = bot;
@@ -133,7 +133,8 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
      * max_time has been explicitly set to 0 by the caller this will run
      * unbounded, but the algorithm is n**2 and we're trying the finest level
      * first so may run a *very* long time... */
-    params.max_time = s->cm_options.max_cycle_time;
+    params.max_time = s->cm_options.max_time;
+    params.max_cycle_time = s->cm_options.max_cycle_time;
     params.verbosity = 1;
     params.minimum_free_mem = FACETIZE_MEMORY_THRESHOLD;
 
@@ -142,6 +143,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 	double timestamp = bu_gettime();
 	pret = bot_gen(&candidate, feature_size, seed, objname, dbip, &params);
 	fastf_t delta = (int)((bu_gettime() - timestamp)/1e6);
+	params.time_offset = total_elapsed + 10; // Allow a few seconds extra for decimation
 
 	if (pret || candidate->num_faces < successful_bot_count || delta < 2) {
 	    if (pret == 3)
