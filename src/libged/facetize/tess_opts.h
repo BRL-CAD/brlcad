@@ -240,7 +240,8 @@ _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_
     std::string s;
     std::vector<std::string> opts;
     while (std::getline(astream, s, ' ')) {
-	opts.push_back(s);
+	if (s.length())
+	    opts.push_back(s);
     }
 
     for (size_t i = 1; i < opts.size(); i++) {
