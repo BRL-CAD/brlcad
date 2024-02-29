@@ -482,7 +482,17 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 	if (seconds > max_time) {
 	    // if we timeout, cleanup and return error
 	    subprocess_terminate(&p);
+
+    bu_log("killed %g %g\n", seconds, max_time);
+    char mraw[MAXPATHLEN*10] = {'\0'};
+    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
+    bu_log("%s\n", mraw);
+    char mraw2[MAXPATHLEN*10] = {'\0'};
+    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
+    bu_log("%s\n", mraw2);
+
 	    subprocess_destroy(&p);
+
 	    // Because we had to kill the process, there's no way of knowing
 	    // whether we interrupted I/O in a state that could result in a
 	    // corrupted .g file.  Restore the pre-run state of the .g file -
@@ -507,7 +517,14 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 
     bu_file_delete(wfilebak.c_str());
 
+
     bu_log("result: %d\n", w_rc);
+    char mraw[MAXPATHLEN*10] = {'\0'};
+    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
+    bu_log("%s\n", mraw);
+    char mraw2[MAXPATHLEN*10] = {'\0'};
+    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
+    bu_log("%s\n", mraw2);
 
     return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
 }
@@ -720,14 +737,18 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 		for (size_t i = 0; i < dps.size(); i++) {
 		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
 		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
-		    if (tess_ret)
+		    if (tess_ret != BRLCAD_OK)
 			bad_dps.push_back(dps[i]);
 		}
 	    }
+
+	    // If we dealt successfully with everything, we're done
 	    if (!err_cnt)
 		break;
-	    err_cnt = 0;
+
 	    if (method_flags.size()) {
+		// If we still have available methods to try, go another round
+		err_cnt = 0;
 		mstrpp = method_flags.front();
 		method_flags.pop();
 		bu_vls_sprintf(&method_str, "%s", mstrpp.c_str());
@@ -737,14 +758,16 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 		// Get defined options for this particular method
 		bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
 		tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
+		dps = bad_dps;
+		bad_dps.clear();
 	    } else {
+		// All done - nothing left to try
 		bu_vls_trunc(&method_str, 0);
 		tess_cmd[method_ind] = NULL;
 	    }
-	    dps = bad_dps;
 	}
 
-	if (err_cnt) {
+	if (err_cnt || bad_dps.size() > 0) {
 	    // If we tried all the active methods and still had failures, we have an
 	    // error.  We can either terminate the whole conversion based on this
 	    // failure, or ignore this object and process the remainder of the
@@ -752,7 +775,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	    // materially contribute to the final object shape, but for some
 	    // applications like visualization there are cases where "something is
 	    // better than nothing" applies
-	    bu_dirclear(wdir);
+
+	    // Don't do cleanup here, since we may want to do a resume...
+	    //bu_dirclear(wdir);
+
 	    return BRLCAD_ERROR;
 	}
     }
