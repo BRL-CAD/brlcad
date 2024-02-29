@@ -632,9 +632,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	return BRLCAD_ERROR;
     }
 
+    method_options_t *mo = (method_options_t*)s->method_opts;
     std::queue<std::string> method_flags;
-    for (size_t i = 0; i < ((method_options_t*)s->method_opts)->methods.size(); i++) {
-	std::string cmethod = ((method_options_t*)s->method_opts)->methods[i];
+    for (size_t i = 0; i < mo->methods.size(); i++) {
+	std::string cmethod = mo->methods[i];
 	if (std::find(avail_methods.begin(), avail_methods.end(), cmethod) != avail_methods.end()) {
 	    method_flags.push(cmethod);
 	} else {
@@ -642,7 +643,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	}
     }
 
-    if (((method_options_t*)s->method_opts)->methods.size() && !method_flags.size()) {
+    if (mo->methods.size() && !method_flags.size()) {
 	bu_log("Error: all user requested tessellation methods unsupported.\n");
 	bu_dirclear(wdir);
 	return BRLCAD_ERROR;
@@ -658,31 +659,33 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     // into groupings that can be fed to ged_tessellate for parallel
     // processing, with fallback to individual if parallel fails
     // Build up the command to run
+    std::string mstrpp;
+    int l_max_time;
     struct bu_vls method_str = BU_VLS_INIT_ZERO;
     struct bu_vls method_opts_str = BU_VLS_INIT_ZERO;
-    struct bu_vls max_time_str = BU_VLS_INIT_ZERO;
     const char *tess_cmd[MAXPATHLEN] = {NULL};
+    int method_ind = 4;
+    int method_opt_ind = 6;
     tess_cmd[ 0] = tess_exec;
     tess_cmd[ 1] = "-O";
     tess_cmd[ 2] = wfile;
-    tess_cmd[ 3] = "--max-time";
-    tess_cmd[ 4] = bu_vls_cstr(&max_time_str);
-    tess_cmd[ 5] = "--methods";
-    tess_cmd[ 6] = bu_vls_cstr(&method_str);
-    tess_cmd[ 7] = "--method-opts";
-    tess_cmd[ 8] = bu_vls_cstr(&method_opts_str);
-    int cmd_fixed_cnt = 9;
+    tess_cmd[ 3] = "--methods";
+    tess_cmd[ 4] = NULL;
+    tess_cmd[ 5] = "--method-opts";
+    tess_cmd[ 6] = NULL;
+    int cmd_fixed_cnt = 7;
     while (!pq.empty()) {
-
 	// There are a number of methods that can be tried.  We try them in priority
 	// order, timing out if one of them goes too long.
-	bu_vls_sprintf(&method_str, "%s", method_flags.front().c_str());
+	mstrpp = method_flags.front();
 	method_flags.pop();
-	std::string tc6str = std::string(tess_cmd[6]);
-	method_options_t *mo = (method_options_t*)s->method_opts;
-	int l_max_time = mo->max_time[tc6str];
-	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
-	bu_vls_sprintf(&max_time_str, "%d", l_max_time);
+	bu_vls_sprintf(&method_str, "%s", mstrpp.c_str());
+	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
+	// Each method has its own default (or possibly user set) time limit
+	l_max_time = mo->max_time[mstrpp];
+	// Get defined options for this particular method
+	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 
 	std::vector<struct directory *> dps;
 	std::vector<struct directory *> bad_dps;
@@ -707,19 +710,13 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// the runs with as many methods as it takes to facetize all the
 	// primitives
 	int err_cnt = 0;
-	while (tess_cmd[6]) {
+	while (bu_vls_strlen(&method_str)) {
 	    if (BU_STR_EQUAL(bu_vls_cstr(&method_str), "NMG")) {
 		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time);
 	    } else {
 		// If we're in fallback territory, process individually rather
 		// than doing the bisect - at least for now, those methods are
 		// much more expensive and likely to fail as compared to NMG.
-		//
-		// CM can be quite time intensive as it does multiple
-		// iterations trying to optimize quality.  For now, we bump the
-		// specified time by an order of magnitude, but we need a
-		// better way to propagate a hard overall max_time to the CM
-		// code and do something intelligent with it on that end.
 		for (size_t i = 0; i < dps.size(); i++) {
 		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
 		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
@@ -731,14 +728,18 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 		break;
 	    err_cnt = 0;
 	    if (method_flags.size()) {
-		bu_vls_sprintf(&method_str, "%s", method_flags.front().c_str());
+		mstrpp = method_flags.front();
 		method_flags.pop();
-		tc6str = std::string(bu_vls_cstr(&method_str));
-		l_max_time = mo->max_time[tc6str];
-		bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(tc6str, dbip).c_str());
-		bu_vls_sprintf(&max_time_str, "%d", l_max_time);
+		bu_vls_sprintf(&method_str, "%s", mstrpp.c_str());
+		tess_cmd[method_ind] = bu_vls_cstr(&method_str);
+		// Each method has its own default (or possibly user set) time limit
+		l_max_time = mo->max_time[mstrpp];
+		// Get defined options for this particular method
+		bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+		tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 	    } else {
-		tess_cmd[6] = NULL;
+		bu_vls_trunc(&method_str, 0);
+		tess_cmd[method_ind] = NULL;
 	    }
 	    dps = bad_dps;
 	}
@@ -757,7 +758,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     }
 
     while (!q_dsp.empty()) {
-	tess_cmd[7] = "--cm";
+	bu_vls_sprintf(&method_str, "CM");
+	mstrpp = std::string("CM");
+	l_max_time = mo->max_time[mstrpp];
+	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
 	std::vector<struct directory *> dps;
 	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 	for (int i = 0; i < cmd_fixed_cnt; i++)
@@ -782,7 +786,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	int err_cnt = 0;
 	for (size_t i = 0; i < dps.size(); i++) {
 	    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-	    err_cnt += tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time);
+	    err_cnt += tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
 	}
 
 	if (err_cnt) {
@@ -799,21 +803,23 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     }
 
     while (!q_pbot.empty()) {
-	tess_cmd[7] = "--nmg";
+	bu_vls_sprintf(&method_str, "NMG");
+	mstrpp = std::string("NMG");
+	l_max_time = mo->max_time[mstrpp];
+	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
 	if (q_pbot.empty())
 	    break;
 	struct directory *ldp = q_pbot.front();
 	tess_cmd[cmd_fixed_cnt] = ldp->d_namep;
 	q_pbot.pop();
 
-	// Plate mode to vol evaluation can be slow, so be generous about time
-	bu_vls_sprintf(&max_time_str, "%d", (int)(s->max_time));
-	
-	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, s->max_time);
+	// Plate mode to vol evaluation can be very slow, so be generous about time
+	int p2v_time = 600;
+	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, p2v_time);
 	if (err_cnt) {
 	    // If we couldn't handle the plate mode conversion, we can't do the
 	    // boolean evaluation
-	    bu_log("Plate mode conversion wasn't able to complete in %d seconds - recommend larger max-time value\n", (int)s->max_time);
+	    bu_log("Plate mode conversion wasn't able to complete in %d seconds\n", p2v_time);
 	    bu_dirclear(wdir);
 	    return BRLCAD_ERROR;
 	}

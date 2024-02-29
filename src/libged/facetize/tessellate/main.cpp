@@ -284,7 +284,7 @@ print_methods_info()
 void
 print_tess_methods()
 {
-    fprintf(stdout, "NMG CM SPSR\n");
+    fprintf(stdout, "NMG CM SPSR");
 }
 
 int
