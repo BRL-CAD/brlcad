@@ -141,9 +141,9 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
     while (!pret && (feature_size > 0.9*s->cm_options.target_feature_size) && fatal_error_cnt < 8 ) {
 	struct rt_bot_internal *candidate = NULL;
 	double timestamp = bu_gettime();
+	params.time_offset = total_elapsed + 10; // Allow a few seconds extra for decimation
 	pret = bot_gen(&candidate, feature_size, seed, objname, dbip, &params);
 	fastf_t delta = (int)((bu_gettime() - timestamp)/1e6);
-	params.time_offset = total_elapsed + 10; // Allow a few seconds extra for decimation
 
 	if (pret || candidate->num_faces < successful_bot_count || delta < 2) {
 	    if (pret == 3)
