@@ -199,11 +199,15 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 	// If we're about to run up against our max time limit, bail rather than keep trying
 	total_elapsed += delta;
 	if (s->cm_options.max_cycle_time < delta*2) {
-	    if (total_elapsed + s->cm_options.max_cycle_time > s->cm_options.max_time)
+	    if (total_elapsed + s->cm_options.max_cycle_time > s->cm_options.max_time) {
+		feature_size = successful_feature_size;
 		break;
+	    }
 	} else {
-	    if (total_elapsed + delta*2 > s->cm_options.max_time)
+	    if (total_elapsed + delta*2 > s->cm_options.max_time) {
+		feature_size = successful_feature_size;
 		break;
+	    }
 	}
     }
 
