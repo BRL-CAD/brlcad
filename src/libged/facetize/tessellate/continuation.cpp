@@ -121,6 +121,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
     struct rt_bot_internal *bot = NULL;
     struct rt_bot_internal *dbot = NULL;
     int pret = 0;
+    int total_elapsed = 0;
     struct analyze_polygonize_params params = ANALYZE_POLYGONIZE_PARAMS_DEFAULT;
     double feature_size = (s->cm_options.feature_size > 0) ? s->cm_options.feature_size : 2*s->cm_options.avg_thickness;
 
@@ -194,6 +195,16 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 
 	// If we got this far, we've had a successful first run
 	first_run = 0;
+
+	// If we're about to run up against our max time limit, bail rather than keep trying
+	total_elapsed += delta;
+	if (s->cm_options.max_cycle_time < delta*2) {
+	    if (total_elapsed + s->cm_options.max_cycle_time > s->cm_options.max_time)
+		break;
+	} else {
+	    if (total_elapsed + delta*2 > s->cm_options.max_time)
+		break;
+	}
     }
 
     if (bot && bot->num_faces) {
