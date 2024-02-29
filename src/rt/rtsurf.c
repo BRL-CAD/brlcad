@@ -29,6 +29,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "vmath.h"
 #include "bu/app.h"
@@ -42,18 +43,22 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     struct hit *hitp;
     struct soltab *stp;
     point_t pt;
-     vect_t inormal;
+    vect_t inormal;
     vect_t onormal;
+
+    static int cnt = 0;
 
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 
 	/* print the name of the region we hit as well as the name of
 	 * the primitives encountered on entry and exit.
 	 */
+#if 0
 	bu_log("\n--- Hit region %s (in %s, out %s)\n",
 	       pp->pt_regionp->reg_name,
 	       pp->pt_inseg->seg_stp->st_name,
 	       pp->pt_outseg->seg_stp->st_name );
+#endif
 
 	/* in hit point */
 	hitp = pp->pt_inhit;
@@ -64,9 +69,10 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
 	/* print the entry hit point info */
-	rt_pr_hit("  In", hitp);
-	VPRINT(   "  Ipoint", pt);
-	VPRINT(   "  Inormal", inormal);
+	//rt_pr_hit("  In", hitp);
+	//VPRINT(   "  Ipoint", pt);
+	//VPRINT(   "  Inormal", inormal);
+	printf("in hit%d.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
 
 	/* out hit point */
 	hitp = pp->pt_outhit;
@@ -77,9 +83,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
 
 	/* print the exit hit point info */
-	rt_pr_hit("  Out", hitp);
-	VPRINT(   "  Opoint", pt);
-	VPRINT(   "  Onormal", onormal);
+	//rt_pr_hit("  Out", hitp);
+	//VPRINT(   "  Opoint", pt);
+	//VPRINT(   "  Onormal", onormal);
     }
 
     return 1;
@@ -89,7 +95,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 static int
 miss(struct application *UNUSED(ap))
 {
-    bu_log("missed\n");
+    //bu_log("missed\n");
     return 0;
 }
 
@@ -155,16 +161,64 @@ initialize(struct application *ap, const char *db, const char *obj[])
 
 
 static void
+init_random(void)
+{
+    srand((unsigned int)time(NULL));
+}
+
+
+static double
+random_double(void) {
+    return rand() / (RAND_MAX + 1.0);
+}
+
+
+static void
+random_point_on_sphere(double radius, point_t point) {
+    double theta = 2 * M_PI * random_double();
+    double phi = acos(2 * random_double() - 1);
+    point[0] = radius * sin(phi) * cos(theta);
+    point[1] = radius * sin(phi) * sin(theta);
+    point[2] = radius * cos(phi);
+}
+
+
+static void
 surface(struct application *ap)
 {
-    VSET(ap->a_ray.r_pt, 0.0, 0.0, 10000.0);
-    VSET(ap->a_ray.r_dir, 0.0, 0.0, -1.0);
+    static const int SAMPLES = 100;
 
-    VPRINT("Pnt", ap->a_ray.r_pt);
-    VPRINT("Dir", ap->a_ray.r_dir);
+    double radius = ap->a_rt_i->rti_radius;
+    point_t center = VINIT_ZERO;
 
-    /* Shoot the ray. */
-    (void)rt_shootray(ap);
+    VADD2SCALE(center, ap->a_rt_i->mdl_max, ap->a_rt_i->mdl_min, 0.5);
+
+    //printf("Radius: %lf\n", radius);
+    //VPRINT("Center:", center);
+    printf("in center.sph sph %lf %lf %lf %lf\n", V3ARGS(center), 2.0);
+    printf("in bounding.sph sph %lf %lf %lf %lf\n", V3ARGS(center), radius);
+
+    for (int i = 0; i < SAMPLES; ++i) {
+	point_t point;
+        random_point_on_sphere(radius, point);
+	VADD2(point, point, center);
+
+        //printf("Point %d: (%f, %f, %f)\n", i+1, point[0], point[1], point[2]);
+
+	VMOVE(ap->a_ray.r_pt, point);
+	VSUB2(ap->a_ray.r_dir, center, point);
+
+	//VPRINT("Pnt", ap->a_ray.r_pt);
+	//VPRINT("Dir", ap->a_ray.r_dir);
+	printf("in pnt%d.sph sph %lf %lf %lf %lf\n", i, V3ARGS(point), 1.0);
+	printf("in dir%d.sph rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), 0.5);
+
+	/* unitize before firing */
+	VUNITIZE(ap->a_ray.r_dir);
+
+	/* Shoot the ray. */
+	(void)rt_shootray(ap);
+    }
 }
 
 
@@ -172,6 +226,7 @@ int
 main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
+    init_random();
 
     /* Make sure we have at least a geometry file and one geometry
      * object on the command line.
