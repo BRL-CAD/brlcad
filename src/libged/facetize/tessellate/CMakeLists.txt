@@ -1,4 +1,5 @@
 set(GED_TESS_SRCS
+  co3ne.cpp
   continuation.cpp
   sample.cpp
   spsr.cpp

@@ -228,20 +228,26 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 
 pnt_sampling_methods:
 
-    if (mset.find(std::string("Co3Ne")) != mset.end()) {
+    if (mset.find(std::string("CO3NE")) != mset.end()) {
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
-	} //else {
-	// if (!s->co3ne_options.equals(s->pnt_options)) {
-	//	s->pnt_options.sync(s->co3ne_options);
-	//      rt_pnts_free(pnts);
-	//	pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
-	//    }
-	//}
-	//s->co3ne_options.sync(s->pnt_options);
-	//ret = co3ne_mesh(obot, &intern, s->ttol, s->tol);
-	if (ret == BRLCAD_OK)
+	} else {
+#ifdef USE_GEOGRAM
+	    if (!s->co3ne_options.equals(s->pnt_options)) {
+		s->pnt_options.sync(s->co3ne_options);
+		rt_pnts_free(pnts);
+		pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	    }
+#endif
+	}
+#ifdef USE_GEOGRAM
+	s->co3ne_options.sync(s->pnt_options);
+#endif
+	ret = co3ne_mesh(obot, dbip, pnts, s);
+	if (ret == BRLCAD_OK) {
+	    bu_vls_sprintf(method_flag, "CO3NE");
 	    return ret;
+	}
     }
 
     if (mset.find(std::string("SPSR")) != mset.end()) {
@@ -287,7 +293,7 @@ print_methods_info()
 void
 print_tess_methods()
 {
-    fprintf(stdout, "NMG CM SPSR");
+    fprintf(stdout, "NMG CM CO3NE SPSR");
 }
 
 int
