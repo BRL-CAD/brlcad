@@ -107,6 +107,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
     char *wdir= (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wfile");
     char *wfile = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wfile");
+    char kfname[MAXPATHLEN];
 
     /* Figure out the working .g filename */
     struct bu_vls wfilename = BU_VLS_INIT_ZERO;
@@ -127,6 +128,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     // Have filename, get a location in the cache directory
     bu_dir(wdir, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), NULL);
     bu_dir(wfile, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), bu_vls_cstr(&wfilename), NULL);
+    bu_vls_printf(&wfilename, "_keep");
+    bu_dir(kfname, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), bu_vls_cstr(&wfilename), NULL);
     bu_vls_free(&dname);
     bu_vls_free(&wfilename);
 
@@ -140,7 +143,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
 	return BRLCAD_ERROR;
-    } 
+    }
 
     // Done with solids table
     bu_ptbl_free(as);
@@ -176,7 +179,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     for (size_t i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(ar, i);
+
+	// Get a name for the region's output BoT
 	bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
+	struct db_i *cdbip = db_open(wfile, DB_OPEN_READONLY);
+	db_dirbuild(cdbip);
+	db_update_nref(cdbip, &rt_uniresource);
+	bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)cdbip);
+	db_close(cdbip);
+
 	if (_ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), wdir, wfile, true) == BRLCAD_OK) {
 	    // Replace the region's comb tree with the new BoT
 	    struct db_i *wdbip = db_open(wfile, DB_OPEN_READWRITE);
@@ -209,10 +220,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	}
     }
 
-    bu_log("failure: %d\n", have_failure);
-
-    bu_exit(EXIT_FAILURE, "abort");
-
     // If any of the regions failed (implicit or explicit), don't keep or
     // dbconcat - the operation wasn't a full success.
     if (have_failure) {
@@ -222,7 +229,28 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	return BRLCAD_ERROR;
     }
 
-    // TODO - keep active regions into .g copy
+    // keep active regions into .g copy
+    struct ged *wgedp = ged_open("db", wfile, 1);
+    if (!wgedp) {
+    	bu_ptbl_free(ar);
+	bu_free(ar, "ar table");
+	bu_free(dpa, "free dpa");
+	return BRLCAD_ERROR;
+    }
+    const char **av = (const char **)bu_calloc(argc+3, sizeof(const char *), "av");
+    av[0] = "keep";
+    av[1] = kfname;
+    for (int i = 0; i < argc; i++) {
+	av[i+2] = argv[i];
+    }
+    av[argc+2] = NULL;
+    ged_exec(wgedp, argc+2, av);
+    bu_free(av, "av");
+
+    bu_log("failure: %d\n", have_failure);
+
+    bu_exit(EXIT_FAILURE, "abort");
+
     // TODO - dbconcat kept .g into original .g - either using -O to overwrite
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.

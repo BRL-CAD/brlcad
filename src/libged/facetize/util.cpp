@@ -41,8 +41,8 @@
 int
 _db_uniq_test(struct bu_vls *n, void *data)
 {
-    struct ged *gedp = (struct ged *)data;
-    if (db_lookup(gedp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
+    struct db_i *dbip = (struct db_i *)data;
+    if (db_lookup(dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
     return 0;
 }
 

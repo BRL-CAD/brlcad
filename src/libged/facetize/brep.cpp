@@ -58,7 +58,7 @@ _ged_facetize_mkname(struct _ged_facetize_state *s, const char *n, int type)
     }
     if (db_lookup(gedp->dbip, bu_vls_addr(&incr_template), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&incr_template, "-0");
-	bu_vls_incr(&incr_template, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	bu_vls_incr(&incr_template, NULL, NULL, &_db_uniq_test, (void *)gedp->dbip);
     }
 
     if (type == SOLID_OBJ_NAME) {
