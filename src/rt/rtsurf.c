@@ -270,6 +270,25 @@ rays_from_points_to_center(struct xray *rays, size_t count, const point_t pnts[]
 }
 
 
+
+// Function to compute surface area using the Cauchy-Crofton formula
+static double
+compute_surface_area(int intersections, int lines)
+{
+    const double PROPORTIONALITY_CONSTANT = 4.0;
+
+    if (lines == 0) {
+        return 0.0;
+    }
+
+    // Apply the Cauchy-Crofton formula
+    double area = PROPORTIONALITY_CONSTANT * ((double)intersections / (double)lines);
+
+    return area;
+}
+
+
+
 static double
 estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 {
@@ -282,6 +301,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     point_t center = VINIT_ZERO;
     size_t samples = opts->samples;
     int print = opts->print;
+    size_t hits = 0;
 
     ap.a_user = radius;
     ap.a_flag = opts->print;
@@ -321,7 +341,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	VUNITIZE(ap.a_ray.r_dir);
 
 	/* Shoot the ray. */
-	(void)rt_shootray(&ap);
+	hits += rt_shootray(&ap);
 
 	total_weighted_area += ap.a_dist;
     }
@@ -331,6 +351,9 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     bu_free(rays, "rays");
     rt_free_rti(ap.a_rt_i);
     ap.a_rt_i = NULL;
+
+    double area = compute_surface_area(hits * 2, (double)samples / 2.0);
+    bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %lf\n", hits * 2, (size_t)((double)samples / 2.0), area);
 
     double estimate = total_weighted_area / (samples * M_PI * radius * radius);
 
