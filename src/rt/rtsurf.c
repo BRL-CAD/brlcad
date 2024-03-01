@@ -41,6 +41,7 @@ static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     double radius = ap->a_user;
+    int print = ap->a_flag;
 
     static size_t cnt = 0;
 
@@ -79,9 +80,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    if (fabs(angle_cos) > 1e-5) {
 		ap->a_dist = M_PI * pow(hitp->hit_dist * angle_cos, 2);
 	    }
-	    printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
+
+	    if (print) {
+		printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
+	    }
 	} else {
-	    printf("in past%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 2.0);
+	    if (print) {
+		printf("in past%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 2.0);
+	    }
 	}
 
 #if 0
@@ -219,7 +225,7 @@ points_on_sphere(size_t count, point_t pnts[], double radius, point_t center)
 
 
 static double
-estimate_surface_area(const char *db, const char *obj[], size_t samples)
+estimate_surface_area(const char *db, const char *obj[], size_t samples, int print)
 {
     struct application ap;
     initialize(&ap, db, obj);
@@ -227,13 +233,20 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples)
     double radius = ap.a_rt_i->rti_radius;
     point_t center = VINIT_ZERO;
     ap.a_user = radius;
+    ap.a_flag = print;
 
     VADD2SCALE(center, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min, 0.5);
 
+    /* set to mm so working units match */
+    if (print)
+	printf("units mm\n");
+
     //printf("Radius: %lf\n", radius);
     //VPRINT("Center:", center);
-    printf("in center.sph sph %lf %lf %lf %lf\n", V3ARGS(center), 5.0);
-    printf("in bounding.sph sph %lf %lf %lf %lf\n", V3ARGS(center), radius);
+    if (print) {
+	printf("in center.sph sph %lf %lf %lf %lf\n", V3ARGS(center), 5.0);
+	printf("in bounding.sph sph %lf %lf %lf %lf\n", V3ARGS(center), radius);
+    }
 
     /* get sample points */
     point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
@@ -245,8 +258,10 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples)
 	VMOVE(ap.a_ray.r_pt, points[i]);
 	VSUB2(ap.a_ray.r_dir, center, points[i]); // point back at origin
 
-	printf("in pnt%zu.sph sph %lf %lf %lf %lf\n", i, V3ARGS(points[i]), 1.0);
-	printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
+	if (print) {
+	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\n", i, V3ARGS(points[i]), 1.0);
+	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
+	}
 
 	/* unitize before firing */
 	VUNITIZE(ap.a_ray.r_dir);
@@ -272,10 +287,10 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples)
 
 
 static void
-get_options(int argc, char *argv[], size_t *samples)
+get_options(int argc, char *argv[], size_t *samples, int *print)
 {
-    static const char *usage = "Usage: %s [-n #samples] model.g objects...\n";
-    
+    static const char *usage = "Usage: %s [-p] [-n #samples] model.g objects...\n";
+
     const char *argv0 = argv[0];
     const char *db = NULL;
     const char **obj = NULL;
@@ -290,11 +305,15 @@ get_options(int argc, char *argv[], size_t *samples)
     bu_optind = 1;
 
     int c;
-    while ((c = bu_getopt(argc, (char * const *)argv, "n:h?")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "pn:h?")) != -1) {
 	if (bu_optopt == '?')
 	    c = 'h';
 
 	switch (c) {
+	case 'p':
+	    if (print)
+		*print=1;
+	    break;
 	case 'n':
 	    if (samples) {
 		*samples = (size_t)atoi(bu_optarg);
@@ -330,19 +349,21 @@ int
 main(int argc, char *argv[])
 {
     size_t samples = 100;
+    int print = 0;
+
     char *db = NULL;
     char **obj = NULL;
 
     bu_setprogname(argv[0]);
 
-    get_options(argc, argv, &samples);
+    get_options(argc, argv, &samples, &print);
     db = argv[bu_optind];
     obj = argv + bu_optind + 1;
 
     bu_log(" db is %s\n", db);
     bu_log(" obj[0] is %s\n", obj[0]);
 
-    double estimate = estimate_surface_area(db, (const char **)obj, samples);
+    double estimate = estimate_surface_area(db, (const char **)obj, samples, print);
     bu_log("Estimated exterior surface area: %lf\n", estimate);
 
     return 0;
