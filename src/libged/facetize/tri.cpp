@@ -859,7 +859,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 }
 
 int
-_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname)
+_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname, bool output_to_working)
 {
     union tree *ftree;
     if (!dbip || !wdbp || !argv || !oname)
@@ -897,6 +897,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	return BRLCAD_ERROR;
 
     bu_log("Preparing Manifold inputs... done.\n");
+    struct db_i *odbip = (output_to_working) ? dbip : s->gedp->dbip;
 
     // We don't have a tree - unless we've been told not to, prepare an empty BoT
     if (!s->facetize_tree && !s->no_empty) {
@@ -912,7 +913,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	bot->num_faces = 0;
 	bot->vertices = NULL;
 	bot->faces = NULL;
-	if (_ged_facetize_write_bot(s, bot, oname) != BRLCAD_OK) {
+	if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
 	    return BRLCAD_ERROR;
 	}
 	return BRLCAD_OK;
@@ -955,7 +956,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	ftree->tr_d.td_d = NULL;
 
 	// If we have a manifold_mesh, write it out as a bot
-	if (_ged_facetize_write_bot(s, bot, oname) != BRLCAD_OK) {
+	if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
 	    return BRLCAD_ERROR;
 	}
     } else {
@@ -974,7 +975,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    bot->num_faces = 0;
 	    bot->vertices = NULL;
 	    bot->faces = NULL;
-	    if (_ged_facetize_write_bot(s, bot, oname) != BRLCAD_OK) {
+	    if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
 		return BRLCAD_ERROR;
 	    }
 	    return BRLCAD_OK;
@@ -985,7 +986,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 }
 
 int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *oname, char *pwdir, char *pwfile)
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *oname, char *pwdir, char *pwfile, bool output_to_working)
 {
     int ret = BRLCAD_OK;
 
@@ -1031,7 +1032,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 
     // Re-open working .g copy after BoTs have replaced CSG solids and perform
     // the tree walk to set up Manifold data.
-    struct db_i *wdbip = db_open(wfile, DB_OPEN_READONLY);
+    struct db_i *wdbip = db_open(wfile, (output_to_working) ? DB_OPEN_READWRITE :  DB_OPEN_READONLY);
     if (!wdbip) {
 	bu_dirclear(wdir);
 	if (wdir != pwdir)
@@ -1061,7 +1062,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	av[i] = dpa[i]->d_namep;
     }
 
-    if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, oname) != BRLCAD_OK) {
+    if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, oname, output_to_working) != BRLCAD_OK) {
 	if (!s->quiet) {
 	    bu_log("FACETIZE: failed to generate %s\n", oname);
 	}
@@ -1069,9 +1070,13 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 
     bu_free(av, "av");
     db_close(wdbip);
-    bu_dirclear(wdir);
-    if (wdir != pwdir)
+
+    if (!pwdir && !pwfile)
+	bu_dirclear(wdir);
+
+    if (wdir != pwdir) {
 	bu_free(wdir, "wdir");
+    }
     if (wfile != pwfile)
 	bu_free(wfile, "wfile");
     return ret;

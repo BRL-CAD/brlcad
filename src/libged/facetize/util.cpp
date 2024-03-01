@@ -87,11 +87,8 @@ _ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *arg
 }
 
 int
-_ged_facetize_write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const char *name)
+_ged_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, int verbosity)
 {
-    struct ged *gedp = s->gedp;
-    struct db_i *dbip = gedp->dbip;
-
     /* Export BOT as a new solid */
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
@@ -102,13 +99,13 @@ _ged_facetize_write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *b
 
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
-	if (s->verbosity)
+	if (verbosity)
 	    bu_log("Cannot add %s to directory\n", name);
 	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	if (s->verbosity)
+	if (verbosity)
 	    bu_log("Failed to write %s to database\n", name);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;

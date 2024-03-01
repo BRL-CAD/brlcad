@@ -44,7 +44,6 @@ int
 _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv)
 {
     struct ged *gedp = s->gedp;
-    int newobj_cnt = 0;
     int ret = BRLCAD_OK;
     struct db_i *dbip = gedp->dbip;
 
@@ -55,16 +54,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     if (!argc) return BRLCAD_ERROR;
 
     struct directory **dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
-    if (_ged_validate_objs_list(s, argc, argv, newobj_cnt) == BRLCAD_ERROR) {
-	bu_free(dpa, "free dpa");
+    if (_ged_sort_existing_objs(gedp, argc, argv, dpa)) {
+	bu_vls_printf(gedp->ged_result_str, "Non-existent object specified in region processing mode, aborting.");
 	return BRLCAD_ERROR;
     }
 
     const char *active_regions = "( -type r ! -below -type r )";
     struct bu_ptbl *ar = NULL;
     BU_ALLOC(ar, struct bu_ptbl);
-    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
+    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
 	if (s->verbosity) {
 	    bu_log("Problem searching for active regions - aborting.\n");
 	}
@@ -86,7 +84,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *active_solids = "! -type comb";
     struct bu_ptbl *as = NULL;
     BU_ALLOC(as, struct bu_ptbl);
-    if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, newobj_cnt, dpa, dbip, NULL) < 0) {
+    if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, argc, dpa, dbip, NULL) < 0) {
 	if (s->verbosity) {
 	    bu_log("Problem searching for active solids - aborting.\n");
 	}
@@ -154,7 +152,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *implicit_regions = "( ! -below -type r ! -type comb )";
     struct bu_ptbl *ir = NULL;
     BU_ALLOC(ir, struct bu_ptbl);
-    if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
+    if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, argc, dpa, dbip, NULL) < 0) {
 	if (s->verbosity) {
 	    bu_log("Problem searching for implicit regions - aborting.\n");
 	}
@@ -179,10 +177,11 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(ar, i);
 	bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
-	bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	if (_ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), wdir, wfile) == BRLCAD_OK) {
+	if (_ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), wdir, wfile, true) == BRLCAD_OK) {
 	    // Replace the region's comb tree with the new BoT
 	    struct db_i *wdbip = db_open(wfile, DB_OPEN_READWRITE);
+	    db_dirbuild(wdbip);
+	    db_update_nref(wdbip, &rt_uniresource);
 	    struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
 	    struct rt_db_internal intern;
 	    struct rt_comb_internal *comb;
@@ -209,6 +208,10 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    have_failure = true;
 	}
     }
+
+    bu_log("failure: %d\n", have_failure);
+
+    bu_exit(EXIT_FAILURE, "abort");
 
     // If any of the regions failed (implicit or explicit), don't keep or
     // dbconcat - the operation wasn't a full success.

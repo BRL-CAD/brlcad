@@ -179,12 +179,12 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 
     // If we're not doing NMG, use the Manifold booleval
     if (!s->in_place) {
-	ret = _ged_facetize_booleval(s, newobj_cnt, dpa, oname, NULL, NULL);
+	ret = _ged_facetize_booleval(s, newobj_cnt, dpa, oname, NULL, NULL, false);
     } else {
 	for (i = 0; i < argc; i++) {
 	    idpa[0] = dpa[i];
 	    idpa[1] = NULL;
-	    ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], NULL, NULL);
+	    ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], NULL, NULL, false);
 	    if (ret == BRLCAD_ERROR)
 		goto booleval_cleanup;
 	}
