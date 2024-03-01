@@ -751,8 +751,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 		for (size_t i = 0; i < dps.size(); i++) {
 		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
 		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
-		    if (tess_ret != BRLCAD_OK)
+		    if (tess_ret != BRLCAD_OK) {
 			bad_dps.push_back(dps[i]);
+			err_cnt++;
+		    }
 		}
 	    }
 
