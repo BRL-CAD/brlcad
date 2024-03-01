@@ -57,8 +57,6 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
     int flags = 0;
     int i = 0;
     struct bg_3d_spsr_opts *s_opts = &s->spsr_options.s_opts;
-    double feature_size = (s->spsr_options.feature_size > 0) ? s->spsr_options.feature_size : 2*s->spsr_options.avg_thickness;
-    double d_feature_size = (s->spsr_options.d_feature_size > 0) ? s->spsr_options.d_feature_size : 1.5 * feature_size;
     point_t *input_points_3d = NULL;
     vect_t *input_normals_3d = NULL;
     point_t rpp_min, rpp_max;
@@ -74,6 +72,7 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
 	VMOVE(input_points_3d[i], pn->v);
 	VMOVE(input_normals_3d[i], pn->n);
+	VMINMAX(rpp_min, rpp_max, input_points_3d[i]);
 	i++;
     }
 
@@ -97,6 +96,9 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 
     /* do decimation */
     {
+	double feature_size = (s->spsr_options.feature_size > 0) ? s->spsr_options.feature_size : 0.01*DIST_PNT_PNT(rpp_min, rpp_max);
+	double d_feature_size = (s->spsr_options.d_feature_size > 0) ? s->spsr_options.d_feature_size : 1.5 * feature_size;
+
 	*obot = bot;
 	bu_log("SPSR: decimating with feature size: %g\n", d_feature_size);
 
