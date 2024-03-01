@@ -65,6 +65,7 @@ method_setup(struct tess_opts *s)
     if (!methods->size()) {
 	methods->push_back(std::string("NMG"));
 	methods->push_back(std::string("CM"));
+	methods->push_back(std::string("CO3NE"));
 	methods->push_back(std::string("SPSR"));
     }
 
