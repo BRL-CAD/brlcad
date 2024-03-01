@@ -274,6 +274,8 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples)
 static void
 get_options(int argc, char *argv[], size_t *samples)
 {
+    static const char *usage = "Usage: %s [-n #samples] model.g objects...\n";
+    
     const char *argv0 = argv[0];
     const char *db = NULL;
     const char **obj = NULL;
@@ -282,7 +284,7 @@ get_options(int argc, char *argv[], size_t *samples)
      * object on the command line, number of samples optional.
      */
     if (argc < 3) {
-	bu_exit(1, "Usage: %s [#samples] model.g objects...\n", argv0);
+	bu_exit(1, usage, argv0);
     }
 
     bu_optind = 1;
@@ -301,7 +303,7 @@ get_options(int argc, char *argv[], size_t *samples)
 	case '?':
 	case 'h':
 	    /* asking for help */
-	    bu_exit(EXIT_SUCCESS, "Usage: %s [#samples] model.g objects...\n", argv0);
+	    bu_exit(EXIT_SUCCESS, usage, argv0);
 	default:
 	    bu_exit(EXIT_FAILURE, "ERROR: unknown option -%c\n", *bu_optarg);
 	}
