@@ -57,7 +57,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	bu_log("\n--- Hit region %s (in %s, out %s)\n",
 	       pp->pt_regionp->reg_name,
 	       pp->pt_inseg->seg_stp->st_name,
-	       pp->pt_outseg->seg_stp->st_name );
+	       pp->pt_outseg->seg_stp->st_name);
 #endif
 
 	/* in hit point */
@@ -74,8 +74,8 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
 	//rt_pr_hit("  In", hitp);
-	//VPRINT(   "  Ipoint", pt);
-	//VPRINT(   "  Inormal", inormal);
+	//VPRINT("  Ipoint", pt);
+	//VPRINT("  Inormal", inormal);
 
 	/* print the entry hit point */
 	if (hitp->hit_dist < radius) {
@@ -104,8 +104,8 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
 
 	//rt_pr_hit("  In", hitp);
-	//VPRINT(   "  Ipoint", pt);
-	//VPRINT(   "  Inormal", inormal);
+	//VPRINT("  Ipoint", pt);
+	//VPRINT("  Inormal", inormal);
 
 	/* print the exit hit point */
 	if (hitp->hit_dist < radius) {
@@ -126,8 +126,8 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 	/* print the exit hit point info */
 	//rt_pr_hit("  Out", hitp);
-	//VPRINT(   "  Opoint", pt);
-	//VPRINT(   "  Onormal", onormal);
+	//VPRINT("  Opoint", pt);
+	//VPRINT("  Onormal", onormal);
     }
 
     return 1;
@@ -186,7 +186,7 @@ initialize(struct application *ap, const char *db, const char *obj[])
     }
 
     size_t loaded = 0;
-    while (*obj && *obj[0] != '\0')  {
+    while (*obj && *obj[0] != '\0') {
 	if (rt_gettree(rtip, obj[0]) < 0) {
 	    bu_log("Loading the geometry for [%s] FAILED\n", obj[0]);
 	} else {
@@ -250,6 +250,16 @@ points_on_sphere(size_t count, point_t pnts[], double radius, point_t center)
 }
 
 
+static void
+rays_from_points_to_center(struct xray *rays, size_t count, const point_t pnts[], const point_t center)
+{
+    for (size_t i = 0; i < count; ++i) {
+	VMOVE(rays[i].r_pt, pnts[i]);
+	VSUB2(rays[i].r_dir, center, pnts[i]); // point back at origin
+    }
+}
+
+
 static double
 estimate_surface_area(const char *db, const char *obj[], size_t samples, int print)
 {
@@ -269,6 +279,7 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples, int pri
 
     //printf("Radius: %lf\n", radius);
     //VPRINT("Center:", center);
+
     if (print) {
 	printf("in center.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), 5.0);
 	printf("in bounding.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), radius);
@@ -278,23 +289,21 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples, int pri
     point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
     points_on_sphere(samples, points, radius, center);
 
+    struct xray *rays = (struct xray *)bu_calloc(samples, sizeof(struct xray), "rays");
+    rays_from_points_to_center(rays, samples, points, center);
+
     double total_weighted_area = 0.0;
 
     for (size_t i = 0; i < samples; ++i) {
-	VMOVE(ap.a_ray.r_pt, points[i]);
-	VSUB2(ap.a_ray.r_dir, center, points[i]); // point back at origin
+	ap.a_ray = rays[i]; /* struct copy */
 
 	if (print) {
 	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(points[i]), 1.0);
 	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
-	    // printf("erase pnt%zu.sph dir%zu.rcc\n", i, i);
 	}
 
 	/* unitize before firing */
 	VUNITIZE(ap.a_ray.r_dir);
-
-	//VPRINT("Pnt", ap.a_ray.r_pt);
-	//VPRINT("Dir", ap.a_ray.r_dir);
 
 	/* Shoot the ray. */
 	(void)rt_shootray(&ap);
@@ -302,15 +311,9 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples, int pri
 	total_weighted_area += ap.a_dist;
     }
 
-    if (print) {
-	//printf("g pnts pnt*.sph\n");
-	//printf("g dirs dir*.rcc\n");
-	//printf("g hits hit*.sph\n");
-	printf("Z\n");
-    }
-
     /* release our raytracing instance and points */
     bu_free(points, "points");
+    bu_free(rays, "rays");
     rt_free_rti(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
@@ -344,21 +347,21 @@ get_options(int argc, char *argv[], size_t *samples, int *print)
 	    c = 'h';
 
 	switch (c) {
-	case 'p':
-	    if (print)
-		*print=1;
-	    break;
-	case 'n':
-	    if (samples) {
-		*samples = (size_t)atoi(bu_optarg);
-	    }
-	    break;
-	case '?':
-	case 'h':
-	    /* asking for help */
-	    bu_exit(EXIT_SUCCESS, usage, argv0);
-	default:
-	    bu_exit(EXIT_FAILURE, "ERROR: unknown option -%c\n", *bu_optarg);
+	    case 'p':
+		if (print)
+		    *print=1;
+		break;
+	    case 'n':
+		if (samples) {
+		    *samples = (size_t)atoi(bu_optarg);
+		}
+		break;
+	    case '?':
+	    case 'h':
+		/* asking for help */
+		bu_exit(EXIT_SUCCESS, usage, argv0);
+	    default:
+		bu_exit(EXIT_FAILURE, "ERROR: unknown option -%c\n", *bu_optarg);
 	}
     }
 
@@ -398,10 +401,12 @@ main(int argc, char *argv[])
     bu_log(" obj[0] is %s\n", obj[0]);
 
     double estimate = estimate_surface_area(db, (const char **)obj, samples, print);
+
     bu_log("Estimated exterior surface area: %lf\n", estimate);
 
     return 0;
 }
+
 
 /*
  * Local Variables:
