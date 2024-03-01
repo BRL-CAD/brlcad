@@ -34,7 +34,15 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/assert.h"
 #include "raytrace.h"
+
+
+struct options
+{
+    size_t samples;
+    int print;
+};
 
 
 static int
@@ -175,6 +183,8 @@ initialize(struct application *ap, const char *db, const char *obj[])
 
     char title[4096] = {'\0'};
 
+    BU_ASSERT(ap && db);
+
     rt_debug = 0;
 
     rtip = rt_dirbuild(db, title, sizeof(title));
@@ -261,15 +271,20 @@ rays_from_points_to_center(struct xray *rays, size_t count, const point_t pnts[]
 
 
 static double
-estimate_surface_area(const char *db, const char *obj[], size_t samples, int print)
+estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 {
+    BU_ASSERT(db && obj && opts);
+
     struct application ap;
     initialize(&ap, db, obj);
 
     double radius = ap.a_rt_i->rti_radius;
     point_t center = VINIT_ZERO;
+    size_t samples = opts->samples;
+    int print = opts->print;
+
     ap.a_user = radius;
-    ap.a_flag = print;
+    ap.a_flag = opts->print;
 
     VADD2SCALE(center, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min, 0.5);
 
@@ -324,7 +339,7 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples, int pri
 
 
 static void
-get_options(int argc, char *argv[], size_t *samples, int *print)
+get_options(int argc, char *argv[], struct options *opts)
 {
     static const char *usage = "Usage: %s [-p] [-n #samples] model.g objects...\n";
 
@@ -348,13 +363,12 @@ get_options(int argc, char *argv[], size_t *samples, int *print)
 
 	switch (c) {
 	    case 'p':
-		if (print)
-		    *print=1;
+		if (opts)
+		    opts->print = 1;
 		break;
 	    case 'n':
-		if (samples) {
-		    *samples = (size_t)atoi(bu_optarg);
-		}
+		if (opts)
+		    opts->samples = (size_t)atoi(bu_optarg);
 		break;
 	    case '?':
 	    case 'h':
@@ -365,8 +379,7 @@ get_options(int argc, char *argv[], size_t *samples, int *print)
 	}
     }
 
-    bu_log("Samples: %zu\n", *samples);
-    bu_log("optind is %d\n", bu_optind);
+    bu_log("Samples: %zu\n", opts->samples);
     argv += bu_optind;
 
     db = argv[0];
@@ -385,22 +398,23 @@ get_options(int argc, char *argv[], size_t *samples, int *print)
 int
 main(int argc, char *argv[])
 {
-    size_t samples = 100;
-    int print = 0;
+    struct options opts;
+    opts.samples = 100;
+    opts.print = 0;
 
     char *db = NULL;
     char **obj = NULL;
 
     bu_setprogname(argv[0]);
 
-    get_options(argc, argv, &samples, &print);
+    get_options(argc, argv, &opts);
     db = argv[bu_optind];
     obj = argv + bu_optind + 1;
 
     bu_log(" db is %s\n", db);
     bu_log(" obj[0] is %s\n", obj[0]);
 
-    double estimate = estimate_surface_area(db, (const char **)obj, samples, print);
+    double estimate = estimate_surface_area(db, (const char **)obj, &opts);
 
     bu_log("Estimated exterior surface area: %lf\n", estimate);
 
