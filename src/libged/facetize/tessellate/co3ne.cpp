@@ -59,7 +59,7 @@ co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inte
 
 #ifdef USE_GEOGRAM
 
-#if 0
+#if 1
     // Geogram libraries like to print a lot - shut down
     // the I/O channels until we can clear the logger
     int serr;
@@ -85,7 +85,7 @@ co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inte
     // Make sure geogram is initialized
     GEO::initialize();
 
-#if 0
+#if 1
     // Quell logging messages
     GEO::Logger::instance()->unregister_all_clients();
 

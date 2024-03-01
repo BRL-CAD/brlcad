@@ -157,11 +157,13 @@ class spsr_opts : public sample_opts {
 method_options_t::method_options_t()
 {
     nmg_opts n;
-    cm_opts c;
+    cm_opts cm;
+    cm_opts co3ne;
     spsr_opts s;
 
     max_time[std::string("NMG")] = n.max_time;
-    max_time[std::string("CM")] = c.max_time;
+    max_time[std::string("CM")] = cm.max_time;
+    max_time[std::string("CO3NE")] = co3ne.max_time;
     max_time[std::string("SPSR")] = s.max_time;
 }
 
