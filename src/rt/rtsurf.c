@@ -43,6 +43,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     double radius = ap->a_user;
     int print = ap->a_flag;
 
+    /* make our hit spheres big enough to see */
+    double hitrad = ((radius / 1000.0) > 1.0) ? radius / 1000.0 : 1.0;
+
     static size_t cnt = 0;
 
     for (struct partition *pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
@@ -82,11 +85,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    }
 
 	    if (print) {
-		printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
+		printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], hitrad);
 	    }
 	} else {
 	    if (print) {
-		printf("in past%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 2.0);
+		printf("in past%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], hitrad * 2.0);
 	    }
 	}
 
@@ -261,6 +264,7 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples, int pri
 	if (print) {
 	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\n", i, V3ARGS(points[i]), 1.0);
 	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
+	    printf("erase pnt%zu.sph dir%zu.rcc\n", i, i);
 	}
 
 	/* unitize before firing */
