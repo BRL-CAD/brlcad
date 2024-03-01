@@ -185,7 +185,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	struct db_i *cdbip = db_open(wfile, DB_OPEN_READONLY);
 	db_dirbuild(cdbip);
 	db_update_nref(cdbip, &rt_uniresource);
-	bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)cdbip);
+	struct directory *dcheck = db_lookup(cdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
+	if (dcheck != RT_DIR_NULL)
+	    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)cdbip);
 	db_close(cdbip);
 
 	if (_ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), wdir, wfile, true) == BRLCAD_OK) {
@@ -237,7 +239,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	bu_free(dpa, "free dpa");
 	return BRLCAD_ERROR;
     }
-    const char **av = (const char **)bu_calloc(argc+3, sizeof(const char *), "av");
+    const char **av = (const char **)bu_calloc(argc+10, sizeof(const char *), "av");
     av[0] = "keep";
     av[1] = kfname;
     for (int i = 0; i < argc; i++) {
@@ -245,15 +247,20 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     }
     av[argc+2] = NULL;
     ged_exec(wgedp, argc+2, av);
-    bu_free(av, "av");
 
-    bu_log("failure: %d\n", have_failure);
-
-    bu_exit(EXIT_FAILURE, "abort");
-
+#if 0
     // TODO - dbconcat kept .g into original .g - either using -O to overwrite
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.
+    av[0] = "dbconcat";
+    av[1] = kfname;
+    for (int i = 0; i < argc; i++) {
+	av[i+2] = argv[i];
+    }
+    av[argc+2] = NULL;
+    ged_exec(wgedp, argc+2, av);
+    bu_free(av, "av");
+#endif
 
     /* Done changing stuff - update nref. */
     db_update_nref(dbip, &rt_uniresource);
