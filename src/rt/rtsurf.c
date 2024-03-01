@@ -33,23 +33,18 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/getopt.h"
 #include "raytrace.h"
 
 
 static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
-    struct partition *pp;
-    struct hit *hitp;
-    struct soltab *stp;
-    point_t pt;
-    vect_t inormal;
-    vect_t onormal;
     double radius = ap->a_user;
 
     static size_t cnt = 0;
 
-    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+    for (struct partition *pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 
 	/* print the name of the region we hit as well as the name of
 	 * the primitives encountered on entry and exit.
@@ -62,11 +57,16 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 #endif
 
 	/* in hit point */
+	point_t pt;
+	struct hit *hitp;
 	hitp = pp->pt_inhit;
 	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+
+	struct soltab *stp;
 	stp = pp->pt_inseg->seg_stp;
 
 	/* in hit normal */
+	vect_t inormal;
 	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
 	/* print the entry hit point info */
@@ -74,18 +74,26 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	//VPRINT(   "  Ipoint", pt);
 	//VPRINT(   "  Inormal", inormal);
 	if (hitp->hit_dist < radius) {
+	    double angle_cos = VDOT(ap->a_ray.r_dir, inormal);
+
+	    if (fabs(angle_cos) > 1e-5) {
+		ap->a_dist = M_PI * pow(hitp->hit_dist * angle_cos, 2);
+	    }
 	    printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 1.0);
 	} else {
 	    printf("in past%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], 2.0);
 	}
 
+#if 0
 	/* out hit point */
 	hitp = pp->pt_outhit;
 	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
 	stp = pp->pt_outseg->seg_stp;
 
 	/* out hit normal */
+	vect_t onormal;
 	RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+#endif
 
 	/* print the exit hit point info */
 	//rt_pr_hit("  Out", hitp);
@@ -148,11 +156,17 @@ initialize(struct application *ap, const char *db, const char *obj[])
 	bu_log("Title:\n%s\n", title);
     }
 
+    size_t loaded = 0;
     while (*obj && *obj[0] != '\0')  {
-	if (rt_gettree(rtip, obj[0]) < 0)
+	if (rt_gettree(rtip, obj[0]) < 0) {
 	    bu_log("Loading the geometry for [%s] FAILED\n", obj[0]);
+	} else {
+	    loaded++;
+	}
 	obj++;
     }
+    if (loaded == 0)
+	bu_exit(3, "No geometry loaded from [%s]\n", db);
 
     rt_prep_parallel(rtip, 1);
 
@@ -225,6 +239,8 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples)
     point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
     points_on_sphere(samples, points, radius, center);
 
+    double total_weighted_area = 0.0;
+
     for (size_t i = 0; i < samples; ++i) {
 	VMOVE(ap.a_ray.r_pt, points[i]);
 	VSUB2(ap.a_ray.r_dir, center, points[i]); // point back at origin
@@ -240,6 +256,8 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples)
 
 	/* Shoot the ray. */
 	(void)rt_shootray(&ap);
+
+	total_weighted_area += ap.a_dist;
     }
 
     /* release our raytracing instance and points */
@@ -247,27 +265,82 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples)
     rt_free_rti(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
-    double estimate = 0.0;
+    double estimate = total_weighted_area / (samples * M_PI * radius * radius);
 
     return estimate;
 }
 
 
-int
-main(int argc, char **argv)
+static void
+get_options(int argc, char *argv[], size_t *samples)
 {
-    int samples = 100;
+    const char *argv0 = argv[0];
+    const char *db = NULL;
+    const char **obj = NULL;
+
+    /* Make sure we have at least a geometry file and one geometry
+     * object on the command line, number of samples optional.
+     */
+    if (argc < 3) {
+	bu_exit(1, "Usage: %s [#samples] model.g objects...\n", argv0);
+    }
+
+    bu_optind = 1;
+
+    int c;
+    while ((c = bu_getopt(argc, (char * const *)argv, "n:h?")) != -1) {
+	if (bu_optopt == '?')
+	    c = 'h';
+
+	switch (c) {
+	case 'n':
+	    if (samples) {
+		*samples = (size_t)atoi(bu_optarg);
+	    }
+	    break;
+	case '?':
+	case 'h':
+	    /* asking for help */
+	    bu_exit(EXIT_SUCCESS, "Usage: %s [#samples] model.g objects...\n", argv0);
+	default:
+	    bu_exit(EXIT_FAILURE, "ERROR: unknown option -%c\n", *bu_optarg);
+	}
+    }
+
+    bu_log("Samples: %zu\n", *samples);
+    bu_log("optind is %d\n", bu_optind);
+    argv += bu_optind;
+
+    db = argv[0];
+    obj = (const char **)(argv+1);
+
+    /* final sanity checks */
+    if (!db || !bu_file_exists(db, NULL)) {
+	bu_exit(EXIT_FAILURE, "ERROR: database %s not found\n", (db)?db:"[]");
+    }
+    if (!obj) {
+	bu_exit(EXIT_FAILURE, "ERROR: object(s) not specified\n");
+    }
+}
+
+
+int
+main(int argc, char *argv[])
+{
+    size_t samples = 100;
+    char *db = NULL;
+    char **obj = NULL;
 
     bu_setprogname(argv[0]);
 
-    /* Make sure we have at least a geometry file and one geometry
-     * object on the command line.
-     */
-    if (argc < 3) {
-	bu_exit(1, "Usage: %s model.g objects...\n", argv[0]);
-    }
+    get_options(argc, argv, &samples);
+    db = argv[bu_optind];
+    obj = argv + bu_optind + 1;
 
-    double estimate = estimate_surface_area(argv[1], (const char **)argv+2, samples);
+    bu_log(" db is %s\n", db);
+    bu_log(" obj[0] is %s\n", obj[0]);
+
+    double estimate = estimate_surface_area(db, (const char **)obj, samples);
     bu_log("Estimated exterior surface area: %lf\n", estimate);
 
     return 0;

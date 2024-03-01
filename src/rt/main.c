@@ -46,7 +46,6 @@
 
 #include "bu/app.h"
 #include "bu/endian.h"
-#include "bu/getopt.h"
 #include "bu/bitv.h"
 #include "bu/debug.h"
 #include "bu/malloc.h"
