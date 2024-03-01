@@ -73,10 +73,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	vect_t inormal;
 	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
-	/* print the entry hit point info */
 	//rt_pr_hit("  In", hitp);
 	//VPRINT(   "  Ipoint", pt);
 	//VPRINT(   "  Inormal", inormal);
+
+	/* print the entry hit point */
 	if (hitp->hit_dist < radius) {
 	    double angle_cos = VDOT(ap->a_ray.r_dir, inormal);
 
@@ -85,15 +86,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    }
 
 	    if (print) {
-		printf("in hit%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], hitrad);
+		printf("in hit%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad);
 	    }
 	} else {
 	    if (print) {
-		printf("in past%zu.sph sph %lf %lf %lf %lf\n", cnt++, pt[0], pt[1], pt[2], hitrad * 2.0);
+		printf("in past%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad * 2.0);
 	    }
 	}
 
-#if 0
 	/* out hit point */
 	hitp = pp->pt_outhit;
 	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
@@ -102,7 +102,27 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	/* out hit normal */
 	vect_t onormal;
 	RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
-#endif
+
+	//rt_pr_hit("  In", hitp);
+	//VPRINT(   "  Ipoint", pt);
+	//VPRINT(   "  Inormal", inormal);
+
+	/* print the exit hit point */
+	if (hitp->hit_dist < radius) {
+	    double angle_cos = VDOT(ap->a_ray.r_dir, inormal);
+
+	    if (fabs(angle_cos) > 1e-5) {
+		ap->a_dist = M_PI * pow(hitp->hit_dist * angle_cos, 2);
+	    }
+
+	    if (print) {
+		printf("in hit%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad);
+	    }
+	} else {
+	    if (print) {
+		printf("in past%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad * 2.0);
+	    }
+	}
 
 	/* print the exit hit point info */
 	//rt_pr_hit("  Out", hitp);
@@ -186,10 +206,13 @@ initialize(struct application *ap, const char *db, const char *obj[])
     ap->a_rt_i = rtip;
     ap->a_hit = hit;
     ap->a_miss = miss;
+    ap->a_overlap = NULL;
+    ap->a_multioverlap = NULL;
+    ap->a_logoverlap = rt_silent_logoverlap;
     ap->a_resource = &resources[0];
 
     /* shoot through? */
-    ap->a_onehit = 1;
+    ap->a_onehit = 0;
 
     init_random();
 
@@ -247,8 +270,8 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples, int pri
     //printf("Radius: %lf\n", radius);
     //VPRINT("Center:", center);
     if (print) {
-	printf("in center.sph sph %lf %lf %lf %lf\n", V3ARGS(center), 5.0);
-	printf("in bounding.sph sph %lf %lf %lf %lf\n", V3ARGS(center), radius);
+	printf("in center.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), 5.0);
+	printf("in bounding.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), radius);
     }
 
     /* get sample points */
@@ -262,9 +285,9 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples, int pri
 	VSUB2(ap.a_ray.r_dir, center, points[i]); // point back at origin
 
 	if (print) {
-	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\n", i, V3ARGS(points[i]), 1.0);
-	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
-	    printf("erase pnt%zu.sph dir%zu.rcc\n", i, i);
+	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(points[i]), 1.0);
+	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
+	    // printf("erase pnt%zu.sph dir%zu.rcc\n", i, i);
 	}
 
 	/* unitize before firing */
@@ -277,6 +300,13 @@ estimate_surface_area(const char *db, const char *obj[], size_t samples, int pri
 	(void)rt_shootray(&ap);
 
 	total_weighted_area += ap.a_dist;
+    }
+
+    if (print) {
+	//printf("g pnts pnt*.sph\n");
+	//printf("g dirs dir*.rcc\n");
+	//printf("g hits hit*.sph\n");
+	printf("Z\n");
     }
 
     /* release our raytracing instance and points */
