@@ -260,6 +260,13 @@ points_on_sphere(size_t count, point_t pnts[], double radius, point_t center)
 }
 
 
+#if 0
+/* This is the former method that shot rays through the bounding
+ * sphere center.  this attenuated areas based on the solid angle and
+ * surface normal, but was egregiously oversampling surface area near
+ * the center and undersampling near the radius.  Still may need this
+ * method though to construct a boundary mesh representation.
+ */
 static void
 rays_from_points_to_center(struct xray *rays, size_t count, const point_t pnts[], const point_t center)
 {
@@ -268,6 +275,7 @@ rays_from_points_to_center(struct xray *rays, size_t count, const point_t pnts[]
 	VSUB2(rays[i].r_dir, center, pnts[i]); // point back at origin
     }
 }
+#endif
 
 
 static void
@@ -325,12 +333,10 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     points_on_sphere(samples, points, radius, center);
 
     struct xray *rays = (struct xray *)bu_calloc(samples, sizeof(struct xray), "rays");
-    if (0) {
-	rays_from_points_to_center(rays, samples, points, center);
-    } else {
-	rays_through_point_pairs(rays, samples, points);
-	rays_through_point_pairs(rays+(samples/2), samples, points);
-    }
+
+    /* use the sample points twice to generate our set of sample rays */
+    rays_through_point_pairs(rays, samples, points);
+    rays_through_point_pairs(rays+(samples/2), samples, points);
 
     size_t hits = 0;
     for (size_t i = 0; i < samples; ++i) {
@@ -366,35 +372,40 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 static double
 do_iterations(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
 {
-    double initial_estimate = 0.0;
-    double running_estimate = 0.0;
-    double change_in_estimate = 100.0; // initialized high
+    double prev2_estimate = 0.0;
+    double prev1_estimate = 0.0;
+    double curr_estimate = 0.0;
+    double curr_percent = 100.0; // initialized high
+    double prev_percent = 100.0; // initialized high
     double threshold = 0.1; // convergence threshold (0.1% change)
-    int iteration = 0;
+    size_t iteration = 0;
+    size_t curr_samples = samples;
 
-    while (change_in_estimate > threshold) {
+    while (curr_percent > threshold && prev_percent > threshold) {
+
 	// increase samples every iteration by just over 2x
-	int current_samples = samples * pow(2.1, iteration);
+	curr_samples = samples * pow(2.01, iteration);
 
-	running_estimate = do_one_iteration(ap, current_samples, center, radius, opts);
+	curr_estimate = do_one_iteration(ap, curr_samples, center, radius, opts);
 
-	if (iteration > 0) {
-	    // need at least two iterations to see if we're stable
-	    // calculate percent change
-	    change_in_estimate = fabs((running_estimate - initial_estimate) / initial_estimate) * 100.0;
+	// check convergence after 3 iterations
+	if (iteration > 1) {
+	    curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
+	    prev_percent = fabs((prev1_estimate - prev2_estimate) / prev2_estimate) * 100.0;
 
-	    // see if we're done.
-	    if (change_in_estimate <= threshold) {
+	    // see if we're done by checking last two estimates
+	    if (curr_percent <= threshold && prev_percent <= threshold) {
 		break; // yep, converged.
 	    }
 	    // nope, not converged.
 	}
 
-	initial_estimate = running_estimate;
+	prev2_estimate = prev1_estimate;
+	prev1_estimate = curr_estimate;
 	iteration++;
     }
 
-    return running_estimate;
+    return curr_estimate;
 }
 
 
@@ -480,9 +491,8 @@ get_options(int argc, char *argv[], struct options *opts)
 	}
     }
 
-    if (opts->samples % 2) {
-	bu_log("WARNING: samples needs to be even number, adjusting by 1\n");
-	opts->samples++;
+    if (opts->samples < 1) {
+	opts->samples = 1;
     }
 
     bu_log("Samples: %zu\n", opts->samples);
