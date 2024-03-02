@@ -270,23 +270,49 @@ rays_from_points_to_center(struct xray *rays, size_t count, const point_t pnts[]
 }
 
 
+static void
+shuffle_points(point_t *points, size_t n)
+{
+    for (size_t i = n - 1; i > 0; i--) {
+        size_t j = rand() % (i + 1);
+
+	point_t temp;
+	VMOVE(temp, points[i]);
+	VMOVE(points[i], points[j]);
+	VMOVE(points[j], temp);
+    }
+}
+
+
+static void
+rays_through_point_pairs(struct xray *rays, size_t count, point_t pnts[])
+{
+    /* generate N/2 rays from an array of N points */
+    shuffle_points(pnts, count);
+
+    for (size_t i = 0; i < count; i += 2) {
+	/* from one point through another */
+	VMOVE(rays[i / 2].r_pt, pnts[i]);
+	VSUB2(rays[i / 2].r_dir, pnts[i + 1], pnts[i]);
+    }
+}
+
 
 // Function to compute surface area using the Cauchy-Crofton formula
 static double
-compute_surface_area(int intersections, int lines)
+compute_surface_area(int intersections, int lines, double radius)
 {
-    const double PROPORTIONALITY_CONSTANT = 4.0;
+    const double PROPORTIONALITY_CONSTANT = 4.0 * M_PI * radius * radius;
 
     if (lines == 0) {
         return 0.0;
     }
 
     // Apply the Cauchy-Crofton formula
-    double area = PROPORTIONALITY_CONSTANT * ((double)intersections / (double)lines);
+    double area = PROPORTIONALITY_CONSTANT * (double)intersections / ((double)lines * 2.0);
 
     return area;
 }
-
 
 
 static double
@@ -312,7 +338,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     if (print)
 	printf("units mm\n");
 
-    //printf("Radius: %lf\n", radius);
+    bu_log("Radius: %lf\n", radius);
     //VPRINT("Center:", center);
 
     if (print) {
@@ -325,7 +351,12 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     points_on_sphere(samples, points, radius, center);
 
     struct xray *rays = (struct xray *)bu_calloc(samples, sizeof(struct xray), "rays");
-    rays_from_points_to_center(rays, samples, points, center);
+    if (0) {
+	rays_from_points_to_center(rays, samples, points, center);
+    } else {
+	rays_through_point_pairs(rays, samples, points);
+	rays_through_point_pairs(rays+(samples/2), samples, points);
+    }
 
     double total_weighted_area = 0.0;
 
@@ -352,8 +383,11 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     rt_free_rti(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
-    double area = compute_surface_area(hits * 2, (double)samples / 2.0);
-    bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %lf\n", hits * 2, (size_t)((double)samples / 2.0), area);
+    if (hits > samples)
+	bu_log("WARNING: hits (%zu) > samples (%zu)\n", hits, samples);
+
+    double area = compute_surface_area(hits * 2, (double)samples, radius);
+    bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %lf\n", hits * 2, (size_t)((double)samples), area);
 
     double estimate = total_weighted_area / (samples * M_PI * radius * radius);
 
@@ -400,6 +434,11 @@ get_options(int argc, char *argv[], struct options *opts)
 	    default:
 		bu_exit(EXIT_FAILURE, "ERROR: unknown option -%c\n", *bu_optarg);
 	}
+    }
+
+    if (opts->samples % 2) {
+	bu_log("WARNING: samples needs to be even number, adjusting by 1\n");
+	opts->samples++;
     }
 
     bu_log("Samples: %zu\n", opts->samples);
