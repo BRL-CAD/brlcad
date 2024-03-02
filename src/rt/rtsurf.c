@@ -369,7 +369,7 @@ do_iterations(struct application *ap, size_t samples, point_t center, double rad
     double initial_estimate = 0.0;
     double running_estimate = 0.0;
     double change_in_estimate = 100.0; // initialized high
-    double threshold = 0.1; // convergence threshold (1.0% change)
+    double threshold = 0.1; // convergence threshold (0.1% change)
     int iteration = 0;
 
     while (change_in_estimate > threshold) {
