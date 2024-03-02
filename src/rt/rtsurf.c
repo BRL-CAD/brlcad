@@ -21,6 +21,35 @@
  *
  * Calculate exterior surface areas.
  *
+ * The general method involves generating a set of random points on
+ * the bounding sphere, and sampling through those points via ray
+ * tracing to determine if we encounter the geometry.  Hit information
+ * can then be used to calculate surface area or volume.
+ *
+ * This only works if there's an even and adequate distribution of the
+ * sample space, which means we can use pseudo-random number
+ * generation (blue noise would probably be better) or even sampling
+ * patterns on the bounding surface.  It also means we can do
+ * monte-carlo sampling iteratively and refine towards a desired
+ * convergence threshold.
+ *
+ * With this method, we could use hit points to estimate surface area
+ * or solid segments to estimate volume.  Here, we're using the first
+ * and last hit points to estimate exterior surface area.
+ *
+ * Came up with the idea for this approach many years ago, but
+ * apparently not alone in that regard.  Found two other papers very
+ * closely relating to the method we're using:
+ *
+ * Li, Xueqing & Wang, Wenping & Martin, Ralph & Bowyer, Adrian.
+ * (2003).  Using low-discrepancy sequences and the Crofton formula to
+ * compute surface areas of geometric models. Computer-Aided Design.
+ * 35.  771-782.  10.1016/S0010-4485(02)00100-8.
+ *
+ * Liu, Yu-Shen & Yi, Jing & Zhang, Hu & Zheng, Guo-Qin & Paul,
+ * Jean-Claude.  (2010).  Surface area estimation of digitized 3D
+ * objects using quasi-Monte Carlo methods.  Pattern Recognition.  43.
+ * 3900-3909. 10.1016/j.patcog.2010.06.002.
  */
 
 #include "common.h"
