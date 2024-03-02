@@ -140,6 +140,7 @@ uniq_name(const char *name, struct ged_concat_data *cc_data)
 	}
 	ndp = db_lookup(cc_data->target_dbip, bu_vls_cstr(&iname), LOOKUP_QUIET);
 	if (!ndp) {
+	    nname = std::string(bu_vls_cstr(&iname));
 	    (*name_map)[(name) ? std::string(name) : std::string("UNKNOWN")] = nname;
 	    used_names->insert(nname);
 	    bu_vls_free(&iname);
