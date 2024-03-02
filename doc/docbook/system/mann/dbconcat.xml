@@ -23,6 +23,7 @@
       <arg choice="opt" rep="norepeat"><replaceable>-u</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-c</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-s|-p</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-A</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-O</replaceable></arg>
       <arg choice="req" rep="norepeat"><replaceable>database_file</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>affix</replaceable></arg>
@@ -33,40 +34,118 @@
 
     <para>
       Concatenates an existing <emphasis>BRL-CAD</emphasis> database to the
-      database currently being edited. If an <emphasis>affix</emphasis> is
-      supplied, then all objects from the <emphasis>database_file</emphasis>
-      will have the <emphasis>affix</emphasis> added to their
-      names as a suffix (if the <emphasis>-s</emphasis> option is specified), or as a prefix
-      (if the <emphasis>-p</emphasis> option is specified). The <emphasis>-p</emphasis> is the default.
-      Note that each <emphasis>BRL-CAD</emphasis> object must have a unique
-      name, so care must be taken not to "dbconcat" a  database that has objects
-      with names the same as objects in the current database. 	The <command>dup</command>
-      command may be used to check for duplicate names. If the <command>dup</command>
-      command finds duplicate names, use the <emphasis>prefix</emphasis> option to both the
-      <command>dup</command> 	and <command>dbconcat</command> commands to find a
-      <emphasis>prefix</emphasis> that produces no duplicates.	If duplicate names
-      are encountered during the "dbconcat" process, there is an option to overwrite the current object.
-      If the <emphasis>-O</emphasis> option is supplied, all conlicts will automatically be overwritten.
-      Otherwise, computer-generated prefixes will be added to the object names coming
-      from the <emphasis>database_file</emphasis> (but member names appearing in combinations will not
-      be modified, so this is a dangerous practice and should be avoided). The <emphasis>-t</emphasis> option indicates that
-      the title of the <emphasis>database_file</emphasis> should become the title of the currently
-      edited database. The <emphasis>-u</emphasis> option indicates that the units of the
-      <emphasis>database_file</emphasis> should become the units of the currently edited database. Similarly,
-      the <emphasis>-c</emphasis> option indicates that the region color table of the currently edited database
-      should be replaced with that of the <emphasis>database_file</emphasis>.
+      database currently being edited. Note that each <emphasis>BRL-CAD</emphasis>
+      object must have a unique name, so naming rules are defined that will
+      automatically rename conflicting objects as they are merged in to a databse.
+    </para>
+    <para>
+      If confliting names are encountered, by default computer-generated prefixes or suffixes
+      will be added to the object names coming from the incoming <emphasis>database_file</emphasis>.
+      If the user wishes to simply overwrite the current objects, the <option>-O</option> option
+      may be supplied and behavior is changed to all incoming objects overwritting an original
+      object with it conflicts. Note that using this option <emphasis>is</emphasis> destructive -
+      old geometry is not preserved when being overwritten.  Consequently this should only be used
+      when the intent is to NOT preserve the original data.
+    </para>
+    <para>
+      Aternately, if an <emphasis>affix</emphasis> string is supplied, then objects from
+      the incoming <emphasis>database_file</emphasis> will have the <emphasis>affix</emphasis> added
+      to their names as a prefix (by default or if the <option>-p</option> option is specified),
+      or as a suffix (if the <option>-s</option> option is specified).  By default this string
+      is used only when resolving name conflicts, but if <option>-A</option> is specified
+      in either mode the <emphasis>affix</emphasis> string is added to ALL incoming object names,
+      not just those cases where there is a conflict.
+    </para>
+    <para>
+      Other options are used to indicate whether or not to preserve incoming metadata such as
+      title, units and region color table.
     </para>
   </refsection>
+
+  <refsection xml:id="dbconcat_options"><title>OPTIONS</title>
+
+  <variablelist remap="TP">
+    <varlistentry>
+	<term><emphasis remap="B" role="bold">-A</emphasis></term>
+	<listitem>
+	  <para>
+	    Apply the affix (either as a prefix or suffix) to all objects,
+	    not just when trying to resolve name conflicts.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-O</emphasis></term>
+	<listitem>
+	  <para>
+	    Overwrite objects in the current .g file in cases where incoming
+	    object names conflict. (WARNING: this option is destructive - old
+	    data is replaced by new.)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-c</emphasis></term>
+	<listitem>
+	  <para>
+	     Indicates that the region color table of the currently edited database
+             should be replaced with that of <emphasis>database_file</emphasis>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-p</emphasis></term>
+	<listitem>
+	  <para>
+	    Use the supplied <emphasis>affix</emphasis> string as a prefix when reading
+	    in object names. (Default.)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-s</emphasis></term>
+	<listitem>
+	  <para>
+	    Use the supplied <emphasis>affix</emphasis> string as a suffix when reading
+	    in object names.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-t</emphasis></term>
+	<listitem>
+	  <para>
+	     Indicates that the title of the currently edited database
+             should be replaced with that of <emphasis>database_file</emphasis>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-u</emphasis></term>
+	<listitem>
+          <para>
+	    Indicates that the units of the incoming <emphasis>database_file</emphasis> 
+	    should become the units of the currently edited database.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsection>
+
+
 
   <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
-      This example shows the use of the <command>dbconcat</command> command to copy all objects in a particular
-      database to the current database. It also shows how to add a particular prefix to every object copied.
+      This example shows the use of the <command>dbconcat</command> command to copy all
+      objects in a particular
+      database to the current database. It also shows how to add a particular prefix to
+      every object copied.
     </para>
     <example><title>Copy objects in a specified database to the current one and add a prefix to all the copied objects.</title>
 
-      <para><prompt>mged&gt; </prompt><userinput>dbconcat model_two.g two_</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>dbconcat -A model_two.g two_</userinput></para>
       <para>
 	Copies all the objects in <emphasis>model_two.g</emphasis> to the current database,
 	but prefixes the name of every object copied with the string <emphasis>two_</emphasis>.
@@ -74,8 +153,10 @@
     </example>
 
     <para>
-      Another example shows a usage to import the title, units, color table, and all the objects of a database file
-      into the current database. This is particularly useful if the current database is empty or just created by mged.
+      Another example shows a usage to import the title, units, color table, and all the
+      objects of a database file
+      into the current database. This is particularly useful if the current database is
+      empty or just created by mged.
     </para>
     <example><title>Copy an entire database, including title, units, and color table, to the current database without any affix</title>
 
