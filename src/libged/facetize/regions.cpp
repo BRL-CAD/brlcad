@@ -248,19 +248,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     av[argc+2] = NULL;
     ged_exec(wgedp, argc+2, av);
 
-#if 0
     // TODO - dbconcat kept .g into original .g - either using -O to overwrite
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.
     av[0] = "dbconcat";
     av[1] = kfname;
-    for (int i = 0; i < argc; i++) {
-	av[i+2] = argv[i];
-    }
-    av[argc+2] = NULL;
-    ged_exec(wgedp, argc+2, av);
+    av[2] = "facetize_"; // TODO - customize
+    av[3] = NULL;
+    ged_exec(s->gedp, 3, av);
     bu_free(av, "av");
-#endif
 
     /* Done changing stuff - update nref. */
     db_update_nref(dbip, &rt_uniresource);
@@ -268,6 +264,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_ptbl_free(ar);
     bu_free(ar, "ar table");
     bu_free(dpa, "free dpa");
+    bu_dirclear(wdir);
     return ret;
 }
 
