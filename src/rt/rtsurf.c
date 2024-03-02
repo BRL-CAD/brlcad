@@ -316,6 +316,89 @@ compute_surface_area(int intersections, int lines, double radius)
 
 
 static double
+do_one_iteration(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
+{
+    int print = opts->print;
+
+    /* get sample points */
+    point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
+    points_on_sphere(samples, points, radius, center);
+
+    struct xray *rays = (struct xray *)bu_calloc(samples, sizeof(struct xray), "rays");
+    if (0) {
+	rays_from_points_to_center(rays, samples, points, center);
+    } else {
+	rays_through_point_pairs(rays, samples, points);
+	rays_through_point_pairs(rays+(samples/2), samples, points);
+    }
+
+    size_t hits = 0;
+    for (size_t i = 0; i < samples; ++i) {
+	ap->a_ray = rays[i]; /* struct copy */
+
+	if (print) {
+	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(points[i]), 1.0);
+	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), 0.5);
+	}
+
+	/* unitize before firing */
+	VUNITIZE(ap->a_ray.r_dir);
+
+	/* Shoot the ray. */
+	hits += rt_shootray(ap);
+    }
+
+    /* sanity */
+    if (hits > samples)
+	bu_log("WARNING: hits (%zu) > samples (%zu)\n", hits, samples);
+
+    /* release points for this iteration */
+    bu_free(points, "points");
+    bu_free(rays, "rays");
+
+    double area = compute_surface_area(hits * 2, (double)samples, radius);
+    bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %lf\n", hits * 2, (size_t)((double)samples), area);
+
+    return area;
+}
+
+
+static double
+do_iterations(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
+{
+    double initial_estimate = 0.0;
+    double running_estimate = 0.0;
+    double change_in_estimate = 100.0; // initialized high
+    double threshold = 0.01; // convergence threshold (1.0% change)
+    int iteration = 0;
+
+    while (change_in_estimate > threshold) {
+	// increase samples every iteration by just over 2x
+	int current_samples = samples * pow(2.1, iteration);
+
+	running_estimate = do_one_iteration(ap, current_samples, center, radius, opts);
+
+	if (iteration > 0) {
+	    // need at least two iterations to see if we're stable
+	    // calculate percent change
+	    change_in_estimate = fabs((running_estimate - initial_estimate) / initial_estimate) * 100.0;
+
+	    // see if we're done.
+	    if (change_in_estimate <= threshold) {
+		break; // yep, converged.
+	    }
+	    // nope, not converged.
+	}
+
+	initial_estimate = running_estimate;
+	iteration++;
+    }
+
+    return running_estimate;
+}
+
+
+static double
 estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 {
     BU_ASSERT(db && obj && opts);
@@ -324,14 +407,13 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     initialize(&ap, db, obj);
 
     double radius = ap.a_rt_i->rti_radius;
-    point_t center = VINIT_ZERO;
     size_t samples = opts->samples;
     int print = opts->print;
-    size_t hits = 0;
 
     ap.a_user = radius;
     ap.a_flag = opts->print;
 
+    point_t center;
     VADD2SCALE(center, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min, 0.5);
 
     /* set to mm so working units match */
@@ -346,52 +428,14 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	printf("in bounding.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), radius);
     }
 
-    /* get sample points */
-    point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
-    points_on_sphere(samples, points, radius, center);
+    /* iterate until we converge on a solution */
+    double area = do_iterations(&ap, samples, center, radius, opts);
 
-    struct xray *rays = (struct xray *)bu_calloc(samples, sizeof(struct xray), "rays");
-    if (0) {
-	rays_from_points_to_center(rays, samples, points, center);
-    } else {
-	rays_through_point_pairs(rays, samples, points);
-	rays_through_point_pairs(rays+(samples/2), samples, points);
-    }
-
-    double total_weighted_area = 0.0;
-
-    for (size_t i = 0; i < samples; ++i) {
-	ap.a_ray = rays[i]; /* struct copy */
-
-	if (print) {
-	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(points[i]), 1.0);
-	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir), 0.5);
-	}
-
-	/* unitize before firing */
-	VUNITIZE(ap.a_ray.r_dir);
-
-	/* Shoot the ray. */
-	hits += rt_shootray(&ap);
-
-	total_weighted_area += ap.a_dist;
-    }
-
-    /* release our raytracing instance and points */
-    bu_free(points, "points");
-    bu_free(rays, "rays");
+    /* release our raytracing instance */
     rt_free_rti(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
-    if (hits > samples)
-	bu_log("WARNING: hits (%zu) > samples (%zu)\n", hits, samples);
-
-    double area = compute_surface_area(hits * 2, (double)samples, radius);
-    bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %lf\n", hits * 2, (size_t)((double)samples), area);
-
-    double estimate = total_weighted_area / (samples * M_PI * radius * radius);
-
-    return estimate;
+    return area;
 }
 
 
