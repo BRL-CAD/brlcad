@@ -386,6 +386,8 @@ do_iterations(struct application *ap, size_t samples, point_t center, double rad
 	// increase samples every iteration by just over 2x
 	curr_samples = samples * pow(2.01, iteration);
 
+	// TODO: keep track of total hits + lines so we don't ignore
+	// previous work in the estimate calculation.
 	curr_estimate = do_one_iteration(ap, curr_samples, center, radius, opts);
 
 	// check convergence after 3 iterations
