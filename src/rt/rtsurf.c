@@ -52,91 +52,63 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     int print = ap->a_flag;
 
     /* make our hit spheres big enough to see */
-    double hitrad = ((radius / 1000.0) > 1.0) ? radius / 1000.0 : 1.0;
+    double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
 
     static size_t cnt = 0;
 
-    for (struct partition *pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+    struct partition *pp=PartHeadp->pt_forw;
+    struct partition *pprev=PartHeadp->pt_back;
 
-	/* print the name of the region we hit as well as the name of
-	 * the primitives encountered on entry and exit.
-	 */
+    /* print the name of the region we hit as well as the name of
+     * the primitives encountered on entry and exit.
+     */
 #if 0
-	bu_log("\n--- Hit region %s (in %s, out %s)\n",
-	       pp->pt_regionp->reg_name,
-	       pp->pt_inseg->seg_stp->st_name,
-	       pp->pt_outseg->seg_stp->st_name);
+    bu_log("\n--- Hit region %s (in %s, out %s)\n",
+	   pp->pt_regionp->reg_name,
+	   pp->pt_inseg->seg_stp->st_name,
+	   pp->pt_outseg->seg_stp->st_name);
 #endif
 
-	/* in hit point */
-	point_t pt;
-	struct hit *hitp;
-	hitp = pp->pt_inhit;
-	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+    /* in hit point */
+    point_t pt;
+    struct hit *hitp;
+    hitp = pp->pt_inhit;
+    VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
 
-	struct soltab *stp;
-	stp = pp->pt_inseg->seg_stp;
+    struct soltab *stp;
+    stp = pp->pt_inseg->seg_stp;
 
-	/* in hit normal */
-	vect_t inormal;
-	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+    /* in hit normal */
+    vect_t inormal;
+    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
-	//rt_pr_hit("  In", hitp);
-	//VPRINT("  Ipoint", pt);
-	//VPRINT("  Inormal", inormal);
+    //rt_pr_hit("  In", hitp);
+    //VPRINT("  Ipoint", pt);
+    //VPRINT("  Inormal", inormal);
 
-	/* print the entry hit point */
-	if (hitp->hit_dist < radius) {
-	    double angle_cos = VDOT(ap->a_ray.r_dir, inormal);
-
-	    if (fabs(angle_cos) > 1e-5) {
-		ap->a_dist = M_PI * pow(hitp->hit_dist * angle_cos, 2);
-	    }
-
-	    if (print) {
-		printf("in hit%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad);
-	    }
-	} else {
-	    if (print) {
-		printf("in past%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad * 2.0);
-	    }
-	}
-
-	/* out hit point */
-	hitp = pp->pt_outhit;
-	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
-	stp = pp->pt_outseg->seg_stp;
-
-	/* out hit normal */
-	vect_t onormal;
-	RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
-
-	//rt_pr_hit("  In", hitp);
-	//VPRINT("  Ipoint", pt);
-	//VPRINT("  Inormal", inormal);
-
-	/* print the exit hit point */
-	if (hitp->hit_dist < radius) {
-	    double angle_cos = VDOT(ap->a_ray.r_dir, inormal);
-
-	    if (fabs(angle_cos) > 1e-5) {
-		ap->a_dist = M_PI * pow(hitp->hit_dist * angle_cos, 2);
-	    }
-
-	    if (print) {
-		printf("in hit%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad);
-	    }
-	} else {
-	    if (print) {
-		printf("in past%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad * 2.0);
-	    }
-	}
-
-	/* print the exit hit point info */
-	//rt_pr_hit("  Out", hitp);
-	//VPRINT("  Opoint", pt);
-	//VPRINT("  Onormal", onormal);
+    /* print the entry hit point */
+    if (print) {
+	printf("in hit%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad);
     }
+
+    /* out hit point */
+    hitp = pprev->pt_outhit;
+    VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+    stp = pprev->pt_outseg->seg_stp;
+
+    /* out hit normal */
+    vect_t onormal;
+    RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pprev->pt_outflip);
+
+    /* print the exit hit point */
+    if (print) {
+	printf("in hit%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad);
+    }
+
+    /* print the exit hit point info */
+    //rt_pr_hit("  Out", hitp);
+    //VPRINT("  Opoint", pt);
+    //VPRINT("  Onormal", onormal);
 
     return 1;
 }
@@ -326,6 +298,7 @@ compute_surface_area(int intersections, int lines, double radius)
 static double
 do_one_iteration(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
 {
+    double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
     int print = opts->print;
 
     /* get sample points */
@@ -343,8 +316,8 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 	ap->a_ray = rays[i]; /* struct copy */
 
 	if (print) {
-	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(points[i]), 1.0);
-	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), 0.5);
+	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(points[i]), hitrad * 1.25);
+	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
 	}
 
 	/* unitize before firing */
