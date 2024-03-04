@@ -23,6 +23,7 @@ changes made.  See document footer for additional details.
 * improved rtwizard command-line option reporting - Sean Morrison
 * added self-intersecting torus ray tracing support - Sean Morrison
 * fixed rt crash rendering to -F/dev/null - Sean Morrison
+* fixed MGED command line handling of objects named 'y' - Cliff Yapp
 * fix double printing of last 'search -exec' result - Chris McGregor
 * improve 'search -v' to support multiple levels - Chris McGregor
 * update 'search -v' to report # of objects found - Chris McGregor
