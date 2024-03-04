@@ -28,6 +28,7 @@ changes made.  See document footer for additional details.
 * update 'search -v' to report # of objects found - Chris McGregor
 * fixed asc2g/g2asc support for brep primitives - Cliff Yapp
 * fixed dsp terrain file data loading for relative paths - Cliff Yapp
+* updated Manifold lib for improved facetize robustness - Cliff Yapp
 
 
 ----------------------------------------------------------------------
