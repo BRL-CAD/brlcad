@@ -54,6 +54,7 @@ class method_options_t {
 	// the parent command.  Some methods may be able to respect a time limit,
 	// but for those that cannot the subprocess may need to be killed.
 	std::map<std::string, int> max_time;
+	int plate_max_time;
 
 	// Routine to assemble an argument from an option_map entry.
 	// May supplement information found there with info from a
@@ -107,6 +108,7 @@ class nmg_opts : public method_opts {
 	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
 	long nmg_debug = 0;
 	int max_time = 30;
+	int plate_max_time = 1200;
 };
 
 class cm_opts : public sample_opts {
@@ -165,6 +167,7 @@ method_options_t::method_options_t()
     max_time[std::string("CM")] = cm.max_time;
     max_time[std::string("CO3NE")] = co3ne.max_time;
     max_time[std::string("SPSR")] = s.max_time;
+    plate_max_time = n.plate_max_time;
 }
 
 method_options_t::~method_options_t()
@@ -274,6 +277,16 @@ _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_
 		continue;
 	    m->max_time[opts[0]] = max_time_val;
 	}
+	if (key_val[0] == std::string("plate_max_time")) {
+	    int max_time_val = 0;
+	    const char *cstr[2];
+	    cstr[0] = key_val[1].c_str();
+	    cstr[1] = NULL;
+	    if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time_val) < 0)
+		continue;
+	    m->plate_max_time = max_time_val;
+	}
+
     }
     return 1;
 }
@@ -464,7 +477,8 @@ nmg_opts::print_options_help()
 {
     std::string h;
     h.append("NMG method settings:\n");
-    h.append("max_time         -  Maximum overall run time for object conversion\n");
+    h.append("max_time         -  Maximum overall run time for object conversion.  Default is 30.\n");
+    h.append("plate_max_time   -  Maximum run time for plate mode to vol BoT conversion.  Default is 1200.\n");
     h.append("nmg_debug        -  NMG debugging flag.  Default is 0x00000000.\n");
     h.append("                    See 'debug -l NMG' in MGED for available values.\n");
     h.append("tol_abs          -  absolute distance tolerance.  Default is 0\n");
@@ -521,6 +535,15 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
     if (key == std::string("max_time")) {
 	if (!val.length()) {
 	    max_time = 0;
+	    return BRLCAD_OK;
+	}
+	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
+	    return BRLCAD_ERROR;
+    }
+
+    if (key == std::string("plate_max_time")) {
+	if (!val.length()) {
+	    plate_max_time = 0;
 	    return BRLCAD_OK;
 	}
 	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)

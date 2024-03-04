@@ -479,6 +479,7 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
     struct subprocess_s p;
     if (subprocess_create(tess_cmd, subprocess_option_no_window, &p)) {
 	// Unable to create subprocess??
+	bu_log("Unable to create subprocess\n");
 	return BRLCAD_ERROR;
     }
     while (subprocess_alive(&p)) {
@@ -518,6 +519,13 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
     int w_rc;
     if (subprocess_join(&p, &w_rc)) {
 	// Unable to join??
+	bu_log("unable to join\n");
+	char mraw[MAXPATHLEN*10] = {'\0'};
+	subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
+	bu_log("%s\n", mraw);
+	char mraw2[MAXPATHLEN*10] = {'\0'};
+	subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
+	bu_log("%s\n", mraw2);
 	return BRLCAD_ERROR;
     }
 
@@ -841,11 +849,8 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	tess_cmd[cmd_fixed_cnt] = ldp->d_namep;
 	q_pbot.pop();
 
-	// Plate mode to vol evaluation can be very slow, so be generous about time
-	// TODO - this should really be based on the size of the mesh and how long
-	// it takes to do a boolean on some baseline test case...
-	int p2v_time = 600;
-	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, p2v_time);
+	// Plate mode to vol evaluation can be very slow, so it has its own time limit
+	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, mo->plate_max_time);
 	if (err_cnt) {
 	    // If we couldn't handle the plate mode conversion, we can't do the
 	    // boolean evaluation
