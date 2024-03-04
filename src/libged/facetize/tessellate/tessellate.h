@@ -65,6 +65,9 @@ extern struct rt_pnts_internal *
 _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s);
 
 extern int
+_brep_csg_tessellate(struct ged *gedp, struct directory *dp, struct tess_opts *s);
+
+extern int
 _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, struct tess_opts *s);
 
 extern int

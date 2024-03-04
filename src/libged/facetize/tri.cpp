@@ -345,7 +345,8 @@ manifold_do_bool(
 	if (!failed) {
 	    // We should have valid inputs - proceed
 
-	    bu_log("Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
+	    if (!s->quiet)
+		bu_log("Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
 
 	    manifold::Manifold bool_out;
 	    try {
@@ -450,7 +451,7 @@ tess_avail_methods()
 }
 
 int
-tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
+tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
 {
     std::string wfile(tess_cmd[2]);
     std::string wfilebak = wfile + std::string(".bak");
@@ -479,7 +480,8 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
     struct subprocess_s p;
     if (subprocess_create(tess_cmd, subprocess_option_no_window, &p)) {
 	// Unable to create subprocess??
-	bu_log("Unable to create subprocess\n");
+	if (!quiet)
+	    bu_log("Unable to create subprocess\n");
 	return BRLCAD_ERROR;
     }
     while (subprocess_alive(&p)) {
@@ -490,13 +492,15 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
 	    // if we timeout, cleanup and return error
 	    subprocess_terminate(&p);
 
-    bu_log("killed %g %g\n", seconds, max_time);
-    char mraw[MAXPATHLEN*10] = {'\0'};
-    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-    bu_log("%s\n", mraw);
-    char mraw2[MAXPATHLEN*10] = {'\0'};
-    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-    bu_log("%s\n", mraw2);
+	    if (!quiet) {
+		bu_log("tess_run subprocess killed %g %g\n", seconds, max_time);
+		char mraw[MAXPATHLEN*10] = {'\0'};
+		subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
+		bu_log("%s\n", mraw);
+		char mraw2[MAXPATHLEN*10] = {'\0'};
+		subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
+		bu_log("%s\n", mraw2);
+	    }
 
 	    subprocess_destroy(&p);
 
@@ -519,35 +523,39 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time)
     int w_rc;
     if (subprocess_join(&p, &w_rc)) {
 	// Unable to join??
-	bu_log("unable to join\n");
-	char mraw[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	bu_log("%s\n", mraw);
-	char mraw2[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	bu_log("%s\n", mraw2);
+	if (!quiet) {
+	    bu_log("tess_run subprocess unable to join\n");
+	    char mraw[MAXPATHLEN*10] = {'\0'};
+	    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
+	    bu_log("%s\n", mraw);
+	    char mraw2[MAXPATHLEN*10] = {'\0'};
+	    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
+	    bu_log("%s\n", mraw2);
+	}
 	return BRLCAD_ERROR;
     }
 
     bu_file_delete(wfilebak.c_str());
 
 
-    bu_log("result: %d\n", w_rc);
-    char mraw[MAXPATHLEN*10] = {'\0'};
-    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-    bu_log("%s\n", mraw);
-    char mraw2[MAXPATHLEN*10] = {'\0'};
-    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-    bu_log("%s\n", mraw2);
+    if (!quiet) {
+	bu_log("result: %d\n", w_rc);
+	char mraw[MAXPATHLEN*10] = {'\0'};
+	subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
+	bu_log("%s\n", mraw);
+	char mraw2[MAXPATHLEN*10] = {'\0'};
+	subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
+	bu_log("%s\n", mraw2);
+    }
 
     return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
 }
 
 int
-bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time);
+bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int quiet);
 
 int
-bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time)
+bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int quiet)
 {
     std::vector<struct directory *> left_inputs;
     std::vector<struct directory *> right_inputs;
@@ -556,13 +564,13 @@ bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<stru
     for (size_t i =  inputs.size()/2; i < inputs.size(); i++)
 	right_inputs.push_back(inputs[i]);
 
-    int lret = bisect_run(bad_dps, left_inputs, orig_cmd, cmd_cnt, max_time);
-    int rret = bisect_run(bad_dps, right_inputs, orig_cmd, cmd_cnt, max_time);
+    int lret = bisect_run(bad_dps, left_inputs, orig_cmd, cmd_cnt, max_time, quiet);
+    int rret = bisect_run(bad_dps, right_inputs, orig_cmd, cmd_cnt, max_time, quiet);
     return lret + rret;
 }
 
 int
-bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time)
+bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int quiet)
 {
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     // The initial part of the re-run is the same.
@@ -573,10 +581,10 @@ bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct director
 	tess_cmd[cmd_cnt+i] = inputs[i]->d_namep;
     }
 
-    int ret = tess_run(tess_cmd, cmd_cnt+inputs.size(), max_time);
+    int ret = tess_run(tess_cmd, cmd_cnt+inputs.size(), max_time, quiet);
     if (ret) {
 	if (inputs.size() > 1) {
-	    return bisect_failing_inputs(bad_dps, inputs, tess_cmd, cmd_cnt, max_time);
+	    return bisect_failing_inputs(bad_dps, inputs, tess_cmd, cmd_cnt, max_time, quiet);
 	}
 	bad_dps.push_back(inputs[0]);
 	return 1;
@@ -751,14 +759,14 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	int err_cnt = 0;
 	while (bu_vls_strlen(&method_str)) {
 	    if (BU_STR_EQUAL(bu_vls_cstr(&method_str), "NMG")) {
-		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time);
+		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time, s->quiet);
 	    } else {
 		// If we're in fallback territory, process individually rather
 		// than doing the bisect - at least for now, those methods are
 		// much more expensive and likely to fail as compared to NMG.
 		for (size_t i = 0; i < dps.size(); i++) {
 		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
+		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time, s->quiet);
 		    if (tess_ret != BRLCAD_OK) {
 			bad_dps.push_back(dps[i]);
 			err_cnt++;
@@ -830,7 +838,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// primitives
 	for (size_t i = 0; i < dps.size(); i++) {
 	    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-	    int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time);
+	    int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time, s->quiet);
 	    if (err_cnt)
 		failed_dps.push_back(dps[i]);
 	}
@@ -850,7 +858,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	q_pbot.pop();
 
 	// Plate mode to vol evaluation can be very slow, so it has its own time limit
-	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, mo->plate_max_time);
+	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, mo->plate_max_time, s->quiet);
 	if (err_cnt) {
 	    // If we couldn't handle the plate mode conversion, we can't do the
 	    // boolean evaluation

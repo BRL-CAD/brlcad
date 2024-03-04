@@ -87,10 +87,12 @@ method_setup(struct tess_opts *s)
 }
 
 static int
-dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct db_i *dbip, struct directory *dp, struct tess_opts *s)
+dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct ged *gedp, struct directory *dp, struct tess_opts *s)
 {
-    if (!s || !obot || !method_flag || !dbip || !dp)
+    if (!s || !obot || !method_flag || !gedp || !dp)
 	return BRLCAD_ERROR;
+
+    struct db_i *dbip = gedp->dbip;
 
     std::set<std::string> mset;
     for (size_t i = 0; i < s->method_opts.methods.size(); i++) {
@@ -194,6 +196,16 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	return BRLCAD_OK;
     }
 
+    // For brep in particular, we have a cheat we can try.  Do a brep->csg
+    // conversion and see if the resulting CSG tree can be facetized.
+    if (intern.idb_minor_type == ID_BREP) {
+	ret = _brep_csg_tessellate(gedp, dp, s);
+    	if (ret == BRLCAD_OK) {
+	    bu_vls_sprintf(method_flag, "NMG_BREP_CSG");
+	    return BRLCAD_OK;
+	}
+    }
+
     // If we got this far, it's not a special case.  Start trying whatever tessellation methods
     // are enabled
 
@@ -205,6 +217,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    return BRLCAD_OK;
 	}
     }
+
 
     if (mset.find(std::string("CM")) != mset.end()) {
 	// The continuation method (CM) is a marching algorithm using an
@@ -392,9 +405,15 @@ main(int argc, const char **argv)
 	// Trigger the core tessellation routines
 	struct rt_bot_internal *obot = NULL;
 	struct bu_vls method_flag = BU_VLS_INIT_ZERO;
-	if (dp_tessellate(&obot, &method_flag, gedp->dbip, dp, &s) != BRLCAD_OK) {
+	if (dp_tessellate(&obot, &method_flag, gedp, dp, &s) != BRLCAD_OK) {
 	    bu_vls_free(&method_flag);
 	    return BRLCAD_ERROR;
+	}
+
+	// If we used a BRep CSG tree, we're already done
+	if (BU_STR_EQUAL(bu_vls_cstr(&method_flag), "NMG_BREP_CSG")) {
+	    bu_vls_free(&method_flag);
+	    return BRLCAD_OK;
 	}
 
 	// If we didn't get anything and we had an OK code, just keep going
