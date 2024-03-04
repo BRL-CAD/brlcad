@@ -26,6 +26,7 @@ changes made.  See document footer for additional details.
 * fix double printing of last 'search -exec' result - Chris McGregor
 * improve 'search -v' to support multiple levels - Chris McGregor
 * update 'search -v' to report # of objects found - Chris McGregor
+* added a "bots only" mode to conversion.sh script - Cliff Yapp
 * fixed asc2g/g2asc support for brep primitives - Cliff Yapp
 * added brep and bot versions of pinewood .g model - Josh Baker
 * added new .g example file "Annual Gift Man" - Josh Baker
