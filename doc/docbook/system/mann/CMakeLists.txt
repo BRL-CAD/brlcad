@@ -26,6 +26,7 @@ set(mann_EN
   bot.xml
   bot_condense.xml
   bot_decimate.xml
+  bot_extrude.xml
   bot_face_fuse.xml
   bot_face_sort.xml
   bot_flip.xml
