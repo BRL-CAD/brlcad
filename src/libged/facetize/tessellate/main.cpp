@@ -156,7 +156,8 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 		return BRLCAD_OK;
 	    // Plate mode BoTs need an explicit volume representation
 	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
-		return rt_bot_plate_to_vol(obot, bot, 0, 0);
+		//bu_log("plate_to_vol: %s\n", dp->d_namep);
+		return rt_bot_plate_to_vol(obot, bot, 0, 1);
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.
@@ -413,7 +414,7 @@ main(int argc, const char **argv)
 	// If we used a BRep CSG tree, we're already done
 	if (BU_STR_EQUAL(bu_vls_cstr(&method_flag), "NMG_BREP_CSG")) {
 	    bu_vls_free(&method_flag);
-	    return BRLCAD_OK;
+	    continue;
 	}
 
 	// If we didn't get anything and we had an OK code, just keep going

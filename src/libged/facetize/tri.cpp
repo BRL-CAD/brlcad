@@ -613,7 +613,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     // Sort dp objects by d_len using a priority queue
     std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> pq;
     std::queue<struct directory *> q_dsp;
-    std::queue<struct directory *> q_pbot;
+    std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> q_pbot;
     for (size_t i = 0; i < BU_PTBL_LEN(leaf_dps); i++) {
 	struct directory *ldp = (struct directory *)BU_PTBL_GET(leaf_dps, i);
 
@@ -631,7 +631,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// Plate mode bots only have a realistic chance of being handled by
 	// the plate to vol conversion method, but they can be quite slow
 	// and will run into max-time limitations if they are large.  Separate
-	// them out - we will treat their handling like a fallback method and
+	// the large ones out - we will treat their handling like a fallback method and
 	// be more tolerant of time
 	if (ldp->d_minor_type == ID_BOT) {
 	    struct rt_db_internal intern;
@@ -851,19 +851,34 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	l_max_time = mo->max_time[mstrpp];
 	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
 	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
-	if (q_pbot.empty())
-	    break;
-	struct directory *ldp = q_pbot.front();
-	tess_cmd[cmd_fixed_cnt] = ldp->d_namep;
-	q_pbot.pop();
 
-	// Plate mode to vol evaluation can be very slow, so it has its own time limit
-	int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, mo->plate_max_time, s->quiet);
+
+	std::vector<struct directory *> dps;
+	std::vector<struct directory *> bad_dps;
+	struct bu_vls cmd = BU_VLS_INIT_ZERO;
+	for (int i = 0; i < cmd_fixed_cnt; i++)
+	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
+	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
+	    if (q_pbot.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
+		break;
+	    struct directory *ldp = q_pbot.top();
+	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
+		// This would be too long -  we've listed all we can
+		break;
+	    }
+	    q_pbot.pop();
+	    dps.push_back(ldp);
+	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
+	}
+	bu_vls_free(&cmd);
+
+
+	int err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time * dps.size(), s->quiet);
 	if (err_cnt) {
 	    // If we couldn't handle the plate mode conversion, we can't do the
 	    // boolean evaluation
 	    bu_log("Plate mode conversion wasn't able to complete\n");
-	    failed_dps.push_back(ldp);
+	    return BRLCAD_ERROR;
 	}
     }
 
