@@ -39,16 +39,16 @@
       automatically rename conflicting objects as they are merged in to a databse.
     </para>
     <para>
-      If confliting names are encountered, by default computer-generated prefixes or suffixes
+      If conflicting names are encountered, by default computer-generated prefixes or suffixes
       will be added to the object names coming from the incoming <emphasis>database_file</emphasis>.
       If the user wishes to simply overwrite the current objects, the <option>-O</option> option
-      may be supplied and behavior is changed to all incoming objects overwritting an original
+      may be supplied and behavior is changed to all incoming objects overwriting an original
       object with it conflicts. Note that using this option <emphasis>is</emphasis> destructive -
       old geometry is not preserved when being overwritten.  Consequently this should only be used
       when the intent is to NOT preserve the original data.
     </para>
     <para>
-      Aternately, if an <emphasis>affix</emphasis> string is supplied, then objects from
+      Alternatively, if an <emphasis>affix</emphasis> string is supplied, then objects from
       the incoming <emphasis>database_file</emphasis> will have the <emphasis>affix</emphasis> added
       to their names as a prefix (by default or if the <option>-p</option> option is specified),
       or as a suffix (if the <option>-s</option> option is specified).  By default this string
