@@ -1659,8 +1659,16 @@ ged_rt_output_handler_helper(struct ged_subprocess* rrtp, bu_process_io_t type)
     if (type == BU_PROCESS_STDERR) active = rrtp->stderr_active;
     if (type == BU_PROCESS_STDOUT) active = rrtp->stdout_active;
 
-
     if (active && bu_process_read((char *)line, &count, rrtp->p, type, RT_MAXLINE) <= 0) {
+	/* Done watching for output or a bad read, undo subprocess I/O hooks. */
+	struct ged *gedp = rrtp->gedp;
+	if (gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(rrtp, type);
+	} else {
+	    if (type == BU_PROCESS_STDERR) rrtp->stderr_active = 0;
+	    if (type == BU_PROCESS_STDOUT) rrtp->stdout_active = 0;
+	}
+
 	return 1;
     }
 
@@ -1694,18 +1702,13 @@ _ged_rt_output_handler(void *clientData, int mask)
 
     /* Get data from rt */
     if (ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDERR) || ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDOUT)) {
+	/* don't fully clean up until we mark each stream inactive */
+	if (rrtp->stderr_active || rrtp->stdout_active)
+	    return;
+
 	int aborted = 0;
 	int retcode = 0;
 	struct ged *gedp = rrtp->gedp;
-
-	/* Done watching for output, undo subprocess I/O hooks. */
-	if (gedp->ged_delete_io_handler) {
-	    if (rrtp->stderr_active)
-		(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
-	    if (rrtp->stdout_active)
-		(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
-	}
-
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
