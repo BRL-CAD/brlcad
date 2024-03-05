@@ -273,8 +273,11 @@ set(mann_INTRO
 ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
 
 
-CMAKEFILES(mged_cmd_template.xml)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  bot_extrude.xml
+  mged_cmd_template.xml
+  )
 
 # Local Variables:
 # tab-width: 8

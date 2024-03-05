@@ -15,6 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rt from mged is not outputting overlap log messages or rt summary.
+  Stops printing after opendb line. (Observed on Mac)
+
+* mged running an rt with excessive overlaps ends up in a deadlock.
+  Backtrace indicates write buffer is full, likely because no output
+  is going to terminal. (Observed on Mac)
+
 * gcv on a glTF file (at least a binary .glb) crashes hard with a NULL
   pointer bomb (workaround: gltf-g succeeds albeit incomplete
   conversion).  Takes out the entire Terminal app on Mac for some

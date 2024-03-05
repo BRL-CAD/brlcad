@@ -16,7 +16,7 @@
 
 # Makefile.am, the source file for Makefile.in (and hence Makefile), is
 #
-# Copyright (c) 2018 Cosmin Truta
+# Copyright (c) 2018-2024 Cosmin Truta
 # Copyright (c) 2004-2016 Glenn Randers-Pehrson
 #
 # This code is released under the libpng license.
@@ -100,11 +100,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-check_PROGRAMS = pngtest$(EXEEXT) pngunknown$(EXEEXT) \
-	pngstest$(EXEEXT) pngvalid$(EXEEXT) pngimage$(EXEEXT) \
-	pngcp$(EXEEXT) $(am__EXEEXT_1)
-@HAVE_CLOCK_GETTIME_TRUE@am__append_1 = timepng
-bin_PROGRAMS = pngfix$(EXEEXT) png-fix-itxt$(EXEEXT)
+@ENABLE_TESTS_TRUE@check_PROGRAMS = pngtest$(EXEEXT) \
+@ENABLE_TESTS_TRUE@	pngunknown$(EXEEXT) pngstest$(EXEEXT) \
+@ENABLE_TESTS_TRUE@	pngvalid$(EXEEXT) pngimage$(EXEEXT) \
+@ENABLE_TESTS_TRUE@	pngcp$(EXEEXT) $(am__EXEEXT_1)
+@ENABLE_TESTS_TRUE@@HAVE_CLOCK_GETTIME_TRUE@am__append_1 = timepng
+@ENABLE_TOOLS_TRUE@bin_PROGRAMS = pngfix$(EXEEXT) \
+@ENABLE_TOOLS_TRUE@	png-fix-itxt$(EXEEXT)
 @PNG_ARM_NEON_TRUE@am__append_2 = arm/arm_init.c\
 @PNG_ARM_NEON_TRUE@	arm/filter_neon.S arm/filter_neon_intrinsics.c \
 @PNG_ARM_NEON_TRUE@	arm/palette_neon_intrinsics.c
@@ -112,26 +114,29 @@ bin_PROGRAMS = pngfix$(EXEEXT) png-fix-itxt$(EXEEXT)
 @PNG_MIPS_MSA_TRUE@am__append_3 = mips/mips_init.c\
 @PNG_MIPS_MSA_TRUE@	mips/filter_msa_intrinsics.c
 
-@PNG_INTEL_SSE_TRUE@am__append_4 = intel/intel_init.c\
+@PNG_MIPS_MMI_TRUE@@PNG_MIPS_MSA_FALSE@am__append_4 = mips/mips_init.c
+@PNG_MIPS_MMI_TRUE@am__append_5 = mips/filter_mmi_inline_assembly.c
+@PNG_INTEL_SSE_TRUE@am__append_6 = intel/intel_init.c\
 @PNG_INTEL_SSE_TRUE@	intel/filter_sse2_intrinsics.c
 
-@PNG_POWERPC_VSX_TRUE@am__append_5 = powerpc/powerpc_init.c\
+@PNG_POWERPC_VSX_TRUE@am__append_7 = powerpc/powerpc_init.c\
 @PNG_POWERPC_VSX_TRUE@        powerpc/filter_vsx_intrinsics.c
 
 
 #   Versioned symbols and restricted exports
-@HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_TRUE@am__append_6 = -Wl,-M -Wl,libpng.vers
-@HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_FALSE@am__append_7 = -Wl,--version-script=libpng.vers
+@HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_TRUE@am__append_8 = -Wl,-M -Wl,libpng.vers
+@HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_FALSE@am__append_9 = -Wl,--version-script=libpng.vers
 #   Only restricted exports when possible
-@HAVE_LD_VERSION_SCRIPT_FALSE@am__append_8 = -export-symbols libpng.sym
-@DO_PNG_PREFIX_TRUE@am__append_9 = -DPNG_PREFIX='@PNG_PREFIX@'
+@HAVE_LD_VERSION_SCRIPT_FALSE@am__append_10 = -export-symbols libpng.sym
+@PNG_LOONGARCH_LSX_TRUE@am__append_11 = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx.la
+@DO_PNG_PREFIX_TRUE@am__append_12 = -DPNG_PREFIX='@PNG_PREFIX@'
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/scripts/libtool.m4 \
-	$(top_srcdir)/scripts/ltoptions.m4 \
-	$(top_srcdir)/scripts/ltsugar.m4 \
-	$(top_srcdir)/scripts/ltversion.m4 \
-	$(top_srcdir)/scripts/lt~obsolete.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/scripts/autoconf/libtool.m4 \
+	$(top_srcdir)/scripts/autoconf/ltoptions.m4 \
+	$(top_srcdir)/scripts/autoconf/ltsugar.m4 \
+	$(top_srcdir)/scripts/autoconf/ltversion.m4 \
+	$(top_srcdir)/scripts/autoconf/lt~obsolete.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -147,7 +152,8 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(bindir)" "$(DESTDIR)$(man3dir)" \
 	"$(DESTDIR)$(man5dir)" "$(DESTDIR)$(pkgconfigdir)" \
 	"$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(pkgincludedir)"
-@HAVE_CLOCK_GETTIME_TRUE@am__EXEEXT_1 = timepng$(EXEEXT)
+@ENABLE_TESTS_TRUE@@HAVE_CLOCK_GETTIME_TRUE@am__EXEEXT_1 =  \
+@ENABLE_TESTS_TRUE@@HAVE_CLOCK_GETTIME_TRUE@	timepng$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -176,8 +182,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-LTLIBRARIES = $(lib_LTLIBRARIES)
-libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LIBADD =
+LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 am__libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES_DIST = png.c \
 	pngerror.c pngget.c pngmem.c pngpread.c pngread.c pngrio.c \
 	pngrtran.c pngrutil.c pngset.c pngtrans.c pngwio.c pngwrite.c \
@@ -185,24 +190,28 @@ am__libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES_DIST = png.c \
 	pngpriv.h pngstruct.h pngusr.dfa arm/arm_init.c \
 	arm/filter_neon.S arm/filter_neon_intrinsics.c \
 	arm/palette_neon_intrinsics.c mips/mips_init.c \
-	mips/filter_msa_intrinsics.c intel/intel_init.c \
-	intel/filter_sse2_intrinsics.c powerpc/powerpc_init.c \
-	powerpc/filter_vsx_intrinsics.c
+	mips/filter_msa_intrinsics.c mips/filter_mmi_inline_assembly.c \
+	intel/intel_init.c intel/filter_sse2_intrinsics.c \
+	powerpc/powerpc_init.c powerpc/filter_vsx_intrinsics.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @PNG_ARM_NEON_TRUE@am__objects_1 = arm/arm_init.lo arm/filter_neon.lo \
 @PNG_ARM_NEON_TRUE@	arm/filter_neon_intrinsics.lo \
 @PNG_ARM_NEON_TRUE@	arm/palette_neon_intrinsics.lo
 @PNG_MIPS_MSA_TRUE@am__objects_2 = mips/mips_init.lo \
 @PNG_MIPS_MSA_TRUE@	mips/filter_msa_intrinsics.lo
-@PNG_INTEL_SSE_TRUE@am__objects_3 = intel/intel_init.lo \
+@PNG_MIPS_MMI_TRUE@@PNG_MIPS_MSA_FALSE@am__objects_3 =  \
+@PNG_MIPS_MMI_TRUE@@PNG_MIPS_MSA_FALSE@	mips/mips_init.lo
+@PNG_MIPS_MMI_TRUE@am__objects_4 = mips/filter_mmi_inline_assembly.lo
+@PNG_INTEL_SSE_TRUE@am__objects_5 = intel/intel_init.lo \
 @PNG_INTEL_SSE_TRUE@	intel/filter_sse2_intrinsics.lo
-@PNG_POWERPC_VSX_TRUE@am__objects_4 = powerpc/powerpc_init.lo \
+@PNG_POWERPC_VSX_TRUE@am__objects_6 = powerpc/powerpc_init.lo \
 @PNG_POWERPC_VSX_TRUE@	powerpc/filter_vsx_intrinsics.lo
 am_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_OBJECTS = png.lo pngerror.lo \
 	pngget.lo pngmem.lo pngpread.lo pngread.lo pngrio.lo \
 	pngrtran.lo pngrutil.lo pngset.lo pngtrans.lo pngwio.lo \
 	pngwrite.lo pngwtran.lo pngwutil.lo $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) $(am__objects_4)
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6)
 nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_OBJECTS =
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_OBJECTS =  \
 	$(am_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_OBJECTS) \
@@ -216,33 +225,69 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LINK = $(LIBTOOL) $(AM_V_lt) \
 	$(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS) $(LDFLAGS) -o \
 	$@
-am_png_fix_itxt_OBJECTS = contrib/tools/png-fix-itxt.$(OBJEXT)
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_LIBADD =
+am__libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_SOURCES_DIST =  \
+	loongarch/loongarch_lsx_init.c \
+	loongarch/filter_lsx_intrinsics.c
+@PNG_LOONGARCH_LSX_TRUE@am_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_OBJECTS = loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.lo \
+@PNG_LOONGARCH_LSX_TRUE@	loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.lo
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_OBJECTS =  \
+	$(am_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_OBJECTS)
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_LINK = $(LIBTOOL) $(AM_V_lt) \
+	--tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
+	$(CCLD) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_CFLAGS) \
+	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+@PNG_LOONGARCH_LSX_TRUE@am_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_rpath =
+am__png_fix_itxt_SOURCES_DIST = contrib/tools/png-fix-itxt.c
+@ENABLE_TOOLS_TRUE@am_png_fix_itxt_OBJECTS =  \
+@ENABLE_TOOLS_TRUE@	contrib/tools/png-fix-itxt.$(OBJEXT)
 png_fix_itxt_OBJECTS = $(am_png_fix_itxt_OBJECTS)
 png_fix_itxt_LDADD = $(LDADD)
-am_pngcp_OBJECTS = contrib/tools/pngcp.$(OBJEXT)
+am__pngcp_SOURCES_DIST = contrib/tools/pngcp.c
+@ENABLE_TESTS_TRUE@am_pngcp_OBJECTS = contrib/tools/pngcp.$(OBJEXT)
 pngcp_OBJECTS = $(am_pngcp_OBJECTS)
-pngcp_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-am_pngfix_OBJECTS = contrib/tools/pngfix.$(OBJEXT)
+@ENABLE_TESTS_TRUE@pngcp_DEPENDENCIES =  \
+@ENABLE_TESTS_TRUE@	libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+am__pngfix_SOURCES_DIST = contrib/tools/pngfix.c
+@ENABLE_TOOLS_TRUE@am_pngfix_OBJECTS = contrib/tools/pngfix.$(OBJEXT)
 pngfix_OBJECTS = $(am_pngfix_OBJECTS)
-pngfix_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-am_pngimage_OBJECTS = contrib/libtests/pngimage.$(OBJEXT)
+@ENABLE_TOOLS_TRUE@pngfix_DEPENDENCIES =  \
+@ENABLE_TOOLS_TRUE@	libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+am__pngimage_SOURCES_DIST = contrib/libtests/pngimage.c
+@ENABLE_TESTS_TRUE@am_pngimage_OBJECTS =  \
+@ENABLE_TESTS_TRUE@	contrib/libtests/pngimage.$(OBJEXT)
 pngimage_OBJECTS = $(am_pngimage_OBJECTS)
-pngimage_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-am_pngstest_OBJECTS = contrib/libtests/pngstest.$(OBJEXT)
+@ENABLE_TESTS_TRUE@pngimage_DEPENDENCIES =  \
+@ENABLE_TESTS_TRUE@	libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+am__pngstest_SOURCES_DIST = contrib/libtests/pngstest.c
+@ENABLE_TESTS_TRUE@am_pngstest_OBJECTS =  \
+@ENABLE_TESTS_TRUE@	contrib/libtests/pngstest.$(OBJEXT)
 pngstest_OBJECTS = $(am_pngstest_OBJECTS)
-pngstest_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-am_pngtest_OBJECTS = pngtest.$(OBJEXT)
+@ENABLE_TESTS_TRUE@pngstest_DEPENDENCIES =  \
+@ENABLE_TESTS_TRUE@	libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+am__pngtest_SOURCES_DIST = pngtest.c
+@ENABLE_TESTS_TRUE@am_pngtest_OBJECTS = pngtest.$(OBJEXT)
 pngtest_OBJECTS = $(am_pngtest_OBJECTS)
-pngtest_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-am_pngunknown_OBJECTS = contrib/libtests/pngunknown.$(OBJEXT)
+@ENABLE_TESTS_TRUE@pngtest_DEPENDENCIES =  \
+@ENABLE_TESTS_TRUE@	libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+am__pngunknown_SOURCES_DIST = contrib/libtests/pngunknown.c
+@ENABLE_TESTS_TRUE@am_pngunknown_OBJECTS =  \
+@ENABLE_TESTS_TRUE@	contrib/libtests/pngunknown.$(OBJEXT)
 pngunknown_OBJECTS = $(am_pngunknown_OBJECTS)
-pngunknown_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-am_pngvalid_OBJECTS = contrib/libtests/pngvalid.$(OBJEXT)
+@ENABLE_TESTS_TRUE@pngunknown_DEPENDENCIES =  \
+@ENABLE_TESTS_TRUE@	libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+am__pngvalid_SOURCES_DIST = contrib/libtests/pngvalid.c
+@ENABLE_TESTS_TRUE@am_pngvalid_OBJECTS =  \
+@ENABLE_TESTS_TRUE@	contrib/libtests/pngvalid.$(OBJEXT)
 pngvalid_OBJECTS = $(am_pngvalid_OBJECTS)
-pngvalid_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-am_timepng_OBJECTS = contrib/libtests/timepng.$(OBJEXT)
+@ENABLE_TESTS_TRUE@pngvalid_DEPENDENCIES =  \
+@ENABLE_TESTS_TRUE@	libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+am__timepng_SOURCES_DIST = contrib/libtests/timepng.c
+@ENABLE_TESTS_TRUE@am_timepng_OBJECTS =  \
+@ENABLE_TESTS_TRUE@	contrib/libtests/timepng.$(OBJEXT)
 timepng_OBJECTS = $(am_timepng_OBJECTS)
-timepng_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TESTS_TRUE@timepng_DEPENDENCIES =  \
+@ENABLE_TESTS_TRUE@	libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 SCRIPTS = $(bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -280,6 +325,9 @@ am__depfiles_remade = ./$(DEPDIR)/png.Plo ./$(DEPDIR)/pngerror.Plo \
 	contrib/tools/$(DEPDIR)/pngfix.Po \
 	intel/$(DEPDIR)/filter_sse2_intrinsics.Plo \
 	intel/$(DEPDIR)/intel_init.Plo \
+	loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.Plo \
+	loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.Plo \
+	mips/$(DEPDIR)/filter_mmi_inline_assembly.Plo \
 	mips/$(DEPDIR)/filter_msa_intrinsics.Plo \
 	mips/$(DEPDIR)/mips_init.Plo \
 	powerpc/$(DEPDIR)/filter_vsx_intrinsics.Plo \
@@ -315,14 +363,18 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES) \
 	$(nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES) \
+	$(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_SOURCES) \
 	$(png_fix_itxt_SOURCES) $(pngcp_SOURCES) $(pngfix_SOURCES) \
 	$(pngimage_SOURCES) $(pngstest_SOURCES) $(pngtest_SOURCES) \
 	$(pngunknown_SOURCES) $(pngvalid_SOURCES) $(timepng_SOURCES)
 DIST_SOURCES =  \
 	$(am__libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES_DIST) \
-	$(png_fix_itxt_SOURCES) $(pngcp_SOURCES) $(pngfix_SOURCES) \
-	$(pngimage_SOURCES) $(pngstest_SOURCES) $(pngtest_SOURCES) \
-	$(pngunknown_SOURCES) $(pngvalid_SOURCES) $(timepng_SOURCES)
+	$(am__libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_SOURCES_DIST) \
+	$(am__png_fix_itxt_SOURCES_DIST) $(am__pngcp_SOURCES_DIST) \
+	$(am__pngfix_SOURCES_DIST) $(am__pngimage_SOURCES_DIST) \
+	$(am__pngstest_SOURCES_DIST) $(am__pngtest_SOURCES_DIST) \
+	$(am__pngunknown_SOURCES_DIST) $(am__pngvalid_SOURCES_DIST) \
+	$(am__timepng_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -708,7 +760,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 PNGLIB_BASENAME = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@
-ACLOCAL_AMFLAGS = -I scripts
+ACLOCAL_AMFLAGS = -I scripts/autoconf
 
 # This ensures that pnglibconf.h gets built at the start of 'make all' or
 # 'make check', but it does not add dependencies to the individual programs,
@@ -719,43 +771,43 @@ ACLOCAL_AMFLAGS = -I scripts
 # result in the installed (system) pnglibconf.h being used and the result is
 # always wrong and always very confusing.
 BUILT_SOURCES = pnglibconf.h
-pngtest_SOURCES = pngtest.c
-pngtest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-pngvalid_SOURCES = contrib/libtests/pngvalid.c
-pngvalid_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-pngstest_SOURCES = contrib/libtests/pngstest.c
-pngstest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-pngunknown_SOURCES = contrib/libtests/pngunknown.c
-pngunknown_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-pngimage_SOURCES = contrib/libtests/pngimage.c
-pngimage_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-timepng_SOURCES = contrib/libtests/timepng.c
-timepng_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-pngfix_SOURCES = contrib/tools/pngfix.c
-pngfix_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-png_fix_itxt_SOURCES = contrib/tools/png-fix-itxt.c
-pngcp_SOURCES = contrib/tools/pngcp.c
-pngcp_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TESTS_TRUE@pngtest_SOURCES = pngtest.c
+@ENABLE_TESTS_TRUE@pngtest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TESTS_TRUE@pngvalid_SOURCES = contrib/libtests/pngvalid.c
+@ENABLE_TESTS_TRUE@pngvalid_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TESTS_TRUE@pngstest_SOURCES = contrib/libtests/pngstest.c
+@ENABLE_TESTS_TRUE@pngstest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TESTS_TRUE@pngunknown_SOURCES = contrib/libtests/pngunknown.c
+@ENABLE_TESTS_TRUE@pngunknown_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TESTS_TRUE@pngimage_SOURCES = contrib/libtests/pngimage.c
+@ENABLE_TESTS_TRUE@pngimage_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TESTS_TRUE@timepng_SOURCES = contrib/libtests/timepng.c
+@ENABLE_TESTS_TRUE@timepng_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TESTS_TRUE@pngcp_SOURCES = contrib/tools/pngcp.c
+@ENABLE_TESTS_TRUE@pngcp_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TOOLS_TRUE@pngfix_SOURCES = contrib/tools/pngfix.c
+@ENABLE_TOOLS_TRUE@pngfix_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+@ENABLE_TOOLS_TRUE@png_fix_itxt_SOURCES = contrib/tools/png-fix-itxt.c
 
 # Generally these are single line shell scripts to run a test with a particular
 # set of parameters:
-TESTS = \
-   tests/pngtest-all\
-   tests/pngvalid-gamma-16-to-8 tests/pngvalid-gamma-alpha-mode\
-   tests/pngvalid-gamma-background tests/pngvalid-gamma-expand16-alpha-mode\
-   tests/pngvalid-gamma-expand16-background\
-   tests/pngvalid-gamma-expand16-transform tests/pngvalid-gamma-sbit\
-   tests/pngvalid-gamma-threshold tests/pngvalid-gamma-transform\
-   tests/pngvalid-progressive-size\
-   tests/pngvalid-progressive-interlace-standard\
-   tests/pngvalid-transform\
-   tests/pngvalid-progressive-standard tests/pngvalid-standard\
-   tests/pngstest-1.8 tests/pngstest-1.8-alpha tests/pngstest-linear\
-   tests/pngstest-linear-alpha tests/pngstest-none tests/pngstest-none-alpha\
-   tests/pngstest-sRGB tests/pngstest-sRGB-alpha tests/pngunknown-IDAT\
-   tests/pngunknown-discard tests/pngunknown-if-safe tests/pngunknown-sAPI\
-   tests/pngunknown-sTER tests/pngunknown-save tests/pngunknown-vpAg\
-   tests/pngimage-quick tests/pngimage-full
+@ENABLE_TESTS_TRUE@TESTS = \
+@ENABLE_TESTS_TRUE@   tests/pngtest-all\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-gamma-16-to-8 tests/pngvalid-gamma-alpha-mode\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-gamma-background tests/pngvalid-gamma-expand16-alpha-mode\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-gamma-expand16-background\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-gamma-expand16-transform tests/pngvalid-gamma-sbit\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-gamma-threshold tests/pngvalid-gamma-transform\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-progressive-size\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-progressive-interlace-standard\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-transform\
+@ENABLE_TESTS_TRUE@   tests/pngvalid-progressive-standard tests/pngvalid-standard\
+@ENABLE_TESTS_TRUE@   tests/pngstest-1.8 tests/pngstest-1.8-alpha tests/pngstest-linear\
+@ENABLE_TESTS_TRUE@   tests/pngstest-linear-alpha tests/pngstest-none tests/pngstest-none-alpha\
+@ENABLE_TESTS_TRUE@   tests/pngstest-sRGB tests/pngstest-sRGB-alpha tests/pngunknown-IDAT\
+@ENABLE_TESTS_TRUE@   tests/pngunknown-discard tests/pngunknown-if-safe tests/pngunknown-sAPI\
+@ENABLE_TESTS_TRUE@   tests/pngunknown-sTER tests/pngunknown-save tests/pngunknown-vpAg\
+@ENABLE_TESTS_TRUE@   tests/pngimage-quick tests/pngimage-full
 
 
 # man pages
@@ -771,14 +823,24 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = png.c pngerror.c \
 	pngrutil.c pngset.c pngtrans.c pngwio.c pngwrite.c pngwtran.c \
 	pngwutil.c png.h pngconf.h pngdebug.h pnginfo.h pngpriv.h \
 	pngstruct.h pngusr.dfa $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5)
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_7)
+@PNG_LOONGARCH_LSX_TRUE@noinst_LTLIBRARIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx.la
+@PNG_LOONGARCH_LSX_TRUE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_SOURCES = loongarch/loongarch_lsx_init.c\
+@PNG_LOONGARCH_LSX_TRUE@	loongarch/filter_lsx_intrinsics.c
+
+@PNG_LOONGARCH_LSX_TRUE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_CFLAGS = -mlsx
+@PNG_LOONGARCH_LSX_TRUE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LIBADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx.la
+# libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx.la
 nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = pnglibconf.h
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = -no-undefined \
 	-export-dynamic -version-number \
 	@PNGLIB_MAJOR@@PNGLIB_MINOR@:@PNGLIB_RELEASE@:0 \
-	$(am__append_6) $(am__append_7) $(am__append_8)
-@HAVE_LD_VERSION_SCRIPT_FALSE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.sym
-@HAVE_LD_VERSION_SCRIPT_TRUE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.vers
+	$(am__append_8) $(am__append_9) $(am__append_10)
+@HAVE_LD_VERSION_SCRIPT_FALSE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES =  \
+@HAVE_LD_VERSION_SCRIPT_FALSE@	libpng.sym $(am__append_11)
+@HAVE_LD_VERSION_SCRIPT_TRUE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES =  \
+@HAVE_LD_VERSION_SCRIPT_TRUE@	libpng.vers $(am__append_11)
 pkginclude_HEADERS = png.h pngconf.h
 nodist_pkginclude_HEADERS = pnglibconf.h
 pkgconfig_DATA = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.pc
@@ -789,7 +851,7 @@ pkgconfig_DATA = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.pc
 EXTRA_DIST = \
 	ANNOUNCE AUTHORS CHANGES INSTALL LICENSE README TODO TRADEMARK \
 	pngtest.png pngbar.png pngnow.png pngbar.jpg autogen.sh \
-	${srcdir}/contrib ${srcdir}/projects ${srcdir}/scripts \
+	${srcdir}/ci ${srcdir}/contrib ${srcdir}/projects ${srcdir}/scripts \
 	$(TESTS) $(XFAIL_TESTS) tests/pngstest \
 	CMakeLists.txt example.c libpng-manual.txt
 
@@ -812,7 +874,7 @@ SUFFIXES = .chk .out
 SYMBOL_CFLAGS = -DPNGLIB_LIBNAME='PNG@PNGLIB_MAJOR@@PNGLIB_MINOR@_0' \
 	-DPNGLIB_VERSION='@PNGLIB_VERSION@' \
 	-DSYMBOL_PREFIX='$(SYMBOL_PREFIX)' -DPNG_NO_USE_READ_MACROS \
-	-DPNG_BUILDING_SYMBOL_TABLE $(am__append_9)
+	-DPNG_BUILDING_SYMBOL_TABLE $(am__append_12)
 
 # EXT_LIST is a list of the possibly library directory extensions, this exists
 # because we can't find a good way of discovering the file extensions that are
@@ -969,6 +1031,17 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	test -z "$$locs" || { \
+	  echo rm -f $${locs}; \
+	  rm -f $${locs}; \
+	}
 arm/$(am__dirstamp):
 	@$(MKDIR_P) arm
 	@: > arm/$(am__dirstamp)
@@ -989,6 +1062,8 @@ mips/$(DEPDIR)/$(am__dirstamp):
 	@: > mips/$(DEPDIR)/$(am__dirstamp)
 mips/mips_init.lo: mips/$(am__dirstamp) mips/$(DEPDIR)/$(am__dirstamp)
 mips/filter_msa_intrinsics.lo: mips/$(am__dirstamp) \
+	mips/$(DEPDIR)/$(am__dirstamp)
+mips/filter_mmi_inline_assembly.lo: mips/$(am__dirstamp) \
 	mips/$(DEPDIR)/$(am__dirstamp)
 intel/$(am__dirstamp):
 	@$(MKDIR_P) intel
@@ -1013,6 +1088,19 @@ powerpc/filter_vsx_intrinsics.lo: powerpc/$(am__dirstamp) \
 
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la: $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_OBJECTS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES) $(EXTRA_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LINK) -rpath $(libdir) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_OBJECTS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LIBADD) $(LIBS)
+loongarch/$(am__dirstamp):
+	@$(MKDIR_P) loongarch
+	@: > loongarch/$(am__dirstamp)
+loongarch/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) loongarch/$(DEPDIR)
+	@: > loongarch/$(DEPDIR)/$(am__dirstamp)
+loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.lo:  \
+	loongarch/$(am__dirstamp) loongarch/$(DEPDIR)/$(am__dirstamp)
+loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.lo:  \
+	loongarch/$(am__dirstamp) loongarch/$(DEPDIR)/$(am__dirstamp)
+
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx.la: $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_OBJECTS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_DEPENDENCIES) $(EXTRA_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_LINK) $(am_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_rpath) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_OBJECTS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_LIBADD) $(LIBS)
 contrib/tools/$(am__dirstamp):
 	@$(MKDIR_P) contrib/tools
 	@: > contrib/tools/$(am__dirstamp)
@@ -1122,6 +1210,8 @@ mostlyclean-compile:
 	-rm -f contrib/tools/*.$(OBJEXT)
 	-rm -f intel/*.$(OBJEXT)
 	-rm -f intel/*.lo
+	-rm -f loongarch/*.$(OBJEXT)
+	-rm -f loongarch/*.lo
 	-rm -f mips/*.$(OBJEXT)
 	-rm -f mips/*.lo
 	-rm -f powerpc/*.$(OBJEXT)
@@ -1160,6 +1250,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/tools/$(DEPDIR)/pngfix.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@intel/$(DEPDIR)/filter_sse2_intrinsics.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@intel/$(DEPDIR)/intel_init.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@mips/$(DEPDIR)/filter_mmi_inline_assembly.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@mips/$(DEPDIR)/filter_msa_intrinsics.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@mips/$(DEPDIR)/mips_init.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@powerpc/$(DEPDIR)/filter_vsx_intrinsics.Plo@am__quote@ # am--include-marker
@@ -1219,6 +1312,20 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
+loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.lo: loongarch/loongarch_lsx_init.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_CFLAGS) $(CFLAGS) -MT loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.lo -MD -MP -MF loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.Tpo -c -o loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.lo `test -f 'loongarch/loongarch_lsx_init.c' || echo '$(srcdir)/'`loongarch/loongarch_lsx_init.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.Tpo loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='loongarch/loongarch_lsx_init.c' object='loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_CFLAGS) $(CFLAGS) -c -o loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.lo `test -f 'loongarch/loongarch_lsx_init.c' || echo '$(srcdir)/'`loongarch/loongarch_lsx_init.c
+
+loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.lo: loongarch/filter_lsx_intrinsics.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_CFLAGS) $(CFLAGS) -MT loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.lo -MD -MP -MF loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.Tpo -c -o loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.lo `test -f 'loongarch/filter_lsx_intrinsics.c' || echo '$(srcdir)/'`loongarch/filter_lsx_intrinsics.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.Tpo loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='loongarch/filter_lsx_intrinsics.c' object='loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la_CFLAGS) $(CFLAGS) -c -o loongarch/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.lo `test -f 'loongarch/filter_lsx_intrinsics.c' || echo '$(srcdir)/'`loongarch/filter_lsx_intrinsics.c
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -1226,6 +1333,7 @@ clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf arm/.libs arm/_libs
 	-rm -rf intel/.libs intel/_libs
+	-rm -rf loongarch/.libs loongarch/_libs
 	-rm -rf mips/.libs mips/_libs
 	-rm -rf powerpc/.libs powerpc/_libs
 
@@ -2048,6 +2156,8 @@ distclean-generic:
 	-rm -f contrib/tools/$(am__dirstamp)
 	-rm -f intel/$(DEPDIR)/$(am__dirstamp)
 	-rm -f intel/$(am__dirstamp)
+	-rm -f loongarch/$(DEPDIR)/$(am__dirstamp)
+	-rm -f loongarch/$(am__dirstamp)
 	-rm -f mips/$(DEPDIR)/$(am__dirstamp)
 	-rm -f mips/$(am__dirstamp)
 	-rm -f powerpc/$(DEPDIR)/$(am__dirstamp)
@@ -2064,7 +2174,8 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
-	clean-libLTLIBRARIES clean-libtool mostlyclean-am
+	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -2098,6 +2209,9 @@ distclean: distclean-am
 	-rm -f contrib/tools/$(DEPDIR)/pngfix.Po
 	-rm -f intel/$(DEPDIR)/filter_sse2_intrinsics.Plo
 	-rm -f intel/$(DEPDIR)/intel_init.Plo
+	-rm -f loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.Plo
+	-rm -f loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.Plo
+	-rm -f mips/$(DEPDIR)/filter_mmi_inline_assembly.Plo
 	-rm -f mips/$(DEPDIR)/filter_msa_intrinsics.Plo
 	-rm -f mips/$(DEPDIR)/mips_init.Plo
 	-rm -f powerpc/$(DEPDIR)/filter_vsx_intrinsics.Plo
@@ -2183,6 +2297,9 @@ maintainer-clean: maintainer-clean-am
 	-rm -f contrib/tools/$(DEPDIR)/pngfix.Po
 	-rm -f intel/$(DEPDIR)/filter_sse2_intrinsics.Plo
 	-rm -f intel/$(DEPDIR)/intel_init.Plo
+	-rm -f loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-filter_lsx_intrinsics.Plo
+	-rm -f loongarch/$(DEPDIR)/libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@lsx_la-loongarch_lsx_init.Plo
+	-rm -f mips/$(DEPDIR)/filter_mmi_inline_assembly.Plo
 	-rm -f mips/$(DEPDIR)/filter_msa_intrinsics.Plo
 	-rm -f mips/$(DEPDIR)/mips_init.Plo
 	-rm -f powerpc/$(DEPDIR)/filter_vsx_intrinsics.Plo
@@ -2217,18 +2334,18 @@ uninstall-man: uninstall-man3 uninstall-man5
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles am--refresh check \
 	check-TESTS check-am clean clean-binPROGRAMS \
 	clean-checkPROGRAMS clean-cscope clean-generic \
-	clean-libLTLIBRARIES clean-libtool cscope cscopelist-am ctags \
-	ctags-am dist dist-all dist-bzip2 dist-gzip dist-hook \
-	dist-lzip dist-shar dist-tarZ dist-xz dist-zip dist-zstd \
-	distcheck distclean distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags distcleancheck \
-	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-binPROGRAMS \
-	install-binSCRIPTS install-data install-data-am \
-	install-data-hook install-dvi install-dvi-am install-exec \
-	install-exec-am install-exec-hook install-html install-html-am \
-	install-info install-info-am install-libLTLIBRARIES \
-	install-man install-man3 install-man5 \
+	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
+	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
+	dist-gzip dist-hook dist-lzip dist-shar dist-tarZ dist-xz \
+	dist-zip dist-zstd distcheck distclean distclean-compile \
+	distclean-generic distclean-hdr distclean-libtool \
+	distclean-tags distcleancheck distdir distuninstallcheck dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-binSCRIPTS install-data \
+	install-data-am install-data-hook install-dvi install-dvi-am \
+	install-exec install-exec-am install-exec-hook install-html \
+	install-html-am install-info install-info-am \
+	install-libLTLIBRARIES install-man install-man3 install-man5 \
 	install-nodist_pkgincludeHEADERS install-pdf install-pdf-am \
 	install-pkgconfigDATA install-pkgincludeHEADERS install-ps \
 	install-ps-am install-strip installcheck installcheck-am \
