@@ -18,6 +18,7 @@ changes made.  See document footer for additional details.
 * improved ambient occlusion rt during -k cut planes - Sean Morrison
 * changed rt ambient occlusion randomization default - Sean Morrison
 * added ambient occlusion example to rt manual pages - Sean Morrison
+* fixed rtweight output display inside MGED - Chris McGregor
 * added shipping container example geometry model - Josh Baker
 * added traffic light example geometry model - Chris McGregor
 * improved rtwizard command-line option reporting - Sean Morrison
