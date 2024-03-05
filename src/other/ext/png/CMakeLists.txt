@@ -102,6 +102,7 @@ option(PNG_HARDWARE_OPTIMIZATIONS "Enable hardware optimizations" ON)
 option(PNG_BUILD_ZLIB "Custom zlib location, else find_package is used" OFF)
 if(NOT PNG_BUILD_ZLIB)
   find_package(ZLIB REQUIRED)
+  include_directories(${ZLIB_INCLUDE_DIRS})
 elseif(POLICY CMP0074)
   if("x${ZLIB_ROOT}" STREQUAL "x")
     message(DEPRECATION
@@ -1090,13 +1091,13 @@ if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
   install(FILES ${libpng_public_hdrs}
           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
   install(FILES ${libpng_public_hdrs}
-          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libpng${PNGLIB_ABI_VERSION})
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libpng_brl${PNGLIB_ABI_VERSION})
 endif()
 if(NOT SKIP_INSTALL_EXECUTABLES AND NOT SKIP_INSTALL_ALL)
   if(NOT WIN32 OR CYGWIN OR MINGW)
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng-config
             DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng${PNGLIB_ABI_VERSION}-config
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng_brl${PNGLIB_ABI_VERSION}-config
             DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif()
 endif()
