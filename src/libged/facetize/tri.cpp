@@ -848,7 +848,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	bu_vls_sprintf(&method_str, "NMG");
 	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
 	mstrpp = std::string("NMG");
-	l_max_time = mo->max_time[mstrpp];
+	l_max_time = mo->plate_max_time;
 	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
 	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 
