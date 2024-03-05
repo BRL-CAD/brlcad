@@ -1,7 +1,7 @@
 /*                         D A T E T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2023 United States Government as represented by
+ * Copyright (c) 2013-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,12 @@ extern int gettimeofday(struct timeval *, void *);
 
 int BU_SEM_DATETIME;
 
-
+// TODO - See about using the actively maintained library related to the C++20
+// standard's date support (https://github.com/HowardHinnant/date) for this, so
+// we can get the improved C++ chrono behavior guaranteed by the standard for
+// year 2038 support rather than relying on y2038.  (Depending on when we get
+// to this, may just be able to use C++20 directly if we're already using it
+// rather than requiring HowardHinnant/date.)
 void
 bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 {

@@ -32,6 +32,7 @@ add_subdirectory(draw)
 # breaking commands.
 CMAKEFILES(
   lint_tests.g
+  search_tests.g
   obb_tests.g
   ged_tests.g
   pnts_in_out.g

@@ -1,7 +1,7 @@
 /*                   T E S T _ S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2023 United States Government as represented by
+ * Copyright (c) 2018-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ int run_search_check_count(struct ged *dbp, int expected_count, int num_args, ..
 int
 main(int ac, char *av[]) {
     struct ged *dbp;
-    
+
     split_data split_ret;
 
     bu_setprogname(av[0]);
@@ -122,7 +122,8 @@ main(int ac, char *av[]) {
 	    ret_code += run_search_check_count(dbp, 3, 3, ".", "-type", "region");
 	    ret_code += run_search_check_count(dbp, 3, 2, "-type", "region");
 	    break;
-	case 3: {
+	case 3:
+	{
 	    // verbosity
 	    const char *cmd[6] = {"search", "-v", ".", "-type", "region", NULL};
 	    ged_exec(dbp, 5, cmd);
@@ -152,7 +153,8 @@ main(int ac, char *av[]) {
 		ret_code = 1;
 		break;
 	    }
-	    break; }
+	    break;
+	}
 	default:
 	    goto finish_tests;
 	    break;

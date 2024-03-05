@@ -133,7 +133,7 @@ removed at any time.
 ----
 MGED commands
 	E (a.k.a "big E") - replaced by "draw -m5"
-
+        
 7.32
 ----
 include/bu/app.h
@@ -1696,4 +1696,9 @@ s/bg_nested_polygon_triangulate/bg_nested_poly_triangulate/g
 s/OP_NMG_TESS/OP_TESS/g
 s/tree_nmgregion/tree_tessellation/g
 s/nmg_booltree_leaf_tess/rt_booltree_leaf_tess/g
-
+s/-ghosting-intensity/-ghost-intensity/g
+        rtwizard option simplified [7.38]
+s/pl_mat_idn/MAT_IDN/g
+s/pl_mat_zero/MAT_ZERO/g
+s/pl_mat_copy/MAT_COPY/g
+s/ambSlow=[0-9]*//g

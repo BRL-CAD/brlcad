@@ -17,7 +17,10 @@ tasks as they are completed.
 
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
+
 * sanity check windows bext size
+
+* complete preliminary concave arb8 support
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -27,6 +30,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* add rt* option to output reusable view specification similar to
+  saveview scripts, but perhaps just the command portion.  this would
+  be similar to what 'art' does, so a given rendering can be reloaded.
+
+* make saveview and loadview work with and output rt command scripts,
+  not shell scripts.  to work, rt command scripts will need to bake in
+  the entire view specification including perspective, ambient, and
+  append/overwrite properly when writing out to the same file
+  (currently appends additional invocations).  primary use case will
+  be to save out multiple view iterations that render the sequence to
+  multiple files.
 
 * explore whether we can write a command to replace bad brep
   3d edge curves with ON_BezierCurve::Loft approximations of
@@ -216,8 +231,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   paths or can/should have meaningful behavior with paths
 
 * default tops to undecorated, deprecate -n, add tops -p
-
-* document tops options in man page
 
 * default ls to undecorated, deprecate -n, add ls -p
 
@@ -474,9 +487,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * drawing with origin, axes, and overall dimensions for rt/rtedge/etc.
 
-* gather v&v docs on configuration management process, user manuals,
-  process documentation, software documentation, model descriptions.
-
 * STIX 2.0 fonts are released, using OpenType - check to see whether
   we can upgrade to these for our DocBook processing
 
@@ -675,10 +685,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * import CTRI material information in fast4-g as per-face data.
 
 * Integrate ADRT into Archer as a visualization mode.
-
-* Document a GUI feature list (prioritized).
-
-* Document a CLI feature list (prioritized).
 
 * high-performance VOL for medical data visualization.  consider
   leveraging OpenVDB, PCL, Paraview/VTK, etc.
@@ -2531,6 +2537,12 @@ GEOMETRY MODELS
 DOCUMENTATION
 -------------
 
+* document rt script commands
+
+* Document a GUI feature list (prioritized).
+
+* Document a CLI feature list (prioritized).
+
 * HTML docs that display in MGED via menu are way out of date and look
   bad per modern standards. Needs to be updated/replaced with doxygen
   docs and/or clean presentation layout with overview, tutorials, and
@@ -2710,6 +2722,11 @@ DOCUMENTATION
   list of things we might need to consider when writing converters.
 
 * document the saveview/loadview options.
+
+* document tops options in man page
+
+* gather v&v docs on configuration management process, user manuals,
+  process documentation, software documentation, model descriptions.
 
 * BRL-CAD Overview Diagram
 	Completed, but not integrated

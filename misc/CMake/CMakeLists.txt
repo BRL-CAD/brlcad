@@ -5,6 +5,7 @@ set(cmake_ignore_files
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
   BRLCAD_Environment_Setup.cmake
+  BRLCAD_EXT_Setup.cmake
   BRLCAD_ExternalDeps.cmake
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake

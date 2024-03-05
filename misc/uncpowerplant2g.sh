@@ -2,7 +2,7 @@
 #              U N C P O W E R P L A N T 2 G . S H
 # BRL-CAD
 #
-# Copyright (c) 2014-2023 United States Government as represented by
+# Copyright (c) 2014-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -20,36 +20,61 @@
 #
 ###
 #
-#  Script to convert the UNC powerplant model* into a BRL-CAD .g
-#  file with hierarchy.
+# Script to convert the UNC powerplant model into a BRL-CAD .g file
+# with hierarchy.  Powerplant is retrieved from:
 #
-#  *http://gamma.cs.unc.edu/POWERPLANT/complete.html
+#   http://gamma.cs.unc.edu/POWERPLANT/complete.html
 #
 
-if [ -e powerplant.g ]
-then
-    echo "powerplant.g exists - refusing to overwrite"
-    exit
+if test -e powerplant.g ; then
+    echo "ERROR: powerplant.g already exists. Delete to procede. Refusing to overwrite."
+    exit 1
 fi
-mged -c powerplant.g y
-for i in {1..30}; do
-    for j in {a..z}; do
-	if [ -e ppsection$i/part_$j ]
-	then
-	    for k in {0..200}; do
-		if [ -e ppsection$i/part_$j/g$k.ply ]
-		then
-		    echo "Converting ppsection$i/part_$j/g$k.ply:"
-		    echo
+
+ppdirs="`ls -1d ppsection* 2>/dev/null | wc | awk '{print $1}'`"
+if [ $ppdirs -eq 0 ] ; then
+    if ! test -f complete.tar.gz ; then
+	echo "NOTICE: Downloading the powerplant model..."
+	curl -O http://gamma.cs.unc.edu/POWERPLANT/unix/complete.tar.gz
+    fi
+    if ! test -f complete.tar.gz ; then
+	echo "ERROR: Download seemingly failed, aborting."
+	exit 2
+    fi
+    echo "NOTICE: Unpacking the powerplant model..."
+    tar zxvf complete.tar.gz
+fi
+
+# sanity double-check
+ppdirs="`ls -1d ppsection* 2>/dev/null | wc | awk '{print $1}'`"
+if [ $ppdirs -eq 0 ] ; then
+    echo "ERROR: Unpacking seemingly failed, aborting."
+    exit 3
+fi
+
+# make sure we got mged, assuming ply-g if we have it
+rm -f powerplant.g
+output="`mged -c powerplant.g quit 2>&1`"
+if test $? != 0 ; then
+    echo "Output: $output"
+    echo "ERROR: Unable to run mged, check PATH. Aborting."
+    exit 4
+fi
+
+# let's go
+for i in {1..30} ; do
+    for j in {a..z} ; do
+	if [ -e ppsection$i/part_$j ] ;	then
+	    for k in {0..200} ; do
+		if [ -e ppsection$i/part_$j/g$k.ply ] ; then
+		    echo "== Converting ppsection$i/part_$j/g$k.ply =="
+		    rm -f part_$i-$j-$k.g
 		    ply-g ppsection$i/part_$j/g$k.ply part_$i-$j-$k.g
 		    mged part_$i-$j-$k.g mvall g$k.bot.r part_$i-$j-$k.r
 		    mged part_$i-$j-$k.g mvall g$k.bot part_$i-$j-$k.bot
 		    mged powerplant.g dbconcat part_$i-$j-$k.g
 		    mged powerplant.g g part_$i-$j part_$i-$j-$k.r
-		    rm part_$i-$j-$k.g
-		    echo
-		    echo "Converting ppsection$i/part_$j/g$k.ply: Done"
-		    echo
+		    rm -f part_$i-$j-$k.g
 		fi
 	    done
 	    mged powerplant.g g section_$i part_$i-$j
@@ -57,6 +82,9 @@ for i in {1..30}; do
     done
     mged powerplant.g g powerplant section_$i
 done
+
+echo "Done, see powerplant.g"
+
 
 # Local Variables:
 # tab-width: 8

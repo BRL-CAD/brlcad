@@ -1,7 +1,7 @@
 /*                 T R I M E S H _ P L O T 3 . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
 #include "bu/malloc.h"
 #include "bu/color.h"
 #include "bu/sort.h"
+#define PLOT_PREFIX_STR bg_plot3_
+#define PLOT3_IMPLEMENTATION
 #include "bv/plot3.h"
 #include "bg/trimesh.h"
 #include "bg/plane.h"
