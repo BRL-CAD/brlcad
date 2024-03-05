@@ -49,6 +49,7 @@
 
 extern "C" {
 #include "vmath.h"
+#include "brep.h"
 #include "rt/primitives/bot.h"
 #include "wdb.h"
 }
