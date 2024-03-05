@@ -47,9 +47,11 @@
 #include <unordered_set>
 #include <vector>
 
+extern "C" {
 #include "vmath.h"
 #include "rt/primitives/bot.h"
 #include "wdb.h"
+}
 #include "ged.h"
 #include "./ged_bot.h"
 
