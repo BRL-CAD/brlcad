@@ -168,7 +168,6 @@ set(LIBRT_SOURCES
   primitives/nmg/nmg.c
   primitives/nmg/nmg_brep.cpp
   primitives/nmg/nmg_mirror.c
-  primitives/nmg/nmg_tess.c
   primitives/nmg/nmg_tri_mc.c
   primitives/obj_adjust.c
   primitives/obj_curve.c

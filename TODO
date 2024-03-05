@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* fix subprocess output.
+
 * sanity check windows bext size
 
 * complete preliminary concave arb8 support

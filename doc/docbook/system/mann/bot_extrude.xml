@@ -1,0 +1,181 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bot_flip">
+  <refmeta>
+    <refentrytitle>BOT_EXTRUDE</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>bot_extrude</refname>
+    <refpurpose>
+      Generate a volumetric BoT to explicitly represent the volume claimed by plate mode BoT.
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>bot_extrude</command>
+      <arg choice="opt" rep="norepeat"><replaceable>-h</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-q</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-i</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-R</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-C</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-F</replaceable></arg>
+      <arg choice="req" rep="norepeat"> <replaceable>input_bot</replaceable></arg>
+      <arg choice="opt" rep="norepeat"> <replaceable>output_bot</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
+  <para>
+    Given a BoT solid using "plate" mode to implicitly define a volume, generate
+    an explicit volumentric BoT to approximately represent the same volume.  The
+    default mode is to produce a BoT, but if the user prefers a CSG tree of
+    implicit shapes that output can be generated with <option>-C</option>.  (Usually
+    the resulting tree is quite large, since it uses one primitive for every mesh
+    element, and typically <option>-C</option> is recommended only for debugging.)
+    Note that the volumetric representation produces will typically not be an
+    <emphasis>exact</emphasis> match to the original plate mode volume - cylinders
+    are used to "fill in" mesh edges and this can produce small artifacts at outer
+    vertex points.  Typically, especially with small thickness values for plates,
+    these artifacts are not significant - the "cylinders" themselves are also facetized
+    approximations of the "thickness volume" claimed by edges.  Just as spheres are
+    approximated by a triangle mesh when facetized, a plate mode's "volume" is approximated
+    when extruded.
+  </para>
+
+  <para>
+    In order to avoid being destructive, the output produced must normally be
+    written out to a different object name than that of the input BoT.  However,
+    if the user wishes to replace a large number of plate mode BoTs in a CSG
+    hierarchy, the <option>-i</option> option may be used to instruct the
+    <command>bot extrude</command> command to replace the original input with
+    the generated output.  This IS destructive, but also avoids the need to edit
+    all of the comb entries referencing the original primitives.  Users should
+    only perform a <option>-i</option> extrusion on an expendable copy of the original
+    .g file until they are sure the result is satisfactory.
+  </para>
+
+  <para>
+    By default outer edges of a plate mode BoT are not represented by cylinders.
+    This is generally the intuitive expectation, but arguably the half cylinder
+    at the outer edge could be considered volume claimed by the plate mode bot,
+    depending on the incoming ray angle.  If the user DOES wish to "round" the
+    outer edges of the conversion with cylinders, the <option>-R</option> option
+    will apply those cylinders in the conversion process.
+  </para>
+
+  <para>
+    The most problematic plate mode BoTs to represent as volumes are those with
+    view dependent behavior - i.e., those with "face_mode" set.  In the strict
+    sense such objects do not claim a well defined volume in space - in/out hit points
+    and partitions will change for the same intersecting line segment depending on
+    what direction the ray is coming from.  By default <command>bot extrude</command>
+    will warn and exit when encountering such volumes, but if the user is willing
+    to accept the differences between the original and a volumetric approximation they
+    may instruct <command>bot extrude</command> to proceed with the <option>-F</option>
+    option.
+  </para>
+  
+  </refsection>
+
+  <refsection xml:id="dbconcat_options"><title>OPTIONS</title>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-h|--help</emphasis></term>
+      <listitem>
+        <para>
+          Print help and exit.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-q|--quiet</emphasis></term>
+      <listitem>
+        <para>
+          Suppress messages reporting the status of the generation process.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-i|--in-place</emphasis></term>
+      <listitem>
+        <para>
+          Replace the input BoT with the generated volumetric output. (Destructive.)
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-R|--round-edges</emphasis></term>
+      <listitem>
+        <para>
+          Represent outer edges of plate mode BoT with cylinderical approximations.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-C|--comb</emphasis></term>
+      <listitem>
+        <para>
+          Return a CSG tree of implicit shapes rather than an evaluated BoT.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-F|--force</emphasis></term>
+      <listitem>
+        <para>
+          Produce a volumetric BoT output even if the input BoT's parameters indicate it is a view dependent solid.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+    <para>
+      Generate a volumetric BoT from a plate mode BoT (standard case.)
+    </para>
+    <example><title>Basic example.</title>
+
+      <para><prompt>mged&gt; </prompt><userinput>bot extrude input.bot output.bot</userinput></para>
+      <para>
+        Represents all triangle elements in input.bot with CSG implicits, approximates them with
+	triangles, and unions them together to produce output.bot.
+      </para>
+    </example>
+
+    <para>
+      For a more advanced use, we combine <command>bot extrude</command> with <command>search -exec</command>
+      to batch convert a large number of plate mode BoTs.
+    </para>
+    <example><title>Batch conversion of plate mode BoTs.</title>
+
+      <para><prompt>mged&gt; </prompt><userinput>search -type bot -type plate -exec "bot extrude -F --in-place {}" ";"</userinput></para>
+      <para>
+        Uses the <option>--in-place</option> to replace plate mode BoTs in the .g file with their
+	volumetric approximations. The <option>-F</option> option instructs <command>bot extrude</command>
+	to proceed even if the BoT is view dependent.
+      </para>
+    </example>
+
+  </refsection>
+  
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to <email>devs@brlcad.org</email>
+    </para>
+  </refsection>
+</refentry>

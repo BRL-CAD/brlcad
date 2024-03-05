@@ -13,19 +13,29 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* updated bot extrude to produce volumetric BoT outputs - Cliff Yapp
+* updated and corrected dbconcat man page - Cliff Yapp
 * improved ambient occlusion rt during -k cut planes - Sean Morrison
 * changed rt ambient occlusion randomization default - Sean Morrison
 * added ambient occlusion example to rt manual pages - Sean Morrison
+* fixed rtweight output display inside MGED - Chris McGregor
 * added shipping container example geometry model - Josh Baker
 * added traffic light example geometry model - Chris McGregor
 * improved rtwizard command-line option reporting - Sean Morrison
 * added self-intersecting torus ray tracing support - Sean Morrison
 * fixed rt crash rendering to -F/dev/null - Sean Morrison
+* added mater man page density table example - Chris McGregor
+* adjusted default ghosting intensity in rtwizard - Josh Baker
+* fixed MGED command line handling of objects named 'y' - Cliff Yapp
 * fix double printing of last 'search -exec' result - Chris McGregor
 * improve 'search -v' to support multiple levels - Chris McGregor
 * update 'search -v' to report # of objects found - Chris McGregor
+* added a "bots only" mode to conversion.sh script - Cliff Yapp
 * fixed asc2g/g2asc support for brep primitives - Cliff Yapp
+* added brep and bot versions of pinewood .g model - Josh Baker
+* added new .g example file "Annual Gift Man" - Josh Baker
 * fixed dsp terrain file data loading for relative paths - Cliff Yapp
+* updated Manifold lib for improved facetize robustness - Cliff Yapp
 
 
 ----------------------------------------------------------------------
