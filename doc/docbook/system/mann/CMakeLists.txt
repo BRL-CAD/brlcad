@@ -26,6 +26,7 @@ set(mann_EN
   bot.xml
   bot_condense.xml
   bot_decimate.xml
+  bot_extrude.xml
   bot_face_fuse.xml
   bot_face_sort.xml
   bot_flip.xml
@@ -273,11 +274,8 @@ set(mann_INTRO
 ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
 
 
-CMAKEFILES(
-  CMakeLists.txt
-  bot_extrude.xml
-  mged_cmd_template.xml
-  )
+CMAKEFILES(mged_cmd_template.xml)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8
