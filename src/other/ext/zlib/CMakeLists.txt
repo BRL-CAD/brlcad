@@ -175,6 +175,7 @@ if(BUILD_STATIC_LIBS)
 endif(BUILD_STATIC_LIBS)
 
 set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
+set_target_properties(zlib PROPERTIES SOVERSION 1)
 
 # OpenBSD has its own naming conventions.  Set a platform variable based on
 # the OS name so we can test for it succinctly.

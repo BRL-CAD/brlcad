@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* updated zlib to version 1.3.1 - Cliff Yapp
 * updated and corrected dbconcat man page - Cliff Yapp
 * improved ambient occlusion rt during -k cut planes - Sean Morrison
 * changed rt ambient occlusion randomization default - Sean Morrison
