@@ -41,41 +41,26 @@
     <para>
       If confliting names are encountered, computer-generated prefixes will be added
       to the object names coming from the incoming <emphasis>database_file</emphasis>.
-      HOWEVER, by default  member names appearing in combinations will NOT be modified
-      to reference the new names - this means that the imported combs will point to the
-      objects in the current database, NOT the copies brought in by dbconcat.  This is
-      dangerous and should be avoided unless the user knows exactly what they are doing.
     </para>
     <para>
-      One approach to resolving conflicting names is to simply overwrite the current objects.
-      If the <emphasis>-O</emphasis> option is supplied, all conlicts will automatically be resolved
-      by overwritting the original object with its replacment from <emphasis>database_file</emphasis>.
-      Note that using this option is destructive - old geometry is not preserved when being overwritten.
-      Consequently this should only be used when the intent is to NOT preserve the original data.
+      Another usage scenario is where the user wishes to overwrite the current objects
+      with those being imported.  The <emphasis>-O</emphasis> option supports this, but
+      note that using this option is destructive - old geometry is NOT preserved when
+      being overwritten.
     </para>
     <para>
-      Aternately, if an <emphasis>affix</emphasis> string is supplied, then all objects from
+      If an <emphasis>affix</emphasis> string is supplied, then all objects from
       the incoming <emphasis>database_file</emphasis> will have the <emphasis>affix</emphasis> added
       to their names as a prefix (by default or if the <emphasis>-p</emphasis> option is specified),
       or as a suffix (if the <emphasis>-s</emphasis> option is specified).  In either mode the
       <emphasis>affix</emphasis> string is added to ALL incoming object names, not just those cases
-      where there is a conflict.  However, comb trees on incoming geometry are also updated to
-      reference the names using the <emphasis>affix</emphasis> string, so this offers a way to
-      bring hierarchies in correctly.
-    </para>
-    <para>
-      Note that specifying such an <emphasis>affix</emphasis> string is not a guarantee of
-      avoiding conflicts.  The <command>dup</command> command should be used to check for
-      duplicate names. If the <command>dup</command> command still finds duplicate
-      names, use the <emphasis>prefix</emphasis> option to both the <command>dup</command> and
-      <command>dbconcat</command> commands to find a <emphasis>prefix</emphasis> that produces
-      no duplicates.
+      where there is a conflict.  Comb trees on incoming geometry are also updated to
+      reference the names using the <emphasis>affix</emphasis> string.
     </para>
 
-
     <para>
-      Other options are used to indicate whether or not to preserve incoming metadata such as title, units
-      and region color table.
+      Other options are used to indicate whether or not to preserve incoming metadata such
+      as title, units and region color table.
     </para>
   </refsection>
 
@@ -144,10 +129,13 @@
   <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
-      This example shows the use of the <command>dbconcat</command> command to copy all objects in a particular
-      database to the current database. It also shows how to add a particular prefix to every object copied.
+      This example shows the use of the <command>dbconcat</command> command to copy all
+      objects in a particular database to the current database. It also shows how to
+      add a particular prefix to every object copied.
     </para>
-    <example><title>Copy objects in a specified database to the current one and add a prefix to all the copied objects.</title>
+    <example>
+      <title>Copy objects in a specified database to the current one and add a
+    prefix to all the copied objects.</title>
 
       <para><prompt>mged&gt; </prompt><userinput>dbconcat model_two.g two_</userinput></para>
       <para>
@@ -157,10 +145,12 @@
     </example>
 
     <para>
-      Another example shows a usage to import the title, units, color table, and all the objects of a database file
-      into the current database. This is particularly useful if the current database is empty or just created by mged.
+      Another example shows a usage to import the title, units, color table, and all
+      the objects of a database file into the current database. This is particularly
+      useful if the current database is empty or just created by mged.
     </para>
-    <example><title>Copy an entire database, including title, units, and color table, to the current database without any affix</title>
+    <example>
+      <title>Copy an entire database, including title, units, and color table, to the current database without any affix</title>
 
       <para><prompt>mged&gt; </prompt><userinput>dbconcat -t -u -c model_two.g</userinput></para>
       <para>
@@ -169,7 +159,8 @@
       </para>
     </example>
 
-    <example><title>Copy a database, overwriting objects in the current databse</title>
+    <example>
+      <title>Copy a database, overwriting objects in the current databse</title>
 
       <para><prompt>mged&gt; </prompt><userinput>dbconcat -O model_two.g</userinput></para>
       <para>

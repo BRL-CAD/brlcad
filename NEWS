@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * updated bot extrude to produce volumetric BoT outputs - Cliff Yapp
-* improved readability of dbconcat man page - Cliff Yapp
+* updated and corrected dbconcat man page - Cliff Yapp
 * improved ambient occlusion rt during -k cut planes - Sean Morrison
 * changed rt ambient occlusion randomization default - Sean Morrison
 * added ambient occlusion example to rt manual pages - Sean Morrison
