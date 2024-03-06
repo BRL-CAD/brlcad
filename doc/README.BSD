@@ -14,3 +14,10 @@ packaging mechanisms.  Failing that, CMake can be bootstrapped
 without much difficulty on most modern Unix-style platforms.
 
 BRL-CAD is included in the FreeBSD Ports system.
+
+---------------------------------------------------------------------
+When setting up to compile on GhostBSD, the following packages are
+enough to get started:
+
+pkg install cmake ninja os-generic-userland-devtools
+
