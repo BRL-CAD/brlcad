@@ -37,6 +37,23 @@
  * or solid segments to estimate volume.  Here, we're using the first
  * and last hit points to estimate exterior surface area.
  *
+ * = Examples =
+ *
+ * # Calculate area within 0.1% convergence (after 3+ iterations):
+ * rtsurf file.g object
+ *
+ * # Calculate area using precisely 1M samples (1 iteration only):
+ * rtsurf -n 1000000 file.g object
+ *
+ * # Sets of 1M samples to within 0.001% convergence (3+ iters):
+ * rtsurf -t 0.001 -n 1000000
+ *
+ * # Sets of 1k, 0.1% convergence, saving geometry script to file:
+ * rtsurf -n 1000 -p file.g object > file.mged
+ * mged -c file.g source file.mged
+ *
+ * = Citations =
+ *
  * Came up with the idea for this approach many years ago, but
  * apparently not alone in that regard.  Found two other papers very
  * closely relating to the method we're using:
@@ -69,8 +86,15 @@
 
 struct options
 {
-    size_t samples;
-    int print;
+    ssize_t samples;  /** number of segments or -1 to iterate to convergence */
+    double threshold; /** percentage change to stop at */
+    int print;        /** whether to log output or not */
+};
+
+
+struct ray {
+    point_t r_pt;
+    vect_t r_dir;
 };
 
 
@@ -269,7 +293,7 @@ points_on_sphere(size_t count, point_t pnts[], double radius, point_t center)
  * method though to construct a boundary mesh representation.
  */
 static void
-rays_from_points_to_center(struct xray *rays, size_t count, const point_t pnts[], const point_t center)
+rays_from_points_to_center(struct ray *rays, size_t count, const point_t pnts[], const point_t center)
 {
     for (size_t i = 0; i < count; ++i) {
 	VMOVE(rays[i].r_pt, pnts[i]);
@@ -294,7 +318,7 @@ shuffle_points(point_t *points, size_t n)
 
 
 static void
-rays_through_point_pairs(struct xray *rays, size_t count, point_t pnts[])
+rays_through_point_pairs(struct ray *rays, size_t count, point_t pnts[])
 {
     /* generate N/2 rays from an array of N points */
     shuffle_points(pnts, count);
@@ -334,18 +358,23 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
     points_on_sphere(samples, points, radius, center);
 
-    struct xray *rays = (struct xray *)bu_calloc(samples, sizeof(struct xray), "rays");
+    struct ray *rays = (struct ray *)bu_calloc(samples, sizeof(struct ray), "rays");
 
     /* use the sample points twice to generate our set of sample rays */
     rays_through_point_pairs(rays, samples, points);
     rays_through_point_pairs(rays+(samples/2), samples, points);
 
+    /* done with points, loaded into rays */
+    bu_free(points, "points");
+
     size_t hits = 0;
     for (size_t i = 0; i < samples; ++i) {
-	ap->a_ray = rays[i]; /* struct copy */
+	/* can't struct copy because our ray is smaller than xray */
+	VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
+	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
 
 	if (print) {
-	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(points[i]), hitrad * 1.25);
+	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
 	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
 	}
 
@@ -360,33 +389,38 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     if (hits > samples)
 	bu_log("WARNING: hits (%zu) > samples (%zu)\n", hits, samples);
 
-    /* release points for this iteration */
-    bu_free(points, "points");
+    /* done with our rays */
     bu_free(rays, "rays");
 
     double area = compute_surface_area(hits * 2, (double)samples, radius);
-    bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %lf\n", hits * 2, (size_t)((double)samples), area);
+    bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %g\n", hits * 2, (size_t)((double)samples), area);
 
     return area;
 }
 
 
 static double
-do_iterations(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
+do_iterations(struct application *ap, point_t center, double radius, struct options *opts)
 {
     double prev2_estimate = 0.0;
     double prev1_estimate = 0.0;
     double curr_estimate = 0.0;
     double curr_percent = 100.0; // initialized high
     double prev_percent = 100.0; // initialized high
-    double threshold = 0.1; // convergence threshold (0.1% change)
+    double threshold = opts->threshold; // convergence threshold (% change)
     size_t iteration = 0;
-    size_t curr_samples = samples;
 
-    while (curr_percent > threshold && prev_percent > threshold) {
+    /* do exact count requested or start at 1000 and iterate */
+    size_t curr_samples = (opts->samples > 0) ? (size_t)opts->samples : 1000;
 
-	// increase samples every iteration by just over 2x
-	curr_samples = samples * pow(2.01, iteration);
+    do {
+	if (opts->samples > 0) {
+	    // do what we're told
+	    curr_samples = opts->samples;
+	} else {
+	    // increase samples every iteration by just over 2x to avoid sampling patterns
+	    curr_samples *= pow(2.01, iteration);
+	}
 
 	// TODO: keep track of total hits + lines so we don't ignore
 	// previous work in the estimate calculation.
@@ -407,7 +441,8 @@ do_iterations(struct application *ap, size_t samples, point_t center, double rad
 	prev2_estimate = prev1_estimate;
 	prev1_estimate = curr_estimate;
 	iteration++;
-    }
+
+    } while (curr_percent > threshold && prev_percent > threshold && opts->samples <= 0);
 
     return curr_estimate;
 }
@@ -422,7 +457,6 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     initialize(&ap, db, obj);
 
     double radius = ap.a_rt_i->rti_radius;
-    size_t samples = opts->samples;
     int print = opts->print;
 
     ap.a_user = radius;
@@ -435,7 +469,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     if (print)
 	printf("units mm\n");
 
-    bu_log("Radius: %lf\n", radius);
+    bu_log("Radius: %g\n", radius);
     //VPRINT("Center:", center);
 
     if (print) {
@@ -444,7 +478,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     }
 
     /* iterate until we converge on a solution */
-    double area = do_iterations(&ap, samples, center, radius, opts);
+    double area = do_iterations(&ap, center, radius, opts);
 
     /* release our raytracing instance */
     rt_free_rti(ap.a_rt_i);
@@ -457,7 +491,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 static void
 get_options(int argc, char *argv[], struct options *opts)
 {
-    static const char *usage = "Usage: %s [-p] [-n #samples] model.g objects...\n";
+    static const char *usage = "Usage: %s [-p] [-n #samples] [-t %threshold] model.g objects...\n";
 
     const char *argv0 = argv[0];
     const char *db = NULL;
@@ -473,7 +507,7 @@ get_options(int argc, char *argv[], struct options *opts)
     bu_optind = 1;
 
     int c;
-    while ((c = bu_getopt(argc, (char * const *)argv, "pn:h?")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "pn:t:h?")) != -1) {
 	if (bu_optopt == '?')
 	    c = 'h';
 
@@ -482,9 +516,13 @@ get_options(int argc, char *argv[], struct options *opts)
 		if (opts)
 		    opts->print = 1;
 		break;
+	    case 't':
+		if (opts)
+		    opts->threshold = (double)strtod(bu_optarg, NULL);
+		break;
 	    case 'n':
 		if (opts)
-		    opts->samples = (size_t)atoi(bu_optarg);
+		    opts->samples = (size_t)strtol(bu_optarg, NULL, 10);
 		break;
 	    case '?':
 	    case 'h':
@@ -495,11 +533,13 @@ get_options(int argc, char *argv[], struct options *opts)
 	}
     }
 
-    if (opts->samples < 1) {
-	opts->samples = 1;
+    if (opts->threshold < 0.0) {
+	opts->threshold = 0.0;
     }
 
     bu_log("Samples: %zu\n", opts->samples);
+    bu_log("Threshold: %g\n", opts->threshold);
+
     argv += bu_optind;
 
     db = argv[0];
@@ -519,8 +559,9 @@ int
 main(int argc, char *argv[])
 {
     struct options opts;
-    opts.samples = 100;
+    opts.samples = -1;
     opts.print = 0;
+    opts.threshold = 0.1;
 
     char *db = NULL;
     char **obj = NULL;
@@ -536,7 +577,7 @@ main(int argc, char *argv[])
 
     double estimate = estimate_surface_area(db, (const char **)obj, &opts);
 
-    bu_log("Estimated exterior surface area: %lf\n", estimate);
+    bu_log("Estimated exterior surface area: %g\n", estimate);
 
     return 0;
 }
