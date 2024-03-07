@@ -109,8 +109,8 @@
 
 struct options
 {
-    ssize_t samples;  /** number of segments or -1 to iterate to convergence */
-    double threshold; /** percentage change to stop at */
+    ssize_t samples;  /** number of segments, -1 to iterate to convergence */
+    double threshold; /** percentage change to stop at, 0 to do 1-shot */
     int print;        /** whether to log output or not */
 };
 
@@ -514,7 +514,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 static void
 get_options(int argc, char *argv[], struct options *opts)
 {
-    static const char *usage = "Usage: %s [-p] [-n #samples] [-t %threshold] model.g objects...\n";
+    static const char *usage = "Usage: %s [-p] [-n #samples] [-t %%threshold] model.g objects...\n";
 
     const char *argv0 = argv[0];
     const char *db = NULL;
