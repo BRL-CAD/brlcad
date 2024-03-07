@@ -143,8 +143,8 @@ BRLCAD_ADDEXEC(png-bw png-bw.c "libbn;libbu;${PNG_LIBRARIES}" FOLDER Util)
 BRLCAD_ADDEXEC(png-pix png-pix.c "libbn;libbu;${PNG_LIBRARIES}" FOLDER Util)
 BRLCAD_ADDEXEC(sun-pix sun-pix.c libbu FOLDER Util)
 BRLCAD_ADDEXEC(terrain terrain.c "libbn;libbu;${M_LIBRARY}" FOLDER Util)
-#FIXME - Need to look at pcattcp port to Windows - ttcp should be
-#maintained and ported
+#FIXME - Need to look at https://github.com/microsoft/ntttcp to see if ttcp
+# can be ported to Windows - ttcp should be cross platform
 if(NOT WIN32)
   BRLCAD_ADDEXEC(ttcp ttcp.c "${SOCKET_LIBRARY};${NSL_LIBRARY};${NETWORK_LIBRARY}" FOLDER Util)
 else(NOT WIN32)
