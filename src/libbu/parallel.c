@@ -157,9 +157,7 @@ struct thread_data {
 int
 bu_thread_id(void)
 {
-    #if defined(HAVE_SYSCALL)
-	return syscall(SYS_gettid);
-    #elif defined(_WIN32)
+    #if defined(_WIN32)
 	return GetCurrentThreadId();
     #elif defined(__FreeBSD__)
 	long tid;
@@ -169,6 +167,8 @@ bu_thread_id(void)
 	return _lwp_self();
     #elif defined(__OpenBSD__)
 	return getthrid();
+    #elif defined(HAVE_SYSCALL)
+	return syscall(SYS_gettid);
     #else
 	return -1;
     #endif

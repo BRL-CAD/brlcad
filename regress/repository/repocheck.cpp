@@ -64,7 +64,7 @@ extern "C" char *
 bu_strnstr(const char *h, const char *n, size_t hlen);
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 217
+#define EXPECTED_PLATFORM_SYMBOLS 242
 
 class repo_info_t {
     public:
@@ -354,7 +354,29 @@ regex_init(repo_info_t &r) {
 	    std::string p_upper(rf);
 	    std::string p_lower = p_upper;
 	    std::transform(p_lower.begin(), p_lower.end(), p_lower.begin(), [](unsigned char c){ return std::tolower(c); });
-	    std::string rrf = std::string("^[[:space:]#]*(if|IF).*[[:space:](]_*(") + p_lower + std::string("|") + p_upper + std::string(")_*([[:space:]]|[)]|$).*$");
+
+	    /* This regex aims to match platform-specific identifiers used in preprocessor logic:
+	     * #if defined(..X
+	     * #if !defined(..X
+	     * #ifdef X
+	     * #ifndef X
+	     * #elif defined(..X
+	     * #elif !defined(..X
+	     * #elifdef X // (since C++23)
+	     * #elifndef X // (since C++23)
+	     *
+	     * as well as build (CMake) logic:
+	     * if (..X
+	     * IF (..X
+	     * elseif (..X
+	     * ELSEIF (..X
+	     *
+	     * Note we only try to match the beginning syntax followed
+	     * by the platform-specified identifer.  This will result
+	     * in false positives inside comments, but we live with
+	     * that.
+	     */
+	    std::string rrf = std::string("^[[:space:]#]*(if|IF|elif|elseif|ELSEIF).*[[:space:](]_*(") + p_lower + std::string("|") + p_upper + std::string(")_*([[:space:]]|[)]|$).*$");
 	    r.platform_checks[std::make_pair(p_lower,p_upper)] = std::regex(rrf);
 	    cnt++;
 	    rf = platform_strs[cnt];
