@@ -537,7 +537,7 @@ get_options(int argc, char *argv[], struct options *opts)
 	opts->threshold = 0.0;
     }
 
-    bu_log("Samples: %zu\n", opts->samples);
+    bu_log("Samples: %zd %s\n", opts->samples, opts->samples>0?"rays":"(until converges)");
     bu_log("Threshold: %g\n", opts->threshold);
 
     argv += bu_optind;
@@ -561,7 +561,7 @@ main(int argc, char *argv[])
     struct options opts;
     opts.samples = -1;
     opts.print = 0;
-    opts.threshold = 0.1;
+    opts.threshold = 0.0;
 
     char *db = NULL;
     char **obj = NULL;
