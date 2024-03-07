@@ -402,8 +402,8 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 static double
 do_iterations(struct application *ap, point_t center, double radius, struct options *opts)
 {
-    double prev2_estimate = 0.0;
-    double prev1_estimate = 0.0;
+    double prev2_estimate = -2.0; // must be negative to start
+    double prev1_estimate = -1.0; // must be negative to start
     double curr_estimate = 0.0;
     double curr_percent = 100.0; // initialized high
     double prev_percent = 100.0; // initialized high
@@ -419,30 +419,25 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 	    curr_samples = opts->samples;
 	} else {
 	    // increase samples every iteration by just over 2x to avoid sampling patterns
-	    curr_samples *= pow(2.01, iteration);
+	    curr_samples *= pow(2.1, iteration);
 	}
 
 	// TODO: keep track of total hits + lines so we don't ignore
 	// previous work in the estimate calculation.
 	curr_estimate = do_one_iteration(ap, curr_samples, center, radius, opts);
 
-	// check convergence after 3 iterations
-	if (iteration > 1) {
-	    curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
-	    prev_percent = fabs((prev1_estimate - prev2_estimate) / prev2_estimate) * 100.0;
+	// threshold-based exit checks for convergence after 3 iterations
+	curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
+	prev_percent = fabs((prev1_estimate - prev2_estimate) / prev2_estimate) * 100.0;
 
-	    // see if we're done by checking last two estimates
-	    if (curr_percent <= threshold && prev_percent <= threshold) {
-		break; // yep, converged.
-	    }
-	    // nope, not converged.
-	}
+	// bu_log("cur%%=%g, prev%%=%g, iter=%zu\n", curr_percent, prev_percent, iteration);
 
+	// prep next iteration
 	prev2_estimate = prev1_estimate;
 	prev1_estimate = curr_estimate;
 	iteration++;
 
-    } while (curr_percent > threshold && prev_percent > threshold && opts->samples <= 0);
+    } while (threshold > 0 && (curr_percent > threshold || prev_percent > threshold));
 
     return curr_estimate;
 }
@@ -538,7 +533,7 @@ get_options(int argc, char *argv[], struct options *opts)
     }
 
     bu_log("Samples: %zd %s\n", opts->samples, opts->samples>0?"rays":"(until converges)");
-    bu_log("Threshold: %g\n", opts->threshold);
+    bu_log("Threshold: %g %s\n", opts->threshold, opts->threshold>0.0?"%":"(one iteration)");
 
     argv += bu_optind;
 
