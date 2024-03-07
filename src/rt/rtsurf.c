@@ -348,7 +348,7 @@ compute_surface_area(int intersections, int lines, double radius)
 }
 
 
-static double
+static size_t
 do_one_iteration(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
 {
     double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
@@ -392,10 +392,7 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     /* done with our rays */
     bu_free(rays, "rays");
 
-    double area = compute_surface_area(hits * 2, (double)samples, radius);
-    bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %g\n", hits * 2, (size_t)((double)samples), area);
-
-    return area;
+    return hits * 2; /* in and out */
 }
 
 
@@ -410,6 +407,9 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
     double threshold = opts->threshold; // convergence threshold (% change)
     size_t iteration = 0;
 
+    size_t total_samples = 0;
+    size_t total_hits = 0;
+
     /* do exact count requested or start at 1000 and iterate */
     size_t curr_samples = (opts->samples > 0) ? (size_t)opts->samples : 1000;
 
@@ -418,13 +418,18 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 	    // do what we're told
 	    curr_samples = opts->samples;
 	} else {
-	    // increase samples every iteration by just over 2x to avoid sampling patterns
-	    curr_samples *= pow(2.1, iteration);
+	    // increase samples every iteration by uneven factor to avoid sampling patterns
+	    curr_samples *= pow(1.5, iteration);
 	}
 
-	// TODO: keep track of total hits + lines so we don't ignore
-	// previous work in the estimate calculation.
-	curr_estimate = do_one_iteration(ap, curr_samples, center, radius, opts);
+	// we keep track of total hits and total lines so we don't
+	// ignore previous work in the estimate calculation.
+	size_t hits = do_one_iteration(ap, curr_samples, center, radius, opts);
+	total_samples += curr_samples;
+	total_hits += hits;
+
+	curr_estimate = compute_surface_area(total_hits, (double)total_samples, radius);
+	bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %g\n", total_hits, (size_t)((double)total_samples), curr_estimate);
 
 	// threshold-based exit checks for convergence after 3 iterations
 	curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
