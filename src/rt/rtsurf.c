@@ -67,6 +67,29 @@
  * Jean-Claude.  (2010).  Surface area estimation of digitized 3D
  * objects using quasi-Monte Carlo methods.  Pattern Recognition.  43.
  * 3900-3909. 10.1016/j.patcog.2010.06.002.
+ *
+ * = TODO =
+ *
+ * Improve script generation
+ *
+ * Track hits per region
+ *
+ * Track hits per material
+ *
+ * Shoot in parallel
+ *
+ * Write utility manual page
+ *
+ * Integrate in MGED/Archer
+ *
+ * Write command manual page
+ *
+ * Calculate volume
+ *
+ * Calculate exterior mesh (shrinkwrap)
+ *
+ * Integrate into libanalyze
+ *
  */
 
 #include "common.h"
