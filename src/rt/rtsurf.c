@@ -104,6 +104,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/assert.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 
 
@@ -164,7 +165,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
     /* print the entry hit point */
     if (print) {
-	printf("in hit%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad);
+	printf("in hit.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, cnt++, pt[0], pt[1], pt[2], hitrad);
     }
 
     /* out hit point */
@@ -178,7 +179,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
     /* print the exit hit point */
     if (print) {
-	printf("in hit%zu.sph sph %lf %lf %lf %lf\nZ\n", cnt++, pt[0], pt[1], pt[2], hitrad);
+	printf("in hit.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, cnt++, pt[0], pt[1], pt[2], hitrad);
     }
 
     /* print the exit hit point info */
@@ -397,15 +398,43 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
 
 	if (print) {
-	    printf("in pnt%zu.sph sph %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
-	    printf("in dir%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
+	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
+	    printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
 	}
 
 	/* unitize before firing */
 	VUNITIZE(ap->a_ray.r_dir);
 
 	/* Shoot the ray. */
-	hits += rt_shootray(ap);
+	size_t hitit = rt_shootray(ap);
+	hits += hitit;
+
+	if (hitit) {
+	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
+	}
+    }
+
+    /* group them all for performance */
+    if (print) {
+	struct bu_vls pntvp = BU_VLS_INIT_ZERO;
+	struct bu_vls dirvp = BU_VLS_INIT_ZERO;
+	struct bu_vls hitvp = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&pntvp, "g pnts.%zu", (size_t)ap->a_dist);
+	bu_vls_printf(&dirvp, "g dirs.%zu", (size_t)ap->a_dist);
+	bu_vls_printf(&hitvp, "g hits.%zu", (size_t)ap->a_dist);
+	for (size_t i = 0; i < samples; ++i) {
+	    bu_vls_printf(&pntvp, " pnt.%zu.%zu", (size_t)ap->a_dist, i);
+	    bu_vls_printf(&dirvp, " dir.%zu.%zu", (size_t)ap->a_dist, i);
+	}
+	for (size_t i = 0; i < hits*2; i++) {
+	    bu_vls_printf(&hitvp, " hit.%zu.%zu", (size_t)ap->a_dist, i);
+	}
+	printf("%s\nZ\n", bu_vls_cstr(&pntvp));
+	printf("%s\nZ\n", bu_vls_cstr(&dirvp));
+	printf("%s\nZ\n", bu_vls_cstr(&hitvp));
+	bu_vls_free(&pntvp);
+	bu_vls_free(&dirvp);
+	bu_vls_free(&hitvp);
     }
 
     /* sanity */
@@ -436,6 +465,19 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
     /* do exact count requested or start at 1000 and iterate */
     size_t curr_samples = (opts->samples > 0) ? (size_t)opts->samples : 1000;
 
+    /* set to mm so working units match */
+    if (opts->print)
+	printf("units mm\n");
+
+    bu_log("Radius: %g\n", radius);
+    //VPRINT("Center:", center);
+
+    if (opts->print) {
+	printf("in center.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), 5.0);
+	printf("in bounding.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), radius);
+    }
+
+    /* run the loop assessment */
     do {
 	if (opts->samples > 0) {
 	    // do what we're told
@@ -447,6 +489,7 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 
 	// we keep track of total hits and total lines so we don't
 	// ignore previous work in the estimate calculation.
+	ap->a_dist = (fastf_t)iteration;
 	size_t hits = do_one_iteration(ap, curr_samples, center, radius, opts);
 	total_samples += curr_samples;
 	total_hits += hits;
@@ -467,6 +510,27 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 
     } while (threshold > 0 && (curr_percent > threshold || prev_percent > threshold));
 
+    /* if we're printing, group all iterations too */
+    if (opts->print) {
+	struct bu_vls pntvp = BU_VLS_INIT_ZERO;
+	struct bu_vls dirvp = BU_VLS_INIT_ZERO;
+	struct bu_vls hitvp = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&pntvp, "g pnts");
+	bu_vls_printf(&dirvp, "g dirs");
+	bu_vls_printf(&hitvp, "g hits");
+	for (size_t i = 0; i < iteration; ++i) {
+	    bu_vls_printf(&pntvp, " pnts.%zu", i);
+	    bu_vls_printf(&dirvp, " dirs.%zu", i);
+	    bu_vls_printf(&hitvp, " hits.%zu", i);
+	}
+	printf("%s\nZ\n", bu_vls_cstr(&pntvp));
+	printf("%s\nZ\n", bu_vls_cstr(&dirvp));
+	printf("%s\nZ\n", bu_vls_cstr(&hitvp));
+	bu_vls_free(&pntvp);
+	bu_vls_free(&dirvp);
+	bu_vls_free(&hitvp);
+    }
+
     return curr_estimate;
 }
 
@@ -480,25 +544,13 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     initialize(&ap, db, obj);
 
     double radius = ap.a_rt_i->rti_radius;
-    int print = opts->print;
 
-    ap.a_user = radius;
-    ap.a_flag = opts->print;
+    ap.a_user = radius; // stores bounding radius
+    ap.a_flag = opts->print; // stores whether to print
+    ap.a_dist = (fastf_t)0.0; // stores iteration count
 
     point_t center;
     VADD2SCALE(center, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min, 0.5);
-
-    /* set to mm so working units match */
-    if (print)
-	printf("units mm\n");
-
-    bu_log("Radius: %g\n", radius);
-    //VPRINT("Center:", center);
-
-    if (print) {
-	printf("in center.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), 5.0);
-	printf("in bounding.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), radius);
-    }
 
     /* iterate until we converge on a solution */
     double area = do_iterations(&ap, center, radius, opts);
