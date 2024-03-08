@@ -1807,7 +1807,7 @@ _ged_rt_write(struct ged *gedp,
 }
 
 int
-_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv)
+_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt)
 {
     FILE *fp_in;
     vect_t eye_model;
@@ -1841,6 +1841,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     run_rtp->stdin_active = 0;
     run_rtp->stdout_active = 0;
     run_rtp->stderr_active = 0;
+    run_rtp->stdout_is_txt = stdout_is_txt;
     run_rtp->end_clbk = gedp->ged_subprocess_end_callback;
     run_rtp->end_clbk_data = gedp->ged_subprocess_clbk_context;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
@@ -1852,7 +1853,8 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
-	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDOUT, _ged_rt_output_handler, (void *)run_rtp);
+	if (stdout_is_txt)
+	    (*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDOUT, _ged_rt_output_handler, (void *)run_rtp);
     }
     return BRLCAD_OK;
 }

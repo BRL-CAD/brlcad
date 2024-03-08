@@ -75,6 +75,15 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     }
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
+    // A couple of the tools that GED might run with this command put their
+    // output on stdout as well as stderr - let _ged_run_rt know to capture
+    // both in those cases.
+    int stdout_txt = 0;
+    if (BU_STR_EQUAL(argv[0], "rtarea"))
+	stdout_txt = 1;
+    if (BU_STR_EQUAL(argv[0], "rtweight"))
+	stdout_txt = 1;
+
     bin = bu_dir(NULL, 0, BU_DIR_BIN, NULL);
     if (bin) {
 	snprintf(rt, 256, "%s/%s", bin, argv[0]);
@@ -117,7 +126,7 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     *vp++ = gedp->dbip->dbi_filename;
     gd_rt_cmd_len = vp - gd_rt_cmd;
 
-    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
+    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), stdout_txt);
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
