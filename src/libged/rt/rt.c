@@ -75,12 +75,10 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     }
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    // A couple of the tools that GED might run with this command put their
-    // output on stdout as well as stderr - let _ged_run_rt know to capture
-    // both in those cases.
+    // rtweight puts its output on stdout as well as stderr - let _ged_run_rt
+    // know to capture stdout.  It looks like our I/O methodology isn't up to
+    // capturing both right now - we need async listening to the channels.
     int stdout_txt = 0;
-    if (BU_STR_EQUAL(argv[0], "rtarea"))
-	stdout_txt = 1;
     if (BU_STR_EQUAL(argv[0], "rtweight"))
 	stdout_txt = 1;
 
