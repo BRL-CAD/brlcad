@@ -150,6 +150,17 @@ export PATH=/opt/cmake/bin
 From there, with the gcc-toolset enabled and the PATH set to include the new
 CMake, it should be possible to proceed normally with the build.
 
+
+Qt building represents a particular problem for Redhat systems - the
+default package repository does not have enough packages.  To set up
+for Qt building on Rocky Linux 8:
+
+sudo dnf install epel-release // needed for xcb cursor package
+/usr/bin/crb enable   // for PowerTools, extra xcb packages
+
+dnf install libxcb-devel xcb-util-cursor-devel xcb-util-devel xcb-util-image-devel xcb-util-keysyms-devel xcb-util-renderutil-devel xcb-util-wm-devel
+
+
 -------
 
 To determine what particular version of Redhat or Redhat-like system you are
