@@ -100,14 +100,14 @@ should be deleted and recreated for each new attempt at package
 generation.
 
 
-Redhat/CentOS/Fedora
--------------
+Redhat/Rocky (should also apply to other Redhat derivatives)
+------------------------------------------------------------
 
 If you don't already have the necessary development tools:
 
-  yum install gcc gcc-c++ cmake
+  yum install git cmake gcc gcc-c++
 
-Development packages for building on Redhat/Fedora platforms:
+Development packages for building on Redhat-based platforms:
 
   yum install libX11-devel
   yum install libXext-devel    # optional
@@ -120,47 +120,49 @@ If you wish to create rpm packages, you'll need rpmbuild
 
   yum install rpm-build        # optional
 
-When setting up older versions for building BRL-CAD, it is sometimes
+When setting up older OS versions for building BRL-CAD, it is sometimes
 necessary to install some non-default compilation tools in addition to the
-usual dependencies.  (The default toolchain is sometimes too old to
-properly build BRL-CAD, if the compilers don't support sufficiently modern
-standards.)  The following example is for CentOS 7:
+usual dependencies.  (The default toolchain can be too old to properly build
+BRL-CAD, if the compilers don't support sufficiently modern standards.)  The
+following example is for Rocky Linux 8:
 
-yum install centos-release-scl
-yum install devtoolset-7
+yum install scl-utils
+yum install gcc-toolset-11
 
 Then to run within that environment:
 
-scl enable devtoolset-7 bash
+scl enable gcc-toolset-11 bash
 
 
-The CMake version is often too old as well.  One way forward is to download the
-source code and bootstrap it (do this within the devtoolset enabled bash):
+The CMake version may be too old as well.  One way to deal with this is to
+download the source code and bootstrap it (do this within the gcc-toolset-11
+enabled bash):
 
 sudo yum install openssl-devel
 
-curl -L -o cmake-3.18.2.tar.gz https://github.com/Kitware/CMake/releases/download/v3.18.2/cmake-3.18.2.tar.gz
-tar -xvf cmake-3.18.2.tar.gz
-cd cmake-3.18.2
+curl -L -O -J https://github.com/Kitware/CMake/releases/download/v3.28.3/cmake-3.28.3.tar.gz
+tar -xvf cmake-3.28.3.tar.gz
+cd cmake-3.28.3
 ./bootstrap --prefix=/opt/cmake
 make -j3 && make install
 export PATH=/opt/cmake/bin
 
-From there, with the devtoolset enabled and the PATH set to include the new
+From there, with the gcc-toolset enabled and the PATH set to include the new
 CMake, it should be possible to proceed normally with the build.
 
 -------
 
-To determine what particular version of Redhat or Fedora you are
+To determine what particular version of Redhat or Redhat-like system you are
 using, check these files:
 
-cat /etc/redhat-release
-cat /etc/fedora-release
+cat /etc/redhat-release (Redhat)
+cat /etc/fedora-release (Fedora)
+cat /etc/rocky-release (Rocky)
 
 -------
 
 Note there is a supported rpm package generation script in file
-'sh/make_rpm.sh' which can only function on a Fedora or openSUSE
+'sh/make_rpm.sh' which can only function on a Redhat-derived
 system.  It can be used like so:
 
   $ cd <BRL-CAD source directory>
@@ -173,10 +175,10 @@ make package build target, on systems with the proper RPM tools.
 
 -------
 
-One issue encountered running CentOS in VirtualBox - networking
-is off by default.  To enable, look for a file in
-/etc/sysconfig/network-scripts/ called something like enp0s3 and
-set ONBOOT=yes (see https://unix.stackexchange.com/a/79273)
+One issue encountered running Rocky Linux 8 in VirtualBox - networking is off
+by default.  To enable, look for a file in /etc/sysconfig/network-scripts/
+called something like enp0s3 and set ONBOOT=yes (see
+https://unix.stackexchange.com/a/79273)
 
 
 PPC64 Linux
