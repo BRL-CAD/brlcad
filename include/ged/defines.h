@@ -135,8 +135,6 @@ struct ged_subprocess {
     int stdin_active;
     int stdout_active;
     int stderr_active;
-    // For rt processes
-    int stdout_is_txt;
 };
 
 /* FIXME: should be private */
