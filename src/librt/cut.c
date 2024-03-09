@@ -1167,7 +1167,7 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
     switch (cutp->cut_type) {
 	case CUT_BOXNODE:
 	    if (stp->st_npieces) {
-		int remove_count, new_count;
+		size_t remove_count, new_count;
 		struct rt_piecelist *new_piece_list;
 
 		remove_count = 0;
@@ -1179,7 +1179,7 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 
 		if (remove_count) {
 		    new_count = cutp->bn.bn_piecelen - remove_count;
-		    if (new_count > 0) {
+		    if (cutp->bn.bn_piecelen - remove_count > 0) {
 			new_piece_list = (struct rt_piecelist *)bu_calloc(
 			    new_count,
 			    sizeof(struct rt_piecelist),
