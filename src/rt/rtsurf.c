@@ -1,3 +1,4 @@
+
 /*                         R T S U R F . C
  * BRL-CAD
  *
@@ -69,8 +70,6 @@
  * 3900-3909. 10.1016/j.patcog.2010.06.002.
  *
  * = TODO =
- *
- * Improve script generation
  *
  * Track hits per region
  *
@@ -391,6 +390,7 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     /* done with points, loaded into rays */
     bu_free(points, "points");
 
+    static size_t total_hits = 0;
     size_t hits = 0;
     for (size_t i = 0; i < samples; ++i) {
 	/* can't struct copy because our ray is smaller than xray */
@@ -408,11 +408,8 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 	/* Shoot the ray. */
 	size_t hitit = rt_shootray(ap);
 	hits += hitit;
-
-	if (hitit) {
-	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
-	}
     }
+    total_hits += hits;
 
     /* group them all for performance */
     if (print) {
@@ -423,11 +420,11 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 	bu_vls_printf(&dirvp, "g dirs.%zu", (size_t)ap->a_dist);
 	bu_vls_printf(&hitvp, "g hits.%zu", (size_t)ap->a_dist);
 	for (size_t i = 0; i < samples; ++i) {
-	    bu_vls_printf(&pntvp, " pnt.%zu.%zu", (size_t)ap->a_dist, i);
-	    bu_vls_printf(&dirvp, " dir.%zu.%zu", (size_t)ap->a_dist, i);
+	    bu_vls_printf(&pntvp, " pnt.%zu.%zu.sph", (size_t)ap->a_dist, i);
+	    bu_vls_printf(&dirvp, " dir.%zu.%zu.rcc", (size_t)ap->a_dist, i);
 	}
-	for (size_t i = 0; i < hits*2; i++) {
-	    bu_vls_printf(&hitvp, " hit.%zu.%zu", (size_t)ap->a_dist, i);
+	for (size_t i = (total_hits-hits)*2; i < total_hits*2; i++) {
+	    bu_vls_printf(&hitvp, " hit.%zu.%zu.sph", (size_t)ap->a_dist, i);
 	}
 	printf("%s\nZ\n", bu_vls_cstr(&pntvp));
 	printf("%s\nZ\n", bu_vls_cstr(&dirvp));
