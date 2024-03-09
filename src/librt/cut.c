@@ -97,8 +97,8 @@ rt_cut_optimize_parallel(int cpu, void *arg)
 }
 
 
-int
-rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
+static size_t
+split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 {
     point_t max, min;
     struct soltab *stp;
@@ -108,12 +108,12 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
     fastf_t max_empty;
     int max_empty_dir;
     size_t i;
-    int num_splits=0;
+    size_t num_splits=0;
 
     switch (cutp->cut_type) {
 	case CUT_CUTNODE:
-	    num_splits += rt_split_mostly_empty_cells(rtip, cutp->cn.cn_l);
-	    num_splits += rt_split_mostly_empty_cells(rtip, cutp->cn.cn_r);
+	    num_splits += split_mostly_empty_cells(rtip, cutp->cn.cn_l);
+	    num_splits += split_mostly_empty_cells(rtip, cutp->cn.cn_r);
 	    break;
 	case CUT_BOXNODE:
 	    /* find the actual bounds of stuff in this cell */
@@ -197,8 +197,8 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 		}
 		if (rt_ct_box(rtip, cutp, max_empty_dir, where, 1)) {
 		    num_splits++;
-		    num_splits += rt_split_mostly_empty_cells(rtip, cutp->cn.cn_l);
-		    num_splits += rt_split_mostly_empty_cells(rtip, cutp->cn.cn_r);
+		    num_splits += split_mostly_empty_cells(rtip, cutp->cn.cn_l);
+		    num_splits += split_mostly_empty_cells(rtip, cutp->cn.cn_r);
 		}
 	    }
 	    break;
@@ -214,7 +214,7 @@ rt_cut_it(register struct rt_i *rtip, int UNUSED(ncpu))
     register struct soltab *stp;
     union cutter *finp;	/* holds the finite solids */
     FILE *plotfp;
-    int num_splits=0;
+    size_t num_splits = 0;
 
     /* Make a list of all solids into one special boxnode, then refine. */
     BU_ALLOC(finp, union cutter);
@@ -268,10 +268,10 @@ rt_cut_it(register struct rt_i *rtip, int UNUSED(ncpu))
 	    rtip->rti_CutHead = *finp;	/* union copy */
 	    rt_ct_optim(rtip, &rtip->rti_CutHead, 0);
 	    /* one more pass to find cells that are mostly empty */
-	    num_splits = rt_split_mostly_empty_cells(rtip,  &rtip->rti_CutHead);
+	    num_splits = split_mostly_empty_cells(rtip,  &rtip->rti_CutHead);
 
 	    if (RT_G_DEBUG&RT_DEBUG_CUT) {
-		bu_log("rt_split_mostly_empty_cells(): split %d cells\n", num_splits);
+		bu_log("split_mostly_empty_cells(): split %zu cells\n", num_splits);
 	    }
 
 	    break; }
