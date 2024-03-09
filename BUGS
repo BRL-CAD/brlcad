@@ -15,6 +15,16 @@ on-going issues.
 Recent Bugs
 -----------
 
+* very peculiar non-linear memory issue in rt when allocating a large
+  flat hierarchy of objects.  I have three combs, each with 10k
+  members unioned. Each member is an rcc.  Rendering with just one
+  comb results in about 2GB usage.  Two combs result in about 3.5GB
+  usage.  Three combs results in 18GB usage.  Four is killed after
+  24GB.  Suspect there is some 32-bit issue once we exceed 4GB that is
+  causing subsequent allocations to be bigger than necessary.  Looking
+  at allocation stack, rt_ct_get() appears to be allocating 10MB
+  chunks.
+
 * rt from mged is not outputting overlap log messages or rt summary.
   Stops printing after opendb line. (Observed on Mac)
 
