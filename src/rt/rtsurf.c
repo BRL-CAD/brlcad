@@ -523,6 +523,9 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 	printf("%s\nZ\n", bu_vls_cstr(&pntvp));
 	printf("%s\nZ\n", bu_vls_cstr(&dirvp));
 	printf("%s\nZ\n", bu_vls_cstr(&hitvp));
+	bu_vls_printf(&pntvp, "r pnts.r u pnts");
+	bu_vls_printf(&dirvp, "r dirs.r u dirs");
+	bu_vls_printf(&hitvp, "r hits.r u hits");
 	bu_vls_free(&pntvp);
 	bu_vls_free(&dirvp);
 	bu_vls_free(&hitvp);
