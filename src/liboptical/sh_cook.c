@@ -254,7 +254,7 @@ cook_render(register struct application *ap, const struct partition *pp, struct 
 {
     register struct light_specific *lp;
     register fastf_t *intensity, *to_light;
-    register int i;
+    register size_t i;
     register fastf_t cosine;
     register fastf_t refl;
     vect_t work;
@@ -298,7 +298,7 @@ cook_render(register struct application *ap, const struct partition *pp, struct 
     }
 
     /* Consider effects of each light source */
-    for (i=ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
+    for (i = 0; i < ap->a_rt_i->rti_nlights; i++) {
 
 	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
 	    continue;	/* shadowed */

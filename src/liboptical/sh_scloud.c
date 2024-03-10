@@ -237,14 +237,14 @@ scloud_render(struct application *ap, const struct partition *pp, struct shadewo
 {
     register struct scloud_specific *scloud_sp =
 	(struct scloud_specific *)dp;
-    point_t in_pt;	/* point where ray enters scloud solid */
+    point_t in_pt; /* point where ray enters scloud solid */
     point_t out_pt; /* point where ray leaves scloud solid */
     point_t pt;
-    vect_t v_cloud;/* vector representing ray/solid intersection */
+    vect_t v_cloud; /* vector representing ray/solid intersection */
     double thickness; /* magnitude of v_cloud (distance through solid) */
-    int steps;	   /* # of samples along ray/solid intersection */
-    double step_delta;/* distance between sample points, texture space */
-    int i;
+    size_t steps; /* # of samples along ray/solid intersection */
+    double step_delta; /* distance between sample points, texture space */
+    size_t i;
     double val;
     double trans;
     point_t incident_light = VINIT_ZERO;
@@ -291,7 +291,7 @@ scloud_render(struct application *ap, const struct partition *pp, struct shadewo
     step_delta = thickness / (double)steps;
 
     if (optical_debug&OPTICAL_DEBUG_SHADE)
-	bu_log("steps=%d  delta=%g  thickness=%g\n",
+	bu_log("steps=%zu  delta=%g  thickness=%g\n",
 	       steps, step_delta, thickness);
 
     VUNITIZE(v_cloud);
@@ -328,7 +328,7 @@ scloud_render(struct application *ap, const struct partition *pp, struct shadewo
 	/* now we know how much light has arrived from each
 	 * light source to this point
 	 */
-	for (i=ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
+	for (i = 0; i < ap->a_rt_i->rti_nlights; i++) {
 	    lp = (struct light_specific *)swp->sw_visible[i];
 	    if (lp == LIGHT_NULL) continue;
 
@@ -366,7 +366,7 @@ scloud_render(struct application *ap, const struct partition *pp, struct shadewo
     swp->sw_inputs |= MFI_HIT | MFI_NORMAL;
     light_obs(ap, swp, swp->sw_inputs);
     VSETALL(incident_light, 0);
-    for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
+    for (i = 0; i < ap->a_rt_i->rti_nlights; i++) {
 	struct light_specific *lp2;
 	if ((lp2 = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
 	    continue;

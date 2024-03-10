@@ -852,7 +852,8 @@ rt_ct_get(struct rt_i *rtip)
     if (rtip->rti_CutFree == CUTTER_NULL) {
 	size_t bytes;
 
-	bytes = (size_t)bu_malloc_len_roundup(64*sizeof(union cutter));
+	//bytes = (size_t)bu_malloc_len_roundup(64*sizeof(union cutter));
+	bytes = sizeof(union cutter);
 	cutp = (union cutter *)bu_calloc(1, bytes, " rt_ct_get");
 	/* Remember this allocation for later */
 	bu_ptbl_ins(&rtip->rti_busy_cutter_nodes, (long *)cutp);

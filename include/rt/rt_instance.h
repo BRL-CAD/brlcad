@@ -65,7 +65,7 @@ struct rt_i {
     int                 rti_save_overlaps; /**< @brief  1=fill in pt_overlap_reg, change boolweave behavior */
     int                 rti_dont_instance; /**< @brief  1=Don't compress instances of solids into 1 while prepping */
     int                 rti_hasty_prep; /**< @brief  1=hasty prep, slower ray-trace */
-    int                 rti_nlights;    /**< @brief  number of light sources */
+    size_t              rti_nlights;    /**< @brief  number of light sources */
     int                 rti_prismtrace; /**< @brief  add support for pixel prism trace */
     char *              rti_region_fix_file; /**< @brief  rt_regionfix() file or NULL */
     int                 rti_space_partition;  /**< @brief  space partitioning method */

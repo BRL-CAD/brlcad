@@ -272,7 +272,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
     fastf_t *to_light;
     fastf_t cosine;
     fastf_t refl;
-    int i;
+    size_t i;
     vect_t reflected;
     vect_t work;
 
@@ -345,7 +345,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	light_obs(ap, swp, ps->mfp->mf_inputs);
 
 	/* Consider effects of each light source */
-	for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
+	for (i = 0; i < ap->a_rt_i->rti_nlights; i++) {
 
 	    if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
 		continue;
