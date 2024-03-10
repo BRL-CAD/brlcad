@@ -102,7 +102,7 @@ struct rt_i {
     union cutter *      rti_CutFree;    /**< @brief  cut Freelist */
     struct bu_ptbl      rti_busy_cutter_nodes; /**< @brief  List of "cutter" mallocs */
     struct bu_ptbl      rti_cuts_waiting;
-    int                 rti_cut_maxlen; /**< @brief  max len RPP list in 1 cut bin */
+    size_t              rti_cut_maxlen; /**< @brief  max len RPP list in 1 cut bin */
     int                 rti_ncut_by_type[CUT_MAXIMUM+1];        /**< @brief  number of cuts by type */
     int                 rti_cut_totobj; /**< @brief  # objs in all bins, total */
     int                 rti_cut_maxdepth;/**< @brief  max depth of cut tree */

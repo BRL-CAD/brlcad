@@ -1080,7 +1080,7 @@ rt_plot_cut(FILE *fp, struct rt_i *rtip, register union cutter *cutp, int lvl)
 static void
 rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth)
 {
-    register int len;
+    register size_t len;
 
     RT_CK_RTI(rtip);
     switch (cutp->cut_type) {
@@ -1091,7 +1091,8 @@ rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth
 	    return;
 	case CUT_BOXNODE:
 	    rtip->rti_ncut_by_type[CUT_BOXNODE]++;
-	    rtip->rti_cut_totobj += (len = cutp->bn.bn_len);
+	    len = cutp->bn.bn_len;
+	    rtip->rti_cut_totobj += len;
 	    if (rtip->rti_cut_maxlen < len)
 		rtip->rti_cut_maxlen = len;
 	    if (rtip->rti_cut_maxdepth < depth)
@@ -1147,7 +1148,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 	   rtip->rti_ncut_by_type[CUT_CUTNODE],
 	   rtip->rti_ncut_by_type[CUT_BOXNODE],
 	   rtip->nempty_cells);
-    bu_log("Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
+    bu_log("Cut: maxdepth=%d, nbins=%d, maxlen=%zu, avg=%g\n",
 	   rtip->rti_cut_maxdepth,
 	   rtip->rti_ncut_by_type[CUT_BOXNODE],
 	   rtip->rti_cut_maxlen,
