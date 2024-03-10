@@ -1141,14 +1141,14 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 {
     RT_CK_RTI(rtip);
 
-    bu_log("%s %s: %d cut, %d box (%zu empty)\n",
+    bu_log("%s %s: %zu cut, %zu box (%zu empty)\n",
 	   str,
 	   rtip->rti_space_partition == RT_PART_NUBSPT ?
 	   "NUBSP" : "unknown",
 	   rtip->rti_ncut_by_type[CUT_CUTNODE],
 	   rtip->rti_ncut_by_type[CUT_BOXNODE],
 	   rtip->nempty_cells);
-    bu_log("Cut: maxdepth=%d, nbins=%d, maxlen=%zu, avg=%g\n",
+    bu_log("Cut: maxdepth=%d, nbins=%zu, maxlen=%zu, avg=%g\n",
 	   rtip->rti_cut_maxdepth,
 	   rtip->rti_ncut_by_type[CUT_BOXNODE],
 	   rtip->rti_cut_maxlen,
