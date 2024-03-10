@@ -56,7 +56,7 @@ static void rt_ct_optim(struct rt_i *rtip, union cutter *cutp, size_t depth);
 static void rt_ct_free(struct rt_i *rtip, union cutter *cutp);
 static void rt_ct_release_storage(union cutter *cutp);
 
-static void rt_ct_measure(struct rt_i *rtip, union cutter *cutp, int depth);
+static void rt_ct_measure(struct rt_i *rtip, union cutter *cutp, size_t depth);
 static union cutter *rt_ct_get(struct rt_i *rtip);
 static void rt_plot_cut(FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl);
 
@@ -1078,7 +1078,7 @@ rt_plot_cut(FILE *fp, struct rt_i *rtip, register union cutter *cutp, int lvl)
  * interesting statistics.
  */
 static void
-rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth)
+rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, size_t depth)
 {
     register size_t len;
 
@@ -1148,7 +1148,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 	   rtip->rti_ncut_by_type[CUT_CUTNODE],
 	   rtip->rti_ncut_by_type[CUT_BOXNODE],
 	   rtip->nempty_cells);
-    bu_log("Cut: maxdepth=%d, nbins=%zu, maxlen=%zu, avg=%g\n",
+    bu_log("Cut: maxdepth=%zu, nbins=%zu, maxlen=%zu, avg=%g\n",
 	   rtip->rti_cut_maxdepth,
 	   rtip->rti_ncut_by_type[CUT_BOXNODE],
 	   rtip->rti_cut_maxlen,

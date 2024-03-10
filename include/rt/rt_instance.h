@@ -105,7 +105,7 @@ struct rt_i {
     size_t              rti_cut_maxlen; /**< @brief  max len RPP list in 1 cut bin */
     size_t              rti_ncut_by_type[CUT_MAXIMUM+1];        /**< @brief  number of cuts by type */
     size_t              rti_cut_totobj; /**< @brief  # objs in all bins, total */
-    int                 rti_cut_maxdepth;/**< @brief  max depth of cut tree */
+    size_t              rti_cut_maxdepth;/**< @brief  max depth of cut tree */
     struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
     int                 rti_nsol_by_type[ID_MAX_SOLID+1];
     int                 rti_maxsol_by_type;

@@ -487,7 +487,7 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 		  rtip->rti_ncut_by_type[CUT_CUTNODE],
 		  rtip->rti_ncut_by_type[CUT_BOXNODE],
 		  rtip->nempty_cells);
-    bu_vls_printf(&str, " maxdepth %d maxlen %zu",
+    bu_vls_printf(&str, " maxdepth %zu maxlen %zu",
 		  rtip->rti_cut_maxdepth,
 		  rtip->rti_cut_maxlen);
     if (rtip->rti_ncut_by_type[CUT_BOXNODE]) bu_vls_printf(&str, " avglen %g",
