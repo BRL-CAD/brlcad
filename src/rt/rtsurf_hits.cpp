@@ -26,6 +26,7 @@
 #include "./rtsurf_hits.h"
 
 #include <unordered_map>
+#include <string>
 #include <mutex>
 #include <functional>
 
@@ -33,7 +34,7 @@
 class HitCounterContext
 {
 public:
-    std::unordered_map<int, size_t> regionHitCounters;
+    std::unordered_map<std::string, size_t> regionHitCounters;
     std::unordered_map<int, size_t> materialHitCounters;
     std::mutex hitCounterMutex;
 };
@@ -54,21 +55,21 @@ rtsurf_context_destroy(void* context)
 
 
 void
-rtsurf_register_hit(void* context, int regionId, int materialId)
+rtsurf_register_hit(void* context, const char *region, int materialId)
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
     std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
-    ctx->regionHitCounters[regionId]++;
+    ctx->regionHitCounters[region]++;
     ctx->materialHitCounters[materialId]++;
 }
 
 
 void
-rtsurf_get_hits(void* context, int regionId, int materialId, size_t *regionHits, size_t *materialHits)
+rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regionHits, size_t *materialHits)
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
     if (regionHits != nullptr) {
-        auto regionIt = ctx->regionHitCounters.find(regionId);
+        auto regionIt = ctx->regionHitCounters.find(region);
         *regionHits = (regionIt != ctx->regionHitCounters.end()) ? regionIt->second : 0;
     }
     if (materialHits != nullptr) {
@@ -79,12 +80,12 @@ rtsurf_get_hits(void* context, int regionId, int materialId, size_t *regionHits,
 
 
 void
-rtsurf_iterate_regions(void* context, void (*callback)(int regionId, size_t hits))
+rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits))
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
     std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
     for (const auto& pair : ctx->regionHitCounters) {
-        callback(pair.first, pair.second);
+        callback(pair.first.c_str(), pair.second);
     }
 }
 

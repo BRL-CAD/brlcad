@@ -139,7 +139,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
     /* register the first and last hit */
     void *context = ap->a_uptr;
-    rtsurf_register_hit(context, pp->pt_regionp->reg_regionid, pp->pt_regionp->reg_gmater);
+    rtsurf_register_hit(context, pp->pt_regionp->reg_name, pp->pt_regionp->reg_gmater);
 
     /* print the name of the region we hit as well as the name of
      * the primitives encountered on entry and exit.
@@ -541,6 +541,20 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 }
 
 
+static void
+regions_callback(const char *name, size_t hits)
+{
+    bu_log("\t%s = %zu hits\n", name, hits);
+}
+
+
+static void
+materials_callback(int id, size_t hits)
+{
+    bu_log("\tid %d = %zu hits\n", id, hits);
+}
+
+
 static double
 estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 {
@@ -563,6 +577,12 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 
     /* iterate until we converge on a solution */
     double area = do_iterations(&ap, center, radius, opts);
+
+    /* print out all regions */
+    bu_log("Regions:\n");
+    rtsurf_iterate_regions(context, &regions_callback);
+    bu_log("Materials:\n");
+    rtsurf_iterate_materials(context, &materials_callback);
 
     /* release our raytracing instance and counters */
     rtsurf_context_destroy(context);

@@ -53,7 +53,7 @@ rtsurf_context_destroy(void* context);
  * count a hit on a given region of a specified material.
  */
 void
-rtsurf_register_hit(void* context, int regionId, int materialId);
+rtsurf_register_hit(void* context, const char *region, int materialId);
 
 
 /**
@@ -64,14 +64,14 @@ rtsurf_register_hit(void* context, int regionId, int materialId);
  * non-NULL.
  */
 void
-rtsurf_get_hits(void* context, int regionId, int materialId, size_t *regionHits, size_t *materialHits);
+rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regionHits, size_t *materialHits);
 
 
 /**
  * iterate over all registered region IDs
  */
 void
-rtsurf_iterate_regions(void* context, void (*callback)(int regionId, size_t hits));
+rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits));
 
 
 /**
