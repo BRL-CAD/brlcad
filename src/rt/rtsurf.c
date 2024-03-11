@@ -234,8 +234,7 @@ init_random(void)
 static void
 initialize(struct application *ap, const char *db, const char *obj[])
 {
-    // FIXME: makes this not safe for multiple concurrent runs
-    static struct rt_i *rtip = NULL;
+    struct rt_i *rtip = NULL;
     struct resource *resources = NULL;
 
     char title[4096] = {'\0'};
@@ -442,7 +441,7 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 	    bu_vls_printf(&pntvp, " pnt.%zu.%zu.sph", (size_t)ap->a_dist, i);
 	    bu_vls_printf(&dirvp, " dir.%zu.%zu.rcc", (size_t)ap->a_dist, i);
 	}
-	for (size_t i = (total_hitpairs-hitpairs)*2; i < total_hits*2; i++) {
+	for (size_t i = (total_hitpairs-hitpairs)*2; i < total_hitpairs*2; i++) {
 	    bu_vls_printf(&hitvp, " hit.%zu.%zu.sph", (size_t)ap->a_dist, i);
 	}
 	printf("%s\nZ\n", bu_vls_cstr(&pntvp));
