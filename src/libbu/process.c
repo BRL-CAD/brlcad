@@ -38,6 +38,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "./process.h"
+#include "./subprocess.h"
 
 #if !defined(HAVE_DECL_WAIT) && !defined(wait) && !defined(_WINSOCKAPI_)
 extern pid_t wait(int *);
@@ -56,75 +57,37 @@ bu_process_id(void)
 
 
 struct bu_process {
-    struct bu_list l;
+    struct subprocess_s* subprocess_p;
+
     const char *cmd;
     int argc;
     const char **argv;
-    FILE *fp_in;
-    FILE *fp_out;
-    FILE *fp_err;
-    int fd_in;
-    int fd_out;
-    int fd_err;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE hProcess;
-    DWORD pid;
-#else
-    int pid;
-#endif
-    int aborted;
+    int aborted;    // TODO: do we still need this?
 };
 
 
 void
-bu_process_close(struct bu_process *pinfo, bu_process_io_t d)
+bu_process_close(struct bu_process *pinfo, bu_process_io_t stream_type)
 {
-    if (!pinfo)
-	return;
-
-    if (d == BU_PROCESS_STDIN) {
-	if (!pinfo->fp_in)
-	    return;
-	(void)fclose(pinfo->fp_in);
-	pinfo->fp_in = NULL;
-	return;
-    }
-    if (d == BU_PROCESS_STDOUT) {
-	if (!pinfo->fp_out)
-	    return;
-	(void)fclose(pinfo->fp_out);
-	pinfo->fp_out = NULL;
-	return;
-    }
-    if (d == BU_PROCESS_STDERR) {
-	if (!pinfo->fp_err)
-	    return;
-	(void)fclose(pinfo->fp_err);
-	pinfo->fp_err = NULL;
-	return;
-    }
+    /* we're not actually opening anything with bu_process_open */
+    return;
 }
 
 
 FILE *
-bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
+bu_process_open(struct bu_process *pinfo, bu_process_io_t stream_type)
 {
     if (!pinfo)
 	return NULL;
 
-    bu_process_close(pinfo, d);
-
-    if (d == BU_PROCESS_STDIN) {
-	pinfo->fp_in = fdopen(pinfo->fd_in, "wb");
-	return pinfo->fp_in;
-    }
-    if (d == BU_PROCESS_STDOUT) {
-	pinfo->fp_out = fdopen(pinfo->fd_out, "rb");
-	return pinfo->fp_out;
-    }
-    if (d == BU_PROCESS_STDERR) {
-	pinfo->fp_err = fdopen(pinfo->fd_err, "rb");
-	return pinfo->fp_err;
+    switch (stream_type)
+    {
+    case BU_PROCESS_STDIN:
+	return subprocess_stdin(pinfo->subprocess_p);
+    case BU_PROCESS_STDOUT:
+	return subprocess_stdout(pinfo->subprocess_p);
+    case BU_PROCESS_STDERR:
+	return subprocess_stderr(pinfo->subprocess_p);
     }
 
     return NULL;
@@ -132,17 +95,20 @@ bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
 
 
 int
-bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d)
+bu_process_fileno(struct bu_process *pinfo, bu_process_io_t stream_type)
 {
     if (!pinfo)
 	return -1;
 
-    if (d == BU_PROCESS_STDIN)
-	return pinfo->fd_in;
-    if (d == BU_PROCESS_STDOUT)
-	return pinfo->fd_out;
-    if (d == BU_PROCESS_STDERR)
-	return pinfo->fd_err;
+    switch (stream_type)
+    {
+    case BU_PROCESS_STDIN:
+	return fileno(subprocess_stdin(pinfo->subprocess_p));
+    case BU_PROCESS_STDOUT:
+	return fileno(subprocess_stdout(pinfo->subprocess_p));
+    case BU_PROCESS_STDERR:
+	return fileno(subprocess_stderr(pinfo->subprocess_p));
+    }
 
     return -1;
 }
@@ -151,9 +117,12 @@ bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d)
 int
 bu_process_pid(struct bu_process *pinfo)
 {
-    if (!pinfo)
-	return -1;
-    return (int)pinfo->pid;
+    if (!pinfo) {
+	/* if no process specified, return the current processes ID */
+	return bu_process_id();
+    }
+
+    return pinfo->subprocess_p->pid;
 }
 
 
@@ -173,24 +142,26 @@ bu_process_args(const char **cmd, const char * const **argv, struct bu_process *
 
 
 int
-bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n)
+bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t stream_type, int n)
 {
     int ret = 1;
     if (!pinfo || !buff || !n || !count)
 	return -1;
 
-    if (d == BU_PROCESS_STDOUT) {
-	(*count) = read((int)pinfo->fd_out, buff, n);
-	if ((*count) <= 0) {
-	    ret = -1;
-	}
+    switch (stream_type)
+    {
+    case BU_PROCESS_STDOUT:
+	*count = subprocess_read_stdout(pinfo->subprocess_p, buff, n);
+	break;
+    case BU_PROCESS_STDERR:
+	*count = subprocess_read_stderr(pinfo->subprocess_p, buff, n);
+	break;
+    default:	// invalid stream_type
+	return -1;
     }
-    if (d == BU_PROCESS_STDERR) {
-	(*count) = read((int)pinfo->fd_err, buff, n);
-	if ((*count) <= 0) {
-	    ret = -1;
-	}
-    }
+
+    if ((*count) <= 0)
+	ret = -1;
 
     /* sanity clamping */
     if ((*count) < 0) {
@@ -205,34 +176,16 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_
 
 
 void
-bu_process_exec(
-    struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err,
-#ifdef _WIN32
-    int hide_window
-#else
-    int UNUSED(hide_window)
-#endif
-    )
+bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window)
 {
-    int pret = 0;
-    int ac = argc;
-#ifdef HAVE_UNISTD_H
-    int pid;
-    int pipe_in[2];
-    int pipe_out[2];
-    int pipe_err[2];
-    const char **av = NULL;
-
     if (!p || !cmd)
 	return;
 
     BU_GET(*p, struct bu_process);
-    (*p)->fp_in = NULL;
-    (*p)->fp_out = NULL;
-    (*p)->fp_err = NULL;
-    (*p)->fd_in = -1;
-    (*p)->fd_out = -1;
-    (*p)->fd_err = -1;
+    BU_GET((*p)->subprocess_p, struct subprocess_s);
+
+    int ac = argc;
+    const char **av = NULL;
 
     av = (const char **)bu_calloc(argc+2, sizeof(char *), "argv array");
     if (!argc || !BU_STR_EQUAL(cmd, argv[0])) {
@@ -261,227 +214,30 @@ bu_process_exec(
     }
     (*p)->argv[ac] = (char *)NULL;
 
-    pret = pipe(pipe_in);
-    if (pret < 0) {
-	perror("pipe");
-    }
-
-    pret = pipe(pipe_out);
-    if (pret < 0) {
-	perror("pipe");
-    }
-
-    pret = pipe(pipe_err);
-    if (pret < 0) {
-	perror("pipe");
-    }
-
-    /* fork + exec */
-    if ((pid = fork()) == 0) {
-	int d1, d2, d3;
-	/* make this a process group leader */
-	setpgid(0, 0);
-
-	/* Redirect stdin and stderr */
-	(void)close(BU_PROCESS_STDIN);
-	d1 = dup(pipe_in[0]);
-	if (d1 < 0) {
-	    perror("dup");
-	}
-	(void)close(BU_PROCESS_STDOUT);
-	d2 = dup(pipe_out[1]);
-	if (d2 < 0) {
-	    perror("dup");
-	}
-	(void)close(BU_PROCESS_STDERR);
-	d3 = dup(pipe_err[1]);
-	if (d3 < 0) {
-	    perror("dup");
-	}
-
-	/* close pipes */
-	(void)close(pipe_in[0]);
-	(void)close(pipe_in[1]);
-	(void)close(pipe_out[0]);
-	(void)close(pipe_out[1]);
-	(void)close(pipe_err[0]);
-	(void)close(pipe_err[1]);
-
-	// TODO - should we be doing this for more than 20? See
-	// https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-Tasks-Descriptors-Child_Processes.html
-	for (int i = 3; i < 20; i++) {
-	    (void)close(i);
-	}
-
-	(void)execvp(cmd, (char * const*)av);
-	perror(cmd);
-#if 0
-	// TODO - do we need to close the dup handles?
-	fflush(NULL);
-	close(d1);
-	close(d2);
-	close(d3);
-#endif
-	exit(16);
-    }
-
-    (void)close(pipe_in[0]);
-    (void)close(pipe_out[1]);
-    (void)close(pipe_err[1]);
-
-    /* Save necessary information for parental process manipulation */
-    (*p)->fd_in = pipe_in[1];
-    if (out_eql_err) {
-	(*p)->fd_out = pipe_err[0];
-    } else {
-	(*p)->fd_out = pipe_out[0];
-    }
-    (*p)->fd_err = pipe_err[0];
-    (*p)->pid = pid;
-
-#else
-    struct bu_vls cp_cmd = BU_VLS_INIT_ZERO;
-    HANDLE pipe_in[2], pipe_inDup;
-    HANDLE pipe_out[2], pipe_outDup;
-    HANDLE pipe_err[2], pipe_errDup;
-    STARTUPINFO si = {0};
-    PROCESS_INFORMATION pi = {0};
-    SECURITY_ATTRIBUTES sa = {0};
-
-    if (!cmd || !argc || !argv)
-	return;
-
-    BU_GET(*p, struct bu_process);
-    (*p)->fp_in = NULL;
-    (*p)->fp_out = NULL;
-    (*p)->fp_err = NULL;
-    (*p)->fd_in = -1;
-    (*p)->fd_out = -1;
-    (*p)->fd_err = -1;
-
-    (*p)->cmd = bu_strdup(cmd);
-    (*p)->argc = argc;
-    (*p)->argv = (const char **)bu_calloc(argc+1, sizeof(char *), "bu_process argv cpy");
-    for (int i = 0; i < argc; i++) {
-	(*p)->argv[i] = bu_strdup(argv[i]);
-    }
-    (*p)->argv[ac] = (char *)NULL;
-
-
-
-    sa.nLength = sizeof(sa);
-    sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
-
-    /* Create a pipe for the child process's STDOUT. */
-    CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
-
-    /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_out[0],
-		    GetCurrentProcess(),  &pipe_outDup ,
-		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_out[0]);
-
-    /* Create a pipe for the child process's STDERR. */
-    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
-
-    /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_err[0],
-		    GetCurrentProcess(),  &pipe_errDup ,
-		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_err[0]);
-
-    /* Create a pipe for the child process's STDIN. */
-    CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
-
-    /* Duplicate the write handle to the pipe so it is not inherited. */
-    DuplicateHandle(GetCurrentProcess(), pipe_in[1],
-		    GetCurrentProcess(), &pipe_inDup,
-		    0, FALSE,                  /* not inherited */
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_in[1]);
-
-    si.cb = sizeof(STARTUPINFO);
-    si.lpReserved = NULL;
-    si.lpReserved2 = NULL;
-    si.cbReserved2 = 0;
-    si.lpDesktop = NULL;
-    if (hide_window) {
-	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_HIDE;
-    } else {
-	si.dwFlags = STARTF_USESTDHANDLES;
-    }
-    si.hStdInput   = pipe_in[0];
-    if (out_eql_err) {
-	si.hStdOutput  = pipe_err[1];
-    } else {
-	si.hStdOutput  = pipe_out[1];
-    }
-    si.hStdError   = pipe_err[1];
-
-    /* Create_Process uses a string, not a char array */
-    for (int i = 0; i < argc; i++) {
-	/* Quote all path names or arguments with spaces for CreateProcess */
-	if (strstr(argv[i], " ") || bu_file_exists(argv[i], NULL)) {
-	    bu_vls_printf(&cp_cmd, "\"%s\" ", argv[i]);
-	} else {
-	    bu_vls_printf(&cp_cmd, "%s ", argv[i]);
-	}
-    }
-
-    CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
-		  DETACHED_PROCESS, NULL, NULL,
-		  &si, &pi);
-    bu_vls_free(&cp_cmd);
-
-    CloseHandle(pipe_in[0]);
-    CloseHandle(pipe_out[1]);
-    CloseHandle(pipe_err[1]);
-
-    /* Save necessary information for parental process manipulation.
-     * Switching from HANDLE to file descriptor so the rest of the code can be
-     * consistent - see
-     * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/open-osfhandle
-     */
-    (*p)->fd_in = _open_osfhandle((intptr_t)pipe_inDup, 0);
-    if (out_eql_err) {
-	(*p)->fd_out = _open_osfhandle((intptr_t)pipe_errDup, 0);
-    } else {
-	(*p)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
-    }
-    (*p)->fd_err = _open_osfhandle((intptr_t)pipe_errDup, 0);
-    (*p)->hProcess = pi.hProcess;
-    (*p)->pid = pi.dwProcessId;
     (*p)->aborted = 0;
 
-#endif
+    /* match out_eql_err and hide_window flags to subprocess options */
+    // NOTE: we probably should collapse those into an 'options' int, and support all of subprocess.h options
+    int options = 0;
+    options |= subprocess_option_enable_async;
+    if (out_eql_err) options |= subprocess_option_combined_stdout_stderr;
+    if (hide_window) options |= subprocess_option_no_window;
+
+    // TODO: return whether process was created successfully?
+    subprocess_create(argv, options, (*p)->subprocess_p);
 }
 
 int
-bu_process_wait(
-    int *aborted, struct bu_process *pinfo,
-#ifndef _WIN32
-    int UNUSED(wtime)
-#else
-    int wtime
-#endif
-    )
+bu_process_wait(int *aborted, struct bu_process *pinfo, int UNUSED(wtime))
 {
     int rc = 0;
+    if (subprocess_join(pinfo->subprocess_p, &rc)) {
+	/* unsuccessful join, forcefully destroy */
+	(void)subprocess_destroy(pinfo->subprocess_p);
+    }
+
+    // NOTE: if we want to maintain an 'aborted' var, we have to do some platform specific gunk
 #ifndef _WIN32
-    int rpid;
-    int retcode = 0;
-
-    if (!pinfo)
-	return -1;
-
-    close(pinfo->fd_in);
-    close(pinfo->fd_out);
-    close(pinfo->fd_err);
-
     while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1) {
     }
     rc = retcode;
@@ -489,27 +245,12 @@ bu_process_wait(
 	pinfo->aborted = 1;
     }
 #else
-    DWORD retcode = 0;
-    if (!pinfo)
-	return -1;
-
-    /* wait for the forked process */
-    if (wtime > 0) {
-	WaitForSingleObject(pinfo->hProcess, wtime);
-    } else {
-	WaitForSingleObject(pinfo->hProcess, INFINITE);
-    }
-
-    GetExitCodeProcess(pinfo->hProcess, &retcode);
-
-    if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == BU_MSVC_ABORT_EXIT) {
+    if (GetLastError() == ERROR_PROCESS_ABORTED || rc == BU_MSVC_ABORT_EXIT) {
 	pinfo->aborted = 1;
     }
-
-    /* may be useful to try pr_wait_status() here */
-    rc = (int)retcode;
 #endif
-    if (aborted) {
+
+    if (aborted)  {
 	(*aborted) = pinfo->aborted;
     }
 
@@ -517,7 +258,7 @@ bu_process_wait(
     bu_process_close(pinfo, BU_PROCESS_STDOUT);
     bu_process_close(pinfo, BU_PROCESS_STDERR);
 
-    /* Free copy of exec args */
+    /* Free copy of exec args and struct allocs */
     bu_free((void *)pinfo->cmd, "pinfo cmd copy");
 
     if (pinfo->argv) {
@@ -526,6 +267,7 @@ bu_process_wait(
 	}
 	bu_free((void *)pinfo->argv, "pinfo argv array");
     }
+    BU_PUT(pinfo->subprocess_p, struct subprocess_t);
     BU_PUT(pinfo, struct bu_process);
 
     return rc;
