@@ -112,6 +112,7 @@
 
 struct options
 {
+    double radius;    /** calculated radius */
     ssize_t samples;  /** number of segments, -1 to iterate to convergence */
     double threshold; /** percentage change to stop at, 0 to do 1-shot */
     char *materials;  /** print out areas per region, path to file */
@@ -122,6 +123,19 @@ struct options
 struct ray {
     point_t r_pt;
     vect_t r_dir;
+};
+
+
+struct region_callback_data {
+    double samples;
+    double radius;
+};
+
+
+struct material_callback_data {
+    struct analyze_densities *densities;
+    double samples;
+    double radius;
 };
 
 
@@ -557,25 +571,34 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 
 
 static void
-regions_callback(const char *name, size_t hits, void* UNUSED(data))
+regions_callback(const char *name, size_t hits, void* data)
 {
-    bu_log("\t%s = %zu hits\n", name, hits);
+    struct region_callback_data *rdata = (struct region_callback_data *)data;
+    BU_ASSERT(rdata);
+
+    double area = compute_surface_area(hits, rdata->samples, rdata->radius);
+
+    bu_log("\t%s = %.1lf (%zu hits)\n", name, area, hits);
 }
 
 
 static void
 materials_callback(int id, size_t hits, void* data)
 {
-    struct analyze_densities *densities = (struct analyze_densities *)data;
-    if (densities) {
-	const char *name = analyze_densities_name(densities, id);
+    struct material_callback_data *mdata = (struct material_callback_data *)data;
+    BU_ASSERT(mdata);
+
+    double area = compute_surface_area(hits, mdata->samples, mdata->radius);
+
+    if (mdata->densities) {
+	const char *name = analyze_densities_name(mdata->densities, id);
 	if (name) {
-	    bu_log("\t%s = %zu hits\n", name, hits);
+	    bu_log("\t%s = %.1lf (%zu hits)\n", name, area, hits);
 	} else {
-	    bu_log("\tmaterial %d = %zu hits\n", id, hits);
+	    bu_log("\tMaterial %d = %.1lf (%zu hits)\n", id, area, hits);
 	}
     } else {
-	bu_log("\tmaterial %d = %zu hits\n", id, hits);
+	bu_log("\tMaterial %d = %.1lf (%zu hits)\n", id, area, hits);
     }
 }
 
@@ -605,7 +628,8 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 
     /* print out all regions */
     bu_log("Area Estimate By Region:\n");
-    rtsurf_iterate_regions(context, &regions_callback, NULL);
+    struct region_callback_data rdata = {opts->samples, radius};
+    rtsurf_iterate_regions(context, &regions_callback, &rdata);
 
     /* print out areas per-region material */
     if (opts->materials) {
@@ -623,7 +647,8 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	    bu_close_mapped_file(dfile);
 	}
 
-	rtsurf_iterate_materials(context, &materials_callback, densities);
+	struct material_callback_data mdata = {densities, opts->samples, radius};
+	rtsurf_iterate_materials(context, &materials_callback, &mdata);
 	analyze_densities_destroy(densities);
     }
 
@@ -719,6 +744,7 @@ main(int argc, char *argv[])
     opts.threshold = 0.0;
     opts.materials = NULL;
     opts.print = 0;
+    opts.radius = 0.0;
 
     char *db = NULL;
     char **obj = NULL;
@@ -734,7 +760,7 @@ main(int argc, char *argv[])
 
     double estimate = estimate_surface_area(db, (const char **)obj, &opts);
 
-    bu_log("Estimated exterior surface area: %g\n", estimate);
+    bu_log("Estimated exterior surface area: %.1lf\n", estimate);
 
     return 0;
 }
