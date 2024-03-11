@@ -106,6 +106,8 @@
 #include "bu/vls.h"
 #include "raytrace.h"
 
+#include "./rtsurf_hits.h"
+
 
 struct options
 {
@@ -134,6 +136,10 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
     struct partition *pp=PartHeadp->pt_forw;
     struct partition *pprev=PartHeadp->pt_back;
+
+    /* register the first and last hit */
+    void *context = ap->a_uptr;
+    rtsurf_register_hit(context, pp->pt_regionp->reg_regionid, pp->pt_regionp->reg_gmater);
 
     /* print the name of the region we hit as well as the name of
      * the primitives encountered on entry and exit.
@@ -269,7 +275,7 @@ initialize(struct application *ap, const char *db, const char *obj[])
     ap->a_logoverlap = rt_silent_logoverlap;
     ap->a_resource = &resources[0];
 
-    /* shoot through? */
+    /* shoot through. */
     ap->a_onehit = 0;
 
     init_random();
@@ -549,13 +555,17 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     ap.a_flag = opts->print; // stores whether to print
     ap.a_dist = (fastf_t)0.0; // stores iteration count
 
+    void *context = rtsurf_context_create();
+    ap.a_uptr = context;
+
     point_t center;
     VADD2SCALE(center, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min, 0.5);
 
     /* iterate until we converge on a solution */
     double area = do_iterations(&ap, center, radius, opts);
 
-    /* release our raytracing instance */
+    /* release our raytracing instance and counters */
+    rtsurf_context_destroy(context);
     rt_free_rti(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
