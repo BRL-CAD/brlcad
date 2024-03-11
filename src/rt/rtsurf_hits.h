@@ -71,14 +71,14 @@ rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regio
  * iterate over all registered region IDs
  */
 void
-rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits));
+rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits, void* data), void* data);
 
 
 /**
  * iterate over all registered material IDs
  */
 void
-rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t hits));
+rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t hits, void* data), void* data);
 
 
 #ifdef __cplusplus

@@ -105,6 +105,7 @@
 #include "bu/assert.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "analyze.h"
 
 #include "./rtsurf_hits.h"
 
@@ -113,6 +114,7 @@ struct options
 {
     ssize_t samples;  /** number of segments, -1 to iterate to convergence */
     double threshold; /** percentage change to stop at, 0 to do 1-shot */
+    char *materials;  /** print out areas per region, path to file */
     int print;        /** whether to log output or not */
 };
 
@@ -498,7 +500,7 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 	total_hits += hits;
 
 	curr_estimate = compute_surface_area(total_hits, (double)total_samples, radius);
-	bu_log("Cauchy-Crofton Area: hits (%zu) / lines (%zu) = %g\n", total_hits, (size_t)((double)total_samples), curr_estimate);
+	bu_log("Cauchy-Crofton Surface Area Estimate: hits (%zu) / lines (%zu) = %g\n", total_hits, (size_t)((double)total_samples), curr_estimate);
 
 	// threshold-based exit checks for convergence after 3 iterations
 	curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
@@ -542,16 +544,26 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 
 
 static void
-regions_callback(const char *name, size_t hits)
+regions_callback(const char *name, size_t hits, void* UNUSED(data))
 {
     bu_log("\t%s = %zu hits\n", name, hits);
 }
 
 
 static void
-materials_callback(int id, size_t hits)
+materials_callback(int id, size_t hits, void* data)
 {
-    bu_log("\tid %d = %zu hits\n", id, hits);
+    struct analyze_densities *densities = (struct analyze_densities *)data;
+    if (densities) {
+	const char *name = analyze_densities_name(densities, id);
+	if (name) {
+	    bu_log("\t%s = %zu hits\n", name, hits);
+	} else {
+	    bu_log("\tmaterial %d = %zu hits\n", id, hits);
+	}
+    } else {
+	bu_log("\tmaterial %d = %zu hits\n", id, hits);
+    }
 }
 
 
@@ -580,9 +592,27 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 
     /* print out all regions */
     bu_log("Regions:\n");
-    rtsurf_iterate_regions(context, &regions_callback);
-    bu_log("Materials:\n");
-    rtsurf_iterate_materials(context, &materials_callback);
+    rtsurf_iterate_regions(context, &regions_callback, NULL);
+
+    /* print out areas per-region material */
+    if (opts->materials) {
+	struct analyze_densities *densities = NULL;
+	struct bu_mapped_file *dfile = NULL;
+
+	bu_log("Materials:\n");
+
+	dfile = bu_open_mapped_file(opts->materials, "densities file");
+	if (!dfile || !dfile->buf) {
+	    bu_log("WARNING: could not open density file [%s]\n", opts->materials);
+	} else {
+	    (void)analyze_densities_create(&densities);
+	    (void)analyze_densities_load(densities, dfile->buf, NULL, NULL);
+	    bu_close_mapped_file(dfile);
+	}
+
+	rtsurf_iterate_materials(context, &materials_callback, &densities);
+	analyze_densities_destroy(densities);
+    }
 
     /* release our raytracing instance and counters */
     rtsurf_context_destroy(context);
@@ -612,7 +642,7 @@ get_options(int argc, char *argv[], struct options *opts)
     bu_optind = 1;
 
     int c;
-    while ((c = bu_getopt(argc, (char * const *)argv, "pn:t:h?")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "pn:t:m:h?")) != -1) {
 	if (bu_optopt == '?')
 	    c = 'h';
 
@@ -624,6 +654,10 @@ get_options(int argc, char *argv[], struct options *opts)
 	    case 't':
 		if (opts)
 		    opts->threshold = (double)strtod(bu_optarg, NULL);
+		break;
+	    case 'm':
+		if (opts)
+		    opts->materials = bu_optarg;
 		break;
 	    case 'n':
 		if (opts)
@@ -640,6 +674,10 @@ get_options(int argc, char *argv[], struct options *opts)
 
     if (opts->threshold < 0.0) {
 	opts->threshold = 0.0;
+    }
+
+    if (opts->materials && !bu_file_exists(opts->materials, NULL)) {
+	bu_exit(EXIT_FAILURE, "ERROR: material file [%s] not found\n", opts->materials);
     }
 
     bu_log("Samples: %zd %s\n", opts->samples, opts->samples>0?"rays":"(until converges)");
@@ -665,8 +703,9 @@ main(int argc, char *argv[])
 {
     struct options opts;
     opts.samples = -1;
-    opts.print = 0;
     opts.threshold = 0.0;
+    opts.materials = NULL;
+    opts.print = 0;
 
     char *db = NULL;
     char **obj = NULL;

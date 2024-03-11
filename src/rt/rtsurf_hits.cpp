@@ -80,23 +80,23 @@ rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regio
 
 
 void
-rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits))
+rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits, void* data), void* data)
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
     std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
     for (const auto& pair : ctx->regionHitCounters) {
-        callback(pair.first.c_str(), pair.second);
+        callback(pair.first.c_str(), pair.second, data);
     }
 }
 
 
 void
-rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t hits))
+rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t hits, void* data), void* data)
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
     std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
     for (const auto& pair : ctx->materialHitCounters) {
-        callback(pair.first, pair.second);
+        callback(pair.first, pair.second, data);
     }
 }
 
