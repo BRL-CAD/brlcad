@@ -234,6 +234,7 @@ init_random(void)
 static void
 initialize(struct application *ap, const char *db, const char *obj[])
 {
+    // FIXME: makes this not safe for multiple concurrent runs
     static struct rt_i *rtip = NULL;
     struct resource *resources = NULL;
 
@@ -366,13 +367,19 @@ rays_through_point_pairs(struct ray *rays, size_t count, point_t pnts[])
 static double
 compute_surface_area(int intersections, int lines, double radius)
 {
+    // surface area of sphere = 4*PI*r^2
     const double PROPORTIONALITY_CONSTANT = 4.0 * M_PI * radius * radius;
 
     if (lines == 0) {
         return 0.0;
     }
 
-    // Apply the Cauchy-Crofton formula
+    /* apply Cauchy-Crofton formula.
+     *
+     * each line intersection represents an entry and exit hit point,
+     * so we devide by 2 so it becomes a ratio of shots that hit to
+     * shots that miss.
+     */
     double area = PROPORTIONALITY_CONSTANT * (double)intersections / ((double)lines * 2.0);
 
     return area;
@@ -398,8 +405,12 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     /* done with points, loaded into rays */
     bu_free(points, "points");
 
-    static size_t total_hits = 0;
-    size_t hits = 0;
+    // FIXME: for uniquely naming our hit spheres, but makes this not
+    // threadsafe or isolated.
+    static size_t total_hitpairs = 0;
+
+    // keep track of this iteration
+    size_t hitpairs = 0;
     for (size_t i = 0; i < samples; ++i) {
 	/* can't struct copy because our ray is smaller than xray */
 	VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
@@ -415,9 +426,9 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 
 	/* Shoot the ray. */
 	size_t hitit = rt_shootray(ap);
-	hits += hitit;
+	hitpairs += hitit;
     }
-    total_hits += hits;
+    total_hitpairs += hitpairs;
 
     /* group them all for performance */
     if (print) {
@@ -431,7 +442,7 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 	    bu_vls_printf(&pntvp, " pnt.%zu.%zu.sph", (size_t)ap->a_dist, i);
 	    bu_vls_printf(&dirvp, " dir.%zu.%zu.rcc", (size_t)ap->a_dist, i);
 	}
-	for (size_t i = (total_hits-hits)*2; i < total_hits*2; i++) {
+	for (size_t i = (total_hitpairs-hitpairs)*2; i < total_hits*2; i++) {
 	    bu_vls_printf(&hitvp, " hit.%zu.%zu.sph", (size_t)ap->a_dist, i);
 	}
 	printf("%s\nZ\n", bu_vls_cstr(&pntvp));
@@ -443,13 +454,13 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     }
 
     /* sanity */
-    if (hits > samples)
-	bu_log("WARNING: hits (%zu) > samples (%zu)\n", hits, samples);
+    if (hitpairs > samples)
+	bu_log("WARNING: ray hitpairs (%zu) > samples (%zu)\n", hitpairs, samples);
 
     /* done with our rays */
     bu_free(rays, "rays");
 
-    return hits * 2; /* in and out */
+    return hitpairs * 2; /* return # in + out hits */
 }
 
 
@@ -492,8 +503,10 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 	    curr_samples *= pow(1.5, iteration);
 	}
 
-	// we keep track of total hits and total lines so we don't
-	// ignore previous work in the estimate calculation.
+	/* we keep track of total hits and total lines so we don't
+	 * ignore previous work in the estimate calculation.  the hit
+	 * count includes both the in-hit and the out-hit separately.
+	 */
 	ap->a_dist = (fastf_t)iteration;
 	size_t hits = do_one_iteration(ap, curr_samples, center, radius, opts);
 	total_samples += curr_samples;
