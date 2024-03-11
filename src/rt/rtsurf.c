@@ -643,7 +643,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	    bu_log("WARNING: could not open density file [%s]\n", opts->materials);
 	} else {
 	    (void)analyze_densities_create(&densities);
-	    (void)analyze_densities_load(densities, dfile->buf, NULL, NULL);
+	    (void)analyze_densities_load(densities, (const char *)dfile->buf, NULL, NULL);
 	    bu_close_mapped_file(dfile);
 	}
 
