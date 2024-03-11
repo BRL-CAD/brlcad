@@ -141,7 +141,8 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
     /* register the first and last hit */
     void *context = ap->a_uptr;
-    rtsurf_register_hit(context, pp->pt_regionp->reg_name, pp->pt_regionp->reg_gmater);
+    rtsurf_register_hit(context, pp->pt_regionp->reg_name, pp->pt_regionp->reg_gmater); // in-hit
+    rtsurf_register_hit(context, pprev->pt_regionp->reg_name, pprev->pt_regionp->reg_gmater); // out-hit
 
     /* print the name of the region we hit as well as the name of
      * the primitives encountered on entry and exit.
@@ -603,7 +604,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     double area = do_iterations(&ap, center, radius, opts);
 
     /* print out all regions */
-    bu_log("Regions:\n");
+    bu_log("Area Estimate By Region:\n");
     rtsurf_iterate_regions(context, &regions_callback, NULL);
 
     /* print out areas per-region material */
@@ -611,7 +612,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	struct analyze_densities *densities = NULL;
 	struct bu_mapped_file *dfile = NULL;
 
-	bu_log("Materials:\n");
+	bu_log("Area Estimate By Material:\n");
 
 	dfile = bu_open_mapped_file(opts->materials, "densities file");
 	if (!dfile || !dfile->buf) {
