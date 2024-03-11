@@ -623,7 +623,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	    bu_close_mapped_file(dfile);
 	}
 
-	rtsurf_iterate_materials(context, &materials_callback, &densities);
+	rtsurf_iterate_materials(context, &materials_callback, densities);
 	analyze_densities_destroy(densities);
     }
 
