@@ -50,6 +50,13 @@ rtsurf_context_destroy(void* context);
 
 
 /**
+ * reset the hit stats
+ */
+void
+rtsurf_context_reset(void* context);
+
+
+/**
  * count a hit on a given region of a specified material.
  */
 void

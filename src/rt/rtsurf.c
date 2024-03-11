@@ -517,6 +517,9 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 	    curr_samples *= pow(1.5, iteration);
 	}
 
+	/* reset stats before every iteration */
+	rtsurf_context_reset(ap->a_uptr);
+
 	/* we keep track of total hits and total lines so we don't
 	 * ignore previous work in the estimate calculation.  the hit
 	 * count includes both the in-hit and the out-hit separately.

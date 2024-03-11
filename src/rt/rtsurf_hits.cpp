@@ -55,6 +55,16 @@ rtsurf_context_destroy(void* context)
 
 
 void
+rtsurf_context_reset(void* context)
+{
+    auto* ctx = static_cast<HitCounterContext*>(context);
+    std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
+    ctx->regionHitCounters.clear();
+    ctx->materialHitCounters.clear();
+}
+
+
+void
 rtsurf_register_hit(void* context, const char *region, int materialId)
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
