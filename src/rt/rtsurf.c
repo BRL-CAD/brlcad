@@ -116,7 +116,8 @@ struct options
     ssize_t samples;  /** number of segments, -1 to iterate to convergence */
     double threshold; /** percentage change to stop at, 0 to do 1-shot */
     char *materials;  /** print out areas per region, path to file */
-    int print;        /** whether to log output or not */
+    int makeGeometry; /** whether to write out a geometry script to stdout */
+    int printRegions; /** whether to print the full list of regions */
 };
 
 
@@ -143,7 +144,7 @@ static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     double radius = ap->a_user;
-    int print = ap->a_flag;
+    int makeGeometry = ap->a_flag;
 
     /* make our hit spheres big enough to see */
     double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
@@ -176,7 +177,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     //VPRINT("  Inormal", inormal);
 
     /* print the entry hit point */
-    if (print) {
+    if (makeGeometry) {
 	printf("in hit.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, cnt++, pt[0], pt[1], pt[2], hitrad);
     }
 
@@ -193,7 +194,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pprev->pt_outflip);
 
     /* print the exit hit point */
-    if (print) {
+    if (makeGeometry) {
 	printf("in hit.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, cnt++, pt[0], pt[1], pt[2], hitrad);
     }
 
@@ -402,7 +403,7 @@ static size_t
 do_one_iteration(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
 {
     double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
-    int print = opts->print;
+    int makeGeometry = opts->makeGeometry;
 
     /* get sample points */
     point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
@@ -428,7 +429,7 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 	VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
 	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
 
-	if (print) {
+	if (makeGeometry) {
 	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
 	    printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
 	}
@@ -443,7 +444,7 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     total_hitpairs += hitpairs;
 
     /* group them all for performance */
-    if (print) {
+    if (makeGeometry) {
 	struct bu_vls pntvp = BU_VLS_INIT_ZERO;
 	struct bu_vls dirvp = BU_VLS_INIT_ZERO;
 	struct bu_vls hitvp = BU_VLS_INIT_ZERO;
@@ -494,13 +495,13 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
     size_t curr_samples = (opts->samples > 0) ? (size_t)opts->samples : 1000;
 
     /* set to mm so working units match */
-    if (opts->print)
+    if (opts->makeGeometry)
 	printf("units mm\n");
 
     bu_log("Radius: %g\n", radius);
     //VPRINT("Center:", center);
 
-    if (opts->print) {
+    if (opts->makeGeometry) {
 	printf("in center.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), 5.0);
 	printf("in bounding.sph sph %lf %lf %lf %lf\nZ\n", V3ARGS(center), radius);
     }
@@ -541,7 +542,7 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
     } while (threshold > 0 && (curr_percent > threshold || prev_percent > threshold));
 
     /* if we're printing, group all iterations too */
-    if (opts->print) {
+    if (opts->makeGeometry) {
 	struct bu_vls pntvp = BU_VLS_INIT_ZERO;
 	struct bu_vls dirvp = BU_VLS_INIT_ZERO;
 	struct bu_vls hitvp = BU_VLS_INIT_ZERO;
@@ -612,7 +613,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     double radius = ap.a_rt_i->rti_radius;
 
     ap.a_user = radius; // stores bounding radius
-    ap.a_flag = opts->print; // stores whether to print
+    ap.a_flag = opts->makeGeometry; // stores whether to print
     ap.a_dist = (fastf_t)0.0; // stores iteration count
 
     void *context = rtsurf_context_create();
@@ -624,10 +625,12 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     /* iterate until we converge on a solution */
     double area = do_iterations(&ap, center, radius, opts);
 
-    /* print out all regions */
-    bu_log("Area Estimate By Region:\n");
-    struct region_callback_data rdata = {opts->samples, radius};
-    rtsurf_iterate_regions(context, &regions_callback, &rdata);
+    if (opts->printRegions) {
+	/* print out all regions */
+	bu_log("Area Estimate By Region:\n");
+	struct region_callback_data rdata = {opts->samples, radius};
+	rtsurf_iterate_regions(context, &regions_callback, &rdata);
+    }
 
     /* print out areas per-region material */
     if (opts->materials) {
@@ -662,7 +665,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 static void
 get_options(int argc, char *argv[], struct options *opts)
 {
-    static const char *usage = "Usage: %s [-p] [-n #samples] [-t %%threshold] [-m density.txt] model.g objects...\n";
+    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] model.g objects...\n";
 
     const char *argv0 = argv[0];
     const char *db = NULL;
@@ -678,15 +681,18 @@ get_options(int argc, char *argv[], struct options *opts)
     bu_optind = 1;
 
     int c;
-    while ((c = bu_getopt(argc, (char * const *)argv, "pn:t:m:h?")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "grn:t:m:h?")) != -1) {
 	if (bu_optopt == '?')
 	    c = 'h';
 
 	switch (c) {
-	    case 'p':
+	    case 'g':
 		if (opts)
-		    opts->print = 1;
+		    opts->makeGeometry = 1;
 		break;
+	    case 'r':
+		if (opts)
+		    opts->printRegions = 1;
 	    case 't':
 		if (opts)
 		    opts->threshold = (double)strtod(bu_optarg, NULL);
@@ -741,7 +747,8 @@ main(int argc, char *argv[])
     opts.samples = -1;
     opts.threshold = 0.0;
     opts.materials = NULL;
-    opts.print = 0;
+    opts.makeGeometry = 0;
+    opts.printRegions = 0;
     opts.radius = 0.0;
 
     char *db = NULL;
