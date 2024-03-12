@@ -77,8 +77,6 @@
  *
  * = TODO =
  *
- * Shoot in parallel
- *
  * Write utility manual page
  *
  * Integrate in MGED/Archer
