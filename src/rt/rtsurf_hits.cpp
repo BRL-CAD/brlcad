@@ -173,10 +173,11 @@ rtsurf_iterate_groups(void* context, void (*callback)(const char *assembly, size
         std::vector<std::string> pathComponents = split_string(entry.first, '/');
         std::string currentPath;
 
-        for (const std::string& component : pathComponents) {
-            if (!currentPath.empty())
+	// skip the leaf nodes (i.e., regions)
+	for (size_t i = 0; i < pathComponents.size() - 1; ++i) {
+	    if (!currentPath.empty())
 		currentPath += "/";
-            currentPath += component;
+            currentPath += pathComponents[i];
             aggregatedCounts[currentPath] += entry.second;
         }
     }
