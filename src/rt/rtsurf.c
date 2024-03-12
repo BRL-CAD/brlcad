@@ -50,8 +50,14 @@
  * rtsurf -t 0.001 -n 1000000
  *
  * # Sets of 1k, 0.1% convergence, saving geometry script to file:
- * rtsurf -n 1000 -p file.g object > file.mged
+ * rtsurf -n 1000 -o file.g object > file.mged
  * mged -c file.g source file.mged
+ *
+ * # Areas per exterior material encountered, output saved to file:
+ * rtsurf -m density.txt file.g object
+ *
+ * # Print summary of areas per region and per group to file:
+ * rtsurf -r -g file.g object 2> rtsurf.log
  *
  * = Citations =
  *
