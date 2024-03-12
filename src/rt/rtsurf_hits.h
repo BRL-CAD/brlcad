@@ -64,6 +64,13 @@ rtsurf_register_hit(void* context, const char *region, int materialId);
 
 
 /**
+ * count a shotline sampled
+ */
+void
+rtsurf_register_line(void* context);
+
+
+/**
  * retrieve the counter for a given region or material ID.
  *
  * specify -1 or NULL to not retrieve a hit count.  hit counts are
@@ -71,21 +78,21 @@ rtsurf_register_hit(void* context, const char *region, int materialId);
  * non-NULL.
  */
 void
-rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regionHits, size_t *materialHits);
+rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regionHits, size_t *materialHits, size_t *lines);
 
 
 /**
  * iterate over all registered region IDs
  */
 void
-rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits, void* data), void* data);
+rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits, size_t lines, void* data), void* data);
 
 
 /**
  * iterate over all registered material IDs
  */
 void
-rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t hits, void* data), void* data);
+rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t hits, size_t lines, void* data), void* data);
 
 
 #ifdef __cplusplus

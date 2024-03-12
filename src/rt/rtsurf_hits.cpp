@@ -36,6 +36,7 @@ class HitCounterContext
 public:
     std::unordered_map<std::string, size_t> regionHitCounters;
     std::unordered_map<int, size_t> materialHitCounters;
+    size_t lineCount;
     std::mutex hitCounterMutex;
 };
 
@@ -61,6 +62,7 @@ rtsurf_context_reset(void* context)
     std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
     ctx->regionHitCounters.clear();
     ctx->materialHitCounters.clear();
+    ctx->lineCount = 0;
 }
 
 
@@ -75,7 +77,15 @@ rtsurf_register_hit(void* context, const char *region, int materialId)
 
 
 void
-rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regionHits, size_t *materialHits)
+rtsurf_register_line(void* context) {
+    auto* ctx = static_cast<HitCounterContext*>(context);
+    std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
+    ctx->lineCount++;
+}
+
+
+void
+rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regionHits, size_t *materialHits, size_t *lines)
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
     if (regionHits != nullptr) {
@@ -86,27 +96,30 @@ rtsurf_get_hits(void* context, const char *region, int materialId, size_t *regio
         auto materialIt = ctx->materialHitCounters.find(materialId);
         *materialHits = (materialIt != ctx->materialHitCounters.end()) ? materialIt->second : 0;
     }
-}
-
-
-void
-rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits, void* data), void* data)
-{
-    auto* ctx = static_cast<HitCounterContext*>(context);
-    std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
-    for (const auto& pair : ctx->regionHitCounters) {
-        callback(pair.first.c_str(), pair.second, data);
+    if (lines != nullptr) {
+	*lines = ctx->lineCount;
     }
 }
 
 
 void
-rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t hits, void* data), void* data)
+rtsurf_iterate_regions(void* context, void (*callback)(const char *region, size_t hits, size_t lines, void* data), void* data)
+{
+    auto* ctx = static_cast<HitCounterContext*>(context);
+    std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
+    for (const auto& pair : ctx->regionHitCounters) {
+        callback(pair.first.c_str(), pair.second, ctx->lineCount, data);
+    }
+}
+
+
+void
+rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t hits, size_t lines, void* data), void* data)
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
     std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
     for (const auto& pair : ctx->materialHitCounters) {
-        callback(pair.first, pair.second, data);
+        callback(pair.first, pair.second, ctx->lineCount, data);
     }
 }
 

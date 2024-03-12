@@ -150,31 +150,21 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
     static size_t cnt = 0;
 
-    struct partition *pp=PartHeadp->pt_forw;
-    struct partition *pprev=PartHeadp->pt_back;
-
     /* register the first and last hit */
     void *context = ap->a_uptr;
-    rtsurf_register_hit(context, pp->pt_regionp->reg_name, pp->pt_regionp->reg_gmater); // in-hit
-    rtsurf_register_hit(context, pprev->pt_regionp->reg_name, pprev->pt_regionp->reg_gmater); // out-hit
 
-    /* print the name of the region we hit as well as the name of
-     * the primitives encountered on entry and exit.
-     */
-#if 0
-    bu_log("\n--- Hit region %s (in %s, out %s)\n",
-	   pp->pt_regionp->reg_name,
-	   pp->pt_inseg->seg_stp->st_name,
-	   pp->pt_outseg->seg_stp->st_name);
-#endif
-
-    /* in hit point */
-    point_t pt;
-    struct hit *hitp;
-    hitp = pp->pt_inhit;
-    VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+    /* keep track of all shots, hit or miss */
+    rtsurf_register_line(context);
 
     struct soltab *stp;
+    struct hit *hitp;
+    point_t pt;
+
+    /* in hit point */
+    struct partition *pp=PartHeadp->pt_forw;
+    rtsurf_register_hit(context, pp->pt_regionp->reg_name, pp->pt_regionp->reg_gmater); // in-hit
+    hitp = pp->pt_inhit;
+    VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
     stp = pp->pt_inseg->seg_stp;
 
     /* in hit normal */
@@ -191,6 +181,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     }
 
     /* out hit point */
+    struct partition *pprev=PartHeadp->pt_back;
+    rtsurf_register_hit(context, pprev->pt_regionp->reg_name, pprev->pt_regionp->reg_gmater); // out-hit
+
     hitp = pprev->pt_outhit;
     VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
     stp = pprev->pt_outseg->seg_stp;
@@ -214,8 +207,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 
 static int
-miss(struct application *UNUSED(ap))
+miss(struct application *ap)
 {
+    void *context = ap->a_uptr;
+
+    /* keep track of all shots, hit or miss */
+    rtsurf_register_line(context);
+
     //bu_log("missed\n");
     return 0;
 }
@@ -517,9 +515,6 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 	    curr_samples *= pow(1.5, iteration);
 	}
 
-	/* reset stats before every iteration */
-	rtsurf_context_reset(ap->a_uptr);
-
 	/* we keep track of total hits and total lines so we don't
 	 * ignore previous work in the estimate calculation.  the hit
 	 * count includes both the in-hit and the out-hit separately.
@@ -530,7 +525,7 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 	total_hits += hits;
 
 	curr_estimate = compute_surface_area(total_hits, (double)total_samples, radius);
-	bu_log("Cauchy-Crofton Surface Area Estimate: hits (%zu) / lines (%zu) = %g\n", total_hits, (size_t)((double)total_samples), curr_estimate);
+	bu_log("Cauchy-Crofton Surface Area Estimate: (%zu hits / %zu lines) = %g mm^2\n", total_hits, (size_t)((double)total_samples), curr_estimate);
 
 	// threshold-based exit checks for convergence after 3 iterations
 	curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
@@ -574,34 +569,34 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 
 
 static void
-regions_callback(const char *name, size_t hits, void* data)
+regions_callback(const char *name, size_t hits, size_t lines, void* data)
 {
     struct region_callback_data *rdata = (struct region_callback_data *)data;
     BU_ASSERT(rdata);
 
-    double area = compute_surface_area(hits, rdata->samples, rdata->radius);
+    double area = compute_surface_area(hits, lines, rdata->radius);
 
-    bu_log("\t%s = %.1lf (%zu hits)\n", name, area, hits);
+    bu_log("\t%s\t(%zu hits / %zu lines) = %.1lf mm^2\n", name, hits, lines, area);
 }
 
 
 static void
-materials_callback(int id, size_t hits, void* data)
+materials_callback(int id, size_t hits, size_t lines, void* data)
 {
     struct material_callback_data *mdata = (struct material_callback_data *)data;
     BU_ASSERT(mdata);
 
-    double area = compute_surface_area(hits, mdata->samples, mdata->radius);
+    double area = compute_surface_area(hits, lines, mdata->radius);
 
     if (mdata->densities) {
 	const char *name = analyze_densities_name(mdata->densities, id);
 	if (name) {
-	    bu_log("\t%s = %.1lf (%zu hits)\n", name, area, hits);
+	    bu_log("\t%s\t(%zu hits / %zu lines) = %.1lf mm^2\n", name, hits, lines, area);
 	} else {
-	    bu_log("\tMaterial %d = %.1lf (%zu hits)\n", id, area, hits);
+	    bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
 	}
     } else {
-	bu_log("\tMaterial %d = %.1lf (%zu hits)\n", id, area, hits);
+	bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
     }
 }
 
