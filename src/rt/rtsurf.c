@@ -71,10 +71,6 @@
  *
  * = TODO =
  *
- * Track hits per region
- *
- * Track hits per material
- *
  * Shoot in parallel
  *
  * Write utility manual page
