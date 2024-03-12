@@ -25,6 +25,7 @@
 
 #include "./rtsurf_hits.h"
 
+#include <algorithm>
 #include <map>
 #include <string>
 #include <sstream>
