@@ -140,8 +140,28 @@ split_string(const std::string& str, char delimiter)
 }
 
 
+static int
+count_depth(const std::string& path)
+{
+    return std::count(path.begin(), path.end(), '/');
+}
+
+
+static bool
+depth_comparator(const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b)
+{
+    int depthA = count_depth(a.first);
+    int depthB = count_depth(b.first);
+    // alpha order for same depth
+    if (depthA == depthB)
+	return a.first < b.first;
+    // deeper paths first
+    return depthA > depthB;
+}
+
+
 void
-rtsurf_iterate_assemblies(void* context, void (*callback)(const char *assembly, size_t hits, size_t lines, void* data), void* data)
+rtsurf_iterate_groups(void* context, void (*callback)(const char *assembly, size_t hits, size_t lines, void* data), void* data)
 {
     auto* ctx = static_cast<HitCounterContext*>(context);
 
@@ -161,8 +181,14 @@ rtsurf_iterate_assemblies(void* context, void (*callback)(const char *assembly, 
         }
     }
 
+    // convert our map to a sorted list
+    std::vector<std::pair<std::string, size_t>> paths(aggregatedCounts.begin(), aggregatedCounts.end());
+
+    // sort paths by depth
+    std::sort(paths.begin(), paths.end(), depth_comparator);
+
     // iterate over our aggregation
-    for (const auto& pair : aggregatedCounts) {
+    for (const auto& pair : paths) {
 	callback(pair.first.c_str(), pair.second, ctx->lineCount, data);
     }
 }

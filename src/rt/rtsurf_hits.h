@@ -96,10 +96,10 @@ rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t 
 
 
 /**
- * iterate over all combinations above regions
+ * iterate over all combination groups above regions
  */
 void
-rtsurf_iterate_assemblies(void* context, void (*callback)(const char *assembly, size_t hits, size_t lines, void* data), void* data);
+rtsurf_iterate_groups(void* context, void (*callback)(const char *assembly, size_t hits, size_t lines, void* data), void* data);
 
 
 #ifdef __cplusplus

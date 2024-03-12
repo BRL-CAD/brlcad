@@ -112,12 +112,13 @@
 
 struct options
 {
-    double radius;    /** calculated radius */
-    ssize_t samples;  /** number of segments, -1 to iterate to convergence */
+    double radius;    /** calculated bounding radius */
+    ssize_t samples;  /** segment count, -1 to iterate to convergence */
     double threshold; /** percentage change to stop at, 0 to do 1-shot */
     char *materials;  /** print out areas per region, path to file */
-    int makeGeometry; /** whether to write out a geometry script to stdout */
+    int makeGeometry; /** whether to write out geometry script to stdout */
     int printRegions; /** whether to print the full list of regions */
+    int printGroups;  /** whether to print the full list of regions */
 };
 
 
@@ -632,6 +633,13 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	rtsurf_iterate_regions(context, &regions_callback, &rdata);
     }
 
+    if (opts->printGroups) {
+	/* print out all combs above regions */
+	bu_log("Area Estimate By Combination:\n");
+	struct region_callback_data rdata = {opts->samples, radius};
+	rtsurf_iterate_groups(context, &regions_callback, &rdata);
+    }
+
     /* print out areas per-region material */
     if (opts->materials) {
 	struct analyze_densities *densities = NULL;
@@ -665,7 +673,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 static void
 get_options(int argc, char *argv[], struct options *opts)
 {
-    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] model.g objects...\n";
+    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] [-o] model.g objects...\n";
 
     const char *argv0 = argv[0];
     const char *db = NULL;
@@ -681,14 +689,18 @@ get_options(int argc, char *argv[], struct options *opts)
     bu_optind = 1;
 
     int c;
-    while ((c = bu_getopt(argc, (char * const *)argv, "grn:t:m:h?")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "grcn:t:m:oh?")) != -1) {
 	if (bu_optopt == '?')
 	    c = 'h';
 
 	switch (c) {
-	    case 'g':
+	    case 'o':
 		if (opts)
 		    opts->makeGeometry = 1;
+		break;
+	    case 'g':
+		if (opts)
+		    opts->printGroups = 1;
 		break;
 	    case 'r':
 		if (opts)
@@ -750,6 +762,7 @@ main(int argc, char *argv[])
     opts.materials = NULL;
     opts.makeGeometry = 0;
     opts.printRegions = 0;
+    opts.printGroups = 0;
     opts.radius = 0.0;
 
     char *db = NULL;
