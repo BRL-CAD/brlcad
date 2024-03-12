@@ -59,7 +59,7 @@ typedef enum {
 } bu_process_io_t;
 
 /**
- * Open and return a FILE pointer associated with the specified file
+ * Return a FILE pointer associated with the specified file
  * descriptor for input (0), output (1), or error (2) respectively.
  *
  * Input will be opened write, output and error will be opened
@@ -95,9 +95,7 @@ BU_EXPORT int bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d);
 
 /**
  * Return the pid of the subprocess.
- *
- * FIXME: seemingly redundant or combinable with bu_process_id()
- * (perhaps make NULL be equivalent to the current process).
+ * Or, if NULL is supplied, return the current processes id
  */
 BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
 
@@ -149,6 +147,7 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  * FIXME: 'aborted' argument may be unnecessary (could make function
  * provide return value of the process waited for).  wtime
  * undocumented.
+ * FIXME: wtime is no longer used on any platforms.
  */
  BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
 
@@ -158,14 +157,6 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  * Returns 1 if interactive, else 0
  */
 BU_EXPORT extern int bu_interactive(void);
-
-
-/**
- * @brief determine whether there is data pending on fd
- *
- * 1 if there is data, else 0
- */
-BU_EXPORT extern int bu_process_pending(int fd);
 
 
 /**
