@@ -66,6 +66,7 @@ set(embedded_licenses
   stb_truetype.txt
   STIX_Font_License_2010.txt
   strnstr.txt
+  subprocess.txt
   tcl.txt
   tcllib.txt
   tiny_gltf.txt

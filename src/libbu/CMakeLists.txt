@@ -194,6 +194,7 @@ set(bu_ignore_files
   mime.cmake
   parallel.h
   process.h
+  subprocess.h
   tests/semchk.cpp
   sha1.h
   vfont.h
