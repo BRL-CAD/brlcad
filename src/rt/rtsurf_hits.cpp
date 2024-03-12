@@ -25,7 +25,7 @@
 
 #include "./rtsurf_hits.h"
 
-#include <unordered_map>
+#include <map>
 #include <string>
 #include <mutex>
 #include <functional>
@@ -34,8 +34,8 @@
 class HitCounterContext
 {
 public:
-    std::unordered_map<std::string, size_t> regionHitCounters;
-    std::unordered_map<int, size_t> materialHitCounters;
+    std::map<std::string, size_t> regionHitCounters;
+    std::map<int, size_t> materialHitCounters;
     size_t lineCount;
     std::mutex hitCounterMutex;
 };

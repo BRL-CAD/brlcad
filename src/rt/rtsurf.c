@@ -693,6 +693,7 @@ get_options(int argc, char *argv[], struct options *opts)
 	    case 'r':
 		if (opts)
 		    opts->printRegions = 1;
+		break;
 	    case 't':
 		if (opts)
 		    opts->threshold = (double)strtod(bu_optarg, NULL);
