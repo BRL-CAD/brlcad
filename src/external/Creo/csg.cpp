@@ -172,12 +172,12 @@ tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
     while (db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET) != RT_DIR_NULL) {
         (void)bu_vls_incr(hname, NULL, "0:0:0:0:-", NULL, NULL);
         count++;
-        creo_log(cinfo, MSG_PLAIN, "   NAME: Generating hole name \"%s\"\n", bu_vls_addr(hname));
+        creo_log(cinfo, MSG_NAME, "Generating hole name \"%s\"\n", bu_vls_addr(hname));
         if (count >= MAX_UNIQUE_NAMES) {
             bu_vls_free(hname);
             BU_PUT(hname, struct bu_vls);
             ProWstringToString(pname, wname);
-            creo_log(cinfo, MSG_PLAIN, "   NAME: Hole \"%s\" failed name generation\n", pname);
+            creo_log(cinfo, MSG_NAME, "Hole \"%s\" failed name generation\n", pname);
             return NULL;
         }
     }
@@ -202,13 +202,17 @@ subtract_hole(struct part_conv_info *pinfo)
     ProError    err = PRO_TK_GENERAL_ERROR;
     ProElement  elem_tree;
     ProElempath elem_path = NULL;
+    ProMdl      model = pinfo->cinfo->curr_model;
 
     struct creo_conv_info *cinfo = pinfo->cinfo;
     struct directory *dp = RT_DIR_NULL;
     vect_t a, b, c, d, h;
 
+    /* Initialize by converting input value to part units */
+    double min_hole = pinfo->cinfo->min_hole/pinfo->cinfo->part_to_mm;
+
     if (pinfo->cinfo->facets_only)
-        return (pinfo->diameter < cinfo->min_hole_diameter) ? 1 : 0;
+        return (pinfo->diameter < min_hole) ? 1 : 0;
 
     struct hole_info *hinfo;
     BU_GET(hinfo, struct hole_info);
@@ -235,21 +239,21 @@ subtract_hole(struct part_conv_info *pinfo)
         return 0;
 
     /* Will need parent object name for naming */
-    (void)ProMdlMdlnameGet(pinfo->model, wname);
+    (void)ProMdlMdlnameGet(model, wname);
 
     /* Make a replacement hole using CSG */
     if (hinfo->hole_type == PRO_HLE_NEW_TYPE_STRAIGHT) {
         /* Plain old straight hole */
-        if (hinfo->diameter < cinfo->min_hole_diameter)
+        if (hinfo->diameter < min_hole)
             return 1;
         VSUB2(h, hinfo->end1, hinfo->end2);
         bn_vec_ortho(a, h);
         VCROSS(b, a, h);
         VUNITIZE(b);
-        VSCALE(hinfo->end2, hinfo->end2, cinfo->creo_to_brl_conv);
-        VSCALE(a, a, pinfo->radius*cinfo->creo_to_brl_conv);
-        VSCALE(b, b, pinfo->radius*cinfo->creo_to_brl_conv);
-        VSCALE(h, h, cinfo->creo_to_brl_conv);
+        VSCALE(hinfo->end2, hinfo->end2, cinfo->part_to_mm);
+        VSCALE(a, a, pinfo->radius*cinfo->part_to_mm);
+        VSCALE(b, b, pinfo->radius*cinfo->part_to_mm);
+        VSCALE(h, h, cinfo->part_to_mm);
         hname = tgc_hole_name(cinfo, wname, "s");
         mk_tgc(cinfo->wdbp, bu_vls_addr(hname), hinfo->end2, h, a, b, a, b);
         dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET);
@@ -265,23 +269,23 @@ subtract_hole(struct part_conv_info *pinfo)
         double accum_depth = 0.0;
         double hole_radius = hinfo->hole_diam / 2.0;
 
-        if (hinfo->hole_diam < cinfo->min_hole_diameter)
+        if (hinfo->hole_diam < min_hole)
             return 1;
 
         VSUB2(dir, hinfo->end1, hinfo->end2);
         VUNITIZE(dir);
 
         VMOVE(start, hinfo->end2);
-        VSCALE(start, start, cinfo->creo_to_brl_conv);
+        VSCALE(start, start, cinfo->part_to_mm);
 
         if (hinfo->add_cbore == PRO_HLE_ADD_CBORE) {
             bn_vec_ortho(a, dir);
             VCROSS(b, a, dir);
             VUNITIZE(b);
-            cb_radius = hinfo->cb_diam * cinfo->creo_to_brl_conv / 2.0;
+            cb_radius = hinfo->cb_diam * cinfo->part_to_mm / 2.0;
             VSCALE(a, a, cb_radius);
             VSCALE(b, b, cb_radius);
-            VSCALE(h, dir, hinfo->cb_depth * cinfo->creo_to_brl_conv);
+            VSCALE(h, dir, hinfo->cb_depth * cinfo->part_to_mm);
             hname = tgc_hole_name(cinfo, wname, "s");
             mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, a, b);
             if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL)
@@ -303,11 +307,11 @@ subtract_hole(struct part_conv_info *pinfo)
             VUNITIZE(b);
             VMOVE(c, a);
             VMOVE(d, b);
-            VSCALE(h, dir, cs_depth * cinfo->creo_to_brl_conv);
-            VSCALE(a, a, cs_radius * cinfo->creo_to_brl_conv);
-            VSCALE(b, b, cs_radius * cinfo->creo_to_brl_conv);
-            VSCALE(c, c, hinfo->hole_diam * cinfo->creo_to_brl_conv / 2.0);
-            VSCALE(d, d, hinfo->hole_diam * cinfo->creo_to_brl_conv / 2.0);
+            VSCALE(h, dir, cs_depth  * cinfo->part_to_mm);
+            VSCALE(a, a,   cs_radius * cinfo->part_to_mm);
+            VSCALE(b, b,   cs_radius * cinfo->part_to_mm);
+            VSCALE(c, c, hinfo->hole_diam * cinfo->part_to_mm / 2.0);
+            VSCALE(d, d, hinfo->hole_diam * cinfo->part_to_mm / 2.0);
             hname = tgc_hole_name(cinfo, wname, "s");
             mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, c, d);
             if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL)
@@ -325,11 +329,11 @@ subtract_hole(struct part_conv_info *pinfo)
         VUNITIZE(b);
         VMOVE(c, a);
         VMOVE(d, b);
-        VSCALE(a, a, hole_radius * cinfo->creo_to_brl_conv);
-        VSCALE(b, b, hole_radius * cinfo->creo_to_brl_conv);
-        VSCALE(c, c, hole_radius * cinfo->creo_to_brl_conv);
-        VSCALE(d, d, hole_radius * cinfo->creo_to_brl_conv);
-        VSCALE(h, dir, (hinfo->hole_depth - accum_depth) * cinfo->creo_to_brl_conv);
+        VSCALE(a, a, hole_radius * cinfo->part_to_mm);
+        VSCALE(b, b, hole_radius * cinfo->part_to_mm);
+        VSCALE(c, c, hole_radius * cinfo->part_to_mm);
+        VSCALE(d, d, hole_radius * cinfo->part_to_mm);
+        VSCALE(h, dir, (hinfo->hole_depth - accum_depth) * cinfo->part_to_mm);
         hname = tgc_hole_name(cinfo, wname, "s");
         mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, c, d);
         dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET);
@@ -350,9 +354,9 @@ subtract_hole(struct part_conv_info *pinfo)
             VMOVE(c, a);
             VMOVE(d, b);
             tip_depth = (hole_radius - MIN_RADIUS) / tan( hinfo->drill_angle * M_PI / 360.0 );
-            VSCALE(h, dir, tip_depth * cinfo->creo_to_brl_conv);
-            VSCALE(a, a, hole_radius * cinfo->creo_to_brl_conv);
-            VSCALE(b, b, hole_radius * cinfo->creo_to_brl_conv);
+            VSCALE(h, dir, tip_depth * cinfo->part_to_mm);
+            VSCALE(a, a, hole_radius * cinfo->part_to_mm);
+            VSCALE(b, b, hole_radius * cinfo->part_to_mm);
             VSCALE(c, c, MIN_RADIUS);
             VSCALE(d, d, MIN_RADIUS);
             hname = tgc_hole_name(cinfo, wname, "s");
@@ -369,7 +373,7 @@ subtract_hole(struct part_conv_info *pinfo)
         char pname[CREO_NAME_MAX];
         ProWstringToString(pname, wname);
         lower_case(pname);
-        creo_log(cinfo, MSG_PLAIN, "FAILURE: Unable to recognize \"%s\" hole type\n", pname);
+        creo_log(cinfo, MSG_FAIL, "Unable to recognize \"%s\" hole type\n", pname);
         BU_PUT(hinfo, struct hole_info);
         return 0;
     }
