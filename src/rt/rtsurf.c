@@ -103,9 +103,10 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/vls.h"
 #include "bu/getopt.h"
 #include "bu/assert.h"
-#include "bu/vls.h"
+#include "bu/parallel.h"
 #include "raytrace.h"
 #include "analyze.h"
 
@@ -292,7 +293,7 @@ initialize(struct application *ap, const char *db, const char *obj[])
     ap->a_overlap = NULL;
     ap->a_multioverlap = NULL;
     ap->a_logoverlap = rt_silent_logoverlap;
-    ap->a_resource = &resources[0];
+    ap->a_resource = resources;
 
     /* shoot through. */
     ap->a_onehit = 0;
@@ -402,21 +403,38 @@ compute_surface_area(int intersections, int lines, double radius)
 }
 
 
+struct rtsurf_shootray_data {
+    struct application *ap;
+    struct ray *rays;
+    size_t start;
+    size_t end;
+    double hitrad;
+    int makeGeometry;
+    size_t *hitpairs;
+};
+
+
 static void
-do_samples_in_parallel(struct application *ap, size_t samples, struct ray *rays, double radius, struct options *opts, size_t *hitpairs)
+sample_in_parallel(int id, void *data)
 {
-    double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
-    int makeGeometry = opts->makeGeometry;
+    struct rtsurf_shootray_data *pdata = &((struct rtsurf_shootray_data *)data)[id-1];
+    struct application *ap = pdata->ap;
+    struct ray *rays = pdata->rays;
+    double hitrad = pdata->hitrad;
+    int makeGeometry = pdata->makeGeometry;
+    size_t *hitpairs = pdata->hitpairs;
 
     // keep track of this iteration
-    for (size_t i = 0; i < samples; ++i) {
+    for (size_t i = pdata->start; i < pdata->end; ++i) {
 	/* can't struct copy because our ray is smaller than xray */
 	VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
 	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
 
 	if (makeGeometry) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
 	    printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
 	/* unitize before firing */
@@ -424,8 +442,47 @@ do_samples_in_parallel(struct application *ap, size_t samples, struct ray *rays,
 
 	/* Shoot the ray. */
 	size_t hitit = rt_shootray(ap);
+
+	bu_semaphore_acquire(BU_SEM_GENERAL);
 	*hitpairs += hitit;
+	bu_semaphore_release(BU_SEM_GENERAL);
     }
+}
+
+
+static void
+do_samples_in_parallel(struct application *ap, size_t samples, struct ray *rays, double radius, struct options *opts, size_t *hitpairs)
+{
+    double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
+    int makeGeometry = opts->makeGeometry;
+
+    size_t ncpus = bu_avail_cpus();
+    struct rtsurf_shootray_data *pdata = (struct rtsurf_shootray_data *)bu_calloc(ncpus, sizeof(struct rtsurf_shootray_data), "pdata");
+
+    size_t samples_per_cpu = samples / ncpus;
+
+    for (size_t i = 0; i < ncpus; ++i) {
+	/* give each one their own copy of the app */
+	struct application *a = (struct application *)bu_calloc(1, sizeof(struct application), "app");
+	*a = *ap; /* struct copy */
+	a->a_resource = &(a->a_resource[i]); // index into the array
+        pdata[i].ap = a;
+        pdata[i].rays = rays;
+        pdata[i].start = i * samples_per_cpu;
+        pdata[i].end = (i == ncpus - 1) ? samples : (i + 1) * samples_per_cpu; // handle last chunk special (i.e., to samples)
+        pdata[i].hitrad = hitrad;
+        pdata[i].makeGeometry = makeGeometry;
+        pdata[i].hitpairs = hitpairs;
+    }
+
+    // Execute in parallel
+    bu_parallel(sample_in_parallel, ncpus, (void *)pdata);
+
+    // Cleanup
+    for (size_t i = 0; i < ncpus; ++i) {
+	bu_free(pdata[i].ap, "app");
+    }
+    bu_free(pdata, "pdata");
 }
 
 
@@ -454,7 +511,6 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     // DO IT.
     size_t hitpairs = 0;
     do_samples_in_parallel(ap, samples, rays, radius, opts, &hitpairs);
-
     total_hitpairs += hitpairs;
 
     /* group them all for performance */
