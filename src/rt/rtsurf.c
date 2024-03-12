@@ -402,10 +402,36 @@ compute_surface_area(int intersections, int lines, double radius)
 }
 
 
+static void
+do_samples_in_parallel(struct application *ap, size_t samples, struct ray *rays, double radius, struct options *opts, size_t *hitpairs)
+{
+    double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
+    int makeGeometry = opts->makeGeometry;
+
+    // keep track of this iteration
+    for (size_t i = 0; i < samples; ++i) {
+	/* can't struct copy because our ray is smaller than xray */
+	VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
+	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
+
+	if (makeGeometry) {
+	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
+	    printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
+	}
+
+	/* unitize before firing */
+	VUNITIZE(ap->a_ray.r_dir);
+
+	/* Shoot the ray. */
+	size_t hitit = rt_shootray(ap);
+	*hitpairs += hitit;
+    }
+}
+
+
 static size_t
 do_one_iteration(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
 {
-    double hitrad = ((radius / 256.0) > 1.0) ? radius / 256.0 : 1.0;
     int makeGeometry = opts->makeGeometry;
 
     /* get sample points */
@@ -425,25 +451,10 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     // threadsafe or isolated.
     static size_t total_hitpairs = 0;
 
-    // keep track of this iteration
+    // DO IT.
     size_t hitpairs = 0;
-    for (size_t i = 0; i < samples; ++i) {
-	/* can't struct copy because our ray is smaller than xray */
-	VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
-	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
+    do_samples_in_parallel(ap, samples, rays, radius, opts, &hitpairs);
 
-	if (makeGeometry) {
-	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
-	    printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
-	}
-
-	/* unitize before firing */
-	VUNITIZE(ap->a_ray.r_dir);
-
-	/* Shoot the ray. */
-	size_t hitit = rt_shootray(ap);
-	hitpairs += hitit;
-    }
     total_hitpairs += hitpairs;
 
     /* group them all for performance */
