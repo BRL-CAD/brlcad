@@ -16,6 +16,7 @@ BRLCAD_INCLUDE_DIRS(PROC_DB_INCLUDE_DIRS)
 # to an end user.  if a tool is fully developed, it should migrate to
 # src/shapes or some similar location.
 BRLCAD_ADDEXEC(bottest bottest.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(brep_arbintersection "brep_arbintersection.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_invalid "brep_invalid.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
@@ -70,6 +71,7 @@ BRLCAD_ADDEXEC(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
 
 set(proc-db_ignore_files
   CMakeLists.txt
+  brep_arbintersection.h
   twistedcube.h
   metaballs.pl
   mkbuilding.h
