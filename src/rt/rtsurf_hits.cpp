@@ -27,6 +27,7 @@
 
 #include <map>
 #include <string>
+#include <sstream>
 #include <mutex>
 #include <functional>
 
@@ -120,6 +121,49 @@ rtsurf_iterate_materials(void* context, void (*callback)(int materialId, size_t 
     std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
     for (const auto& pair : ctx->materialHitCounters) {
         callback(pair.first, pair.second, ctx->lineCount, data);
+    }
+}
+
+
+static std::vector<std::string>
+split_string(const std::string& str, char delimiter)
+{
+    std::vector<std::string> components;
+    std::stringstream ss(str);
+    std::string item;
+    while (std::getline(ss, item, delimiter)) {
+        if (!item.empty()) {
+            components.push_back(item);
+        }
+    }
+    return components;
+}
+
+
+void
+rtsurf_iterate_assemblies(void* context, void (*callback)(const char *assembly, size_t hits, size_t lines, void* data), void* data)
+{
+    auto* ctx = static_cast<HitCounterContext*>(context);
+
+    // not necessary, but why not
+    std::lock_guard<std::mutex> lock(ctx->hitCounterMutex);
+
+    std::map<std::string, size_t> aggregatedCounts;
+    for (const auto& entry : ctx->regionHitCounters) {
+        std::vector<std::string> pathComponents = split_string(entry.first, '/');
+        std::string currentPath;
+
+        for (const std::string& component : pathComponents) {
+            if (!currentPath.empty())
+		currentPath += "/";
+            currentPath += component;
+            aggregatedCounts[currentPath] += entry.second;
+        }
+    }
+
+    // iterate over our aggregation
+    for (const auto& pair : aggregatedCounts) {
+	callback(pair.first.c_str(), pair.second, ctx->lineCount, data);
     }
 }
 
