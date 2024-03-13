@@ -31,6 +31,7 @@
 #include <sstream>
 #include <mutex>
 #include <functional>
+#include <vector>
 
 
 class HitCounterContext
