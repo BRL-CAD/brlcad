@@ -1,0 +1,156 @@
+ <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rtweight">
+
+  <refmeta>
+    <refentrytitle>RTWEIGHT</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+  </refmeta>
+
+ <refnamediv xml:id="name">
+    <refname>rtweight</refname>
+    <refpurpose>Calculate mass, centroid, and volume of geometry using raytracing</refpurpose>
+ </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id='synopsis'>
+    <cmdsynopsis>
+      <command>rtweight</command>
+      <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+  <para>
+    <command>rtweight</command> operates on the currently drawn. Material 
+    density information and region line of sight (LOS) thickness measurements
+    obtained via ray tracing are used to calculate the mass for each region
+    encountered. It will calculate and report volume of the objects specified.
+    With material properties, it will also report mass information
+    as well as the overall geometric centroid.  All calculations take
+    any Boolean operations into consideration.
+  </para>
+
+  <para>
+    <command>rtweight</command> can either use density information
+    stored directly in a .g database or read a density file specified by
+    the <option>-d</option> option.
+  </para>
+
+  <para>
+    If using a density file the file must contain lines with the
+    material number, density in g/cc, and material name, each separated
+    by some white space.  See the
+    <citerefentry><refentrytitle>mater</refentrytitle></citerefentry>
+    manual page for more information about defining and managing density
+    information.
+  </para>
+
+  <para>The following options are recognized.</para>
+  <variablelist remap='TP'>
+    <varlistentry>
+      <term><option>-s#</option></term>
+      <listitem>
+        <para>Number of rays to fire in X and Y directions (square grid).
+        Default is 512 (512x512).  Conflicts with
+        <option>-g</option></para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-g#</option></term>
+      <listitem>
+        <para>Distance between rays in the X and Y directions in
+        millimeters.  Conflicts with <option>-s</option></para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-d file</option></term>
+      <listitem>
+        <para>Read density information from the specified file.</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-r</option></term>
+      <listitem>
+        <para>Report individual region weights by region path name and
+        also by region id number.  The default only prints the total
+        weight for all the objects specified.</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-o file</option></term>
+      <listitem>
+        <para>Send the output to a specified file.  The default is to
+        standard output.</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-P#</option></term>
+      <listitem>
+        <para>Specify the maximum number of processor cores to be used
+        on multicore systems.  The default is the maximum number of
+        cores available for the machine.  Negative numbers indicate
+        using all except for the count specified.</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+ </refsection>
+
+ <refsection xml:id="examples"><title>EXAMPLES</title>
+
+  <example><title>Use <emphasis>rtweight</emphasis> to calculate to total volume and weight of the currently drawn
+  group using a specified number of rays</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>rtweight -s1024</userinput>
+    </para>
+    <para>Runs <emphasis>rtweight</emphasis> using 1024x1024 rays.
+    </para>
+  </example>
+
+  <example><title>Use <emphasis>rtweight</emphasis> to calculate to total volume and weight of the currently drawn group using a specified gridsize</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>rtweight -g10</userinput>
+    </para>
+    <para>Runs <emphasis>rtweight</emphasis> at a gridsize of 10 current units.
+    </para>
+  </example>
+
+  <example><title>Use <emphasis>rtweight</emphasis> to calculate to total volume and weight of the currently drawn group and specify a density file</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>rtweight -d density.txt</userinput>
+    </para>
+    <para>Runs <emphasis>rtweight</emphasis> and uses the density.txt file located in the current directory.
+    </para>
+  </example>
+
+  <example><title>Use <emphasis>rtweight</emphasis> to calculate to total volume and weight of the currently drawn group and specify an output file</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>rtweight -o weightfile.txt</userinput>
+    </para>
+    <para>Runs <emphasis>rtweight</emphasis> and outputs the results to weightfile.txt
+    </para>
+  </example>
+
+ </refsection>
+ 
+   <refsection xml:id="copyright"><title>COPYRIGHT</title>
+    <para>
+      This software is Copyright (c) 1987-2024 United States Government as represented by the
+      U.S. Army Research Laboratory.
+    </para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;bugs@brlcad.org&gt;.
+    </para>
+  </refsection>
+
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
+</refentry>
