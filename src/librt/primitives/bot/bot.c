@@ -450,32 +450,89 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 int
 rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    struct rt_bot_internal *bot_ip;
-    size_t rt_bot_mintie;
-    int ret;
-
     RT_CK_DB_INTERNAL(ip);
-    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
+    struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    rt_bot_mintie = RT_DEFAULT_MINTIE;
+    if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
+
+    // How much of this do we actually need to do?
+    struct bot_specific *bot;
+    BU_GET(bot, struct bot_specific);
+    stp->st_specific = (void *)bot;
+    bot->bot_mode = bot_ip->mode;
+    bot->bot_orientation = bot_ip->orientation;
+    bot->bot_flags = bot_ip->bot_flags;
+	
+    // set up thickness if requested
+    if (bot_ip->thickness) {
+	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
+	for (size_t tri_index = 0; tri_index < bot_ip->num_faces; tri_index++)
+	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
+    } else {
+	bot->bot_thickness = NULL;
+    }
+
+    // set up face_mode and facelist
+    if (bot_ip->face_mode) {
+	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
+    } else {
+	bot->bot_facemode = BU_BITV_NULL;
+    }
+    bot->bot_facelist = NULL;
+
+    // look for a requested bundle size
+    size_t rt_bot_mintie = RT_DEFAULT_MINTIE;
     const char *bmintie = getenv("LIBRT_BOT_MINTIE");
     if (bmintie)
 	rt_bot_mintie = atoi(bmintie);
 
-    if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
+    // set up centroids and bounds for hlbvh call
+    fastf_t *centroids = (fastf_t*)bu_calloc(bot_ip->num_faces, sizeof(fastf_t)*3, "bot centroids");
+    fastf_t *bounds    = (fastf_t*)bu_calloc(bot_ip->num_faces, sizeof(fastf_t)*6, "bot bounds");
+    
+    for (size_t i = 0; i < bot_ip->num_faces; i++) {
+	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[i*3+0]);
+	fastf_t* v1 = (bot_ip->vertices+3*bot_ip->faces[i*3+1]);
+	fastf_t* v2 = (bot_ip->vertices+3*bot_ip->faces[i*3+2]);
+	
+        VADD3(&centroids[i*3], v0, v1, v2);
+        VSCALE(&centroids[i*3], &centroids[i*3], 1.0/3.0);
 
-    if (rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie /* FIXME: (necessary?) && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) */)
-	ret = bottie_prep_double(stp, bot_ip, rtip);
-    else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS)
-	ret = bot_prep_float(stp, bot_ip, rtip);
-    else
-	ret = bot_prep_double(stp, bot_ip, rtip);
+	VMOVE(&bounds[i*6+0], v0);
+        VMOVE(&bounds[i*6+3], v0);
+        VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v1);
+        VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v2);
+
+        /* Prevent the RPP from being 0 thickness */
+        if (NEAR_EQUAL(bounds[i*6+X], bounds[i*6+3+X], SMALL_FASTF)) {
+            bounds[i*6+X] -= SMALL_FASTF;
+            bounds[i*6+3+X] += SMALL_FASTF;
+        }
+        if (NEAR_EQUAL(bounds[i*6+Y], bounds[i*6+3+Y], SMALL_FASTF)) {
+            bounds[i*6+Y] -= SMALL_FASTF;
+            bounds[i*6+3+Y] += SMALL_FASTF;
+        }
+        if (NEAR_EQUAL(bounds[i*6+Z], bounds[i*6+3+Z], SMALL_FASTF)) {
+            bounds[i*6+Z] -= SMALL_FASTF;
+            bounds[i*6+3+Z] += SMALL_FASTF;
+        }
+    }
+    struct bu_pool *pool = hlbvh_init_pool(bot_ip->num_faces);
+    // implicit return values
+    long nodes_created = 0;
+    long *ordered_faces = NULL;
+    struct bvh_build_node *root = hlbvh_create(4, pool, centroids, bounds, &nodes_created,
+					       bot_ip->num_faces, &ordered_faces);
+    bu_log("Built hlbvh at root %p with %d triangles.\n", root, bot_ip->num_faces);
+    // do we want to flatten the nodes as in cut_hlbvh.c:flatten_bvh_tree?
+    // copy triangles into order specfied by ordered_faces
+
 
 #ifdef USE_OPENCL
     clt_bot_prep(stp, bot_ip, rtip);
 #endif
-    return ret;
+    return 0;
 }
 
 
@@ -559,6 +616,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 {
     struct bot_specific *bot;
 
+    return 0;
     if (UNLIKELY(!stp || !ap || !seghead))
 	return 0;
 

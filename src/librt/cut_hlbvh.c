@@ -43,6 +43,7 @@
 #include "bio.h"
 
 #include "bu/parallel.h"
+#include "bu/malloc.h"
 #include "bu/sort.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -96,6 +97,19 @@ init_interior(struct bvh_build_node *node, uint8_t axis, struct bvh_build_node *
     node->n_primitives = 0;
 }
 
+struct bu_pool* 
+hlbvh_init_pool(size_t n_primatives) {
+    /*
+     * This pool must have enough size to fit the whole tree or the
+     * algorithm will fail. It stores pointers to itself and a
+     * realloc would make the pointers invalid.
+     *
+     * total_nodes = treelets_size + upper_sah_size,  where:
+     *  treelets_size < 2*n_primitives
+     *  upper_sah_size < 2*2^popcnt(0x3ffc0000)   i.e. 2*4096
+     */
+    return bu_pool_create(sizeof(struct bvh_build_node)*(2*n_primatives+2*4096));
+}
 
 /* utility functions */
 static inline uint32_t left_shift3(uint32_t x)
@@ -612,16 +626,7 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
 	long nodes_created = 0;
         struct bvh_build_node *root;
 
-        /*
-         * This pool must have enough size to fit the whole tree or the
-         * algorithm will fail. It stores pointers to itself and a
-         * realloc would make the pointers invalid.
-         *
-         * total_nodes = treelets_size + upper_sah_size,  where:
-         *  treelets_size < 2*n_primitives
-         *  upper_sah_size < 2*2^popcnt(0x3ffc0000)   i.e. 2*4096
-         */
-	pool = bu_pool_create(sizeof(struct bvh_build_node)*(2*n_primitives+2*4096));
+	pool = hlbvh_init_pool(n_primatives);
         root = hlbvh_create(4, pool, centroids_prims, bounds_prims, &nodes_created,
 			    n_primitives, ordered_prims);
 
