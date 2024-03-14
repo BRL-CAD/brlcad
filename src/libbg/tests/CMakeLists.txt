@@ -346,6 +346,12 @@ BRLCAD_ADDEXEC(bg_sat sat.c "libbg;libbn;libbu" TEST)
 
 BRLCAD_ADD_TEST(NAME bg_sat_basic   COMMAND bg_sat)
 
+#  ************ trimesh_fuse.cpp tests ***********
+
+BRLCAD_ADDEXEC(bg_trimesh_fuse trimesh_fuse.cpp "libbg;libbn;libbu" TEST)
+
+BRLCAD_ADD_TEST(NAME bg_trimesh_fuse  COMMAND bg_trimesh_fuse)
+
 
 #  ************ trimesh_sync.cpp tests ***********
 

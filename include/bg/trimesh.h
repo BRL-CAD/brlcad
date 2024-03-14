@@ -309,6 +309,31 @@ bg_trimesh_split(int ***ofs, int **ofc, int *f, int fcnt);
 
 /**
  * @brief
+ * Given a threshold size, bin vertices into buckets and merge vertices
+ * in the same bucket to a single vertex.  Remove faces that are made
+ * degenerate by the merging.
+ *
+ * Vertices that are unique in their bin are unaltered.  Bins with multiple
+ * vertices are replaced by a new vertex that is the average coordinates of
+ * the coordinates within the bin.
+ *
+ * @param[out] ofs   array of output faces.
+ * @param[out] ofc   array output face count.
+ * @param[out] ov    array of output vertices.
+ * @param[out] ofc   array output vertex count.
+ * @param[in]  f     input set of faces.
+ * @param[in]  fcnt  input face count
+ * @param[in]  v     input set of vertices.
+ * @param[in]  vcnt  input vertex count
+ * @param[in]  bsize bin size
+ *
+ * @return -1 if error, otherwise return the number of face sets created
+ */
+BG_EXPORT extern int
+bg_trimesh_fuse(int **ofs, int *ofcnt, fastf_t **ov, int *ovcnt, int *f, int fcnt, fastf_t *v, int vcnt, fastf_t bsize);
+
+/**
+ * @brief
  * Return a set of face sets where all topologically connected faces are
  * grouped into common sets.
  *

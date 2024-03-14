@@ -77,6 +77,7 @@ set(LIBBG_SOURCES
   tri_ray.c
   tri_tri.c
   trimesh.cpp
+  trimesh_fuse.cpp
   trimesh_isect.cpp
   trimesh_plot3.cpp
   trimesh_sync.cpp
