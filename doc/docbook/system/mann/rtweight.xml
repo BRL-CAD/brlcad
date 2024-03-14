@@ -23,27 +23,22 @@
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
   <para>
-    <command>rtweight</command> operates on the currently drawn. Material 
-    density information and region line of sight (LOS) thickness measurements
-    obtained via ray tracing are used to calculate the mass for each region
-    encountered. It will calculate and report volume of the objects specified.
-    With material properties, it will also report mass information
-    as well as the overall geometric centroid.  All calculations take
-    any Boolean operations into consideration.
+    The <command>rtweight</command> command calculates the volume, weight (if
+   density information is present), and centroid of the currently drawn object(s). These 
+   values are calculated by shooting rays at the current azimuth and elevation.
+   By default, <command>rtweight</command> will shoot a 512x512 grid at the
+   screen. The -s flag can be used to specify a different grid and the -g 
+   flag can be used to specify a gridsize in millimeters.
   </para>
 
   <para>
-    <command>rtweight</command> can either use density information
-    stored directly in a .g database or read a density file specified by
-    the <option>-d</option> option.
-  </para>
-
-  <para>
-    If using a density file the file must contain lines with the
+    The <command>rtweight</command> command can use density information
+    stored directly in a .g database, read a .density file in the home directory,
+    or read a density file specified by the <option>-d</option> flag. If using
+    an external density file the file must contain lines with the
     material number, density in g/cc, and material name, each separated
-    by some white space.  See the
-    <citerefentry><refentrytitle>mater</refentrytitle></citerefentry>
-    manual page for more information about defining and managing density
+    by some white space.  See the <command>gqa</command> and <command>mater</command>
+    manual pages for more information about defining and managing density
     information.
   </para>
 
@@ -75,14 +70,14 @@
       <listitem>
         <para>Report individual region weights by region path name and
         also by region id number.  The default only prints the total
-        weight for all the objects specified.</para>
+        weight for all the objects onscreen.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
       <term><option>-o file</option></term>
       <listitem>
-        <para>Send the output to a specified file.  The default is to
-        standard output.</para>
+        <para>Send the output to a specified file.
+         </para>
       </listitem>
     </varlistentry>
     <varlistentry>
@@ -99,7 +94,7 @@
 
  <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example><title>Use <emphasis>rtweight</emphasis> to calculate to total volume and weight of the currently drawn
+  <example><title>Use <emphasis>rtweight</emphasis> to calculate the total volume and weight of the currently drawn
   group using a specified number of rays</title>
 
     <para>
@@ -109,16 +104,18 @@
     </para>
   </example>
 
-  <example><title>Use <emphasis>rtweight</emphasis> to calculate to total volume and weight of the currently drawn group using a specified gridsize</title>
+  <example><title>Use <emphasis>rtweight</emphasis> to calculate the total volume and weight of the currently
+   drawn group using a specified gridsize</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>rtweight -g10</userinput>
     </para>
-    <para>Runs <emphasis>rtweight</emphasis> at a gridsize of 10 current units.
+    <para>Runs <emphasis>rtweight</emphasis> at a gridsize of 10 millimeters (regardless of model units).
     </para>
   </example>
 
-  <example><title>Use <emphasis>rtweight</emphasis> to calculate to total volume and weight of the currently drawn group and specify a density file</title>
+  <example><title>Use <emphasis>rtweight</emphasis> to calculate the total volume and weight of the currently
+   drawn group and specify a density file</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>rtweight -d density.txt</userinput>
@@ -127,7 +124,8 @@
     </para>
   </example>
 
-  <example><title>Use <emphasis>rtweight</emphasis> to calculate to total volume and weight of the currently drawn group and specify an output file</title>
+  <example><title>Use <emphasis>rtweight</emphasis> to calculate the total volume and weight of the currently
+   drawn group and specify an output file</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>rtweight -o weightfile.txt</userinput>
