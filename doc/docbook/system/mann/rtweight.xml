@@ -23,8 +23,9 @@
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
   <para>
-    The <command>rtweight</command> command calculates the volume, weight (if
-   density information is present), and centroid of the currently drawn object(s). These 
+   The <command>rtweight</command> command calculates the volume, weight,
+   and centroid of the currently drawn object(s). Output will
+   include values per region as well as an overall calculation. These 
    values are calculated by shooting rays at the current azimuth and elevation.
    By default, <command>rtweight</command> will shoot a 512x512 grid at the
    screen. The -s flag can be used to specify a different grid and the -g 
@@ -32,11 +33,12 @@
   </para>
 
   <para>
-    The <command>rtweight</command> command can use density information
-    stored directly in a .g database, read a .density file in the home directory,
-    or read a density file specified by the <option>-d</option> flag. If using
-    an external density file the file must contain lines with the
-    material number, density in g/cc, and material name, each separated
+    The <command>rtweight</command> command requires density information to run. It
+    can use density information stored directly in a .g database, read a .density file
+    in the home directory, or read a density file specified by the <option>-d</option> flag.
+    A specified file with the -d command takes precedence, then embedded density information, and
+    finally the .density file is used. If using an external density file the file must
+    contain lines with the material number, density in g/cc, and material name, each separated
     by some white space.  See the <command>gqa</command> and <command>mater</command>
     manual pages for more information about defining and managing density
     information.
@@ -65,12 +67,16 @@
         <para>Read density information from the specified file.</para>
       </listitem>
     </varlistentry>
+       <varlistentry>
+      <term><option>-R</option></term>
+      <listitem>
+        <para>Disable overlap reporting.</para>
+      </listitem>
+    </varlistentry>
     <varlistentry>
       <term><option>-r</option></term>
       <listitem>
-        <para>Report individual region weights by region path name and
-        also by region id number.  The default only prints the total
-        weight for all the objects onscreen.</para>
+        <para>Enable overlap reporting (on by default).</para>
       </listitem>
     </varlistentry>
     <varlistentry>
@@ -84,8 +90,8 @@
       <term><option>-P#</option></term>
       <listitem>
         <para>Specify the maximum number of processor cores to be used
-        on multicore systems.  The default is the maximum number of
-        cores available for the machine.  Negative numbers indicate
+        on multicore systems. The default is the maximum number of
+        cores available for the machine. Negative numbers indicate
         using all except for the count specified.</para>
       </listitem>
     </varlistentry>
