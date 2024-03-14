@@ -433,6 +433,22 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 }
 
+// TODO: convert to point_t
+typedef struct _triangle_s {
+    fastf_t v0[3];
+    fastf_t v1[3];
+    fastf_t v2[3];
+    fastf_t n0[3];
+    fastf_t n1[3];
+    fastf_t n2[3];
+    size_t face_id;
+} triangle_s;
+
+typedef struct _tie_s {
+    struct bu_pool *pool;
+    struct bvh_build_node *root;
+    triangle_s *tris;
+};
 
 /**
  * Given a pointer to a GED database record, and a transformation
@@ -463,6 +479,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
+    bot->bot_ntri = bot_ip->num_faces;
 	
     // set up thickness if requested
     if (bot_ip->thickness) {
@@ -524,10 +541,31 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     long *ordered_faces = NULL;
     struct bvh_build_node *root = hlbvh_create(4, pool, centroids, bounds, &nodes_created,
 					       bot_ip->num_faces, &ordered_faces);
-    bu_log("Built hlbvh at root %p with %d triangles.\n", root, bot_ip->num_faces);
+    bu_log("Built hlbvh at root %p with %d nodes of %d triangles.\n", root, nodes_created, bot_ip->num_faces);
     // do we want to flatten the nodes as in cut_hlbvh.c:flatten_bvh_tree?
+    bu_free(centroids, "bot centroids");
+    bu_free(bounds, "bot bounds");
+	
+    triangle_s *tris = (triangle_s *)bu_calloc(bot_ip->num_faces, sizeof(triangle_s), "ordered triangles");
     // copy triangles into order specfied by ordered_faces
+    for (size_t i = 0; i < bot_ip->num_faces; i++) {
+	VMOVE(tris[i].v0, (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+0]));
+	VMOVE(tris[i].v1, (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+1]));
+	VMOVE(tris[i].v2, (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+2]));
+	if (bot_ip->num_normals == bot_ip->num_vertices) {
+	    // TODO: add normals
+	}
+	tris[i].face_id = ordered_faces[i];
+    }
 
+    bu_free(ordered_faces, "ordered faces");
+	
+    struct _tie_s *tie;
+    BU_GET(tie, struct _tie_s);
+    tie->pool = pool;
+    tie->root = root;
+    tie->tris = tris;
+    bot->tie = (void*) tie;
 
 #ifdef USE_OPENCL
     clt_bot_prep(stp, bot_ip, rtip);
