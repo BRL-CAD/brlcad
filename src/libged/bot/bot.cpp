@@ -375,115 +375,6 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
-_bot_cmd_fuse(void *bs, int argc, const char **argv)
-{
-    struct rt_db_internal intern;
-    struct directory *dp = RT_DIR_NULL;
-    struct directory *odp = RT_DIR_NULL;
-    struct rt_bot_internal *nbot = NULL;
-    int ret = BRLCAD_OK;
-    const char *usage_string = "bot fuse <objname> [tol]";
-    const char *purpose_string = "Fuse vertices of the BoT that are close together";
-    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
-    }
-
-    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
-
-    argc--; argv++;
-
-    if (argc != 1 && argc != 2) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
-	return BRLCAD_ERROR;
-    }
-
-    fastf_t ftol = BN_TOL_DIST;
-    if (argc == 2) {
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&ftol) != 1) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	    return BRLCAD_ERROR;
-	}
-    }
-
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
-
-    int ovcnt = bot->num_vertices;
-    int *nf = NULL;
-    int nfcnt = 0;
-    fastf_t *nv = NULL;
-    int nvcnt = 0;
-
-    if (bg_trimesh_fuse(&nf, &nfcnt, &nv, &nvcnt, bot->faces, bot->num_faces, bot->vertices, bot->num_vertices, ftol)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "BoT fuse unsuccessful");
-	ret = BRLCAD_ERROR;
-	goto bot_fuse_done;
-    }
-
-    // Overwrite the old BoT
-    odp = db_lookup(gb->gedp->dbip, argv[0], LOOKUP_QUIET);
-    if (odp) {
-	db_delete(gb->gedp->dbip, odp);
-	db_dirdelete(gb->gedp->dbip, odp);
-    }
-    BU_ALLOC(nbot, struct rt_bot_internal);
-    nbot->magic = RT_BOT_INTERNAL_MAGIC;
-    nbot->mode = bot->mode;
-    nbot->orientation = bot->orientation;
-    if (bot->thickness) {
-	// TODO - do something intelligent here...
-	nbot->thickness = (fastf_t *)bu_calloc(nfcnt, sizeof(fastf_t), "dummy thicknesses array");
-    } else {
-	nbot->thickness = NULL;
-    }
-    if (bot->face_mode) {
-	// TODO - do something intelligent here...
-	nbot->face_mode = bu_bitv_new(nfcnt);
-    } else {
-	nbot->face_mode = NULL;
-    }
-    nbot->num_faces = nfcnt;
-    nbot->num_vertices = nvcnt;
-    nbot->faces = nf;
-    nbot->vertices = nv;
-
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_BOT;
-    intern.idb_meth = &OBJ[ID_BOT];
-    intern.idb_ptr = (void *)nbot;
-
-    dp = db_diradd(gb->gedp->dbip, argv[0], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-    if (dp == RT_DIR_NULL) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Cannot add %s to directory\n", argv[0]);
-	ret = BRLCAD_ERROR;
-	goto bot_fuse_done;
-    }
-    if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", argv[0]);
-	rt_db_free_internal(&intern);
-	ret = BRLCAD_ERROR;
-	goto bot_fuse_done;
-    }
-    bu_vls_printf(gb->gedp->ged_result_str, "Vert count: %d -> %d", ovcnt, nvcnt);
-    return BRLCAD_OK;
-
-bot_fuse_done:
-    if (nbot)
-	bu_free(nbot, "nbot");
-    if (nf)
-	bu_free(nf, "free facescontainer");
-    if (nv)
-	bu_free(nf, "free facescontainer");
-
-    bu_vls_printf(gb->gedp->ged_result_str, "BoT fuse failure: %s", argv[0]);
-    return ret;
-}
-
-extern "C" int
 _bot_cmd_isect(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "bot [options] isect <objname> <objname2>";
@@ -847,7 +738,6 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "decimate",   _bot_cmd_decimate},
     { "extrude",    _bot_cmd_extrude},
     { "flip",       _bot_cmd_flip},
-    { "fuse",       _bot_cmd_fuse},
     { "get",        _bot_cmd_get},
     { "isect",      _bot_cmd_isect},
     { "remesh",     _bot_cmd_remesh},
