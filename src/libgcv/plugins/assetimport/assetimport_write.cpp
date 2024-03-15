@@ -229,16 +229,16 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     curr_mesh->mColors[0] = static_cast<aiColor4D *>(bu_calloc(numverts, sizeof(aiColor4D), "color array"));
     /* default color is white */
     for (size_t ci = 0; ci < numverts; ci++) {
-	curr_mesh->mColors[ci]->r = 1;
-	curr_mesh->mColors[ci]->g = 1;
-	curr_mesh->mColors[ci]->b = 1;
-	curr_mesh->mColors[ci]->a = 1;
+	curr_mesh->mColors[0][ci].r = 1;
+	curr_mesh->mColors[0][ci].g = 1;
+	curr_mesh->mColors[0][ci].b = 1;
+	curr_mesh->mColors[0][ci].a = 1;
     }
     if (tsp->ts_mater.ma_color_valid) {
 	for (size_t ci = 0; ci < numverts; ci++) {
-	    curr_mesh->mColors[ci]->r = tsp->ts_mater.ma_color[0];
-	    curr_mesh->mColors[ci]->g = tsp->ts_mater.ma_color[1];
-	    curr_mesh->mColors[ci]->b = tsp->ts_mater.ma_color[2];
+	    curr_mesh->mColors[0][ci].r = tsp->ts_mater.ma_color[0];
+	    curr_mesh->mColors[0][ci].g = tsp->ts_mater.ma_color[1];
+	    curr_mesh->mColors[0][ci].b = tsp->ts_mater.ma_color[2];
 	}
     }
 
