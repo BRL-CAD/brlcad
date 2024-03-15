@@ -465,6 +465,83 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 #undef n_buckets
 }
 
+struct tri_list {
+    struct bu_list l;
+    long first_prim_offset, n_primitives;
+};
+
+void 
+recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struct tri_list* leafs, size_t* tris_so_far)
+{
+    { // check bounds
+	// TODO: do we want to handle NaNs correctly?
+	point_t lows_t, highs_t, low_ts, high_ts;
+
+	VSUB2( lows_t, &node->bounds[0], rp->r_pt);
+	VSUB2(highs_t, &node->bounds[3], rp->r_pt);
+	// TODO: precompute inverse of r_dir for speed?
+	VELDIV( lows_t,  lows_t, rp->r_dir);
+	VELDIV(highs_t, highs_t, rp->r_dir);
+	
+	VMOVE( low_ts, lows_t);
+	VMOVE(high_ts, lows_t);
+	VMINMAX(low_ts, high_ts, highs_t);
+	
+	fastf_t high_t = high_ts[0];
+	V_MIN(high_t, high_ts[1]);
+	V_MIN(high_t, high_ts[2]);
+	fastf_t low_t = low_ts[0];
+	V_MAX(low_t, low_ts[1]);
+	V_MAX(low_t, low_ts[2]);
+	if (ZERO(high_t) | (low_t >= high_t)) return;
+    }
+
+    if (node->n_primitives > 0) {
+	BU_ASSERT(!node->children[0] && !node->children[1]);
+	struct tri_list* entry;
+	BU_GET(entry, struct tri_list);
+	entry->n_primitives = node->n_primitives;
+	entry->first_prim_offset = node->first_prim_offset;
+	BU_LIST_PUSH(&(leafs->l), &(entry->l));
+	*tris_so_far += node->n_primitives;
+    } else {
+	// TODO: unroll recursion into while loop
+	recursive_populate_leaf_list(node->children[0], rp, leafs, tris_so_far);
+	recursive_populate_leaf_list(node->children[1], rp, leafs, tris_so_far);
+    }
+}
+
+void
+hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_tris, size_t* num_check_tris)
+{
+    size_t tri_accum = 0;
+    struct tri_list *leafs = NULL;
+    BU_GET(leafs, struct tri_list);
+    BU_LIST_INIT(&(leafs->l));
+    leafs->first_prim_offset = -1;
+    leafs->n_primitives = -1;
+    recursive_populate_leaf_list(root, rp, leafs, &tri_accum);
+    *num_check_tris = tri_accum;
+    if (tri_accum == 0) {
+	BU_PUT(leafs, struct tri_list);
+	return;
+    }
+    *check_tris = (long*)bu_calloc(tri_accum, sizeof(long), "hlbvh primative list");
+    size_t index = 0;
+    struct tri_list *entry;
+    while (BU_LIST_WHILE(entry, tri_list, &(leafs->l))) {
+	for (int i = 0; i < entry->n_primitives; i++) {
+	    (*check_tris)[index] = entry->first_prim_offset + i;
+	    index++;
+	}
+	
+	BU_LIST_DEQUEUE(&(entry->l));
+	BU_PUT(entry, struct tri_list);
+    }
+    BU_PUT(leafs, struct tri_list);
+    BU_ASSERT(index == tri_accum);
+}
+
 
 struct bvh_build_node *
 hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,

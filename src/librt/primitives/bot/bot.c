@@ -444,7 +444,7 @@ typedef struct _triangle_s {
     size_t face_id;
 } triangle_s;
 
-typedef struct _tie_s {
+struct _tie_s {
     struct bu_pool *pool;
     struct bvh_build_node *root;
     triangle_s *tris;
@@ -504,6 +504,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (bmintie)
 	rt_bot_mintie = atoi(bmintie);
 
+    (void)rt_bot_mintie;
     // set up centroids and bounds for hlbvh call
     fastf_t *centroids = (fastf_t*)bu_calloc(bot_ip->num_faces, sizeof(fastf_t)*3, "bot centroids");
     fastf_t *bounds    = (fastf_t*)bu_calloc(bot_ip->num_faces, sizeof(fastf_t)*6, "bot bounds");
@@ -541,7 +542,6 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     long *ordered_faces = NULL;
     struct bvh_build_node *root = hlbvh_create(4, pool, centroids, bounds, &nodes_created,
 					       bot_ip->num_faces, &ordered_faces);
-    bu_log("Built hlbvh at root %p with %d nodes of %d triangles.\n", root, nodes_created, bot_ip->num_faces);
     // do we want to flatten the nodes as in cut_hlbvh.c:flatten_bvh_tree?
     bu_free(centroids, "bot centroids");
     bu_free(bounds, "bot bounds");
@@ -652,23 +652,77 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
 int
 rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    struct bot_specific *bot;
-
-    return 0;
     if (UNLIKELY(!stp || !ap || !seghead))
 	return 0;
 
-    bot = (struct bot_specific *)stp->st_specific;
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     if (UNLIKELY(!bot))
 	return 0;
 
-    if (bot->tie != NULL) {
-	return bottie_shot_double(stp, rp, ap, seghead);
-    } else if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return bot_shot_float(stp, rp, ap, seghead);
-    } else {
-	return bot_shot_double(stp, rp, ap, seghead);
+    struct _tie_s *tie = (struct _tie_s *)bot->tie;
+    if (UNLIKELY(!tie))
+	return 0;
+
+    long* check_tris = NULL;
+    size_t num_check_tris = 0;
+
+    hlbvh_shot(tie->root, rp, &check_tris, &num_check_tris);
+
+    if (num_check_tris == 0) {
+	BU_ASSERT(check_tris == NULL);
+	return 0;
     }
+    struct hit *hits = (struct hit*) bu_calloc(num_check_tris, sizeof(struct hit), "bot hitdata");
+    // TODO: Cleanup. We only really use the tri_specific 
+    // structure to communicate the normal to rt_bot_makesegs.
+    struct tri_specific *tri_hitdata = (struct tri_specific*) bu_calloc(num_check_tris, sizeof(struct tri_specific), "bot triangle hitdata");
+    size_t nhits = 0;
+    for (size_t i = 0; i < num_check_tris; i++) {
+	// We currently only use triangle_s for this
+	// do we want to do a bunch of pre-computation
+	// in the setup to make this faster?
+	triangle_s* tri = &tie->tris[check_tris[i]];
+	point_t E1, E2, S, S1, S2, norm;
+	VSUB2(E1, tri->v1, tri->v0);
+	VSUB2(E2, tri->v2, tri->v0);
+	VSUB2( S, rp->r_pt, tri->v0);
+	VCROSS(S1,rp->r_dir, E2);
+	fastf_t denom = VDOT(S1, E1);
+	fastf_t beta = VDOT(S1, S) / denom;
+	VCROSS(S2, S, E1);
+	fastf_t gamma = VDOT(S2, rp->r_dir) / denom;
+	// early out beta and gamma
+	if ((beta < 0.0f) | (gamma < 0.0f) | (gamma + beta > 1.0f)) { continue; }
+	// we calculate beta and gamma first, because 
+	// beta is associated with v1 and gamma is 
+	// associated with v2
+	fastf_t alpha = 1 - beta - gamma;
+	fastf_t dist = VDOT(S2, E2) / denom;
+	VCROSS(norm, E1, E2);
+	(void)alpha;
+	// fill out hitdata
+	struct hit* cur_hit = &hits[nhits];
+	struct tri_specific* cur_tri = &tri_hitdata[nhits];
+	nhits++;
+	cur_hit->hit_magic = RT_HIT_MAGIC;
+	cur_hit->hit_dist = dist;
+	// we copy what btg.c does right now
+	// even if we don't really understand why
+	cur_hit->hit_vpriv[X] = VDOT(norm, rp->r_dir);
+	cur_hit->hit_vpriv[Y] = 0.0;
+	cur_hit->hit_vpriv[Z] = 0.0;
+	cur_hit->hit_private = cur_tri;
+	cur_hit->hit_surfno = tri->face_id;
+	cur_hit->hit_rayp = rp;
+	VMOVE(cur_tri->tri_N, norm);
+    }
+    bu_free(check_tris, "hlbvh primative list");
+
+    int retval = rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
+
+    bu_free(hits, "bot hitdata");
+    bu_free(tri_hitdata, "bot triangle hitdata");
+    return retval;
 }
 
 

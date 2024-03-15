@@ -111,6 +111,8 @@ hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centro
 	     const fastf_t *bounds_prims, long *total_nodes,
 	     const long n_primitives, long **ordered_prims);
 
+RT_EXPORT void
+hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_tris, size_t* num_check_tris);
 
 /**
  * Add a solid into a given boxnode, extending the lists there.  This
