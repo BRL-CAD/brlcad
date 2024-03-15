@@ -116,7 +116,7 @@ BU_EXPORT extern size_t bu_avail_cpus(void);
  *
  * Locking and work dispatching are handled by 'func' using a
  * "self-dispatching" paradigm.  This means you must manually protect
- * shared data structures, e.g., via BU_SEMAPHORE_ACQUIRE().
+ * shared data structures, e.g., via bu_semaphore_acquire().
  * Lock-free execution is often possible by creating data containers
  * with MAX_PSW elements as bu_parallel will never execute more than
  * that many threads of execution.

@@ -767,7 +767,7 @@ do_prep(struct rt_i *rtip)
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%s: %d cut, %d box (%zu empty)\n",
+	bu_log("%s: %zu cut, %zu box (%zu empty)\n",
 	       rtip->rti_space_partition == RT_PART_NUBSPT ?
 	       "NUBSP" : "unknown",
 	       rtip->rti_ncut_by_type[CUT_CUTNODE],

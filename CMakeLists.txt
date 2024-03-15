@@ -185,12 +185,11 @@ if (DEFINED BRLCAD_EXT_DIR)
   endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
 endif (DEFINED BRLCAD_EXT_DIR)
 
-# If we're doing the non-src-other build, we've got to have brlcad_externals
-# for at least a few custom components no matter how many system packages got
-# installed.
+# If we're doing the non-src-other build, we've got to have bext for at least a
+# few custom components no matter how many system packages got installed.
 if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
   if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-    message(WARNING "BRL-CAD requires a source for external components, but no BRLCAD_EXT_DIR is set.  To use a pre-compiled set of components, set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals).\nBecause no BRLCAD_EXT_DIR was successfully configured, BRL-CAD will attempt to download, configure and build its own bext copy locally during the configure process.")
+    message(WARNING "BRL-CAD requires a source for external components, but no BRLCAD_EXT_DIR is set.  To use a pre-compiled set of components, set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/bext).\nBecause no BRLCAD_EXT_DIR was successfully configured, BRL-CAD will attempt to download, configure and build its own bext copy locally during the configure process.")
   endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 
   # Tell CPack to bundle bext into the source tarball
@@ -723,21 +722,8 @@ endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AU
 if(BRLCAD_DEBUGGING)
   CHECK_C_FLAG(g GROUPS DEBUG_C_FLAGS)
   CHECK_CXX_FLAG(g GROUPS DEBUG_CXX_FLAGS)
-  if(APPLE)
-    EXEC_PROGRAM(sw_vers ARGS -productVersion OUTPUT_VARIABLE MACOSX_VERSION)
-    if(${MACOSX_VERSION} VERSION_LESS "10.5")
-      CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
-      CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
-    else(${MACOSX_VERSION} VERSION_LESS "10.5")
-      # CHECK_C_COMPILER_FLAG silently eats gstabs+ - also, compiler
-      # apparently doesn't like mixing stabs with another debug flag.
-      set(DEBUG_C_FLAGS "-ggdb")
-      set(DEBUG_CXX_FLAGS "-ggdb")
-    endif(${MACOSX_VERSION} VERSION_LESS "10.5")
-  else(APPLE)
-    CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
-    CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
-  endif(APPLE)
+  CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
+  CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
   if(CMAKE_CONFIGURATION_TYPES)
     set(debug_config_list "${CMAKE_CONFIGURATION_TYPES}")
   else(CMAKE_CONFIGURATION_TYPES)

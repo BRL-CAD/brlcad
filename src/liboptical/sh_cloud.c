@@ -67,7 +67,7 @@ struct mfuncs cloud_mfuncs[] = {
 double
 cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t initFx, fastf_t initFy)
 {
-    register int i;
+    register size_t i;
     fastf_t Px, Py, Fx, Fy, C;
     fastf_t t1, t2, k;
 
@@ -84,7 +84,7 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
      *                    .499     .4999999998...
      *                    .352     .3535533904...
      */
-    static const fastf_t seven0seven = (int)(M_SQRT1_2*1000.0)/1000.0;
+    static const fastf_t seven0seven = ((int)(M_SQRT1_2*1000.0))/1000.0;
 
     t1 = t2 = 0;
 

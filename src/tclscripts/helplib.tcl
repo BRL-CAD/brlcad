@@ -194,7 +194,7 @@ set helplib_data(dgo_rtabort)		{{} {abort the associated raytraces}}
 set helplib_data(dgo_rtcheck)		{{[options]}	{check for overlaps in current view}}
 set helplib_data(dgo_rtarea)		{{[options] [-- objects]}	{report the exposed and presented areas in the current view}}
 set helplib_data(dgo_rtedge)		{{[options] [-- objects]}	{do edge rendering of view or specified objects}}
-set helplib_data(dgo_rtweight)		{{[options] [-- objects]}	{report the approximate weight and centroid of displayed geometry}}
+set helplib_data(dgo_rtweight)		{{[options] [-- objects]}	{report the approximate volume, weight, and centroid of displayed geometry}}
 set helplib_data(dgo_set_outputHandler)	{{[script]}	{get/set output handler script}}
 set helplib_data(dgo_set_plOutputMode)	{{[binary|text]}	{get/set the plot output mode}}
 set helplib_data(dgo_set_transparency)	{{obj transparency}	{set transparency of the specified object}}

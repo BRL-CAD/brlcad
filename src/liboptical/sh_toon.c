@@ -166,7 +166,7 @@ toon_free(void *cp)
 int
 toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
-    int i;
+    size_t i;
     struct toon_specific *toon_sp = (struct toon_specific *)dp;
     fastf_t cosi, scale;
 
@@ -189,7 +189,7 @@ toon_render(struct application *ap, const struct partition *pp, struct shadework
     light_obs(ap, swp, MFI_HIT);
 
     /* Consider effects of each light source */
-    for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
+    for (i = 0; i < ap->a_rt_i->rti_nlights; i++) {
 	if ((struct light_specific *)swp->sw_visible[i] == LIGHT_NULL)
 	    continue;
 

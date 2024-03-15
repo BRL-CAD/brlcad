@@ -75,6 +75,13 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     }
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
+    // rtweight puts its output on stdout as well as stderr - let _ged_run_rt
+    // know to capture stdout.  It looks like our I/O methodology isn't up to
+    // capturing both right now - we need async listening to the channels.
+    int stdout_txt = 0;
+    if (BU_STR_EQUAL(argv[0], "rtweight"))
+	stdout_txt = 1;
+
     bin = bu_dir(NULL, 0, BU_DIR_BIN, NULL);
     if (bin) {
 	snprintf(rt, 256, "%s/%s", bin, argv[0]);
@@ -117,7 +124,7 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     *vp++ = gedp->dbip->dbi_filename;
     gd_rt_cmd_len = vp - gd_rt_cmd;
 
-    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
+    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), stdout_txt);
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 

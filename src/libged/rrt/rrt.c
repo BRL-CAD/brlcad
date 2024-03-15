@@ -60,7 +60,7 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
 
     gd_rt_cmd_len = ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
 
-    (void)_ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, -1, NULL);
+    (void)_ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, -1, NULL, 0);
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
