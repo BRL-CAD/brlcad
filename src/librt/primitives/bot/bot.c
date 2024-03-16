@@ -433,14 +433,13 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 }
 
-// TODO: convert to point_t
 typedef struct _triangle_s {
-    fastf_t v0[3];
-    fastf_t v1[3];
-    fastf_t v2[3];
-    fastf_t n0[3];
-    fastf_t n1[3];
-    fastf_t n2[3];
+    point_t v0;
+    point_t v1;
+    point_t v2;
+    vect_t n0;
+    vect_t n1;
+    vect_t n2;
     size_t face_id;
 } triangle_s;
 
@@ -499,6 +498,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot->bot_facelist = NULL;
 
     // look for a requested bundle size
+    // TODO: set a good default and use it
     size_t rt_bot_mintie = RT_DEFAULT_MINTIE;
     const char *bmintie = getenv("LIBRT_BOT_MINTIE");
     if (bmintie)
@@ -566,6 +566,23 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     tie->root = root;
     tie->tris = tris;
     bot->tie = (void*) tie;
+	
+    // struct bvh_build_node is a pun for fastf_t[6] which are the bounds
+    fastf_t *min = (fastf_t *)root;
+    fastf_t *max = &min[3];
+
+    VMOVE(stp->st_min, min);
+    VMOVE(stp->st_max, max);
+
+    /* zero thickness will get missed by the raytracer */
+    BBOX_NONDEGEN(stp->st_min, stp->st_max, rtip->rti_tol.dist);
+
+    point_t mid;
+    VADD2SCALE(mid, min, max, 0.5);
+    VMOVE(stp->st_center, mid);
+    fastf_t radius = DIST_PNT_PNT(mid, max);
+    stp->st_aradius = radius;
+    stp->st_bradius = radius;
 
 #ifdef USE_OPENCL
     clt_bot_prep(stp, bot_ip, rtip);
@@ -699,6 +716,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	fastf_t alpha = 1 - beta - gamma;
 	fastf_t dist = VDOT(S2, E2) / denom;
 	VCROSS(norm, E1, E2);
+	VUNITIZE(norm);
 	(void)alpha;
 	// fill out hitdata
 	struct hit* cur_hit = &hits[nhits];
@@ -836,18 +854,19 @@ rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 void
 rt_bot_free(struct soltab *stp)
 {
-    struct bot_specific *bot =
-	(struct bot_specific *)stp->st_specific;
-
-    if (bot->tie != NULL) {
-	bottie_free_double(bot->tie);
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    
+    if (bot && bot->tie) {
+	struct _tie_s *tie = (struct _tie_s*)bot->tie;
+	bu_free(tie->tris, "bot triangles");
+	bu_pool_delete(tie->pool);
+	BU_PUT(tie, struct _tie_s);
 	bot->tie = NULL;
     }
 
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	bot_free_float(bot);
-    } else {
-	bot_free_double(bot);
+    if (bot) {
+	BU_PUT(bot, struct bot_specific);
+	stp->st_specific = NULL;
     }
 
 #ifdef USE_OPENCL

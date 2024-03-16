@@ -50,6 +50,8 @@
 #include "bg/plane.h"
 #include "bv/plot3.h"
 
+// TODO: move this out somewhere others
+// can see it and use it
 struct bvh_build_node {
     fastf_t bounds[6];
     struct bvh_build_node *children[2];
@@ -465,13 +467,15 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 #undef n_buckets
 }
 
-struct tri_list {
+// TODO: do something better than a list
+// in hlbvh_shot
+struct prim_list {
     struct bu_list l;
     long first_prim_offset, n_primitives;
 };
 
 void 
-recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struct tri_list* leafs, size_t* tris_so_far)
+recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far)
 {
     { // check bounds
 	// TODO: do we want to handle NaNs correctly?
@@ -498,48 +502,53 @@ recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struc
 
     if (node->n_primitives > 0) {
 	BU_ASSERT(!node->children[0] && !node->children[1]);
-	struct tri_list* entry;
-	BU_GET(entry, struct tri_list);
+	struct prim_list* entry;
+	BU_GET(entry, struct prim_list);
 	entry->n_primitives = node->n_primitives;
 	entry->first_prim_offset = node->first_prim_offset;
 	BU_LIST_PUSH(&(leafs->l), &(entry->l));
-	*tris_so_far += node->n_primitives;
+	*prims_so_far += node->n_primitives;
     } else {
 	// TODO: unroll recursion into while loop
-	recursive_populate_leaf_list(node->children[0], rp, leafs, tris_so_far);
-	recursive_populate_leaf_list(node->children[1], rp, leafs, tris_so_far);
+	recursive_populate_leaf_list(node->children[0], rp, leafs, prims_so_far);
+	recursive_populate_leaf_list(node->children[1], rp, leafs, prims_so_far);
     }
 }
 
 void
-hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_tris, size_t* num_check_tris)
+hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
 {
-    size_t tri_accum = 0;
-    struct tri_list *leafs = NULL;
-    BU_GET(leafs, struct tri_list);
+    // TODO: do something better than a list here
+    // How do we return a collection of primatives
+    // when we don't know how many we're going to 
+    // intersect? The best solution would be to 
+    // be able to move this code out this 
+    size_t prim_accum = 0;
+    struct prim_list *leafs = NULL;
+    BU_GET(leafs, struct prim_list);
     BU_LIST_INIT(&(leafs->l));
     leafs->first_prim_offset = -1;
     leafs->n_primitives = -1;
-    recursive_populate_leaf_list(root, rp, leafs, &tri_accum);
-    *num_check_tris = tri_accum;
-    if (tri_accum == 0) {
-	BU_PUT(leafs, struct tri_list);
+    recursive_populate_leaf_list(root, rp, leafs, &prim_accum);
+    *num_check_prims = prim_accum;
+    if (prim_accum == 0) {
+	BU_PUT(leafs, struct prim_list);
 	return;
     }
-    *check_tris = (long*)bu_calloc(tri_accum, sizeof(long), "hlbvh primative list");
+    *check_prims = (long*)bu_calloc(prim_accum, sizeof(long), "hlbvh primative list");
     size_t index = 0;
-    struct tri_list *entry;
-    while (BU_LIST_WHILE(entry, tri_list, &(leafs->l))) {
+    struct prim_list *entry;
+    while (BU_LIST_WHILE(entry, prim_list, &(leafs->l))) {
 	for (int i = 0; i < entry->n_primitives; i++) {
-	    (*check_tris)[index] = entry->first_prim_offset + i;
+	    (*check_prims)[index] = entry->first_prim_offset + i;
 	    index++;
 	}
 	
 	BU_LIST_DEQUEUE(&(entry->l));
-	BU_PUT(entry, struct tri_list);
+	BU_PUT(entry, struct prim_list);
     }
-    BU_PUT(leafs, struct tri_list);
-    BU_ASSERT(index == tri_accum);
+    BU_PUT(leafs, struct prim_list);
+    BU_ASSERT(index == prim_accum);
 }
 
 
