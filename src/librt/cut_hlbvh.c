@@ -520,9 +520,9 @@ hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_prims, siz
 {
     // TODO: do something better than a list here
     // How do we return a collection of primatives
-    // when we don't know how many we're going to 
-    // intersect? The best solution would be to 
-    // be able to move this code out this 
+    // when we don't know how many we're going to
+    // intersect? The best solution would be to
+    // be able to move this code out of this file
     size_t prim_accum = 0;
     struct prim_list *leafs = NULL;
     BU_GET(leafs, struct prim_list);

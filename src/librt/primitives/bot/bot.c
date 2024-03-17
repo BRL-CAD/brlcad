@@ -514,27 +514,27 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	fastf_t* v1 = (bot_ip->vertices+3*bot_ip->faces[i*3+1]);
 	fastf_t* v2 = (bot_ip->vertices+3*bot_ip->faces[i*3+2]);
 	
-        VADD3(&centroids[i*3], v0, v1, v2);
-        VSCALE(&centroids[i*3], &centroids[i*3], 1.0/3.0);
+	VADD3(&centroids[i*3], v0, v1, v2);
+	VSCALE(&centroids[i*3], &centroids[i*3], 1.0/3.0);
 
 	VMOVE(&bounds[i*6+0], v0);
-        VMOVE(&bounds[i*6+3], v0);
-        VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v1);
-        VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v2);
+	VMOVE(&bounds[i*6+3], v0);
+	VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v1);
+	VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v2);
 
-        /* Prevent the RPP from being 0 thickness */
-        if (NEAR_EQUAL(bounds[i*6+X], bounds[i*6+3+X], SMALL_FASTF)) {
-            bounds[i*6+X] -= SMALL_FASTF;
-            bounds[i*6+3+X] += SMALL_FASTF;
-        }
-        if (NEAR_EQUAL(bounds[i*6+Y], bounds[i*6+3+Y], SMALL_FASTF)) {
-            bounds[i*6+Y] -= SMALL_FASTF;
-            bounds[i*6+3+Y] += SMALL_FASTF;
-        }
-        if (NEAR_EQUAL(bounds[i*6+Z], bounds[i*6+3+Z], SMALL_FASTF)) {
-            bounds[i*6+Z] -= SMALL_FASTF;
-            bounds[i*6+3+Z] += SMALL_FASTF;
-        }
+	/* Prevent the RPP from being 0 thickness */
+	if (NEAR_EQUAL(bounds[i*6+X], bounds[i*6+3+X], SMALL_FASTF)) {
+	    bounds[i*6+X] -= SMALL_FASTF;
+	    bounds[i*6+3+X] += SMALL_FASTF;
+	}
+	if (NEAR_EQUAL(bounds[i*6+Y], bounds[i*6+3+Y], SMALL_FASTF)) {
+	    bounds[i*6+Y] -= SMALL_FASTF;
+	    bounds[i*6+3+Y] += SMALL_FASTF;
+	}
+	if (NEAR_EQUAL(bounds[i*6+Z], bounds[i*6+3+Z], SMALL_FASTF)) {
+	    bounds[i*6+Z] -= SMALL_FASTF;
+	    bounds[i*6+3+Z] += SMALL_FASTF;
+	}
     }
     struct bu_pool *pool = hlbvh_init_pool(bot_ip->num_faces);
     // implicit return values
@@ -683,6 +683,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     long* check_tris = NULL;
     size_t num_check_tris = 0;
 
+    // TODO: do we want to back the xray out by one dirlen before this?
     hlbvh_shot(tie->root, rp, &check_tris, &num_check_tris);
 
     if (num_check_tris == 0) {
@@ -696,6 +697,8 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     size_t nhits = 0;
     for (size_t i = 0; i < num_check_tris; i++) {
 	// We currently only use triangle_s for this
+	// Also this is a relatively naive ray-triangle
+	// intersection algorithm
 	// do we want to do a bunch of pre-computation
 	// in the setup to make this faster?
 	triangle_s* tri = &tie->tris[check_tris[i]];
@@ -736,7 +739,26 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
     bu_free(check_tris, "hlbvh primative list");
 
-    int retval = rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
+    // sort the hits
+    //insertion sort
+    for (size_t i = 1; i < nhits; i++) {
+	fastf_t i_dist = hits[i].hit_dist;
+	struct hit swap = hits[i];
+	int j;
+	for (j = i-1; j >= 0; j--) {
+	    fastf_t j_dist = hits[j].hit_dist;
+	    if (j_dist < i_dist) {
+		break;
+	    }
+	    hits[j+1] = hits[j];
+	}
+	hits[j+1] = swap;
+    }
+    
+    int retval = 0;
+    if (nhits > 0) {
+	retval = rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
+    }
 
     bu_free(hits, "bot hitdata");
     bu_free(tri_hitdata, "bot triangle hitdata");
