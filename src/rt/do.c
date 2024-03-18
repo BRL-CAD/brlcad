@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2023 United States Government as represented by
+ * Copyright (c) 1987-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,8 +41,8 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/debug.h"
+#include "bu/getopt.h"
 #include "bu/mime.h"
 #include "bu/vls.h"
 #include "vmath.h"
@@ -767,7 +767,7 @@ do_prep(struct rt_i *rtip)
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%s: %d cut, %d box (%zu empty)\n",
+	bu_log("%s: %zu cut, %zu box (%zu empty)\n",
 	       rtip->rti_space_partition == RT_PART_NUBSPT ?
 	       "NUBSP" : "unknown",
 	       rtip->rti_ncut_by_type[CUT_CUTNODE],

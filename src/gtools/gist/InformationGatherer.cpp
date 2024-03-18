@@ -1,7 +1,7 @@
 /*         I N F O R M A T I O N G A T H E R E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023 United States Government as represented by
+ * Copyright (c) 2023-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -340,7 +340,8 @@ InformationGatherer::getSubComp()
 
     std::string pathToOutput = "output/sub_comp.txt";
     std::string retrieveSub = opt->getTemppath() + "mged -c " + opt->getFilepath() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
-    system(retrieveSub.c_str());
+    if (system(retrieveSub.c_str()))
+	bu_log("warning: non-zero system return for %s\n",retrieveSub.c_str());
 
     if (!bu_file_exists(pathToOutput.c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", pathToOutput.c_str());

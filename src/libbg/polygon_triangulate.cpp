@@ -1,7 +1,7 @@
 /*         P O L Y G O N _ T R I A N G U L A T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2023 United States Government as represented by
+ * Copyright (c) 2019-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "RTree.h"
 #include "clipper.hpp"
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -57,6 +56,10 @@
 #include "delaunator.hpp"
 
 #include "poly2tri/poly2tri.h"
+
+#define PLOT_PREFIX_STR bg_plot3_ // needed by RTree.h and plot3.h
+
+#include "RTree.h"
 
 #include "bu/malloc.h"
 #include "bn/rand.h"

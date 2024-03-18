@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,16 @@
 # Define relative install locations.  Don't set these if they have already
 # been set by some other means (like a higher level CMakeLists.txt file
 # including this one).
+
+# Note - Windows has different constraints than other platforms on the
+# relative placement of libraries and binaries.  We don't know of a
+# proven way to make the bin/lib layout work on Windows the way we do
+# on other platforms yet - the best candidate is probably:
+#
+# https://stackoverflow.com/a/2003775/2037687
+#
+# but it's implications for behavior and performance (or even whether
+# it can succeed at all with our code) are unknown.
 
 # The location in which to install BRL-CAD executables.
 if(NOT BIN_DIR)

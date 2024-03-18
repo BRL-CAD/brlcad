@@ -1,7 +1,7 @@
 /*                       P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2023 United States Government as represented by
+ * Copyright (c) 2007-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -592,7 +592,7 @@ bu_interactive(void)
     FD_SET(fileno(stdin), &read_set);
     result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
     if (bu_debug > 0) {
-	fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
+	fprintf(stdout, "DEBUG: select result: %d, stdin read: %ld\n", result, (long int)FD_ISSET(fileno(stdin), &read_set));
 	if (result < 0) {
 	    fprintf(stdout, "DEBUG: select error: %s\n", strerror(errno));
 	}
@@ -613,7 +613,7 @@ bu_interactive(void)
 	FD_SET(fileno(stdin), &exception_set);
 	result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
 	if (bu_debug > 0)
-	    fprintf(stdout, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
+	    fprintf(stdout, "DEBUG: select result: %d, stdin exception: %ld\n", result, (long int)FD_ISSET(fileno(stdin), &exception_set));
 
 	/* see if there's valid input waiting (more reliable than select) */
 	if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {

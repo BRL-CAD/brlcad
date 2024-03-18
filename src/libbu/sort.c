@@ -146,7 +146,7 @@
  * only advantage over quicksort is that it requires little additional memory.
  */
 static int
-heapsort(void *vbase, size_t nmemb, size_t size,
+openbsd_heapsort(void *vbase, size_t nmemb, size_t size,
 	int (*compar)(const void *, const void *, void *), void *context)
 {
     size_t cnt, i, j, l;
@@ -301,7 +301,7 @@ loop:	if (n < 7) {
 	    return;
 	}
 	if (maxdepth == 0) {
-	    if (heapsort(a, n, es, cmp, context) == 0)
+	    if (openbsd_heapsort(a, n, es, cmp, context) == 0)
 		return;
 	}
 	maxdepth--;

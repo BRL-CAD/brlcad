@@ -1399,13 +1399,15 @@ Release steps are as follows:
     # the resolution will be to make STABLE match the state of RELEASE
 
 #####################################################################
-# 10: Test the merge.
+# 10: If there are any differences between RELEASE and STABLE trees,
+      test the merge.  In normal usage STABLE should match RELEASE,
+      so this is only necessary in special circumstances.
 
     mkdir .merge && cd .merge
     cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck-full && cd .. && rm -rf .merge
 
 #####################################################################
-# 11: Commit the merge.
+# 11: Let upstream know about the new state of STABLE.
 
     # If merge conflict resolution was needed, make a merge commit:
     RSHA1=$(git log -1 RELEASE --pretty=format:"%h")a
@@ -1428,7 +1430,7 @@ Release steps are as follows:
     git push origin rel-$MAJOR-$MINOR-$PATCH
 
 #####################################################################
-# 13: Increment and commit the next BRL-CAD release numbers to SVN.
+# 13: Increment and commit the next BRL-CAD release numbers.
 
     # Update the include/conf/(MAJOR|MINOR|PATCH) version files
     # immediately to odd-numbered minor version or new patch developer
@@ -1438,14 +1440,17 @@ Release steps are as follows:
     echo "`expr $PATCH + 1`" > include/conf/PATCH
     NEXT="`expr $PATCH + 2`"
     perl -pi -e "s/Release [0-9]+\.[0-9]+\.[0-9]+/Release $MAJOR.$MINOR.$NEXT/" README
-    EXPR="s/(@---[[:space:]@-]*[0-9]{4}-)([0-9]{2}-[0-9]{2})([[:space:]]*Release[[:space:]]*${MAJOR}\.${MINOR}\.)(${PATCH})([[:space:]@-]*-@)/\$1XX-XX\${3}${NEXT}\$5@* TBD@@\1\2\3\4\5/"
-    cat NEWS | tr '\n' '@' | perl -pi -e "$EXPR" | tr '@' '\n' > NEWS
+
+    # TODO - this doesn't seem to work, at least on Linux?
+    #EXPR="s/(@---[[:space:]@-]*[0-9]{4}-)([0-9]{2}-[0-9]{2})([[:space:]]*Release[[:space:]]*${MAJOR}\.${MINOR}\.)(${PATCH})([[:space:]@-]*-@)/\$1XX-XX\${3}${NEXT}\$5@* TBD@@\1\2\3\4\5/"
+    #cat NEWS | tr '\n' '@' | perl -pi -e "$EXPR" | tr '@' '\n' > NEWS
+
     git add include/conf/PATCH README NEWS
     git commit -m "Bump to next development revision after tagging the $MAJOR.$MINOR.$PATCH release"
     git push
 
 #####################################################################
-# 14: Sync RELEASE changes back to trunk.
+# 14: Sync RELEASE changes back to main.
 
     git checkout main
     git merge RELEASE
@@ -1471,40 +1476,8 @@ Release steps are as follows:
 # 16: Upload the source distributions and release notes.  Use source
 # tarballs to create binaries.
 
-    # create a shell session and source dir
-    SFUSERNAME=username
-    echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
-    ssh -v $SFUSERNAME,brlcad@shell.sf.net create
-    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"
+------------- TODO - need new procedures for Github... ------------
 
-    # create binary dirs (as needed)
-    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/brlcad/BRL-CAD\ Runtime\ Libraries/$MAJOR.$MINOR.$PATCH"
-    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/brlcad/BRL-CAD\ for\ BSD/$MAJOR.$MINOR.$PATCH"
-    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/brlcad/BRL-CAD\ for\ Linux/$MAJOR.$MINOR.$PATCH"
-    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/brlcad/BRL-CAD\ for\ Mac\ OS\ X/$MAJOR.$MINOR.$PATCH"
-    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/brlcad/BRL-CAD\ for\ Windows/$MAJOR.$MINOR.$PATCH"
-
-    # upload source dist and any binaries
-    scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
-
-    # extract and upload release notes to source dir
-    cat ../NEWS | tr '\n' '@' | perl -p -e "s/.*?(@---[[:space:]@-]*[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]*Release[[:space:]]*${MAJOR}\.${MINOR}\.${PATCH}[[:space:]@-]*.*?)@---.*/\1/" | tr '@' '\n' > README-${MAJOR}-${MINOR}-${PATCH}.txt
-    echo "Release notes for $MAJOR.$MINOR.$PATCH" && echo "==="
-    cat README-$MAJOR-$MINOR-$PATCH.txt && echo "==="
-    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
-
-    # NON-AUTO: Following the NAMING A BINARY RELEASE convention,
-    # upload any release binaries and platform-specific release notes.
-
-    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ Runtime\ Libraries/$MAJOR.$MINOR.$PATCH/."
-    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ for\ BSD/$MAJOR.$MINOR.$PATCH/."
-    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ for\ Linux/$MAJOR.$MINOR.$PATCH/."
-    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ for\ Mac\ OS\ X/$MAJOR.$MINOR.$PATCH/."
-    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ for\ Windows/$MAJOR.$MINOR.$PATCH/."
-
-    # NON-AUTO: Be sure to mark binaries as default download, then
-    # close shell session
-    ssh -v $SFUSERNAME,brlcad@shell.sf.net shutdown
 
 #####################################################################
 # 17: Notify binary platform maintainers:

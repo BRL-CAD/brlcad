@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2023 United States Government as represented by
+ * Copyright (c) 2000-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1649,6 +1649,42 @@ _ged_rt_output_handler2(void *clientData, int type)
 
 }
 
+static int
+ged_rt_output_handler_helper(struct ged_subprocess* rrtp, bu_process_io_t type)
+{
+    int active = 0;
+    int count = 0;
+    char line[RT_MAXLINE+1] = {0};
+
+    if (type == BU_PROCESS_STDERR) active = rrtp->stderr_active;
+    if (type == BU_PROCESS_STDOUT) active = rrtp->stdout_active;
+
+    if (active && bu_process_read((char *)line, &count, rrtp->p, type, RT_MAXLINE) <= 0) {
+	/* Done watching for output or a bad read, undo subprocess I/O hooks. */
+	struct ged *gedp = rrtp->gedp;
+	if (gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(rrtp, type);
+	} else {
+	    if (type == BU_PROCESS_STDERR) rrtp->stderr_active = 0;
+	    if (type == BU_PROCESS_STDOUT) rrtp->stdout_active = 0;
+	}
+
+	return 1;
+    }
+
+
+    /* for feelgoodedness */
+    line[count] = '\0';
+
+    /* handle (i.e., probably log to stderr) the resulting line */
+    if (rrtp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
+	ged_output_handler_cb(rrtp->gedp, line);
+    else
+	bu_vls_printf(rrtp->gedp->ged_result_str, "%s", line);
+
+    return 0;
+}
+
 void
 _ged_rt_output_handler(void *clientData, int mask)
 {
@@ -1658,38 +1694,21 @@ _ged_rt_output_handler(void *clientData, int mask)
 	return;
     }
     struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
-    int count = 0;
-    int retcode = 0;
-    int read_failed_stderr = 0;
-    int read_failed_stdout = 0;
-    char line[RT_MAXLINE+1] = {0};
 
     if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
 	return;
 
     BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
 
-    struct ged *gedp = rrtp->gedp;
-
     /* Get data from rt */
-    if (rrtp->stderr_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
-	read_failed_stderr = 1;
-    }
-    if (rrtp->stdout_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
-	read_failed_stdout = 1;
-    }
+    if (ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDERR) || ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDOUT)) {
+	/* don't fully clean up until we mark each stream inactive */
+	if (rrtp->stderr_active || rrtp->stdout_active)
+	    return;
 
-    if (read_failed_stderr || read_failed_stdout) {
-	int aborted;
-
-	/* Done watching for output, undo subprocess I/O hooks. */
-	if (gedp->ged_delete_io_handler) {
-	    if (rrtp->stderr_active)
-		(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
-	    if (rrtp->stdout_active)
-		(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
-	}
-
+	int aborted = 0;
+	int retcode = 0;
+	struct ged *gedp = rrtp->gedp;
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
@@ -1714,16 +1733,6 @@ _ged_rt_output_handler(void *clientData, int mask)
 
 	return;
     }
-
-    /* for feelgoodedness */
-    line[count] = '\0';
-
-    /* handle (i.e., probably log to stderr) the resulting line */
-    if (gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
-	ged_output_handler_cb(gedp, line);
-    else
-	bu_vls_printf(gedp->ged_result_str, "%s", line);
-
 }
 
 void
@@ -1798,7 +1807,7 @@ _ged_rt_write(struct ged *gedp,
 }
 
 int
-_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv)
+_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt)
 {
     FILE *fp_in;
     vect_t eye_model;
@@ -1843,6 +1852,8 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
+	if (stdout_is_txt)
+	    (*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDOUT, _ged_rt_output_handler, (void *)run_rtp);
     }
     return BRLCAD_OK;
 }

@@ -1,7 +1,7 @@
 /*                           C U T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2023 United States Government as represented by
+ * Copyright (c) 1990-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ static void rt_ct_optim(struct rt_i *rtip, union cutter *cutp, size_t depth);
 static void rt_ct_free(struct rt_i *rtip, union cutter *cutp);
 static void rt_ct_release_storage(union cutter *cutp);
 
-static void rt_ct_measure(struct rt_i *rtip, union cutter *cutp, int depth);
+static void rt_ct_measure(struct rt_i *rtip, union cutter *cutp, size_t depth);
 static union cutter *rt_ct_get(struct rt_i *rtip);
 static void rt_plot_cut(FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl);
 
@@ -97,8 +97,8 @@ rt_cut_optimize_parallel(int cpu, void *arg)
 }
 
 
-int
-rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
+static size_t
+split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 {
     point_t max, min;
     struct soltab *stp;
@@ -108,12 +108,12 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
     fastf_t max_empty;
     int max_empty_dir;
     size_t i;
-    int num_splits=0;
+    size_t num_splits=0;
 
     switch (cutp->cut_type) {
 	case CUT_CUTNODE:
-	    num_splits += rt_split_mostly_empty_cells(rtip, cutp->cn.cn_l);
-	    num_splits += rt_split_mostly_empty_cells(rtip, cutp->cn.cn_r);
+	    num_splits += split_mostly_empty_cells(rtip, cutp->cn.cn_l);
+	    num_splits += split_mostly_empty_cells(rtip, cutp->cn.cn_r);
 	    break;
 	case CUT_BOXNODE:
 	    /* find the actual bounds of stuff in this cell */
@@ -197,8 +197,8 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 		}
 		if (rt_ct_box(rtip, cutp, max_empty_dir, where, 1)) {
 		    num_splits++;
-		    num_splits += rt_split_mostly_empty_cells(rtip, cutp->cn.cn_l);
-		    num_splits += rt_split_mostly_empty_cells(rtip, cutp->cn.cn_r);
+		    num_splits += split_mostly_empty_cells(rtip, cutp->cn.cn_l);
+		    num_splits += split_mostly_empty_cells(rtip, cutp->cn.cn_r);
 		}
 	    }
 	    break;
@@ -214,7 +214,7 @@ rt_cut_it(register struct rt_i *rtip, int UNUSED(ncpu))
     register struct soltab *stp;
     union cutter *finp;	/* holds the finite solids */
     FILE *plotfp;
-    int num_splits=0;
+    size_t num_splits = 0;
 
     /* Make a list of all solids into one special boxnode, then refine. */
     BU_ALLOC(finp, union cutter);
@@ -268,10 +268,10 @@ rt_cut_it(register struct rt_i *rtip, int UNUSED(ncpu))
 	    rtip->rti_CutHead = *finp;	/* union copy */
 	    rt_ct_optim(rtip, &rtip->rti_CutHead, 0);
 	    /* one more pass to find cells that are mostly empty */
-	    num_splits = rt_split_mostly_empty_cells(rtip,  &rtip->rti_CutHead);
+	    num_splits = split_mostly_empty_cells(rtip,  &rtip->rti_CutHead);
 
 	    if (RT_G_DEBUG&RT_DEBUG_CUT) {
-		bu_log("rt_split_mostly_empty_cells(): split %d cells\n", num_splits);
+		bu_log("split_mostly_empty_cells(): split %zu cells\n", num_splits);
 	    }
 
 	    break; }
@@ -852,7 +852,8 @@ rt_ct_get(struct rt_i *rtip)
     if (rtip->rti_CutFree == CUTTER_NULL) {
 	size_t bytes;
 
-	bytes = (size_t)bu_malloc_len_roundup(64*sizeof(union cutter));
+	//bytes = (size_t)bu_malloc_len_roundup(64*sizeof(union cutter));
+	bytes = sizeof(union cutter);
 	cutp = (union cutter *)bu_calloc(1, bytes, " rt_ct_get");
 	/* Remember this allocation for later */
 	bu_ptbl_ins(&rtip->rti_busy_cutter_nodes, (long *)cutp);
@@ -1077,9 +1078,9 @@ rt_plot_cut(FILE *fp, struct rt_i *rtip, register union cutter *cutp, int lvl)
  * interesting statistics.
  */
 static void
-rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth)
+rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, size_t depth)
 {
-    register int len;
+    register size_t len;
 
     RT_CK_RTI(rtip);
     switch (cutp->cut_type) {
@@ -1090,7 +1091,8 @@ rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth
 	    return;
 	case CUT_BOXNODE:
 	    rtip->rti_ncut_by_type[CUT_BOXNODE]++;
-	    rtip->rti_cut_totobj += (len = cutp->bn.bn_len);
+	    len = cutp->bn.bn_len;
+	    rtip->rti_cut_totobj += len;
 	    if (rtip->rti_cut_maxlen < len)
 		rtip->rti_cut_maxlen = len;
 	    if (rtip->rti_cut_maxdepth < depth)
@@ -1139,14 +1141,14 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 {
     RT_CK_RTI(rtip);
 
-    bu_log("%s %s: %d cut, %d box (%zu empty)\n",
+    bu_log("%s %s: %zu cut, %zu box (%zu empty)\n",
 	   str,
 	   rtip->rti_space_partition == RT_PART_NUBSPT ?
 	   "NUBSP" : "unknown",
 	   rtip->rti_ncut_by_type[CUT_CUTNODE],
 	   rtip->rti_ncut_by_type[CUT_BOXNODE],
 	   rtip->nempty_cells);
-    bu_log("Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
+    bu_log("Cut: maxdepth=%zu, nbins=%zu, maxlen=%zu, avg=%g\n",
 	   rtip->rti_cut_maxdepth,
 	   rtip->rti_ncut_by_type[CUT_BOXNODE],
 	   rtip->rti_cut_maxlen,
@@ -1167,7 +1169,7 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
     switch (cutp->cut_type) {
 	case CUT_BOXNODE:
 	    if (stp->st_npieces) {
-		int remove_count, new_count;
+		size_t remove_count, new_count;
 		struct rt_piecelist *new_piece_list;
 
 		remove_count = 0;
@@ -1179,7 +1181,7 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 
 		if (remove_count) {
 		    new_count = cutp->bn.bn_piecelen - remove_count;
-		    if (new_count > 0) {
+		    if (cutp->bn.bn_piecelen - remove_count > 0) {
 			new_piece_list = (struct rt_piecelist *)bu_calloc(
 			    new_count,
 			    sizeof(struct rt_piecelist),

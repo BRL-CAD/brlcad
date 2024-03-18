@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,6 +118,12 @@
 
 /* #define CPP11THREAD */
 
+
+#if defined(HAVE_SYSCALL) && !defined(HAVE_DECL_SYSCALL) && !defined(syscall)
+long syscall(long number, ...);
+#endif
+
+
 #if defined(CPP11THREAD)
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
@@ -151,9 +157,7 @@ struct thread_data {
 int
 bu_thread_id(void)
 {
-    #if defined(HAVE_SYS_SYSCALL_H)
-	return syscall(SYS_gettid);
-    #elif defined(_WIN32)
+    #if defined(_WIN32)
 	return GetCurrentThreadId();
     #elif defined(__FreeBSD__)
 	long tid;
@@ -163,6 +167,8 @@ bu_thread_id(void)
 	return _lwp_self();
     #elif defined(__OpenBSD__)
 	return getthrid();
+    #elif defined(HAVE_SYSCALL)
+	return syscall(SYS_gettid);
     #else
 	return -1;
     #endif

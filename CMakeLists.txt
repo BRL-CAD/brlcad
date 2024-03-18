@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -89,6 +89,11 @@ endif(DEFINED BRLCAD_VERSION_AMEND)
 project(BRLCAD VERSION ${BRLCAD_VERSION} DESCRIPTION "Open Source Solid Modeling" HOMEPAGE_URL "https://brlcad.org" LANGUAGES C CXX)
 #######
 
+# Policy CMP0009: FILE GLOB_RECURSE calls should not follow symlinks by default
+if (POLICY CMP0009)
+  cmake_policy(SET CMP0009 NEW)
+endif (POLICY CMP0009)
+
 # Policy CMP0060 tells CMake to use full paths in link specifications
 if (POLICY CMP0060)
   cmake_policy(SET CMP0060 NEW)
@@ -150,43 +155,45 @@ include(BRLCAD_Environment_Setup)
 # Populate these early, even though their main use is in
 # misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
 # may also make use of them, particularly BRLCAD_EXT_NOINSTALL_DIR
-set(ENV_HOME "$ENV{HOME}")
-if (NOT ENV_HOME)
-  set(ENV_HOME "$ENV{USERPROFILE}")
-endif (NOT ENV_HOME)
+set(BRLCAD_EXT_DIR_ENV "$ENV{BRLCAD_EXT_DIR}")
+if (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
+  set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR_ENV})
+endif (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
 
-# Check common location(s) in home directory
-set(EXT_CANDIDATES bext_output brlcad_ext)
-foreach(EC ${EXT_CANDIDATES})
-  if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
-    set(BRLCAD_EXT_DIR "${ENV_HOME}/${EC}")
-  endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
-endforeach(EC ${EXT_CANDIDATES})
+# For a full tarball of the repo and its dependencies, look in the
+# location package_source would place a bext copy
+if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/src/bext")
+  set(BRLCAD_EXT_DIR "${CMAKE_SOURCE_DIR}/src/bext")
+endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/src/bext")
 
-if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
-  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
-endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
-# Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
-# is, we need to expand the symlink in order for the tar tricks we use
-# later for file copying to work...
-if (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
-  file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
-  set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
-endif (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+if (DEFINED BRLCAD_EXT_DIR)
+  if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+    set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
+  endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+  # Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
+  # is, we need to expand the symlink in order for the tar tricks we use
+  # later for file copying to work...
+  if (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+    file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
+    set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
+  endif (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
 
-# For noinstall we don't need to worry about symlinks since we'll be using
-# the contents in place.
-if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
-  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
-endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+  # For noinstall we don't need to worry about symlinks since we'll be using
+  # the contents in place.
+  if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+    set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
+  endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+endif (DEFINED BRLCAD_EXT_DIR)
 
-# If we're doing the non-src-other build, we've got to have brlcad_externals
-# for at least a few custom components no matter how many system packages got
-# installed.
+# If we're doing the non-src-other build, we've got to have bext for at least a
+# few custom components no matter how many system packages got installed.
 if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
   if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-    message(FATAL_ERROR "BRL-CAD requires a source for external components - please set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals). By default this location is ${ENV_HOME}/brlcad_ext but it can be overridden.  In lieu of setting BRLCAD_EXT_DIR, it is also possible to directly set BRLCAD_EXT_INSTALL_DIR and BRLCAD_EXT_NOINSTALL_DIR to custom indivdiaul folders holding the necessary dependencies.")
+    message(WARNING "BRL-CAD requires a source for external components, but no BRLCAD_EXT_DIR is set.  To use a pre-compiled set of components, set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/bext).\nBecause no BRLCAD_EXT_DIR was successfully configured, BRL-CAD will attempt to download, configure and build its own bext copy locally during the configure process.")
   endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+
+  # Tell CPack to bundle bext into the source tarball
+  set(CPACK_INCLUDE_EXT 1)
 endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
 #---------------------------------------------------------------------
@@ -606,11 +613,6 @@ if(BRLCAD_PRINT_MSGS)
   message("*     Stage 3 of 9 - Check for Compiler Characteristics   *")
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
-
-# TODO - the Ninja single config generator in Release build uses the O3
-# and other optimization flags, but they don't seem to make it to the
-# step-g sources in MultiConfig release build???
-
 # load our compiler testing macro definitions
 include(CompilerFlags)
 
@@ -720,21 +722,8 @@ endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AU
 if(BRLCAD_DEBUGGING)
   CHECK_C_FLAG(g GROUPS DEBUG_C_FLAGS)
   CHECK_CXX_FLAG(g GROUPS DEBUG_CXX_FLAGS)
-  if(APPLE)
-    EXEC_PROGRAM(sw_vers ARGS -productVersion OUTPUT_VARIABLE MACOSX_VERSION)
-    if(${MACOSX_VERSION} VERSION_LESS "10.5")
-      CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
-      CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
-    else(${MACOSX_VERSION} VERSION_LESS "10.5")
-      # CHECK_C_COMPILER_FLAG silently eats gstabs+ - also, compiler
-      # apparently doesn't like mixing stabs with another debug flag.
-      set(DEBUG_C_FLAGS "-ggdb")
-      set(DEBUG_CXX_FLAGS "-ggdb")
-    endif(${MACOSX_VERSION} VERSION_LESS "10.5")
-  else(APPLE)
-    CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
-    CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
-  endif(APPLE)
+  CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
+  CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
   if(CMAKE_CONFIGURATION_TYPES)
     set(debug_config_list "${CMAKE_CONFIGURATION_TYPES}")
   else(CMAKE_CONFIGURATION_TYPES)
@@ -1570,6 +1559,7 @@ BRLCAD_INCLUDE_FILE(sys/select.h HAVE_SYS_SELECT_H)
 BRLCAD_INCLUDE_FILE(sys/shm.h HAVE_SYS_SHM_H)
 BRLCAD_INCLUDE_FILE(sys/socket.h HAVE_SYS_SOCKET_H)
 BRLCAD_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+BRLCAD_INCLUDE_FILE(sys/syscall.h HAVE_SYS_SYSCALL_H)
 BRLCAD_INCLUDE_FILE(sys/sysctl.h HAVE_SYS_SYSCTL_H)
 BRLCAD_INCLUDE_FILE(sys/sysinfo.h HAVE_SYS_SYSINFO_H)
 BRLCAD_INCLUDE_FILE(sys/sysmp.h HAVE_SYS_SYSMP_H)
@@ -1813,6 +1803,7 @@ BRLCAD_FUNCTION_EXISTS(strlcpy)
 BRLCAD_FUNCTION_EXISTS(strncasecmp)
 BRLCAD_FUNCTION_EXISTS(strtoll)
 BRLCAD_FUNCTION_EXISTS(sync)
+BRLCAD_FUNCTION_EXISTS(syscall)
 BRLCAD_FUNCTION_EXISTS(sysctl)
 BRLCAD_FUNCTION_EXISTS(sysmp)
 BRLCAD_FUNCTION_EXISTS(time)

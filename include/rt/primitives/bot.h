@@ -1,7 +1,7 @@
 /*                        B O T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -147,6 +147,9 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
 				     fastf_t max_normal_error,
 				     fastf_t min_edge_length);
 RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
+
+/* Function to convert plate mode BoT to volumetric BoT */
+RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode);
 
 
 /** @} */

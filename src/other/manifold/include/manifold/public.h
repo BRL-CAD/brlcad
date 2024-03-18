@@ -633,6 +633,8 @@ struct ExecutionParams {
   bool suppressErrors = false;
   /// Deterministic outputs. Will disable some parallel optimizations.
   bool deterministic = false;
+  /// Perform optional but recommended triangle cleanups in SimplifyTopology()
+  bool cleanupTriangles = true;
 };
 
 #ifdef MANIFOLD_DEBUG
@@ -651,6 +653,13 @@ template <typename T>
 inline std::ostream& operator<<(std::ostream& stream, const glm::tvec4<T>& v) {
   return stream << "x = " << v.x << ", y = " << v.y << ", z = " << v.z
                 << ", w = " << v.w;
+}
+
+inline std::ostream& operator<<(std::ostream& stream, const glm::mat3& mat) {
+  glm::mat3 tam = glm::transpose(mat);
+  return stream << tam[0] << std::endl
+                << tam[1] << std::endl
+                << tam[2] << std::endl;
 }
 
 inline std::ostream& operator<<(std::ostream& stream, const glm::mat4x3& mat) {

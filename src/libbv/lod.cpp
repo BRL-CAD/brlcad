@@ -1,7 +1,7 @@
 /*                       L O D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2023 United States Government as represented by
+ * Copyright (c) 2022-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from https://github.com/bhaettasch/pop-buffer-demo
@@ -687,6 +687,9 @@ bv_mesh_lod_context_create(const char *name)
 
     // Ensure the necessary top level dirs are present
     char dir[MAXPATHLEN];
+    // TODO - need to support a LIBBV_LOD_CACHE environment variable,
+    // similar to LIBRT_CACHE, so we can run parallel tests without
+    // LoD generating routines colliding
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
     if (!bu_file_exists(dir, NULL))
 	lod_dir(dir);

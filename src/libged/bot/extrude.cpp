@@ -1,7 +1,7 @@
 /*                      E X T R U D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <set>
 #include <vector>
 
 #include "vmath.h"
@@ -54,7 +55,6 @@
 #include "ged.h"
 #include "./ged_bot.h"
 
-
 bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 {
@@ -62,7 +62,7 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 
     /* sanity */
     if (!n || !bot || i < 0 || (size_t)i > bot->num_faces ||
-	bot->faces[i*3+2] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices) {
+	    bot->faces[i*3+2] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices) {
 	return false;
     }
 
@@ -149,6 +149,67 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     // from the surface.
     struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+
+    // Collect the active vertices and edges
+    std::set<int> verts;
+    std::map<int, double> verts_thickness;
+    std::map<int, int> verts_fcnt;
+    std::map<std::pair<int, int>, double> edges_thickness;
+    std::map<std::pair<int, int>, int> edges_fcnt;
+    std::set<std::pair<int, int>> edges;
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	point_t eind;
+	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
+	for (int j = 0; j < 3; j++) {
+	    verts.insert(bot->faces[i*3+j]);
+	    verts_thickness[bot->faces[i*3+j]] += fthickness;
+	    verts_fcnt[bot->faces[i*3+j]]++;
+	    eind[j] = bot->faces[i*3+j];
+	}
+	int e11, e12, e21, e22, e31, e32;
+	e11 = (eind[0] < eind[1]) ? eind[0] : eind[1];
+	e12 = (eind[1] < eind[0]) ? eind[0] : eind[1];
+	e21 = (eind[1] < eind[2]) ? eind[1] : eind[2];
+	e22 = (eind[2] < eind[1]) ? eind[1] : eind[2];
+	e31 = (eind[2] < eind[0]) ? eind[2] : eind[0];
+	e32 = (eind[0] < eind[2]) ? eind[2] : eind[0];
+	edges.insert(std::make_pair(e11, e12));
+	edges.insert(std::make_pair(e21, e22));
+	edges.insert(std::make_pair(e31, e32));
+	edges_thickness[std::make_pair(e11, e12)] += fthickness;
+	edges_thickness[std::make_pair(e21, e22)] += fthickness;
+	edges_thickness[std::make_pair(e31, e32)] += fthickness;
+	edges_fcnt[std::make_pair(e11, e12)]++;
+	edges_fcnt[std::make_pair(e21, e22)]++;
+	edges_fcnt[std::make_pair(e31, e32)]++;
+    }
+
+    std::set<int>::iterator v_it;
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	point_t v;
+	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
+	// Make a sph at the vertex point with a radius based on the thickness
+	VMOVE(v, &bot->vertices[3**v_it]);
+	bu_vls_sprintf(&prim_name, "%s.sph.%d", gb->dp->d_namep, *v_it);
+	mk_sph(wdbp, bu_vls_cstr(&prim_name), v, r);
+	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
+    }
+
+    std::set<std::pair<int, int>>::iterator e_it;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
+	// Make an rcc along the edge a radius based on the thickness
+	point_t b, v;
+	vect_t h;
+	VMOVE(b, &bot->vertices[3*(*e_it).first]);
+	VMOVE(v, &bot->vertices[3*(*e_it).second]);
+	VSUB2(h, v, b);
+	bu_vls_sprintf(&prim_name, "%s.rcc.%d_%d", gb->dp->d_namep, (*e_it).first, (*e_it).second);
+	mk_rcc(wdbp, bu_vls_cstr(&prim_name), b, h, r);
+	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
+    }
+
+    // Now, handle the primary arb faces
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t pnts[6];
 	point_t pf[3];
@@ -162,12 +223,11 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 		VSCALE(pv1[j], n, bot->thickness[i]);
 		VSCALE(pv2[j], n, -1*bot->thickness[i]);
 	    } else {
-		/* Note - g_bot_include.c uses .51, so using the same value
-		 * here for consistency. */
-		VSCALE(pv1[j], n, 0.51*bot->thickness[i]);
-		VSCALE(pv2[j], n, -0.51*bot->thickness[i]);
+		VSCALE(pv1[j], n, 0.5*bot->thickness[i]);
+		VSCALE(pv2[j], n, -0.5*bot->thickness[i]);
 	    }
 	}
+
 	for (int j = 0; j < 3; j++) {
 	    point_t npnt1;
 	    point_t npnt2;
@@ -187,9 +247,6 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	/* 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
 
 	bu_vls_sprintf(&prim_name, "%s.arb6.%zd", gb->dp->d_namep, i);
-
-	// For arb6 creation we need to move a couple points the array.
-
 	mk_arb6(wdbp, bu_vls_cstr(&prim_name), pnts_array);
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
     }

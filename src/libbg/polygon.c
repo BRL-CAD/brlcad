@@ -1,7 +1,7 @@
 /*                     P O L Y G O N . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2023 United States Government as represented by
+ * Copyright (c) 2013-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/plane.h"
-#define PLOT3_IMPLEMENTATION
+#define PLOT_PREFIX_STR bg_plot3_
 #include "bv/plot3.h"
 #include "bn/tol.h"
 #include "bg/polygon.h"

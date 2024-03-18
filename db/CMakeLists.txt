@@ -144,6 +144,7 @@ set(G_BENCHMARK_MODELS
 
 set(G_SAMPLE_MODELS
   aet.asc
+  annual_gift_man.asc
   axis.asc
   bearing.asc
   boolean-ops.asc
@@ -167,6 +168,7 @@ set(G_SAMPLE_MODELS
   prim.asc
   radialgrid.asc
   rounds.asc
+  shipping_container.asc
   tank_car.asc
   terra.asc
   toyjeep.asc

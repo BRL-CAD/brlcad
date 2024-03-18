@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -397,7 +397,7 @@ _ged_rt_output_handler(void *clientData, int mask);
 
 GED_EXPORT extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-GED_EXPORT extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv);
+GED_EXPORT extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt);
 GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
 			  vect_t eye_model,

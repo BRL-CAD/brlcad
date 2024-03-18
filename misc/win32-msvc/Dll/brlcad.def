@@ -56,6 +56,7 @@ mk_region1
 mk_rpp
 mk_trc_h
 
+rt_booltree_leaf_tess
 rt_bot_smooth
 rt_clean
 rt_db_free_internal
@@ -72,7 +73,6 @@ rt_rpp_region
 rt_shootray
 rt_uniresource
 
-nmg_booltree_leaf_tess
 nmg_km
 nmg_mm
 nmg_triangulate_model

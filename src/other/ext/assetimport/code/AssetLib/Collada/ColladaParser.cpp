@@ -1770,6 +1770,10 @@ size_t ColladaParser::ReadPrimitives(XmlNode &node, Mesh &pMesh, std::vector<Inp
         const Accessor *acc = input.mResolved;
         if (!acc->mData) {
             acc->mData = &ResolveLibraryReference(mDataLibrary, acc->mSource);
+	    const size_t dataSize = acc->mOffset + acc->mCount * acc->mStride;
+	    if (dataSize > acc->mData->mValues.size()) {
+                throw DeadlyImportError("Not enough data for accessor");
+            }
         }
     }
     // and the same for the per-index channels
@@ -1794,6 +1798,10 @@ size_t ColladaParser::ReadPrimitives(XmlNode &node, Mesh &pMesh, std::vector<Inp
         const Accessor *acc = input.mResolved;
         if (!acc->mData) {
             acc->mData = &ResolveLibraryReference(mDataLibrary, acc->mSource);
+	    const size_t dataSize = acc->mOffset + acc->mCount * acc->mStride;
+            if (dataSize > acc->mData->mValues.size()) {
+                throw DeadlyImportError("Not enough data for accessor");
+            }
         }
     }
 

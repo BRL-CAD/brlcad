@@ -234,9 +234,20 @@ class Manifold {
   Manifold TrimByPlane(glm::vec3 normal, float originOffset) const;
   ///@}
 
+  /** @name 2D from 3D
+   */
+  ///@{
+  CrossSection Slice(float height = 0) const;
+  CrossSection Project() const;
+  ///@}
+
+  /** @name Convex hull
+   */
+  ///@{
   Manifold Hull() const;
   static Manifold Hull(const std::vector<Manifold>& manifolds);
   static Manifold Hull(const std::vector<glm::vec3>& pts);
+  ///@}
 
   /** @name Testing hooks
    *  These are just for internal testing.

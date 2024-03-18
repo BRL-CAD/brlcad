@@ -14,12 +14,17 @@ if (MANIFOLD_LIBRARIES)
     ${MANIFOLD_INCLUDE_DIRS}
     )
   add_definitions(-DUSE_MANIFOLD)
+
+  if (ASSETIMPORT_LIBRARY)
+    include_directories(SYSTEM ${ASSETIMPORT_INCLUDE_DIR})
+    add_definitions(-DUSE_ASSETIMPORT)
+  endif (ASSETIMPORT_LIBRARY)
 endif (MANIFOLD_LIBRARIES)
 # We want to include 3rd party libraries with -isystem - use
 # BRLCAD_LIB_INCLUDE_DIRS for that purpose
 BRLCAD_LIB_INCLUDE_DIRS(facetize FACETIZE_INCLUDE_DIRS FACETIZE_LOCAL_INCLUDE_DIRS)
 
-set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES})
+set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES} ${ASSETIMPORT_LIBRARIES})
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-facetize SHARED facetize.cpp facetize_log.c)

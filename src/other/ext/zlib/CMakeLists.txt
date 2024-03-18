@@ -175,6 +175,7 @@ if(BUILD_STATIC_LIBS)
 endif(BUILD_STATIC_LIBS)
 
 set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
+set_target_properties(zlib PROPERTIES SOVERSION 1)
 
 # OpenBSD has its own naming conventions.  Set a platform variable based on
 # the OS name so we can test for it succinctly.
@@ -196,7 +197,7 @@ if(NOT CYGWIN AND NOT OPENBSD)
 endif()
 
 if (OPENBSD)
-  set_target_properties(zlib PROPERTIES VERSION 1.2)
+  set_target_properties(zlib PROPERTIES VERSION 1.3)
 endif (OPENBSD)
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )

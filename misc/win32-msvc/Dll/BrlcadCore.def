@@ -168,7 +168,6 @@ mk_write_color_table
 
 nmg_add_loop_to_face
 nmg_booltree_evaluate
-nmg_booltree_leaf_tess
 nmg_break_edges
 nmg_break_long_edges
 nmg_calc_face_g
@@ -271,6 +270,7 @@ regcomp
 regexec
 
 rt_arc2d_to_cnurb
+rt_booltree_leaf_tess
 rt_bot_condense
 rt_bot_face_fuse
 rt_bot_minpieces

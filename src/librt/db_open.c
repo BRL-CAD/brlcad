@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2023 United States Government as represented by
+ * Copyright (c) 1988-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -192,11 +192,13 @@ db_open(const char *name, const char *mode)
      * dbip->dbi_filepath to argv.  arg values and array memory are
      * released during db_close.
      */
+    char *nname = bu_file_realpath(name, NULL);
     argv = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
     argv[0] = bu_strdup(".");
-    argv[1] = bu_path_dirname(name);
+    argv[1] = bu_path_dirname(nname);
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
+    bu_free(nname, "realpath");
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* If not a full path */

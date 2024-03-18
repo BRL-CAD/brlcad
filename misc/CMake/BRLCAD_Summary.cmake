@@ -1,7 +1,7 @@
 #            B R L C A D _ S U M M A R Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2023 United States Government as represented by
+# Copyright (c) 2012-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -246,27 +246,33 @@ function(BRLCAD_Summary)
     # build anymore.  We have to check the library variables to see if we're
     # using the bundled versions.
     #
-    # NOTE: these two lists must stay in sync - the var in the second list must
-    # correspond to the library labeled in the same position in the first list
-    set(BUNDLED_LABELS
-      "Asset Import Library"
-      "Eigen"
-      "Geospatial Data Abstraction Library"
-      "Lightning Memory-Mapped Database"
-      "Netpbm"
-      "OpenCV"
-      "OpenMesh"
-      "openNURBS"
-      "OSMesa"
-      "Portable Network Graphics"
-      "Qt"
-      "Regex Library"
-      "STEPcode"
-      "Tcl"
-      "Tk"
-      "UtahRLE"
-      "Zlib"
-      )
+    # We define a number of routines to help with printing and managing the
+    # dependencies
+
+    set(BUNDLED_LABELS)
+    set(BUNDLED_VARS)
+    set(BUNDLED_REQUIRED)
+    function(EXT_REPORT blabel bvar)
+      cmake_parse_arguments(ER "" "REQUIRED_VARS" "" ${ARGN})
+      set(BUNDLED_LABELS ${BUNDLED_LABELS} ${blabel} PARENT_SCOPE)
+      set(BUNDLED_VARS ${BUNDLED_VARS} ${bvar} PARENT_SCOPE)
+      if (ER_REQUIRED_VARS)
+	set(BUNDLED_REQUIRED ${BUNDLED_REQUIRED} ${ER_REQUIRED_VARS} PARENT_SCOPE)
+      else (ER_REQUIRED_VARS)
+	set(BUNDLED_REQUIRED ${BUNDLED_REQUIRED} "VARS_NONE" PARENT_SCOPE)
+      endif (ER_REQUIRED_VARS)
+    endfunction(EXT_REPORT blabel bvar)
+
+    EXT_REPORT("Asset Import Library" ASSETIMPORT_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_ASSETIMPORT")
+    EXT_REPORT("Eigen" EIGEN3_INCLUDE_DIRS)
+    EXT_REPORT("Geospatial Data Abstraction Library" GDAL_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_GDAL")
+    EXT_REPORT("Lightning Memory-Mapped Database" LMDB_LIBRARY)
+    EXT_REPORT("Netpbm" NETPBM_LIBRARY)
+    EXT_REPORT("OpenCV" OpenCV_DIR)
+    EXT_REPORT("OpenMesh" OPENMESH_LIBRARIES REQUIRED_VARS "BRLCAD_ENABLE_OPENMESH")
+    EXT_REPORT("openNURBS" OPENNURBS_LIBRARY)
+    EXT_REPORT("OSMesa" OSMESA_LIBRARY)
+    EXT_REPORT("Portable Network Graphics" PNG_LIBRARY_RELEASE)
 
     # Because we may have a Qt5 from the system as well as a Qt6, we need to
     # flatten the two variables for reporting
@@ -278,25 +284,14 @@ function(BRLCAD_Summary)
       set(QtCore_DIR ${Qt5Core_DIR})
     endif (Qt5Core_DIR)
 
-    set(BUNDLED_VARS
-      ASSETIMPORT_LIBRARY
-      EIGEN3_INCLUDE_DIRS
-      GDAL_LIBRARY
-      LMDB_LIBRARY
-      NETPBM_LIBRARY
-      OpenCV_DIR
-      OPENMESH_LIBRARIES
-      OPENNURBS_LIBRARY
-      OSMESA_LIBRARY
-      PNG_LIBRARY_RELEASE
-      QtCore_DIR
-      REGEX_LIBRARY
-      STEPCODE_CORE_LIBRARY
-      TCL_LIBRARY
-      TK_LIBRARY
-      UTAHRLE_LIBRARY
-      ZLIB_LIBRARY
-      )
+    EXT_REPORT("Qt" QtCore_DIR REQUIRED_VARS "BRLCAD_ENABLE_QT")
+    EXT_REPORT("Regex Library" REGEX_LIBRARY)
+    EXT_REPORT("STEPcode" STEPCODE_CORE_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_STEP")
+    EXT_REPORT("Tcl" TCL_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_TCL")
+    EXT_REPORT("Tk" TK_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_TCL")
+    EXT_REPORT("UtahRLE" UTAHRLE_LIBRARY)
+    EXT_REPORT("Zlib" ZLIB_LIBRARY)
+
 
     # Find the maximum label length
     set(LABEL_LENGTH 0)
@@ -327,24 +322,37 @@ function(BRLCAD_Summary)
     set(bindex 0)
     foreach(blabel ${BUNDLED_LABELS})
       list(GET BUNDLED_VARS ${bindex} LVAR)
-      if (NOT ${LVAR})
-	message("${blabel} NotFound")
-	math(EXPR bindex "${bindex} + 1")
-	continue()
-      endif (NOT ${LVAR})
-      IS_SUBPATH("${CMAKE_BINARY_DIR}" "${${LVAR}}" LOCAL_TEST)
-      if (LOCAL_TEST)
-	message("${blabel} Bundled")
-      else (LOCAL_TEST)
-	# For header-only dependencies, we don't copy them into the build tree
-	# - check for the NOINSTALL directory
-	IS_SUBPATH("${BRLCAD_EXT_NOINSTALL_DIR}" "${${LVAR}}" EXT_TEST)
-	if (EXT_TEST)
+      list(GET BUNDLED_REQUIRED ${bindex} RVARS)
+      set(DO_REPORT TRUE)
+      if (NOT "${RVARS}" STREQUAL "VARS_NONE")
+	# If we've got some enable variables to check, make sure they're active
+	# before reporting on this dependency
+	foreach (rvar ${RVARS})
+	  if (NOT ${rvar})
+	    set(DO_REPORT FALSE)
+	  endif (NOT ${rvar})
+	endforeach (rvar ${RVARS})
+      endif (NOT "${RVARS}" STREQUAL "VARS_NONE")
+      if (DO_REPORT)
+	if (NOT ${LVAR})
+	  message("${blabel} NotFound")
+	  math(EXPR bindex "${bindex} + 1")
+	  continue()
+	endif (NOT ${LVAR})
+	IS_SUBPATH("${CMAKE_BINARY_DIR}" "${${LVAR}}" LOCAL_TEST)
+	if (LOCAL_TEST)
 	  message("${blabel} Bundled")
-	else (EXT_TEST)
-	  message("${blabel} System")
-	endif (EXT_TEST)
-      endif (LOCAL_TEST)
+	else (LOCAL_TEST)
+	  # For header-only dependencies, we don't copy them into the build tree
+	  # - check for the NOINSTALL directory
+	  IS_SUBPATH("${BRLCAD_EXT_NOINSTALL_DIR}" "${${LVAR}}" EXT_TEST)
+	  if (EXT_TEST)
+	    message("${blabel} Bundled")
+	  else (EXT_TEST)
+	    message("${blabel} System")
+	  endif (EXT_TEST)
+	endif (LOCAL_TEST)
+      endif (DO_REPORT)
       math(EXPR bindex "${bindex} + 1")
     endforeach(blabel ${BUNDLED_LABELS})
   endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")

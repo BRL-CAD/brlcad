@@ -269,8 +269,21 @@
     </varlistentry>
   </variablelist>
   </example>
+
+  <example><title>View Full Density Table</title>
+  <variablelist>
+    <varlistentry>
+      <term><prompt>mged&gt; </prompt><userinput>mater -d get \*</userinput></term>
+      <listitem>
+	<para>
+	  Lists all entries in the density table.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+  </example>
   
-  <example><title>Viewing Density Data</title>
+  <example><title>View Name-Specific Density Data</title>
   <variablelist>
     <varlistentry>
       <term><prompt>mged&gt; </prompt><userinput>mater -d get --name \*Rubber\*</userinput></term>

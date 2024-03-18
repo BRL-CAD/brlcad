@@ -86,6 +86,8 @@ set_property(TARGET rthide APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 BRLCAD_ADDEXEC(rtsil "${LIBRTUIF_SOURCES};viewsil.c" "${RT_STD_LIBS}" FOLDER Rt)
 ADD_TARGET_DEPS(rtxray dm_plugins)
 
+BRLCAD_ADDEXEC(rtsurf "rtsurf.c;rtsurf_hits.cpp" "libanalyze;librt;libdm;liboptical;libicv")
+
 BRLCAD_ADDEXEC(rtweight "${LIBRTUIF_SOURCES};viewweight.c" "libanalyze;${RT_STD_LIBS}" FOLDER Rt)
 set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
@@ -101,6 +103,7 @@ set(rt_ignore_files
   libfb-dummy.c
   main.c
   rtuif.h
+  rtsurf_hits.h
   scanline.h
   viewdir.c
   viewdummy.c
