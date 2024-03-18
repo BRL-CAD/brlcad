@@ -497,7 +497,7 @@ recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struc
 	fastf_t low_t = low_ts[0];
 	V_MAX(low_t, low_ts[1]);
 	V_MAX(low_t, low_ts[2]);
-	if (ZERO(high_t) | (low_t >= high_t)) return;
+	if (high_t < SMALL_FASTF | (low_t >= high_t)) return;
     }
 
     if (node->n_primitives > 0) {

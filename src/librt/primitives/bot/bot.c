@@ -712,7 +712,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	VCROSS(S2, S, E1);
 	fastf_t gamma = VDOT(S2, rp->r_dir) / denom;
 	// early out beta and gamma
-	if ((beta < 0.0f) | (gamma < 0.0f) | (gamma + beta > 1.0f)) { continue; }
+	if ((beta <= 0.0f) | (gamma <= 0.0f) | (gamma + beta >= 1.0f)) { continue; }
 	// we calculate beta and gamma first, because 
 	// beta is associated with v1 and gamma is 
 	// associated with v2
