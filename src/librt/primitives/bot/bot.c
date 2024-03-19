@@ -469,7 +469,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
+    // if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 
     // How much of this do we actually need to do?
     struct bot_specific *bot;
@@ -523,18 +523,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v2);
 
 	/* Prevent the RPP from being 0 thickness */
-	if (NEAR_EQUAL(bounds[i*6+X], bounds[i*6+3+X], SMALL_FASTF)) {
-	    bounds[i*6+X] -= SMALL_FASTF;
-	    bounds[i*6+3+X] += SMALL_FASTF;
-	}
-	if (NEAR_EQUAL(bounds[i*6+Y], bounds[i*6+3+Y], SMALL_FASTF)) {
-	    bounds[i*6+Y] -= SMALL_FASTF;
-	    bounds[i*6+3+Y] += SMALL_FASTF;
-	}
-	if (NEAR_EQUAL(bounds[i*6+Z], bounds[i*6+3+Z], SMALL_FASTF)) {
-	    bounds[i*6+Z] -= SMALL_FASTF;
-	    bounds[i*6+3+Z] += SMALL_FASTF;
-	}
+	BBOX_NONDEGEN(&bounds[i*6+0], &bounds[i*6+3], SMALL_FASTF);
     }
     struct bu_pool *pool = hlbvh_init_pool(bot_ip->num_faces);
     // implicit return values
@@ -577,12 +566,11 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* zero thickness will get missed by the raytracer */
     BBOX_NONDEGEN(stp->st_min, stp->st_max, rtip->rti_tol.dist);
 
-    point_t mid;
-    VADD2SCALE(mid, min, max, 0.5);
-    VMOVE(stp->st_center, mid);
-    fastf_t radius = DIST_PNT_PNT(mid, max);
-    stp->st_aradius = radius;
-    stp->st_bradius = radius;
+    VADD2SCALE(stp->st_center, min, max, 0.5);
+    point_t dist_vec;
+    VSUB2SCALE(dist_vec, max, min, 0.5);
+    stp->st_aradius = FMAX(dist_vec[0], FMAX(dist_vec[1], dist_vec[2]));
+    stp->st_bradius = MAGNITUDE(dist_vec);
 
 #ifdef USE_OPENCL
     clt_bot_prep(stp, bot_ip, rtip);
@@ -727,6 +715,8 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	nhits++;
 	cur_hit->hit_magic = RT_HIT_MAGIC;
 	cur_hit->hit_dist = dist;
+	VJOIN1(cur_hit->hit_point, rp->r_pt, cur_hit->hit_dist, rp->r_dir);
+	VMOVE(cur_hit->hit_normal, norm);
 	// we copy what btg.c does right now
 	// even if we don't really understand why
 	cur_hit->hit_vpriv[X] = VDOT(norm, rp->r_dir);
@@ -817,13 +807,7 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
 void
 rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
-
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	bot_norm_float(bot, hitp, rp);
-    } else {
-	bot_norm_double(bot, hitp, rp);
-    }
+    return;
 }
 
 
