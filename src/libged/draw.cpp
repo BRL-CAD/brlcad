@@ -34,12 +34,10 @@
 #include <time.h>
 #include "bsocket.h"
 
-#define XXH_STATIC_LINKING_ONLY
-#include "xxhash.h"
-
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
+#include "bu/str.h"
 #include "bv/defines.h"
 #include "bg/sat.h"
 #include "bv/lod.h"
@@ -428,7 +426,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
 	    if (db_get_external(&ext, dp, dbip))
 		return;
-	    key = bv_mesh_lod_custom_key((void *)ext.ext_buf,  ext.ext_nbytes);
+	    key = bu_data_hash((void *)ext.ext_buf,  ext.ext_nbytes);
 	    bu_free_external(&ext);
 	    if (!key)
 		return;

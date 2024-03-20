@@ -363,7 +363,8 @@ BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const c
 BU_EXPORT size_t
 bu_editdist(const char *s1, const char *s2);
 
-/**
+
+/***************************************************************************
  * Given data, return an unsigned long long value based on a hashing
  * calculation.  We are deliberately not documenting the hashing algorithm used
  * to allow for "under the hood" improvements to its properties over time, and
@@ -372,9 +373,31 @@ bu_editdist(const char *s1, const char *s2);
  *
  * One of the uses for this function is to provide a "good enough" content-
  * based universally unique identifier, similarly to how Git uses SHA1 hashes
- * as UUIDs for commits. */
+ * as UUIDs for commits.
+ **************************************************************************/
 BU_EXPORT unsigned long long
-bu_data_hash(void *data, size_t len);
+bu_data_hash(const void *data, size_t len);
+
+/* bu_data_hash is the simple API, but there are situations where we need to
+ * build up the data to be used for hashing from multiple inputs.  For that
+ * case, the below API allows for updating a persistent hash state.
+ */
+struct bu_data_hash_impl;
+struct bu_data_hash_state {
+    struct bu_data_hash_impl *i;
+};
+
+BU_EXPORT struct bu_data_hash_state *
+bu_data_hash_create();
+
+BU_EXPORT void
+bu_data_hash_destroy(struct bu_data_hash_state *s);
+
+BU_EXPORT void
+bu_data_hash_update(struct bu_data_hash_state *s, const void *data, size_t len);
+
+BU_EXPORT unsigned long long
+bu_data_hash_val(struct bu_data_hash_state *s);
 
 __END_DECLS
 

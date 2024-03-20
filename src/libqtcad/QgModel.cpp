@@ -46,10 +46,6 @@
 #include <QAction>
 #include <QFileInfo>
 
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#include "xxhash.h"
-
 #include "bu/env.h"
 #include "bu/sort.h"
 #include "bv/lod.h"
@@ -250,7 +246,6 @@ qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent
 extern "C" void
 qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    XXH64_state_t h_state;
     unsigned long long hash;
     QgModel *mdl = (QgModel *)u_data;
     DbiState *ctx = mdl->gedp->dbi_state;
@@ -280,9 +275,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    // When this callback is made, dp is still valid, but in subsequent
 	    // processing it will not be.  We need to capture everything we
 	    // will need from this dp now, for later use when updating state
-	    XXH64_reset(&h_state, 0);
-	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    hash = (unsigned long long)XXH64_digest(&h_state);
+	    hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
 	    ctx->removed.insert(hash);
 	    ctx->old_names[hash] = std::string(dp->d_namep);
 	    break;

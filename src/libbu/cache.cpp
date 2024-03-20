@@ -30,9 +30,6 @@
 #include <thread>
 #include <vector>
 
-#define XXH_STATIC_LINKING_ONLY
-#include "xxhash.h"
-
 #include "lmdb.h"
 
 #include "bio.h"
