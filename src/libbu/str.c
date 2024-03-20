@@ -30,6 +30,10 @@
 #include <ctype.h>
 #include <stdio.h> /* for fprintf */
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
+
 #include "bu/debug.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
@@ -268,6 +272,20 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
 #endif
 }
 
+unsigned long long
+bu_data_hash(void *data, size_t len)
+{
+    if (!data || !len)
+	return 0;
+
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, (const char *)data, len);
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    return hash;
+}
 
 /*
  * Local Variables:
