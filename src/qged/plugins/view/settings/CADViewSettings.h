@@ -19,7 +19,12 @@
  */
 /** @file CADViewSettings.h
  *
- * Brief description
+ * TODO - update widget for bv/faceplate.h bv_params_state
+ * mode of operation - FPS isn't separate, it's one of the
+ * parameters.  Need to have an overall on-of box and a
+ * set of specific flags for each individual drawing
+ * element, similar to how General Polygon Modes box
+ * works in QPolyMod.cpp
  *
  */
 

@@ -182,7 +182,7 @@ set mged_help_data(g)		$helplib_data(wdb_group)
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set mged_help_data(gdiff)	{{[-h][-g #][-l|-r|-b][-G][-S] left_object right_object}	{compare two objects}}
 set mged_help_data(get)		$helplib_data(wdb_get)
-set mged_help_data(gqa)       {{[options] object}    {check and analyze geometry}}
+set mged_help_data(gqa)       {{[options] object}    {check and analyze geometry, including bounding box dimensions, weight, volume, overlaps, centroid, and air checking}}
 set mged_help_data(graph)       {{}    {query and manipulate properties of the graph that corresponds to the currently opened .g database}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
     [-gd graphics_display_string] [-dt graphics_type]

@@ -206,6 +206,7 @@ set(mann_EN
   rtarea.xml
   rtcheck.xml
   rtedge.xml
+  rtweight.xml
   saveview.xml
   sca.xml
   screengrab.xml

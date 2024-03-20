@@ -67,7 +67,6 @@ set(include_misc
   conf/PATCH
   conf/make.vbs
   config_win.h.in
-  xxhash.h
   RTree.h
   )
 CMAKEFILES(${include_misc})

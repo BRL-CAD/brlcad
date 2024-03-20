@@ -32,10 +32,6 @@
 
 #include <math.h>
 #include <string.h>
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#define XXH_PRIVATE_API
-#include "xxhash.h"
 #include "bio.h"
 
 #include "bu/debug.h"

@@ -96,7 +96,7 @@ render ( ) {
     hard=`echo 10k $edpx $gz 25.4 \* \* p | dc`
     easy=`echo 10k $arpx $gz $gz \* \* p | dc`
     # what's not hard is easy
-    if [[ $actual > $hard ]] ; then
+    if awk "BEGIN {exit !($actual > $hard)}" ; then
         easy=`echo 10k $actual $hard - p | dc`
     else
         easy=0

@@ -168,6 +168,10 @@ typedef SSIZE_T	ssize_t;
 # define MDB_USE_SYSV_SEM	1
 # endif
 # define MDB_FDATASYNC		fsync
+#elif defined(__HAIKU__)
+// TODO - is there a robust option for HaikuOS?  PTHREAD_MUTEX_ROBUST
+// doesn't seem to be present...
+# define MDB_USE_ROBUST	0
 #elif defined(__ANDROID__)
 # define MDB_FDATASYNC		fsync
 #endif

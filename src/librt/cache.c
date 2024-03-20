@@ -32,9 +32,6 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h> /* for mkdir */
-#endif
 
 #include "bio.h"
 #include "bnetwork.h"
@@ -135,12 +132,7 @@ cache_ensure_path(const char *path, int is_file)
     bu_free(dir, "dirname");
 
     if (!is_file && !bu_file_directory(path)) {
-#ifdef HAVE_WINDOWS_H
-	CreateDirectory(path, NULL);
-#else
-	/* mode: 775 */
-	mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
+	bu_mkdir(path);
     } else if (is_file && !bu_file_exists(path, NULL)) {
 	/* touch file */
 	FILE *fp = fopen(path, "w");

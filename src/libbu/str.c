@@ -30,6 +30,10 @@
 #include <ctype.h>
 #include <stdio.h> /* for fprintf */
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
+
 #include "bu/debug.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
@@ -268,6 +272,68 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
 #endif
 }
 
+unsigned long long
+bu_data_hash(const void *data, size_t len)
+{
+    if (!data || !len)
+	return 0;
+
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, (const char *)data, len);
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    return hash;
+}
+
+struct bu_data_hash_impl {
+    XXH64_state_t *h_state;
+};
+
+struct bu_data_hash_state *
+bu_data_hash_create()
+{
+    struct bu_data_hash_state *s;
+    BU_GET(s, struct bu_data_hash_state);
+    BU_GET(s->i, struct bu_data_hash_impl);
+    s->i->h_state = XXH64_createState();
+    XXH64_reset(s->i->h_state, 0);
+    return s;
+}
+
+void
+bu_data_hash_destroy(struct bu_data_hash_state *s)
+{
+    if (!s)
+	return;
+    if (s->i) {
+	if (s->i->h_state)
+	    XXH64_freeState(s->i->h_state);
+	s->i->h_state = NULL;
+	BU_PUT(s->i, struct bu_data_hash_impl);
+    }
+    s->i = NULL;
+    BU_PUT(s, struct bu_data_hash_state);
+}
+
+void
+bu_data_hash_update(struct bu_data_hash_state *s, const void *data, size_t len)
+{
+    if (!s || !data || !len)
+	return;
+    XXH64_update(s->i->h_state, data, len);
+}
+
+unsigned long long
+bu_data_hash_val(struct bu_data_hash_state *s)
+{
+    if (!s || !s->i || !s->i->h_state)
+	return 0;
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(s->i->h_state);
+    return (unsigned long long)hash_val;
+}
 
 /*
  * Local Variables:

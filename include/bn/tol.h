@@ -117,6 +117,16 @@ struct bn_tol {
 #define BN_TOL_IS_INITIALIZED(_p) (((struct bn_tol *)(_p) != (struct bn_tol *)0) && LIKELY((_p)->magic == BN_TOL_MAGIC))
 
 /**
+ * copy one tolerance structure to another
+ */
+#define BN_TOL_CPY(_d,_s) { \
+	(_d)->dist = (_s)->dist; \
+	(_d)->dist_sq = (_s)->dist_sq; \
+	(_d)->perp = (_s)->perp; \
+	(_d)->para = (_s)->para; \
+    }
+
+/**
  * replaces the hard coded tolerance value
  */
 #define BN_TOL_DIST 0.0005
