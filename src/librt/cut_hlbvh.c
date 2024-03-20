@@ -491,17 +491,14 @@ recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struc
 	VMOVE(high_ts, lows_t);
 	VMINMAX(low_ts, high_ts, highs_t);
 	
-	fastf_t high_t = high_ts[0];
-	V_MIN(high_t, high_ts[1]);
-	V_MIN(high_t, high_ts[2]);
-	fastf_t low_t = low_ts[0];
-	V_MAX(low_t, low_ts[1]);
-	V_MAX(low_t, low_ts[2]);
+	fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
+	fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
 	if (high_t < SMALL_FASTF | (low_t >= high_t)) return;
     }
 
     if (node->n_primitives > 0) {
-	BU_ASSERT(!node->children[0] && !node->children[1]);
+	BU_ASSERT(node->children[0] == NULL && node->children[1] == NULL);
+	// add the leaf values into a list
 	struct prim_list* entry;
 	BU_GET(entry, struct prim_list);
 	entry->n_primitives = node->n_primitives;

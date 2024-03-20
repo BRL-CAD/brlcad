@@ -729,6 +729,8 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
     // sort the hits
     //insertion sort
+    // TODO: this could be very large - use a sort from
+    // libbu or something
     for (size_t i = 1; i < nhits; i++) {
 	fastf_t i_dist = hits[i].hit_dist;
 	struct hit swap = hits[i];
