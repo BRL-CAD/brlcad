@@ -71,10 +71,6 @@
 #include <sstream>
 #include <string>
 
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h> /* for mkdir */
-#endif
-
 extern "C" {
 #define XXH_STATIC_LINKING_ONLY
 #include "xxhash.h"
@@ -134,17 +130,6 @@ extern "C" {
 #define CACHE_TRI_LEVEL "t"
 
 typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
-
-static void
-lod_dir(char *dir)
-{
-#ifdef HAVE_WINDOWS_H
-    CreateDirectory(dir, NULL);
-#else
-    /* mode: 775 */
-    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
-}
 
 static void
 obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct bview *v)
@@ -692,10 +677,10 @@ bv_mesh_lod_context_create(const char *name)
     // LoD generating routines colliding
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
     if (!bu_file_exists(dir, NULL))
-	lod_dir(dir);
+	bu_mkdir(dir);
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL)) {
-	lod_dir(dir);
+	bu_mkdir(dir);
     }
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, "format", NULL);
     if (!bu_file_exists(dir, NULL)) {
@@ -726,7 +711,7 @@ bv_mesh_lod_context_create(const char *name)
     // Create the specific LoD LMDB cache dir, if not already present
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
     if (!bu_file_exists(dir, NULL))
-	lod_dir(dir);
+	bu_mkdir(dir);
 
     // Need to call mdb_env_sync() at appropriate points.
     if (mdb_env_open(i->lod_env, dir, MDB_NOSYNC, 0664))
@@ -736,7 +721,7 @@ bv_mesh_lod_context_create(const char *name)
     bu_vls_printf(&fname, "_namekey");
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
     if (!bu_file_exists(dir, NULL))
-	lod_dir(dir);
+	bu_mkdir(dir);
 
     // Need to call mdb_env_sync() at appropriate points.
     if (mdb_env_open(i->name_env, dir, MDB_NOSYNC, 0664))
@@ -2108,26 +2093,6 @@ bv_mesh_lod_memshrink(struct bv_scene_obj *s)
 }
 
 static void
-bv_clear(const char *d)
-{
-    if (bu_file_directory(d)) {
-	char **filenames;
-	size_t nfiles = bu_file_list(d, "*", &filenames);
-	for (size_t i = 0; i < nfiles; i++) {
-	    if (BU_STR_EQUAL(filenames[i], "."))
-		continue;
-	    if (BU_STR_EQUAL(filenames[i], ".."))
-		continue;
-	    char cdir[MAXPATHLEN] = {0};
-	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
-	    bv_clear((const char *)cdir);
-	}
-	bu_argv_free(nfiles, filenames);
-    }
-    bu_file_delete(d);
-}
-
-static void
 cache_del(struct bv_mesh_lod_context *c, unsigned long long hash, const char *component)
 {
     // Construct lookup key
@@ -2241,7 +2206,7 @@ bv_mesh_lod_clear_cache(struct bv_mesh_lod_context *c, unsigned long long key)
 
     // Clear everything
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    bv_clear((const char *)dir);
+    bu_dirclear((const char *)dir);
 }
 
 extern "C" void

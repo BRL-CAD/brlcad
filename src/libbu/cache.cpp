@@ -30,10 +30,6 @@
 #include <thread>
 #include <vector>
 
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h> /* for mkdir */
-#endif
-
 #define XXH_STATIC_LINKING_ONLY
 #include "xxhash.h"
 
@@ -61,16 +57,6 @@ struct bu_cache_impl {
     struct bu_vls *fname;
 };
 
-static void
-_mk_cache_dir(char *dir) {
-#ifdef HAVE_WINDOWS_H
-    CreateDirectory(dir, NULL);
-#else
-    /* mode: 775 */
-    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
-}
-
 struct bu_cache *
 bu_cache_open(const char *cache_db, int create)
 {
@@ -89,7 +75,7 @@ bu_cache_open(const char *cache_db, int create)
 	// Ensure the necessary top level dirs are present
 	bu_dir(cdb, MAXPATHLEN, BU_DIR_CACHE, NULL);
 	if (!bu_file_exists(cdb, NULL))
-	    _mk_cache_dir(cdb);
+	    bu_mkdir(cdb);
 
 	// Break cache_db up into component directories with bu_path_component,
 	// making sure each one exists
@@ -108,7 +94,7 @@ bu_cache_open(const char *cache_db, int create)
 	for (long long i = dirs.size() - 1; i >= 0; i--) {
 	    bu_vls_printf(&ctmp, "/%s", dirs[i].c_str());
 	    if (!bu_file_exists(bu_vls_cstr(&ctmp), NULL))
-		_mk_cache_dir((char *)bu_vls_cstr(&ctmp));
+		bu_mkdir((char *)bu_vls_cstr(&ctmp));
 	}
 
 	bu_dir(cdb, MAXPATHLEN, BU_DIR_CACHE, cache_db, NULL);
@@ -168,26 +154,6 @@ bu_cache_close(struct bu_cache *c)
     BU_PUT(c, struct bu_cache);
 }
 
-static void
-_cache_dirclear(const char *d)
-{
-    if (bu_file_directory(d)) {
-	char **filenames;
-	size_t nfiles = bu_file_list(d, "*", &filenames);
-	for (size_t i = 0; i < nfiles; i++) {
-	    if (BU_STR_EQUAL(filenames[i], "."))
-		continue;
-	    if (BU_STR_EQUAL(filenames[i], ".."))
-		continue;
-	    char cdir[MAXPATHLEN] = {0};
-	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
-	    _cache_dirclear((const char *)cdir);
-	}
-	bu_argv_free(nfiles, filenames);
-    }
-    bu_file_delete(d);
-}
-
 void
 bu_cache_erase(const char *cache_db)
 {
@@ -196,7 +162,7 @@ bu_cache_erase(const char *cache_db)
 
     char cdb[MAXPATHLEN];
     bu_dir(cdb, MAXPATHLEN, BU_DIR_CACHE, cache_db, NULL);
-    _cache_dirclear(cdb);
+    bu_dirclear(cdb);
 }
 
 size_t
