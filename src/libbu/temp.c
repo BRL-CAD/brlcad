@@ -150,7 +150,7 @@ temp_add_to_list(const char *fn, int fd)
     all_temp_files.size++;
 }
 
-#define MAX_FILELEN 255	/* arbitrary len */
+#define MAX_FILELEN 25	/* arbitrary len */
 const char*
 bu_temp_file_name(char* filename, size_t len)
 {

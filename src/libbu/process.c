@@ -43,10 +43,6 @@
 extern pid_t wait(int *);
 #endif
 
-#if defined(HAVE_KILL) && !defined(HAVE_DECL_KILL) && !defined(kill)
-extern int kill(pid_t, int);
-#endif
-
 
 int
 bu_process_id(void)
@@ -157,18 +153,6 @@ bu_process_pid(struct bu_process *pinfo)
 {
     if (!pinfo)
 	return -1;
-
-    // Check if the process is still running.  If not, return -1
-#ifdef HAVE_UNISTD_H
-    if ((kill(pinfo->pid, 0) == -1) && (errno == ESRCH))
-	return -1;
-#elif defined(_WIN32)
-    // https://stackoverflow.com/a/1591379/2037687
-    DWORD rc = WaitForSingleObject(pinfo->hProcess, 0);
-    if (rc != WAIT_TIMEOUT)
-	return -1;
-#endif
-
     return (int)pinfo->pid;
 }
 
@@ -488,29 +472,20 @@ bu_process_wait(
 {
     int rc = 0;
 #ifndef _WIN32
+    int rpid;
     int retcode = 0;
 
     if (!pinfo)
 	return -1;
 
-    // Waiting now, done with input. Close to
-    // avoid leaking the file descriptor
     close(pinfo->fd_in);
-
-    // Wait for the PID in question
-    waitpid(pinfo->pid, &retcode, 0);
-
-    // Process done, close output channels (TODO,
-    // do we need to do this?)
     close(pinfo->fd_out);
     close(pinfo->fd_err);
 
+    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1) {
+    }
     rc = retcode;
-
-    // Rather than using a non-zero retcode, we should check WIFSIGNALED to
-    // determine if the process was aborted - a non-zero return code may be an
-    // expected return for some programs.
-    if (WIFSIGNALED(retcode)) {
+    if (rc) {
 	pinfo->aborted = 1;
     }
 #else

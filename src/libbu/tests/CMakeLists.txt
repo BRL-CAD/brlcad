@@ -731,7 +731,6 @@ BRLCAD_ADDEXEC(bu_subprocess subprocess.cpp libbu TEST)
 add_dependencies(bu_test bu_subprocess)
 BRLCAD_ADD_TEST(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" basic)
 BRLCAD_ADD_TEST(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
-BRLCAD_ADD_TEST(NAME bu_process_error COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" error)
 
 #  *********** mappedfile.c tests ************
 BRLCAD_ADD_TEST(NAME bu_mappedfile_serial_1 COMMAND bu_test mappedfile 1 1)

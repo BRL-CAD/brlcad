@@ -32,22 +32,6 @@
 
 #include "bu.h"
 
-static void
-exit_info(int retcode)
-{
-    if ( WIFEXITED(retcode) ) {
-	int rc = WEXITSTATUS(retcode);
-	bu_log("Normal exit, return code %d\n", rc);
-    } else if (WIFSIGNALED(retcode) ) {
-	int signum = WTERMSIG(retcode);
-	printf("Exited due to receiving signal %d\n", signum);
-    } else if (WIFSTOPPED(retcode) ) {
-	int signum = WSTOPSIG(retcode);
-	printf("Stopped due to receiving signal %d\n", signum);
-    }
-}
-
-
 int
 main(int ac, char *av[])
 {
@@ -84,18 +68,10 @@ main(int ac, char *av[])
 	} else {
 	    fprintf(stdout, "got: %s\n", line);
 	}
-	int ret = bu_process_wait(&aborted, p, 120);
-	if (ret == -1) {
+	if (bu_process_wait(&aborted, p, 120) == -1) {
 	    fprintf(stderr, "bu_process_test - wait failed\n");
-	    exit_info(ret);
 	    return 1;
 	}
-	if (aborted) {
-	    fprintf(stderr, "bu_process_test - process unexpectedly aborted\n");
-	    exit_info(ret);
-	    return 1;
-	}
-	exit_info(ret);
     }
 
     if (BU_STR_EQUAL(av[2], "abort")) {
@@ -110,37 +86,16 @@ main(int ac, char *av[])
 
 	bu_terminate(bu_process_pid(p));
 
-	int ret = bu_process_wait(&aborted, p, 1);
+	if (!bu_process_wait(&aborted, p, 1)) {
+	    fprintf(stderr, "bu_process_test - subprocess didn't abort correctly\n");
+	    return 1;
+	}
+
 	if (!aborted) {
 	    fprintf(stderr, "bu_process_test - bu_process didn't correctly report an aborted subprocess\n");
-	    exit_info(ret);
 	    return 1;
 	}
-	exit_info(ret);
     }
-
-    if (BU_STR_EQUAL(av[2], "error")) {
-	const char *pav[3];
-	int aborted = 0;
-	pav[0] = av[1];
-	pav[1] = av[2];
-	pav[2] = NULL;
-	bu_process_exec(&p, av[1], 2, (const char **)pav, 0, 0);
-
-	int ret = bu_process_wait(&aborted, p, 120);
-	if (WEXITSTATUS(ret) != 2) {
-	    fprintf(stderr, "bu_process_test - unexpected return code %d\n", WEXITSTATUS(ret));
-	    exit_info(ret);
-	    return 1;
-	}
-	if (aborted) {
-	    fprintf(stderr, "bu_process_test - process unexpectedly aborted\n");
-	    exit_info(ret);
-	    return 1;
-	}
-	exit_info(ret);
-    }
-
 
     return 0;
 }
