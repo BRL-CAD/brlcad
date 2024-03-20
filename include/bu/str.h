@@ -363,18 +363,6 @@ BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const c
 BU_EXPORT size_t
 bu_editdist(const char *s1, const char *s2);
 
-/**
- * Given data, return an unsigned long long value based on a hashing
- * calculation.  We are deliberately not documenting the hashing algorithm used
- * to allow for "under the hood" improvements to its properties over time, and
- * there should be no assumption of the equality of the hashed value between
- * different versions of BRL-CAD.
- *
- * One of the uses for this function is to provide a "good enough" content-
- * based universally unique identifier, similarly to how Git uses SHA1 hashes
- * as UUIDs for commits. */
-BU_EXPORT unsigned long long
-bu_data_hash(void *data, size_t len);
 
 /***************************************************************************
  * Given data, return an unsigned long long value based on a hashing
