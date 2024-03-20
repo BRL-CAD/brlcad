@@ -39,7 +39,7 @@
 #include "../ged_private.h"
 
 /**
- * structure used by the dbconcat command for keeping tract of where objects
+ * structure used by the dbconcat command for keeping track of where objects
  * are being copied to and from, and what type of affix to use.
  */
 struct ged_concat_data {
@@ -150,6 +150,7 @@ uniq_name(const char *name, struct ged_concat_data *cc_data)
 
     // Nope, not enough.
     const char *rx = NULL;
+    const char *prx = "[!0-9]*([0-9+]).*";
     bu_vls_sprintf(&iname, "%s", orig_name);
     if (cc_data->suffix) {
 	rx = NULL; // default incr behavior is to go for the suffix.
@@ -157,7 +158,6 @@ uniq_name(const char *name, struct ged_concat_data *cc_data)
 	if (cc_data->affix.length())
 	    bu_vls_printf(&iname, "%s", cc_data->affix.c_str());
     } else {
-	const char *prx = "[!0-9]*([0-9+]).*";
 	rx = prx;
 	bu_vls_prepend(&iname, "0_");
 	if (cc_data->affix.length())
