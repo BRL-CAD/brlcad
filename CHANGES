@@ -1702,3 +1702,7 @@ s/pl_mat_idn/MAT_IDN/g
 s/pl_mat_zero/MAT_ZERO/g
 s/pl_mat_copy/MAT_COPY/g
 s/ambSlow=[0-9]*//g
+
+7.40
+----
+s/bv_mesh_lod_custom_key/bu_data_hash/g

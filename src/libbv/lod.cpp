@@ -72,9 +72,6 @@
 #include <string>
 
 extern "C" {
-#define XXH_STATIC_LINKING_ONLY
-#include "xxhash.h"
-
 #include "lmdb.h"
 }
 
@@ -615,18 +612,14 @@ bv_mesh_lod_context_create(const char *name)
 	return NULL;
 
     // Hash the input filename to generate a key for uniqueness
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&fname, "%s", bu_path_normalize(name));
     // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    // (may have fixed this - need to check...)
     if (bu_vls_strlen(&fname) < 10) {
 	bu_vls_printf(&fname, "GGGGGGGGGGGGG");
     }
-    XXH64_update(&h_state, bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
+    unsigned long long hash = bu_data_hash(bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
     bu_path_component(&fname, bu_path_normalize(name), BU_PATH_BASENAME_EXTLESS);
     bu_vls_printf(&fname, "_%llu", hash);
 
@@ -762,18 +755,14 @@ bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
 
     // Database object names may be of arbitrary length - hash
     // to get the lookup key
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&keystr, "%s", name);
     // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    // (may have fixed this - need to check...)
     if (bu_vls_strlen(&keystr) < 10) {
 	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
     }
-    XXH64_update(&h_state, bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
+    unsigned long long hash = bu_data_hash(bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
     bu_vls_sprintf(&keystr, "%llu", hash);
 
     mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
@@ -799,18 +788,14 @@ bv_mesh_lod_key_put(struct bv_mesh_lod_context *c, const char *name, unsigned lo
 {
     // Database object names may be of arbitrary length - hash
     // to get something appropriate for a lookup key
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&keystr, "%s", name);
     // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    // (may have fixed this - need to check...)
     if (bu_vls_strlen(&keystr) < 10) {
 	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
     }
-    XXH64_update(&h_state, bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
+    unsigned long long hash = bu_data_hash(bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
     bu_vls_sprintf(&keystr, "%llu", hash);
 
     MDB_val mdb_key;
@@ -1095,13 +1080,11 @@ POPState::POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcn
 
     // Hash the data to generate a key, if the user didn't supply us with one
     if (!user_key) {
-	XXH64_state_t h_state;
-	XXH64_reset(&h_state, 0);
-	XXH64_update(&h_state, v, vcnt*sizeof(point_t));
-	XXH64_update(&h_state, faces, 3*fcnt*sizeof(int));
-	XXH64_hash_t hash_val;
-	hash_val = XXH64_digest(&h_state);
-	hash = (unsigned long long)hash_val;
+	struct bu_data_hash_state *s = bu_data_hash_create();
+	bu_data_hash_update(s, v, vcnt*sizeof(point_t));
+	bu_data_hash_update(s, faces, 3*fcnt*sizeof(int));
+	hash = bu_data_hash_val(s);
+	bu_data_hash_destroy(s);
     } else {
 	hash = user_key;
     }
@@ -1928,20 +1911,6 @@ bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, 
 
     return key;
 }
-
-
-extern "C" unsigned long long
-bv_mesh_lod_custom_key(void *data, size_t data_size)
-{
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, data, data_size);
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
-    return hash; 
-}
-
 
 extern "C" struct bv_mesh_lod *
 bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key)

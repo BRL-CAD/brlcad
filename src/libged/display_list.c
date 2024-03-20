@@ -37,10 +37,6 @@
 #include "ged.h"
 #include "./ged_private.h"
 
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#include "xxhash.h"
-
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
 #define FREE_BV_SCENE_OBJ(p, fp) { \
@@ -2424,12 +2420,9 @@ dl_name_hash(struct ged *gedp)
     if (!BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay))
 	return 0;
 
-    XXH64_hash_t hash_val;
-    XXH64_state_t *state;
-    state = XXH64_createState();
+    struct bu_data_hash_state *state = bu_data_hash_create();
     if (!state)
 	return 0;
-    XXH64_reset(state, 0);
 
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -2445,7 +2438,7 @@ dl_name_hash(struct ged *gedp)
 		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
 		    struct directory *dp = bdata->s_fullpath.fp_names[i];
-		    XXH64_update(state, dp->d_namep, strlen(dp->d_namep));
+		    bu_data_hash_update(state, dp->d_namep, strlen(dp->d_namep));
 		}
 	    }
 	    sp = nsp;
@@ -2453,10 +2446,10 @@ dl_name_hash(struct ged *gedp)
 	gdlp = next_gdlp;
     }
 
-    hash_val = XXH64_digest(state);
-    XXH64_freeState(state);
+    unsigned long long hash_val = bu_data_hash_val(state);
+    bu_data_hash_destroy(state);
 
-    return (unsigned long long)hash_val;
+    return hash_val;
 }
 
 /*

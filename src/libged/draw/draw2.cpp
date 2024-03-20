@@ -39,11 +39,6 @@
 #include "nmg.h"
 #include "rt/view.h"
 
-extern "C" {
-#define XXH_STATIC_LINKING_ONLY
-#include "xxhash.h"
-}
-
 #include "ged/view/state.h"
 #include "../ged_private.h"
 
