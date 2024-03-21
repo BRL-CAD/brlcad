@@ -1652,16 +1652,6 @@ LIBGED
   statefulness can go away.  a db_glob expression that doesn't match
   anything should not return the expression.
 
-* incorporate some variety of spatial partitioning into the facetize
-  command (may involve just rewriting it) to try and realize MUCH
-  faster tessellation of CSG geometry.  Current routines are doing a
-  lot of unnecessary work that tends to result in explosive completion
-  times for worst-case scenarios - try to get closer to the "only do
-  the work we need to" ideal.  Once a new idea is proven in that
-  command, it should be made into a libgcv routine and
-  converters/other commands retargeted to use it.
-
-
 SHADED DISPLAYS
 ---------------
 
