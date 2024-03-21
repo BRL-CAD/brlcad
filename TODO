@@ -735,9 +735,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * implement rt_volume() API for computing geometry volume (gqa style
   for complex, direct for primitives)
 
-* rework fbcolor, fbzoom, and fbpoint to not use termlib, instead just
-  using regular printing and input reading in a loop.
-
 * See if it is possible to simplify btclsh/bwish code when it comes
   to relying on libtermio - linenoise can do the basics, and for fancier
   keybinding/word based navigation see if launching in Emacs can suffice:
