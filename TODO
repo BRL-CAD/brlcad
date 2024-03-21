@@ -481,11 +481,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/include/glob.h
   https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/glob.c
 
-* look at components of the Screened Poisson code and figure out where/how
-  they would map into BRL-CAD components. (this is partially to see whether
-  we can (re)implement this logic in our framework and partially an exercise
-  in BRL-CAD library scoping)
-
 * replace guts of bu_ptbl to see if we can improve performance -
   implications for removal if an appropriate substitute is found,
   needs to be deprecated if we remove all API but we can update guts.
