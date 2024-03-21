@@ -528,13 +528,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
 
-* evaluate OpenMesh (http://www.openmesh.org) and OpenFlipper
-  (http://www.openflipper.org) for smoothing, decimation, and
-  additional GCV conversion formats.
-
-* GCT decimation assumes no edge is shared by two triangles except
-  once in the reversed order (AB, BA).  Needs basic check to avoid
-  failures/crashing.
+* replace bundled GCT decimation code with https://github.com/BRL-CAD/mmesh 
 
 * V&V bwcrop, pixembed are behaving correctly, as documented
 
