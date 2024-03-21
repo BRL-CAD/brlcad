@@ -26,177 +26,174 @@
 #include "common.h"
 
 #include <string>
-#include <unordered_set>
+#include <set>
 #include <unordered_map>
 
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
 #include "bu/getopt.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
 
+
 /**
- * structure used by the dbconcat command for keeping track of where objects
- * are being copied to and from, and what type of affix to use.
+ * structure used by the dbconcat command for keeping tract of where
+ * objects are being copied to and from, and what type of affix to
+ * use.
  */
 struct ged_concat_data {
-    struct db_i *incoming_dbip = NULL;
-    struct db_i *target_dbip = NULL;
-    std::string affix;
-    int prefix = 0;
-    int suffix = 0;
-    int affix_all = 0;
-    int overwrite = 0;
-    long int overwritten = 0;
-    int use_ctbl = 0;
-    int use_title = 0;
-    int use_units = 0;
-    std::unordered_map<std::string, std::string> name_map;
-    std::unordered_set<std::string> used_names;
+    int copy_mode;
+    struct db_i *old_dbip;
+    struct db_i *new_dbip;
+    struct bu_vls affix;
+    long overwritten = 0;
 };
 
-static int
-_db_uniq_test(struct bu_vls *n, void *data)
-{
-    struct db_i *dbip = (struct db_i *)data;
-    if (db_lookup(dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
-    return 0;
-}
 
-static int
-_cc_uniq_test(struct bu_vls *n, void *data)
-{
-    struct ged_concat_data *cc_data = (struct ged_concat_data *)data;
-    // If it's in the target database, it's not unique
-    if (db_lookup(cc_data->target_dbip, bu_vls_cstr(n), LOOKUP_QUIET) != RT_DIR_NULL)
-	return 0;
-    // If it's not in the target database, check it against used_names
-    if (cc_data->used_names.find(std::string(bu_vls_cstr(n))) != cc_data->used_names.end())
-	return 0;
-    // Yep, it's unique
-    return 1;
-}
+#define NO_AFFIX	1<<0
+#define AUTO_PREFIX	1<<1
+#define AUTO_SUFFIX	1<<2
+#define CUSTOM_PREFIX	1<<3
+#define CUSTOM_SUFFIX	1<<4
+#define OVERWRITE	1<<5
+
 
 /**
  * find a new unique name given a list of previously used names, and
  * the type of naming mode that described what type of affix to use.
  */
-static int
-uniq_name(const char *name, struct ged_concat_data *cc_data)
+static std::string
+get_new_name(const char *name,
+	     struct db_i *dbip,
+	     std::unordered_map<std::string, std::string> &name_map,
+	     std::set<std::string> &used_names,
+	     struct ged_concat_data *cc_data)
 {
+    struct bu_vls new_name = BU_VLS_INIT_ZERO;
+    char *aname = NULL;
+    long num=0;
+
+    RT_CK_DBI(dbip);
     BU_ASSERT(cc_data);
-    std::unordered_map<std::string, std::string> *name_map = &cc_data->name_map;
-    std::unordered_set<std::string> *used_names = &cc_data->used_names;
 
-    if (!name)
+    if (!name) {
 	bu_log("WARNING: encountered NULL name, renaming to \"UNKNOWN\"\n");
-    const char *orig_name = (name) ? name : "UNKNOWN";
-    struct bu_vls iname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&iname, "%s", orig_name);
-    std::string nname = std::string(bu_vls_cstr(&iname));
-
-    // If we already have a mapping assigned for this object name.
-    if (name_map->find(nname) != name_map->end()) {
-	bu_vls_free(&iname);
-	return BRLCAD_OK;
+	name = "UNKNOWN";
     }
 
-    // If we have a non-empty affix and auto_prefix is set, every name gets
-    // the same prefix applied.  Same for suffix
-    bool affix_applied = false;
-    if (cc_data->affix_all && cc_data->affix.length()) {
-	if (cc_data->suffix) {
-	    bu_vls_printf(&iname, "%s", cc_data->affix.c_str());
+    std::string nname = std::string(name);
+
+    // If we already have a mapping assigned for this object name, reuse it.
+    if (name_map.find(nname) != name_map.end()) {
+	return name_map[nname];
+    }
+
+    do {
+	/* iterate until we find an object name that is not in
+	 * use, trying to accommodate the user's requested affix
+	 * naming mode.
+	 */
+
+	bu_vls_trunc(&new_name, 0);
+
+	if (cc_data->copy_mode & NO_AFFIX) {
+	    if (num > 0 && cc_data->copy_mode & CUSTOM_PREFIX) {
+		/* auto-increment prefix */
+		bu_vls_printf(&new_name, "%ld_", num);
+	    }
+	    bu_vls_strcat(&new_name, name);
+	    if (num > 0 && cc_data->copy_mode & CUSTOM_SUFFIX) {
+		/* auto-increment suffix */
+		bu_vls_printf(&new_name, "_%ld", num);
+	    }
+	} else if (cc_data->copy_mode & CUSTOM_SUFFIX) {
+	    /* use custom suffix */
+	    bu_vls_strcpy(&new_name, name);
+	    if (num > 0) {
+		bu_vls_printf(&new_name, "_%ld_", num);
+	    }
+	    bu_vls_vlscat(&new_name, &cc_data->affix);
+	} else if (cc_data->copy_mode & CUSTOM_PREFIX) {
+	    /* use custom prefix */
+	    bu_vls_vlscat(&new_name, &cc_data->affix);
+	    if (num > 0) {
+		bu_vls_printf(&new_name, "_%ld_", num);
+	    }
+	    bu_vls_strcat(&new_name, name);
+	} else if (cc_data->copy_mode & AUTO_SUFFIX) {
+	    /* use auto-incrementing suffix */
+	    bu_vls_strcat(&new_name, name);
+	    bu_vls_printf(&new_name, "_%ld", num);
+	} else if (cc_data->copy_mode & AUTO_PREFIX) {
+	    /* use auto-incrementing prefix */
+	    bu_vls_printf(&new_name, "%ld_", num);
+	    bu_vls_strcat(&new_name, name);
 	} else {
-	    bu_vls_prepend(&iname, cc_data->affix.c_str());
+	    /* no custom suffix/prefix specified, use prefix */
+	    if (num > 0) {
+		bu_vls_printf(&new_name, "%ld_", num);
+	    }
+	    bu_vls_strcat(&new_name, name);
 	}
-	affix_applied = true;
-    }
 
-    // Check the currently proposed name against the target database - if there
-    // is no conflict, we're done.
-    nname = std::string(bu_vls_cstr(&iname));
-    struct directory *ndp = db_lookup(cc_data->target_dbip, bu_vls_cstr(&iname), LOOKUP_QUIET);
-    if (!ndp) {
-	(*name_map)[(name) ? std::string(name) : std::string("UNKNOWN")] = nname;
-	used_names->insert(nname);
-	bu_vls_free(&iname);
-	return BRLCAD_OK;
-    }
-
-    // Conflict.  Rework the names to allow for automatic incrementing, and
-    // find a unique name.
-    bu_vls_sprintf(&iname, "%s", nname.c_str());
-    if (cc_data->affix.size() && !affix_applied) {
-	// We have an affix, but we weren't forcibly told to apply it to
-	// everything - see if that'll do the job
-	if (!cc_data->suffix) {
-	    bu_vls_prepend(&iname, cc_data->affix.c_str());
-	} else {
-	    bu_vls_printf(&iname, "%s", cc_data->affix.c_str());
+	/* make sure it fits for v4 */
+	if (db_version(cc_data->old_dbip) < 5) {
+	    if (bu_vls_strlen(&new_name) > _GED_V4_MAXNAME) {
+		bu_log("WARNING: generated new name [%s] is too long (%zu > %d).  Truncating.\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), _GED_V4_MAXNAME);
+	    }
+	    bu_vls_addr(&new_name)[_GED_V4_MAXNAME-1] = '\0';
 	}
-	ndp = db_lookup(cc_data->target_dbip, bu_vls_cstr(&iname), LOOKUP_QUIET);
-	if (!ndp) {
-	    nname = std::string(bu_vls_cstr(&iname));
-	    (*name_map)[(name) ? std::string(name) : std::string("UNKNOWN")] = nname;
-	    used_names->insert(nname);
-	    bu_vls_free(&iname);
-	    return BRLCAD_OK;
+	aname = bu_vls_addr(&new_name);
+
+	num++;
+
+    } while (db_lookup(dbip, aname, LOOKUP_QUIET) != RT_DIR_NULL ||
+	     (used_names.find(std::string(aname)) != used_names.end()));
+
+    /* if they didn't get what they asked for, warn them (except when overwriting) */
+    if (num > 1 && !(cc_data->copy_mode & OVERWRITE)) {
+	if (cc_data->copy_mode & NO_AFFIX) {
+	    bu_log("WARNING: unable to import [%s] without an affix, imported as [%s]\n", name, bu_vls_addr(&new_name));
+	} else if (cc_data->copy_mode & CUSTOM_SUFFIX) {
+	    bu_log("WARNING: unable to import [%s] as [%s%s], imported as [%s]\n", name, name, bu_vls_addr(&cc_data->affix), bu_vls_addr(&new_name));
+	} else if (cc_data->copy_mode & CUSTOM_PREFIX) {
+	    bu_log("WARNING: unable to import [%s] as [%s%s], imported as [%s]\n", name, bu_vls_addr(&cc_data->affix), name, bu_vls_addr(&new_name));
 	}
     }
 
-    // Nope, not enough.
-    const char *rx = NULL;
-    const char *prx = "[!0-9]*([0-9+]).*";
-    bu_vls_sprintf(&iname, "%s", orig_name);
-    if (cc_data->suffix) {
-	rx = NULL; // default incr behavior is to go for the suffix.
-	bu_vls_printf(&iname, "_0");
-	if (cc_data->affix.length())
-	    bu_vls_printf(&iname, "%s", cc_data->affix.c_str());
-    } else {
-	rx = prx;
-	bu_vls_prepend(&iname, "0_");
-	if (cc_data->affix.length())
-	    bu_vls_prepend(&iname, cc_data->affix.c_str());
-    }
-    // Increment until we get something usable
-    if (bu_vls_incr(&iname, rx, NULL, &_cc_uniq_test, (void *)cc_data) < 0) {
-	bu_vls_free(&iname);
-	return BRLCAD_ERROR;
-    }
+    /* we should now have a unique name.  store it in the map and the used_names set */
+    name_map[nname] = std::string(bu_vls_cstr(&new_name));
+    used_names.insert(name_map[nname]);
+    bu_vls_free(&new_name);
 
-    nname = std::string(bu_vls_cstr(&iname));
-    (*name_map)[(name) ? std::string(name) : std::string("UNKNOWN")] = nname;
-    used_names->insert(nname);
-
-    bu_vls_free(&iname);
-    return BRLCAD_OK;
+    return name_map[nname];
 }
 
 
 static void
 adjust_names(union tree *trp,
-	struct ged_concat_data *cc_data)
+	     struct db_i *dbip,
+	     std::unordered_map<std::string, std::string> &name_map,
+	     std::set<std::string> &used_names,
+	     struct ged_concat_data *cc_data)
 {
-    /* If we are overwriting conflicts, there's nothing to adjust */
-    if (cc_data->overwrite)
-	return;
-
-    std::string old_name;
     std::string new_name;
-    std::unordered_map<std::string, std::string> &name_map = cc_data->name_map;
+    std::string old_name;
 
-    if (trp == NULL)
+    if (cc_data->copy_mode & OVERWRITE) /* we're overwriting conflicts, there's nothing to adjust */
 	return;
+
+    if (trp == NULL) {
+	return;
+    }
 
     switch (trp->tr_op) {
 	case OP_DB_LEAF:
 	    old_name = std::string(trp->tr_l.tl_name);
-	    new_name = name_map[old_name];
+	    new_name = get_new_name(trp->tr_l.tl_name, dbip,
+				    name_map, used_names, cc_data);
 	    if (old_name != new_name) {
 		bu_free(trp->tr_l.tl_name, "leaf name");
 		trp->tr_l.tl_name = bu_strdup(new_name.c_str());
@@ -206,13 +203,16 @@ adjust_names(union tree *trp,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    adjust_names(trp->tr_b.tb_left, cc_data);
-	    adjust_names(trp->tr_b.tb_right, cc_data);
+	    adjust_names(trp->tr_b.tb_left, dbip,
+			 name_map, used_names, cc_data);
+	    adjust_names(trp->tr_b.tb_right, dbip,
+			 name_map, used_names, cc_data);
 	    break;
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    adjust_names(trp->tr_b.tb_left, cc_data);
+	    adjust_names(trp->tr_b.tb_left, dbip,
+			 name_map, used_names, cc_data);
 	    break;
     }
 }
@@ -220,8 +220,12 @@ adjust_names(union tree *trp,
 
 static int
 copy_object(struct ged *gedp,
-	struct directory *input_dp,
-	struct ged_concat_data *cc_data)
+	    struct directory *input_dp,
+	    struct db_i *input_dbip,
+	    struct db_i *curr_dbip,
+	    std::unordered_map<std::string, std::string> &name_map,
+	    std::set<std::string> &used_names,
+	    struct ged_concat_data *cc_data)
 {
     struct rt_db_internal ip;
     struct rt_extrude_internal *extr;
@@ -232,28 +236,27 @@ copy_object(struct ged *gedp,
     struct directory* oride_dp = NULL;
     std::string owrite_backup;
 
-    if (rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&ip, input_dp, input_dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
-		"Failed to get internal form of object (%s) - aborting!!!\n",
-		input_dp->d_namep);
+		      "Failed to get internal form of object (%s) - aborting!!!\n",
+		      input_dp->d_namep);
 	return BRLCAD_ERROR;
     }
 
-    std::string old_name;
     if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD) {
 	/* adjust names of referenced object in any object that reference other objects */
 	switch (ip.idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_COMBINATION:
 		comb = (struct rt_comb_internal *)ip.idb_ptr;
 		RT_CK_COMB(comb);
-		adjust_names(comb->tree, cc_data);
+		adjust_names(comb->tree, curr_dbip, name_map, used_names, cc_data);
 		break;
 	    case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 		extr = (struct rt_extrude_internal *)ip.idb_ptr;
 		RT_EXTRUDE_CK_MAGIC(extr);
-		old_name = std::string(extr->sketch_name);
-		new_name = cc_data->name_map[old_name];
-		if (new_name != old_name) {
+
+		new_name = get_new_name(extr->sketch_name, curr_dbip, name_map, used_names, cc_data);
+		if (new_name.length()) {
 		    bu_free(extr->sketch_name, "sketch name");
 		    extr->sketch_name = bu_strdup(new_name.c_str());
 		}
@@ -264,8 +267,8 @@ copy_object(struct ged *gedp,
 
 		if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ) {
 		    /* This dsp references a database object, may need to change its name */
-		    old_name = std::string(bu_vls_cstr(&dsp->dsp_name));
-		    new_name = cc_data->name_map[old_name];
+		    new_name = get_new_name(bu_vls_addr(&dsp->dsp_name), curr_dbip,
+					    name_map, used_names, cc_data);
 		    if (new_name.length()) {
 			bu_vls_free(&dsp->dsp_name);
 			bu_vls_strcpy(&dsp->dsp_name, new_name.c_str());
@@ -275,38 +278,29 @@ copy_object(struct ged *gedp,
 	}
     }
 
-    if (cc_data->overwrite) {
+    new_name = get_new_name(input_dp->d_namep, curr_dbip, name_map, used_names, cc_data);
+    if (!new_name.length()) {
 	new_name = std::string(input_dp->d_namep);
-    } else {
-	new_name = cc_data->name_map[std::string(input_dp->d_namep)];
-	if (!new_name.length()) {
-	    bu_log("Error - no mapped name for %s\n", input_dp->d_namep);
-	    return BRLCAD_ERROR;
-	}
     }
 
     /* if overwriting -
      * move current to temp name before copying to avoid name collisions and data loss */
-    if (cc_data->overwrite) {
+    if (cc_data->copy_mode & OVERWRITE) {
 	oride_dp = db_lookup(gedp->dbip, input_dp->d_namep, 0);
 	if (oride_dp) { /* obj exists and needs to be moved out of the way */
-	    struct bu_vls bname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&bname, "%s.bak", input_dp->d_namep);
-	    if (bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)cc_data->target_dbip) < 0) {
-		owrite_backup = std::string(input_dp->d_namep) + std::string(".bak");
-	    } else {
-		owrite_backup = std::string(bu_vls_cstr(&bname));
-	    }
-	    bu_vls_free(&bname);
-	    db_rename(cc_data->target_dbip, oride_dp, owrite_backup.c_str());
+	    db_rename(cc_data->old_dbip, oride_dp, new_name.c_str());
+	    /* remember the backup's name so we can delete it later */
+	    owrite_backup = new_name;
+	    /* we've moved the orignal object out of the way. Reset new_name for the diradd */
+	    new_name = std::string(input_dp->d_namep);
 	}
     }
 
-    if ((new_dp = db_diradd(cc_data->target_dbip, new_name.c_str(), RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
-		    (void *)&input_dp->d_minor_type)) == RT_DIR_NULL) {
+    if ((new_dp = db_diradd(curr_dbip, new_name.c_str(), RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
+			    (void *)&input_dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
-		"Failed to add new object name (%s) to directory - aborting!!\n",
-		new_name.c_str());
+		      "Failed to add new object name (%s) to directory - aborting!!\n",
+		      new_name.c_str());
 	return BRLCAD_ERROR;
     }
 
@@ -314,10 +308,10 @@ copy_object(struct ged *gedp,
      * make sure they match. */
     new_dp->d_major_type = input_dp->d_major_type;
 
-    if (rt_db_put_internal(new_dp, cc_data->target_dbip, &ip, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(new_dp, curr_dbip, &ip, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
-		"Failed to write new object (%s) to database - aborting!!\n",
-		new_name.c_str());
+		      "Failed to write new object (%s) to database - aborting!!\n",
+		      new_name.c_str());
 	return BRLCAD_ERROR;
     }
 
@@ -341,152 +335,235 @@ copy_object(struct ged *gedp,
 extern "C" int
 ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help;
+    struct db_i *newdbp;
     struct directory *dp;
+    std::unordered_map<std::string, std::string> name_map;
+    std::set<std::string> used_names;
+    struct bu_attribute_value_set g_avs;
+    const char *cp;
+    char *colorTab;
     struct ged_concat_data cc_data;
-    const char *commandName = argv[0];
-
-    static const char *usage = "[options] file.g [affix]";
-    struct bu_opt_desc d[9];
-    BU_OPT(d[0], "h",      "help", "", NULL,          &print_help, "Print help and exit");
-    BU_OPT(d[1], "O", "overwrite", "", NULL, &(cc_data.overwrite), "Overwrite existing objects if names conflict.");
-    BU_OPT(d[2], "c",          "", "", NULL,  &(cc_data.use_ctbl), "Use incoming region colortable");
-    BU_OPT(d[3], "p",    "prefix", "", NULL,    &(cc_data.prefix), "Apply naming adjustments to the beginning of the object name");
-    BU_OPT(d[4], "s",    "suffix", "", NULL,    &(cc_data.suffix), "Apply naming adjustments to the end of the object name");
-    BU_OPT(d[5], "A", "affix_all", "", NULL, &(cc_data.affix_all), "Apply any supplied affix to all objects, not just to avoid name conflicts.");
-    BU_OPT(d[6], "t",          "", "", NULL, &(cc_data.use_title), "Use incoming database title");
-    BU_OPT(d[7], "u",          "", "", NULL, &(cc_data.use_units), "Use incoming units");
-    BU_OPT_NULL(d[8]);
+    const char *oldfile;
+    static const char *usage = "[-u] [-t] [-c] [-s|-p] [-O] file.g [suffix|prefix]";
+    int importUnits = 0;
+    int importTitle = 0;
+    int importColorTable = 0;
+    int saveGlobalAttrs = 0;
+    int c;
+    const char *commandName;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    /* skip command name argv[0] */
-    argc-=(argc>0); argv+=(argc>0);
-
-    /* Make sure we're v5 */
-    if (db_version(gedp->dbip) < 5) {
-	bu_log("ERROR: %s does not support v%d files as import destinations.\n", commandName, db_version(gedp->dbip));
-	return BRLCAD_ERROR;
-    }
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* parse standard options */
-    struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    argc = bu_opt_parse(&omsg, argc, argv, d);
-    if (argc < 0) {
-	bu_vls_printf(gedp->ged_result_str, "option parsing failed: %s\n", bu_vls_cstr(&omsg));
-	bu_vls_free(&omsg);
-	return BRLCAD_ERROR;
-    }
-    bu_vls_free(&omsg);
-
-    if (print_help || argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
-	return (print_help) ? BRLCAD_OK : BRLCAD_ERROR;
-    }
-
-    /* Current database is the target */
-    cc_data.target_dbip = gedp->dbip;
-
-    /* Open the incoming .g file */
-    const char *incoming_file = argv[0];
-    if ((cc_data.incoming_dbip = db_open(incoming_file, DB_OPEN_READONLY)) == DBI_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: Can't open geometry database file %s", commandName, incoming_file);
-	return BRLCAD_ERROR;
-    }
-    if (db_version(cc_data.incoming_dbip) != db_version(gedp->dbip)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first", commandName, incoming_file);
+    if (argc < 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    db_dirbuild(cc_data.incoming_dbip);
+    bu_vls_init(&cc_data.affix);
+    cc_data.copy_mode = 0;
+    commandName = argv[0];
 
-    // If we have an affix, set it
-    if (argc > 1)
-	cc_data.affix = std::string(argv[1]);
-
-    // For all incoming objects, compare their names against the current
-    // database.  In case of any collisions, generate a new unique name based
-    // on the options.  If we can't do this successfully, we can't concat the
-    // databases - do it before making any data changes.
-    FOR_ALL_DIRECTORY_START(dp, cc_data.incoming_dbip) {
-	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
-	    continue;
-	if (uniq_name(dp->d_namep, &cc_data) != BRLCAD_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "Name mapping failed for %s, aborting", dp->d_namep);
-	    return BRLCAD_ERROR;
-	}
-    } FOR_ALL_DIRECTORY_END;
-
-
-    /* Handle the metadata options first */
-    if (cc_data.use_ctbl || cc_data.use_title || cc_data.use_units) {
-	struct db_i *t_dbip = cc_data.target_dbip;
-	struct db_i *i_dbip = cc_data.incoming_dbip;
-	const char *i_fname = i_dbip->dbi_filename;
-	const char *t_fname = t_dbip->dbi_filename;
-	struct directory *tglobal_dp = db_lookup(t_dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
-	struct directory *iglobal_dp = db_lookup(i_dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
-	if (!tglobal_dp) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, t_fname);
-	    return BRLCAD_ERROR;
-	}
-	if (!iglobal_dp) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, i_fname);
-	    return BRLCAD_ERROR;
-	}
-
-	if (cc_data.use_units || cc_data.use_title) {
-	    double l2mm = (cc_data.use_units) ? i_dbip->dbi_local2base : t_dbip->dbi_local2base;
-	    const char *title = (cc_data.use_title) ? i_dbip->dbi_title : t_dbip->dbi_title;
-	    if (db_update_ident(t_dbip, title, l2mm) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "%s: db_update_ident failed (%s)", commandName, i_fname);
+    /* process args */
+    bu_optind = 1;
+    bu_opterr = 0;
+    while ((c=bu_getopt(argc, (char * const *)argv, "utcspO")) != -1) {
+	switch (c) {
+	    case 'u':
+		importUnits = 1;
+		break;
+	    case 't':
+		importTitle = 1;
+		break;
+	    case 'c':
+		importColorTable = 1;
+		break;
+	    case 'p':
+		cc_data.copy_mode |= AUTO_PREFIX;
+		break;
+	    case 's':
+		cc_data.copy_mode |= AUTO_SUFFIX;
+		break;
+	    case 'O':
+	        cc_data.copy_mode |= OVERWRITE;
+		break;
+	    default: {
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+		bu_vls_free(&cc_data.affix);
 		return BRLCAD_ERROR;
 	    }
 	}
-	if (cc_data.use_ctbl) {
-	    struct bu_attribute_value_set g_avs = BU_AVS_INIT_ZERO;
-	    db5_get_attributes(i_dbip, &g_avs, iglobal_dp);
-	    const char *cp = bu_avs_get(&g_avs, "regionid_colortable");
-	    if (!cp) {
-		bu_vls_printf(gedp->ged_result_str, "%s: Can't get regionid_colortable from %s", commandName, i_fname);
-		bu_avs_free(&g_avs);
-		return BRLCAD_ERROR;
+    }
+    argc -= bu_optind;
+    argv += bu_optind;
+
+    if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+	return BRLCAD_ERROR;
+    }
+
+    oldfile = argv[0];
+
+    argc--;
+    argv++;
+
+    if (cc_data.copy_mode) {
+	/* specified suffix or prefix explicitly */
+
+	if (cc_data.copy_mode & AUTO_PREFIX) {
+
+	    if (argc == 0 || BU_STR_EQUAL(argv[0], "/")) {
+		cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
+	    } else {
+		(void)bu_vls_strcpy(&cc_data.affix, argv[0]);
+		cc_data.copy_mode |= CUSTOM_PREFIX;
 	    }
-	    char *colorTab = bu_strdup(cp);
-	    struct bu_attribute_value_set t_avs = BU_AVS_INIT_ZERO;
-	    db5_get_attributes(t_dbip, &t_avs, tglobal_dp);
-	    bu_avs_add(&t_avs, "regionid_colortable", colorTab);
-	    db5_import_color_table(colorTab);
-	    db5_update_attributes(tglobal_dp, &t_avs, gedp->dbip);
-	    bu_free(colorTab, "colorTab");
-	    bu_avs_free(&g_avs);
-	    bu_avs_free(&t_avs);
+
+	} else if (cc_data.copy_mode & AUTO_SUFFIX) {
+
+	    if (argc == 0 || BU_STR_EQUAL(argv[0], "/")) {
+		cc_data.copy_mode = NO_AFFIX | CUSTOM_SUFFIX;
+	    } else {
+		(void)bu_vls_strcpy(&cc_data.affix, argv[0]);
+		cc_data.copy_mode |= CUSTOM_SUFFIX;
+	    }
+
+	} else if (cc_data.copy_mode & OVERWRITE) {
+	    /* don't mess with affix */
+	} else {
+	    bu_vls_free(&cc_data.affix);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+	    return BRLCAD_ERROR;
+	}
+
+    } else {
+	/* no prefix/suffix preference, use prefix */
+
+	cc_data.copy_mode |= AUTO_PREFIX;
+
+	if (argc == 0 || BU_STR_EQUAL(argv[0], "/")) {
+	    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
+	} else {
+	    (void)bu_vls_strcpy(&cc_data.affix, argv[0]);
+	    cc_data.copy_mode |= CUSTOM_PREFIX;
+	}
+
+    }
+
+    if (db_version(gedp->dbip) < 5) {
+	if (bu_vls_strlen(&cc_data.affix) > _GED_V4_MAXNAME-1) {
+	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), db_version(gedp->dbip));
+	    bu_vls_free(&cc_data.affix);
+	    return BRLCAD_ERROR;
 	}
     }
 
-    /* copy each directory pointer in the input database */
-    FOR_ALL_DIRECTORY_START(dp, cc_data.incoming_dbip) {
-	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
+    /* open the input file */
+    if ((newdbp = db_open(oldfile, DB_OPEN_READONLY)) == DBI_NULL) {
+	bu_vls_free(&cc_data.affix);
+	perror(oldfile);
+	bu_vls_printf(gedp->ged_result_str, "%s: Can't open geometry database file %s", commandName, oldfile);
+	return BRLCAD_ERROR;
+    }
+
+    if (db_version(newdbp) > 4 && db_version(gedp->dbip) < 5) {
+	bu_vls_free(&cc_data.affix);
+	bu_vls_printf(gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first",
+		      commandName, gedp->dbip->dbi_filename);
+	return BRLCAD_ERROR;
+    }
+
+    db_dirbuild(newdbp);
+
+    cc_data.new_dbip = newdbp;
+    cc_data.old_dbip = gedp->dbip;
+
+    /* visit each directory pointer in the input database */
+    if (importUnits || importTitle || importColorTable) {
+	saveGlobalAttrs = 1;
+    }
+    FOR_ALL_DIRECTORY_START(dp, newdbp) {
+	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	    if (saveGlobalAttrs) {
+		if (db5_get_attributes(newdbp, &g_avs, dp)) {
+		    bu_vls_printf(gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, oldfile);
+		    return BRLCAD_ERROR;
+		}
+	    }
 	    continue;
-	copy_object(gedp, dp, &cc_data);
+	}
+	copy_object(gedp, dp, newdbp, gedp->dbip, name_map, used_names, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
-    rt_mempurge(&(cc_data.incoming_dbip->dbi_freep));
+    bu_vls_free(&cc_data.affix);
+    rt_mempurge(&(newdbp->dbi_freep));
 
-    /* Free all the directory entries, and close the incoming database */
-    db_close(cc_data.incoming_dbip);
+    /* Free all the directory entries, and close the input database */
+    db_close(newdbp);
 
-    if (cc_data.overwrite) {
+    if (cc_data.copy_mode & OVERWRITE) {
 	bu_vls_printf(gedp->ged_result_str, "    [%ld] objects overwritten", cc_data.overwritten);
     }
 
-    /* force changes to disk */
-    db_sync(cc_data.target_dbip);
+    if (importColorTable) {
+	if ((cp = bu_avs_get(&g_avs, "regionid_colortable")) != NULL) {
+	    colorTab = bu_strdup(cp);
+	    db5_import_color_table(colorTab);
+	    bu_free(colorTab, "colorTab");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s: no region color table "
+			  "was found in %s to import\n", commandName, oldfile);
+	}
+    } else if (saveGlobalAttrs) {
+	bu_avs_remove(&g_avs, "regionid_colortable");
+    }
+
+    if (importTitle) {
+	if ((cp = bu_avs_get(&g_avs, "title")) != NULL) {
+	    char *oldTitle = gedp->dbip->dbi_title;
+	    gedp->dbip->dbi_title = bu_strdup(cp);
+	    if (oldTitle) {
+		bu_free(oldTitle, "old title");
+	    }
+	} else {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "%s: no title was found in %s to import\n", commandName,
+			  oldfile);
+	}
+    } else if (saveGlobalAttrs) {
+	bu_avs_remove(&g_avs, "title");
+    }
+
+    if (importUnits) {
+	if ((cp = bu_avs_get(&g_avs, "units")) != NULL) {
+	    double dd;
+	    if (sscanf(cp, "%lf", &dd) != 1 || NEAR_ZERO(dd, VUNITIZE_TOL)) {
+		bu_log("copy_object(%s): improper database, %s object attribute 'units'=%s is invalid\n",
+		       oldfile, DB5_GLOBAL_OBJECT_NAME, cp);
+		bu_avs_remove(&g_avs, "units");
+	    } else {
+		gedp->dbip->dbi_local2base = dd;
+		gedp->dbip->dbi_base2local = 1 / dd;
+	    }
+	} else {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "%s: no units were found in %s to import\n", commandName,
+			  oldfile);
+	}
+    } else if (saveGlobalAttrs) {
+	bu_avs_remove(&g_avs, "units");
+    }
+
+    if (saveGlobalAttrs) {
+	dp = db_lookup(gedp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
+	db5_update_attributes(dp, &g_avs, gedp->dbip);
+    }
+
+    db_sync(gedp->dbip);	/* force changes to disk */
 
     /* Update references. */
     db_update_nref(gedp->dbip, &rt_uniresource);
@@ -498,21 +575,21 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat_core, GED_CMD_DEFAULT };
-    const struct ged_cmd concat_cmd = { &concat_cmd_impl };
+struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat_core, GED_CMD_DEFAULT };
+const struct ged_cmd concat_cmd = { &concat_cmd_impl };
 
-    struct ged_cmd_impl dbconcat_cmd_impl = { "dbconcat", ged_concat_core, GED_CMD_DEFAULT };
-    const struct ged_cmd dbconcat_cmd = { &dbconcat_cmd_impl };
+struct ged_cmd_impl dbconcat_cmd_impl = { "dbconcat", ged_concat_core, GED_CMD_DEFAULT };
+const struct ged_cmd dbconcat_cmd = { &dbconcat_cmd_impl };
 
 
-    const struct ged_cmd *concat_cmds[] = { &concat_cmd,  &dbconcat_cmd, NULL };
+const struct ged_cmd *concat_cmds[] = { &concat_cmd,  &dbconcat_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  concat_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  concat_cmds, 2 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
+{
+    return &pinfo;
+}
 }
 #endif
 
