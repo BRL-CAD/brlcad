@@ -155,11 +155,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
-* Investigate OpenMesh decimation capabilities, identifying a good working
-  default setup for a decimate command.  Probably will need bounding box
-  based tolerance defaults, as well as enabling one or more of the filters
-  that constrain triangle shape.
-
 * See if we can eliminate BRL-CAD use of re2c/lemon/perplex.  Upstream
   stepcode project is considering a part11 parser rewrite not using
   them.  wfobj uses it, but with the pending Asset Import Library support
