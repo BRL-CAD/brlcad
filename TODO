@@ -173,9 +173,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   https://github.com/ChengCat/fast-poly2tri
   https://github.com/raptor/clip2tri
 
-* add basic bot validation so we can have a means to sanity check
-  that vertex, edge, and other indices are valid.
-
 * automatic tops
 
   implement db_tops() to return list of top-level entities.  then,
