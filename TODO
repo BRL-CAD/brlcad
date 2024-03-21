@@ -874,7 +874,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   reserve the first N semaphores for BRL-CAD library use.  change
   index to a uint8_t or uint16_t type.
 
-* make libbn/plot3.c functions parallel-safe so callers do not have to
+* make bv/plot3.h functions parallel-safe so callers do not have to
   manually wrap with bu_semaphore_acquire().
 
 * rendering of the 'part' primitive is wrong for cases where H is less
