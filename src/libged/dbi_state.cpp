@@ -44,6 +44,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/color.h"
+#include "bu/hash.h"
 #include "bu/path.h"
 #include "bu/opt.h"
 #include "bu/sort.h"

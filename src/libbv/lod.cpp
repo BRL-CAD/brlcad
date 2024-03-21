@@ -80,6 +80,7 @@ extern "C" {
 #include "bu/app.h"
 #include "bu/bitv.h"
 #include "bu/color.h"
+#include "bu/hash.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/path.h"

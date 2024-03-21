@@ -26,8 +26,8 @@
 #include "common.h"
 #include <string.h>
 #include "vmath.h"
+#include "bu/hash.h"
 #include "bu/log.h"
-#include "bu/str.h"
 #include "bn/mat.h"
 #include "bv/vlist.h"
 #include "bv/defines.h"
