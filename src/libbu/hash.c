@@ -31,6 +31,7 @@
 
 #include "bu/magic.h"
 #include "bu/hash.h"
+#include "bu/malloc.h"
 #include "bu/parallel.h"
 
 struct bu_hash_entry {
