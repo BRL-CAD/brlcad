@@ -369,8 +369,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	}
     }
 
-    db5_standardize_avs(&avs);
-
     bu_vls_free(&attr_vls);
     bu_vls_free(&val_vls);
 
@@ -552,7 +550,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	}
 	comb->tree = tp;
 
-	db5_standardize_avs(&avs);
 	db5_sync_attr_to_comb(comb, &avs, dp);
 	db5_sync_comb_to_attr(&avs, comb);
     }
@@ -652,7 +649,6 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
 
     hasattr = db5_get_attributes(gedp->dbip, &avs, dp);
-    db5_standardize_avs(&avs);
     db5_sync_comb_to_attr(&avs, comb);
 
     if (!hasattr) {
