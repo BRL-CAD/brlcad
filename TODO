@@ -175,10 +175,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * automatic tops
 
-  implement db_tops() to return list of top-level entities.  then,
-  implement a db_tops_default() to support automatic default object
-  loading for commands like rt* that typically work with top-level
-  objects.  let some commands default to an unspecified object when
+  db_ls with the DB_LS_TOPS flag can supply us with a list of top
+  level entities.  Implement a db_tops_default() to support automatic
+  default object loading for commands like rt* that typically work with
+  top-level objects.  let some commands default to an unspecified object when
   there's an identifiable priority according to matching criteria:
 
   a) _GLOBAL has a tops_default attribute set, default to that object
