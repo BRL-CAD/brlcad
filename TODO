@@ -164,8 +164,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   other GUI-inducing commands like rtwizard, raytrace control panel,
   geometree, etc.
 
-* Add manual page for 3dm-g
-
 * Attempt to update to use latest upstream poly2tri resulted in incorrect
   shading when trying to view the NIST2 example - many faces didn't
   facetize.  We've had occasional robustness problems with brep triangulation
