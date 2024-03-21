@@ -225,6 +225,14 @@ main(int ac, char *av[]) {
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     bu_setenv("LIBGED_DBI_STATE", "1", 1);
 
+
+    // We don't want the test caches to collide with the
+    // standard caches
+    char cache_dir[MAXPATHLEN];
+    const char *tmp_dirname = bu_temp_file_name(NULL, 0);
+    bu_dir(cache_dir, MAXPATHLEN, BU_DIR_CURR, "cache", tmp_dirname, NULL);
+    bu_setenv("BU_DIR_CACHE", cache_dir, 1);
+
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;
