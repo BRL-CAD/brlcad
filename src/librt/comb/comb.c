@@ -1094,7 +1094,6 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
     /* Make sure the attributes have gotten the message */
     db5_sync_comb_to_attr(&intern->idb_avs, comb);
-    db5_standardize_avs(&intern->idb_avs);
 
     return BRLCAD_OK;
 

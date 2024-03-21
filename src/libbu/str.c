@@ -268,7 +268,6 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
 #endif
 }
 
-
 /*
  * Local Variables:
  * mode: C

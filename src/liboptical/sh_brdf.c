@@ -185,7 +185,7 @@ brdf_render(register struct application *ap, const struct partition *pp, struct 
 {
     register struct light_specific *lp;
     register fastf_t *intensity, *to_light;
-    register int i;
+    register size_t i;
     register fastf_t cosi, cosr;
     register fastf_t refl;
     vect_t h_dir;
@@ -229,7 +229,7 @@ brdf_render(register struct application *ap, const struct partition *pp, struct 
     VREVERSE(to_eye, ap->a_ray.r_dir);
 
     /* Consider effects of each light source */
-    for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
+    for (i = 0; i < ap->a_rt_i->rti_nlights; i++) {
 	fastf_t cos_tmp;
 	fastf_t tan_sq;
 	double exponent;

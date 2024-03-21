@@ -402,7 +402,7 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table, struct gcv_context *context)
 	struct bu_vls pattern = BU_VLS_INIT_ZERO;
 
 	/* LIBGCV_PLUGINS_SUFFIX is filename extension on libraries, defined via cppflag */
-	bu_vls_sprintf(&pattern, "*%s", LIBGCV_PLUGIN_SUFFIX);
+	bu_vls_sprintf(&pattern, "*%s", LIBGCV_PLUGINS_SUFFIX);
 	num_filenames = bu_file_list(plugins_path, bu_vls_addr(&pattern) , &filenames);
 
 	for (i = 0; i < num_filenames; ++i)

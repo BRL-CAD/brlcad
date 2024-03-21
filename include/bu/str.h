@@ -363,7 +363,6 @@ BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const c
 BU_EXPORT size_t
 bu_editdist(const char *s1, const char *s2);
 
-
 __END_DECLS
 
 /** @} */

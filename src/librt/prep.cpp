@@ -236,7 +236,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 
     if (rtip->nsolids <= 0) {
 	if (rtip->rti_air_discards > 0) {
-	    bu_log("rt_prep_parallel(%s, %d): %d primitives discarded due to air regions\n",
+	    bu_log("rt_prep_parallel(%s, %d): %zu primitives discarded due to air regions\n",
 		   rtip->rti_dbip->dbi_filename,
 		   rtip->rti_dbip->dbi_uses,
 		   rtip->rti_air_discards);
@@ -371,7 +371,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 	       rtip->rti_dbip->dbi_filename,
 	       rtip->rti_dbip->dbi_uses);
 	for (i=1; i <= ID_MAX_SOLID; i++) {
-	    bu_log("%5d %s (%d)\n", rtip->rti_nsol_by_type[i], OBJ[i].ft_name, i);
+	    bu_log("%5zu %s (%d)\n", rtip->rti_nsol_by_type[i], OBJ[i].ft_name, i);
 	}
     }
 

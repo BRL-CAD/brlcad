@@ -159,7 +159,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 	gd_rt_cmd[j] = bu_strdup(args[j].c_str());
     }
 
-    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
+    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), 0);
 
     bu_vls_cstr(&wstr);
     for (size_t j = 0; j < args.size(); j++) {

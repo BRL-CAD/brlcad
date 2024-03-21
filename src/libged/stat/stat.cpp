@@ -291,13 +291,11 @@ cmp_dps(const void *a, const void *b, void *arg)
 	if (db5_get_attributes(dbip, &avs1, dp1)) {
 	    continue;
 	}
-	db5_standardize_avs(&avs1);
 	struct bu_attribute_value_set avs2 = BU_AVS_INIT_ZERO;
 	if (db5_get_attributes(dbip, &avs2, dp2)) {
 	    bu_avs_free(&avs1);
 	    continue;
 	}
-	db5_standardize_avs(&avs2);
 
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&str, "%s", bu_vls_cstr(&key));

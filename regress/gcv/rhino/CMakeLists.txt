@@ -1,4 +1,4 @@
-GCV_regress_util("rhino" "idef_test.3dm" EXPECTED_FILE_SIZE "40712")
+GCV_regress_util("rhino" "idef_test.3dm" EXPECTED_FILE_SIZE "40712" EXPECTED_FILE_SIZE_DELTA "20000")
 
 CMAKEFILES(
   CMakeLists.txt

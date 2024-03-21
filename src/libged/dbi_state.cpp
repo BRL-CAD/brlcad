@@ -36,9 +36,6 @@
 #include <sstream>
 
 extern "C" {
-#define XXH_STATIC_LINKING_ONLY
-#include "xxhash.h"
-
 #include "lmdb.h"
 }
 
@@ -47,6 +44,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/color.h"
+#include "bu/hash.h"
 #include "bu/path.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
@@ -78,43 +76,12 @@ extern "C" {
 #define CACHE_INHERIT_FLAG "if"
 #define CACHE_COLOR "c"
 
-static void
-dbi_dir(char *dir)
-{
-#ifdef HAVE_WINDOWS_H
-    CreateDirectory(dir, NULL);
-#else
-    /* mode: 775 */
-    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
-}
-
 struct ged_draw_cache {
     MDB_env *env;
     MDB_txn *txn;
     MDB_dbi dbi;
     struct bu_vls *fname;
 };
-
-static void
-dbi_dirclear(const char *d)
-{
-    if (bu_file_directory(d)) {
-	char **filenames;
-	size_t nfiles = bu_file_list(d, "*", &filenames);
-	for (size_t i = 0; i < nfiles; i++) {
-	    if (BU_STR_EQUAL(filenames[i], "."))
-		continue;
-	    if (BU_STR_EQUAL(filenames[i], ".."))
-		continue;
-	    char cdir[MAXPATHLEN] = {0};
-	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
-	    dbi_dirclear((const char *)cdir);
-	}
-	bu_argv_free(nfiles, filenames);
-    }
-    bu_file_delete(d);
-}
 
 void
 dbi_cache_clear(struct ged_draw_cache *c)
@@ -123,22 +90,17 @@ dbi_cache_clear(struct ged_draw_cache *c)
 	return;
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, bu_vls_cstr(c->fname));
-    dbi_dirclear((const char *)dir);
+    bu_dirclear((const char *)dir);
 }
 
 struct ged_draw_cache *
 dbi_cache_open(const char *name)
 {
     // Hash the input filename to generate a key for uniqueness
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&fname, "%s", bu_path_normalize(name));
 
-    XXH64_update(&h_state, bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
+    unsigned long long hash = bu_data_hash(bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
     bu_path_component(&fname, bu_path_normalize(name), BU_PATH_BASENAME_EXTLESS);
     bu_vls_printf(&fname, "_%llu", hash);
 
@@ -170,10 +132,10 @@ dbi_cache_open(const char *name)
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
     if (!bu_file_exists(dir, NULL))
-	dbi_dir(dir);
+	bu_mkdir(dir);
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL)) {
-	dbi_dir(dir);
+	bu_mkdir(dir);
     }
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, "format", NULL);
     if (!bu_file_exists(dir, NULL)) {
@@ -210,7 +172,7 @@ dbi_cache_open(const char *name)
       // Create the specific LMDB cache dir, if not already present
       bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, bu_vls_cstr(&fname), NULL);
       if (!bu_file_exists(dir, NULL))
-          dbi_dir(dir);
+          bu_mkdir(dir);
 
       // Need to call mdb_env_sync() at appropriate points.
       if (mdb_env_open(c->env, dir, MDB_NOSYNC, 0664))
@@ -357,12 +319,8 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
     RT_CHECK_DBI(dbip);
 
     std::unordered_map<unsigned long long, unsigned long long> &i_count = d->i_count;
-    XXH64_state_t h_state;
-    unsigned long long chash;
     struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, name, strlen(name)*sizeof(char));
-    chash = (unsigned long long)XXH64_digest(&h_state);
+    unsigned long long chash = bu_data_hash(name, strlen(name)*sizeof(char));
     i_count[chash] += 1;
     if (i_count[chash] > 1) {
 	// If we've got multiple instances of the same object in the tree,
@@ -370,9 +328,7 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 	// parent comb so we can associate it with the tree contents
 	struct bu_vls iname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&iname, "%s@%llu", name, i_count[chash] - 1);
-	XXH64_reset(&h_state, 0);
-	XXH64_update(&h_state, bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
-	unsigned long long ihash = (unsigned long long)XXH64_digest(&h_state);
+	unsigned long long ihash = bu_data_hash(bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
 	d->dbis->i_map[ihash] = chash;
 	d->dbis->i_str[ihash] = std::string(bu_vls_cstr(&iname));
 	d->dbis->p_c[d->phash].insert(ihash);
@@ -540,10 +496,7 @@ unsigned long long
 DbiState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
 {
     size_t mlen = (max_len) ? max_len : path.size();
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, path.data(), mlen * sizeof(unsigned long long));
-    return (unsigned long long)XXH64_digest(&h_state);
+    return bu_data_hash(path.data(), mlen * sizeof(unsigned long long));
 }
 
 static void
@@ -661,12 +614,9 @@ DbiState::digest_path(const char *path)
     // Convert the string elements into hash elements
     std::vector<unsigned long long> phe;
     struct bu_vls hname = BU_VLS_INIT_ZERO;
-    XXH64_state_t h_state;
     for (size_t i = 0; i < elements.size(); i++) {
-	XXH64_reset(&h_state, 0);
 	bu_vls_sprintf(&hname, "%s", elements[i].c_str());
-	XXH64_update(&h_state, bu_vls_cstr(&hname), bu_vls_strlen(&hname)*sizeof(char));
-	phe.push_back((unsigned long long)XXH64_digest(&h_state));
+	phe.push_back(bu_data_hash(bu_vls_cstr(&hname), bu_vls_strlen(&hname)*sizeof(char)));
     }
     bu_vls_free(&hname);
 
@@ -856,10 +806,7 @@ DbiState::clear_cache(struct directory *dp)
     if (!dp || !dcache)
 	return;
 
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+    unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
 
     cache_del(dcache, hash, CACHE_OBJ_BOUNDS);
     cache_del(dcache, hash, CACHE_REGION_ID);
@@ -880,10 +827,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 	return 0;
 
     // Set up to go from hash back to name
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+    unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
     d_map[hash] = dp;
 
     // Clear any (possibly) state bbox.  bbox calculation
@@ -1549,12 +1493,8 @@ DbiState::tops(bool show_cyclic)
     int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
     if (all_paths) {
 	bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_sort, NULL);
-
-	XXH64_state_t h_state;
 	for (int i = 0; i < tops_cnt; i++) {
-	    XXH64_reset(&h_state, 0);
-	    XXH64_update(&h_state, all_paths[i]->d_namep, strlen(all_paths[i]->d_namep)*sizeof(char));
-	    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	    unsigned long long hash = bu_data_hash(all_paths[i]->d_namep, strlen(all_paths[i]->d_namep)*sizeof(char));
 	    ret.push_back(hash);
 	}
 	bu_free(all_paths, "free db_ls output");
@@ -1604,13 +1544,10 @@ DbiState::update()
     }
 
     // dps -> hashes
-    XXH64_state_t h_state;
     changed_hashes.clear();
     for(g_it = changed.begin(); g_it != changed.end(); g_it++) {
 	struct directory *dp = *g_it;
-	XXH64_reset(&h_state, 0);
-	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
 	changed_hashes.insert(hash);
     }
 
@@ -3641,12 +3578,15 @@ unsigned long long
 BSelectState::state_hash()
 {
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
+    struct bu_data_hash_state *s = bu_data_hash_create();
+    if (!s)
+	return 0;
     for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
-	XXH64_update(&h_state, &s_it->first, sizeof(unsigned long long));
+	bu_data_hash_update(s, &s_it->first, sizeof(unsigned long long));
     }
-    return (unsigned long long)XXH64_digest(&h_state);
+    unsigned long long hval = bu_data_hash_val(s);
+    bu_data_hash_destroy(s);
+    return hval;
 }
 
 /** @} */

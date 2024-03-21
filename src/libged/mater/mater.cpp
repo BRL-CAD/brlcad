@@ -239,9 +239,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     }
-    db5_standardize_avs(&avs);
     db5_sync_comb_to_attr(&avs, comb);
-    db5_standardize_avs(&avs);
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
 

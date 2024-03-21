@@ -10,9 +10,17 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 202X-XX-XX  Release 7.3X.X                                     ---
+--- 202X-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* added "standardize" option to GED attr command - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2024-03-18  Release 7.38.2                                     ---
+----------------------------------------------------------------------
+
+* added "rtsurf" exterior surface area tool prototype - Sean Morrison
 * updated sqlite3 to version 3.45.1 - Cliff Yapp
 * updated libpng to version 1.6.43 - Cliff Yapp
 * updated zlib to version 1.3.1 - Cliff Yapp

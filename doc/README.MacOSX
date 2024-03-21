@@ -85,6 +85,18 @@ just subdirectories (e.g. src/other, doc, etc.) individually and then
 do a toplevel make in non-parallel mode to finalize the build.
 
 
+Debugging
+---------
+
+Apple now employs code signing and we do not yet.  To debug apps using
+Instruments, they will need to be signed with permissions in order to
+debug them.  Here's an example that signs them all with a
+get-task-allow permission that lets them be introspected:
+
+echo "<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>com.apple.security.get-task-allow</key><true/></dict></plist>" >> debug.plist
+codesign -s - -v -f --entitlements debug.plist bin/*
+
+
 Tips
 ----
 

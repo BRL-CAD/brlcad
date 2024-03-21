@@ -197,7 +197,7 @@ if(NOT CYGWIN AND NOT OPENBSD)
 endif()
 
 if (OPENBSD)
-  set_target_properties(zlib PROPERTIES VERSION 1.2)
+  set_target_properties(zlib PROPERTIES VERSION 1.3)
 endif (OPENBSD)
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )

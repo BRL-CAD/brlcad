@@ -18,10 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix subprocess output.
-
-* sanity check windows bext size
-
 * complete preliminary concave arb8 support
 
 
@@ -159,34 +155,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
-* Investigate OpenMesh decimation capabilities, identifying a good working
-  default setup for a decimate command.  Probably will need bounding box
-  based tolerance defaults, as well as enabling one or more of the filters
-  that constrain triangle shape.
-
-* See if we can eliminate BRL-CAD use of re2c/lemon/perplex.  Upstream
-  stepcode project is considering a part11 parser rewrite not using
-  them.  wfobj uses it, but with the pending Asset Import Library support
-  in gcv that capability may be eclipsed, and the csg parser isn't
-  active and is at a very early stage.  DPLOT support for brep command
-  would need to be rewritten, but other than that we may be in a position
-  to eliminate usage of those tools in BRL-CAD and (eventually) stepcode.
-
-  The main motivation for this: our versions of these tools ended up being
-  a one-off - re2c didn't end up adopting the lemon port and the code has
-  moved on, and perplex is our own one off.  STEPcode was the main
-  motivation for the creation of that toolset (needing a portable
-  alternative to the flex/bison solution originally used).  We've not
-  ended up needing the re2c/lemon/perplex toolchain for other parts of
-  BRL-CAD much, which means it now makes sense to see if we can simplify.
+* update code requiring lemon parser generator to support newest upstream
+  code.
 
 * consider user interface and usability implications of gchecker
   and/or overlap_tool as commands that kick off GUI.  need to consider
   if there's a non-GUI output/utility and how the CLI pairs up with
   other GUI-inducing commands like rtwizard, raytrace control panel,
   geometree, etc.
-
-* Add manual page for 3dm-g
 
 * Attempt to update to use latest upstream poly2tri resulted in incorrect
   shading when trying to view the NIST2 example - many faces didn't
@@ -197,15 +173,12 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   https://github.com/ChengCat/fast-poly2tri
   https://github.com/raptor/clip2tri
 
-* add basic bot validation so we can have a means to sanity check
-  that vertex, edge, and other indices are valid.
-
 * automatic tops
 
-  implement db_tops() to return list of top-level entities.  then,
-  implement a db_tops_default() to support automatic default object
-  loading for commands like rt* that typically work with top-level
-  objects.  let some commands default to an unspecified object when
+  db_ls with the DB_LS_TOPS flag can supply us with a list of top
+  level entities.  Implement a db_tops_default() to support automatic
+  default object loading for commands like rt* that typically work with
+  top-level objects.  let some commands default to an unspecified object when
   there's an identifiable priority according to matching criteria:
 
   a) _GLOBAL has a tops_default attribute set, default to that object
@@ -283,12 +256,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   points, no interpolation.
 
 * add script/command for changing metaball weights in masse
-
-* dbconcat option to override / merge over existing objects
-
-* dbconcat option to auto-update incoming combs when affixes are
-  auto-added.  this would address the caution mentioned in the man
-  page.
 
 * gdiff in mged appears to be broken?  get "no primitives found" on
   second comb when specifying two combs (gdiff comb1 comb2).
@@ -514,11 +481,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/include/glob.h
   https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/glob.c
 
-* look at components of the Screened Poisson code and figure out where/how
-  they would map into BRL-CAD components. (this is partially to see whether
-  we can (re)implement this logic in our framework and partially an exercise
-  in BRL-CAD library scoping)
-
 * replace guts of bu_ptbl to see if we can improve performance -
   implications for removal if an appropriate substitute is found,
   needs to be deprecated if we remove all API but we can update guts.
@@ -566,13 +528,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
 
-* evaluate OpenMesh (http://www.openmesh.org) and OpenFlipper
-  (http://www.openflipper.org) for smoothing, decimation, and
-  additional GCV conversion formats.
-
-* GCT decimation assumes no edge is shared by two triangles except
-  once in the reversed order (AB, BA).  Needs basic check to avoid
-  failures/crashing.
+* replace bundled GCT decimation code with https://github.com/BRL-CAD/mmesh 
 
 * V&V bwcrop, pixembed are behaving correctly, as documented
 
@@ -779,9 +735,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * implement rt_volume() API for computing geometry volume (gqa style
   for complex, direct for primitives)
 
-* rework fbcolor, fbzoom, and fbpoint to not use termlib, instead just
-  using regular printing and input reading in a loop.
-
 * See if it is possible to simplify btclsh/bwish code when it comes
   to relying on libtermio - linenoise can do the basics, and for fancier
   keybinding/word based navigation see if launching in Emacs can suffice:
@@ -921,7 +874,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   reserve the first N semaphores for BRL-CAD library use.  change
   index to a uint8_t or uint16_t type.
 
-* make libbn/plot3.c functions parallel-safe so callers do not have to
+* make bv/plot3.h functions parallel-safe so callers do not have to
   manually wrap with bu_semaphore_acquire().
 
 * rendering of the 'part' primitive is wrong for cases where H is less
@@ -1699,20 +1652,10 @@ LIBGED
   statefulness can go away.  a db_glob expression that doesn't match
   anything should not return the expression.
 
-* incorporate some variety of spatial partitioning into the facetize
-  command (may involve just rewriting it) to try and realize MUCH
-  faster tessellation of CSG geometry.  Current routines are doing a
-  lot of unnecessary work that tends to result in explosive completion
-  times for worst-case scenarios - try to get closer to the "only do
-  the work we need to" ideal.  Once a new idea is proven in that
-  command, it should be made into a libgcv routine and
-  converters/other commands retargeted to use it.
-
-
 SHADED DISPLAYS
 ---------------
 
-* See doc/TODO.shaded_displays
+* See doc/notes/TODO.shaded_displays
 
 
 ARCHER
