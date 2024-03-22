@@ -148,12 +148,13 @@ main(int argc, const char **argv)
     bu_argv_free((size_t)gargc, gargv);
 
     // dbconcat the control file into the current database, with a prefix
-    const char *dbcargv[4];
+    const char *dbcargv[5];
     dbcargv[0] = "dbconcat";
     dbcargv[1] = argv[0];
-    dbcargv[2] = "ctrl_";
-    dbcargv[3] = NULL;
-    ged_exec(gedp, 3, (const char **)dbcargv);
+    dbcargv[2] = "-A";
+    dbcargv[3] = "ctrl_";
+    dbcargv[4] = NULL;
+    ged_exec(gedp, 4, (const char **)dbcargv);
 
     // object names may not be identical - what we are concerned with is that
     // the geometry shapes remain unchanged from what is expected (or, in a few
