@@ -178,6 +178,16 @@ set(filtered_man
 
 function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
+  cmake_parse_arguments(A "" "" "REQUIRED" ${ARGN})
+
+  if (A_REQUIRED)
+    foreach (rdep ${A_REQUIRED})
+      if (NOT TARGET ${rdep})
+	return()
+      endif (NOT TARGET ${rdep})
+    endforeach (rdep ${A_REQUIRED})
+  endif (A_REQUIRED)
+
   # If we got the name of a list or an explicit list, translate into
   # the form we need.
   list(GET ${in_xml_files} 0 xml_files)
