@@ -341,7 +341,7 @@ copy_object(struct ged *gedp,
 extern "C" int
 ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help;
+    int print_help = 0;
     struct directory *dp;
     struct ged_concat_data cc_data;
     const char *commandName = argv[0];
