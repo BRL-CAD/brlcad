@@ -865,6 +865,15 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC" "" ${ARGN})
 
+  if (depends_list)
+    foreach(dep ${depends_list})
+      message("dep: ${dep}")
+      if (NOT TARGET ${dep})
+	return()
+      endif (NOT TARGET ${dep})
+    endforeach(dep ${depends_list})
+  endif (depends_list)
+
   if (NOT ${testname}_TEST_DEFINED)
 
     # Test isn't yet defined - do the add_test setup

@@ -9,6 +9,10 @@ function(GCV_regress_util fmt INPUT_FILES)
   # CONVERTERS          : for file types with multiple converters (i.e. obj). runs 'default' and then specified converter(s)
   cmake_parse_arguments("${fmt}" "EXPORTER" "DEPS;EXPECTED_FILE_SIZE;EXPECTED_FILE_SIZE_DELTA" "GCV_OPTIONS;CONVERTERS" ${ARGN})
 
+  if (NOT TARGET gcv)
+    return()
+  endif (NOT TARGET gcv)
+
   if(${fmt}_EXPORTER)
     set(TARGET_DIRECTION "regress-g-${fmt}")
   else()

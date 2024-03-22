@@ -53,6 +53,10 @@ function(ADD_G_TARGET in_model folder)
   # the sense that it uses libgcv...)
   if(${MODEL_TYPE} STREQUAL "3dm")
 
+    if (NOT TARGET 3dm-g)
+      return()
+    endif (NOT TARGET 3dm-g)
+
     set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
     set(OUTPUT_FILE "${output_file}")
     # Use the model name for the script, since the output file is specific to this input
@@ -73,6 +77,9 @@ function(ADD_G_TARGET in_model folder)
 
   if(${MODEL_TYPE} STREQUAL "asc")
     if (BRLCAD_ENABLE_TCL)
+      if (NOT TARGET asc2g)
+	return()
+      endif (NOT TARGET asc2g)
       add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
 	COMMAND asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}" ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
@@ -89,6 +96,9 @@ function(ADD_G_TARGET in_model folder)
   endif(${MODEL_TYPE} STREQUAL "asc")
 
   if(${MODEL_TYPE} STREQUAL "comgeom")
+    if (NOT TARGET comgeom-g)
+      return()
+    endif (NOT TARGET comgeom-g)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
       COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
@@ -98,6 +108,9 @@ function(ADD_G_TARGET in_model folder)
   endif(${MODEL_TYPE} STREQUAL "comgeom")
 
   if(${MODEL_TYPE} STREQUAL "fg4")
+    if (NOT TARGET fast4-g)
+      return()
+    endif (NOT TARGET fast4-g)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
       COMMAND fast4-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} > ${log_file} 2>&1
@@ -107,6 +120,9 @@ function(ADD_G_TARGET in_model folder)
 
   if(${MODEL_TYPE} STREQUAL "stp")
     if (BRLCAD_ENABLE_STEP)
+      if (NOT TARGET step-g)
+	return()
+      endif (NOT TARGET step-g)
       add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
 	COMMAND step-g -O ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} > ${log_file} 2>&1
