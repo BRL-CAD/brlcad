@@ -181,26 +181,31 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
   list(GET ${in_xml_files} 0 xml_files)
   if("${xml_files}" MATCHES "NOTFOUND")
     set(xml_files ${in_xml_files})
+    get_filename_component(abs_xml_file_path "${xml_files}" ABSOLUTE)
+    get_filename_component(dname_root1 "${abs_xml_file_path}" NAME_WE)
+    get_filename_component(dname_path1  "${abs_xml_file_path}" PATH)
+    get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
+    get_filename_component(dname_path2  "${dname_path1}" PATH)
+    get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
+    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
   else("${xml_files}" MATCHES "NOTFOUND")
+    get_filename_component(abs_xml_file_path "${xml_files}" ABSOLUTE)
+    get_filename_component(abs_path "${abs_xml_file_path}" PATH)
+    get_filename_component(dname_root1 "${abs_path}" NAME_WE)
+    get_filename_component(dname_path1  "${abs_path}" PATH)
+    get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
+    get_filename_component(dname_path2  "${dname_path1}" PATH)
+    get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
+    set(inc_num 0)
+    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
+    while(TARGET docbook-${target_root})
+      math(EXPR inc_num "${inc_num} + 1")
+      set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
+    endwhile(TARGET docbook-${target_root})
+   
+    # Unpack the list
     set(xml_files ${${in_xml_files}})
   endif("${xml_files}" MATCHES "NOTFOUND")
-
-  # Get a target name that is unique but at least has some information
-  # about what/where the target is.
-  get_filename_component(dname_root1 "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
-  get_filename_component(dname_path1  "${CMAKE_CURRENT_SOURCE_DIR}" PATH)
-  get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
-  get_filename_component(dname_path2  "${dname_path1}" PATH)
-  get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
-  set(inc_num 0)
-  set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
-  while(TARGET docbook-${target_root})
-    math(EXPR inc_num "${inc_num} + 1")
-    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
-  endwhile(TARGET docbook-${target_root})
-
-  # Mark files for distcheck
-  CMAKEFILES(${xml_files})
 
   if(BRLCAD_EXTRADOCS)
     set(all_outfiles)
@@ -210,6 +215,9 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     # handle all the outputs to be produced from that file.
     foreach(fname ${xml_files})
       get_filename_component(fname_root "${fname}" NAME_WE)
+
+      # Used in cmake.in scripts
+      get_filename_component(filename "${fname}" ABSOLUTE)
 
       # Find out which outputs we're actually going to produce,
       # between what's currently enabled and what the command says the
