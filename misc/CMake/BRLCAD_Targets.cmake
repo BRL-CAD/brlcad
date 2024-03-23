@@ -150,12 +150,14 @@ endfunction(FILE_LANG)
 
 define_property(GLOBAL PROPERTY BRLCAD_EXEC_FILES BRIEF_DOCS "BRL-CAD binaries" FULL_DOCS "List of installed BRL-CAD binary programs")
 
+include(DocBook)
+
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 function(BRLCAD_ADDEXEC execname srcslist libslist)
 
-  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
+  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
 
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist}")
@@ -232,6 +234,13 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   endif(E_FOLDER)
   set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables${SUBFOLDER}")
 
+  if (NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL AND NOT E_NO_MAN)
+    if (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+      ADD_DOCBOOK("HTML;PHP;MANN;PDF" ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml man1 "")
+    else (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+      message("No man page defined for ${execname}")
+    endif (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+  endif (NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL AND NOT E_NO_MAN)
 
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
@@ -867,7 +876,6 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   if (depends_list)
     foreach(dep ${depends_list})
-      message("dep: ${dep}")
       if (NOT TARGET ${dep})
 	return()
       endif (NOT TARGET ${dep})
