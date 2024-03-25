@@ -7,7 +7,7 @@ set(icv_headers
   ops.h
   stat.h
   )
-BRLCAD_MANAGE_FILES(icv_headers ${INCLUDE_DIR}/brlcad/icv)
+BRLCAD_MANAGE_FILES(icv_headers ${INCLUDE_DIR}/brlcad/icv REQUIRED libicv)
 
 CMAKEFILES(CMakeLists.txt)
 

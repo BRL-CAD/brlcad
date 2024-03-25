@@ -3,7 +3,7 @@ set(gcv_headers
   api.h
   util.h
   )
-BRLCAD_MANAGE_FILES(gcv_headers ${INCLUDE_DIR}/brlcad/gcv)
+BRLCAD_MANAGE_FILES(gcv_headers ${INCLUDE_DIR}/brlcad/gcv REQUIRED libgcv)
 
 CMAKEFILES(CMakeLists.txt)
 

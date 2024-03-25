@@ -14,40 +14,34 @@ add_subdirectory(qtcad)
 add_subdirectory(rt)
 add_subdirectory(tclcad)
 
-set(public_hdrs
-  RtServerImpl.h
-  analyze.h
-  bg.h
-  bio.h
-  bn.h
-  bnetwork.h
-  brep.h
-  bresource.h
-  brlcad.h
-  brlcad.i
-  bsocket.h
-  bu.h
-  bv.h
-  common.h
-  dm.h
-  fft.h
-  gcv.h
-  ged.h
-  icv.h
-  nmg.h
-  optical.h
-  pc.h
-  photonmap.h
-  pinttypes.h
-  pkg.h
-  pstdint.h
-  raytrace.h
-  rtserver.h
-  tclcad.h
-  vmath.h
-  wdb.h
-  )
-BRLCAD_MANAGE_FILES("${public_hdrs}" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("analyze.h" ${INCLUDE_DIR}/brlcad REQUIRED libanalyze)
+BRLCAD_MANAGE_FILES("bg.h" ${INCLUDE_DIR}/brlcad REQUIRED libbg)
+BRLCAD_MANAGE_FILES("bio.h" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("bn.h" ${INCLUDE_DIR}/brlcad REQUIRED libbn)
+BRLCAD_MANAGE_FILES("bnetwork.h" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("brep.h" ${INCLUDE_DIR}/brlcad REQUIRED libbrep)
+BRLCAD_MANAGE_FILES("bresource.h" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("brlcad.h" ${INCLUDE_DIR}/brlcad REQUIRED libwdb)
+BRLCAD_MANAGE_FILES("bsocket.h" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("bu.h" ${INCLUDE_DIR}/brlcad REQUIRED libbu)
+BRLCAD_MANAGE_FILES("bv.h" ${INCLUDE_DIR}/brlcad REQUIRED libbv)
+BRLCAD_MANAGE_FILES("common.h" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("dm.h" ${INCLUDE_DIR}/brlcad REQUIRED libdm)
+BRLCAD_MANAGE_FILES("fft.h" ${INCLUDE_DIR}/brlcad REQUIRED libfft)
+BRLCAD_MANAGE_FILES("gcv.h" ${INCLUDE_DIR}/brlcad REQUIRED libgcv)
+BRLCAD_MANAGE_FILES("ged.h" ${INCLUDE_DIR}/brlcad REQUIRED libged)
+BRLCAD_MANAGE_FILES("icv.h" ${INCLUDE_DIR}/brlcad REQUIRED libicv)
+BRLCAD_MANAGE_FILES("nmg.h" ${INCLUDE_DIR}/brlcad REQUIRED libnmg)
+BRLCAD_MANAGE_FILES("optical.h" ${INCLUDE_DIR}/brlcad REQUIRED liboptical)
+BRLCAD_MANAGE_FILES("pc.h" ${INCLUDE_DIR}/brlcad REQUIRED libpc)
+BRLCAD_MANAGE_FILES("photonmap.h" ${INCLUDE_DIR}/brlcad REQUIRED liboptical)
+BRLCAD_MANAGE_FILES("pinttypes.h" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("pkg.h" ${INCLUDE_DIR}/brlcad REQUIRED libpkg)
+BRLCAD_MANAGE_FILES("pstdint.h" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("raytrace.h" ${INCLUDE_DIR}/brlcad REQUIRED librt)
+BRLCAD_MANAGE_FILES("tclcad.h" ${INCLUDE_DIR}/brlcad REQUIRED libtclcad)
+BRLCAD_MANAGE_FILES("vmath.h" ${INCLUDE_DIR}/brlcad)
+BRLCAD_MANAGE_FILES("wdb.h" ${INCLUDE_DIR}/brlcad REQUIRED libwdb)
 
 BUILD_CFG_HDR(brlcad_ident.h.in ${INCLUDE_DIR}/brlcad)
 BUILD_CFG_HDR(brlcad_version.h.in ${INCLUDE_DIR}/brlcad)
@@ -59,6 +53,7 @@ endif(MSVC)
 
 set(include_misc
   CMakeLists.txt
+  brlcad.i
   brlcad_ident.h.in
   brlcad_version.h.in
   conf/BrlcadConfig.tmpl
@@ -68,6 +63,8 @@ set(include_misc
   conf/make.vbs
   config_win.h.in
   RTree.h
+  RtServerImpl.h
+  rtserver.h
   )
 CMAKEFILES(${include_misc})
 

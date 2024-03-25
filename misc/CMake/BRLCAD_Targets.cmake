@@ -626,6 +626,23 @@ endfunction(BRLCAD_LIB_INCLUDE_DIRS)
 
 function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
+  cmake_parse_arguments(M "" "" "REQUIRED" ${ARGN})
+
+  # Handle both a list of one or more files and variable holding a
+  # list of files - find out what we've got.
+  NORMALIZE_FILE_LIST("${inputdata}" RLIST datalist FPLIST fullpath_datalist TARGET targetname)
+
+  # Identify the source files for CMake
+  CMAKEFILES(${datalist})
+
+  if (M_REQUIRED)
+    foreach(mt ${M_REQUIRED})
+      if (NOT TARGET ${mt})
+	return()
+      endif (NOT TARGET ${mt})
+    endforeach(mt ${M_REQUIRED})
+  endif (M_REQUIRED)
+
   if (NOT TARGET managed_files)
     add_custom_target(managed_files ALL)
     set_target_properties(managed_files PROPERTIES FOLDER "BRL-CAD File Copying")
@@ -635,13 +652,6 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   if(${ARGC} GREATER 2)
     CMAKE_PARSE_ARGUMENTS(${VAR_PREFIX} "EXEC" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 2)
-
-  # Handle both a list of one or more files and variable holding a
-  # list of files - find out what we've got.
-  NORMALIZE_FILE_LIST("${inputdata}" RLIST datalist FPLIST fullpath_datalist TARGET targetname)
-
-  # Identify the source files for CMake
-  CMAKEFILES(${datalist})
 
   #-------------------------------------------------------------------
   # Some of the more advanced build system features in BRL-CAD's CMake

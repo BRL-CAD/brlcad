@@ -18,7 +18,7 @@ set(primitives_headers
   tgc.h
   tor.h
   )
-BRLCAD_MANAGE_FILES(primitives_headers ${INCLUDE_DIR}/brlcad/rt/primitives)
+BRLCAD_MANAGE_FILES(primitives_headers ${INCLUDE_DIR}/brlcad/rt/primitives REQUIRED librt)
 
 CMAKEFILES(CMakeLists.txt)
 

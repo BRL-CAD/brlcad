@@ -48,7 +48,7 @@ set(bu_headers
   vlb.h
   vls.h
   )
-BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu)
+BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu REQUIRED libbu)
 
 CMAKEFILES(CMakeLists.txt)
 CMAKEFILES(column.h)

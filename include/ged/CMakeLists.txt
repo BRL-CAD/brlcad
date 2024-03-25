@@ -12,7 +12,7 @@ set(ged_headers
   rt.h
   view.h
   )
-BRLCAD_MANAGE_FILES(ged_headers ${INCLUDE_DIR}/brlcad/ged)
+BRLCAD_MANAGE_FILES(ged_headers ${INCLUDE_DIR}/brlcad/ged REQUIRED libged)
 
 CMAKEFILES(CMakeLists.txt)
 
