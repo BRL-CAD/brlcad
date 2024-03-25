@@ -126,11 +126,13 @@ set(lessons_ES_IMAGES
   images/mged16_radio_wireframe_circ_board.png
   images/mged16_radio_with_mater_props.png
   )
-if(BRLCAD_EXTRADOCS)
-  ADD_DOC(lessons_ES_IMAGES html/lessons/es/images)
-endif(BRLCAD_EXTRADOCS)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if (BRLCAD_EXTRADOCS)
+    ADD_DOC(lessons_ES_IMAGES html/lessons/es/images)
+    ADD_DOCBOOK("HTML;PHP;PDF" lessons_ES lessons/es lessons_ES_IMAGES_cp)
+  endif (BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
-ADD_DOCBOOK("HTML;PHP;PDF" lessons_ES lessons/es lessons_ES_IMAGES_cp)
 CMAKEFILES(
   CMakeLists.txt
   ${lessons_ES}

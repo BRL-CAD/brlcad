@@ -78,9 +78,11 @@ set(books_EN_IMAGES
   images/v4-image010.jpg
   images/v4-image011.jpg
   )
-if(BRLCAD_EXTRADOCS)
-  ADD_DOC(books_EN_IMAGES html/books/images)
-endif(BRLCAD_EXTRADOCS)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOC(books_EN_IMAGES html/books/images)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 # The PDFs need some special logic to generate custom
 # covers.
@@ -99,7 +101,11 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeI.xsl")
 
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeI.xsl")
 
-ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeI.xml books books_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeI.xml books books_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 set(COVER_COLOR "cc6666")
 set(CURRENT_VOLUME "II")
@@ -115,7 +121,11 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeII.xsl")
 
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeII.xsl")
 
-ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeII.xml books books_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeII.xml books books_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 
 set(COVER_COLOR "669966")
@@ -132,7 +142,11 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIII.xsl")
 
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIII.xsl")
 
-ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeIII.xml books books_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeIII.xml books books_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 
 set(COVER_COLOR "6699cc")
@@ -149,7 +163,11 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV.xsl")
 
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV.xsl")
 
-ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeIV.xml books books_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeIV.xml books books_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 set(hacking_brlcad_images
    images/hacking_brlcad_article_tire_pdf.png

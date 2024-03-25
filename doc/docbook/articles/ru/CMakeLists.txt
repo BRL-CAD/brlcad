@@ -1,7 +1,11 @@
 set(articles_RU
   about_ru.xml
   )
-ADD_DOCBOOK("HTML;PHP;PDF" articles_RU articles/ru "")
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if (BRLCAD_EXTRADOCS)
+    ADD_DOCBOOK("HTML;PHP;PDF" articles_RU articles/ru "")
+  endif (BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 CMAKEFILES(
   ${articles_RU}

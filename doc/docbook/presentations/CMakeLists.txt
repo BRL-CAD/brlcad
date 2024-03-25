@@ -49,11 +49,12 @@ set(presentations_EN_IMAGES
   images/special-character-interpretation.png
   images/tk-based-gui-for-mged.png
   )
-if(BRLCAD_EXTRADOCS)
-  ADD_DOC(presentations_EN_IMAGES html/presentations/images)
-endif(BRLCAD_EXTRADOCS)
-
-ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations presentations_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOC(presentations_EN_IMAGES html/presentations/images)
+    ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations presentations_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 CMAKEFILES(
   README

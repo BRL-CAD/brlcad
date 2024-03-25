@@ -157,11 +157,12 @@ set(lessons_EN_IMAGES
   images/mged16_radio_structure_3.png
   images/mged16_radio_cutaways.png
   )
-if(BRLCAD_EXTRADOCS)
-  ADD_DOC(lessons_EN_IMAGES html/lessons/images)
-endif(BRLCAD_EXTRADOCS)
-
-ADD_DOCBOOK("HTML;PHP;PDF" lessons_EN lessons lessons_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOC(lessons_EN_IMAGES html/lessons/images)
+    ADD_DOCBOOK("HTML;PHP;PDF" lessons_EN lessons lessons_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 add_subdirectory(es)
 

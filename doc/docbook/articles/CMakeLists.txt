@@ -167,13 +167,12 @@ set(articles_EN_IMAGES
   images/rim.gif
   images/rim.jpg
   )
-if(BRLCAD_EXTRADOCS)
-  ADD_DOC(articles_EN_IMAGES html/articles/images)
-else(BRLCAD_EXTRADOCS)
-  CMAKEFILES(${articles_EN_IMAGES})
-endif(BRLCAD_EXTRADOCS)
-
-ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles articles_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOC(articles_EN_IMAGES html/articles/images)
+    ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles articles_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 CMAKEFILES(
   CMakeLists.txt
