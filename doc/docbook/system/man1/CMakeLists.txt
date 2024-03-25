@@ -176,10 +176,10 @@ set(man1_EN
   wire.xml
   )
 
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" benchmark.xml man1 "" REQUIRED "rt" NO_TARGET)
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad-config.xml man1 "" REQUIRED "rt" NO_TARGET)
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad.xml man1 "" REQUIRED "mged" NO_TARGET)
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" dbclean.xml man1 "" REQUIRED "asc2g" NO_TARGET)
+ADD_DOCBOOK("HTML;PHP;MAN1;PDF" benchmark.xml man1 "" REQUIRED "rt")
+ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad-config.xml man1 "" REQUIRED "rt")
+ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad.xml man1 "" REQUIRED "mged")
+ADD_DOCBOOK("HTML;PHP;MAN1;PDF" dbclean.xml man1 "" REQUIRED "asc2g")
 
 if (NOT BRLCAD_COMPONENTS)
 

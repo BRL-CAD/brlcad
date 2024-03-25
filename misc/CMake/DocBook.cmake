@@ -166,15 +166,15 @@ endif (TARGET brlcad_css)
 
 function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
-  cmake_parse_arguments(A "NO_TARGET" "" "REQUIRED" ${ARGN})
+  cmake_parse_arguments(A "" "" "REQUIRED" ${ARGN})
 
-  if (A_REQUIRED AND NOT A_NO_TARGET)
+  if (A_REQUIRED)
     foreach (rdep ${A_REQUIRED})
       if (NOT TARGET ${rdep})
 	return()
       endif (NOT TARGET ${rdep})
     endforeach (rdep ${A_REQUIRED})
-  endif (A_REQUIRED AND NOT A_NO_TARGET)
+  endif (A_REQUIRED)
 
   # If we got the name of a list or an explicit list, translate into
   # the form we need.
@@ -202,7 +202,7 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
       math(EXPR inc_num "${inc_num} + 1")
       set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
     endwhile(TARGET docbook-${target_root})
-   
+
     # Unpack the list
     set(xml_files ${${in_xml_files}})
   endif("${xml_files}" MATCHES "NOTFOUND")
