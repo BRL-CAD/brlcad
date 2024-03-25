@@ -51,14 +51,16 @@ set(presentations_EN_IMAGES
   )
 if(BRLCAD_EXTRADOCS)
   ADD_DOC(presentations_EN_IMAGES html/presentations/images)
-else(BRLCAD_EXTRADOCS)
-  CMAKEFILES(${presentations_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)
 
 ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations presentations_EN_IMAGES_cp)
 
-CMAKEFILES(README)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  README
+  CMakeLists.txt
+  ${presentations_EN}
+  ${presentations_EN_IMAGES}
+  )
 
 # Local Variables:
 # tab-width: 8

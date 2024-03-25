@@ -45,6 +45,7 @@ ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN man5 "${attribute_DEPS}")
 
 CMAKEFILES(
   CMakeLists.txt
+  ${man5_EN}
   attributes.xml.in
   )
 

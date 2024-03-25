@@ -159,15 +159,17 @@ set(lessons_EN_IMAGES
   )
 if(BRLCAD_EXTRADOCS)
   ADD_DOC(lessons_EN_IMAGES html/lessons/images)
-else(BRLCAD_EXTRADOCS)
-  CMAKEFILES(${lessons_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)
 
 ADD_DOCBOOK("HTML;PHP;PDF" lessons_EN lessons lessons_EN_IMAGES_cp)
 
 add_subdirectory(es)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${lessons_EN}
+  ${lessons_EN_IMAGES}
+  )
 
 # Local Variables:
 # tab-width: 8

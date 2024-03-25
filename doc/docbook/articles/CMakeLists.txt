@@ -177,6 +177,8 @@ ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles articles_EN_IMAGES_cp)
 
 CMAKEFILES(
   CMakeLists.txt
+  ${articles_EN}
+  ${articles_EN_IMAGES}
   images/tire_fig12.svg
   images/tire_fig13.svg
   )
@@ -184,8 +186,6 @@ CMAKEFILES(
 add_subdirectory(hy)
 add_subdirectory(it)
 add_subdirectory(ru)
-
-CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

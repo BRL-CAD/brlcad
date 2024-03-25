@@ -271,11 +271,15 @@ ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann "" REQUIRED "libged")
 set(mann_INTRO
   Introduction.xml
   )
-ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
+if (TARGET libged)
+  ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
+endif (TARGET libged)
 
 
 CMAKEFILES(
   CMakeLists.txt
+  ${mann_EN}
+  ${mann_INTRO}
   bot_extrude.xml
   mged_cmd_template.xml
   )

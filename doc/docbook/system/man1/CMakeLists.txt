@@ -174,7 +174,7 @@ set(man1_EN
   window.xml
   window_frame.xml
   wire.xml
-)
+  )
 
 ADD_DOCBOOK("HTML;PHP;MAN1;PDF" benchmark.xml man1 "" REQUIRED "rt" NO_TARGET)
 ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad-config.xml man1 "" REQUIRED "rt" NO_TARGET)
@@ -184,9 +184,9 @@ ADD_DOCBOOK("HTML;PHP;MAN1;PDF" dbclean.xml man1 "" REQUIRED "asc2g" NO_TARGET)
 if (NOT BRLCAD_COMPONENTS)
 
   foreach(mp ${man1_EN})
-   
+
     get_filename_component(tname ${mp} NAME_WE)
-    
+
     # BRLCAD_ADDEXEC takes care of the ADD_DOCBOOK call - we just need to warn
     # if we've got a man page in the list indicating we should have an
     # associated target but not showing one.  Generally this will be an
@@ -194,7 +194,7 @@ if (NOT BRLCAD_COMPONENTS)
     if (NOT TARGET ${tname})
       message("Warning: man1 man page ${tname} has no associated build target")
     endif (NOT TARGET ${tname})
- 
+
   endforeach(mp ${man3_EN})
 
 endif (NOT BRLCAD_COMPONENTS)
@@ -206,7 +206,7 @@ CMAKEFILES(
   brlcad.xml
   dbclean.xml
   CMakeLists.txt
-)
+  )
 
 # Local Variables:
 # tab-width: 8
