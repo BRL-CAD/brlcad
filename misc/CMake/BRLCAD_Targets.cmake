@@ -867,7 +867,6 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   if (depends_list)
     foreach(dep ${depends_list})
-      message("dep: ${dep}")
       if (NOT TARGET ${dep})
 	return()
       endif (NOT TARGET ${dep})
