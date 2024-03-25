@@ -70,12 +70,14 @@ function(brlcad_ext_setup)
   if (NOT BRLCAD_ENABLE_TCL)
     set(BRLCAD_EXT_CMAKE_OPTS ${BRLCAD_EXT_CMAKE_OPTS} "-DUSE_TCL=OFF")
   endif (NOT BRLCAD_ENABLE_TCL)
+  string(REPLACE ";" "\\;" BRLCAD_EXT_CMAKE_OPTS "${BRLCAD_EXT_CMAKE_OPTS}")
 
   if (BRLCAD_COMPONENTS)
     set(active_dirs ${BRLCAD_COMPONENTS})
     foreach(wc ${BRLCAD_COMPONENTS})
       deps_expand(${wc} active_dirs)
     endforeach(wc ${BRLCAD_COMPONENTS})
+    string(REPLACE ";" "\\;" active_dirs "${active_dirs}")
     message("${CMAKE_COMMAND} ${BRLCAD_EXT_SOURCE_DIR} ${BRLCAD_EXT_CMAKE_OPTS} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR} -DBRLCAD_COMPONENTS=${active_dirs}")
     execute_process(COMMAND ${CMAKE_COMMAND} ${BRLCAD_EXT_SOURCE_DIR}
       ${BRLCAD_EXT_CMAKE_OPTS}
