@@ -2142,7 +2142,22 @@ else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
   # bundle it.
   #
   # This logic will also set up the necessary steps to install the bundling
-  # targets as part of BRL-CAD's install process
+  # targets as part of BRL-CAD's install process.
+  #
+  # The exception to the above indifference to user settings is when BRL-CAD's
+  # configure logic undertakes the building of the dependencies itself, rather
+  # than using a pre-built bext repository.  In that situation, enough info is
+  # available to make intelligent decisions about what to turn on and off at
+  # configure time, and we don't have to solve the problem of figuring out which
+  # output files correspond to which project(s).  To allow us to also pass
+  # detailed info about which components are enabled to the bext build process,
+  # we need to know from the BRL-CAD build what component dependencies are.
+  # Since we can't add_subdirectory src/ until we have the dependencies set
+  # up, we have a chicken-egg problem.  To resolve it, we break the dependency
+  # info out into a separate file used both here and by src/ :
+  include(${CMAKE_SOURCE_DIR}/src/source_dirs.cmake)
+
+  # Now we have the necessary info - trigger the primary management logic
   include(BRLCAD_ExternalDeps)
 endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 

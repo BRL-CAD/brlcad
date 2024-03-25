@@ -54,10 +54,10 @@ function(brlcad_ext_setup)
     file(MAKE_DIRECTORY ${BRLCAD_EXT_BUILD_DIR})
   endif (NOT EXISTS ${BRLCAD_EXT_BUILD_DIR})
 
-  # TODO - Need to control options for this based on BRL-CAD configure
-  # settings.  Unlike an independent bext build, we know for this one what
-  # we can turn on and off
-  set(BRLCAD_EXT_CMAKE_OPTS)
+  # Need to control options for this based on BRL-CAD configure settings.
+  # Unlike an independent bext build, we know for this one what we can turn on
+  # and off
+  set(BRLCAD_EXT_CMAKE_OPTS "-DGIT_SHALLOW_CLONE=ON")
   if ("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
     set(BRLCAD_EXT_CMAKE_OPTS ${BRLCAD_EXT_CMAKE_OPTS} "-DENABLE_ALL=ON")
   endif ("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
@@ -71,12 +71,27 @@ function(brlcad_ext_setup)
     set(BRLCAD_EXT_CMAKE_OPTS ${BRLCAD_EXT_CMAKE_OPTS} "-DUSE_TCL=OFF")
   endif (NOT BRLCAD_ENABLE_TCL)
 
-  execute_process(COMMAND ${CMAKE_COMMAND} ${BRLCAD_EXT_SOURCE_DIR}
-    ${BRLCAD_EXT_CMAKE_OPTS}
-    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}
-    WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR}
-    )
+  if (BRLCAD_COMPONENTS)
+    set(active_dirs ${BRLCAD_COMPONENTS})
+    foreach(wc ${BRLCAD_COMPONENTS})
+      deps_expand(${wc} active_dirs)
+    endforeach(wc ${BRLCAD_COMPONENTS})
+    message("${CMAKE_COMMAND} ${BRLCAD_EXT_SOURCE_DIR} ${BRLCAD_EXT_CMAKE_OPTS} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR} -DBRLCAD_COMPONENTS=${active_dirs}")
+    execute_process(COMMAND ${CMAKE_COMMAND} ${BRLCAD_EXT_SOURCE_DIR}
+      ${BRLCAD_EXT_CMAKE_OPTS}
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}
+      -DBRLCAD_COMPONENTS=${active_dirs}
+      WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR}
+      )
+  else (BRLCAD_COMPONENTS)
+    execute_process(COMMAND ${CMAKE_COMMAND} ${BRLCAD_EXT_SOURCE_DIR}
+      ${BRLCAD_EXT_CMAKE_OPTS}
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}
+      WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR}
+      )
+  endif (BRLCAD_COMPONENTS)
 
   if (CMAKE_CONFIGURATION_TYPES)
     execute_process(COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel 8 --config ${CMAKE_BUILD_TYPE} WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR})

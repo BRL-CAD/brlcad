@@ -841,7 +841,11 @@ find_package_reset(ZLIB RESET_TP)
 unset(Z_PREFIX CACHE)
 unset(Z_PREFIX_STR CACHE)
 set(ZLIB_ROOT "${CMAKE_BINARY_DIR}")
-find_package(ZLIB REQUIRED)
+if (NOT BRLCAD_COMPONENTS)
+  find_package(ZLIB REQUIRED)
+else (NOT BRLCAD_COMPONENTS)
+  find_package(ZLIB)
+endif (NOT BRLCAD_COMPONENTS)
 if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
   set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
 endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
@@ -849,7 +853,11 @@ endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
 # libregex regular expression matching
 find_package_reset(REGEX RESET_TP)
 set(REGEX_ROOT "${CMAKE_BINARY_DIR}")
-find_package(REGEX REQUIRED)
+if (NOT BRLCAD_COMPONENTS)
+  find_package(REGEX REQUIRED)
+else (NOT BRLCAD_COMPONENTS)
+  find_package(REGEX)
+endif (NOT BRLCAD_COMPONENTS)
 
 # netpbm library - support for pnm,ppm,pbm, etc. image files
 # http://netpbm.sourceforge.net/
@@ -1011,7 +1019,11 @@ find_package(OSMESA)
 # https://github.com/jhasse/poly2tri
 find_package_reset(POLY2TRI RESET_TP)
 set(POLY2TRI_ROOT "${CMAKE_BINARY_DIR}")
-find_package(POLY2TRI REQUIRED)
+if (NOT BRLCAD_COMPONENTS)
+  find_package(POLY2TRI REQUIRED)
+else (NOT BRLCAD_COMPONENTS)
+  find_package(POLY2TRI)
+endif (NOT BRLCAD_COMPONENTS)
 
 
 if (BRLCAD_ENABLE_TCL)
