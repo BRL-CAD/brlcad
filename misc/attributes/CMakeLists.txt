@@ -14,7 +14,9 @@ set(GENATTRS_DIRS
 BRLCAD_INCLUDE_DIRS(GENATTRS_DIRS)
 
 # a new html and xml generation file
-BRLCAD_ADDEXEC(gen-attributes-file gen-attributes-file.cpp "libbu;librt" NO_INSTALL NO_STRICT)
+if (TARGET librt)
+  BRLCAD_ADDEXEC(gen-attributes-file gen-attributes-file.cpp "libbu;librt" NO_INSTALL NO_STRICT)
+endif (TARGET librt)
 
 CMAKEFILES(gen-attributes-files.cpp.in)
 CMAKEFILES(CMakeLists.txt)

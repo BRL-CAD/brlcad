@@ -4,7 +4,10 @@ set(articles_HY
 
 ADD_DOCBOOK("HTML;PHP;PDF" articles_HY articles/hy articles_EN_IMAGES_cp)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${articles_HY}
+  )
 
 # Local Variables:
 # tab-width: 8

@@ -2177,6 +2177,92 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
+# If we're building Docbook documentation, we need to prepare
+# some settings before the BRLCAD_ADDEXEC targets are defined
+if (BRLCAD_EXTRADOCS)
+
+  # Define a build target that builds a no-op executable, so we can ensure
+  # a target for generator expression use regardless of other changes elsewhere
+  # in the build system
+  add_executable(db_dir_info doc/docbook/db_dir_info.c)
+  set_target_properties(db_dir_info PROPERTIES FOLDER "DocBook")
+
+  # Most of the Docbook resources we need are defined here
+  add_subdirectory(doc/docbook/resources)
+
+  # Rework CMake binary and source paths for DocBook templates - if we
+  # have spaces in the paths, they will cause a problem.
+  string(REPLACE " " "%20" DOCBOOK_BINARY_DIR "${CMAKE_BINARY_DIR}")
+  string(REPLACE " " "%20" DOCBOOK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
+
+  # Files for PDF products
+  if(BRLCAD_EXTRADOCS_PDF)
+    # Apache FOP needs a couple of config files set up
+    set(srcdir ${CMAKE_CURRENT_SOURCE_DIR}/doc/docbook)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
+    DISTCLEAN("${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf")
+  endif(BRLCAD_EXTRADOCS_PDF)
+
+  # TODO - with CMake 3.20, add_custom_command supports generator expressions in
+  # OUTPUT, so once we can require that version we should look at retiring this
+  # use of CMAKE_CFG_INTDIR
+  # For the html files, we need brlcad.css
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-${CMAKE_CFG_INTDIR}-done
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css $<TARGET_FILE_DIR:db_dir_info>/${RBIN_DIR}/${DOC_DIR}/html/css/brlcad.css
+    COMMAND "${CMAKE_COMMAND}" -E touch  ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-${CMAKE_CFG_INTDIR}-done
+    DEPENDS ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css
+    )
+  add_custom_target(brlcad_css DEPENDS ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-${CMAKE_CFG_INTDIR}-done)
+  set_target_properties(brlcad_css PROPERTIES FOLDER "DocBook")
+  install(FILES ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
+  DISTCLEAN(${CMAKE_CFG_INTDIR}/${DOC_DIR}/html/css/brlcad.css)
+
+  # Include CMake macros for DocBook.
+  include(DocBook)
+
+  # The system man pages are the ones build targets might generate, so
+  # make sure to set their stylesheet resources up front
+
+  # Style sheet for XSLT transformation to HTML pages
+  set(D_RDIR ${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad)
+  set(D_BRDIR ${CMAKE_BINARY_DIR}/doc/docbook/resources/brlcad)
+  if(BRLCAD_EXTRADOCS_HTML)
+    configure_file(${D_RDIR}/brlcad-man-xhtml-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl)
+    DISTCLEAN("${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
+  endif(BRLCAD_EXTRADOCS_HTML)
+
+  if(BRLCAD_EXTRADOCS_PHP)
+    configure_file(${D_RDIR}/brlcad-man-xhtml-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl)
+    DISTCLEAN("${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
+  endif(BRLCAD_EXTRADOCS_PHP)
+
+  # Style sheet for XSLT transformation to manual pages
+  if(BRLCAD_EXTRADOCS_MAN)
+    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad/brlcad-man-stylesheet.xsl)
+    DISTCLEAN("${D_BRDIR}/brlcad-man-stylesheet.xsl")
+  endif(BRLCAD_EXTRADOCS_MAN)
+
+  # Files for PDF
+  if(BRLCAD_EXTRADOCS_PDF)
+    configure_file(${D_RDIR}/brlcad-man-fo-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-fo-stylesheet.xsl)
+    DISTCLEAN("${D_BRDIR}/brlcad-man-fo-stylesheet.xsl")
+  endif(BRLCAD_EXTRADOCS_PDF)
+
+  # For HTML, MAN and FO (FO is an intermediate file used in the
+  # XML->PDF transformation) we use variables to hold the full
+  # stylesheet path. In the case we need to further
+  # customize FO stylesheets we can have separate CMake logic in
+  # appropriate directories to handle the customization (e.g., the
+  # BRL-CAD manuals in books/en/CMakeLists.txt).
+  set(XSL_PHP_STYLESHEET "${D_BRDIR}/wordpress.xsl")
+  set(XSL_HTML_STYLESHEET "${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
+  set(XSL_MAN_STYLESHEET "${D_BRDIR}/brlcad-man-stylesheet.xsl")
+  set(XSL_FO_STYLESHEET "${D_BRDIR}/brlcad-man-fo-stylesheet.xsl")
+
+endif (BRLCAD_EXTRADOCS)
+
+
 # Enable CTest Testing support - this is done after src/other is added
 # to avoid incorporating src/other CTests into BRL-CAD's own testing.
 include(CTest)

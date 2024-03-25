@@ -80,8 +80,6 @@ set(books_EN_IMAGES
   )
 if(BRLCAD_EXTRADOCS)
   ADD_DOC(books_EN_IMAGES html/books/images)
-else(BRLCAD_EXTRADOCS)
-  CMAKEFILES(${books_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)
 
 # The PDFs need some special logic to generate custom
@@ -153,9 +151,6 @@ set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-Volum
 
 ADD_DOCBOOK("HTML;PHP;PDF" BRL-CAD_Tutorial_Series-VolumeIV.xml books books_EN_IMAGES_cp)
 
-
-CMAKEFILES(tutorial_series_authors.xml)
-
 set(hacking_brlcad_images
    images/hacking_brlcad_article_tire_pdf.png
    images/hacking_brlcad_bearing_cc.png
@@ -183,10 +178,19 @@ set(hacking_brlcad_images
    images/hacking_brlcad_tutorial_1_pdf.png
    images/hacking_brlcad_xyz.png
    )
-CMAKEFILES(${hacking_brlcad_images})
-CMAKEFILES(HACKING_BRL-CAD.xml)
-CMAKEFILES(README)
-CMAKEFILES(CMakeLists.txt)
+
+CMAKEFILES(
+  ${books_EN_IMAGES}
+  ${hacking_brlcad_images}
+  BRL-CAD_Tutorial_Series-VolumeI.xml
+  BRL-CAD_Tutorial_Series-VolumeII.xml
+  BRL-CAD_Tutorial_Series-VolumeIII.xml
+  BRL-CAD_Tutorial_Series-VolumeIV.xml
+  CMakeLists.txt
+  HACKING_BRL-CAD.xml
+  README
+  tutorial_series_authors.xml
+)
 
 # Local Variables:
 # tab-width: 8
