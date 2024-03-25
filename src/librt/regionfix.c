@@ -71,7 +71,7 @@ rt_regionfix(struct rt_i *rtip)
 
     fp = fopen(file, "rb");
     if (fp == NULL) {
-	if (rtip->rti_region_fix_file) perror(file);
+	if (rtip->rti_region_fix_file) bu_log("unable to open REGEXP file: %s\n", file);
 	bu_vls_free(&name);
 	return;
     }
