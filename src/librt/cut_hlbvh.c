@@ -50,14 +50,8 @@
 #include "bg/plane.h"
 #include "bv/plot3.h"
 
-// TODO: move this out somewhere others
-// can see it and use it
-struct bvh_build_node {
-    fastf_t bounds[6];
-    struct bvh_build_node *children[2];
-    long first_prim_offset, n_primitives;
-    uint8_t split_axis;
-};
+#define HLBVH_IMPLEMENTATION
+#include "cut_hlbvh.h"
 
 struct morton_primitive {
     long primitive_index;
