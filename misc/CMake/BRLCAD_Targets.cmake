@@ -150,12 +150,41 @@ endfunction(FILE_LANG)
 
 define_property(GLOBAL PROPERTY BRLCAD_EXEC_FILES BRIEF_DOCS "BRL-CAD binaries" FULL_DOCS "List of installed BRL-CAD binary programs")
 
+function(BRLCAD_INCLUDE_DIR targetname inc_dir itype)
+
+  if ("${inc_dir}" STREQUAL "NONE")
+    return()
+  endif ("${inc_dir}" STREQUAL "NONE")
+
+  get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
+  IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
+  if (NOT IS_LOCAL)
+    IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
+  endif (NOT IS_LOCAL)
+  set(IS_SYSPATH 0)
+  foreach(sp ${SYS_INCLUDE_PATTERNS})
+    if("${inc_dir}" MATCHES "${sp}")
+      set(IS_SYSPATH 1)
+    endif("${inc_dir}" MATCHES "${sp}")
+  endforeach(sp ${SYS_INCLUDE_PATTERNS})
+  if(IS_SYSPATH OR NOT IS_LOCAL)
+    if(IS_SYSPATH)
+      target_include_directories(${targetname} SYSTEM ${itype} ${inc_dir})
+    else(IS_SYSPATH)
+      target_include_directories(${targetname} SYSTEM AFTER ${itype} ${inc_dir})
+    endif(IS_SYSPATH)
+  else(IS_SYSPATH OR NOT IS_LOCAL)
+    target_include_directories(${targetname} BEFORE ${itype} ${inc_dir})
+  endif(IS_SYSPATH OR NOT IS_LOCAL)
+
+endfunction(BRLCAD_INCLUDE_DIR)
+
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 function(BRLCAD_ADDEXEC execname srcslist libslist)
 
-  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
+  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
 
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist}")
@@ -186,6 +215,15 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   # If we have libraries to link, link them.
   if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
     target_link_libraries(${execname} ${libslist})
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	# Note - we always treat INTERFACE includes from targets as system -
+	# while not all of them are, there are frequently some (such as
+	# openNURBS) that necessitate this treatment
+	target_include_directories(${execname} SYSTEM PRIVATE
+	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
   endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
   # In some situations (usually test executables) we want to be able
@@ -232,6 +270,13 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   endif(E_FOLDER)
   set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables${SUBFOLDER}")
 
+  if (NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL AND NOT E_NO_MAN)
+    if (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+      ADD_DOCBOOK("HTML;PHP;MAN1;PDF" ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml man1 "")
+    else (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+      message("No man page defined for ${execname}")
+    endif (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+  endif (NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL AND NOT E_NO_MAN)
 
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
@@ -239,7 +284,7 @@ endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 #---------------------------------------------------------------------
 # Library function handles both shared and static libs, so one
 # "BRLCAD_ADDLIB" statement will cover both automatically
-function(BRLCAD_ADDLIB libname srcslist libslist)
+function(BRLCAD_ADDLIB libname srcslist libslist include_dirs local_include_dirs)
 
   cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
@@ -274,6 +319,23 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libname}-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    # Set up includes
+    foreach (idr ${include_dirs})
+      BRLCAD_INCLUDE_DIR(${libname}-obj ${idr} PUBLIC)
+    endforeach (idr ${include_dirs})
+    foreach (idr ${local_include_dirs})
+      BRLCAD_INCLUDE_DIR(${libname}-obj ${idr} PRIVATE)
+    endforeach (idr ${local_include_dirs})
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	# Note - we always treat INTERFACE includes from targets as system -
+	# while not all of them are, there are frequently some (such as
+	# openNURBS) that necessitate this treatment
+	target_include_directories(${libname}-obj SYSTEM PRIVATE
+	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
 
     if(HIDE_INTERNAL_SYMBOLS)
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
@@ -314,6 +376,23 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 
+    # Set up includes
+    foreach (idr ${include_dirs})
+      BRLCAD_INCLUDE_DIR(${libname} ${idr} INTERFACE)
+    endforeach (idr ${include_dirs})
+    foreach (idr ${local_include_dirs})
+      BRLCAD_INCLUDE_DIR(${libname} ${idr} PRIVATE)
+    endforeach (idr ${local_include_dirs})
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	# Note - we always treat INTERFACE includes from targets as system -
+	# while not all of them are, there are frequently some (such as
+	# openNURBS) that necessitate this treatment
+	target_include_directories(${libname} PRIVATE
+	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
+
     if(HIDE_INTERNAL_SYMBOLS)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
       set_property(TARGET ${libname} APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS  "${UPPER_CORE}_DLL_IMPORTS")
@@ -334,6 +413,23 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libstatic} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    # Set up includes
+    foreach (idr ${include_dirs})
+      BRLCAD_INCLUDE_DIR(${libstatic} ${idr} INTERFACE)
+    endforeach (idr ${include_dirs})
+    foreach (idr ${local_include_dirs})
+      BRLCAD_INCLUDE_DIR(${libstatic} ${idr} PRIVATE)
+    endforeach (idr ${local_include_dirs})
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	# Note - we always treat INTERFACE includes from targets as system -
+	# while not all of them are, there are frequently some (such as
+	# openNURBS) that necessitate this treatment
+	target_include_directories(${libstatic} PRIVATE 
+	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
 
     if(NOT MSVC)
       set_target_properties(${libstatic} PROPERTIES OUTPUT_NAME "${libname}")
@@ -383,7 +479,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT L_NO_INSTALL)
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
-endfunction(BRLCAD_ADDLIB libname srcslist libslist)
+endfunction(BRLCAD_ADDLIB)
 
 
 #-----------------------------------------------------------------------------
@@ -429,171 +525,6 @@ if (NOT COMMAND IS_SUBPATH)
 endif (NOT COMMAND IS_SUBPATH)
 
 #---------------------------------------------------------------------
-# For situations when a local 3rd party library (say, zlib) has been
-# chosen in preference to a system version of that library, it is
-# important to ensure that the local header(s) get included before the
-# system headers.  Normally this is handled by explicitly specifying
-# the local include paths (which, being explicitly specified and
-# non-standard, are checked prior to default system locations) but
-# there are some situations (macports being a classic example) where
-# *other* "non-standard" installed copies of libraries may exist and
-# be found if those directories are included ahead of the desired
-# local copy.  An observed case:
-#
-# 1.  macports is installed on OSX
-#
-# 2.  X11 is found in macports, X11 directories are set to
-#     /usr/macports based paths
-#
-# 3.  These paths are mixed into the general include path lists for
-#     some BRL-CAD libs.
-#
-# 4.  Because these paths are a) non-standard and b) contain zlib.h
-#     they result in "system" versions of zlib present in macports
-#     being found first even when the local zlib is enabled, if the
-#     macports paths happen to appear in the include directory list
-#     before the local zlib include paths.
-#
-# To mitigate this problem, BRL-CAD library include directories are
-# sorted according to the following hierarchy (using gcc's
-# left-to-right search order as a basis:
-# http://gcc.gnu.org/onlinedocs/cpp/Search-Path.html):
-#
-# 1.  If CMAKE_CURRENT_BINARY_DIR or CMAKE_CURRENT_SOURCE_DIR are in
-#     the include list, they come first.
-#
-# 2.  If BRLCAD_BINARY_DIR/include or BRLCAD_SOURCE_DIR/include are
-#     present, they come second.
-#
-# 3.  For remaining paths, if the "root" path matches the
-#     BRLCAD_SOURCE_DIR or BRLCAD_BINARY_DIR paths, they are appended.
-#
-# 4.  Any remaining paths are appended.
-#
-function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
-  if(${DIR_LIST})
-    set(ORDERED_ELEMENTS "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${BRLCAD_BINARY_DIR}/include" "${BRLCAD_SOURCE_DIR}/include")
-    set(LAST_ELEMENTS "/usr/local/include" "/usr/include")
-
-    set(NEW_DIR_LIST "")
-    set(LAST_DIR_LIST "")
-
-    foreach(element ${ORDERED_ELEMENTS})
-      set(DEF_EXISTS "-1")
-      list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
-      if(NOT "${DEF_EXISTS}" STREQUAL "-1")
-        set(NEW_DIR_LIST ${NEW_DIR_LIST} ${element})
-        list(REMOVE_ITEM ${DIR_LIST} ${element})
-      endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
-    endforeach(element ${ORDERED_ELEMENTS})
-
-    # paths in BRL-CAD build dir
-    foreach(inc_path ${${DIR_LIST}})
-      IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${inc_path}" SUBPATH_TEST)
-      if("${SUBPATH_TEST}" STREQUAL "1")
-        set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
-        list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
-      endif("${SUBPATH_TEST}" STREQUAL "1")
-    endforeach(inc_path ${${DIR_LIST}})
-
-    # paths in BRL-CAD source dir
-    foreach(inc_path ${${DIR_LIST}})
-      IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${inc_path}" SUBPATH_TEST)
-      if("${SUBPATH_TEST}" STREQUAL "1")
-        set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
-        list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
-      endif("${SUBPATH_TEST}" STREQUAL "1")
-    endforeach(inc_path ${${DIR_LIST}})
-
-    # Pull out include paths that are definitely system paths (and
-    # hence need to come after ours
-    foreach(element ${LAST_ELEMENTS})
-      set(DEF_EXISTS "-1")
-      list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
-      if(NOT "${DEF_EXISTS}" STREQUAL "-1")
-        set(LAST_DIR_LIST ${LAST_DIR_LIST} ${element})
-        list(REMOVE_ITEM ${DIR_LIST} ${element})
-      endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
-    endforeach(element ${LAST_ELEMENTS})
-
-    # add anything that might be left
-    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}} ${LAST_DIR_LIST})
-
-    # remove any duplicates
-    list(REMOVE_DUPLICATES NEW_DIR_LIST)
-
-    # put the results into DIR_LIST
-    set(${DIR_LIST} ${NEW_DIR_LIST} PARENT_SCOPE)
-  endif(${DIR_LIST})
-endfunction(BRLCAD_SORT_INCLUDE_DIRS)
-
-#---------------------------------------------------------------------
-# Wrapper to properly include directories for a BRL-CAD build.
-# Handles the SYSTEM option to the include_directories command, as
-# well as calling the sort function.
-function(BRLCAD_INCLUDE_DIRS DIR_LIST)
-
-  # TODO - We don't want parent directories values augmenting DIR_LIST
-  # for subsequent targets - if we're calling this, we're taking full
-  # control of all inclusions for all targets in this and subsequent
-  # directories.  We should probably use the target level
-  # INCLUDE_DIRECTORIES property and stop setting include_directories
-  # on entire directories all together for maximal precision and
-  # minimum surprises...
-  #
-  # set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
-
-  set(INCLUDE_DIRS ${${DIR_LIST}})
-  if(INCLUDE_DIRS)
-    list(REMOVE_DUPLICATES INCLUDE_DIRS)
-  endif(INCLUDE_DIRS)
-
-  BRLCAD_SORT_INCLUDE_DIRS(INCLUDE_DIRS)
-
-  foreach(inc_dir ${INCLUDE_DIRS})
-    get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
-    IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
-    if (NOT IS_LOCAL)
-      IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
-    endif (NOT IS_LOCAL)
-    set(IS_SYSPATH 0)
-    foreach(sp ${SYS_INCLUDE_PATTERNS})
-      if("${inc_dir}" MATCHES "${sp}")
-        set(IS_SYSPATH 1)
-      endif("${inc_dir}" MATCHES "${sp}")
-    endforeach(sp ${SYS_INCLUDE_PATTERNS})
-    if(IS_SYSPATH OR NOT IS_LOCAL)
-      if(IS_SYSPATH)
-        include_directories(SYSTEM ${inc_dir})
-      else(IS_SYSPATH)
-        include_directories(AFTER SYSTEM ${inc_dir})
-      endif(IS_SYSPATH)
-    else(IS_SYSPATH OR NOT IS_LOCAL)
-      include_directories(BEFORE ${inc_dir})
-    endif(IS_SYSPATH OR NOT IS_LOCAL)
-  endforeach(inc_dir ${ALL_INCLUDES})
-
-endfunction(BRLCAD_INCLUDE_DIRS DIR_LIST)
-
-#---------------------------------------------------------------------
-# Wrapper to handle include directories specific to libraries.
-# Removes duplicates and makes sure the <LIB>_INCLUDE_DIRS list is in
-# the cache immediately, so it can be used by other libraries.  These
-# lists are not intended as toplevel user settable options so mark as
-# advanced.
-function(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
-  string(TOUPPER ${libname} LIB_UPPER)
-
-  list(REMOVE_DUPLICATES ${DIR_LIST})
-  set(${LIB_UPPER}_INCLUDE_DIRS ${${DIR_LIST}} CACHE STRING "Include directories for lib${libname}" FORCE)
-  mark_as_advanced(${DIR_LIST})
-
-  set(ALL_INCLUDES ${${DIR_LIST}} ${${LOCAL_DIR_LIST}})
-  BRLCAD_INCLUDE_DIRS(ALL_INCLUDES)
-endfunction(BRLCAD_LIB_INCLUDE_DIRS)
-
-
-#---------------------------------------------------------------------
 # Files needed by BRL-CAD need to be both installed and copied into
 # the correct locations in the build directories to allow executables
 # to run at build time.  Ideally, we would like any error messages
@@ -619,6 +550,23 @@ endfunction(BRLCAD_LIB_INCLUDE_DIRS)
 
 function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
+  cmake_parse_arguments(M "" "" "REQUIRED" ${ARGN})
+
+  # Handle both a list of one or more files and variable holding a
+  # list of files - find out what we've got.
+  NORMALIZE_FILE_LIST("${inputdata}" RLIST datalist FPLIST fullpath_datalist TARGET targetname)
+
+  # Identify the source files for CMake
+  CMAKEFILES(${datalist})
+
+  if (M_REQUIRED)
+    foreach(mt ${M_REQUIRED})
+      if (NOT TARGET ${mt})
+	return()
+      endif (NOT TARGET ${mt})
+    endforeach(mt ${M_REQUIRED})
+  endif (M_REQUIRED)
+
   if (NOT TARGET managed_files)
     add_custom_target(managed_files ALL)
     set_target_properties(managed_files PROPERTIES FOLDER "BRL-CAD File Copying")
@@ -628,13 +576,6 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   if(${ARGC} GREATER 2)
     CMAKE_PARSE_ARGUMENTS(${VAR_PREFIX} "EXEC" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 2)
-
-  # Handle both a list of one or more files and variable holding a
-  # list of files - find out what we've got.
-  NORMALIZE_FILE_LIST("${inputdata}" RLIST datalist FPLIST fullpath_datalist TARGET targetname)
-
-  # Identify the source files for CMake
-  CMAKEFILES(${datalist})
 
   #-------------------------------------------------------------------
   # Some of the more advanced build system features in BRL-CAD's CMake
@@ -864,6 +805,14 @@ endfunction(ADD_MAN_PAGES)
 function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC" "" ${ARGN})
+
+  if (depends_list)
+    foreach(dep ${depends_list})
+      if (NOT TARGET ${dep})
+	return()
+      endif (NOT TARGET ${dep})
+    endforeach(dep ${depends_list})
+  endif (depends_list)
 
   if (NOT ${testname}_TEST_DEFINED)
 

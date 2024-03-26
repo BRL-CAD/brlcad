@@ -12,6 +12,15 @@ set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ge
 
 function(ged_plugin_library name)
   add_library(${name} ${ARGN})
+  foreach(ll ${libslist})
+    if (TARGET ${ll})
+      # Note - we always treat INTERFACE includes from targets as system -
+      # while not all of them are, there are frequently some (such as
+      # openNURBS) that necessitate this treatment
+      target_include_directories(${name} SYSTEM PRIVATE
+	$<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+    endif (TARGET ${ll})
+  endforeach(ll ${libslist})
   add_dependencies(ged_plugins_sentinel ${name})
 endfunction(ged_plugin_library name)
 
@@ -60,18 +69,12 @@ set(LIBGED_SOURCES
 
 set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
-# Include directories needed by libged users
-set(GED_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${ANALYZE_INCLUDE_DIRS}
-  ${BG_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
-  ${FB_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  ${BREP_INCLUDE_DIRS}
+set(GED_LIBS
+  ${libged_deps}
+  ${PNG_LIBRARIES}
+  ${REGEX_LIBRARIES}
+  ${WINSOCK_LIB}
+  ${M_LIBRARY}
   )
 
 # Local include directories
@@ -83,10 +86,8 @@ set(GED_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
-BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
-
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "${libged_deps};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
-SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}")
+set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 add_subdirectory(simulate/tests)

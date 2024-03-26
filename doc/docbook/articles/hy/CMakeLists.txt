@@ -2,9 +2,14 @@ set(articles_HY
   about_hy.xml
   )
 
-ADD_DOCBOOK("HTML;PHP;PDF" articles_HY articles/hy articles_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  ADD_DOCBOOK("HTML;PHP;PDF" articles_HY articles/hy articles_EN_IMAGES_cp)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${articles_HY}
+  )
 
 # Local Variables:
 # tab-width: 8

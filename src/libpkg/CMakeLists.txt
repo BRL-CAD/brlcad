@@ -1,17 +1,9 @@
-# Include directories needed by libpkg users
-set(PKG_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  )
-BRLCAD_LIB_INCLUDE_DIRS(pkg PKG_INCLUDE_DIRS "")
-
 set(LIBPKG_SOURCES
   pkg.c
   vers.c
   )
 
-BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" "${libpkg_deps}")
+BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" "${libpkg_deps}" "" "")
 set_target_properties(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 BRLCAD_ADDDATA(tpkg.c sample_applications)

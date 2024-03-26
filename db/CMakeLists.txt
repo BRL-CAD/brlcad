@@ -53,6 +53,10 @@ function(ADD_G_TARGET in_model folder)
   # the sense that it uses libgcv...)
   if(${MODEL_TYPE} STREQUAL "3dm")
 
+    if (NOT TARGET 3dm-g)
+      return()
+    endif (NOT TARGET 3dm-g)
+
     set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
     set(OUTPUT_FILE "${output_file}")
     # Use the model name for the script, since the output file is specific to this input
@@ -73,6 +77,9 @@ function(ADD_G_TARGET in_model folder)
 
   if(${MODEL_TYPE} STREQUAL "asc")
     if (BRLCAD_ENABLE_TCL)
+      if (NOT TARGET asc2g)
+	return()
+      endif (NOT TARGET asc2g)
       add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
 	COMMAND asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}" ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
@@ -89,6 +96,9 @@ function(ADD_G_TARGET in_model folder)
   endif(${MODEL_TYPE} STREQUAL "asc")
 
   if(${MODEL_TYPE} STREQUAL "comgeom")
+    if (NOT TARGET comgeom-g)
+      return()
+    endif (NOT TARGET comgeom-g)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
       COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
@@ -98,6 +108,9 @@ function(ADD_G_TARGET in_model folder)
   endif(${MODEL_TYPE} STREQUAL "comgeom")
 
   if(${MODEL_TYPE} STREQUAL "fg4")
+    if (NOT TARGET fast4-g)
+      return()
+    endif (NOT TARGET fast4-g)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
       COMMAND fast4-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} > ${log_file} 2>&1
@@ -107,6 +120,9 @@ function(ADD_G_TARGET in_model folder)
 
   if(${MODEL_TYPE} STREQUAL "stp")
     if (BRLCAD_ENABLE_STEP)
+      if (NOT TARGET step-g)
+	return()
+      endif (NOT TARGET step-g)
       add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
 	COMMAND step-g -O ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} > ${log_file} 2>&1
@@ -140,7 +156,7 @@ set(G_BENCHMARK_MODELS
   sphflake.asc
   star.asc
   world.asc
-)
+  )
 
 set(G_SAMPLE_MODELS
   aet.asc
@@ -177,7 +193,7 @@ set(G_SAMPLE_MODELS
   wave.asc
   woodsman.asc
   xmp.asc
-)
+  )
 add_subdirectory(chess)
 add_subdirectory(comgeom)
 add_subdirectory(nist)
@@ -192,58 +208,60 @@ foreach(g_input ${G_SAMPLE_MODELS})
 endforeach(g_input ${G_SAMPLE_MODELS})
 
 if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-   BRLCAD_ADDDATA(terra.bin db)
+  BRLCAD_ADDDATA(terra.bin db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 
 if(SH_EXEC)
-  set(conversion_g_files)
-  set(conversion_g_files_fp)
-  set(conversion_deps_list)
+  if (TARGET mged OR TARGET gcv)
+    set(conversion_g_files)
+    set(conversion_g_files_fp)
+    set(conversion_deps_list)
 
-  macro(Sh_Conversion_Test gfile depends_list)
-    if (TARGET mged)
-      add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
-    else ()
-      add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:gcv> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
-    endif (TARGET mged)
-    set_target_properties(convert-${gfile} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-    set_target_properties(convert-${gfile} PROPERTIES FOLDER "BRL-CAD Conversion Tests")
-    set(conversion_g_files ${conversion_g_files} ${gfile})
-    if(NOT "${depends_list}" STREQUAL "")
-      add_dependencies(convert-${gfile} ${depends_list})
-      set(conversion_deps_list ${conversion_deps_list} ${depends_list})
-    endif(NOT "${depends_list}" STREQUAL "")
-  endmacro(Sh_Conversion_Test)
+    macro(Sh_Conversion_Test gfile depends_list)
+      if (TARGET mged)
+	add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
+      else ()
+	add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:gcv> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
+      endif (TARGET mged)
+      set_target_properties(convert-${gfile} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+      set_target_properties(convert-${gfile} PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+      set(conversion_g_files ${conversion_g_files} ${gfile})
+      if(NOT "${depends_list}" STREQUAL "")
+	add_dependencies(convert-${gfile} ${depends_list})
+	set(conversion_deps_list ${conversion_deps_list} ${depends_list})
+      endif(NOT "${depends_list}" STREQUAL "")
+    endmacro(Sh_Conversion_Test)
 
-  foreach(g_input ${G_BENCHMARK_MODELS})
-    get_filename_component(GROOT "${g_input}" NAME_WE)
-    if (TARGET mged)
-      Sh_Conversion_Test(${GROOT}.g "mged")
-    else ()
-      Sh_Conversion_Test(${GROOT}.g "gcv")
-    endif (TARGET mged)
-  endforeach(g_input ${G_BENCHMARK_MODELS})
-  foreach(g_input ${G_SAMPLE_MODELS})
-    get_filename_component(GROOT "${g_input}" NAME_WE)
-    if (TARGET mged)
-      Sh_Conversion_Test(${GROOT}.g "mged")
-    else ()
-      Sh_Conversion_Test(${GROOT}.g "gcv")
-    endif (TARGET mged)
-  endforeach(g_input ${G_SAMPLE_MODELS})
+    foreach(g_input ${G_BENCHMARK_MODELS})
+      get_filename_component(GROOT "${g_input}" NAME_WE)
+      if (TARGET mged)
+	Sh_Conversion_Test(${GROOT}.g "mged")
+      else ()
+	Sh_Conversion_Test(${GROOT}.g "gcv")
+      endif (TARGET mged)
+    endforeach(g_input ${G_BENCHMARK_MODELS})
+    foreach(g_input ${G_SAMPLE_MODELS})
+      get_filename_component(GROOT "${g_input}" NAME_WE)
+      if (TARGET mged)
+	Sh_Conversion_Test(${GROOT}.g "mged")
+      else ()
+	Sh_Conversion_Test(${GROOT}.g "gcv")
+      endif (TARGET mged)
+    endforeach(g_input ${G_SAMPLE_MODELS})
 
-  list(REMOVE_DUPLICATES conversion_deps_list)
-  foreach(gfile ${conversion_g_files})
-    set(conversion_g_files_fp ${conversion_g_files_fp} "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile}")
-  endforeach(gfile ${conversion_g_files})
-  if (TARGET mged)
-    add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${conversion_g_files_fp})
-  else ()
-    add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:gcv> ${conversion_g_files_fp})
-  endif (TARGET mged)
-  set_target_properties(convert PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-  set_target_properties(convert PROPERTIES FOLDER "BRL-CAD Conversion Tests")
-  add_dependencies(convert ${conversion_deps_list})
+    list(REMOVE_DUPLICATES conversion_deps_list)
+    foreach(gfile ${conversion_g_files})
+      set(conversion_g_files_fp ${conversion_g_files_fp} "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile}")
+    endforeach(gfile ${conversion_g_files})
+    if (TARGET mged)
+      add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${conversion_g_files_fp})
+    else ()
+      add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:gcv> ${conversion_g_files_fp})
+    endif (TARGET mged)
+    set_target_properties(convert PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+    set_target_properties(convert PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+    add_dependencies(convert ${conversion_deps_list})
+  endif (TARGET mged OR TARGET gcv)
 endif(SH_EXEC)
 
 CMAKEFILES(

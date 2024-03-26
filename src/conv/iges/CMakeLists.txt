@@ -1,12 +1,3 @@
-set(IGES_INCLUDE_DIRS
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  )
-list(REMOVE_DUPLICATES IGES_INCLUDE_DIRS)
-BRLCAD_INCLUDE_DIRS(IGES_INCLUDE_DIRS)
-
 #add_executable(iges
 #    BrepHandler.cpp
 #    brlcad_brep.cpp

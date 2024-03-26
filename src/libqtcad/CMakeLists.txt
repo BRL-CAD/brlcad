@@ -1,3 +1,5 @@
+set(QG_DIRS)
+
 if(BRLCAD_ENABLE_QT)
 
   if (BRLCAD_ENABLE_OPENGL)
@@ -16,19 +18,11 @@ if(BRLCAD_ENABLE_QT)
     endif (Qt6Widgets_FOUND)
   endif (OPENGL_LIBS)
 
-  set(QG_DIRS
+  set(QG_DIRS ${QG_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
-    ${BRLCAD_SOURCE_DIR}/include
-    ${GED_INCLUDE_DIRS}
-    ${DM_INCLUDE_DIRS}
-    ${RT_INCLUDE_DIRS}
-    ${BU_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR_GL}
     )
-  BRLCAD_INCLUDE_DIRS(QG_DIRS)
-
 endif(BRLCAD_ENABLE_QT)
 
 # We build the resources in at this level, but list them out
@@ -108,19 +102,21 @@ endforeach(qh ${qth_names})
 if(BRLCAD_ENABLE_QT)
 
   set(USE_OBJECT_LIBS OFF)
+  set(QTCAD_SRCS ${qtcad_srcs})
+  set(QTCAD_LIBS ${libqtcad_deps})
 
   if (Qt6Widgets_FOUND)
     QT6_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_hdrs})
     QT6_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
+    set(QTCAD_LIBS ${QTCAD_LIBS} Qt6::Core Qt6::Widgets ${OPENGL_LIBS})
   else()
     QT5_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_hdrs})
     QT5_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
+    set(QTCAD_LIBS ${QTCAD_LIBS} Qt5::Core;Qt5::Widgets;${OPENGL_LIBS})
   endif (Qt6Widgets_FOUND)
-  if (Qt6Widgets_FOUND)
-    BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "${libqtcad_deps};Qt6::Core;Qt6::Widgets;${OPENGL_LIBS}" SHARED)
-  else()
-    BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "${libqtcad_deps};Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}" SHARED)
-  endif (Qt6Widgets_FOUND)
+  set(QTCAD_SRCS ${QTCAD_SRCS} ${qtcad_moc_srcs} ${qtcad_qrc})
+
+  BRLCAD_ADDLIB(libqtcad "${QTCAD_SRCS}" "${QTCAD_LIBS}" "${QG_DIRS}" "" SHARED)
   set_target_properties(libqtcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
   if (OPENGL_LIBS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")

@@ -1,27 +1,3 @@
-# Include directories needed by libdm users
-set(DM_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${BG_INCLUDE_DIRS}
-  ${BVIEW_INCLUDE_DIRS}
-  ${ICV_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${PNG_INCLUDE_DIRS}
-  )
-
-if(BRLCAD_ENABLE_OPENGL)
-  set(DM_INCLUDE_DIRS ${DM_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
-endif(BRLCAD_ENABLE_OPENGL)
-
-# local includes
-set(DM_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/libbg
-  )
-
-BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
 # Main libdm library
 set(LIBDM_SRCS
@@ -57,7 +33,19 @@ set(LIBDM_SRCS
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "${libdm_deps};${PNG_LIBRARIES}")
+
+if(BRLCAD_ENABLE_OPENGL)
+  set(DM_INCLUDE_DIRS ${DM_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
+endif(BRLCAD_ENABLE_OPENGL)
+
+# local includes
+set(DM_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${PNG_INCLUDE_DIRS}
+  ${BRLCAD_SOURCE_DIR}/src/libbg
+  )
+
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "${libdm_deps};${PNG_LIBRARIES}" "${DM_INCLUDE_DIRS}" "${DM_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
@@ -81,7 +69,7 @@ if (BRLCAD_ENABLE_OPENGL)
     set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
   endif (OPENGL_gl_LIBRARY)
 
-  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_LIBS}")
+  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_LIBS}" "${DM_INCLUDE_DIRS}" "")
   set_target_properties(libdmgl PROPERTIES VERSION 20.0.1 SOVERSION 20)
 endif (BRLCAD_ENABLE_OPENGL)
 

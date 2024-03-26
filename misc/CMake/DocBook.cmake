@@ -52,6 +52,8 @@
 #
 # Note that rnv must be in the system path for this to work.
 
+if (NOT COMMAND ADD_DOCBOOK)
+
 find_program(XSLTPROC_EXECUTABLE xsltproc HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 mark_as_advanced(XSLTPROC_EXECUTABLE)
 find_program(XMLLINT_EXECUTABLE xmllint HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
@@ -162,47 +164,48 @@ if (TARGET brlcad_css)
   add_dependencies(docbook brlcad_css)
 endif (TARGET brlcad_css)
 
-# man1 or man3 man pages for which it is expected that there is no associated
-# build target.
-#
-# NOTE:  for now, remrt is listed because the target is disabled on Windows.
-# If/when it works there, remove from this list
-set(filtered_man
-  brlcad
-  brlcad-config
-  redblack
-  remrt
-  benchmark
-  dbclean
-  )
-
 function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
+
+  cmake_parse_arguments(A "" "" "REQUIRED" ${ARGN})
+
+  if (A_REQUIRED)
+    foreach (rdep ${A_REQUIRED})
+      if (NOT TARGET ${rdep})
+	return()
+      endif (NOT TARGET ${rdep})
+    endforeach (rdep ${A_REQUIRED})
+  endif (A_REQUIRED)
 
   # If we got the name of a list or an explicit list, translate into
   # the form we need.
   list(GET ${in_xml_files} 0 xml_files)
   if("${xml_files}" MATCHES "NOTFOUND")
     set(xml_files ${in_xml_files})
+    get_filename_component(abs_xml_file_path "${xml_files}" ABSOLUTE)
+    get_filename_component(dname_root1 "${abs_xml_file_path}" NAME_WE)
+    get_filename_component(dname_path1  "${abs_xml_file_path}" PATH)
+    get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
+    get_filename_component(dname_path2  "${dname_path1}" PATH)
+    get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
+    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
   else("${xml_files}" MATCHES "NOTFOUND")
+    get_filename_component(abs_xml_file_path "${xml_files}" ABSOLUTE)
+    get_filename_component(abs_path "${abs_xml_file_path}" PATH)
+    get_filename_component(dname_root1 "${abs_path}" NAME_WE)
+    get_filename_component(dname_path1  "${abs_path}" PATH)
+    get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
+    get_filename_component(dname_path2  "${dname_path1}" PATH)
+    get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
+    set(inc_num 0)
+    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
+    while(TARGET docbook-${target_root})
+      math(EXPR inc_num "${inc_num} + 1")
+      set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
+    endwhile(TARGET docbook-${target_root})
+
+    # Unpack the list
     set(xml_files ${${in_xml_files}})
   endif("${xml_files}" MATCHES "NOTFOUND")
-
-  # Get a target name that is unique but at least has some information
-  # about what/where the target is.
-  get_filename_component(dname_root1 "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
-  get_filename_component(dname_path1  "${CMAKE_CURRENT_SOURCE_DIR}" PATH)
-  get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
-  get_filename_component(dname_path2  "${dname_path1}" PATH)
-  get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
-  set(inc_num 0)
-  set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
-  while(TARGET docbook-${target_root})
-    math(EXPR inc_num "${inc_num} + 1")
-    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
-  endwhile(TARGET docbook-${target_root})
-
-  # Mark files for distcheck
-  CMAKEFILES(${xml_files})
 
   if(BRLCAD_EXTRADOCS)
     set(all_outfiles)
@@ -213,31 +216,7 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     foreach(fname ${xml_files})
       get_filename_component(fname_root "${fname}" NAME_WE)
 
-      # Almost all of the man1 and man3 man pages should have build targets -
-      # check and handle accordingly
-      if ("${outdir}" MATCHES "man*")
-	if (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
-	  list(FIND filtered_man "${fname_root}" IS_FILTERED)
-	  if ("${IS_FILTERED}" EQUAL "-1")
-	    if (NOT TARGET "${fname_root}")
-	      message("WARNING: ${outdir} man page ${fname_root} has no associated build target.")
-	      # TODO - if we disable Tcl, we don't build some of the man page tools - we need
-	      # to conditionalize the man page building the same way we do the targets for
-	      # this to be a fatal error...
-	      #math(EXPR errors "${errors} + 1")
-	    endif (NOT TARGET "${fname_root}")
-	 # TODO - until we can ensure uniformity across all platforms for
-	 # definition of man1/man3 targets, we need to skip this check.
-	 # Instead we just ignore anything in the filtered list completely.
-	 #else ("${IS_FILTERED}" EQUAL "-1")
-	 #  if (TARGET "${fname_root}")
-	 #    message("WARNING: ${outdir} man page ${fname_root} is listed as not having a build target but one was found - remove from filtered list.")
-	 #    math(EXPR errors "${errors} + 1")
-	 #  endif (TARGET "${fname_root}")
-	 endif ("${IS_FILTERED}" EQUAL "-1")
-	endif (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
-      endif ("${outdir}" MATCHES "man*")
-
+      # Used in cmake.in scripts
       get_filename_component(filename "${fname}" ABSOLUTE)
 
       # Find out which outputs we're actually going to produce,
@@ -329,13 +308,19 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     endif (errors GREATER "0")
 
     if(NOT "${all_outfiles}" STREQUAL "")
-      add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})
+      if (NOT TARGET docbook-${target_root})
+	add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})
+      else (NOT TARGET docbook-${target_root})
+	add_dependencies(docbook-${target_root} ${all_outfiles})
+      endif (NOT TARGET docbook-${target_root})
       set_target_properties(docbook-${target_root} PROPERTIES FOLDER "DocBook")
       add_dependencies(docbook docbook-${target_root})
     endif(NOT "${all_outfiles}" STREQUAL "")
   endif(BRLCAD_EXTRADOCS)
 
 endfunction(ADD_DOCBOOK)
+
+endif (NOT COMMAND ADD_DOCBOOK)
 
 # Local Variables:
 # tab-width: 8

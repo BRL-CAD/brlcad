@@ -1,15 +1,4 @@
 if (BRLCAD_ENABLE_TCL)
-  set(ARCHER_INCLUDE_DIRS
-    ${BU_INCLUDE_DIRS}
-    ${TCLCAD_INCLUDE_DIRS}
-    ${TCL_INCLUDE_PATH}
-    )
-  if (TK_INCLUDE_PATH)
-    set(ARCHER_INCLUDE_DIRS ${ARCHER_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
-  endif (TK_INCLUDE_PATH)
-  list(REMOVE_DUPLICATES ARCHER_INCLUDE_DIRS)
-  BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
-
   BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer/init)
 
   # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer

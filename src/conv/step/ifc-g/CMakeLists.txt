@@ -1,13 +1,5 @@
-set(IFC_INCLUDE_DIRS
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${STEPCODE_INCLUDE_DIRS}
-  ${OPENNURBS_INCLUDE_DIRS}
-  )
 
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
-
-BRLCAD_INCLUDE_DIRS(IFC_INCLUDE_DIRS)
 
 set(IFC_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ifc4/IFC4.exp)
 
@@ -30,10 +22,18 @@ set(ifcg_LIBS
   ${STEPCODE_CORE_LIBRARY}
   ${OPENNURBS_LIBRARIES}
   )
-list(APPEND ifcg_LIBS ${ifcg_LIBS})
+
+set(IFC_INCLUDE_DIRS
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/..
+  ${STEPCODE_INCLUDE_DIRS}
+  ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
+  )
 
 BRLCAD_ADDEXEC(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(ifc-g ifc-express-${SCHEMA_NAME}-ifcg)
+target_include_directories(ifc-g SYSTEM PRIVATE ${IFC_INCLUDE_DIRS})
 
 if (HIDE_INTERNAL_SYMBOLS)
   set(ifcg_IMPORTS
@@ -45,7 +45,6 @@ if (HIDE_INTERNAL_SYMBOLS)
     SC_EDITOR_DLL_IMPORTS
     SC_UTILS_DLL_IMPORTS
     )
-  list(APPEND ifcg_IMPORTS ${ifcg_IMPORTS})
   set_property(TARGET ifc-g APPEND PROPERTY COMPILE_DEFINITIONS "${ifcg_IMPORTS}")
 endif (HIDE_INTERNAL_SYMBOLS)
 

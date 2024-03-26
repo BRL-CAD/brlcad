@@ -1,16 +1,6 @@
 if (TARGET libtclcad)
-  set(RTWIZARD_INCLUDE_DIRS
-    ${OPTICAL_INCLUDE_DIRS}
-    ${FB_INCLUDE_DIRS}
-    ${RT_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    )
-  LIST(REMOVE_DUPLICATES RTWIZARD_INCLUDE_DIRS)
-  include_directories(${RTWIZARD_INCLUDE_DIRS})
 
-  set(RTWIZARD_SRCS
-    main.c
-    )
+  set(RTWIZARD_SRCS main.c)
 
   if (HAVE_WINDOWS_H)
     # To associate an icon with the application for Windows (needed
@@ -21,6 +11,7 @@ if (TARGET libtclcad)
 
 
   BRLCAD_ADDEXEC(rtwizard "${RTWIZARD_SRCS}" "libtclcad;librt;libdm;liboptical;libicv;Threads::Threads;${M_LIBRARY}")
+  target_include_directories(rtwizard PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   ADD_TARGET_DEPS(rtwizard rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb tkpng dm_plugins)
   foreach(item ${tclindex_target_list})
     add_dependencies(rtwizard ${item})

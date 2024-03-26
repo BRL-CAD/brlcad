@@ -4,7 +4,7 @@ set(tclcad_headers
   misc.h
   setup.h
   )
-BRLCAD_MANAGE_FILES(tclcad_headers ${INCLUDE_DIR}/brlcad/tclcad)
+BRLCAD_MANAGE_FILES(tclcad_headers ${INCLUDE_DIR}/brlcad/tclcad REQUIRED libtclcad)
 
 CMAKEFILES(CMakeLists.txt)
 

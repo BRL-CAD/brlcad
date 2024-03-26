@@ -17,17 +17,6 @@ CHECK_CXX_FLAG("Wno-ignored-qualifiers")
 
 find_package(STEPCODE)
 
-set(STEP_INCLUDE_DIRS
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BU_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  ${STEPCODE_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
-  )
-BRLCAD_INCLUDE_DIRS(STEP_INCLUDE_DIRS)
-
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   if (BRLCAD_ENABLE_STEP)
     # This Schema determines which version of STEP the command will support
