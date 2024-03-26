@@ -3,7 +3,7 @@ if(TARGET libtclcad)
 
   # Define the btclsh target
   BRLCAD_ADDEXEC(btclsh "main.c;cmd.c;input.c" "${btclsh_libs}")
-  target_include_directories(btclsh PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
+  target_include_directories(btclsh BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 
   if (TARGET itcl_pkgIndex)
     add_dependencies(btclsh itcl_pkgIndex)
@@ -15,7 +15,7 @@ if(TARGET libtclcad)
     set(bwish_libs libtclcad libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
     BRLCAD_ADDEXEC(bwish "main.c;cmd.c;input.c" "${bwish_libs}" GUI)
-    target_include_directories(bwish PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
+    target_include_directories(bwish BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
     set_property(TARGET bwish APPEND PROPERTY COMPILE_DEFINITIONS "BWISH=1")
     set_target_properties(bwish PROPERTIES FOLDER "BRL-CAD Executables")
 

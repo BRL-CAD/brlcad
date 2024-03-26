@@ -27,7 +27,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
     add_definitions(-DTEST_BUILD)
     add_library(ug-g ${ug_g_srcs})
-    target_include_directories(ug-g PRIVATE ${UG_DIRS})
+    target_include_directories(ug-g BEFORE PRIVATE ${UG_DIRS})
     target_link_libraries(ug-g librt libwdb libbrep libbg libnmg libbv libbn libbu ${TCL_LIBRARY})
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
     set_target_properties(ug-g PROPERTIES FOLDER "BRL-CAD Executables/Build Only")

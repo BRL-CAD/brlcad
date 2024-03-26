@@ -56,7 +56,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
   endif (OPENGL_gl_LIBRARY)
 
   BRLCAD_ADDEXEC(qisst "${isst_srcs};${moc_srcs}" "${QISST_LIBS}")
-  target_include_directories(qisst PRIVATE ${QISST_DIRS})
+  target_include_directories(qisst BEFORE PRIVATE ${QISST_DIRS})
 
   DISTCLEAN(
     moc_gfile.cpp_parameters

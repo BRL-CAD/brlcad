@@ -5,11 +5,11 @@ if(BRLCAD_ENABLE_GECODE)
     ${GECODE_INCLUDE_DIR}
     )
   BRLCAD_ADDEXEC(cartesian-heart cartesian-heart.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
-  target_include_directories(cartesian-heart PRIVATE ${PC_INCLUDE_DIRS})
+  target_include_directories(cartesian-heart BEFORE PRIVATE ${PC_INCLUDE_DIRS})
   BRLCAD_ADDEXEC(gecode_solver_test gecode_solver_test.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
-  target_include_directories(gecode_solver_test PRIVATE ${PC_INCLUDE_DIRS})
+  target_include_directories(gecode_solver_test BEFORE PRIVATE ${PC_INCLUDE_DIRS})
   BRLCAD_ADDEXEC(gecode_librt_test gecode_librt_test.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
-  target_include_directories(gecode_librt_test PRIVATE ${PC_INCLUDE_DIRS})
+  target_include_directories(gecode_librt_test BEFORE PRIVATE ${PC_INCLUDE_DIRS})
 endif(BRLCAD_ENABLE_GECODE)
 
 set(pc_ignore_files

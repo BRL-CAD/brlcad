@@ -7,7 +7,7 @@ set(gdiff_srcs
   )
 
 BRLCAD_ADDEXEC(gdiff "${gdiff_srcs}" "librt")
-target_include_directories(gdiff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(gdiff BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 CMAKEFILES(
   CMakeLists.txt

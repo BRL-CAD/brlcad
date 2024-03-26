@@ -5,7 +5,7 @@ set(beset_SRCS
   )
 
 BRLCAD_ADDEXEC(beset "${beset_SRCS}" "libbu;librt;libwdb" NO_INSTALL)
-target_include_directories(beset PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(beset BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(beset_ignore_files
   CMakeLists.txt

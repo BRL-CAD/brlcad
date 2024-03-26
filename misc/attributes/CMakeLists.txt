@@ -6,7 +6,7 @@ add_definitions(
 # a new html and xml generation file
 if (TARGET librt)
   BRLCAD_ADDEXEC(gen-attributes-file gen-attributes-file.cpp "libbu;librt" NO_INSTALL NO_STRICT)
-  target_include_directories(gen-attributes-file PRIVATE ${BRLCAD_SOURCE_DIR}/src/librt)
+  target_include_directories(gen-attributes-file BEFORE PRIVATE ${BRLCAD_SOURCE_DIR}/src/librt)
 endif (TARGET librt)
 
 CMAKEFILES(gen-attributes-files.cpp.in)
