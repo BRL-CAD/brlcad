@@ -64,19 +64,19 @@
 	if (!(_ap)->a_bot_reverse_normal_disabled) {		    \
 	    if (_out) {	/* this is an exit */			    \
 		if ((_hitp)->hit_vpriv[X] < 0.0) {		    \
-		    VREVERSE((_hitp)->hit_normal, trip->tri_N);	    \
+		    VREVERSE((_hitp)->hit_normal, trip->tri_N); \
 		} else {					    \
-		    VMOVE((_hitp)->hit_normal, trip->tri_N);	    \
+		    VMOVE((_hitp)->hit_normal, trip->tri_N);    \
 		}						    \
 	    } else {	/* this is an entrance */		    \
 		if ((_hitp)->hit_vpriv[X] > 0.0) {		    \
-		    VREVERSE((_hitp)->hit_normal, trip->tri_N);	    \
+		    VREVERSE((_hitp)->hit_normal, trip->tri_N); \
 		} else {					    \
-		    VMOVE((_hitp)->hit_normal, trip->tri_N);	    \
+		    VMOVE((_hitp)->hit_normal, trip->tri_N);    \
 		}						    \
 	    }							    \
 	} else {						    \
-	    VMOVE((_hitp)->hit_normal, trip->tri_N);		    \
+	    VMOVE((_hitp)->hit_normal, trip->tri_N);	    \
 	}							    \
     }
 
@@ -111,6 +111,20 @@ rt_botface_w_normals(struct soltab *stp,
 		     size_t face_no,
 		     const struct bn_tol *tol);
 
+void
+rt_bot_prep_pieces(struct bot_specific *bot,
+		   struct soltab *stp,
+		   size_t ntri,
+		   const struct bn_tol *tol);
+
+size_t
+rt_botface(struct soltab *stp,
+	   struct bot_specific *bot,
+	   fastf_t *ap,
+	   fastf_t *bp,
+	   fastf_t *cp,
+	   size_t face_no,
+	   const struct bn_tol *tol);
 
 #define TRI_TYPE float
 #define NORM_TYPE signed char
@@ -130,6 +144,27 @@ rt_botface_w_normals(struct soltab *stp,
 #undef NORM_TYPE
 #undef NORMAL_SCALE
 #undef ONE_OVER_SCALE
+
+#undef BOT_UNORIENTED_NORM
+#define BOT_UNORIENTED_NORM(_ap, _hitp, _norm, _out) {		    \
+	if (!(_ap)->a_bot_reverse_normal_disabled) {		    \
+	    if (_out) {	/* this is an exit */			    \
+		if ((_hitp)->hit_vpriv[X] < 0.0) {		    \
+		    VREVERSE((_hitp)->hit_normal, (_norm));	    \
+		} else {					    \
+		    VMOVE((_hitp)->hit_normal, (_norm));	    \
+		}						    \
+	    } else {	/* this is an entrance */		    \
+		if ((_hitp)->hit_vpriv[X] > 0.0) {		    \
+		    VREVERSE((_hitp)->hit_normal, (_norm));	    \
+		} else {					    \
+		    VMOVE((_hitp)->hit_normal, (_norm));	    \
+		}						    \
+	    }							    \
+	} else {						    \
+	    VMOVE((_hitp)->hit_normal, (_norm));		    \
+	}							    \
+    }
 
 #ifdef USE_OPENCL
 int
@@ -433,16 +468,6 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 }
 
-typedef struct _triangle_s {
-    point_t v0;
-    point_t v1;
-    point_t v2;
-    vect_t n0;
-    vect_t n1;
-    vect_t n2;
-    size_t face_id;
-} triangle_s;
-
 struct _tie_s {
     struct bu_pool *pool;
     struct bvh_build_node *root;
@@ -533,15 +558,56 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bu_free(centroids, "bot centroids");
     bu_free(bounds, "bot bounds");
 	
+    int do_normals = (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) 
+		  && (bot_ip->bot_flags & RT_BOT_USE_NORMALS) 
+		  && (bot_ip->num_normals > 0);
+	
     triangle_s *tris = (triangle_s *)bu_calloc(bot_ip->num_faces, sizeof(triangle_s), "ordered triangles");
     // copy triangles into order specfied by ordered_faces
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
-	VMOVE(tris[i].v0, (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+0]));
-	VMOVE(tris[i].v1, (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+1]));
-	VMOVE(tris[i].v2, (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+2]));
-	if (bot_ip->num_normals == bot_ip->num_vertices) {
-	    // TODO: add normals
+	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+0]);
+	fastf_t* v1 = (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+1]);
+	fastf_t* v2 = (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+2]);
+	VMOVE(tris[i].A, v0);
+	VSUB2(tris[i].AB, v1, v0);
+	VSUB2(tris[i].AC, v2, v0);
+	vect_t wn, work;
+	VCROSS(wn, tris[i].AB, tris[i].AC);
+	tris[i].face_norm_scalar = MAGNITUDE(wn);
+	
+	// some error-checking
+	fastf_t m1 = MAGSQ(tris[i].AB);
+	fastf_t m2 = MAGSQ(tris[i].AC);
+	VSUB2(work, v1, v2);
+	fastf_t m3 = MAGSQ(work);
+	fastf_t m4 = MAGSQ(wn);
+	if (m1 < rtip->rti_tol.dist_sq ||
+	    m2 < rtip->rti_tol.dist_sq ||
+	    m3 < rtip->rti_tol.dist_sq ||
+	    m4 < rtip->rti_tol.dist_sq)
+	{
+	    if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
+		bu_log("%s: degenerate facet #%zu\n", stp->st_name, ordered_faces[i]);
+		bu_log("\t(%g %g %g) (%g %g %g) (%g %g %g)\n", V3ARGS(v0), V3ARGS(v1), V3ARGS(v2));
+	    }
 	}
+	VUNITIZE(wn);
+	VMOVE(tris[i].face_norm, wn);
+	tris[i].norms = NULL;
+	/*
+	if (do_normals && bot_ip->num_face_normals > i) {
+	    long idx[3];
+	    VMOVE(idx, &bot_ip->face_normals[i*3]);
+	    if (idx[0] >= 0 && idx[0] < bot_ip->num_normals &&
+		idx[1] >= 0 && idx[1] < bot_ip->num_normals &&
+		idx[2] >= 0 && idx[2] < bot_ip->num_normals) 
+	    {
+		tris[i].norms = (fastf_t *)bu_malloc(9 * sizeof(fastf_t), "bot normals");
+		VMOVE(&tris[i].norms[0*3], &bot_ip->face_normals[idx[0]*3]);
+		VMOVE(&tris[i].norms[1*3], &bot_ip->face_normals[idx[1]*3]);
+		VMOVE(&tris[i].norms[2*3], &bot_ip->face_normals[idx[2]*3]);
+	    }
+	}*/
 	tris[i].face_id = ordered_faces[i];
     }
 
@@ -601,6 +667,38 @@ rt_bot_plate_segs(struct hit *hits,
 }
 
 
+int 
+rt_bot_surface_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+{
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    register struct seg *segp;
+    register ssize_t i;
+    static const int IN_SEG = 0;
+    static const int OUT_SEG = 1;
+    /* TODO: review the use of a signed tmp var. Var i was changed to be signed in
+     * r44239 as a bug in another project was segfaulting. */
+    ssize_t snhits = (ssize_t)nhits;
+    
+    for (i = 0; i < snhits; i++) {
+	triangle_s *trip=(triangle_s *)hits[i].hit_private;
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+
+	/* set in hit */
+	segp->seg_in = hits[i];
+	BOT_UNORIENTED_NORM(ap, &segp->seg_in, trip->norms, IN_SEG);
+
+	/* set out hit */
+	segp->seg_out = hits[i];
+	BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->norms, OUT_SEG);
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    }
+    /* Every hit turns into two, and makes a seg.  No leftovers */
+    return snhits*2;
+}
+
+
 static int
 rt_bot_unoriented_segs(struct hit *hits,
 		       size_t nhits,
@@ -618,6 +716,11 @@ rt_bot_unoriented_segs(struct hit *hits,
 }
 
 
+int
+rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
+{
+    return 0;
+}
 /**
  * Given an array of hits, make sebgents out of them.  Exactly how
  * this is to be done depends on the mode of the BoT.
@@ -625,18 +728,25 @@ rt_bot_unoriented_segs(struct hit *hits,
 int
 rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
+    RT_CK_SOLTAB(stp);
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 
     if (bot->bot_mode == RT_BOT_PLATE ||
 	bot->bot_mode == RT_BOT_PLATE_NOCOS) {
 	return rt_bot_plate_segs(hits, nhits, stp, rp, ap, seghead, bot);
     }
-
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return bot_makesegs_float(hits, nhits, stp, rp, ap, seghead, psp);
-    } else {
-	return bot_makesegs_double(hits, nhits, stp, rp, ap, seghead, psp);
+	
+    if (bot->bot_mode == RT_BOT_SURFACE) {
+	return rt_bot_surface_segs(hits, nhits, stp, rp, ap, seghead);
     }
+	
+    BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
+	
+    if (bot->bot_orientation == RT_BOT_UNORIENTED) {
+	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap, seghead, bot);
+    }
+
+    return rt_bot_oriented_segs(hits, nhits, stp, rp, ap, seghead, psp);
 }
 
 
@@ -677,53 +787,48 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	return 0;
     }
     struct hit *hits = (struct hit*) bu_calloc(num_check_tris, sizeof(struct hit), "bot hitdata");
-    // TODO: Cleanup. We only really use the tri_specific 
-    // structure to communicate the normal to rt_bot_makesegs.
-    struct tri_specific *tri_hitdata = (struct tri_specific*) bu_calloc(num_check_tris, sizeof(struct tri_specific), "bot triangle hitdata");
+    
+    fastf_t toldist = 0.0;
+    if (bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID)
+	toldist = stp->st_aradius / 10.0e+6;
+    
     size_t nhits = 0;
     for (size_t i = 0; i < num_check_tris; i++) {
-	// We currently only use triangle_s for this
-	// Also this is a relatively naive ray-triangle
-	// intersection algorithm
-	// do we want to do a bunch of pre-computation
-	// in the setup to make this faster?
 	triangle_s* tri = &tie->tris[check_tris[i]];
-	point_t E1, E2, S, S1, S2, norm;
-	VSUB2(E1, tri->v1, tri->v0);
-	VSUB2(E2, tri->v2, tri->v0);
-	VSUB2( S, rp->r_pt, tri->v0);
-	VCROSS(S1,rp->r_dir, E2);
-	fastf_t denom = VDOT(S1, E1);
-	fastf_t beta = VDOT(S1, S) / denom;
-	VCROSS(S2, S, E1);
-	fastf_t gamma = VDOT(S2, rp->r_dir) / denom;
-	// early out beta and gamma
-	if ((beta <= 0.0f) | (gamma <= 0.0f) | (gamma + beta >= 1.0f)) { continue; }
+	vect_t wn, wxb, xp;
+	VSCALE(wn, tri->face_norm, tri->face_norm_scalar);
+	fastf_t dn = VDOT(wn, rp->r_dir);
+	fastf_t abs_dn = dn >= 0.0 ? dn : (-dn);
+	if (abs_dn < BOT_MIN_DN) continue;
+	VSUB2(wxb, tri->A, rp->r_pt);
+	VCROSS(xp, wxb, rp->r_dir);
+	fastf_t dn_plus_tol = toldist + abs_dn;
+	fastf_t beta = VDOT(tri->AB, xp);
+	fastf_t gamma = VDOT(tri->AC, xp);
+	if (dn < 0.0) {
+	    beta = -beta;
+	    gamma = -gamma;
+	}
+	if ( (beta < -toldist) || (gamma < -toldist) || (beta + gamma > dn_plus_tol) ) continue;
 	// we calculate beta and gamma first, because 
-	// beta is associated with v1 and gamma is 
-	// associated with v2
-	fastf_t alpha = 1 - beta - gamma;
-	fastf_t dist = VDOT(S2, E2) / denom;
-	VCROSS(norm, E1, E2);
-	VUNITIZE(norm);
-	(void)alpha;
+	// beta is associated with point B and gamma is 
+	// associated with point C
+	fastf_t dist = VDOT(wxb, wn) / dn;
 	// fill out hitdata
 	struct hit* cur_hit = &hits[nhits];
-	struct tri_specific* cur_tri = &tri_hitdata[nhits];
 	nhits++;
+	// we copy what g_bot_include.c does right now
+	// even if we don't really understand why
 	cur_hit->hit_magic = RT_HIT_MAGIC;
 	cur_hit->hit_dist = dist;
 	VJOIN1(cur_hit->hit_point, rp->r_pt, cur_hit->hit_dist, rp->r_dir);
-	VMOVE(cur_hit->hit_normal, norm);
-	// we copy what btg.c does right now
-	// even if we don't really understand why
-	cur_hit->hit_vpriv[X] = VDOT(norm, rp->r_dir);
-	cur_hit->hit_vpriv[Y] = 0.0;
-	cur_hit->hit_vpriv[Z] = 0.0;
-	cur_hit->hit_private = cur_tri;
+	VMOVE(cur_hit->hit_normal, tri->face_norm);
+	cur_hit->hit_vpriv[X] = VDOT(tri->face_norm, rp->r_dir);
+	cur_hit->hit_vpriv[Y] = gamma / abs_dn;
+	cur_hit->hit_vpriv[Z] =  beta / abs_dn;
+	cur_hit->hit_private = tri;
 	cur_hit->hit_surfno = tri->face_id;
-	cur_hit->hit_rayp = rp;
-	VMOVE(cur_tri->tri_N, norm);
+	cur_hit->hit_rayp = &ap->a_ray; // could also use rp
     }
     bu_free(check_tris, "hlbvh primative list");
 
@@ -751,7 +856,6 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     bu_free(hits, "bot hitdata");
-    bu_free(tri_hitdata, "bot triangle hitdata");
     return retval;
 }
 
@@ -807,7 +911,61 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
 void
 rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    return;
+    struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
+
+    vect_t old_norm;
+    triangle_s *trip=(triangle_s *)hitp->hit_private;
+
+    VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
+    VMOVE(old_norm, hitp->hit_normal);
+
+    if ((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && trip->norms) {
+	fastf_t old_ray_dot_norm, new_ray_dot_norm;
+	fastf_t u, v, w; /*barycentric coords of hit point */
+	size_t i;
+
+	old_ray_dot_norm = VDOT(hitp->hit_normal, rp->r_dir);
+
+	v = hitp->hit_vpriv[Y];
+	if (v < 0.0) v = 0.0;
+	if (v > 1.0) v = 1.0;
+
+	w = hitp->hit_vpriv[Z];
+	if (w < 0.0) w = 0.0;
+	if (w > 1.0) w =  1.0;
+
+	u = 1.0 - v - w;
+	if (u < 0.0) u = 0.0;
+	VSETALL(hitp->hit_normal, 0.0);
+
+	for (i = X; i <= Z; i++) {
+	    hitp->hit_normal[i] = u*trip->norms[i] + v*trip->norms[i+3] + w*trip->norms[i+6];
+	}
+	VUNITIZE(hitp->hit_normal);
+
+	if (bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS) {
+	    if (VDOT(old_norm, hitp->hit_normal) < 0.0) {
+		VREVERSE(hitp->hit_normal, hitp->hit_normal);
+	    }
+	}
+
+	new_ray_dot_norm = VDOT(hitp->hit_normal, rp->r_dir);
+
+	if ((old_ray_dot_norm < 0.0 && new_ray_dot_norm > 0.0) ||
+	    (old_ray_dot_norm > 0.0 && new_ray_dot_norm < 0.0)) {
+	    /* surface normal interpolation has produced an
+	     * incompatible normal direction clamp the normal to 90
+	     * degrees to the ray direction
+	     */
+
+	    vect_t tmp;
+
+	    VCROSS(tmp, rp->r_dir, hitp->hit_normal);
+	    VCROSS(hitp->hit_normal, tmp, rp->r_dir);
+	}
+
+	VUNITIZE(hitp->hit_normal);
+    }
 }
 
 
