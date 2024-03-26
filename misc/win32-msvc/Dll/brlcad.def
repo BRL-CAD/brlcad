@@ -72,6 +72,7 @@ rt_prep
 rt_rpp_region
 rt_shootray
 rt_uniresource
+rt_version
 
 nmg_km
 nmg_mm
