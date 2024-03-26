@@ -312,18 +312,17 @@ function(BRLCAD_ADDLIB libname srcslist libslist include_dirs local_include_dirs
     target_compile_definitions(${libname}-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 
     # Set up includes
-    message("include_dirs: ${include_dirs}")
     foreach (idr ${include_dirs})
-      message("${libname}-obj including ${idr}")
       BRLCAD_INCLUDE_DIR(${libname}-obj ${idr} PUBLIC)
     endforeach (idr ${include_dirs})
     foreach (idr ${local_include_dirs})
-      message("${libname}-obj including ${idr}")
       BRLCAD_INCLUDE_DIR(${libname}-obj ${idr} PRIVATE)
     endforeach (idr ${local_include_dirs})
     foreach(ll ${libslist})
       if (TARGET ${ll})
-	message("${libname}-obj including ${ll} dirs")
+	# Note - we always treat INTERFACE includes from targets as system -
+	# while not all of them are, there are frequently some (such as
+	# openNURBS) that necessitate this treatment
 	target_include_directories(${libname}-obj SYSTEM PRIVATE
 	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
       endif (TARGET ${ll})
@@ -377,6 +376,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist include_dirs local_include_dirs
     endforeach (idr ${local_include_dirs})
     foreach(ll ${libslist})
       if (TARGET ${ll})
+	# Note - we always treat INTERFACE includes from targets as system -
+	# while not all of them are, there are frequently some (such as
+	# openNURBS) that necessitate this treatment
 	target_include_directories(${libname} PRIVATE
 	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
       endif (TARGET ${ll})
@@ -412,6 +414,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist include_dirs local_include_dirs
     endforeach (idr ${local_include_dirs})
     foreach(ll ${libslist})
       if (TARGET ${ll})
+	# Note - we always treat INTERFACE includes from targets as system -
+	# while not all of them are, there are frequently some (such as
+	# openNURBS) that necessitate this treatment
 	target_include_directories(${libstatic} PRIVATE 
 	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
       endif (TARGET ${ll})
