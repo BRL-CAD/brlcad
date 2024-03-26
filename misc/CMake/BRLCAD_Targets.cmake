@@ -251,7 +251,12 @@ endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 
 function(BRLCAD_INCLUDE_DIRS targetname dirlist itype)
 
-  set(INCLUDE_DIRS ${${dirlist}})
+  set(INCLUDE_DIRS)
+  foreach(idr ${${dirlist}})
+    if (NOT "${idr}" MATCHES ".*NOTFOUND")
+      list(APPEND INCLUDE_DIRS ${idr})
+    endif (NOT "${idr}" MATCHES ".*NOTFOUND")
+  endforeach(idr ${INCLUDE_DIRS})
   if (NOT INCLUDE_DIRS)
     return()
   endif (NOT INCLUDE_DIRS)
