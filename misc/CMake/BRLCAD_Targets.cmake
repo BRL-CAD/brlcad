@@ -215,6 +215,15 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   # If we have libraries to link, link them.
   if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
     target_link_libraries(${execname} ${libslist})
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	# Note - we always treat INTERFACE includes from targets as system -
+	# while not all of them are, there are frequently some (such as
+	# openNURBS) that necessitate this treatment
+	target_include_directories(${execname} SYSTEM PRIVATE
+	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
   endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
   # In some situations (usually test executables) we want to be able
@@ -514,171 +523,6 @@ if (NOT COMMAND IS_SUBPATH)
 
   endfunction(IS_SUBPATH)
 endif (NOT COMMAND IS_SUBPATH)
-
-#---------------------------------------------------------------------
-# For situations when a local 3rd party library (say, zlib) has been
-# chosen in preference to a system version of that library, it is
-# important to ensure that the local header(s) get included before the
-# system headers.  Normally this is handled by explicitly specifying
-# the local include paths (which, being explicitly specified and
-# non-standard, are checked prior to default system locations) but
-# there are some situations (macports being a classic example) where
-# *other* "non-standard" installed copies of libraries may exist and
-# be found if those directories are included ahead of the desired
-# local copy.  An observed case:
-#
-# 1.  macports is installed on OSX
-#
-# 2.  X11 is found in macports, X11 directories are set to
-#     /usr/macports based paths
-#
-# 3.  These paths are mixed into the general include path lists for
-#     some BRL-CAD libs.
-#
-# 4.  Because these paths are a) non-standard and b) contain zlib.h
-#     they result in "system" versions of zlib present in macports
-#     being found first even when the local zlib is enabled, if the
-#     macports paths happen to appear in the include directory list
-#     before the local zlib include paths.
-#
-# To mitigate this problem, BRL-CAD library include directories are
-# sorted according to the following hierarchy (using gcc's
-# left-to-right search order as a basis:
-# http://gcc.gnu.org/onlinedocs/cpp/Search-Path.html):
-#
-# 1.  If CMAKE_CURRENT_BINARY_DIR or CMAKE_CURRENT_SOURCE_DIR are in
-#     the include list, they come first.
-#
-# 2.  If BRLCAD_BINARY_DIR/include or BRLCAD_SOURCE_DIR/include are
-#     present, they come second.
-#
-# 3.  For remaining paths, if the "root" path matches the
-#     BRLCAD_SOURCE_DIR or BRLCAD_BINARY_DIR paths, they are appended.
-#
-# 4.  Any remaining paths are appended.
-#
-function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
-  if(${DIR_LIST})
-    set(ORDERED_ELEMENTS "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${BRLCAD_BINARY_DIR}/include" "${BRLCAD_SOURCE_DIR}/include")
-    set(LAST_ELEMENTS "/usr/local/include" "/usr/include")
-
-    set(NEW_DIR_LIST "")
-    set(LAST_DIR_LIST "")
-
-    foreach(element ${ORDERED_ELEMENTS})
-      set(DEF_EXISTS "-1")
-      list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
-      if(NOT "${DEF_EXISTS}" STREQUAL "-1")
-        set(NEW_DIR_LIST ${NEW_DIR_LIST} ${element})
-        list(REMOVE_ITEM ${DIR_LIST} ${element})
-      endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
-    endforeach(element ${ORDERED_ELEMENTS})
-
-    # paths in BRL-CAD build dir
-    foreach(inc_path ${${DIR_LIST}})
-      IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${inc_path}" SUBPATH_TEST)
-      if("${SUBPATH_TEST}" STREQUAL "1")
-        set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
-        list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
-      endif("${SUBPATH_TEST}" STREQUAL "1")
-    endforeach(inc_path ${${DIR_LIST}})
-
-    # paths in BRL-CAD source dir
-    foreach(inc_path ${${DIR_LIST}})
-      IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${inc_path}" SUBPATH_TEST)
-      if("${SUBPATH_TEST}" STREQUAL "1")
-        set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
-        list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
-      endif("${SUBPATH_TEST}" STREQUAL "1")
-    endforeach(inc_path ${${DIR_LIST}})
-
-    # Pull out include paths that are definitely system paths (and
-    # hence need to come after ours
-    foreach(element ${LAST_ELEMENTS})
-      set(DEF_EXISTS "-1")
-      list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
-      if(NOT "${DEF_EXISTS}" STREQUAL "-1")
-        set(LAST_DIR_LIST ${LAST_DIR_LIST} ${element})
-        list(REMOVE_ITEM ${DIR_LIST} ${element})
-      endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
-    endforeach(element ${LAST_ELEMENTS})
-
-    # add anything that might be left
-    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}} ${LAST_DIR_LIST})
-
-    # remove any duplicates
-    list(REMOVE_DUPLICATES NEW_DIR_LIST)
-
-    # put the results into DIR_LIST
-    set(${DIR_LIST} ${NEW_DIR_LIST} PARENT_SCOPE)
-  endif(${DIR_LIST})
-endfunction(BRLCAD_SORT_INCLUDE_DIRS)
-
-#---------------------------------------------------------------------
-# Wrapper to properly include directories for a BRL-CAD build.
-# Handles the SYSTEM option to the include_directories command, as
-# well as calling the sort function.
-function(BRLCAD_INCLUDE_DIRS DIR_LIST)
-
-  # TODO - We don't want parent directories values augmenting DIR_LIST
-  # for subsequent targets - if we're calling this, we're taking full
-  # control of all inclusions for all targets in this and subsequent
-  # directories.  We should probably use the target level
-  # INCLUDE_DIRECTORIES property and stop setting include_directories
-  # on entire directories all together for maximal precision and
-  # minimum surprises...
-  #
-  # set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
-
-  set(INCLUDE_DIRS ${${DIR_LIST}})
-  if(INCLUDE_DIRS)
-    list(REMOVE_DUPLICATES INCLUDE_DIRS)
-  endif(INCLUDE_DIRS)
-
-  BRLCAD_SORT_INCLUDE_DIRS(INCLUDE_DIRS)
-
-  foreach(inc_dir ${INCLUDE_DIRS})
-    get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
-    IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
-    if (NOT IS_LOCAL)
-      IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
-    endif (NOT IS_LOCAL)
-    set(IS_SYSPATH 0)
-    foreach(sp ${SYS_INCLUDE_PATTERNS})
-      if("${inc_dir}" MATCHES "${sp}")
-        set(IS_SYSPATH 1)
-      endif("${inc_dir}" MATCHES "${sp}")
-    endforeach(sp ${SYS_INCLUDE_PATTERNS})
-    if(IS_SYSPATH OR NOT IS_LOCAL)
-      if(IS_SYSPATH)
-        include_directories(SYSTEM ${inc_dir})
-      else(IS_SYSPATH)
-        include_directories(AFTER SYSTEM ${inc_dir})
-      endif(IS_SYSPATH)
-    else(IS_SYSPATH OR NOT IS_LOCAL)
-      include_directories(BEFORE ${inc_dir})
-    endif(IS_SYSPATH OR NOT IS_LOCAL)
-  endforeach(inc_dir ${ALL_INCLUDES})
-
-endfunction(BRLCAD_INCLUDE_DIRS DIR_LIST)
-
-#---------------------------------------------------------------------
-# Wrapper to handle include directories specific to libraries.
-# Removes duplicates and makes sure the <LIB>_INCLUDE_DIRS list is in
-# the cache immediately, so it can be used by other libraries.  These
-# lists are not intended as toplevel user settable options so mark as
-# advanced.
-function(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
-  string(TOUPPER ${libname} LIB_UPPER)
-
-  list(REMOVE_DUPLICATES ${DIR_LIST})
-  set(${LIB_UPPER}_INCLUDE_DIRS ${${DIR_LIST}} CACHE STRING "Include directories for lib${libname}" FORCE)
-  mark_as_advanced(${DIR_LIST})
-
-  set(ALL_INCLUDES ${${DIR_LIST}} ${${LOCAL_DIR_LIST}})
-  BRLCAD_INCLUDE_DIRS(ALL_INCLUDES)
-endfunction(BRLCAD_LIB_INCLUDE_DIRS)
-
 
 #---------------------------------------------------------------------
 # Files needed by BRL-CAD need to be both installed and copied into

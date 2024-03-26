@@ -14,7 +14,6 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     ${ZLIB_INCLUDE_DIRS}
     ${REGEX_INCLUDE_DIRS}
     )
-  BRLCAD_INCLUDE_DIRS(SAT_DIRS)
 
   # The build shims aren't so great at mocking the initialization
   # behavior of the real code.
@@ -23,6 +22,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(g_sat_srcs g-sat.cpp)
   add_definitions(-DTEST_BUILD)
   add_library(g-sat ${g_sat_srcs})
+  target_include_directories(g-sat PRIVATE ${SAT_DIRS})
   target_link_libraries(g-sat librt libwdb libbrep libbg libnmg libbv libbn libbu)
   set_property(TARGET g-sat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   set_target_properties(g-sat PROPERTIES FOLDER "BRL-CAD Executables/Build Only")

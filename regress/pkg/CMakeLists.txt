@@ -1,10 +1,3 @@
-include_directories(
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${PKG_INCLUDE_DIRS}
-  )
-
 if (TARGET libpkg)
   BRLCAD_ADDEXEC(regress_pkg regress_pkg.cpp "libpkg;libbu;Threads::Threads" NO_INSTALL)
   set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/pkg")

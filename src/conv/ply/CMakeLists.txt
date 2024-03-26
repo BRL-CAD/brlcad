@@ -1,8 +1,3 @@
-set(PLY_INCLUDE_DIRS
-  ${GCV_INCLUDE_DIRS}
-  )
-BRLCAD_INCLUDE_DIRS(PLY_INCLUDE_DIRS)
-
 BRLCAD_ADDEXEC(ply-g ply-g.c "libgcv" FOLDER Conv)
 BRLCAD_ADDEXEC(g-ply g-ply.c "libgcv" FOLDER Conv)
 add_dependencies(ply-g gcv_plugins)

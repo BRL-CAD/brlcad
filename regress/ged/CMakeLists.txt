@@ -1,8 +1,6 @@
 # Tests for various GED commands
 
 if (TARGET libged)
-  BRLCAD_INCLUDE_DIRS(GED_INCLUDE_DIRS)
-
   BRLCAD_ADDEXEC(regress_mater mater.c libged TEST_USESDATA)
   BRLCAD_REGRESSION_TEST(regress-ged_mater "regress_mater;ged-mater;density_DATAFILES_cp" EXEC regress_mater)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_mater.log")

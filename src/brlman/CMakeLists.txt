@@ -1,19 +1,7 @@
-set(BRLMAN_INCLUDE_DIRS
-  ${BU_INCLUDE_DIRS}
-  )
 set(brlman_libs libbu ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
 # Tcl/Tk version of brlman GUI
 if (NOT BRLCAD_ENABLE_QT AND TARGET libtclcad)
-  set(BRLMAN_INCLUDE_DIRS
-    ${BRLMAN_INCLUDE_DIRS}
-    ${TCLCAD_INCLUDE_DIRS}
-    ${TCL_INCLUDE_PATH}
-    )
-  if (TARGET Tkhtml)
-    set(BRLMAN_INCLUDE_DIRS ${BRLMAN_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
-  endif (TARGET Tkhtml)
-
   BRLCAD_ADDDATA(brlman.tcl tclscripts/brlman)
 
   set(brlman_libs libtclcad ${TCL_LIBRARY} ${brlman_libs})
@@ -31,10 +19,6 @@ if (BRLCAD_ENABLE_QT)
     set(brlman_libs libqtcad Qt5::Widgets Qt5::Gui ${brlman_libs})
   endif (Qt6Widgets_FOUND)
 endif (BRLCAD_ENABLE_QT)
-
-list(REMOVE_DUPLICATES BRLMAN_INCLUDE_DIRS)
-BRLCAD_INCLUDE_DIRS(BRLMAN_INCLUDE_DIRS)
-
 
 # Building "GUI" doesn't matter except on Windows, but
 # on Windows brlman works only in graphical mode - might

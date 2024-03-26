@@ -1,10 +1,3 @@
-set(FUZZ_INCLUDE_DIRS
-  ${BU_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  )
-BRLCAD_INCLUDE_DIRS(FUZZ_INCLUDE_DIRS)
-
 include(CheckCXXCompilerFlag)
 
 # We're fuzzing, so let the compiler know it doesn't matter if we're doing

@@ -62,17 +62,15 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   set(isst_dirs
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/librender
-    ${TCLCAD_INCLUDE_DIRS}
-    ${DM_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR_GL}
     ${OPENGL_INCLUDE_DIR_GLX}
     )
-  BRLCAD_INCLUDE_DIRS(isst_dirs)
 
   set(isst_libs libtclcad librender libdm ${TCL_LIBRARY} ${OPENGL_LIBRARIES} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY} ${OPENGL32_LIBRARY})
 
   BRLCAD_ADDDATA(isst.tcl tclscripts/isst)
   BRLCAD_ADDEXEC(isst isst.c "${isst_libs}" GUI)
+  target_include_directories(isst PRIVATE ${isst_dirs})
   ADD_TARGET_DEPS(isst isst_tcl_cp dm_plugins)
   foreach(item ${tclindex_target_list})
     add_dependencies(isst ${item})

@@ -24,13 +24,8 @@ if(BRLCAD_ENABLE_BULLET)
   set(SIM_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/simulate
-    ${BRLCAD_BINARY_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/include
-    ${BU_INCLUDE_DIRS}
-    ${GED_INCLUDE_DIRS}
     ${BULLET_INCLUDE_DIR}
     )
-  BRLCAD_INCLUDE_DIRS(SIM_INCLUDE_DIRS)
 
   # If bullet was built with USE_DOUBLE_PRECISION, we need this (see
   # https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=9670 for more discussion.)
@@ -38,6 +33,7 @@ if(BRLCAD_ENABLE_BULLET)
   add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
 
   BRLCAD_ADDEXEC(simulate_test "simulate_test.cpp" "libged;${BULLET_LIBRARIES}" TEST)
+  target_include_directories(simulate_test PRIVATE ${SIM_INCLUDE_DIRS})
   BRLCAD_ADD_TEST(NAME simulate_test COMMAND simulate_test)
 endif(BRLCAD_ENABLE_BULLET)
 

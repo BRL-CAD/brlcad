@@ -12,6 +12,15 @@ set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ge
 
 function(ged_plugin_library name)
   add_library(${name} ${ARGN})
+  foreach(ll ${libslist})
+    if (TARGET ${ll})
+      # Note - we always treat INTERFACE includes from targets as system -
+      # while not all of them are, there are frequently some (such as
+      # openNURBS) that necessitate this treatment
+      target_include_directories(${name} SYSTEM PRIVATE
+	$<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+    endif (TARGET ${ll})
+  endforeach(ll ${libslist})
   add_dependencies(ged_plugins_sentinel ${name})
 endfunction(ged_plugin_library name)
 

@@ -522,7 +522,6 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
     "${OPENNURBS_INCLUDE_DIRS}"
      )
-  BRLCAD_INCLUDE_DIRS(CREO_DIRS)
 
   #----------------------------------------------------------------------#
   # The build shims aren't so great at mocking the initialization        #
@@ -532,6 +531,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   set(CREO2BRL_SOURCES ${CREO2BRL_SOURCES} shim.cpp)
   add_library(creo-brl ${CREO2BRL_SOURCES})
+  target_include_directories(creo-brl PRIVATE ${CREO_DIRS})
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
   target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu)
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
