@@ -593,6 +593,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	}
 	VUNITIZE(wn);
 	VMOVE(tris[i].face_norm, wn);
+	if (bot->bot_orientation == RT_BOT_CW) { VREVERSE(tris[i].face_norm, tris[i].face_norm); }
 	tris[i].norms = NULL;
 	/*
 	if (do_normals && bot_ip->num_face_normals > i) {
@@ -659,11 +660,76 @@ rt_bot_plate_segs(struct hit *hits,
 		  struct seg *seghead,
 		  struct bot_specific *bot)
 {
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return bot_plate_segs_float(hits, nhits, stp, rp, ap, seghead, bot);
-    } else {
-	return bot_plate_segs_double(hits, nhits, stp, rp, ap, seghead, bot);
+    register struct seg *segp;
+    register size_t i;
+    register fastf_t los;
+    size_t surfno;
+    static const int IN_SEG = 0;
+    static const int OUT_SEG = 1;
+
+    if (rp) RT_CK_RAY(rp);
+
+    for (i = 0; i < nhits; i++) {
+	triangle_s *trip = (triangle_s *)hits[i].hit_private;
+
+	surfno = hits[i].hit_surfno;
+
+	los = 0.0;
+	if (LIKELY(bot->bot_thickness != NULL)) {
+	    if (bot->bot_mode == RT_BOT_PLATE_NOCOS) {
+		los = bot->bot_thickness[surfno];
+	    } else {
+		los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
+		if (los < 0.0)
+		    los = -los;
+	    }
+	}
+
+	if (LIKELY(bot->bot_facemode != NULL) && BU_BITTEST(bot->bot_facemode, hits[i].hit_surfno)) {
+
+	    /* append thickness to hit point */
+	    RT_GET_SEG(segp, ap->a_resource);
+	    segp->seg_stp = stp;
+
+	    /* set in hit */
+	    segp->seg_in = hits[i];
+	    BOT_UNORIENTED_NORM(ap, &segp->seg_in, trip->face_norm, IN_SEG);
+
+	    /* set out hit */
+	    segp->seg_out.hit_surfno = surfno;
+	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
+	    VMOVE(segp->seg_out.hit_vpriv, hits[i].hit_vpriv);
+	    BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->face_norm, OUT_SEG);
+	    segp->seg_out.hit_private = segp->seg_in.hit_private;
+	    segp->seg_out.hit_rayp = &ap->a_ray;
+
+	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	} else {
+	    /* center thickness about hit point */
+	    RT_GET_SEG(segp, ap->a_resource);
+	    segp->seg_stp = stp;
+
+	    /* set in hit */
+	    segp->seg_in.hit_surfno = surfno;
+	    VMOVE(segp->seg_in.hit_vpriv, hits[i].hit_vpriv);
+	    BOT_UNORIENTED_NORM(ap, &segp->seg_in, trip->face_norm, IN_SEG);
+	    segp->seg_in.hit_private = hits[i].hit_private;
+	    segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5);
+	    segp->seg_in.hit_rayp = &ap->a_ray;
+
+	    /* set out hit */
+	    segp->seg_out.hit_surfno = surfno;
+	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
+	    VMOVE(segp->seg_out.hit_vpriv, hits[i].hit_vpriv);
+	    BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->face_norm, OUT_SEG);
+	    segp->seg_out.hit_private = hits[i].hit_private;
+	    segp->seg_out.hit_rayp = &ap->a_ray;
+
+	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	}
     }
+    /* Every hit turns into two, and makes a seg.  No leftovers */
+    return nhits*2;
 }
 
 
@@ -687,11 +753,11 @@ rt_bot_surface_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct x
 
 	/* set in hit */
 	segp->seg_in = hits[i];
-	BOT_UNORIENTED_NORM(ap, &segp->seg_in, trip->norms, IN_SEG);
+	BOT_UNORIENTED_NORM(ap, &segp->seg_in, trip->face_norm, IN_SEG);
 
 	/* set out hit */
 	segp->seg_out = hits[i];
-	BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->norms, OUT_SEG);
+	BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->face_norm, OUT_SEG);
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     /* Every hit turns into two, and makes a seg.  No leftovers */
@@ -708,18 +774,509 @@ rt_bot_unoriented_segs(struct hit *hits,
 		       struct seg *seghead,
 		       struct bot_specific *bot)
 {
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return bot_unoriented_segs_float(hits, nhits, stp, rp, ap, seghead);
-    } else {
-	return bot_unoriented_segs_double(hits, nhits, stp, rp, ap, seghead);
+    register struct seg *segp;
+    register size_t i, j;
+
+    /*
+     * RT_BOT_SOLID, RT_BOT_UNORIENTED.
+     */
+    fastf_t rm_dist = 0.0;
+    int removed = 0;
+    static const int IN_SEG = 0;
+    static const int OUT_SEG = 1;
+
+    if (nhits == 1) {
+	triangle_s *trip = (triangle_s *)hits[0].hit_private;
+
+	/* make a zero length partition */
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+
+	/* set in hit */
+	segp->seg_in = hits[0];
+	BOT_UNORIENTED_NORM(ap, &segp->seg_in, trip->face_norm, IN_SEG);
+
+	/* set out hit */
+	segp->seg_out = hits[0];
+	BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->face_norm, OUT_SEG);
+
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	return 1;
     }
+
+    /* Remove duplicate hits */
+    for (i = 0; i < nhits - 1; i++) {
+	fastf_t dist;
+
+	dist = hits[i].hit_dist - hits[i+1].hit_dist;
+	if (NEAR_ZERO(dist, ap->a_rt_i->rti_tol.dist)) {
+	    removed++;
+	    rm_dist = hits[i+1].hit_dist;
+	    for (j = i; j < nhits - 1; j++)
+		hits[j] = hits[j+1];
+	    nhits--;
+	    i--;
+	}
+    }
+
+    if (nhits == 1)
+	return 0;
+
+    if (nhits&1 && removed) {
+	/* If we have an odd number of hits and have removed a
+	 * duplicate, then it was likely on an edge, so remove the one
+	 * we left.
+	 */
+	for (i = 0; i < nhits; i++) {
+	    if (ZERO(hits[i].hit_dist - rm_dist)) {
+		for (j = i; j < nhits - 1; j++)
+		    hits[j] = hits[j+1];
+		nhits--;
+		i--;
+		break;
+	    }
+	}
+    }
+
+    for (i = 0; i < (nhits&~1); i += 2) {
+	triangle_s *trip = (triangle_s *)hits[i].hit_private;
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+
+	/* set in hit */
+	segp->seg_in = hits[i];
+	BOT_UNORIENTED_NORM(ap, &segp->seg_in, trip->face_norm, IN_SEG);
+
+	/* set out hit */
+	segp->seg_out = hits[i+1];
+	trip = (triangle_s *)hits[i+1].hit_private;
+	BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->face_norm, OUT_SEG);
+
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    }
+    if (nhits&1) {
+	if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
+	    bu_log("rt_bot_unoriented_segs(%s): WARNING: odd number of hits (%zu), last hit ignored\n",
+		   stp->st_name, nhits);
+	    bu_log("\tray = -p %g %g %g -d %g %g %g\n",
+		   V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
+	}
+	nhits--;
+    }
+    return nhits;
 }
 
 
 int
 rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
-    return 0;
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    register struct seg *segp;
+    register ssize_t i;
+    static const int IN_SEG = 0;
+    static const int OUT_SEG = 1;
+    /* TODO: review the use of a signed tmp var. Var i was changed to be signed in
+     * r44239 as a bug in another project was segfaulting. */
+    ssize_t snhits = (ssize_t)nhits;
+
+    /* Remove duplicate hits */
+    {
+	register ssize_t j, k, l;
+
+	for (i = 0; i < snhits-1; i++) {
+	    fastf_t dist;
+	    fastf_t dn;
+
+	    dn = hits[i].hit_vpriv[X];
+
+	    k = i + 1;
+	    dist = hits[i].hit_dist - hits[k].hit_dist;
+
+	    /* count number of hits at this distance */
+	    while (NEAR_ZERO(dist, ap->a_rt_i->rti_tol.dist)) {
+		k++;
+		if (k > snhits - 1)
+		    break;
+		dist = hits[i].hit_dist - hits[k].hit_dist;
+	    }
+
+	    if ((k - i) == 2 && dn * hits[i+1].hit_vpriv[X] > 0) {
+		/* a pair of hits at the same distance and both are exits or entrances,
+		 * likely an edge hit, remove one */
+		for (j = i; j < snhits - 1; j++)
+		    hits[j] = hits[j+1];
+		if (psp) {
+		    psp->htab.end--;
+		}
+		snhits--;
+		i--;
+		continue;
+	    } else if ((k - i) > 2) {
+		ssize_t keep1 = -1, keep2 = -1;
+		ssize_t enters = 0, exits = 0;
+		int reorder = 0;
+		int reorder_failed = 0;
+
+		/* more than two hits at the same distance, likely a vertex hit
+		 * try to keep just two, one entrance and one exit.
+		 * unless they are all entrances or all exits, then just keep one */
+
+		/* first check if we need to do anything */
+		for (j = 0; j < k; j++) {
+		    if (hits[j].hit_vpriv[X] > 0)
+			exits++;
+		    else
+			enters++;
+		}
+
+		if (k%2) {
+		    if (exits == (enters - 1)) {
+			reorder = 1;
+		    }
+		} else {
+		    if (exits == enters) {
+			reorder = 1;
+		    }
+		}
+
+		if (reorder) {
+		    struct hit tmp_hit;
+		    int changed = 0;
+
+		    for (j = i; j < k; j++) {
+
+			if (j%2) {
+			    if (hits[j].hit_vpriv[X] > 0) {
+				continue;
+			    }
+			    /* should be an exit here */
+			    l = j+1;
+			    while (l < k) {
+				if (hits[l].hit_vpriv[X] > 0) {
+				    /* swap with this exit */
+				    tmp_hit = hits[j];
+				    hits[j] = hits[l];
+				    hits[l] = tmp_hit;
+				    changed = 1;
+				    break;
+				}
+				l++;
+			    }
+			    if (hits[j].hit_vpriv[X] < 0) {
+				reorder_failed = 1;
+				break;
+			    }
+			} else {
+			    if (hits[j].hit_vpriv[X] < 0) {
+				continue;
+			    }
+			    /* should be an entrance here */
+			    l = j+1;
+			    while (l < k) {
+				if (hits[l].hit_vpriv[X] < 0) {
+				    /* swap with this entrance */
+				    tmp_hit = hits[j];
+				    hits[j] = hits[l];
+				    hits[l] = tmp_hit;
+				    changed = 1;
+				    break;
+				}
+				l++;
+			    }
+			    if (hits[j].hit_vpriv[X] > 0) {
+				reorder_failed = 1;
+				break;
+			    }
+			}
+		    }
+		    if (changed) {
+			/* if we have re-ordered these hits, make sure they are really
+			 * at the same distance.
+			 */
+			for (j = i + 1; j < k; j++) {
+			    hits[j].hit_dist = hits[i].hit_dist;
+			}
+		    }
+		}
+		if (!reorder || reorder_failed) {
+
+		    exits = 0;
+		    enters = 0;
+		    if (i == 0) {
+			dn = 1.0;
+		    } else {
+			dn = hits[i-1].hit_vpriv[X];
+		    }
+		    for (j = i; j < k; j++) {
+			if (hits[j].hit_vpriv[X] > 0)
+			    exits++;
+			else
+			    enters++;
+			if (dn * hits[j].hit_vpriv[X] < 0) {
+			    if (keep1 == -1) {
+				keep1 = j;
+				dn = hits[j].hit_vpriv[X];
+			    } else if (keep2 == -1) {
+				keep2 = j;
+				/* TODO: assignment not used - should it be? */
+				/*dn = hits[j].hit_vpriv[X];*/
+				break;
+			    }
+			}
+		    }
+
+		    if (keep2 == -1) {
+			/* did not find two keepers, perhaps they were
+			 * all entrances or all exits.
+			 */
+			if (exits == k - i || enters == k - i) {
+			    /* eliminate all but one entrance or exit */
+			    for (j = k - 1; j > i; j--) {
+				/* delete this hit */
+				for (l=j; l<snhits-1; l++)
+				    hits[l] = hits[l+1];
+				if (psp) {
+				    psp->htab.end--;
+				}
+				snhits--;
+			    }
+			    i--;
+			}
+		    } else {
+			/* found an entrance and an exit to keep */
+			for (j = k - 1; j >= i; j--) {
+			    if (j != keep1 && j != keep2) {
+				/* delete this hit */
+				for (l=j; l<snhits-1; l++)
+				    hits[l] = hits[l+1];
+				if (psp) {
+				    psp->htab.end--;
+				}
+				snhits--;
+			    }
+			}
+			i--;
+		    }
+		}
+	    }
+	}
+
+	/*
+	 * Handle cases where there are multiple adjacent entrances or
+	 * exits along the shotline.  Using the FILO approach where we
+	 * keep the "First In" from multiple entrances and the "Last
+	 * Out" for multiple exits.
+	 *
+	 * Many of these cases were being generated when the shot ray
+	 * grazed a surface.  Grazing shots should USUALLY be treated
+	 * as non-hits (and is the case for other primitives).  With
+	 * BoTs, however, these can cause multiple entrances and exits
+	 * when adjacent surfaces are hit.
+	 *
+	 * Example #1: CROSS-SECTION OF CONVEX SOLID
+	 *
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  ------------            ------------
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * For this grazing hit, LOS(X) was being shown as:
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  XXXXXXXXXXXX            XXXXXXXXXXXXX
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * Using a FILO approach, now LOS(X) shows as:
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 */
+	for (i = 0; i < snhits-1; i++) {
+	    if (hits[i].hit_vpriv[X] < 0.0) { /* entering */
+		k = i + 1;
+		while ((k < snhits) && (hits[k].hit_vpriv[X] < 0.0)) {
+		    for (j = i; j < snhits-1; j++)
+			hits[j] = hits[j+1];
+		    snhits--;
+		}
+	    } else if (hits[i].hit_vpriv[X] > 0.0) { /* exiting */
+		k = i + 1;
+		while ((k < snhits) && (hits[k].hit_vpriv[X] > 0.0)) {
+		    for (j = i + 1; j < snhits - 1; j++)
+			hits[j] = hits[j+1];
+		    snhits--;
+		}
+	    }
+	}
+
+	/*
+	 * Note that we could try to use a LIFO approach so that we
+	 * more consistently count all grazing hits as a miss, but
+	 * there's an increased chance of slipping through a crack
+	 * with BoTs without a change to check mesh neighbors:
+	 *
+	 * Using a LIFO approach, the above LOS(X) would have been:
+	 *
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  -----------XXXXXXXXXXXXXX------------
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * Example #2: CROSS-SECTION OF CONCAVE SOLID
+	 *
+	 *   ray-->  ------------            ------------
+	 *           |entrance  |exit        |entrance  |exit
+	 *           |          |            |          |
+	 *                      --------------
+	 *
+	 * Using LIFO, we would report a miss for the concave case,
+	 * but with FILO this will return two hit segments.
+	 *
+	 *   ray-->  XXXXXXXXXXXX            XXXXXXXXXXXX
+	 *           |entrance  |exit        |entrance  |exit
+	 *           |          |            |          |
+	 *                      --------------
+	 */
+    }
+
+    /* if first hit is an exit, it is likely due to the "piece" for
+     * the corresponding entrance not being processed (this is OK, but
+     * we need to eliminate the stray exit hit)
+     */
+    while (snhits > 0 && hits[0].hit_vpriv[X] > 0.0) {
+	ssize_t j;
+
+	for (j = 1; j < snhits; j++) {
+	    hits[j-1] = hits[j];
+	}
+	snhits--;
+    }
+
+    /* similar for trailing entrance hits */
+    while (snhits > 0 && hits[snhits-1].hit_vpriv[X] < 0.0) {
+	snhits--;
+    }
+
+    if ((snhits&1)) {
+	/*
+	 * If this condition exists, it is almost certainly due to the
+	 * dn==0 check above.  Thus, we will make the last surface
+	 * rather thin.  This at least makes the presence of this
+	 * solid known.  There may be something better we can do.
+	 */
+
+	if (snhits > 2) {
+	    fastf_t dot1, dot2;
+	    ssize_t j;
+
+	    /* likely an extra hit, look for consecutive entrances or
+	     * exits.
+	     */
+
+	    dot2 = 1.0;
+	    i = 0;
+	    while (i<snhits) {
+		dot1 = dot2;
+		dot2 = hits[i].hit_vpriv[X];
+		if (dot1 > 0.0 && dot2 > 0.0) {
+		    /* two consecutive exits, manufacture an entrance
+		     * at same distance as second exit.
+		     */
+		    /* XXX This consumes an extra hit structure in the array */
+		    if (psp) {
+			/* using pieces */
+			(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+			hits = psp->htab.hits;
+		    } else if (snhits + 1 >= MAXHITS) {
+			/* not using pieces */
+			bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
+			i++;
+			continue;
+		    }
+		    for (j = snhits; j > i; j--)
+			hits[j] = hits[j-1];	/* struct copy */
+
+		    hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
+		    dot2 = hits[i].hit_vpriv[X];
+		    snhits++;
+		    bu_log("\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name);
+		    bu_log("\t\t\tray = (%g %g %g) -> (%g %g %g)\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
+		} else if (dot1 < 0.0 && dot2 < 0.0) {
+		    /* two consecutive entrances, manufacture an exit
+		     * between them.
+		     */
+		    /* XXX This consumes an extra hit structure in the
+		     * array.
+		     */
+
+		    if (psp) {
+			/* using pieces */
+			(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+			hits = psp->htab.hits;
+		    } else if (snhits + 1 >= MAXHITS) {
+			/* not using pieces */
+			bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
+			i++;
+			continue;
+		    }
+		    for (j = snhits; j > i; j--)
+			hits[j] = hits[j-1];	/* struct copy */
+
+		    hits[i] = hits[i-1];	/* struct copy */
+		    hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
+		    dot2 = hits[i].hit_vpriv[X];
+		    snhits++;
+		    bu_log("\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name);
+		    bu_log("\t\t\tray = (%g %g %g) -> (%g %g %g)\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
+		}
+		i++;
+	    }
+	}
+    }
+
+    if ((snhits&1)) {
+	/* XXX This consumes an extra hit structure in the array */
+	if (psp) {
+	    (void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+	    hits = psp->htab.hits;
+	}
+	if (!psp && (snhits + 1 >= MAXHITS)) {
+	    bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
+	    snhits--;
+	} else {
+	    hits[snhits] = hits[snhits-1];	/* struct copy */
+	    hits[snhits].hit_vpriv[X] = -hits[snhits].hit_vpriv[X];
+	    snhits++;
+	}
+    }
+
+    /* snhits is even, build segments */
+    for (i = 0; i < snhits; i += 2) {
+	triangle_s *trip;
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+	segp->seg_in = hits[i];	/* struct copy */
+	trip = (triangle_s *)hits[i].hit_private;
+	BOT_UNORIENTED_NORM(ap, &segp->seg_in, trip->face_norm, IN_SEG);
+	segp->seg_out = hits[i+1];	/* struct copy */
+	trip = (triangle_s *)hits[i+1].hit_private;
+	BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->face_norm, OUT_SEG);
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    }
+
+    return snhits;			/* HIT */
 }
 /**
  * Given an array of hits, make sebgents out of them.  Exactly how
