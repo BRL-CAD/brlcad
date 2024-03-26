@@ -1,12 +1,3 @@
-set(ADRT_INCLUDE_DIRS
-  ${GCV_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/adrt
-  ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
-  ${BRLCAD_SOURCE_DIR}/src/adrt/librender
-  )
-list(REMOVE_DUPLICATES ADRT_INCLUDE_DIRS)
-BRLCAD_INCLUDE_DIRS(ADRT_INCLUDE_DIRS)
-
 IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ZLIB_LIBRARY}" LOCAL_TEST)
 if(LOCAL_TEST OR TARGET ZLIB_BLD)
   add_definitions(-DZ_PREFIX)
@@ -40,7 +31,14 @@ set(LIBRENDER_SRCS
   librender/texture_perlin.c
   librender/texture_stack.c
   )
-BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv;${ZLIB_LIBRARIES}")
+
+set(ADRT_LOCAL_INCLUDE_DIRS
+  ${BRLCAD_SOURCE_DIR}/src/adrt
+  ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
+  ${BRLCAD_SOURCE_DIR}/src/adrt/librender
+  )
+
+BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv;${ZLIB_LIBRARIES}" "" "${ADRT_LOCAL_INCLUDE_DIRS}")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_dependencies(librender gcv_plugins)
 
@@ -62,6 +60,8 @@ BRLCAD_MANAGE_FILES(tie_HDRS ${INCLUDE_DIR}/tie)
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
   set(isst_dirs
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/librender
     ${TCLCAD_INCLUDE_DIRS}
     ${DM_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR_GL}

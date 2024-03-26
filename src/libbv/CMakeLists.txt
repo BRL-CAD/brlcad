@@ -1,19 +1,3 @@
-# Include directories needed by libbv users
-set(BV_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${BG_INCLUDE_DIRS}
-  )
-
-set(BV_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${LMDB_INCLUDE_DIR}
-  )
-
-BRLCAD_LIB_INCLUDE_DIRS(bv BV_INCLUDE_DIRS BV_LOCAL_INCLUDE_DIRS)
-
 set(LIBBV_SRCS
   adc.c
   diff.c
@@ -37,7 +21,12 @@ set(LIBBV_SRCS
   view_sets.cpp
   )
 
-BRLCAD_ADDLIB(libbv "${LIBBV_SRCS}" "${libbv_deps}")
+set(BV_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${LMDB_INCLUDE_DIR}
+  )
+
+BRLCAD_ADDLIB(libbv "${LIBBV_SRCS}" "${libbv_deps}" "" "${BV_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET libbv APPEND PROPERTY COMPILE_DEFINITIONS "PLOT3_DLL_EXPORTS")

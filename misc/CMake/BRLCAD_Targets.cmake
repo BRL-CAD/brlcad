@@ -150,6 +150,35 @@ endfunction(FILE_LANG)
 
 define_property(GLOBAL PROPERTY BRLCAD_EXEC_FILES BRIEF_DOCS "BRL-CAD binaries" FULL_DOCS "List of installed BRL-CAD binary programs")
 
+function(BRLCAD_INCLUDE_DIR targetname inc_dir itype)
+
+  if ("${inc_dir}" STREQUAL "NONE")
+    return()
+  endif ("${inc_dir}" STREQUAL "NONE")
+
+  get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
+  IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
+  if (NOT IS_LOCAL)
+    IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
+  endif (NOT IS_LOCAL)
+  set(IS_SYSPATH 0)
+  foreach(sp ${SYS_INCLUDE_PATTERNS})
+    if("${inc_dir}" MATCHES "${sp}")
+      set(IS_SYSPATH 1)
+    endif("${inc_dir}" MATCHES "${sp}")
+  endforeach(sp ${SYS_INCLUDE_PATTERNS})
+  if(IS_SYSPATH OR NOT IS_LOCAL)
+    if(IS_SYSPATH)
+      target_include_directories(${targetname} SYSTEM ${itype} ${inc_dir})
+    else(IS_SYSPATH)
+      target_include_directories(${targetname} SYSTEM AFTER ${itype} ${inc_dir})
+    endif(IS_SYSPATH)
+  else(IS_SYSPATH OR NOT IS_LOCAL)
+    target_include_directories(${targetname} BEFORE ${itype} ${inc_dir})
+  endif(IS_SYSPATH OR NOT IS_LOCAL)
+
+endfunction(BRLCAD_INCLUDE_DIR)
+
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
@@ -246,7 +275,7 @@ endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 #---------------------------------------------------------------------
 # Library function handles both shared and static libs, so one
 # "BRLCAD_ADDLIB" statement will cover both automatically
-function(BRLCAD_ADDLIB libname srcslist libslist)
+function(BRLCAD_ADDLIB libname srcslist libslist include_dirs local_include_dirs)
 
   cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
@@ -281,6 +310,24 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libname}-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    # Set up includes
+    message("include_dirs: ${include_dirs}")
+    foreach (idr ${include_dirs})
+      message("${libname}-obj including ${idr}")
+      BRLCAD_INCLUDE_DIR(${libname}-obj ${idr} PUBLIC)
+    endforeach (idr ${include_dirs})
+    foreach (idr ${local_include_dirs})
+      message("${libname}-obj including ${idr}")
+      BRLCAD_INCLUDE_DIR(${libname}-obj ${idr} PRIVATE)
+    endforeach (idr ${local_include_dirs})
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	message("${libname}-obj including ${ll} dirs")
+	target_include_directories(${libname}-obj SYSTEM PRIVATE
+	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
 
     if(HIDE_INTERNAL_SYMBOLS)
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
@@ -321,6 +368,20 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 
+    # Set up includes
+    foreach (idr ${include_dirs})
+      BRLCAD_INCLUDE_DIR(${libname} ${idr} INTERFACE)
+    endforeach (idr ${include_dirs})
+    foreach (idr ${local_include_dirs})
+      BRLCAD_INCLUDE_DIR(${libname} ${idr} PRIVATE)
+    endforeach (idr ${local_include_dirs})
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	target_include_directories(${libname} PRIVATE
+	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
+
     if(HIDE_INTERNAL_SYMBOLS)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
       set_property(TARGET ${libname} APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS  "${UPPER_CORE}_DLL_IMPORTS")
@@ -341,6 +402,20 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libstatic} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    # Set up includes
+    foreach (idr ${include_dirs})
+      BRLCAD_INCLUDE_DIR(${libstatic} ${idr} INTERFACE)
+    endforeach (idr ${include_dirs})
+    foreach (idr ${local_include_dirs})
+      BRLCAD_INCLUDE_DIR(${libstatic} ${idr} PRIVATE)
+    endforeach (idr ${local_include_dirs})
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	target_include_directories(${libstatic} PRIVATE 
+	  $<TARGET_PROPERTY:${ll},INTERFACE_INCLUDE_DIRECTORIES>)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
 
     if(NOT MSVC)
       set_target_properties(${libstatic} PROPERTIES OUTPUT_NAME "${libname}")
@@ -390,7 +465,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT L_NO_INSTALL)
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
-endfunction(BRLCAD_ADDLIB libname srcslist libslist)
+endfunction(BRLCAD_ADDLIB)
 
 
 #-----------------------------------------------------------------------------

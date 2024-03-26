@@ -1,28 +1,8 @@
-# Include directories needed by libbu users
-set(BU_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  )
-
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-  # If this becomes a default we'll need to bundle libbson
-  # to ensure it is available - while it is not on by default,
-  # require a system version
+  # If this becomes a default we'll need to bundle libbson to ensure it is
+  # available - while it is not on by default, require a system version
   find_package(BSON REQUIRED)
-  set(BU_INCLUDE_DIRS ${BU_INCLUDE_DIRS} ${BSON_INCLUDE_DIR})
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-
-# locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/y2038
-  ${LMDB_INCLUDE_DIR}
-  )
-if (UUID_INCLUDE_DIR)
-  set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
-endif (UUID_INCLUDE_DIR)
-
-BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
-
 
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure
@@ -147,10 +127,36 @@ set(LIBBU_SOURCES
 if(NOT CMAKE_CXX_STANDARD EQUAL 98)
   set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
 else(NOT CMAKE_CXX_STANDARD EQUAL 98)
-  CMAKEFILES(parallel_cpp11thread.cpp)
 endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};Threads::Threads;${libbu_deps};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${LMDB_LIBRARIES};${UUID_LIBRARIES};${M_LIBRARY}")
+set(BU_LIBS
+  ${Foundation_LIBRARIES}
+  Threads::Threads
+  ${libbu_deps}
+  ${DL_LIBRARY}
+  ${WINSOCK_LIB}
+  ${PSAPI_LIB}
+  ${BSON_LIBRARIES}
+  ${LMDB_LIBRARIES}
+  ${UUID_LIBRARIES}
+  ${M_LIBRARY}
+  )
+
+# Include directories needed by libbu users
+set(BU_INCLUDE_DIRS
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  )
+
+# locally used but not needed by users of the library
+set(BU_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}/y2038
+  ${BSON_INCLUDE_DIR}
+  ${LMDB_INCLUDE_DIR}
+  ${UUID_INCLUDE_DIR}
+  )
+
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 # With newer GCC, our bitv structure triggers a compiler
@@ -161,25 +167,6 @@ if(${BRLCAD_OPTIMIZED} MATCHES "ON")
     target_link_options(libbu PRIVATE -Wno-error=stringop-overflow=)
   endif (HAVE_NO_STRINGOP_OVERFLOW)
 endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
-
-# Define a pre-build test for libbu to check the semaphores in BRL-CAD's headers for
-# ordering issues
-#set(BCAD_HDRS_FILE "${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
-#file(REMOVE "${BCAD_HDRS_FILE}")
-#file(GLOB_RECURSE BCAD_HDRS "${CMAKE_SOURCE_DIR}/include/*.h*")
-#foreach(HDRF ${BCAD_HDRS})
-#  if (NOT "${HDRF}" MATCHES ".*.svn.*")
-#    file(APPEND "${BCAD_HDRS_FILE}" "${HDRF}\n")
-#  endif (NOT "${HDRF}" MATCHES ".*.svn.*")
-#endforeach(HDRF ${BCAD_HDRS})
-#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
-#BRLCAD_ADDEXEC(semchk "tests/semchk.cpp" "" NO_INSTALL)
-#add_custom_command(
-#  TARGET libbu PRE_BUILD
-#  COMMAND $<TARGET_FILE:semchk> "${BCAD_HDRS_FILE}"
-#  COMMENT "Validating BRL-CAD library semaphore definitions"
-#  DEPENDS semchk
-#  )
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
@@ -193,6 +180,7 @@ set(bu_ignore_files
   fort.h
   mime.cmake
   parallel.h
+  parallel_cpp11thread.cpp
   process.h
   tests/semchk.cpp
   sha1.h

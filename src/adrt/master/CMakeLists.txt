@@ -6,6 +6,11 @@ set(ADRT_MASTER_SOURCES
   tienet_master.c
   )
 
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/..
+  ${CMAKE_CURRENT_SOURCE_DIR}/../librender
+  )
+
 BRLCAD_ADDEXEC(adrt_master "${ADRT_MASTER_SOURCES}" "librt;${ZLIB_LIBRARIES}")
 
 set(adrt_master_ignore_files

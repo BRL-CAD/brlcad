@@ -1,12 +1,3 @@
-set(ICV_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${PNG_INCLUDE_DIRS}
-  ${NETPBM_INCLUDE_DIR}
-  )
-BRLCAD_LIB_INCLUDE_DIRS(icv ICV_INCLUDE_DIRS "")
-
 set(LIBICV_SOURCES
   PImgHash.cpp
   fileformat.c
@@ -26,7 +17,17 @@ set(LIBICV_SOURCES
   dpix.c
   )
 
-BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "${libicv_deps};${PNG_LIBRARIES};${NETPBM_LIBRARY}")
+set(ICV_LIBS
+  ${libicv_deps}
+  ${PNG_LIBRARIES}
+  ${NETPBM_LIBRARY}
+  )
+set(LOCAL_ICV_INCLUDE_DIRS
+  ${PNG_INCLUDE_DIRS}
+  ${NETPBM_INCLUDE_DIR}
+  )
+
+BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "${ICV_LIBS}" "" "${LOCAL_ICV_INCLUDE_DIRS}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(stgts png netpbm)

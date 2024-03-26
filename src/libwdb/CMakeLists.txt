@@ -1,17 +1,3 @@
-# Include directories needed by libwdb users
-set(WDB_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${OPENNURBS_INCLUDE_DIRS}
-  )
-
-BRLCAD_LIB_INCLUDE_DIRS(wdb WDB_INCLUDE_DIRS "")
-
-
 set(LIBWDB_SOURCES
   annot.c
   arbn.c
@@ -41,7 +27,7 @@ set(LIBWDB_SOURCES
   wdb.c
   )
 
-BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "${libwdb_deps};${OPENNURBS_LIBRARIES}")
+BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "${libwdb_deps};${OPENNURBS_LIBRARIES}" "" "")
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 CMAKEFILES(CMakeLists.txt)
