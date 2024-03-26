@@ -49,7 +49,6 @@
 #include "rt/tie.h"
 
 /* private implementation headers */
-#include "./btg.h"	/* for the bottie_ functions */
 #include "./bot_edge.h"
 #include "../../librt_private.h"
 #include "../../cut_hlbvh.h" /* for hlbvh functions */
