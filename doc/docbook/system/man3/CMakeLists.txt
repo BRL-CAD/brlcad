@@ -1,7 +1,9 @@
 set(notarget_man3_EN
   redblack.xml
 )
-ADD_DOCBOOK("HTML;PHP;MAN3;PDF" notarget_man3_EN man3 "")
+if (BRLCAD_EXTRADOCS)
+  ADD_DOCBOOK("HTML;PHP;MAN3;PDF" notarget_man3_EN man3 "")
+endif (BRLCAD_EXTRADOCS)
 
 set(man3_EN
   libbv.xml
@@ -17,9 +19,9 @@ foreach(mp ${man3_EN})
   # BRLCAD_ADDLIB doesn't take care of the man pages currently - most of our
   # libs don't have one at the moment - so do it here if we have the associated
   # target.
-  if (TARGET ${tname})
+  if (TARGET ${tname} AND BRLCAD_EXTRADOCS)
     ADD_DOCBOOK("HTML;PHP;MAN3;PDF" ${mp} man3 "")
-  endif (TARGET ${tname})
+  endif (TARGET ${tname} AND BRLCAD_EXTRADOCS)
 
   # Warn if we've got a man page but no target, unless we're doing a partial
   # build (if the build is partial its not surprising that some of the man

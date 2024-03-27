@@ -3,7 +3,9 @@ set(articles_HY
   )
 
 if (TARGET mged OR TARGET qged OR TARGET archer)
-  ADD_DOCBOOK("HTML;PHP;PDF" articles_HY articles/hy articles_EN_IMAGES_cp)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOCBOOK("HTML;PHP;PDF" articles_HY articles/hy articles_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
 endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 CMAKEFILES(

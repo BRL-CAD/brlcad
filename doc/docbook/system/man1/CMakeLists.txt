@@ -176,28 +176,29 @@ set(man1_EN
   wire.xml
   )
 
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" benchmark.xml man1 "" REQUIRED "rt")
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad-config.xml man1 "" REQUIRED "rt")
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad.xml man1 "" REQUIRED "mged")
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" dbclean.xml man1 "" REQUIRED "asc2g")
+if (BRLCAD_EXTRADOCS)
 
-if (NOT BRLCAD_COMPONENTS)
+  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" benchmark.xml man1 "" REQUIRED "rt")
+  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad-config.xml man1 "" REQUIRED "rt")
+  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad.xml man1 "" REQUIRED "mged")
+  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" dbclean.xml man1 "" REQUIRED "asc2g")
 
-  foreach(mp ${man1_EN})
+  # BRLCAD_ADDEXEC takes care of the ADD_DOCBOOK call - we just need to warn if
+  # we've got a man page in the list indicating we should have an associated
+  # target but not showing one.  Generally this will be an indication of a tool
+  # not ported to the current platform.  Only do this if we're doing a full build
+  # rather than a subset, since the latter case will likely report many man pages
+  # without associated targets and isn't useful.
+  if (NOT BRLCAD_COMPONENTS)
+    foreach(mp ${man1_EN})
+      get_filename_component(tname ${mp} NAME_WE)
+        if (NOT TARGET ${tname})
+	message("Warning: man1 man page ${tname} has no associated build target")
+      endif (NOT TARGET ${tname})
+    endforeach(mp ${man3_EN})
+  endif (NOT BRLCAD_COMPONENTS)
 
-    get_filename_component(tname ${mp} NAME_WE)
-
-    # BRLCAD_ADDEXEC takes care of the ADD_DOCBOOK call - we just need to warn
-    # if we've got a man page in the list indicating we should have an
-    # associated target but not showing one.  Generally this will be an
-    # indication of a tool not ported to the current platform.
-    if (NOT TARGET ${tname})
-      message("Warning: man1 man page ${tname} has no associated build target")
-    endif (NOT TARGET ${tname})
-
-  endforeach(mp ${man3_EN})
-
-endif (NOT BRLCAD_COMPONENTS)
+endif (BRLCAD_EXTRADOCS)
 
 CMAKEFILES(
   ${man1_EN}
