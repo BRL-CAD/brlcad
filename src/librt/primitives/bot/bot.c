@@ -1345,10 +1345,6 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
     struct hit *hits = (struct hit*) bu_calloc(num_check_tris, sizeof(struct hit), "bot hitdata");
     
-    fastf_t toldist = 0.0;
-    if (bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID)
-	toldist = stp->st_aradius / 10.0e+6;
-    
     size_t nhits = 0;
     for (size_t i = 0; i < num_check_tris; i++) {
 	triangle_s* tri = &tie->tris[check_tris[i]];
@@ -1359,14 +1355,11 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	if (abs_dn < BOT_MIN_DN) continue;
 	VSUB2(wxb, tri->A, rp->r_pt);
 	VCROSS(xp, wxb, rp->r_dir);
-	fastf_t dn_plus_tol = toldist + abs_dn;
 	fastf_t beta = VDOT(tri->AB, xp);
 	fastf_t gamma = VDOT(tri->AC, xp);
-	if (dn < 0.0) {
-	    beta = -beta;
-	    gamma = -gamma;
-	}
-	if ( (beta < -toldist) || (gamma < -toldist) || (beta + gamma > dn_plus_tol) ) continue;
+	 beta = (dn > 0.0) ?  -beta :  beta;
+	gamma = (dn < 0.0) ? -gamma : gamma;
+	if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) ) continue;
 	// we calculate beta and gamma first, because 
 	// beta is associated with point B and gamma is 
 	// associated with point C
