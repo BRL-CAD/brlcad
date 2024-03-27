@@ -47,9 +47,7 @@ BUILD_CFG_HDR(brlcad_ident.h.in ${INCLUDE_DIR}/brlcad)
 BUILD_CFG_HDR(brlcad_version.h.in ${INCLUDE_DIR}/brlcad)
 
 # FIXME: shouldn't exist, needs to be absorbed into brlcad_config.h
-if(MSVC)
-  BUILD_CFG_HDR(config_win.h.in ${INCLUDE_DIR}/brlcad)
-endif(MSVC)
+BUILD_CFG_HDR(config_win.h.in ${INCLUDE_DIR}/brlcad)
 
 set(include_misc
   CMakeLists.txt
