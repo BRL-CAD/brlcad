@@ -563,6 +563,10 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		  && (bot_ip->num_normals > 0);
 	
     triangle_s *tris = (triangle_s *)bu_malloc(bot_ip->num_faces * sizeof(triangle_s), "ordered triangles");
+    fastf_t *tri_norms = NULL;
+    if (do_normals) {
+	tri_norms = (fastf_t*) bu_malloc(bot_ip->num_faces * 9 * sizeof(fastf_t), "bot norms");
+    }
     // copy triangles into order specfied by ordered_faces
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
 	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+0]);
