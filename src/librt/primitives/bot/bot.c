@@ -607,6 +607,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		VMOVE(&tris[i].norms[0*3], &bot_ip->normals[idx[0]*3]);
 		VMOVE(&tris[i].norms[1*3], &bot_ip->normals[idx[1]*3]);
 		VMOVE(&tris[i].norms[2*3], &bot_ip->normals[idx[2]*3]);
+	    } else if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
+		bu_log("%s: facet #%zu tried to have normals, but gave incorrect indexes\n", stp->st_name, ordered_faces[i]);
+		bu_log("\t%zu %zu %zu a max number of %zu\n", V3ARGS(idx), bot_ip->num_normals);
 	    }
 	}
 	tris[i].face_id = ordered_faces[i];
