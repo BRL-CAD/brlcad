@@ -1340,21 +1340,6 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 }
 
 
-void
-rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap)
-{
-    RT_CK_PIECESTATE(psp);
-    RT_CK_AP(ap);
-    RT_CK_HTBL(&psp->htab);
-
-    /* Sort hits, Near to Far */
-    primitive_hitsort(psp->htab.hits, psp->htab.end);
-
-    /* build sebgents */
-    (void)rt_bot_makesegs(psp->htab.hits, psp->htab.end, psp->stp, &ap->a_ray, ap, seghead, psp);
-}
-
-
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
