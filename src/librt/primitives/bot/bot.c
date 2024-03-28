@@ -472,6 +472,7 @@ struct _tie_s {
     struct bu_pool *pool;
     struct bvh_build_node *root;
     triangle_s *tris;
+    fastf_t *vertex_normals;
 };
 
 /**
@@ -626,6 +627,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     tie->pool = pool;
     tie->root = root;
     tie->tris = tris;
+    tie->vertex_normals = tri_norms;
     bot->tie = (void*) tie;
 	
     // struct bvh_build_node is a pun for fastf_t[6] which are the bounds
@@ -1579,6 +1581,9 @@ rt_bot_free(struct soltab *stp)
     
     if (bot && bot->tie) {
 	struct _tie_s *tie = (struct _tie_s*)bot->tie;
+	if (tie->vertex_normals) {
+	    bu_free(tie->vertex_normals);
+	}
 	bu_free(tie->tris, "bot triangles");
 	bu_pool_delete(tie->pool);
 	BU_PUT(tie, struct _tie_s);
