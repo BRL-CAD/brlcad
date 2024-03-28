@@ -493,7 +493,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CK_DB_INTERNAL(ip);
     struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
-
+    
     // How much of this do we actually need to do?
     struct bot_specific *bot;
     BU_GET(bot, struct bot_specific);
@@ -595,10 +595,10 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VMOVE(tris[i].face_norm, wn);
 	if (bot->bot_orientation == RT_BOT_CW) { VREVERSE(tris[i].face_norm, tris[i].face_norm); }
 	tris[i].norms = NULL;
-	/*
+	
 	if (do_normals && bot_ip->num_face_normals > i) {
 	    long idx[3];
-	    VMOVE(idx, &bot_ip->face_normals[i*3]);
+	    VMOVE(idx, &bot_ip->face_normals[ordered_faces[i]*3]);
 	    if (idx[0] >= 0 && idx[0] < bot_ip->num_normals &&
 		idx[1] >= 0 && idx[1] < bot_ip->num_normals &&
 		idx[2] >= 0 && idx[2] < bot_ip->num_normals) 
@@ -608,7 +608,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		VMOVE(&tris[i].norms[1*3], &bot_ip->normals[idx[1]*3]);
 		VMOVE(&tris[i].norms[2*3], &bot_ip->normals[idx[2]*3]);
 	    }
-	}*/
+	}
 	tris[i].face_id = ordered_faces[i];
     }
 
