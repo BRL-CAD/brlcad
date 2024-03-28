@@ -600,7 +600,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	if (bot->bot_orientation == RT_BOT_CW) { VREVERSE(tris[i].face_norm, tris[i].face_norm); }
 	tris[i].norms = NULL;
 	
-	if (do_normals && bot_ip->num_face_normals > i) {
+	if (do_normals && bot_ip->num_face_normals > ordered_faces[i]) {
 	    long idx[3];
 	    VMOVE(idx, &bot_ip->face_normals[ordered_faces[i]*3]);
 	    if (idx[0] >= 0 && idx[0] < bot_ip->num_normals &&
