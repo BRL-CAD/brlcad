@@ -468,7 +468,7 @@ if (BRLCAD_ENABLE_STEP)
     )
 
   BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT FOLDER Conv)
-  target_include_directories(step-g PRIVATE ${AP203_INCLUDE_DIRS})
+  target_include_directories(step-g BEFORE PRIVATE ${AP203_INCLUDE_DIRS})
   add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
   set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
   target_compile_definitions(step-g PRIVATE SC_SCHEMA_DLL_EXPORTS)

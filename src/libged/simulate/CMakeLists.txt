@@ -51,7 +51,7 @@ set(SIM_INCLUDE_DIRS
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-simulate SHARED ${bullet_srcs})
-target_include_directories(ged-simulate PRIVATE ${SIM_INCLUDE_DIRS})
+target_include_directories(ged-simulate BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
 target_link_libraries(ged-simulate libged libbu ${BULLET_LIBRARIES})
 set_property(TARGET ged-simulate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-simulate ${bullet_srcs})

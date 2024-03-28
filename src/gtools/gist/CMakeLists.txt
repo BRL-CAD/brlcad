@@ -37,7 +37,7 @@ endif(NOT OpenCV_FOUND)
 message("Found OpenCV: ${OpenCV_LIBRARIES}")
 
 BRLCAD_ADDEXEC(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBRARIES};")
-target_include_directories(gist PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(gist BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(gist SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 # FIXME: should be cxx_std_14, but uses std::filesystem.  should use libbu.

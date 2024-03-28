@@ -42,7 +42,7 @@ set(AP242_INCLUDE_DIRS
   )
 
 BRLCAD_ADDEXEC(g-ap242 "${gap242_SOURCES}" "${gap242_LIBS}" NO_STRICT FOLDER Conv)
-target_include_directories(g-ap242 PRIVATE ${AP242_INCLUDE_DIRS})
+target_include_directories(g-ap242 BEFORE PRIVATE ${AP242_INCLUDE_DIRS})
 add_dependencies(g-ap242 step-express-${SCHEMA_NAME}-gap242)
 
 if (HIDE_INTERNAL_SYMBOLS)

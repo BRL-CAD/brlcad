@@ -27,9 +27,9 @@ if (TARGET libged)
   # superset of what will be installed, but is the best available option without
   # performing an actual install step.)
   if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad")
+    target_include_directories(cad_user BEFORE PUBLIC "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad")
   else(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
+    target_include_directories(cad_user BEFORE PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
   endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
 
   set_target_properties(cad_user PROPERTIES FOLDER "BRL-CAD Regression Tests/user")

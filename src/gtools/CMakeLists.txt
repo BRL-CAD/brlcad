@@ -1,7 +1,7 @@
 BRLCAD_ADDDATA(gtransfer.c sample_applications)
 
 BRLCAD_ADDEXEC(ganalyze ganalyze.cpp "libanalyze;librt;libbu;libpkg;${LINENOISE_LIBRARIES}" NO_INSTALL)
-target_include_directories(ganalyze PRIVATE ${LINENOISE_INCLUDE_DIRS})
+target_include_directories(ganalyze BEFORE PRIVATE ${LINENOISE_INCLUDE_DIRS})
 set_property(TARGET ganalyze APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
 
 BRLCAD_ADDEXEC(gchecker gchecker.cpp "libged;librt;libbu")
@@ -10,7 +10,7 @@ BRLCAD_ADDEXEC(glint glint.cpp "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(gqa gqa.c "libged;librt")
 
 BRLCAD_ADDEXEC(gsh gsh.cpp  "libged;libdm;libbu;${LINENOISE_LIBRARIES}")
-target_include_directories(gsh PRIVATE ${LINENOISE_INCLUDE_DIRS})
+target_include_directories(gsh BEFORE PRIVATE ${LINENOISE_INCLUDE_DIRS})
 set_property(TARGET gsh APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
 add_dependencies(gsh dm_plugins)
 

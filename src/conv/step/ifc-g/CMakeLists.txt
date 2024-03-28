@@ -33,7 +33,7 @@ set(IFC_INCLUDE_DIRS
 
 BRLCAD_ADDEXEC(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(ifc-g ifc-express-${SCHEMA_NAME}-ifcg)
-target_include_directories(ifc-g SYSTEM PRIVATE ${IFC_INCLUDE_DIRS})
+target_include_directories(ifc-g SYSTEM BEFORE PRIVATE ${IFC_INCLUDE_DIRS})
 
 if (HIDE_INTERNAL_SYMBOLS)
   set(ifcg_IMPORTS

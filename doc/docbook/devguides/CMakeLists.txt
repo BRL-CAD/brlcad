@@ -63,6 +63,8 @@ endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 CMAKEFILES(
   CMakeLists.txt
+  ${devguides_EN}
+  ${devguides_EN_IMAGES}
   )
 
 # Local Variables:

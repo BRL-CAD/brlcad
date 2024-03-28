@@ -33,7 +33,7 @@ if(BRLCAD_ENABLE_BULLET)
   add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
 
   BRLCAD_ADDEXEC(simulate_test "simulate_test.cpp" "libged;${BULLET_LIBRARIES}" TEST)
-  target_include_directories(simulate_test PRIVATE ${SIM_INCLUDE_DIRS})
+  target_include_directories(simulate_test BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
   BRLCAD_ADD_TEST(NAME simulate_test COMMAND simulate_test)
 endif(BRLCAD_ENABLE_BULLET)
 

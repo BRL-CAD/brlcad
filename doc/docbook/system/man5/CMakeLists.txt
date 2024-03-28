@@ -41,7 +41,9 @@ if (TARGET gen-attributes-file)
   set(attribute_DEPS attr_std_list_xml attr_std_table_xml)
 endif (TARGET gen-attributes-file)
 
-ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN man5 "${attribute_DEPS}")
+if (BRLCAD_EXTRADOCS)
+  ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN man5 "${attribute_DEPS}")
+endif (BRLCAD_EXTRADOCS)
 
 CMAKEFILES(
   CMakeLists.txt

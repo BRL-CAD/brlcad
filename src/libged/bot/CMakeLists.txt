@@ -45,7 +45,7 @@ set(BOT_SRCS
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-bot SHARED ${BOT_SRCS})
-target_include_directories(ged-bot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu) # for fort.h
+target_include_directories(ged-bot BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu) # for fort.h
 if (BRLCAD_ENABLE_OPENVDB)
   target_include_directories(ged-bot SYSTEM PRIVATE ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
 endif (BRLCAD_ENABLE_OPENVDB)

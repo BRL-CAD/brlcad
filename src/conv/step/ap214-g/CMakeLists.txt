@@ -238,7 +238,7 @@ set(AP214_INCLUDE_DIRS
   )
 
 BRLCAD_ADDEXEC(ap214-g "${ap214g_SOURCES}" "${ap214g_LIBS}" NO_STRICT FOLDER Conv)
-target_include_directories(ap214-g PRIVATE ${AP214_INCLUDE_DIRS})
+target_include_directories(ap214-g BEFORE PRIVATE ${AP214_INCLUDE_DIRS})
 add_dependencies(ap214-g step-express-${SCHEMA_NAME}-ap214g)
 
 if (HIDE_INTERNAL_SYMBOLS)

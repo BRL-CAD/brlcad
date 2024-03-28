@@ -46,7 +46,7 @@ set(AP203_INCLUDE_DIRS
   )
 
 BRLCAD_ADDEXEC(g-ap203e2 "${gap203e2_SOURCES}" "${gap203e2_LIBS}" NO_STRICT FOLDER Conv)
-target_include_directories(g-ap203e2 PRIVATE ${AP203_INCLUDE_DIRS})
+target_include_directories(g-ap203e2 BEFORE PRIVATE ${AP203_INCLUDE_DIRS})
 add_dependencies(g-ap203e2 step-express-${SCHEMA_NAME}-gap203e2)
 
 if (HIDE_INTERNAL_SYMBOLS)

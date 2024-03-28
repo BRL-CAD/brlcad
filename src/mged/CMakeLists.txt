@@ -67,7 +67,7 @@ if (BRLCAD_ENABLE_TCL)
     ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
     )
   BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
-  target_include_directories(mged PRIVATE ${MGED_INCLUDE_DIRS})
+  target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS})
   ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm_plugins)
 
   # mged depends on the creation/installation of all the
