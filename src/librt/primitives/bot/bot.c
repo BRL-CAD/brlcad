@@ -101,31 +101,8 @@ rt_bot_unoriented_segs(struct hit *hits,
 		       struct seg *seghead,
 		       struct bot_specific *bot);
 
-size_t
-rt_botface_w_normals(struct soltab *stp,
-		     struct bot_specific *bot,
-		     fastf_t *ap,
-		     fastf_t *bp,
-		     fastf_t *cp,
-		     fastf_t *vertex_normals, /* array of nine values (three unit normals vectors) */
-		     size_t face_no,
-		     const struct bn_tol *tol);
 
-void
-rt_bot_prep_pieces(struct bot_specific *bot,
-		   struct soltab *stp,
-		   size_t ntri,
-		   const struct bn_tol *tol);
-
-size_t
-rt_botface(struct soltab *stp,
-	   struct bot_specific *bot,
-	   fastf_t *ap,
-	   fastf_t *bp,
-	   fastf_t *cp,
-	   size_t face_no,
-	   const struct bn_tol *tol);
-
+#if 0
 #define TRI_TYPE float
 #define NORM_TYPE signed char
 #define NORMAL_SCALE 127.0
@@ -144,6 +121,7 @@ rt_botface(struct soltab *stp,
 #undef NORM_TYPE
 #undef NORMAL_SCALE
 #undef ONE_OVER_SCALE
+#endif
 
 #undef BOT_UNORIENTED_NORM
 #define BOT_UNORIENTED_NORM(_ap, _hitp, _norm, _out) {		    \
@@ -394,64 +372,6 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
 }
 #endif
 
-
-/**
- * This function is called with pointers to 3 points, and is used to
- * prepare BOT faces.  ap, bp, cp point to vect_t points.
- *
- * Return -
- * 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
- * # pts (3) if a valid plane resulted.
- */
-size_t
-rt_botface_w_normals(struct soltab *stp,
-		     struct bot_specific *bot,
-		     fastf_t *ap,
-		     fastf_t *bp,
-		     fastf_t *cp,
-		     fastf_t *vertex_normals, /* array of nine values (three unit normals vectors) */
-		     size_t face_no,
-		     const struct bn_tol *tol)
-{
-
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return bot_face_w_normals_float(stp, bot, ap, bp, cp,
-					vertex_normals, face_no, tol);
-    } else {
-	return bot_face_w_normals_double(stp, bot, ap, bp, cp,
-					 vertex_normals, face_no, tol);
-    }
-}
-
-
-size_t
-rt_botface(struct soltab *stp,
-	   struct bot_specific *bot,
-	   fastf_t *ap,
-	   fastf_t *bp,
-	   fastf_t *cp,
-	   size_t face_no,
-	   const struct bn_tol *tol)
-{
-    return rt_botface_w_normals(stp, bot, ap, bp, cp, NULL, face_no, tol);
-}
-
-
-/**
- * Do the prep to support pieces for a BOT/ARS
- */
-void
-rt_bot_prep_pieces(struct bot_specific *bot,
-		   struct soltab *stp,
-		   size_t ntri,
-		   const struct bn_tol *tol)
-{
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	bot_prep_pieces_float(bot, stp, ntri, tol);
-    } else {
-	bot_prep_pieces_double(bot, stp, ntri, tol);
-    }
-}
 
 
 /**
@@ -1420,36 +1340,6 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 }
 
 
-/**
- * Intersect a ray with a list of "pieces" of a BoT.
- *
- * This routine may be invoked many times for a single ray, as the ray
- * traverses from one space partitioning cell to the next.
- *
- * Plate-mode (2 hit) sebgents will be returned immediately in
- * seghead.
- *
- * Generally the hits are stashed between invocations in psp.
- */
-int
-rt_bot_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead)
-{
-    struct soltab *stp;
-    struct bot_specific *bot;
-
-    RT_CK_PIECELIST(plp);
-    stp = plp->stp;
-    RT_CK_SOLTAB(stp);
-    bot = (struct bot_specific *)stp->st_specific;
-
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return bot_piece_shot_float(psp, plp, dist_corr, rp, ap, seghead);
-    } else {
-	return bot_piece_shot_double(psp, plp, dist_corr, rp, ap, seghead);
-    }
-}
-
-
 void
 rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap)
 {
@@ -1567,10 +1457,18 @@ rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 
     bot = (struct bot_specific *)stp->st_specific;
 
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	bot_uv_float(bot, hitp, uvp);
-    } else {
-	bot_uv_double(bot, hitp, uvp);
+    size_t i;
+
+    if (!bot || !hitp || !uvp)
+	return;
+    triangle_s *trip = (triangle_s *)hitp->hit_private;
+    if (!trip)
+	return;
+
+    if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /* && trip->tri_uvs */) {
+	for (i = X; i <= Z; i++) {
+	    /* TODO: do stuff */
+	}
     }
 }
 

@@ -406,8 +406,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_bot_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_bot_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_bot_norm),
-	RTFUNCTAB_FUNC_PIECE_SHOT_CAST(rt_bot_piece_shot),
-	RTFUNCTAB_FUNC_PIECE_HITSEGS_CAST(rt_bot_piece_hitsegs),
+	NULL, /* piece_shot */
+	NULL, /* piece hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_bot_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_bot_curve),
 	NULL, /* classify */
@@ -1625,8 +1625,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_bot_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_bot_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_bot_norm),
-	RTFUNCTAB_FUNC_PIECE_SHOT_CAST(rt_bot_piece_shot),
-	RTFUNCTAB_FUNC_PIECE_HITSEGS_CAST(rt_bot_piece_hitsegs),
+	NULL, /* piece shot */
+	NULL, /* piece hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_bot_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_bot_curve),
 	NULL, /* classify */
