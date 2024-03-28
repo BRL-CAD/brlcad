@@ -1583,7 +1583,7 @@ rt_bot_free(struct soltab *stp)
     if (bot && bot->tie) {
 	struct _tie_s *tie = (struct _tie_s*)bot->tie;
 	if (tie->vertex_normals) {
-	    bu_free(tie->vertex_normals);
+	    bu_free(tie->vertex_normals, "bot normals");
 	}
 	bu_free(tie->tris, "bot triangles");
 	bu_pool_delete(tie->pool);
