@@ -529,8 +529,8 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     (void)rt_bot_mintie;
     // set up centroids and bounds for hlbvh call
-    fastf_t *centroids = (fastf_t*)bu_calloc(bot_ip->num_faces, sizeof(fastf_t)*3, "bot centroids");
-    fastf_t *bounds    = (fastf_t*)bu_calloc(bot_ip->num_faces, sizeof(fastf_t)*6, "bot bounds");
+    fastf_t *centroids = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*3, "bot centroids");
+    fastf_t *bounds    = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*6, "bot bounds");
     
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
 	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[i*3+0]);
@@ -562,7 +562,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		  && (bot_ip->bot_flags & RT_BOT_USE_NORMALS) 
 		  && (bot_ip->num_normals > 0);
 	
-    triangle_s *tris = (triangle_s *)bu_calloc(bot_ip->num_faces, sizeof(triangle_s), "ordered triangles");
+    triangle_s *tris = (triangle_s *)bu_malloc(bot_ip->num_faces * sizeof(triangle_s), "ordered triangles");
     // copy triangles into order specfied by ordered_faces
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
 	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+0]);
@@ -603,7 +603,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		idx[1] >= 0 && idx[1] < bot_ip->num_normals &&
 		idx[2] >= 0 && idx[2] < bot_ip->num_normals) 
 	    {
-		tris[i].norms = (fastf_t *)bu_malloc(9 * sizeof(fastf_t), "bot normals");
+		tris[i].norms = &tri_norms[i*9];
 		VMOVE(&tris[i].norms[0*3], &bot_ip->normals[idx[0]*3]);
 		VMOVE(&tris[i].norms[1*3], &bot_ip->normals[idx[1]*3]);
 		VMOVE(&tris[i].norms[2*3], &bot_ip->normals[idx[2]*3]);
