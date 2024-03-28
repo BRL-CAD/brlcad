@@ -507,8 +507,8 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     // set up thickness if requested
     if (bot_ip->thickness) {
 	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
-	for (size_t tri_index = 0; tri_index < bot_ip->num_faces; tri_index++)
-	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
+	for (size_t bot_ip_index = 0; bot_ip_index < bot_ip->num_faces; bot_ip_index++)
+	    bot->bot_thickness[bot_ip_index] = bot_ip->thickness[bot_ip_index];
     } else {
 	bot->bot_thickness = NULL;
     }
@@ -570,9 +570,10 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
     // copy triangles into order specfied by ordered_faces
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
-	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+0]);
-	fastf_t* v1 = (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+1]);
-	fastf_t* v2 = (bot_ip->vertices+3*bot_ip->faces[ordered_faces[i]*3+2]);
+	int bot_ip_index = ordered_faces[i];
+	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+0]);
+	fastf_t* v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
+	fastf_t* v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
 	VMOVE(tris[i].A, v0);
 	VSUB2(tris[i].AB, v1, v0);
 	VSUB2(tris[i].AC, v2, v0);
@@ -592,7 +593,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    m4 < rtip->rti_tol.dist_sq)
 	{
 	    if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
-		bu_log("%s: degenerate facet #%zu\n", stp->st_name, ordered_faces[i]);
+		bu_log("%s: degenerate facet #%zu\n", stp->st_name, bot_ip_index);
 		bu_log("\t(%g %g %g) (%g %g %g) (%g %g %g)\n", V3ARGS(v0), V3ARGS(v1), V3ARGS(v2));
 	    }
 	}
@@ -601,9 +602,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	if (bot->bot_orientation == RT_BOT_CW) { VREVERSE(tris[i].face_norm, tris[i].face_norm); }
 	tris[i].norms = NULL;
 	
-	if (do_normals && bot_ip->num_face_normals > ordered_faces[i]) {
+	if (do_normals && bot_ip->num_face_normals > bot_ip_index) {
 	    long idx[3];
-	    VMOVE(idx, &bot_ip->face_normals[ordered_faces[i]*3]);
+	    VMOVE(idx, &bot_ip->face_normals[bot_ip_index*3]);
 	    if (idx[0] >= 0 && idx[0] < bot_ip->num_normals &&
 		idx[1] >= 0 && idx[1] < bot_ip->num_normals &&
 		idx[2] >= 0 && idx[2] < bot_ip->num_normals) 
@@ -613,11 +614,11 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		VMOVE(&tris[i].norms[1*3], &bot_ip->normals[idx[1]*3]);
 		VMOVE(&tris[i].norms[2*3], &bot_ip->normals[idx[2]*3]);
 	    } else if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
-		bu_log("%s: facet #%zu tried to have normals, but gave incorrect indexes\n", stp->st_name, ordered_faces[i]);
+		bu_log("%s: facet #%zu tried to have normals, but gave incorrect indexes\n", stp->st_name, bot_ip_index);
 		bu_log("\t%zu %zu %zu a max number of %zu\n", V3ARGS(idx), bot_ip->num_normals);
 	    }
 	}
-	tris[i].face_id = ordered_faces[i];
+	tris[i].face_id = bot_ip_index;
     }
 
     bu_free(ordered_faces, "ordered faces");
