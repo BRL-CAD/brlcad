@@ -117,6 +117,7 @@ endif (POLICY CMP0127)
 # stored in one directory - let CMake know where to find them.  If we
 # are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
 # our own, otherwise misc/CMake takes first priority.
+set(BRLCAD_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
 list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
 

@@ -80,7 +80,7 @@ if(HAVE_UNIQUE_PTR)
 endif(HAVE_UNIQUE_PTR)
 
 # Find tools for generating source files
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
   find_package_perplex(REQUIRED)
 else()
   find_package(PERPLEX REQUIRED)
