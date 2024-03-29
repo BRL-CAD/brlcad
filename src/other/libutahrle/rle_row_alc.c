@@ -91,7 +91,6 @@ rle_pixel ***scanp;
 	else
 	    scanbuf[i] = 0;
     *scanp = scanbuf;
-    free(pixbuf);
     return 0;
 }
 

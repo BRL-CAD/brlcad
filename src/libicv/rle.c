@@ -28,6 +28,7 @@
 #include "rle.h"
 
 #include "bu/log.h"
+#include "bu/str.h"
 #include "bu/malloc.h"
 #include "vmath.h"
 #include "icv_private.h"
@@ -41,8 +42,75 @@ typedef struct {
 int
 rle_write(icv_image_t *bif, const char *filename)
 {
-    if (!bif || !filename)
+    if (!bif)
 	return BRLCAD_ERROR;
+
+    int bg_color[3] = {0, 0, 0};
+    rle_hdr rle_icv = { RUN_DISPATCH, 3, bg_color, 0, 2, 0, 511, 0, 511, 0, 8, NULL, NULL, 0, {7}, 0L, "libicv", "no file", 0, {{0}}};
+
+    rle_icv.ncolors = 3;
+    RLE_SET_BIT(rle_icv, RLE_RED);
+    RLE_SET_BIT(rle_icv, RLE_GREEN);
+    RLE_SET_BIT(rle_icv, RLE_BLUE);
+    rle_icv.background = 2;      /* use background */
+    rle_icv.alpha = 0;           /* no alpha channel */
+    rle_icv.ncmap = 0;           /* no color map */
+    rle_icv.cmaplen = 0;
+    rle_icv.cmap = NULL;
+    rle_icv.xmin = rle_icv.ymin = 0;
+    rle_icv.xmax = bif->width-1;
+    rle_icv.ymax = bif->height-1;
+    rle_icv.comments = NULL;
+    rle_icv.rle_file = stdout;
+    if (filename) {
+	rle_icv.rle_file = fopen(filename, "wb");
+	if (!rle_icv.rle_file) {
+	    bu_log("rle_write: Could not open %s for writing\n", filename);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    // pix-rle had more extensive info in comments (date, time, hostname, user,
+    // etc.) - for now let's just note the originating software.  User should
+    // really have control over whether or not to encode extra info like that.
+    struct bu_vls cmt = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&cmt, "BRL-CAD libicv export");
+    rle_putcom(bu_strdup(bu_vls_cstr(&cmt)), &rle_icv);
+    bu_vls_free(&cmt);
+
+    rle_put_setup(&rle_icv);
+
+    rle_pixel **rows;
+    rle_row_alloc(&rle_icv, &rows);
+
+    const unsigned char *bifdata = icv_data2uchar(bif);
+    unsigned char *scan_buf = (unsigned char *)bu_malloc(sizeof(unsigned char) * 3 * bif->width, "scan_buf");
+
+    for (size_t i = 0; i < bif->height; i++) {
+	int offset = 3*bif->width*i;
+	for (size_t j = 0; j < bif->width; j++) {
+	    scan_buf[3*j+0] = bifdata[offset + 3*j+0];
+	    scan_buf[3*j+1] = bifdata[offset + 3*j+1];
+	    scan_buf[3*j+2] = bifdata[offset + 3*j+2];
+	}
+
+	/* Grumble, convert to Utah layout */
+	{
+	    unsigned char *pp = (unsigned char *)scan_buf;
+	    rle_pixel *rp = rows[0];
+	    rle_pixel *gp = rows[1];
+	    rle_pixel *bp = rows[2];
+	    for (size_t k = 0; k < bif->width; k++) {
+		*rp++ = *pp++;
+		*gp++ = *pp++;
+		*bp++ = *pp++;
+	    }
+	}
+	rle_putrow(rows, bif->width, &rle_icv);
+    }
+    rle_puteof(&rle_icv);
+    fclose(rle_icv.rle_file);
+    bu_free(scan_buf, "scan_buf");
 
     return BRLCAD_OK;
 }

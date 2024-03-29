@@ -140,6 +140,9 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 	case BU_MIME_IMAGE_DPIX :
 	    ret = dpix_write(bif, ofname);
 	    break;
+	case BU_MIME_IMAGE_RLE :
+	    ret = rle_write(bif, ofname);
+	    break;
 	default:
 	    ret = pix_write(bif, ofname);
     }
