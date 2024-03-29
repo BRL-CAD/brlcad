@@ -426,7 +426,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
     // copy triangles into order specfied by ordered_faces
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
-	int bot_ip_index = ordered_faces[i];
+	size_t bot_ip_index = ordered_faces[i];
 	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+0]);
 	fastf_t* v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
 	fastf_t* v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
@@ -461,9 +461,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	if (do_normals && bot_ip->num_face_normals > bot_ip_index) {
 	    long idx[3];
 	    VMOVE(idx, &bot_ip->face_normals[bot_ip_index*3]);
-	    if (idx[0] >= 0 && idx[0] < bot_ip->num_normals &&
-		idx[1] >= 0 && idx[1] < bot_ip->num_normals &&
-		idx[2] >= 0 && idx[2] < bot_ip->num_normals) 
+	    if (idx[0] >= 0 && idx[0] < (long)bot_ip->num_normals &&
+		idx[1] >= 0 && idx[1] < (long)bot_ip->num_normals &&
+		idx[2] >= 0 && idx[2] < (long)bot_ip->num_normals) 
 	    {
 		tris[i].norms = &tri_norms[i*9];
 		VMOVE(&tris[i].norms[0*3], &bot_ip->normals[idx[0]*3]);
