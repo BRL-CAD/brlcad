@@ -63,9 +63,9 @@ rle_read(const char *filename)
     // Globals are usually bad news, so we'll start out with a local
     // version with the same defaults.
     int bg_color[3] = {0, 0, 0};
-    rle_hdr rle_icv_hdr = { RUN_DISPATCH, 3, bg_color, 0, 2, 0, 511, 0, 511, 0, 8, NULL, NULL, 0, {7}, 0L, "libicv", "no file", 0, {{0}}};
-    rle_icv_hdr.rle_file = fp;
-    if (rle_get_setup(&rle_icv_hdr) < 0) {
+    rle_hdr rle_icv = { RUN_DISPATCH, 3, bg_color, 0, 2, 0, 511, 0, 511, 0, 8, NULL, NULL, 0, {7}, 0L, "libicv", "no file", 0, {{0}}};
+    rle_icv.rle_file = fp;
+    if (rle_get_setup(&rle_icv) < 0) {
 	bu_log("rle_read: Error reading setup information\n");
 	if (fp != stdin)
 	    fclose(fp);
@@ -77,25 +77,25 @@ rle_read(const char *filename)
      * more here - initial revival of the code is trying to to change
      * things until we get the old functionality working, but this
      * should be revisited. */
-    RLE_CLR_BIT(rle_icv_hdr, RLE_ALPHA);
-    for (int i = 3; i < rle_icv_hdr.ncolors; i++)
-	RLE_CLR_BIT(rle_icv_hdr, i);
-    int iwidth = rle_icv_hdr.xmax + 1;
-    int iheight = rle_icv_hdr.xmax + 1;
+    RLE_CLR_BIT(rle_icv, RLE_ALPHA);
+    for (int i = 3; i < rle_icv.ncolors; i++)
+	RLE_CLR_BIT(rle_icv, i);
+    int iwidth = rle_icv.xmax + 1;
+    int iheight = rle_icv.xmax + 1;
 
     double *data = (double *)bu_calloc(iwidth * iheight * 3, sizeof(double), "image data");
 
     // Set bg color
-    if (rle_icv_hdr.bg_color) {
-	for (int i = 0; i < (rle_icv_hdr.xmax + 1) * (rle_icv_hdr.ymax + 1); i++) {
-	    data[3*i+0] = (double)rle_icv_hdr.bg_color[0]/(double)255.0;
-	    data[3*i+1] = (double)rle_icv_hdr.bg_color[1]/(double)255.0;
-	    data[3*i+2] = (double)rle_icv_hdr.bg_color[2]/(double)255.0;
+    if (rle_icv.bg_color) {
+	for (int i = 0; i < (rle_icv.xmax + 1) * (rle_icv.ymax + 1); i++) {
+	    data[3*i+0] = (double)rle_icv.bg_color[0]/(double)255.0;
+	    data[3*i+1] = (double)rle_icv.bg_color[1]/(double)255.0;
+	    data[3*i+2] = (double)rle_icv.bg_color[2]/(double)255.0;
 	}
     }
 
-    int ncolors = rle_icv_hdr.ncolors > 3 ? 3 : rle_icv_hdr.ncolors;
-    int file_width = rle_icv_hdr.xmax - rle_icv_hdr.xmin + 1;
+    int ncolors = rle_icv.ncolors > 3 ? 3 : rle_icv.ncolors;
+    int file_width = rle_icv.xmax - rle_icv.xmin + 1;
     unsigned char *rows[4];
     int mi = 0;
     for (mi=0; mi < ncolors; mi++)
@@ -110,13 +110,13 @@ rle_read(const char *filename)
      * XXX need to handle < 3 channels of color map, by replication.
      */
     ColorMap cmap;
-    if (rle_icv_hdr.ncmap && rle_icv_hdr.ncmap > 0) {
-	int maplen = (1 << rle_icv_hdr.cmaplen);
+    if (rle_icv.ncmap && rle_icv.ncmap > 0) {
+	int maplen = (1 << rle_icv.cmaplen);
 	int all = 0;
 	for (int i = 0; i < 256; i++) {
-	    cmap.cm_red[i] = rle_icv_hdr.cmap[i];
-	    cmap.cm_green[i] = rle_icv_hdr.cmap[i+maplen];
-	    cmap.cm_blue[i] = rle_icv_hdr.cmap[i+2*maplen];
+	    cmap.cm_red[i] = rle_icv.cmap[i];
+	    cmap.cm_green[i] = rle_icv.cmap[i+maplen];
+	    cmap.cm_blue[i] = rle_icv.cmap[i+2*maplen];
 	    all |= cmap.cm_red[i] | cmap.cm_green[i] | cmap.cm_blue[i];
 	}
 	if ((all & 0xFF00) == 0 && (all & 0x00FF) != 0) {
@@ -133,16 +133,16 @@ rle_read(const char *filename)
     }
 
     unsigned char *scan_buf = (unsigned char *)bu_malloc(sizeof(unsigned char) * 3 * iwidth, "scan_buf");
-    for (int i = 0; i < rle_icv_hdr.ymax; i++) {
+    for (int i = 0; i < rle_icv.ymax; i++) {
 	unsigned char *pp = (unsigned char *)scan_buf;
 	rle_pixel *rp = &(rows[0][0]);
 	rle_pixel *gp = &(rows[1][0]);
 	rle_pixel *bp = &(rows[2][0]);
 
-	rle_getrow(&rle_icv_hdr, rows);
+	rle_getrow(&rle_icv, rows);
 
 	/* Grumble, convert from Utah layout */
-	if (!rle_icv_hdr.ncmap) {
+	if (!rle_icv.ncmap) {
 	    for (int j = 0; j < iwidth; j++) {
 		*pp++ = *rp++;
 		*pp++ = *gp++;
@@ -169,8 +169,8 @@ rle_read(const char *filename)
     icv_image_t *bif = NULL;
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
-    bif->width = (size_t)rle_icv_hdr.xmax + 1;
-    bif->height = (size_t)rle_icv_hdr.ymax + 1;
+    bif->width = (size_t)rle_icv.xmax + 1;
+    bif->height = (size_t)rle_icv.ymax + 1;
     bif->data = data;
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 3;
