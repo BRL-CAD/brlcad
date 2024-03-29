@@ -1,5 +1,7 @@
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_qt(REQUIRED)
+  if (BRLCAD_ENABLE_QT)
+    find_package_qt(REQUIRED)
+  endif (BRLCAD_ENABLE_QT)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 # TODO - need this now for code in lower level directories,
