@@ -53,75 +53,11 @@
 #include "../../librt_private.h"
 #include "../../cut_hlbvh.h" /* for hlbvh functions */
 
-//adding time only for now, delete later******
-//#include <time.h>
-
-#define MAXHITS 128
+// TODO: we currently only need this for stuff in makesegs
+// make sure we take this out when we get dynamic hit arrays
+#define MAXHITS 128 
 
 #define BOT_MIN_DN 1.0e-9
-
-#define BOT_UNORIENTED_NORM(_ap, _hitp, _out) {			    \
-	if (!(_ap)->a_bot_reverse_normal_disabled) {		    \
-	    if (_out) {	/* this is an exit */			    \
-		if ((_hitp)->hit_vpriv[X] < 0.0) {		    \
-		    VREVERSE((_hitp)->hit_normal, trip->tri_N); \
-		} else {					    \
-		    VMOVE((_hitp)->hit_normal, trip->tri_N);    \
-		}						    \
-	    } else {	/* this is an entrance */		    \
-		if ((_hitp)->hit_vpriv[X] > 0.0) {		    \
-		    VREVERSE((_hitp)->hit_normal, trip->tri_N); \
-		} else {					    \
-		    VMOVE((_hitp)->hit_normal, trip->tri_N);    \
-		}						    \
-	    }							    \
-	} else {						    \
-	    VMOVE((_hitp)->hit_normal, trip->tri_N);	    \
-	}							    \
-    }
-
-
-/* forward declarations needed for the included routines below */
-int
-rt_bot_makesegs(
-    struct hit *hits,
-    size_t nhits,
-    struct soltab *stp,
-    struct xray *rp,
-    struct application *ap,
-    struct seg *seghead,
-    struct rt_piecestate *psp);
-
-static int
-rt_bot_unoriented_segs(struct hit *hits,
-		       size_t nhits,
-		       struct soltab *stp,
-		       struct xray *rp,
-		       struct application *ap,
-		       struct seg *seghead,
-		       struct bot_specific *bot);
-
-
-#if 0
-#define TRI_TYPE float
-#define NORM_TYPE signed char
-#define NORMAL_SCALE 127.0
-#define ONE_OVER_SCALE (1.0/127.0)
-#include "./g_bot_include.c"
-#undef TRI_TYPE
-#undef NORM_TYPE
-#undef NORMAL_SCALE
-#undef ONE_OVER_SCALE
-#define TRI_TYPE double
-#define NORM_TYPE fastf_t
-#define NORMAL_SCALE 1.0
-#define ONE_OVER_SCALE 1.0
-#include "./g_bot_include.c"
-#undef TRI_TYPE
-#undef NORM_TYPE
-#undef NORMAL_SCALE
-#undef ONE_OVER_SCALE
-#endif
 
 #undef BOT_UNORIENTED_NORM
 #define BOT_UNORIENTED_NORM(_ap, _hitp, _norm, _out) {		    \
