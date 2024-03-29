@@ -580,6 +580,268 @@ rt_bot_print(const struct soltab *stp)
     if (stp) RT_CK_SOLTAB(stp);
 }
 
+/* Forward declare for rt_bot_shot */
+int
+rt_bot_makesegs(struct hit *hits, 
+		size_t nhits, 
+		struct soltab *stp, 
+		struct xray *rp, 
+		struct application *ap, 
+		struct seg *seghead, 
+		struct rt_piecestate *psp);
+
+
+
+/**
+ * Intersect a ray with a bot.  If an intersection occurs, a struct
+ * seg will be acquired and filled in.
+ *
+ * Notes for rt_bot_norm(): hit_private contains pointer to the
+ * triangle_s structure.  
+ * hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific.
+ * hit_vpriv[Y] contains the barycentric coordinate associated with point B of the triangle.
+ * hit_vpriv[Z] contains the barycentric coordinate associated with point C of the triangle.
+ *
+ * Returns -
+ * 0 MISS
+ * >0 HIT
+ */
+int
+rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+{
+    if (UNLIKELY(!stp || !ap || !seghead))
+	return 0;
+
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    if (UNLIKELY(!bot))
+	return 0;
+
+    struct _tie_s *tie = (struct _tie_s *)bot->tie;
+    if (UNLIKELY(!tie))
+	return 0;
+
+    long* check_tris = NULL;
+    size_t num_check_tris = 0;
+
+    // TODO: do we want to back the xray out by one dirlen before this?
+    hlbvh_shot(tie->root, rp, &check_tris, &num_check_tris);
+
+    if (num_check_tris == 0) {
+	BU_ASSERT(check_tris == NULL);
+	return 0;
+    }
+    struct hit *hits = (struct hit*) bu_calloc(num_check_tris, sizeof(struct hit), "bot hitdata");
+    
+    size_t nhits = 0;
+    for (size_t i = 0; i < num_check_tris; i++) {
+	triangle_s* tri = &tie->tris[check_tris[i]];
+	vect_t wn, wxb, xp;
+	VSCALE(wn, tri->face_norm, tri->face_norm_scalar);
+	fastf_t dn = VDOT(wn, rp->r_dir);
+	fastf_t abs_dn = dn >= 0.0 ? dn : (-dn);
+	if (abs_dn < BOT_MIN_DN) continue;
+	VSUB2(wxb, tri->A, rp->r_pt);
+	VCROSS(xp, wxb, rp->r_dir);
+	fastf_t beta = VDOT(tri->AB, xp);
+	fastf_t gamma = VDOT(tri->AC, xp);
+	 beta = (dn > 0.0) ?  -beta :  beta;
+	gamma = (dn < 0.0) ? -gamma : gamma;
+	if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) ) continue;
+	// we calculate beta and gamma first, because 
+	// beta is associated with point B and gamma is 
+	// associated with point C
+	fastf_t dist = VDOT(wxb, wn) / dn;
+	// fill out hitdata
+	struct hit* cur_hit = &hits[nhits];
+	nhits++;
+	// we copy what g_bot_include.c does right now
+	// even if we don't really understand why
+	cur_hit->hit_magic = RT_HIT_MAGIC;
+	cur_hit->hit_dist = dist;
+	VJOIN1(cur_hit->hit_point, rp->r_pt, cur_hit->hit_dist, rp->r_dir);
+	VMOVE(cur_hit->hit_normal, tri->face_norm);
+	cur_hit->hit_vpriv[X] = VDOT(tri->face_norm, rp->r_dir);
+	cur_hit->hit_vpriv[Y] = gamma / abs_dn;
+	cur_hit->hit_vpriv[Z] =  beta / abs_dn;
+	cur_hit->hit_private = tri;
+	cur_hit->hit_surfno = tri->face_id;
+	cur_hit->hit_rayp = &ap->a_ray; // could also use rp
+    }
+    bu_free(check_tris, "hlbvh primative list");
+
+    // sort the hits
+    //insertion sort
+    // TODO: this could be very large - use a sort from
+    // libbu or something
+    for (size_t i = 1; i < nhits; i++) {
+	fastf_t i_dist = hits[i].hit_dist;
+	struct hit swap = hits[i];
+	int j;
+	for (j = i-1; j >= 0; j--) {
+	    fastf_t j_dist = hits[j].hit_dist;
+	    if (j_dist < i_dist) {
+		break;
+	    }
+	    hits[j+1] = hits[j];
+	}
+	hits[j+1] = swap;
+    }
+    
+    int retval = 0;
+    if (nhits > 0) {
+	retval = rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
+    }
+
+    bu_free(hits, "bot hitdata");
+    return retval;
+}
+
+
+/**
+ * Given ONE ray distance, return the normal and entry/exit point.
+ */
+void
+rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
+{
+    struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
+
+    vect_t old_norm;
+    triangle_s *trip=(triangle_s *)hitp->hit_private;
+
+    VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
+    VMOVE(old_norm, hitp->hit_normal);
+
+    if ((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && trip->norms) {
+	fastf_t old_ray_dot_norm, new_ray_dot_norm;
+	fastf_t u, v, w; /*barycentric coords of hit point */
+	size_t i;
+
+	old_ray_dot_norm = VDOT(hitp->hit_normal, rp->r_dir);
+
+	v = hitp->hit_vpriv[Y];
+	if (v < 0.0) v = 0.0;
+	if (v > 1.0) v = 1.0;
+
+	w = hitp->hit_vpriv[Z];
+	if (w < 0.0) w = 0.0;
+	if (w > 1.0) w =  1.0;
+
+	u = 1.0 - v - w;
+	if (u < 0.0) u = 0.0;
+	VSETALL(hitp->hit_normal, 0.0);
+
+	for (i = X; i <= Z; i++) {
+	    hitp->hit_normal[i] = u*trip->norms[i] + v*trip->norms[i+3] + w*trip->norms[i+6];
+	}
+	VUNITIZE(hitp->hit_normal);
+
+	if (bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS) {
+	    if (VDOT(old_norm, hitp->hit_normal) < 0.0) {
+		VREVERSE(hitp->hit_normal, hitp->hit_normal);
+	    }
+	}
+
+	new_ray_dot_norm = VDOT(hitp->hit_normal, rp->r_dir);
+
+	if ((old_ray_dot_norm < 0.0 && new_ray_dot_norm > 0.0) ||
+	    (old_ray_dot_norm > 0.0 && new_ray_dot_norm < 0.0)) {
+	    /* surface normal interpolation has produced an
+	     * incompatible normal direction clamp the normal to 90
+	     * degrees to the ray direction
+	     */
+
+	    vect_t tmp;
+
+	    VCROSS(tmp, rp->r_dir, hitp->hit_normal);
+	    VCROSS(hitp->hit_normal, tmp, rp->r_dir);
+	}
+
+	VUNITIZE(hitp->hit_normal);
+    }
+}
+
+
+/**
+ * Return the curvature of the bot.
+ */
+void
+rt_bot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
+{
+    if (stp) RT_CK_SOLTAB(stp);
+
+    cvp->crv_c1 = cvp->crv_c2 = 0;
+
+    /* any tangent direction */
+    bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
+    cvp->crv_c1 = cvp->crv_c2 = 0;
+}
+
+
+/**
+ * For a hit on the surface of an bot, return the (u, v) coordinates
+ * of the hit point, 0 <= u, v <= 1.
+ *
+ * u = azimuth
+ * v = elevation
+ */
+void
+rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
+{
+    struct bot_specific *bot;
+    if (ap) RT_CK_APPLICATION(ap);
+
+    if (!stp)
+	return;
+    RT_CK_SOLTAB(stp);
+
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp) return;
+
+    bot = (struct bot_specific *)stp->st_specific;
+
+    size_t i;
+
+    if (!bot || !hitp || !uvp)
+	return;
+    triangle_s *trip = (triangle_s *)hitp->hit_private;
+    if (!trip)
+	return;
+
+    if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /* && trip->tri_uvs */) {
+	for (i = X; i <= Z; i++) {
+	    /* TODO: do stuff */
+	}
+    }
+}
+
+
+void
+rt_bot_free(struct soltab *stp)
+{
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    
+    if (bot && bot->tie) {
+	struct _tie_s *tie = (struct _tie_s*)bot->tie;
+	if (tie->vertex_normals) {
+	    bu_free(tie->vertex_normals, "bot normals");
+	}
+	bu_free(tie->tris, "bot triangles");
+	bu_pool_delete(tie->pool);
+	BU_PUT(tie, struct _tie_s);
+	bot->tie = NULL;
+    }
+
+    if (bot) {
+	BU_PUT(bot, struct bot_specific);
+	stp->st_specific = NULL;
+    }
+
+#ifdef USE_OPENCL
+    clt_bot_free(bot);
+#endif
+}
+
+
 
 static int
 rt_bot_plate_segs(struct hit *hits,
@@ -1237,252 +1499,6 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
 }
 
 
-/**
- * Intersect a ray with a bot.  If an intersection occurs, a struct
- * seg will be acquired and filled in.
- *
- * Notes for rt_bot_norm(): hit_private contains pointer to the
- * tri_specific structure.  hit_vpriv[X] contains dot product of ray
- * direction and unit normal from tri_specific.
- *
- * Returns -
- * 0 MISS
- * >0 HIT
- */
-int
-rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
-{
-    if (UNLIKELY(!stp || !ap || !seghead))
-	return 0;
-
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    if (UNLIKELY(!bot))
-	return 0;
-
-    struct _tie_s *tie = (struct _tie_s *)bot->tie;
-    if (UNLIKELY(!tie))
-	return 0;
-
-    long* check_tris = NULL;
-    size_t num_check_tris = 0;
-
-    // TODO: do we want to back the xray out by one dirlen before this?
-    hlbvh_shot(tie->root, rp, &check_tris, &num_check_tris);
-
-    if (num_check_tris == 0) {
-	BU_ASSERT(check_tris == NULL);
-	return 0;
-    }
-    struct hit *hits = (struct hit*) bu_calloc(num_check_tris, sizeof(struct hit), "bot hitdata");
-    
-    size_t nhits = 0;
-    for (size_t i = 0; i < num_check_tris; i++) {
-	triangle_s* tri = &tie->tris[check_tris[i]];
-	vect_t wn, wxb, xp;
-	VSCALE(wn, tri->face_norm, tri->face_norm_scalar);
-	fastf_t dn = VDOT(wn, rp->r_dir);
-	fastf_t abs_dn = dn >= 0.0 ? dn : (-dn);
-	if (abs_dn < BOT_MIN_DN) continue;
-	VSUB2(wxb, tri->A, rp->r_pt);
-	VCROSS(xp, wxb, rp->r_dir);
-	fastf_t beta = VDOT(tri->AB, xp);
-	fastf_t gamma = VDOT(tri->AC, xp);
-	 beta = (dn > 0.0) ?  -beta :  beta;
-	gamma = (dn < 0.0) ? -gamma : gamma;
-	if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) ) continue;
-	// we calculate beta and gamma first, because 
-	// beta is associated with point B and gamma is 
-	// associated with point C
-	fastf_t dist = VDOT(wxb, wn) / dn;
-	// fill out hitdata
-	struct hit* cur_hit = &hits[nhits];
-	nhits++;
-	// we copy what g_bot_include.c does right now
-	// even if we don't really understand why
-	cur_hit->hit_magic = RT_HIT_MAGIC;
-	cur_hit->hit_dist = dist;
-	VJOIN1(cur_hit->hit_point, rp->r_pt, cur_hit->hit_dist, rp->r_dir);
-	VMOVE(cur_hit->hit_normal, tri->face_norm);
-	cur_hit->hit_vpriv[X] = VDOT(tri->face_norm, rp->r_dir);
-	cur_hit->hit_vpriv[Y] = gamma / abs_dn;
-	cur_hit->hit_vpriv[Z] =  beta / abs_dn;
-	cur_hit->hit_private = tri;
-	cur_hit->hit_surfno = tri->face_id;
-	cur_hit->hit_rayp = &ap->a_ray; // could also use rp
-    }
-    bu_free(check_tris, "hlbvh primative list");
-
-    // sort the hits
-    //insertion sort
-    // TODO: this could be very large - use a sort from
-    // libbu or something
-    for (size_t i = 1; i < nhits; i++) {
-	fastf_t i_dist = hits[i].hit_dist;
-	struct hit swap = hits[i];
-	int j;
-	for (j = i-1; j >= 0; j--) {
-	    fastf_t j_dist = hits[j].hit_dist;
-	    if (j_dist < i_dist) {
-		break;
-	    }
-	    hits[j+1] = hits[j];
-	}
-	hits[j+1] = swap;
-    }
-    
-    int retval = 0;
-    if (nhits > 0) {
-	retval = rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
-    }
-
-    bu_free(hits, "bot hitdata");
-    return retval;
-}
-
-
-/**
- * Given ONE ray distance, return the normal and entry/exit point.
- */
-void
-rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
-{
-    struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
-
-    vect_t old_norm;
-    triangle_s *trip=(triangle_s *)hitp->hit_private;
-
-    VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
-    VMOVE(old_norm, hitp->hit_normal);
-
-    if ((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && trip->norms) {
-	fastf_t old_ray_dot_norm, new_ray_dot_norm;
-	fastf_t u, v, w; /*barycentric coords of hit point */
-	size_t i;
-
-	old_ray_dot_norm = VDOT(hitp->hit_normal, rp->r_dir);
-
-	v = hitp->hit_vpriv[Y];
-	if (v < 0.0) v = 0.0;
-	if (v > 1.0) v = 1.0;
-
-	w = hitp->hit_vpriv[Z];
-	if (w < 0.0) w = 0.0;
-	if (w > 1.0) w =  1.0;
-
-	u = 1.0 - v - w;
-	if (u < 0.0) u = 0.0;
-	VSETALL(hitp->hit_normal, 0.0);
-
-	for (i = X; i <= Z; i++) {
-	    hitp->hit_normal[i] = u*trip->norms[i] + v*trip->norms[i+3] + w*trip->norms[i+6];
-	}
-	VUNITIZE(hitp->hit_normal);
-
-	if (bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS) {
-	    if (VDOT(old_norm, hitp->hit_normal) < 0.0) {
-		VREVERSE(hitp->hit_normal, hitp->hit_normal);
-	    }
-	}
-
-	new_ray_dot_norm = VDOT(hitp->hit_normal, rp->r_dir);
-
-	if ((old_ray_dot_norm < 0.0 && new_ray_dot_norm > 0.0) ||
-	    (old_ray_dot_norm > 0.0 && new_ray_dot_norm < 0.0)) {
-	    /* surface normal interpolation has produced an
-	     * incompatible normal direction clamp the normal to 90
-	     * degrees to the ray direction
-	     */
-
-	    vect_t tmp;
-
-	    VCROSS(tmp, rp->r_dir, hitp->hit_normal);
-	    VCROSS(hitp->hit_normal, tmp, rp->r_dir);
-	}
-
-	VUNITIZE(hitp->hit_normal);
-    }
-}
-
-
-/**
- * Return the curvature of the bot.
- */
-void
-rt_bot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-
-    cvp->crv_c1 = cvp->crv_c2 = 0;
-
-    /* any tangent direction */
-    bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
-    cvp->crv_c1 = cvp->crv_c2 = 0;
-}
-
-
-/**
- * For a hit on the surface of an bot, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
- *
- * u = azimuth
- * v = elevation
- */
-void
-rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
-{
-    struct bot_specific *bot;
-    if (ap) RT_CK_APPLICATION(ap);
-
-    if (!stp)
-	return;
-    RT_CK_SOLTAB(stp);
-
-    if (hitp) RT_CK_HIT(hitp);
-    if (!uvp) return;
-
-    bot = (struct bot_specific *)stp->st_specific;
-
-    size_t i;
-
-    if (!bot || !hitp || !uvp)
-	return;
-    triangle_s *trip = (triangle_s *)hitp->hit_private;
-    if (!trip)
-	return;
-
-    if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /* && trip->tri_uvs */) {
-	for (i = X; i <= Z; i++) {
-	    /* TODO: do stuff */
-	}
-    }
-}
-
-
-void
-rt_bot_free(struct soltab *stp)
-{
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    
-    if (bot && bot->tie) {
-	struct _tie_s *tie = (struct _tie_s*)bot->tie;
-	if (tie->vertex_normals) {
-	    bu_free(tie->vertex_normals, "bot normals");
-	}
-	bu_free(tie->tris, "bot triangles");
-	bu_pool_delete(tie->pool);
-	BU_PUT(tie, struct _tie_s);
-	bot->tie = NULL;
-    }
-
-    if (bot) {
-	BU_PUT(bot, struct bot_specific);
-	stp->st_specific = NULL;
-    }
-
-#ifdef USE_OPENCL
-    clt_bot_free(bot);
-#endif
-}
 
 
 static vdsNode *
