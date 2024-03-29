@@ -67,7 +67,10 @@ endif(WFOBJ_IS_SUBBUILD)
 include(${WFOBJ_CMAKE_DIR}/Path_Setup.cmake)
 
 # Includes are in current dir
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/include # some files use common.h
+  )
 
 # Check if we should be using unique_ptr
 include(CheckCXXSourceCompiles)
