@@ -2,6 +2,10 @@ set(QG_DIRS)
 
 if(BRLCAD_ENABLE_QT)
 
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    find_package_qt(REQUIRED)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
   if (BRLCAD_ENABLE_OPENGL)
     if (OPENGL_opengl_LIBRARY)
       set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})

@@ -1,4 +1,3 @@
-
 # Main libdm library
 set(LIBDM_SRCS
   null/dm-Null.c

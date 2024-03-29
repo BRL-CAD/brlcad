@@ -1,6 +1,12 @@
 # LIBGED is set up based on a plugin architecture, with common functionality
 # defined in a core library.
 
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_lmdb(REQUIRED)
+  find_package_png(REQUIRED)
+  find_package_regex(REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 add_custom_command(
   OUTPUT "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
   COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
@@ -73,6 +79,7 @@ set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN
 set(GED_LIBS
   ${libged_deps}
   ${PNG_LIBRARIES}
+  ${LMDB_LIBRARIES}
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
   ${M_LIBRARY}
@@ -83,6 +90,7 @@ set(GED_LIBS
 set(GED_LOCAL_INCLUDE_DIRS
   ${PNG_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIRS}
+  ${LMDB_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbg
   ${CMAKE_CURRENT_BINARY_DIR}
   )

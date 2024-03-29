@@ -1,3 +1,7 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_tcl()
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 set(MGED_SOURCES
   adc.c
   arbs.c
@@ -67,6 +71,11 @@ if (BRLCAD_ENABLE_TCL)
     ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
     )
   BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    if (TK_LIBRARY)
+      target_compile_definitions(mged PRIVATE HAVE_TK=1)
+    endif (TK_LIBRARY)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
   target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS})
   ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm_plugins)
 

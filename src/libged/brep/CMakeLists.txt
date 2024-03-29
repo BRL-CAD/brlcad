@@ -1,9 +1,13 @@
 
 set(DPLOT_READER dplot)
 
-find_package(PERPLEX)
-find_package(LEMON)
-find_package(RE2C)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_perplex(REQUIRED)
+else()
+  find_package(PERPLEX)
+  find_package(LEMON)
+  find_package(RE2C)
+endif()
 
 PERPLEX_TARGET(
   ${DPLOT_READER}_scanner

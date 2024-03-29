@@ -60,7 +60,9 @@
 #include "bn.h"
 #include "./rt/db5.h"
 #include "nmg.h"
-#include "pc.h"
+// Note - libpc development is not currently active, don't require this header
+// until there is some functionality to justify it
+//#include "pc.h"
 #include "./rt/geom.h"
 
 __BEGIN_DECLS

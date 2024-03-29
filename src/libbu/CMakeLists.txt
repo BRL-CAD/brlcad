@@ -1,8 +1,12 @@
-if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_lmdb(REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
+if (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
   # If this becomes a default we'll need to bundle libbson to ensure it is
   # available - while it is not on by default, require a system version
   find_package(BSON REQUIRED)
-endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+endif (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure

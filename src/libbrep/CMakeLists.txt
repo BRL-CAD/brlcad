@@ -1,3 +1,7 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_opennurbs(REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 set(LIBBREP_SOURCES
   BBNode.cpp
   BRNode.cpp

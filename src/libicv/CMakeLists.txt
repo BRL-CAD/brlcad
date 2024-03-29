@@ -1,3 +1,9 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_netpbm(REQUIRED)
+  find_package_png(REQUIRED)
+  #find_package_utahrle(REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 set(LIBICV_SOURCES
   PImgHash.cpp
   fileformat.c

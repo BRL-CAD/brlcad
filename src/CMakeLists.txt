@@ -32,6 +32,7 @@ if (BRLCAD_COMPONENTS)
   endforeach(wc ${BRLCAD_COMPONENTS})
 
   # Add the directories
+  list(REVERSE active_dirs)
   foreach(ad ${active_dirs})
     verbose_add_subdirectory(src ${ad})
   endforeach(ad ${active_dirs})

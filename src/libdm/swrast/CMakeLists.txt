@@ -1,3 +1,7 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_osmesa(REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 set(SWRAST_SRCS
   dm-swrast.cpp
   fb-swrast.cpp
@@ -10,6 +14,10 @@ set(SWRAST_SRCS
 # in a "headless" configuration, with screengrab able to retrieve and save
 # images of the drawn scene.
 if(BRLCAD_ENABLE_QT)
+
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    find_package_qt(REQUIRED)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
   add_definitions(-DSWRAST_QT)
 
