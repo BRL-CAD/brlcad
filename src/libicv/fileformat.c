@@ -98,6 +98,8 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
 	    return dpix_read(filename, width, height);
 	case BU_MIME_IMAGE_PPM :
 	    return ppm_read(filename);
+	case BU_MIME_IMAGE_RLE :
+	    return rle_read(filename);
 	default:
 	    bu_log("icv_read not implemented for this format\n");
 	    return NULL;

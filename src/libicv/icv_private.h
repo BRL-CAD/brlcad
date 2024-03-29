@@ -46,6 +46,10 @@ extern icv_image_t* png_read(const char *filename);
 extern int ppm_write(icv_image_t *bif, const char *filename);
 extern icv_image_t* ppm_read(const char *filename);
 
+/* defined in rle.c */
+extern int rle_write(icv_image_t *bif, const char *filename);
+extern icv_image_t* rle_read(const char *filename);
+
 #endif /* ICV_PRIVATE_H */
 
 /*

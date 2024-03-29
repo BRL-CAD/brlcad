@@ -1,7 +1,7 @@
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
   find_package_netpbm(REQUIRED)
   find_package_png(REQUIRED)
-  #find_package_utahrle(REQUIRED)
+  find_package_utahrle(REQUIRED)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 set(LIBICV_SOURCES
@@ -19,6 +19,7 @@ set(LIBICV_SOURCES
   pix.c
   png.c
   ppm.c
+  rle.c
   bw.c
   dpix.c
   )
@@ -27,10 +28,12 @@ set(ICV_LIBS
   ${libicv_deps}
   ${PNG_LIBRARIES}
   ${NETPBM_LIBRARY}
+  ${UTAHRLE_LIBRARY}
   )
 set(LOCAL_ICV_INCLUDE_DIRS
   ${PNG_INCLUDE_DIRS}
   ${NETPBM_INCLUDE_DIR}
+  ${UTAHRLE_INCLUDE_DIR}
   )
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "${ICV_LIBS}" "" "${LOCAL_ICV_INCLUDE_DIRS}")
