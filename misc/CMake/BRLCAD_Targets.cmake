@@ -432,15 +432,12 @@ function(BRLCAD_ADDLIB libname srcslist libslist include_dirs local_include_dirs
   foreach(ll ${libslist})
     if (TARGET ${ll})
       get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
-      message("${ll}: ${IDIRS}")
       if (IDIRS)
 	list(APPEND PUBLIC_HDRS ${IDIRS})
       endif (IDIRS)
     endif (TARGET ${ll})
   endforeach(ll ${libslist})
-  message("${libname} PUBLIC_HDRS: ${PUBLIC_HDRS}")
   set(PRIVATE_HDRS ${local_include_dirs})
-  message("${libname} PRIVATE_HDRS: ${PRIVATE_HDRS}")
 
   # If we need it, set up the OBJECT library build
   if(USE_OBJECT_LIBS)
