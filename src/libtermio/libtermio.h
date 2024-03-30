@@ -47,10 +47,6 @@ void set_Raw(int fd);
 #    define COMPAT_43TTY 1
 #  endif
 #  include <sys/ioctl_compat.h>
-#  if !defined(OCRNL)
-#    define OCRNL 0000010
-#  endif
-
 #endif
 
 #include "bio.h"
