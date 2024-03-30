@@ -696,10 +696,9 @@ endif(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOY
 
 
 # Most of the src/other projects have their own logic for handling
-# the C inline issue - BRL-CAD needs a fine-grained approach.  Mixed
+# the C inline issue - BRL-CAD needs a fine-grained approach.
 # C and C++ sources require different treatment for the same build
-# target, since C++11 doesn't allow inline to be re-defined. See
-# misc/CMake/BRLCAD_Targets.cmake for handling of C_INLINE.
+# target, since C++11 doesn't allow inline to be re-defined.
 CHECK_C_INLINE(C_INLINE)
 if(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
   CONFIG_H_APPEND(BRLCAD "#ifndef __cplusplus\n")
@@ -719,6 +718,9 @@ endif(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
 # memory regions.  Unfortunately, glibc-1.6 made _FORTIFY_SOURCE spew
 # an unquellable warning if optimization is disabled so we can't tie
 # the flag to debug builds.
+#
+# TODO (3/2024) - is glibc-1.6 old enough now that we could fold this into the
+# debug build flags?
 if(${BRLCAD_OPTIMIZED} MATCHES "ON")
   CONFIG_H_APPEND(BRLCAD "#ifndef _FORTIFY_SOURCE\n#  define _FORTIFY_SOURCE 2\n#endif\n")
 endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
@@ -730,8 +732,7 @@ endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 # ******************************************************************* #
 # For some tests, we need Werror to make sure the test actually fails
 
-# TODO - replace this cache approach with the CMakePushCheckState module
-set(CMAKE_REQUIRED_FLAGS_BAK ${CMAKE_REQUIRED_FLAGS})
+cmake_push_check_state(RESET)
 CHECK_C_FLAG(Werror VARS ERROR_FLAG)
 if (ERROR_FLAG)
   set(CMAKE_REQUIRED_FLAGS "-Werror")
@@ -847,9 +848,7 @@ endif(HAVE_FLATTEN_ATTRIBUTE)
 CHECK_C_FLAG(Qunused-arguments)
 CHECK_CXX_FLAG(Qunused-arguments)
 
-
-set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
-
+cmake_pop_check_state()
 
 # The following tests are almost entirely for gcc/llvm style flags, so
 # we don't unnecessarily slow down the Windows build.
