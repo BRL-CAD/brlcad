@@ -94,60 +94,6 @@ function(VALIDATE_STYLE targetname srcslist)
 
 endfunction(VALIDATE_STYLE)
 
-# Determine if a given file is a C or C++ file
-function(FILE_LANG sfile outvar)
-
-  if("${srcfile}" MATCHES "<TARGET_OBJECTS:")
-    set(${outvar} "" PARENT_SCOPE)
-    return()
-  endif("${srcfile}" MATCHES "<TARGET_OBJECTS:")
-
-  # If we're building all CXX, assume CXX
-  if(ENABLE_ALL_CXX_COMPILE)
-    set(file_language CXX)
-  endif(ENABLE_ALL_CXX_COMPILE)
-
-  # Try LANGUAGE property
-  get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
-
-  # If we still don't know, go with extension
-  if(NOT file_language)
-
-    get_filename_component(srcfile_ext ${srcfile} EXT)
-    string(SUBSTRING "${srcfile_ext}" 1 -1 f_ext)
-    while(NOT "${f_ext}" STREQUAL "")
-      get_filename_component(f_ext ${f_ext} EXT)
-      if(f_ext)
-        set(srcfile_ext ${f_ext})
-        string(SUBSTRING "${f_ext}" 1 -1 f_ext)
-      endif(f_ext)
-    endwhile(NOT "${f_ext}" STREQUAL "")
-
-    # C++
-    if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
-      set(file_language CXX)
-    endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
-    if(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
-      set(file_language CXX)
-    endif(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
-
-    # C
-    if(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h" OR ${srcfile_ext} STREQUAL ".m")
-      set(file_language C)
-    endif(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h" OR ${srcfile_ext} STREQUAL ".m")
-
-    # If we can't figure it out, assume C...
-    if(NOT file_language)
-      message(WARNING "Can't determine the source language of ${sfile}, assuming C...")
-      set(file_language C)
-    endif(NOT file_language)
-
-  endif(NOT file_language)
-
-  set(${outvar} "${file_language}" PARENT_SCOPE)
-
-endfunction(FILE_LANG)
-
 define_property(GLOBAL PROPERTY BRLCAD_EXEC_FILES BRIEF_DOCS "BRL-CAD binaries" FULL_DOCS "List of installed BRL-CAD binary programs")
 
 #---------------------------------------------------------------------
