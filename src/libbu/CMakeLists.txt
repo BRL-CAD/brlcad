@@ -176,6 +176,16 @@ foreach(bt ${bu_atgts})
   target_compile_definitions(${bt} PRIVATE BRLCAD_ROOT=\"${CMAKE_INSTALL_PREFIX}\")
   target_compile_definitions(${bt} PRIVATE EXECUTABLE_SUFFIX=\"${CMAKE_EXECUTABLE_SUFFIX}\")
   target_compile_definitions(${bt} PRIVATE SHARED_LIBRARY_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+  target_compile_definitions(${bt} PRIVATE SIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P})
+
+  # OpenBSD doesn't define __WORD_SIZE, used by y2038/time64.h.  Remove this
+  # once we can replace y2038 with a C++ based solution
+  if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
+    target_compile_definitions(${bt} PRIVATE __OS_WORDSIZE=32)
+  endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
+  if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
+    target_compile_definitions(${bt} PRIVATE __OS_WORDSIZE=64)
+  endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
   # Define the various relative paths for bu_dir
   include(Path_Setup)

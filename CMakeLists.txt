@@ -480,20 +480,6 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
 # of some C++ functionality differs at runtime based on version.
 CONFIG_H_APPEND(BRLCAD "#define CXX_STANDARD ${CMAKE_CXX_STANDARD}\n")
 
-#----------------------------------------------------------------------
-# Let config.h know whether we're doing a 32 or a 64 bit build.
-
-CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
-
-# OpenBSD doesn't define __WORD_SIZE
-if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 32\n#endif\n")
-endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-  CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 64\n#endif\n")
-endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-
-
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
