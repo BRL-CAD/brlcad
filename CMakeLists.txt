@@ -1322,18 +1322,6 @@ find_package(MPI COMPONENTS C)
 BRLCAD_CHECK_LIBRARY(BSD bsd daemon)
 BRLCAD_CHECK_LIBRARY(BSD c daemon)
 
-# Check for CoreFoundation and Cocoa on Apple
-if(APPLE)
-  include(CMakeFindFrameworks)
-  CMAKE_FIND_FRAMEWORKS(Foundation)
-  if(Foundation_FRAMEWORKS)
-    set(Foundation_LIBRARIES "-framework Foundation" CACHE FILEPATH "Foundation framework" FORCE)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_FOUNDATION_FOUNDATION_H 1\n")
-  endif(Foundation_FRAMEWORKS)
-  mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
-  mark_as_advanced(Foundation_LIBRARIES)
-endif(APPLE)
-
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
   message("X11 detected and enabled")
@@ -1376,19 +1364,6 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 
 # Solaris lexer library
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
-
-# timeSetEvent in Windows memory management
-if("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
-  # TODO - replace this cache approach with the CMakePushCheckState module
-  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
-  set(CMAKE_REQUIRED_LIBRARIES "winmm.lib")
-  check_c_source_compiles("#include <windows.h>\nint main(void) {(void)timeSetEvent(1000, 100, (LPTIMECALLBACK)NULL, (DWORD_PTR)NULL, TIME_ONESHOT);}" HAVE_TIMESETEVENT)
-  if(HAVE_TIMESETEVENT)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TIMESETEVENT 1\n")
-    set(WINMM_LIBRARY "winmm.lib")
-  endif(HAVE_TIMESETEVENT)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
-endif("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
 
 # Grumble... find_library doesn't find ws2_32.  Until we come up with
 # working tests for these, set them by hand
