@@ -1961,11 +1961,6 @@ if(MSVC)
   # For Windows, we need some dlls to be redistributed with the installer.
   include(InstallRequiredSystemLibraries)
 
-  # For portability with older Windows versions - remove this once we are no
-  # longer worried about Windows versions older than Windows 7/Windows 2008 R2
-  # https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
-  add_definitions(-DPSAPI_VERSION=1)
-
   # Before we finalize, set some specific global linker flags
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
