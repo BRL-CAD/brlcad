@@ -1222,14 +1222,6 @@ if(NOT MSVC)
     # unrecognized options when other diagnostics are produced.
     # Instead, we must use an indirect test via -Wno-error=...
 
-    CHECK_C_FLAG(Wno-error=c11-extensions VARS c11_extensions)
-    if(c11_extensions)
-      # If we're going strict, suppress C11 warnings about isnan due
-      # to clang issue: https://llvm.org/bugs/show_bug.cgi?id=17788
-      CHECK_C_FLAG(Wno-c11-extensions)
-      CHECK_CXX_FLAG(Wno-c11-extensions)
-    endif(c11_extensions)
-
     # Add the flag that actually turns warnings into errors
     CHECK_C_FLAG(Werror)
     CHECK_CXX_FLAG(Werror)
