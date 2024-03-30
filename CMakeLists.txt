@@ -473,43 +473,7 @@ CONFIG_H_APPEND(BRLCAD "#define __CONFIG_H__\n")
 
 # Set up some of the define statements for path information and other basics
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE \"brlcad\"\n")
-CONFIG_H_APPEND(BRLCAD "#define PACKAGE_BUGREPORT \"https://brlcad.org\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
-CONFIG_H_APPEND(BRLCAD "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
-
-# Let programs know what the executable suffix and lib suffix are on this platform, if any
-CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define SHARED_LIBRARY_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
-
-# Let bu_dir know what the target install directory is.  In a superbuild
-# configuration this will be the most import place to be sure that we get the
-# actual superbuild install path, not the local BRL-CAD subbuild install path.
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
-
-# Define the various relative paths for bu_dir (be sure to have included
-# Path_Setup.cmake before this point, as that file defines these variables.)
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_BIN_DIR \"${BIN_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_LIB_DIR \"${LIB_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_LIBEXEC_DIR \"${LIBEXEC_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_INCLUDE_DIR \"${INCLUDE_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
-
-# Define the amendment count if we have one
-if(DEFINED BRLCAD_VERSION_AMEND)
-  CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
-endif(DEFINED BRLCAD_VERSION_AMEND)
-
-#----------------------------------------------------------------------
-# If we're not debugging, we want HIDDEN to be defined as static.  Set
-# the NDEBUG flag accordingly, and common.h will take it from there.
-# Don't set this if we're doing multi-config, since whether we want
-# this on is not ultimately decided at configure time.
-if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
-  CONFIG_H_APPEND(BRLCAD "#define NDEBUG 1\n")
-endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
 
 #----------------------------------------------------------------------
 # Let our code know what the minimum active C++ standard is - behavior

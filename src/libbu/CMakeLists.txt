@@ -163,6 +163,31 @@ set(BU_LOCAL_INCLUDE_DIRS
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+set(bu_atgts)
+set(bu_targets libbu-obj libbu libbu-static)
+foreach(bt ${bu_targets})
+  if (TARGET ${bt})
+    list(APPEND bu_atgts ${bt})
+  endif ()
+endforeach()
+
+foreach(bt ${bu_atgts})
+  # LIBBU is where we record some information about the OS environment
+  target_compile_definitions(${bt} PRIVATE BRLCAD_ROOT=\"${CMAKE_INSTALL_PREFIX}\")
+  target_compile_definitions(${bt} PRIVATE EXECUTABLE_SUFFIX=\"${CMAKE_EXECUTABLE_SUFFIX}\")
+  target_compile_definitions(${bt} PRIVATE SHARED_LIBRARY_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+
+  # Define the various relative paths for bu_dir
+  include(Path_Setup)
+  target_compile_definitions(${bt} PRIVATE BRLCAD_BIN_DIR=\"${BIN_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_LIB_DIR=\"${LIB_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_LIBEXEC_DIR=\"${LIBEXEC_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_INCLUDE_DIR=\"${INCLUDE_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_DATA_DIR=\"${DATA_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_DOC_DIR=\"${DOC_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_MAN_DIR=\"${MAN_DIR}\")
+endforeach(bt ${bu_atgts})
+
 # With newer GCC, our bitv structure triggers a compiler
 # warning about writing 1 byte into a region of size 0.
 if(${BRLCAD_OPTIMIZED} MATCHES "ON")

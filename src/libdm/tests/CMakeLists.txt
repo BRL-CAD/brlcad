@@ -6,6 +6,11 @@ BRLCAD_ADDEXEC(dm_test dm_test.c "libdm;libbu" TEST)
 #TODO - these should be portable without X11, but we need to set up the Tk Xlib
 # and provide an appropriate include first...
 if (BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_X11)
+
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    find_package_tcl(REQUIRED)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${TCL_INCLUDE_PATH}
