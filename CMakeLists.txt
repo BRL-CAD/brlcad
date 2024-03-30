@@ -1634,13 +1634,6 @@ else (HAVE_THREAD_LOCAL)
   endif (HAVE___THREAD)
 endif (HAVE_THREAD_LOCAL)
 
-# Test for C++11 features that we need - CMake will sometimes assert that a
-# C++11 compiler flag exists, but the actual compiler support for C++11 language
-# ends up lacking in practice.
-include(CheckCXX11Features)
-cxx11_check_feature("nullptr" HAS_CXX11_NULLPTR)
-# cxx11_check_feature("lib_regex" HAS_CXX11_LIB_REGEX)
-
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_PERCENT_Z()
 
