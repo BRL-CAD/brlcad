@@ -59,7 +59,6 @@ BUILD_CFG_HDR(config_win.h.in ${INCLUDE_DIR}/brlcad)
 
 set(include_misc
   CMakeLists.txt
-  brlcad.i
   brlcad_ident.h.in
   brlcad_version.h.in
   conf/BrlcadConfig.tmpl
@@ -69,8 +68,6 @@ set(include_misc
   conf/make.vbs
   config_win.h.in
   RTree.h
-  RtServerImpl.h
-  rtserver.h
   )
 CMAKEFILES(${include_misc})
 
