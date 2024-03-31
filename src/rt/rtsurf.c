@@ -421,6 +421,27 @@ compute_surface_area(int intersections, int lines, double radius)
     return area;
 }
 
+// Function to compute volume
+static double
+compute_volume(int intersections, int lines, double radius)
+{
+    // volume of sphere = 4/3*PI*r^3
+    const double PROPORTIONALITY_CONSTANT = 4.0 / 3.0 * M_PI * radius * radius * radius;
+
+    if (lines == 0) {
+        return 0.0;
+    }
+
+    /*
+    * each line intersection represents an entry and exit hit point,
+    * so we devide by 2 so it becomes a ratio of shots that hit to
+    * shots that miss.
+    */
+    double volume = PROPORTIONALITY_CONSTANT * (double)intersections / ((double)lines * 2.0);
+
+    return volume;
+}
+
 
 struct rtsurf_shootray_data {
     struct application *ap;
