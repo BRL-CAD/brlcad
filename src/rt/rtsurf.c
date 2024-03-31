@@ -332,6 +332,27 @@ points_on_sphere(size_t count, point_t pnts[], double radius, point_t center)
 }
 
 
+// Function to generate sample points on the bounding sphere and shoot rays through them
+static struct ray *
+bounding_sphere_sampling(size_t samples, double radius, point_t center)
+{
+    /* get sample points */
+    point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
+    points_on_sphere(samples, points, radius, center);
+
+    struct ray *rays = (struct ray *)bu_calloc(samples, sizeof(struct ray), "rays");
+
+    /* use the sample points twice to generate our set of sample rays */
+    rays_through_point_pairs(rays, samples, points);
+    rays_through_point_pairs(rays+(samples/2), samples, points);
+
+    /* done with points, loaded into rays */
+    bu_free(points, "points");
+
+    return rays;
+}
+
+
 #if 0
 /* This is the former method that shot rays through the bounding
  * sphere center.  this attenuated areas based on the solid angle and
@@ -489,18 +510,7 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 {
     int makeGeometry = opts->makeGeometry;
 
-    /* get sample points */
-    point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
-    points_on_sphere(samples, points, radius, center);
-
-    struct ray *rays = (struct ray *)bu_calloc(samples, sizeof(struct ray), "rays");
-
-    /* use the sample points twice to generate our set of sample rays */
-    rays_through_point_pairs(rays, samples, points);
-    rays_through_point_pairs(rays+(samples/2), samples, points);
-
-    /* done with points, loaded into rays */
-    bu_free(points, "points");
+    struct ray *rays = bounding_sphere_sampling(samples, radius, center);
 
     // FIXME: for uniquely naming our hit spheres, but makes this not
     // threadsafe or isolated.
