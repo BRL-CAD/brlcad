@@ -264,7 +264,7 @@ function(BRLCAD_Summary)
     endfunction(EXT_REPORT blabel bvar)
 
     EXT_REPORT("Asset Import Library" ASSETIMPORT_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_ASSETIMPORT")
-    EXT_REPORT("Eigen" EIGEN3_INCLUDE_DIRS)
+    EXT_REPORT("Eigen" EIGEN3_INCLUDE_DIR)
     EXT_REPORT("Geospatial Data Abstraction Library" GDAL_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_GDAL")
     EXT_REPORT("Lightning Memory-Mapped Database" LMDB_LIBRARY)
     EXT_REPORT("Netpbm" NETPBM_LIBRARY)
