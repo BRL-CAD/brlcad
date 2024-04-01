@@ -2,7 +2,7 @@ set(toplevel_HTML
   bookmarks.html
   toc.html
   )
-ADD_DOC(toplevel_HTML html)
+ADD_DOC(toplevel_HTML html REQUIRED "mged")
 
 set(cadwidgets_HTML
   manuals/cadwidgets/Command.html
@@ -19,14 +19,14 @@ set(cadwidgets_HTML
   manuals/cadwidgets/index.html
   manuals/cadwidgets/skeleton.html
   )
-ADD_DOC(cadwidgets_HTML html/manuals/cadwidgets)
+ADD_DOC(cadwidgets_HTML html/manuals/cadwidgets REQUIRED "mged")
 
 set(libbu_HTML
   manuals/libbu/cmdhist_obj.html
   manuals/libbu/contents.html
   manuals/libbu/index.html
   )
-ADD_DOC(libbu_HTML html/manuals/libbu)
+ADD_DOC(libbu_HTML html/manuals/libbu REQUIRED "libbu")
 
 set(libdm_HTML
   manuals/libdm/api.html
@@ -36,7 +36,7 @@ set(libdm_HTML
   manuals/libdm/preface.html
   manuals/libdm/tcl.html
   )
-ADD_DOC(libdm_HTML html/manuals/libdm)
+ADD_DOC(libdm_HTML html/manuals/libdm REQUIRED "libdm")
 
 set(librt_HTML
   manuals/librt/contents.html
@@ -45,7 +45,7 @@ set(librt_HTML
   manuals/librt/view_obj.html
   manuals/librt/wdb_obj.html
   )
-ADD_DOC(librt_HTML html/manuals/librt)
+ADD_DOC(librt_HTML html/manuals/librt REQUIRED "librt")
 
 set(manuals_HTML
   manuals/BRL-CAD_gear_logo.ico
@@ -57,7 +57,7 @@ set(manuals_HTML
   manuals/index.html
   manuals/small-eagleCAD.gif
   )
-ADD_DOC(manuals_HTML html/manuals)
+ADD_DOC(manuals_HTML html/manuals REQUIRED "mged")
 
 set(manuals_mged_HTML
   manuals/mged/az_el.gif
@@ -117,9 +117,9 @@ set(manuals_mged_HTML
   manuals/mged/shaders.html
   manuals/mged/tex-html.tcl
   )
-ADD_DOC(manuals_mged_HTML html/manuals/mged)
+ADD_DOC(manuals_mged_HTML html/manuals/mged REQUIRED "mged")
 
-ADD_DOC(manuals/shaders/camo.html html/manuals/shaders)
+ADD_DOC(manuals/shaders/camo.html html/manuals/shaders REQUIRED "liboptical")
 
 set(relnotes_HTML
   ReleaseNotes/email2.0.html
@@ -130,7 +130,7 @@ set(relnotes_HTML
   ReleaseNotes/email5.0.html
   ReleaseNotes/index.html
   )
-ADD_DOC(relnotes_HTML html/ReleaseNotes)
+ADD_DOC(relnotes_HTML html/ReleaseNotes REQUIRED "librt")
 
 set(relnotes_5_HTML
   ReleaseNotes/Rel5.0/deprecated.html
@@ -138,7 +138,7 @@ set(relnotes_5_HTML
   ReleaseNotes/Rel5.0/new_cmds.html
   ReleaseNotes/Rel5.0/new_libs.html
   )
-ADD_DOC(relnotes_5_HTML html/ReleaseNotes/Rel5.0)
+ADD_DOC(relnotes_5_HTML html/ReleaseNotes/Rel5.0 REQUIRED "librt")
 
 set(relnotes_5_summary_HTML
   ReleaseNotes/Rel5.0/Summary/activem.gif
@@ -214,9 +214,9 @@ set(relnotes_5_summary_HTML
   ReleaseNotes/Rel5.0/Summary/tsld018.htm
   ReleaseNotes/Rel5.0/Summary/tsld019.htm
   )
-ADD_DOC(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary)
+ADD_DOC(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary REQUIRED "mged")
 
-ADD_DOC(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
+ADD_DOC(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0 REQUIRED "mged")
 
 set(html_ignore_files
   CMakeLists.txt

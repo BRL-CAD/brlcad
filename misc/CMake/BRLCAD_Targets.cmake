@@ -773,6 +773,20 @@ function(BRLCAD_ADDDATA datalist targetdir)
 endfunction(BRLCAD_ADDDATA)
 
 function(ADD_DOC doclist targetdir)
+
+  cmake_parse_arguments(A "" "" "REQUIRED" ${ARGN})
+
+  # Identify the source files for CMake
+  CMAKEFILES(${${doclist}})
+
+  if (A_REQUIRED)
+    foreach (rdep ${A_REQUIRED})
+      if (NOT TARGET ${rdep})
+	return()
+      endif (NOT TARGET ${rdep})
+    endforeach (rdep ${A_REQUIRED})
+  endif (A_REQUIRED)
+
   if (BRLCAD_INSTALL_DOCS)
     set(doc_target_dir ${DOC_DIR}/${targetdir})
     BRLCAD_MANAGE_FILES(${doclist} ${doc_target_dir})
