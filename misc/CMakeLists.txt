@@ -9,7 +9,6 @@ set(includedir "\${prefix}/include")
 set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 
-add_subdirectory(pkgconfig)
 add_subdirectory(perl)
 add_subdirectory(attributes)
 add_subdirectory(opencl-raytracer-tests)
