@@ -23,7 +23,7 @@ if (TARGET gen-attributes-file)
 
   set(attribute_DEPS attr_std_list_xml attr_std_table_xml)
   if (BRLCAD_EXTRADOCS)
-    ADD_DOCBOOK("HTML;PHP;MAN5;PDF" ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml man5 "" REQUIRED "librt")
+    ADD_DOCBOOK("HTML;PHP;MAN5;PDF" ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml man5 "${attribute_DEPS}" REQUIRED "librt")
   endif (BRLCAD_EXTRADOCS)
 endif (TARGET gen-attributes-file)
 
