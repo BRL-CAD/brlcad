@@ -66,7 +66,7 @@ BRLCAD_MANAGE_FILES(stb_image.txt              ${DOC_DIR}/legal/embedded REQUIRE
 BRLCAD_MANAGE_FILES(stb_truetype.txt           ${DOC_DIR}/legal/embedded REQUIRED libdm)
 BRLCAD_MANAGE_FILES(STIX_Font_License_2010.txt ${DOC_DIR}/legal/embedded REQUIRED libbu)
 BRLCAD_MANAGE_FILES(strnstr.txt                ${DOC_DIR}/legal/embedded REQUIRED libbu)
-BRLCAD_MANAGE_FILES(tcl.txt                    ${DOC_DIR}/legal/embedded REQUIRED libbu)
+BRLCAD_MANAGE_FILES(tcl_code.txt               ${DOC_DIR}/legal/embedded REQUIRED libbu)
 BRLCAD_MANAGE_FILES(tcllib.txt                 ${DOC_DIR}/legal/embedded REQUIRED libtclcad)
 BRLCAD_MANAGE_FILES(tiny_gltf.txt              ${DOC_DIR}/legal/embedded REQUIRED libgcv)
 BRLCAD_MANAGE_FILES(tinythread.txt             ${DOC_DIR}/legal/embedded REQUIRED libbu)

@@ -18,12 +18,13 @@ set_target_properties(echeck PROPERTIES FOLDER "BRL-CAD Regression Tests/license
 
 # Get the list of embedded license files from doc/legal/embedded and generate
 # an input file for the regression test
-get_directory_property(ELEGAL DIRECTORY ${CMAKE_SOURCE_DIR}/doc/legal/embedded DEFINITION embedded_licenses)
+file(GLOB embedded_licenses "${CMAKE_SOURCE_DIR}/doc/legal/embedded/*.txt")
+list(REMOVE_ITEM embedded_licenses "${CMAKE_SOURCE_DIR}/doc/legal/embedded/CMakeLists.txt")
 set(LICENSE_LIST "${CMAKE_CURRENT_BINARY_DIR}/embedded_licenses.txt")
 file(REMOVE "${LICENSE_LIST}")
-foreach(lfile ${ELEGAL})
-  file(APPEND "${LICENSE_LIST}" "${CMAKE_SOURCE_DIR}/doc/legal/embedded/${lfile}\n")
-endforeach(lfile ${ELEGAL})
+foreach(lfile ${embedded_licenses})
+  file(APPEND "${LICENSE_LIST}" "${lfile}\n")
+endforeach(lfile ${embedded_licenses})
 DISTCLEAN("${LICENSE_LIST}")
 
 # Define the actual regression test
@@ -48,12 +49,13 @@ if (EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
 
   # Get the list of other license files from doc/legal/other and generate
   # an input file for the regression test
-  get_directory_property(OLEGAL DIRECTORY ${CMAKE_SOURCE_DIR}/doc/legal/other DEFINITION other_licenses)
+  file(GLOB other_licenses "${CMAKE_SOURCE_DIR}/doc/legal/other/*.txt")
+  list(REMOVE_ITEM other_licenses "${CMAKE_SOURCE_DIR}/doc/legal/other/CMakeLists.txt")
   set(LICENSE_LIST "${CMAKE_CURRENT_BINARY_DIR}/other_licenses.txt")
   file(REMOVE "${LICENSE_LIST}")
-  foreach(lfile ${OLEGAL})
-    file(APPEND "${LICENSE_LIST}" "${CMAKE_SOURCE_DIR}/doc/legal/other/${lfile}\n")
-  endforeach(lfile ${OLEGAL})
+  foreach(lfile ${other_licenses})
+    file(APPEND "${LICENSE_LIST}" "${lfile}\n")
+  endforeach(lfile ${other_licenses})
   DISTCLEAN("${LICENSE_LIST}")
 
   # Get the list of dist files
