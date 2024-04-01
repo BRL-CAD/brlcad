@@ -80,11 +80,7 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
     target_include_directories(isst PRIVATE ${isst_dirs})
   endif (isst_dirs)
   target_include_directories(isst BEFORE PRIVATE ${local_isst_dirs})
-  ADD_TARGET_DEPS(isst isst_tcl_cp dm_plugins)
-  foreach(item ${tclindex_target_list})
-    add_dependencies(isst ${item})
-  endforeach(item ${tclindex_target_list})
-
+  ADD_TARGET_DEPS(isst isst_tcl_cp TclIndexBld dm_plugins)
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 CMAKEFILES(isst.tcl)
