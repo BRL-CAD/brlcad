@@ -9,53 +9,71 @@ set(includedir "\${prefix}/include")
 set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 
-add_subdirectory(perl)
-add_subdirectory(attributes)
-add_subdirectory(opencl-raytracer-tests)
+if (NOT BRLCAD_COMPONENTS)
+  add_subdirectory(perl)
+endif (NOT BRLCAD_COMPONENTS)
 
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
-  file(COPY ${CMAKE_BINARY_DIR}/misc/brlcad-config
-    DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-    GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-  DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlcad-config)
-  file(REMOVE ${CMAKE_BINARY_DIR}/misc/brlcad-config)
-  install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${BIN_DIR})
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config @ONLY)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    file(COPY ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config
-      DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
+add_subdirectory(attributes)
+
+if (NOT BRLCAD_COMPONENTS)
+  add_subdirectory(opencl-raytracer-tests)
+endif (NOT BRLCAD_COMPONENTS)
+
+if (NOT BRLCAD_COMPONENTS)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
+    file(COPY ${CMAKE_BINARY_DIR}/misc/brlcad-config
+      DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
       FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
       GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-    DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/brlcad-config)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config)
-  install(PROGRAMS ${CMAKE_BINARY_DIR}/\${BUILD_TYPE}/bin/brlcad-config DESTINATION ${BIN_DIR})
-endif(NOT CMAKE_CONFIGURATION_TYPES)
+    DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlcad-config)
+    file(REMOVE ${CMAKE_BINARY_DIR}/misc/brlcad-config)
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${BIN_DIR})
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config @ONLY)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      file(COPY ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config
+	DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
+	FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+	GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+      DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/brlcad-config)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config)
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/\${BUILD_TYPE}/bin/brlcad-config DESTINATION ${BIN_DIR})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
+endif (NOT BRLCAD_COMPONENTS)
 
-BRLCAD_ADDDATA(fortran_example.f sample_applications)
+if (NOT BRLCAD_COMPONENTS)
+  BRLCAD_ADDDATA(fortran_example.f sample_applications)
+endif (NOT BRLCAD_COMPONENTS)
 
-set(density_DATAFILES
-  GQA_SAMPLE_DENSITIES
-  NIST_DENSITIES
-  )
-BRLCAD_ADDDATA(density_DATAFILES data)
+if (TARGET libanalyze)
+  set(density_DATAFILES
+    GQA_SAMPLE_DENSITIES
+    NIST_DENSITIES
+    )
+  BRLCAD_ADDDATA(density_DATAFILES data)
+endif (TARGET libanalyze)
 
-add_subdirectory(nirt)
+if (TARGET nirt)
+  add_subdirectory(nirt)
+endif (TARGET nirt)
 
 BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
 
-BRLCAD_ADDDATA(nsis/brlcad.ico icons)
-BRLCAD_ADDDATA(nsis/archer.ico icons)
+if (TARGET archer)
+  BRLCAD_ADDDATA(nsis/brlcad.ico icons)
+  BRLCAD_ADDDATA(nsis/archer.ico icons)
+endif (TARGET archer)
 
-
-add_subdirectory(doxygen)
 add_subdirectory(CMake)
-add_subdirectory(debian)
-add_subdirectory(osl_shaders)
+
+if (NOT BRLCAD_COMPONENTS)
+  add_subdirectory(doxygen)
+  add_subdirectory(debian)
+  add_subdirectory(osl_shaders)
+endif (NOT BRLCAD_COMPONENTS)
 
 set(misc_ignore_files
   Bullet_Box_Chain_Demo.cpp

@@ -2180,14 +2180,16 @@ endfunction()
 
 verbose_add_subdirectory("" src)
 verbose_add_subdirectory("" include)
-verbose_add_subdirectory("" sh)
+if (TARGET rt)
+  verbose_add_subdirectory("" sh)
+endif (TARGET rt)
 verbose_add_subdirectory("" misc)
-if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  verbose_add_subdirectory("" doc)
-  verbose_add_subdirectory("" db)
+verbose_add_subdirectory("" doc)
+verbose_add_subdirectory("" db)
+if (TARGET rt)
   verbose_add_subdirectory("" bench)
-  verbose_add_subdirectory("" regress)
-endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+endif (TARGET rt)
+verbose_add_subdirectory("" regress)
 
 # Restore BRL-CAD configurations, if necessary
 # TODO - remove once bext based building goes live.  We'll need to look
