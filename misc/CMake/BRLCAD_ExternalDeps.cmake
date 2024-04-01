@@ -1003,6 +1003,9 @@ macro(find_package_eigen)
   list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
 
+  # Let the cache know for BRLCAD_Summary.cmake
+  set(EIGEN3_INCLUDE_DIR "${EIGEN3_INCLUDE_DIR}" CACHE PATH "Eigen include directory" FORCE)
+
 endmacro(find_package_eigen)
 
 
