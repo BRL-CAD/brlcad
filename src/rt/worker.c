@@ -535,11 +535,7 @@ pat_found:
 	int to;
     if (random_mode) {
 
-	/* FIXME: this currently runs forever. It should probably
-	 *        generate a list of random pixels and then process
-	 *        them in that order.
-	 */
-
+	// FIXME: this is a error in Parallel case
 		int* pixel_ls = malloc(last_pixel * sizeof(int));
 		if (pixel_ls != NULL){
 			for (int i = 0; i < last_pixel; i++)
@@ -572,12 +568,12 @@ pat_found:
 					bu_semaphore_release(RT_SEM_WORKER);
 
 					for (int i = 0; i < sub_pixel_len; i++) {
-						bu_log("    PIXEL[%d]\n", sub_pixel_ls[i]);
+						//bu_log("    PIXEL[%d]\n", sub_pixel_ls[i]);
 						do_pixel(cpu, pat_num, sub_pixel_ls[i]);
 					}
 					if (to >= last_pixel) {
 						free(sub_pixel_ls);
-						free(sub_pixel_ls);
+						free(pixel_ls);
 						return;
 					}
 				}
