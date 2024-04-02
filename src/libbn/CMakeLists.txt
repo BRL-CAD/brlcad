@@ -24,6 +24,7 @@ set(BN_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+# Note - libbn_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "${libbn_deps}" "" "${BN_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 

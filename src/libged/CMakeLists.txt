@@ -76,6 +76,7 @@ set(LIBGED_SOURCES
 
 set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
+# Note - libged_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(GED_LIBS
   ${libged_deps}
   ${PNG_LIBRARIES}

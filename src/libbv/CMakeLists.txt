@@ -30,6 +30,7 @@ set(BV_LOCAL_INCLUDE_DIRS
   ${LMDB_INCLUDE_DIR}
   )
 
+# Note - libbv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 BRLCAD_ADDLIB(libbv "${LIBBV_SRCS}" "${libbv_deps};${LMDB_LIBRARIES}" "" "${BV_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)

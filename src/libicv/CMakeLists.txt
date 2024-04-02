@@ -24,6 +24,7 @@ set(LIBICV_SOURCES
   dpix.c
   )
 
+# Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(ICV_LIBS
   ${libicv_deps}
   ${PNG_LIBRARIES}

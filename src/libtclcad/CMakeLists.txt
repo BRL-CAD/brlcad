@@ -54,6 +54,7 @@ if (BRLCAD_ENABLE_TCL)
     set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
   endif(BRLCAD_ENABLE_X11)
 
+  # Note - libtclcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
   set(TCLCAD_LIBS ${libtclcad_deps} ${TCL_LIBRARY} ${TCLCAD_XLIBS})
   if (TK_LIBRARY)
     set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})

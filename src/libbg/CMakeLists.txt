@@ -74,6 +74,7 @@ set(LIBBG_SOURCES
   util.c
   )
 
+# Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BG_LIBS
   ${libbg_deps}
   ${POLY2TRI_LIBRARIES}

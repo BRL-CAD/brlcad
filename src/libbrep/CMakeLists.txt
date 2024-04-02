@@ -47,6 +47,7 @@ set(BREP_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIRS}
   )
 
+# Note - libbrep_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BREP_LIBS
   ${libbrep_deps}
   ${OPENNURBS_LIBRARIES}

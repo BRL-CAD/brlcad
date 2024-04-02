@@ -366,6 +366,7 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
+# Note - librt_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(LIBRT_LIBS
   ${OPENCL_LIBS}
   ${librt_deps}
