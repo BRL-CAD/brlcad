@@ -324,6 +324,50 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 }
 
+typedef struct _hit_da {
+    size_t count;
+    size_t capacity;
+    struct hit * items;
+} hit_da;
+
+#define DA_INIT_CAPACITY 128
+
+// Append one item to a dynamic array
+#define DA_APPEND(da, item)								\
+    do {										\
+	if ((da)->count >= (da)->capacity) {						\
+	    (da)->capacity = (da)->capacity == 0 ? DA_INIT_CAPACITY : (da)->capacity*2;	\
+	    (da)->items = bu_realloc((da)->items, (da)->capacity*sizeof(*(da)->items),	\
+				     "DA realloc __FILE__: __LINE__" );			\
+	    BU_ASSERT((da)->items != NULL);						\
+	}										\
+											\
+	(da)->items[(da)->count++] = (item);						\
+    } while (0)
+
+#define nob_da_free(da) NOB_FREE((da).items)
+
+// Append several items to a dynamic array
+#define DA_APPEND_MANY(da, new_items, new_items_count)						\
+    do {											\
+	if ((da)->count + (new_items_count) > (da)->capacity) {					\
+	    if ((da)->capacity == 0) {								\
+		(da)->capacity = DA_INIT_CAPCITY;						\
+	    }											\
+	    while ((da)->count + (new_items_count) > (da)->capacity) {				\
+		(da)->capacity *= 2;								\
+	    }											\
+	    (da)->items = bu_realloc((da)->items, (da)->capacity*sizeof(*(da)->items),		\
+				     "DA realloc __FILE__: __LINE__" );				\
+	    BU_ASSERT((da)->items != NULL);							\
+	}											\
+	memcpy((da)->items + (da)->count, (new_items), (new_items_count)*sizeof(*(da)->items)); \
+	(da)->count += (new_items_count);							\
+    } while (0)
+
+
+
+
 struct _tie_s {
     struct bu_pool *pool;
     struct bvh_build_node *root;
