@@ -2159,6 +2159,9 @@ endif (BRLCAD_EXTRADOCS)
 include(CTest)
 mark_as_advanced(BUILD_TESTING)
 
+# Set up the BRL-CAD wrapper around find_package
+include(BRLCAD_Find_Package)
+
 # We've done the toplevel configure steps, now add the subdirectories
 function(verbose_add_subdirectory root dir)
     if(BRLCAD_PRINT_MSGS)

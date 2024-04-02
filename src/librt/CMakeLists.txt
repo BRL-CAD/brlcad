@@ -1,9 +1,9 @@
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_manifold(REQUIRED)
-  find_package_opennurbs(REQUIRED)
-  find_package_regex(REQUIRED)
+  BRLCAD_Find_Package(MANIFOLD REQUIRED)
+  BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
+  BRLCAD_Find_Package(REGEX REQUIRED)
   if (BRLCAD_ENABLE_ASSETIMPORT)
-    find_package_assetimport()
+    BRLCAD_Find_Package(ASSETIMPORT)
   endif (BRLCAD_ENABLE_ASSETIMPORT)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 

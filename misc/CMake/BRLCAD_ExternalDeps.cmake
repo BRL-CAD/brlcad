@@ -795,20 +795,10 @@ endforeach (ef ${TP_NOINST_FILES})
 
 
 #####################################################################
-# Now that the staging process is complete, it's time to run (or
-# re-run) the find_package logic to let BRL-CAD know what to use.
-# For the re-running case, if something changed with the files from
-# the previous configure we need to reset the find_package variables.
-# There isn't a standard way to do this, so we must sometimes have
-# per-package logic for those projects using more complex variable
-# sets.
-#
-# One advantage of this approach is that there is no longer order
-# dependency between these find_package calls - because all 3rd
-# party compilation is done by the time we reach this step, the
-# results shouldn't vary.  (TODO - right now these are ordered
-# roughly by project complexity - should we switch to alphabetical
-# by project name?)
+# We want find_package calls that re-run every time configure is
+# run, which means we need to unset cache variables.  Most of the
+# packages use the BRLCAD_Find_Package wrapper for this, but in a
+# few cases it's more complicated.
 #####################################################################
 
 # Not all packages will define all of these, but it shouldn't matter - an unset
@@ -830,36 +820,6 @@ function(find_package_reset pname trigger_var)
   unset(${pname}_VERSION_STRING CACHE)
   unset(${pname}_PREFIX_STR CACHE)
 endfunction(find_package_reset pname trigger_var)
-
-# Perplex/Lemon/RE2C toolchain
-macro(find_package_perplex)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  set(PERPLEX_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-  set(LEMON_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-  set(RE2C_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-
-  if (RESET_TP)
-    unset(PERPLEX_EXECUTABLE CACHE)
-    unset(LEMON_EXECUTABLE CACHE)
-    unset(RE2C_EXECUTABLE CACHE)
-    unset(PERPLEX_TEMPLATE CACHE)
-    unset(LEMON_TEMPLATE CACHE)
-    unset(RE2C_TEMPLATE CACHE)
-  endif (RESET_TP)
-
-  if (F_REQUIRED)
-    find_package(PERPLEX REQUIRED)
-    find_package(LEMON REQUIRED)
-    find_package(RE2C REQUIRED)
-  else()
-    find_package(PERPLEX)
-    find_package(LEMON)
-    find_package(RE2C)
-  endif ()
-
-endmacro(find_package_perplex)
 
 # zlib compression/decompression library
 # https://zlib.net
@@ -886,107 +846,6 @@ macro(find_package_zlib)
 
 endmacro(find_package_zlib)
 
-# libregex regular expression matching
-macro(find_package_regex)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(REGEX RESET_TP)
-  set(REGEX_ROOT "${CMAKE_BINARY_DIR}")
-  if (NOT BRLCAD_COMPONENTS OR F_REQUIRED)
-    find_package(REGEX REQUIRED)
-  else ()
-    find_package(REGEX)
-  endif ()
-
-endmacro(find_package_regex)
-
-# netpbm library - support for pnm,ppm,pbm, etc. image files
-# http://netpbm.sourceforge.net/
-macro(find_package_netpbm)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(NETPBM RESET_TP)
-  set(NETPBM_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(NETPBM REQUIRED)
-  else ()
-    find_package(NETPBM)
-  endif ()
-
-endmacro(find_package_netpbm)
-
-# libpng - Portable Network Graphics image file support
-# http://www.libpng.org/pub/png/libpng.html
-macro(find_package_png)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(PNG RESET_TP)
-  if (RESET_TP)
-    unset(PNG_PNG_INCLUDE_DIR CACHE)
-  endif (RESET_TP)
-  set(PNG_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(PNG REQUIRED)
-  else (F_REQUIRED)
-    find_package(PNG)
-  endif (F_REQUIRED)
-
-endmacro(find_package_png)
-
-# libutahrle - Utah RLE Image library
-macro(find_package_utahrle)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(UTAHRLE RESET_TP)
-  set(UTAHRLE_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(UTAHRLE REQUIRED)
-  else (F_REQUIRED)
-    find_package(UTAHRLE)
-  endif (F_REQUIRED)
-
-endmacro(find_package_utahrle)
-
-# STEPcode - support for reading and writing STEP files
-# https://github.com/stepcode/stepcode
-#
-# Note - We are heavily involved with the stepcode effort and in the past our
-# stepcode copy has been extensively modified, but we are working to get our
-# copy and a released upstream copy synced - in anticipation of that, stepcode
-# lives in ext.
-macro(find_package_stepcode)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(STEPCODE RESET_TP)
-  if (RESET_TP)
-    unset(STEPCODE_CORE_LIBRARY    CACHE)
-    unset(STEPCODE_DAI_DIR         CACHE)
-    unset(STEPCODE_DAI_LIBRARY     CACHE)
-    unset(STEPCODE_EDITOR_DIR      CACHE)
-    unset(STEPCODE_EDITOR_LIBRARY  CACHE)
-    unset(STEPCODE_EXPPP_DIR       CACHE)
-    unset(STEPCODE_EXPPP_LIBRARY   CACHE)
-    unset(STEPCODE_EXPRESS_DIR     CACHE)
-    unset(STEPCODE_EXPRESS_LIBRARY CACHE)
-    unset(STEPCODE_INCLUDE_DIR     CACHE)
-    unset(STEPCODE_STEPCORE_DIR    CACHE)
-    unset(STEPCODE_UTILS_DIR       CACHE)
-    unset(STEPCODE_UTILS_LIBRARY   CACHE)
-  endif (RESET_TP)
-  set(STEPCODE_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(STEPCODE REQUIRED)
-  else ()
-    find_package(STEPCODE)
-  endif ()
-endmacro(find_package_stepcode)
-
-
 # Eigen - linear algebra library
 macro(find_package_eigen)
 
@@ -1008,138 +867,6 @@ macro(find_package_eigen)
 
 endmacro(find_package_eigen)
 
-
-# GDAL -  translator library for raster and vector geospatial data formats
-# https://gdal.org
-macro(find_package_gdal)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(GDAL RESET_TP)
-  set(GDAL_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(GDAL REQUIRED)
-  else()
-    find_package(GDAL)
-  endif ()
-
-endmacro(find_package_gdal)
-
-# Linenoise - line editing library
-# https://github.com/msteveb/linenoise
-macro(find_package_linenoise)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(LINENOISE RESET_TP)
-  set(LINENOISE_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(LINENOISE REQUIRED)
-  else()
-    find_package(LINENOISE)
-  endif ()
-
-endmacro(find_package_linenoise)
-
-# LMDB - Lightning Memory-Mapped Database
-# https://github.com/LMDB/lmdb
-macro(find_package_lmdb)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(LMDB RESET_TP)
-  set(LMDB_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(LMDB REQUIRED)
-  else()
-    find_package(LMDB)
-  endif ()
-
-endmacro(find_package_lmdb)
-
-# Open Asset Import Library - library for supporting I/O for a number of
-# Geometry file formats
-# https://github.com/assimp/assimp
-macro(find_package_assetimport)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(ASSETIMPORT RESET_TP)
-  set(ASSETIMPORT_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(ASSETIMPORT REQUIRED)
-  else()
-    find_package(ASSETIMPORT)
-  endif ()
-
-endmacro(find_package_assetimport)
-
-# OpenMesh Library - library for representing and manipulating polygonal meshes
-# https://www.graphics.rwth-aachen.de/software/openmesh/
-macro(find_package_openmesh)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-
-  find_package_reset(OPENMESH RESET_TP)
-  if (RESET_TP)
-    unset(OPENMESH_CORE_LIBRARY          CACHE)
-    unset(OPENMESH_CORE_LIBRARY_DEBUG    CACHE)
-    unset(OPENMESH_CORE_LIBRARY_RELEASE  CACHE)
-    unset(OPENMESH_TOOLS_LIBRARY         CACHE)
-    unset(OPENMESH_TOOLS_LIBRARY_DEBUG   CACHE)
-    unset(OPENMESH_TOOLS_LIBRARY_RELEASE CACHE)
-  endif (RESET_TP)
-  set(OpenMesh_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(OpenMesh REQUIRED)
-  else()
-    find_package(OpenMesh)
-  endif ()
-
-endmacro(find_package_openmesh)
-
-
-# Manifold - Mesh library for boolean ops
-# https://github.com/elalish/manifold
-macro(find_package_manifold)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(MANIFOLD RESET_TP)
-  set(MANIFOLD_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(MANIFOLD REQUIRED)
-  else()
-    find_package(MANIFOLD)
-  endif ()
-
-endmacro(find_package_manifold)
-
-
-# openNURBS Non-Uniform Rational BSpline library
-# https://github.com/mcneel/opennurbs
-macro(find_package_opennurbs)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(OPENNURBS RESET_TP)
-  if (RESET_TP)
-    unset(OPENNURBS_X_INCLUDE_DIR CACHE)
-  endif (RESET_TP)
-  set(OPENNURBS_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(OPENNURBS REQUIRED)
-  else()
-    find_package(OPENNURBS)
-  endif ()
-
-  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS)
-  list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
-  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled system include dirs" FORCE)
-
-endmacro(find_package_opennurbs)
-
 # OpenCV - Open Source Computer Vision Library
 # http://opencv.org
 macro(find_package_opencv)
@@ -1152,7 +879,7 @@ macro(find_package_opencv)
   set(OpenCV_DIR_TMP "${OpenCV_DIR}")
   set(OpenCV_DIR "${CMAKE_BINARY_DIR}/${LIB_DIR}/cmake/opencv4")
   set(OpenCV_ROOT ${CMAKE_BINARY_DIR})
-  find_package(OpenCV COMPONENTS ${QtComponents})
+  find_package(OpenCV COMPONENTS core features2d imgproc highgui)
   unset(OpenCV_ROOT)
 
   # If no bundled copy, see what the system has
@@ -1163,44 +890,17 @@ macro(find_package_opencv)
     else()
       find_package(OpenCV)
     endif ()
+    if (OpenCV_FOUND)
+      set(OPENCV_STATUS "System" CACHE STRING "OpenCV is bundled" FORCE)
+    else (OpenCV_FOUND)
+      set(OPENCV_STATUS "NotFound" CACHE STRING "OpenCV is bundled" FORCE)
+    endif (OpenCV_FOUND)
 
+  else (NOT OpenCV_FOUND)
+    set(OPENCV_STATUS "Bundled" CACHE STRING "OpenCV is bundled" FORCE)
   endif (NOT OpenCV_FOUND)
 
 endmacro(find_package_opencv)
-
-
-# OSMesa Off Screen Rendering library
-# https://github.com/starseeker/osmesa
-macro(find_package_osmesa)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(OSMESA RESET_TP)
-  set(OSMESA_ROOT "${CMAKE_BINARY_DIR}")
-  if (F_REQUIRED)
-    find_package(OSMESA REQUIRED)
-  else()
-    find_package(OSMESA)
-  endif ()
-
-endmacro(find_package_osmesa)
-
-
-# Poly2Tri - constrained Delaunay triangulation
-# https://github.com/jhasse/poly2tri
-macro(find_package_poly2tri)
-
-  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  find_package_reset(POLY2TRI RESET_TP)
-  set(POLY2TRI_ROOT "${CMAKE_BINARY_DIR}")
-  if (NOT BRLCAD_COMPONENTS OR F_REQUIRED)
-    find_package(POLY2TRI REQUIRED)
-  else ()
-    find_package(POLY2TRI)
-  endif ()
-
-endmacro(find_package_poly2tri)
 
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.

@@ -2,7 +2,9 @@
 set(DPLOT_READER dplot)
 
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_perplex(REQUIRED)
+  BRLCAD_Find_Package(PERPLEX REQUIRED NOINSTALL)
+  BRLCAD_Find_Package(LEMON REQUIRED NOINSTALL)
+  BRLCAD_Find_Package(RE2C REQUIRED NOINSTALL)
 else()
   find_package(PERPLEX)
   find_package(LEMON)

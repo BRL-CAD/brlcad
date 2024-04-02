@@ -28,7 +28,12 @@ set(GIST_SRCS
 
 CMAKEFILES(${gist_ignore_files} ${GIST_SRCS})
 
-find_package(OpenCV COMPONENTS core features2d imgproc highgui)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_opencv()
+else (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package(OpenCV COMPONENTS core features2d imgproc highgui)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 # FIND_PACKAGE(OpenCV)
 if(NOT OpenCV_FOUND)
   message("OpenCV is DISABLED")
