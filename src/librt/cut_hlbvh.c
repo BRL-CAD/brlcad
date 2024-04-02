@@ -468,44 +468,6 @@ struct prim_list {
     long first_prim_offset, n_primitives;
 };
 
-void 
-recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far)
-{
-    { // check bounds
-	// TODO: do we want to handle NaNs correctly?
-	point_t lows_t, highs_t, low_ts, high_ts;
-
-	VSUB2( lows_t, &node->bounds[0], rp->r_pt);
-	VSUB2(highs_t, &node->bounds[3], rp->r_pt);
-	// TODO: precompute inverse of r_dir for speed?
-	VELDIV( lows_t,  lows_t, rp->r_dir);
-	VELDIV(highs_t, highs_t, rp->r_dir);
-	
-	VMOVE( low_ts, lows_t);
-	VMOVE(high_ts, lows_t);
-	VMINMAX(low_ts, high_ts, highs_t);
-	
-	fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
-	fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
-	if ((high_t < -1.0) | (low_t > high_t)) return;
-    }
-
-    if (node->n_primitives > 0) {
-	BU_ASSERT(node->children[0] == NULL && node->children[1] == NULL);
-	// add the leaf values into a list
-	struct prim_list* entry;
-	BU_GET(entry, struct prim_list);
-	entry->n_primitives = node->n_primitives;
-	entry->first_prim_offset = node->first_prim_offset;
-	BU_LIST_PUSH(&(leafs->l), &(entry->l));
-	*prims_so_far += node->n_primitives;
-    } else {
-	// TODO: unroll recursion into while loop
-	recursive_populate_leaf_list(node->children[0], rp, leafs, prims_so_far);
-	recursive_populate_leaf_list(node->children[1], rp, leafs, prims_so_far);
-    }
-}
-
 void while_populate_leaf_list(struct bvh_build_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
 {
     struct bvh_build_node *stack_node[128];
