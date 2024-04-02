@@ -373,6 +373,7 @@ struct _tie_s {
     struct bvh_build_node *root;
     triangle_s *tris;
     fastf_t *vertex_normals;
+    hit_da *hit_arrays_per_cpu;
 };
 
 /**
@@ -529,6 +530,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     tie->root = root;
     tie->tris = tris;
     tie->vertex_normals = tri_norms;
+    tie->hit_arrays_per_cpu = (hit_da *) bu_calloc( bu_avail_cpus(), sizeof(hit_da), "thread-local bot hit arrays");
     bot->tie = (void*) tie;
 	
     // struct bvh_build_node is a pun for fastf_t[6] which are the bounds
@@ -599,7 +601,10 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     struct _tie_s *tie = (struct _tie_s *)bot->tie;
     if (UNLIKELY(!tie))
 	return 0;
-
+    
+    int thread_ind = bu_thread_id() % bu_avail_cpus();
+    hit_da *hits_da = &tie->hit_arrays_per_cpu[thread_ind];
+    
     long* check_tris = NULL;
     size_t num_check_tris = 0;
 
