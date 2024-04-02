@@ -505,7 +505,13 @@ recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struc
 	recursive_populate_leaf_list(node->children[1], rp, leafs, prims_so_far);
     }
 }
-
+/**
+ * This is a naive shot function that returns an allocated 
+ * list of primative indexes that correspond with the indexes
+ * returned from ordered_prims in hlbvh_create(). 
+ * It is not fast, but we're keeping it around to facilitate
+ * prototyping code for other primatives.
+ */
 void
 hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
 {
