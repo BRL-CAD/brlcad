@@ -505,6 +505,64 @@ recursive_populate_leaf_list(struct bvh_build_node* node, struct xray* rp, struc
 	recursive_populate_leaf_list(node->children[1], rp, leafs, prims_so_far);
     }
 }
+
+void while_populate_leaf_list(struct bvh_build_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
+{
+    struct bvh_build_node *stack_node[128];
+    unsigned char stack_child_index[128];
+    int stack_ind = 0;
+    stack_node[stack_ind] = root;
+    stack_child_index[stack_ind] = 0;
+	
+    while (stack_ind >= 0) {
+	if (stack_child_index[stack_ind] >= 2) {
+	    stack_ind--;
+	    continue;
+	}
+	struct bvh_build_node* node = stack_node[stack_ind];
+	// check bounds if it's the first time in this node
+	if (!stack_child_index[stack_ind]) {
+	    // TODO: do we want to handle NaNs correctly?
+	    point_t lows_t, highs_t, low_ts, high_ts;
+
+	    VSUB2( lows_t, &node->bounds[0], rp->r_pt);
+	    VSUB2(highs_t, &node->bounds[3], rp->r_pt);
+	    // TODO: precompute inverse of r_dir for speed?
+	    VELDIV( lows_t,  lows_t, rp->r_dir);
+	    VELDIV(highs_t, highs_t, rp->r_dir);
+	
+	    VMOVE( low_ts, lows_t);
+	    VMOVE(high_ts, lows_t);
+	    VMINMAX(low_ts, high_ts, highs_t);
+	
+	    fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
+	    fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
+	    if ((high_t < -1.0) | (low_t > high_t)) {
+		stack_ind--;
+		continue;
+	    }
+	}
+	if (node->n_primitives > 0) {
+	    BU_ASSERT(node->children[0] == NULL && node->children[1] == NULL);
+	    // add the leaf values into a list
+	    struct prim_list* entry;
+	    BU_GET(entry, struct prim_list);
+	    entry->n_primitives = node->n_primitives;
+	    entry->first_prim_offset = node->first_prim_offset;
+	    BU_LIST_PUSH(&(leafs->l), &(entry->l));
+	    *prims_so_far += node->n_primitives;
+	    stack_ind--;
+	    continue;
+	}
+	// we hit the bounds and are not in a leaf
+	// so we do the next child of this node
+	stack_node[stack_ind+1] = node->children[stack_child_index[stack_ind]];
+	stack_child_index[stack_ind] += 1;
+	stack_child_index[stack_ind+1] = 0;
+	stack_ind++;
+    }
+}
+
 /**
  * This is a naive shot function that returns an allocated 
  * list of primative indexes that correspond with the indexes
@@ -526,7 +584,7 @@ hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_prims, siz
     BU_LIST_INIT(&(leafs->l));
     leafs->first_prim_offset = -1;
     leafs->n_primitives = -1;
-    recursive_populate_leaf_list(root, rp, leafs, &prim_accum);
+    while_populate_leaf_list(root, rp, leafs, &prim_accum);
     *num_check_prims = prim_accum;
     if (prim_accum == 0) {
 	BU_PUT(leafs, struct prim_list);
