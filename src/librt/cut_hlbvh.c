@@ -513,6 +513,8 @@ void while_populate_leaf_list(struct bvh_build_node *root, struct xray* rp, stru
     int stack_ind = 0;
     stack_node[stack_ind] = root;
     stack_child_index[stack_ind] = 0;
+    vect_t inverse_r_dir;
+    VINVDIR(inverse_r_dir, rp->r_dir);
 	
     while (stack_ind >= 0) {
 	if (stack_child_index[stack_ind] >= 2) {
@@ -527,9 +529,9 @@ void while_populate_leaf_list(struct bvh_build_node *root, struct xray* rp, stru
 
 	    VSUB2( lows_t, &node->bounds[0], rp->r_pt);
 	    VSUB2(highs_t, &node->bounds[3], rp->r_pt);
-	    // TODO: precompute inverse of r_dir for speed?
-	    VELDIV( lows_t,  lows_t, rp->r_dir);
-	    VELDIV(highs_t, highs_t, rp->r_dir);
+	    
+	    VELMUL( lows_t,  lows_t, inverse_r_dir);
+	    VELMUL(highs_t, highs_t, inverse_r_dir);
 	
 	    VMOVE( low_ts, lows_t);
 	    VMOVE(high_ts, lows_t);
