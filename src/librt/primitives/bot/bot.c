@@ -691,60 +691,18 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     
     int thread_ind = bu_thread_id() % bu_avail_cpus();
     hit_da *hits_da = &tie->hit_arrays_per_cpu[thread_ind];
+    hits_da->count = 0;
     
-    long* check_tris = NULL;
-    size_t num_check_tris = 0;
+    bot_shot_hlbvh(tie->root, rp, tie->tris, bot->bot_ntri, hits_da);
 
-    // TODO: do we want to back the xray out by one dirlen before this?
-    hlbvh_shot(tie->root, rp, &check_tris, &num_check_tris);
-
-    if (num_check_tris == 0) {
-	BU_ASSERT(check_tris == NULL);
+    if (hits_da->count == 0) {
 	return 0;
     }
-    struct hit *hits = (struct hit*) bu_calloc(num_check_tris, sizeof(struct hit), "bot hitdata");
-    
-    size_t nhits = 0;
-    for (size_t i = 0; i < num_check_tris; i++) {
-	triangle_s* tri = &tie->tris[check_tris[i]];
-	vect_t wn, wxb, xp;
-	VSCALE(wn, tri->face_norm, tri->face_norm_scalar);
-	fastf_t dn = VDOT(wn, rp->r_dir);
-	fastf_t abs_dn = dn >= 0.0 ? dn : (-dn);
-	if (abs_dn < BOT_MIN_DN) continue;
-	VSUB2(wxb, tri->A, rp->r_pt);
-	VCROSS(xp, wxb, rp->r_dir);
-	fastf_t beta = VDOT(tri->AB, xp);
-	fastf_t gamma = VDOT(tri->AC, xp);
-	 beta = (dn > 0.0) ?  -beta :  beta;
-	gamma = (dn < 0.0) ? -gamma : gamma;
-	if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) ) continue;
-	// we calculate beta and gamma first, because 
-	// beta is associated with point B and gamma is 
-	// associated with point C
-	fastf_t dist = VDOT(wxb, wn) / dn;
-	// fill out hitdata
-	struct hit* cur_hit = &hits[nhits];
-	nhits++;
-	// we copy what g_bot_include.c does right now
-	// even if we don't really understand why
-	cur_hit->hit_magic = RT_HIT_MAGIC;
-	cur_hit->hit_dist = dist;
-	VJOIN1(cur_hit->hit_point, rp->r_pt, cur_hit->hit_dist, rp->r_dir);
-	VMOVE(cur_hit->hit_normal, tri->face_norm);
-	cur_hit->hit_vpriv[X] = VDOT(tri->face_norm, rp->r_dir);
-	cur_hit->hit_vpriv[Y] = gamma / abs_dn;
-	cur_hit->hit_vpriv[Z] =  beta / abs_dn;
-	cur_hit->hit_private = tri;
-	cur_hit->hit_surfno = tri->face_id;
-	cur_hit->hit_rayp = &ap->a_ray; // could also use rp
-    }
-    bu_free(check_tris, "hlbvh primative list");
-
     // sort the hits
     //insertion sort
-    // TODO: this could be very large - use a sort from
-    // libbu or something
+    {
+    size_t nhits = hits_da->count;
+    struct hit *hits = hits_da->items;
     for (size_t i = 1; i < nhits; i++) {
 	fastf_t i_dist = hits[i].hit_dist;
 	struct hit swap = hits[i];
@@ -758,14 +716,9 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	}
 	hits[j+1] = swap;
     }
-    
-    int retval = 0;
-    if (nhits > 0) {
-	retval = rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
     }
-
-    bu_free(hits, "bot hitdata");
-    return retval;
+    
+    return rt_bot_makesegs(hits_da->items, hits_da->count, stp, rp, ap, seghead, NULL);
 }
 
 
