@@ -104,6 +104,7 @@ if(BRLCAD_ENABLE_OSL)
 
 endif(BRLCAD_ENABLE_OSL)
 
+# Note - liboptical_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(olibs "${liboptical_deps}")
 if (TARGET liboslrend)
   set(olibs "${olibs};liboslrend")

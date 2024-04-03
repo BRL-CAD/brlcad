@@ -2,9 +2,9 @@
 # defined in a core library.
 
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_lmdb(REQUIRED)
-  find_package_png(REQUIRED)
-  find_package_regex(REQUIRED)
+  BRLCAD_Find_Package(LMDB REQUIRED)
+  BRLCAD_Find_Package(PNG REQUIRED)
+  BRLCAD_Find_Package(REGEX REQUIRED)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 add_custom_command(
@@ -76,6 +76,7 @@ set(LIBGED_SOURCES
 
 set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
+# Note - libged_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(GED_LIBS
   ${libged_deps}
   ${PNG_LIBRARIES}

@@ -1,7 +1,7 @@
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_netpbm(REQUIRED)
-  find_package_png(REQUIRED)
-  find_package_utahrle(REQUIRED)
+  BRLCAD_Find_Package(NETPBM REQUIRED)
+  BRLCAD_Find_Package(PNG REQUIRED)
+  BRLCAD_Find_Package(UTAHRLE REQUIRED)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 set(LIBICV_SOURCES
@@ -24,6 +24,7 @@ set(LIBICV_SOURCES
   dpix.c
   )
 
+# Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(ICV_LIBS
   ${libicv_deps}
   ${PNG_LIBRARIES}

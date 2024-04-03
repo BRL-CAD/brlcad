@@ -44,6 +44,7 @@ set(DM_LOCAL_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/src/libbg
   )
 
+# Note - libdm_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "${libdm_deps};${PNG_LIBRARIES}" "${DM_INCLUDE_DIRS}" "${DM_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (TARGET profont_ProFont_ttf_cp)

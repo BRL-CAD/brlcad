@@ -81,7 +81,9 @@ endif(HAVE_UNIQUE_PTR)
 
 # Find tools for generating source files
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
-  find_package_perplex(REQUIRED)
+  BRLCAD_Find_Package(PERPLEX REQUIRED NOINSTALL)
+  BRLCAD_Find_Package(LEMON REQUIRED NOINSTALL)
+  BRLCAD_Find_Package(RE2C REQUIRED NOINSTALL)
 else()
   find_package(PERPLEX REQUIRED)
   find_package(LEMON REQUIRED)

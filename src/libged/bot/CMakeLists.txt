@@ -2,7 +2,7 @@ set(BOT_LIBS libged libbg libbu)
 
 if (BRLCAD_ENABLE_OPENMESH)
   if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-    find_package_openmesh()
+    BRLCAD_Find_Package(OpenMesh)
   endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
   if (OPENMESH_INCLUDE_DIRS)
     set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${OPENMESH_INCLUDE_DIRS})
