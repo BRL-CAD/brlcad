@@ -1,16 +1,3 @@
-# Include directories needed by liboptical users
-set(OPTICAL_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  )
-if (BRLCAD_ENABLE_TCL)
-  set(OPTICAL_INCLUDE_DIRS ${OPTICAL_INCLUDE_DIRS} ${TCL_INCLUDE_PATH})
-endif (BRLCAD_ENABLE_TCL)
-BRLCAD_LIB_INCLUDE_DIRS(optical OPTICAL_INCLUDE_DIRS "")
-
 set(LIBOPTICAL_SOURCES
   init.c
   material.c
@@ -51,7 +38,11 @@ set(LIBOPTICAL_SOURCES
   )
 
 if(BRLCAD_ENABLE_TCL)
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    find_package_tcl(REQUIRED)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
   set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_tcl.c)
+  set(LOCAL_OPTICAL_INCLUDE_DIRS ${LOCAL_OPTICAL_INCLUDE_DIRS} ${TCL_INCLUDE_PATH})
 endif(BRLCAD_ENABLE_TCL)
 
 if(BRLCAD_ENABLE_OSL)
@@ -66,15 +57,6 @@ if(BRLCAD_ENABLE_OSL)
   # NOTE(boulos): Boost can only detect that you've disabled RTTI for
   # gcc >= 4.3. My poor mac doesn't have that.
   add_definitions("-fno-rtti -DBOOST_NO_RTTI -DBOOST_NO_TYPEID -DOSL_ENABLED")
-
-  include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${OSL_INCLUDES}
-    ${OPENIMAGEIO_INCLUDES}
-    # This is required for brep.h to find opennurbs.h
-    # (TODO: better way to include this dir?)
-    ../other/openNURBS/
-    )
 
   message("Oslexec: ${OSLEXEC_LIBRARY}")
   message("Oslcomp: ${OSLCOMP_LIBRARY}")
@@ -102,7 +84,16 @@ if(BRLCAD_ENABLE_OSL)
 
   set(OSLRT_LIBS ${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
 
-  BRLCAD_ADDLIB(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS}")
+  set(OSL_LOCAL_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${OSL_INCLUDES}
+    ${OPENIMAGEIO_INCLUDES}
+    # This is required for brep.h to find opennurbs.h
+    # (TODO: better way to include this dir?)
+    ../other/openNURBS/
+    )
+
+  BRLCAD_ADDLIB(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS}" "" "${OSL_LOCAL_INCLUDE_DIRS}")
 
   ##########################################
   # Build OSL Shader
@@ -113,6 +104,7 @@ if(BRLCAD_ENABLE_OSL)
 
 endif(BRLCAD_ENABLE_OSL)
 
+# Note - liboptical_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(olibs "${liboptical_deps}")
 if (TARGET liboslrend)
   set(olibs "${olibs};liboslrend")
@@ -121,7 +113,7 @@ if (BRLCAD_ENABLE_TCL)
   set(olibs "${olibs};${TCL_LIBRARY}")
 endif (BRLCAD_ENABLE_TCL)
 
-BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "${olibs}")
+BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "${olibs}" "" "${LOCAL_OPTICAL_INCLUDE_DIRS}")
 
 
 CMAKEFILES(

@@ -1125,7 +1125,6 @@ have_part:
         bu_vls_free(&vstr);
     }
 
-    db5_standardize_avs(&cinfo->avs);
     db5_update_attributes(sdp, &cinfo->avs, cinfo->wdbp->dbip);
 
     /* Set the Creo attributes for the region */
@@ -1267,7 +1266,6 @@ have_part:
     param_export(cinfo, model, pname);
 
     /* Update attributes stored on disk */
-    db5_standardize_avs(&cinfo->avs);
     db5_update_attributes(rdp, &cinfo->avs, cinfo->wdbp->dbip);
 
     /* Increment the region id - this is a concern if we move to multithreaded generation... */

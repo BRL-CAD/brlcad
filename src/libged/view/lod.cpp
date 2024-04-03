@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/hash.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bv/lod.h"

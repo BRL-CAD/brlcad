@@ -372,8 +372,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     }
 
 
-    /* Standardize and write */
-    db5_standardize_avs(&cinfo->avs);
+    /* Write */
     db5_update_attributes(dp, &cinfo->avs, cinfo->wdbp->dbip);
 
     creo_log(cinfo, MSG_PLAIN, "  ASSEM: Conversion of assembly \"%s\" complete\n", cname);

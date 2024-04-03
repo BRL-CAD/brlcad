@@ -1,12 +1,3 @@
-set(GDIFF_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BU_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  )
-list(REMOVE_DUPLICATES GDIFF_INCLUDE_DIRS)
-include_directories(${GDIFF_INCLUDE_DIRS})
-
 set(gdiff_srcs
   diff3_summary.c
   diff_summary.c
@@ -16,6 +7,7 @@ set(gdiff_srcs
   )
 
 BRLCAD_ADDEXEC(gdiff "${gdiff_srcs}" "librt")
+target_include_directories(gdiff BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 CMAKEFILES(
   CMakeLists.txt

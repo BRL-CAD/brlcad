@@ -23,7 +23,7 @@
       <arg choice="opt" rep="norepeat"><replaceable>-u</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-c</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-s|-p</replaceable></arg>
-      <arg choice="opt" rep="norepeat"><replaceable>-A</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-L</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-O</replaceable></arg>
       <arg choice="req" rep="norepeat"><replaceable>database_file</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>affix</replaceable></arg>
@@ -52,9 +52,8 @@
       the incoming <emphasis>database_file</emphasis> will have the <emphasis>affix</emphasis> added
       to their names as a prefix (by default or if the <option>-p</option> option is specified),
       or as a suffix (if the <option>-s</option> option is specified).  By default this string
-      is used only when resolving name conflicts, but if <option>-A</option> is specified
-      in either mode the <emphasis>affix</emphasis> string is added to ALL incoming object names,
-      not just those cases where there is a conflict.
+      is added to ALL incoming object names, but if <option>-L</option> is specified
+      in either mode the <emphasis>affix</emphasis> string is used only when resolving name conflicts.
     </para>
     <para>
       Other options are used to indicate whether or not to preserve incoming metadata such as
@@ -66,11 +65,11 @@
 
   <variablelist remap="TP">
     <varlistentry>
-	<term><emphasis remap="B" role="bold">-A</emphasis></term>
+	<term><emphasis remap="B" role="bold">-L</emphasis></term>
 	<listitem>
 	  <para>
-	    Apply the affix (either as a prefix or suffix) to all objects,
-	    not just when trying to resolve name conflicts.
+	    Apply the affix (either as a prefix or suffix) only 
+	    when trying to resolve name conflicts.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -143,12 +142,14 @@
       database to the current database. It also shows how to add a particular prefix to
       every object copied.
     </para>
-    <example><title>Copy objects in a specified database to the current one and add a prefix to all the copied objects.</title>
+    <example><title>Copy objects in a specified database to the current one and lazily apply a prefix to the copied objects.</title>
 
-      <para><prompt>mged&gt; </prompt><userinput>dbconcat -A model_two.g two_</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>dbconcat -L model_two.g two_</userinput></para>
       <para>
 	Copies all the objects in <emphasis>model_two.g</emphasis> to the current database,
-	but prefixes the name of every object copied with the string <emphasis>two_</emphasis>.
+	using the specified prefix <emphasis>two_</emphasis> to attempt to resolve name conflicts.
+	If there is a still a conflict even with the prefix applied standard rules will continue
+	to be applied for additional name generation.
       </para>
     </example>
 

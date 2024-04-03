@@ -4,7 +4,7 @@ set(dm_headers
   util.h
   view.h
   )
-BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm)
+BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm REQUIRED libdm)
 
 CMAKEFILES(CMakeLists.txt)
 

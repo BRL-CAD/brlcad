@@ -1,18 +1,15 @@
 set(man1_EN
   3dm-g.xml
-  ap-pix.xml
   alias-pix.xml
+  ap-pix.xml
   asc-nmg.xml
   asc-plot3.xml
   asc2dsp.xml
   asc2g.xml
-  benchmark.xml
   bolt.xml
-  brlman.xml
   bot_dump.xml
   brep_simple.xml
-  brlcad-config.xml
-  brlcad.xml
+  brlman.xml
   bw-fb.xml
   bw-pix.xml
   bw-png.xml
@@ -35,7 +32,6 @@ set(man1_EN
   comgeom-g.xml
   conv-vg2g.xml
   cv.xml
-  dbclean.xml
   dbupgrade.xml
   decimate.xml
   dpix-pix.xml
@@ -174,21 +170,44 @@ set(man1_EN
   ug-g.xml
   vdeck.xml
   wavelet.xml
+  wdb_example.xml
   window.xml
   window_frame.xml
   wire.xml
-  wdb_example.xml
   )
 
-# Some DocBook man pages generate multiple output files, if they
-# describe more than one command.  Those files need special
-# handling, since the CMake logic has no way to know about the
-# extra outputs without being told.
-set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN1_OUTPUTS "asc2pix.1")
+if (BRLCAD_EXTRADOCS)
 
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1 "")
+  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" benchmark.xml man1 "" REQUIRED "rt")
+  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad-config.xml man1 "" REQUIRED "rt")
+  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad.xml man1 "" REQUIRED "mged")
+  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" dbclean.xml man1 "" REQUIRED "asc2g")
 
-CMAKEFILES(CMakeLists.txt)
+  # BRLCAD_ADDEXEC takes care of the ADD_DOCBOOK call - we just need to warn if
+  # we've got a man page in the list indicating we should have an associated
+  # target but not showing one.  Generally this will be an indication of a tool
+  # not ported to the current platform.  Only do this if we're doing a full build
+  # rather than a subset, since the latter case will likely report many man pages
+  # without associated targets and isn't useful.
+  if (NOT BRLCAD_COMPONENTS)
+    foreach(mp ${man1_EN})
+      get_filename_component(tname ${mp} NAME_WE)
+        if (NOT TARGET ${tname})
+	message("Warning: man1 man page ${tname} has no associated build target")
+      endif (NOT TARGET ${tname})
+    endforeach(mp ${man3_EN})
+  endif (NOT BRLCAD_COMPONENTS)
+
+endif (BRLCAD_EXTRADOCS)
+
+CMAKEFILES(
+  ${man1_EN}
+  benchmark.xml
+  brlcad-config.xml
+  brlcad.xml
+  dbclean.xml
+  CMakeLists.txt
+  )
 
 # Local Variables:
 # tab-width: 8

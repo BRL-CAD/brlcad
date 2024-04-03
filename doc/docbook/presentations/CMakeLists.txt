@@ -49,16 +49,19 @@ set(presentations_EN_IMAGES
   images/special-character-interpretation.png
   images/tk-based-gui-for-mged.png
   )
-if(BRLCAD_EXTRADOCS)
-  ADD_DOC(presentations_EN_IMAGES html/presentations/images)
-else(BRLCAD_EXTRADOCS)
-  CMAKEFILES(${presentations_EN_IMAGES})
-endif(BRLCAD_EXTRADOCS)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOC(presentations_EN_IMAGES html/presentations/images)
+    ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations presentations_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
-ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations presentations_EN_IMAGES_cp)
-
-CMAKEFILES(README)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  README
+  CMakeLists.txt
+  ${presentations_EN}
+  ${presentations_EN_IMAGES}
+  )
 
 # Local Variables:
 # tab-width: 8

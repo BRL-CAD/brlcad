@@ -28,7 +28,12 @@ set(GIST_SRCS
 
 CMAKEFILES(${gist_ignore_files} ${GIST_SRCS})
 
-find_package(OpenCV COMPONENTS core features2d imgproc highgui)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_opencv()
+else (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package(OpenCV COMPONENTS core features2d imgproc highgui)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 # FIND_PACKAGE(OpenCV)
 if(NOT OpenCV_FOUND)
   message("OpenCV is DISABLED")
@@ -36,17 +41,9 @@ if(NOT OpenCV_FOUND)
 endif(NOT OpenCV_FOUND)
 message("Found OpenCV: ${OpenCV_LIBRARIES}")
 
-set(GIST_INCLUDE_DIRS
-  ${BU_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
-list(REMOVE_DUPLICATES GIST_INCLUDE_DIRS)
-include_directories(${GIST_INCLUDE_DIRS})
-
 BRLCAD_ADDEXEC(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBRARIES};")
+target_include_directories(gist BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(gist SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 # FIXME: should be cxx_std_14, but uses std::filesystem.  should use libbu.
 target_compile_features(gist PRIVATE cxx_std_17)

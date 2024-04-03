@@ -44,7 +44,6 @@ region_flag_set(struct ged *gedp, struct directory *dp) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	return BRLCAD_ERROR;
     }
-    db5_standardize_avs(&avs);
     dp->d_flags |= RT_DIR_REGION;
     (void)bu_avs_add(&avs, "region", "R");
     if (db5_update_attributes(dp, &avs, gedp->dbip)) {
@@ -64,7 +63,6 @@ region_flag_clear(struct ged *gedp, struct directory *dp) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	return BRLCAD_ERROR;
     }
-    db5_standardize_avs(&avs);
     dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
     (void)bu_avs_remove(&avs, "region");
     if (db5_replace_attributes(dp, &avs, gedp->dbip)) {
@@ -84,7 +82,6 @@ color_shader_clear(struct ged *gedp, struct directory *dp) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	return BRLCAD_ERROR;
     }
-    db5_standardize_avs(&avs);
     (void)bu_avs_remove(&avs, "rgb");
     (void)bu_avs_remove(&avs, "color");
     (void)bu_avs_remove(&avs, "shader");
@@ -111,7 +108,6 @@ comb_tree_clear(struct ged *gedp, struct directory *dp)
     db_free_tree(comb->tree, &rt_uniresource);
     comb->tree = TREE_NULL;
     db5_sync_comb_to_attr(&((&intern)->idb_avs), comb);
-    db5_standardize_avs(&((&intern)->idb_avs));
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_put_internal(wdbp, dp->d_namep, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", dp->d_namep);

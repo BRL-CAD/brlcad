@@ -48,7 +48,7 @@ struct ged_concat_data {
     std::string affix;
     int prefix = 0;
     int suffix = 0;
-    int affix_all = 0;
+    int lazy_affix = 0;
     int overwrite = 0;
     long int overwritten = 0;
     int use_ctbl = 0;
@@ -107,7 +107,7 @@ uniq_name(const char *name, struct ged_concat_data *cc_data)
     // If we have a non-empty affix and auto_prefix is set, every name gets
     // the same prefix applied.  Same for suffix
     bool affix_applied = false;
-    if (cc_data->affix_all && cc_data->affix.length()) {
+    if (!cc_data->lazy_affix && cc_data->affix.length()) {
 	if (cc_data->suffix) {
 	    bu_vls_printf(&iname, "%s", cc_data->affix.c_str());
 	} else {
@@ -341,21 +341,21 @@ copy_object(struct ged *gedp,
 extern "C" int
 ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help;
+    int print_help = 0;
     struct directory *dp;
     struct ged_concat_data cc_data;
     const char *commandName = argv[0];
 
     static const char *usage = "[options] file.g [affix]";
     struct bu_opt_desc d[9];
-    BU_OPT(d[0], "h",      "help", "", NULL,          &print_help, "Print help and exit");
-    BU_OPT(d[1], "O", "overwrite", "", NULL, &(cc_data.overwrite), "Overwrite existing objects if names conflict.");
-    BU_OPT(d[2], "c",          "", "", NULL,  &(cc_data.use_ctbl), "Use incoming region colortable");
-    BU_OPT(d[3], "p",    "prefix", "", NULL,    &(cc_data.prefix), "Apply naming adjustments to the beginning of the object name");
-    BU_OPT(d[4], "s",    "suffix", "", NULL,    &(cc_data.suffix), "Apply naming adjustments to the end of the object name");
-    BU_OPT(d[5], "A", "affix_all", "", NULL, &(cc_data.affix_all), "Apply any supplied affix to all objects, not just to avoid name conflicts.");
-    BU_OPT(d[6], "t",          "", "", NULL, &(cc_data.use_title), "Use incoming database title");
-    BU_OPT(d[7], "u",          "", "", NULL, &(cc_data.use_units), "Use incoming units");
+    BU_OPT(d[0], "h",       "help", "", NULL,           &print_help, "Print help and exit");
+    BU_OPT(d[1], "O",  "overwrite", "", NULL,  &(cc_data.overwrite), "Overwrite existing objects if names conflict.");
+    BU_OPT(d[2], "c",           "", "", NULL,   &(cc_data.use_ctbl), "Use incoming region colortable");
+    BU_OPT(d[3], "p",     "prefix", "", NULL,     &(cc_data.prefix), "Apply naming adjustments to the beginning of the object name");
+    BU_OPT(d[4], "s",     "suffix", "", NULL,     &(cc_data.suffix), "Apply naming adjustments to the end of the object name");
+    BU_OPT(d[5], "L", "lazy-affix", "", NULL, &(cc_data.lazy_affix), "Lazily affix to objects - only use when needed to avoid name conflicts.");
+    BU_OPT(d[6], "t",           "", "", NULL,  &(cc_data.use_title), "Use incoming database title");
+    BU_OPT(d[7], "u",           "", "", NULL,  &(cc_data.use_units), "Use incoming units");
     BU_OPT_NULL(d[8]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);

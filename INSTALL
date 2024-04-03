@@ -41,12 +41,12 @@ walk-through including instructions for building on Windows.
 
 Required tools:
   - Git must be 2.17 or later
-  - CMake must be 3.12 or later
-  - Compiler must be C++11-compliant
-    - If using Visual Studio, version 2015 (14.0+) or later
-    - If using GCC/G++, version 4.8.1 or later
-    - If using LLVM/Clang 3.3 or later
-    - If using Intel, version 2015 (15.0+) or later
+  - CMake must be 3.18 or later
+  - Compiler must be C++17-compliant
+    - If using Visual Studio, version 2019 (16.8+) or later
+    - If using GCC/G++, version 7 or later
+    - If using LLVM/Clang 5 or later
+    - If using Intel, version 19.0.1 or later
 
 Steps to compile, test, and install an optimized BRL-CAD on
 non-Windows platforms:

@@ -1,14 +1,3 @@
-set(FBBIN_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${PKG_INCLUDE_DIRS}
-  ${DM_INCLUDE_DIRS}
-  ${PNG_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
-  )
-BRLCAD_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
-
 if(MSVC)
   add_definitions(-DIF_WGL)
 endif(MSVC)
@@ -29,6 +18,7 @@ ADD_TARGET_DEPS(fbclear dm_plugins)
 BRLCAD_ADDEXEC(fbcmap fbcmap.c libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbcmap dm_plugins)
 BRLCAD_ADDEXEC(fbcolor fbcolor.c "libdm" FOLDER Fb)
+target_include_directories(fbcolor BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 ADD_TARGET_DEPS(fbcolor dm_plugins)
 BRLCAD_ADDEXEC(fbfade "fbfade.c;ioutil.c" libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbfade dm_plugins)
@@ -47,10 +37,12 @@ ADD_TARGET_DEPS(fblabel dm_plugins)
 BRLCAD_ADDEXEC(fbline fbline.c libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbline dm_plugins)
 BRLCAD_ADDEXEC(fbpoint fbpoint.c "libdm;libbu;libpkg" FOLDER Fb)
+target_include_directories(fbpoint BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 ADD_TARGET_DEPS(fbpoint dm_plugins)
 BRLCAD_ADDEXEC(fbstretch "fbstretch.c;ioutil.c" libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbstretch dm_plugins)
 BRLCAD_ADDEXEC(fbzoom fbzoom.c "libdm" FOLDER Fb)
+target_include_directories(fbzoom BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 ADD_TARGET_DEPS(fbzoom dm_plugins)
 BRLCAD_ADDEXEC(gif-fb "gif-fb.c;ioutil.c" libdm FOLDER Fb)
 ADD_TARGET_DEPS(gif-fb dm_plugins)

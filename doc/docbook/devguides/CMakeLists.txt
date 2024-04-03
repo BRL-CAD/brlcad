@@ -54,12 +54,17 @@ set(devguides_EN_IMAGES
   images/evaluation_overview.png
   )
 
-ADD_DOC(devguides_EN html/devguides)
-ADD_DOC(devguides_EN_IMAGES html/devguides/images)
-ADD_DOCBOOK("HTML;PHP;PDF" devguides_EN devguides/en devguides_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if (BRLCAD_EXTRADOCS)
+    ADD_DOC(devguides_EN_IMAGES html/devguides/images)
+    ADD_DOCBOOK("HTML;PHP;PDF" devguides_EN devguides/en devguides_EN_IMAGES_cp)
+  endif (BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 CMAKEFILES(
   CMakeLists.txt
+  ${devguides_EN}
+  ${devguides_EN_IMAGES}
   )
 
 # Local Variables:

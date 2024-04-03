@@ -1,20 +1,6 @@
-# Include directories needed by libbrep users
-set(BREP_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${POLY2TRI_INCLUDE_DIRS}
-  ${OPENNURBS_INCLUDE_DIRS}
-  )
-
-# locally used but not needed by users of the library
-set(BREP_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${REGEX_INCLUDE_DIRS}
-  )
-
-BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 set(LIBBREP_SOURCES
   BBNode.cpp
@@ -49,7 +35,29 @@ set(LIBBREP_SOURCES
   tools/util.cpp
   )
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "${libbrep_deps};${OPENNURBS_LIBRARIES};${POLY2TRI_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+# Include directories needed by libbrep users
+set(BREP_INCLUDE_DIRS
+  ${POLY2TRI_INCLUDE_DIRS}
+  ${OPENNURBS_INCLUDE_DIRS}
+  )
+
+# locally used but not needed by users of the library
+set(BREP_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${REGEX_INCLUDE_DIRS}
+  )
+
+# Note - libbrep_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+set(BREP_LIBS
+  ${libbrep_deps}
+  ${OPENNURBS_LIBRARIES}
+  ${POLY2TRI_LIBRARIES}
+  ${WINSOCK_LIB}
+  ${RPCRT_LIB}
+  ${STDCXX_LIBRARIES}
+  )
+
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "${BREP_LIBS}" "${BREP_INCLUDE_DIRS}" "${BREP_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(HIDE_INTERNAL_SYMBOLS)

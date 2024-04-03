@@ -1,43 +1,32 @@
-set(BOT_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  )
-
-set(BOT_LOCAL_INCLUDE_DIRS
-  ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
-  ${GEOGRAM_INCLUDE_DIR}
-  ${MANIFOLD_INCLUDE_DIRS}
-  ${ASSETIMPORT_INCLUDE_DIR}
-  )
-
-if(ASSETIMPORT_LIBRARIES)
-  add_definitions(-DUSE_ASSETIMPORT)
-endif(ASSETIMPORT_LIBRARIES)
-
-if(GEOGRAM_LIBRARY)
-  add_definitions(-DUSE_GEOGRAM)
-endif(GEOGRAM_LIBRARY)
-
-set(BOT_LIBS libged libbg libbu ${MANIFOLD_LIBRARIES} ${ASSETIMPORT_LIBRARIES} ${GEOGRAM_LIBRARY})
-
+set(BOT_LIBS libged libbg libbu)
 
 if (BRLCAD_ENABLE_OPENMESH)
-  set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${OPENMESH_INCLUDE_DIRS})
-  set(BOT_LIBS ${BOT_LIBS} ${OPENMESH_LIBRARIES})
-  add_compile_definitions(BUILD_OPENMESH_TOOLS)
-  add_compile_definitions(_USE_MATH_DEFINES)
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    BRLCAD_Find_Package(OpenMesh)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  if (OPENMESH_INCLUDE_DIRS)
+    set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${OPENMESH_INCLUDE_DIRS})
+    set(BOT_LIBS ${BOT_LIBS} ${OPENMESH_LIBRARIES})
+    add_compile_definitions(BUILD_OPENMESH_TOOLS)
+    add_compile_definitions(_USE_MATH_DEFINES)
+  else (OPENMESH_INCLUDE_DIRS)
+    message("BRLCAD_ENABLE_OPENMESH enabled, but OpenMesh not found - skipping")
+  endif (OPENMESH_INCLUDE_DIRS)
 endif (BRLCAD_ENABLE_OPENMESH)
 
+BRLCAD_Find_Package(ASSETIMPORT)
+if(ASSETIMPORT_LIBRARIES)
+  add_definitions(-DUSE_ASSETIMPORT)
+  set(BOT_LIBS ${BOT_LIBS} ${ASSETIMPORT_LIBRARIES})
+endif(ASSETIMPORT_LIBRARIES)
+
+BRLCAD_Find_Package(Geogram SYSPATTERN geogram)
+if(GEOGRAM_LIBRARY)
+  add_definitions(-DUSE_GEOGRAM)
+  set(BOT_LIBS ${BOT_LIBS} ${GEOGRAM_LIBRARY})
+endif(GEOGRAM_LIBRARY)
+
 if (BRLCAD_ENABLE_OPENVDB)
-  set(BOT_LOCAL_INCLUDE_DIRS
-    ${BOT_LOCAL_INCLUDE_DIRS}
-    ${OpenVDB_INCLUDE_DIRS}
-    ${Tbb_INCLUDE_DIRS}
-    ${IlmBase_INCLUDE_DIRS}
-    )
   set(BOT_LIBS
     ${BOT_LIBS}
     ${OpenVDB_LIBRARIES}
@@ -48,17 +37,8 @@ if (BRLCAD_ENABLE_OPENVDB)
   set_property(SOURCE remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
 
-# We want to include 3rd party libraries with -isystem - use
-# BRLCAD_LIB_INCLUDE_DIRS for that purpose
-BRLCAD_LIB_INCLUDE_DIRS(bot BOT_INCLUDE_DIRS BOT_LOCAL_INCLUDE_DIRS)
-
-
 # TODO - investigate https://github.com/nissmar/VSA to see if it could be
 # a viable way to simplify large, complex BoT primitives...
-
-# TODO - investigate https://github.com/BrunoLevy/geogram for Co3Ne surface
-# reconstruction (possible way to rebuild bad bots?), UV parameterization, hole
-# filling (and possibly another boolean eval option)
 
 set(BOT_SRCS
   bot_condense.c
@@ -88,8 +68,12 @@ set(BOT_SRCS
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-bot SHARED ${BOT_SRCS})
+target_include_directories(ged-bot BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${GEOGRAM_INCLUDE_DIR} ${ASSETIMPORT_INCLUDE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu) # for fort.h
+if (BRLCAD_ENABLE_OPENVDB)
+  target_include_directories(ged-bot SYSTEM PRIVATE ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
+endif (BRLCAD_ENABLE_OPENVDB)
 target_link_libraries(ged-bot ${BOT_LIBS})
-set_property(TARGET ged-bot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
+set_property(TARGET ged-bot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-bot ${BOT_SRCS})
 PLUGIN_SETUP(ged-bot ged)
 

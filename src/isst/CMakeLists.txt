@@ -1,20 +1,15 @@
+set(QISST_DIRS)
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
   find_package(OpenGL)
 
-  set(QG_DIRS
+  set(QISST_DIRS ${QISST_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../adrt
     ${CMAKE_CURRENT_SOURCE_DIR}/../adrt/librender
-    ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
-    ${BRLCAD_SOURCE_DIR}/include
-    ${GED_INCLUDE_DIRS}
-    ${RT_INCLUDE_DIRS}
-    ${BU_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR}
     )
-  BRLCAD_INCLUDE_DIRS(QG_DIRS)
 endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
 # NOTE: We can't use the CMake global values for automoc et. al.
@@ -38,20 +33,30 @@ set(moc_headers
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
-  if (OPENGL_opengl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-  endif (OPENGL_opengl_LIBRARY)
-  if (OPENGL_gl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-  endif (OPENGL_gl_LIBRARY)
+  set(QISST_LIBS
+    librender
+    libgcv
+    librt
+    libbu
+    )
 
   if (Qt6Widgets_FOUND)
     QT6_WRAP_CPP(moc_srcs ${moc_headers})
-    BRLCAD_ADDEXEC(qisst "${isst_srcs};${moc_srcs}" "libbu;librt;libgcv;librender;Qt6::Core;Qt6::Widgets;Qt6::OpenGL;Qt6::OpenGLWidgets;${OPENGL_LIBS}")
+    set(QISST_LIBS ${QISST_LIBS} Qt6::Core Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets)
   else (Qt6Widgets_FOUND)
     QT5_WRAP_CPP(moc_srcs ${moc_headers})
-    BRLCAD_ADDEXEC(qisst "${isst_srcs};${moc_srcs}" "libbu;librt;libgcv;librender;Qt5::Core;Qt5::Widgets;Qt5::OpenGL;${OPENGL_LIBS}")
+    set(QISST_LIBS ${QISST_LIBS} Qt5::Core Qt5::Widgets Qt5::OpenGL)
   endif (Qt6Widgets_FOUND)
+
+  if (OPENGL_opengl_LIBRARY)
+    set(QISST_LIBS ${QISST_LIBS} ${OPENGL_opengl_LIBRARY})
+  endif (OPENGL_opengl_LIBRARY)
+  if (OPENGL_gl_LIBRARY)
+    set(QISST_LIBS ${QISST_LIBS} ${OPENGL_gl_LIBRARY})
+  endif (OPENGL_gl_LIBRARY)
+
+  BRLCAD_ADDEXEC(qisst "${isst_srcs};${moc_srcs}" "${QISST_LIBS}")
+  target_include_directories(qisst BEFORE PRIVATE ${QISST_DIRS})
 
   DISTCLEAN(
     moc_gfile.cpp_parameters

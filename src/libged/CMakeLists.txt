@@ -1,6 +1,12 @@
 # LIBGED is set up based on a plugin architecture, with common functionality
 # defined in a core library.
 
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  BRLCAD_Find_Package(LMDB REQUIRED)
+  BRLCAD_Find_Package(PNG REQUIRED)
+  BRLCAD_Find_Package(REGEX REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 add_custom_command(
   OUTPUT "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
   COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
@@ -12,6 +18,16 @@ set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ge
 
 function(ged_plugin_library name)
   add_library(${name} ${ARGN})
+  set(dep_includes)
+  foreach(ll ${libslist})
+    if (TARGET ${ll})
+      get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
+      if (IDIRS)
+	list(APPEND dep_includes ${IDIRS})
+      endif (IDIRS)
+    endif (TARGET ${ll})
+  endforeach(ll ${libslist})
+  BRLCAD_INCLUDE_DIRS(${name} dep_includes PRIVATE)
   add_dependencies(ged_plugins_sentinel ${name})
 endfunction(ged_plugin_library name)
 
@@ -60,18 +76,14 @@ set(LIBGED_SOURCES
 
 set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
-# Include directories needed by libged users
-set(GED_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${ANALYZE_INCLUDE_DIRS}
-  ${BG_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
-  ${FB_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  ${BREP_INCLUDE_DIRS}
+# Note - libged_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+set(GED_LIBS
+  ${libged_deps}
+  ${PNG_LIBRARIES}
+  ${LMDB_LIBRARIES}
+  ${REGEX_LIBRARIES}
+  ${WINSOCK_LIB}
+  ${M_LIBRARY}
   )
 
 # Local include directories
@@ -79,14 +91,13 @@ set(GED_INCLUDE_DIRS
 set(GED_LOCAL_INCLUDE_DIRS
   ${PNG_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIRS}
+  ${LMDB_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbg
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
-BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
-
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "${libged_deps};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
-SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}")
+set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 add_subdirectory(simulate/tests)

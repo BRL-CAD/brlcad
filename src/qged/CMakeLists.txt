@@ -1,23 +1,15 @@
-set(QG_DIRS
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  if (BRLCAD_ENABLE_QT)
+    find_package_qt(REQUIRED)
+  endif (BRLCAD_ENABLE_QT)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
+# TODO - need this now for code in lower level directories,
+# need to do some cleanup.
+include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
-  ${BRLCAD_SOURCE_DIR}/include
-  ${QTCAD_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
   )
-BRLCAD_INCLUDE_DIRS(QG_DIRS)
-
-# TODO - we need to figure out how to use windeployqt and macdeployqt (and
-# maybe something similar for Linux?) to make self-contained packages using Qt.
-# Right now, qged won't work from the build dir on Windows because it can't
-# find the Qt libraries, and it will have the same problem when bundled into
-# the .exe and .msi installers.  Potentially helpful:
-#
-# https://stackoverflow.com/a/41199492/2037687
-# https://github.com/probonopd/linuxdeployqt
 
 # NOTE: We can't use the CMake global values for automoc et. al.
 # because most of BRL-CAD's targets are not Qt targets.  We don't

@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/hash.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/time.h"

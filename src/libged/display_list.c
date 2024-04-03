@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/color.h"

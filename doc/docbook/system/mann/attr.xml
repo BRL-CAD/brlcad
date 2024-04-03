@@ -24,6 +24,7 @@ objects.
     <arg choice="opt" rep="norepeat">list</arg>
     <arg choice="opt" rep="norepeat">show</arg>
     <arg choice="opt" rep="norepeat">sort</arg>
+    <arg choice="opt" rep="norepeat">standardize</arg>
     <arg choice="opt" rep="norepeat">copy</arg>
     <arg choice="req" rep="norepeat"><replaceable>object_name_pattern</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>arguments</replaceable></arg>
@@ -111,6 +112,14 @@ objects.
           <listitem>
                 <para>
                   Pretty prints all attributes on each object matched by the pattern.  Attributes are sorted into alphabetical order before printing.  The arguments for the "sort" sub-command set the sort type for the attributes: 'case' (default), 'nocase', 'value', and 'value-nocase'.
+                </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">standardize</emphasis></term>
+          <listitem>
+                <para>
+		  Updates attributes defined on the object using older conventions to current "standard" attribute key strings (for example, giftmater -> material_id).
                 </para>
           </listitem>
         </varlistentry>

@@ -1,16 +1,15 @@
-# Include directories needed by libpc users
-set(PC_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  )
-
 if(BRLCAD_ENABLE_GECODE)
-  set(PC_INCLUDE_DIRS ${PC_INCLUDE_DIRS} ${GECODE_INCLUDE_DIR})
-  set(PC_LOCAL_INCLUDE_DIRS)
-  BRLCAD_LIB_INCLUDE_DIRS(pc PC_INCLUDE_DIRS PC_LOCAL_INCLUDE_DIRS)
+  set(PC_INCLUDE_DIRS
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${GECODE_INCLUDE_DIR}
+    )
   BRLCAD_ADDEXEC(cartesian-heart cartesian-heart.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
+  target_include_directories(cartesian-heart BEFORE PRIVATE ${PC_INCLUDE_DIRS})
   BRLCAD_ADDEXEC(gecode_solver_test gecode_solver_test.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
+  target_include_directories(gecode_solver_test BEFORE PRIVATE ${PC_INCLUDE_DIRS})
   BRLCAD_ADDEXEC(gecode_librt_test gecode_librt_test.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
+  target_include_directories(gecode_librt_test BEFORE PRIVATE ${PC_INCLUDE_DIRS})
 endif(BRLCAD_ENABLE_GECODE)
 
 set(pc_ignore_files

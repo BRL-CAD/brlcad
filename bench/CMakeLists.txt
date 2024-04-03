@@ -1,7 +1,5 @@
 add_subdirectory(ref)
 
-include_directories(${BU_INCLUDE_DIRS})
-
 add_definitions(-DCONSOLE)
 
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)

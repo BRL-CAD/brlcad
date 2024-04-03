@@ -1,11 +1,3 @@
-# local includes
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
-
-BRLCAD_INCLUDE_DIRS(STEPCODE_INCLUDE_DIRS)
-
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../step-g/ap203.exp)
@@ -46,7 +38,16 @@ if (BRLCAD_ENABLE_STEP)
     ${OPENNURBS_LIBRARIES}
     )
 
+  set(gstep_INCLUDE_DIRS
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${STEPCODE_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
+    )
+
   BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT FOLDER Conv)
+  target_include_directories(g-step BEFORE PRIVATE ${gstep_INCLUDE_DIRS})
   add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
   set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
   target_compile_definitions(g-step PRIVATE SC_SCHEMA_DLL_EXPORTS)
@@ -62,7 +63,6 @@ if (BRLCAD_ENABLE_STEP)
       SC_EDITOR_DLL_IMPORTS
       SC_UTILS_DLL_IMPORTS
       )
-    list(APPEND gstep_IMPORTS ${gstep_IMPORTS})
     set_property(TARGET g-step APPEND PROPERTY COMPILE_DEFINITIONS "${gstep_IMPORTS}")
   endif (HIDE_INTERNAL_SYMBOLS)
 endif (BRLCAD_ENABLE_STEP)

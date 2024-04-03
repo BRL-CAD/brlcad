@@ -1,3 +1,7 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_tcl()
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 set(MGED_SOURCES
   adc.c
   arbs.c
@@ -63,33 +67,17 @@ set(mged_libs libtclcad libged libwdb libdm libnmg ${WS2_32_LIBRARY} ${OPENGL32_
 if (BRLCAD_ENABLE_TCL)
 
   set(MGED_INCLUDE_DIRS
-    ${BRLCAD_BINARY_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/include
-    ${TCLCAD_INCLUDE_DIRS}
-    ${GED_INCLUDE_DIRS}
-    ${WDB_INCLUDE_DIRS}
-    ${DM_INCLUDE_DIRS}
-    ${BU_INCLUDE_DIRS}
-    ${NMG_INCLUDE_DIRS}
-    ${TCL_INCLUDE_PATH}
-    ${TERMIO_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
     )
-  if (TK_INCLUDE_PATH)
-    set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
-  endif (TK_INCLUDE_PATH)
-
-  BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
-
   BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
-  ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm_plugins)
-
-  # mged depends on the creation/installation of all the
-  # tclscripts.
-  foreach(item ${tclindex_target_list})
-    add_dependencies(mged ${item})
-  endforeach(item ${tclindex_target_list})
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    if (TK_LIBRARY)
+      target_compile_definitions(mged PRIVATE HAVE_TK=1)
+    endif (TK_LIBRARY)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS})
+  ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex TclIndexBld dm_plugins)
 
   # stage targets
   set(stgts tcl tk itcl itk iwidgets)
@@ -112,13 +100,6 @@ else (BRLCAD_ENABLE_TCL)
   CMAKEFILES(${MGED_SOURCES})
 
 endif (BRLCAD_ENABLE_TCL)
-
-if (NOT BRLCAD_ENABLE_TCL)
-  set(MGED_INCLUDE_DIRS
-    ${BU_INCLUDE_DIRS}
-    )
-  BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
-endif (NOT BRLCAD_ENABLE_TCL)
 
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 

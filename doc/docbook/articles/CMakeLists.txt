@@ -167,16 +167,17 @@ set(articles_EN_IMAGES
   images/rim.gif
   images/rim.jpg
   )
-if(BRLCAD_EXTRADOCS)
-  ADD_DOC(articles_EN_IMAGES html/articles/images)
-else(BRLCAD_EXTRADOCS)
-  CMAKEFILES(${articles_EN_IMAGES})
-endif(BRLCAD_EXTRADOCS)
-
-ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles articles_EN_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOC(articles_EN_IMAGES html/articles/images)
+    ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles articles_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
 CMAKEFILES(
   CMakeLists.txt
+  ${articles_EN}
+  ${articles_EN_IMAGES}
   images/tire_fig12.svg
   images/tire_fig13.svg
   )
@@ -184,8 +185,6 @@ CMAKEFILES(
 add_subdirectory(hy)
 add_subdirectory(it)
 add_subdirectory(ru)
-
-CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

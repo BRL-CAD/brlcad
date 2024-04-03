@@ -1,14 +1,3 @@
-# Include directories needed by libgcv users
-set(GCV_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  )
-BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
-
 set(LIBGCV_PLUGINS_DIRECTORY "gcv")
 add_subdirectory(plugins)
 
@@ -22,7 +11,8 @@ set(LIBGCV_SOURCES
   )
 
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "${libgcv_deps}" SHARED_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
+# Note - libgcv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "${libgcv_deps}" "" "" SHARED_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_DIRECTORY=\"${LIBGCV_PLUGINS_DIRECTORY}\"")
 set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")

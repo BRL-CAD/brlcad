@@ -1,9 +1,15 @@
 
 set(DPLOT_READER dplot)
 
-find_package(PERPLEX)
-find_package(LEMON)
-find_package(RE2C)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  BRLCAD_Find_Package(PERPLEX REQUIRED NOINSTALL)
+  BRLCAD_Find_Package(LEMON REQUIRED NOINSTALL)
+  BRLCAD_Find_Package(RE2C REQUIRED NOINSTALL)
+else()
+  find_package(PERPLEX)
+  find_package(LEMON)
+  find_package(RE2C)
+endif()
 
 PERPLEX_TARGET(
   ${DPLOT_READER}_scanner
@@ -20,6 +26,7 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${DPLOT_READER}_parser_${DPLOT_READER}_par
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}

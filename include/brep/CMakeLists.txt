@@ -13,7 +13,7 @@ set(brep_headers
   surfacetree.h
   util.h
   )
-BRLCAD_MANAGE_FILES(brep_headers ${INCLUDE_DIR}/brlcad/brep)
+BRLCAD_MANAGE_FILES(brep_headers ${INCLUDE_DIR}/brlcad/brep REQUIRED libbrep)
 
 CMAKEFILES(CMakeLists.txt)
 

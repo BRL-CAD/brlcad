@@ -1,16 +1,3 @@
-# Include directories needed by libbn users
-set(BN_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  )
-
-set(BN_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
-
-BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS BN_LOCAL_INCLUDE_DIRS)
-
 set(LIBBN_SOURCES
   anim.c
   complex.c
@@ -33,8 +20,12 @@ set(LIBBN_SOURCES
   wavelet.c
   )
 
+set(BN_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 
-BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "${libbn_deps}")
+# Note - libbn_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "${libbn_deps}" "" "${BN_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)

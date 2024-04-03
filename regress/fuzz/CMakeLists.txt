@@ -1,10 +1,3 @@
-set(FUZZ_INCLUDE_DIRS
-  ${BU_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  )
-BRLCAD_INCLUDE_DIRS(FUZZ_INCLUDE_DIRS)
-
 include(CheckCXXCompilerFlag)
 
 # We're fuzzing, so let the compiler know it doesn't matter if we're doing
@@ -47,32 +40,34 @@ extern \\\"C\\\" int LLVMFuzzerTestOneInput(const uint8_t *, size_t) {
   endif (HAVE_LLVMFUZZER)
 endif (NOT HAVE_FSANITIZE_FUZZER)
 
-set(FUZZ_GED_SRCS fuzz_ged.cpp)
-set(FUZZ_SHOOTRAY_SRCS fuzz_shootray.cpp)
+if (TARGET libged)
+  set(FUZZ_GED_SRCS fuzz_ged.cpp)
+  set(FUZZ_SHOOTRAY_SRCS fuzz_shootray.cpp)
 
-if (NOT HAVE_FSANITIZE_FUZZER AND NOT HAVE_LLVMFUZZER)
-  # provide simple main() so they at least compile and run
-  set(FUZZ_GED_SRCS ${FUZZ_GED_SRCS} fuzz_stub.cpp)
-  set(FUZZ_SHOOTRAY_SRCS ${FUZZ_SHOOTRAY_SRCS} fuzz_stub.cpp)
-endif (NOT HAVE_FSANITIZE_FUZZER AND NOT HAVE_LLVMFUZZER)
+  if (NOT HAVE_FSANITIZE_FUZZER AND NOT HAVE_LLVMFUZZER)
+    # provide simple main() so they at least compile and run
+    set(FUZZ_GED_SRCS ${FUZZ_GED_SRCS} fuzz_stub.cpp)
+    set(FUZZ_SHOOTRAY_SRCS ${FUZZ_SHOOTRAY_SRCS} fuzz_stub.cpp)
+  endif (NOT HAVE_FSANITIZE_FUZZER AND NOT HAVE_LLVMFUZZER)
 
-BRLCAD_ADDEXEC(fuzz_ged_test "${FUZZ_GED_SRCS}" "libbu;librt;libged;${FUZZER_LIBRARY}" TEST)
-BRLCAD_ADDEXEC(fuzz_shootray_test "${FUZZ_SHOOTRAY_SRCS}" "libbu;librt;libged;${FUZZER_LIBRARY}" TEST)
+  BRLCAD_ADDEXEC(fuzz_ged_test "${FUZZ_GED_SRCS}" "libbu;librt;libged;${FUZZER_LIBRARY}" TEST)
+  BRLCAD_ADDEXEC(fuzz_shootray_test "${FUZZ_SHOOTRAY_SRCS}" "libbu;librt;libged;${FUZZER_LIBRARY}" TEST)
 
-# 20220909CY If I'm not mistaken, these don't really make sense as CTest
-# entries - usually fuzz testing is intended to run for a long time...
-#BRLCAD_ADD_TEST(NAME fuzz_ged COMMAND fuzz_ged_test)
-#BRLCAD_ADD_TEST(NAME fuzz_shootray COMMAND fuzz_shootray_test)
+  # 20220909CY If I'm not mistaken, these don't really make sense as CTest
+  # entries - usually fuzz testing is intended to run for a long time...
+  #BRLCAD_ADD_TEST(NAME fuzz_ged COMMAND fuzz_ged_test)
+  #BRLCAD_ADD_TEST(NAME fuzz_shootray COMMAND fuzz_shootray_test)
 
-if (HAVE_FSANITIZE_FUZZER OR HAVE_LLVMFUZZER)
-  target_compile_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
-  target_compile_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
-endif (HAVE_FSANITIZE_FUZZER OR HAVE_LLVMFUZZER)
+  if (HAVE_FSANITIZE_FUZZER OR HAVE_LLVMFUZZER)
+    target_compile_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
+    target_compile_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
+  endif (HAVE_FSANITIZE_FUZZER OR HAVE_LLVMFUZZER)
 
-if (HAVE_FSANITIZE_FUZZER)
-  target_link_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
-  target_link_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
-endif (HAVE_FSANITIZE_FUZZER)
+  if (HAVE_FSANITIZE_FUZZER)
+    target_link_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
+    target_link_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
+  endif (HAVE_FSANITIZE_FUZZER)
+endif (TARGET libged)
 
 CMAKEFILES(
   CMakeLists.txt

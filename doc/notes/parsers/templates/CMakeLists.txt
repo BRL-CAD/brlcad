@@ -18,8 +18,7 @@ set (LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-BRLCAD_LIB_INCLUDE_DIRS(lib${READER} LOCAL_INCLUDE_DIRS)
-BRLCAD_ADDLIB(lib${READER} "${SOURCES}" "librt;libbn;libbu")
+BRLCAD_ADDLIB(lib${READER} "${SOURCES}" "librt;libbn;libbu" "" "${LOCAL_INCLUDE_DIRS}")
 
 # Local Variables:
 # tab-width: 8

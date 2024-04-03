@@ -36,7 +36,7 @@
 extern "C" int
 ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "{[-c sep_char] set|get|show|rm|append|sort|list|copy} object [key [value] ... ]";
+    static const char *usage = "{[-c sep_char] set|get|show|rm|append|sort|list|copy|standardize} object [key [value] ... ]";
     const char *cmd_name = argv[0];
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);

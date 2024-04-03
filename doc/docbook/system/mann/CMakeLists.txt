@@ -267,16 +267,24 @@ set(mann_EN
 # extra outputs without being told.
 set_source_files_properties(gr.xml PROPERTIES EXTRA_MANN_OUTPUTS "dg.nged")
 
-ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann "")
+if (BRLCAD_EXTRADOCS)
+  ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann "" REQUIRED "libged")
+endif (BRLCAD_EXTRADOCS)
 
 set(mann_INTRO
   Introduction.xml
   )
-ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
+if (TARGET libged AND BRLCAD_EXTRADOCS)
+  ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
+endif (TARGET libged AND BRLCAD_EXTRADOCS)
 
 
-CMAKEFILES(mged_cmd_template.xml)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${mann_EN}
+  ${mann_INTRO}
+  mged_cmd_template.xml
+  )
 
 # Local Variables:
 # tab-width: 8

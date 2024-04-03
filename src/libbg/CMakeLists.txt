@@ -1,18 +1,7 @@
-# Include directories needed by libbg users
-set(BG_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BN_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
-  ${POLY2TRI_INCLUDE_DIRS}
-  ${SPSR_INCLUDE_DIR}
-  ${LMDB_INCLUDE_DIR}
-  ${EIGEN3_INCLUDE_DIRS}
-  )
-if (EXISTS ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
-  set(BG_INCLUDE_DIRS ${BG_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
-endif (EXISTS ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
-BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_eigen(REQUIRED)
+  BRLCAD_Find_Package(POLY2TRI REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 set(SPSR_srcs
   spsr/Allocator.h
@@ -85,7 +74,24 @@ set(LIBBG_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${libbg_deps};${POLY2TRI_LIBRARIES};${LMDB_LIBRARIES}")
+# Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+set(BG_LIBS
+  ${libbg_deps}
+  ${POLY2TRI_LIBRARIES}
+  ${LMDB_LIBRARIES}
+  )
+
+set(BG_INCLUDE_DIRS
+  ${POLY2TRI_INCLUDE_DIRS}
+  ${SPSR_INCLUDE_DIR}
+  ${LMDB_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIR}
+  )
+if (EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
+  set(BG_INCLUDE_DIRS ${BG_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
+endif (EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
+
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)

@@ -1,13 +1,3 @@
-# Include directories needed by libanalyze users
-set(ANALYZE_INCLUDE_DIRS
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  )
-BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
-
 set(NIRT_DBG_HDRS
   ${BRLCAD_SOURCE_DIR}/include/bu/debug.h
   ${BRLCAD_SOURCE_DIR}/include/nmg/debug.h
@@ -71,7 +61,8 @@ set(libanalyze_ignored_files
 )
 CMAKEFILES(${libanalyze_ignored_files})
 
-BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${libanalyze_deps}")
+# Note - libanalyze_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${libanalyze_deps}" "" "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)

@@ -1,32 +1,28 @@
-set(other_licenses
-  Eigen.txt
-  assetimport.txt
-  openNURBS.txt
-  gdal.txt
-  itcl3.txt
-  itk3.txt
-  iwidgets.txt
-  libosmesa.txt
-  libutahrle.txt
-  linenoise.txt
-  lmdb.txt
-  manifold.txt
-  netpbm.txt
-  openmesh.txt
-  openNURBS.txt
-  png.txt
-  poly2tri.txt
-  proj.txt
-  regex.txt
-  sqlite3.txt
-  stepcode.txt
-  tcl.txt
-  tk.txt
-  tkhtml.txt
-  tktable.txt
-  zlib.txt
-  )
-BRLCAD_MANAGE_FILES(other_licenses ${DOC_DIR}/legal/other)
+BRLCAD_MANAGE_FILES(Eigen.txt       ${DOC_DIR}/legal/other REQUIRED libbn)
+BRLCAD_MANAGE_FILES(assetimport.txt ${DOC_DIR}/legal/other REQUIRED librt)
+BRLCAD_MANAGE_FILES(openNURBS.txt   ${DOC_DIR}/legal/other REQUIRED libbrep)
+BRLCAD_MANAGE_FILES(gdal.txt        ${DOC_DIR}/legal/other REQUIRED libgcv)
+BRLCAD_MANAGE_FILES(itcl3.txt       ${DOC_DIR}/legal/other REQUIRED libtclcad)
+BRLCAD_MANAGE_FILES(itk3.txt        ${DOC_DIR}/legal/other REQUIRED libtclcad)
+BRLCAD_MANAGE_FILES(iwidgets.txt    ${DOC_DIR}/legal/other REQUIRED libtclcad)
+BRLCAD_MANAGE_FILES(libosmesa.txt   ${DOC_DIR}/legal/other REQUIRED libdm)
+BRLCAD_MANAGE_FILES(libutahrle.txt  ${DOC_DIR}/legal/other REQUIRED libicv)
+BRLCAD_MANAGE_FILES(linenoise.txt   ${DOC_DIR}/legal/other REQUIRED nirt)
+BRLCAD_MANAGE_FILES(lmdb.txt        ${DOC_DIR}/legal/other REQUIRED libbu)
+BRLCAD_MANAGE_FILES(manifold.txt    ${DOC_DIR}/legal/other REQUIRED librt)
+BRLCAD_MANAGE_FILES(netpbm.txt      ${DOC_DIR}/legal/other REQUIRED libicv)
+BRLCAD_MANAGE_FILES(openmesh.txt    ${DOC_DIR}/legal/other REQUIRED libged)
+BRLCAD_MANAGE_FILES(png.txt         ${DOC_DIR}/legal/other REQUIRED libicv)
+BRLCAD_MANAGE_FILES(poly2tri.txt    ${DOC_DIR}/legal/other REQUIRED libbg)
+BRLCAD_MANAGE_FILES(proj.txt        ${DOC_DIR}/legal/other REQUIRED libgcv)
+BRLCAD_MANAGE_FILES(regex.txt       ${DOC_DIR}/legal/other REQUIRED librt)
+BRLCAD_MANAGE_FILES(sqlite3.txt     ${DOC_DIR}/legal/other REQUIRED libgcv)
+BRLCAD_MANAGE_FILES(stepcode.txt    ${DOC_DIR}/legal/other REQUIRED step-g)
+BRLCAD_MANAGE_FILES(tcl.txt         ${DOC_DIR}/legal/other REQUIRED libtclcad)
+BRLCAD_MANAGE_FILES(tk.txt          ${DOC_DIR}/legal/other REQUIRED libtclcad)
+BRLCAD_MANAGE_FILES(tkhtml.txt      ${DOC_DIR}/legal/other REQUIRED libtclcad)
+BRLCAD_MANAGE_FILES(tktable.txt     ${DOC_DIR}/legal/other REQUIRED libtclcad)
+BRLCAD_MANAGE_FILES(zlib.txt        ${DOC_DIR}/legal/other REQUIRED libicv)
 
 CMAKEFILES(CMakeLists.txt)
 
