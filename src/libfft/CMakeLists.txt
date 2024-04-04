@@ -44,6 +44,8 @@ set(LIBFFT_SRCS
   )
 fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/shared" FFT_GEN_SHARED_SRCS)
 fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/static" FFT_GEN_STATIC_SRCS)
+
+# Note - libfft_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${libfft_deps};${M_LIBRARY}"
   "" "${CMAKE_BINARY_DIR}/include;${CMAKE_SOURCE_DIR}/include"
   SHARED_SRCS "${FFT_GEN_SHARED_SRCS}" STATIC_SRCS "${FFT_GEN_STATIC_SRCS}")

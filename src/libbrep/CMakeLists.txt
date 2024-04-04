@@ -1,5 +1,5 @@
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_opennurbs(REQUIRED)
+  BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 set(LIBBREP_SOURCES
@@ -47,6 +47,7 @@ set(BREP_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIRS}
   )
 
+# Note - libbrep_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BREP_LIBS
   ${libbrep_deps}
   ${OPENNURBS_LIBRARIES}

@@ -55,6 +55,7 @@ CMAKEFILES(
   nmg_private.h
 )
 
+# Note - libnmg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "${libnmg_deps};${STDCXX_LIBRARIES}" "" "")
 
 add_subdirectory(tests)

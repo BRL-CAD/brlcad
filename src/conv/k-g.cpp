@@ -613,7 +613,7 @@ main(int argc, char **argv)
 	bu_exit(1, "Error: file %s already exists.\n", argv[1]);
     }
 
-    std::ifstream infile(argv[0]);
+    std::ifstream infile(argv[0], std::ios::binary);
     if (!infile.is_open()) {
 	bu_exit(1, "Error: unable to open %s for reading.\n", argv[0]);
     }

@@ -77,13 +77,7 @@ if (BRLCAD_ENABLE_TCL)
     endif (TK_LIBRARY)
   endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
   target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS})
-  ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm_plugins)
-
-  # mged depends on the creation/installation of all the
-  # tclscripts.
-  foreach(item ${tclindex_target_list})
-    add_dependencies(mged ${item})
-  endforeach(item ${tclindex_target_list})
+  ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex TclIndexBld dm_plugins)
 
   # stage targets
   set(stgts tcl tk itcl itk iwidgets)

@@ -1,5 +1,5 @@
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_lmdb(REQUIRED)
+  BRLCAD_Find_Package(LMDB REQUIRED)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 if (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
@@ -133,6 +133,7 @@ if(NOT CMAKE_CXX_STANDARD EQUAL 98)
 else(NOT CMAKE_CXX_STANDARD EQUAL 98)
 endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
+# Note - libbu_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BU_LIBS
   ${Foundation_LIBRARIES}
   Threads::Threads

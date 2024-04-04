@@ -241,10 +241,6 @@ if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
   set(OPENBSD ON)
 endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
 
-# TODO - need to set these based on the feature flags...
-set(BRLCAD_LEVEL2 ON)
-set(BRLCAD_LEVEL3 ON)
-
 # TODO - in stand-alone mode, these need to be set to enable the builds...
 #set(BRLCAD_ENABLE_STEP ON)
 #set(BRLCAD_ENABLE_GDAL ON)

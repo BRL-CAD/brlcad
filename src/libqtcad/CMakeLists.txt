@@ -103,6 +103,7 @@ foreach(qh ${qth_names})
   set(qtcad_moc_hdrs ${qtcad_moc_hdrs} ${QTCAD_HDR_DIR}/${qh}.h)
 endforeach(qh ${qth_names})
 
+# Note - libqtcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 if(BRLCAD_ENABLE_QT)
 
   set(USE_OBJECT_LIBS OFF)

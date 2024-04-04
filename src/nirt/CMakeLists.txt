@@ -1,5 +1,5 @@
 if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_linenoise(REQUIRED)
+  BRLCAD_Find_Package(LINENOISE REQUIRED)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 BRLCAD_ADDEXEC(nirt main.cpp "libanalyze;librt;libbu;${LINENOISE_LIBRARIES};${M_LIBRARY}")

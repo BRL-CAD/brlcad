@@ -44,11 +44,11 @@ if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
   find_package_eigen(REQUIRED)
 endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 BRLCAD_ADDEXEC(bn_eigen eigen.cpp "libbu;libbn" TEST)
-if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/Eigen")
-  target_include_directories(bn_eigen SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIRS}")
-else (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/Eigen")
+if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
+  target_include_directories(bn_eigen SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+else (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
   target_include_directories(bn_eigen SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/src/other/Eigen")
-endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/Eigen")
+endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
 #
 #  *********** poly.c tests *************

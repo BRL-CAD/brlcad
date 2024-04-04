@@ -27,6 +27,7 @@ set(LIBWDB_SOURCES
   wdb.c
   )
 
+# Note - libwdb_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "${libwdb_deps};${OPENNURBS_LIBRARIES}" "" "")
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
 

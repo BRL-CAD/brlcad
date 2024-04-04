@@ -12,10 +12,7 @@ if (TARGET libtclcad)
 
   BRLCAD_ADDEXEC(rtwizard "${RTWIZARD_SRCS}" "libtclcad;librt;libdm;liboptical;libicv;Threads::Threads;${M_LIBRARY}")
   target_include_directories(rtwizard BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-  ADD_TARGET_DEPS(rtwizard rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb tkpng dm_plugins)
-  foreach(item ${tclindex_target_list})
-    add_dependencies(rtwizard ${item})
-  endforeach(item ${tclindex_target_list})
+  ADD_TARGET_DEPS(rtwizard rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb tkpng TclIndexBld dm_plugins)
 
   # stage targets
   set(stgts tcl tk itcl itk iwidgets)

@@ -7,6 +7,7 @@ set(cmake_ignore_files
   BRLCAD_Environment_Setup.cmake
   BRLCAD_EXT_Setup.cmake
   BRLCAD_ExternalDeps.cmake
+  BRLCAD_Find_Package.cmake
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake
   BRLCAD_Regress_Util.cmake

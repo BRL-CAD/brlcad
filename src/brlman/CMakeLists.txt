@@ -35,9 +35,7 @@ endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 if (NOT BRLCAD_ENABLE_QT AND TARGET brlman_tcl_cp)
   add_dependencies(brlman brlman_tcl_cp)
-  foreach(item ${tclindex_target_list})
-    add_dependencies(brlman ${item})
-  endforeach(item ${tclindex_target_list})
+  add_dependencies(brlman TclIndexBld)
 endif (NOT BRLCAD_ENABLE_QT AND TARGET brlman_tcl_cp)
 
 CMAKEFILES(
