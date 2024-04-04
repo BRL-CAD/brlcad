@@ -855,11 +855,17 @@ rt_bot_free(struct soltab *stp)
     
     if (bot && bot->tie) {
 	struct _tie_s *tie = (struct _tie_s*)bot->tie;
+	bu_pool_delete(tie->pool); // this takes care of pool and root
+	bu_free(tie->tris, "bot triangles");
 	if (tie->vertex_normals) {
 	    bu_free(tie->vertex_normals, "bot normals");
 	}
-	bu_free(tie->tris, "bot triangles");
-	bu_pool_delete(tie->pool);
+	if (tie->hit_arrays_per_cpu) {
+	    for (size_t i = 0; i < tie->num_cpus; i++) {
+		if (tie->hit_arrays_per_cpu[i].items) bu_free(tie->hit_arrays_per_cpu[i].items, "bot thread-local hit arrays");
+	    }
+	    bu_free(tie->hit_arrays_per_cpu, "bot array of dynamic thread-local hit arrays");
+	}
 	BU_PUT(tie, struct _tie_s);
 	bot->tie = NULL;
     }
