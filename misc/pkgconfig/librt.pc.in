@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: librt
+Description: BRL-CAD Ray-Trace Library
+Version: @BRLCAD_VERSION@
+Requires: libbn libbu
+Libs: -L${libdir} -lrt -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBTCL@ @LIBREGEX@ @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}
