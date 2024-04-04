@@ -311,15 +311,43 @@ int _test_alive(const char* cmd) {
     struct bu_process* p;
     const char* run_av[3] = {cmd, "alive", NULL};
 
+    /* test alive status with bu_process_wait */
     bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
 
-    if (!bu_process_alive(p)) {
+    if (!bu_process_alive(p)) {	// should be alive
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check failed\n");
 	return PROCESS_FAIL;
     }
 
     if (bu_process_wait(NULL, p, 0)) {
 	fprintf(stderr, "bu_process_test[\"alive\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_alive(p)) {	// should be dead
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check failed after wait\n");
+	return PROCESS_FAIL;
+    }
+
+
+    /* test alive status with bu_terminate */
+    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+
+    if (!bu_process_alive(p)) {	// should be alive
+	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (!bu_terminate(bu_process_pid(p))) {
+	fprintf(stderr, "bu_process_test[\"alive\"] - terminate failed\n");
+	return PROCESS_FAIL;
+    }
+
+    int64_t start_time = bu_gettime();
+    while ((bu_gettime() - start_time) < BU_SEC2USEC(.1))	;   // need slight delay so bu_terminate can settle
+
+    if (bu_process_alive(p)) {	// should be dead
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check failed after terminate\n");
 	return PROCESS_FAIL;
     }
 
