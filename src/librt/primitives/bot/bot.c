@@ -374,6 +374,7 @@ struct _tie_s {
     triangle_s *tris;
     fastf_t *vertex_normals;
     hit_da *hit_arrays_per_cpu;
+    size_t num_cpus;
 };
 
 /**
@@ -530,7 +531,8 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     tie->root = root;
     tie->tris = tris;
     tie->vertex_normals = tri_norms;
-    tie->hit_arrays_per_cpu = (hit_da *) bu_calloc( bu_avail_cpus(), sizeof(hit_da), "thread-local bot hit arrays");
+    tie->num_cpus = bu_avail_cpus();
+    tie->hit_arrays_per_cpu = (hit_da *) bu_calloc(tie->num_cpus, sizeof(hit_da), "thread-local bot hit arrays");
     bot->tie = (void*) tie;
 	
     // struct bvh_build_node is a pun for fastf_t[6] which are the bounds
@@ -689,7 +691,13 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (UNLIKELY(!tie))
 	return 0;
     
-    int thread_ind = bu_thread_id() % bu_avail_cpus();
+    // we cache the number of cpus because calling
+    // bu_avail_cpus() for every shot takes a long
+    // time - we sometimes spend as much time asking
+    // how many cpus there are as we spend going
+    // through bvh nodes, triangle intersection, and
+    // adding hits combined.
+    int thread_ind = bu_thread_id() % tie->num_cpus;
     hit_da *hits_da = &tie->hit_arrays_per_cpu[thread_ind];
     hits_da->count = 0;
     
