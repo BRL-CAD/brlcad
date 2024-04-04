@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: libfft
+Description: BRL-CAD Fast Fourier Transform Library
+Version: @BRLCAD_VERSION@
+Requires:
+Libs: -L${libdir} -lfft @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}

@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: libpkg
+Description: BRL-CAD Network Package Transport Library
+Version: @BRLCAD_VERSION@
+Requires: libbu
+Libs: -L${libdir} -lpkg -lbu @LIBTCL@ @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}

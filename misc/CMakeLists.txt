@@ -10,6 +10,7 @@ set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 
 if (NOT BRLCAD_COMPONENTS)
+  add_subdirectory(pkgconfig)
   add_subdirectory(perl)
 endif (NOT BRLCAD_COMPONENTS)
 

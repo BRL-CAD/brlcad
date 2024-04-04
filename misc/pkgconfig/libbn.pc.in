@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: libbn
+Description: BRL-CAD Numerics Library
+Version: @BRLCAD_VERSION@
+Requires: libbu
+Libs: -L${libdir} -lbn -lbu @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}

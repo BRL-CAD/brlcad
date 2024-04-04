@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: libged
+Description: BRL-CAD Geometry Editing Library
+Version: @BRLCAD_VERSION@
+Requires: libwdb librt libbn libbu
+Libs: -L${libdir} -lged -lwdb -lrt -lbn -lbu @LIBTCL@ @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}
