@@ -1,0 +1,9 @@
+set(lmdb_ignore_files
+CMakeLists.txt
+COPYRIGHT
+LICENSE
+lmdb.h
+mdb.c
+midl.c
+midl.h
+)

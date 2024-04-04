@@ -1,0 +1,68 @@
+--    $ ../bin/exp2cxx ../../data/test_schema.exp
+--    ../../data/test_schema.exp:34: --ERROR: Query expression source must be an aggregate.
+--    Errors in input
+
+SCHEMA aggregate_error_schema;
+
+ENTITY representation_item
+    SUPERTYPE OF (ONEOF (binary_representation_item, compound_representation_item));
+    name : label;
+--WHERE
+  --  WR1 : SIZEOF(using_representations(SELF)) > 0;
+END_ENTITY;
+
+TYPE list_representation_item = LIST [1:?] OF representation_item;
+END_TYPE;
+
+TYPE set_representation_item = SET [1:?] OF representation_item;
+END_TYPE;
+
+TYPE compound_item_definition = SELECT (
+    list_representation_item,
+    set_representation_item);
+END_TYPE;
+
+ENTITY compound_representation_item
+    SUPERTYPE OF (ONEOF (point_and_vector, table_representation_item))
+    SUBTYPE OF (representation_item);
+    item_element : compound_item_definition;
+END_ENTITY;
+
+ENTITY table_representation_item
+    SUBTYPE OF (compound_representation_item);
+WHERE
+    WR1 : SIZEOF(QUERY(itet <* SELF\compound_representation_item.item_element |
+        NOT('TEST_SCHEMA.ROW_REPRESENTATION_ITEM' IN TYPEOF(itet))
+            )) = 0;
+END_ENTITY;
+
+
+
+--
+
+ENTITY row_representation_item
+    SUBTYPE OF (compound_representation_item);
+    SELF\compound_representation_item.item_element : list_representation_item;
+END_ENTITY;
+
+
+ENTITY binary_representation_item
+    SUBTYPE OF (representation_item);
+    binary_value : BINARY;
+END_ENTITY;
+
+ENTITY point_and_vector
+    SUBTYPE OF (compound_representation_item); --, geometric_representation_item);
+    SELF\compound_representation_item.item_element : point_and_vector_members;
+END_ENTITY;
+
+TYPE point_and_vector_members = LIST [2:3] OF identifier;
+END_TYPE;
+
+TYPE label = STRING;
+END_TYPE;
+
+TYPE identifier = STRING;
+END_TYPE;
+
+END_SCHEMA;

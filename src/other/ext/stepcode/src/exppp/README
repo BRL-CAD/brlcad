@@ -1,0 +1,30 @@
+--------------------
+Introduction
+--------------------
+
+This is the README for Exppp, an EXPRESS Pretty Printer for the NIST
+EXPRESS Toolkit.  It is described in detail by the report: Libes, D.,
+"Exppp - An EXPRESS Pretty Printer", NISTIR 5292, Gaithersburg, MD,
+November 8, 1993.  You can obtain this report from ftp.cme.nist.gov
+as pub/step/nptdocs/exppp.ps.Z
+
+--------------------
+Installing
+--------------------
+
+First install the NIST EXPRESS Toolkit.  This is described in the
+document "The NIST EXPRESS Toolkit - Obtaining and Installing" which
+can be obtained from ftp.cme.nist.gov as
+pub/step/nptdocs/obtaining-installing.ps.Z
+
+Installing Exppp is very similar to the NIST EXPRESS Toolkit itself.
+Adjust any parameters in the Makefile and do "make install".
+
+This will build and install an executable called exppp and a library
+called libexppp.a.
+
+exppp is similar to fedex except that exppp recreates the schemas and
+stores them in separate files.  The library is described further in
+the report on Exppp (see above).
+
+

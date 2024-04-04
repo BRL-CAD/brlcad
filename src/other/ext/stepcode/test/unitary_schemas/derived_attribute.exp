@@ -1,0 +1,18 @@
+SCHEMA test_derived_attribute;
+
+ENTITY point;
+END_ENTITY;
+
+ENTITY vector;
+END_ENTITY;
+
+ENTITY circle;
+  centre : point;
+  radius : REAL;
+  axis : vector;
+DERIVE
+  area : REAL := PI*radius**2;
+  perimeter : REAL := 2.0*PI*radius;
+
+END_ENTITY;
+END_SCHEMA;

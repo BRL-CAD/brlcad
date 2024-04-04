@@ -1,0 +1,67 @@
+SCHEMA test_multiple_inheritance;
+
+TYPE classification_item = SELECT (
+person_and_organization_address,
+address);
+END_TYPE;
+
+TYPE label = STRING;
+END_TYPE;
+
+TYPE identifier = STRING;
+END_TYPE;
+
+TYPE text = STRING;
+END_TYPE;
+
+ENTITY person_and_organization_address
+SUBTYPE OF (organizational_address, personal_address);
+SELF\organizational_address.organizations : SET [1:1] OF organization;
+SELF\personal_address.people : SET [1:1] OF person;
+END_ENTITY;
+
+ENTITY personal_address
+SUBTYPE OF (address);
+people : SET [1:?] OF person;
+description : OPTIONAL text;
+END_ENTITY;
+
+ENTITY organizational_address
+SUBTYPE OF (address);
+organizations : SET [1:?] OF organization;
+description : OPTIONAL text;
+END_ENTITY;
+
+ENTITY organization;
+id : OPTIONAL identifier;
+name : label;
+description : OPTIONAL text;
+END_ENTITY;
+
+ENTITY address;
+internal_location : OPTIONAL label;
+street_number : OPTIONAL label;
+street : OPTIONAL label;
+postal_box : OPTIONAL label;
+town : OPTIONAL label;
+region : OPTIONAL label;
+postal_code : OPTIONAL label;
+country : OPTIONAL label;
+facsimile_number : OPTIONAL label;
+telephone_number : OPTIONAL label;
+electronic_mail_address : OPTIONAL label;
+telex_number : OPTIONAL label;
+END_ENTITY;
+
+ENTITY person;
+id : identifier;
+last_name : OPTIONAL label;
+first_name : OPTIONAL label;
+middle_names : OPTIONAL LIST [1:?] OF label;
+prefix_titles : OPTIONAL LIST [1:?] OF label;
+suffix_titles : OPTIONAL LIST [1:?] OF label;
+WHERE
+WR1 : EXISTS(last_name) OR EXISTS(first_name);
+END_ENTITY;
+
+END_SCHEMA;

@@ -1,0 +1,626 @@
+#
+# Watch
+# ----------------------------------------------------------------------
+# Implements a a clock widget in a canvas.
+#
+# ----------------------------------------------------------------------
+#  AUTHOR: John A. Tucker               EMAIL: jatucker@spd.dsccc.com
+#
+# ======================================================================
+#            Copyright (c) 1997 DSC Technologies Corporation
+# ======================================================================
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
+# software without specific, written prior permission.
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+# SOFTWARE.
+# ======================================================================
+
+#
+# Default resources.
+#
+option add *Watch.labelFont		\
+    -*-Courier-Medium-R-Normal--*-120-*-*-*-*-*-*	widgetDefault
+
+#
+# Usual options.
+#
+itk::usual Watch {
+    keep -background -cursor -labelfont -foreground
+}
+
+itcl::class iwidgets::Watch {
+
+    inherit itk::Widget
+
+    itk_option define -hourradius hourRadius Radius .50
+    itk_option define -hourcolor hourColor Color red
+
+    itk_option define -minuteradius minuteRadius Radius .80
+    itk_option define -minutecolor minuteColor Color yellow
+
+    itk_option define -pivotradius pivotRadius Radius .10
+    itk_option define -pivotcolor pivotColor Color white
+
+    itk_option define -secondradius secondRadius Radius .90
+    itk_option define -secondcolor secondColor Color black
+
+    itk_option define -clockcolor clockColor Color white
+    itk_option define -clockstipple clockStipple ClockStipple {}
+
+    itk_option define -state state State normal
+    itk_option define -showampm showAmPm ShowAmPm true
+
+    itk_option define -tickcolor tickColor Color black
+
+    constructor {args} {}
+    destructor {}
+
+    #
+    # Public methods
+    #
+    public {
+	method get {{format "-string"}}
+	method show {{time "now"}}
+	method watch {args}
+    }
+
+    #
+    # Private methods
+    #
+    private {
+	method _handMotionCB {tag x y}
+	method _drawHand {tag}
+	method _handReleaseCB {tag x y}
+	method _displayClock {{when "later"}}
+
+	variable _interior
+	variable _radius
+	variable _theta
+	variable _extent
+	variable _reposition ""  ;# non-null => _displayClock pending
+	variable _timeVar
+	variable _x0 1
+	variable _y0 1
+
+	common _ampmVar
+	common PI [expr {2*asin(1.0)}]
+    }
+}
+
+#
+# Provide a lowercased access method for the Watch class.
+# 
+proc ::iwidgets::watch {pathName args} {
+    uplevel ::iwidgets::Watch $pathName $args
+}
+
+#
+# Use option database to override default resources of base classes.
+#
+option add *Watch.width 155 widgetDefault
+option add *Watch.height 175 widgetDefault
+
+# -----------------------------------------------------------------------------
+#                        CONSTRUCTOR
+# -----------------------------------------------------------------------------
+itcl::body iwidgets::Watch::constructor { args } {
+    #
+    # Add back to the hull width and height options and make the
+    # borderwidth zero since we don't need it.
+    #
+    set _interior $itk_interior
+
+    itk_option add hull.width hull.height
+    component hull configure -borderwidth 0
+    grid propagate $itk_component(hull) no
+
+    set _ampmVar($this) "AM"
+    set _radius(outer) 1
+
+    set _radius(hour) 1
+    set _radius(minute) 1
+    set _radius(second) 1
+
+    set _theta(hour) 30
+    set _theta(minute) 6
+    set _theta(second) 6
+
+    set _extent(hour) 14
+    set _extent(minute) 14
+    set _extent(second) 2
+
+    set _timeVar(hour) 12
+    set _timeVar(minute) 0
+    set _timeVar(second) 0
+
+    #
+    # Create the frame in which the "AM" and "PM" radiobuttons will be drawn
+    #
+    itk_component add frame {
+	frame $itk_interior.frame
+    } 
+
+    #
+    # Create the canvas in which the clock will be drawn
+    #
+    itk_component add canvas {
+	canvas $itk_interior.canvas
+    }
+    bind $itk_component(canvas) <Map> +[itcl::code $this _displayClock]
+    bind $itk_component(canvas) <Configure> +[itcl::code $this _displayClock]
+
+    #
+    # Create the "AM" and "PM" radiobuttons to be drawn in the canvas
+    #
+    itk_component add am {
+	radiobutton $itk_component(frame).am \
+	    -text "AM" \
+	    -value "AM" \
+	    -variable [itcl::scope _ampmVar($this)]
+    } {
+	usual
+	rename -font -labelfont labelFont Font
+    }
+
+    itk_component add pm {
+	radiobutton $itk_component(frame).pm \
+	    -text "PM" \
+	    -value "PM" \
+	    -variable [itcl::scope _ampmVar($this)]
+    } {
+	usual
+	rename -font -labelfont labelFont Font
+    }
+
+    #
+    # Create the canvas item for displaying the main oval which encapsulates
+    # the entire clock.
+    #
+    watch create oval 0 0 2 2 -width 5 -tags clock
+
+    #
+    # Create the canvas items for displaying the 60 ticks marks around the
+    # inner perimeter of the watch.
+    #
+    set extent 3
+    for {set i 0} {$i < 60} {incr i} {
+	set start [expr {$i*6-1}]
+	set tag [expr {[expr {$i%5}] == 0 ? "big" : "little"}]
+	watch create arc 0 0 0 0 \
+	    -style arc \
+	    -extent $extent \
+	    -start $start \
+	    -tags "tick$i tick $tag"
+    }
+
+    #
+    # Create the canvas items for displaying the hour, minute, and second hands
+    # of the watch.  Add bindings to allow the mouse to move and set the
+    # clock hands.
+    #
+    watch create arc 1 1 1 1 -extent 30 -tags minute
+    watch create arc 1 1 1 1 -extent 30 -tags hour
+    watch create arc 1 1 1 1 -tags second
+
+    #
+    # Create the canvas item for displaying the center of the watch in which
+    # the hour, minute, and second hands will pivot.
+    #
+    watch create oval 0 0 1 1 -width 5 -fill black -tags pivot
+
+    #
+    # Position the "AM/PM" button frame and watch canvas.
+    #
+    grid $itk_component(frame) -row 0 -column 0 -sticky new
+    grid $itk_component(canvas) -row 1 -column 0 -sticky nsew
+
+    grid rowconfigure    $itk_interior 0 -weight 0
+    grid rowconfigure    $itk_interior 1 -weight 1
+    grid columnconfigure $itk_interior 0 -weight 1
+
+    eval itk_initialize $args
+}
+
+# -----------------------------------------------------------------------------
+#                           DESTURCTOR
+# -----------------------------------------------------------------------------
+itcl::body iwidgets::Watch::destructor {} {
+    if {$_reposition != ""} {
+	after cancel $_reposition
+    }
+}
+
+# -----------------------------------------------------------------------------
+#                            METHODS
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# METHOD: _handReleaseCB tag x y
+#
+# -----------------------------------------------------------------------------
+itcl::body iwidgets::Watch::_handReleaseCB {tag x y} {
+
+    set atanab [expr {atan2(double($y-$_y0),double($x-$_x0))*(180/$PI)}]
+    set degrees [expr {$atanab > 0 ? [expr {360-$atanab}] : abs($atanab)}]
+    set ticks [expr {round($degrees/$_theta($tag))}]
+    set _timeVar($tag) [expr {((450-$ticks*$_theta($tag))%360)/$_theta($tag)}]
+
+    if {$tag == "hour" && $_timeVar(hour) == 0} {
+	set _timeVar($tag) 12
+    }
+
+    _drawHand $tag
+}
+
+# -----------------------------------------------------------------------------
+# PROTECTED METHOD: _handMotionCB tag x y
+#
+# -----------------------------------------------------------------------------
+itcl::body iwidgets::Watch::_handMotionCB {tag x y} {
+    if {$x == $_x0 || $y == $_y0} {
+	return
+    }
+
+    set a [expr {$y-$_y0}]
+    set b [expr {$x-$_x0}]
+    set c [expr {hypot($a,$b)}]
+
+    set atanab [expr {atan2(double($a),double($b))*(180/$PI)}]
+    set degrees [expr {$atanab > 0 ? [expr 360-$atanab] : abs($atanab)}]
+
+    set x2 [expr {$_x0+$_radius($tag)*($b/double($c))}]
+    set y2 [expr {$_y0+$_radius($tag)*($a/double($c))}]
+    watch coords $tag \
+	[expr {$x2-$_radius($tag)}] \
+	[expr {$y2-$_radius($tag)}] \
+	[expr {$x2+$_radius($tag)}] \
+	[expr {$y2+$_radius($tag)}]
+    set start [expr {$degrees-180-($_extent($tag)/2)}]
+    watch itemconfigure $tag -start $start -extent $_extent($tag)
+}
+
+# -----------------------------------------------------------------------------
+# PROTECTED METHOD: get ?format?
+#
+# -----------------------------------------------------------------------------
+itcl::body iwidgets::Watch::get {{format "-string"}} {
+    set timestr [format "%02d:%02d:%02d %s" \
+		     $_timeVar(hour) $_timeVar(minute) \
+		     $_timeVar(second) $_ampmVar($this)]
+
+    switch -- $format {
+	"-string" {
+	    return $timestr
+	}
+	"-clicks" {
+	    return [clock scan $timestr]
+	}
+	default {
+	    error "bad format option \"$format\":\
+                   should be -string or -clicks"
+	}
+    }
+}
+
+# -----------------------------------------------------------------------------
+# METHOD: watch ?args?
+#
+# Evaluates the specified args against the canvas component.
+# -----------------------------------------------------------------------------
+itcl::body iwidgets::Watch::watch {args} {
+    return [eval $itk_component(canvas) $args]
+}
+
+# -----------------------------------------------------------------------------
+# METHOD: _drawHand tag
+#
+# -----------------------------------------------------------------------------
+itcl::body iwidgets::Watch::_drawHand {tag} {
+
+    set degrees [expr {abs(450-($_timeVar($tag)*$_theta($tag)))%360}]
+    set radians [expr {$degrees*($PI/180)}]
+    set x [expr {$_x0+$_radius($tag)*cos($radians)}]
+    set y [expr {$_y0+$_radius($tag)*sin($radians)*(-1)}]
+    watch coords $tag \
+	[expr {$x-$_radius($tag)}] \
+	[expr {$y-$_radius($tag)}] \
+	[expr {$x+$_radius($tag)}] \
+	[expr {$y+$_radius($tag)}]
+    set start [expr {$degrees-180-($_extent($tag)/2)}]
+    watch itemconfigure $tag -start $start
+}
+
+# ------------------------------------------------------------------
+# PUBLIC METHOD: show time
+#
+# Changes the currently displayed time to be that of the time
+# argument.  The time may be specified either as a string or an
+# integer clock value.  Reference the clock command for more 
+# information on obtaining times and their formats.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Watch::show {{time "now"}} {
+    if {$time == "now"} {
+	set seconds [clock seconds]
+    } elseif {![catch {clock format $time}]} {
+	set seconds $time
+    } elseif {[catch {set seconds [clock scan $time]}]} {
+	error "bad time: \"$time\", must be a valid time\
+               string, clock clicks value or the keyword now"
+    }
+
+    set timestring [clock format $seconds -format "%I %M %S %p"]
+    set _timeVar(hour)   [expr int(1[lindex $timestring 0] - 100)]
+    set _timeVar(minute) [expr int(1[lindex $timestring 1] - 100)]
+    set _timeVar(second) [expr int(1[lindex $timestring 2] - 100)]
+    set _ampmVar($this) [lindex $timestring 3]
+
+    _drawHand hour
+    _drawHand minute
+    _drawHand second
+}
+
+# -----------------------------------------------------------------------------
+# PROTECTED METHOD: _displayClock ?when?
+#
+# Places the hour, minute, and second dials in the canvas.  If "when" is "now",
+# the change is applied immediately.  If it is "later" or it is not specified,
+# then the change is applied later, when the application is idle.
+# -----------------------------------------------------------------------------
+itcl::body iwidgets::Watch::_displayClock {{when "later"}} {
+
+    if {$when == "later"} {
+	if {$_reposition == ""} {
+	    set _reposition [after idle [itcl::code $this _displayClock now]]
+	}
+	return
+    }
+
+    #
+    # Compute the center coordinates for the clock based on the
+    # with and height of the canvas.
+    #
+    set width [winfo width $itk_component(canvas)]
+    set height [winfo height $itk_component(canvas)]
+    set _x0 [expr {$width/2}]
+    set _y0 [expr {$height/2}]
+
+    #
+    # Set the radius of the watch, pivot, hour, minute and second items.
+    #
+    set _radius(outer)  [expr {$_x0 < $_y0 ? $_x0 : $_y0}]
+    set _radius(pivot)  [expr {$itk_option(-pivotradius)*$_radius(outer)}]
+    set _radius(hour)   [expr {$itk_option(-hourradius)*$_radius(outer)}]
+    set _radius(minute) [expr {$itk_option(-minuteradius)*$_radius(outer)}]
+    set _radius(second) [expr {$itk_option(-secondradius)*$_radius(outer)}]
+    set outerWidth [watch itemcget clock -width]
+
+    #
+    # Set the coordinates of the clock item
+    #
+    set x1Outer $outerWidth
+    set y1Outer $outerWidth
+    set x2Outer [expr {$width-$outerWidth}]
+    set y2Outer [expr {$height-$outerWidth}]
+    watch coords clock $x1Outer $y1Outer $x2Outer $y2Outer
+
+    #
+    # Set the coordinates of the tick items
+    #
+    set offset [expr {$outerWidth*2}]
+    set x1Tick [expr {$x1Outer+$offset}]
+    set y1Tick [expr {$y1Outer+$offset}]
+    set x2Tick [expr {$x2Outer-$offset}]
+    set y2Tick [expr {$y2Outer-$offset}]
+    for {set i 0} {$i < 60} {incr i} {
+	watch coords tick$i $x1Tick $y1Tick $x2Tick $y2Tick
+    }
+    set maxTickWidth [expr {$_radius(outer)-$_radius(second)+1}]
+    set minTickWidth [expr {round($maxTickWidth/2)}]
+    watch itemconfigure big -width $maxTickWidth
+    watch itemconfigure little -width [expr {round($maxTickWidth/2)}]
+
+    #
+    # Set the coordinates of the pivot item
+    #
+    set x1Center [expr {$_x0-$_radius(pivot)}]
+    set y1Center [expr {$_y0-$_radius(pivot)}]
+    set x2Center [expr {$_x0+$_radius(pivot)}]
+    set y2Center [expr {$_y0+$_radius(pivot)}]
+    watch coords pivot $x1Center $y1Center $x2Center $y2Center        
+
+    #
+    # Set the coordinates of the hour, minute, and second dial items
+    #
+    watch itemconfigure hour -extent $_extent(hour)
+    _drawHand hour
+
+    watch itemconfigure minute -extent $_extent(minute)
+    _drawHand minute
+
+    watch itemconfigure second -extent $_extent(second)
+    _drawHand second
+
+    set _reposition ""
+}
+
+# -----------------------------------------------------------------------------
+#                             OPTIONS
+# -----------------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# OPTION: state
+#
+# Configure the editable state of the widget.  Valid values are
+# normal and disabled.  In a disabled state, the hands of the 
+# watch are not selectabled.
+# ------------------------------------------------------------------
+itcl::configbody ::iwidgets::Watch::state {
+    if {$itk_option(-state) == "normal"} {
+	watch bind minute <B1-Motion> \
+	    [itcl::code $this _handMotionCB minute %x %y]
+	watch bind minute <ButtonRelease-1> \
+	    [itcl::code $this _handReleaseCB minute %x %y]
+
+	watch bind hour <B1-Motion> \
+	    [itcl::code $this _handMotionCB hour %x %y]
+	watch bind hour <ButtonRelease-1> \
+	    [itcl::code $this _handReleaseCB hour %x %y]
+
+	watch bind second <B1-Motion> \
+	    [itcl::code $this _handMotionCB second %x %y]
+	watch bind second <ButtonRelease-1> \
+	    [itcl::code $this _handReleaseCB second %x %y]
+
+	$itk_component(am) configure -state normal
+	$itk_component(pm) configure -state normal
+
+    } elseif {$itk_option(-state) == "disabled"} {
+	watch bind minute <B1-Motion> {}
+	watch bind minute <ButtonRelease-1> {}
+
+	watch bind hour <B1-Motion> {}
+	watch bind hour <ButtonRelease-1> {}
+
+	watch bind second <B1-Motion> {}
+	watch bind second <ButtonRelease-1> {}
+
+	$itk_component(am) configure -state disabled \
+	    -disabledforeground [$itk_component(am) cget -background]
+	$itk_component(pm) configure -state normal \
+	    -disabledforeground [$itk_component(am) cget -background]
+
+    } else {
+	error "bad state option \"$itk_option(-state)\":\
+                   should be normal or disabled"
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: showampm
+#
+# Configure the display of the AM/PM radio buttons.
+# ------------------------------------------------------------------
+itcl::configbody ::iwidgets::Watch::showampm {
+    switch -- $itk_option(-showampm) {
+        0 - no - false - off { 
+	    pack forget $itk_component(am)
+	    pack forget $itk_component(pm)
+	}
+
+        1 - yes - true - on { 
+	    pack $itk_component(am) -side left -fill both -expand 1
+	    pack $itk_component(pm) -side right -fill both -expand 1 
+	}
+
+        default {
+            error "bad showampm option \"$itk_option(-showampm)\":\
+                   should be boolean"
+        }
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: pivotcolor
+#
+# Configure the color of the clock pivot.
+#
+itcl::configbody ::iwidgets::Watch::pivotcolor {
+    watch itemconfigure pivot -fill $itk_option(-pivotcolor)
+}
+
+# ------------------------------------------------------------------
+# OPTION: clockstipple
+#
+# Configure the stipple pattern for the clock fill color.
+#
+itcl::configbody ::iwidgets::Watch::clockstipple {
+    watch itemconfigure clock -stipple $itk_option(-clockstipple)
+}
+
+# ------------------------------------------------------------------
+# OPTION: clockcolor
+#
+# Configure the color of the clock.
+#
+itcl::configbody ::iwidgets::Watch::clockcolor {
+    watch itemconfigure clock -fill $itk_option(-clockcolor)
+}
+
+# ------------------------------------------------------------------
+# OPTION: hourcolor
+#
+# Configure the color of the hour hand.
+#
+itcl::configbody ::iwidgets::Watch::hourcolor {
+    watch itemconfigure hour -fill $itk_option(-hourcolor)
+}
+
+# ------------------------------------------------------------------
+# OPTION: minutecolor
+#
+# Configure the color of the minute hand.
+#
+itcl::configbody ::iwidgets::Watch::minutecolor {
+    watch itemconfigure minute -fill $itk_option(-minutecolor)
+}
+
+# ------------------------------------------------------------------
+# OPTION: secondcolor
+#
+# Configure the color of the second hand.
+#
+itcl::configbody ::iwidgets::Watch::secondcolor {
+    watch itemconfigure second -fill $itk_option(-secondcolor)
+}
+
+# ------------------------------------------------------------------
+# OPTION: tickcolor
+#
+# Configure the color of the ticks.
+#
+itcl::configbody ::iwidgets::Watch::tickcolor {
+    watch itemconfigure tick -outline $itk_option(-tickcolor)
+}
+
+# ------------------------------------------------------------------
+# OPTION: hourradius
+#
+# Configure the radius of the hour hand.
+#
+itcl::configbody ::iwidgets::Watch::hourradius {
+    _displayClock
+}
+
+# ------------------------------------------------------------------
+# OPTION: minuteradius
+#
+# Configure the radius of the minute hand.
+#
+itcl::configbody ::iwidgets::Watch::minuteradius {
+    _displayClock
+}
+
+# ------------------------------------------------------------------
+# OPTION: secondradius
+#
+# Configure the radius of the second hand.
+#
+itcl::configbody ::iwidgets::Watch::secondradius {
+    _displayClock
+}
+

@@ -1,0 +1,10 @@
+SCHEMA missing_semicolon; --derived from ifc2x4
+
+TYPE IfcCountMeasure = NUMBER;
+END_TYPE;
+
+ENTITY IfcReinforcementBarProperties --error due to missing semicolon here
+    BarCount : OPTIONAL IfcCountMeasure;
+END_ENTITY;
+
+END_SCHEMA;

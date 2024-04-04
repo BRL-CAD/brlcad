@@ -1,0 +1,82 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$a02546.html" title="Base class for all handle types." alt="" coords="5,2835,169,2862"/>
+<area shape="rect" id="node2" href="$a02918.html" title="Base property handle." alt="" coords="240,1988,431,2029"/>
+<area shape="rect" id="node61" href="$a02558.html" title="Handle for a edge entity." alt="" coords="253,3613,417,3639"/>
+<area shape="rect" id="node63" href="$a02562.html" title="Handle for a face entity." alt="" coords="254,3795,417,3822"/>
+<area shape="rect" id="node65" href="$a02554.html" title="Handle for a halfedge entity." alt="" coords="242,4030,429,4057"/>
+<area shape="rect" id="node67" href="$a02566.html" title="Handle type for meshes to simplify some template programming." alt="" coords="252,1806,419,1833"/>
+<area shape="rect" id="node68" href="$a03562.html" title="Handle template for adaptive composite subdividion rules." alt="" coords="236,1857,435,1899"/>
+<area shape="rect" id="node69" href="$a03818.html" title="Handle for vertex hierarchy nodes" alt="" coords="233,1923,438,1964"/>
+<area shape="rect" id="node70" href="$a02550.html" title="Handle for a vertex entity." alt="" coords="249,4213,421,4239"/>
+<area shape="rect" id="node3" href="$a02930.html" title=" " alt="" coords="541,717,720,759"/>
+<area shape="rect" id="node4" href="$a02930.html" title=" " alt="" coords="541,783,720,824"/>
+<area shape="rect" id="node5" href="$a02930.html" title=" " alt="" coords="541,848,720,889"/>
+<area shape="rect" id="node6" href="$a02930.html" title=" " alt="" coords="541,914,720,970"/>
+<area shape="rect" id="node7" href="$a02930.html" title=" " alt="" coords="537,995,725,1036"/>
+<area shape="rect" id="node8" href="$a02930.html" title=" " alt="" coords="541,1060,720,1101"/>
+<area shape="rect" id="node9" href="$a02930.html" title=" " alt="" coords="541,1125,720,1167"/>
+<area shape="rect" id="node10" href="$a02930.html" title=" " alt="" coords="541,1191,720,1232"/>
+<area shape="rect" id="node11" href="$a02930.html" title=" " alt="" coords="501,1256,760,1327"/>
+<area shape="rect" id="node12" href="$a02934.html" title=" " alt="" coords="542,1351,719,1392"/>
+<area shape="rect" id="node13" href="$a02934.html" title=" " alt="" coords="531,1416,730,1457"/>
+<area shape="rect" id="node14" href="$a02934.html" title=" " alt="" coords="542,1481,719,1523"/>
+<area shape="rect" id="node15" href="$a02934.html" title=" " alt="" coords="542,1547,719,1588"/>
+<area shape="rect" id="node16" href="$a02934.html" title=" " alt="" coords="503,1612,758,1653"/>
+<area shape="rect" id="node17" href="$a02934.html" title=" " alt="" coords="542,1677,719,1719"/>
+<area shape="rect" id="node18" href="$a02934.html" title=" " alt="" coords="542,1743,719,1799"/>
+<area shape="rect" id="node19" href="$a02934.html" title=" " alt="" coords="542,1824,719,1865"/>
+<area shape="rect" id="node20" href="$a02934.html" title=" " alt="" coords="542,1889,719,1931"/>
+<area shape="rect" id="node21" href="$a02934.html" title=" " alt="" coords="542,1955,719,1996"/>
+<area shape="rect" id="node22" href="$a02934.html" title=" " alt="" coords="542,2020,719,2061"/>
+<area shape="rect" id="node23" href="$a02934.html" title=" " alt="" coords="542,2085,719,2127"/>
+<area shape="rect" id="node24" href="$a02934.html" title=" " alt="" coords="542,2151,719,2192"/>
+<area shape="rect" id="node25" href="$a02926.html" title=" " alt="" coords="541,2216,720,2257"/>
+<area shape="rect" id="node26" href="$a02926.html" title=" " alt="" coords="541,2282,720,2338"/>
+<area shape="rect" id="node27" href="$a02926.html" title=" " alt="" coords="541,2363,720,2404"/>
+<area shape="rect" id="node28" href="$a02926.html" title=" " alt="" coords="541,2428,720,2469"/>
+<area shape="rect" id="node29" href="$a02926.html" title=" " alt="" coords="541,2493,720,2535"/>
+<area shape="rect" id="node30" href="$a02926.html" title=" " alt="" coords="541,2559,720,2600"/>
+<area shape="rect" id="node31" href="$a02926.html" title=" " alt="" coords="541,2624,720,2665"/>
+<area shape="rect" id="node32" href="$a02926.html" title=" " alt="" coords="541,2689,720,2731"/>
+<area shape="rect" id="node33" href="$a02938.html" title=" " alt="" coords="541,2755,721,2796"/>
+<area shape="rect" id="node34" href="$a02922.html" title=" " alt="" coords="541,2821,720,2877"/>
+<area shape="rect" id="node35" href="$a02922.html" title=" " alt="" coords="541,2901,720,2943"/>
+<area shape="rect" id="node36" href="$a02922.html" title=" " alt="" coords="541,2967,720,3008"/>
+<area shape="rect" id="node37" href="$a02922.html" title=" " alt="" coords="528,3032,733,3073"/>
+<area shape="rect" id="node38" href="$a02922.html" title=" " alt="" coords="541,3097,720,3139"/>
+<area shape="rect" id="node39" href="$a02922.html" title=" " alt="" coords="541,3163,720,3219"/>
+<area shape="rect" id="node40" href="$a02922.html" title=" " alt="" coords="541,3244,720,3285"/>
+<area shape="rect" id="node41" href="$a02922.html" title=" " alt="" coords="541,3309,720,3351"/>
+<area shape="rect" id="node42" href="$a02922.html" title=" " alt="" coords="541,3375,720,3416"/>
+<area shape="rect" id="node43" href="$a02922.html" title=" " alt="" coords="541,3440,720,3481"/>
+<area shape="rect" id="node44" href="$a02922.html" title=" " alt="" coords="537,3505,725,3547"/>
+<area shape="rect" id="node45" href="$a02922.html" title=" " alt="" coords="541,3571,720,3612"/>
+<area shape="rect" id="node46" href="$a02922.html" title=" " alt="" coords="541,3636,720,3677"/>
+<area shape="rect" id="node47" href="$a02922.html" title=" " alt="" coords="541,3701,720,3743"/>
+<area shape="rect" id="node48" href="$a02922.html" title=" " alt="" coords="541,3767,720,3808"/>
+<area shape="rect" id="node49" href="$a02922.html" title=" " alt="" coords="541,5,720,47"/>
+<area shape="rect" id="node50" href="$a02922.html" title=" " alt="" coords="541,71,720,112"/>
+<area shape="rect" id="node51" href="$a02922.html" title=" " alt="" coords="541,136,720,177"/>
+<area shape="rect" id="node52" href="$a02922.html" title=" " alt="" coords="536,201,725,243"/>
+<area shape="rect" id="node53" href="$a02922.html" title=" " alt="" coords="541,267,720,308"/>
+<area shape="rect" id="node54" href="$a02922.html" title=" " alt="" coords="541,332,720,373"/>
+<area shape="rect" id="node55" href="$a02922.html" title=" " alt="" coords="541,397,720,439"/>
+<area shape="rect" id="node56" href="$a02930.html" title="Handle representing an edge property." alt="" coords="525,463,736,490"/>
+<area shape="rect" id="node57" href="$a02934.html" title="Handle representing a face property." alt="" coords="526,514,735,541"/>
+<area shape="rect" id="node58" href="$a02926.html" title="Handle representing a halfedge property." alt="" coords="525,565,736,591"/>
+<area shape="rect" id="node59" href="$a02938.html" title="Handle representing a mesh property." alt="" coords="525,615,737,642"/>
+<area shape="rect" id="node60" href="$a02922.html" title="Handle representing a vertex property." alt="" coords="525,666,736,693"/>
+<area shape="rect" id="node62" href="$a02726.html" title=" " alt="" coords="531,3833,730,3859"/>
+<area shape="rect" id="node64" href="$a02730.html" title=" " alt="" coords="531,3883,730,3910"/>
+<area shape="rect" id="node66" href="$a02722.html" title=" " alt="" coords="520,4001,741,4027"/>
+<area shape="rect" id="node71" href="$a02718.html" title="Smart version of VertexHandle contains a pointer to the corresponding mesh and allows easier access t..." alt="" coords="527,4183,734,4210"/>
+<area shape="rect" id="node72" href="$a02706.html" title="Base class for all smart handle types." alt="" coords="236,3913,435,3939"/>
+<area shape="rect" id="node73" href="$a02714.html" title=" " alt="" coords="223,3664,447,3705"/>
+<area shape="rect" id="node74" href="$a02714.html" title=" " alt="" coords="223,3847,447,3888"/>
+<area shape="rect" id="node75" href="$a02714.html" title=" " alt="" coords="221,4081,450,4123"/>
+<area shape="rect" id="node76" href="$a02714.html" title=" " alt="" coords="223,4264,447,4305"/>
+<area shape="rect" id="node77" href="$a02710.html" title=" " alt="" coords="228,3547,443,3588"/>
+<area shape="rect" id="node78" href="$a02710.html" title=" " alt="" coords="229,3729,442,3771"/>
+<area shape="rect" id="node79" href="$a02710.html" title=" " alt="" coords="217,3964,453,4005"/>
+<area shape="rect" id="node80" href="$a02710.html" title=" " alt="" coords="224,4147,447,4188"/>
+</map>

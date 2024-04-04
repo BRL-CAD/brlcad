@@ -1,0 +1,86 @@
+
+(* Generating: Example_Schema *)
+
+SCHEMA select_schema;
+
+(* ////////////// TYPE Definitions *)
+
+TYPE color = ENUMERATION OF 
+  (red,
+   green,
+   blue,
+   yellow,
+   orange,
+   white,
+   black,
+   brown);
+END_TYPE;
+
+TYPE label = string;
+END_TYPE;
+
+TYPE point = real;
+END_TYPE;
+
+TYPE length_measure = real;
+END_TYPE;
+
+TYPE myselect = SELECT
+ (label,
+  point,
+  length_measure
+ );
+END_TYPE;
+
+(* ////////////// ENTITY Definitions *)
+
+ENTITY poly_line;
+    points : LIST OF line;
+END_ENTITY;
+
+ENTITY shape
+  SUPERTYPE OF (ONEOF (circle,triangle,rectangle));
+    item_name : label;
+    item_color : OPTIONAL color;
+    number_of_sides : integer;
+END_ENTITY;
+
+ENTITY rectangle
+  SUPERTYPE OF (square)
+  SUBTYPE OF (shape);
+    height : length_measure;
+    width : length_measure;
+END_ENTITY;
+
+ENTITY square
+  SUBTYPE OF (rectangle);
+   selaggr : LIST [1:10] of myselect;
+END_ENTITY;
+
+ENTITY triangle
+  SUBTYPE OF (shape);
+    side1_length : length_measure;
+    side2_length : length_measure;
+    side3_length : length_measure;
+END_ENTITY;
+
+ENTITY circle
+  SUBTYPE OF (shape);
+    radius : real;
+  (* UNIQUE *)
+    (* Hi Dave *)
+
+END_ENTITY;
+
+ENTITY line;
+    end_point_one : cartesian_point;
+    end_point_two : cartesian_point;
+END_ENTITY;
+
+ENTITY cartesian_point;
+    x : point;
+    y : point;
+    z : OPTIONAL point;
+END_ENTITY;
+
+END_SCHEMA;
