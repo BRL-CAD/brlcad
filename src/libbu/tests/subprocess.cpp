@@ -55,6 +55,12 @@ main(int argc, const char *argv[])
 	return 0;
     }
 
+    if (BU_STR_EQUAL(argv[1], "basic_err")) {
+	// single write to stderr
+	fprintf(stderr, "Howdy from stderr!\n");
+	return 0;
+    }
+
     if (BU_STR_EQUAL(argv[1], "echo")) {
 	// echo incoming line on stdout and stderr
 	char line[25];

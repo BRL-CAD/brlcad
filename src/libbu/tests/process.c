@@ -68,6 +68,39 @@ int _test_read(const char* cmd) {
     return PROCESS_PASS;
 }
 
+/* tests:   single stderr read, attempt to read from stdout with nothing written
+ *  bu_process_read() [stderr]
+ * also relies on:
+ *  bu_process_exec()
+ *  bu_process_wait()
+ */
+int _test_read_stderr(const char* cmd) {
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "basic_err", NULL};
+    int count = 0;
+    int aborted = 0;
+    char line[100] = {0};
+
+    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+
+    if (bu_process_read((char *)line, &count, p, BU_PROCESS_STDERR, 100) <= 0) {    // good read
+	fprintf(stderr, "bu_process_test[\"read\"] stdout read failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_read((char *)line, &count, p, BU_PROCESS_STDOUT, 100) != -1) {    // should fail
+	fprintf(stderr, "bu_process_test[\"read\"] stdin read failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait(&aborted, p, 0)) {
+	fprintf(stderr, "bu_process_test[\"read\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
 /* tests:   reads with lots of output; equal distribution - BLOCKING READS
  *  bu_process_read() [stdout and stderr]
  * also relies on:
@@ -448,6 +481,7 @@ typedef struct {
 ProcessTest tests[] = {
     {"exec_wait", _test_exec_wait},
     {"read", _test_read},
+    {"read_err", _test_read_stderr},
     {"read_flood", _test_read_flood},
     {"ids", _test_ids},
     {"streams", _test_streams},
