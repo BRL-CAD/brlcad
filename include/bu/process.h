@@ -166,6 +166,14 @@ BU_EXPORT extern int bu_interactive(void);
  */
 BU_EXPORT extern int bu_process_pending(int fd);
 
+
+/**
+ * @brief whether process is still alive and running
+ *
+ * returns 1 if alive, else 0
+ */
+BU_EXPORT extern int bu_process_alive(struct bu_process *pinfo);
+
 /** @} */
 
 __END_DECLS

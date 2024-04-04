@@ -312,6 +312,12 @@ bu_process_pending(int fd)
 }
 
 int
+bu_process_alive(struct bu_process *pinfo)
+{
+    return subprocess_alive(pinfo->subprocess_p);
+}
+
+int
 bu_interactive(void)
 {
     int interactive = 1;
