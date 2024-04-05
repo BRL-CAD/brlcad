@@ -335,25 +335,6 @@ points_on_sphere(size_t count, point_t pnts[], double radius, point_t center)
 }
 
 
-// Function to generate sample points on the bounding sphere and shoot rays through them
-static struct ray *
-bounding_sphere_sampling(size_t samples, double radius, point_t center, struct options* opts, double* total_hits_bs)
-{
-    /* get sample points */
-    point_t* points = (point_t*)bu_calloc(samples, sizeof(point_t), "points");
-    points_on_sphere(samples, points, radius, center);
-
-    struct ray* rays = (struct ray*)bu_calloc(samples, sizeof(struct ray), "rays");
-
-    /* use the sample points twice to generate our set of sample rays */
-    rays_through_point_pairs(rays, samples, points, opts, total_hits_bs);
-    rays_through_point_pairs(rays + (samples / 2), samples, points, opts, total_hits_bs);
-
-    /* done with points, loaded into rays */
-    bu_free(points, "points");
-
-    return rays;
-}
 
 
 #if 0
@@ -412,10 +393,29 @@ rays_through_point_pairs(struct ray *rays, size_t count, point_t pnts[], struct 
     }
 }
 
+// Function to generate sample points on the bounding sphere and shoot rays through them
+static struct ray*
+bounding_sphere_sampling(size_t samples, double radius, point_t center, struct options* opts, double* total_hits_bs)
+{
+    /* get sample points */
+    point_t* points = (point_t*)bu_calloc(samples, sizeof(point_t), "points");
+    points_on_sphere(samples, points, radius, center);
+
+    struct ray* rays = (struct ray*)bu_calloc(samples, sizeof(struct ray), "rays");
+
+    /* use the sample points twice to generate our set of sample rays */
+    rays_through_point_pairs(rays, samples, points, opts, total_hits_bs);
+    rays_through_point_pairs(rays + (samples / 2), samples, points, opts, total_hits_bs);
+
+    /* done with points, loaded into rays */
+    bu_free(points, "points");
+
+    return rays;
+}
 
 // Function to compute surface area using the Cauchy-Crofton formula
 static double
-compute_surface_area(int intersections, int lines, double radius)
+compute_surface_area(double intersections, double lines, double radius)
 {
     // surface area of sphere = 4*PI*r^2
     const double PROPORTIONALITY_CONSTANT = 4.0 * M_PI * radius * radius;
@@ -430,7 +430,7 @@ compute_surface_area(int intersections, int lines, double radius)
      * so we divide by 2 so it becomes a ratio of shots that hit to
      * shots that miss.
      */
-    double area = PROPORTIONALITY_CONSTANT * (double)intersections / ((double)lines * 2.0);
+    double area = PROPORTIONALITY_CONSTANT * intersections / (lines * 2.0);
 
     return area;
 }
@@ -481,43 +481,43 @@ sample_in_parallel(int id, void *data)
 
     // keep track of this iteration
     for (size_t i = pdata->start; i < pdata->end; ++i) {
-	/* can't struct copy because our ray is smaller than xray */
-	VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
-	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
+        /* can't struct copy because our ray is smaller than xray */
+        VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
+        VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
 
-	if (makeGeometry) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
-	    printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-
-	/* unitize before firing */
-	VUNITIZE(ap->a_ray.r_dir);
-
-    size_t hitit = 0;
-    struct partition* part;
-
-	/* Shoot the ray.
-     * If we are estimating the volume, retrieve the partition list
-     * containing the segments inside the volume of the object.
-     */
-    if (is_volume) {
-        part = rt_shootray_simple(ap, ap->a_ray.r_pt, ap->a_ray.r_dir);
-
-        // calculate the length of the segments
-        if(part != NULL) {
-            do {
-                size_t length = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
-                hitit += length;
-
-                part = part->pt_forw;
-            } while (part != NULL);
+        if (makeGeometry) {
+            bu_semaphore_acquire(BU_SEM_SYSCALL);
+            printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
+            printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
+            bu_semaphore_release(BU_SEM_SYSCALL);
         }
-    }
-    else {
-        hitit = rt_shootray(ap);
-    }
+
+        /* unitize before firing */
+        VUNITIZE(ap->a_ray.r_dir);
+
+        size_t hitit = 0;
+        struct partition* part;
+
+        /* Shoot the ray.
+         * If we are estimating the volume, retrieve the partition list
+         * containing the segments inside the volume of the object.
+         */
+        if (is_volume) {
+            part = rt_shootray_simple(ap, ap->a_ray.r_pt, ap->a_ray.r_dir);
+
+            // calculate the length of the segments
+            if (part != NULL) {
+                do {
+                    size_t length = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
+                    hitit += length;
+
+                    part = part->pt_forw;
+                } while (part != NULL);
+            }
+        }
+        else {
+            hitit = rt_shootray(ap);
+        }
 
 	bu_semaphore_acquire(BU_SEM_GENERAL);
 	*hitpairs += hitit;
@@ -652,44 +652,45 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 
     /* run the loop assessment */
     do {
-	if (opts->samples > 0) {
-	    // do what we're told
-	    curr_samples = opts->samples;
-	} else {
-	    // increase samples every iteration by uneven factor to avoid sampling patterns
-	    curr_samples *= pow(1.5, iteration);
-	}
+        if (opts->samples > 0) {
+            // do what we're told
+            curr_samples = opts->samples;
+        }
+        else {
+            // increase samples every iteration by uneven factor to avoid sampling patterns
+            curr_samples *= pow(1.5, iteration);
+        }
 
-	/* we keep track of total hits and total lines so we don't
-	 * ignore previous work in the estimate calculation.  the hit
-	 * count includes both the in-hit and the out-hit separately.
-	 */
-	ap->a_dist = (fastf_t)iteration;
-	size_t hits = do_one_iteration(ap, curr_samples, center, radius, opts, &total_hits_bs);
-    if (opts->volume == 0) {
-        total_samples += curr_samples;
-    }
-	total_hits += hits;
+        /* we keep track of total hits and total lines so we don't
+         * ignore previous work in the estimate calculation.  the hit
+         * count includes both the in-hit and the out-hit separately.
+         */
+        ap->a_dist = (fastf_t)iteration;
+        size_t hits = do_one_iteration(ap, curr_samples, center, radius, opts, &total_hits_bs);
+        if (opts->volume == 0) {
+            total_samples += curr_samples;
+        }
+        total_hits += hits;
 
-    if (opts->volume) {
-        curr_estimate = compute_volume(total_hits, total_hits_bs, radius);
-        bu_log("Cauchy-Crofton Volume Estimate: (%zu hitted segments / %zu total segments) = %g mm^3\n", total_hits, (size_t)((double)total_samples), curr_estimate);
-    }
-    else {
-        curr_estimate = compute_surface_area(total_hits, (double)total_samples, radius);
-        bu_log("Cauchy-Crofton Surface Area Estimate: (%zu hits / %zu lines) = %g mm^2\n", total_hits, (size_t)((double)total_samples), curr_estimate);
-    }
+        if (opts->volume) {
+            curr_estimate = compute_volume(total_hits, total_hits_bs, radius);
+            bu_log("Cauchy-Crofton Volume Estimate: (%zu hits length segments / %zu total length segments) = %g mm^3\n", (size_t)total_hits, (size_t)((double)total_samples), curr_estimate);
+        }
+        else {
+            curr_estimate = compute_surface_area(total_hits, (double)total_samples, radius);
+            bu_log("Cauchy-Crofton Surface Area Estimate: (%zu hits / %zu lines) = %g mm^2\n", (size_t)total_hits, (size_t)((double)total_samples), curr_estimate);
+        }
 
-	// threshold-based exit checks for convergence after 3 iterations
-	curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
-	prev_percent = fabs((prev1_estimate - prev2_estimate) / prev2_estimate) * 100.0;
+        // threshold-based exit checks for convergence after 3 iterations
+        curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
+        prev_percent = fabs((prev1_estimate - prev2_estimate) / prev2_estimate) * 100.0;
 
-	// bu_log("cur%%=%g, prev%%=%g, iter=%zu\n", curr_percent, prev_percent, iteration);
+        // bu_log("cur%%=%g, prev%%=%g, iter=%zu\n", curr_percent, prev_percent, iteration);
 
-	// prep next iteration
-	prev2_estimate = prev1_estimate;
-	prev1_estimate = curr_estimate;
-	iteration++;
+        // prep next iteration
+        prev2_estimate = prev1_estimate;
+        prev1_estimate = curr_estimate;
+        iteration++;
 
     } while (threshold > 0 && (curr_percent > threshold || prev_percent > threshold));
 
@@ -742,14 +743,16 @@ materials_callback(int id, size_t hits, size_t lines, void* data)
     double area = compute_surface_area(hits, lines, mdata->radius);
 
     if (mdata->densities) {
-	const char *name = analyze_densities_name(mdata->densities, id);
-	if (name) {
-	    bu_log("\t%s\t(%zu hits / %zu lines) = %.1lf mm^2\n", name, hits, lines, area);
-	} else {
-	    bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
-	}
-    } else {
-	bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
+        const char* name = analyze_densities_name(mdata->densities, id);
+        if (name) {
+            bu_log("\t%s\t(%zu hits / %zu lines) = %.1lf mm^2\n", name, hits, lines, area);
+        }
+        else {
+            bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
+        }
+    }
+    else {
+        bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
     }
 }
 
