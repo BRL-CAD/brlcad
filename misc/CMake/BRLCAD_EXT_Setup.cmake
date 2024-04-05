@@ -38,12 +38,15 @@ function(brlcad_ext_setup)
   set(BRLCAD_EXT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_build)
   set(BRLCAD_EXT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-  # If we don't have
+  # If we don't have the bext source directory, try to clone it
   if (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
     set(BRLCAD_EXT_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext)
     if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
       find_program(GIT_EXEC git REQUIRED)
-      execute_process(COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git)
+      execute_process(
+	COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
     endif (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
   endif (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
   if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
