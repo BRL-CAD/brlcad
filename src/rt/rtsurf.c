@@ -674,11 +674,11 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 
         if (opts->volume) {
             curr_estimate = compute_volume(total_hits, total_hits_bs, radius);
-            bu_log("Cauchy-Crofton Volume Estimate: (%zu hits length segments / %zu total length segments) = %g mm^3\n", (size_t)total_hits, (size_t)((double)total_samples), curr_estimate);
+            bu_log("Cauchy-Crofton Volume Estimate: (%zu hits length segments / %zu total length segments) = %g mm^3\n", (size_t)total_hits, (size_t)total_hits_bs, curr_estimate);
         }
         else {
             curr_estimate = compute_surface_area(total_hits, (double)total_samples, radius);
-            bu_log("Cauchy-Crofton Surface Area Estimate: (%zu hits / %zu lines) = %g mm^2\n", (size_t)total_hits, (size_t)((double)total_samples), curr_estimate);
+            bu_log("Cauchy-Crofton Surface Area Estimate: (%zu hits / %zu lines) = %g mm^2\n", (size_t)total_hits, (size_t)total_samples, curr_estimate);
         }
 
         // threshold-based exit checks for convergence after 3 iterations
@@ -728,7 +728,7 @@ regions_callback(const char *name, size_t hits, size_t lines, void* data)
     struct region_callback_data *rdata = (struct region_callback_data *)data;
     BU_ASSERT(rdata);
 
-    double area = compute_surface_area(hits, lines, rdata->radius);
+    double area = compute_surface_area((double)hits, (double)lines, rdata->radius);
 
     bu_log("\t%s\t(%zu hits / %zu lines) = %.1lf mm^2\n", name, hits, lines, area);
 }
@@ -740,7 +740,7 @@ materials_callback(int id, size_t hits, size_t lines, void* data)
     struct material_callback_data *mdata = (struct material_callback_data *)data;
     BU_ASSERT(mdata);
 
-    double area = compute_surface_area(hits, lines, mdata->radius);
+    double area = compute_surface_area((double)hits, (double)lines, mdata->radius);
 
     if (mdata->densities) {
         const char* name = analyze_densities_name(mdata->densities, id);
