@@ -250,6 +250,7 @@ set(librt_ignored_files
   librt_private.h
   material/materialX.cpp
   material/materialX.h
+  cut_hlbvh.h
   prcomb.c
   primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp
