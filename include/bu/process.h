@@ -149,7 +149,7 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  * undocumented.
  * FIXME: wtime is no longer used on any platforms.
  */
- BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+ BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process **pinfo, int wtime);
 
 /**
  * @brief detect whether or not a program is being run in interactive mode

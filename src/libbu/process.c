@@ -228,12 +228,12 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 }
 
 int
-bu_process_wait(int *aborted, struct bu_process *pinfo, int UNUSED(wtime))
+bu_process_wait(int *aborted, struct bu_process **pinfo, int UNUSED(wtime))
 {
     int rc = 0;
-    if (subprocess_join(pinfo->subprocess_p, &rc)) {
+    if (subprocess_join((*pinfo)->subprocess_p, &rc)) {
 	/* unsuccessful join, forcefully destroy */
-	(void)subprocess_destroy(pinfo->subprocess_p);
+	(void)subprocess_destroy((*pinfo)->subprocess_p);
     }
 
     // NOTE: if we want to maintain an 'aborted' var, we have to do some platform specific gunk
@@ -246,29 +246,29 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int UNUSED(wtime))
     }
 #else
     if (GetLastError() == ERROR_PROCESS_ABORTED || rc == BU_MSVC_ABORT_EXIT) {
-	pinfo->aborted = 1;
+	(*pinfo)->aborted = 1;
     }
 #endif
 
     if (aborted)  {
-	(*aborted) = pinfo->aborted;
+	(*aborted) = (*pinfo)->aborted;
     }
 
     /* Clean up */
-    bu_process_close(pinfo, BU_PROCESS_STDOUT);
-    bu_process_close(pinfo, BU_PROCESS_STDERR);
+    bu_process_close(*pinfo, BU_PROCESS_STDOUT);
+    bu_process_close(*pinfo, BU_PROCESS_STDERR);
 
     /* Free copy of exec args and struct allocs */
-    bu_free((void *)pinfo->cmd, "pinfo cmd copy");
+    bu_free((void *)(*pinfo)->cmd, "pinfo cmd copy");
 
-    if (pinfo->argv) {
-	for (int i = 0; i < pinfo->argc; i++) {
-	    bu_free((void *)pinfo->argv[i], "pinfo argv member");
+    if ((*pinfo)->argv) {
+	for (int i = 0; i < (*pinfo)->argc; i++) {
+	    bu_free((void *)(*pinfo)->argv[i], "pinfo argv member");
 	}
-	bu_free((void *)pinfo->argv, "pinfo argv array");
+	bu_free((void *)(*pinfo)->argv, "pinfo argv array");
     }
-    BU_PUT(pinfo->subprocess_p, struct subprocess_t);
-    BU_PUT(pinfo, struct bu_process);
+    BU_PUT((*pinfo)->subprocess_p, struct subprocess_t);
+    BU_PUT(*pinfo, struct bu_process);
 
     return rc;
 }

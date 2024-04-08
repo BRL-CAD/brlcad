@@ -1616,7 +1616,7 @@ _ged_rt_output_handler2(void *clientData, int type)
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait(&aborted, rrtp->p, 120);
+	retcode = bu_process_wait(&aborted, &rrtp->p, 120);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");
@@ -1712,7 +1712,7 @@ _ged_rt_output_handler(void *clientData, int mask)
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait(&aborted, rrtp->p, 120);
+	retcode = bu_process_wait(&aborted, &rrtp->p, 120);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");

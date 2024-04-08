@@ -60,7 +60,7 @@ int _test_read(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait(&aborted, p, 0)) {
+    if (bu_process_wait(&aborted, &p, 0)) {
 	fprintf(stderr, "bu_process_test[\"read\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -93,7 +93,7 @@ int _test_read_stderr(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait(&aborted, p, 0)) {
+    if (bu_process_wait(&aborted, &p, 0)) {
 	fprintf(stderr, "bu_process_test[\"read\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -124,7 +124,7 @@ int _test_read_flood(const char* cmd) {
 	    stderr_done = 1;
     }
 
-    if (bu_process_wait(NULL, p, 0)) {
+    if (bu_process_wait(NULL, &p, 0)) {
 	fprintf(stderr, "bu_process_test[\"read\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -143,7 +143,7 @@ int _test_exec_wait(const char* cmd) {
     // TODO: add tests to check options flags
     bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
 
-    if (bu_process_wait(NULL, p, 0)) {
+    if (bu_process_wait(NULL, &p, 0)) {
 	fprintf(stderr, "bu_process_test[\"exec_wait\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -180,7 +180,7 @@ int _test_ids(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait(NULL, p, 0)) {
+    if (bu_process_wait(NULL, &p, 0)) {
 	fprintf(stderr, "bu_process_test[\"ids\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -251,7 +251,7 @@ int _test_streams(const char* cmd) {
     bu_process_close(p, BU_PROCESS_STDOUT);
     bu_process_close(p, BU_PROCESS_STDERR);
 
-    if (bu_process_wait(NULL, p, 0) == -1) {
+    if (bu_process_wait(NULL, &p, 0) == -1) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -278,7 +278,7 @@ int _test_abort(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (!bu_process_wait(&aborted, p, 0)) {
+    if (!bu_process_wait(&aborted, &p, 0)) {
         fprintf(stderr, "bu_process_test[\"terminate\"] - wait should have reported abort code\n");
 	return PROCESS_FAIL;
     }
@@ -326,7 +326,7 @@ int _test_args(const char* cmd) {
 	}
     }
 
-    if (bu_process_wait(NULL, p, 0)) {
+    if (bu_process_wait(NULL, &p, 0)) {
         fprintf(stderr, "bu_process_test[\"args\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -352,7 +352,7 @@ int _test_alive(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait(NULL, p, 0)) {
+    if (bu_process_wait(NULL, &p, 0)) {
 	fprintf(stderr, "bu_process_test[\"alive\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -422,7 +422,7 @@ int _test_async_balanced(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait(NULL, p, 0)) {
+    if (bu_process_wait(NULL, &p, 0)) {
 	fprintf(stderr, "bu_process_test[\"async_bal\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -465,7 +465,7 @@ int _test_async_unbalanced(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait(NULL, p, 0)) {
+    if (bu_process_wait(NULL, &p, 0)) {
 	fprintf(stderr, "bu_process_test[\"async_unbal\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
