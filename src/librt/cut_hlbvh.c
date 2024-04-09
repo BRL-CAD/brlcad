@@ -686,6 +686,38 @@ hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centro
 }
 
 
+struct bvh_flat_node *
+flatten_bvh_tree_recursive(int *next_unused, struct bvh_flat_node *flat_nodes, long total_nodes, 
+			   const struct bvh_build_node *node, long depth)
+{
+    int my_offset = *next_unused;
+    struct bvh_flat_node *linear_node;
+
+    BU_ASSERT(my_offset < total_nodes);
+    ++*next_unused;
+    linear_node = &flat_nodes[my_offset];
+
+    VMOVE(&linear_node->bounds[0], &node->bounds[0]);
+    VMOVE(&linear_node->bounds[3], &node->bounds[3]);
+    if (node->n_primitives > 0) {
+	BU_ASSERT(!node->children[0] && !node->children[1]);
+	BU_ASSERT(node->n_primitives < 65536);
+        linear_node->data.first_prim_offset = node->first_prim_offset;
+        linear_node->n_primitives = node->n_primitives;
+    } else {
+        /* Create interior flattened BVH node */
+        // We don't copy the axis because that isn't used in the traversal.
+	// If it is used in the traversal, then bvh_flat_node.n_primitives
+	// should be resized to a ushort and the axis put in the remaining
+	// space
+        linear_node->n_primitives = 0;
+	flatten_bvh_tree_recursive(next_unused, flat_nodes, total_nodes, node->children[0], depth + 1);
+        linear_node->data.other_child =
+	    flatten_bvh_tree_recursive(next_unused, flat_nodes, total_nodes, node->children[1], depth + 1);
+    }
+    return linear_node;
+}
+
 #ifdef USE_OPENCL
 static cl_int
 flatten_bvh_tree(cl_int *offset, struct clt_linear_bvh_node *nodes, long total_nodes,

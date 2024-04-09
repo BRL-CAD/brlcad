@@ -7,6 +7,15 @@ struct bvh_build_node {
     uint8_t split_axis;
 };
 
+struct bvh_flat_node {
+    fastf_t bounds[6];
+    long n_primitives;
+    union {
+	long first_prim_offset;
+	struct bvh_flat_node *other_child;
+    } data;
+};
+
 #ifndef HLBVH_IMPLEMENTATION
 
 RT_EXPORT extern struct bu_pool *
