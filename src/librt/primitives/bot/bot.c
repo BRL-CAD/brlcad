@@ -456,7 +456,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     // implicit return values
     long nodes_created = 0;
     long *ordered_faces = NULL;
-    struct bvh_build_node *root = hlbvh_create(4, pool, centroids, bounds, &nodes_created,
+    struct bvh_build_node *root = hlbvh_create(rt_bot_mintie, pool, centroids, bounds, &nodes_created,
 					       bot_ip->num_faces, &ordered_faces);
     // do we want to flatten the nodes as in cut_hlbvh.c:flatten_bvh_tree?
     bu_free(centroids, "bot centroids");
