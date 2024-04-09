@@ -27,8 +27,7 @@ hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centro
 	     const long n_primitives, long **ordered_prims);
 
 RT_EXPORT struct bvh_flat_node *
-flatten_bvh_tree_recursive(int *next_unused, struct bvh_flat_node *flat_nodes, long total_nodes, 
-			   const struct bvh_build_node *node, long depth);
+hlbvh_flatten(const struct bvh_build_node *root, long nodes_created);
 
 RT_EXPORT void
 hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_tris, size_t* num_check_tris);

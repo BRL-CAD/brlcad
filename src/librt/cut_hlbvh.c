@@ -610,6 +610,15 @@ flatten_bvh_tree_recursive(int *next_unused, struct bvh_flat_node *flat_nodes, l
 }
 
 
+struct bvh_flat_node *
+hlbvh_flatten(const struct bvh_build_node *root, long nodes_created)
+{
+    struct bvh_flat_node *new_root = bu_malloc(nodes_created * sizeof(struct bvh_flat_node), "bvh flat nodes");
+    int next_unused = 0;
+    return flatten_bvh_tree_recursive(&next_unused, new_root, nodes_created, root, 0);
+}
+
+
 // TODO: do something better than a list
 // in hlbvh_shot
 struct prim_list {
@@ -617,8 +626,10 @@ struct prim_list {
     long first_prim_offset, n_primitives;
 };
 
-void while_populate_leaf_list(struct bvh_build_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
+void while_populate_leaf_list_raw(struct bvh_build_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
 {
+    // For maximum speed, move this code out and specialize
+    // An example can be seen in src/librt/primitives/bot/bot.c:bot_shot_hlbvh()
     struct bvh_build_node *stack_node[128];
     unsigned char stack_child_index[128];
     int stack_ind = 0;
@@ -686,18 +697,13 @@ void while_populate_leaf_list(struct bvh_build_node *root, struct xray* rp, stru
 void
 hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
 {
-    // TODO: do something better than a list here
-    // How do we return a collection of primatives
-    // when we don't know how many we're going to
-    // intersect? The best solution would be to
-    // be able to move this code out of this file
     size_t prim_accum = 0;
     struct prim_list *leafs = NULL;
     BU_GET(leafs, struct prim_list);
     BU_LIST_INIT(&(leafs->l));
     leafs->first_prim_offset = -1;
     leafs->n_primitives = -1;
-    while_populate_leaf_list(root, rp, leafs, &prim_accum);
+    while_populate_leaf_list_raw(root, rp, leafs, &prim_accum);
     *num_check_prims = prim_accum;
     if (prim_accum == 0) {
 	BU_PUT(leafs, struct prim_list);
@@ -718,6 +724,110 @@ hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_prims,
     BU_PUT(leafs, struct prim_list);
     BU_ASSERT(index == prim_accum);
 }
+
+
+void while_populate_leaf_list_flat(struct bvh_flat_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
+{
+    // For maximum speed, move this code out and specialize
+    // An example can be seen in src/librt/primitives/bot/bot.c:bot_shot_hlbvh()
+    struct bvh_flat_node *stack_node[128];
+    unsigned char stack_child_index[128];
+    int stack_ind = 0;
+    stack_node[stack_ind] = root;
+    stack_child_index[stack_ind] = 0;
+    vect_t inverse_r_dir;
+    VINVDIR(inverse_r_dir, rp->r_dir);
+	
+    while (stack_ind >= 0) {
+	if (stack_child_index[stack_ind] >= 2) {
+	    stack_ind--;
+	    continue;
+	}
+	struct bvh_flat_node* node = stack_node[stack_ind];
+	// check bounds if it's the first time in this node
+	if (!stack_child_index[stack_ind]) {
+	    // TODO: do we want to handle NaNs correctly?
+	    point_t lows_t, highs_t, low_ts, high_ts;
+
+	    VSUB2( lows_t, &node->bounds[0], rp->r_pt);
+	    VSUB2(highs_t, &node->bounds[3], rp->r_pt);
+	    
+	    VELMUL( lows_t,  lows_t, inverse_r_dir);
+	    VELMUL(highs_t, highs_t, inverse_r_dir);
+	
+	    VMOVE( low_ts, lows_t);
+	    VMOVE(high_ts, lows_t);
+	    VMINMAX(low_ts, high_ts, highs_t);
+	
+	    fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
+	    fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
+	    if ((high_t < -1.0) | (low_t > high_t)) {
+		stack_ind--;
+		continue;
+	    }
+	}
+	if (node->n_primitives > 0) {
+	    // add the leaf values into a list
+	    struct prim_list* entry;
+	    BU_GET(entry, struct prim_list);
+	    entry->n_primitives = node->n_primitives;
+	    entry->first_prim_offset = node->data.first_prim_offset;
+	    BU_LIST_PUSH(&(leafs->l), &(entry->l));
+	    *prims_so_far += node->n_primitives;
+	    stack_ind--;
+	    continue;
+	}
+	// we hit the bounds and are not in a leaf
+	// so we do the next child of this node
+	
+	// stack_child_index[stack_ind] either == 0 or == 1
+	// because of the guard at the top of the loop
+	stack_node[stack_ind+1] = (stack_child_index[stack_ind]) ? (node->data.other_child) : (node +1);
+	stack_child_index[stack_ind] += 1;
+	stack_child_index[stack_ind+1] = 0;
+	stack_ind++;
+    }
+}
+
+
+/**
+ * This is a naive shot function that returns an allocated 
+ * list of primative indexes that correspond with the indexes
+ * returned from ordered_prims in hlbvh_create(). 
+ * It is not fast, but we're keeping it around to facilitate
+ * prototyping code for other primatives.
+ */
+void
+hlbvh_shot_flat(struct bvh_flat_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
+{
+    size_t prim_accum = 0;
+    struct prim_list *leafs = NULL;
+    BU_GET(leafs, struct prim_list);
+    BU_LIST_INIT(&(leafs->l));
+    leafs->first_prim_offset = -1;
+    leafs->n_primitives = -1;
+    while_populate_leaf_list_flat(root, rp, leafs, &prim_accum);
+    *num_check_prims = prim_accum;
+    if (prim_accum == 0) {
+	BU_PUT(leafs, struct prim_list);
+	return;
+    }
+    *check_prims = (long*)bu_calloc(prim_accum, sizeof(long), "hlbvh primative list");
+    size_t index = 0;
+    struct prim_list *entry;
+    while (BU_LIST_WHILE(entry, prim_list, &(leafs->l))) {
+	for (int i = 0; i < entry->n_primitives; i++) {
+	    (*check_prims)[index] = entry->first_prim_offset + i;
+	    index++;
+	}
+	
+	BU_LIST_DEQUEUE(&(entry->l));
+	BU_PUT(entry, struct prim_list);
+    }
+    BU_PUT(leafs, struct prim_list);
+    BU_ASSERT(index == prim_accum);
+}
+
 
 #ifdef USE_OPENCL
 static cl_int
