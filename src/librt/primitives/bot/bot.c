@@ -366,11 +366,15 @@ typedef struct _hit_da {
     } while (0)
 
 
-
+#define BOT_BVH_FLATTEN 0
 
 struct _tie_s {
+#if BOT_BVH_FLATTEN
+    struct bvh_flat_node *root;
+#else
     struct bu_pool *pool;
     struct bvh_build_node *root;
+#endif //BOT_BVH_FLATTEN
     triangle_s *tris;
     fastf_t *vertex_normals;
     hit_da *hit_arrays_per_cpu;
@@ -456,11 +460,16 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     // implicit return values
     long nodes_created = 0;
     long *ordered_faces = NULL;
-    struct bvh_build_node *root = hlbvh_create(rt_bot_mintie, pool, centroids, bounds, &nodes_created,
+    struct bvh_build_node *build_root = hlbvh_create(rt_bot_mintie, pool, centroids, bounds, &nodes_created,
 					       bot_ip->num_faces, &ordered_faces);
     // do we want to flatten the nodes as in cut_hlbvh.c:flatten_bvh_tree?
     bu_free(centroids, "bot centroids");
     bu_free(bounds, "bot bounds");
+
+#if BOT_BVH_FLATTEN
+    struct bvh_flat_node *flat_root = hlbvh_flatten(build_root, nodes_created);
+    bu_pool_delete(pool);
+#endif //BOT_BVH_FLATTEN
 	
     int do_normals = (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) 
 		  && (bot_ip->bot_flags & RT_BOT_USE_NORMALS) 
@@ -528,16 +537,20 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	
     struct _tie_s *tie;
     BU_GET(tie, struct _tie_s);
+#if BOT_BVH_FLATTEN
+    tie->root = flat_root;
+#else
     tie->pool = pool;
-    tie->root = root;
+    tie->root = build_root;
+#endif //BOT_BVH_FLATTEN
     tie->tris = tris;
     tie->vertex_normals = tri_norms;
     tie->num_cpus = bu_avail_cpus();
     tie->hit_arrays_per_cpu = (hit_da *) bu_calloc(tie->num_cpus, sizeof(hit_da), "thread-local bot hit arrays");
     bot->tie = (void*) tie;
 	
-    // struct bvh_build_node is a pun for fastf_t[6] which are the bounds
-    fastf_t *min = (fastf_t *)root;
+    // struct bvh_build_node and struct bvh_flat_node are puns for fastf_t[6] which are the bounds
+    fastf_t *min = (fastf_t *)tie->root;
     fastf_t *max = &min[3];
 
     VMOVE(stp->st_min, min);
@@ -578,7 +591,7 @@ rt_bot_makesegs(struct hit *hits,
 
 
 void
-bot_shot_hlbvh(struct bvh_build_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits)
+bot_shot_hlbvh_raw(struct bvh_build_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits)
 {
     struct bvh_build_node *stack_node[128];
     unsigned char stack_child_index[128];
@@ -702,7 +715,11 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     hit_da *hits_da = &tie->hit_arrays_per_cpu[thread_ind];
     hits_da->count = 0;
     
-    bot_shot_hlbvh(tie->root, rp, tie->tris, bot->bot_ntri, hits_da);
+#if BOT_BVH_FLATTEN
+    bot_shot_hlbvh_flat(tie->root, rp, tie->tris, bot->bot_ntri, hits_da);
+#else
+    bot_shot_hlbvh_raw(tie->root, rp, tie->tris, bot->bot_ntri, hits_da);
+#endif //BOT_BVH_FLATTEN
 
     if (hits_da->count == 0) {
 	return 0;
@@ -856,7 +873,11 @@ rt_bot_free(struct soltab *stp)
     
     if (bot && bot->tie) {
 	struct _tie_s *tie = (struct _tie_s*)bot->tie;
+#if BOT_BVH_FLATTEN
+	bu_free(tie->root, "bot bvh flat nodes");
+#else
 	bu_pool_delete(tie->pool); // this takes care of pool and root
+#endif //BOT_BVH_FLATTEN
 	bu_free(tie->tris, "bot triangles");
 	if (tie->vertex_normals) {
 	    bu_free(tie->vertex_normals, "bot normals");
