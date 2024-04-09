@@ -18,15 +18,22 @@ struct bvh_flat_node {
 
 #ifndef HLBVH_IMPLEMENTATION
 
-RT_EXPORT extern struct bu_pool *
+RT_EXPORT struct bu_pool *
 hlbvh_init_pool(size_t n_primatives);
 
-RT_EXPORT extern struct bvh_build_node *
+RT_EXPORT struct bvh_build_node *
 hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
 	     const fastf_t *bounds_prims, long *total_nodes,
 	     const long n_primitives, long **ordered_prims);
 
+RT_EXPORT struct bvh_flat_node *
+flatten_bvh_tree_recursive(int *next_unused, struct bvh_flat_node *flat_nodes, long total_nodes, 
+			   const struct bvh_build_node *node, long depth);
+
 RT_EXPORT void
-hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_tris, size_t* num_check_tris);
+hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_tris, size_t* num_check_tris);
+
+RT_EXPORT void
+hlbvh_shot_flat(struct bvh_flat_node* root, struct xray* rp, long** check_tris, size_t* num_check_tris);
 
 #endif // HLBVH_IMPLEMENTATION

@@ -684,7 +684,7 @@ void while_populate_leaf_list(struct bvh_build_node *root, struct xray* rp, stru
  * prototyping code for other primatives.
  */
 void
-hlbvh_shot(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
+hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
 {
     // TODO: do something better than a list here
     // How do we return a collection of primatives
