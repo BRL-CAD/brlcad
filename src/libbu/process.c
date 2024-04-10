@@ -244,11 +244,6 @@ bu_process_wait(int *aborted, struct bu_process **pinfo, int UNUSED(wtime))
 
     // NOTE: if we want to maintain an 'aborted' var, we have to do some platform specific gunk
 #ifndef _WIN32
-    int rpid;
-    int retcode = 0;
-    while ((rpid = wait(&retcode)) != subprocess_pid((*pinfo)->subprocess_p) && rpid != -1) {
-    }
-    rc = retcode;
     if (rc) {
 	(*pinfo)->aborted = 1;
     }
