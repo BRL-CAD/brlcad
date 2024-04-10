@@ -5747,7 +5747,10 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
 	    /* bot->normals array already exists, use those instead */
 	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-	} else if (UNLIKELY(bg_make_plane_3pnts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
+	} else if (UNLIKELY(bg_make_plane_3pnts(face.plane_eqn, 
+						(&bot->vertices[(a) * ELEMENTS_PER_POINT]), 
+						(&bot->vertices[(b) * ELEMENTS_PER_POINT]), 
+						(&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
 	    continue;
 	}
 
