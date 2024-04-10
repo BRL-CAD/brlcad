@@ -158,6 +158,15 @@ subprocess_stdout(const struct subprocess_s *const process);
 subprocess_pure subprocess_weak FILE *
 subprocess_stderr(const struct subprocess_s *const process);
 
+/// @brief Close the standard input file for a process.
+/// @param process The process to query.
+/// @return On success 0 is returned
+///
+/// Used when subprocess is expecting to read from stdin until it is closed.
+/// The file can not be opened again once it is closed
+subprocess_pure subprocess_weak int
+subprocess_close_stdin(struct subprocess_s *const process);
+
 /// @brief Wait for a process to finish execution.
 /// @param process The process to wait for.
 /// @param out_return_code The return code of the returned process (can be
@@ -952,6 +961,16 @@ FILE *subprocess_stderr(const struct subprocess_s *const process) {
   } else {
     return SUBPROCESS_NULL;
   }
+}
+
+int subprocess_close_stdin(struct subprocess_s *const process) {
+    if (process->stdin_file) {
+        int close_status = fclose(process->stdin_file);
+        process->stdin_file = SUBPROCESS_NULL;
+        return close_status;
+    }
+
+    return 0;
 }
 
 int subprocess_join(struct subprocess_s *const process,
