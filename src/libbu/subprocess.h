@@ -226,6 +226,11 @@ subprocess_read_stderr(struct subprocess_s *const process, char *const buffer,
 /// @return If the process is still alive non-zero is returned.
 subprocess_weak int subprocess_alive(struct subprocess_s *const process);
 
+/// @brief Returns the current subprocesses id
+/// @param process The process to check.
+/// @return The processes id
+subprocess_weak pid_t subprocess_pid(struct subprocess_s *const process);
+
 #if defined(__cplusplus)
 #define SUBPROCESS_CAST(type, x) static_cast<type>(x)
 #define SUBPROCESS_PTR_CAST(type, x) reinterpret_cast<type>(x)
@@ -1182,6 +1187,14 @@ unsigned subprocess_read_stderr(struct subprocess_s *const process,
   }
 
   return SUBPROCESS_CAST(unsigned, bytes_read);
+#endif
+}
+
+pid_t subprocess_pid(struct subprocess_s *const process) {
+#if defined(_WIN32)
+    return process->pid;
+#else
+    return process->child;
 #endif
 }
 
