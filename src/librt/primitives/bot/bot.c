@@ -330,7 +330,7 @@ typedef struct _hit_da {
     struct hit * items;
 } hit_da;
 
-#define DA_INIT_CAPACITY 128
+#define DA_INIT_CAPACITY 127
 
 // Append one item to a dynamic array
 #define DA_APPEND(da, item)								\
@@ -969,9 +969,8 @@ rt_bot_plate_segs(struct hit *hits,
 
 
 int 
-rt_bot_surface_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+rt_bot_surface_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct application *ap, struct seg *seghead)
 {
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     register struct seg *segp;
     register ssize_t i;
     static const int IN_SEG = 0;
@@ -1529,7 +1528,7 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
     }
 	
     if (bot->bot_mode == RT_BOT_SURFACE) {
-	return rt_bot_surface_segs(hits, nhits, stp, rp, ap, seghead);
+	return rt_bot_surface_segs(hits, nhits, stp, ap, seghead);
     }
 	
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
