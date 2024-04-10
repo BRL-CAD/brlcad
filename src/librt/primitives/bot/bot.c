@@ -1005,8 +1005,7 @@ rt_bot_unoriented_segs(struct hit *hits,
 		       struct soltab *stp,
 		       struct xray *rp,
 		       struct application *ap,
-		       struct seg *seghead,
-		       struct bot_specific *bot)
+		       struct seg *seghead)
 {
     register struct seg *segp;
     register size_t i, j;
@@ -1534,7 +1533,7 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
 	
     if (bot->bot_orientation == RT_BOT_UNORIENTED) {
-	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap, seghead, bot);
+	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap, seghead);
     }
 
     return rt_bot_oriented_segs(hits, nhits, stp, rp, ap, seghead, psp);
