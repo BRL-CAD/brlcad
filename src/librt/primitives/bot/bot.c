@@ -677,6 +677,98 @@ bot_shot_hlbvh_raw(struct bvh_build_node *root, struct xray* rp, triangle_s *tri
     }
 }
 
+
+void
+bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits)
+{
+    struct bvh_flat_node *stack_node[128];
+    unsigned char stack_child_index[128];
+    int stack_ind = 0;
+    stack_node[stack_ind] = root;
+    stack_child_index[stack_ind] = 0;
+    vect_t inverse_r_dir;
+    VINVDIR(inverse_r_dir, rp->r_dir);
+	
+    while (stack_ind >= 0) {
+	if (stack_child_index[stack_ind] >= 2) {
+	    stack_ind--;
+	    continue;
+	}
+	struct bvh_flat_node* node = stack_node[stack_ind];
+	// check bounds if it's the first time in this node
+	if (!stack_child_index[stack_ind]) {
+	    // TODO: do we want to handle NaNs correctly?
+	    point_t lows_t, highs_t, low_ts, high_ts;
+
+	    VSUB2( lows_t, &node->bounds[0], rp->r_pt);
+	    VSUB2(highs_t, &node->bounds[3], rp->r_pt);
+	    
+	    VELMUL( lows_t,  lows_t, inverse_r_dir);
+	    VELMUL(highs_t, highs_t, inverse_r_dir);
+	
+	    VMOVE( low_ts, lows_t);
+	    VMOVE(high_ts, lows_t);
+	    VMINMAX(low_ts, high_ts, highs_t);
+	
+	    fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
+	    fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
+	    if ((high_t < -1.0) | (low_t > high_t)) {
+		stack_ind--;
+		continue;
+	    }
+	}
+	if (node->n_primitives > 0) {
+	    size_t end = node->data.first_prim_offset + node->n_primitives;
+	    BU_ASSERT(end <= ntris);
+	    // need to go through prims in leaf node
+	    for (size_t i = node->data.first_prim_offset; i < end; i++) {
+		triangle_s* tri = &tris[i];
+		vect_t wn, wxb, xp;
+		VSCALE(wn, tri->face_norm, tri->face_norm_scalar);
+		fastf_t dn = VDOT(wn, rp->r_dir);
+		fastf_t abs_dn = dn >= 0.0 ? dn : (-dn);
+		if (abs_dn < BOT_MIN_DN) continue;
+		VSUB2(wxb, tri->A, rp->r_pt);
+		VCROSS(xp, wxb, rp->r_dir);
+		fastf_t beta = VDOT(tri->AB, xp);
+		fastf_t gamma = VDOT(tri->AC, xp);
+		 beta = (dn > 0.0) ?  -beta :  beta;
+		gamma = (dn < 0.0) ? -gamma : gamma;
+		if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) ) continue;
+		// we calculate beta and gamma first, because 
+		// beta is associated with point B and gamma is 
+		// associated with point C
+		fastf_t dist = VDOT(wxb, wn) / dn;
+		// fill out hitdata
+		struct hit cur_hit = {0};
+		// we copy what g_bot_include.c does right now
+		// even if we don't really understand why
+		cur_hit.hit_magic = RT_HIT_MAGIC;
+		cur_hit.hit_dist = dist;
+		cur_hit.hit_vpriv[X] = VDOT(tri->face_norm, rp->r_dir);
+		cur_hit.hit_vpriv[Y] = gamma / abs_dn;
+		cur_hit.hit_vpriv[Z] =  beta / abs_dn;
+		cur_hit.hit_private = tri;
+		cur_hit.hit_surfno = tri->face_id;
+		cur_hit.hit_rayp = rp;
+		DA_APPEND(hits, cur_hit);
+	    }
+	    stack_ind--;
+	    continue;
+	}
+	// we hit the bounds and are not in a leaf
+	// so we do the next child of this node
+	
+	// stack_child_index[stack_ind] either == 0 or == 1
+	// because of the guard at the top of the loop
+	stack_node[stack_ind+1] = (stack_child_index[stack_ind]) ? (node->data.other_child) : (node +1);
+	stack_child_index[stack_ind] += 1;
+	stack_child_index[stack_ind+1] = 0;
+	stack_ind++;
+    }
+}
+
+
 /**
  * Intersect a ray with a bot.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
