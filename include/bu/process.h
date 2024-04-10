@@ -138,6 +138,7 @@ BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *
  * exposed to parameters not relevant to them.
  */
 BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
+BU_EXPORT extern void bu_process_exec_(struct bu_process **info, const char *cmd, int argc, const char **argv, int options);
 
 
 /**

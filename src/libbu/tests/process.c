@@ -404,7 +404,7 @@ int _test_async_balanced(const char* cmd) {
     int timed_out = 0;
 
     // subprocess_option_enable_async = 0x4
-    bu_process_create(&p, cmd, 2, (const char**)run_av, 0x4);
+    bu_process_exec_(&p, cmd, 2, (const char**)run_av, 0x4);
 
     // read for up to 2 seconds
     int64_t start_time = bu_gettime();
@@ -447,7 +447,7 @@ int _test_async_unbalanced(const char* cmd) {
     int timed_out = 0;
 
     // subprocess_option_enable_async = 0x4
-    bu_process_create(&p, cmd, 2, (const char**)run_av, 0x4);
+    bu_process_exec_(&p, cmd, 2, (const char**)run_av, 0x4);
 
     // read for up to 2 seconds
     int64_t start_time = bu_gettime();

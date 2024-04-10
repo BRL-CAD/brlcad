@@ -69,8 +69,10 @@ struct bu_process {
 void
 bu_process_close(struct bu_process *pinfo, bu_process_io_t stream_type)
 {
+    if (stream_type == BU_PROCESS_STDIN)
+	(void)subprocess_close_stdin(pinfo->subprocess_p);
+
     /* we're not actually opening anything with bu_process_open */
-    return;
 }
 
 
@@ -97,7 +99,7 @@ bu_process_open(struct bu_process *pinfo, bu_process_io_t stream_type)
 int
 bu_process_fileno(struct bu_process *pinfo, bu_process_io_t stream_type)
 {
-    if (!pinfo)
+    if (!pinfo || !pinfo->subprocess_p)
 	return -1;
 
     switch (stream_type)
@@ -176,7 +178,7 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_
 
 
 void
-bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window)
+bu_process_exec_(struct bu_process **p, const char *cmd, int argc, const char **argv, int options)
 {
     if (!p || !cmd)
 	return;
@@ -216,22 +218,26 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     (*p)->aborted = 0;
 
+    // TODO: return whether process was created successfully?
+    subprocess_create(argv, options, (*p)->subprocess_p);
+}
+
+void
+bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window)
+{
     /* match out_eql_err and hide_window flags to subprocess options */
-    // NOTE: we probably should collapse those into an 'options' int, and support all of subprocess.h options
     int options = 0;
-    options |= subprocess_option_enable_async;
     if (out_eql_err) options |= subprocess_option_combined_stdout_stderr;
     if (hide_window) options |= subprocess_option_no_window;
 
-    // TODO: return whether process was created successfully?
-    subprocess_create(argv, options, (*p)->subprocess_p);
+    bu_process_exec_(p, cmd, argc, argv, options);
 }
 
 int
 bu_process_wait(int *aborted, struct bu_process **pinfo, int UNUSED(wtime))
 {
     int rc = 0;
-    if (subprocess_join((*pinfo)->subprocess_p, &rc)) {
+    if ((*pinfo)->subprocess_p && subprocess_join((*pinfo)->subprocess_p, &rc)) {
 	/* unsuccessful join, forcefully destroy */
 	(void)subprocess_destroy((*pinfo)->subprocess_p);
     }
@@ -314,7 +320,10 @@ bu_process_pending(int fd)
 int
 bu_process_alive(struct bu_process *pinfo)
 {
-    return subprocess_alive(pinfo->subprocess_p);
+    if (pinfo && pinfo->subprocess_p)
+	return subprocess_alive(pinfo->subprocess_p);
+
+    return 0;
 }
 
 int
