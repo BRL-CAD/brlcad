@@ -1102,9 +1102,8 @@ rt_bot_unoriented_segs(struct hit *hits,
 
 
 int
-rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
+rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     register struct seg *segp;
     register ssize_t i;
     static const int IN_SEG = 0;
@@ -1536,7 +1535,7 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
 	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap, seghead);
     }
 
-    return rt_bot_oriented_segs(hits, nhits, stp, rp, ap, seghead, psp);
+    return rt_bot_oriented_segs(hits, nhits, stp, ap, seghead, psp);
 }
 
 
