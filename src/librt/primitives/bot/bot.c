@@ -337,8 +337,11 @@ typedef struct _hit_da {
     do {										\
 	if ((da)->count >= (da)->capacity) {						\
 	    (da)->capacity = (da)->capacity == 0 ? DA_INIT_CAPACITY : (da)->capacity*2;	\
+_Pragma("GCC diagnostic push")								\
+_Pragma("GCC diagnostic ignored \"-Wc++-compat\"")					\
 	    (da)->items = bu_realloc((da)->items, (da)->capacity*sizeof(*(da)->items),	\
 				     "DA realloc __FILE__: __LINE__" );			\
+_Pragma("GCC diagnostic pop")	     							\
 	    BU_ASSERT((da)->items != NULL);						\
 	}										\
 											\
@@ -357,8 +360,11 @@ typedef struct _hit_da {
 	    while ((da)->count + (new_items_count) > (da)->capacity) {				\
 		(da)->capacity *= 2;								\
 	    }											\
+_Pragma("GCC diagnostic push")									\
+_Pragma("GCC diagnostic ignored \"-Wc++-compat\"")						\
 	    (da)->items = bu_realloc((da)->items, (da)->capacity*sizeof(*(da)->items),		\
 				     "DA realloc __FILE__: __LINE__" );				\
+_Pragma("GCC diagnostic pop")	     								\
 	    BU_ASSERT((da)->items != NULL);							\
 	}											\
 	memcpy((da)->items + (da)->count, (new_items), (new_items_count)*sizeof(*(da)->items)); \
