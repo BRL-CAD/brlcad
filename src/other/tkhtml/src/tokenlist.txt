@@ -1,0 +1,335 @@
+#
+# $Revision$
+#
+# tokenlist.tcl -- 
+#
+#     This file contains raw data used to build a database of tag
+#     information used by tkhtml at runtime. Most of the information in
+#     this file comes from the SGML specification of the various versions
+#     of the HTML language. Also, some html tags require a special C
+#     structure to be allocated for some specific use. This file identifies
+#     these tags.
+#
+#     In an HTML document, some elements have implicit close tags (some
+#     also have optional open tags, but this is handled entirely in
+#     htmltree.c). To build the correct document tree from an HTML file
+#     tkhtml needs to know about this. So this file contains enough
+#     information to allow implicit close tags to be determined. 
+#
+#     The rules for implicit closes in HTML are summarised in the 
+#     following table:
+#
+#     Tag        | Allowed content
+#     -------------------------------
+#     <p>        | %inline only.
+#     <colgroup> | <col> only.
+#     <dd>       | %flow
+#     <dt>       | %inline only.
+#     <li>       | %flow
+#     <option>   | #PCDATA only.
+#     <td>       | %flow
+#     <tfoot>    | <tr> only.
+#     <th>       | %flow
+#     <thead>    | <tr> only
+#     <tr>       | <TH> or <TD> only.
+#
+#----------------------------------------------------------------------------
+# Copyright (c) 2005 Eolas Technologies Inc.
+# All rights reserved.
+#
+# This Open Source project was made possible through the financial support
+# of Eolas Technologies Inc.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of the <ORGANIZATION> nor the names of its
+#       contributors may be used to endorse or promote products derived from
+#       this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+###########################################################################
+proc TAG {args} {
+    lappend ::tagscript [concat _TAG $args]
+}
+#
+# File Format:
+#
+#     This file is sourced by a Tcl interpreter. The global 'TAG'
+#     command is used to add a new tag to the internal database. The
+#     Tcl script outputs C-code which is used to build a runtime
+#     version of the same database.
+#
+#     TAG tag-name 
+#         ?-content (content function)?
+#         ?-flow (inline|block)?
+#
+#         ?-head?
+#         ?-body?
+#         ?-frameset?
+#
+#         ?-pcdata?
+#
+TAG a -flow inline -content HtmlAnchorContent
+# TAG abbr
+# TAG acronym
+TAG address
+TAG applet -flow inline
+TAG area -content HtmlEmptyContent
+TAG base -content HtmlEmptyContent             
+TAG basefont
+TAG b -flow inline
+# TAG bdo
+TAG big -flow inline
+TAG blockquote -flow block
+TAG body       
+TAG br -content HtmlEmptyContent -flow inline
+TAG button
+TAG caption 
+TAG center -flow block
+TAG cite -flow inline
+TAG code -flow inline
+# TAG col
+# TAG colgroup -content HtmlColgroupContent
+TAG dd -content HtmlLiContent
+# TAG del
+TAG dfn -flow inline
+TAG dir -flow block -content HtmlUlContent
+TAG div -flow block
+TAG dl -flow block -content HtmlDlContent
+TAG dt -content HtmlLiContent
+TAG em -flow inline
+TAG fieldset -flow inline
+TAG font -flow inline
+TAG form -flow block -content HtmlFormContent
+TAG frame -content HtmlEmptyContent
+TAG frameset
+TAG h1 -flow block
+TAG h2 -flow block
+TAG h3 -flow block
+TAG h4 -flow block
+TAG h5 -flow block
+TAG h6 -flow block
+TAG head -content HtmlHeadContent
+TAG hr -content HtmlEmptyContent -flow block
+TAG html                                
+TAG i -flow inline
+TAG iframe ;# -content HtmlEmptyContent
+TAG img -content HtmlEmptyContent -flow inline
+TAG input -content HtmlEmptyContent -flow inline
+TAG isindex -flow block -content HtmlEmptyContent
+TAG kbd -flow inline
+TAG label -flow inline
+TAG legend -flow inline
+TAG li -content HtmlLiContent
+TAG link -content HtmlEmptyContent  
+TAG map -flow inline
+TAG menu -flow block -content HtmlUlContent
+TAG meta -content HtmlEmptyContent 
+TAG noframes
+TAG noscript                            
+TAG object
+TAG ol -flow block -content HtmlUlContent
+# TAG optgroup
+TAG option -content HtmlPcdataContent -flow inline
+TAG p -flow block -content HtmlInlineContent
+TAG param -content HtmlEmptyContent
+TAG pre -flow block
+# TAG q
+TAG s -flow inline
+TAG samp -flow inline
+TAG script -content HtmlEmptyContent -flow inline
+TAG select -flow inline
+TAG small -flow inline
+TAG span -flow inline
+TAG strike -flow inline
+TAG strong -flow inline
+TAG style -content HtmlEmptyContent
+TAG sub -flow inline
+TAG sup -flow inline
+
+# Note: In "quirks mode", according to both Opera and Gecko, you can nest a
+# <table> tag inside of a <p>. The results pages from google look a bit
+# better if this is the case too. For now though, operate in strict mode only.
+#
+# TODO: Check the IE behaviour.
+TAG table -flow block -content HtmlTableContent
+# TAG table -content HtmlTableContent
+
+TAG tbody
+TAG td -content HtmlTableCellContent
+TAG textarea -flow inline -pcdata
+TAG tfoot
+TAG th -content HtmlTableCellContent
+TAG thead
+TAG title
+TAG tr -content HtmlTableRowContent
+TAG tt -flow inline
+TAG u -flow inline
+TAG ul -flow block -content HtmlUlContent
+TAG var -flow inline
+
+#     The tags listed above are the complete set of HTML 4.01 tags. Some
+#     are commented out because we don't support them in any way.
+#
+#     Tkhtml also supports the tags below. They are no longer inluded
+#     in the standard as of HTML 4.01. Supporting these tags is a low
+#     priority.
+#
+TAG comment
+TAG embed -content HtmlEmptyContent
+TAG listing                             
+TAG marquee                             
+TAG nextid -content HtmlEmptyContent             
+TAG nobr -flow inline
+TAG noembed                              
+TAG plaintext -content HtmlInlineContent             
+TAG wbr -content HtmlEmptyContent -flow inline
+TAG xmp 
+TAG bgsound -content HtmlEmptyContent 
+
+###########################################################################
+# Below this line is the engine for processing the database declared 
+# above. We produce a header file (htmltokens.h) and an implementation 
+# file (htmltokens.c).
+#
+
+#-------------------------------------------------------------------------
+# shift --
+#
+#         shift LISTVAR
+#
+#     This is a helper proc for [_TAG]. The argument is the name of a 
+#     list variable in the callers context. This proc returns and removes 
+#     the first element of that list. i.e: 
+#    
+#         $ set abc {a b c}
+#         {a b c}
+#         $ shift abc
+#         a
+#         $ set abc
+#         {b c}
+#
+proc shift {list} {
+    upvar $list l
+    set ret [lindex $l 0]
+    set l [lrange $l 1 end]
+    return $ret
+}
+
+set ::nextfreeconst 0
+proc _TAG {args} {
+
+    set tag [lindex $args 0]
+
+    # Parse the arguments. Default values are all zero.
+    set flow 0
+    set pcdata 0
+    set empty 0
+    set xClose 0
+
+    while {[llength $args]} {
+        switch -exact -- [shift args] {
+            -flow {
+                 set flow HTMLTAG_[string toupper [shift args]]
+            }
+            -content {
+                 set xClose [shift args]
+            }
+            -pcdata {
+                 set pcdata 1
+            }
+        }
+    }
+
+    # Insert the two constants for the tag into the header file.
+    set header_format {#define % -20s %s}
+
+    set opensym "Html_[string toupper $tag]"
+    puts $::h_file [format $header_format $opensym $::nextfreeconst]
+    incr ::nextfreeconst
+
+    # set closesym "Html_End[string toupper $tag]"
+    # puts $::h_file [format $header_format $closesym $::nextfreeconst]
+    # incr ::nextfreeconst
+
+    # Insert the HtmlTokenMap record into the constant array.
+    set fmt {  {% -15s % -18s %s %s %s},}
+    set flags 0
+    if {$flow!=0} {
+        set flags $flow
+    } 
+    if {$xClose == "HtmlEmptyContent"} {
+        append flags |HTMLTAG_EMPTY
+        set xClose 0
+    }
+    if {$pcdata} {
+        append flags |HTMLTAG_PCDATA
+    }
+    puts $::c_file [format $fmt "\"$tag\"," $opensym, $flags, $xClose, 0]
+
+    # set flags HTMLTAG_END
+    # if {$flow!=0} { append flags |$flow } 
+    # puts $::c_file [format $fmt "\"/$tag\"," $closesym, $flags, 0, 0]
+}
+
+# Open the files htmltokens.c and htmltokens.h for writing. Write a
+# warning to the top of each that they are generated files.
+#
+set c_file [open htmltokens.c w]
+set h_file [open htmltokens.h w]
+set warning {
+/* 
+ * DO NOT EDIT!
+ *
+ * The code in this file was automatically generated. See the files
+ * src/tokenlist.txt and tools/maketokens.tcl from the tkhtml source
+ * distribution.
+ */
+}
+puts $c_file $warning
+puts $h_file $warning
+
+puts -nonewline $h_file {
+#define Html_Text    1
+#define Html_Space   2
+#define Html_Unknown 3
+#define Html_Block   4
+#define HtmlIsMarkup(X) ((X)->base.type>Html_Block)
+}
+set ::nextfreeconst 5
+
+# puts $c_file {#include "html.h"}
+puts $c_file "HtmlTokenMap HtmlMarkupMap\[] = {"
+
+# Evaluate the calls to TAG from the database specified above.
+foreach l $::tagscript {eval $l}
+
+set c $::nextfreeconst
+puts $h_file "#define Html_TypeCount $c"
+puts $h_file "#define HTML_MARKUP_HASH_SIZE [expr $c+11]"
+puts $h_file "#define HTML_MARKUP_COUNT [expr $c-5]"
+
+puts $c_file "};"
+
+# Close the two generated files.
+close $c_file
+close $h_file
+

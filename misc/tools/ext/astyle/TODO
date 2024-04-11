@@ -1,0 +1,4 @@
+It looks like AStyle 3.0 requires C++11 and GCC 4.6 as a minimum (the latter is
+due to use of nullptr, which isn't supported in earlier GCC versions.  Until we
+can require these features/versions as minimum requirements for BRL-CAD, we
+can't upgrade our local AStyle copy.

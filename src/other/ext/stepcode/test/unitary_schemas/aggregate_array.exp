@@ -1,0 +1,7 @@
+SCHEMA test_array;
+
+ENTITY point;
+    coords : ARRAY[1:3] OF REAL;
+END_ENTITY;
+
+END_SCHEMA;

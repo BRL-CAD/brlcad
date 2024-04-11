@@ -1,0 +1,41 @@
+SCHEMA test_entity_where_rule;
+
+TYPE label = STRING;
+END_TYPE; -- label
+
+ENTITY address;
+  internal_location       : OPTIONAL label;
+  street_number           : OPTIONAL label;
+  street                  : OPTIONAL label;
+  postal_box              : OPTIONAL label;
+  town                    : OPTIONAL label;
+  region                  : OPTIONAL label;
+  postal_code             : OPTIONAL label;
+  country                 : OPTIONAL label;
+  facsimile_number        : OPTIONAL label;
+  telephone_number        : OPTIONAL label;
+  electronic_mail_address : OPTIONAL label;
+  telex_number            : OPTIONAL label;
+WHERE
+  WR1: EXISTS(internal_location)       OR
+       EXISTS(street_number)           OR
+       EXISTS(street)                  OR
+       EXISTS(postal_box)              OR
+       EXISTS(town)                    OR
+       EXISTS(region)                  OR
+       EXISTS(postal_code)             OR
+       EXISTS(country)                 OR
+       EXISTS(facsimile_number)        OR
+       EXISTS(telephone_number)        OR
+       EXISTS(electronic_mail_address) OR
+       EXISTS(telex_number);
+END_ENTITY; -- address
+
+ENTITY unit_vector;
+  a, b, c : REAL;
+WHERE
+  length_1 : a**2 + b**2 + c**2 = 1.0;
+END_ENTITY;
+
+END_SCHEMA;
+

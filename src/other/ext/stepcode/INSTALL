@@ -1,0 +1,69 @@
+INSTALL
+
+This file is contains installation instructions for STEPcode.
+
+These installation requires that you have the following software
+available:
+
+- C and C++ compilers    (Tested with GCC, MSVC, Embarcadero)
+- CMake                  (v2.8.7 or greater)
+- mingw                  (only on Windows)
+- a lexer and parser (i.e. flex, bison) are NOT necessary anymore
+  -if you modify the lexer or parser, you will need LEMON, RE2C, PERPLEX from BRL-CAD
+
+--------------------
+Installation
+--------------------
+
+* Known to work on Linux, OSX, and Windows
+
+* Build system uses CMake now: configure, Makefile, and all
+  autotools files have been removed, as has mkProbe.
+
+* Building SC from the command prompt:
+  - cd sc
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make
+  - make install       #  optional
+
+* Building SC from the GUI:
+  - Run cmake-gui, set it to build in sc/build
+  - Select the correct build file generator
+  - Press Configure
+  - Change options as necessary, configuring again afterwards
+      -  If there are errors, some options may not be visible until the error is resolved
+  - Press Generate
+  - Open the main build file using your preferred build tool
+
+* Build options (append to the 'cmake ..' line):
+  -DSC_BUILD_SCHEMAS="path/to/schema.exp;path/to/schema2.exp"
+    - this generates c++ for the schema, and compiles it into a
+      library. Also works with directories, as long as each dir only
+      has one express file.
+    - multiple files/directories are separated by semicolons
+    - this also builds a 'p21read' program, which reads one step file
+      and writes another. It may change whitespace or remove comments;
+      otherwise, the input and output files should be identical. If
+      they are not identical, either the file does not match the
+      schema, or SC generated incorrect source code.
+  -DSC_BUILD_SCHEMAS=ALL
+    - Added to make use of ctest easier. If SC_BUILD_SCHEMAS == ALL,
+      then CMake adds each *.exp file found in data/.
+  -DSC_BUILD_TYPE=Release
+    - this causes binaries to be built without debugging information
+    - without this, cmake defaults to a Debug build
+
+* Using CTest to test SC:
+  - Read the comments in run_ctest.cmake
+  - (OPTIONAL) Create sc/../.SC_CTEST_PREFS.cmake, and set variables
+    in it (this file is required for CDash submission to be enabled)
+  - Run tests with `ctest -S run_ctest.cmake`
+
+* Using CTest to regenerate the schema matrix on the github SC wiki:
+  - Requires:
+     - git
+     - python
+     - a clone of the git repo for the wiki at sc/../wiki-sc
+  - run `ctest -S ctest_matrix.cmake`

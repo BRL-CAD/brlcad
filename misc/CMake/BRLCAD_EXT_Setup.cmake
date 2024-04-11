@@ -38,12 +38,15 @@ function(brlcad_ext_setup)
   set(BRLCAD_EXT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_build)
   set(BRLCAD_EXT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-  # If we don't have
+  # If we don't have the bext source directory, try to clone it
   if (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
     set(BRLCAD_EXT_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext)
     if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
       find_program(GIT_EXEC git REQUIRED)
-      execute_process(COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git)
+      execute_process(
+	COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
     endif (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
   endif (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
   if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
@@ -119,10 +122,13 @@ function(brlcad_ext_setup)
   endif (EXT_CONFIG_STATUS)
 
   set(EXT_BUILD_STATUS 0)
+  if (NOT DEFINED BRLCAD_EXT_PARALLEL)
+    set(BRLCAD_EXT_PARALLEL 8)
+  endif (NOT DEFINED BRLCAD_EXT_PARALLEL)
   if (CMAKE_CONFIGURATION_TYPES)
-    execute_process(COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel 8 --config ${CMAKE_BUILD_TYPE} WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR} RESULT_VARIABLE EXT_BUILD_STATUS)
+    execute_process(COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel ${BRLCAD_EXT_PARALLEL} --config ${CMAKE_BUILD_TYPE} WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR} RESULT_VARIABLE EXT_BUILD_STATUS)
   else (CMAKE_CONFIGURATION_TYPES)
-    execute_process(COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel 8 WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR} RESULT_VARIABLE EXT_BUILD_STATUS)
+    execute_process(COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel ${BRLCAD_EXT_PARALLEL} WORKING_DIRECTORY ${BRLCAD_EXT_BUILD_DIR} RESULT_VARIABLE EXT_BUILD_STATUS)
   endif (CMAKE_CONFIGURATION_TYPES)
   if (EXT_BUILD_STATUS)
     message(FATAL_ERROR "Unable to successfully build bext dependency repository")

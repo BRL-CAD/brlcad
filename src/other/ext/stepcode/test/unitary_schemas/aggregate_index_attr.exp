@@ -1,0 +1,42 @@
+SCHEMA index_attribute;
+
+ENTITY general_datum_reference
+  ABSTRACT SUPERTYPE OF (DATUM_REFERENCE_ELEMENT)
+  SUBTYPE OF (shape_aspect);
+  base : datum_or_common_datum;
+WHERE
+  WR1: NOT('INDEX_ATTRIBUTE.COMMON_DATUM_LIST' IN TYPEOF(base)) OR (SELF\shape_aspect.of_shape = base[1]\shape_aspect.of_shape);
+END_ENTITY;
+
+TYPE datum_or_common_datum = SELECT
+   (common_datum_list,
+    datum);
+END_TYPE;
+
+TYPE common_datum_list = LIST[1:?] OF datum_reference_element;
+WHERE
+  WR1: SIZEOF( QUERY(dre <* SELF | dre\shape_aspect.of_shape <> SELF[1]\shape_aspect.of_shape)) = 0;
+END_TYPE;
+
+ENTITY datum
+  SUBTYPE OF (shape_aspect);
+END_ENTITY;
+
+TYPE label = STRING;END_TYPE;
+
+
+ENTITY shape_aspect ;
+  name : label;
+  of_shape : product_definition_shape;
+WHERE
+  WR1: SIZEOF(USEDIN(SELF, 'INDEX_ATTRIBUTE.' + 'ID_ATTRIBUTE.IDENTIFIED_ITEM')) <= 1;
+END_ENTITY;
+
+ENTITY product_definition_shape;
+END_ENTITY;
+
+ENTITY datum_reference_element
+  SUBTYPE OF (general_datum_reference);
+END_ENTITY;
+
+END_SCHEMA;

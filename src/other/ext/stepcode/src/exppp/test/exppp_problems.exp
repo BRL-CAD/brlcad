@@ -1,0 +1,45 @@
+SCHEMA exppp_problems;
+
+  ENTITY A;
+    name : STRING;  -- should remain colon
+  END_ENTITY;
+
+  ENTITY B
+    SUBTYPE OF (A);
+    WHERE
+      WR1: SELF.name IN ['prefix', 'suffix']; -- should remain comma
+  END_ENTITY;
+
+  ENTITY C;
+    arr_real : ARRAY[1:3] OF REAL; -- should remain colon
+  DERIVE
+    id : REAL := 1.2345678901234567890E20; -- check precision after pretty print
+  END_ENTITY;
+
+  FUNCTION exppp_colon_and_comma(
+               lis: LIST [0:?] OF GENERIC:t -- should remain colon
+      ): ARRAY [1:5] OF GENERIC:t; -- should remain colon
+
+    LOCAL
+      re  : ARRAY [1:5] OF GENERIC:t; -- should remain colon
+      res : ARRAY [1:5] OF GENERIC:t; -- should remain colon
+    END_LOCAL;
+    re := [lis[1],5];  --should remain a comma
+    res := [lis[1]:5]; --should remain a colon
+    RETURN(res);
+
+  END_FUNCTION; -- exppp_colon_and_comma
+
+  ENTITY long_lines;
+      name             : STRING;
+    WHERE
+      WR1: SIZEOF (USEDIN (SELF, 'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.' +
+                                 'ID_ATTRIBUTE.IDENTIFIED_ITEM'))
+         <= 1;
+      WR2: SIZEOF (USEDIN (SELF, 'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+      WR3: SIZEOF ([ USEDIN (SELF, 'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.MANIFOLD_SOLID_BREP'), USEDIN (SELF, 'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.MAPPED_ITEM') ] ) = 1;
+      WR4: SIZEOF (USEDIN (SELF, 'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.'
+      + 'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+  END_ENTITY;
+
+END_SCHEMA; -- exppp_problems

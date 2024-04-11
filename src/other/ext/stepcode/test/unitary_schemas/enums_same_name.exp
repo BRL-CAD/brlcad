@@ -1,0 +1,13 @@
+SCHEMA test_enums_same_name;
+
+TYPE favorite_color = ENUMERATION OF (
+   red,
+   clear);
+END_TYPE;
+
+TYPE hair_color = ENUMERATION OF (
+   red,
+   bald);
+END_TYPE;
+
+END_SCHEMA;

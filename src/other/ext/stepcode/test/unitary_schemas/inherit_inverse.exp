@@ -1,0 +1,25 @@
+
+--derived from AP214E3
+--schema to test inverse attributes when inherited
+-- TODO what about ia's from 2nd or 3rd parent? must be handled differently...
+
+SCHEMA test_inherit_inverse;
+
+ENTITY representation;
+  name : STRING;
+  context_of_items : representation_context;
+END_ENTITY;
+
+ENTITY representation_context;
+  context_identifier : INTEGER;
+  context_type : STRING;
+INVERSE
+  representations_in_context : SET [1:?] OF representation FOR context_of_items;
+END_ENTITY;
+
+ENTITY geometric_representation_context
+SUBTYPE OF (representation_context);
+  coordinate_space_dimension : INTEGER;
+END_ENTITY;
+
+END_SCHEMA;

@@ -1,0 +1,144 @@
+#
+# Messagedialog
+# ----------------------------------------------------------------------
+# Implements a message dialog composite widget.  The Messagedialog is 
+# derived from the Dialog class and is composed of an image and text
+# component.  The image will accept both images as well as bitmaps.
+# The text can extend mutliple lines by embedding newlines.
+# 
+# ----------------------------------------------------------------------
+#  AUTHOR: Mark L. Ulferts              EMAIL: mulferts@austin.dsccc.com
+#
+#  @(#) $Id$
+# ----------------------------------------------------------------------
+#            Copyright (c) 1995 DSC Technologies Corporation
+# ======================================================================
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
+# software without specific, written prior permission.
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+# SOFTWARE.
+# ======================================================================
+
+#
+# Usual options.
+#
+itk::usual Messagedialog {
+    keep -background -cursor -font -foreground -modality
+    keep -wraplength -justify
+}
+
+# ------------------------------------------------------------------
+#                            MESSAGEDIALOG
+# ------------------------------------------------------------------
+itcl::class iwidgets::Messagedialog {
+    inherit iwidgets::Dialog
+
+    constructor {args} {}
+
+    itk_option define -imagepos imagePos Position w
+}
+
+#
+# Provide a lowercased access method for the Messagedialog class.
+# 
+proc ::iwidgets::messagedialog {pathName args} {
+    uplevel ::iwidgets::Messagedialog $pathName $args
+}
+
+#
+# Use option database to override default resources of base classes.
+#
+option add *Messagedialog.title "Message Dialog" widgetDefault
+option add *Messagedialog.master "." widgetDefault
+option add *Messagedialog.textPadX 20 widgetDefault
+option add *Messagedialog.textPadY 20 widgetDefault
+
+# ------------------------------------------------------------------
+#                        CONSTRUCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Messagedialog::constructor {args} {
+    #
+    # Create the image component which may be either a bitmap or image.
+    #
+    itk_component add image {
+	label $itk_interior.image 
+    } {
+	keep -background -bitmap -cursor -foreground -image 
+    }
+    
+    #
+    # Create the text message component.  The message may extend over
+    # several lines by embedding '\n' characters.
+    #
+    itk_component add message {
+	label $itk_interior.message
+    } {
+	keep -background -cursor -font -foreground -text 
+	keep -wraplength -justify
+
+	rename -padx -textpadx textPadX Pad
+	rename -pady -textpady textPadY Pad
+    }
+    
+    #
+    # Hide the apply and help buttons.
+    #
+    hide Apply
+    hide Help
+    
+    #
+    # Initialize the widget based on the command line options.
+    #
+    eval itk_initialize $args
+}   
+
+# ------------------------------------------------------------------
+#                             OPTIONS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# OPTION: -imagepos
+#
+# Specifies the image position relative to the message: n, s,
+# e, or w.  The default is w.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Messagedialog::imagepos {
+    switch $itk_option(-imagepos) {
+    	n {
+	    grid $itk_component(image) -row 0 -column 0 
+	    grid $itk_component(message) -row 1 -column 0 
+    	}
+    	s {
+	    grid $itk_component(message) -row 0 -column 0 
+	    grid $itk_component(image) -row 1 -column 0 
+    	}
+    	e {
+	    grid $itk_component(message) -row 0 -column 0 
+	    grid $itk_component(image) -row 0 -column 1
+    	}
+    	w {
+	    grid $itk_component(image) -row 0 -column 0 
+	    grid $itk_component(message) -row 0 -column 1
+    	}
+	
+    	default {
+    	    error "bad imagepos option \"$itk_option(-imagepos)\":\
+		    should be n, e, s, or w"
+    	}
+    }
+}

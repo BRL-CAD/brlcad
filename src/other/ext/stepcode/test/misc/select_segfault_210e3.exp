@@ -1,0 +1,348 @@
+SCHEMA select_segfault_210e3;
+
+
+  ENTITY compound_representation_item
+      SUPERTYPE OF ( ( (ONEOF (
+               ROW_REPRESENTATION_ITEM,
+               TABLE_REPRESENTATION_ITEM)) )ANDOR( ONEOF (
+               POINT_AND_VECTOR,
+               POINT_PATH) )  )
+      SUBTYPE OF (representation_item);
+      item_element : compound_item_definition;
+  END_ENTITY;
+
+  ENTITY geometric_representation_item
+  SUBTYPE OF (representation_item);
+  END_ENTITY;
+  
+  TYPE point_and_vector_members = LIST [2:3] OF point_and_vector_member;
+  END_TYPE;
+
+  TYPE point_path_members = LIST [1:?] OF point_and_vector;
+  END_TYPE;
+  
+  TYPE point_and_vector_member = SELECT (point, direction);
+  END_TYPE;
+  
+  ENTITY point
+   SUPERTYPE OF (ONEOF (
+              CARTESIAN_POINT))
+  SUBTYPE OF (geometric_representation_item);
+ END_ENTITY;
+
+  ENTITY cartesian_point
+  SUBTYPE OF (point);
+    coordinates  : LIST [1:3] OF length_measure;
+  END_ENTITY;
+
+ ENTITY direction
+   SUBTYPE OF (geometric_representation_item);
+   direction_ratios : LIST [2:3] OF REAL;
+ WHERE
+   WR1: SIZEOF(QUERY(tmp <* direction_ratios | tmp <> 0.0)) > 0;
+ END_ENTITY;
+
+
+
+  ENTITY point_and_vector
+    SUBTYPE OF (compound_representation_item, geometric_representation_item);
+      SELF\compound_representation_item.item_element : point_and_vector_members;
+  END_ENTITY;
+
+
+  ENTITY point_path
+    SUBTYPE OF (compound_representation_item, geometric_representation_item);
+      SELF\compound_representation_item.item_element : point_path_members;
+  END_ENTITY;
+
+
+  TYPE compound_item_definition = SELECT
+    (list_representation_item,
+     set_representation_item);
+  END_TYPE;
+
+  TYPE list_representation_item = LIST [1:?] OF representation_item;
+  END_TYPE;
+
+
+  TYPE set_representation_item = SET [1:?] OF representation_item;
+  END_TYPE;
+
+
+  ENTITY representation_item
+      SUPERTYPE OF ( ( ONEOF (
+               BINARY_REPRESENTATION_ITEM,
+               COMPOUND_REPRESENTATION_ITEM,
+               MAPPED_ITEM,
+               VALUE_REPRESENTATION_ITEM) )ANDOR( (ONEOF (
+               BOOLEAN_REPRESENTATION_ITEM,
+               DATE_REPRESENTATION_ITEM,
+               DATE_TIME_REPRESENTATION_ITEM,
+               INTEGER_REPRESENTATION_ITEM,
+               LOGICAL_REPRESENTATION_ITEM,
+               RATIONAL_REPRESENTATION_ITEM,
+               REAL_REPRESENTATION_ITEM)) )ANDOR( ONEOF (
+               MAPPED_ITEM,
+               STYLED_ITEM) )  ) ;
+      name : label;
+  END_ENTITY;
+  
+  ENTITY mapped_item
+    SUBTYPE OF (representation_item);
+      mapping_source : representation_map;
+      mapping_target : representation_item;
+  END_ENTITY;
+    ENTITY value_representation_item
+    SUBTYPE OF (representation_item);
+      value_component : measure_value;
+  END_ENTITY;
+  ENTITY boolean_representation_item
+    SUBTYPE OF (representation_item, boolean_literal);
+  END_ENTITY;
+
+  ENTITY date_representation_item
+    SUBTYPE OF (representation_item, date);
+  END_ENTITY;
+
+  ENTITY date_time_representation_item
+    SUBTYPE OF (representation_item, date_and_time);
+  END_ENTITY;
+
+  ENTITY integer_representation_item
+    SUBTYPE OF (representation_item, int_literal);
+  END_ENTITY;
+
+  ENTITY logical_representation_item
+    SUBTYPE OF (representation_item, logical_literal);
+  END_ENTITY;
+
+  ENTITY rational_representation_item
+    SUBTYPE OF (representation_item, slash_expression);
+    WHERE
+      WR1: SIZEOF( QUERY( operand <* SELF\binary_generic_expression.operands |
+        NOT('AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.INT_LITERAL' IN TYPEOF(operand)))) = 0;
+  END_ENTITY;
+ENTITY binary_numeric_expression
+ ABSTRACT SUPERTYPE OF (ONEOF (
+                        SLASH_EXPRESSION))
+SUBTYPE OF (numeric_expression, binary_generic_expression);
+    SELF\binary_generic_expression.operands : LIST [2:2] OF
+                        numeric_expression;
+END_ENTITY;
+
+  ENTITY real_representation_item
+    SUBTYPE OF (representation_item, real_literal);
+  END_ENTITY;
+
+ENTITY numeric_expression
+ ABSTRACT SUPERTYPE OF (ONEOF (BINARY_NUMERIC_EXPRESSION));
+END_ENTITY;
+
+
+  ENTITY measure_representation_item
+    SUBTYPE OF (representation_item, measure_with_unit);
+  END_ENTITY;
+
+
+  ENTITY measure_with_unit;
+    value_component : measure_value;
+    unit_component : unit;
+  END_ENTITY;
+  
+
+  ENTITY named_unit
+    SUPERTYPE OF (ONEOF (
+              SI_UNIT,
+              CONVERSION_BASED_UNIT)
+              ANDOR ONEOF (
+              PLANE_ANGLE_UNIT));
+    dimensions : dimensional_exponents;
+  END_ENTITY;
+
+
+  ENTITY plane_angle_measure_with_unit
+    SUBTYPE OF (measure_with_unit);
+  WHERE
+    WR1: 'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.PLANE_ANGLE_UNIT' IN TYPEOF(SELF\measure_with_unit.unit_component);
+  END_ENTITY;
+
+
+  ENTITY plane_angle_unit
+    SUBTYPE OF (named_unit);
+  WHERE
+    WR1: (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.dimensions.luminous_intensity_exponent = 0.0);
+  END_ENTITY;
+
+
+  TYPE plane_angle_measure = REAL;
+  END_TYPE;
+
+
+  ENTITY si_unit
+    SUBTYPE OF (named_unit);
+    prefix : OPTIONAL si_prefix;
+    name : si_unit_name;
+  WHERE
+    WR1: NOT(('AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.MASS_UNIT' IN TYPEOF(SELF)) AND
+             (SIZEOF(USEDIN(SELF,'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.DERIVED_UNIT_ELEMENT.UNIT')) > 0)) OR
+            (prefix = si_prefix.kilo);
+  END_ENTITY;
+
+
+  ENTITY conversion_based_unit
+    SUBTYPE OF (named_unit);
+     name : label;
+     conversion_factor : measure_with_unit;
+  END_ENTITY;
+
+
+
+  TYPE measure_value = SELECT
+    (plane_angle_measure, positive_length_measure);
+  END_TYPE;
+
+  TYPE positive_length_measure = REAL;
+  END_TYPE;
+  TYPE length_measure = REAL;
+  END_TYPE;
+  
+  TYPE label = STRING;
+  END_TYPE;
+  
+  TYPE unit = SELECT (derived_unit, named_unit);
+  END_TYPE;
+  
+  TYPE si_prefix = ENUMERATION OF (
+      exa, peta, tera, giga, mega, kilo, hecto, deca, deci, centi, milli, micro, nano, pico, femto, atto);
+  END_TYPE;
+  
+  TYPE si_unit_name = ENUMERATION OF (
+      metre, gram, second, ampere, kelvin, mole, candela, radian, steradian, hertz, newton, pascal, joule, watt, coulomb, volt, farad, ohm, siemens, weber, tesla, henry, degree_Celsius, lumen, lux, becquerel, gray, sievert);
+  END_TYPE;
+
+  ENTITY derived_unit;
+  END_ENTITY;
+
+  ENTITY dimensional_exponents;
+    length_exponent : REAL;
+    mass_exponent : REAL;
+    time_exponent : REAL;
+    electric_current_exponent : REAL;
+    thermodynamic_temperature_exponent : REAL;
+    amount_of_substance_exponent : REAL;
+    luminous_intensity_exponent : REAL;
+  END_ENTITY;
+
+  ENTITY binary_representation_item
+    SUBTYPE OF (representation_item);
+      binary_value : BINARY;
+  END_ENTITY;
+
+ENTITY int_literal
+SUBTYPE OF (literal_number);
+    SELF\literal_number.the_value: INTEGER;
+END_ENTITY;
+
+
+ENTITY real_literal
+SUBTYPE OF (literal_number);
+    SELF\literal_number.the_value: REAL;
+END_ENTITY;
+
+ENTITY logical_literal;
+  lit_value : LOGICAL;
+END_ENTITY;
+
+ENTITY literal_number
+ ABSTRACT SUPERTYPE OF (ONEOF ( INT_LITERAL, REAL_LITERAL));
+    the_value: NUMBER;
+END_ENTITY;
+  ENTITY row_representation_item
+    SUBTYPE OF(compound_representation_item);
+      SELF\compound_representation_item.item_element : list_representation_item;
+  END_ENTITY;
+
+  ENTITY table_representation_item
+    SUBTYPE OF (compound_representation_item);
+    WHERE
+      WR1: SIZEOF(QUERY(itet <* SELF\compound_representation_item.item_element |
+        NOT('AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.ROW_REPRESENTATION_ITEM' IN TYPEOF(itet))
+            )) = 0;
+  END_ENTITY;
+  ENTITY styled_item
+    SUBTYPE OF (representation_item);
+      styles :  SET [1:?] OF text; --presentation_style_assignment;
+      item   :  representation_item;
+    WHERE
+      WR1: (SIZEOF(SELF.styles) = 1)
+               XOR
+         (SIZEOF(QUERY(pres_style <* SELF.styles |
+         NOT ('AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.' +
+              'PRESENTATION_STYLE_BY_CONTEXT' IN
+         TYPEOF(pres_style))
+         )) = 0);
+      WR2: NOT ('AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.STYLED_ITEM' IN TYPEOF(item));
+      WR3: ('AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.MAPPED_ITEM' IN TYPEOF(item)) OR
+           ('AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.GEOMETRIC_REPRESENTATION_ITEM' IN TYPEOF(item));
+  END_ENTITY;
+
+  ENTITY representation_map;
+      mapping_origin        : representation_item;
+      mapped_representation : representation;
+    INVERSE
+      map_usage : SET[1:?] OF mapped_item FOR mapping_source;
+  END_ENTITY;
+
+ENTITY date_and_time;
+  date_component : date;
+END_ENTITY;
+
+
+ENTITY date;
+  year_component : year_number;
+END_ENTITY;
+
+ENTITY slash_expression
+SUBTYPE OF (binary_numeric_expression);
+END_ENTITY;
+ENTITY boolean_literal;
+  the_value: BOOLEAN;
+END_ENTITY;
+
+TYPE year_number = INTEGER;
+END_TYPE;
+  ENTITY representation;
+      name             : label;
+      items            : SET[1:?] OF representation_item;
+      context_of_items : representation_context;
+    WHERE
+      WR1: SIZEOF (USEDIN (SELF, 'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.' +
+                                 'ID_ATTRIBUTE.IDENTIFIED_ITEM'))
+         <= 1;
+      WR2: SIZEOF (USEDIN (SELF, 'AP210_ELECTRONIC_ASSEMBLY_INTERCONNECT_AND_PACKAGING_DESIGN_MIM_LF.' +
+                                 'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM'))
+         <= 1;
+  END_ENTITY;
+ENTITY binary_generic_expression
+ ABSTRACT SUPERTYPE
+SUBTYPE OF(generic_expression);
+    operands: LIST [2:2] OF generic_expression;
+END_ENTITY;
+
+  TYPE text = STRING;
+  END_TYPE;
+
+  TYPE identifier = STRING;
+  END_TYPE;
+  ENTITY representation_context;
+      context_identifier : identifier;
+      context_type       : text;
+    INVERSE
+      representations_in_context : SET [1:?] OF representation FOR context_of_items;
+  END_ENTITY;
+  ENTITY generic_expression
+ ABSTRACT SUPERTYPE OF (BINARY_GENERIC_EXPRESSION);
+END_ENTITY;
+
+
+END_SCHEMA;
