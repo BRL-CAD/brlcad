@@ -1,3 +1,9 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  if (BRLCAD_ENABLE_STEP)
+    BRLCAD_Find_Package(STEPCODE REQUIRED)
+  endif (BRLCAD_ENABLE_STEP)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 # Because the exp2cxx outputs are used by both step-g and g-step,
 # the logic both commands need is the same and is defined up front.
 

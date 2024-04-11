@@ -514,7 +514,7 @@ bu_fseek(FILE *stream, b_off_t offset, int origin)
 {
     int ret;
 
-#if defined(HAVE__FSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8^M
+#if defined(HAVE__FSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
     ret = _fseeki64(stream, offset, origin);
 #else
     ret = fseek(stream, offset, origin);

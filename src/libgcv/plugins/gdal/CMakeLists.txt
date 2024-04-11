@@ -1,3 +1,9 @@
+if (BRLCAD_ENABLE_GDAL)
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    BRLCAD_Find_Package(GDAL REQUIRED)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+endif (BRLCAD_ENABLE_GDAL)
+
 set(GDAL_SRCS
   gdal.cpp
   gdal_ll.cpp

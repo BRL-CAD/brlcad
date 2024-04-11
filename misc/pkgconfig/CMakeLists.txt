@@ -1,5 +1,6 @@
-#TODO - once we're not doing both autotools and CMake, re-examine
-#this pkgconfig setup
+# TODO - if we're going to keep these pkgconfig files, need to properly
+# integrate their generation with the CMake build.  For a starting point look
+# at https://stackoverflow.com/q/44292462
 
 set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(exec_prefix "\${prefix}")

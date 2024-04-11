@@ -106,13 +106,13 @@ mark_as_advanced(SKIP_INSTALL_HEADERS)
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
 # and the include directory for utahrle are different, so override the
 # macro's setting of UTAHRLE_INCLUDE_DIRS here.
-if (BRLCAD_LEVEL3 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
   add_subdirectory(libutahrle)
   set(UTAHRLE_LIBRARY utahrle CACHE STRING "directory with rle.h header" FORCE)
   set(UTAHRLE_LIBRARIES utahrle CACHE STRING "directory with rle.h header" FORCE)
   set(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
   set(UTAHRLE_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
-endif (BRLCAD_LEVEL3 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
 mark_as_advanced(UTAHRLE_LIBRARY)
 mark_as_advanced(UTAHRLE_LIBRARIES)
 mark_as_advanced(UTAHRLE_INCLUDE_DIR)

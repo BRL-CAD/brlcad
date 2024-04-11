@@ -203,11 +203,13 @@ set(documentation_mged_old_DATA
   notes/tool_categories.txt
   old-mged.tr
   )
-ADD_DOC(documentation_mged_old_DATA mged_old)
+ADD_DOC(documentation_mged_old_DATA mged_old REQUIRED "mged")
 
-configure_file(pad_file.xml.in "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" @ONLY)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
+if (TARGET mged)
+  configure_file(pad_file.xml.in "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" @ONLY)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml")
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
+endif (TARGET mged)
 
 CMAKEFILES(
   CMakeLists.txt

@@ -75,6 +75,8 @@
  */
 #define BRLCAD_VERSION_PATCH @BRLCAD_VERSION_PATCH@
 
+/* Optional additional number for small post-patch release updates */
+@BRLCAD_VERSION_AMEND_STR@
 
 /**
  * Compile-time macro for testing whether the current compilation

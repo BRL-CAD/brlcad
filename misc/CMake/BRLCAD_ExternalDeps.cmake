@@ -502,7 +502,7 @@ message("Comparing previous and current states... done.")
 # If we do have changes in a repeat configure process, we're going to have to
 # redo the find_package tests.  However, we don't want to repeat them if we
 # don't have to, so key the reset process on what we find.
-set(RESET_TP FALSE)
+set(RESET_TP FALSE CACHE BOOL "resetting flag")
 
 if (BRLCAD_TP_FULL_RESET)
 
@@ -533,7 +533,7 @@ if (BRLCAD_TP_FULL_RESET)
     INTIIALIZE_TP_FILES()
 
     # Reset all the find_package results
-    set(RESET_DP TRUE)
+    set(RESET_TP TRUE CACHE BOOL "resetting flag")
 
   endif (TP_NEW OR TP_CHANGED OR TP_STALE)
 
@@ -608,7 +608,7 @@ else (BRLCAD_TP_FULL_RESET)
 
   # If the directory file lists differ, we have to reset find package
   if (TP_NEW OR TP_STALE OR TP_CHANGED)
-    set(RESET_TP TRUE)
+    set(RESET_TP TRUE CACHE BOOL "resetting flag")
   endif (TP_NEW OR TP_STALE OR TP_CHANGED)
 
 endif (BRLCAD_TP_FULL_RESET)
@@ -795,20 +795,10 @@ endforeach (ef ${TP_NOINST_FILES})
 
 
 #####################################################################
-# Now that the staging process is complete, it's time to run (or
-# re-run) the find_package logic to let BRL-CAD know what to use.
-# For the re-running case, if something changed with the files from
-# the previous configure we need to reset the find_package variables.
-# There isn't a standard way to do this, so we must sometimes have
-# per-package logic for those projects using more complex variable
-# sets.
-#
-# One advantage of this approach is that there is no longer order
-# dependency between these find_package calls - because all 3rd
-# party compilation is done by the time we reach this step, the
-# results shouldn't vary.  (TODO - right now these are ordered
-# roughly by project complexity - should we switch to alphabetical
-# by project name?)
+# We want find_package calls that re-run every time configure is
+# run, which means we need to unset cache variables.  Most of the
+# packages use the BRLCAD_Find_Package wrapper for this, but in a
+# few cases it's more complicated.
 #####################################################################
 
 # Not all packages will define all of these, but it shouldn't matter - an unset
@@ -837,198 +827,87 @@ endfunction(find_package_reset pname trigger_var)
 # Note - our copy is modified from Vanilla upstream to support specifying a
 # custom prefix - until a similar feature is available in upstream zlib, we
 # need this to reliably avoid conflicts between bundled and system zlib.
-find_package_reset(ZLIB RESET_TP)
-unset(Z_PREFIX CACHE)
-unset(Z_PREFIX_STR CACHE)
-set(ZLIB_ROOT "${CMAKE_BINARY_DIR}")
-if (NOT BRLCAD_COMPONENTS)
-  find_package(ZLIB REQUIRED)
-else (NOT BRLCAD_COMPONENTS)
-  find_package(ZLIB)
-endif (NOT BRLCAD_COMPONENTS)
-if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
-  set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
-endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+macro(find_package_zlib)
 
-# libregex regular expression matching
-find_package_reset(REGEX RESET_TP)
-set(REGEX_ROOT "${CMAKE_BINARY_DIR}")
-if (NOT BRLCAD_COMPONENTS)
-  find_package(REGEX REQUIRED)
-else (NOT BRLCAD_COMPONENTS)
-  find_package(REGEX)
-endif (NOT BRLCAD_COMPONENTS)
+  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
 
-# netpbm library - support for pnm,ppm,pbm, etc. image files
-# http://netpbm.sourceforge.net/
-#
-# Note - we build a custom subset of this library for convenience, and (at the
-# moment) mod it to remove a GPL string component, although there is some hope
-# (2022) that the latter issue will be addressed upstream.  Arguably in this
-# form our netpbm copy isn't really a good fit for ext, but it is kept there
-# because a) there is an active upstream and b) we are unlikely to need to
-# modify these sources to our needs from a functional perspective.
-find_package_reset(NETPBM RESET_TP)
-set(NETPBM_ROOT "${CMAKE_BINARY_DIR}")
-find_package(NETPBM)
+  find_package_reset(ZLIB RESET_TP)
+  unset(Z_PREFIX CACHE)
+  unset(Z_PREFIX_STR CACHE)
+  set(ZLIB_ROOT "${CMAKE_BINARY_DIR}")
+  if (NOT BRLCAD_COMPONENTS OR F_REQUIRED)
+    find_package(ZLIB REQUIRED)
+  else ()
+    find_package(ZLIB)
+  endif ()
+  if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+    set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
+  endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
 
-# libpng - Portable Network Graphics image file support
-# http://www.libpng.org/pub/png/libpng.html
-find_package_reset(PNG RESET_TP)
-if (RESET_TP)
-  unset(PNG_PNG_INCLUDE_DIR CACHE)
-endif (RESET_TP)
-set(PNG_ROOT "${CMAKE_BINARY_DIR}")
-find_package(PNG)
-
-# libutahrle - Utah RLE Image library
-find_package_reset(UTAHRLE RESET_TP)
-set(UTAHRLE_ROOT "${CMAKE_BINARY_DIR}")
-find_package(UTAHRLE)
-
-# STEPcode - support for reading and writing STEP files
-# https://github.com/stepcode/stepcode
-#
-# Note - We are heavily involved with the stepcode effort and in the past our
-# stepcode copy has been extensively modified, but we are working to get our
-# copy and a released upstream copy synced - in anticipation of that, stepcode
-# lives in ext.
-if (BRLCAD_ENABLE_STEP)
-  find_package_reset(STEPCODE RESET_TP)
-  if (RESET_TP)
-    unset(STEPCODE_CORE_LIBRARY    CACHE)
-    unset(STEPCODE_DAI_DIR         CACHE)
-    unset(STEPCODE_DAI_LIBRARY     CACHE)
-    unset(STEPCODE_EDITOR_DIR      CACHE)
-    unset(STEPCODE_EDITOR_LIBRARY  CACHE)
-    unset(STEPCODE_EXPPP_DIR       CACHE)
-    unset(STEPCODE_EXPPP_LIBRARY   CACHE)
-    unset(STEPCODE_EXPRESS_DIR     CACHE)
-    unset(STEPCODE_EXPRESS_LIBRARY CACHE)
-    unset(STEPCODE_INCLUDE_DIR     CACHE)
-    unset(STEPCODE_STEPCORE_DIR    CACHE)
-    unset(STEPCODE_UTILS_DIR       CACHE)
-    unset(STEPCODE_UTILS_LIBRARY   CACHE)
-  endif (RESET_TP)
-  set(STEPCODE_ROOT "${CMAKE_BINARY_DIR}")
-  find_package(STEPCODE)
-endif (BRLCAD_ENABLE_STEP)
-
+endmacro(find_package_zlib)
 
 # Eigen - linear algebra library
-find_package_reset(Eigen3 RESET_TP)
-set(Eigen3_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}/share/eigen3/cmake")
-find_package(Eigen3 NO_MODULE)
-set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen)
-list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
-set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
+macro(find_package_eigen)
 
+  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
 
-# GDAL -  translator library for raster and vector geospatial data formats
-# https://gdal.org
-if (BRLCAD_ENABLE_GDAL)
-  find_package_reset(GDAL RESET_TP)
-  set(GDAL_ROOT "${CMAKE_BINARY_DIR}")
-  find_package(GDAL)
-endif (BRLCAD_ENABLE_GDAL)
+  find_package_reset(Eigen3 RESET_TP)
+  set(Eigen3_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}/share/eigen3/cmake")
+  if (F_REQUIRED)
+    find_package(Eigen3 NO_MODULE REQUIRED)
+  else ()
+    find_package(Eigen3 NO_MODULE)
+  endif ()
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen)
+  list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
 
-# Linenoise - line editing library
-# https://github.com/msteveb/linenoise
-find_package_reset(LINENOISE RESET_TP)
-set(LINENOISE_ROOT "${CMAKE_BINARY_DIR}")
-find_package(LINENOISE)
+  # Let the cache know for BRLCAD_Summary.cmake
+  set(EIGEN3_INCLUDE_DIR "${EIGEN3_INCLUDE_DIR}" CACHE PATH "Eigen include directory" FORCE)
 
-# LMDB - Lightning Memory-Mapped Database
-# https://github.com/LMDB/lmdb
-find_package_reset(LMDB RESET_TP)
-set(LMDB_ROOT "${CMAKE_BINARY_DIR}")
-find_package(LMDB)
-
-# Open Asset Import Library - library for supporting I/O for a number of
-# Geometry file formats
-# https://github.com/assimp/assimp
-if (BRLCAD_ENABLE_ASSETIMPORT)
-  find_package_reset(ASSETIMPORT RESET_TP)
-  set(ASSETIMPORT_ROOT "${CMAKE_BINARY_DIR}")
-  find_package(ASSETIMPORT)
-endif (BRLCAD_ENABLE_ASSETIMPORT)
-
-# OpenMesh Library - library for representing and manipulating polygonal meshes
-# https://www.graphics.rwth-aachen.de/software/openmesh/
-if (BRLCAD_ENABLE_OPENMESH)
-  find_package_reset(OPENMESH RESET_TP)
-  if (RESET_TP)
-    unset(OPENMESH_CORE_LIBRARY          CACHE)
-    unset(OPENMESH_CORE_LIBRARY_DEBUG    CACHE)
-    unset(OPENMESH_CORE_LIBRARY_RELEASE  CACHE)
-    unset(OPENMESH_TOOLS_LIBRARY         CACHE)
-    unset(OPENMESH_TOOLS_LIBRARY_DEBUG   CACHE)
-    unset(OPENMESH_TOOLS_LIBRARY_RELEASE CACHE)
-  endif (RESET_TP)
-  set(OpenMesh_ROOT "${CMAKE_BINARY_DIR}")
-  find_package(OpenMesh)
-endif (BRLCAD_ENABLE_OPENMESH)
-
-
-# Manifold - Mesh library for boolean ops
-# https://github.com/elalish/manifold
-find_package_reset(MANIFOLD RESET_TP)
-set(MANIFOLD_ROOT "${CMAKE_BINARY_DIR}")
-find_package(MANIFOLD)
-
-
-# openNURBS Non-Uniform Rational BSpline library
-# https://github.com/mcneel/opennurbs
-find_package_reset(OPENNURBS RESET_TP)
-if (RESET_TP)
-  unset(OPENNURBS_X_INCLUDE_DIR CACHE)
-endif (RESET_TP)
-set(OPENNURBS_ROOT "${CMAKE_BINARY_DIR}")
-find_package(OPENNURBS)
-set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS)
-list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
-set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled system include dirs" FORCE)
-
+endmacro(find_package_eigen)
 
 # OpenCV - Open Source Computer Vision Library
 # http://opencv.org
-find_package_reset(OpenCV RESET_TP)
+macro(find_package_opencv)
 
-# First, see if we have a bundled version
-set(OpenCV_DIR_TMP "${OpenCV_DIR}")
-set(OpenCV_DIR "${CMAKE_BINARY_DIR}/${LIB_DIR}/cmake/opencv4")
-set(OpenCV_ROOT ${CMAKE_BINARY_DIR})
-find_package(OpenCV COMPONENTS ${QtComponents})
-unset(OpenCV_ROOT)
+  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
 
-# If no bundled copy, see what the system has
-if (NOT OpenCV_FOUND)
-  set(OpenCV_DIR "${OpenCV_DIR_TMP}")
-  find_package(OpenCV)
-endif (NOT OpenCV_FOUND)
+  find_package_reset(OpenCV RESET_TP)
 
+  # First, see if we have a bundled version
+  set(OpenCV_DIR_TMP "${OpenCV_DIR}")
+  set(OpenCV_DIR "${CMAKE_BINARY_DIR}/${LIB_DIR}/cmake/opencv4")
+  set(OpenCV_ROOT ${CMAKE_BINARY_DIR})
+  find_package(OpenCV COMPONENTS core features2d imgproc highgui)
+  unset(OpenCV_ROOT)
 
-# OSMesa Off Screen Rendering library
-# https://github.com/starseeker/osmesa
-find_package_reset(OSMESA RESET_TP)
-set(OSMESA_ROOT "${CMAKE_BINARY_DIR}")
-find_package(OSMESA)
+  # If no bundled copy, see what the system has
+  if (NOT OpenCV_FOUND)
+    set(OpenCV_DIR "${OpenCV_DIR_TMP}")
+    if (F_REQUIRED)
+      find_package(OpenCV REQUIRED)
+    else()
+      find_package(OpenCV)
+    endif ()
+    if (OpenCV_FOUND)
+      set(OPENCV_STATUS "System" CACHE STRING "OpenCV is bundled" FORCE)
+    else (OpenCV_FOUND)
+      set(OPENCV_STATUS "NotFound" CACHE STRING "OpenCV is bundled" FORCE)
+    endif (OpenCV_FOUND)
 
+  else (NOT OpenCV_FOUND)
+    set(OPENCV_STATUS "Bundled" CACHE STRING "OpenCV is bundled" FORCE)
+  endif (NOT OpenCV_FOUND)
 
-# Poly2Tri - constrained Delaunay triangulation
-# https://github.com/jhasse/poly2tri
-find_package_reset(POLY2TRI RESET_TP)
-set(POLY2TRI_ROOT "${CMAKE_BINARY_DIR}")
-if (NOT BRLCAD_COMPONENTS)
-  find_package(POLY2TRI REQUIRED)
-else (NOT BRLCAD_COMPONENTS)
-  find_package(POLY2TRI)
-endif (NOT BRLCAD_COMPONENTS)
+endmacro(find_package_opencv)
 
+# TCL - scripting language.  For Tcl/Tk builds we want
+# static lib building on so we get the stub libraries.
+macro(find_package_tcl)
 
-if (BRLCAD_ENABLE_TCL)
-  # TCL - scripting language.  For Tcl/Tk builds we want
-  # static lib building on so we get the stub libraries.
+  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
+
   if (BRLCAD_ENABLE_TK)
     # For FindTCL.cmake
     set(TCL_ENABLE_TK ON CACHE BOOL "enable tk")
@@ -1049,33 +928,20 @@ if (BRLCAD_ENABLE_TCL)
   endif (RESET_TP)
 
   set(TCL_ROOT "${CMAKE_BINARY_DIR}")
-  find_package(TCL)
-  if (TK_LIBRARY)
-    set(HAVE_TK 1)
-  endif (TK_LIBRARY)
-  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
-    set(ITCL_VERSION "3.4")
-    CONFIG_H_APPEND(BRLCAD "#define ITCL_VERSION \"${ITCL_VERSION}\"\n")
-  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
-  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
-    set(ITK_VERSION "3.4")
-    CONFIG_H_APPEND(BRLCAD "#define ITK_VERSION \"${ITK_VERSION}\"\n")
-  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
-  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
-    set(IWIDGETS_VERSION "4.1.1")
-    CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
-  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
+  if (F_REQUIRED)
+    find_package(TCL REQUIRED)
+  else()
+    find_package(TCL)
+  endif ()
 
-  # A lot of code depends on knowing about Tk being active,
-  # so we set a flag in the configuration header to pass
-  # on that information.
-  CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
-endif (BRLCAD_ENABLE_TCL)
+endmacro(find_package_tcl)
 
 
 # Qt - cross-platform user interface/application development toolkit
 # https://download.qt.io/archive/qt
-if (BRLCAD_ENABLE_QT)
+macro(find_package_qt)
+
+  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
 
   find_package_reset(Qt5 RESET_TP)
   find_package_reset(Qt6 RESET_TP)
@@ -1113,7 +979,13 @@ if (BRLCAD_ENABLE_QT)
     # QT_QMAKE_EXECUTABLE=<install_dir>/bin/qmake
     # AUTORCC_EXECUTABLE=<install_dir>/bin/rcc
     list(REMOVE_ITEM QtComponents OpenGLWidgets)
-    find_package(Qt5 COMPONENTS ${QtComponents})
+    if (F_REQUIRED)
+      # This is our last attempt - if we're requiring Qt and this fails,
+      # it's fatal
+      find_package(Qt5 COMPONENTS ${QtComponents} REQUIRED)
+    else()
+      find_package(Qt5 COMPONENTS ${QtComponents})
+    endif()
   endif (NOT Qt6Widgets_FOUND)
   if (NOT Qt6Widgets_FOUND AND NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
     message("Qt requested, but Qt installation not found - disabling")
@@ -1131,7 +1003,7 @@ if (BRLCAD_ENABLE_QT)
   mark_as_advanced(Qt5Widgets_DIR)
   mark_as_advanced(Qt5Core_DIR)
   mark_as_advanced(Qt5Gui_DIR)
-endif (BRLCAD_ENABLE_QT)
+endmacro(find_package_qt)
 
 # Local Variables:
 # tab-width: 8

@@ -243,8 +243,7 @@ endmacro(BRLCAD_FUNCTION_EXISTS)
 # included first can be prepended in the filelist separated by
 # semicolons.  Add HAVE_*_H define to config header.
 ###
-macro(BRLCAD_INCLUDE_FILE filelist var)
-
+macro(BRLCAD_CHECK_INCLUDE filelist var)
   cmake_push_check_state()
   set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
   if(NOT "${ARGV2}" STREQUAL "")
@@ -252,11 +251,14 @@ macro(BRLCAD_INCLUDE_FILE filelist var)
   endif(NOT "${ARGV2}" STREQUAL "")
   check_include_files("${filelist}" "${var}")
   cmake_pop_check_state()
+endmacro(BRLCAD_CHECK_INCLUDE filelist var)
 
+# Do the above check and add HAVE_*_H define to config header.
+macro(BRLCAD_INCLUDE_FILE filelist var)
+  BRLCAD_CHECK_INCLUDE(${filelist} ${var})
   if(CONFIG_H_FILE AND ${var})
     CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
   endif(CONFIG_H_FILE AND ${var})
-
 endmacro(BRLCAD_INCLUDE_FILE)
 
 

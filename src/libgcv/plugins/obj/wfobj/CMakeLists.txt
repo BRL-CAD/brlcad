@@ -67,7 +67,10 @@ endif(WFOBJ_IS_SUBBUILD)
 include(${WFOBJ_CMAKE_DIR}/Path_Setup.cmake)
 
 # Includes are in current dir
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/include # some files use common.h
+  )
 
 # Check if we should be using unique_ptr
 include(CheckCXXSourceCompiles)
@@ -77,12 +80,15 @@ if(HAVE_UNIQUE_PTR)
 endif(HAVE_UNIQUE_PTR)
 
 # Find tools for generating source files
-set(LEMON_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-find_package(LEMON REQUIRED)
-set(RE2C_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-find_package(RE2C REQUIRED)
-set(PERPLEX_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-find_package(PERPLEX REQUIRED)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
+  BRLCAD_Find_Package(PERPLEX REQUIRED NOINSTALL)
+  BRLCAD_Find_Package(LEMON REQUIRED NOINSTALL)
+  BRLCAD_Find_Package(RE2C REQUIRED NOINSTALL)
+else()
+  find_package(PERPLEX REQUIRED)
+  find_package(LEMON REQUIRED)
+  find_package(RE2C REQUIRED)
+endif()
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_SO")
 set(WFOBJ_SCANNER_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_SO")

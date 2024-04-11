@@ -1,3 +1,16 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_tcl(REQUIRED)
+  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
+    set(ITCL_VERSION "3.4")
+  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
+  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
+    set(ITK_VERSION "3.4")
+  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itk3.4)
+  if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
+    set(IWIDGETS_VERSION "4.1.1")
+  endif (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/Iwidgets4.1.1)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 set(LIBTCLCAD_SRCS
   auto_path.c
   bn.c
@@ -41,12 +54,28 @@ if (BRLCAD_ENABLE_TCL)
     set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
   endif(BRLCAD_ENABLE_X11)
 
+  # Note - libtclcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
   set(TCLCAD_LIBS ${libtclcad_deps} ${TCL_LIBRARY} ${TCLCAD_XLIBS})
   if (TK_LIBRARY)
     set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})
   endif (TK_LIBRARY)
 
   BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_LIBS}" "${TCLCAD_INCLUDE_DIRS}" "${TCLCAD_LOCAL_INCLUDE_DIRS}")
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    set(ptargets libtclcad)
+    if (TARGET libtclcad-obj)
+      list(APPEND ptargets libtclcad-obj)
+    endif (TARGET libtclcad-obj)
+    foreach (pt ${ptargets})
+      target_compile_definitions(${pt} PRIVATE ITCL_VERSION=\"${ITCL_VERSION}\")
+      target_compile_definitions(${pt} PRIVATE ITK_VERSION=\"${ITK_VERSION}\")
+      target_compile_definitions(${pt} PRIVATE IWIDGETS_VERSION=\"${IWIDGETS_VERSION}\")
+      if (TK_LIBRARY)
+	target_compile_definitions(${pt} PRIVATE HAVE_TK)
+      endif (TK_LIBRARY)
+    endforeach (pt ${ptargets})
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
   set_target_properties(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
   if (TARGET itcl_pkgIndex)
     add_dependencies(libtclcad itcl_pkgIndex)

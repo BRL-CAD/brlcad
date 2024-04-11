@@ -1,3 +1,9 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  BRLCAD_Find_Package(NETPBM REQUIRED)
+  BRLCAD_Find_Package(PNG REQUIRED)
+  BRLCAD_Find_Package(UTAHRLE REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 set(LIBICV_SOURCES
   PImgHash.cpp
   fileformat.c
@@ -13,18 +19,22 @@ set(LIBICV_SOURCES
   pix.c
   png.c
   ppm.c
+  rle.c
   bw.c
   dpix.c
   )
 
+# Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(ICV_LIBS
   ${libicv_deps}
   ${PNG_LIBRARIES}
   ${NETPBM_LIBRARY}
+  ${UTAHRLE_LIBRARY}
   )
 set(LOCAL_ICV_INCLUDE_DIRS
   ${PNG_INCLUDE_DIRS}
   ${NETPBM_INCLUDE_DIR}
+  ${UTAHRLE_INCLUDE_DIR}
   )
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "${ICV_LIBS}" "" "${LOCAL_ICV_INCLUDE_DIRS}")

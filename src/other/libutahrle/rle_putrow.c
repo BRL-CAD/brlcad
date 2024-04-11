@@ -121,8 +121,8 @@ register rle_hdr * the_hdr;
      */
     if ( PBRUN == NULL )
     {
-	PBRUN = (short (*)[2])malloc(
-	    (unsigned)((rowlen/3 + 1) * 2 * sizeof(short)) );
+	int rsize = (rowlen/3 + 1) * 2 * sizeof(short);
+	PBRUN = (short (*)[2])malloc(rsize);
 	if ( PBRUN == NULL )
 	{
 	    fprintf( stderr, "%s: Malloc failed in rle_putrow, writing %s\n",
@@ -310,17 +310,6 @@ register rle_hdr * the_hdr;
 			{
 			    state = INRUN;
 			    putdata(row + dstart, rstart - dstart);
-#ifdef FASTRUNS
-#ifdef LOCC
-			    /* Shortcut to find end of run! */
-			    i = dend - skpc( (char *)row + i, dend + 1 - i,
-					     runval );
-#else
-			    while ( row[++i] == runval && i <= dend)
-				; /* not quite so good, but not bad */
-			    i--;
-#endif /* LOCC */
-#endif /* FASTRUNS */
 			}
 			else
 			{

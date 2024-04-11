@@ -94,60 +94,6 @@ function(VALIDATE_STYLE targetname srcslist)
 
 endfunction(VALIDATE_STYLE)
 
-# Determine if a given file is a C or C++ file
-function(FILE_LANG sfile outvar)
-
-  if("${srcfile}" MATCHES "<TARGET_OBJECTS:")
-    set(${outvar} "" PARENT_SCOPE)
-    return()
-  endif("${srcfile}" MATCHES "<TARGET_OBJECTS:")
-
-  # If we're building all CXX, assume CXX
-  if(ENABLE_ALL_CXX_COMPILE)
-    set(file_language CXX)
-  endif(ENABLE_ALL_CXX_COMPILE)
-
-  # Try LANGUAGE property
-  get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
-
-  # If we still don't know, go with extension
-  if(NOT file_language)
-
-    get_filename_component(srcfile_ext ${srcfile} EXT)
-    string(SUBSTRING "${srcfile_ext}" 1 -1 f_ext)
-    while(NOT "${f_ext}" STREQUAL "")
-      get_filename_component(f_ext ${f_ext} EXT)
-      if(f_ext)
-        set(srcfile_ext ${f_ext})
-        string(SUBSTRING "${f_ext}" 1 -1 f_ext)
-      endif(f_ext)
-    endwhile(NOT "${f_ext}" STREQUAL "")
-
-    # C++
-    if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
-      set(file_language CXX)
-    endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
-    if(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
-      set(file_language CXX)
-    endif(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
-
-    # C
-    if(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h" OR ${srcfile_ext} STREQUAL ".m")
-      set(file_language C)
-    endif(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h" OR ${srcfile_ext} STREQUAL ".m")
-
-    # If we can't figure it out, assume C...
-    if(NOT file_language)
-      message(WARNING "Can't determine the source language of ${sfile}, assuming C...")
-      set(file_language C)
-    endif(NOT file_language)
-
-  endif(NOT file_language)
-
-  set(${outvar} "${file_language}" PARENT_SCOPE)
-
-endfunction(FILE_LANG)
-
 define_property(GLOBAL PROPERTY BRLCAD_EXEC_FILES BRIEF_DOCS "BRL-CAD binaries" FULL_DOCS "List of installed BRL-CAD binary programs")
 
 #---------------------------------------------------------------------
@@ -260,11 +206,9 @@ function(BRLCAD_INCLUDE_DIRS targetname dirlist itype)
   if (NOT INCLUDE_DIRS)
     return()
   endif (NOT INCLUDE_DIRS)
-  
+
   list(REMOVE_DUPLICATES INCLUDE_DIRS)
   BRLCAD_SORT_INCLUDE_DIRS(INCLUDE_DIRS)
-
-  #message("${targetname} ${itype}: ${INCLUDE_DIRS}")
 
   foreach (inc_dir ${INCLUDE_DIRS})
     get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
@@ -819,7 +763,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
 endfunction(BRLCAD_MANAGE_FILES)
 
 #-----------------------------------------------------------------------------
-# Specific uses of the BRLCAD_MANAGED_FILES functionality - these
+# Specific uses of the BRLCAD_MANAGE_FILES functionality - these
 # cover most of the common cases in BRL-CAD.
 
 function(BRLCAD_ADDDATA datalist targetdir)
@@ -827,6 +771,20 @@ function(BRLCAD_ADDDATA datalist targetdir)
 endfunction(BRLCAD_ADDDATA)
 
 function(ADD_DOC doclist targetdir)
+
+  cmake_parse_arguments(A "" "" "REQUIRED" ${ARGN})
+
+  # Identify the source files for CMake
+  CMAKEFILES(${${doclist}})
+
+  if (A_REQUIRED)
+    foreach (rdep ${A_REQUIRED})
+      if (NOT TARGET ${rdep})
+	return()
+      endif (NOT TARGET ${rdep})
+    endforeach (rdep ${A_REQUIRED})
+  endif (A_REQUIRED)
+
   if (BRLCAD_INSTALL_DOCS)
     set(doc_target_dir ${DOC_DIR}/${targetdir})
     BRLCAD_MANAGE_FILES(${doclist} ${doc_target_dir})

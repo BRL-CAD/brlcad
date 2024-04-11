@@ -1,3 +1,7 @@
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_zlib(REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
 IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ZLIB_LIBRARY}" LOCAL_TEST)
 if(LOCAL_TEST OR TARGET ZLIB_BLD)
   add_definitions(-DZ_PREFIX)
@@ -76,11 +80,7 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
     target_include_directories(isst PRIVATE ${isst_dirs})
   endif (isst_dirs)
   target_include_directories(isst BEFORE PRIVATE ${local_isst_dirs})
-  ADD_TARGET_DEPS(isst isst_tcl_cp dm_plugins)
-  foreach(item ${tclindex_target_list})
-    add_dependencies(isst ${item})
-  endforeach(item ${tclindex_target_list})
-
+  ADD_TARGET_DEPS(isst isst_tcl_cp TclIndexBld dm_plugins)
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 CMAKEFILES(isst.tcl)

@@ -191,6 +191,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
+	nmg_kr(r);
 
 	return _gcv_cleanup(NMG_debug_state, tp);
     } else {
@@ -199,6 +200,8 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
         data->write_region(r, pathp, tsp, data->client_data);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
+
+    nmg_kr(r);
 
     return _gcv_cleanup(NMG_debug_state, tp);
 }

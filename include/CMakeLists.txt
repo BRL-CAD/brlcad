@@ -44,6 +44,14 @@ BRLCAD_MANAGE_FILES("vmath.h" ${INCLUDE_DIR}/brlcad)
 BRLCAD_MANAGE_FILES("wdb.h" ${INCLUDE_DIR}/brlcad REQUIRED libwdb)
 
 BUILD_CFG_HDR(brlcad_ident.h.in ${INCLUDE_DIR}/brlcad)
+
+# Define the amendment count if we have one
+set(BRLCAD_VERSION_AMEND_STR "")
+if (BRLCAD_VERSION_AMEND)
+  set(BRLCAD_VERSION_AMEND_STR "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}")
+endif (BRLCAD_VERSION_AMEND)
+
+# Generate the version header
 BUILD_CFG_HDR(brlcad_version.h.in ${INCLUDE_DIR}/brlcad)
 
 # FIXME: shouldn't exist, needs to be absorbed into brlcad_config.h
@@ -51,7 +59,6 @@ BUILD_CFG_HDR(config_win.h.in ${INCLUDE_DIR}/brlcad)
 
 set(include_misc
   CMakeLists.txt
-  brlcad.i
   brlcad_ident.h.in
   brlcad_version.h.in
   conf/BrlcadConfig.tmpl
@@ -61,8 +68,6 @@ set(include_misc
   conf/make.vbs
   config_win.h.in
   RTree.h
-  RtServerImpl.h
-  rtserver.h
   )
 CMAKEFILES(${include_misc})
 

@@ -54,6 +54,9 @@ typedef Int64           Time64_T;
 typedef Int64           Year;
 
 #ifndef PRId64
+# ifndef __WORDSIZE
+#  define __WORDSIZE __OS_WORDSIZE
+# endif
 # if (__WORDSIZE == 64) && !defined(__APPLE__)
 #  define PRId64 "ld"
 # else

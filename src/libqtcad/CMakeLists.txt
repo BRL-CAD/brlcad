@@ -2,6 +2,10 @@ set(QG_DIRS)
 
 if(BRLCAD_ENABLE_QT)
 
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    find_package_qt(REQUIRED)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
   if (BRLCAD_ENABLE_OPENGL)
     if (OPENGL_opengl_LIBRARY)
       set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
@@ -99,6 +103,7 @@ foreach(qh ${qth_names})
   set(qtcad_moc_hdrs ${qtcad_moc_hdrs} ${QTCAD_HDR_DIR}/${qh}.h)
 endforeach(qh ${qth_names})
 
+# Note - libqtcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 if(BRLCAD_ENABLE_QT)
 
   set(USE_OBJECT_LIBS OFF)

@@ -1,15 +1,15 @@
 set(brlman_libs libbu ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
 # Tcl/Tk version of brlman GUI
-if (NOT BRLCAD_ENABLE_QT AND TARGET libtclcad)
+if (NOT BRLCAD_ENABLE_QT AND TARGET libtclcad AND TK_LIBRARY)
   BRLCAD_ADDDATA(brlman.tcl tclscripts/brlman)
 
-  set(brlman_libs libtclcad ${TCL_LIBRARY} ${brlman_libs})
+  set(brlman_libs libtclcad ${TCL_LIBRARY} ${TK_LIBRARY} ${brlman_libs})
 
   if(TARGET Tkhtml)
     set(brlman_libs ${brlman_libs} Tkhtml)
   endif(TARGET Tkhtml)
-endif (NOT BRLCAD_ENABLE_QT AND TARGET libtclcad)
+endif (NOT BRLCAD_ENABLE_QT AND TARGET libtclcad AND TK_LIBRARY)
 
 # Qt version of brlman GUI
 if (BRLCAD_ENABLE_QT)
@@ -27,12 +27,15 @@ BRLCAD_ADDEXEC(brlman brlman.cpp "${brlman_libs}" GUI)
 if (BRLCAD_ENABLE_QT)
   target_compile_definitions(brlman PRIVATE USE_QT)
 endif (BRLCAD_ENABLE_QT)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  if (TK_LIBRARY)
+    target_compile_definitions(brlman PRIVATE HAVE_TK)
+  endif (TK_LIBRARY)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 if (NOT BRLCAD_ENABLE_QT AND TARGET brlman_tcl_cp)
   add_dependencies(brlman brlman_tcl_cp)
-  foreach(item ${tclindex_target_list})
-    add_dependencies(brlman ${item})
-  endforeach(item ${tclindex_target_list})
+  add_dependencies(brlman TclIndexBld)
 endif (NOT BRLCAD_ENABLE_QT AND TARGET brlman_tcl_cp)
 
 CMAKEFILES(

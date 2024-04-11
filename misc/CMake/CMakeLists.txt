@@ -7,6 +7,7 @@ set(cmake_ignore_files
   BRLCAD_Environment_Setup.cmake
   BRLCAD_EXT_Setup.cmake
   BRLCAD_ExternalDeps.cmake
+  BRLCAD_Find_Package.cmake
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake
   BRLCAD_Regress_Util.cmake
@@ -18,10 +19,6 @@ set(cmake_ignore_files
   CMakeLists.txt
   CheckCInline.cmake
   CheckCSourceRuns.cmake
-  CheckCXX11Features.cmake
-  CheckCXX11Features/cxx11-test-nullptr.cpp
-  CheckCXX11Features/cxx11-test-nullptr_fail_compile.cpp
-  CheckCXX11Features/cxx11-test-lib_regex.cpp
   CheckStructHasMember.cmake
   CompilerFlags.cmake
   Distcheck.cmake

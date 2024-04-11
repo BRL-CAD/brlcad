@@ -1,8 +1,12 @@
-if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  BRLCAD_Find_Package(LMDB REQUIRED)
+endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
+if (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
   # If this becomes a default we'll need to bundle libbson to ensure it is
   # available - while it is not on by default, require a system version
   find_package(BSON REQUIRED)
-endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+endif (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure
@@ -129,6 +133,7 @@ if(NOT CMAKE_CXX_STANDARD EQUAL 98)
 else(NOT CMAKE_CXX_STANDARD EQUAL 98)
 endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
+# Note - libbu_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BU_LIBS
   ${Foundation_LIBRARIES}
   Threads::Threads
@@ -158,6 +163,41 @@ set(BU_LOCAL_INCLUDE_DIRS
 
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+set(bu_atgts)
+set(bu_targets libbu-obj libbu libbu-static)
+foreach(bt ${bu_targets})
+  if (TARGET ${bt})
+    list(APPEND bu_atgts ${bt})
+  endif ()
+endforeach()
+
+foreach(bt ${bu_atgts})
+  # LIBBU is where we record some information about the OS environment
+  target_compile_definitions(${bt} PRIVATE BRLCAD_ROOT=\"${CMAKE_INSTALL_PREFIX}\")
+  target_compile_definitions(${bt} PRIVATE EXECUTABLE_SUFFIX=\"${CMAKE_EXECUTABLE_SUFFIX}\")
+  target_compile_definitions(${bt} PRIVATE SHARED_LIBRARY_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+  target_compile_definitions(${bt} PRIVATE SIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P})
+
+  # OpenBSD doesn't define __WORD_SIZE, used by y2038/time64.h.  Remove this
+  # once we can replace y2038 with a C++ based solution
+  if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
+    target_compile_definitions(${bt} PRIVATE __OS_WORDSIZE=32)
+  endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
+  if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
+    target_compile_definitions(${bt} PRIVATE __OS_WORDSIZE=64)
+  endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
+
+  # Define the various relative paths for bu_dir
+  include(Path_Setup)
+  target_compile_definitions(${bt} PRIVATE BRLCAD_BIN_DIR=\"${BIN_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_LIB_DIR=\"${LIB_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_LIBEXEC_DIR=\"${LIBEXEC_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_INCLUDE_DIR=\"${INCLUDE_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_DATA_DIR=\"${DATA_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_DOC_DIR=\"${DOC_DIR}\")
+  target_compile_definitions(${bt} PRIVATE BRLCAD_MAN_DIR=\"${MAN_DIR}\")
+endforeach(bt ${bu_atgts})
 
 # With newer GCC, our bitv structure triggers a compiler
 # warning about writing 1 byte into a region of size 0.

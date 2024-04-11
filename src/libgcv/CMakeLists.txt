@@ -11,6 +11,7 @@ set(LIBGCV_SOURCES
   )
 
 
+# Note - libgcv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "${libgcv_deps}" "" "" SHARED_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_DIRECTORY=\"${LIBGCV_PLUGINS_DIRECTORY}\"")
