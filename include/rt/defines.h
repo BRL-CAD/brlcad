@@ -175,7 +175,7 @@
 /* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES            32
 #define RT_DEFAULT_TRIS_PER_PIECE       4
-#define RT_DEFAULT_MINTIE               4       /* TODO: find the best value */
+#define RT_DEFAULT_MINTIE               8
 
 
 #define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */
