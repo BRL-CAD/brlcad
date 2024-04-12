@@ -674,7 +674,8 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model, std::unordered_map<std::
 	    continue;
 
 	if (idef->IsLinkedType()) {
-	    std::cout << "Warning - instance " << idef->Name().Array() << " is defined using external file, unsupported\n";
+	    ON_String iname = ON_String(idef->Name());
+	    std::cout << "Warning - instance " << iname.Array() << " is defined using external file, unsupported\n";
 	    continue;
 	}
 
