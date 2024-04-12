@@ -428,7 +428,6 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot->bot_facelist = NULL;
 
     // look for a requested bundle size
-    // TODO: set a good default and use it
     size_t rt_bot_mintie = RT_DEFAULT_MINTIE;
     const char *bmintie = getenv("LIBRT_BOT_MINTIE");
     if (bmintie)
@@ -461,7 +460,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     long *ordered_faces = NULL;
     struct bvh_build_node *build_root = hlbvh_create(rt_bot_mintie, pool, centroids, bounds, &nodes_created,
 					       bot_ip->num_faces, &ordered_faces);
-    // do we want to flatten the nodes as in cut_hlbvh.c:flatten_bvh_tree?
+    
     bu_free(centroids, "bot centroids");
     bu_free(bounds, "bot bounds");
 
