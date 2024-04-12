@@ -584,8 +584,9 @@ rt_bot_makesegs(struct hit *hits,
 void
 bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits)
 {
-    struct bvh_flat_node *stack_node[128];
-    unsigned char stack_child_index[128];
+    const unsigned int STACK_SIZE = 256;
+    struct bvh_flat_node *stack_node[STACK_SIZE];
+    unsigned char stack_child_index[STACK_SIZE];
     int stack_ind = 0;
     stack_node[stack_ind] = root;
     stack_child_index[stack_ind] = 0;
@@ -593,6 +594,18 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
     VINVDIR(inverse_r_dir, rp->r_dir);
 	
     while (stack_ind >= 0) {
+	if (UNLIKELY(stack_ind >= STACK_SIZE)) {
+	    // This should only ever happen if the BVH tree that was
+	    // built had a depth greater than the defined stack size.
+	    // Even if a BVH is built degenerately and has an average
+	    // splitting factor of 1.2 (we expect this to be close to
+	    // 2), then this stack should support >10^20 triangles
+	    // There is a recursive function in cut_hlbvh that we use
+	    // to flatten the tree, it has a depth parameter, and it
+	    // does a similar traversal to the one here. (It would
+	    // probably be good for debugging) - Apr 2024
+	    bu_bomb("Stack size exceeded in bot shot");
+	}
 	if (stack_child_index[stack_ind] >= 2) {
 	    stack_ind--;
 	    continue;
