@@ -46,6 +46,7 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 #include "./earcut.hpp"
+//#include "detria.hpp"
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -732,6 +733,109 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     return 0;
 }
 
+#if 0
+int
+bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+	    const int *poly, const size_t poly_pnts,
+	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	    const int *steiner, const size_t steiner_npts,
+	    const point2d_t *pts)
+{
+    std::map<int, int> det2pts;
+    std::set<int> active_pts;
+
+    detria::Triangulation<detria::PointD, int> tri;
+    // Outer polygon is defined first
+    std::vector<int> outer_polyline;
+    for (size_t i = 0; i < poly_pnts; i++) {
+	outer_polyline.push_back(poly[i]);
+	active_pts.insert(poly[i]);
+    }
+    tri.addOutline(outer_polyline);
+
+    // Next are the holes
+    std::vector<std::vector<int>> inner_holes;
+    if (nholes) {
+	for (size_t i = 0; i < nholes; i++) {
+	    size_t hpcnt = holes_npts[i];
+	    const int *harray = holes_array[i];
+	    std::vector<int> hv;
+	    for (size_t j = 0; j < hpcnt; j++) {
+		hv.push_back(harray[j]);
+		active_pts.insert(harray[i]);
+	    }
+	    tri.addHole(hv);
+	}
+    }
+
+    // Finally, steiner points
+    for (size_t i = 0; i < steiner_npts; i++) {
+	active_pts.insert(steiner[i]);
+    }
+
+    // Set up a points array holding the range of points used by the polygons
+    std::vector<detria::PointD> tpnts;
+    std::set<int>::iterator a_it;
+    for (a_it = active_pts.begin(); a_it != active_pts.end(); a_it++) {
+	detria::PointD npt;
+	npt.x = pts[*a_it][X];
+	npt.y = pts[*a_it][Y];
+	tpnts.push_back(npt);
+	int detind = (int)tpnts.size() - 1;
+	det2pts[detind] = *a_it;
+    }
+    tri.setPoints(tpnts);
+
+    // Run the core triangulation routine
+    bool tri_success = false;
+    {
+	try {
+	    tri_success = tri.triangulate(true);
+	}
+	catch (...) {
+	    return 1;
+	}
+    }
+
+    // Did we succeed?
+    if (!tri_success) {
+	return 1;
+    }
+
+     // Should the result triangles be in CW order?
+    bool cwTriangles = true;
+    int tri_cnt = 0;
+    tri.forEachTriangle([&](const detria::Triangle<int> &){tri_cnt++;}, cwTriangles);
+    (*num_faces) = tri_cnt;
+    int *nfaces = (int *)bu_calloc(*num_faces * 3, sizeof(int), "faces array");
+
+    active_pts.clear();
+    int tri_ind= 0;
+    tri.forEachTriangle([&](detria::Triangle<int> triangle)
+    {
+        // `triangle` contains the point indices
+	nfaces[3*tri_ind] = det2pts[triangle.x];
+	nfaces[3*tri_ind+1] = det2pts[triangle.y];
+	nfaces[3*tri_ind+2] = det2pts[triangle.z];
+	active_pts.insert(nfaces[3*tri_ind]);
+	active_pts.insert(nfaces[3*tri_ind+1]);
+	active_pts.insert(nfaces[3*tri_ind+2]);
+    }, cwTriangles);
+
+    (*faces) = nfaces;
+
+    // We're not generating a new points array, so if out_pts exists set it to the
+    // input points array
+    if (out_pts) {
+	(*out_pts) = (point2d_t *)pts;
+    }
+    if (num_outpts) {
+	(*num_outpts) = (int)active_pts.size();
+    }
+
+    return 0;
+}
+#endif
 
 int
 bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
