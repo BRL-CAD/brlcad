@@ -636,7 +636,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 	if (node->n_primitives > 0) {
 	    size_t end = node->data.first_prim_offset + node->n_primitives;
 	    BU_ASSERT(end <= ntris);
-	    // need to go through prims in leaf node
+	    // each leaf node has multiple primatives in it
 	    for (size_t i = node->data.first_prim_offset; i < end; i++) {
 		triangle_s* tri = &tris[i];
 		vect_t wn, wxb, xp;
@@ -651,14 +651,9 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 		 beta = (dn > 0.0) ?  -beta :  beta;
 		gamma = (dn < 0.0) ? -gamma : gamma;
 		if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) ) continue;
-		// we calculate beta and gamma first, because 
-		// beta is associated with point B and gamma is 
-		// associated with point C
 		fastf_t dist = VDOT(wxb, wn) / dn;
 		// fill out hitdata
 		struct hit cur_hit = {0};
-		// we copy what g_bot_include.c does right now
-		// even if we don't really understand why
 		cur_hit.hit_magic = RT_HIT_MAGIC;
 		cur_hit.hit_dist = dist;
 		cur_hit.hit_vpriv[X] = VDOT(tri->face_norm, rp->r_dir);
