@@ -12,6 +12,7 @@ BRLCAD_MANAGE_FILES(db_nist-info.txt           ${DOC_DIR}/legal/embedded REQUIRE
 BRLCAD_MANAGE_FILES(damlev.txt                 ${DOC_DIR}/legal/embedded REQUIRED libbu)
 BRLCAD_MANAGE_FILES(dehumanize.txt             ${DOC_DIR}/legal/embedded REQUIRED libbu)
 BRLCAD_MANAGE_FILES(delaunator.txt             ${DOC_DIR}/legal/embedded REQUIRED libbg)
+BRLCAD_MANAGE_FILES(detria.txt                 ${DOC_DIR}/legal/embedded REQUIRED libbg)
 BRLCAD_MANAGE_FILES(DejaVu_Fonts.txt           ${DOC_DIR}/legal/embedded REQUIRED libbu)
 BRLCAD_MANAGE_FILES(earcut.txt                 ${DOC_DIR}/legal/embedded REQUIRED libbg)
 BRLCAD_MANAGE_FILES(fnmatch.txt                ${DOC_DIR}/legal/embedded REQUIRED libbu)

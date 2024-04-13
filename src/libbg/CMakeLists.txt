@@ -128,6 +128,7 @@ set(bg_ignore
   bg_private.h
   clipper.hpp
   delaunator.hpp
+  detria.hpp
   earcut.hpp
   pointgen.c
   spsr/LICENSE
