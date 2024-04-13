@@ -1,6 +1,6 @@
 // detria - a delaunay triangulation library
 //
-// Copyright (c) Kimbatt (https://github.com/Kimbatt)
+// Copyright (c) 2024 Kimbatt (https://github.com/Kimbatt)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -19,6 +19,10 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
+//
+// (Note - official licenses are at the bottom of the file - this copy is
+// placed here to indiciate which one BRL-CAD is using detria under and to
+// make it easier for our license scanner to find.)
 
 //
 // Example usage:
@@ -1056,7 +1060,7 @@ namespace detria
 #undef DETRIA_Two_One_Diff
 #undef DETRIA_Two_Two_Sum
 #undef DETRIA_Two_Two_Diff
-    };
+    }
 
     namespace detail
     {
@@ -1079,8 +1083,8 @@ namespace detria
             }
             else
             {
-                return b > Scalar(0) && a > std::numeric_limits<Scalar>::max() - b
-                    || b < Scalar(0) && a < std::numeric_limits<Scalar>::min() - b;
+                return (b > Scalar(0) && a > std::numeric_limits<Scalar>::max() - b)
+                    || (b < Scalar(0) && a < std::numeric_limits<Scalar>::min() - b);
             }
         }
 
@@ -1093,8 +1097,8 @@ namespace detria
             }
             else
             {
-                return b < Scalar(0) && a > std::numeric_limits<Scalar>::max() + b
-                    || b > Scalar(0) && a < std::numeric_limits<Scalar>::min() + b;
+                return (b < Scalar(0) && a > std::numeric_limits<Scalar>::max() + b)
+                    || (b > Scalar(0) && a < std::numeric_limits<Scalar>::min() + b);
             }
         }
 
@@ -1107,10 +1111,10 @@ namespace detria
             }
             else
             {
-                return a > 0 && b > 0 && a > std::numeric_limits<Scalar>::max() / b
-                    || a > 0 && b < 0 && b < std::numeric_limits<Scalar>::min() / a
-                    || a < 0 && b > 0 && a < std::numeric_limits<Scalar>::min() / b
-                    || a < 0 && b < 0 && b < std::numeric_limits<Scalar>::max() / a;
+                return (a > 0 && b > 0 && a > std::numeric_limits<Scalar>::max() / b)
+                    || (a > 0 && b < 0 && b < std::numeric_limits<Scalar>::min() / a)
+                    || (a < 0 && b > 0 && a < std::numeric_limits<Scalar>::min() / b)
+                    || (a < 0 && b < 0 && b < std::numeric_limits<Scalar>::max() / a);
             }
         }
 #endif
@@ -1155,9 +1159,9 @@ namespace detria
             Scalar detright = (pa1 - pc1) * (pb0 - pc0);
             Scalar det = detleft - detright;
 
-            det = [&]()
+            if constexpr (Robust && !IsInteger)
             {
-                if constexpr (Robust && !IsInteger)
+                do
                 {
                     Scalar detsum = Scalar(0);
 
@@ -1165,7 +1169,7 @@ namespace detria
                     {
                         if (detright <= Scalar(0))
                         {
-                            return det;
+                            break;
                         }
                         else
                         {
@@ -1176,7 +1180,7 @@ namespace detria
                     {
                         if (detright >= Scalar(0))
                         {
-                            return det;
+                            break;
                         }
                         else
                         {
@@ -1185,25 +1189,20 @@ namespace detria
                     }
                     else
                     {
-                        return det;
+                        break;
                     }
 
                     Scalar errbound = predicates::errorBounds<Scalar>.ccwerrboundA * detsum;
-                    if (predicates::Absolute(det) >= errbound) DETRIA_LIKELY
+                    if (predicates::Absolute(det) < errbound) DETRIA_UNLIKELY
                     {
-                        return det;
+                        Scalar pa[2]{ a.x, a.y };
+                        Scalar pb[2]{ b.x, b.y };
+                        Scalar pc[2]{ c.x, c.y };
+                        det = predicates::orient2dadapt(pa, pb, pc, detsum);
                     }
-
-                    Scalar pa[2]{ a.x, a.y };
-                    Scalar pb[2]{ b.x, b.y };
-                    Scalar pc[2]{ c.x, c.y };
-                    return predicates::orient2dadapt(pa, pb, pc, detsum);
                 }
-                else
-                {
-                    return det;
-                }
-            }();
+                while (false);
+            }
 
             if (det < Scalar(0))
             {
@@ -1317,32 +1316,23 @@ namespace detria
 
             Scalar det = alift * (bdxcdy - cdxbdy) + blift * (cdxady - adxcdy) + clift * (adxbdy - bdxady);
 
-            det = [&]()
+            if constexpr (Robust && !IsInteger)
             {
-                if constexpr (Robust && !IsInteger)
+                Scalar permanent =
+                    (predicates::Absolute(bdxcdy) + predicates::Absolute(cdxbdy)) * alift +
+                    (predicates::Absolute(cdxady) + predicates::Absolute(adxcdy)) * blift +
+                    (predicates::Absolute(adxbdy) + predicates::Absolute(bdxady)) * clift;
+
+                Scalar errbound = predicates::errorBounds<Scalar>.iccerrboundA * permanent;
+                if (predicates::Absolute(det) <= errbound) DETRIA_UNLIKELY
                 {
-                    Scalar permanent = 
-                        (predicates::Absolute(bdxcdy) + predicates::Absolute(cdxbdy)) * alift +
-                        (predicates::Absolute(cdxady) + predicates::Absolute(adxcdy)) * blift +
-                        (predicates::Absolute(adxbdy) + predicates::Absolute(bdxady)) * clift;
-
-                    Scalar errbound = predicates::errorBounds<Scalar>.iccerrboundA * permanent;
-                    if (predicates::Absolute(det) > errbound) DETRIA_LIKELY
-                    {
-                        return det;
-                    }
-
                     Scalar pa[2]{ a.x, a.y };
                     Scalar pb[2]{ b.x, b.y };
                     Scalar pc[2]{ c.x, c.y };
                     Scalar pd[2]{ d.x, d.y };
-                    return predicates::incircleadapt(pa, pb, pc, pd, permanent);
+                    det = predicates::incircleadapt(pa, pb, pc, pd, permanent);
                 }
-                else
-                {
-                    return det;
-                }
-            }();
+            }
 
             if (det > Scalar(0))
             {
@@ -2852,6 +2842,7 @@ namespace detria
         Triangulation(Allocator allocator = { }) :
             _allocator(allocator),
             _pointGetter(),
+            _numPoints(0),
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_polylines),
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_manuallyConstrainedEdges),
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_autoDetectedPolylineTypes),
@@ -2871,6 +2862,9 @@ namespace detria
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_delaunayCheckStack)
         {
         }
+
+        Triangulation(const Triangulation&) = delete;
+        Triangulation operator=(const Triangulation&) = delete;
 
         // If the triangulation failed, this function returns the type of the error that occured
         TriangulationError getError() const
@@ -3768,7 +3762,8 @@ namespace detria
                             };
 
                             break;
-                        DETRIA_UNLIKELY default:
+                        DETRIA_UNLIKELY case EdgeType::NotConstrained:
+                        DETRIA_UNLIKELY case EdgeType::MAX_EDGE_TYPE:
                             DETRIA_ASSERT(false);
                             break;
                     }
