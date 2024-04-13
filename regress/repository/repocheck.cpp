@@ -893,6 +893,7 @@ main(int argc, const char *argv[])
 		"/qtads/",
 		"/shapelib/",
 		"gltf/",
+		"/detria.hpp",
 		"/xxhash.h",
 		"misc/CMake/Find",
 		"misc/debian",
