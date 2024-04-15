@@ -432,8 +432,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     const char *bmintie = getenv("LIBRT_BOT_MINTIE");
     if (bmintie)
 	rt_bot_mintie = atoi(bmintie);
-
-    (void)rt_bot_mintie;
+    
     // set up centroids and bounds for hlbvh call
     fastf_t *centroids = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*3, "bot centroids");
     fastf_t *bounds    = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*6, "bot bounds");
