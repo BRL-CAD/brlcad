@@ -5,9 +5,9 @@ includedir=@includedir@
 datarootdir=@datarootdir@
 datadir=@datadir@
 
-Name: libpc
-Description: BRL-CAD Parametrics and Constraints Library
+Name: libbv
+Description: BRL-CAD View Library
 Version: @BRLCAD_VERSION@
-Requires: librt libbn libbu
-Libs: -L${libdir} -lpc -lrt -lbn -lbu -lpc @LIBTCL@ @LIBM@
+Requires: libbg libbn libbu
+Libs: -L${libdir} -lbg -lbn -lbu -llmdb @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

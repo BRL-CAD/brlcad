@@ -9,5 +9,5 @@ Name: libbu
 Description: BRL-CAD Utility Library
 Version: @BRLCAD_VERSION@
 Requires:
-Libs: -L${libdir} -lbu @LIBUUID@ @LIBREGEX@ @LIBM@
+Libs: -L${libdir} -lbu -llmdb @LIBUUID@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

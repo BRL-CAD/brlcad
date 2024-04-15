@@ -8,6 +8,6 @@ datadir=@datadir@
 Name: libbrep
 Description: BRL-CAD NURBS Boundary Representation Library
 Version: @BRLCAD_VERSION@
-Requires: libbg libbn libbu
-Libs: -L${libdir} -lbg -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBREGEX@ @LIBM@
+Requires: libbv libbg libbn libbu
+Libs: -L${libdir} -lbv -lbg -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBREGEX@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}
