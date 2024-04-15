@@ -13,6 +13,11 @@ endif (NOT BRLCAD_ENABLE_QT AND TARGET libtclcad AND TK_LIBRARY)
 
 # Qt version of brlman GUI
 if (BRLCAD_ENABLE_QT)
+
+  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    find_package_qt(REQUIRED)
+  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+
   if (Qt6Widgets_FOUND)
     set(brlman_libs libqtcad Qt6::Widgets Qt6::Gui ${brlman_libs})
   else()
