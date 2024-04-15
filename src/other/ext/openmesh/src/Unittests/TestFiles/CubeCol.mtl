@@ -1,9 +1,0 @@
-newmtl cube
-Ns 10.0000
-Ni 1.000
-d 1.0000
-illum 2
-#Ambient, Diffuse, Specular colors
- Ka 1.0000 0.7000 0.1000
- Kd 0.1250 0.2500 0.5000
- Ks 1.0000 0.6000 0.4000
