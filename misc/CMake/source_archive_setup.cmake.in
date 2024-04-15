@@ -133,7 +133,7 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
       message("Populating src/bext...")
       find_program(GIT_EXEC git REQUIRED)
       execute_process(
-	COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git
+	COMMAND ${GIT_EXEC} clone -b RELEASE https://github.com/BRL-CAD/bext.git
 	WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src"
 	)
       execute_process(

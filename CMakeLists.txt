@@ -111,6 +111,20 @@ if (POLICY CMP0127)
   cmake_policy(SET CMP0127 NEW)
 endif (POLICY CMP0127)
 
+message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+message("CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
+
+if (NOT EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+  message(FATAL_ERROR "Invalid brlcad directory: ${CMAKE_SOURCE_DIR}")
+endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+
+if (CMAKE_ORIGINAL_SRC_DIR)
+  if (NOT "${CMAKE_ORIGINAL_SRC_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+    message(FATAL_ERROR "Got ${CMAKE_ORIGINAL_SOURCE_DIR}/CMakeLists.txt from ${CMAKE_SOURCE_DIR}")
+  endif (NOT "${CMAKE_ORIGINAL_SRC_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+endif (CMAKE_ORIGINAL_SRC_DIR)
+
+set(CMAKE_ORIGINAL_SRC_DIR "${CMAKE_SOURCE_DIR}" CACHE PATH "Source of original CMakeLists.txt file" FORCE)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
@@ -194,7 +208,9 @@ if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
   endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 
   # Tell CPack to bundle bext into the source tarball
-  set(CPACK_INCLUDE_EXT 1)
+  if (NOT DEFINED CPACK_INCLUDE_EXT)
+    set(CPACK_INCLUDE_EXT ON)
+  endif (NOT DEFINED CPACK_INCLUDE_EXT)
 endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
 #---------------------------------------------------------------------
