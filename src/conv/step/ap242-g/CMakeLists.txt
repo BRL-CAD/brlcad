@@ -1,9 +1,9 @@
-link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
-
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap242e1.exp)
 add_definitions(-DAP242)
 
-GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap242g)
+if (DEFINED ENABLE_STEP_EXPERIMENTAL)
+  GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap242g)
+endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 set(ap242g_SOURCES
   ${express_srcs}
@@ -237,25 +237,20 @@ set(AP242_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
   )
 
-BRLCAD_ADDEXEC(ap242-g "${ap242g_SOURCES}" "${ap242g_LIBS}" NO_STRICT FOLDER Conv)
-target_include_directories(ap242-g BEFORE PRIVATE ${AP242_INCLUDE_DIRS})
-add_dependencies(ap242-g step-express-${SCHEMA_NAME}-ap242g)
-
-if (HIDE_INTERNAL_SYMBOLS)
-  set(ap242g_IMPORTS
-    BU_DLL_IMPORTS
-    RT_DLL_IMPORTS
-    WDB_DLL_IMPORTS
-    SC_CORE_DLL_IMPORTS
-    SC_DAI_DLL_IMPORTS
-    SC_EDITOR_DLL_IMPORTS
-    SC_UTILS_DLL_IMPORTS
-    )
-  set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${ap242g_IMPORTS}")
-endif (HIDE_INTERNAL_SYMBOLS)
+if (DEFINED ENABLE_STEP_EXPERIMENTAL)
+  BRLCAD_ADDEXEC(ap242-g "${ap242g_SOURCES}" "${ap242g_LIBS}" NO_STRICT FOLDER Conv)
+  target_include_directories(ap242-g BEFORE PRIVATE ${AP242_INCLUDE_DIRS})
+  add_dependencies(ap242-g step-express-${SCHEMA_NAME}-ap242g)
+endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 CMAKEFILES(
+  ${ap242g_SOURCES}
   CMakeLists.txt
+  GlobalUnitAssignedContext.h
+  MeasureValue.h
+  MeasureWithUnit.h
+  PropertyDefinitionRepresentation.h
+  RepresentedDefinition.h
   ap242e1.exp
   )
 
