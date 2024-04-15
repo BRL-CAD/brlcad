@@ -1807,7 +1807,7 @@ NEW OBJECTS
   http://www.wikistep.org/index.php/Associative_Text_in_3D_recommended_practices
   http://www.wikistep.org/index.php/Model_viewing,_basic_drawing_structure_and_dimensions_recommended_practices
   http://www.iigdt.com/Products/Images/0f390980.jpg
-  src/other/openNURBS/opennurbs_annotation*
+  openNURBS: opennurbs_annotation*
 
   Types of annotations:
 	text:                   text.
@@ -2168,8 +2168,6 @@ STEP
 
 * implement g-step exporter (see above)
 
-* see additional TODO items in file './src/other/step/README'
-
 
 BREP/NURBS
 ----------
@@ -2345,10 +2343,6 @@ INFRASTRUCTURE
 
 * ensure primary cmake option parity with summary option listing
 
-  -- Um.  Not sure this is fully achieveable - we only want to
-     summarize a subset of the src/other settings in the summary
-     printout, was my (CY) understanding...
-
 * investigate ignoring .hidden directories/files from dist packing so
   that internal build directories can be used instead of external ones
 
@@ -2366,7 +2360,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * have all primitives record a matrix so they may retain a local
   coordinate system even after pushed matrices.  this also will allow
   primitives like the torus to support non-uniform scaling.
-  
+
 * change convention of using 'u', '+', and '-' for unions,
   intersections, and subtractions respectively to symbols that
   unambiguously describe the underlying CSG operation.

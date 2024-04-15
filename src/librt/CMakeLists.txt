@@ -1,11 +1,9 @@
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  BRLCAD_Find_Package(MANIFOLD REQUIRED)
-  BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
-  BRLCAD_Find_Package(REGEX REQUIRED)
-  if (BRLCAD_ENABLE_ASSETIMPORT)
-    BRLCAD_Find_Package(ASSETIMPORT)
-  endif (BRLCAD_ENABLE_ASSETIMPORT)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+BRLCAD_Find_Package(MANIFOLD REQUIRED)
+BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
+BRLCAD_Find_Package(REGEX REQUIRED)
+if (BRLCAD_ENABLE_ASSETIMPORT)
+  BRLCAD_Find_Package(ASSETIMPORT)
+endif (BRLCAD_ENABLE_ASSETIMPORT)
 
 if(ASSETIMPORT_LIBRARIES)
   add_definitions(-DUSE_ASSETIMPORT)
@@ -446,8 +444,9 @@ endif (MUSL_LD)
 # The following is build code for test applications used during
 # development
 #
+# find_package_eigen(REQUIRED)
 #include_directories(
-#  ${CMAKE_SOURCE_DIR}/src/other/Eigen
+#  ${EIGEN3_INCLUDE_DIR}
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
 #  )
 #

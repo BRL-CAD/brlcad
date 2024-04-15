@@ -1,7 +1,7 @@
 
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(IFC_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ifc4/IFC4.exp)
+set(IFC_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/IFC4.exp)
 
 GENERATE_SCHEMA_INPUTS(${IFC_SCHEMA_FILE} ifcg)
 
@@ -48,7 +48,10 @@ if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET ifc-g APPEND PROPERTY COMPILE_DEFINITIONS "${ifcg_IMPORTS}")
 endif (HIDE_INTERNAL_SYMBOLS)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  IFC4.exp
+  )
 
 # Local Variables:
 # tab-width: 8

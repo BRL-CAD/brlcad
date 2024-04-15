@@ -81,7 +81,7 @@ online may prove fruitful.
 
 So far, if parallel building doesn't work due to the above issue a
 non-parallel build will still succeed.  Another workaround is to build
-just subdirectories (e.g. src/other, doc, etc.) individually and then
+just subdirectories (e.g. src, doc, etc.) individually and then
 do a toplevel make in non-parallel mode to finalize the build.
 
 

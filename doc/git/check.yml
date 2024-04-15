@@ -32,8 +32,9 @@ name: BRL-CAD
 on: [push]
 
 jobs:
+
   windows:
-    name: Windows Latest MSVC
+    name: Windows Latest MSVC - Ninja
     runs-on: windows-latest
     strategy:
       fail-fast: true
@@ -41,75 +42,134 @@ jobs:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      - name: Setup - Ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1.3
 
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Add cl.exe to PATH
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Add github workspace to path
         # https://github.community/t/deprecated-add-path/136621
         run: echo "$ENV{GITHUB_WORKSPACE}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.0.2
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Add cl.exe to PATH
-        uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup - bext
+        shell: powershell
+        run: |
+          cmake -E make_directory build_winninja
+          cd build_winninja
+          git clone https://github.com/BRL-CAD/bext.git
+          cmake -E make_directory bext_build
+          cd bext_build
+          cmake ../bext -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/build_winninja
+          cmake --build . --config Release -j 1
+          cd ..
+          cmake -E rm -rf bext
+          cmake -E rm -rf bext_build
+          cd ..
 
       - name: Configure
+        shell: powershell
         run: |
-          cmake -S . -B build -G Ninja -D CMAKE_C_COMPILER="cl.exe" -D CMAKE_CXX_COMPILER="cl.exe" -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release
-          # We do the following in order to help ensure files are "flushed"
-          # to disk before compilation is attempted
+          # We do the Write-VolumeCache calls in order to help ensure files are
+          # "flushed" to disk before compilation is attempted
           # https://superuser.com/a/1553374/1286142
-          powershell Write-VolumeCache C
-          powershell Write-VolumeCache D
+          cd build_winninja; cmake .. -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_winninja/bext_output -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON; Write-VolumeCache C; Write-VolumeCache D
 
       - name: Build
-        run: cd build && ninja -j1 -v && ninja check -v && ninja package
+        shell: powershell
+        run: |
+          cd build_winninja; ninja -j1 -v; ninja check -v; ninja package
 
-        # Various other Windows build lines used for various types of testing.
-        # Preserved for reference, as the iterative time to figure out how to
-        # perform them was significant...
-        #run: cmake --build build --config Release --target package
-        #run: cd build && ninja -j1 -v STEPCODE_BLD && cd src/other/ext/STEPCODE_BLD-prefix/src/STEPCODE_BLD-build && ninja clean && ninja -j1 -v
-        #run: cmake --build build --config Release --target STEPCODE_BLD && cd build/src/other/ext/STEPCODE_BLD-prefix/src/STEPCODE_BLD-build && msbuild ALL_BUILD.vcxproj -t:clean && msbuild ALL_BUILD.vcxproj -v:diag
 
-        # For the moment the space demands are too extreme to enable this
-        # output for every compile test, but leave the enabling logic present
-        # in commented out form so it can be enabled as needed.
-#     - name: Upload Package
-#       uses: actions/upload-artifact@v2
-#       with:
-#         name: BRLCAD_Windows
-#         path: ${{ github.workspace }}/build/BRL-CAD*exe
-
-  linux:
-    name: Ubuntu Latest GCC
-    runs-on: ubuntu-20.04
+  windows_std_tools:
+    name: Windows Latest MSVC - Standard Tools
+    runs-on: windows-latest
     strategy:
       fail-fast: true
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      - name: Setup - Ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add github workspace to path
+        # https://github.community/t/deprecated-add-path/136621
+        run: echo "$ENV{GITHUB_WORKSPACE}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
+      - name: Build Directory setup
+        run: |
+          cmake -E make_directory ./build_winstd
+
+      - name: Configure
+        shell: cmd
+        run: |
+          call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          cmake -S . -B build_winstd -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BUNDLED_LIBS=Bundled -DBRLCAD_ENABLE_QT=ON -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          cmake --build build_winstd --config Release --target mged
+
+
+  linux:
+    name: Ubuntu Latest GCC
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup - System
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils liblief-dev
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Cleanup (we want to avoid wasting disk space)
+          sudo apt-get clean
+
+      - name: Setup - System Qt Build Requirements
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+          sudo apt-get clean
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Build Directory setup
+        run: |
+          cmake -E make_directory ./build_linux
 
       - name: Configure
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release
+          cmake -S . -G Ninja -B build_linux -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake --build build --config Release --target check
-          cmake --build build --config Release --target package
+          cmake --build build_linux --config Release --target check
+          cmake --build build_linux --config Release --target package
 
         # For the moment the space demands are too extreme to enable this
         # output for every compile test, but leave the enabling logic present
@@ -118,7 +178,7 @@ jobs:
 #       uses: actions/upload-artifact@v2
 #       with:
 #         name: BRLCAD_Linux
-#         path: ${{ github.workspace }}/build/BRL-CAD*gz
+#         path: ${{ github.workspace }}/build_linux/BRL-CAD*gz
 
   osx:
     name: macOS Latest Clang
@@ -129,24 +189,39 @@ jobs:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      - name: Setup - Ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
-
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Build Directory setup
+        run: |
+          cmake -E make_directory ./build_osx
+
+      - name: Setup - bext
+        run: |
+          cd build_osx
+          git clone https://github.com/BRL-CAD/bext.git
+          cmake -E make_directory bext_build
+          cd bext_build
+          export CC=clang
+          export CXX=clang++
+          cmake ../bext -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/build_osx -DCMAKE_BUILD_TYPE=Debug
+          cmake --build . -j 1
+          cd ..
+          cmake -E rm -rf bext
+          cmake -E rm -rf bext_build
+          cd ..
 
       - name: Configure
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
           export CC=clang
           export CXX=clang++
-          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release
+          cmake -S . -G Ninja -B build_osx -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_osx/bext_output -DBRLCAD_ENABLE_X11=OFF -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake --build build --config Release --target check
-          cmake --build build --config Release --target package
+          cd build_osx && ninja -j1 && ninja -j1 package
 
         # For the moment the space demands are too extreme to enable this
         # output for every compile test, but leave the enabling logic present
@@ -155,6 +230,43 @@ jobs:
 #       uses: actions/upload-artifact@v2
 #       with:
 #         name: BRLCAD_OSX
-#         path: ${{ github.workspace }}/build/BRL-CAD*gz
+#         path: ${{ github.workspace }}/build_osx/BRL-CAD*gz
 
+  # A full distcheck is too expensive for the runners, but we can run the
+  # repository integrity check and make sure we can build source archives.
+  archives:
+    name: Source Archives
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup - System
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils liblief-dev
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Cleanup (we want to avoid wasting disk space)
+          sudo apt-get clean
+
+      - name: Setup - bext
+        run: |
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          cmake -E make_directory ./build_archives
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cmake -S . -B build_archives -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DCPACK_INCLUDE_EXT=OFF
+          cmake --build build_archives --config Release --target distcheck-source_archives
 

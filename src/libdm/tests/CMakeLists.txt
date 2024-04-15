@@ -7,9 +7,7 @@ BRLCAD_ADDEXEC(dm_test dm_test.c "libdm;libbu" TEST)
 # and provide an appropriate include first...
 if (BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_X11)
 
-  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-    find_package_tcl(REQUIRED)
-  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_tcl(REQUIRED)
 
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}

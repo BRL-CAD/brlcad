@@ -1,6 +1,6 @@
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203e2.exp)
 add_definitions(-DAP203e2)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap203e2g)
@@ -254,7 +254,10 @@ if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${ap203e2g_IMPORTS}")
 endif (HIDE_INTERNAL_SYMBOLS)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ap203e2.exp
+  )
 
 # Local Variables:
 # tab-width: 8

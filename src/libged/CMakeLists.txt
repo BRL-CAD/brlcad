@@ -1,11 +1,9 @@
 # LIBGED is set up based on a plugin architecture, with common functionality
 # defined in a core library.
 
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  BRLCAD_Find_Package(LMDB REQUIRED)
-  BRLCAD_Find_Package(PNG REQUIRED)
-  BRLCAD_Find_Package(REGEX REQUIRED)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+BRLCAD_Find_Package(LMDB REQUIRED)
+BRLCAD_Find_Package(PNG REQUIRED)
+BRLCAD_Find_Package(REGEX REQUIRED)
 
 add_custom_command(
   OUTPUT "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"

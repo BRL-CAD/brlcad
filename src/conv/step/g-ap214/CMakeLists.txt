@@ -1,6 +1,6 @@
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap214e3/AP214E3_2010.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap214e3.exp)
 add_definitions(-DAP214e3)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gap214)
@@ -69,6 +69,7 @@ endif (HIDE_INTERNAL_SYMBOLS)
 set(IGNORE_FILES
   CMakeLists.txt
   AP214e3.h
+  ap214e3.exp
   )
 CMAKEFILES(${IGNORE_FILES})
 

@@ -376,8 +376,6 @@ details on subdirectories and authorship not covered here.
 	Write database library
   src/mged/
 	Multi-device geometry editor
-  src/other/
-	External frameworks (Tcl/Tk, libpng, zlib, etc.)
   src/proc-db/
 	Procedural geometry tools, create models programmatically
   src/remrt/

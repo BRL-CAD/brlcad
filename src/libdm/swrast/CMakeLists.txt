@@ -1,6 +1,4 @@
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  BRLCAD_Find_Package(OSMESA REQUIRED)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+BRLCAD_Find_Package(OSMESA REQUIRED)
 
 set(SWRAST_SRCS
   dm-swrast.cpp
@@ -15,9 +13,7 @@ set(SWRAST_SRCS
 # images of the drawn scene.
 if(BRLCAD_ENABLE_QT)
 
-  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-    find_package_qt(REQUIRED)
-  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_qt(REQUIRED)
 
   add_definitions(-DSWRAST_QT)
 

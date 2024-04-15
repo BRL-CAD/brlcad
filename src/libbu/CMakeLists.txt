@@ -1,6 +1,4 @@
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  BRLCAD_Find_Package(LMDB REQUIRED)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+BRLCAD_Find_Package(LMDB REQUIRED)
 
 if (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
   # If this becomes a default we'll need to bundle libbson to ensure it is

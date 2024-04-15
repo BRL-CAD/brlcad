@@ -80,10 +80,7 @@ When referring to BRL-CAD, its source code, documentation, and
 libraries, the reference is not meant to include or imply 3rd party
 source code, libraries, and/or applications unless specifically stated
 otherwise.  No endorsement or claim of authorship is implied to any
-3rd party asset that is included with BRL-CAD.  The majority of the
-3rd party source code, libraries, and applications included with
-BRL-CAD are located in the src/other/ directory of the source code
-distribution.
+3rd party asset that is included with BRL-CAD.
 
 Copyright
 ---------

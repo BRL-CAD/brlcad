@@ -32,7 +32,7 @@ Difficulty:
 Prerequisites:
  * Basic familiarity with C++ STL
 References:
- * src/other/step
+ * https://github.com/BRL-CAD/stepcode
  * src/conv/step
  * include
  * http://www.sgi.com/tech/stl/

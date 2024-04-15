@@ -903,7 +903,6 @@ main(int argc, const char *argv[])
 		"pkg.h",
 		"src/libdm/wgl/wintk/",
 		"src/libpkg",
-		"src/other/",
 		"~",
 		NULL
 	};

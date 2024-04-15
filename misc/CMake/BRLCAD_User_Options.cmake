@@ -60,11 +60,12 @@ cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONF
 option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
 mark_as_advanced(BRLCAD_ENABLE_BRLCAD_LIBRARY)
 
-# Global third party controls - these options enable and disable ALL local
-# copies of libraries in src/other.  Forcing all local libraries off is not
-# usually recommended unless attempting to build packages for a distribution.
-# If both of these options are on the enabling of local packages is the
-# "senior" option and will force the system libs option to off.
+# Global third party controls - these options enable and disable ALL bext
+# copies of libraries.
+# TODO - with the bext scheme, this primarily serves to drive a configure-
+# managed bext build as far as enabling or disabling all components.
+# Probably can just simplify all this to passing an ENABLE_ALL down to the
+# bext build, if supplied...
 set(BRLCAD_BUNDLED_LIBS_DESCRIPTION "
 Enables compilation of all 3rd party sources that are provided within a BRL-CAD
 source distribution.  If used this option sets all other 3rd party library
@@ -214,68 +215,6 @@ mark_as_advanced(BRLCAD_ENABLE_STEP)
 # Enable features requiring Qt
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
-if (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
-if (BRLCAD_ENABLE_QT)
-
-  # Note - to use Qt6, set Qt6_DIR to <qt_install_dir>/lib/cmake/Qt6 and CMAKE_PREFIX_PATH
-  # to <qt_install_dir>
-  if(Qt6_DIR)
-    if(BRLCAD_ENABLE_OPENGL)
-      find_package(Qt6 COMPONENTS Core Widgets Gui Svg OpenGL OpenGLWidgets Network REQUIRED)
-      find_package(Qt6 COMPONENTS Test)
-    else()
-      find_package(Qt6 COMPONENTS Core Widgets Gui Svg Network REQUIRED)
-      find_package(Qt6 COMPONENTS Test)
-    endif(BRLCAD_ENABLE_OPENGL)
-  else()
-    if(BRLCAD_ENABLE_OPENGL)
-      find_package(Qt6 COMPONENTS Core Widgets Gui Svg OpenGL OpenGLWidgets Network QUIET)
-      find_package(Qt6 COMPONENTS Test)
-    else()
-      find_package(Qt6 COMPONENTS Core Widgets Gui Svg Network QUIET)
-      find_package(Qt6 COMPONENTS Test)
-    endif(BRLCAD_ENABLE_OPENGL)
-  endif(Qt6_DIR)
-
-  if(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
-
-    # We didn't find 6, try 5.  For non-standard install locations, you may need to set
-    # the following:
-    #
-    # Qt5_DIR=<install_dir>/lib/cmake/Qt5
-    # QT_QMAKE_EXECUTABLE=<install_dir>/bin/qmake
-    # AUTORCC_EXECUTABLE=<install_dir>/bin/rcc
-    # TODO - others?
-    if(BRLCAD_ENABLE_OPENGL)
-      find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL Network)
-      find_package(Qt5 COMPONENTS Test)
-    else()
-      find_package(Qt5 COMPONENTS Core Widgets Gui Network)
-      find_package(Qt5 COMPONENTS Test)
-    endif(BRLCAD_ENABLE_OPENGL)
-
-    if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-
-      message("Qt requested, but Qt installation not found - disabling")
-
-      set(BRLCAD_ENABLE_QT OFF)
-
-    endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-
-  endif(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
-
-  if (Qt6Test_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define USE_QTTEST 1\n")
-  endif (Qt6Test_FOUND)
-
-endif (BRLCAD_ENABLE_QT)
-mark_as_advanced(Qt6Widgets_DIR)
-mark_as_advanced(Qt6Core_DIR)
-mark_as_advanced(Qt6Gui_DIR)
-mark_as_advanced(Qt5Widgets_DIR)
-mark_as_advanced(Qt5Core_DIR)
-mark_as_advanced(Qt5Gui_DIR)
-endif (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
 
 # Enable features requiring OpenSceneGraph
 option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
@@ -395,7 +334,7 @@ BRLCAD_OPTION(BRLCAD_WARNINGS ON
 mark_as_advanced(BRLCAD_WARNINGS)
 
 # Enable/disable strict compiler settings - these are used for building BRL-CAD
-# by default, but not src/other code.  Always used for BRL-CAD code unless the
+# by default.  Always used for BRL-CAD code unless the
 # NO_STRICT option is specified when defining a target with BRLCAD_ADDEXEC or
 # BRLCAD_ADDLIB.  If only C++ files in a target are not compatible with strict,
 # the NO_STRICT_CXX option can be used.
@@ -488,10 +427,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 #-----------------------------------------------------------------------------
 # There are extra documentation files available requiring DocBook They are
 # quite useful in graphical interfaces, but also add considerably to the
-# overall build time.  If necessary BRL-CAD provides its own xsltproc (see
-# src/other/xmltools), so the html and man page outputs are always potentially
-# available.  PDF output, on the other hand, needs Apache FOP.  FOP is not a
-# candidate for bundling with BRL-CAD for a number of reasons, so we simply
+# overall build time.  Via xsltproc from bext (if needed) html and man page
+# outputs are always potentially available.  PDF output, on the other hand,
+# needs Apache FOP.  FOP is part of bext for a number of reasons, so we simply
 # check to see if it is present and set the options accordingly.
 
 # Do we have the environment variable set locally?

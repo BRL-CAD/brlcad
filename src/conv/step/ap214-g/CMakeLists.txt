@@ -1,6 +1,6 @@
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap214e3/AP214E3_2010.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap214e3.exp)
 add_definitions(-DAP214e3)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap214g)
@@ -254,7 +254,10 @@ if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${ap214g_IMPORTS}")
 endif (HIDE_INTERNAL_SYMBOLS)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ap214e3.exp
+  )
 
 # Local Variables:
 # tab-width: 8

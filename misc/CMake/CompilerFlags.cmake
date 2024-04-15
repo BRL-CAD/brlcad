@@ -58,49 +58,9 @@ function(PRINT_BUILD_FLAGS)
   message(" ")
 endfunction(PRINT_BUILD_FLAGS)
 
-# Cache current values of CMake build variables
-macro(CACHE_BUILD_FLAGS suffix)
-  set(CMAKE_C_FLAGS_CACHED${suffix} "${CMAKE_C_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
-  set(CMAKE_CXX_FLAGS_CACHED${suffix} "${CMAKE_CXX_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
-  set(CMAKE_SHARED_LINKER_FLAGS_CACHED${suffix} "${CMAKE_SHARED_LINKER_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
-  set(CMAKE_EXE_LINKER_FLAGS_CACHED${suffix} "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
-  mark_as_advanced(CMAKE_C_FLAGS_CACHED${suffix})
-  mark_as_advanced(CMAKE_CXX_FLAGS_CACHED${suffix})
-  mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_CACHED${suffix})
-  mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_CACHED${suffix})
-  foreach(BTYPE ${CMAKE_BUILD_TYPES})
-    set(CMAKE_C_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_C_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
-    set(CMAKE_CXX_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_CXX_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
-    set(CMAKE_SHARED_LINKER_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_SHARED_LINKER_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_EXE_LINKER_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
-    mark_as_advanced(CMAKE_C_FLAGS_${BTYPE}_CACHED${suffix})
-    mark_as_advanced(CMAKE_CXX_FLAGS_${BTYPE}_CACHED${suffix})
-    mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_${BTYPE}_CACHED${suffix})
-    mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${BTYPE}_CACHED${suffix})
-  endforeach(BTYPE ${CMAKE_BUILD_TYPES})
-  set(CMAKE_BUILD_FLAGS_CACHED${suffix} TRUE CACHE BOOL "Have cached build flag values" FORCE)
-  mark_as_advanced(CMAKE_BUILD_FLAGS_CACHED${suffix})
-endmacro(CACHE_BUILD_FLAGS)
-
-# Restore cached values of CMake build variables
-macro(RESTORE_CACHED_BUILD_FLAGS suffix)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
-  foreach(BTYPE ${CMAKE_BUILD_TYPES})
-    set(CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
-    set(CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
-    set(CMAKE_SHARED_LINKER_FLAGS_${BTYPE} "${CMAKE_SHARED_LINKER_FLAGS_${BTYPE}_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS_${BTYPE} "${CMAKE_EXE_LINKER_FLAGS_${BTYPE}_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
-  endforeach(BTYPE ${CMAKE_BUILD_TYPES})
-endmacro(RESTORE_CACHED_BUILD_FLAGS)
-
-# Clear all currently defined CMake compiler and linker flags
-#
-# TODO - currently, it seems most of our src/other subbuilds
-# rely on CMake to specify Windows compilation flags - until
-# that changes, we can't afford to strip flags out on MSVC
+# Clear all currently defined CMake compiler and linker flags.
+# NOTE - we don't currently manage MSVC build flags directly,
+# so in that case we leave the CMake defaults.
 macro(CLEAR_BUILD_FLAGS)
   set(BUILD_FLAGS_TO_CLEAR
     CMAKE_C_FLAGS

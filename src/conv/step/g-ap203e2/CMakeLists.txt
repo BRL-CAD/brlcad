@@ -1,6 +1,6 @@
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203e2.exp)
 add_definitions(-DAP203e2)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gap203e2)
@@ -66,6 +66,7 @@ endif (HIDE_INTERNAL_SYMBOLS)
 set(IGNORE_FILES
   CMakeLists.txt
   AP203e2.h
+  ap203e2.exp
   )
 CMAKEFILES(${IGNORE_FILES})
 
