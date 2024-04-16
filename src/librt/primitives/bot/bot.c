@@ -332,8 +332,6 @@ _Pragma("GCC diagnostic pop")	     							\
 	(da)->items[(da)->count++] = (item);						\
     } while (0)
 
-#define nob_da_free(da) NOB_FREE((da).items)
-
 // Append several items to a dynamic array
 #define DA_APPEND_MANY(da, new_items, new_items_count)						\
     do {											\
