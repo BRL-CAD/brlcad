@@ -861,9 +861,7 @@ rt_bot_free(struct soltab *stp)
 	struct spatial_partition_s *sps = (struct spatial_partition_s*)bot->tie;
 	bu_free(sps->root, "bot bvh flat nodes");
 	bu_free(sps->tris, "bot triangles");
-	if (sps->vertex_normals) {
-	    bu_free(sps->vertex_normals, "bot normals");
-	}
+	bu_free(sps->vertex_normals, "bot normals");
 	if (sps->hit_arrays_per_cpu) {
 	    for (size_t i = 0; i < sps->num_cpus; i++) {
 		if (sps->hit_arrays_per_cpu[i].items) bu_free(sps->hit_arrays_per_cpu[i].items, "bot thread-local hit arrays");
