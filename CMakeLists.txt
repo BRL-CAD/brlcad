@@ -167,6 +167,11 @@ endif(BRLCAD_PRINT_MSGS)
 # do this early in the process.
 include(BRLCAD_Environment_Setup)
 
+# We do NOT want CMake looking in the User Package Registry - have encountered
+# at least one case where stale or incorrect information there has resulted in
+# an incorrect include directory for Eigen based on bext build info.
+set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
+
 # Populate these early, even though their main use is in
 # misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
 # may also make use of them, particularly BRLCAD_EXT_NOINSTALL_DIR
