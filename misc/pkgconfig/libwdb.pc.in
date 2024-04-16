@@ -8,6 +8,6 @@ datadir=@datadir@
 Name: libwdb
 Description: BRL-CAD Write Database Library
 Version: @BRLCAD_VERSION@
-Requires: librt libbn libbu
-Libs: -L${libdir} -lwdb -lrt -lbn -lbu @LIBTCL@ @LIBM@
+Requires: librt libnmg libbrep libbv libbg libbn libbu
+Libs: -L${libdir} -lwdb -lrt -lnmg -lbrep -lbv -lbg -lbn -lbu @LIBTCL@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

@@ -1,7 +1,5 @@
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_eigen(REQUIRED)
-  BRLCAD_Find_Package(POLY2TRI REQUIRED)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+find_package_eigen(REQUIRED)
+BRLCAD_Find_Package(POLY2TRI REQUIRED)
 
 set(SPSR_srcs
   spsr/Allocator.h
@@ -87,9 +85,6 @@ set(BG_INCLUDE_DIRS
   ${LMDB_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIR}
   )
-if (EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
-  set(BG_INCLUDE_DIRS ${BG_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
-endif (EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
 
 BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
@@ -128,6 +123,7 @@ set(bg_ignore
   bg_private.h
   clipper.hpp
   delaunator.hpp
+  detria.hpp
   earcut.hpp
   pointgen.c
   spsr/LICENSE

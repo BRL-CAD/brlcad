@@ -488,7 +488,7 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    view_flags |= QG_VIEW_SELECT;
 	    // This is what notifies currently drawn solids to update
 	    // in response to a command line selection change
-	    if (ss->draw_sync())
+	    if (ss && ss->draw_sync())
 		view_flags |= QG_VIEW_DRAWN;
 	}
     }

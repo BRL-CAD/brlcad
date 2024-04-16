@@ -33,7 +33,7 @@ BRLCAD_MANAGE_FILES("ged.h" ${INCLUDE_DIR}/brlcad REQUIRED libged)
 BRLCAD_MANAGE_FILES("icv.h" ${INCLUDE_DIR}/brlcad REQUIRED libicv)
 BRLCAD_MANAGE_FILES("nmg.h" ${INCLUDE_DIR}/brlcad REQUIRED libnmg)
 BRLCAD_MANAGE_FILES("optical.h" ${INCLUDE_DIR}/brlcad REQUIRED liboptical)
-BRLCAD_MANAGE_FILES("pc.h" ${INCLUDE_DIR}/brlcad REQUIRED libpc)
+BRLCAD_MANAGE_FILES("pc.h" ${INCLUDE_DIR}/brlcad REQUIRED librt)
 BRLCAD_MANAGE_FILES("photonmap.h" ${INCLUDE_DIR}/brlcad REQUIRED liboptical)
 BRLCAD_MANAGE_FILES("pinttypes.h" ${INCLUDE_DIR}/brlcad)
 BRLCAD_MANAGE_FILES("pkg.h" ${INCLUDE_DIR}/brlcad REQUIRED libpkg)
@@ -94,7 +94,6 @@ if (DEFINED BRLCAD_HDR_CHECK AND NOT MSVC)
       add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
 	COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_BINARY_DIR}/include
-	-I${CMAKE_SOURCE_DIR}/src/other/openNURBS -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic
 	-fsyntax-only -Wall -Wextra -Wno-deprecated
 	${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
 	COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp

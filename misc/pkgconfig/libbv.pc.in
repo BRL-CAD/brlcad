@@ -5,9 +5,9 @@ includedir=@includedir@
 datarootdir=@datarootdir@
 datadir=@datadir@
 
-Name: liboptical
-Description: BRL-CAD Optics Library
+Name: libbv
+Description: BRL-CAD View Library
 Version: @BRLCAD_VERSION@
-Requires: librt libnmg libbrep libbv libbg libbn libbu
-Libs: -L${libdir} -loptical -lrt -lnmg -lbrep -lbv -lbg -lbn -lbu @LIBTCL@ @LIBM@
+Requires: libbg libbn libbu
+Libs: -L${libdir} -lbg -lbn -lbu -llmdb @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

@@ -52,6 +52,7 @@
 #  pragma clang diagnostic ignored "-Wunused-parameter"
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #  pragma clang diagnostic ignored "-Wdocumentation"
+#  pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 #include "OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh"
 #include "OpenMesh/Core/Utils/Property.hh"

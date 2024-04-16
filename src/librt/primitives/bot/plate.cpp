@@ -435,7 +435,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     // Now, handle the primary arb faces
     size_t fcnt = 0;
     start = bu_gettime();
-    elapsed = 0;
     if (!quiet_mode)
 	bu_log("Processing %zd faces...\n" , bot->num_faces);
     for (size_t i = 0; i < bot->num_faces; i++) {

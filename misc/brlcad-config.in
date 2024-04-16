@@ -225,12 +225,6 @@ check ( ) {
 		new="`basename \"$new\"`"
 		new="-l`echo $new | sed 's/^lib//' | sed 's/\.la$//'`"
 		;;
-	    x-L/src/other*)
-		new=""
-		;;
-	    x-I/src/other*)
-		new=""
-		;;
 	    x-I/include)
 		new=""
 		;;

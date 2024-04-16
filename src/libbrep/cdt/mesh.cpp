@@ -4640,7 +4640,11 @@ cdt_mesh_t::best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname
  * approximating is locally semi-planar, but if the repair area is not one
  * that can be projected into a plane without introducing self intersections,
  * we will need something more sophisticated.  Take a look at
- * https://github.com/jpcy/xatlas to see if it might be a good starting point.
+ * Geogram's uv projection capabilities to see if they can help here.
+ *
+ * Also possibilities:
+ * https://github.com/educelab/OpenABF
+ * https://github.com/jpcy/xatlas
  */
 
 bool

@@ -236,7 +236,8 @@ set(IGNORED_FS_FILES ${FS_FILE_LIST})
 list(REMOVE_ITEM IGNORED_FS_FILES ${BUILD_FILES})
 if(IGNORED_FS_FILES)
   string(REPLACE ";" "\n" IGNORED_FS_FILES "${IGNORED_FS_FILES}")
-  message("\nFiles unknown to both Version Control System and the Build logic (will not be incorporated into dist):\n${IGNORED_FS_FILES}\n")
+  #message("\nFiles unknown to both Version Control System and the Build logic (will not be incorporated into dist):\n${IGNORED_FS_FILES}\n")
+  message("\nFiles present unknown to both Version Control System and the Build logic (will not be incorporated into dist)\n")
 endif(IGNORED_FS_FILES)
 
 # Write out the archive status so the build targets can see it later.

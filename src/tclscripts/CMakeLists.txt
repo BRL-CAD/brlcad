@@ -116,13 +116,15 @@ add_subdirectory(rtwizard)
 # We've collected all the commands - now add add a single command
 # to run all of them at once.
 add_custom_command(
-  OUTPUT ${index_install_files}
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
   COMMAND ${CMAKE_COMMAND} -DCONFIG=$<CONFIG> -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
+  COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
   DEPENDS ${index_depends_files} ${index_cpy_targets}
   )
 add_custom_target(TclIndexBld ALL
-  DEPENDS ${index_install_files}
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
   )
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
 
 foreach(ifile ${index_install_files})
   # Install logic for index file.

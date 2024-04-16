@@ -111,7 +111,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
         case DETAILED:
             a = 45, e = 45;
             outputname += "_detailed.png";
-            render = opt.getTemppath() + "rt -C 255/255/255 -s 1024 -A 1.5 -W -R -c \"set ambSamples=64 ambSlow=1\" -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rt -C 255/255/255 -s 1024  -a " + std::to_string(a) + " -e " + std::to_string(e) + " -A 1.5 -W -R -c \"set ambSamples=64 ambSlow=1\" -o " + outputname + " " + pathToInput + " " + component;
             break;
         case GHOST:
             a = 35, e = 25;

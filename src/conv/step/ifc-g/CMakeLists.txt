@@ -1,9 +1,8 @@
+set(IFC_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/IFC4.exp)
 
-link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
-
-set(IFC_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ifc4/IFC4.exp)
-
-GENERATE_SCHEMA_INPUTS(${IFC_SCHEMA_FILE} ifcg)
+if (DEFINED ENABLE_STEP_EXPERIMENTAL)
+  GENERATE_SCHEMA_INPUTS(${IFC_SCHEMA_FILE} ifcg)
+endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 set(ifcg_SOURCES
   ${express_srcs}
@@ -31,24 +30,18 @@ set(IFC_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
   )
 
-BRLCAD_ADDEXEC(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT FOLDER Conv)
-add_dependencies(ifc-g ifc-express-${SCHEMA_NAME}-ifcg)
-target_include_directories(ifc-g SYSTEM BEFORE PRIVATE ${IFC_INCLUDE_DIRS})
+if (DEFINED ENABLE_STEP_EXPERIMENTAL)
+  BRLCAD_ADDEXEC(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT FOLDER Conv)
+  add_dependencies(ifc-g ifc-express-${SCHEMA_NAME}-ifcg)
+  target_include_directories(ifc-g SYSTEM BEFORE PRIVATE ${IFC_INCLUDE_DIRS})
+endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-if (HIDE_INTERNAL_SYMBOLS)
-  set(ifcg_IMPORTS
-    BU_DLL_IMPORTS
-    RT_DLL_IMPORTS
-    WDB_DLL_IMPORTS
-    SC_CORE_DLL_IMPORTS
-    SC_DAI_DLL_IMPORTS
-    SC_EDITOR_DLL_IMPORTS
-    SC_UTILS_DLL_IMPORTS
-    )
-  set_property(TARGET ifc-g APPEND PROPERTY COMPILE_DEFINITIONS "${ifcg_IMPORTS}")
-endif (HIDE_INTERNAL_SYMBOLS)
-
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  ${ifcg_SOURCES}
+  CMakeLists.txt
+  IFC4.exp
+  IFCWrapper.h
+  )
 
 # Local Variables:
 # tab-width: 8

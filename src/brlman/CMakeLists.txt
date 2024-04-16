@@ -13,6 +13,9 @@ endif (NOT BRLCAD_ENABLE_QT AND TARGET libtclcad AND TK_LIBRARY)
 
 # Qt version of brlman GUI
 if (BRLCAD_ENABLE_QT)
+
+  find_package_qt(REQUIRED)
+
   if (Qt6Widgets_FOUND)
     set(brlman_libs libqtcad Qt6::Widgets Qt6::Gui ${brlman_libs})
   else()
@@ -27,11 +30,9 @@ BRLCAD_ADDEXEC(brlman brlman.cpp "${brlman_libs}" GUI)
 if (BRLCAD_ENABLE_QT)
   target_compile_definitions(brlman PRIVATE USE_QT)
 endif (BRLCAD_ENABLE_QT)
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  if (TK_LIBRARY)
-    target_compile_definitions(brlman PRIVATE HAVE_TK)
-  endif (TK_LIBRARY)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+if (TK_LIBRARY)
+  target_compile_definitions(brlman PRIVATE HAVE_TK)
+endif (TK_LIBRARY)
 
 if (NOT BRLCAD_ENABLE_QT AND TARGET brlman_tcl_cp)
   add_dependencies(brlman brlman_tcl_cp)

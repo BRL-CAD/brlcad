@@ -37,8 +37,6 @@
 #include <set>
 #include <utility>
 
-#include "poly2tri/poly2tri.h"
-
 #include "assert.h"
 
 #include "vmath.h"

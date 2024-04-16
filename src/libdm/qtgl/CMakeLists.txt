@@ -6,9 +6,7 @@ set(QTGL_SRCS
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
-  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-    find_package_qt(REQUIRED)
-  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_qt(REQUIRED)
 
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}

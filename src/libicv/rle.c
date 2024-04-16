@@ -164,7 +164,7 @@ rle_read(const char *filename)
 
     int ncolors = rle_icv.ncolors > 3 ? 3 : rle_icv.ncolors;
     int file_width = rle_icv.xmax - rle_icv.xmin + 1;
-    unsigned char *rows[4];
+    unsigned char *rows[4] = {NULL};
     int mi = 0;
     for (mi=0; mi < ncolors; mi++)
 	rows[mi] = (unsigned char *)bu_malloc((size_t)file_width, "row[]");

@@ -1,4 +1,9 @@
 set(QISST_DIRS)
+
+if (BRLCAD_ENABLE_QT)
+  find_package_qt(REQUIRED)
+endif (BRLCAD_ENABLE_QT)
+
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
   find_package(OpenGL)

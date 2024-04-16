@@ -88,7 +88,7 @@ int run_search_check_count(struct ged *dbp, int expected_count, int num_args, ..
 int
 main(int ac, char *av[]) {
     struct ged *dbp;
-    
+
     split_data split_ret;
 
     bu_setprogname(av[0]);
@@ -110,54 +110,66 @@ main(int ac, char *av[]) {
     while (++curr_test) {
 	switch (curr_test)
 	{
-	case 1:
-	    // Generic searches
-	    // TODO: check something more concrete than just number of newline separated results
-	    ret_code += run_search_check_count(dbp, 8, 1, ".");
-	    ret_code += run_search_check_count(dbp, 10, 1, "/");
-	    ret_code += run_search_check_count(dbp, 8, 1, "|");
-	    break;
-	case 2:
-	    // -type region
-	    ret_code += run_search_check_count(dbp, 3, 3, ".", "-type", "region");
-	    ret_code += run_search_check_count(dbp, 3, 2, "-type", "region");
-	    break;
-	case 3:
-	{
-	    // verbosity
-	    const char *cmd[6] = {"search", "-v", ".", "-type", "region", NULL};
-	    ged_exec(dbp, 5, cmd);
-	    split_ret = split_newline(bu_vls_addr(dbp->ged_result_str));
-	    if (split_ret.arr[split_ret.count - 1][1] != '3') {
-		printf("ERROR: bad -v result. Got \"%s\", expected [%s]\n", split_ret.arr[split_ret.count - 1], "3");
-		ret_code = 1;
+	    case 1:
+		// Generic searches
+		// TODO: check something more concrete than just number of newline separated results
+		ret_code += run_search_check_count(dbp, 8, 1, ".");
+		ret_code += run_search_check_count(dbp, 10, 1, "/");
+		ret_code += run_search_check_count(dbp, 8, 1, "|");
 		break;
-	    }
+	    case 2:
+		// -type region
+		ret_code += run_search_check_count(dbp, 3, 3, ".", "-type", "region");
+		ret_code += run_search_check_count(dbp, 3, 2, "-type", "region");
+		break;
+	    case 3:
+		{
+		    // verbosity
+		    const char *cmd[6] = {"search", "-v", ".", "-type", "region", NULL};
+		    ged_exec(dbp, 5, cmd);
+		    split_ret = split_newline(bu_vls_addr(dbp->ged_result_str));
 
-	    // max verbosity
-	    cmd[1] = "-vvv";
-	    cmd[2] = "/";
-	    ged_exec(dbp, 5, cmd);
-	    split_ret = split_newline(bu_vls_addr(dbp->ged_result_str));
-	    // should see union 'u' as second char of first search result
-	    char chk_u = split_ret.arr[0][1];
-	    // should see region 'r' as second to last char of first search result
-	    char chk_r = split_ret.arr[0][strnlen(split_ret.arr[0], 30) - 2];
-	    if (chk_u != 'u') {
-		printf("ERROR: bad -vv result. Got \"%s\", expected [%s]\n", split_ret.arr[0], "/u");
-		ret_code = 1;
+		    if (!split_ret.count) {
+			printf("ERROR: split_ret.count == 0");
+			ret_code = 1;
+			break;
+		    }
+		    if (split_ret.arr[split_ret.count - 1][1] != '3') {
+			printf("ERROR: bad -v result. Got \"%s\", expected [%s]\n", split_ret.arr[split_ret.count - 1], "3");
+			ret_code = 1;
+			break;
+		    }
+
+		    // max verbosity
+		    cmd[1] = "-vvv";
+		    cmd[2] = "/";
+		    ged_exec(dbp, 5, cmd);
+		    split_ret = split_newline(bu_vls_addr(dbp->ged_result_str));
+		    if (split_ret.count) {
+			// should see union 'u' as second char of first search result
+			char chk_u = split_ret.arr[0][1];
+			// should see region 'r' as second to last char of first search result
+			char chk_r = split_ret.arr[0][strnlen(split_ret.arr[0], 30) - 2];
+			if (chk_u != 'u') {
+			    printf("ERROR: bad -vv result. Got \"%s\", expected [%s]\n", split_ret.arr[0], "/u");
+			    ret_code = 1;
+			    break;
+			}
+			if (chk_r != 'r') {
+			    printf("ERROR: bad -vvv result. Got \"%s\", expected [%s]\n", split_ret.arr[0], "(r)");
+			    ret_code = 1;
+			    break;
+			}
+		    } else {
+			printf("ERROR: split_ret.count == 0");
+			ret_code = 1;
+			break;
+		    }
+		    break;
+		}
+	    default:
+		goto finish_tests;
 		break;
-	    }
-	    if (chk_r != 'r') {
-		printf("ERROR: bad -vvv result. Got \"%s\", expected [%s]\n", split_ret.arr[0], "(r)");
-		ret_code = 1;
-		break;
-	    }
-	    break;
-	}
-	default:
-	    goto finish_tests;
-	    break;
 	}
 	if (ret_code) {
 	    printf("[test_search]: test [%d] failed\n", curr_test);

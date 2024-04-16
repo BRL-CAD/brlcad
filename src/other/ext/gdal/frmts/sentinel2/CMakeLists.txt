@@ -1,2 +1,0 @@
-add_gdal_driver(TARGET gdal_SENTINEL2 SOURCES sentinel2dataset.cpp PLUGIN_CAPABLE NO_DEPS)
-gdal_standard_includes(gdal_SENTINEL2)

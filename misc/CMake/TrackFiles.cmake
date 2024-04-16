@@ -203,18 +203,6 @@ if (NOT COMMAND cmakefiles)
   endfunction(CMAKEFILES FILESLIST)
 endif (NOT COMMAND cmakefiles)
 
-# Routine to tell distcheck to ignore a series of items in a directory.
-# Primarily useful when working with src/other dist lists.
-if (NOT COMMAND cmakefiles_in_dir)
-  function(cmakefiles_in_dir filestoignore targetdir)
-    set(CMAKE_IGNORE_LIST "")
-    foreach(filepath ${${filestoignore}})
-      set(CMAKE_IGNORE_LIST ${CMAKE_IGNORE_LIST} "${targetdir}/${filepath}")
-    endforeach(filepath ${filestoignore})
-    cmakefiles(${CMAKE_IGNORE_LIST})
-  endfunction(cmakefiles_in_dir)
-endif (NOT COMMAND cmakefiles_in_dir)
-
 #-----------------------------------------------------------------------------
 # The "distclean" build target will clear all CMake-generated files from a
 # source directory in the case of an in-source-dir configuration, or will fully

@@ -126,8 +126,6 @@ OTHER C89 FIXES documented here:
    affected several files (fixed):
      ./src/util/ttcp.c
      ./src/libpkg/pkg.c
-   also affects (not fixed!):
-     ./src/other/tcl/win/tclWinSock.c
 ------------------------------------------------------------------
 
   #include <signal.h>
