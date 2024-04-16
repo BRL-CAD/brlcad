@@ -42,10 +42,6 @@
 #include "../../librt_private.h"
 #include "../../cut_hlbvh.h" /* for hlbvh functions */
 
-// TODO: we currently only need this for stuff in makesegs
-// make sure we take this out when we get dynamic hit arrays
-#define MAXHITS 128 
-
 #define BOT_MIN_DN 1.0e-9
 
 #undef BOT_UNORIENTED_NORM
@@ -318,7 +314,7 @@ typedef struct _hit_da {
     struct hit * items;
 } hit_da;
 
-#define DA_INIT_CAPACITY 127
+#define DA_INIT_CAPACITY 128
 
 // Append one item to a dynamic array
 #define DA_APPEND(da, item)								\
@@ -358,7 +354,6 @@ _Pragma("GCC diagnostic pop")	     								\
 	memcpy((da)->items + (da)->count, (new_items), (new_items_count)*sizeof(*(da)->items)); \
 	(da)->count += (new_items_count);							\
     } while (0)
-
 
 struct spatial_partition_s {
     struct bvh_flat_node *root;
@@ -555,6 +550,10 @@ rt_bot_print(const struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
 }
+
+// TODO: we currently only need this for stuff in makesegs
+// we are waiting on removal of btg.c to refactor rt_bot_makesegs
+#define MAXHITS DA_INIT_CAPACITY
 
 /* Forward declare for rt_bot_shot */
 int
