@@ -358,7 +358,8 @@ _Pragma("GCC diagnostic pop")	     								\
 struct spatial_partition_s {
     struct bvh_flat_node *root;
     triangle_s *tris;
-    fastf_t *vertex_normals;
+    fastf_t *vertex_normals; /* for deallocation, access normals
+				through triangle_s */
     hit_da *hit_arrays_per_cpu;
     size_t num_cpus;
 };
