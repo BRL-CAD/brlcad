@@ -372,7 +372,7 @@ _Pragma("GCC diagnostic pop")	     								\
     } while (0)
 
 
-struct _tie_s {
+struct spatial_partition_s {
     struct bvh_flat_node *root;
     triangle_s *tris;
     fastf_t *vertex_normals;
@@ -530,17 +530,17 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     bu_free(ordered_faces, "ordered faces");
 	
-    struct _tie_s *tie;
-    BU_GET(tie, struct _tie_s);
-    tie->root = flat_root;
-    tie->tris = tris;
-    tie->vertex_normals = tri_norms;
-    tie->num_cpus = bu_avail_cpus();
-    tie->hit_arrays_per_cpu = (hit_da *) bu_calloc(tie->num_cpus, sizeof(hit_da), "thread-local bot hit arrays");
-    bot->tie = (void*) tie;
+    struct spatial_partition_s *sps;
+    BU_GET(sps, struct spatial_partition_s);
+    sps->root = flat_root;
+    sps->tris = tris;
+    sps->vertex_normals = tri_norms;
+    sps->num_cpus = bu_avail_cpus();
+    sps->hit_arrays_per_cpu = (hit_da *) bu_calloc(sps->num_cpus, sizeof(hit_da), "thread-local bot hit arrays");
+    bot->tie = (void*) sps;
 	
     // struct bvh_build_node and struct bvh_flat_node are puns for fastf_t[6] which are the bounds
-    fastf_t *min = (fastf_t *)tie->root;
+    fastf_t *min = (fastf_t *)sps->root;
     fastf_t *max = &min[3];
 
     VMOVE(stp->st_min, min);
@@ -703,8 +703,8 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (UNLIKELY(!bot))
 	return 0;
 
-    struct _tie_s *tie = (struct _tie_s *)bot->tie;
-    if (UNLIKELY(!tie))
+    struct spatial_partition_s *sps = (struct spatial_partition_s *)bot->tie;
+    if (UNLIKELY(!sps))
 	return 0;
     
     // we cache the number of cpus because calling
@@ -713,11 +713,11 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     // how many cpus there are as we spend going
     // through bvh nodes, triangle intersection, and
     // adding hits combined.
-    int thread_ind = bu_thread_id() % tie->num_cpus;
-    hit_da *hits_da = &tie->hit_arrays_per_cpu[thread_ind];
+    int thread_ind = bu_thread_id() % sps->num_cpus;
+    hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
     hits_da->count = 0;
     
-    bot_shot_hlbvh_flat(tie->root, rp, tie->tris, bot->bot_ntri, hits_da);
+    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, hits_da);
 
     if (hits_da->count == 0) {
 	return 0;
@@ -870,19 +870,19 @@ rt_bot_free(struct soltab *stp)
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     
     if (bot && bot->tie) {
-	struct _tie_s *tie = (struct _tie_s*)bot->tie;
-	bu_free(tie->root, "bot bvh flat nodes");
-	bu_free(tie->tris, "bot triangles");
-	if (tie->vertex_normals) {
-	    bu_free(tie->vertex_normals, "bot normals");
+	struct spatial_partition_s *sps = (struct spatial_partition_s*)bot->tie;
+	bu_free(sps->root, "bot bvh flat nodes");
+	bu_free(sps->tris, "bot triangles");
+	if (sps->vertex_normals) {
+	    bu_free(sps->vertex_normals, "bot normals");
 	}
-	if (tie->hit_arrays_per_cpu) {
-	    for (size_t i = 0; i < tie->num_cpus; i++) {
-		if (tie->hit_arrays_per_cpu[i].items) bu_free(tie->hit_arrays_per_cpu[i].items, "bot thread-local hit arrays");
+	if (sps->hit_arrays_per_cpu) {
+	    for (size_t i = 0; i < sps->num_cpus; i++) {
+		if (sps->hit_arrays_per_cpu[i].items) bu_free(sps->hit_arrays_per_cpu[i].items, "bot thread-local hit arrays");
 	    }
-	    bu_free(tie->hit_arrays_per_cpu, "bot array of dynamic thread-local hit arrays");
+	    bu_free(sps->hit_arrays_per_cpu, "bot array of dynamic thread-local hit arrays");
 	}
-	BU_PUT(tie, struct _tie_s);
+	BU_PUT(sps, struct spatial_partition_s);
 	bot->tie = NULL;
     }
 
