@@ -27,26 +27,15 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <ctype.h>
-#include "bnetwork.h"
+#include <string.h> // needed for memset, memcpy, and strlen
+#include <ctype.h> // needed for isdigit() and isspace() in rt_bot_adjust
 
 #include "vds.h"
 
-#include "bu/cv.h"
-#include "bg/polygon.h"
-#include "bg/trimesh.h"
+#include "bg/trimesh.h" // needed for the call in rt_bot_bbox
 #include "vmath.h"
-#include "rt/db4.h"
-#include "nmg.h"
-#include "rt/geom.h"
-#include "raytrace.h"
 
 #include "rt/primitives/bot.h"
-#include "rt/tie.h"
 
 /* private implementation headers */
 #include "./bot_edge.h"
@@ -321,7 +310,6 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     RT_BOT_CK_MAGIC(bot_ip);
 
     return bg_trimesh_aabb(min, max, bot_ip->faces, bot_ip->num_faces, (const point_t *)bot_ip->vertices, bot_ip->num_vertices);
-
 }
 
 typedef struct _hit_da {
