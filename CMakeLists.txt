@@ -472,20 +472,6 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-# The BRL-CAD CMake build will also generate a configure script
-# that emulates the command option style of GNU Autotool's
-# configure.  Write the pre-defined header into the build-dir template
-# to initialize the file.
-file(REMOVE "${CMAKE_BINARY_DIR}/configure.new")
-file(READ "${BRLCAD_CMAKE_DIR}/configure_prefix.sh" CONFIG_PREFIX)
-file(WRITE "${CMAKE_BINARY_DIR}/configure.new.tmp" "${CONFIG_PREFIX}")
-file(COPY "${CMAKE_BINARY_DIR}/configure.new.tmp" DESTINATION
-  "${CMAKE_BINARY_DIR}/CMakeFiles" FILE_PERMISSIONS OWNER_READ OWNER_WRITE
-  OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-file(REMOVE "${CMAKE_BINARY_DIR}/configure.new.tmp")
-file(RENAME "${CMAKE_BINARY_DIR}/CMakeFiles/configure.new.tmp"
-  "${CMAKE_BINARY_DIR}/configure.new")
-
 include(BRLCAD_User_Options)
 
 # global msvc-specific configuration setup
@@ -2344,11 +2330,8 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/cmakefiles.cmake")
 DISTCLEAN("${CMAKE_BINARY_DIR}/brlcadexec.cmake")
 DISTCLEAN("${CMAKE_BINARY_DIR}/cmake_install.cmake")
 DISTCLEAN("${CMAKE_BINARY_DIR}/install_manifest.txt")
-DISTCLEAN("${CMAKE_BINARY_DIR}/BRLCAD_OPTIONS")
 DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeFiles")
 DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp")
-DISTCLEAN("${CMAKE_BINARY_DIR}/configure.new")
-DISTCLEAN("${CMAKE_BINARY_DIR}/INSTALL.new")
 DISTCLEAN("${CMAKE_BINARY_DIR}/include/brlcad_config.h.in")
 DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxyfile.in")
 DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxygenDefaults.cmake")
