@@ -571,7 +571,7 @@ rt_bot_makesegs(struct hit *hits,
 void
 bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits)
 {
-    const unsigned int STACK_SIZE = 256;
+    const int STACK_SIZE = 256;
     struct bvh_flat_node *stack_node[STACK_SIZE];
     unsigned char stack_child_index[STACK_SIZE];
     int stack_ind = 0;
