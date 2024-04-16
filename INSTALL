@@ -341,3 +341,88 @@ REPORTING PROBLEMS
 Please report any bugs, support requests, or feature requests to:
   https://github.com/BRL-CAD/brlcad/issues
 
+
+
+CONFIGURATION OPTIONS
+---------------------
+
+--- BRLCAD_BUNDLED_LIBS ---
+
+If set to BUNDLED, and the BRL-CAD configure process is managing the bext
+dependencies, instructs bext to default to building local copies of the
+dependencies it will enable per the BRL-CAD feature settings, rather than
+searching for system versions.
+
+Aliases:  ENABLE_ALL
+
+
+--- BRLCAD_ENABLE_OPENGL ---
+
+Enable support for OpenGL based Display Managers in BRL-CAD.
+Default depends on whether OpenGL is successfully detected -
+if it is, default is to enable.
+
+Aliases:  ENABLE_OPENGL
+
+
+--- BRLCAD_ENABLE_RUNTIME_DEBUG ---
+
+Enables support for application and library debugging facilities.
+Disabling the run-time debugging facilities can provide a significant
+(10%-30%) performance boost at the expense of extensive error
+checking (that in turn help prevent corruption of your data).
+Default is "ON", and should only be disabled for read-only render
+work where performance is critical.
+
+Aliases:  ENABLE_RUNTIME_DEBUG, ENABLE_RUN_TIME_DEBUG, ENABLE_RUNTIME_DEBUGGING
+          ENABLE_RUN_TIME_DEBUGGING
+
+
+--- BRLCAD_DEBUGGING ---
+
+Add compiler flags to aid in program debugging.  Defaults to ON.
+
+Aliases:  ENABLE_DEBUG, ENABLE_FLAGS_DEBUG, ENABLE_DEBUG_FLAGS
+          BRLCAD_FLAGS_DEBUG
+
+
+--- BRLCAD_WARNINGS ---
+
+Use extra warning flags when compiling C/C++ code.  Defaults to ON.
+
+Aliases:  ENABLE_WARNINGS, ENABLE_COMPILER_WARNINGS
+          BRLCAD_ENABLE_COMPILER_WARNINGS
+
+
+--- BRLCAD_ENABLE_STRICT ---
+
+Causes all compilation warnings for C code to be treated as errors.  This is now
+the default for BRL-CAD source code, and developers should address issues
+discovered by these flags whenever possible rather than disabling strict
+mode.
+
+Aliases:  ENABLE_STRICT, ENABLE_STRICT_COMPILE, ENABLE_STRICT_COMPILE_FLAGS
+
+
+--- ENABLE_ALL_CXX_COMPILE ---
+
+Build all C and C++ files with a C++ compiler.  Defaults to OFF.
+
+EXPERIMENTAL!
+
+Aliases:  ENABLE_ALL_CXX
+
+
+--- BRLCAD_EXTRADOCS ---
+
+The core option that enables and disables building of BRL-CAD's
+DocBook based documentation (includes manuals and man pages for
+commands, among other things).  Defaults to ON, but only HTML and MAN
+formats are enabled by default - PDF must be enabled separately by use
+of this option or one of its aliases.  Note that you may set
+environment variable APACHE_FOP to point to your locally installed fop
+executable file (which on Linux is usually a shell script with 0755
+permissions).
+
+Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
+

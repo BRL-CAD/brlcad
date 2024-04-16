@@ -65,9 +65,9 @@ function(brlcad_ext_setup)
   # Unlike an independent bext build, we know for this one what we can turn on
   # and off
   set(BEXT_ENABLE_ALL OFF)
-  if ("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
+  if ("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR ENABLE_ALL)
     set(BEXT_ENABLE_ALL ON)
-  endif ("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
+  endif ("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR ENABLE_ALL)
   set(BEXT_USE_GDAL ON)
   if (NOT BRLCAD_ENABLE_GDAL)
     set(BEXT_USE_GDAL OFF)
