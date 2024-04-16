@@ -41,16 +41,34 @@ function(brlcad_ext_setup)
   # If we don't have the bext source directory, try to clone it
   set(BEXT_SRC_CLEANUP FALSE)
   if (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
-    set(BRLCAD_EXT_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext)
-    if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
-      find_program(GIT_EXEC git REQUIRED)
-      execute_process(
-	COMMAND ${GIT_EXEC} clone -b RELEASE https://github.com/BRL-CAD/bext.git
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	)
-      set(BEXT_SRC_CLEANUP TRUE)
-    endif (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
+
+    # If we have a bext copy in src/bext, use that.
+    if (EXISTS "${CMAKE_SOURCE_DIR}/src/bext/README.md")
+
+      # A git clone --recursive of BRL-CAD will populate src/bext as a
+      # submodule.  It is the simplest way to clone a full copy of BRL-CAD and
+      # its dependencies in one shot, but the drawback is it clones ALL the
+      # dependencies' source trees, whether or not they are needed for any
+      # particular set of build options.
+      set(BRLCAD_EXT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/bext")
+
+    else (EXISTS "${CMAKE_SOURCE_DIR}/src/bext/README.md")
+
+      # If not, next up is a bext dir in the build directory.  If
+      # one doesn't already exist, try to clone it
+      set(BRLCAD_EXT_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext)
+      if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
+	find_program(GIT_EXEC git REQUIRED)
+	execute_process(
+	  COMMAND ${GIT_EXEC} clone -b RELEASE https://github.com/BRL-CAD/bext.git
+	  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	  )
+	set(BEXT_SRC_CLEANUP TRUE)
+      endif (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
+
+    endif (EXISTS "${CMAKE_SOURCE_DIR}/src/bext/README.md")
   endif (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
+
   if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
     message(FATAL_ERROR "bext directory ${BRLCAD_EXT_SOURCE_DIR} is not present")
   endif (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})

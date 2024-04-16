@@ -1,0 +1,4 @@
+[submodule "src/bext"]
+	path = src/bext
+	url = https://github.com/BRL-CAD/bext.git
+	branch = RELEASE

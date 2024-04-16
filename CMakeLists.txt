@@ -180,12 +180,6 @@ if (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
   set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR_ENV})
 endif (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
 
-# For a full tarball of the repo and its dependencies, look in the
-# location package_source would place a bext copy
-if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/src/bext")
-  set(BRLCAD_EXT_DIR "${CMAKE_SOURCE_DIR}/src/bext")
-endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/src/bext")
-
 if (DEFINED BRLCAD_EXT_DIR)
   if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
     set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
