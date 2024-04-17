@@ -44,7 +44,6 @@
 
 #define BOT_MIN_DN 1.0e-9
 
-#undef BOT_UNORIENTED_NORM
 #define BOT_UNORIENTED_NORM(_ap, _hitp, _norm, _out) {		    \
 	if (!(_ap)->a_bot_reverse_normal_disabled) {		    \
 	    if (_out) {	/* this is an exit */			    \
