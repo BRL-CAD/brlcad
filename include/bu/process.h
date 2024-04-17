@@ -36,10 +36,42 @@ __BEGIN_DECLS
 /** @{ */
 /** @file bu/process.h */
 
+/* Wrappers for using subprocess execution */
+struct bu_process;
+
+typedef enum {
+    BU_PROCESS_STDIN,
+    BU_PROCESS_STDOUT,
+    BU_PROCESS_STDERR
+} bu_process_io_t;
+
 /**
- * returns the process ID of the calling process
+ * @brief Wrapper for executing a sub-process
+ *
+ * FIXME: eliminate the last two options so all callers are not
+ * exposed to parameters not relevant to them.
  */
-BU_EXPORT extern int bu_process_id(void);
+BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
+
+
+/**
+ * @brief wait for a sub-process to complete, release all process
+ * allocations, and release the process itself.
+ *
+ * FIXME: 'aborted' argument may be unnecessary (could make function
+ * provide return value of the process waited for).  wtime
+ * undocumented.
+ */
+ BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+
+
+/**
+ * @brief determine whether process is still running
+ *
+ * Returns 1 if alive, else 0
+ */
+BU_EXPORT extern int bu_process_alive(struct bu_process* info);
+
 
 /**
  * @brief terminate a given process and any children.
@@ -49,14 +81,23 @@ BU_EXPORT extern int bu_process_id(void);
 BU_EXPORT extern int bu_terminate(int process);
 
 
-/* Wrappers for using subprocess execution */
-struct bu_process;
+/**
+ * @brief determine whether there is data pending on fd
+ *
+ * 1 if there is data, else 0
+ */
+BU_EXPORT extern int bu_process_pending(int fd);
 
-typedef enum {
-    BU_PROCESS_STDIN,
-    BU_PROCESS_STDOUT,
-    BU_PROCESS_STDERR
-} bu_process_io_t;
+
+/**
+ * Read up to n bytes into buff from a process's specified output
+ * channel (fd == 1 for output, fd == 2 for err).
+ *
+ * FIXME: arg ordering and input/output grouping is wrong.  partially
+ * redundant with bu_process_fd() and/or bu_process_open().
+ */
+BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
+
 
 /**
  * Open and return a FILE pointer associated with the specified file
@@ -103,6 +144,12 @@ BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
 
 
 /**
+ * returns the process ID of the calling process
+ */
+BU_EXPORT extern int bu_process_id(void);
+
+
+/**
  * Reports one or both of the command string and the argv array
  * used to execute the process.
  *
@@ -124,56 +171,11 @@ BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struc
 
 
 /**
- * Read up to n bytes into buff from a process's specified output
- * channel (fd == 1 for output, fd == 2 for err).
- *
- * FIXME: arg ordering and input/output grouping is wrong.  partially
- * redundant with bu_process_fd() and/or bu_process_open().
- */
-BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
-
-
-/**
- * @brief Wrapper for executing a sub-process
- *
- * FIXME: eliminate the last two options so all callers are not
- * exposed to parameters not relevant to them.
- */
-BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
-
-
-/**
- * @brief wait for a sub-process to complete, release all process
- * allocations, and release the process itself.
- *
- * FIXME: 'aborted' argument may be unnecessary (could make function
- * provide return value of the process waited for).  wtime
- * undocumented.
- */
- BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
-
-/**
  * @brief detect whether or not a program is being run in interactive mode
  *
  * Returns 1 if interactive, else 0
  */
 BU_EXPORT extern int bu_interactive(void);
-
-
-/**
- * @brief determine whether there is data pending on fd
- *
- * 1 if there is data, else 0
- */
-BU_EXPORT extern int bu_process_pending(int fd);
-
-
-/**
- * @brief determine whether process is still running
- *
- * Returns 1 if alive, else 0
- */
-BU_EXPORT extern int bu_process_alive(struct bu_process* info);
 
 /** @} */
 
