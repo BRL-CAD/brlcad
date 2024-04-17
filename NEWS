@@ -13,6 +13,10 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* added man pages for 'bot check' and 'bot extrude' cmds - Cliff Yapp
+* enhanced bot extrude command to output a BoT mesh - Cliff Yapp
+* added bot check manifold cmd for bot validity testing - Cliff Yapp
+* added bot repair command for filling holes in meshes - Cliff Yapp
 * added Utah RLE image reading and writing to libicv - Cliff Yapp
 * added "standardize" option to GED attr command - Cliff Yapp
 * added -L option to dbconcat for lazy prefix/suffix use - Cliff Yapp
