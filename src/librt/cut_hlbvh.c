@@ -692,7 +692,7 @@ void while_populate_leaf_list_raw(struct bvh_build_node *root, struct xray* rp, 
  * list of primative indexes that correspond with the indexes
  * returned from ordered_prims in hlbvh_create(). 
  * It is not fast, but we're keeping it around to facilitate
- * prototyping code for other primatives.
+ * prototyping code for other primitives.
  */
 void
 hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
