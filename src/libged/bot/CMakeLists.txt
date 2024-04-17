@@ -1,4 +1,6 @@
-set(BOT_LIBS libged libbg libbu)
+BRLCAD_Find_Package(MANIFOLD REQUIRED)
+
+set(BOT_LIBS libged libbg libbu ${MANIFOLD_LIBRARIES})
 
 if (BRLCAD_ENABLE_OPENMESH)
   BRLCAD_Find_Package(OpenMesh)
@@ -22,6 +24,9 @@ if (BRLCAD_ENABLE_OPENVDB)
   # disable warnings due to unquellable issues in Boost and IlmBase/half headers
   set_property(SOURCE remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
+
+# TODO - investigate https://github.com/nissmar/VSA to see if it could be
+# a viable way to simplify large, complex BoT primitives...
 
 set(BOT_SRCS
   bot_condense.c
@@ -51,7 +56,7 @@ set(BOT_SRCS
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-bot SHARED ${BOT_SRCS})
-target_include_directories(ged-bot BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu) # for fort.h
+target_include_directories(ged-bot BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${MANIFOLD_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/libbu) # for fort.h
 if (BRLCAD_ENABLE_OPENVDB)
   target_include_directories(ged-bot SYSTEM PRIVATE ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
 endif (BRLCAD_ENABLE_OPENVDB)
