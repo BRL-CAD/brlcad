@@ -12,18 +12,6 @@ if (BRLCAD_ENABLE_OPENMESH)
   endif (OPENMESH_INCLUDE_DIRS)
 endif (BRLCAD_ENABLE_OPENMESH)
 
-BRLCAD_Find_Package(ASSETIMPORT)
-if(ASSETIMPORT_LIBRARIES)
-  add_definitions(-DUSE_ASSETIMPORT)
-  set(BOT_LIBS ${BOT_LIBS} ${ASSETIMPORT_LIBRARIES})
-endif(ASSETIMPORT_LIBRARIES)
-
-BRLCAD_Find_Package(Geogram SYSPATTERN geogram)
-if(GEOGRAM_LIBRARY)
-  add_definitions(-DUSE_GEOGRAM)
-  set(BOT_LIBS ${BOT_LIBS} ${GEOGRAM_LIBRARY})
-endif(GEOGRAM_LIBRARY)
-
 if (BRLCAD_ENABLE_OPENVDB)
   set(BOT_LIBS
     ${BOT_LIBS}
@@ -66,7 +54,7 @@ set(BOT_SRCS
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-bot SHARED ${BOT_SRCS})
-target_include_directories(ged-bot BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${GEOGRAM_INCLUDE_DIR} ${ASSETIMPORT_INCLUDE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu) # for fort.h
+target_include_directories(ged-bot BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu) # for fort.h
 if (BRLCAD_ENABLE_OPENVDB)
   target_include_directories(ged-bot SYSTEM PRIVATE ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
 endif (BRLCAD_ENABLE_OPENVDB)
