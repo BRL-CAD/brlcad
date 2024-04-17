@@ -81,7 +81,7 @@ function(brlcad_ext_setup)
 	# Unless both of the above succeed, we can't check that the src/bext
 	# SHA1 is current with the main repository, so we skip it.  However, if
 	# both commands DID succeed, we can validate
-	if (NOT LS_TREE_STATUS AND NOT LS_REMOTE_STATUS)
+	if (NOT LS_TREE_STATUS AND LS_TREE_STR AND NOT LS_REMOTE_STATUS AND LS_REMOTE_STR)
 	  string(REPLACE " " ";" LS_TREE_STR "${LS_TREE_STR}")
 	  string(REPLACE "\t" ";" LS_TREE_STR "${LS_TREE_STR}")
 	  string(REPLACE " " ";" LS_REMOTE_STR "${LS_REMOTE_STR}")
@@ -106,18 +106,18 @@ function(brlcad_ext_setup)
 	      OUTPUT_VARIABLE LS_REL_STR
 	      ERROR_VARIABLE LS_REL_STR
 	      )
-	    if (NOT LS_REL_STATUS)
+	    if (NOT LS_REL_STATUS AND LS_REL_STR)
 	      string(REPLACE " " ";" LS_REL_STR "${LS_REL_STR}")
 	      string(REPLACE "\t" ";" LS_REL_STR "${LS_REL_STR}")
 	      list(GET LS_REL_STR 0 REL_SHA1)
 	      if (NOT "${LOCAL_SHA1}" STREQUAL "${REL_SHA1}")
 		message(WARNING "The local src/bext submodule SHA1 (${LOCAL_SHA1}) does not match the rel-${VMAJOR}-${VMINOR}-${VPATCH} SHA1 (${REL_SHA1}).  If preparing a release, remember to update src/bext's submodule to point to bext's rel-${VMAJOR}-${VMINOR}-${VPATCH}.")
 	      endif (NOT "${LOCAL_SHA1}" STREQUAL "${REL_SHA1}")
-	    else (NOT LS_REL_STATUS)
+	    else (NOT LS_REL_STATUS AND LS_REL_STR)
 	      message(WARNING "The local src/bext submodule SHA1 (${LOCAL_SHA1}) does not match the latest bext RELEASE branch SHA1 (${REMOTE_SHA1}).  This probably means bext RELEASE was updated without the brlcad src/bext submodule being updated.  Recommend running\ngit submodule update --remote\nto update src/bext to the latest external sources.")
-	    endif (NOT LS_REL_STATUS)
+	    endif (NOT LS_REL_STATUS AND LS_REL_STR)
 	  endif (NOT "${LOCAL_SHA1}" STREQUAL "${REMOTE_SHA1}")
-	endif (NOT LS_TREE_STATUS AND NOT LS_REMOTE_STATUS)
+	endif (NOT LS_TREE_STATUS AND LS_TREE_STR AND NOT LS_REMOTE_STATUS AND LS_REMOTE_STR)
       endif (GIT_EXEC)
 
     else (EXISTS "${CMAKE_SOURCE_DIR}/src/bext/README.md")
