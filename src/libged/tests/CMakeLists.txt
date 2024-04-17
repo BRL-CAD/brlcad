@@ -25,6 +25,7 @@ BRLCAD_ADDEXEC(ged_test_search test_search.c libged TEST)
 add_dependencies(ged_test_search ged_plugins)
 BRLCAD_ADD_TEST(NAME ged_test_search COMMAND ged_test_search "${CMAKE_CURRENT_SOURCE_DIR}/search_tests.g")
 
+add_subdirectory(bot)
 add_subdirectory(draw)
 
 # Note: it is particularly important that the lint tests in particular are kept
