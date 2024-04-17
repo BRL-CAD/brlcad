@@ -24,12 +24,14 @@ set(mann_EN
   bev.xml
   bo.xml
   bot.xml
+  bot_check.xml
   bot_condense.xml
   bot_decimate.xml
   bot_extrude.xml
   bot_face_fuse.xml
   bot_face_sort.xml
   bot_flip.xml
+  bot_repair.xml
   bot_split.xml
   bot_sync.xml
   bot_vertex_fuse.xml
