@@ -4,10 +4,15 @@ BRLCAD_Find_Package(REGEX REQUIRED)
 if (BRLCAD_ENABLE_ASSETIMPORT)
   BRLCAD_Find_Package(ASSETIMPORT)
 endif (BRLCAD_ENABLE_ASSETIMPORT)
+BRLCAD_Find_Package(Geogram SYSPATTERN geogram)
 
 if(ASSETIMPORT_LIBRARIES)
   add_definitions(-DUSE_ASSETIMPORT)
 endif(ASSETIMPORT_LIBRARIES)
+
+if(GEOGRAM_LIBRARY)
+  add_definitions(-DUSE_GEOGRAM)
+endif(GEOGRAM_LIBRARY)
 
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
@@ -91,6 +96,7 @@ set(LIBRT_SOURCES
   primitives/bot/btgf.c
   primitives/bot/decimate.c
   primitives/bot/plate.cpp
+  primitives/bot/repair.cpp
   primitives/brep/brep.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
@@ -371,6 +377,7 @@ set(LIBRT_LIBS
   ${OPENNURBS_LIBRARIES}
   ${MANIFOLD_LIBRARIES}
   ${ASSETIMPORT_LIBRARIES}
+  ${GEOGRAM_LIBRARY}
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
@@ -389,6 +396,9 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
   ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
   ${REGEX_INCLUDE_DIRS}
+  ${GEOGRAM_INCLUDE_DIR}
+  ${MANIFOLD_INCLUDE_DIRS}
+  ${ASSETIMPORT_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
   ${ASSETIMPORT_INCLUDE_DIR}
   )
@@ -398,7 +408,7 @@ set(RT_LOCAL_INCLUDE_DIRS
 BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}")
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
-# BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}")
+# BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
