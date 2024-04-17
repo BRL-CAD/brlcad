@@ -29,6 +29,7 @@ set(mann_EN
   bot_face_fuse.xml
   bot_face_sort.xml
   bot_flip.xml
+  bot_repair.xml
   bot_split.xml
   bot_sync.xml
   bot_vertex_fuse.xml

@@ -43,6 +43,7 @@ set(BOT_SRCS
   decimate.cpp
   extrude.cpp
   remesh.cpp
+  repair.cpp
   smooth.cpp
   subdivide.cpp
   ../../libbu/fort.c

@@ -90,6 +90,8 @@ extern int _bot_cmd_check(void *bs, int argc, const char **argv);
 
 extern int _bot_cmd_remesh(void *bs, int argc, const char **argv);
 
+extern int _bot_cmd_repair(void* bs, int argc, const char** argv);
+
 extern int _bot_cmd_smooth(void* bs, int argc, const char** argv);
 
 extern int _bot_cmd_subd(void* bs, int argc, const char** argv);

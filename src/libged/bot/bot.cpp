@@ -426,7 +426,6 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-
 extern "C" int
 _bot_cmd_sync(void *bs, int argc, const char **argv)
 {
@@ -741,6 +740,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "get",        _bot_cmd_get},
     { "isect",      _bot_cmd_isect},
     { "remesh",     _bot_cmd_remesh},
+    { "repair",     _bot_cmd_repair},
     { "set",        _bot_cmd_set},
     { "smooth",     _bot_cmd_smooth},
     { "split",      _bot_cmd_split},
