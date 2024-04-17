@@ -24,6 +24,7 @@ set(mann_EN
   bev.xml
   bo.xml
   bot.xml
+  bot_check.xml
   bot_condense.xml
   bot_decimate.xml
   bot_extrude.xml
@@ -284,7 +285,6 @@ CMAKEFILES(
   CMakeLists.txt
   ${mann_EN}
   ${mann_INTRO}
-  bot_extrude.xml
   mged_cmd_template.xml
   )
 
