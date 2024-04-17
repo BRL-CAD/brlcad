@@ -119,3 +119,13 @@ Emacs .emacs file:
 ;; using XMl->Set Schema->File... from the GUI or C-c C-s C-f in
 ;; the editor itself.
 (add-to-list 'auto-mode-alist (cons (concat "\\." (regexp-opt '("xml") t) "\\'") 'nxml-mode))
+
+;; Vim keybindings - see https://www.emacswiki.org/emacs/Evil for install
+;; instructions
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(package-initialize)
+(require 'evil)
+(evil-mode 1)
+
+
