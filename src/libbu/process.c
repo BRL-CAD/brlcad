@@ -203,6 +203,12 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_
     return ret;
 }
 
+int
+bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts)
+{
+    return -1;
+}
+
 
 void
 bu_process_exec(

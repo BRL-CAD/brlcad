@@ -45,6 +45,11 @@ typedef enum {
     BU_PROCESS_STDERR
 } bu_process_io_t;
 
+typedef enum {
+    BU_PROCESS_OUT_EQ_ERR,  // stderr output is written to stdout
+    BU_PROCESS_HIDE_WINDOW, // hide creation window, if process would normall spawn one
+} bu_process_create_opts;
+
 /**
  * @brief Wrapper for executing a sub-process
  *
@@ -52,6 +57,17 @@ typedef enum {
  * exposed to parameters not relevant to them.
  */
 BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
+/**
+ * @brief Wrapper for executing a sub-process. Allocates bu_process and starts process
+ *
+ * @param[out] pinfo - bu_process struct to be created
+ * @param[in] argv - array of command line arguments to executed. Last element MUST be NULL
+ * @param[in] opts - creation options
+ *
+ * Returns 0 on successful process start; Otherwise, platform specific error code is returned
+ */
+// TODO: deprecate _exec, replace callers in our code
+BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts);
 
 
 /**
