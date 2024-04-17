@@ -16,7 +16,7 @@
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
-      <command>bot_extrude</command>
+      <command>bot extrude</command>
       <arg choice="opt" rep="norepeat"><replaceable>-h</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-q</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-i</replaceable></arg>

@@ -44,18 +44,19 @@
 #include <sstream>
 #include <string>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
+extern "C" {
 #include "vmath.h"
-#include "bu/avs.h"
-#include "bu/path.h"
 #include "brep.h"
+#include "rt/primitives/bot.h"
 #include "wdb.h"
-#include "analyze.h"
+}
 #include "ged.h"
 #include "./ged_bot.h"
 
-bool
+static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 {
     vect_t a,b;
@@ -77,21 +78,21 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
     return true;
 }
 
-// The "correct" way to do this unfortunately requires an implementation of a
-// surface offsetting algorithm, which is a hard problem:
-//
-// Charlie C.L. Wang, and Yong Chen, "Thickening freeform surfaces for solid
-// fabrication", Rapid Prototyping Journal, vol.19, no.6, pp.395-406, November
-// 2013.
-//
-// Chen, Zhen and Panozzo, Daniele and Dumas, Jeremie, "Half-Space Power
-// Diagrams and Discrete Surface Offsets", IEEE Transactions on Visualization
-// and Computer Graphics, 2019 (https://github.com/geometryprocessing/voroffset)
+static void
+extrude_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
+    char *option_help = bu_opt_describe(d, NULL);
+    bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
+    if (option_help) {
+	bu_vls_printf(str, "Options:\n%s\n", option_help);
+	bu_free(option_help, "help str");
+    }
+}
+
 extern "C" int
 _bot_cmd_extrude(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] extrude <objname> [output_obj]";
-    const char *purpose_string = "generate an ARB6 representation of the specified plate mode BoT object";
+    const char *usage_string = "bot extrude [options] <objname> [output_obj]";
+    const char *purpose_string = "generate a volumetric BoT or CSG tree from the specified plate mode BoT object";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -99,6 +100,45 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
     argc--; argv++;
+
+    int print_help = 0;
+    int extrude_in_place = 0;
+    int round_edges = 0;
+    int comb_tree = 0;
+    int quiet_mode = 0;
+    int force_mode = 0;
+
+    struct bu_opt_desc d[7];
+    BU_OPT(d[0], "h",        "help",     "",            NULL, &print_help,       "Print help");
+    BU_OPT(d[1], "q",       "quiet",     "",            NULL, &quiet_mode,       "Suppress output messages");
+    BU_OPT(d[2], "i",    "in-place",     "",            NULL, &extrude_in_place, "Overwrite input BoT");
+    BU_OPT(d[3], "R", "round-edges",     "",            NULL, &round_edges,      "Apply rounding to outer BoT edges");
+    BU_OPT(d[4], "C",        "comb",     "",            NULL, &comb_tree,        "Write out a CSG tree rather than a volumetric BoT");
+    BU_OPT(d[5], "F",       "force",     "",            NULL, &force_mode,       "Generate output even if source bot is view dependent.");
+    BU_OPT_NULL(d[6]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    argc = ac;
+
+    if (print_help || !argc) {
+	extrude_usage(gb->gedp->ged_result_str, "bot extrude", d);
+	return GED_HELP;
+    }
+
+    if (extrude_in_place && argc != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    if (!extrude_in_place && argc != 2) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    if (!extrude_in_place && db_lookup(gb->gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
 
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
@@ -110,6 +150,37 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    if (bot->mode == RT_BOT_PLATE_NOCOS) {
+	if (!force_mode) {
+	    if (!quiet_mode)
+		bu_vls_printf(gb->gedp->ged_result_str, "bot %s is using RT_BOT_PLATE_NOCOS mode.\n\nCannot be accurately represented as a volume.  To force volumetric BoT generation, use the -F flag.\n", gb->solid_name.c_str());
+	    return BRLCAD_ERROR;
+	} else {
+	    if (!quiet_mode)
+		bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s is using RT_BOT_PLATE_NOCOS mode\n\nConversion will report different thicknesses depending on incoming ray directions.\n", gb->solid_name.c_str());
+	}
+    }
+
+    if (bot->face_mode) {
+	bool view_dependent = false;
+	for (size_t i = 0; i < bot->num_faces; i++) {
+	    if (BU_BITTEST(bot->face_mode, i)) {
+		view_dependent = true;
+		break;
+	    }
+	}
+	if (view_dependent) {
+	    if (!force_mode) {
+		if (!quiet_mode)
+		    bu_vls_printf(gb->gedp->ged_result_str, "bot %s has face_mode set (i.e. it exhibits view-dependent shotline behavior).\n\nCannot be accurately represented as a volume.  To force volumetric BoT generation, use the -F flag.\n", gb->solid_name.c_str());
+		return BRLCAD_ERROR;
+	    } else {
+		if (!quiet_mode)
+		    bu_vls_printf(gb->gedp->ged_result_str, "WARNING: object %s has one or more faces with face_mode set.\n\nVolumetric BoT will report different in/out hit points than the original.\n", gb->solid_name.c_str());
+	    }
+	}
+    }
+
     // Check for at least 1 non-zero thickness, or there's no volume to define
     bool have_solid = false;
     for (size_t i = 0; i < bot->num_faces; i++) {
@@ -118,9 +189,51 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	}
     }
     if (!have_solid) {
-	bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
+	if (!quiet_mode)
+	    bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
 	return BRLCAD_OK;
     }
+
+    if (!comb_tree) {
+	struct rt_bot_internal *obot;
+	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode);
+	if (ret != BRLCAD_OK) {
+	    if (!quiet_mode)
+		bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
+	    return BRLCAD_ERROR;
+	}
+
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *)obot;
+
+	const char *rname;
+	struct directory *dp;
+	if (extrude_in_place) {
+	    rname = gb->dp->d_namep;
+	    dp = gb->dp;
+	} else {
+	    rname = argv[1];
+	    dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	    if (dp == RT_DIR_NULL) {
+		if (!quiet_mode)
+		    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
+		return BRLCAD_ERROR;
+	    }
+	}
+
+	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	    if (!quiet_mode)
+		bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
+	    return BRLCAD_ERROR;
+	}
+	return BRLCAD_OK;
+    }
+
+    // We're doing a CSG tree, not a bot
 
     // Make a comb to hold the union of the new solid primitives
     struct wmember wcomb;
@@ -132,7 +245,8 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
 
     if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&comb_name), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&comb_name));
+	if (!quiet_mode)
+	    bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&comb_name));
 	bu_vls_free(&comb_name);
 	return BRLCAD_ERROR;
     }
@@ -159,7 +273,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     std::set<std::pair<int, int>> edges;
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t eind;
-	double fthickness = (BU_BITTEST(bot->face_mode, i)) ? bot->thickness[i] : 0.5*bot->thickness[i];
+	double fthickness = 0.5*bot->thickness[i];
 	for (int j = 0; j < 3; j++) {
 	    verts.insert(bot->faces[i*3+j]);
 	    verts_thickness[bot->faces[i*3+j]] += fthickness;
@@ -184,8 +298,25 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	edges_fcnt[std::make_pair(e31, e32)]++;
     }
 
+    // Any edge with only one face associated with it is an outer
+    // edge.  Vertices on those edges are exterior vertices
+    std::unordered_set<int> exterior_verts;
+    std::set<std::pair<int, int>>::iterator e_it;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	if (edges_fcnt[*e_it] == 1) {
+	    exterior_verts.insert(e_it->first);
+	    exterior_verts.insert(e_it->second);
+	}
+    }
+
+
     std::set<int>::iterator v_it;
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	if (!round_edges) {
+	    if (exterior_verts.find(*v_it) != exterior_verts.end())
+		continue;
+	}
+
 	point_t v;
 	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
 	// Make a sph at the vertex point with a radius based on the thickness
@@ -195,8 +326,12 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
     }
 
-    std::set<std::pair<int, int>>::iterator e_it;
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	if (!round_edges) {
+	    if (edges_fcnt[*e_it] == 1)
+		continue;
+	}
+
 	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
 	// Make an rcc along the edge a radius based on the thickness
 	point_t b, v;
@@ -219,13 +354,8 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
 	for (int j = 0; j < 3; j++) {
 	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
-	    if (BU_BITTEST(bot->face_mode, i)) {
-		VSCALE(pv1[j], n, bot->thickness[i]);
-		VSCALE(pv2[j], n, -1*bot->thickness[i]);
-	    } else {
-		VSCALE(pv1[j], n, 0.5*bot->thickness[i]);
-		VSCALE(pv2[j], n, -0.5*bot->thickness[i]);
-	    }
+	    VSCALE(pv1[j], n, 0.5*bot->thickness[i]);
+	    VSCALE(pv2[j], n, -0.5*bot->thickness[i]);
 	}
 
 	for (int j = 0; j < 3; j++) {
