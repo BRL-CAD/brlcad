@@ -151,11 +151,19 @@ dsp_data_cpy(struct db_i *dbip, struct rt_dsp_internal *dsp_ip, const char *dirp
     }
 }
 
+// TODO - stub function for compiling until we get a real implementation of this...
+static int bu_process_alive(int UNUSED(pid))
+{
+    return 0;
+}
+
+#define PID_KEY "facetize_pid"
 int
-_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume)
+_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume, int reset)
 {
     if (!dbip || !wfile || !wdir)
 	return BRLCAD_ERROR;
+
 
     if (!*wfile || !*wdir) {
 	(*wfile) = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wfile");
@@ -183,13 +191,46 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	bu_vls_free(&wfilename);
     }
 
-    /* If we're resuming and we already have an appropriately named .g file, we
-     * don't overwrite it.  Otherwise we need to prepare the working copy. */
-    if (!resume || (resume && !bu_file_exists(*wfile, NULL))) {
-	// If we need to clear an old working copy, do it now
-	bu_dirclear(*wdir);
-	bu_mkdir(*wdir);
+    // If we have a wfile, check for a pid and see if that pid is still active.  If it is, bail - we
+    // can't collide with another active process trying to facetize the same .g file
+    int pid;
+    if (bu_file_exists(*wfile, NULL)) {
+	struct db_i *wdbip = db_open(*wfile, DB_OPEN_READONLY);
+	if (wdbip) {
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+	    if (db5_get_attributes(wdbip, &avs, wgdp)) {
+		const char *val = bu_avs_get(&avs, PID_KEY);
+		if (bu_opt_int(NULL, 1, (const char **)&val, (void *)&pid) == 1) {
+		    if (bu_process_alive(pid)) {
+			bu_log("Error - %s _GLOBAL attribute process id %d is still active.  This indicates another process is actively working on this file.  Please terminate process %d before trying a facetize operation on this .g file.", *wfile, pid, pid);
+			bu_avs_free(&avs);
+			db_close(wdbip);
+			return BRLCAD_ERROR;
+		    }
+		}
+	    }
+	    bu_avs_free(&avs);
+	    db_close(wdbip);
+	}
+    }
 
+    if (reset) {
+	// If we're resetting, clear the old
+	bu_dirclear(*wdir);
+    }
+
+    if (!bu_file_directory(*wdir)) {
+	// Set up the directory
+	bu_mkdir(*wdir);
+    }
+
+    // If we're resuming, the resuming process is taking ownership of the
+    // existing working file
+    int write_pid = resume;
+
+    if (!bu_file_exists(*wfile, NULL)) {
 	// Populate the working copy with original .g data
 	// (TODO - should use the dbip's FILE pointer for this rather than
 	// opening it again if we can (see FIO24-C), but that's a private entry
@@ -219,6 +260,28 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	    }
 
 	    // TODO - There may be other such cases...
+	}
+
+	// We have created a new file, so we need to set the pid
+	write_pid = 1;
+    }
+
+    if (write_pid) {
+	// Write the current pid to the working file as a _GLOBAL attribute
+	pid = bu_process_id();
+	struct db_i *wdbip = db_open(*wfile, DB_OPEN_READWRITE);
+	if (wdbip) {
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+	    if (db5_get_attributes(wdbip, &avs, wgdp)) {
+		struct bu_vls pid_str = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&pid_str, "%d", pid);
+		(void)bu_avs_add(&avs, PID_KEY, bu_vls_cstr(&pid_str));
+		(void)db5_update_attributes(wgdp, &avs, wdbip);
+		bu_avs_free(&avs);
+	    }
+	    db_close(wdbip);
 	}
     }
 
