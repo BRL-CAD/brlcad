@@ -32,6 +32,7 @@ set(cmake_ignore_files
   FindBSON.cmake
   FindFontconfig.cmake
   FindGECODE.cmake
+  FindGeogram.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
   FindLINENOISE.cmake
