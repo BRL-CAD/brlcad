@@ -119,3 +119,7 @@ Emacs .emacs file:
 ;; using XMl->Set Schema->File... from the GUI or C-c C-s C-f in
 ;; the editor itself.
 (add-to-list 'auto-mode-alist (cons (concat "\\." (regexp-opt '("xml") t) "\\'") 'nxml-mode))
+
+NOTE: For those wanting Emacs features but used to vim keybindings, you can try:
+https://www.emacswiki.org/emacs/Evil
+
