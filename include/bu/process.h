@@ -169,11 +169,11 @@ BU_EXPORT extern int bu_process_pending(int fd);
 
 
 /**
- * @brief determine whether there is data pending on fd
+ * @brief determine whether process is still running
  *
- * 1 if there is data, else 0
+ * Returns 1 if alive, else 0
  */
-BU_EXPORT extern int bu_process_pending(int fd);
+BU_EXPORT extern int bu_process_alive(struct bu_process* info);
 
 /** @} */
 

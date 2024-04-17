@@ -570,6 +570,25 @@ bu_process_pending(int fd)
 }
 
 int
+bu_process_alive(struct bu_process* pinfo)
+{
+    if (!pinfo)
+	return 0;
+
+#if defined(_WIN32)
+    const unsigned long win_wait_timeout = 0x00000102L;
+
+    // if process is alive, timeout should immediately come back
+    return WaitForSingleObject(pinfo->hProcess, 0) == win_wait_timeout;
+#else
+    // TODO
+#endif
+
+
+    return 0;
+}
+
+int
 bu_interactive(void)
 {
     int interactive = 1;
