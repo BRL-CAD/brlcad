@@ -1,4 +1,4 @@
-/*                     M A N I F O L D . C P P
+/*                     R E P A I R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2024 United States Government as represented by
@@ -17,14 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/bot/manifold.cpp
+/** @file libged/bot/repair.cpp
  *
- * The LIBGED bot manifold subcommand.
+ * The LIBGED bot repair subcommand.
  *
- * Checks if a BoT is manifold according to the Manifold library.  If
- * not, and if an output object name is specified, it will attempt
- * various repair operations to try and produce a manifold output
- * using the specified test bot as an input.
+ * If a BoT is not manifold according to the Manifold library attempt various
+ * repair operations to try and produce a manifold output using the specified
+ * bot as input.
  */
 
 #include "common.h"
@@ -58,37 +57,17 @@
 #include "../ged_private.h"
 
 static struct rt_bot_internal *
-manifold_process(struct rt_bot_internal *bot, int repair)
+bot_repair(struct rt_bot_internal *bot)
 {
-    if (!bot)
-	return NULL;
-
-    manifold::Mesh bot_mesh;
-    for (size_t j = 0; j < bot->num_vertices ; j++)
-	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
-    if (bot->orientation == RT_BOT_CW) {
-	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
-    } else {
-	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
-    }
-
-    manifold::Manifold omanifold(bot_mesh);
-    if (omanifold.Status() == manifold::Manifold::Error::NoError) {
-	// BoT is already manifold
-	return bot;
-    }
-
-    // If we're not going to try and repair it, it's just a
-    // non-manifold mesh report at this point.
-    if (!repair)
-	return NULL;
-
     struct rt_bot_internal *obot = NULL;
-    if (rt_bot_repair(&obot, bot)) {
+    int rep_ret = rt_bot_repair(&obot, bot);
+    if (rep_ret < 0) {
 	// bot repair failed
 	return NULL;
+    }
+    if (rep_ret == 1) {
+	// Already valid, no-op
+	return bot;
     }
 
     // Bot repair succeeded
@@ -96,7 +75,7 @@ manifold_process(struct rt_bot_internal *bot, int repair)
 }
 
 static void
-manifold_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
+repair_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
     char *option_help = bu_opt_describe(d, NULL);
     bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
     if (option_help) {
@@ -106,10 +85,10 @@ manifold_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
 }
 
 extern "C" int
-_bot_cmd_manifold(void *bs, int argc, const char **argv)
+_bot_cmd_repair(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot manifold <objname> [repaired_obj_name]";
-    const char *purpose_string = "Check if Manifold thinks the BoT is a manifold mesh.  If not, and a repaired_obj_name has been supplied, attempt to produce a manifold output using objname's geometry as an input.  If successful, the resulting manifold geometry will be written to repaired_obj_name.";
+    const char *usage_string = "bot repair <objname> [repaired_obj_name]";
+    const char *purpose_string = "Attempt to produce a manifold output using objname's geometry as an input.  If successful, the resulting manifold geometry will either overwrite the original objname object (if no repaired_obj_name is supplied) or be written to repaired_obj_name.  Note that in-place repair is destructive - the original BoT data is lost.  If the input is already manifold repair is a no-op.";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -122,25 +101,22 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
     int print_help = 0;
     int in_place_repair = 0;
 
-    struct bu_opt_desc d[5];
+    struct bu_opt_desc d[2];
     BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,      "Print help");
-    BU_OPT(d[1], "i",  "in-place",     "",            NULL, &in_place_repair, "Alter BoTs (if necessary) in place");
-    BU_OPT_NULL(d[2]);
+    BU_OPT_NULL(d[1]);
 
     int ac = bu_opt_parse(NULL, argc, argv, d);
     argc = ac;
 
     if (print_help || !argc) {
-	manifold_usage(gb->gedp->ged_result_str, "bot manifold", d);
+	repair_usage(gb->gedp->ged_result_str, "bot manifold", d);
 	return GED_HELP;
     }
 
-    if (in_place_repair && argc != 1) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return BRLCAD_ERROR;
-    }
+    if (argc == 1)
+	in_place_repair = 1;
 
-    if (!in_place_repair && argc != 1 && argc != 2) {
+    if (!in_place_repair && argc != 2) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
 	return BRLCAD_ERROR;
     }
@@ -160,24 +136,16 @@ _bot_cmd_manifold(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    int repair_flag = (in_place_repair || argc == 2) ?  1 : 0;
+    struct rt_bot_internal *mbot = bot_repair(bot);
 
-    struct rt_bot_internal *mbot = manifold_process(bot, repair_flag);
-
-    // If we were already manifold, there's nothing to do but report it regardless of mode
+    // If we were already manifold, there's nothing to do
     if (mbot && mbot == bot) {
-	bu_vls_printf(gb->gedp->ged_result_str, "BoT %s is manifold", gb->dp->d_namep);
+	bu_vls_printf(gb->gedp->ged_result_str, "BoT %s is valid", gb->dp->d_namep);
 	return BRLCAD_OK;
     }
 
-    // If we weren't asked to repair, just report non-manifold
-    if (!mbot && !repair_flag) {
-    	bu_vls_printf(gb->gedp->ged_result_str, "BoT %s is NOT manifold", gb->dp->d_namep);
-	return BRLCAD_ERROR;
-    }
-
-    // If we were trying repair and couldn't, it's an error
-    if (!mbot && repair_flag) {
+    // Trying repair and couldn't, it's an error
+    if (!mbot) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Unable to repair BoT %s", gb->dp->d_namep);
 	return BRLCAD_ERROR;
     }

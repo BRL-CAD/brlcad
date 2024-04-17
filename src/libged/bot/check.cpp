@@ -30,6 +30,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "manifold/manifold.h"
+
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
@@ -40,6 +42,32 @@
 #include "../ged_private.h"
 #include "./ged_bot.h"
 
+static bool
+manifold_check(struct rt_bot_internal *bot)
+{
+    if (!bot)
+	return NULL;
+
+    manifold::Mesh bot_mesh;
+    for (size_t j = 0; j < bot->num_vertices ; j++)
+	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
+    if (bot->orientation == RT_BOT_CW) {
+	for (size_t j = 0; j < bot->num_faces; j++)
+	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
+    } else {
+	for (size_t j = 0; j < bot->num_faces; j++)
+	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
+    }
+
+    manifold::Manifold omanifold(bot_mesh);
+    if (omanifold.Status() == manifold::Manifold::Error::NoError) {
+	// BoT is manifold
+	return true;
+    }
+
+    // Not manifold
+    return false;
+}
 
 struct _ged_bot_icheck {
     struct _ged_bot_info *gb;
@@ -491,6 +519,24 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
+_bot_cmd_manifold(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "bot [options] manifold <objname>";
+    const char *purpose_string = "Check BoT for validity using the Manifold library";
+    if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
+    bool is_manifold = manifold_check(bot);
+    bu_vls_printf(gib->vls, is_manifold ? "1" : "0");
+
+    return BRLCAD_OK;
+}
+
+
+extern "C" int
 _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "bot [options] open_edges <objname>";
@@ -580,15 +626,22 @@ _bot_cmd_solid(void *bs, int argc, const char **argv)
     int not_solid;
 
     if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	// By definition we consider plate modes solid
 	bu_vls_printf(gib->vls, "1");
 	return BRLCAD_OK;
     }
+
+    // Do the manifold check first
+    bool not_manifold = !manifold_check(bot);
 
     int num_vertices = (int)bot->num_vertices;
     int num_faces = (int)bot->num_faces;
 
     not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, gib->gb->visualize ? &errors : NULL);
-    bu_vls_printf(gib->vls, "%d", (not_solid) ? 0 : 1);
+    bu_vls_printf(gib->vls, "%d", (not_solid || not_manifold) ? 0 : 1);
+
+    if (not_solid != not_manifold)
+	bu_log("Warning - bg_trimesh_solid2(%d) and Manifold(%d) disagree\n", (int)!not_solid, (int)!not_manifold);
 
     if (not_solid && gib->gb->visualize) {
 	struct bg_trimesh_edges *degen_edges = NULL, *all_edges, *other_edges;
@@ -680,6 +733,7 @@ const struct bu_cmdtab _bot_check_cmds[] = {
     { "degen_faces",   _bot_cmd_degen_faces},
     { "extra_edges",   _bot_cmd_extra_edges},
     { "flipped_edges", _bot_cmd_flipped_edges},
+    { "manifold",      _bot_cmd_manifold},
     { "open_edges",    _bot_cmd_open_edges},
     { "solid",         _bot_cmd_solid},
     { (char *)NULL,      NULL}
@@ -712,7 +766,7 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    // Skip the "check" subcommand
+    // Skip the "check" string
     argc--;argv++;
 
     if (!argc) {
