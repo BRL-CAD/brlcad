@@ -2320,6 +2320,7 @@ set(toplevel_ignore_files
   .github/workflows/analysis.yml
   .github/workflows/check.yml
   .gitignore
+  .gitmodules
   BUGS
   CMakeLists.txt
   ChangeLog
