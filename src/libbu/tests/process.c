@@ -306,19 +306,27 @@ int _test_args(const char* cmd) {
 
 /* tests:   process reports alive
  *  bu_process_alive()
+ *  bu_process_alive_id()
  * also relies on:
+ *  bu_process_pid()
  *  bu_process_exec()
  *  bu_process_wait()
  */
 int _test_alive(const char* cmd) {
     struct bu_process* p;
     const char* run_av[3] = {cmd, "alive", NULL};
+    int pid = -1;
 
     /* test alive status with wait */
     bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    pid = bu_process_pid(p);
 
     if (!bu_process_alive(p)) {	// should be alive
-	fprintf(stderr, "bu_process_test[\"alive\"] alive check failed\n");
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed\n");
+	return PROCESS_FAIL;
+    }
+    if (!bu_process_alive_id(pid)) {	// should be alive
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (pid) failed\n");
 	return PROCESS_FAIL;
     }
 
@@ -328,16 +336,25 @@ int _test_alive(const char* cmd) {
     }
 
     if (bu_process_alive(p)) {	// should be dead
-	fprintf(stderr, "bu_process_test[\"alive\"] alive check failed after wait\n");
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after wait\n");
+	return PROCESS_FAIL;
+    }
+    if (bu_process_alive_id(pid)) {	// should be dead
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (pid) failed after wait\n");
 	return PROCESS_FAIL;
     }
 
 
     /* test alive status with termination */
     bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    pid = bu_process_pid(p);
 
     if (!bu_process_alive(p)) {	// should be alive
 	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check failed\n");
+	return PROCESS_FAIL;
+    }
+    if (!bu_process_alive_id(pid)) {	// should be alive
+	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check (pid) failed\n");
 	return PROCESS_FAIL;
     }
 
@@ -350,7 +367,11 @@ int _test_alive(const char* cmd) {
     while ((bu_gettime() - start_time) < BU_SEC2USEC(.1))	;   // need slight delay so bu_terminate can settle
 
     if (bu_process_alive(p)) {	// should be dead
-	fprintf(stderr, "bu_process_test[\"alive\"] alive check failed after terminate\n");
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after terminate\n");
+	return PROCESS_FAIL;
+    }
+    if (bu_process_alive_id(pid)) {	// should be dead
+	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check (pid) failed after terminate\n");
 	return PROCESS_FAIL;
     }
 
