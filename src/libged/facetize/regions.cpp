@@ -160,6 +160,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    bu_log("Problem searching for implicit regions - aborting.\n");
 	}
 	bu_ptbl_free(ar);
+	bu_free(wdir, "wdir");
+	bu_free(wfile, "wfile");
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
 	return BRLCAD_OK;
@@ -228,6 +230,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
+	bu_free(wdir, "wdir");
+	bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
     }
 
@@ -237,6 +241,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
+	bu_free(wdir, "wdir");
+	bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
     }
     const char **av = (const char **)bu_calloc(argc+10, sizeof(const char *), "av");
@@ -252,10 +258,11 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.
     av[0] = "dbconcat";
-    av[1] = kfname;
-    av[2] = "facetize_"; // TODO - customize
-    av[3] = NULL;
-    ged_exec(s->gedp, 3, av);
+    av[1] = "-L";
+    av[2] = kfname;
+    av[3] = "facetize_"; // TODO - customize
+    av[4] = NULL;
+    ged_exec(s->gedp, 4, av);
     bu_free(av, "av");
 
     /* Done changing stuff - update nref. */
@@ -265,6 +272,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_free(ar, "ar table");
     bu_free(dpa, "free dpa");
     bu_dirclear(wdir);
+    bu_free(wdir, "wdir");
+    bu_free(wfile, "wfile");
     return ret;
 }
 

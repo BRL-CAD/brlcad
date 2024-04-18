@@ -240,20 +240,22 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 
 	// Must also copy any files referenced by the .g into the proper
 	// relative position to the working .g copy.
-	for (size_t i = 0; i < BU_PTBL_LEN(leaf_dps); i++) {
-	    struct directory *ldp = (struct directory *)BU_PTBL_GET(leaf_dps, i);
-	    if (ldp->d_major_type != DB5_MAJORTYPE_BRLCAD)
-		continue;
-
-	    if (ldp->d_minor_type == ID_DSP) {
-		struct rt_db_internal intern;
-		if (rt_db_get_internal(&intern, ldp, dbip, NULL, &rt_uniresource) < 0)
+	if (leaf_dps) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(leaf_dps); i++) {
+		struct directory *ldp = (struct directory *)BU_PTBL_GET(leaf_dps, i);
+		if (ldp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 		    continue;
-		dsp_data_cpy(dbip, (struct rt_dsp_internal *)intern.idb_ptr, *wdir);
-		rt_db_free_internal(&intern);
-	    }
 
-	    // TODO - There may be other such cases...
+		if (ldp->d_minor_type == ID_DSP) {
+		    struct rt_db_internal intern;
+		    if (rt_db_get_internal(&intern, ldp, dbip, NULL, &rt_uniresource) < 0)
+			continue;
+		    dsp_data_cpy(dbip, (struct rt_dsp_internal *)intern.idb_ptr, *wdir);
+		    rt_db_free_internal(&intern);
+		}
+
+		// TODO - There may be other such cases...
+	    }
 	}
 
 	// We have created a new file, so we need to set the pid
