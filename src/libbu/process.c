@@ -171,6 +171,11 @@ bu_process_args(const char **cmd, const char * const **argv, struct bu_process *
     return pinfo->argc;
 }
 
+int
+bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff, int *count)
+{
+    return -1;
+}
 
 int
 bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n)

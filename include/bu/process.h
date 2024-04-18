@@ -145,6 +145,20 @@ BU_EXPORT extern int bu_process_pending(int fd);
  * redundant with bu_process_fd() and/or bu_process_open().
  */
 BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
+/**
+ * @brief Read from a process's specified output channel
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] d - channel (BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
+ * @param[in] n - max number of bytes to be read
+ * @param[out] buff - data read from channel
+ * @param[out] count - number of bytes actually read into buff
+ *
+ * @return
+ * returns 0 on successful read
+ */
+// TODO: deprecate _read, replace callers
+BU_EXPORT extern int bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff, int *count);
 
 
 /**
