@@ -64,7 +64,8 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  * @param[in] argv - array of command line arguments to executed. Last element MUST be NULL
  * @param[in] opts - creation options
  *
- * Returns 0 on successful process start; Otherwise, platform specific error code is returned
+ * @return
+ * 0 on successful process start; Otherwise, platform specific error code is returned
  */
 // TODO: deprecate _exec, replace callers in our code
 BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts);
@@ -86,7 +87,8 @@ BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **a
  * @param[in] pinfo - bu_process structure of interest
  * @param[in] wtime - maximum wait time (in ms) before forcibly stopping process. NOTE: 0 is treated as INFINITE
  *
- * Returns 0 on success; Otherwise exit status
+ * @return
+ * 0 on success; Otherwise exit status
  */
  // TODO: deprecate _wait, replace callers; add tests for wtime and return codes
  BU_EXPORT extern int bu_process_wait_n(struct bu_process *pinfo, int wtime);
@@ -96,17 +98,30 @@ BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **a
  * @brief determine whether process is still running
  *
  * @param[in] pinfo - bu_process structure of interest
- * 
- * Returns 1 if alive, else 0
+ *
+ * @return
+ * 1 if alive, else 0
  */
 BU_EXPORT extern int bu_process_alive(struct bu_process* pinfo);
+
+/**
+ * @brief determine whether process is still running using its ID
+ *
+ * @param[in] pid - process ID of interest
+ *
+ * @return
+ * 1 if alive, else 0
+ */
 BU_EXPORT extern int bu_process_alive_id(int pid);
 
 
 /**
  * @brief terminate a given process and any children.
  *
- * returns truthfully whether the process could be killed.
+ * @param[in] process - process ID of interest
+ *
+ * @return
+ * returns truthfully whether the process could be killed
  */
 BU_EXPORT extern int bu_terminate(int process);
 
@@ -114,7 +129,10 @@ BU_EXPORT extern int bu_terminate(int process);
 /**
  * @brief determine whether there is data pending on fd
  *
- * 1 if there is data, else 0
+ * @param[in] fd - file descriptor of interest
+ *
+ * @return
+ * 1 if there is data on fd, else 0
  */
 BU_EXPORT extern int bu_process_pending(int fd);
 
@@ -155,17 +173,26 @@ BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, bu_process_io_t
 
 
 /**
- * Retrieve the file descriptor to the input (BU_PROCESS_STDIN), output
- * (BU_PROCESS_STDOUT), or error (BU_PROCESS_STDERR) I/O channel associated
- * with the process.
+ * @brief Retrieve the file descriptor to the I/O channel associated with the process.
  *
- * For Windows cases where HANDLE is needed, use _get_osfhandle
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] d - channel (BU_PROCESS_STDIN, BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
+ *
+ * @return
+ * file descriptor
+ *
+ * @note For Windows cases where HANDLE is needed, use _get_osfhandle
  */
 BU_EXPORT int bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
- * Return the pid of the subprocess.
+ * @brief Return the pid of the subprocess.
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ *
+ * @return
+ * process ID
  *
  * FIXME: seemingly redundant or combinable with bu_process_id()
  * (perhaps make NULL be equivalent to the current process).
@@ -203,7 +230,8 @@ BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struc
 /**
  * @brief detect whether or not a program is being run in interactive mode
  *
- * Returns 1 if interactive, else 0
+ * @return
+ * 1 if interactive, else 0
  */
 BU_EXPORT extern int bu_interactive(void);
 
