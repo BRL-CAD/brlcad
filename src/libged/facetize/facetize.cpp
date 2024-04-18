@@ -107,11 +107,6 @@ _ged_facetize_state_create()
 
     s->gedp = NULL;
 
-    BU_ALLOC(s->c_map, struct bu_attribute_value_set);
-    BU_ALLOC(s->s_map, struct bu_attribute_value_set);
-    bu_avs_init_empty(s->c_map);
-    bu_avs_init_empty(s->s_map);
-
     return s;
 }
 void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
@@ -123,11 +118,6 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
 	bu_vls_free(s->faceted_suffix);
 	BU_PUT(s->faceted_suffix, struct bu_vls);
     }
-
-    bu_avs_free(s->c_map);
-    bu_avs_free(s->s_map);
-    bu_free(s->c_map, "comb map");
-    bu_free(s->s_map, "solid map");
 
     BU_PUT(s, struct _ged_facetize_state);
 }

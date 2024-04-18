@@ -58,8 +58,6 @@ struct _ged_facetize_state {
     /* Brep specific */
     struct bg_tess_tol *tol;
     double nonovlp_threshold;
-    struct bu_attribute_value_set *c_map; // TODO - this should probably be a std::map
-    struct bu_attribute_value_set *s_map; // TODO - this should probably be a std::map
     struct bu_vls *faceted_suffix;
 
     /* Implementation */
