@@ -46,7 +46,7 @@ static bool
 manifold_check(struct rt_bot_internal *bot)
 {
     if (!bot)
-	return NULL;
+	return false;
 
     manifold::Mesh bot_mesh;
     for (size_t j = 0; j < bot->num_vertices ; j++)

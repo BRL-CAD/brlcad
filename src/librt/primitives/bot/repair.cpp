@@ -127,10 +127,10 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
 #ifdef USE_GEOGRAM
     // Geogram libraries like to print a lot - shut down
     // the I/O channels until we can clear the logger
-    int serr;
-    int sout;
-    int stderr_stashed;
-    int stdout_stashed;
+    int serr = -1;
+    int sout = -1;
+    int stderr_stashed = -1;
+    int stdout_stashed = -1;
     int fnull = open("/dev/null", O_WRONLY);
     if (fnull == -1) {
 	/* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
