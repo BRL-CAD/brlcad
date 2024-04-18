@@ -95,9 +95,11 @@ BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **a
 /**
  * @brief determine whether process is still running
  *
+ * @param[in] pinfo - bu_process structure of interest
+ * 
  * Returns 1 if alive, else 0
  */
-BU_EXPORT extern int bu_process_alive(struct bu_process* info);
+BU_EXPORT extern int bu_process_alive(struct bu_process* pinfo);
 BU_EXPORT extern int bu_process_alive_id(int pid);
 
 
