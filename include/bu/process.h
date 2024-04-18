@@ -79,6 +79,17 @@ BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **a
  * undocumented.
  */
  BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+/**
+ * @brief wait for a sub-process to complete, release all process
+ * allocations, and release the process itself.
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] wtime - maximum wait time (in ms) before forcibly stopping process. NOTE: 0 is treated as INFINITE
+ *
+ * Returns 0 on success; Otherwise exit status
+ */
+ // TODO: deprecate _wait, replace callers; add tests for wtime and return codes
+ BU_EXPORT extern int bu_process_wait_n(struct bu_process *pinfo, int wtime);
 
 
 /**

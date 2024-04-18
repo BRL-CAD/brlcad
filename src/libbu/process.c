@@ -467,6 +467,12 @@ bu_process_exec(
 }
 
 int
+bu_process_wait_n(struct bu_process *pinfo, int wtime)
+{
+    return -1;
+}
+
+int
 bu_process_wait(
     int *aborted, struct bu_process *pinfo,
 #ifndef _WIN32
