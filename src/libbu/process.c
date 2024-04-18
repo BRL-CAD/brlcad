@@ -644,6 +644,32 @@ bu_interactive(void)
     return interactive;
 }
 
+int
+bu_process_alive_id(int pid)
+{
+    if (!pid)
+	return 0;
+
+#if defined(_WIN32)
+    HANDLE pHandle = OpenProcess(SYNCHRONIZE, FALSE, (DWORD)pid);
+    if (pHandle == NULL) { // couldn't open - process is not alive
+	return 0;
+    } else {
+	const unsigned long win_wait_timeout = 0x00000102L;
+
+	// if process is alive, timeout should immediately come back
+	DWORD ret = WaitForSingleObject(pHandle, 0);
+	CloseHandle(pHandle);
+	return ret == win_wait_timeout;
+    }
+#else
+    return kill((pid_t)pid, 0) == 0;
+#endif
+
+
+    return 0;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

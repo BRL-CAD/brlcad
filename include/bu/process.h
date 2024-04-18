@@ -175,6 +175,8 @@ BU_EXPORT extern int bu_process_pending(int fd);
  */
 BU_EXPORT extern int bu_process_pending(int fd);
 
+BU_EXPORT extern int bu_process_alive_id(int pid);
+
 /** @} */
 
 __END_DECLS
