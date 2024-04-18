@@ -153,7 +153,7 @@ dsp_data_cpy(struct db_i *dbip, struct rt_dsp_internal *dsp_ip, const char *dirp
 
 #define PID_KEY "facetize_pid"
 int
-_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume, int reset)
+_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume)
 {
     if (!dbip || !wfile || !wdir)
 	return BRLCAD_ERROR;
@@ -210,8 +210,8 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	}
     }
 
-    if (reset) {
-	// If we're resetting, clear the old
+    // If we're starting over, clear the old working directory
+    if (!resume && bu_file_directory(*wdir)) {
 	bu_dirclear(*wdir);
     }
 

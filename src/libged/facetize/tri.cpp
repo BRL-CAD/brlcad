@@ -1042,7 +1042,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     char *wdir = pwdir;
     char *wfile = pwfile;
     if (!wdir || !wfile) {
-	if (_ged_facetize_working_file_setup(&wfile, &wdir, gedp->dbip, &leaf_dps, s->resume, s->reset) != BRLCAD_OK) {
+	if (_ged_facetize_working_file_setup(&wfile, &wdir, gedp->dbip, &leaf_dps, s->resume) != BRLCAD_OK) {
 	    if (wdir && wdir != pwdir)
 		bu_free(wdir, "wdir");
 	    if (wfile && wfile != pwfile)

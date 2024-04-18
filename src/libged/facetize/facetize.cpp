@@ -93,7 +93,6 @@ _ged_facetize_state_create()
 
     s->regions = 0;
     s->resume = 0;
-    s->reset = 0;
     s->in_place = 0;
 
     BU_GET(s->faceted_suffix, struct bu_vls);
@@ -210,7 +209,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     s->method_opts = method_options;
 
     /* General options */
-    struct bu_opt_desc d[16];
+    struct bu_opt_desc d[15];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",            &_ged_vopt,       &(s->verbosity), "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,           &(s->quiet), "Suppress all output (overrides verbose flag)");
@@ -220,13 +219,12 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[ 6],  "", "max-time",                                 "#",           &bu_opt_int,        &(s->max_time), "Maximum time to spend per object (in seconds).  Default is method specific.  Note that specifying shorter times may cut off conversions (particularly using sampling methods) that could succeed with longer runtimes.  Per-method time limits can also be adjusted to allow longer runtimes on slower methods.");
     BU_OPT(d[ 7],  "", "max-pnts",                                 "#",           &bu_opt_int,        &(s->max_pnts), "Maximum number of pnts per object to use when applying ray sampling methods.");
     BU_OPT(d[ 8],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion");
-    BU_OPT(d[ 9],  "", "reset",                                     "",                  NULL,           &(s->reset), "Forcibly clear any previously cached facetization temporary files and start over.");
-    BU_OPT(d[10],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
-    BU_OPT(d[11],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
-    BU_OPT(d[12],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
-    BU_OPT(d[13], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[14], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
-    BU_OPT_NULL(d[15]);
+    BU_OPT(d[ 9],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
+    BU_OPT(d[10],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
+    BU_OPT(d[11],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
+    BU_OPT(d[12], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
+    BU_OPT(d[13], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
+    BU_OPT_NULL(d[14]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);

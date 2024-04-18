@@ -136,7 +136,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     // Set up working file.  We will reuse this for each region->bot conversion.
     // We pass in the list of all active solids so any necessary supporting data
     // files also get copied over.
-    if (_ged_facetize_working_file_setup(&wfile, &wdir, dbip, as, s->resume, s->reset) != BRLCAD_OK) {
+    if (_ged_facetize_working_file_setup(&wfile, &wdir, dbip, as, s->resume) != BRLCAD_OK) {
 	bu_ptbl_free(as);
 	bu_free(as, "as table");
 	bu_ptbl_free(ar);

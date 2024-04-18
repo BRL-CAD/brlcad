@@ -49,7 +49,6 @@ struct _ged_facetize_state {
     // Processing
     int regions;
     int resume;
-    int reset;
     int in_place;
 
     // Settings
@@ -90,7 +89,7 @@ extern int
 _ged_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, int verbosity);
 
 extern int
-_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume, int reset);
+_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume);
 
 extern int
 _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps);
