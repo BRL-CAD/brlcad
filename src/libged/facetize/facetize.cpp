@@ -281,11 +281,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 
     /* If we're doing the experimental brep-only logic, it's a separate process */
     if (s->nonovlp_brep) {
-	// TODO - for this mode, we need to xpush the tree(s) being processed.  Overlaps occur
-	// in instances, so (unlike the default method) we need to mimic the older approach of
-	// tessellating each individual instance in the tree.  Since we're making a working
-	// copy of the .g file, we can just use xpush to achieve this state as a pre-processing
-	// step rather than having to change up the whole processing chain.
 	if (NEAR_ZERO(s->nonovlp_threshold, SMALL_FASTF)) {
 	    bu_vls_printf(gedp->ged_result_str, "-B option requires a specified length threshold\n");
 	    return BRLCAD_ERROR;

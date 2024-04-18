@@ -72,6 +72,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     /* OK, we have work to do. Set up a working copy of the .g file. */
     char *wdir = NULL;
     char *wfile = NULL;
+    char kfname[MAXPATHLEN];
     if (_ged_facetize_working_file_setup(&wfile, &wdir, s->gedp->dbip, NULL, s->resume) != BRLCAD_OK) {
 	bu_free(dpa, "dp array");
 	bu_free(wdir, "wdir");
@@ -226,15 +227,27 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	ON_Brep_CDT_Destroy(ss_cdt[i]);
     }
 
+    /* Keep out just what we asked for into a .g file */
+    struct bu_vls kwfile = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&kwfile, "%s_keep", wfile);
+    const char **av = (const char **)bu_calloc(argc+10, sizeof(const char *), "av");
+    av[0] = "keep";
+    av[1] = bu_vls_cstr(&kwfile);
+    for (int i = 0; i < argc; i++) {
+	av[i+2] = argv[i];
+    }
+    av[argc+2] = NULL;
+    ged_exec(wgedp, argc+2, av);
+
     /* Merge working geometry into original file */
-    const char *dav[5];
-    dav[0] = "dbconcat";
-    dav[1] = "-L";
-    dav[2] = wfile;
-    dav[3] = "brep_facetize_"; // TODO - customize
-    dav[4] = NULL;
-    ged_exec(s->gedp, 4, dav);
-    bu_free(dav, "dav");
+    av[0] = "dbconcat";
+    av[1] = "-L";
+    av[2] = bu_vls_cstr(&kwfile);
+    av[3] = "brep_facetize_"; // TODO - customize
+    av[4] = NULL;
+    ged_exec(s->gedp, 4, av);
+    bu_free(av, "av");
+    bu_vls_free(&kwfile);
 
     /* Clean up */
     bu_dirclear(wdir);

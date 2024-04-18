@@ -254,11 +254,11 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     av[argc+2] = NULL;
     ged_exec(wgedp, argc+2, av);
 
-    // TODO - dbconcat kept .g into original .g - either using -O to overwrite
+    // dbconcat output .g into original .g - either using -O to overwrite
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.
     av[0] = "dbconcat";
-    av[1] = "-L";
+    av[1] = (s->in_place) ? "-O" : "-L";
     av[2] = kfname;
     av[3] = "facetize_"; // TODO - customize
     av[4] = NULL;
