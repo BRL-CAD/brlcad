@@ -613,7 +613,7 @@ bu_process_alive_id(int pid)
 	return ret == win_wait_timeout;
     }
 #else
-    // TODO
+    return kill((pid_t)pid, 0) == 0;
 #endif
 
 
