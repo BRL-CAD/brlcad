@@ -315,16 +315,26 @@ typedef struct _hit_da {
 
 #define DA_INIT_CAPACITY 128
 
+// We include itemtype in DA_APPEND and DA_APPEND_MANY because
+// the options are:
+// 1. Get a -Wc++-compat warning
+// 2. Push a diagnostic that ignores that warning
+// 3. Do some sort of decltype shenanigans
+// 4. Pass in the type of the dynamic array
+
 // Append one item to a dynamic array
-#define DA_APPEND(da, item)								\
+// It may be tempting to make this a specialization of
+// DA_APPEND_MANY, however this supports the use case 
+// of appending a compile time value to a dynamic array
+// Ex. DA_APPEND(da_ints, 42, int)
+// Ex. DA_APPEND(da_some_struct, {0}, struct some_name)
+#define DA_APPEND(da, item, itemtype)							\
     do {										\
 	if ((da)->count >= (da)->capacity) {						\
 	    (da)->capacity = (da)->capacity == 0 ? DA_INIT_CAPACITY : (da)->capacity*2;	\
-_Pragma("GCC diagnostic push")								\
-_Pragma("GCC diagnostic ignored \"-Wc++-compat\"")					\
-	    (da)->items = bu_realloc((da)->items, (da)->capacity*sizeof(*(da)->items),	\
-				     "DA realloc __FILE__: __LINE__" );			\
-_Pragma("GCC diagnostic pop")	     							\
+	    (da)->items = (itemtype*)bu_realloc((da)->items, 				\
+						(da)->capacity*sizeof(*(da)->items),	\
+						"DA realloc __FILE__: __LINE__" );	\
 	    BU_ASSERT((da)->items != NULL);						\
 	}										\
 											\
@@ -332,7 +342,7 @@ _Pragma("GCC diagnostic pop")	     							\
     } while (0)
 
 // Append several items to a dynamic array
-#define DA_APPEND_MANY(da, new_items, new_items_count)						\
+#define DA_APPEND_MANY(da, new_items, new_items_count, itemtype)				\
     do {											\
 	if ((da)->count + (new_items_count) > (da)->capacity) {					\
 	    if ((da)->capacity == 0) {								\
@@ -341,11 +351,9 @@ _Pragma("GCC diagnostic pop")	     							\
 	    while ((da)->count + (new_items_count) > (da)->capacity) {				\
 		(da)->capacity *= 2;								\
 	    }											\
-_Pragma("GCC diagnostic push")									\
-_Pragma("GCC diagnostic ignored \"-Wc++-compat\"")						\
-	    (da)->items = bu_realloc((da)->items, (da)->capacity*sizeof(*(da)->items),		\
-				     "DA realloc __FILE__: __LINE__" );				\
-_Pragma("GCC diagnostic pop")	     								\
+	    (da)->items = (itemtype*)bu_realloc((da)->items, 					\
+						(da)->capacity*sizeof(*(da)->items),		\
+						"DA realloc __FILE__: __LINE__" );		\
 	    BU_ASSERT((da)->items != NULL);							\
 	}											\
 	memcpy((da)->items + (da)->count, (new_items), (new_items_count)*sizeof(*(da)->items)); \
@@ -646,7 +654,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 		cur_hit.hit_private = tri;
 		cur_hit.hit_surfno = tri->face_id;
 		cur_hit.hit_rayp = rp;
-		DA_APPEND(hits, cur_hit);
+		DA_APPEND(hits, cur_hit, struct hit);
 	    }
 	    stack_ind--;
 	    continue;
