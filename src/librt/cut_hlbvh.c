@@ -613,7 +613,7 @@ flatten_bvh_tree_recursive(int *next_unused, struct bvh_flat_node *flat_nodes, l
 struct bvh_flat_node *
 hlbvh_flatten(const struct bvh_build_node *root, long nodes_created)
 {
-    struct bvh_flat_node *new_root = bu_malloc(nodes_created * sizeof(struct bvh_flat_node), "bvh flat nodes");
+    struct bvh_flat_node *new_root = (struct bvh_flat_node *) bu_malloc(nodes_created * sizeof(struct bvh_flat_node), "bvh flat nodes");
     int next_unused = 0;
     return flatten_bvh_tree_recursive(&next_unused, new_root, nodes_created, root, 0);
 }
