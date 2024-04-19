@@ -619,8 +619,6 @@ hlbvh_flatten(const struct bvh_build_node *root, long nodes_created)
 }
 
 
-// TODO: do something better than a list
-// in hlbvh_shot
 struct prim_list {
     struct bu_list l;
     long first_prim_offset, n_primitives;
