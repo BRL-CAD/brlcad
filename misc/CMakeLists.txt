@@ -14,8 +14,6 @@ if (NOT BRLCAD_COMPONENTS)
   add_subdirectory(perl)
 endif (NOT BRLCAD_COMPONENTS)
 
-add_subdirectory(attributes)
-
 if (NOT BRLCAD_COMPONENTS)
   add_subdirectory(opencl-raytracer-tests)
 endif (NOT BRLCAD_COMPONENTS)
