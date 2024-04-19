@@ -447,7 +447,7 @@ struct bu_data_hash_impl {
 };
 
 struct bu_data_hash_state *
-bu_data_hash_create()
+bu_data_hash_create(void)
 {
     struct bu_data_hash_state *s;
     BU_GET(s, struct bu_data_hash_state);
