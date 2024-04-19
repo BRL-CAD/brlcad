@@ -1,6 +1,7 @@
 # a new html and xml generation file
 if (TARGET librt)
   BRLCAD_ADDEXEC(gen-attributes-file gen-attributes-file.cpp "libbu;librt" NO_INSTALL NO_STRICT)
+  set_target_properties(gen-attributes-file PROPERTIES INSTALL_NAME_DIR "@executable_path/../../../../${LIB_DIR}")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/attributes.xml.in
     ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml COPYONLY)
