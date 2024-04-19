@@ -1,4 +1,22 @@
-
+/* 
+ * BRL-CAD
+ *
+ * Copyright (c) 1999-2024 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
 
 struct bvh_build_node {
     fastf_t bounds[6];
@@ -36,3 +54,14 @@ extern void
 hlbvh_shot_flat(struct bvh_flat_node* root, struct xray* rp, long** check_tris, size_t* num_check_tris);
 
 #endif // HLBVH_IMPLEMENTATION
+
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
