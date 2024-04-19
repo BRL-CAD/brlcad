@@ -698,44 +698,6 @@ void while_populate_leaf_list_raw(struct bvh_build_node *root, struct xray* rp, 
     }
 }
 
-/**
- * This is a naive shot function that returns an allocated 
- * list of primative indexes that correspond with the indexes
- * returned from ordered_prims in hlbvh_create(). 
- * It is not fast, but we're keeping it around to facilitate
- * prototyping code for other primitives.
- */
-void
-hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
-{
-    size_t prim_accum = 0;
-    struct prim_list *leafs = NULL;
-    BU_GET(leafs, struct prim_list);
-    BU_LIST_INIT(&(leafs->l));
-    leafs->first_prim_offset = -1;
-    leafs->n_primitives = -1;
-    while_populate_leaf_list_raw(root, rp, leafs, &prim_accum);
-    *num_check_prims = prim_accum;
-    if (prim_accum == 0) {
-	BU_PUT(leafs, struct prim_list);
-	return;
-    }
-    *check_prims = (long*)bu_calloc(prim_accum, sizeof(long), "hlbvh primative list");
-    size_t index = 0;
-    struct prim_list *entry;
-    while (BU_LIST_WHILE(entry, prim_list, &(leafs->l))) {
-	for (int i = 0; i < entry->n_primitives; i++) {
-	    (*check_prims)[index] = entry->first_prim_offset + i;
-	    index++;
-	}
-	
-	BU_LIST_DEQUEUE(&(entry->l));
-	BU_PUT(entry, struct prim_list);
-    }
-    BU_PUT(leafs, struct prim_list);
-    BU_ASSERT(index == prim_accum);
-}
-
 
 void while_populate_leaf_list_flat(struct bvh_flat_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
 {
@@ -822,7 +784,7 @@ void while_populate_leaf_list_flat(struct bvh_flat_node *root, struct xray* rp, 
  * prototyping code for other primatives.
  */
 void
-hlbvh_shot_flat(struct bvh_flat_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
+hlbvh_shot(void* root, struct xray* rp, long** check_prims, size_t* num_check_prims, int is_flat)
 {
     size_t prim_accum = 0;
     struct prim_list *leafs = NULL;
@@ -830,7 +792,11 @@ hlbvh_shot_flat(struct bvh_flat_node* root, struct xray* rp, long** check_prims,
     BU_LIST_INIT(&(leafs->l));
     leafs->first_prim_offset = -1;
     leafs->n_primitives = -1;
-    while_populate_leaf_list_flat(root, rp, leafs, &prim_accum);
+    if (is_flat) {
+	while_populate_leaf_list_flat((struct bvh_flat_node *)root, rp, leafs, &prim_accum);
+    } else {
+	while_populate_leaf_list_raw((struct bvh_build_node *)root, rp, leafs, &prim_accum);
+    }
     *num_check_prims = prim_accum;
     if (prim_accum == 0) {
 	BU_PUT(leafs, struct prim_list);
@@ -850,6 +816,18 @@ hlbvh_shot_flat(struct bvh_flat_node* root, struct xray* rp, long** check_prims,
     }
     BU_PUT(leafs, struct prim_list);
     BU_ASSERT(index == prim_accum);
+}
+
+void
+hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
+{
+    hlbvh_shot(root, rp, check_prims, num_check_prims, 0 /*false*/);
+}
+
+void
+hlbvh_shot_flat(struct bvh_flat_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
+{
+    hlbvh_shot(root, rp, check_prims, num_check_prims, 1 /*true*/);
 }
 
 
