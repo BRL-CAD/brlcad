@@ -1,4 +1,7 @@
-if (TARGET gen-attributes-file)
+# a new html and xml generation file
+if (TARGET librt)
+  BRLCAD_ADDEXEC(gen-attributes-file gen-attributes-file.cpp "libbu;librt" NO_INSTALL NO_STRICT)
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/attributes.xml.in
     ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml COPYONLY)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/attributes.xml")
@@ -25,7 +28,7 @@ if (TARGET gen-attributes-file)
   if (BRLCAD_EXTRADOCS)
     ADD_DOCBOOK("HTML;PHP;MAN5;PDF" ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml man5 "${attribute_DEPS}" REQUIRED "librt")
   endif (BRLCAD_EXTRADOCS)
-endif (TARGET gen-attributes-file)
+endif (TARGET librt)
 
 if (BRLCAD_EXTRADOCS)
   ADD_DOCBOOK("HTML;PHP;MAN5;PDF" dsp.xml             man5 "" REQUIRED "librt")
@@ -51,6 +54,7 @@ CMAKEFILES(
   nirt_formatting.xml
   pix.xml
   plot3.xml
+  gen-attributes-file.cpp
   )
 
 # Local Variables:
