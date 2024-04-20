@@ -19,11 +19,9 @@
  */
 /** @file primitives/bot/btgf.c
  *
- * the bot/tie float glue.
+ * For compiling float version of tie library for use in adrt_slave and isst.
  *
  */
-
-#include "common.h"
 
 #ifdef TIE_PRECISION
 #  undef TIE_PRECISION
@@ -31,50 +29,9 @@
 #define TIE_PRECISION 0
 
 #include "raytrace.h"
-#include "rt/geom.h"
-#include "rt/tie.h"
-#include "btg.h"
 
 #include "tie.c"
 #include "tie_kdtree.c"
-
-void *
-bottie_allocn_float(unsigned long long ntri)
-{
-    struct tie_s *tie;
-    BU_ALLOC(tie, struct tie_s);
-    tie_init_single(tie, ntri, TIE_KDTREE_FAST);
-    return (void *)tie;
-}
-
-void
-bottie_push_float(void *UNUSED(vtie), float **UNUSED(tri), unsigned int UNUSED(ntri), void *UNUSED(usr), unsigned int UNUSED(pstride))
-{
-    return;
-}
-
-int
-bottie_prep_float(struct soltab *stp,struct rt_bot_internal *bot, struct rt_i *UNUSED(rtip))
-{
-    struct tie_s *tie = (struct tie_s *)bot->tie;
-
-    tie_prep_single(tie);
-    VMOVE(stp->st_min, tie->min);
-    VMOVE(stp->st_max, tie->max);
-    VMOVE(stp->st_center, tie->mid);
-    stp->st_bradius = stp->st_aradius = tie->radius;
-    stp->st_specific = bot;
-
-    return 0;
-}
-
-
-int
-bottie_shot_float(struct soltab *UNUSED(stp), register struct xray *UNUSED(rp), struct application *UNUSED(ap), struct seg *UNUSED(seghead))
-{
-    /* use hitfunc to build the hit list */
-    return -1;
-}
 
 /*
  * Local Variables:
