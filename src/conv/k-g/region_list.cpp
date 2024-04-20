@@ -20,7 +20,7 @@
 /** @file region_list.cpp
  *
  * LS Dyna keyword file to BRL-CAD converter:
- * intermediate list of regions implementation
+ * intermediate region structure implementation
  */
 
 #include "common.h"

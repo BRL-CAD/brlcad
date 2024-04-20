@@ -20,7 +20,7 @@
 /** @file k_parser.h
  *
  * LS Dyna keyword file to BRL-CAD converter:
- * k-file paring function declaration
+ * k-file parsing function declaration
  */
 
 #ifndef KPARSER_INCLUDED

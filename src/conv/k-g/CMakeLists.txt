@@ -1,8 +1,8 @@
 set(k-g_SRCF
-    bot.cpp
-    k-g.cpp
-    k_parser.cpp
-    region_list.cpp
+  bot.cpp
+  k-g.cpp
+  k_parser.cpp
+  region_list.cpp
   )
 BRLCAD_ADDEXEC(k-g "${k-g_SRCF}" "libwdb;librt;libbu" FOLDER Conv)
 

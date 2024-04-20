@@ -20,7 +20,7 @@
 /** @file k_parser.cpp
  *
  * LS Dyna keyword file to BRL-CAD converter:
- * k-file paring function implementation
+ * k-file parsing function implementation
  */
 
 #include "common.h"
@@ -198,8 +198,12 @@ bool parse_k
 				sectionTitle = "";
 				sectionId    = -1;
 
-				if (command.size() == 3)
-				    sectionLinesRead = 0;
+				if (command.size() == 3) {
+				    if (command[2] == "TITLE")
+					sectionLinesRead = 0;
+				    else
+					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
+				}
 				else
 				    sectionLinesRead = 1;
 			    }
