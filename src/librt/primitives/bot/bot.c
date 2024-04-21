@@ -313,6 +313,8 @@ typedef struct _hit_da {
     struct hit * items;
 } hit_da;
 
+const struct hit zeroed_hit_s = {0};
+
 #define DA_INIT_CAPACITY 128
 
 // We include itemtype in DA_APPEND and DA_APPEND_MANY because
@@ -557,14 +559,9 @@ rt_bot_print(const struct soltab *stp)
     if (stp) RT_CK_SOLTAB(stp);
 }
 
-// TODO: we currently only need this for stuff in makesegs
-// we are waiting on removal of btg.c to refactor rt_bot_makesegs
-#define MAXHITS DA_INIT_CAPACITY
-
 /* Forward declare for rt_bot_shot */
 int
-rt_bot_makesegs(struct hit *hits, 
-		size_t nhits, 
+rt_bot_makesegs(hit_da *hits, 
 		struct soltab *stp, 
 		struct xray *rp, 
 		struct application *ap, 
@@ -735,7 +732,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
     }
     
-    return rt_bot_makesegs(hits_da->items, hits_da->count, stp, rp, ap, seghead, NULL);
+    return rt_bot_makesegs(hits_da, stp, rp, ap, seghead, NULL);
 }
 
 
@@ -1105,7 +1102,7 @@ rt_bot_unoriented_segs(struct hit *hits,
 
 
 int
-rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
+rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
     register struct seg *segp;
     register ssize_t i;
@@ -1113,7 +1110,8 @@ rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct 
     static const int OUT_SEG = 1;
     /* TODO: review the use of a signed tmp var. Var i was changed to be signed in
      * r44239 as a bug in another project was segfaulting. */
-    ssize_t snhits = (ssize_t)nhits;
+    ssize_t snhits = (ssize_t)hits_da->count;
+    struct hit *hits = hits_da->items;
 
     /* Remove duplicate hits */
     {
@@ -1403,6 +1401,8 @@ rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct 
 	snhits--;
     }
 
+    hits_da->count = snhits;
+
     if ((snhits&1)) {
 	/*
 	 * If this condition exists, it is almost certainly due to the
@@ -1429,16 +1429,7 @@ rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct 
 		     * at same distance as second exit.
 		     */
 		    /* XXX This consumes an extra hit structure in the array */
-		    if (psp) {
-			/* using pieces */
-			(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
-			hits = psp->htab.hits;
-		    } else if (snhits + 1 >= MAXHITS) {
-			/* not using pieces */
-			bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
-			i++;
-			continue;
-		    }
+		    DA_APPEND(hits_da, zeroed_hit_s, struct hit);
 		    for (j = snhits; j > i; j--)
 			hits[j] = hits[j-1];	/* struct copy */
 
@@ -1451,20 +1442,8 @@ rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct 
 		    /* two consecutive entrances, manufacture an exit
 		     * between them.
 		     */
-		    /* XXX This consumes an extra hit structure in the
-		     * array.
-		     */
-
-		    if (psp) {
-			/* using pieces */
-			(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
-			hits = psp->htab.hits;
-		    } else if (snhits + 1 >= MAXHITS) {
-			/* not using pieces */
-			bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
-			i++;
-			continue;
-		    }
+		    /* XXX This consumes an extra hit structure in the array */
+		    DA_APPEND(hits_da, zeroed_hit_s, struct hit);
 		    for (j = snhits; j > i; j--)
 			hits[j] = hits[j-1];	/* struct copy */
 
@@ -1481,19 +1460,9 @@ rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct 
     }
 
     if ((snhits&1)) {
-	/* XXX This consumes an extra hit structure in the array */
-	if (psp) {
-	    (void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
-	    hits = psp->htab.hits;
-	}
-	if (!psp && (snhits + 1 >= MAXHITS)) {
-	    bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
-	    snhits--;
-	} else {
-	    hits[snhits] = hits[snhits-1];	/* struct copy */
-	    hits[snhits].hit_vpriv[X] = -hits[snhits].hit_vpriv[X];
-	    snhits++;
-	}
+	DA_APPEND(hits_da, hits[snhits-1], struct hit);
+	hits[snhits].hit_vpriv[X] = -hits[snhits].hit_vpriv[X];
+	snhits++;
     }
 
     /* snhits is even, build segments */
@@ -1518,27 +1487,27 @@ rt_bot_oriented_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct 
  * this is to be done depends on the mode of the BoT.
  */
 int
-rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
+rt_bot_makesegs(hit_da *hits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
     RT_CK_SOLTAB(stp);
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 
     if (bot->bot_mode == RT_BOT_PLATE ||
 	bot->bot_mode == RT_BOT_PLATE_NOCOS) {
-	return rt_bot_plate_segs(hits, nhits, stp, rp, ap, seghead, bot);
+	return rt_bot_plate_segs(hits->items, hits->count, stp, rp, ap, seghead, bot);
     }
 	
     if (bot->bot_mode == RT_BOT_SURFACE) {
-	return rt_bot_surface_segs(hits, nhits, stp, ap, seghead);
+	return rt_bot_surface_segs(hits->items, hits->count, stp, ap, seghead);
     }
 	
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
 	
     if (bot->bot_orientation == RT_BOT_UNORIENTED) {
-	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap, seghead);
+	return rt_bot_unoriented_segs(hits->items, hits->count, stp, rp, ap, seghead);
     }
 
-    return rt_bot_oriented_segs(hits, nhits, stp, ap, seghead, psp);
+    return rt_bot_oriented_segs(hits, stp, ap, seghead, psp);
 }
 
 
