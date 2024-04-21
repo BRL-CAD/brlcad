@@ -329,7 +329,6 @@ const struct hit zeroed_hit_s = {0};
 // DA_APPEND_MANY, however this supports the use case 
 // of appending a compile time value to a dynamic array
 // Ex. DA_APPEND(da_ints, 42, int)
-// Ex. DA_APPEND(da_some_struct, {0}, struct some_name)
 #define DA_APPEND(da, item, itemtype)							\
     do {										\
 	if ((da)->count >= (da)->capacity) {						\
@@ -715,21 +714,21 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     // sort the hits
     //insertion sort
     {
-    size_t nhits = hits_da->count;
-    struct hit *hits = hits_da->items;
-    for (size_t i = 1; i < nhits; i++) {
-	fastf_t i_dist = hits[i].hit_dist;
-	struct hit swap = hits[i];
-	int j;
-	for (j = i-1; j >= 0; j--) {
-	    fastf_t j_dist = hits[j].hit_dist;
-	    if (j_dist < i_dist) {
-		break;
+	size_t nhits = hits_da->count;
+	struct hit *hits = hits_da->items;
+	for (size_t i = 1; i < nhits; i++) {
+	    fastf_t i_dist = hits[i].hit_dist;
+	    struct hit swap = hits[i];
+	    int j;
+	    for (j = i-1; j >= 0; j--) {
+		fastf_t j_dist = hits[j].hit_dist;
+		if (j_dist < i_dist) {
+		    break;
+		}
+		hits[j+1] = hits[j];
 	    }
-	    hits[j+1] = hits[j];
+	    hits[j+1] = swap;
 	}
-	hits[j+1] = swap;
-    }
     }
     
     return rt_bot_makesegs(hits_da, stp, rp, ap, seghead, NULL);
