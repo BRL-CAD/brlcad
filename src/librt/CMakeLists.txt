@@ -1,6 +1,7 @@
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 brlcad_find_package(MANIFOLD REQUIRED)
+brlcad_find_package(MMESH REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
@@ -339,17 +340,6 @@ set(
   prcomb.c
   primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp
-  ${GCT_SRCS}
-  primitives/bot/gct_decimation/auxiliary/cc.h
-  primitives/bot/gct_decimation/auxiliary/mm.h
-  primitives/bot/gct_decimation/auxiliary/mmatomic.h
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.h
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.h
-  primitives/bot/gct_decimation/auxiliary/mmhash.h
-  primitives/bot/gct_decimation/auxiliary/mmthread.h
-  primitives/bot/gct_decimation/meshdecimation.h
-  primitives/bot/gct_decimation/meshoptimization.h
-  primitives/bot/gct_decimation/meshoptimizer.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/bot/tieprivate.h
@@ -444,7 +434,7 @@ set(
   ${OPENNURBS_LIBRARIES}
   ${MANIFOLD_LIBRARIES}
   ${Geogram_LIBRARY}
-  ${MMESH_LIBRARY}
+  ${MMESH_LIBRARIES}
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
@@ -462,7 +452,7 @@ set(
   ${REGEX_INCLUDE_DIRS}
   ${Geogram_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
-  ${MMESH_INCLUDE_DIR}
+  ${MMESH_INCLUDE_DIRS}
 )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
