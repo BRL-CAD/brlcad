@@ -104,27 +104,6 @@ BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **a
  */
 BU_EXPORT extern int bu_process_alive(struct bu_process* pinfo);
 
-/**
- * @brief determine whether process is still running using its ID
- *
- * @param[in] pid - process ID of interest
- *
- * @return
- * 1 if alive, else 0
- */
-BU_EXPORT extern int bu_process_alive_id(int pid);
-
-
-/**
- * @brief terminate a given process and any children.
- *
- * @param[in] process - process ID of interest
- *
- * @return
- * returns truthfully whether the process could be killed
- */
-BU_EXPORT extern int bu_terminate(int process);
-
 
 /**
  * @brief determine whether there is data pending on fd
@@ -211,17 +190,8 @@ BU_EXPORT int bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d);
  *
  * @return
  * process ID
- *
- * FIXME: seemingly redundant or combinable with bu_process_id()
- * (perhaps make NULL be equivalent to the current process).
  */
 BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
-
-
-/**
- * returns the process ID of the calling process
- */
-BU_EXPORT extern int bu_process_id(void);
 
 
 /**
@@ -243,6 +213,41 @@ BU_EXPORT extern int bu_process_id(void);
  * the corresponding argc count for pinfo's argv array.
  */
 BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo);
+
+
+/**
+ * @brief Return the process ID of the calling process
+ *
+ * @return
+ * process ID
+ */
+BU_EXPORT extern int bu_process_id(void);
+// TODO: dep process_id
+BU_EXPORT extern int bu_pid(void);
+
+
+/**
+ * @brief determine whether process is still running using its ID
+ *
+ * @param[in] pid - process ID of interest
+ *
+ * @return
+ * 1 if alive, else 0
+ */
+BU_EXPORT extern int bu_pid_alive(int pid);
+
+
+/**
+ * @brief terminate a given process and any children.
+ *
+ * @param[in] process - process ID of interest
+ *
+ * @return
+ * returns truthfully whether the process could be killed
+ */
+BU_EXPORT extern int bu_terminate(int process);
+// TODO: dep bu_terminate
+BU_EXPORT extern int bu_pid_terminate(int pid);
 
 
 /**

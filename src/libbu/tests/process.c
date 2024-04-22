@@ -306,7 +306,7 @@ int _test_args(const char* cmd) {
 
 /* tests:   process reports alive
  *  bu_process_alive()
- *  bu_process_alive_id()
+ *  bu_pid_alive()
  * also relies on:
  *  bu_process_pid()
  *  bu_process_exec()
@@ -325,7 +325,7 @@ int _test_alive(const char* cmd) {
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed\n");
 	return PROCESS_FAIL;
     }
-    if (!bu_process_alive_id(pid)) {	// should be alive
+    if (!bu_pid_alive(pid)) {	// should be alive
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check (pid) failed\n");
 	return PROCESS_FAIL;
     }
@@ -339,7 +339,7 @@ int _test_alive(const char* cmd) {
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after wait\n");
 	return PROCESS_FAIL;
     }
-    if (bu_process_alive_id(pid)) {	// should be dead
+    if (bu_pid_alive(pid)) {	// should be dead
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check (pid) failed after wait\n");
 	return PROCESS_FAIL;
     }
@@ -353,7 +353,7 @@ int _test_alive(const char* cmd) {
 	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check failed\n");
 	return PROCESS_FAIL;
     }
-    if (!bu_process_alive_id(pid)) {	// should be alive
+    if (!bu_pid_alive(pid)) {	// should be alive
 	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check (pid) failed\n");
 	return PROCESS_FAIL;
     }
@@ -370,7 +370,7 @@ int _test_alive(const char* cmd) {
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after terminate\n");
 	return PROCESS_FAIL;
     }
-    if (bu_process_alive_id(pid)) {	// should be dead
+    if (bu_pid_alive(pid)) {	// should be dead
 	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check (pid) failed after terminate\n");
 	return PROCESS_FAIL;
     }

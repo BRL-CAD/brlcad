@@ -606,7 +606,7 @@ bu_process_alive(struct bu_process* pinfo)
 }
 
 int
-bu_process_alive_id(int pid)
+bu_pid_alive(int pid)
 {
     if (!pid)
 	return 0;
