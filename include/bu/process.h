@@ -162,8 +162,7 @@ BU_EXPORT extern int bu_process_read_n(struct bu_process *pinfo, bu_process_io_t
 
 
 /**
- * Open and return a FILE pointer associated with the specified file
- * descriptor for input (0), output (1), or error (2) respectively.
+ * @brief Open and return a FILE pointer associated with the specified channel.
  *
  * Input will be opened write, output and error will be opened
  * read.
@@ -171,18 +170,23 @@ BU_EXPORT extern int bu_process_read_n(struct bu_process *pinfo, bu_process_io_t
  * Caller should not close these FILE pointers directly.  Call
  * bu_process_close() instead.
  *
- * FIXME: misnomer, this does not open a process.  Probably doesn't
- * need to exist; just call fdopen().
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] d - channel (BU_PROCESS_STDIN, BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
+ *
+ * @return
+ * FILE pointer for specified channel
  */
+// TODO: rename to something more indicitive -> bu_process_file_open?
 BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
- * Close any FILE pointers internally opened via bu_process_open().
+ * @brief Close any FILE pointers internally opened via bu_process_open().
  *
- * FIXME: misnomer, this does not close a process.  Probably doesn't
- * need to exist; just call fclose().
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] d - channel (BU_PROCESS_STDIN, BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
  */
+// TODO: parallel name change from process_open
 BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, bu_process_io_t d);
 
 
