@@ -248,8 +248,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\n");
     }
 
-
-    bu_process_exec(&p, gd_rt_cmd[0], gd_rt_cmd_len, (const char **)gd_rt_cmd, 0, 0);
+    bu_process_create(&p, (const char **)gd_rt_cmd, BU_PROCESS_DEFAULT);
 
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");

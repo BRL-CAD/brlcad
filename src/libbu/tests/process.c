@@ -42,7 +42,7 @@
 /* tests:   single stdout and stderr reads - BLOCKING READS
  *  bu_process_read() [stdout and stderr]
  * also relies on:
- *  bu_process_exec()
+ *  bu_process_create()
  *  bu_process_wait()
  */
 int _test_read(const char* cmd) {
@@ -52,7 +52,7 @@ int _test_read(const char* cmd) {
     int aborted = 0;
     char line[100] = {0};
 
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     if (bu_process_read((char *)line, &count, p, BU_PROCESS_STDOUT, 100) <= 0) {
 	fprintf(stderr, "bu_process_test[\"read\"] stdin read failed\n");
@@ -74,7 +74,7 @@ int _test_read(const char* cmd) {
 /* tests:   reads with lots of output; equal distribution - BLOCKING READS
  *  bu_process_read() [stdout and stderr]
  * also relies on:
- *  bu_process_exec()
+ *  bu_process_create()
  *  bu_process_wait()
  */
 int _test_read_flood(const char* cmd) {
@@ -84,7 +84,7 @@ int _test_read_flood(const char* cmd) {
     char line[100] = {0};
     int stdout_done = 0, stderr_done = 0;   // NOTE: this would be better checked with 'alive' function
 
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     while (!stdout_done || !stderr_done) {
 	if (!stdout_done && bu_process_read((char *)line, &count, p, BU_PROCESS_STDOUT, 100) <= 0)
@@ -103,7 +103,7 @@ int _test_read_flood(const char* cmd) {
 }
 
 /* tests:   basic process execution and wait
- *  bu_process_exec()
+ *  bu_process_create()
  *  bu_process_wait()
  */
 int _test_exec_wait(const char* cmd) {
@@ -111,7 +111,7 @@ int _test_exec_wait(const char* cmd) {
     const char* run_av[3] = {cmd, "basic", NULL};
 
     // TODO: add tests to check options flags
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     if (bu_process_wait(NULL, p, 0)) {
 	fprintf(stderr, "bu_process_test[\"exec_wait\"] - wait failed\n");
@@ -125,14 +125,14 @@ int _test_exec_wait(const char* cmd) {
  *  bu_process_id()
  *  bu_process_pid()
  * also relies on
- *  bu_process_exec()
+ *  bu_process_create()
  *  bu_process_wait()
  */
 int _test_ids(const char* cmd) {
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "basic", NULL};
 
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     int curr_id = bu_process_id();
     int process_id = bu_process_pid(p);
@@ -164,14 +164,14 @@ int _test_ids(const char* cmd) {
  *  bu_process_fileno(),
  *  bu_process_pending()
  * also relies on:
- *  bu_process_exec(),
+ *  bu_process_create(),
  *  bu_process_wait()
  */
 int _test_streams(const char* cmd) {
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "echo", NULL};
 
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     FILE* f_in = bu_process_open(p, BU_PROCESS_STDIN);
 
@@ -233,7 +233,7 @@ int _test_streams(const char* cmd) {
 /* tests:   forcefully terminate a running process
  *  bu_terminate()
  * also relies on:
- *  bu_process_exec()
+ *  bu_process_create()
  *  bu_process_pid()
  *  bu_process_wait()
  */
@@ -241,7 +241,7 @@ int _test_abort(const char* cmd) {
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "echo", NULL};	// 'echo' test has inf wait on cin.get()
     int aborted = 0;
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     if (!bu_terminate(bu_process_pid(p))) {
 	fprintf(stderr, "bu_process_test[\"terminate\"] - subprocess could not be terminated\n");
@@ -265,7 +265,7 @@ int _test_abort(const char* cmd) {
 /* tests:   process args storage and retrieval
  *  bu_process_args()
  * also relies on:
- *  bu_process_exec()
+ *  bu_process_create()
  *  bu_process_wait()
  */
 int _test_args(const char* cmd) {
@@ -275,7 +275,7 @@ int _test_args(const char* cmd) {
     const char* ck_cmd;
     const char* const* ck_argv;
 
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     ck_argc = bu_process_args(&ck_cmd, &ck_argv, p);
 
@@ -309,7 +309,7 @@ int _test_args(const char* cmd) {
  *  bu_pid_alive()
  * also relies on:
  *  bu_process_pid()
- *  bu_process_exec()
+ *  bu_process_create()
  *  bu_process_wait()
  */
 int _test_alive(const char* cmd) {
@@ -318,7 +318,7 @@ int _test_alive(const char* cmd) {
     int pid = -1;
 
     /* test alive status with wait */
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
     pid = bu_process_pid(p);
 
     if (!bu_process_alive(p)) {	// should be alive
@@ -346,7 +346,7 @@ int _test_alive(const char* cmd) {
 
 
     /* test alive status with termination */
-    bu_process_exec(&p, cmd, 2, (const char**)run_av, 0, 0);
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
     pid = bu_process_pid(p);
 
     if (!bu_process_alive(p)) {	// should be alive

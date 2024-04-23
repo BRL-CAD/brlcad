@@ -211,66 +211,41 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_
 int
 bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts)
 {
-    return -1;
-}
+    if (!pinfo || !argv)
+	return -1;
 
+    int ret = 0;
+    /* get argc count */
+    int argc = 0;
+    while (argv[argc] != NULL)
+	argc++;
+    /* by convention - first value of argv is the cmd */
+    const char* cmd = (*argv);
 
-void
-bu_process_exec(
-    struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err,
-#ifdef _WIN32
-    int hide_window
-#else
-    int UNUSED(hide_window)
-#endif
-    )
-{
-    int pret = 0;
-    int ac = argc;
+    /* alloc and zero-out pinfo */
+    BU_GET(*pinfo, struct bu_process);
+    (*pinfo)->fp_in = NULL;
+    (*pinfo)->fp_out = NULL;
+    (*pinfo)->fp_err = NULL;
+    (*pinfo)->fd_in = -1;
+    (*pinfo)->fd_out = -1;
+    (*pinfo)->fd_err = -1;
+
+    /* Make a copy of the final execvp args */
+    (*pinfo)->cmd = bu_strdup(cmd);
+    (*pinfo)->argc = argc;
+    (*pinfo)->argv = (const char **)bu_calloc(argc, sizeof(char *), "bu_process argv cpy");
+    for (int i = 0; i < argc; i++) {
+	(*pinfo)->argv[i] = bu_strdup(argv[i]);
+    }
+    //(*pinfo)->argv[ac] = (char *)NULL;	// SHOULD ALREADY BE NULL? 
+
 #ifdef HAVE_UNISTD_H
+    int pret;
     int pid;
     int pipe_in[2];
     int pipe_out[2];
     int pipe_err[2];
-    const char **av = NULL;
-
-    if (!p || !cmd)
-	return;
-
-    BU_GET(*p, struct bu_process);
-    (*p)->fp_in = NULL;
-    (*p)->fp_out = NULL;
-    (*p)->fp_err = NULL;
-    (*p)->fd_in = -1;
-    (*p)->fd_out = -1;
-    (*p)->fd_err = -1;
-
-    av = (const char **)bu_calloc(argc+2, sizeof(char *), "argv array");
-    if (!argc || !BU_STR_EQUAL(cmd, argv[0])) {
-	/* By convention the first argument to execvp should match the
-	 * cmd string - if it doesn't we can handle it in av, but it
-	 * means the actual exec av array will be longer by one. */
-	av[0] = cmd;
-	for (int i = 1; i <= argc; i++) {
-	    av[i] = argv[i-1];
-	}
-	av[argc+1] = (char *)NULL;
-	ac++;
-    } else {
-	for (int i = 0; i < argc; i++) {
-	    av[i] = argv[i];
-	}
-	av[argc] = (char *)NULL;
-    }
-
-    /* Make a copy of the final execvp args */
-    (*p)->cmd = bu_strdup(cmd);
-    (*p)->argc = ac;
-    (*p)->argv = (const char **)bu_calloc(ac+1, sizeof(char *), "bu_process argv cpy");
-    for (int i = 0; i < ac; i++) {
-	(*p)->argv[i] = bu_strdup(av[i]);
-    }
-    (*p)->argv[ac] = (char *)NULL;
 
     pret = pipe(pipe_in);
     if (pret < 0) {
@@ -324,7 +299,8 @@ bu_process_exec(
 	    (void)close(i);
 	}
 
-	(void)execvp(cmd, (char * const*)av);
+	if (execvp(cmd, (char * const*)av) == -1)
+	    ret = errno;
 	perror(cmd);
 #if 0
 	// TODO - do we need to close the dup handles?
@@ -342,7 +318,7 @@ bu_process_exec(
 
     /* Save necessary information for parental process manipulation */
     (*p)->fd_in = pipe_in[1];
-    if (out_eql_err) {
+    if (opts & BU_PROCESS_OUT_EQ_ERR) {
 	(*p)->fd_out = pipe_err[0];
     } else {
 	(*p)->fd_out = pipe_out[0];
@@ -358,27 +334,6 @@ bu_process_exec(
     STARTUPINFO si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa = {0};
-
-    if (!cmd || !argc || !argv)
-	return;
-
-    BU_GET(*p, struct bu_process);
-    (*p)->fp_in = NULL;
-    (*p)->fp_out = NULL;
-    (*p)->fp_err = NULL;
-    (*p)->fd_in = -1;
-    (*p)->fd_out = -1;
-    (*p)->fd_err = -1;
-
-    (*p)->cmd = bu_strdup(cmd);
-    (*p)->argc = argc;
-    (*p)->argv = (const char **)bu_calloc(argc+1, sizeof(char *), "bu_process argv cpy");
-    for (int i = 0; i < argc; i++) {
-	(*p)->argv[i] = bu_strdup(argv[i]);
-    }
-    (*p)->argv[ac] = (char *)NULL;
-
-
 
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
@@ -419,14 +374,14 @@ bu_process_exec(
     si.lpReserved2 = NULL;
     si.cbReserved2 = 0;
     si.lpDesktop = NULL;
-    if (hide_window) {
+    if (opts & BU_PROCESS_HIDE_WINDOW) {
 	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_HIDE;
     } else {
 	si.dwFlags = STARTF_USESTDHANDLES;
     }
     si.hStdInput   = pipe_in[0];
-    if (out_eql_err) {
+    if (opts & BU_PROCESS_OUT_EQ_ERR) {
 	si.hStdOutput  = pipe_err[1];
     } else {
 	si.hStdOutput  = pipe_out[1];
@@ -443,9 +398,11 @@ bu_process_exec(
 	}
     }
 
-    CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
-		  DETACHED_PROCESS, NULL, NULL,
-		  &si, &pi);
+    if (!CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
+		       DETACHED_PROCESS, NULL, NULL,
+		       &si, &pi)) {
+	ret = GetLastError();
+    }
     bu_vls_free(&cp_cmd);
 
     CloseHandle(pipe_in[0]);
@@ -457,18 +414,54 @@ bu_process_exec(
      * consistent - see
      * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/open-osfhandle
      */
-    (*p)->fd_in = _open_osfhandle((intptr_t)pipe_inDup, 0);
-    if (out_eql_err) {
-	(*p)->fd_out = _open_osfhandle((intptr_t)pipe_errDup, 0);
+    (*pinfo)->fd_in = _open_osfhandle((intptr_t)pipe_inDup, 0);
+    if (opts & BU_PROCESS_OUT_EQ_ERR) {
+	(*pinfo)->fd_out = _open_osfhandle((intptr_t)pipe_errDup, 0);
     } else {
-	(*p)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
+	(*pinfo)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
     }
-    (*p)->fd_err = _open_osfhandle((intptr_t)pipe_errDup, 0);
-    (*p)->hProcess = pi.hProcess;
-    (*p)->pid = pi.dwProcessId;
-    (*p)->aborted = 0;
+    (*pinfo)->fd_err = _open_osfhandle((intptr_t)pipe_errDup, 0);
+    (*pinfo)->hProcess = pi.hProcess;
+    (*pinfo)->pid = pi.dwProcessId;
+    (*pinfo)->aborted = 0;
 
 #endif
+
+    return ret;
+}
+
+
+void
+bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window)
+{
+    if (!p || !cmd)
+	return;
+
+    // make sure cmd starts the argv, and argv is null terminated
+    const char **av = NULL;
+    av = (const char **)bu_calloc(argc+2, sizeof(char *), "argv array");
+    if (!argc || !BU_STR_EQUAL(cmd, argv[0])) {
+	/* By convention the first argument to execvp should match the
+	 * cmd string - if it doesn't we can handle it in av, but it
+	 * means the actual exec av array will be longer by one. */
+	av[0] = cmd;
+	for (int i = 1; i <= argc; i++) {
+	    av[i] = argv[i-1];
+	}
+	av[argc+1] = (char *)NULL;
+    } else {
+	for (int i = 0; i < argc; i++) {
+	    av[i] = argv[i];
+	}
+	av[argc] = (char *)NULL;
+    }
+
+    // combine opts for new call
+    int opts = 0;
+    if (out_eql_err) opts |= BU_PROCESS_OUT_EQ_ERR;
+    if (hide_window) opts |= BU_PROCESS_HIDE_WINDOW;
+
+    bu_process_create(p, av, opts);
 }
 
 int

@@ -347,7 +347,7 @@ subprocess_launcher(int id, void *data)
     sd->result = 0;
 
     struct bu_process *p = NULL;
-    bu_process_exec(&p, sd->pname, ac, (const char **)av, 0, 0);
+    bu_process_create(&p, (const char **)av, BU_PROCESS_DEFAULT);
     bu_vls_printf(sd->sd_result, "Test %ld(process %ld): running...\n", sd->test_num, sd->process_num);
 
     while (bu_process_read((char *)line, &count, p, BU_PROCESS_STDERR, MAXPATHLEN+501) > 0) {

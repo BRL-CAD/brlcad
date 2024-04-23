@@ -48,7 +48,7 @@ main(int ac, char *av[]) {
 	    const char *cmd[2];
 	    cmd[0] = av[0];
 	    cmd[1] = NULL;
-	    bu_process_exec(&info, av[0], 1, cmd, 0, 0);
+	    bu_process_create(&info, cmd, BU_PROCESS_DEFAULT);
 #if 0
 	    {
 		char buffer[1024] = {0};

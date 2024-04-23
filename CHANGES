@@ -129,6 +129,11 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.40
+----
+include/bu/process.h
+	bu_process_exec: replaced by bu_process_create
+
 7.38
 ----
 MGED commands

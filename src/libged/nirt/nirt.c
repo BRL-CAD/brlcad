@@ -113,13 +113,14 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
             BU_STR_EQUAL(argv[i], "-L")) {
 
             // load av with request
-            av = (char **)bu_calloc(4, sizeof(char *), "av");
+            av = (char **)bu_calloc(5, sizeof(char *), "av");
             av[0] = (char*)nirt;
             av[1] = (char*)argv[i];
             av[2] = "-X";
             av[3] = "ged";
+	    av[4] = NULL;
 
-            bu_process_exec(&p, nirt, 4, (const char **)av, 0, 1);
+	    bu_process_create(&p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
             bu_free(av, "av");
 
             // open pipes
@@ -274,7 +275,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_process_exec(&p, gd_rt_cmd[0], j, (const char **)av, 0, 1);
+    bu_process_create(&p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
     bu_free(av, "av");
 
 

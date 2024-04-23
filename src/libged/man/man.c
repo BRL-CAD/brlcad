@@ -211,7 +211,7 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct bu_process *p;
-    bu_process_exec(&p, brlman_exec_cmd[0], cmd_ac, (const char **)brlman_exec_cmd, 0, 1);
+    bu_process_create(&p, (const char **)brlman_exec_cmd, BU_PROCESS_HIDE_WINDOW);
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
 	ret = BRLCAD_ERROR;
