@@ -85,7 +85,7 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp, int type)
 
     bu_process_close(p->p, BU_PROCESS_STDOUT);
     /* wait for the forked process */
-    int retcode = bu_process_wait(NULL, p->p, 0);
+    int retcode = bu_process_wait_n(p->p, 0);
     if (retcode != 0) {
 	_ged_wait_status(gedp->ged_result_str, retcode);
     }

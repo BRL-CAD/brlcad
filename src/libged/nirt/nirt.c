@@ -425,7 +425,7 @@ print:
     bu_process_close(p, BU_PROCESS_STDOUT);
     bu_process_close(p, BU_PROCESS_STDERR);
 
-    retcode = bu_process_wait(NULL, p, 0);
+    retcode = bu_process_wait_n(p, 0);
 
     if (retcode != 0) {
 	_ged_wait_status(gedp->ged_result_str, retcode);

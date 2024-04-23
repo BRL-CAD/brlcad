@@ -36,6 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/process.h"
 #include "bu/str.h"
+#include "bu/snooze.h"
 #include "bu/vls.h"
 #include "./process.h"
 
@@ -467,41 +468,40 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 int
 bu_process_wait_n(struct bu_process *pinfo, int wtime)
 {
-    return -1;
-}
+    if (!pinfo)
+	return -1;
 
-int
-bu_process_wait(
-    int *aborted, struct bu_process *pinfo,
-#ifndef _WIN32
-    int UNUSED(wtime)
-#else
-    int wtime
-#endif
-    )
-{
     int rc = 0;
 #ifndef _WIN32
     int rpid;
     int retcode = 0;
 
-    if (!pinfo)
-	return -1;
-
     close(pinfo->fd_in);
     close(pinfo->fd_out);
     close(pinfo->fd_err);
 
-    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1) {
+    /* wait for process to end, or timeout */
+    int64_t start_time = bu_gettime();
+    while ((rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG) != pinfo->pid) {
+	if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
+	    break;
     }
-    rc = retcode;
-    if (rc) {
-	pinfo->aborted = 1;
+
+    /* check wait() status and filter retcode */
+    if (rpid == -1 || rpid == 0) {
+	/* timed-out */
+	bu_pid_terminate(pinfo->pid);
+	rc = 0;	// process concluded, albeit forcibly
+    } else {
+	if (WIFEXITED(retcode))		    // normal exit
+	    rc = 0;
+	else if (WIFSIGNALED(retcode))	    // terminated
+	    rc = ERROR_PROCESS_ABORTED;
+	else
+	    rc = retcode;
     }
 #else
     DWORD retcode = 0;
-    if (!pinfo)
-	return -1;
 
     /* wait for the forked process */
     if (wtime > 0) {
@@ -510,19 +510,19 @@ bu_process_wait(
 	WaitForSingleObject(pinfo->hProcess, INFINITE);
     }
 
-    GetExitCodeProcess(pinfo->hProcess, &retcode);
-
-    if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == BU_MSVC_ABORT_EXIT) {
-	pinfo->aborted = 1;
+    if (GetExitCodeProcess(pinfo->hProcess, &retcode)) {    // make sure function succeeds
+	if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == BU_MSVC_ABORT_EXIT) {
+	    // collapse abort into our abort code
+	    rc = ERROR_PROCESS_ABORTED;
+	} else {
+	    rc = (int)retcode;
+	}
+    } else {
+	rc = -1;
     }
 
-    /* may be useful to try pr_wait_status() here */
-    rc = (int)retcode;
+    CloseHandle(pinfo->hProcess);
 #endif
-    if (aborted) {
-	(*aborted) = pinfo->aborted;
-    }
-
     /* Clean up */
     bu_process_close(pinfo, BU_PROCESS_STDOUT);
     bu_process_close(pinfo, BU_PROCESS_STDERR);
@@ -539,6 +539,17 @@ bu_process_wait(
     BU_PUT(pinfo, struct bu_process);
 
     return rc;
+}
+
+int
+bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
+{
+    int wait_ret = bu_process_wait_n(pinfo, wtime);
+
+    if (aborted && wait_ret == ERROR_PROCESS_ABORTED)
+	(*aborted) = 1;
+
+    return wait_ret;
 }
 
 

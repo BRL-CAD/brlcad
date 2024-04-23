@@ -1590,8 +1590,6 @@ _ged_rt_output_handler2(void *clientData, int type)
     }
 
     if (read_failed_stderr || read_failed_stdout) {
-	int aborted;
-
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (type != -1 && gedp->ged_delete_io_handler) {
 
@@ -1616,7 +1614,8 @@ _ged_rt_output_handler2(void *clientData, int type)
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait(&aborted, rrtp->p, 120);
+	retcode = bu_process_wait_n(rrtp->p, 120);
+	int aborted = (retcode == ERROR_PROCESS_ABORTED);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");
@@ -1706,13 +1705,13 @@ _ged_rt_output_handler(void *clientData, int mask)
 	if (rrtp->stderr_active || rrtp->stdout_active)
 	    return;
 
-	int aborted = 0;
 	int retcode = 0;
 	struct ged *gedp = rrtp->gedp;
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait(&aborted, rrtp->p, 120);
+	retcode = bu_process_wait_n(rrtp->p, 120);
+	int aborted = (retcode == ERROR_PROCESS_ABORTED);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");

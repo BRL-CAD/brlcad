@@ -77,11 +77,13 @@ BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **a
  * @brief wait for a sub-process to complete, release all process
  * allocations, and release the process itself.
  *
- * FIXME: 'aborted' argument may be unnecessary (could make function
+ * @deprecated use bu_process_wait_n instead.
+ *
+ * @note FIXME: 'aborted' argument may be unnecessary (could make function
  * provide return value of the process waited for).  wtime
  * undocumented.
  */
- BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+ DEPRECATED BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
 /**
  * @brief wait for a sub-process to complete, release all process
  * allocations, and release the process itself.
@@ -90,9 +92,8 @@ BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **a
  * @param[in] wtime - maximum wait time (in ms) before forcibly stopping process. NOTE: 0 is treated as INFINITE
  *
  * @return
- * 0 on success; Otherwise exit status
+ * 0 on success; ERROR_PROCESS_ABORTED for aborted process; Otherwise, platform specific exit status
  */
- // TODO: deprecate _wait, replace callers; add tests for wtime and return codes
  BU_EXPORT extern int bu_process_wait_n(struct bu_process *pinfo, int wtime);
 
 

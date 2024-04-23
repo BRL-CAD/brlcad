@@ -133,6 +133,7 @@ removed at any time.
 ----
 include/bu/process.h
 	bu_process_exec: replaced by bu_process_create
+	bu_process_wait: replaced by bu_process_wait_n
 
 7.38
 ----
