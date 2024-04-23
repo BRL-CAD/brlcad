@@ -9,6 +9,7 @@ set(primitives_headers
   epa.h
   hf.h
   metaball.h
+  nmg.h
   pg.h
   pipe.h
   rhc.h
