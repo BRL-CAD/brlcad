@@ -60,6 +60,7 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 	(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
     }
 
+    // FIXME: Windows throws 'invalid handle specified' exception here - is ged_delete_io_handler already closing STDOUT?
     bu_process_close(rrtp->p, BU_PROCESS_STDOUT);
 
     /* wait for the forked process */
