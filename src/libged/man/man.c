@@ -180,7 +180,6 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    int cmd_ac = 0;
     const char *brlman_exec_cmd[8];
     struct bu_vls man_sect = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&man_sect, "%c", man_section);
@@ -194,19 +193,15 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
 	if (uac) {
 	    brlman_exec_cmd[6] = man_name;
 	    brlman_exec_cmd[7] = NULL;
-	    cmd_ac = 7;
 	} else {
 	    brlman_exec_cmd[6] = NULL;
-	    cmd_ac = 6;
 	}
     } else {
 	if (uac) {
 	    brlman_exec_cmd[5] = man_name;
 	    brlman_exec_cmd[6] = NULL;
-	    cmd_ac = 6;
 	} else {
 	    brlman_exec_cmd[5] = NULL;
-	    cmd_ac = 5;
 	}
     }
 

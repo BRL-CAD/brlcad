@@ -51,6 +51,11 @@ typedef enum {
     BU_PROCESS_HIDE_WINDOW = 0x2,   // hide creation window, if process would normall spawn one
 } bu_process_create_opts;
 
+#ifndef ERROR_PROCESS_ABORTED
+// have a consistent 'aborted' return code on cross-platforms
+#define ERROR_PROCESS_ABORTED 1067L
+#endif
+
 /**
  * @brief Wrapper for executing a sub-process
  *

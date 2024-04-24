@@ -320,7 +320,6 @@ struct subprocess_data {
 static void
 subprocess_launcher(int id, void *data)
 {
-    int ac = 8;
     char *line = (char *)bu_calloc(MAXPATHLEN+501, sizeof(char), "resultstr");
     const char *av[9];
     int ind = (!id) ? 0 : (id - 1);

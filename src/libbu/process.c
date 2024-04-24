@@ -37,7 +37,7 @@
 #include "bu/malloc.h"
 #include "bu/process.h"
 #include "bu/str.h"
-#include "bu/snooze.h"
+#include "bu/time.h"
 #include "bu/vls.h"
 #include "./process.h"
 
@@ -336,7 +336,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
 	    (void)close(i);
 	}
 
-	if (execvp(cmd, (char * const*)av) == -1)
+	if (execvp(cmd, (char * const*)(*pinfo)->argv) == -1)
 	    ret = errno;
 	perror(cmd);
 #if 0
@@ -354,14 +354,14 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
     (void)close(pipe_err[1]);
 
     /* Save necessary information for parental process manipulation */
-    (*p)->fd_in = pipe_in[1];
+    (*pinfo)->fd_in = pipe_in[1];
     if (opts & BU_PROCESS_OUT_EQ_ERR) {
-	(*p)->fd_out = pipe_err[0];
+	(*pinfo)->fd_out = pipe_err[0];
     } else {
-	(*p)->fd_out = pipe_out[0];
+	(*pinfo)->fd_out = pipe_out[0];
     }
-    (*p)->fd_err = pipe_err[0];
-    (*p)->pid = pid;
+    (*pinfo)->fd_err = pipe_err[0];
+    (*pinfo)->pid = pid;
 
 #else
     struct bu_vls cp_cmd = BU_VLS_INIT_ZERO;
@@ -498,7 +498,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     if (out_eql_err) opts |= BU_PROCESS_OUT_EQ_ERR;
     if (hide_window) opts |= BU_PROCESS_HIDE_WINDOW;
 
-    bu_process_create(p, av, opts);
+    bu_process_create(p, av, (bu_process_create_opts)opts);
 }
 
 int
@@ -518,7 +518,7 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
 
     /* wait for process to end, or timeout */
     int64_t start_time = bu_gettime();
-    while ((rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG) != pinfo->pid) {
+    while ((rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG) != pinfo->pid)) {
 	if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
 	    break;
     }
@@ -674,19 +674,13 @@ bu_pid_alive(int pid)
 int
 bu_pid_terminate(int process)
 {
-#ifdef HAVE_KILL
     int successful = 0;
-
+#ifdef HAVE_KILL
     /* kill process and all children (negative pid, sysv extension) */
     successful = kill((pid_t)-process, SIGKILL);
     /* kill() returns 0 for success */
     successful = !successful;
-
-    return successful;
-}
-
 #else /* !HAVE_KILL */
-    int successful = 0;
     HANDLE hProcessSnap;
     HANDLE hProcess;
     PROCESSENTRY32 pe32 = {0};
@@ -717,8 +711,8 @@ bu_pid_terminate(int process)
     }
 
     CloseHandle(hProcessSnap);
-    return successful;
 #endif	/* HAVE_KILL */
+    return successful;
 }
 
 int

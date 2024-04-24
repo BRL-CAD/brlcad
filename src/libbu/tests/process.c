@@ -87,7 +87,7 @@ int _test_read_flood(const char* cmd) {
 	if (!stdout_done && bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0)
 	    stdout_done = 1;
 
-	if (!stdout_done && bu_process_read_n(p, BU_PROCESS_STDERR, 100, (char *)line) <= 0)
+	if (!stderr_done && bu_process_read_n(p, BU_PROCESS_STDERR, 100, (char *)line) <= 0)
 	    stderr_done = 1;
     }
 
