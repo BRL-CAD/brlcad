@@ -170,7 +170,7 @@ bu_process_pid(struct bu_process *pinfo)
 
 
 int
-bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo)
+bu_process_args_n(struct bu_process *pinfo, const char **cmd, const char * const **argv)
 {
     if (!pinfo)
 	return 0;
@@ -181,6 +181,12 @@ bu_process_args(const char **cmd, const char * const **argv, struct bu_process *
 	*argv = (const char * const *)(pinfo->argv);
 
     return pinfo->argc;
+}
+
+int
+bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo)
+{
+    return bu_process_args_n(pinfo, cmd, argv);
 }
 
 int

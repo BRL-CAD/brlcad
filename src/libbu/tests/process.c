@@ -271,7 +271,7 @@ int _test_args(const char* cmd) {
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
-    ck_argc = bu_process_args(&ck_cmd, &ck_argv, p);
+    ck_argc = bu_process_args_n(p, &ck_cmd, &ck_argv);
 
     if (ck_argc != 2) {
 	fprintf(stderr, "bu_process_test[\"args\"] - ck_argc got (%d), expected (%d)\n", ck_argc, 2);

@@ -240,8 +240,29 @@ BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
  *
  * @return
  * the corresponding argc count for pinfo's argv array.
+ *
+ * @deprecated use bu_process_args_n instead
  */
-BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo);
+DEPRECATED BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo);
+/**
+ * Reports one or both of the command string and the argv array
+ * used to execute the process.
+ *
+ * The bu_process container owns all strings for both cmd and argv -
+ * for the caller they are read-only.
+ *
+ * If either cmd or argv are NULL they will be skipped - if the
+ * caller only wants one of these outputs the other argument can
+ * be set to NULL.
+ *
+ * @param[in] pinfo - the bu_process structure of interest
+ * @param[out] cmd - pointer to the cmd string used to launch pinfo
+ * @param[out] argv - pointer to the argv array used to launch pinfo
+ *
+ * @return
+ * the corresponding argc count for pinfo's argv array.
+ */
+BU_EXPORT int bu_process_args_n(struct bu_process *pinfo, const char **cmd, const char * const **argv);
 
 
 /**

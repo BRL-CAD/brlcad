@@ -137,6 +137,7 @@ include/bu/process.h
 	bu_process_read: replaced by bu_process_read_n
 	bu_process_open: replaced by bu_process_file_open
 	bu_process_close: replaced by bu_process_file_close
+	bu_process_args: replaced by bu_process_args_n
 
 7.38
 ----
