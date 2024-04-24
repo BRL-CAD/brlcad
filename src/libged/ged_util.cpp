@@ -1582,10 +1582,10 @@ _ged_rt_output_handler2(void *clientData, int type)
     struct ged *gedp = rrtp->gedp;
 
     /* Get data from rt */
-    if (rrtp->stderr_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+    if (rrtp->stderr_active && (count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	read_failed_stderr = 1;
     }
-    if (rrtp->stdout_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
+    if (rrtp->stdout_active && (count = bu_process_read_n(rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE, (char *)line)) <= 0) {
 	read_failed_stdout = 1;
     }
 
@@ -1658,7 +1658,7 @@ ged_rt_output_handler_helper(struct ged_subprocess* rrtp, bu_process_io_t type)
     if (type == BU_PROCESS_STDERR) active = rrtp->stderr_active;
     if (type == BU_PROCESS_STDOUT) active = rrtp->stdout_active;
 
-    if (active && bu_process_read((char *)line, &count, rrtp->p, type, RT_MAXLINE) <= 0) {
+    if (active && (count = bu_process_read_n(rrtp->p, type, RT_MAXLINE, (char *)line)) <= 0) {
 	/* Done watching for output or a bad read, undo subprocess I/O hooks. */
 	struct ged *gedp = rrtp->gedp;
 	if (gedp->ged_delete_io_handler) {

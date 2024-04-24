@@ -172,7 +172,7 @@ rtcheck_output_handler(void *clientData, int type)
     struct ged *gedp = rrtp->gedp;
 
     /* Get textual output from rtcheck */
-    if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+    if ((count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	rtcp->read_failed = 1;
 	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    gedp->ged_gdp->gd_rtCmdNotify(0);

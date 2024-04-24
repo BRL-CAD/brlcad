@@ -52,8 +52,7 @@ main(int ac, char *av[]) {
 #if 0
 	    {
 		char buffer[1024] = {0};
-		int count = 1024;
-		bu_process_read(buffer, &count, info, 1, 1024);
+		(void)bu_process_read_n(info, 1, 1024, buffer);
 		bu_log("read %d: [%s]\n", count, buffer);
 	    }
 #endif

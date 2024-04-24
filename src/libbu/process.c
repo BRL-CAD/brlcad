@@ -173,40 +173,43 @@ bu_process_args(const char **cmd, const char * const **argv, struct bu_process *
 }
 
 int
-bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff, int *count)
+bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff)
 {
-    return -1;
+    if (!pinfo || !buff || !n)
+	return -1;
+
+    int read_fd = -1;
+    if (d == BU_PROCESS_STDOUT)
+	read_fd = (int)pinfo->fd_out;
+    else if (d == BU_PROCESS_STDERR)
+	read_fd = (int)pinfo->fd_err;
+    else
+	return -1;	// invalid channel specified
+
+    int ret = read(read_fd, buff, n);
+
+    if (ret < 0)
+	perror("READ ERROR");
+
+    return ret;
 }
 
 int
 bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n)
 {
-    int ret = 1;
-    if (!pinfo || !buff || !n || !count)
-	return -1;
-
-    if (d == BU_PROCESS_STDOUT) {
-	(*count) = read((int)pinfo->fd_out, buff, n);
-	if ((*count) <= 0) {
-	    ret = -1;
-	}
-    }
-    if (d == BU_PROCESS_STDERR) {
-	(*count) = read((int)pinfo->fd_err, buff, n);
-	if ((*count) <= 0) {
-	    ret = -1;
-	}
-    }
+    int read_ret = bu_process_read_n(pinfo, d, n, buff);
 
     /* sanity clamping */
-    if ((*count) < 0) {
-	perror("READ ERROR");
+    if (read_ret < 0) {
 	(*count) = 0;
-    } else if ((*count) > n) {
+    } else if (read_ret > n) {
 	(*count) = n;
+    } else {
+	(*count) = read_ret;
     }
 
-    return ret;
+    // maintain consistent behavior with old read which returned 1 on success and -1 on error
+    return (read_ret > 0) ? 1 : -1;
 }
 
 int

@@ -48,16 +48,15 @@
 int _test_read(const char* cmd) {
     struct bu_process* p;
     const char* run_av[3] = {cmd, "basic", NULL};
-    int count = 0;
     char line[100] = {0};
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
-    if (bu_process_read((char *)line, &count, p, BU_PROCESS_STDOUT, 100) <= 0) {
+    if (bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0) {
 	fprintf(stderr, "bu_process_test[\"read\"] stdin read failed\n");
 	return PROCESS_FAIL;
     }
-    if (bu_process_read((char *)line, &count, p, BU_PROCESS_STDERR, 100) <= 0) {
+    if (bu_process_read_n(p, BU_PROCESS_STDERR, 100, (char *)line) <= 0) {
 	fprintf(stderr, "bu_process_test[\"read\"] stdout read failed\n");
 	return PROCESS_FAIL;
     }
@@ -79,17 +78,16 @@ int _test_read(const char* cmd) {
 int _test_read_flood(const char* cmd) {
     struct bu_process* p;
     const char* run_av[3] = {cmd, "flood", NULL};
-    int count = 0;
     char line[100] = {0};
     int stdout_done = 0, stderr_done = 0;   // NOTE: this would be better checked with 'alive' function
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     while (!stdout_done || !stderr_done) {
-	if (!stdout_done && bu_process_read((char *)line, &count, p, BU_PROCESS_STDOUT, 100) <= 0)
+	if (!stdout_done && bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0)
 	    stdout_done = 1;
 
-	if (!stderr_done && bu_process_read((char *)line, &count, p, BU_PROCESS_STDERR, 100) <= 0)
+	if (!stdout_done && bu_process_read_n(p, BU_PROCESS_STDERR, 100, (char *)line) <= 0)
 	    stderr_done = 1;
     }
 

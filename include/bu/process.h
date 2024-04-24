@@ -123,10 +123,12 @@ BU_EXPORT extern int bu_process_pending(int fd);
  * Read up to n bytes into buff from a process's specified output
  * channel (fd == 1 for output, fd == 2 for err).
  *
- * FIXME: arg ordering and input/output grouping is wrong.  partially
+ * @deprecated use bu_process_read_n instead
+ *
+ * @note FIXME: arg ordering and input/output grouping is wrong.  partially
  * redundant with bu_process_fd() and/or bu_process_open().
  */
-BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
+DEPRECATED BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
 /**
  * @brief Read from a process's specified output channel
  *
@@ -134,13 +136,14 @@ BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *
  * @param[in] d - channel (BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
  * @param[in] n - max number of bytes to be read
  * @param[out] buff - data read from channel
- * @param[out] count - number of bytes actually read into buff
  *
  * @return
- * returns 0 on successful read
+ * returns the number of bytes read into buff; 0 if read is at EOF; -1 on error
+ *
+ * @note the returned number of bytes read may be less than 'n'
+ * in a successful read.
  */
-// TODO: deprecate _read, replace callers
-BU_EXPORT extern int bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff, int *count);
+BU_EXPORT extern int bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff);
 
 
 /**
