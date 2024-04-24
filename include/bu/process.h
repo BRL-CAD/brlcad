@@ -270,9 +270,16 @@ BU_EXPORT int bu_process_args_n(struct bu_process *pinfo, const char **cmd, cons
  *
  * @return
  * process ID
+ *
+ * @deprecated use bu_pid instead
  */
-BU_EXPORT extern int bu_process_id(void);
-// TODO: dep process_id
+DEPRECATED BU_EXPORT extern int bu_process_id(void);
+/**
+ * @brief Return the process ID of the calling process
+ *
+ * @return
+ * process ID
+ */
 BU_EXPORT extern int bu_pid(void);
 
 

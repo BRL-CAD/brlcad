@@ -562,7 +562,7 @@ main(int ac, char *av[])
     {
 	int fd;
 	const char *logfile;
-	bu_vls_printf(&str, "run-%d-benchmark.log", bu_process_id());
+	bu_vls_printf(&str, "run-%d-benchmark.log", bu_pid());
 	logfile = bu_vls_addr(&str);
 	bu_setenv("LOGFILE", logfile, 1);
 	fd = open(logfile, O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);

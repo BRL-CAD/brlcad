@@ -52,7 +52,7 @@ main(int argc, char *argv[])
     struct bn_gauss *gp;
     struct bn_unif *up;
 
-    int seed = bu_process_id();
+    int seed = bu_pid();
     int high, low;
     double center = 0;
     int verbose = 0;

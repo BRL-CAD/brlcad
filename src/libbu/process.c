@@ -46,13 +46,19 @@ extern pid_t wait(int *);
 
 
 int
-bu_process_id(void)
+bu_pid(void)
 {
 #ifdef HAVE_UNISTD_H
     return getpid();
 #else
     return (int)GetCurrentProcessId();
 #endif
+}
+
+int
+bu_process_id(void)
+{
+    return bu_pid();
 }
 
 

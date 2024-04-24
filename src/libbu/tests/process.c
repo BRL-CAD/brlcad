@@ -133,11 +133,11 @@ int _test_ids(const char* cmd) {
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
-    int curr_id = bu_process_id();
+    int curr_id = bu_pid();
     int process_id = bu_process_pid(p);
 
     if (curr_id <= 0) {
-	fprintf(stderr, "bu_process_test[\"ids\"] bu_process_id() should not be 0");
+	fprintf(stderr, "bu_process_test[\"ids\"] bu_pid() should not be 0");
 	return PROCESS_FAIL;
     }
     if (process_id <= 0) {
@@ -145,7 +145,7 @@ int _test_ids(const char* cmd) {
 	return PROCESS_FAIL;
     }
     if (curr_id == process_id) {
-	fprintf(stderr, "bu_process_test[\"ids\"] bu_process_pid() should not equal bu_process_id()");
+	fprintf(stderr, "bu_process_test[\"ids\"] bu_process_pid() should not equal bu_pid()");
 	return PROCESS_FAIL;
     }
 
