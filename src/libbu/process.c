@@ -638,11 +638,8 @@ bu_process_alive(struct bu_process* pinfo)
     // if process is alive, timeout should immediately come back
     return WaitForSingleObject(pinfo->hProcess, 0) == win_wait_timeout;
 #else
-    // TODO
+    return bu_pid_alive(pinfo->pid);
 #endif
-
-
-    return 0;
 }
 
 int
