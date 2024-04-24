@@ -241,7 +241,7 @@ int _test_abort(const char* cmd) {
     const char* run_av[3] = {cmd, "echo", NULL};	// 'echo' test has inf wait on cin.get()
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
-    if (!bu_terminate(bu_process_pid(p))) {
+    if (!bu_pid_terminate(bu_process_pid(p))) {
 	fprintf(stderr, "bu_process_test[\"terminate\"] - subprocess could not be terminated\n");
 	return PROCESS_FAIL;
     }
@@ -352,13 +352,13 @@ int _test_alive(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (!bu_terminate(bu_process_pid(p))) {
+    if (!bu_pid_terminate(bu_process_pid(p))) {
 	fprintf(stderr, "bu_process_test[\"alive\"] - terminate failed\n");
 	return PROCESS_FAIL;
     }
 
     int64_t start_time = bu_gettime();
-    while ((bu_gettime() - start_time) < BU_SEC2USEC(.1))	;   // need slight delay so bu_terminate can settle
+    while ((bu_gettime() - start_time) < BU_SEC2USEC(.1))	;   // need slight delay so bu_pid_terminate can settle
 
     if (bu_process_alive(p)) {	// should be dead
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after terminate\n");

@@ -66,7 +66,7 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt") ||
 		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtwizard") || BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "art") ||
 		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtcheck"))  {
-		bu_terminate(bu_process_pid(rrp->p));
+		bu_pid_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 	    }
 	}

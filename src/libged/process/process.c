@@ -116,7 +116,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 		return BRLCAD_ERROR;
 	    }
 	    if (ppid == pid) {
-		bu_terminate(bu_process_pid(rrp->p));
+		bu_pid_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 		/* terminated it, no need to check other args for
 		 * this process */
@@ -144,7 +144,7 @@ _ged_process_gabort(struct ged *gedp, int argc, const char **argv)
 	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
 	    for (int j = 0; j < argc; j++) {
 		if (!bu_path_match(argv[j], bu_vls_cstr(&cmdroot), 0)) {
-		    bu_terminate(bu_process_pid(rrp->p));
+		    bu_pid_terminate(bu_process_pid(rrp->p));
 		    rrp->aborted = 1;
 		    /* terminated it, no need to check other args for
 		     * this process */

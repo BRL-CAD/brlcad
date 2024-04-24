@@ -139,6 +139,7 @@ include/bu/process.h
 	bu_process_close: replaced by bu_process_file_close
 	bu_process_args: replaced by bu_process_args_n
 	bu_process_id: replaced by bu_pid
+	bu_terminate: replaced by bu_pid_terminate
 
 7.38
 ----
