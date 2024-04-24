@@ -300,14 +300,8 @@ include(CheckCXXSourceCompiles)
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
 #---------------------------------------------------------------------
-# Set up include paths for generated header files.  For multi-config
-# builds, make sure we get build-specific dirs.
-if(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR})
-  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad)
-else(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
-endif(CMAKE_CONFIGURATION_TYPES)
+# Set up include paths for generated header files.
+include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
 
 #---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it if it exists
@@ -645,11 +639,7 @@ if(BRLCAD_DEBUGGING)
   CHECK_CXX_FLAG(g GROUPS DEBUG_CXX_FLAGS)
   CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
   CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(debug_config_list "${CMAKE_CONFIGURATION_TYPES}")
-  else(CMAKE_CONFIGURATION_TYPES)
-    set(debug_config_list "ALL")
-  endif(CMAKE_CONFIGURATION_TYPES)
+  set(debug_config_list "ALL")
   ADD_NEW_FLAG(C DEBUG_C_FLAGS "${debug_config_list}")
   ADD_NEW_FLAG(CXX DEBUG_CXX_FLAGS "${debug_config_list}")
   # TODO - need to figure out a way to actually test linker flags
@@ -1015,19 +1005,10 @@ if(NOT MSVC)
     endif(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
   endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
-  # Add optimization flags. If we're a multiconfig build, set up based
-  # on build type.  If not, check if BRLCAD_OPTIMIZED is on.
-  if(CMAKE_CONFIGURATION_TYPES)
-    if(NOT ENABLE_ALL_CONFIG_TYPES)
-      set(opt_conf_list "Release")
-    else(NOT ENABLE_ALL_CONFIG_TYPES)
-      set(opt_conf_list "Release;RelWithDebInfo;MinSizeRel")
-    endif(NOT ENABLE_ALL_CONFIG_TYPES)
-  else(CMAKE_CONFIGURATION_TYPES)
-    if(${BRLCAD_OPTIMIZED} MATCHES "ON")
-      set(opt_conf_list "ALL")
-    endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
-  endif(CMAKE_CONFIGURATION_TYPES)
+  # Add optimization flags - check if BRLCAD_OPTIMIZED is on.
+  if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+    set(opt_conf_list "ALL")
+  endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
   if(opt_conf_list)
     ADD_NEW_FLAG(C OPTIMIZE_C_FLAGS "${opt_conf_list}")
     ADD_NEW_FLAG(CXX OPTIMIZE_CXX_FLAGS "${opt_conf_list}")
@@ -1219,18 +1200,6 @@ if(NOT MSVC)
     mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_${BUILD_TYPE_UPPER})
     mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE_UPPER})
   endif(CMAKE_BUILD_TYPE)
-
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    set(CMAKE_C_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_C_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "C Compiler flags used for ${CFG_TYPE} builds" FORCE)
-    set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "C++ Compiler flags used for ${CFG_TYPE} builds" FORCE)
-    set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Linker flags used for ${CFG_TYPE} builds" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Exe linker flags used for ${CFG_TYPE} builds" FORCE)
-    mark_as_advanced(CMAKE_C_FLAGS_${CFG_TYPE_UPPER})
-    mark_as_advanced(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER})
-    mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER})
-    mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER})
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
   # TODO - figure out if this should be integrated above
   CHECK_COMPILER_FLAG(C "-Wunused-const-variable" HAVE_C_WUNUSED_CONST_VARIABLE)
@@ -2126,17 +2095,6 @@ if (TARGET rt)
 endif (TARGET rt)
 verbose_add_subdirectory("" regress)
 
-# Restore BRL-CAD configurations, if necessary
-# TODO - remove once bext based building goes live.  We'll need to look
-# at forcing multiconfig builds to single build configurations, as mixing
-# configs with bext being separate is just too error prone, particularly
-# on Windows
-if(NOT ENABLE_ALL_CONFIG_TYPES)
-  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-endif(NOT ENABLE_ALL_CONFIG_TYPES)
-
 # Make sure we have the target dir
 file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
 
@@ -2264,49 +2222,6 @@ foreach(ad ${ALL_DIRS})
 endforeach(ad ${ALL_DIRS})
 
 #------------------------------------------------------------------------------
-# To set correct install paths for CMake at build time, rather than CMake
-# time, some rather special logic is necessary - a build target that needs
-# to be run when the current build type changes, and introspective scripting
-# that updates the CMake files themselves to have the correct path.
-# Unfortunately, there does not appear to be a way to control this well enough
-# from the CMake level - a build-type aware path is technically possible, but
-# it does not conform to BRL-CAD's conventions for installation directory
-# naming.
-#
-# TODO - given how gnarly it is this trick has served us surprisingly well over
-# the years, but with bext if we move to forcing a single config type per
-# configure we can probably simplify or remove this altogether.
-if(CMAKE_CONFIGURATION_TYPES)
-  # if we have stale cmake_install.cmake.orig files around, clear them now.
-  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
-  if(ALL_CMAKE_INSTALL_FILES_ORIG)
-    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
-  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
-  # need a build target for this one - install directory may be dependent on configuration, but that won't
-  # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
-  configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake" @ONLY)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake")
-  configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake" @ONLY)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake")
-  if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
-    file(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
-  endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
-  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
-  add_custom_command(
-    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    )
-  # To make sure multiconfig_path runs in time for the source code builds it might impact, we will need to add the output file as a dependency
-  # to the first target to run - the timestamp printing.
-  add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
-  set_target_properties(multiconfig_path PROPERTIES FOLDER "Compilation Utilities")
-  add_dependencies(timestamp multiconfig_path)
-endif(CMAKE_CONFIGURATION_TYPES)
-
-
 # CPack is used to produce tgz files, RPMS, etc.
 #
 # TODO - CPack's package_source makes lots of copies of files, which is a problem

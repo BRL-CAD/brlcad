@@ -50,11 +50,7 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   # btclsh to try to read the partial output of another.  To avoid this, we
   # make each new target depend on all previous targets, so they are forced
   # execute one at a time.
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(tclindex_outdir "${CMAKE_BINARY_DIR}/\${CONFIG}/${DATA_DIR}/${targetdir}")
-  else(CMAKE_CONFIGURATION_TYPES)
-    set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
-  endif(CMAKE_CONFIGURATION_TYPES)
+  set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
   file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir})\n")
 
   list(APPEND index_install_files ${targetdir}/${outfile})
@@ -130,17 +126,7 @@ foreach(ifile ${index_install_files})
   # Install logic for index file.
   get_filename_component(targetdir "${ifile}" DIRECTORY)
   get_filename_component(outfile "${ifile}" NAME)
-  if(CMAKE_CONFIGURATION_TYPES)
-    # Need to use $<CONFIG> here rather than CMAKE_CFG_INTDIR
-    # as install in interpreted by CMake, not by the build tool.  See
-    # https://discourse.cmake.org/t/cmake-cfg-intdir-and-file-install/2169
-    install(FILES ${CMAKE_BINARY_DIR}/$<CONFIG>/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
-  else(CMAKE_CONFIGURATION_TYPES)
-    # CMAKE_CFG_INTDIR expands to "." in non-multiconfig builds, which is why we can use it universally in
-    # the add_custom_command logic.  However, $<CONFIG> may be Debug or Release even in a singlei
-    # configuration.  Therefore, we use a non-config specific path if we're not in multiconfig build mode.
-    install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
-  endif(CMAKE_CONFIGURATION_TYPES)
+  install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
 endforeach(ifile ${index_install_files})
 
 CMAKEFILES(

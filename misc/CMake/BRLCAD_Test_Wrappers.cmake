@@ -54,13 +54,9 @@ else(NOT N EQUAL 0)
   set(JFLAG)
 endif(NOT N EQUAL 0)
 
-if(CMAKE_CONFIGURATION_TYPES)
-  set(CONFIG $<CONFIG>)
-else(CMAKE_CONFIGURATION_TYPES)
-  if ("${CONFIG}" STREQUAL "")
-    set(CONFIG "\"\"")
-  endif ("${CONFIG}" STREQUAL "")
-endif(CMAKE_CONFIGURATION_TYPES)
+if ("${CONFIG}" STREQUAL "")
+  set(CONFIG "\"\"")
+endif ("${CONFIG}" STREQUAL "")
 
 if (NOT TARGET check)
   add_custom_target(check
