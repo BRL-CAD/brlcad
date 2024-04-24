@@ -83,7 +83,7 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp, int type)
 
     bu_log("doing cleanup: %d\n", type);
 
-    bu_process_close(p->p, BU_PROCESS_STDOUT);
+    bu_process_file_close(p->p, BU_PROCESS_STDOUT);
     /* wait for the forked process */
     int retcode = bu_process_wait_n(p->p, 0);
     if (retcode != 0) {
@@ -280,16 +280,16 @@ ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    fp = bu_process_open(p, BU_PROCESS_STDIN);
+    fp = bu_process_file_open(p, BU_PROCESS_STDIN);
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp, eye_model, -1, NULL);
 
-    bu_process_close(p, BU_PROCESS_STDIN);
+    bu_process_file_close(p, BU_PROCESS_STDIN);
 
     /* create the rtcheck struct */
     BU_GET(rtcp, struct ged_rtcheck);
-    rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
+    rtcp->fp = bu_process_file_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(fileno(rtcp->fp), O_BINARY);
     rtcp->vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);

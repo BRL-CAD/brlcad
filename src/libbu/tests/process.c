@@ -172,7 +172,7 @@ int _test_streams(const char* cmd) {
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
-    FILE* f_in = bu_process_open(p, BU_PROCESS_STDIN);
+    FILE* f_in = bu_process_file_open(p, BU_PROCESS_STDIN);
 
     // send a test line through stdin
     char line[10] = "echo_test";
@@ -182,8 +182,8 @@ int _test_streams(const char* cmd) {
 
     // subprocess should echo on stdout and stderr
     char out_read[10], err_read[10];
-    FILE* f_out = bu_process_open(p, BU_PROCESS_STDOUT);
-    FILE* f_err = bu_process_open(p, BU_PROCESS_STDERR);
+    FILE* f_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
+    FILE* f_err = bu_process_file_open(p, BU_PROCESS_STDERR);
     int fd_out = bu_process_fileno(p, BU_PROCESS_STDOUT);
     int fd_err = bu_process_fileno(p, BU_PROCESS_STDERR);
 
@@ -216,9 +216,9 @@ int _test_streams(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    bu_process_close(p, BU_PROCESS_STDIN);
-    bu_process_close(p, BU_PROCESS_STDOUT);
-    bu_process_close(p, BU_PROCESS_STDERR);
+    bu_process_file_close(p, BU_PROCESS_STDIN);
+    bu_process_file_close(p, BU_PROCESS_STDOUT);
+    bu_process_file_close(p, BU_PROCESS_STDERR);
 
     if (bu_process_wait_n(p, 0) == -1) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - wait failed\n");

@@ -1828,12 +1828,12 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 	(*gedp->ged_subprocess_init_callback)(bu_process_pid(p), gedp->ged_subprocess_clbk_context);
     }
 
-    fp_in = bu_process_open(p, BU_PROCESS_STDIN);
+    fp_in = bu_process_file_open(p, BU_PROCESS_STDIN);
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model, argc, argv);
 
-    bu_process_close(p, BU_PROCESS_STDIN);
+    bu_process_file_close(p, BU_PROCESS_STDIN);
 
     BU_GET(run_rtp, struct ged_subprocess);
     run_rtp->magic = GED_CMD_MAGIC;

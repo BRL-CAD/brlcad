@@ -124,17 +124,17 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
             bu_free(av, "av");
 
             // open pipes
-            fp_in = bu_process_open(p, BU_PROCESS_STDIN);
+            fp_in = bu_process_file_open(p, BU_PROCESS_STDIN);
 
             /* use fp_out to read back the result */
-            fp_out = bu_process_open(p, BU_PROCESS_STDOUT);
+            fp_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
 
             /* use fp_err to read any error messages */
-            fp_err = bu_process_open(p, BU_PROCESS_STDERR);
+            fp_err = bu_process_file_open(p, BU_PROCESS_STDERR);
 
             /* send quit command to nirt */
             fprintf(fp_in, "q\n");
-            bu_process_close(p, BU_PROCESS_STDIN);
+            bu_process_file_close(p, BU_PROCESS_STDIN);
 
             goto print;
         }
@@ -289,7 +289,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    fp_in = bu_process_open(p, BU_PROCESS_STDIN);
+    fp_in = bu_process_file_open(p, BU_PROCESS_STDIN);
 
     /* send commands down the pipe */
     for (i = 1; i < gd_rt_cmd_len - 2; i++) {
@@ -299,14 +299,14 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* use fp_out to read back the result */
-    fp_out = bu_process_open(p, BU_PROCESS_STDOUT);
+    fp_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
 
     /* use fp_err to read any error messages */
-    fp_err = bu_process_open(p, BU_PROCESS_STDERR);
+    fp_err = bu_process_file_open(p, BU_PROCESS_STDERR);
 
     /* send quit command to nirt */
     fprintf(fp_in, "q\n");
-    bu_process_close(p, BU_PROCESS_STDIN);
+    bu_process_file_close(p, BU_PROCESS_STDIN);
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
 
@@ -422,8 +422,8 @@ print:
 
     bu_vls_free(&v);
 
-    bu_process_close(p, BU_PROCESS_STDOUT);
-    bu_process_close(p, BU_PROCESS_STDERR);
+    bu_process_file_close(p, BU_PROCESS_STDOUT);
+    bu_process_file_close(p, BU_PROCESS_STDERR);
 
     retcode = bu_process_wait_n(p, 0);
 

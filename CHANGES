@@ -135,6 +135,8 @@ include/bu/process.h
 	bu_process_exec: replaced by bu_process_create
 	bu_process_wait: replaced by bu_process_wait_n
 	bu_process_read: replaced by bu_process_read_n
+	bu_process_open: replaced by bu_process_file_open
+	bu_process_close: replaced by bu_process_file_close
 
 7.38
 ----

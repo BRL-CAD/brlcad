@@ -78,7 +78,7 @@ struct bu_process {
 
 
 void
-bu_process_close(struct bu_process *pinfo, bu_process_io_t d)
+bu_process_file_close(struct bu_process *pinfo, bu_process_io_t d)
 {
     if (!pinfo)
 	return;
@@ -106,14 +106,19 @@ bu_process_close(struct bu_process *pinfo, bu_process_io_t d)
     }
 }
 
+void
+bu_process_close(struct bu_process *pinfo, bu_process_io_t d)
+{
+    bu_process_file_close(pinfo, d);
+}
 
 FILE *
-bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
+bu_process_file_open(struct bu_process *pinfo, bu_process_io_t d)
 {
     if (!pinfo)
 	return NULL;
 
-    bu_process_close(pinfo, d);
+    bu_process_file_close(pinfo, d);
 
     if (d == BU_PROCESS_STDIN) {
 	pinfo->fp_in = fdopen(pinfo->fd_in, "wb");
@@ -129,6 +134,12 @@ bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
     }
 
     return NULL;
+}
+
+FILE *
+bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
+{
+    return bu_process_file_open(pinfo, d);
 }
 
 
@@ -527,8 +538,8 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
     CloseHandle(pinfo->hProcess);
 #endif
     /* Clean up */
-    bu_process_close(pinfo, BU_PROCESS_STDOUT);
-    bu_process_close(pinfo, BU_PROCESS_STDERR);
+    bu_process_file_close(pinfo, BU_PROCESS_STDOUT);
+    bu_process_file_close(pinfo, BU_PROCESS_STDERR);
 
     /* Free copy of exec args */
     bu_free((void *)pinfo->cmd, "pinfo cmd copy");
