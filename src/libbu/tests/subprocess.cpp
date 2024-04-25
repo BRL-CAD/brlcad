@@ -49,6 +49,11 @@ main(int argc, const char *argv[])
     bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "basic")) {
+        // just return
+	return 0;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "output")) {
 	// single write to stdout and stderr
 	fprintf(stdout, "Howdy from stdout!\n");
 	fprintf(stderr, "Howdy from stderr!\n");

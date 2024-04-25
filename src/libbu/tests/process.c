@@ -47,7 +47,7 @@
  */
 int _test_read(const char* cmd) {
     struct bu_process* p;
-    const char* run_av[3] = {cmd, "basic", NULL};
+    const char* run_av[3] = {cmd, "output", NULL};
     char line[100] = {0};
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
