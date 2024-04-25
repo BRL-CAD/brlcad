@@ -178,7 +178,7 @@ int _test_create_timeout(const char* cmd) {
 
     /* NOTE: this time is mostly arbitrary, as execution time is variable
      * but bu_subprocess 'timeout' sleep time is 10000ms */
-    if ((bu_gettime() - start_time) > 500) {
+    if ((bu_gettime() - start_time) > BU_SEC2USEC(.2)) {
         fprintf(stderr, "bu_process_test[\"create_timeout\"] - took too long\n");
 	return PROCESS_FAIL;
     }
