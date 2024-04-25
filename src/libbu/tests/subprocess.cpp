@@ -65,8 +65,8 @@ main(int argc, const char *argv[])
 	char line[25];
 	std::cin.get(line, 25);
 
-	fprintf(stdout, line);
-	fprintf(stderr, line);
+	fprintf(stdout, "%s", line);
+	fprintf(stderr, "%s", line);
 	return 0;
     }
 
