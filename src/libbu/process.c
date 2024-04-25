@@ -338,13 +338,13 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
         // TODO / FIXME - parent does not know whether child successfully started or not
 	(void)execvp(cmd, (char * const*)(*pinfo)->argv);
 	perror(cmd);
-#if 0
-	// TODO - do we need to close the dup handles?
+
+        // close unnecessary fd's
 	fflush(NULL);
 	close(d1);
 	close(d2);
 	close(d3);
-#endif
+
 	_exit(16);
     }
 
