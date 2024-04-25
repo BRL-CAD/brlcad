@@ -72,10 +72,10 @@ DEPRECATED BU_EXPORT extern void bu_process_exec(struct bu_process **info, const
  * @param[in] argv - array of command line arguments to executed. Last element MUST be NULL
  * @param[in] opts - creation options
  *
- * @return
- * 0 on successful process start; Otherwise, platform specific error code is returned
+ * @note
+ * does not guarantee child process started successfully. use bu_process_wait() to check exit status
  */
-BU_EXPORT extern int bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts);
+BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts);
 
 
 /**

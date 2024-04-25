@@ -245,13 +245,12 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_
     return (read_ret > 0) ? 1 : -1;
 }
 
-int
+void
 bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts)
 {
     if (!pinfo || !argv)
-	return -1;
+	return;
 
-    int ret = 0;
     /* get argc count */
     int argc = 0;
     while (argv[argc] != NULL)
@@ -336,8 +335,8 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
 	    (void)close(i);
 	}
 
-	if (execvp(cmd, (char * const*)(*pinfo)->argv) == -1)
-	    ret = errno;
+        // TODO / FIXME - parent does not know whether child successfully started or not
+	(void)execvp(cmd, (char * const*)(*pinfo)->argv);
 	perror(cmd);
 #if 0
 	// TODO - do we need to close the dup handles?
@@ -346,7 +345,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
 	close(d2);
 	close(d3);
 #endif
-	exit(16);
+	_exit(16);
     }
 
     (void)close(pipe_in[0]);
@@ -435,10 +434,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
 	}
     }
 
+    int create_err = 0;
     if (!CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
 		       DETACHED_PROCESS, NULL, NULL,
 		       &si, &pi)) {
-	ret = GetLastError();
+	create_err = GetLastError();
     }
     bu_vls_free(&cp_cmd);
 
@@ -463,8 +463,6 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
     (*pinfo)->aborted = 0;
 
 #endif
-
-    return ret;
 }
 
 

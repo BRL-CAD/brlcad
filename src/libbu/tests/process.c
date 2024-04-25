@@ -113,7 +113,6 @@ int _test_exec_wait(const char* cmd) {
     const char* run_av[3] = {cmd, "basic", NULL};
 
     // TODO: add tests to check options flags
-    // TODO: add tests to check bad creation behavior
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     // TODO: add tests for timeout
