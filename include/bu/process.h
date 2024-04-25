@@ -47,8 +47,8 @@ typedef enum {
 
 typedef enum {
     BU_PROCESS_DEFAULT = 0x0,	    // default creation: equiv to (bu_process_create_opts)0
-    BU_PROCESS_OUT_EQ_ERR = 0x1,    // stderr output is written to stdout
-    BU_PROCESS_HIDE_WINDOW = 0x2,   // hide creation window, if process would normall spawn one
+    BU_PROCESS_OUT_EQ_ERR = 0x1,    // stdout reads from stderr instead
+    BU_PROCESS_HIDE_WINDOW = 0x2,   // (Windows only)hide creation window if process would normally spawn one
 } bu_process_create_opts;
 
 #ifndef ERROR_PROCESS_ABORTED

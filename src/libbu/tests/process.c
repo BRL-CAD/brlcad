@@ -112,7 +112,6 @@ int _test_exec_wait(const char* cmd) {
     struct bu_process* p;
     const char* run_av[3] = {cmd, "basic", NULL};
 
-    // TODO: add tests to check options flags
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     // TODO: add tests for timeout
@@ -120,6 +119,43 @@ int _test_exec_wait(const char* cmd) {
 	fprintf(stderr, "bu_process_test[\"exec_wait\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
+
+    return PROCESS_PASS;
+}
+
+/* tests:   process creation with options
+ *  bu_process_create() [bu_process_create_opts]
+ * also relies on
+ *  bu_process_read()
+ *  bu_process_wait()
+ */
+int _test_create_opts(const char* cmd) {
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "output", NULL};
+    char line[100] = {0};
+
+    /*** out = stderr ***/
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_OUT_EQ_ERR);
+
+    /* read from stdout, but should get text from stderr*/
+    if (bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0) {
+	fprintf(stderr, "bu_process_test[\"read\"] stdin read failed\n");
+	return PROCESS_FAIL;
+    }
+    char expected[19] = "Howdy from stderr!";   // intentionally ignore newline chars if any
+    if (bu_strncmp(line, expected, 18)) {
+        fprintf(stderr,
+                "bu_process_test[\"create_opts\"] - OUT_EQ_ERR fail\n  Expected: %s\n  Got: %s\n",
+                expected, line);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(p, 0)) {
+	fprintf(stderr, "bu_process_test[\"exec_wait\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    /*** TODO: (Windows) Hide Window? ***/
 
     return PROCESS_PASS;
 }
@@ -473,6 +509,7 @@ typedef struct {
 
 ProcessTest tests[] = {
     {"exec_wait", _test_exec_wait},
+    {"create_opts", _test_create_opts},
     {"read", _test_read},
     {"read_flood", _test_read_flood},
     {"ids", _test_ids},
