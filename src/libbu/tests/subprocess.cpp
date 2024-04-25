@@ -70,14 +70,6 @@ main(int argc, const char *argv[])
 	return 0;
     }
 
-    if (BU_STR_EQUAL(argv[1], "alive")) {
-	// delay 100ms to give time for an alive check
-	// cross-plat sleep function: https://stackoverflow.com/a/11276503
-	std::this_thread::sleep_for(std::chrono::milliseconds(300));
-
-	return 0;
-    }
-
     if (BU_STR_EQUAL(argv[1], "flood")) {
 	// 1000 writes to stdout and stderr
 	const int STDOUT_WRITE_CNT = 1000;
@@ -100,6 +92,22 @@ main(int argc, const char *argv[])
 	    if ((i % 10) == 0)
 		fprintf(stderr, "err: %s[%d]\n", lorem_25, i);
 	}
+
+	return 0;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "alive")) {
+	// delay 100ms to give time for an alive check
+	// cross-plat sleep function: https://stackoverflow.com/a/11276503
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+	return 0;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "timeout")) {
+	// long, but reasonable sleep to allow for time checks
+	// cross-plat sleep function: https://stackoverflow.com/a/11276503
+	std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
 	return 0;
     }

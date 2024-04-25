@@ -114,7 +114,6 @@ int _test_exec_wait(const char* cmd) {
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
-    // TODO: add tests for timeout
     if (bu_process_wait_n(p, 0)) {
 	fprintf(stderr, "bu_process_test[\"exec_wait\"] - wait failed\n");
 	return PROCESS_FAIL;
@@ -159,6 +158,34 @@ int _test_create_opts(const char* cmd) {
 
     return PROCESS_PASS;
 }
+
+/* tests:   process creation with timeout
+ *  bu_process_create()
+ * also relies on
+ *  bu_process_wait()
+ */
+int _test_create_timeout(const char* cmd) {
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "timeout", NULL};
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    int64_t start_time = bu_gettime();
+    if (bu_process_wait_n(p, 1)) {
+	fprintf(stderr, "bu_process_test[\"create_timeout\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    /* NOTE: this time is mostly arbitrary, as execution time is variable
+     * but bu_subprocess 'timeout' sleep time is 10000ms */
+    if ((bu_gettime() - start_time) > 500) {
+        fprintf(stderr, "bu_process_test[\"create_timeout\"] - took too long\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
 
 /* tests:   current process id, and running subprocess id
  *  bu_process_id()
@@ -278,7 +305,7 @@ int _test_streams(const char* cmd) {
  */
 int _test_abort(const char* cmd) {
     struct bu_process* p = NULL;
-    const char* run_av[3] = {cmd, "echo", NULL};	// 'echo' test has inf wait on cin.get()
+    const char* run_av[3] = {cmd, "timeout", NULL};
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     gettime_delay(200); /* give process a moment to start before trying to kill it */
@@ -510,6 +537,7 @@ typedef struct {
 ProcessTest tests[] = {
     {"exec_wait", _test_exec_wait},
     {"create_opts", _test_create_opts},
+    {"create_timeout", _test_create_timeout},
     {"read", _test_read},
     {"read_flood", _test_read_flood},
     {"ids", _test_ids},
