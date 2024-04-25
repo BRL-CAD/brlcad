@@ -73,7 +73,7 @@ main(int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[1], "alive")) {
 	// delay 100ms to give time for an alive check
 	// cross-plat sleep function: https://stackoverflow.com/a/11276503
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
 	return 0;
     }

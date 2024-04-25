@@ -39,6 +39,11 @@
 #define PROCESS_FAIL  1
 #define PROCESS_PASS  0
 
+void gettime_delay(long ms) {
+    int64_t start_time = bu_gettime();
+    while ((bu_gettime() - start_time) < ms)	;
+}
+
 /* tests:   single stdout and stderr reads - BLOCKING READS
  *  bu_process_read() [stdout and stderr]
  * also relies on:
@@ -230,7 +235,7 @@ int _test_streams(const char* cmd) {
 
 
 /* tests:   forcefully terminate a running process
- *  bu_terminate()
+ *  bu_pid_terminate()
  * also relies on:
  *  bu_process_create()
  *  bu_process_pid()
@@ -240,6 +245,8 @@ int _test_abort(const char* cmd) {
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "echo", NULL};	// 'echo' test has inf wait on cin.get()
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    gettime_delay(200); /* give process a moment to start before trying to kill it */
 
     if (!bu_pid_terminate(bu_process_pid(p))) {
 	fprintf(stderr, "bu_process_test[\"terminate\"] - subprocess could not be terminated\n");
@@ -352,13 +359,13 @@ int _test_alive(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
+    gettime_delay(200); /* give process a moment to start before trying to kill it */
     if (!bu_pid_terminate(bu_process_pid(p))) {
 	fprintf(stderr, "bu_process_test[\"alive\"] - terminate failed\n");
 	return PROCESS_FAIL;
     }
 
-    int64_t start_time = bu_gettime();
-    while ((bu_gettime() - start_time) < BU_SEC2USEC(.1))	;   // need slight delay so bu_pid_terminate can settle
+    (void)bu_process_wait_n(p, 0);      // reap terminated process
 
     if (bu_process_alive(p)) {	// should be dead
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after terminate\n");
