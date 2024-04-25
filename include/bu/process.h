@@ -310,7 +310,7 @@ DEPRECATED BU_EXPORT extern int bu_terminate(int process);
 /**
  * @brief terminate a given process and any children.
  *
- * @param[in] process - process ID of interest
+ * @param[in] pid - process ID of interest
  *
  * @return
  * returns truthfully whether the process could be killed
