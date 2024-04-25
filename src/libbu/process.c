@@ -509,7 +509,6 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
 
     int rc = 0;
 #ifndef _WIN32
-    int rpid;
     int retcode = 0;
 
     close(pinfo->fd_in);
@@ -518,9 +517,11 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
 
     /* wait for process to end, or timeout */
     int64_t start_time = bu_gettime();
-    while ((rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG) != pinfo->pid)) {
+    int rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
+    while (rpid != pinfo->pid) {
 	if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
 	    break;
+        rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
     }
 
     /* check wait() status and filter retcode */
