@@ -549,6 +549,10 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
 	if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == BU_MSVC_ABORT_EXIT) {
 	    // collapse abort into our abort code
 	    rc = ERROR_PROCESS_ABORTED;
+	} else if (retcode == STILL_ACTIVE) {
+	    /* timed out */
+	    bu_pid_terminate(pinfo->pid);
+	    rc = 0;
 	} else {
 	    rc = (int)retcode;
 	}
