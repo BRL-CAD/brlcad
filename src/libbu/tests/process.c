@@ -263,16 +263,12 @@ int _test_streams(const char* cmd) {
 	}
     }
 
-    if (bu_process_pending(fd_out)) {
-	fgets(out_read, 10, f_out);
-    } else {
+    if (!bu_process_pending(fd_out) || (fgets(out_read, 10, f_out) == NULL)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - expected pending data on stdout\n");
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_pending(fd_err)) {
-	fgets(err_read, 10, f_err);
-    } else {
+    if (!bu_process_pending(fd_err) || (fgets(err_read, 10, f_err) == NULL)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - expected pending data on stderr\n");
 	return PROCESS_FAIL;
     }
