@@ -196,6 +196,8 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
 	    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+	    if (!wgdp)
+		return BRLCAD_ERROR;
 	    if (db5_get_attributes(wdbip, &avs, wgdp)) {
 		const char *val = bu_avs_get(&avs, PID_KEY);
 		if (bu_opt_int(NULL, 1, (const char **)&val, (void *)&pid) == 1) {
@@ -274,6 +276,8 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
 	    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+	    if (!wgdp)
+		return BRLCAD_ERROR;
 	    if (db5_get_attributes(wdbip, &avs, wgdp)) {
 		struct bu_vls pid_str = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&pid_str, "%d", pid);
