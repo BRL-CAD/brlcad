@@ -60,7 +60,7 @@ if (EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
       if (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
 	message(FATAL_ERROR "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Release binaries.")
       endif (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   endif (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
 endif (EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
