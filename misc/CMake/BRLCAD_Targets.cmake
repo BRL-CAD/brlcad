@@ -297,14 +297,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   if(E_NO_INSTALL OR E_TEST)
     # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
     if(NOT WIN32 AND NOT E_TEST_USESDATA)
-      if(NOT CMAKE_CONFIGURATION_TYPES)
-        set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-      else(NOT CMAKE_CONFIGURATION_TYPES)
-        foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-          string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-          set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}")
-        endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif(NOT CMAKE_CONFIGURATION_TYPES)
+      set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
     endif(NOT WIN32 AND NOT E_TEST_USESDATA)
   else(E_NO_INSTALL OR E_TEST)
     if (NOT E_TEST_USESDATA)
@@ -645,14 +638,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
     # Make sure the target directory exists (symlinks need the target
     # directory already in place)
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-      execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${targetdir}")
-    else(NOT CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif(NOT CMAKE_CONFIGURATION_TYPES)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${targetdir}")
 
     # Using symlinks - in this case, the custom command doesn't
     # actually have to do the work every time the source file changes
@@ -661,14 +647,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     # the configure stage.
     foreach(filename ${fullpath_datalist})
       get_filename_component(ITEM_NAME ${filename} NAME)
-      if(NOT CMAKE_CONFIGURATION_TYPES)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
-      else(NOT CMAKE_CONFIGURATION_TYPES)
-        foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-          string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-          execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ITEM_NAME}")
-        endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif(NOT CMAKE_CONFIGURATION_TYPES)
+      execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
     endforeach(filename ${fullpath_datalist})
 
     # check for and remove any dead symbolic links from a previous run
@@ -695,14 +674,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     # Write out script for copying from source dir to build dir
     set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${fullpath_datalist}\")\n")
     set(${targetname}_cmake_contents "${${targetname}_cmake_contents}foreach(filename \${FILES_TO_COPY})\n")
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-      set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${targetdir}\")\n")
-    else(NOT CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-        set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}\")\n")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif(NOT CMAKE_CONFIGURATION_TYPES)
+    set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${targetdir}\")\n")
     set(${targetname}_cmake_contents "${${targetname}_cmake_contents}endforeach(filename \${CURRENT_FILE_LIST})\n")
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake" "${${targetname}_cmake_contents}")
 
@@ -739,14 +711,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   # handle the single and multiconfig cases.
   foreach(filename ${fullpath_datalist})
     get_filename_component(ITEM_NAME "${filename}" NAME)
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-      DISTCLEAN("${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
-    else(NOT CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-        DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ITEM_NAME}")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif(NOT CMAKE_CONFIGURATION_TYPES)
+    DISTCLEAN("${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
   endforeach(filename ${fullpath_datalist})
 
   # The installation rule relates only to the original source
@@ -882,17 +847,10 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
 
   # Every regression test gets a build target
-  if (CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(${testname}
-      COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R^${testname}$ --output-on-failure
-      VERBATIM
-      )
-  else (CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(${testname}
-      COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname}$ --output-on-failure
-      VERBATIM
-      )
-  endif (CMAKE_CONFIGURATION_TYPES)
+  add_custom_target(${testname}
+    COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname}$ --output-on-failure
+    VERBATIM
+    )
   if (depends_list)
     add_dependencies(${testname} ${depends_list})
   endif (depends_list)

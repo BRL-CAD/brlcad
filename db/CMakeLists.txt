@@ -9,13 +9,6 @@ function(ADD_G_TARGET in_model folder)
   # Initialize
   set(MODEL_TYPE "UNKNOWN")
 
-  # Get our root path
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
-  else(CMAKE_CONFIGURATION_TYPES)
-    set(bin_root "${CMAKE_BINARY_DIR}")
-  endif(CMAKE_CONFIGURATION_TYPES)
-
   # Find our conversion type
   set(model_types "3dm;asc;comgeom;fg4;stp")
   foreach(mt ${model_types})
@@ -35,14 +28,8 @@ function(ADD_G_TARGET in_model folder)
   set(output_file ${DATA_DIR}/${rel_dir}/${in_model_root}.g)
   set(log_file ${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.log)
 
-  # Make sure the output db target directories are there
-  if(CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${DATA_DIR}/${rel_dir}")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  else(CMAKE_CONFIGURATION_TYPES)
-    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${DATA_DIR}/${rel_dir}")
-  endif(CMAKE_CONFIGURATION_TYPES)
+  # Make sure the output db target directory is there
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${DATA_DIR}/${rel_dir}")
 
   #############################################################################
   #                            Build logic
@@ -65,8 +52,8 @@ function(ADD_G_TARGET in_model folder)
 
     # Define the target
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}"
+      OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
+      COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/${output_file}"
       COMMAND ${CMAKE_COMMAND} -DEXEC=$<TARGET_FILE:3dm-g> -P "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake"
       DEPENDS 3dm-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
@@ -81,15 +68,15 @@ function(ADD_G_TARGET in_model folder)
 	return()
       endif (NOT TARGET asc2g)
       add_custom_command(
-	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-	COMMAND asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}" ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
+	OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
+	COMMAND asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}" ${CMAKE_BINARY_DIR}/${output_file}
 	DEPENDS asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}"
 	)
     else (BRLCAD_ENABLE_TCL)
       add_custom_command(
-	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-	COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-	COMMAND gcv "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}" ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
+	OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
+	COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${output_file}
+	COMMAND gcv "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}" ${CMAKE_BINARY_DIR}/${output_file}
 	DEPENDS gcv "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}"
 	)
     endif (BRLCAD_ENABLE_TCL)
@@ -100,9 +87,9 @@ function(ADD_G_TARGET in_model folder)
       return()
     endif (NOT TARGET comgeom-g)
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      COMMAND comgeom-g -v 5 ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} > ${log_file} 2>&1
+      OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
+      COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${output_file}
+      COMMAND comgeom-g -v 5 ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_BINARY_DIR}/${output_file} > ${log_file} 2>&1
       DEPENDS comgeom-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
   endif(${MODEL_TYPE} STREQUAL "comgeom")
@@ -112,8 +99,8 @@ function(ADD_G_TARGET in_model folder)
       return()
     endif (NOT TARGET fast4-g)
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      COMMAND fast4-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} > ${log_file} 2>&1
+      OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
+      COMMAND fast4-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_BINARY_DIR}/${output_file} > ${log_file} 2>&1
       DEPENDS fast4-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
   endif(${MODEL_TYPE} STREQUAL "fg4")
@@ -124,8 +111,8 @@ function(ADD_G_TARGET in_model folder)
 	return()
       endif (NOT TARGET step-g)
       add_custom_command(
-	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-	COMMAND step-g -O ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} > ${log_file} 2>&1
+	OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
+	COMMAND step-g -O ${CMAKE_BINARY_DIR}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} > ${log_file} 2>&1
 	DEPENDS step-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
 	)
     else (BRLCAD_ENABLE_STEP)
@@ -134,12 +121,12 @@ function(ADD_G_TARGET in_model folder)
   endif(${MODEL_TYPE} STREQUAL "stp")
 
   if(NOT ${MODEL_TYPE} STREQUAL "stp" OR BRLCAD_ENABLE_STEP)
-    add_custom_target(${in_model_root}.g ALL DEPENDS ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file})
+    add_custom_target(${in_model_root}.g ALL DEPENDS ${CMAKE_BINARY_DIR}/${output_file})
     set_target_properties(${in_model_root}.g PROPERTIES FOLDER "${folder}")
 
     # Install logic
     if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-      install(FILES ${CMAKE_CURRENT_BUILD_DIR_INSTALL}/${output_file} DESTINATION ${DATA_DIR}/${rel_dir})
+      install(FILES ${CMAKE_BINARY_DIR}/${output_file} DESTINATION ${DATA_DIR}/${rel_dir})
     endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 
     # Clean-up

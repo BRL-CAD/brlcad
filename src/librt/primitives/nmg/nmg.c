@@ -40,6 +40,7 @@
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/conv.h"
+#include "rt/primitives/nmg.h"
 #include "raytrace.h"
 #include "../../librt_private.h"
 

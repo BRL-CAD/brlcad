@@ -40,6 +40,30 @@
 # we add those patterns to the SYS_INCLUDE_PATTERNS list
 mark_as_advanced(SYS_INCLUDE_PATTERNS)
 
+# If we DO have a pre-defined BRLCAD_EXT_DIR, on Windows we need to check
+# if our build type and the targeted runtime of the bext binaries matches.
+# If not, it's a fatal error
+if (EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+  find_program(DUMPBIN_EXEC dumpbin)
+  set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
+  if (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+    # https://stackoverflow.com/a/28304716/2037687
+    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TEST_BINFILE}
+      OUTPUT_VARIABLE DB_OUT
+      ERROR_VARIABLE DB_OUT)
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+      if ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+	message(FATAL_ERROR "Release build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Debug binaries.")
+      endif ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+      if (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+	message(FATAL_ERROR "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Release binaries.")
+      endif (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  endif (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+endif (EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+
 if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   message("Attempting to prepare our own version of the bext dependencies\n")
   include(BRLCAD_EXT_Setup)
@@ -282,24 +306,6 @@ function(INITIALIZE_TP_FILES)
     endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
     message("Expanding ${sd}.tar in build directory... done.")
 
-    # For multi-config, we'll also need to decompress once for each active configuration's build dir
-    # so the executables will work locally...
-    if (CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${sd})
-	message("Expanding ${sd}.tar in configuration: ${CFG_TYPE} build directory...")
-	if ("${CMAKE_VERSION}" VERSION_LESS "3.24")
-	  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	else ("${CMAKE_VERSION}" VERSION_LESS "3.24")
-	  # If we have it, use --touch instead of the (very slow) per file -E touch update
-	  # https://cmake.org/cmake/help/latest/manual/cmake.1.html#cmdoption-cmake-E_tar-touch
-	  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar --touch WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
-	message("Expanding ${sd}.tar in configuration: ${CFG_TYPE} build directory... done.")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif (CMAKE_CONFIGURATION_TYPES)
-
     # Copying complete - remove the archive file
     execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${sd}.tar)
   endforeach(sd ${SDIRS})
@@ -308,12 +314,6 @@ function(INITIALIZE_TP_FILES)
   # files we don't wish to include
   message("Removing files indicated by exclude patterns...")
   STRIP_EXCLUDED("${CMAKE_BINARY_DIR}" EXCLUDED_PATTERNS)
-  if (CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      STRIP_EXCLUDED("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" EXCLUDED_PATTERNS)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (CMAKE_CONFIGURATION_TYPES)
   message("Removing files indicated by exclude patterns... done.")
 
   # In older CMake, unpacking the files didn't come with the option to update
@@ -521,12 +521,6 @@ if (BRLCAD_TP_FULL_RESET)
     # Clear old files
     foreach (ef ${TP_PREVIOUS})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-      if (CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_PREVIOUS})
 
     # Redo full copy
@@ -545,13 +539,6 @@ else (BRLCAD_TP_FULL_RESET)
     foreach (ef ${TP_STALE})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
       message("  ${CMAKE_BINARY_DIR}/${ef}")
-      if (CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_STALE})
     message("Removing stale 3rd party files in build directory... done.")
   endif (TP_STALE)
@@ -571,14 +558,6 @@ else (BRLCAD_TP_FULL_RESET)
       get_filename_component(EF_NAME ${ef} NAME)
       file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
       message("  ${CMAKE_BINARY_DIR}/${ef}")
-      if (CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	  file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${EF_DIR})
-	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_CHANGED})
     message("Staging new 3rd party files from ${BRLCAD_EXT_DIR}/install... done.")
   endif (TP_NEW)
@@ -593,15 +572,6 @@ else (BRLCAD_TP_FULL_RESET)
       file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
       execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate "${CMAKE_BINARY_DIR}/${ef}")
       message("  ${CMAKE_BINARY_DIR}/${ef}")
-      if (CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	  file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${EF_DIR})
-	  execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_CHANGED})
     message("Staging changed 3rd party files from ${BRLCAD_EXT_DIR}/install... done.")
   endif (TP_CHANGED)
@@ -660,23 +630,10 @@ file(WRITE "${TP_INVENTORY_BINARIES}" "${TP_B}")
 
 if (NBINARY_FILES)
   message("Setting rpath on new 3rd party lib and exe files...")
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    # Set local RPATH so the files will work during build
-    foreach(lf ${NBINARY_FILES})
-      RPATH_BUILD_DIR_PROCESS("${CMAKE_BINARY_DIR}" "${lf}")
-    endforeach(lf ${NBINARY_FILES})
-  else (NOT CMAKE_CONFIGURATION_TYPES)
-    # For multi-config, we set the RPATHs for each active configuration's build dir
-    # so the executables will work locally.  We don't need to set the top level copy
-    # being used for the install target since in multi-config those copies won't be
-    # used by build directory executables
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      foreach(lf ${NBINARY_FILES})
-	RPATH_BUILD_DIR_PROCESS("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" "${lf}")
-      endforeach(lf ${NBINARY_FILES})
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (NOT CMAKE_CONFIGURATION_TYPES)
+  # Set local RPATH so the files will work during build
+  foreach(lf ${NBINARY_FILES})
+    RPATH_BUILD_DIR_PROCESS("${CMAKE_BINARY_DIR}" "${lf}")
+  endforeach(lf ${NBINARY_FILES})
   message("Setting rpath on new 3rd party lib and exe files... done.")
 endif (NBINARY_FILES)
 

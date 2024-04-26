@@ -44,11 +44,8 @@
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-# Build static libs by default unless we're debugging. Note: this option will
-# not disable libraries specifically added as STATIC even when OFF.  For
-# multi-configuration options the build type determination is made at build
-# time, so just default to "ON".
-cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT \"${CMAKE_BUILD_TYPE}\" STREQUAL Debug" OFF)
+# Build static libs by default.
+option(BUILD_STATIC_LIBS "Build static libraries" ON)
 
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.

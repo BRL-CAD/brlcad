@@ -60,6 +60,10 @@ ADD_TARGET_DEPS(halftone dm_plugins)
 # This is intended to replace all of the img-img utils eventually
 BRLCAD_ADDEXEC(icv icv.cpp "libicv;libbu" FOLDER Util)
 
+# Should (eventually) have the pixdiff functionality, but be more
+# flexible about input and output formats...
+BRLCAD_ADDEXEC(imgdiff imgdiff.cpp "libicv;libbu" FOLDER Util)
+
 BRLCAD_ADDEXEC(imgdims imgdims.c "libdm;libbu" FOLDER Util)
 ADD_TARGET_DEPS(imgdims dm_plugins)
 BRLCAD_ADDEXEC(loop loop.c libbu FOLDER Util)
