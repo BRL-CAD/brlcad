@@ -72,7 +72,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     /* OK, we have work to do. Set up a working copy of the .g file. */
     char *wdir = NULL;
     char *wfile = NULL;
-    char kfname[MAXPATHLEN];
+    //char kfname[MAXPATHLEN];
     if (_ged_facetize_working_file_setup(&wfile, &wdir, s->gedp->dbip, NULL, s->resume) != BRLCAD_OK) {
 	bu_free(dpa, "dp array");
 	bu_free(wdir, "wdir");
