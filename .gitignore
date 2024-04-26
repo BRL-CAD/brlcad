@@ -18,21 +18,23 @@
 .DS_Store
 .DS_Store?
 
-# CMake supports some configuration files, and in newer Visual Studio setups
-# the preset files are actually the recommended way to configure the build:
+# CMake supports some configuration files to allow users a convenient way to pre-define
+# sets of configuration options:
 # https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html
+/CMakeUserPresets.json
+
+# Visual Studio (note that CMakePresets.json is recommended instead of
+# CMakeSettings.json for Visual Studio going forward)
 # https://learn.microsoft.com/en-us/cpp/build/cmake-presets-vs
 # https://learn.microsoft.com/en-us/cpp/build/customize-cmake-settings
-#
-# Allow the user to define these files while not having them get accidentally
-# sucked into Git commits by listing them for gitignore.
-/CMakePresets.json
-/CMakeUserPresets.json
+/.vs
+.vscode
 /CMakeSettings.json
 
-# Misc
-.vscode
-.clang-format
+#Qt Creator
 CMakeLists.txt.user
-/.vs
+
+# Misc
+.clang-format
+
 
