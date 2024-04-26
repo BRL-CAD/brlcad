@@ -115,30 +115,6 @@
 # we add those patterns to the SYS_INCLUDE_PATTERNS list
 mark_as_advanced(SYS_INCLUDE_PATTERNS)
 
-# If we DO have a pre-defined BRLCAD_EXT_DIR, on Windows we need to check
-# if our build type and the targeted runtime of the bext binaries matches.
-# If not, it's a fatal error
-if (EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
-  find_program(DUMPBIN_EXEC dumpbin)
-  set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
-  if (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
-    # https://stackoverflow.com/a/28304716/2037687
-    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TEST_BINFILE}
-      OUTPUT_VARIABLE DB_OUT
-      ERROR_VARIABLE DB_OUT)
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-      if ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-	message(FATAL_ERROR "Release build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Debug binaries.")
-      endif ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-      if (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-	message(FATAL_ERROR "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Release binaries.")
-      endif (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-  endif (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
-endif (EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
-
 if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   message("Attempting to prepare our own version of the bext dependencies\n")
   include(BRLCAD_EXT_Setup)

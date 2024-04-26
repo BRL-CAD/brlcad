@@ -160,6 +160,9 @@ if(BRLCAD_PRINT_MSGS)
   message(STATUS "CMake version: ${CMAKE_VERSION}")
 endif(BRLCAD_PRINT_MSGS)
 
+#---------------------------------------------------------------------
+# Management of build types
+include(BRLCAD_Build_Types)
 
 #---------------------------------------------------------------------
 # Setup and checks related to system environment settings.  Some of
@@ -215,6 +218,32 @@ if (NOT DEFINED CPACK_INCLUDE_EXT)
   set(CPACK_INCLUDE_EXT ON)
 endif (NOT DEFINED CPACK_INCLUDE_EXT)
 
+# Before we do a lot of configure work, check whether we've got a type mismatch
+# between bext and the BRL-CAD build type. If not, on Windows at least, it's a
+# fatal error.
+#
+# NOTE: This test must come AFTER the inclusion of BRLCAD_Build_Types
+if (CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+  find_program(DUMPBIN_EXEC dumpbin)
+  set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
+  if (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+    # https://stackoverflow.com/a/28304716/2037687
+    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TEST_BINFILE}
+      OUTPUT_VARIABLE DB_OUT
+      ERROR_VARIABLE DB_OUT)
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+      if ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+	message(FATAL_ERROR "Release build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Debug binaries.")
+      endif ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+      if (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+	message(FATAL_ERROR "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Release binaries.")
+      endif (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  endif (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+endif (CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+
 #---------------------------------------------------------------------
 # Define various utilities.
 include(BRLCAD_Util)
@@ -258,10 +287,6 @@ execute_process(COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${CONFIG_DELTA_START} -P
 # conditional basis.
 
 include(Path_Setup)
-
-#---------------------------------------------------------------------
-# Management of build types
-include(BRLCAD_Build_Types)
 
 #---------------------------------------------------------------------
 # For cleaning files as part of the distclean command, CMake needs
