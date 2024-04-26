@@ -191,6 +191,8 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
     if (bu_file_exists(*wfile, NULL)) {
 	struct db_i *wdbip = db_open(*wfile, DB_OPEN_READONLY);
 	if (wdbip) {
+	    if (db_dirbuild(wdbip) < 0)
+		return BRLCAD_ERROR;
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
 	    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
@@ -267,6 +269,8 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	pid = bu_process_id();
 	struct db_i *wdbip = db_open(*wfile, DB_OPEN_READWRITE);
 	if (wdbip) {
+	    if (db_dirbuild(wdbip) < 0)
+		return BRLCAD_ERROR;
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
 	    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
