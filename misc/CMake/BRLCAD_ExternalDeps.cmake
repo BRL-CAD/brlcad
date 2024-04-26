@@ -32,37 +32,88 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 # Logic to set up third party dependences (either system installed
 # versions or prepared local versions to be bundled with BRL-CAD.)
+#
+# BRLCAD_EXT_DIR is the successor to the old src/other method for managing
+# third party dependencies in BRL-CAD.  It utilizes a separate Git
+# repository (https://github.com/BRL-CAD/bext.git) to track and manage
+# changes to dependencies.  This separation was introduced in order to
+# allow BRL-CAD to contemplate using dependencies too large and complex
+# for integration directly in our own build.  BRL-CAD's logic will try
+# to make bext work as seamlessly as possible, but there are some problems
+# that are simply inherent to the nature of the dependencies themselves.
+# Foremost among these is compilation time - if Appleseed rendering,
+# for example, need all of its dependencies compiled the wait can be
+# very long.
+#
+# To alleviate that problem, the recommended way for BRL-CAD developers
+# who do frequent BRL-CAD builds from scratch to use bext is to build it
+# separately from BRL-CAD proper, and use BRLCAD_EXT_DIR to specify where
+# the prepared outputs can be found.  BRLCAD_EXT_DIR can be defined on
+# the command line directly (or via GUI):
+#
+#  cmake ../brlcad -DBRLCAD_EXT_DIR=/home/user/bext_output
+#
+# However, since this is still a bit cumbersome to type, we can make things
+# easier for ourselves by utilizing a CMakeUserPresets.json file in the BRL-CAD
+# root source directory (this file should not be checked in to the repository
+# and is listed in .gitignore):
+#
+# {
+#   "version": 6,
+#   "configurePresets": [
+#     {
+#       "name": "hb",
+#       "cacheVariables": {
+#         "BRLCAD_EXT_DIR": {
+#           "type": "PATH",
+#           "value": "/home/user/bext_output"
+#         }
+#       }
+#     }
+#   ]
+# }
+#
+# With the above file in place, the above cmake line can be shortened to
+#
+# cmake ../brlcad --preset=hb
+#
+# Note the name "hb" is arbitrary - in this case a shorthand for "Home Bext
+# directory".  It could equally be called bext_home, bext_debug, or whatever
+# else the user finds convenient to type and remember.
+#
+# Multiple presets can also be defined to allow rapid selection of various
+# build configurations.  For example, we could define a second preset to also
+# enable Qt, in addition to setting BRLCAD_EXT_DIR:
+#
+# {
+#   "version": 6,
+#   "configurePresets": [
+#     {
+#       "name": "hb",
+#       "cacheVariables": {
+#         "BRLCAD_EXT_DIR": {
+#           "type": "PATH",
+#           "value": "/home/cyapp/bext_output"
+#         }
+#       }
+#     },
+#     {
+#       "name": "hbq",
+#       "inherits": "hb",
+#       "cacheVariables": {
+#         "BRLCAD_ENABLE_QT": "ON"
+#       }
+#     }
+#   ]
+# }
+
+
 
 # When we need to have CMake treat includes as system paths to avoid warnings,
 # we add those patterns to the SYS_INCLUDE_PATTERNS list
 mark_as_advanced(SYS_INCLUDE_PATTERNS)
-
-# If we DO have a pre-defined BRLCAD_EXT_DIR, on Windows we need to check
-# if our build type and the targeted runtime of the bext binaries matches.
-# If not, it's a fatal error
-if (EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
-  find_program(DUMPBIN_EXEC dumpbin)
-  set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
-  if (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
-    # https://stackoverflow.com/a/28304716/2037687
-    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TEST_BINFILE}
-      OUTPUT_VARIABLE DB_OUT
-      ERROR_VARIABLE DB_OUT)
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-      if ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-	message(FATAL_ERROR "Release build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Debug binaries.")
-      endif ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-      if (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-	message(FATAL_ERROR "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Release binaries.")
-      endif (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
-    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  endif (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
-endif (EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
 if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   message("Attempting to prepare our own version of the bext dependencies\n")

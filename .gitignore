@@ -18,8 +18,23 @@
 .DS_Store
 .DS_Store?
 
-.vscode
-.clang-format
-CMakeLists.txt.user
+# CMake supports some configuration files to allow users a convenient way to pre-define
+# sets of configuration options:
+# https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html
+/CMakeUserPresets.json
+
+# Visual Studio (note that CMakePresets.json is recommended instead of
+# CMakeSettings.json for Visual Studio going forward)
+# https://learn.microsoft.com/en-us/cpp/build/cmake-presets-vs
+# https://learn.microsoft.com/en-us/cpp/build/customize-cmake-settings
 /.vs
+.vscode
 /CMakeSettings.json
+
+#Qt Creator
+CMakeLists.txt.user
+
+# Misc
+.clang-format
+
+

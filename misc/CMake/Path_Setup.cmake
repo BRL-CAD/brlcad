@@ -133,7 +133,7 @@ if (CMAKE_CONFIGURATION_TYPES)
     set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${CMAKE_BINARY_DIR} CACHE INTERNAL "Toplevel binary dir for all building.")
     set("${PROJECT_NAME}_BINARY_DIR_${CFG_TYPE_UPPER}" ${CMAKE_BINARY_DIR} CACHE INTERNAL "Toplevel binary dir for all building.")
   endforeach()
-endif(NOT CMAKE_CONFIGURATION_TYPES)
+endif (CMAKE_CONFIGURATION_TYPES)
 
 # Local Variables:
 # tab-width: 8
