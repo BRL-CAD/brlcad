@@ -194,7 +194,7 @@ jobs:
 
       - name: Install Xquartz
         run: |
-          brew --cask install xquartz
+          brew install xquartz --cask
 
       - name: Build Directory setup
         run: |
