@@ -71,7 +71,7 @@ _ged_process_list(struct ged *gedp)
 	struct bu_vls pline = BU_VLS_INIT_ZERO;
 	struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
 	const char * const *argv;
-	int argc = bu_process_args(NULL, &argv, rrp->p);
+	int argc = bu_process_args_n(rrp->p, NULL, &argv);
 	int pid = bu_process_pid(rrp->p);
 	(void)bu_path_component(&cmdroot, argv[0], BU_PATH_BASENAME_EXTLESS);
 	bu_vls_sprintf(&pline, "%*d %s", longest_pid, pid, bu_vls_cstr(&cmdroot));
@@ -116,7 +116,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 		return BRLCAD_ERROR;
 	    }
 	    if (ppid == pid) {
-		bu_terminate(bu_process_pid(rrp->p));
+		bu_pid_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 		/* terminated it, no need to check other args for
 		 * this process */
@@ -139,12 +139,12 @@ _ged_process_gabort(struct ged *gedp, int argc, const char **argv)
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
 	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	const char *cmd;
-	int argcnt = bu_process_args(&cmd, NULL, rrp->p);
+	int argcnt = bu_process_args_n(rrp->p, &cmd, NULL);
 	bu_vls_trunc(&cmdroot, 0);
 	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
 	    for (int j = 0; j < argc; j++) {
 		if (!bu_path_match(argv[j], bu_vls_cstr(&cmdroot), 0)) {
-		    bu_terminate(bu_process_pid(rrp->p));
+		    bu_pid_terminate(bu_process_pid(rrp->p));
 		    rrp->aborted = 1;
 		    /* terminated it, no need to check other args for
 		     * this process */

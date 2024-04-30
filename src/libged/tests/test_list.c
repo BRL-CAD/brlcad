@@ -48,16 +48,15 @@ main(int ac, char *av[]) {
 	    const char *cmd[2];
 	    cmd[0] = av[0];
 	    cmd[1] = NULL;
-	    bu_process_exec(&info, av[0], 1, cmd, 0, 0);
+	    bu_process_create(&info, cmd, BU_PROCESS_DEFAULT);
 #if 0
 	    {
 		char buffer[1024] = {0};
-		int count = 1024;
-		bu_process_read(buffer, &count, info, 1, 1024);
+		(void)bu_process_read_n(info, 1, 1024, buffer);
 		bu_log("read %d: [%s]\n", count, buffer);
 	    }
 #endif
-	    bu_process_wait(NULL, info, 0);
+	    bu_process_wait_n(info, 0);
 	    invocations++;
 	    /* bu_snooze(BU_SEC2USEC(1)); */
 	}

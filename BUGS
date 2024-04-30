@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtcheck_handler_cleanup() throws 'invalid handle specified' on Windows
+  in closing of STDOUT (see FIXME comment). Does not affect normal running,
+  but a debug build complains.
+
 * very peculiar non-linear memory issue in rt when allocating a large
   flat hierarchy of objects.  I have three combs, each with 10k
   members unioned. Each member is an rcc.  Rendering with just one
