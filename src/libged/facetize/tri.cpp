@@ -46,7 +46,6 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 #include "./tess_opts.h"
-#include "./subprocess.h"
 
 static int
 bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip, int flip)
@@ -422,22 +421,17 @@ tess_avail_methods()
     tess_cmd[ 1] = "--list-methods";
     tess_cmd[ 2] = NULL;
 
-    struct subprocess_s p;
-    if (subprocess_create(tess_cmd, subprocess_option_no_window, &p)) {
-	// Unable to create subprocess??
-	std::vector<std::string> empty;
-	return empty;
-    }
-
-    int w_rc;
-    if (subprocess_join(&p, &w_rc)) {
-	// Unable to join??
-	std::vector<std::string> empty;
-	return empty;
-    }
+    struct bu_process* p;
+    bu_process_create(&p, tess_cmd, BU_PROCESS_HIDE_WINDOW);
 
     char mraw[MAXPATHLEN] = {'\0'};
-    subprocess_read_stdout(&p, mraw, MAXPATHLEN);
+    int read_res = bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
+
+    if (bu_process_wait_n(p, 0) || (read_res <= 0)) {
+	// wait error or read error
+	std::vector<std::string> empty;
+	return empty;
+    }
 
     std::string mstr = std::string((const char *)mraw);
     std::stringstream mstream(mstr);
@@ -477,32 +471,27 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
     int64_t elapsed = 0;
     fastf_t seconds = 0.0;
     tess_cmd[tess_cmd_cnt] = NULL; // Make sure we're NULL terminated
-    struct subprocess_s p;
-    if (subprocess_create(tess_cmd, subprocess_option_no_window, &p)) {
-	// Unable to create subprocess??
-	if (!quiet)
-	    bu_log("Unable to create subprocess\n");
-	return BRLCAD_ERROR;
-    }
-    while (subprocess_alive(&p)) {
+    struct bu_process* p;
+    bu_process_create(&p, tess_cmd, BU_PROCESS_HIDE_WINDOW);
+    while (bu_process_alive(p)) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
 	if (seconds > max_time) {
-	    // if we timeout, cleanup and return error
-	    subprocess_terminate(&p);
-
+	    /* timed-out */
 	    if (!quiet) {
+		/* try to salvage a read */
 		bu_log("tess_run subprocess killed %g %g\n", seconds, max_time);
 		char mraw[MAXPATHLEN*10] = {'\0'};
-		subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-		bu_log("%s\n", mraw);
+		if (bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN*10, mraw) > 0)
+		    bu_log("%s\n", mraw);
 		char mraw2[MAXPATHLEN*10] = {'\0'};
-		subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-		bu_log("%s\n", mraw2);
+		if (bu_process_read_n(p, BU_PROCESS_STDERR, MAXPATHLEN*10, mraw2) > 0)
+		    bu_log("%s\n", mraw2);
 	    }
 
-	    subprocess_destroy(&p);
+	    bu_pid_terminate(bu_process_pid(p));
+	    bu_process_wait_n(p, 1);
 
 	    // Because we had to kill the process, there's no way of knowing
 	    // whether we interrupted I/O in a state that could result in a
@@ -520,32 +509,22 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
 	    return BRLCAD_ERROR;
 	}
     }
-    int w_rc;
-    if (subprocess_join(&p, &w_rc)) {
-	// Unable to join??
-	if (!quiet) {
-	    bu_log("tess_run subprocess unable to join\n");
-	    char mraw[MAXPATHLEN*10] = {'\0'};
-	    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	    bu_log("%s\n", mraw);
-	    char mraw2[MAXPATHLEN*10] = {'\0'};
-	    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	    bu_log("%s\n", mraw2);
-	}
-	return BRLCAD_ERROR;
-    }
 
     bu_file_delete(wfilebak.c_str());
 
-
     if (!quiet) {
-	bu_log("result: %d\n", w_rc);
 	char mraw[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	bu_log("%s\n", mraw);
+	if (bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN*10, mraw) > 0)
+	    bu_log("%s\n", mraw);
 	char mraw2[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	bu_log("%s\n", mraw2);
+	if (bu_process_read_n(p, BU_PROCESS_STDERR, MAXPATHLEN*10, mraw2) > 0)
+	    bu_log("%s\n", mraw2);
+    }
+
+    int w_rc;
+    if ((w_rc = bu_process_wait_n(p, 0)) && !quiet) {
+	bu_log("result: %d\n", w_rc);
+	bu_log("tess_run subprocess unable to join\n");
     }
 
     return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);

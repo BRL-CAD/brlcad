@@ -201,7 +201,7 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	    if (db5_get_attributes(wdbip, &avs, wgdp)) {
 		const char *val = bu_avs_get(&avs, PID_KEY);
 		if (bu_opt_int(NULL, 1, (const char **)&val, (void *)&pid) == 1) {
-		    if (bu_process_alive_id(pid)) {
+		    if (bu_pid_alive(pid)) {
 			bu_log("Error - %s _GLOBAL attribute process id %d is still active.  This indicates another process is actively working on this file.  Please terminate process %d before trying a facetize operation on this .g file.", *wfile, pid, pid);
 			bu_avs_free(&avs);
 			db_close(wdbip);
