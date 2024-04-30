@@ -268,7 +268,7 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 
     if (write_pid) {
 	// Write the current pid to the working file as a _GLOBAL attribute
-	pid = bu_process_id();
+	pid = bu_pid();
 	struct db_i *wdbip = db_open(*wfile, DB_OPEN_READWRITE);
 	if (wdbip) {
 	    if (db_dirbuild(wdbip) < 0)
