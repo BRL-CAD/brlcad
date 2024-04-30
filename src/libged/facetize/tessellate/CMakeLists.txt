@@ -16,7 +16,7 @@ if(ASSETIMPORT_LIBRARIES)
   add_definitions(-DUSE_ASSETIMPORT)
 endif(ASSETIMPORT_LIBRARIES)
 
-BRLCAD_Find_Package(Geogram SYSPATTERN geogram)
+BRLCAD_Find_Package(GEOGRAM SYSPATTERN geogram)
 if(GEOGRAM_LIBRARY)
   add_definitions(-DUSE_GEOGRAM)
 endif(GEOGRAM_LIBRARY)
