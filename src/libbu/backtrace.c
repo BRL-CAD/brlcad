@@ -126,7 +126,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
     /* capture our sub process PID pre-fork */
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() parent is %d\n", bu_process_id());
+	bu_log("[BACKTRACE] backtrace() parent is %d\n", bu_pid());
     }
 
     pid2 = fork();
@@ -460,7 +460,7 @@ bu_backtrace_app(FILE *fp, const char *argv0)
 #endif
 
     /* capture our main process PID pre-fork */
-    process = bu_process_id();
+    process = bu_pid();
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] bu_backtrace() parent is %d\n", process);
     }

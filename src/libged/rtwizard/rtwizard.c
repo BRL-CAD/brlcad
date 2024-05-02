@@ -44,7 +44,7 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
     struct ged_subprocess *run_rtp;
     struct bu_process *p;
 
-    bu_process_exec(&p, gd_rt_cmd[0], cmd_len, (const char **)gd_rt_cmd, 0, 0);
+    bu_process_create(&p, (const char **)gd_rt_cmd, BU_PROCESS_DEFAULT);
 
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
