@@ -633,8 +633,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     }
 
     if (pq.empty() && q_dsp.empty() && q_pbot.empty()) {
-	bu_log("No viable objects for tessellation found.\n");
-	bu_dirclear(wdir);
+	bu_log("Note: no viable objects for tessellation found.\n");
 	return BRLCAD_OK;
     }
 
