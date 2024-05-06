@@ -516,27 +516,32 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
     close(pinfo->fd_out);
     close(pinfo->fd_err);
 
-    /* wait for process to end, or timeout */
-    int64_t start_time = bu_gettime();
-    int rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
-    while (rpid != pinfo->pid) {
-	if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
-	    break;
-        rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
-    }
+    if (kill((pid_t)pinfo->pid, 0) == 0) {      // make sure the process exists
+        /* wait for process to end, or timeout */
+        int64_t start_time = bu_gettime();
+        int rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
+        while (rpid != pinfo->pid) {
+                if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
+                break;
+                rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
+        }
 
-    /* check wait() status and filter retcode */
-    if (rpid == -1 || rpid == 0) {
-	/* timed-out */
-	bu_pid_terminate(pinfo->pid);
-	rc = 0;	// process concluded, albeit forcibly
+        /* check wait() status and filter retcode */
+        if (rpid == -1 || rpid == 0) {
+                /* timed-out */
+                bu_pid_terminate(pinfo->pid);
+                rc = 0;	// process concluded, albeit forcibly
+        } else {
+                if (WIFEXITED(retcode))		    // normal exit
+                rc = 0;
+                else if (WIFSIGNALED(retcode))	    // terminated
+                rc = ERROR_PROCESS_ABORTED;
+                else
+                rc = retcode;
+        }
     } else {
-	if (WIFEXITED(retcode))		    // normal exit
-	    rc = 0;
-	else if (WIFSIGNALED(retcode))	    // terminated
-	    rc = ERROR_PROCESS_ABORTED;
-	else
-	    rc = retcode;
+        /* process doesn't exist or has already been waited on */
+        rc = 0;
     }
 #else
     DWORD retcode = 0;
@@ -667,7 +672,17 @@ bu_pid_alive(int pid)
 	return ret == win_wait_timeout;
     }
 #else
-    return kill((pid_t)pid, 0) == 0;
+    int status;
+    int is_alive = 0 == waitpid(pid, &status, WNOHANG);
+
+    // FIXME: process was waited on - we need to call process_wait() or let it know to not try again
+//     if (!is_alive) {
+//       if (WIFEXITED(status)) {
+        // process is done
+//       }
+//     }
+
+    return is_alive;
 #endif
 
 
