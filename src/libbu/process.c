@@ -270,11 +270,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
     /* Make a copy of the final execvp args */
     (*pinfo)->cmd = bu_strdup(cmd);
     (*pinfo)->argc = argc;
-    (*pinfo)->argv = (const char **)bu_calloc(argc, sizeof(char *), "bu_process argv cpy");
+    (*pinfo)->argv = (const char **)bu_calloc(argc + 1, sizeof(char *), "bu_process argv cpy"); // +1 for NULL termination
     for (int i = 0; i < argc; i++) {
 	(*pinfo)->argv[i] = bu_strdup(argv[i]);
     }
-    //(*pinfo)->argv[ac] = (char *)NULL;	// SHOULD ALREADY BE NULL? 
+    (*pinfo)->argv[argc] = (char *)NULL;	// sanity check
 
 #ifdef HAVE_UNISTD_H
     int pret;
