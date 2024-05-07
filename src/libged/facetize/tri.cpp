@@ -480,14 +480,18 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
 	if (seconds > max_time) {
 	    /* timed-out */
 	    if (!quiet) {
-		/* try to salvage a read */
 		bu_log("tess_run subprocess killed %g %g\n", seconds, max_time);
+		// TODO - right now this seems to be a blocking read, and will
+		// hang rather than letting the timeout proceed.
+#if 0
+		/* try to salvage a read */
 		char mraw[MAXPATHLEN*10] = {'\0'};
 		if (bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN*10, mraw) > 0)
 		    bu_log("%s\n", mraw);
 		char mraw2[MAXPATHLEN*10] = {'\0'};
 		if (bu_process_read_n(p, BU_PROCESS_STDERR, MAXPATHLEN*10, mraw2) > 0)
 		    bu_log("%s\n", mraw2);
+#endif
 	    }
 
 	    bu_pid_terminate(bu_process_pid(p));
