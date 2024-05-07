@@ -33,6 +33,9 @@ class Options
 public:
     Options();
     ~Options();
+
+    bool readParameters(int argc, const char **argv);
+
     //Setter functions
     void setFilepath(std::string f);
     void setTemppath(std::string f);

@@ -57,7 +57,8 @@
 #include "picohash.h"
 
 // BRL-CAD header files
-#include "bu/getopt.h"
+#include "bu/opt.h"
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/units.h"
 #include "ged.h"
