@@ -40,7 +40,6 @@
 #define TESS_OPTS_IMPLEMENTATION
 #include "./tess_opts.h"
 #include "./ged_facetize.h"
-#include "./subprocess.h"
 
 void
 _facetize_methods_help(struct ged *gedp)
@@ -54,26 +53,23 @@ _facetize_methods_help(struct ged *gedp)
       tess_cmd[ 1] = "--list-methods";
       tess_cmd[ 2] = NULL;
 
-      struct subprocess_s mp;
-      if (subprocess_create(tess_cmd, subprocess_option_no_window, &mp))
-          return; // Unable to create subprocess??
-      int w_rc;
-      if (subprocess_join(&mp, &w_rc))
-          return ; // Unable to join??
+      struct bu_process* mp;
+      bu_process_create(&mp, tess_cmd, BU_PROCESS_HIDE_WINDOW);
       char mraw[MAXPATHLEN] = {'\0'};
-      subprocess_read_stdout(&mp, mraw, MAXPATHLEN);
+      int read_res = bu_process_read_n(mp, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
+      if (bu_process_wait_n(mp, 0) || (read_res <= 0))
+	  return;   // wait error or read error
       std::string method_list(mraw);
 
       tess_cmd[ 2] = "-h";
       tess_cmd[ 3] = NULL;
 
-      struct subprocess_s mop;
-      if (subprocess_create(tess_cmd, subprocess_option_no_window, &mop))
-          return; // Unable to create subprocess??
-      if (subprocess_join(&mop, &w_rc))
-          return ; // Unable to join??
+      struct bu_process* mop;
+      bu_process_create(&mop, tess_cmd, BU_PROCESS_HIDE_WINDOW);
       char moraw[MAXPATHLEN*10] = {'\0'};
-      subprocess_read_stdout(&mop, moraw, MAXPATHLEN*10);
+      read_res = bu_process_read_n(mop, BU_PROCESS_STDOUT, MAXPATHLEN*10, moraw);
+      if (bu_process_wait_n(mop, 0) || (read_res <= 0))
+	  return;   // wait error
       std::string method_options(moraw);
 
       bu_vls_printf(gedp->ged_result_str, "Available BoT tessellation methods: %s\n", method_list.c_str());

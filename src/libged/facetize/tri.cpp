@@ -422,22 +422,17 @@ tess_avail_methods()
     tess_cmd[ 1] = "--list-methods";
     tess_cmd[ 2] = NULL;
 
-    struct subprocess_s p;
-    if (subprocess_create(tess_cmd, subprocess_option_no_window, &p)) {
-	// Unable to create subprocess??
-	std::vector<std::string> empty;
-	return empty;
-    }
-
-    int w_rc;
-    if (subprocess_join(&p, &w_rc)) {
-	// Unable to join??
-	std::vector<std::string> empty;
-	return empty;
-    }
+    struct bu_process* p;
+    bu_process_create(&p, tess_cmd, BU_PROCESS_HIDE_WINDOW);
 
     char mraw[MAXPATHLEN] = {'\0'};
-    subprocess_read_stdout(&p, mraw, MAXPATHLEN);
+    int read_res = bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
+
+    if (bu_process_wait_n(p, 0) || (read_res <= 0)) {
+	// wait error or read error
+	std::vector<std::string> empty;
+	return empty;
+    }
 
     std::string mstr = std::string((const char *)mraw);
     std::stringstream mstream(mstr);
