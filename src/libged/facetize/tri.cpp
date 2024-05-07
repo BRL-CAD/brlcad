@@ -873,38 +873,59 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     if (!dbip || !wdbp || !argv || !oname)
 	return BRLCAD_ERROR;
 
-    bu_log("Preparing Manifold inputs...\n");
-    s->error_flag = 0;
-    struct db_tree_state init_state;
-    db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
-    /* Establish tolerances */
-    init_state.ts_ttol = &wdbp->wdb_ttol;
-    init_state.ts_tol = &wdbp->wdb_tol;
-    init_state.ts_m = NULL;
-    s->facetize_tree = (union tree *)0;
-    int i = 0;
-    if (!BU_SETJUMP) {
-	/* try */
-	i = db_walk_tree(dbip, argc, argv,
-		1,
-		&init_state,
-		0,			/* take all regions */
-		facetize_region_end,
-		_booltree_leaf_tess,
-		(void *)s
-		);
-    } else {
-	/* catch */
-	BU_UNSETJUMP;
-	i = -1;
-    } BU_UNSETJUMP;
+    // Make need inputs that can be fed to db_walk_tree - if not, db_walk_tree
+    // will produce an error, which we don't want.  What we do want in such a
+    // case - where there are NO valid walking candidates - is to indicate that
+    // there wasn't a logic failure.  That means we need an empty bot to be
+    // generated - i.e. we don't want to trigger the db_walk_tree error path.
+    int ac = 0;
+    const char **av = (const char **)bu_calloc(argc, sizeof(const char *), "av");
+    for (int i = 0; i < argc; i++) {
+	struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
+	if (dp->d_flags & RT_DIR_COMB || dp->d_flags & RT_DIR_SOLID) {
+	    av[ac] = argv[i];
+	    ac++;
+	}
+    }
 
-    // Something went wrong - not just empty geometry, but an actual error.
-    // Do not generate a BoT, empty or otherwise.
-    if (i < 0 || s->error_flag)
-	return BRLCAD_ERROR;
+    if (ac) {
+	bu_log("Preparing Manifold inputs...\n");
+	s->error_flag = 0;
+	struct db_tree_state init_state;
+	db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
+	/* Establish tolerances */
+	init_state.ts_ttol = &wdbp->wdb_ttol;
+	init_state.ts_tol = &wdbp->wdb_tol;
+	init_state.ts_m = NULL;
+	s->facetize_tree = (union tree *)0;
+	int i = 0;
+	if (!BU_SETJUMP) {
+	    /* try */
+	    i = db_walk_tree(dbip, argc, argv,
+		    1,
+		    &init_state,
+		    0,			/* take all regions */
+		    facetize_region_end,
+		    _booltree_leaf_tess,
+		    (void *)s
+		    );
+	} else {
+	    /* catch */
+	    BU_UNSETJUMP;
+	    i = -1;
+	} BU_UNSETJUMP;
 
-    bu_log("Preparing Manifold inputs... done.\n");
+	// Something went wrong - not just empty geometry, but an actual error.
+	// Do not generate a BoT, empty or otherwise.
+	if (i < 0 || s->error_flag) {
+	    bu_free(av, "av");
+	    return BRLCAD_ERROR;
+	}
+
+	bu_log("Preparing Manifold inputs... done.\n");
+    }
+    bu_free(av, "av");
+
     struct db_i *odbip = (output_to_working) ? dbip : s->gedp->dbip;
 
     // We don't have a tree - unless we've been told not to, prepare an empty BoT
@@ -1007,8 +1028,11 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     struct ged *gedp = s->gedp;
     struct rt_wdb *wwdbp;
 
-    /* First stage is to process the primitive instances */
-    const char *sfilter = "! -type comb";
+    /* First stage is to process the primitive instances.  We include points in
+     * this even though they do not define a volume in order to allow for the
+     * possibility of applying the alternative pnt based reconstruction methods
+     * to their data. */
+    const char *sfilter = "-type shape -or -type pnts";
     struct bu_ptbl leaf_dps = BU_PTBL_INIT_ZERO;
     if (db_search(&leaf_dps, DB_SEARCH_RETURN_UNIQ_DP, sfilter, argc, dpa, gedp->dbip, NULL) < 0) {
 	// Empty input - nothing to facetize.
