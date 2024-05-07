@@ -672,17 +672,7 @@ bu_pid_alive(int pid)
 	return ret == win_wait_timeout;
     }
 #else
-    int status;
-    int is_alive = 0 == waitpid(pid, &status, WNOHANG);
-
-    // FIXME: process was waited on - we need to call process_wait() or let it know to not try again
-//     if (!is_alive) {
-//       if (WIFEXITED(status)) {
-        // process is done
-//       }
-//     }
-
-    return is_alive;
+    return waitpid(pid, NULL, WNOHANG) == 0;
 #endif
 
 
