@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <vector>
@@ -54,10 +55,17 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     if (!argc) return BRLCAD_ERROR;
 
     struct directory **dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
-    if (_ged_sort_existing_objs(gedp, argc, argv, dpa)) {
-	bu_vls_printf(gedp->ged_result_str, "Non-existent object specified in region processing mode, aborting.");
+    int newobjcnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+    if (newobjcnt != 1) {
+	if (!newobjcnt)
+	    bu_vls_printf(gedp->ged_result_str, "Need non-existent output comb name.");
+	if (newobjcnt)
+	    bu_vls_printf(gedp->ged_result_str, "More than one non-existent object specified in region processing mode, aborting.");
 	return BRLCAD_ERROR;
     }
+
+    const char *oname = argv[argc-1];
+    argc--;
 
     const char *active_regions = "( -type r ! -below -type r )";
     struct bu_ptbl *ar = NULL;
@@ -254,6 +262,19 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     av[argc+2] = NULL;
     ged_exec(wgedp, argc+2, av);
 
+    /* Capture the current tops list.  If we're not doing an in-place overwrite, we
+     * need to know what the new top level objects are for the assembly of the
+     * final comb. */
+    struct directory **tlist = NULL;
+    size_t tcnt = db_ls(s->gedp->dbip, DB_LS_TOPS, NULL, &tlist);
+    std::set<std::string> otops;
+    for (size_t i = 0; i < tcnt; i++) {
+	otops.insert(std::string(tlist[i]->d_namep));
+    }
+    bu_free(tlist, "tlist");
+    tlist = NULL;
+
+
     // dbconcat output .g into original .g - either using -O to overwrite
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.
@@ -265,7 +286,34 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     ged_exec(s->gedp, 4, av);
     bu_free(av, "av");
 
-    /* Done changing stuff - update nref. */
+    /* Done importing stuff - update nref. */
+    db_update_nref(dbip, &rt_uniresource);
+
+
+    /* Capture the new tops list. */
+    tcnt = db_ls(s->gedp->dbip, DB_LS_TOPS, NULL, &tlist);
+    std::set<std::string> ntops;
+    for (size_t i = 0; i < tcnt; i++) {
+	ntops.insert(std::string(tlist[i]->d_namep));
+    }
+    bu_free(tlist, "tlist");
+
+
+    /* Find the new top level objects from dbconcat */
+    std::set<std::string> new_tobjs;
+    std::set_difference(ntops.begin(), ntops.end(), otops.begin(), otops.end(), std::inserter(new_tobjs, new_tobjs.begin()));
+
+    /* Make a new comb to hold the output */
+    struct wmember wcomb;
+    BU_LIST_INIT(&wcomb.l);
+    struct rt_wdb *cwdbp = wdb_dbopen(s->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    std::set<std::string>::iterator s_it;
+    for (s_it = new_tobjs.begin(); s_it != new_tobjs.end(); ++s_it) {
+	(void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
+    }
+    mk_lcomb(cwdbp, oname, &wcomb, 0, NULL, NULL, NULL, 0);
+
+    /* Done importing stuff - update nref. */
     db_update_nref(dbip, &rt_uniresource);
 
     bu_ptbl_free(ar);
