@@ -41,6 +41,7 @@ CMAKEFILES(
   CMakeLists.txt
   tess_opts.h
   ged_facetize.h
+  subprocess.h
   ${FACETIZE_SRCS}
   )
 
