@@ -1372,25 +1372,29 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (mat == NULL)
 	mat = bn_mat_identity;
 
-    for (i = 0; i < bip->num_vertices; i++) {
-	/* must be double for import and export */
-	double tmp[ELEMENTS_PER_POINT];
+    if (bip->vertices) {
+	for (i = 0; i < bip->num_vertices; i++) {
+	    /* must be double for import and export */
+	    double tmp[ELEMENTS_PER_POINT];
 
-	bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_POINT);
-	cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
-	MAT4X3PNT(&(bip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
+	    bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_POINT);
+	    cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
+	    MAT4X3PNT(&(bip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
+	}
     }
 
-    for (i = 0; i < bip->num_faces; i++) {
-	bip->faces[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
-	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
-	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
-	cp += SIZEOF_NETWORK_LONG;
+    if (bip->faces) {
+	for (i = 0; i < bip->num_faces; i++) {
+	    bip->faces[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+	    cp += SIZEOF_NETWORK_LONG;
+	    bip->faces[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+	    cp += SIZEOF_NETWORK_LONG;
+	    bip->faces[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+	    cp += SIZEOF_NETWORK_LONG;
+	}
     }
 
-    if (bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS) {
+    if (bip->num_faces && (bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS)) {
 	bip->thickness = (fastf_t *)bu_calloc(bip->num_faces, sizeof(fastf_t), "BOT thickness");
 	for (i = 0; i < bip->num_faces; i++) {
 	    double scan;
