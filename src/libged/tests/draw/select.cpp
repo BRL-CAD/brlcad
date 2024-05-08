@@ -22,6 +22,8 @@
  * Testing routines for selection logic, with a focus on verifying
  * drawing response
  *
+ * TODO - need to set up a current-working-directory cache for these
+ * facetize calls so multiple builds don't end up conflicting
  */
 
 #include "common.h"
@@ -324,7 +326,7 @@ main(int ac, char *av[]) {
     bu_log("Selecting a single object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
-    s_av[2] = "all.bot/all.g-1/tor.r-1/tor.r.bot";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -334,7 +336,7 @@ main(int ac, char *av[]) {
     bu_log("De-selected object...\n");
     s_av[0] = "select";
     s_av[1] = "rm";
-    s_av[2] = "all.bot/all.g-1/tor.r-1/tor.r.bot";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -344,7 +346,7 @@ main(int ac, char *av[]) {
     bu_log("Select higher level object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
-    s_av[2] = "all.bot/all.g-1/tor.r-1";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -354,7 +356,7 @@ main(int ac, char *av[]) {
     bu_log("Select object below selected object (should be no-op)...\n");
     s_av[0] = "select";
     s_av[1] = "add";
-    s_av[2] = "all.bot/all.g-1/tor.r-1/tor.r.bot";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -364,7 +366,7 @@ main(int ac, char *av[]) {
     bu_log("Select second object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
-    s_av[2] = "all.bot/all.g-1/box.r-1";
+    s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -391,7 +393,7 @@ main(int ac, char *av[]) {
     bu_log("De-select one object...\n");
     s_av[0] = "select";
     s_av[1] = "rm";
-    s_av[2] = "all.bot/all.g-1/tor.r-1/tor.r.bot";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -415,7 +417,7 @@ main(int ac, char *av[]) {
 
     s_av[0] = "select";
     s_av[1] = "rm";
-    s_av[2] = "all.bot/all.g-1/box.r-1";
+    s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -626,7 +628,7 @@ main(int ac, char *av[]) {
     bu_log("Selecting a single object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
-    s_av[2] = "all.bot/all.g-1/tor.r-1/tor.r.bot";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -636,7 +638,7 @@ main(int ac, char *av[]) {
     bu_log("De-selected object...\n");
     s_av[0] = "select";
     s_av[1] = "rm";
-    s_av[2] = "all.bot/all.g-1/tor.r-1/tor.r.bot";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -646,7 +648,7 @@ main(int ac, char *av[]) {
     bu_log("Select higher level object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
-    s_av[2] = "all.bot/all.g-1/tor.r-1";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -656,7 +658,7 @@ main(int ac, char *av[]) {
     bu_log("Select object below selected object (should be no-op)...\n");
     s_av[0] = "select";
     s_av[1] = "add";
-    s_av[2] = "all.bot/all.g-1/tor.r-1/tor.r.bot";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -666,7 +668,7 @@ main(int ac, char *av[]) {
     bu_log("Select second object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
-    s_av[2] = "all.bot/all.g-1/box.r-1";
+    s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -693,7 +695,7 @@ main(int ac, char *av[]) {
     bu_log("De-select one object...\n");
     s_av[0] = "select";
     s_av[1] = "rm";
-    s_av[2] = "all.bot/all.g-1/tor.r-1/tor.r.bot";
+    s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -717,7 +719,7 @@ main(int ac, char *av[]) {
 
     s_av[0] = "select";
     s_av[1] = "rm";
-    s_av[2] = "all.bot/all.g-1/box.r-1";
+    s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 

@@ -21,6 +21,8 @@
  *
  * Testing routines for new drawing logic
  *
+ * TODO - need to set up a current-working-directory cache for these
+ * facetize calls so multiple builds don't end up conflicting
  */
 
 #include "common.h"
