@@ -38,7 +38,6 @@
 #  ASSETIMPORT_ROOT          - path to assetimport root if it is built outside of /usr
 #
 #=============================================================================
-
 set(_ASSETIMPORT_SEARCHES)
 
 # Search ASSETIMPORT_ROOT first if it is set.
@@ -52,30 +51,49 @@ set(ASSETIMPORT_NAMES assimp assimpd)
 # Try each search configuration.
 foreach(search ${_ASSETIMPORT_SEARCHES})
   find_path(ASSETIMPORT_INCLUDE_DIR
-	  NAMES assimp/postprocess.h assimp/scene.h assimp/version.h assimp/config.h assimp/cimport.h
-	  ${${search}} PATH_SUFFIXES include)
+    NAMES assimp/postprocess.h assimp/scene.h assimp/version.h assimp/config.h assimp/cimport.h
+    ${${search}} PATH_SUFFIXES include)
   find_library(ASSETIMPORT_LIBRARY
-	  NAMES ${ASSETIMPORT_NAMES}
-	  ${${search}} PATH_SUFFIXES lib lib64 bin)
+    NAMES ${ASSETIMPORT_NAMES}
+    ${${search}} PATH_SUFFIXES lib lib64 bin)
 endforeach()
+
+if (NOT ASSETIMPORT_LIBRARY OR NOT ASSETIMPORT_INCLUDE_DIR)
+  # Try a more generic search
+  find_path(ASSETIMPORT_INCLUDE_DIR
+    NAMES assimp/postprocess.h assimp/scene.h assimp/version.h assimp/config.h assimp/cimport.h
+    PATH_SUFFIXES include)
+  find_library(ASSETIMPORT_LIBRARY
+    NAMES ${ASSETIMPORT_NAMES}
+    PATH_SUFFIXES lib lib64 bin)
+endif (NOT ASSETIMPORT_LIBRARY OR NOT ASSETIMPORT_INCLUDE_DIR)
 
 # Handle the QUIETLY and REQUIRED arguments and set assetimport_FOUND.
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (ASSETIMPORT REQUIRED_VARS
-    ASSETIMPORT_LIBRARY
-    ASSETIMPORT_INCLUDE_DIR
-)
+  ASSETIMPORT_LIBRARY
+  ASSETIMPORT_INCLUDE_DIR
+  )
 
 # Set the output variables.
 if (assetimport_FOUND)
-    set (ASSETIMPORT_INCLUDE_DIRS ${ASSETIMPORT_INCLUDE_DIR})
-    set (ASSETIMPORT_LIBRARIES ${ASSETIMPORT_LIBRARY})
+  set (ASSETIMPORT_INCLUDE_DIRS ${ASSETIMPORT_INCLUDE_DIR})
+  set (ASSETIMPORT_LIBRARIES ${ASSETIMPORT_LIBRARY})
 else ()
-    set (ASSETIMPORT_INCLUDE_DIRS)
-    set (ASSETIMPORT_LIBRARIES)
+  set (ASSETIMPORT_INCLUDE_DIRS)
+  set (ASSETIMPORT_LIBRARIES)
 endif ()
 
 mark_as_advanced (
-    ASSETIMPORT_INCLUDE_DIR
-    ASSETIMPORT_LIBRARY
-)
+  ASSETIMPORT_INCLUDE_DIR
+  ASSETIMPORT_LIBRARY
+  )
+
+
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
