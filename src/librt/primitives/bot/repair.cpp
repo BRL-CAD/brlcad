@@ -160,7 +160,6 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
 	fflush(stdout);
 	dup2(stdout_stashed, sout);
 	close(stdout_stashed);
-	fnull = -1;
     }
 
     // Use the default hole filling algorithm
