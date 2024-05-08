@@ -62,22 +62,22 @@ extern int
 _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, const char *method);
 
 extern struct rt_pnts_internal *
-_tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s);
+_tess_pnts_sample(const char *oname, struct db_i *dbip, tess_opts *s);
 
 extern int
-_brep_csg_tessellate(struct ged *gedp, struct directory *dp, struct tess_opts *s);
+_brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s);
 
 extern int
-_nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, struct tess_opts *s);
+_nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, tess_opts *s);
 
 extern int
-continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed);
+continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, tess_opts *s, point_t seed);
 
 extern int
-co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, struct tess_opts *s);
+co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s);
 
 extern int
-spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, struct tess_opts *s);
+spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s);
 
 extern bool
 bot_is_manifold(struct rt_bot_internal *bot);

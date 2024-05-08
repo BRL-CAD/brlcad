@@ -39,7 +39,7 @@
 #include "./tessellate.h"
 
 int
-_brep_csg_tessellate(struct ged *gedp, struct directory *dp, struct tess_opts *s)
+_brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
 {
     if (!gedp || !dp || !s)
 	return BRLCAD_ERROR;
