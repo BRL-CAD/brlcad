@@ -734,7 +734,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	// Each method has its own default (or possibly user set) time limit
 	l_max_time = mo->max_time[mstrpp];
 	// Get defined options for this particular method
-	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+	bu_vls_sprintf(&method_opts_str, "%s", mo->method_optstr(mstrpp, dbip).c_str());
 	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 
 	std::vector<struct directory *> dps;
