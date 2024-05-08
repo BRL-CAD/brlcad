@@ -37,6 +37,9 @@ set_property(TARGET ged-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-facetize facetize.cpp)
 PLUGIN_SETUP(ged-facetize ged)
 
+# Plugin requires subprocess to work
+add_dependencies(ged-facetize ged_tessellate)
+
 CMAKEFILES(
   CMakeLists.txt
   tess_opts.h
