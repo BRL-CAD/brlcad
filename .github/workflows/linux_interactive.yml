@@ -1,0 +1,86 @@
+# The purpose of this particular test definition is to support on-demand
+# interactive command shells.  We sometimes see problems that occur only in the
+# Github Runner environments, and in order to explore what is happening we need
+# an interactive prompt (the alternative is hours-per-cycle submit and test
+# loops, which doesn't scale at all.)
+#
+# Unlike the other BRL-CAD tests, this one is started manually from the Github
+# website.  For more information see https://mxschmitt.github.io/action-tmate/
+#
+# The "recommended" way to use this action is for the dev to make a fork of
+# the repository, alter the configure and/or build logic below for their
+# particular use case (the example below is a libged-only build used to zero
+# in on a specific libged behavior) before running.
+
+name: BRL-CAD Linux Interactive Debugging
+
+on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
+
+jobs:
+
+  linux:
+    name: Ubuntu Latest GCC
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup - System
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils liblief-dev
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Cleanup (we want to avoid wasting disk space)
+          sudo apt-get clean
+
+      - name: Setup - System Qt Build Requirements
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+          sudo apt-get clean
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Directory setup
+        run: |
+          cmake -E make_directory ./build_linux
+
+      - name: Configure
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cmake -S . -G Ninja -B build_linux -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_COMPONENTS=libged -DBRLCAD_EXTRADOCS=OFF
+
+      - name: Build
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cmake --build build_linux --config Release --target check
+
+      - name: Debugging - tmate session
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+
