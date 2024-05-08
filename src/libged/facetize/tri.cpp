@@ -430,7 +430,7 @@ tess_avail_methods()
 
     if (bu_process_wait_n(p, 0) || (read_res <= 0)) {
 	// wait error or read error
-	bu_log("%s %s - wait or read error\n" tess_cmd[0], tess_cmd[1]);
+	bu_log("%s %s - wait or read error\n", tess_cmd[0], tess_cmd[1]);
 	std::vector<std::string> empty;
 	return empty;
     }
