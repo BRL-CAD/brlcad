@@ -35,9 +35,7 @@ if (TARGET libanalyze)
   BRLCAD_ADDDATA(density_DATAFILES data)
 endif (TARGET libanalyze)
 
-if (TARGET nirt)
-  add_subdirectory(nirt)
-endif (TARGET nirt)
+add_subdirectory(nirt)
 
 BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
 
