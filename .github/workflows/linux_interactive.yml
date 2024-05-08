@@ -28,14 +28,7 @@ jobs:
   linux:
     name: Ubuntu Latest GCC
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
     steps:
-      - name: Debugging - tmate session
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: true
 
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -84,4 +77,9 @@ jobs:
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
           cmake --build build_linux --config Release --target check
 
+      - name: Debugging - tmate session
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
 
