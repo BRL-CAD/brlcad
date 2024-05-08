@@ -28,9 +28,8 @@ jobs:
   linux:
     name: Ubuntu Latest GCC
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
     steps:
+
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
