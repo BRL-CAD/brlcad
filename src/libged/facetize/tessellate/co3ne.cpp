@@ -52,7 +52,7 @@
 #include "../tess_opts.h"
 
 int
-co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, struct tess_opts *s)
+co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s)
 {
     if (!obot || !dbip || !pnts || !s)
 	return BRLCAD_ERROR;

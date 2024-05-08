@@ -61,7 +61,7 @@ _bbox_vol(point_t b_min, point_t b_max)
 }
 
 struct rt_pnts_internal *
-_tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
+_tess_pnts_sample(const char *oname, struct db_i *dbip, tess_opts *s)
 {
     if (!oname || !dbip || !s)
 	return NULL;

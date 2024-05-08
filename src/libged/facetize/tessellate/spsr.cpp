@@ -44,7 +44,7 @@ _db_uniq_test(struct bu_vls *n, void *data)
 }
 
 int
-spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, struct tess_opts *s)
+spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s)
 {
     if (!obot || !dbip || !pnts || !s)
 	return BRLCAD_ERROR;

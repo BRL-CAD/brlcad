@@ -37,7 +37,7 @@
 #include "./tessellate.h"
 
 int
-_nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, struct tess_opts *s)
+_nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, tess_opts *s)
 {
     int status = -1;
 

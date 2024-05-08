@@ -110,7 +110,7 @@ bot_gen(struct rt_bot_internal **obot, fastf_t feature_size, point_t seed, const
 }
 
 int
-continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed)
+continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, tess_opts *s, point_t seed)
 {
 
     int first_run = 1;

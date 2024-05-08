@@ -56,7 +56,7 @@ rt_pnts_free(struct rt_pnts_internal *pnts)
 }
 
 static void
-method_setup(struct tess_opts *s)
+method_setup(tess_opts *s)
 {
     if (!s)
 	return;
@@ -87,7 +87,7 @@ method_setup(struct tess_opts *s)
 }
 
 static int
-dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct ged *gedp, struct directory *dp, struct tess_opts *s)
+dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct ged *gedp, struct directory *dp, tess_opts *s)
 {
     if (!s || !obot || !method_flag || !gedp || !dp)
 	return BRLCAD_ERROR;
@@ -324,7 +324,7 @@ main(int argc, const char **argv)
 
     static const char *usage = "Usage: ged_tessellate [options] file.g input_obj [input_object_2 ...]\n";
     int print_help = 0;
-    struct tess_opts s;
+    tess_opts s;
 
     int list_methods = 0;
     int max_time = 0;
