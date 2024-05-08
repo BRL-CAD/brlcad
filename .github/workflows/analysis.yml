@@ -47,9 +47,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Directory setup
+      - name: Directory setup
         run: |
           cmake -E make_directory ./build_clangstatic
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
 
       - name: Run Analyzer
         run: |
@@ -107,9 +109,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Directory setup
+      - name: Directory setup
         run: |
           cmake -E make_directory ./build_lcov
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
 
       - name: Configure
         run: |
