@@ -2259,6 +2259,7 @@ include(BRLCAD_CPack)
 set(toplevel_ignore_files
   .github/workflows/analysis.yml
   .github/workflows/check.yml
+  .github/workflows/linux_interactive.yml
   .gitignore
   .gitmodules
   BUGS
