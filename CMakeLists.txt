@@ -2059,7 +2059,7 @@ if (BRLCAD_EXTRADOCS)
 
   # Style sheet for XSLT transformation to manual pages
   if(BRLCAD_EXTRADOCS_MAN)
-    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad/brlcad-man-stylesheet.xsl)
+    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-stylesheet.xsl)
     DISTCLEAN("${D_BRDIR}/brlcad-man-stylesheet.xsl")
   endif(BRLCAD_EXTRADOCS_MAN)
 

@@ -55,6 +55,8 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
 
   list(APPEND index_install_files ${targetdir}/${outfile})
 
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile}")
+
 endmacro(general_tcl_index_BUILD name targetdir)
 
 # Type specific generalizations of the general_tcl_index_BUILD macro
@@ -129,6 +131,7 @@ if (TARGET btclsh)
     get_filename_component(outfile "${ifile}" NAME)
     install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
   endforeach(ifile ${index_install_files})
+
 endif (TARGET btclsh)
 
 CMAKEFILES(

@@ -716,6 +716,10 @@ if (NTEXT_FILES)
   message("Replacing paths in new 3rd party text files... done.")
 endif (NTEXT_FILES)
 
+# Tell the build cleanup about all the copied-in files - otherwise it won't
+# the distcheck cleaning logic won't know to scrub them.
+DISTCLEAN("${TP_FILES}")
+
 # Everything until now has been setting the stage in the build directory. Now
 # we set up the install rules.  It is for these stages that we need complete
 # knowledge of the third party files, since configure re-defines all of these

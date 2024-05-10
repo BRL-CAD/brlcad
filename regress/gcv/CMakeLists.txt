@@ -146,11 +146,11 @@ file(APPEND \"\${LOGFILE}\" \"\${log_msg}\\n\")
 unset(log_msg)
   ")
 
-  set(OUTPUT_FILES "${OUTPUT_FILES} ${expected_output_files}")
+  set(OUTPUT_FILES ${OUTPUT_FILES} ${expected_output_files})
   unset(expected_output_files)
   endforeach(in_file ${INPUT_FILES})
 
-  file(APPEND ${cmake_in_path} 
+  file(APPEND ${cmake_in_path}
   "
 # check output files exists and are a reasonable size
 foreach(out_file \${ofiles})
