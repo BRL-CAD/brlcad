@@ -848,9 +848,11 @@ macro(find_package_zlib)
   else ()
     find_package(ZLIB)
   endif ()
-  if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+  list(GET ZLIB_LIBRARIES 0 ZLIB_FILE)
+  IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ZLIB_FILE}" ZLIB_LOCAL_TEST)
+  if (ZLIB_LOCAL_TEST)
     set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
-  endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+  endif (ZLIB_LOCAL_TEST)
 
 endmacro(find_package_zlib)
 
