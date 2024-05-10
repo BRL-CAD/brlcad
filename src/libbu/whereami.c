@@ -354,19 +354,22 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
       uint32_t major, minor;
       char path[MAXPATHLEN];
       uint32_t inode;
+      int poffset = -1;
 
       if (!bu_fgets(buffer, sizeof(buffer), maps))
         break;
 
-      if (sscanf(buffer, "%" PRIx64 "-%" PRIx64 " %s %" PRIx64 " %x:%x %u %s\n", &low, &high, perms, &offset, &major, &minor, &inode, path) == 8)
+      if (sscanf(buffer, "%" PRIx64 "-%" PRIx64 " %s %" PRIx64 " %x:%x %u %n\n", &low, &high, perms, &offset, &major, &minor, &inode, &poffset) == 7)
       {
         void *paddr = WAI_RETURN_ADDRESS();
         uint64_t addr = (uint64_t)(uintptr_t)paddr;
-        if (low <= addr && addr <= high)
+        if (low <= addr && addr <= high && poffset > 0)
         {
           char* resolved;
+	  char *opath = buffer+poffset;
+	  opath[strlen(opath)-1] = '\0';
 
-          resolved = bu_file_realpath(path, buffer);
+          resolved = bu_file_realpath(opath, path);
           if (!resolved)
             break;
 
