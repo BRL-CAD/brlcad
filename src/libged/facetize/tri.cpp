@@ -701,11 +701,14 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 
     method_flags_bak = method_flags;
 
+    // We want the subprocess to be using the same cache directory
+    // as the parent
+    char lcache[MAXPATHLEN] = {0};
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CACHE, NULL);
 
-    // Call ged_tessellate to produce evaluated solids - TODO batch
-    // into groupings that can be fed to ged_tessellate for parallel
-    // processing, with fallback to individual if parallel fails
-    // Build up the command to run
+
+    // Call ged_tessellate to produce evaluated solids.
+    // First step is to build up the command to run
     std::vector<struct directory *> failed_dps;
     std::string mstrpp;
     int l_max_time;
@@ -721,7 +724,9 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     tess_cmd[ 4] = NULL;
     tess_cmd[ 5] = "--method-opts";
     tess_cmd[ 6] = NULL;
-    int cmd_fixed_cnt = 7;
+    tess_cmd[ 7] = "--cache-dir";
+    tess_cmd[ 8] = lcache;
+    int cmd_fixed_cnt = 9;
     while (!pq.empty()) {
 	// Starting a new round of object processing - reset method flags
 	method_flags = method_flags_bak;

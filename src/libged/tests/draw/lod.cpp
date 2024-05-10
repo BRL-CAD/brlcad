@@ -20,9 +20,6 @@
 /** @file lod.cpp
  *
  * Testing routines for Level of Detail (LoD) logic
- *
- * TODO - need to set up a current-working-directory cache for these
- * facetize calls so multiple builds don't end up conflicting
  */
 
 #include "common.h"
@@ -82,6 +79,12 @@ main(int ac, char *av[]) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;
     }
+
+    /* We want a local working dir cache */
+    char lcache[MAXPATHLEN] = {0};
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_draw_test_lod_cache", NULL);
+    bu_mkdir(lcache);
+    bu_setenv("BU_DIR_CACHE", lcache, 1);
 
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
@@ -417,6 +420,9 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 4, s_av);
 
     ged_close(dbp);
+
+    /* Remove the local cache files */
+    bu_dirclear(lcache);
 
     return 0;
 }

@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/env.h"
 #include "bu/opt.h"
 #include "rt/primitives/bot.h"
 #include "ged.h"
@@ -324,13 +325,14 @@ main(int argc, const char **argv)
 
     static const char *usage = "Usage: ged_tessellate [options] file.g input_obj [input_object_2 ...]\n";
     int print_help = 0;
+    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
     tess_opts s;
 
     int list_methods = 0;
     int max_time = 0;
     int max_pnts = 0;
 
-    struct bu_opt_desc d[ 8];
+    struct bu_opt_desc d[ 9];
     BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
     BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
@@ -338,7 +340,8 @@ main(int argc, const char **argv)
     BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,        &s.method_opts, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
     BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,             &max_time, "Maximum number of seconds to allow for runtime (not supported by all methods).");
     BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,             &max_pnts, "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT_NULL(d[ 7]);
+    BU_OPT(d[ 7],   "",     "cache-dir",                     "dir",           &bu_opt_vls,            &cache_dir, "Directory to use for cached outputs (default is libbu cache directory).");
+    BU_OPT_NULL(d[ 8]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
@@ -376,20 +379,32 @@ main(int argc, const char **argv)
         return BRLCAD_OK;
     }
 
+    // If we have a non-default cache directory specified, set it up
+    if (bu_vls_strlen(&cache_dir)) {
+	// Make sure it's there first
+	bu_mkdir(bu_vls_cstr(&cache_dir));
+	// Set the environment variable
+	bu_setenv("BU_DIR_CACHE", bu_vls_cstr(&cache_dir), 1);
+    }
+
     // Do the setup for the various methods
     method_setup(&s);
 
     // Open the database
     struct ged *gedp = ged_open("db", argv[0], 1);
-    if (!gedp)
+    if (!gedp) {
+	bu_vls_free(&cache_dir);
 	return BRLCAD_ERROR;
+    }
 
     // Translate specified object names to directory pointers
     struct bu_ptbl dps = BU_PTBL_INIT_ZERO;
     for (int i = 1; i < argc; i++) {
 	struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY);
-	if (!dp)
+	if (!dp) {
+	    bu_vls_free(&cache_dir);
 	    return BRLCAD_ERROR;
+	}
 	bu_ptbl_ins(&dps, (long *)dp);
     }
 
@@ -434,10 +449,14 @@ main(int argc, const char **argv)
 	int ret = _tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name), bu_vls_cstr(&method_flag));
 	bu_vls_free(&method_flag);
 	bu_vls_free(&obot_name);
-	if (ret != BRLCAD_OK)
+	if (ret != BRLCAD_OK) {
+	    bu_vls_free(&cache_dir);
 	    return BRLCAD_ERROR;
+	}
 
     }
+
+    bu_vls_free(&cache_dir);
 
     return BRLCAD_OK;
 }
