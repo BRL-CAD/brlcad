@@ -109,25 +109,27 @@ endif (BRLCAD_ENABLE_TCL)
 # that relies on the other tclscripts being set up.
 add_subdirectory(rtwizard)
 
-# We've collected all the commands - now add add a single command
-# to run all of them at once.
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-  COMMAND ${CMAKE_COMMAND} -DCONFIG=$<CONFIG> -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
-  COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-  DEPENDS ${index_depends_files} ${index_cpy_targets}
-  )
-add_custom_target(TclIndexBld ALL
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-  )
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
+if (TARGET btclsh)
+  # We've collected all the commands - now add add a single command
+  # to run all of them at once.
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    COMMAND ${CMAKE_COMMAND} -DCONFIG=$<CONFIG> -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    DEPENDS ${index_depends_files} ${index_cpy_targets}
+    )
+  add_custom_target(TclIndexBld ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    )
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
 
-foreach(ifile ${index_install_files})
-  # Install logic for index file.
-  get_filename_component(targetdir "${ifile}" DIRECTORY)
-  get_filename_component(outfile "${ifile}" NAME)
-  install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
-endforeach(ifile ${index_install_files})
+  foreach(ifile ${index_install_files})
+    # Install logic for index file.
+    get_filename_component(targetdir "${ifile}" DIRECTORY)
+    get_filename_component(outfile "${ifile}" NAME)
+    install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+  endforeach(ifile ${index_install_files})
+endif (TARGET btclsh)
 
 CMAKEFILES(
   CMakeLists.txt
