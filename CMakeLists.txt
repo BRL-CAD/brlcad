@@ -213,9 +213,11 @@ if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
   endif (NOT EXISTS ${CMAKE_SOURCE_DIR}/src/bext/README.md)
 endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 
-# Tell CPack to bundle bext into the source tarball
+# By default, we don't bundle bext into the source tarball for performance
+# reasons, but the support is there if the dev wants to pay the price in time
+# and disk space.
 if (NOT DEFINED CPACK_INCLUDE_EXT)
-  set(CPACK_INCLUDE_EXT ON)
+  set(CPACK_INCLUDE_EXT OFF)
 endif (NOT DEFINED CPACK_INCLUDE_EXT)
 
 # Before we do a lot of configure work, check whether we've got a type mismatch
