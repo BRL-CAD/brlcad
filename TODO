@@ -26,6 +26,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * Validate and merge hlbvh BoT raytracing improvements
 
+* Test detria as a replacement for poly2tri (will need
+  to try viewing shaded views of larger NURBS models
+  and make sure performance is comparable.  The code
+  can be enabled with the USE_DETRIA define)
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
