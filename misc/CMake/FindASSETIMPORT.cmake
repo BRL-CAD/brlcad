@@ -76,7 +76,8 @@ find_package_handle_standard_args (ASSETIMPORT REQUIRED_VARS
   )
 
 # Set the output variables.
-if (assetimport_FOUND)
+if (ASSETIMPORT_FOUND)
+  set (ASSETIMPORT_LIBRARY "${ASSETIMPORT_LIBRARY}" CACHE PATH "Asset Import Library")
   set (ASSETIMPORT_INCLUDE_DIRS ${ASSETIMPORT_INCLUDE_DIR})
   set (ASSETIMPORT_LIBRARIES ${ASSETIMPORT_LIBRARY})
 else ()
