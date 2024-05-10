@@ -51,7 +51,7 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   # make each new target depend on all previous targets, so they are forced
   # execute one at a time.
   set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
-  file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir})\n")
+  file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\")\n")
 
   list(APPEND index_install_files ${targetdir}/${outfile})
 
