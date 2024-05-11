@@ -82,6 +82,7 @@ endif(NOT EXISTS \"\${GCV_EXEC}\")\n"
       set(out_suffix ".g")
     endif(${fmt}_EXPORTER)
     # keep track for distclean
+    set(out_distclean ${out_distclean} "${out_path}${out_suffix}")
     set(expected_output_files "${expected_output_files} \"${out_path}${out_suffix}\"")
 
     # command string can't have empty "" - have to build it explicitly with cmd line flags if supplied
@@ -105,6 +106,7 @@ endif(NOT EXISTS \"\${GCV_EXEC}\")\n"
         set(CMD_STR "${CMD_STR} COMMAND \"\${GCV_EXEC}\" \"${fmt_input_output}\" \"\${in_path}\" \"${out_path}-${out_fmt}${out_suffix}\"")
       endif(${fmt}_GCV_OPTIONS)
 
+      set(out_distclean ${out_distclean}} "${out_path}-${out_fmt}${out_suffix}")
       set(expected_output_files "${expected_output_files} \"${out_path}-${out_fmt}${out_suffix}\"")
     endforeach(out_fmt ${${fmt}_CONVERTERS})
 
@@ -146,8 +148,9 @@ file(APPEND \"\${LOGFILE}\" \"\${log_msg}\\n\")
 unset(log_msg)
   ")
 
-  set(OUTPUT_FILES ${OUTPUT_FILES} ${expected_output_files})
+  set(OUTPUT_FILES ${OUTPUT_FILES} ${out_distclean})
   unset(expected_output_files)
+  unset(out_distclean)
   endforeach(in_file ${INPUT_FILES})
 
   file(APPEND ${cmake_in_path}
