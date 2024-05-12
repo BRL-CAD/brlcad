@@ -26,6 +26,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   mged[main()] -> ged_exec() -> subprocess-exec("ged_exec search . -type region") ;
   ged_exec[main()] -> dlload("ged_search") -> ged_search()
 
+* See if the regression tests (and any unit tests that trigger
+  caching) can use local caches rather than hitting the main
+  user cache.
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
