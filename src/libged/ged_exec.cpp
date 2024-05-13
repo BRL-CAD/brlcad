@@ -54,8 +54,6 @@ main(int argc, const char *argv[])
     if (!bu_file_exists(pfile, NULL))
 	return BRLCAD_ERROR;
 
-    argc--; argv++;
-
     void *dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
     if (!dl_handle) {
 	const char * const error_msg = bu_dlerror();

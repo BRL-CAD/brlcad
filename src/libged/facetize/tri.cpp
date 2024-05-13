@@ -413,14 +413,15 @@ std::vector<std::string>
 tess_avail_methods()
 {
 
-    // Build up the path to the ged_tessellate executable
+    // Build up the path to the ged_exec executable
     char tess_exec[MAXPATHLEN];
-    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
+    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
 
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[ 0] = tess_exec;
-    tess_cmd[ 1] = "--list-methods";
-    tess_cmd[ 2] = NULL;
+    tess_cmd[ 1] = "facetize_process";
+    tess_cmd[ 2] = "--list-methods";
+    tess_cmd[ 3] = NULL;
 
     struct bu_process* p;
     bu_process_create(&p, tess_cmd, BU_PROCESS_HIDE_WINDOW);
@@ -449,7 +450,7 @@ tess_avail_methods()
 int
 tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
 {
-    std::string wfile(tess_cmd[2]);
+    std::string wfile(tess_cmd[3]);
     std::string wfilebak = wfile + std::string(".bak");
     {
 	// Before the run, prepare a backup file
@@ -663,9 +664,9 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 	return BRLCAD_OK;
     }
 
-    // Build up the path to the ged_tessellate executable
+    // Build up the path to the ged_exec executable
     char tess_exec[MAXPATHLEN];
-    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
+    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
 
     // Set up a priority order of methods to try when processing primitives.
     std::vector<std::string> avail_methods = tess_avail_methods();
@@ -707,7 +708,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     bu_dir(lcache, MAXPATHLEN, BU_DIR_CACHE, NULL);
 
 
-    // Call ged_tessellate to produce evaluated solids.
+    // Call ged_exec to produce evaluated solids.
     // First step is to build up the command to run
     std::vector<struct directory *> failed_dps;
     std::string mstrpp;
@@ -715,18 +716,19 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     struct bu_vls method_str = BU_VLS_INIT_ZERO;
     struct bu_vls method_opts_str = BU_VLS_INIT_ZERO;
     const char *tess_cmd[MAXPATHLEN] = {NULL};
-    int method_ind = 4;
-    int method_opt_ind = 6;
+    int method_ind = 5;
+    int method_opt_ind = 7;
     tess_cmd[ 0] = tess_exec;
-    tess_cmd[ 1] = "-O";
-    tess_cmd[ 2] = wfile;
-    tess_cmd[ 3] = "--methods";
-    tess_cmd[ 4] = NULL;
-    tess_cmd[ 5] = "--method-opts";
-    tess_cmd[ 6] = NULL;
-    tess_cmd[ 7] = "--cache-dir";
-    tess_cmd[ 8] = lcache;
-    int cmd_fixed_cnt = 9;
+    tess_cmd[ 1] = "facetize_process";
+    tess_cmd[ 2] = "-O";
+    tess_cmd[ 3] = wfile;
+    tess_cmd[ 4] = "--methods";
+    tess_cmd[ 5] = NULL;
+    tess_cmd[ 6] = "--method-opts";
+    tess_cmd[ 7] = NULL;
+    tess_cmd[ 8] = "--cache-dir";
+    tess_cmd[ 9] = lcache;
+    int cmd_fixed_cnt = 10;
     while (!pq.empty()) {
 	// Starting a new round of object processing - reset method flags
 	method_flags = method_flags_bak;
