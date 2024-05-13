@@ -116,7 +116,7 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
     curiX++;
     img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getOrientationRightLeft() + ", " + opt.getOrientationZYUp());
+    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getCoordSystem_asString() + ", " + opt.getUpAxis_asString());
     curiX++;
     img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");

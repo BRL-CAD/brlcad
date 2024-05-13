@@ -36,21 +36,25 @@ public:
 
     bool readParameters(int argc, const char **argv);
 
+    // Options for orientation settings
+    enum coord_system { RIGHT_HAND, LEFT_HAND };
+    enum up_axis { POS_Z_UP, POS_Y_UP };
+
     //Setter functions
-    void setFilepath(std::string f);
-    void setTemppath(std::string f);
+    void setInFile(std::string f);
+    void setExeDir(std::string f);
     void setPPI(int p);
     void setIsFolder();
     void setOpenGUI();
     void setExportToFile();
     void setOverrideImages();
-    void setExportFolder(std::string fldr);
-    void setFileName(std::string n);
-    void setFolder(std::string n);
-    void setName(std::string n);
+    void setOutFolder(std::string fldr);
+    void setOutFile(std::string n);
+    void setInFolder(std::string n);
+    void setPreparer(std::string n);
     void setClassification(std::string c);
-    void setOrientationRightLeft(bool rL);
-    void setOrientationZYUp(bool zy);
+    void setCoordSystem(coord_system sys);
+    void setUpAxis(up_axis axis);
     void setNotes(std::string n);
 
     void setTopComp(std::string t);
@@ -60,21 +64,23 @@ public:
 
 
     //Getter functions
-    std::string getFilepath();
-    std::string getTemppath();
+    std::string getInFile();
+    std::string getExeDir();
     int getWidth();
     int getLength();
     bool getIsFolder();
     bool getOpenGUI();
     bool getExportToFile();
     bool getOverrideImages();
-    std::string getFileName();
-    std::string getFolder();
-    std::string getExportFolder();
-    std::string getName();
+    std::string getOutFile();
+    std::string getInFolder();
+    std::string getOutFolder();
+    std::string getPreparer();
     std::string getClassification();
-    std::string getOrientationRightLeft();
-    std::string getOrientationZYUp();
+    coord_system getCoordSystem();
+    std::string getCoordSystem_asString();
+    up_axis getUpAxis();
+    std::string getUpAxis_asString();
     std::string getNotes();
 
     std::string getTopComp();
@@ -85,10 +91,10 @@ public:
     bool isDefaultMass();
 
 private:
-    // Path to file that will be used to generate report
-    std::string filepath;
-    // Path to temporary directory to store the info
-    std::string temppath;
+    // Path to input file that will be used to generate report
+    std::string inFile;
+    // Path to directory with BRL-CAD executables (rt/rtarea/mged/gqa/..)
+    std::string exeDir;
     // Pixels per inch
     int ppi;
     // Dimensions of the output, in pixels
@@ -102,19 +108,19 @@ private:
     bool exportToFile;
     // Whether or not to override pre-existing rt/rtwizard output files
     bool overrideImages;
-    //Name of export file
-    std::string fileName;
+    // Name of export file
+    std::string outFile;
     // Name of folder that contains input models
-    std::string folderName;
-    // Name of folder you want to create report.png in
-    std::string exportFolderName;
+    std::string inFolderName;
+    // Name of folder you want to create report(s).png in
+    std::string outFolderName;
     // Name of preparer
-    std::string name;
+    std::string preparer;
     // Classification word
     std::string classification;
     // Orientation
-    std::string rightLeft;
-    std::string zY;
+    coord_system coordinate_system;
+    up_axis axis_orientation;
     // Notes
     std::string notes;
 

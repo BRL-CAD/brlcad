@@ -36,7 +36,7 @@ generateReport(Options opt)
     InformationGatherer info(&opt);
 
     // read in all information from model file
-    if (!info.gatherInformation(opt.getName())) {
+    if (!info.gatherInformation(opt.getPreparer())) {
         std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
         return;
     }
@@ -75,7 +75,7 @@ generateReport(Options opt)
 
     // optionally, export the image
     if (opt.getExportToFile()) {
-        img.exportToFile(opt.getFileName());
+        img.exportToFile(opt.getOutFile());
     }
 }
 
@@ -88,15 +88,15 @@ handleFolder(Options& options)
 {
     int cnt = 1;
 
-    for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
-        options.setFilepath(entry.path().string());
+    for (const auto & entry : std::filesystem::directory_iterator(options.getInFolder())) {
+        options.setInFile(entry.path().string());
         options.setExportToFile();
-        std::string filename = options.getFilepath();
+        std::string filename = options.getInFile();
         filename = filename.substr(filename.find_last_of("/\\") + 1);
         filename = filename.substr(0, filename.find_last_of("."));
         std::cout << "Processing: " << filename << std::endl;
-        std::string exportPath = options.getExportFolder() + "/" + filename + "_report.png";
-        options.setFileName(exportPath);
+        std::string exportPath = options.getOutFolder() + "/" + filename + "_report.png";
+        options.setOutFile(exportPath);
         generateReport(options);
         std::cout << "Finished Processing: " << cnt++ << std::endl;
     }

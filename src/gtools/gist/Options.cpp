@@ -23,22 +23,22 @@
 
 Options::Options()
 {
-    filepath = "";
-    temppath = "../../../build/bin/";
+    inFile = "";
+    exeDir = "";
     ppi = 300;
     width = 3508;
     length = 2480;
     isFolder = false;
-    folderName = "";
+    inFolderName = "";
     openGUI = false;
     exportToFile = false;
     overrideImages = false;
-    exportFolderName = "";
-    fileName = "";
-    name = "N/A";
+    outFolderName = "";
+    outFile = "";
+    preparer = "N/A";
     classification = "";
-    rightLeft = "Right hand";
-    zY = "+Z-up";
+    coordinate_system = RIGHT_HAND;
+    axis_orientation = POS_Z_UP;
     notes = "N/A";
     uLength = "m";
     defaultLength = true;
@@ -74,14 +74,14 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_Umass = "";	// user requested mass units
 
     struct bu_opt_desc d[20];
-    BU_OPT(d[0],  "p", "",     "filepath",        &_param_set_std_str,     &this->filepath,          "filepath to .g");
+    BU_OPT(d[0],  "p", "",     "filepath",        &_param_set_std_str,     &this->inFile,          "filepath to .g");
     BU_OPT(d[1],  "P", "",     "#",		  &bu_opt_int,             &param_ppi,               "pixels per inch (default 300ppi)");
-    BU_OPT(d[2],  "F", "",     "path",            &_param_set_std_str,     &this->folderName,        "path to folder of .g models to generate");
-    BU_OPT(d[3],  "E", "",     "dir_name",        &_param_set_std_str,     &this->exportFolderName,  "set export folder's name");
+    BU_OPT(d[2],  "F", "",     "path",            &_param_set_std_str,     &this->inFolderName,        "path to folder of .g models to generate");
+    BU_OPT(d[3],  "E", "",     "dir_name",        &_param_set_std_str,     &this->outFolderName,  "set export folder's name");
     BU_OPT(d[4],  "g", "",     "",                NULL,                    &this->openGUI,           "GUI output");
-    BU_OPT(d[5],  "f", "",     "filepath",        &_param_set_std_str,     &this->fileName,          "set output name, MUST end in .png");
-    BU_OPT(d[6],  "n", "",     "preparer_name",   &_param_set_std_str,     &this->name,              "name of preparer, to be us in report");
-    BU_OPT(d[7],  "T", "",     "path/to/rt",      &_param_set_std_str,     &this->temppath,          "path to rt and rtwizard executables");
+    BU_OPT(d[5],  "f", "",     "filepath",        &_param_set_std_str,     &this->outFile,          "set output name, MUST end in .png");
+    BU_OPT(d[6],  "n", "",     "preparer_name",   &_param_set_std_str,     &this->preparer,              "name of preparer, to be us in report");
+    BU_OPT(d[7],  "T", "",     "path/to/rt",      &_param_set_std_str,     &this->exeDir,          "path to rt and rtwizard executables");
     BU_OPT(d[8],  "c", "",     "classification",  &_param_set_std_str,     &this->classification,    "classification of generated report, displayed in top/bottom banner");
     BU_OPT(d[9],  "o", "",     "",                NULL,                    &param_Lhand,             "use left-handed coordinate system (default is right-handed)");
     BU_OPT(d[10], "O", "",     "",                NULL,                    &param_Yup,               "use +Y-up geometry axis (default is +Z-up)");
@@ -105,7 +105,7 @@ bool Options::readParameters(int argc, const char **argv) {
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
 
     if (ret_ac) {   // asssume a leftover option is a .g file
-	setFilepath(argv[0]);
+	setInFile(argv[0]);
 	ret_ac--;
     }
 
@@ -131,34 +131,34 @@ bool Options::readParameters(int argc, const char **argv) {
     if (param_ppi)
 	setPPI(param_ppi);
     if (param_Lhand)
-	setOrientationRightLeft(true);
+	setCoordSystem(LEFT_HAND);
     if (!param_Ulength.empty())
 	setUnitLength(param_Ulength);
     if (!param_Umass.empty())
 	setUnitMass(param_Umass);
-    if (!this->folderName.empty())
+    if (!this->inFolderName.empty())
 	setIsFolder();
-    if (!this->fileName.empty())
+    if (!this->outFile.empty())
 	setExportToFile();
-    if (!this->temppath.empty())
-	setTemppath(this->temppath);
+    if (!this->exeDir.empty())
+	setExeDir(this->exeDir);
 
     /* make sure we have a .g file or folder specified */
-    if (!getIsFolder() && !bu_file_exists(this->filepath.c_str(), NULL)) {
+    if (!getIsFolder() && !bu_file_exists(this->inFile.c_str(), NULL)) {
 	bu_log("\nUsage:  %s %s\n", cmd_progname, usage);
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;
     }
 
     /* make sure input .g exists */
-    if (!bu_file_exists(this->filepath.c_str(), NULL)) {
-	bu_log("ERROR: %s does not exist\n", this->filepath.c_str());
+    if (!bu_file_exists(this->inFile.c_str(), NULL)) {
+	bu_log("ERROR: %s does not exist\n", this->inFile.c_str());
 	return false;
     }
 
     /* make sure we're not unintentionally overwriting an existing report */
-    if (!param_overwrite && bu_file_exists(this->fileName.c_str(), NULL)) {
-	bu_log("output file \"%s\" already exists. Re-run with overwrite flag (-m) or remove file.", this->fileName.c_str());
+    if (!param_overwrite && bu_file_exists(this->outFile.c_str(), NULL)) {
+	bu_log("output file \"%s\" already exists. Re-run with overwrite flag (-m) or remove file.", this->outFile.c_str());
 	return false;
     }
 
@@ -167,15 +167,15 @@ bool Options::readParameters(int argc, const char **argv) {
 }
 
 
-void Options::setFilepath(std::string f) {
-    filepath = f;
+void Options::setInFile(std::string f) {
+    inFile = f;
 }
 
 
-void Options::setTemppath(std::string f) {
+void Options::setExeDir(std::string f) {
     if (f[f.size() - 1] != '/' && f[f.size() - 1] != '\\')
 	f = f + '\\';
-    temppath = f;
+    exeDir = f;
 }
 
 
@@ -206,23 +206,23 @@ void Options::setOverrideImages() {
 }
 
 
-void Options::setExportFolder(std::string fldr) {
-    exportFolderName = fldr;
+void Options::setOutFolder(std::string fldr) {
+    outFolderName = fldr;
 }
 
 
-void Options::setFolder(std::string n) {
-    folderName = n;
+void Options::setInFolder(std::string n) {
+    inFolderName = n;
 }
 
 
-void Options::setFileName(std::string n) {
-    fileName = n;
+void Options::setOutFile(std::string n) {
+    outFile = n;
 }
 
 
-void Options::setName(std::string n) {
-    name = n;
+void Options::setPreparer(std::string n) {
+    preparer = n;
 }
 
 
@@ -231,17 +231,13 @@ void Options::setClassification(std::string c) {
 }
 
 
-void Options::setOrientationRightLeft(bool rL) {
-    if (rL) {
-	rightLeft = "Left hand";
-    }
+void Options::setCoordSystem(coord_system sys) {
+    coordinate_system = sys;
 }
 
 
-void Options::setOrientationZYUp(bool zy) {
-    if (zy) {
-	zY = "+Y-up";
-    }
+void Options::setUpAxis(up_axis axis) {
+    axis_orientation = axis;
 }
 
 
@@ -265,23 +261,23 @@ void Options::setUnitMass(std::string m) {
 }
 
 
-std::string Options::getFilepath() {
-    return filepath;
+std::string Options::getInFile() {
+    return inFile;
 }
 
 
-std::string Options::getFolder() {
-    return folderName;
+std::string Options::getInFolder() {
+    return inFolderName;
 }
 
 
-std::string Options::getExportFolder() {
-    return exportFolderName;
+std::string Options::getOutFolder() {
+    return outFolderName;
 }
 
 
-std::string Options::getTemppath() {
-    return temppath;
+std::string Options::getExeDir() {
+    return exeDir;
 }
 
 
@@ -315,13 +311,13 @@ bool Options::getOverrideImages() {
 }
 
 
-std::string Options::getFileName() {
-    return fileName;
+std::string Options::getOutFile() {
+    return outFile;
 }
 
 
-std::string Options::getName() {
-    return name;
+std::string Options::getPreparer() {
+    return preparer;
 }
 
 
@@ -330,13 +326,35 @@ std::string Options::getClassification() {
 }
 
 
-std::string Options::getOrientationRightLeft() {
-    return rightLeft;
+Options::coord_system Options::getCoordSystem() {
+    return coordinate_system;
+}
+
+std::string Options::getCoordSystem_asString() {
+    switch (coordinate_system) {
+	case RIGHT_HAND:
+	    return "Right Hand";
+	case LEFT_HAND:
+	    return "Left Hand";
+	default:
+	    return "";
+    }
 }
 
 
-std::string Options::getOrientationZYUp() {
-    return zY;
+Options::up_axis Options::getUpAxis() {
+    return axis_orientation;
+}
+
+std::string Options::getUpAxis_asString() {
+    switch (axis_orientation) {
+	case POS_Y_UP:
+	    return "+Y-up";
+	case POS_Z_UP:
+	    return "+Z-up";
+	default:
+	    return "";
+    }
 }
 
 

@@ -38,7 +38,7 @@ void
 getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
 {
     //Run RTArea to get surface area
-    std::string command = opt->getTemppath() + "rtarea -u " + unit + " -a " + az + " -e " + el + " " + opt->getFilepath() + " " + comp + " 2>&1";
+    std::string command = opt->getExeDir() + "rtarea -u " + unit + " -a " + az + " -e " + el + " " + opt->getInFile() + " " + comp + " 2>&1";
     char buffer[128];
     std::string result = "";
     FILE* pipe = popen(command.c_str(), "r");
@@ -125,7 +125,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     for (size_t i = 0; i < toVisit.size(); i++) {
         std::string val2 = toVisit[i];
         //Get volume of region
-        std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\" " + opt->getFilepath() + " " + val2 + " 2>&1";
+        std::string command = opt->getExeDir() + "gqa -Av -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\" " + opt->getInFile() + " " + val2 + " 2>&1";
         char buffer[128];
         std::string result = "";
         FILE* pipe = popen(command.c_str(), "r");
@@ -156,7 +156,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         }
 
         //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getFilepath() + " " + val2 + " 2>&1";
+        command = opt->getExeDir() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getInFile() + " " + val2 + " 2>&1";
         result = "";
         pipe = popen(command.c_str(), "r");
         if (!pipe)
@@ -333,13 +333,13 @@ InformationGatherer::getSubComp()
 {
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
 
-    if (!bu_file_exists((opt->getTemppath() + "mged").c_str(), NULL) && !bu_file_exists((opt->getTemppath() + "mged.exe").c_str(), NULL)) {
-        bu_log("ERROR: File to executables (%s) is invalid\nPlease use (or check) the -T parameter\n", opt->getTemppath().c_str());
+    if (!bu_file_exists((opt->getExeDir() + "mged").c_str(), NULL) && !bu_file_exists((opt->getExeDir() + "mged.exe").c_str(), NULL)) {
+        bu_log("ERROR: File to executables (%s) is invalid\nPlease use (or check) the -T parameter\n", opt->getExeDir().c_str());
         bu_exit(BRLCAD_ERROR, "Bad folder, aborting.\n");
     }
 
     std::string pathToOutput = "output/sub_comp.txt";
-    std::string retrieveSub = opt->getTemppath() + "mged -c " + opt->getFilepath() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
+    std::string retrieveSub = opt->getExeDir() + "mged -c " + opt->getInFile() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
     if (system(retrieveSub.c_str()))
 	bu_log("warning: non-zero system return for %s\n",retrieveSub.c_str());
 
@@ -395,7 +395,7 @@ InformationGatherer::gatherInformation(std::string name)
     }
 
     //Open database
-    std::string filePath = opt->getFilepath();
+    std::string filePath = opt->getInFile();
     g = ged_open("db", filePath.c_str(), 1);
 
     //Gather title
@@ -606,7 +606,7 @@ InformationGatherer::gatherInformation(std::string name)
     HANDLE hFile;
     PSECURITY_DESCRIPTOR pSD = NULL;
 
-    hFile = CreateFile(TEXT(opt->getFilepath().c_str()), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFile(TEXT(opt->getInFile().c_str()), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (hFile == INVALID_HANDLE_VALUE) {
         worked = false;
@@ -639,7 +639,7 @@ InformationGatherer::gatherInformation(std::string name)
 
 #ifdef __APPLE__
     struct stat fileInfo;
-    stat(opt->getFilepath().c_str(), &fileInfo);
+    stat(opt->getInFile().c_str(), &fileInfo);
     uid_t ownerUID = fileInfo.st_uid;
     struct passwd *pw = getpwuid(ownerUID);
     if (pw == NULL) {
@@ -653,18 +653,18 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Gather last date updated
     struct stat info;
-    stat(opt->getFilepath().c_str(), &info);
+    stat(opt->getInFile().c_str(), &info);
     std::time_t update = info.st_mtime;
     tm* ltm = localtime(&update);
     std::string date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
     infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
 
     //Gather source file
-    std::size_t last1 = opt->getFilepath().find_last_of("/");
-    std::size_t last2 = opt->getFilepath().find_last_of("\\");
+    std::size_t last1 = opt->getInFile().find_last_of("/");
+    std::size_t last2 = opt->getInFile().find_last_of("\\");
     last = last1 < last2 ? last1 : last2;
 
-    std::string file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
+    std::string file = opt->getInFile().substr(last+1, opt->getInFile().length()-1);
 
     infoMap.insert(std::pair < std::string, std::string>("file", file));
 
@@ -675,7 +675,7 @@ InformationGatherer::gatherInformation(std::string name)
     infoMap["dateGenerated"] = date;
 
     //Gather name of preparer
-    infoMap.insert(std::pair < std::string, std::string>("preparer", opt->getName()));
+    infoMap.insert(std::pair < std::string, std::string>("preparer", opt->getPreparer()));
 
     //Gather classification
     std::string classification = opt->getClassification();
@@ -686,7 +686,7 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Gather checksum
     struct bu_mapped_file* gFile = NULL;
-    gFile = bu_open_mapped_file(opt->getFilepath().c_str(), ".g file");
+    gFile = bu_open_mapped_file(opt->getInFile().c_str(), ".g file");
     picohash_ctx_t ctx;
     char digest[PICOHASH_MD5_DIGEST_LENGTH];
     std::string output;
