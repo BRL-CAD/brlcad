@@ -93,6 +93,9 @@ struct ged_cmd_impl {
     unsigned long long opts;
 };
 
+struct ged_cmd_process_impl {
+    ged_process_ptr func;
+};
 
 /*
  * Local Variables:

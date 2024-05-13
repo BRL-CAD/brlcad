@@ -28,6 +28,14 @@ set(INCLUDE_DIRS
 BRLCAD_ADDEXEC(ged_tessellate "${GED_TESS_SRCS}" "libged;${MANIFOLD_LIBRARIES};${ASSETIMPORT_LIBRARIES};${GEOGRAM_LIBRARY}")
 target_include_directories(ged_tessellate SYSTEM PRIVATE ${INCLUDE_DIRS})
 
+ged_subprocess_library(facetize_process SHARED ${GED_TESS_SRCS})
+target_compile_definitions(facetize_process PRIVATE GED_SUBPROCESS)
+target_include_directories(facetize_process SYSTEM PRIVATE ${INCLUDE_DIRS})
+target_link_libraries(facetize_process libged;${MANIFOLD_LIBRARIES};${ASSETIMPORT_LIBRARIES};${GEOGRAM_LIBRARY})
+set_property(TARGET facetize_process APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
+VALIDATE_STYLE(facetize_process ${GED_TESS_SRCS})
+PLUGIN_SETUP(facetize_process ged_exec)
+
 CMAKEFILES(
   CMakeLists.txt
   tessellate.h

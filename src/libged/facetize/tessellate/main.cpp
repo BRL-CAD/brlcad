@@ -312,8 +312,13 @@ print_tess_methods()
     fprintf(stdout, "NMG CM CO3NE SPSR");
 }
 
+#ifdef GED_SUBPROCESS
+extern "C" int
+facetize_subprocess(int argc, const char **argv)
+#else
 int
 main(int argc, const char **argv)
+#endif
 {
     if (!argc || !argv)
 	return BRLCAD_ERROR;
@@ -460,6 +465,24 @@ main(int argc, const char **argv)
 
     return BRLCAD_OK;
 }
+
+#ifdef GED_SUBPROCESS
+extern "C" {
+#include "../../include/plugin.h"
+struct ged_cmd_process_impl fp_impl = {
+    facetize_subprocess
+};
+
+const struct ged_cmd_process fp = { &fp_impl };
+static const struct ged_process_plugin pinfo = { GED_API,  &fp };
+
+COMPILER_DLLEXPORT const struct ged_process_plugin *ged_process_info(void)
+{
+    return &pinfo;
+}
+}
+#endif /* GED_SUBPROCESS */
+
 
 // Local Variables:
 // tab-width: 8
