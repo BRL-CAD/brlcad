@@ -44,8 +44,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # Tests should use a local cache
 BU_DIR_CACHE="`pwd`/cache"
+rm -rf $BU_DIR_CACHE && mkdir $BU_DIR_CACHE
 export BU_DIR_CACHE
 LIBRT_CACHE="`pwd`/rtcache"
+rm -rf $LIBRT_CACHE && mkdir $LIBRT_CACHE
 export LIBRT_CACHE
 
 if test "x$LOGFILE" = "x" ; then
