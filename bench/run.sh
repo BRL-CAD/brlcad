@@ -105,6 +105,11 @@ case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
     *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
 esac
 
+# Use a local cache
+BU_DIR_CACHE="`pwd`/cache"
+export BU_DIR_CACHE
+LIBRT_CACHE="`pwd`/rtcache"
+export LIBRT_CACHE
 
 #######################
 # log to tty and file #
@@ -1614,6 +1619,10 @@ else
     $ECHO "The document is available at $BENCHMARK_TR"
 fi
 $ECHO
+
+# Cleanup
+rm -rf $BU_DIR_CACHE
+rm -rf $LIBRT_CACHE
 
 $ECHO "Output was saved to $LOGFILE from `pwd`"
 $ECHO "Benchmark testing complete."

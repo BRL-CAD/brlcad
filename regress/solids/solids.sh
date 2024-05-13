@@ -42,6 +42,12 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+# Tests should use a local cache
+BU_DIR_CACHE="`pwd`/cache"
+export BU_DIR_CACHE
+LIBRT_CACHE="`pwd`/rtcache"
+export LIBRT_CACHE
+
 if test "x$LOGFILE" = "x" ; then
     LOGFILE=`pwd`/solids.log
     rm -f $LOGFILE
@@ -189,6 +195,10 @@ else
     log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
     cat "$LOGFILE"
 fi
+
+# Cleanup
+rm -rf $BU_DIR_CACHE
+rm -rf $LIBRT_CACHE
 
 exit $NUMBER_WRONG
 
