@@ -1,0 +1,84 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(BIN_DIR "@BIN_DIR@")
+set(LOGFILE "${CBDIR}/regress-gqa_plot.log")
+
+set(BU_CACHE_DIR ${CBDIR}/cache)
+set(LIBRT_CACHE ${CBDIR}/rtcache)
+set(ENV{BU_CACHE_DIR} ${BU_CACHE_DIR})
+set(ENV{LIBRT_CACHE} ${LIBRT_CACHE})
+file(REMOVE_RECURSE "${BU_CACHE_DIR}")
+file(REMOVE_RECURSE "${LIBRT_CACHE}")
+file(MAKE_DIRECTORY "${BU_CACHE_DIR}")
+file(MAKE_DIRECTORY "${LIBRT_CACHE}")
+
+message("Starting gqa_plot test run\n")
+
+# The executable locations aren't know at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" GQA_EXEC "${EXEC}")
+if (NOT EXISTS "${GQA_EXEC}")
+  message(FATAL_ERROR "gqa not found at location \"${GQA_EXEC}\" - aborting\n")
+endif (NOT EXISTS "${GQA_EXEC}")
+string(REPLACE "\\" "" BVIEW_PLOT3_EXEC "${VEXEC}")
+if (NOT EXISTS "${BVIEW_PLOT3_EXEC}")
+  message(FATAL_ERROR "bview_plot3 not found at location \"${BVIEW_PLOT3_EXEC}\" - aborting\n")
+endif (NOT EXISTS "${BVIEW_PLOT3_EXEC}")
+
+# Input geometry
+set(GQA_GEOM_FILE "@GQA_GFILE@")
+
+# Single threaded
+execute_process(
+  COMMAND "${GQA_EXEC}" -P 1 -Ao -p ovlp_ "${GQA_GEOM_FILE}" ovlp
+  RESULT_VARIABLE gqa_plot_result OUTPUT_VARIABLE gqa_plot_log ERROR_VARIABLE gqa_plot_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+if(gqa_plot_result)
+  message(FATAL_ERROR "[gqa_plot] Failure, unexpected result running ${GQA_EXEC} -P 1 -Ao -p ovlp_ ${GQA_GEOM_FILE} ovlp\n${gqa_plot_log}")
+endif(gqa_plot_result)
+
+set(GQA_PLOT_FILE "${CBDIR}/ovlp_overlaps.plot3")
+execute_process(
+  COMMAND "${BVIEW_PLOT3_EXEC}" -b "${GQA_PLOT_FILE}"
+  RESULT_VARIABLE gqa_plot_result OUTPUT_VARIABLE gqa_plot_log ERROR_VARIABLE gqa_plot_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+if(gqa_plot_result)
+  message(FATAL_ERROR "[gqa_plot] Verification failure\n ${gqa_plot_log}")
+endif(gqa_plot_result)
+
+# Multithreaded
+execute_process(
+  COMMAND "${GQA_EXEC}" -Ao -p ovlpmulti_ "${GQA_GEOM_FILE}" ovlp
+  RESULT_VARIABLE gqa_plot_result OUTPUT_VARIABLE gqa_plot_log ERROR_VARIABLE gqa_plot_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+if(gqa_plot_result)
+  message(FATAL_ERROR "[gqa_plot_multithreaded] Failure, unexpected result running ${GQA_EXEC} -Ao -p ovlpmulti_ ${GQA_GEOM_FILE} ovlp\n ${gqa_plot_log}")
+endif(gqa_plot_result)
+
+set(GQA_MULTIPLOT_FILE "${CBDIR}/ovlpmulti_overlaps.plot3")
+execute_process(
+  COMMAND "${BVIEW_PLOT3_EXEC}" -b "${GQA_MULTIPLOT_FILE}"
+  RESULT_VARIABLE gqa_plot_result OUTPUT_VARIABLE gqa_plot_log ERROR_VARIABLE gqa_plot_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+if(gqa_plot_result)
+  message(FATAL_ERROR "[gqa_plot_multithreaded] Verification failure\n ${gqa_plot_log}")
+endif(gqa_plot_result)
+
+
+# Cleanup
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_CACHE_DIR})
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

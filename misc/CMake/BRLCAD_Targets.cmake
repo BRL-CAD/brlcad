@@ -817,7 +817,7 @@ endfunction(ADD_MAN_PAGES)
 
 function(BRLCAD_REGRESSION_TEST testname depends_list)
 
-  cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC" "" ${ARGN})
+  cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC;VEXEC" "" ${ARGN})
 
   if (depends_list)
     foreach(dep ${depends_list})
@@ -838,7 +838,11 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
 
     if (TARGET ${${testname}_EXEC})
-      add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+      if (TARGET ${${testname}_VEXEC})
+	add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -DVEXEC=$<TARGET_FILE:${${testname}_VEXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+      else (TARGET ${${testname}_VEXEC})
+	add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+      endif (TARGET ${${testname}_VEXEC})
     else (TARGET ${${testname}_EXEC})
       add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
     endif (TARGET ${${testname}_EXEC})
