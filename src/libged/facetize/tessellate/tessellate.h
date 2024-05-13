@@ -19,7 +19,7 @@
  */
 /** @file tessellate.h
  *
- * Private header for ged_tessellate executable.
+ * Private header for facetize subprocess ged_exec module.
  *
  */
 

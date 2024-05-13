@@ -38,7 +38,7 @@ VALIDATE_STYLE(ged-facetize facetize.cpp)
 PLUGIN_SETUP(ged-facetize ged)
 
 # Plugin requires subprocess to work
-add_dependencies(ged-facetize ged_tessellate)
+add_dependencies(ged-facetize ged_exec facetize_process)
 
 CMAKEFILES(
   CMakeLists.txt

@@ -44,14 +44,15 @@
 void
 _facetize_methods_help(struct ged *gedp)
 {
-        // Build up the path to the ged_tessellate executable
+        // Build up the path to the ged_exec executable
       char tess_exec[MAXPATHLEN];
-      bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
+      bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
 
       const char *tess_cmd[MAXPATHLEN] = {NULL};
       tess_cmd[ 0] = tess_exec;
-      tess_cmd[ 1] = "--list-methods";
-      tess_cmd[ 2] = NULL;
+      tess_cmd[ 1] = "facetize_process";
+      tess_cmd[ 2] = "--list-methods";
+      tess_cmd[ 3] = NULL;
 
       struct bu_process* mp;
       bu_process_create(&mp, tess_cmd, BU_PROCESS_HIDE_WINDOW);
