@@ -10,7 +10,7 @@ set(NIST_SAMPLE_MODELS
 )
 
 foreach(im ${NIST_SAMPLE_MODELS})
-  ADD_G_TARGET(${im} "BRL-CAD Geometry Models/Sample")
+  G_TARGET(${im} "BRL-CAD Geometry Models/Sample")
 endforeach(im ${NIST_SAMPLE_MODELS})
 
 CMAKEFILES(
