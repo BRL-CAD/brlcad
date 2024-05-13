@@ -249,7 +249,7 @@ cache_init(struct rt_cache *cache)
     char dirsep[2] = {BU_DIR_SEPARATOR, '\0'};
 
     if (!bu_file_exists(dir, NULL)) {
-	cache_warn(cache, dir, "Directory does not exist.  Initializing.");
+	//cache_warn(cache, dir, "Directory does not exist.  Initializing.");
 	if (!cache_ensure_path(dir, 0)) {
 	    cache_warn(cache, dir, "Cannot create cache directory.  Caching disabled.");
 	    return 0;
