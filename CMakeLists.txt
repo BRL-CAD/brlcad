@@ -2298,35 +2298,6 @@ endif("${CMAKE_GENERATOR}" MATCHES "Ninja*")
 # set of tests - Debug and Release build configurations
 include(Distcheck)
 
-# Define some custom distcheck targets for distcheck-full (not run by default)
-#
-# CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
-CREATE_DISTCHECK(default_build_type "" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-
-# The remainder of the distcheck targets deliberately specify a build type.
-# Since we are reusing the bext outputs produced by the parent configure (and
-# we *want* to do that whenever possible - its a massive overall savings in
-# build time) we can't define these for Windows due to the incompatibility of
-# Debug and Release dlls.
-# At the moment this isn't a practical issue, since distcheck is not known to
-# work on Windows currently in any case, but eventually we'll have to make some
-# adjustments.  Unfortunately, the most practical answer will probably be to
-# have an option to force the individual configurations to each build their own
-# copies of bext when we can't mix Debug and Release libs...
-if (NOT HAVE_WINDOWS_H)
-  CREATE_DISTCHECK(no_tcl "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_ENABLE_TCL=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install" distcheck_no_tcl.cmake.in)
-  CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(no_object "-DCMAKE_BUILD_TYPE=Debug -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
-  CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
-endif (NOT HAVE_WINDOWS_H)
-
-# Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
-DEFINE_DISTCHECK_TARGET(STD)
-
 # ----------------------------------------------------------------------------
 # Mark various miscellaneous things as advanced that we don't want in our
 # default view
