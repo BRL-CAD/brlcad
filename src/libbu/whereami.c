@@ -58,16 +58,6 @@ extern "C" {
 #include <stdlib.h>
 #endif
 
-#if defined(HAVE_DLADDR) && !defined(HAVE_DECL_DLADDR) && !defined(dladdr) && !defined(__APPLE__)
-typedef struct dl_info {
-        const char      *dli_fname;     /* Pathname of shared object */
-        void            *dli_fbase;     /* Base address of shared object */
-        const char      *dli_sname;     /* Name of nearest symbol */
-        void            *dli_saddr;     /* Address of nearest symbol */
-} Dl_info;
-extern int dladdr(const void *, Dl_info *);
-#endif /* HAVE_DLADDR */
-
 #if !defined(WAI_MALLOC)
 #define WAI_MALLOC(size) malloc(size)
 #endif
@@ -476,6 +466,16 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 #include <dlfcn.h>
 #include <stdbool.h>
 
+#if defined(HAVE_DLADDR) && !defined(HAVE_DECL_DLADDR) && !defined(dladdr)
+typedef struct dl_info {
+        const char      *dli_fname;     /* Pathname of shared object */
+        void            *dli_fbase;     /* Base address of shared object */
+        const char      *dli_sname;     /* Name of nearest symbol */
+        void            *dli_saddr;     /* Address of nearest symbol */
+} Dl_info;
+extern int dladdr(const void *, Dl_info *);
+#endif /* HAVE_DLADDR */
+
 WAI_FUNCSPEC
 int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 {
@@ -583,6 +583,16 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 #include <string.h>
 #include <dlfcn.h>
 #include <stdbool.h>
+
+#if defined(HAVE_DLADDR) && !defined(HAVE_DECL_DLADDR) && !defined(dladdr)
+typedef struct dl_info {
+        const char      *dli_fname;     /* Pathname of shared object */
+        void            *dli_fbase;     /* Base address of shared object */
+        const char      *dli_sname;     /* Name of nearest symbol */
+        void            *dli_saddr;     /* Address of nearest symbol */
+} Dl_info;
+extern int dladdr(const void *, Dl_info *);
+#endif /* HAVE_DLADDR */
 
 #if !defined(WAI_PROC_SELF_EXE)
 #define WAI_PROC_SELF_EXE "/proc/self/exefile"
@@ -695,6 +705,16 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 #include <sys/sysctl.h>
 #include <dlfcn.h>
 #include <stdbool.h>
+
+#if defined(HAVE_DLADDR) && !defined(HAVE_DECL_DLADDR) && !defined(dladdr)
+typedef struct dl_info {
+        const char      *dli_fname;     /* Pathname of shared object */
+        void            *dli_fbase;     /* Base address of shared object */
+        const char      *dli_sname;     /* Name of nearest symbol */
+        void            *dli_saddr;     /* Address of nearest symbol */
+} Dl_info;
+extern int dladdr(const void *, Dl_info *);
+#endif /* HAVE_DLADDR */
 
 #if defined(__OpenBSD__)
 
