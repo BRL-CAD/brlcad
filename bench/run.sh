@@ -106,10 +106,10 @@ case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
 esac
 
 # Use a local cache
-BU_DIR_CACHE="`pwd`/cache"
+BU_DIR_CACHE="`pwd`/cache-$$-benchmark"
 rm -rf $BU_DIR_CACHE && mkdir $BU_DIR_CACHE
 export BU_DIR_CACHE
-LIBRT_CACHE="`pwd`/rtcache"
+LIBRT_CACHE="`pwd`/rtcache-$$-benchmark"
 rm -rf $LIBRT_CACHE && mkdir $LIBRT_CACHE
 export LIBRT_CACHE
 
