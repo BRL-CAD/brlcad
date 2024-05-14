@@ -58,7 +58,7 @@ extern "C" {
 #include <stdlib.h>
 #endif
 
-#if defined(HAVE_DLADDR) && !defined(HAVE_DECL_DLADDR) && !defined(dladdr)
+#if defined(HAVE_DLADDR) && !defined(HAVE_DECL_DLADDR) && !defined(dladdr) && !defined(__APPLE__)
 typedef struct dl_info {
         const char      *dli_fname;     /* Pathname of shared object */
         void            *dli_fbase;     /* Base address of shared object */
