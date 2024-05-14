@@ -39,11 +39,6 @@
 #define PROCESS_FAIL  1
 #define PROCESS_PASS  0
 
-void gettime_delay(long ms) {
-    int64_t start_time = bu_gettime();
-    while ((bu_gettime() - start_time) < ms)	;
-}
-
 /* tests:   single stdout and stderr reads - BLOCKING READS
  *  bu_process_read() [stdout and stderr]
  * also relies on:
@@ -300,20 +295,26 @@ int _test_streams(const char* cmd) {
  *  bu_process_wait()
  */
 int _test_abort(const char* cmd) {
+    const int64_t MAX_TIMEOUT = BU_SEC2USEC(15);
+    int terminate_successful = 0;
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "timeout", NULL};
+
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
-    gettime_delay(200); /* give process a moment to start before trying to kill it */
+    /* process starting can be finicky.. keep trying until it's able to be terminated - or time out */
+    int64_t start_time = bu_gettime();
+    while (!(terminate_successful = bu_pid_terminate(bu_process_pid(p))) && (bu_gettime() - start_time < MAX_TIMEOUT))
+	;
 
-    if (!bu_pid_terminate(bu_process_pid(p))) {
-	fprintf(stderr, "bu_process_test[\"terminate\"] - subprocess could not be terminated\n");
+    if (!terminate_successful){
+	fprintf(stderr, "bu_process_test[\"abort\"] - subprocess could not be terminated\n");
 	return PROCESS_FAIL;
     }
 
     int wait_status = bu_process_wait_n(p, 0);
     if (wait_status != ERROR_PROCESS_ABORTED) {
-        fprintf(stderr, "bu_process_test[\"terminate\"] - wait should have reported abort code\n");
+        fprintf(stderr, "bu_process_test[\"abort\"] - wait should have reported abort code\n");
 	return PROCESS_FAIL;
     }
 
@@ -417,10 +418,13 @@ int _test_alive(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    gettime_delay(200); /* give process a moment to start before trying to kill it */
+    const int64_t MAX_TIMEOUT = BU_SEC2USEC(15);
+    int64_t start_time = bu_gettime();
     if (!bu_pid_terminate(bu_process_pid(p))) {
-	fprintf(stderr, "bu_process_test[\"alive\"] - terminate failed\n");
-	return PROCESS_FAIL;
+	if ((start_time - bu_gettime()) > MAX_TIMEOUT) {
+	    fprintf(stderr, "bu_process_test[\"alive\"] - terminate failed\n");
+	    return PROCESS_FAIL;
+	}
     }
 
     (void)bu_process_wait_n(p, 0);      // reap terminated process
