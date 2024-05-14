@@ -35,7 +35,7 @@ function(G_TARGET in_model folder)
     if (NOT TARGET 3dm-g)
       return()
     endif (NOT TARGET 3dm-g)
-    set(CONV_ARGS "-o ${CMAKE_BINARY_DIR}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
+    set(CONV_ARGS "-o \"${CMAKE_BINARY_DIR}/${output_file}\" \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
     # Custom command to generate the output
     add_custom_command(
@@ -48,7 +48,7 @@ function(G_TARGET in_model folder)
 
   # BRL-CAD ASCII database
   if(${MODEL_TYPE} STREQUAL "asc")
-    set(CONV_ARGS "${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_BINARY_DIR}/${output_file} ")
+    set(CONV_ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\" \"${CMAKE_BINARY_DIR}/${output_file}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
     if (BRLCAD_ENABLE_TCL)
       if (NOT TARGET asc2g)
@@ -80,7 +80,7 @@ function(G_TARGET in_model folder)
     if (NOT TARGET comgeom-g)
       return()
     endif (NOT TARGET comgeom-g)
-    set(CONV_ARGS "-v 5 ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_BINARY_DIR}/${output_file}")
+    set(CONV_ARGS "-v 5 \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\" \"${CMAKE_BINARY_DIR}/${output_file}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
     # Custom command to generate the output
     add_custom_command(
@@ -96,7 +96,7 @@ function(G_TARGET in_model folder)
     if (NOT TARGET fast4-g)
       return()
     endif (NOT TARGET fast4-g)
-    set(CONV_ARGS "${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_BINARY_DIR}/${output_file}")
+    set(CONV_ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\" \"${CMAKE_BINARY_DIR}/${output_file}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
@@ -111,7 +111,7 @@ function(G_TARGET in_model folder)
     if (NOT TARGET step-g)
       return()
     endif (NOT TARGET step-g)
-    set(CONV_ARGS "-O ${CMAKE_BINARY_DIR}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
+    set(CONV_ARGS "-O \"${CMAKE_BINARY_DIR}/${output_file}\" \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
     # Custom command to generate the output
     add_custom_command(

@@ -32,7 +32,8 @@ execute_process(
   )
 
 if(conv_result)
-  message(FATAL_ERROR "[@in_model_root@] Failure: ${conv_result}\n${CONV_EXEC} @CONV_ARGS@\"\n\n${conv_log}")
+  set(CARGS @CONV_ARGS@)
+  message(FATAL_ERROR "[@in_model_root@] Failure: ${conv_result}\n${CONV_EXEC} ${CARGS}\"\n\n${conv_log}")
 endif(conv_result)
 
 # Cleanup
