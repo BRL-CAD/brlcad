@@ -92,7 +92,7 @@ int _test_read_flood(const char* cmd) {
     }
 
     if (bu_process_wait_n(p, 0)) {
-	fprintf(stderr, "bu_process_test[\"read\"] - wait failed\n");
+	fprintf(stderr, "bu_process_test[\"read_flood\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
 
@@ -133,7 +133,7 @@ int _test_create_opts(const char* cmd) {
 
     /* read from stdout, but should get text from stderr*/
     if (bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0) {
-	fprintf(stderr, "bu_process_test[\"read\"] stdin read failed\n");
+	fprintf(stderr, "bu_process_test[\"create_opts\"] stdin read failed\n");
 	return PROCESS_FAIL;
     }
     char expected[19] = "Howdy from stderr!";   // intentionally ignore newline chars if any
@@ -145,7 +145,7 @@ int _test_create_opts(const char* cmd) {
     }
 
     if (bu_process_wait_n(p, 0)) {
-	fprintf(stderr, "bu_process_test[\"exec_wait\"] - wait failed\n");
+	fprintf(stderr, "bu_process_test[\"create_opts\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
 
