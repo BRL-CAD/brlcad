@@ -22,6 +22,8 @@ set(gqa_outfiles
   gqa.mged
   gqa.overlaps.plot3
   gqa.volume.plot3
+  ovlp_overlaps.plot3
+  ovlpmulti_overlaps.plot3
   )
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${gqa_outfiles}")

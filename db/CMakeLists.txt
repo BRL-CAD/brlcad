@@ -37,6 +37,7 @@ function(G_TARGET in_model folder)
     endif (NOT TARGET 3dm-g)
     set(CONV_ARGS "-o \"${CMAKE_BINARY_DIR}/${output_file}\" \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
     # Custom command to generate the output
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
@@ -50,6 +51,7 @@ function(G_TARGET in_model folder)
   if(${MODEL_TYPE} STREQUAL "asc")
     set(CONV_ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\" \"${CMAKE_BINARY_DIR}/${output_file}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
     if (BRLCAD_ENABLE_TCL)
       if (NOT TARGET asc2g)
 	return()
@@ -82,6 +84,7 @@ function(G_TARGET in_model folder)
     endif (NOT TARGET comgeom-g)
     set(CONV_ARGS "-v 5 \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\" \"${CMAKE_BINARY_DIR}/${output_file}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
     # Custom command to generate the output
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
@@ -98,6 +101,7 @@ function(G_TARGET in_model folder)
     endif (NOT TARGET fast4-g)
     set(CONV_ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\" \"${CMAKE_BINARY_DIR}/${output_file}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
       COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/${output_file}"
@@ -113,6 +117,7 @@ function(G_TARGET in_model folder)
     endif (NOT TARGET step-g)
     set(CONV_ARGS "-O \"${CMAKE_BINARY_DIR}/${output_file}\" \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\"")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
     # Custom command to generate the output
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${output_file}
