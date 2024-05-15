@@ -75,7 +75,6 @@ if (success)
 #include <array>
 #include <cmath>
 #include <cstdint>
-#include <limits>
 #include <type_traits>
 #include <optional>
 #include <variant>
@@ -84,6 +83,7 @@ if (success)
 
 #if !defined(NDEBUG)
 #include <iostream>
+#include <limits>
 
 #if !defined(_WIN32) || !_WIN32
 #include <csignal>
@@ -1227,7 +1227,7 @@ namespace detria
         inline CircleLocation incircle(const Vec2& a, const Vec2& b, const Vec2& c, const Vec2& d)
         {
 #ifndef NDEBUG
-            // The points pa, pb, and pc must be in counterclockwise order, or the sign of the result will be reversed.
+            // The points pa, pb, and pc must be in counterclockwise order, or the sign of the result will be reversed
             detail::detriaAssert(math::orient2d<Robust, Vec2>(a, b, c) == math::Orientation::CCW);
 #endif
 
@@ -1394,106 +1394,6 @@ namespace detria
     {
         // Simple zero-sized struct
         struct Empty { };
-
-        template <typename T, typename Idx, template <typename, typename> typename Collection, typename Allocator>
-        struct FlatLinkedList
-        {
-            // Simple cyclic doubly-linked list, but the elements are not allocated one-by-one
-            // The indices of the deleted elements are stored in `free`
-
-            struct Node
-            {
-                Idx prevId;
-                Idx nextId;
-                T data;
-            };
-
-            FlatLinkedList(Allocator allocator) :
-                DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_nodes),
-                DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_free)
-            {
-            }
-
-            inline Idx create(const T& data)
-            {
-                Idx newId{ };
-                Node* newNode = nullptr;
-                if (_free.empty())
-                {
-                    newId = Idx(_nodes.size());
-                    newNode = &_nodes.emplace_back();
-                }
-                else
-                {
-                    newId = _free.back();
-                    _free.pop_back();
-                    newNode = &_nodes[size_t(newId)];
-                }
-
-                newNode->data = data;
-                newNode->prevId = newId;
-                newNode->nextId = newId;
-
-                return newId;
-            }
-
-            inline Idx addAfter(const Idx& afterId, const T& data)
-            {
-                Idx nodeId = create(data);
-                Node& node = _nodes[size_t(nodeId)];
-                Node& after = _nodes[size_t(afterId)];
-
-                _nodes[size_t(after.nextId)].prevId = nodeId;
-                node.nextId = after.nextId;
-                after.nextId = nodeId;
-                node.prevId = afterId;
-
-                return nodeId;
-            }
-
-            inline Idx addBefore(const Idx& beforeId, const T& data)
-            {
-                Idx nodeId = create(data);
-                Node& node = _nodes[size_t(nodeId)];
-                Node& before = _nodes[size_t(beforeId)];
-
-                _nodes[size_t(before.prevId)].nextId = nodeId;
-                node.prevId = before.prevId;
-                before.prevId = nodeId;
-                node.nextId = before;
-
-                return nodeId;
-            }
-
-            inline void remove(const Idx& nodeId)
-            {
-                Node& node = _nodes[size_t(nodeId)];
-                _nodes[size_t(node.prevId)].nextId = node.nextId;
-                _nodes[size_t(node.nextId)].prevId = node.prevId;
-
-                _free.push_back(nodeId);
-            }
-
-            inline const Node& getNode(const Idx& nodeId) const
-            {
-                return _nodes[size_t(nodeId)];
-            }
-
-            inline size_t size() const
-            {
-                return _nodes.size();
-            }
-
-            inline void clear()
-            {
-                _nodes.clear();
-                _free.clear();
-            }
-
-        private:
-            Collection<Node, typename Allocator::template StlAllocator<Node>> _nodes;
-            Collection<Idx, typename Allocator::template StlAllocator<Idx>> _free;
-        };
 
         inline bool detriaAssert(bool condition, const char* message)
         {
@@ -1772,7 +1672,7 @@ namespace detria
         // The returned point can be a const reference if you already have the points in a compatible format.
 
 
-        // If you get an error here, then it's likely that the returned Point class has no field 'x'
+        // If you get an error here, then it's likely that your Point class has no field 'x'
         using Scalar = decltype(Point::x);
 
         // If you get an error here, then it's likely that the type of 'x' in the Point class is not a number type
@@ -2236,14 +2136,20 @@ namespace detria
     enum class TriangleLocation : uint8_t
     {
         // Inside an outline
-        Interior = 1,
+        Interior = 0,
 
         // Part of a hole
-        Hole = 2,
+        Hole = 1,
 
         // Not part of any outlines or holes, only part of the initial triangulation
-        ConvexHull = 4,
+        ConvexHull = 2,
+    };
 
+    enum class TriangleLocationMask : uint8_t
+    {
+        Interior = 1 << uint8_t(TriangleLocation::Interior),
+        Hole = 1 << uint8_t(TriangleLocation::Hole),
+        ConvexHull = 1 << uint8_t(TriangleLocation::ConvexHull),
         All = Interior | Hole | ConvexHull
     };
 
@@ -2567,8 +2473,6 @@ namespace detria
             EdgeType type{ };
         };
 
-        using List = detail::FlatLinkedList<TVertex, Idx, Collection, Allocator>;
-
         // Triangulation error types
 
         struct TE_NoError
@@ -2858,7 +2762,6 @@ namespace detria
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_classifyTriangles_CheckedTriangles),
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_classifyTriangles_TrianglesToCheck),
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_resultTriangles),
-            _convexHullPoints(allocator),
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_parentPolylines),
             DETRIA_INIT_COLLECTION_WITH_ALLOCATOR(_delaunayCheckStack)
         {
@@ -2997,7 +2900,7 @@ namespace detria
             {
                 // If failed, then clear topology and convex hull points, so no invalid triangulation is returned
                 _topology.clear();
-                _convexHullPoints.clear();
+                _convexHullInitialVertex = TVertex();
                 _resultTriangles.clear();
                 return false;
             }
@@ -3044,14 +2947,16 @@ namespace detria
         // Iterate over every triangle of a given location
         // Locations can be combined, to iterate over e.g. both interior and hole triangles
         template <typename Callback>
-        void forEachTriangleOfLocation(Callback&& callback, const TriangleLocation& locationMask, bool cwTriangles = true) const
+        void forEachTriangleOfLocation(Callback&& callback, TriangleLocationMask locationMask, bool cwTriangles = true) const
         {
-            uint8_t mask = static_cast<uint8_t>(locationMask);
+            uint8_t mask = uint8_t(locationMask);
 
             for (size_t i = 0; i < _resultTriangles.size(); ++i)
             {
                 TriangleLocation location = getTriangleLocation(i);
-                bool shouldProcess = (uint8_t(location) & mask) != 0;
+                uint8_t currentMask = uint8_t(1 << uint8_t(location));
+
+                bool shouldProcess = (currentMask & mask) != 0;
                 if (shouldProcess)
                 {
                     if (cwTriangles)
@@ -3071,19 +2976,27 @@ namespace detria
         template <typename Callback>
         void forEachConvexHullVertex(Callback&& callback)
         {
-            if (_convexHullPoints.size() == 0 || _convexHullStartIndex == Idx(-1))
+            if (!_convexHullInitialVertex.isValid())
             {
                 return;
             }
 
-            Idx nodeId = _convexHullStartIndex;
+            // Find boundary edge of the convex hull vertex
+            THalfEdge startingEdge = _topology.getOpposite(getBoundaryEdgeOfVertex(_convexHullInitialVertex));
+            if (!startingEdge.isValid())
+            {
+                return;
+            }
+
+            THalfEdge edge = startingEdge;
             do
             {
-                const typename List::Node& currentNode = _convexHullPoints.getNode(nodeId);
-                callback(currentNode.data.index);
-                nodeId = currentNode.nextId;
+                const HalfEdge& halfEdge = _topology.getEdge(edge);
+                callback(halfEdge.vertex.index);
+                THalfEdge opposite = _topology.getOpposite(edge);
+                edge = _topology.getEdge(opposite).nextEdge;
             }
-            while (nodeId != _convexHullStartIndex);
+            while (edge != startingEdge);
         }
 
         // Returns the index of the parent of this polyline (the parent directly contains this polyline)
@@ -3096,6 +3009,12 @@ namespace detria
             }
 
             return { };
+        }
+
+        // Returns the half-edge data structure created during the triangulation (mostly used for testing)
+        const Topology& getTopology() const
+        {
+            return _topology;
         }
 
         // Generates a text representation of the triangulation input, which can be used for debugging, or for reporting an issue
@@ -3192,8 +3111,7 @@ namespace detria
             _classifyTriangles_CheckedTriangles.clear();
             _classifyTriangles_TrianglesToCheck.clear();
             _delaunayCheckStack.clear();
-            _convexHullPoints.clear();
-            _convexHullStartIndex = Idx(-1);
+            _convexHullInitialVertex = TVertex();
             _parentPolylines.clear();
             _autoDetectedPolylineTypes.clear();
         }
@@ -3246,23 +3164,22 @@ namespace detria
                 _topology.createVertex();
             }
 
-            TVertex convexHullVertex0{ };
-            TVertex convexHullVertex1{ };
-
             // Initial triangulation, will add the edges
-            DETRIA_CHECK(createInitialTriangulation(delaunay, convexHullVertex0, convexHullVertex1));
+            DETRIA_CHECK(createInitialTriangulation(delaunay));
 
             // Add constrained edges, which ensures that all required vertices have edges between them
             DETRIA_CHECK(createConstrainedEdges(delaunay));
 
             // Go through all triangles, and decide if they are inside or outside
-            DETRIA_CHECK(classifyTriangles(_topology.getEdgeBetween(convexHullVertex0, convexHullVertex1)));
+            DETRIA_CHECK(classifyTriangles());
             
             return true;
         }
 
-        bool createInitialTriangulation(bool delaunay, TVertex& convexHullVertex0, TVertex& convexHullVertex1)
+        bool createInitialTriangulation(bool delaunay)
         {
+            // Initial triangulation - just a valid triangulation that includes all points
+
             // Initialize point data
             CollectionWithAllocator<Idx>& sortedPoints = _initialTriangulation_SortedPoints;
             sortedPoints.resize(_numPoints);
@@ -3270,8 +3187,6 @@ namespace detria
             {
                 sortedPoints[i] = Idx(i);
             }
-
-            // Initial triangulation - just a valid triangulation that includes all points
 
             // Sort all points by x coordinates; for points with the same x coordinate, sort by y
             // If there are two points (or more) that have the same x and y coordinate, then we can't triangulate it,
@@ -3306,6 +3221,9 @@ namespace detria
                 }
             }
 
+            // Set initial convex hull vertex - the first sorted point is guaranteed to be part of the convex hull
+            _convexHullInitialVertex = TVertex(sortedPoints[0]);
+
             // Find an initial triangle
             // Since we have no duplicate points, we can always use the first two points as the triangle's points
             // For the third point, we need to find one so that the first three points are not collinear
@@ -3339,9 +3257,6 @@ namespace detria
             const Idx& p2Idx = sortedPoints[firstNonCollinearIndex];
 
             // We have a triangle now, so start adding the remaining points to the triangulation
-            // Also keep track of the convex hull
-
-            using ListNode = typename List::Node;
 
             // Make sure that the triangles are clockwise
 
@@ -3359,6 +3274,8 @@ namespace detria
                 v0 = TVertex(p1Idx);
                 v1 = TVertex(p0Idx);
             }
+
+            THalfEdge lastEdge{ };
 
             // Create initial half-edges
             {
@@ -3419,28 +3336,54 @@ namespace detria
                     markEdge(e12, false);
                     markEdge(e21, true);
                 }
+
+                lastEdge = e20;
             }
 
-            // Add indices to convex hull
-            Idx firstPointId = _convexHullPoints.create(v0);
-            Idx secondPointId = _convexHullPoints.addAfter(firstPointId, v1);
-            Idx lastPointId = _convexHullPoints.addAfter(secondPointId, v2);
-
-            auto addPoint = [&](size_t sortedPointIdx)
+            bool addNextEdgeForFirstCollinearPoints{ };
+            if (firstNonCollinearIndex != 2)
             {
-                const Idx& originalIndex = sortedPoints[sortedPointIdx];
+                // In case there are multiple collinear points at the start, we need to store a different edge after adding a vertex
+                // Depending on the orientation of an edge of the initial triangle and the first (or any other) collinear point,
+                // we need to get the next/previous edge after adding the point
+                // All of those collinear points will be on the same side of the edge, so this only needs to be calculated once
+
+                TVertex firstNonCollinearVertexAtStart = v2;
+                Vector2 firstNonCollinearVertexPositionAtStart = getPoint(firstNonCollinearVertexAtStart.index);
+
+                Vector2 collinearPoint = getPoint(sortedPoints[2]);
+
+                math::Orientation orientation = orient2d(
+                    getPoint(v0.index),
+                    firstNonCollinearVertexPositionAtStart,
+                    collinearPoint
+                );
+
+                addNextEdgeForFirstCollinearPoints = orientation == detria::math::Orientation::CCW;
+            }
+
+            // Add points
+            for (size_t i = 2; i < _numPoints; ++i)
+            {
+                if (i == firstNonCollinearIndex) DETRIA_UNLIKELY
+                {
+                    // Vertex is part of first triangle, which was already added at the start
+                    continue;
+                }
+
+                const Idx& originalIndex = sortedPoints[i];
                 Vector2 position = getPoint(originalIndex);
 
-                auto isEdgeVisible = [&](const Idx& nodeId)
+                auto isEdgeVisible = [&](const THalfEdge& edge)
                 {
-                    // Decide if the edge (which is given by the current and the next vertex) is visible from the current point
+                    // Decide if the edge is visible from the current point
 
-                    const ListNode& node = _convexHullPoints.getNode(nodeId);
-                    const ListNode& next = _convexHullPoints.getNode(node.nextId);
+                    TVertex vertex0 = _topology.getEdge(edge).vertex;
+                    TVertex vertex1 = _topology.getEdge(_topology.getOpposite(edge)).vertex;
 
                     math::Orientation orientation = orient2d(
-                        getPoint(node.data.index),
-                        getPoint(next.data.index),
+                        getPoint(vertex0.index),
+                        getPoint(vertex1.index),
                         position
                     );
 
@@ -3448,18 +3391,30 @@ namespace detria
                     return orientation == math::Orientation::CCW;
                 };
 
-                // Start checking edges, and find the first and last one that is visible from the current point
-                // `lastPointId` is guaranteed to be visible, so it's a good starting point
+                auto getNextEdgeAlongConvexHull = [&](THalfEdge halfEdge)
+                {
+                    const HalfEdge& opposite = _topology.getEdge(_topology.getOpposite(halfEdge));
+                    return opposite.nextEdge;
+                };
 
-                Idx lastVisibleForwards = lastPointId;
-                Idx lastVisibleBackwards = _convexHullPoints.getNode(lastPointId).prevId;
+                auto getPrevEdgeAlongConvexHull = [&](THalfEdge halfEdge)
+                {
+                    THalfEdge prevEdge = _topology.getEdge(halfEdge).prevEdge;
+                    return _topology.getOpposite(prevEdge);
+                };
+
+                // Start checking edges, and find the first and last one that is visible from the current point
+                // The vertex of `lastEdge` is guaranteed to be visible, so it's a good starting point
+
+                THalfEdge lastVisibleForwards = lastEdge;
+                THalfEdge lastVisibleBackwards = getPrevEdgeAlongConvexHull(lastEdge);
 
                 // Check forwards
                 while (true)
                 {
                     if (isEdgeVisible(lastVisibleForwards))
                     {
-                        lastVisibleForwards = _convexHullPoints.getNode(lastVisibleForwards).nextId;
+                        lastVisibleForwards = getNextEdgeAlongConvexHull(lastVisibleForwards);
                     }
                     else
                     {
@@ -3472,11 +3427,11 @@ namespace detria
                 {
                     if (isEdgeVisible(lastVisibleBackwards))
                     {
-                        lastVisibleBackwards = _convexHullPoints.getNode(lastVisibleBackwards).prevId;
+                        lastVisibleBackwards = getPrevEdgeAlongConvexHull(lastVisibleBackwards);
                     }
                     else
                     {
-                        lastVisibleBackwards = _convexHullPoints.getNode(lastVisibleBackwards).nextId;
+                        lastVisibleBackwards = getNextEdgeAlongConvexHull(lastVisibleBackwards);
                         break;
                     }
                 }
@@ -3487,25 +3442,24 @@ namespace detria
 
                 // Add new edges
                 // If delaunay, then add edges that we are about to remove to the list of edges to check
-                Idx current = lastVisibleBackwards;
+                THalfEdge current = lastVisibleBackwards;
                 THalfEdge lastAddedEdge{ };
 
                 while (current != lastVisibleForwards)
                 {
-                    const ListNode& currentNode = _convexHullPoints.getNode(current);
-
-                    TVertex currentVertex = currentNode.data;
-                    TVertex nextVertex = _convexHullPoints.getNode(currentNode.nextId).data;
-
-                    THalfEdge edge0i = _topology.getEdgeBetween(currentVertex, nextVertex);
-                    HalfEdge& edge0 = _topology.getEdge(edge0i);
+                    THalfEdge edge0i = current;
+                    const HalfEdge& edge0 = _topology.getEdge(current);
+                    TVertex currentVertex = edge0.vertex;
+                    const HalfEdge& oppositeEdge0 = _topology.getEdge(_topology.getOpposite(current));
+                    TVertex nextVertex = oppositeEdge0.vertex;
+                    THalfEdge nextEdge = oppositeEdge0.nextEdge;
 
                     THalfEdge edge1i = lastAddedEdge.isValid()
                         ? lastAddedEdge
                         : _topology.createNewEdge(pVertex, currentVertex, { }, edge0.prevEdge);
                     HalfEdge& edge1 = _topology.getEdge(edge1i);
 
-                    THalfEdge oppositeEdge0i = _topology.getOpposite(edge0i);
+                    THalfEdge oppositeEdge0i = _topology.getOpposite(current);
                     THalfEdge edge2i = _topology.createNewEdge(pVertex, nextVertex, edge1.prevEdge, oppositeEdge0i);
 
                     // Update boundary status
@@ -3525,7 +3479,7 @@ namespace detria
                         DETRIA_CHECK(delaunayEdgeFlip(pVertex, edge0i));
                     }
 
-                    current = currentNode.nextId;
+                    current = nextEdge;
                 }
 
                 // Finally, mark lastAddedEdge as boundary
@@ -3533,59 +3487,17 @@ namespace detria
                     _topology.getEdgeData(_topology.getOpposite(lastAddedEdge)).setBoundary(true);
                 }
 
-                // Remove vertices from convex hull if needed
-                current = _convexHullPoints.getNode(lastVisibleBackwards).nextId;
-                while (current != lastVisibleForwards)
+                if (i < firstNonCollinearIndex)
                 {
-                    Idx next = _convexHullPoints.getNode(current).nextId;
-                    _convexHullPoints.remove(current);
-                    current = next;
+                    lastEdge = addNextEdgeForFirstCollinearPoints
+                        ? getNextEdgeAlongConvexHull(lastAddedEdge)
+                        : getPrevEdgeAlongConvexHull(lastAddedEdge);
                 }
-
-                // Add new vertex to convex hull
-                lastPointId = _convexHullPoints.addAfter(lastVisibleBackwards, pVertex);
-
-                return true;
-            };
-
-            Idx rightMostConvexHullPointAtStart = lastPointId;
-
-            // Add points up to `firstNonCollinearIndex`
-            for (size_t i = 2; i < firstNonCollinearIndex; ++i)
-            {
-                DETRIA_CHECK(addPoint(i));
-            }
-
-            if (firstNonCollinearIndex != 2)
-            {
-                // If the first three (or more) points were collinear, then `lastPointId` might not be the right-most point
-                // So make sure that it is the right-most
-
-                auto getXCoord = [&](const Idx& id)
+                else
                 {
-                    return getPoint(_convexHullPoints.getNode(id).data.index).x;
-                };
-
-                if (getXCoord(lastPointId) < getXCoord(rightMostConvexHullPointAtStart))
-                {
-                    lastPointId = rightMostConvexHullPointAtStart;
+                    lastEdge = lastAddedEdge;
                 }
             }
-
-            // Skip `firstNonCollinearIndex`, add the rest of the points
-            for (size_t i = firstNonCollinearIndex + 1; i < sortedPoints.size(); ++i)
-            {
-                DETRIA_CHECK(addPoint(i));
-            }
-
-            // Store an edge of the outline for later
-            // Also, don't store the edge, because it's possible that an edge is deleted and recreated with a different id later
-            // Storing two vertices guarantees that the edge will be valid later too
-            _convexHullStartIndex = lastPointId;
-            const ListNode& firstConvexHullNode = _convexHullPoints.getNode(_convexHullStartIndex);
-            const ListNode& secondConvexHullNode = _convexHullPoints.getNode(firstConvexHullNode.nextId);
-            convexHullVertex0 = firstConvexHullNode.data;
-            convexHullVertex1 = secondConvexHullNode.data;
 
             return true;
         }
@@ -4217,7 +4129,7 @@ namespace detria
                     {
                         // Add edge if needed
 
-                        std::optional<THalfEdge> oppositeEdge{ };
+                        THalfEdge oppositeEdge{ };
                         if (isCW)
                         {
                             if (!_topology.getEdgeBetween(prevPrevVertex, currentVertex).isValid())
@@ -4225,7 +4137,7 @@ namespace detria
                                 oppositeEdge = _topology.getEdgeBetween(prevPrevVertex, prevVertex);
 
                                 _topology.createNewEdge(prevPrevVertex, currentVertex,
-                                    _topology.getEdge(*oppositeEdge).prevEdge,
+                                    _topology.getEdge(oppositeEdge).prevEdge,
                                     _topology.getEdgeBetween(currentVertex, prevVertex),
                                     getReusedEdge()
                                 );
@@ -4239,7 +4151,7 @@ namespace detria
 
                                 _topology.createNewEdge(currentVertex, prevPrevVertex,
                                     _topology.getEdge(_topology.getEdgeBetween(currentVertex, prevVertex)).prevEdge,
-                                    *oppositeEdge,
+                                    oppositeEdge,
                                     getReusedEdge()
                                 );
                             }
@@ -4248,12 +4160,23 @@ namespace detria
                         // Update stack
                         _constrainedEdgeReTriangulationStack.pop_back();
 
-                        if (delaunay && oppositeEdge.has_value())
+                        if (delaunay)
                         {
-                            // Ensure delaunay criteria for the newly inserted triangle
-                            // Usually, the triangles are already delaunay, but sometimes not, so check it here
+                            if (i == vertices.size() - 1 && !oppositeEdge.isValid())
+                            {
+                                // For the last vertex, the edge might already be created, so oppositeEdge is not always set
+                                // But it is needed for delaunay edge flip, so make sure it is set properly
+                                oppositeEdge = _topology.getEdgeBetween(prevPrevVertex, prevVertex);
+                                DETRIA_DEBUG_ASSERT(oppositeEdge.isValid());
+                            }
 
-                            DETRIA_CHECK(delaunayEdgeFlip(currentVertex, *oppositeEdge));
+                            if (oppositeEdge.isValid())
+                            {
+                                // Ensure delaunay criteria for the newly inserted triangle
+                                // Usually, the triangles are already delaunay, but sometimes not, so check it here
+
+                                DETRIA_CHECK(delaunayEdgeFlip(currentVertex, oppositeEdge));
+                            }
                         }
 
                         // If there are more than one items left in the stack, then go back and try to triangulate again
@@ -4278,8 +4201,9 @@ namespace detria
             return true;
         }
 
-        bool classifyTriangles(THalfEdge startingConvexHullEdge)
+        bool classifyTriangles()
         {
+            THalfEdge startingConvexHullEdge = _topology.getOpposite(getBoundaryEdgeOfVertex(_convexHullInitialVertex));
             DETRIA_ASSERT(startingConvexHullEdge.isValid());
 
             const EdgeData& startingEdgeData = _topology.getEdgeData(startingConvexHullEdge);
@@ -4593,6 +4517,26 @@ namespace detria
             }
         }
 
+        THalfEdge getBoundaryEdgeOfVertex(TVertex vertex) const
+        {
+            // Since only one half of an edge is boundary, there should be only one boundary edge here
+
+            THalfEdge boundaryEdge{ };
+
+            _topology.forEachEdgeOfVertex(vertex, [&](const THalfEdge& halfEdge)
+            {
+                if (_topology.getEdgeData(halfEdge).isBoundary())
+                {
+                    boundaryEdge = halfEdge;
+                    return false;
+                }
+
+                return true;
+            });
+
+            return boundaryEdge;
+        }
+
         inline static math::Orientation orient2d(Vector2 a, Vector2 b, Vector2 c)
         {
             return math::orient2d<Config::UseRobustOrientationTests>(a, b, c);
@@ -4635,8 +4579,7 @@ namespace detria
         CollectionWithAllocator<TriangleWithData> _resultTriangles;
 
         // Results which are not related to the triangulation directly
-        List _convexHullPoints;
-        Idx _convexHullStartIndex = Idx(-1);
+        TVertex _convexHullInitialVertex = TVertex();
         CollectionWithAllocator<std::optional<Idx>> _parentPolylines;
 
         struct TopologyEdgeWithVertices
