@@ -324,7 +324,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       libwdb
       lmdb
       openNURBS
-      poly2tri
       regex_brl
       z_brl
       )

@@ -31,12 +31,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * Validate and merge hlbvh BoT raytracing improvements
 
-* Test detria as a replacement for poly2tri (will need
-  to try viewing shaded views of larger NURBS models
-  and make sure performance is comparable.  The code
-  can be enabled with the USE_DETRIA define)
-
-
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
@@ -174,15 +168,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   if there's a non-GUI output/utility and how the CLI pairs up with
   other GUI-inducing commands like rtwizard, raytrace control panel,
   geometree, etc.
-
-* Attempt to update to use latest upstream poly2tri resulted in incorrect
-  shading when trying to view the NIST2 example - many faces didn't
-  facetize.  We've had occasional robustness problems with brep triangulation
-  for a long while - need to investigate approaches to this algorithm that
-  might help:
-
-  https://github.com/ChengCat/fast-poly2tri
-  https://github.com/raptor/clip2tri
 
 * automatic tops
 
@@ -766,11 +751,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * Translate logic from clipper polygon clipping library
   (http://www.angusj.com/delphi/clipper.php) into libbg and use it
-  as a pre-processing step for poly2tri's algorithm along the lines
+  as a pre-processing step for detria's algorithm along the lines
   of what bitfighter did:  https://github.com/raptor/clip2tri
   Some useful notes here: http://stackoverflow.com/a/16115775
-
-* Translate the poly2tri routines into libbg C code
 
 * Implement Shamos-Hoey test for checking whether a polygon is simple
   in libbg: http://geomalgorithms.com/a09-_intersect-3.html

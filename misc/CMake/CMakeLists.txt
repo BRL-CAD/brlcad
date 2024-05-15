@@ -52,7 +52,6 @@ set(cmake_ignore_files
   FindPERPLEX.cmake
   FindPkgMacros.cmake
   FindPNG.cmake
-  FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
