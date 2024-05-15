@@ -121,6 +121,9 @@ if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL
   brlcad_ext_setup()
 endif ()
 
+# If we have a bext_output in the build directory, we need to clear it
+DISTCLEAN("${CMAKE_BINARY_DIR}/bext_output")
+
 # If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to expand it so
 # we can spot the path that would have been used in ${BRLCAD_EXT_DIR}/install files
 #
