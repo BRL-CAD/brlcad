@@ -1,7 +1,7 @@
 /*                  D I S P L A Y _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/color.h"
@@ -36,10 +37,6 @@
 
 #include "ged.h"
 #include "./ged_private.h"
-
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#include "xxhash.h"
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
@@ -686,7 +683,13 @@ solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
 {
+    if (!dgcdp || !dgcdp->v)
+	return;
+
     struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_DB_OBJS);
+    if (!sp)
+	return;
+
     struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
     if (!bdata) {
 	BU_GET(bdata, struct ged_bv_data);
@@ -1000,6 +1003,9 @@ solid_copy_vlist(struct db_i *UNUSED(dbip), struct bv_scene_obj *sp, struct bv_v
 int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy,
        	fastf_t transparency, int dmode, int csoltab)
 {
+    if (!gedp || !gedp->ged_gvp)
+	return 0;
+
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
     struct directory *dp;
@@ -2415,12 +2421,9 @@ dl_name_hash(struct ged *gedp)
     if (!BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay))
 	return 0;
 
-    XXH64_hash_t hash_val;
-    XXH64_state_t *state;
-    state = XXH64_createState();
+    struct bu_data_hash_state *state = bu_data_hash_create();
     if (!state)
 	return 0;
-    XXH64_reset(state, 0);
 
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -2436,7 +2439,7 @@ dl_name_hash(struct ged *gedp)
 		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
 		    struct directory *dp = bdata->s_fullpath.fp_names[i];
-		    XXH64_update(state, dp->d_namep, strlen(dp->d_namep));
+		    bu_data_hash_update(state, dp->d_namep, strlen(dp->d_namep));
 		}
 	    }
 	    sp = nsp;
@@ -2444,10 +2447,10 @@ dl_name_hash(struct ged *gedp)
 	gdlp = next_gdlp;
     }
 
-    hash_val = XXH64_digest(state);
-    XXH64_freeState(state);
+    unsigned long long hash_val = bu_data_hash_val(state);
+    bu_data_hash_destroy(state);
 
-    return (unsigned long long)hash_val;
+    return hash_val;
 }
 
 /*

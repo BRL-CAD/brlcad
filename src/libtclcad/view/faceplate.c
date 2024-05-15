@@ -1,7 +1,7 @@
 /*                     F A C E P L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2023 United States Government as represented by
+ * Copyright (c) 2000-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -145,16 +145,16 @@ to_faceplate(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "view_params")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_s->gv_view_params.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_s->gv_view_params.draw);
 		return BRLCAD_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
-		    gdvp->gv_s->gv_view_params.gos_draw = 1;
+		    gdvp->gv_s->gv_view_params.draw = 1;
 		else
-		    gdvp->gv_s->gv_view_params.gos_draw = 0;
+		    gdvp->gv_s->gv_view_params.draw = 0;
 
 		to_refresh_view(gdvp);
 		return BRLCAD_OK;
@@ -163,7 +163,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_s->gv_view_params.gos_text_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_s->gv_view_params.color));
 		return BRLCAD_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -173,7 +173,7 @@ to_faceplate(struct ged *gedp,
 		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
-		VSET(gdvp->gv_s->gv_view_params.gos_text_color, r, g, b);
+		VSET(gdvp->gv_s->gv_view_params.color, r, g, b);
 		to_refresh_view(gdvp);
 		return BRLCAD_OK;
 	    }

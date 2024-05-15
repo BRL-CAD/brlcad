@@ -1,7 +1,7 @@
 /*                      A S C _ V 5 . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,10 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 
+// TODO - pinewood.asc exposes a defect in this importer - we need to be able
+// to support multi-line quoted strings as well as multi-line bracket commands.
+// The brep object serializations are spread over many lines, but are part of a
+// single command...
 
 static int
 check_bracket_balance(int *ocnt, int *ccnt, std::string &s)

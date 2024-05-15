@@ -7,11 +7,7 @@ if(NOT N EQUAL 0 AND NOT BRLCAD_SERIAL_TESTING)
 else()
   set(JFLAG)
 endif()
-if (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -L Regression --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress_output.log" ${JFLAG})
-else (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress_output.log" ${JFLAG})
-endif (CMAKE_CONFIGURATION_TYPES)
+add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress_output.log" ${JFLAG})
 DISTCLEAN(${CMAKE_BINARY_DIR}/regress_output.log)
 set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
@@ -21,9 +17,6 @@ add_subdirectory(asc)
 
 # Bag of Triangles Tests
 add_subdirectory(bots)
-
-# Burst Regression Tests
-add_subdirectory(burst)
 
 # comgeom Conversion Tests
 add_subdirectory(comgeom)

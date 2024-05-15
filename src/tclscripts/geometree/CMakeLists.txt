@@ -2,11 +2,16 @@ set(geometree_TCLSCRIPTS
   GeometryBrowser.tcl
   geometree.tcl
   )
-BRLCAD_ADDDATA(geometree_TCLSCRIPTS tclscripts/geometree)
-pkgIndex_BUILD(tclscripts/geometree)
-tclIndex_BUILD(tclscripts/geometree)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(geometree_TCLSCRIPTS tclscripts/geometree)
+  pkgIndex_BUILD(tclscripts/geometree)
+  tclIndex_BUILD(tclscripts/geometree)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${geometree_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

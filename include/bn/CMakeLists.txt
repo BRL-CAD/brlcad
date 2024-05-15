@@ -19,7 +19,7 @@ set(bn_headers
   version.h
   wavelet.h
   )
-BRLCAD_MANAGE_FILES(bn_headers ${INCLUDE_DIR}/brlcad/bn)
+BRLCAD_MANAGE_FILES(bn_headers ${INCLUDE_DIR}/brlcad/bn REQUIRED libbn)
 
 CMAKEFILES(numgen.h)
 CMAKEFILES(CMakeLists.txt)

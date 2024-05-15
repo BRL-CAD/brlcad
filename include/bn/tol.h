@@ -1,7 +1,7 @@
 /*                        T O L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -115,6 +115,16 @@ struct bn_tol {
  * returns truthfully whether a bn_tol struct has been initialized.
  */
 #define BN_TOL_IS_INITIALIZED(_p) (((struct bn_tol *)(_p) != (struct bn_tol *)0) && LIKELY((_p)->magic == BN_TOL_MAGIC))
+
+/**
+ * copy one tolerance structure to another
+ */
+#define BN_TOL_CPY(_d,_s) { \
+	(_d)->dist = (_s)->dist; \
+	(_d)->dist_sq = (_s)->dist_sq; \
+	(_d)->perp = (_s)->perp; \
+	(_d)->para = (_s)->para; \
+    }
 
 /**
  * replaces the hard coded tolerance value

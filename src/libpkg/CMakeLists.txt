@@ -1,21 +1,14 @@
-# Include directories needed by libpkg users
-set(PKG_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  )
-BRLCAD_LIB_INCLUDE_DIRS(pkg PKG_INCLUDE_DIRS "")
-
 set(LIBPKG_SOURCES
   pkg.c
   vers.c
   )
 
+# Note - libpkg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" "${libpkg_deps}" "" "")
+set_target_properties(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
 BRLCAD_ADDDATA(tpkg.c sample_applications)
 BRLCAD_ADDEXEC(tpkg tpkg.c "libbu;libpkg" NO_INSTALL)
-
-BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" libbu)
-SET_TARGET_PROPERTIES(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(example)
 add_subdirectory(example_qt)

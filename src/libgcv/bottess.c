@@ -1,7 +1,7 @@
 /*                    B O T T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -302,7 +302,7 @@ _tree_invert(union tree *tree)
     unsigned long int i;
 
     RT_CK_TREE(tree);
-    if (tree->tr_op != OP_NMG_TESS) {
+    if (tree->tr_op != OP_TESS) {
 	bu_log("Erm, this isn't an nmg tess\n");
 	return tree;
     }
@@ -408,7 +408,7 @@ evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *to
     switch (tr->tr_op) {
 	case OP_NOP:
 	    return tr;
-	case OP_NMG_TESS:
+	case OP_TESS:
 	    /* ugh, keep it as nmg_tess and just shove the rt_bot_internal ptr
 	     * in as nmgregion. :/ Also, only doing the first shell of the first
 	     * model. Primitives should only provide a single shell, right? */
@@ -521,7 +521,7 @@ gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct bg_tess_tol *
     struct db_tree_state tree_state = rt_initial_tree_state;
     tree_state.ts_ttol = ttol;
 
-    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, nmg_booltree_leaf_tess, NULL) < 0)
+    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, rt_booltree_leaf_tess, NULL) < 0)
 	bu_log("gcv_bottess: db_walk_tree failure\n");
 
     return NULL;

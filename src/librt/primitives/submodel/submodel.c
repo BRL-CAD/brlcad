@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2023 United States Government as represented by
+ * Copyright (c) 2000-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -912,6 +912,8 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
+    if (ep->ext_nbytes <= 0)
+	return 0;
     ep->ext_nbytes = bu_vls_strlen(&str);
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
 
@@ -944,6 +946,26 @@ rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 		  sip->meth);
 
     return 0;
+}
+
+void
+rt_submodel_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_submodel_internal* ip;
+    struct bu_vls empty = BU_VLS_INIT_ZERO;
+
+    intern->idb_type = ID_SUBMODEL;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_submodel_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
+    ip->file = empty;
+    ip->treetop = empty;
 }
 
 

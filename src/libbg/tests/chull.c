@@ -1,7 +1,7 @@
 /*                      B G _ C H U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2023 United States Government as represented by
+ * Copyright (c) 2013-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
+#define PLOT3_IMPLEMENTATION
 #include "bv/plot3.h"
 
 static

@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -74,7 +74,7 @@ endforeach()
 mark_as_advanced(PERPLEX_TEMPLATE)
 
 if(PERPLEX_EXECUTABLE AND NOT PERPLEX_TEMPLATE)
-  get_filename_component(perplex_path ${PERPLEX_EXECUTABLE} PATH)
+  get_filename_component(perplex_path ${PERPLEX_EXECUTABLE} DIRECTORY)
   if(perplex_path)
     set(PERPLEX_TEMPLATE "")
     if(EXISTS ${perplex_path}/../share/perplex/perplex_template.c)
@@ -122,7 +122,7 @@ mark_as_advanced(PERPLEX_TEMPLATE)
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -187,7 +187,7 @@ if(NOT COMMAND PERPLEX_TARGET)
     if ("${${PVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
       set(${PVAR_PREFIX}_OUT_SRC_FILE ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE_WE}.c)
     else ("${${PVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
-      get_filename_component(specified_out_dir ${${PVAR_PREFIX}_OUT_SRC_FILE} PATH)
+      get_filename_component(specified_out_dir ${${PVAR_PREFIX}_OUT_SRC_FILE} DIRECTORY)
       if(NOT "${specified_out_dir}" STREQUAL "")
 	message(FATAL_ERROR "\nFull path specified for OUT_SRC_FILE - should be filename only.\n")
       endif(NOT "${specified_out_dir}" STREQUAL "")
@@ -198,7 +198,7 @@ if(NOT COMMAND PERPLEX_TARGET)
     if ("${${PVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
       set(${PVAR_PREFIX}_OUT_HDR_FILE ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE_WE}.h)
     else ("${${PVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
-      get_filename_component(specified_out_dir ${${PVAR_PREFIX}_OUT_HDR_FILE} PATH)
+      get_filename_component(specified_out_dir ${${PVAR_PREFIX}_OUT_HDR_FILE} DIRECTORY)
       if(NOT "${specified_out_dir}" STREQUAL "")
 	message(FATAL_ERROR "\nFull path specified for OUT_HDR_FILE - should be filename only.\n")
       endif(NOT "${specified_out_dir}" STREQUAL "")

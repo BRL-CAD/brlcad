@@ -1,7 +1,7 @@
 /*                         Z A P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,24 +45,26 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     int clear_view_objs = 0;
     int clear_solid_objs = 0;
     int clear_all_views = 0;
+    int shared_only = 0;
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     const char *usage = "zap [options]\n";
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = NULL;
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bu_opt_desc d[7];
-    BU_OPT(d[0],  "h", "help",          "",        NULL,       &print_help, "Print help and exit");
-    BU_OPT(d[1],  "?", "",              "",        NULL,       &print_help, "");
-    BU_OPT(d[2],  "V", "view",     "name", &bu_opt_vls,             &cvls, "specify view to draw on");
-    BU_OPT(d[3],  "v", "view-objs",    "",        NULL,  &clear_view_objs, "clear non-solid based view objects");
-    BU_OPT(d[4],  "g", "solid-objs",   "",        NULL, &clear_solid_objs, "clear solid based view objects");
-    BU_OPT(d[5],  "",  "all",          "",        NULL, &clear_all_views, "clear shared and independent views");
-    BU_OPT_NULL(d[6]);
+    struct bu_opt_desc d[8];
+    BU_OPT(d[0],  "h", "help",         "",        NULL,       &print_help, "Print help and exit");
+    BU_OPT(d[1],  "?", "",             "",        NULL,       &print_help, "");
+    BU_OPT(d[2],  "V", "view",     "name", &bu_opt_vls,             &cvls, "clear data specific to this view");
+    BU_OPT(d[3],  "S", "shared",       "",        NULL,      &shared_only, "clear only data shared across views");
+    BU_OPT(d[4],  "v", "view-objs",    "",        NULL,  &clear_view_objs, "clear non-solid based view objects");
+    BU_OPT(d[5],  "g", "solid-objs",   "",        NULL, &clear_solid_objs, "clear solid based view objects");
+    BU_OPT(d[6],  "",  "all",          "",        NULL,  &clear_all_views, "clear shared and independent views");
+    BU_OPT_NULL(d[7]);
 
     int opt_ret = bu_opt_parse(NULL, argc, argv, d);
     argc = opt_ret;
@@ -77,7 +79,19 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (!clear_solid_objs && !clear_view_objs) {
+	clear_solid_objs = 1;
+	clear_view_objs = 1;
+    }
+
     if (!clear_all_views && bu_vls_strlen(&cvls)) {
+
+	if (shared_only) {
+	    bu_vls_printf(gedp->ged_result_str, "Zap scope defined as view %s - not clearing shared data\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return BRLCAD_ERROR;
+	}
+
 	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
 	if (!v) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
@@ -85,28 +99,22 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (!v->independent) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support clearing db objects in only this view.  To change the view's status, the command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
-	    return BRLCAD_ERROR;
-	}
-    }
-    bu_vls_free(&cvls);
-
-    if (!clear_solid_objs && !clear_view_objs) {
-	clear_solid_objs = 1;
-	clear_view_objs = 1;
-    }
-
-    // If we're clearing just one view, handle it
-    if (v && v->independent && !clear_all_views) {
-	int flags = 0;
-	if (clear_solid_objs)
+	int flags = BV_LOCAL_OBJS;
+	if (clear_solid_objs) {
 	    flags |= BV_DB_OBJS;
+	    if (gedp->dbi_state) {
+		BViewState *bvs = gedp->dbi_state->get_view_state(v);
+		bvs->clear();
+	    }
+	}
+
 	if (clear_view_objs)
 	    flags |= BV_VIEW_OBJS;
+
 	if (!bv_clear(v, flags))
 	    v->gv_s->gv_cleared = 1;
+
+	bu_vls_free(&cvls);
 	return BRLCAD_OK;
     }
 
@@ -118,20 +126,28 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	if (v->independent && !clear_all_views)
 	    continue;
 	int flags = 0;
-	if (clear_solid_objs)
+	if (clear_solid_objs) {
 	    flags |= BV_DB_OBJS;
+	    if (gedp->dbi_state) {
+		BViewState *bvs = gedp->dbi_state->get_view_state(v);
+		bvs->clear();
+	    }
+	}
 	if (clear_view_objs)
 	    flags |= BV_VIEW_OBJS;
 	int nret = bv_clear(v, flags);
-	if (nret) {
+	int lret = 1;
+	if (!shared_only) {
 	    flags |= BV_LOCAL_OBJS;
-	    nret = bv_clear(v, flags);
+	    lret = bv_clear(v, flags);
 	}
-	if (!nret)
+	if (!nret || !lret)
 	    v->gv_s->gv_cleared = 1;
+
 	ret = BRLCAD_OK;
     }
 
+    bu_vls_free(&cvls);
     return ret;
 }
 

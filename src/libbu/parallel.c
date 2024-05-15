@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,10 @@
 #  include <sys/time.h>
 #endif
 
+#ifdef HAVE_SYS_SYSCALL_H
+#  include <sys/syscall.h>
+#endif
+
 #ifdef linux
 #  include <sys/stat.h>
 #endif
@@ -42,6 +46,13 @@
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
 #  include <sys/stat.h>
+#endif
+
+#if defined(__FreeBSD__)
+#  include <sys/thr.h> // for thr_self
+#endif
+#if defined(__NetBSD__)
+#  include <lwp.h>     // for _lwp_self
 #endif
 
 #ifdef __APPLE__
@@ -107,6 +118,12 @@
 
 /* #define CPP11THREAD */
 
+
+#if defined(HAVE_SYSCALL) && !defined(HAVE_DECL_SYSCALL) && !defined(syscall)
+long syscall(long number, ...);
+#endif
+
+
 #if defined(CPP11THREAD)
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
@@ -136,6 +153,26 @@ struct thread_data {
     int affinity;
     struct parallel_info *parent;
 };
+
+int
+bu_thread_id(void)
+{
+    #if defined(_WIN32)
+	return GetCurrentThreadId();
+    #elif defined(__FreeBSD__)
+	long tid;
+	thr_self(&tid);
+	return (int)tid;
+    #elif defined(__NetBSD__)
+	return _lwp_self();
+    #elif defined(__OpenBSD__)
+	return getthrid();
+    #elif defined(HAVE_SYSCALL)
+	return syscall(SYS_gettid);
+    #else
+	return -1;
+    #endif
+}
 
 
 int

@@ -1,16 +1,9 @@
-set(ADRT_INCLUDE_DIRS
-  ${GCV_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/adrt
-  ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
-  ${BRLCAD_SOURCE_DIR}/src/adrt/librender
-  )
-list(REMOVE_DUPLICATES ADRT_INCLUDE_DIRS)
-BRLCAD_INCLUDE_DIRS(ADRT_INCLUDE_DIRS)
+find_package_zlib(REQUIRED)
 
-if(NOT "${Z_PREFIX_STR}" STREQUAL "")
+IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ZLIB_LIBRARY}" LOCAL_TEST)
+if(LOCAL_TEST OR TARGET ZLIB_BLD)
   add_definitions(-DZ_PREFIX)
-  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
-endif(NOT "${Z_PREFIX_STR}" STREQUAL "")
+endif(LOCAL_TEST OR TARGET ZLIB_BLD)
 
 set(LIBRENDER_SRCS
   load.c
@@ -40,7 +33,14 @@ set(LIBRENDER_SRCS
   librender/texture_perlin.c
   librender/texture_stack.c
   )
-BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv")
+
+set(ADRT_LOCAL_INCLUDE_DIRS
+  ${BRLCAD_SOURCE_DIR}/src/adrt
+  ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
+  ${BRLCAD_SOURCE_DIR}/src/adrt/librender
+  )
+
+BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv;${ZLIB_LIBRARIES}" "" "${ADRT_LOCAL_INCLUDE_DIRS}")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_dependencies(librender gcv_plugins)
 
@@ -62,22 +62,23 @@ BRLCAD_MANAGE_FILES(tie_HDRS ${INCLUDE_DIR}/tie)
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
   set(isst_dirs
-    ${TCLCAD_INCLUDE_DIRS}
-    ${DM_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR_GL}
     ${OPENGL_INCLUDE_DIR_GLX}
     )
-  BRLCAD_INCLUDE_DIRS(isst_dirs)
+  set(local_isst_dirs
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/librender
+    )
 
   set(isst_libs libtclcad librender libdm ${TCL_LIBRARY} ${OPENGL_LIBRARIES} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY} ${OPENGL32_LIBRARY})
 
   BRLCAD_ADDDATA(isst.tcl tclscripts/isst)
   BRLCAD_ADDEXEC(isst isst.c "${isst_libs}" GUI)
-  ADD_TARGET_DEPS(isst isst_tcl_cp dm_plugins)
-  foreach(item ${tclindex_target_list})
-    add_dependencies(isst ${item})
-  endforeach(item ${tclindex_target_list})
-
+  if (isst_dirs)
+    target_include_directories(isst PRIVATE ${isst_dirs})
+  endif (isst_dirs)
+  target_include_directories(isst BEFORE PRIVATE ${local_isst_dirs})
+  ADD_TARGET_DEPS(isst isst_tcl_cp TclIndexBld dm_plugins)
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 CMAKEFILES(isst.tcl)

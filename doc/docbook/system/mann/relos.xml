@@ -1,0 +1,58 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="relos">
+
+  <refmeta>
+    <refentrytitle>RELOS</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>relos</refname>
+    <refpurpose>Sets the LOS percentage for all regions found in the given group.
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>relos</command>
+      <arg choice="req" rep="norepeat">assembly</arg>
+      <arg choice="req" rep="norepeat">value</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
+    <para>
+     The <command>relos</command> sets the LOS value for all regions found under the given assembly to the inputted value.
+      If a region is given, it will set the LOS for just that region.
+    </para>
+  </refsection>
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+    <para>
+      Set the LOS
+    </para>
+    <example><title>Set the LOS to 50.
+      </title>
+	  <para><prompt>mged&gt; </prompt><userinput>relos example.c 50</userinput>
+    </para>
+	    <para>All regions under example.c will have their LOS value reset to 50.
+	    </para>
+    </example>
+  </refsection>
+
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to <email>devs@brlcad.org</email>
+    </para>
+  </refsection>
+</refentry>

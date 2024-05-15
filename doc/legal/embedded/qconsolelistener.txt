@@ -22,6 +22,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-file:/src/libqtcad/QtConsoleListener.cpp
-file:/include/qtcad/QtConsoleListener.h
+file:/src/libqtcad/QgConsoleListener.cpp
+file:/include/qtcad/QgConsoleListener.h
 

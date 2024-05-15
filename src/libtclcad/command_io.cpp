@@ -1,7 +1,7 @@
 /*                  C O M M A N D _ I O . C P P
  * BRL-CAD
  *
- * Copyright (c) 2000-2023 United States Government as represented by
+ * Copyright (c) 2000-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,16 +31,13 @@
 #include <map>
 
 extern "C" {
-
 #include "tcl.h"
-
 #include "bu/malloc.h"
-#include "tclcad.h"
+}
 
+#include "tclcad.h"
     /* Private headers */
 #include "./tclcad_private.h"
-
-}
 
 struct tclcad_process_channels {
     Tcl_Channel cstdin;

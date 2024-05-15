@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2023 United States Government as represented by
+ * Copyright (c) 2000-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ wdb_prep_dbip(const char *filename)
 	}
 
 	/* db_create does a db_dirbuild */
-	if ((dbip = db_create(filename, 5)) == DBI_NULL) {
+	if ((dbip = db_create(filename, BRLCAD_DB_FORMAT_LATEST)) == DBI_NULL) {
 	    bu_log("wdb_prep_dbip: failed to create %s\n", filename);
 
 	    if (dbip == DBI_NULL)
@@ -320,7 +320,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    /*XXX Temporary */
+    /*XXX Temporary.  TODO - why are we not using the applications GEDP here? */
     GED_INIT(&ged, wdbp);
 
     i = 1;
@@ -1957,6 +1957,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
+    /* TODO - why are we not using the applications GEDP here? */
     GED_INIT(&ged, wdbp);
 
     bu_log_hook_save_all(&save_hook_list);

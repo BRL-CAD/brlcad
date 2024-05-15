@@ -2,11 +2,16 @@ set(igraph_TCLSCRIPTS
   GraphEditor.tcl
   igraph.tcl
   )
-BRLCAD_ADDDATA(igraph_TCLSCRIPTS tclscripts/igraph)
-pkgIndex_BUILD(tclscripts/igraph)
-tclIndex_BUILD(tclscripts/igraph)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(igraph_TCLSCRIPTS tclscripts/igraph)
+  pkgIndex_BUILD(tclscripts/igraph)
+  tclIndex_BUILD(tclscripts/igraph)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${igraph_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

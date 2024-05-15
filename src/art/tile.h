@@ -1,7 +1,7 @@
 /*                          T I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2022-2023 United States Government as represented by
+ * Copyright (c) 2022-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,20 +20,48 @@
 
 #include "renderer/kernel/rendering/itilecallback.h"
 
+class ArtTileCallback
+   :public renderer::ITileCallback
+{
+    public:
+	//
+	// Methods called by tile-based renderers.
+	//
 
-class ArtTileCallback: public renderer::ITileCallback {
+	// This method is called before a frame is rendered.
+	void on_tiled_frame_begin(const renderer::Frame*) {;}
 
-public:
+	// This method is called after a frame is rendered.
+	void on_tiled_frame_end(const renderer::Frame*) {;}
 
-    virtual void on_tile_end(const renderer::Frame* frame, const size_t tile_x, const size_t tile_y);
+	// This method is called before a tile is rendered.
+	void on_tile_begin(
+		const renderer::Frame*,           //frame
+		const size_t,           //tile_x
+		const size_t,           //tile_y
+		const size_t,           //thread_index
+		const size_t            //thread_count
+		) {;}
 
-    virtual void release() {};
-    virtual void on_tiled_frame_begin(const renderer::Frame*) {};
-    virtual void on_tiled_frame_end(const renderer::Frame*) {};
-    virtual void on_tile_begin(const renderer::Frame*, const size_t, const size_t) {};
-    virtual void on_progressive_frame_update(const renderer::Frame*) {};
+	// This method is called after a tile is rendered.
+	void on_tile_end(
+		const renderer::Frame*,           //frame
+		const size_t,           //tile_x
+		const size_t            //tile_y
+		);
+
+	// This method is called after the frame has been updated.
+	void on_progressive_frame_update(
+		const renderer::Frame&,           //frame
+		const double,           //time
+		const std::uint64_t,    //samples
+		const double,           //samples_per_pixel
+		const std::uint64_t     //samples_per_second
+		) {;}
+
+
+	void release() {};
 };
-
 
 /*
  * Local Variables:

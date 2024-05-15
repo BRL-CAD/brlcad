@@ -1,7 +1,7 @@
 /*                           C A C H E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2023 United States Government as represented by
+ * Copyright (c) 2018-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -221,7 +221,7 @@ create_test_g_file(long int test_num, const char *gfile)
 	bu_exit(1, "Test %ld: Stale .g file %s exists\n", test_num, gfile);
     }
 
-    dbip = db_create(gfile, 5);
+    dbip = db_create(gfile, BRLCAD_DB_FORMAT_LATEST);
 
     if (dbip == DBI_NULL) {
 	bu_exit(1, "Test %ld: unable to create test file %s\n", test_num, gfile);
@@ -320,8 +320,6 @@ struct subprocess_data {
 static void
 subprocess_launcher(int id, void *data)
 {
-    int count, aborted;
-    int ac = 8;
     char *line = (char *)bu_calloc(MAXPATHLEN+501, sizeof(char), "resultstr");
     const char *av[9];
     int ind = (!id) ? 0 : (id - 1);
@@ -347,15 +345,15 @@ subprocess_launcher(int id, void *data)
     sd->result = 0;
 
     struct bu_process *p = NULL;
-    bu_process_exec(&p, sd->pname, ac, (const char **)av, 0, 0);
+    bu_process_create(&p, (const char **)av, BU_PROCESS_DEFAULT);
     bu_vls_printf(sd->sd_result, "Test %ld(process %ld): running...\n", sd->test_num, sd->process_num);
 
-    while (bu_process_read((char *)line, &count, p, BU_PROCESS_STDERR, MAXPATHLEN+501) > 0) {
+    while (bu_process_read_n(p, BU_PROCESS_STDERR, MAXPATHLEN+501, (char *)line) > 0) {
 	bu_vls_printf(sd->sd_result, "%s\n", line);
 	memset(line, 0, MAXPATHLEN+501);
     }
 
-    if (bu_process_wait(&aborted, p, 120)) {
+    if (bu_process_wait_n(p, 120)) {
 	bu_vls_printf(sd->sd_result, "Test %ld(process %ld): rt_cache_subprocess failed\n", sd->test_num, sd->process_num);
 	sd->result = 1;
     }

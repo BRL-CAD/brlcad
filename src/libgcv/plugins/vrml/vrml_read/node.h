@@ -1,7 +1,7 @@
 /*			 N O D E. H
  * BRL-CAD
  *
- * Copyright (c) 2015-2023 United States Government as represented by
+ * Copyright (c) 2015-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -99,8 +99,6 @@
 
 #define FIELDNAMEMAX            43
 
-using namespace std;
-
 char *getNextWord( char *nextword);
 char *nextWord(char *inputstring, char *nextwd);
 
@@ -112,8 +110,8 @@ public:
     int nchild;
     int isprotodef;
     int ispoly;
-    vector<NODE*> children;
-    string nodetypename;
+    std::vector<NODE*> children;
+    std::string nodetypename;
     float color[3];
     float diffusecolor[3];
     float scale[3]; // = {1, 1, 1};
@@ -124,9 +122,9 @@ public:
     float bottomradius;
     float height;
     double rotmat[16];
-    vector<int> coordindex;
-    vector<float> point;
-    vector<double> vertics;
+    std::vector<int> coordindex;
+    std::vector<float> point;
+    std::vector<double> vertics;
 
 
     NODE *createNewNode(int nodetype);
@@ -141,7 +139,7 @@ public:
     void getSphere (NODE *node);
     void getPolyRep(NODE *node);
     void rotXNode(NODE *node, double rad);
-    void doMakePoly(vector<NODE*> &noderef);
+    void doMakePoly(std::vector<NODE*> &noderef);
 };
 
 #endif

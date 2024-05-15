@@ -1,7 +1,7 @@
 /*                 P O L Y G O N _ T Y P E S. H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ __BEGIN_DECLS
 
 /* The following data types are originally from bv - we keep them
  * separate here to maximize their ease of reuse */
-typedef enum { bg_Union, bg_Difference, bg_Intersection, bg_Xor } bg_clip_t;
+typedef enum { bg_None, bg_Union, bg_Difference, bg_Intersection, bg_Xor } bg_clip_t;
 
 struct bg_poly_contour {
     size_t    num_points;

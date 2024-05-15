@@ -6,7 +6,7 @@ set(optical_headers
   shadework.h
   shadefuncs.h
   )
-BRLCAD_MANAGE_FILES(optical_headers ${INCLUDE_DIR}/brlcad/optical)
+BRLCAD_MANAGE_FILES(optical_headers ${INCLUDE_DIR}/brlcad/optical REQUIRED liboptical)
 
 CMAKEFILES(CMakeLists.txt)
 

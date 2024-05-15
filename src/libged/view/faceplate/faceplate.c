@@ -1,7 +1,7 @@
 /*                      F A C E P L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,50 +131,6 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
 }
 
 int
-_fp_cmd_fps(void *ds, int argc, const char **argv)
-{
-    const char *usage_string = "faceplate [options] fps [0|1]";
-    const char *purpose_string = "Enable/disable frames-per-second";
-    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
-    }
-
-    argc--; argv++;
-
-    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
-    struct ged *gedp = gd->gedp;
-    struct bview *v = gedp->ged_gvp;
-
-    if (!argc) {
-	if (gd->verbosity) {
-	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_s->gv_center_dot.gos_draw,
-		    v->gv_s->gv_center_dot.gos_line_color[0], v->gv_s->gv_center_dot.gos_line_color[1],
-		    v->gv_s->gv_center_dot.gos_line_color[2]);
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_center_dot.gos_draw);
-	}
-	return BRLCAD_OK;
-    }
-
-    if (argc == 1) {
-	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_s->gv_fps = 1;
-	    return BRLCAD_OK;
-	}
-	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_s->gv_fps = 0;
-	    return BRLCAD_OK;
-	}
-	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
-	return BRLCAD_ERROR;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
-
-    return BRLCAD_OK;
-}
-
-int
 _fp_cmd_fb(void *ds, int argc, const char **argv)
 {
     const char *usage_string = "faceplate [options] fb [0|1|2]";
@@ -279,8 +235,8 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 int
 _fp_cmd_params(void *ds, int argc, const char **argv)
 {
-    const char *usage_string = "faceplate [options] params [0|1] [color r/g/b]";
-    const char *purpose_string = "Enable/disable params and set its color.";
+    const char *usage_string = "faceplate [options] params [0|1] [size 0/1] [center 0/1] [az 0/1] [el 0/1] [tw 0/1] [fps 0/1] [color r/g/b] [font_size [#]";
+    const char *purpose_string = "Enable/disable params and set color/font size.";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -293,42 +249,136 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 
     if (!argc) {
 	if (gd->verbosity) {
-	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_s->gv_view_params.gos_draw,
-		    v->gv_s->gv_view_params.gos_text_color[0], v->gv_s->gv_view_params.gos_text_color[1],
-		    v->gv_s->gv_view_params.gos_text_color[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%d[%d] (%d/%d/%d) [%d %d %d %d %d %d]",
+		    v->gv_s->gv_view_params.draw,
+		    v->gv_s->gv_view_params.font_size,
+		    V3ARGS(v->gv_s->gv_view_params.color),
+		    v->gv_s->gv_view_params.draw_size,
+		    v->gv_s->gv_view_params.draw_center,
+		    v->gv_s->gv_view_params.draw_az,
+		    v->gv_s->gv_view_params.draw_el,
+		    v->gv_s->gv_view_params.draw_tw,
+		    v->gv_s->gv_view_params.draw_fps
+		    );
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.gos_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.draw);
 	}
 	return BRLCAD_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_s->gv_view_params.gos_draw = 1;
+	    v->gv_s->gv_view_params.draw = 1;
 	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_s->gv_view_params.gos_draw = 0;
+	    v->gv_s->gv_view_params.draw = 0;
 	    return BRLCAD_OK;
 	}
-	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
+	if (BU_STR_EQUAL("size", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.draw_size);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("center", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.draw_center);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("az", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.draw_az);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("el", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.draw_el);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("tw", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.draw_tw);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("fps", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.draw_fps);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("font_size", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.font_size);
+	    return BRLCAD_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "input %s is invalid\n", argv[0]);
 	return BRLCAD_ERROR;
     }
 
     if (argc > 1) {
-	if (!BU_STR_EQUAL("color", argv[0])) {
-	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
-	    return BRLCAD_ERROR;
+	if (BU_STR_EQUAL("color", argv[0])) {
+	    argc--; argv++;
+	    struct bu_color c;
+	    struct bu_vls msg = BU_VLS_INIT_ZERO;
+	    if (bu_opt_color(&msg, argc, argv, &c) == -1) {
+		bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
+	    }
+	    int *cls = (int *)(v->gv_s->gv_view_params.color);
+	    bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
+	    return BRLCAD_OK;
 	}
-	argc--; argv++;
-	struct bu_color c;
-	struct bu_vls msg = BU_VLS_INIT_ZERO;
-	if (bu_opt_color(&msg, argc, argv, &c) == -1) {
-	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
+	if (BU_STR_EQUAL("size", argv[0]))  {
+	    if (BU_STR_EQUAL("0", argv[0])) {
+		v->gv_s->gv_view_params.draw_size = 0;
+	    } else {
+		v->gv_s->gv_view_params.draw_size = 1;
+	    }
+	    return BRLCAD_OK;
 	}
-	int *cls = (int *)(v->gv_s->gv_view_params.gos_text_color);
-	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
-	return BRLCAD_OK;
+	if (BU_STR_EQUAL("center", argv[0]))  {
+	    if (BU_STR_EQUAL("0", argv[0])) {
+		v->gv_s->gv_view_params.draw_center = 0;
+	    } else {
+		v->gv_s->gv_view_params.draw_center = 1;
+	    }
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("az", argv[0]))  {
+	    if (BU_STR_EQUAL("0", argv[0])) {
+		v->gv_s->gv_view_params.draw_az = 0;
+	    } else {
+		v->gv_s->gv_view_params.draw_az = 1;
+	    }
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("el", argv[0]))  {
+	    if (BU_STR_EQUAL("0", argv[0])) {
+		v->gv_s->gv_view_params.draw_el = 0;
+	    } else {
+		v->gv_s->gv_view_params.draw_el = 1;
+	    }
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("tw", argv[0]))  {
+	    if (BU_STR_EQUAL("0", argv[0])) {
+		v->gv_s->gv_view_params.draw_tw = 0;
+	    } else {
+		v->gv_s->gv_view_params.draw_tw = 1;
+	    }
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("fps", argv[0]))  {
+	    if (BU_STR_EQUAL("0", argv[0])) {
+		v->gv_s->gv_view_params.draw_fps = 0;
+	    } else {
+		v->gv_s->gv_view_params.draw_fps = 1;
+	    }
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL("font_size", argv[0])) {
+	    argc--; argv++;
+	    int fsize;
+	    struct bu_vls msg = BU_VLS_INIT_ZERO;
+	    if (bu_opt_int(&msg, argc, argv, &fsize) == -1) {
+		bu_vls_printf(gedp->ged_result_str, "invalid font size specification\n");
+	    }
+	    v->gv_s->gv_view_params.font_size = fsize;
+	    return BRLCAD_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid command\n");
@@ -338,10 +388,9 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 
 const struct bu_cmdtab _fp_cmds[] = {
     { "center_dot",      _fp_cmd_center_dot},
+    { "fb",              _fp_cmd_fb},
     { "grid",            _fp_cmd_grid},
     { "irect",           _fp_cmd_irect},
-    { "fb",              _fp_cmd_fb},
-    { "fps",             _fp_cmd_fps},
     { "model_axes",      _fp_cmd_model_axes},
     { "params",          _fp_cmd_params},
     { "scale",           _fp_cmd_scale},

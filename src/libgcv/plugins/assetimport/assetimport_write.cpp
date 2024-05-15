@@ -1,7 +1,7 @@
 /*                A S S I M P _ W R I T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2023 United States Government as represented by
+ * Copyright (c) 2022-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -226,11 +226,20 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     }
 
     /* set color data at mesh level */
-    curr_mesh->mColors[0] = new aiColor4D(1);  /* default color is white */
+    curr_mesh->mColors[0] = static_cast<aiColor4D *>(bu_calloc(numverts, sizeof(aiColor4D), "color array"));
+    /* default color is white */
+    for (size_t ci = 0; ci < numverts; ci++) {
+	curr_mesh->mColors[0][ci].r = 1;
+	curr_mesh->mColors[0][ci].g = 1;
+	curr_mesh->mColors[0][ci].b = 1;
+	curr_mesh->mColors[0][ci].a = 1;
+    }
     if (tsp->ts_mater.ma_color_valid) {
-	curr_mesh->mColors[0]->r = tsp->ts_mater.ma_color[0];
-	curr_mesh->mColors[0]->g = tsp->ts_mater.ma_color[1];
-	curr_mesh->mColors[0]->b = tsp->ts_mater.ma_color[2];
+	for (size_t ci = 0; ci < numverts; ci++) {
+	    curr_mesh->mColors[0][ci].r = tsp->ts_mater.ma_color[0];
+	    curr_mesh->mColors[0][ci].g = tsp->ts_mater.ma_color[1];
+	    curr_mesh->mColors[0][ci].b = tsp->ts_mater.ma_color[2];
+	}
     }
 
     /* set material data using shader string */
@@ -412,7 +421,7 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
 		&tree_state,
 		0,			/* take all regions */
 		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:gcv_region_end,
-		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:nmg_booltree_leaf_tess,
+		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:rt_booltree_leaf_tess,
 		(void *)&gcvwriter);
     } else {
 	(void) db_walk_tree(context->dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
@@ -420,7 +429,7 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
 		&tree_state,
 		0,			/* take all regions */
 		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:gcv_region_end,
-		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:nmg_booltree_leaf_tess,
+		(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:rt_booltree_leaf_tess,
 		(void *)&gcvwriter);
     }
 

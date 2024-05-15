@@ -1,7 +1,7 @@
 /*             Q G T R E E S E L E C T I O N M O D E L . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,23 +54,8 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
     public slots:
 	void select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags) override;
         void select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags) override;
-	void mode_change(int i);
-	void update_selected_node_relationships(const QModelIndex & index);
-
-	// If we only need to check part of the tree (i.e. when opening a comb)
-	// we can supply a non-null start QgItem
-	void ged_selection_sync(QgItem *start, struct ged_selection_set *gs);
-
-	// Sync GED drawn object information to QgItems, so the tree view can
-	// display the drawn state.  If we only need to check part of the tree
-	// (i.e. when opening a comb) we can supply a non-null start QgItem
-	void ged_drawn_sync(QgItem *start, struct ged *gedp);
 
     public:
-	// There are a number of relationships which can be used for related
-	// node highlighting - this allows a client application to select one.
-	int interaction_mode = 0;
-
 	QgTreeView *treeview;
 };
 

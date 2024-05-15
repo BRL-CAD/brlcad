@@ -1,7 +1,7 @@
 /*                  S W R A S T W I N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,9 +23,9 @@
 
 #include "swrastwin.h"
 
-QtSWWin::QtSWWin(struct fb *fbp)
+QgSWWin::QgSWWin(struct fb *fbp)
 {
-    canvas = new QtSW(this, fbp);
+    canvas = new QgSW(this, fbp);
     this->setCentralWidget(canvas);
     canvas->setMinimumSize(1,1);
 }

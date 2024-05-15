@@ -1,7 +1,7 @@
 /*                     Q T G L W I N . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file main_window.h
  *
- * Defines the toplevel window for a stand-alone QtGL dm.
+ * Defines the toplevel window for a stand-alone QgGL dm.
  *
  */
 
@@ -28,14 +28,14 @@
 
 #include <QMainWindow>
 #include "dm.h"
-#include "qtcad/QtGL.h"
+#include "qtcad/QgGL.h"
 
-class QtGLWin : public QMainWindow
+class QgGLWin : public QMainWindow
 {
     Q_OBJECT
     public:
-	QtGLWin(struct fb *fbp);
-	QtGL *canvas = NULL;
+	QgGLWin(struct fb *fbp);
+	QgGL *canvas = NULL;
 };
 
 #endif /* QTGLWIN_H */

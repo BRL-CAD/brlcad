@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2023 United States Government as represented by
+ * Copyright (c) 2007-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ pop_spawn (struct population *p)
 
     char shape[256];
 
-    p->db_p = db_create("gen000", 5);
+    p->db_p = db_create("gen000", BRLCAD_DB_FORMAT_LATEST);
     struct rt_wdb *wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
 
     for (i = 0; i < p->size; i++) {

@@ -1,7 +1,7 @@
 /*                        M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -284,18 +284,18 @@ bu_prmem(const char *str)
 }
 
 
-int
-bu_malloc_len_roundup(register int nbytes)
+size_t
+bu_malloc_len_roundup(register size_t nbytes)
 {
 #if !defined(HAVE_CALTECH_MALLOC)
     return nbytes;
 #else
-    static int pagesz;
-    register int n;
-    register int amt;
+    static size_t pagesz = 0;
+    size_t n = 0;
+    size_t amt = 0;
 
     if (pagesz == 0)
-	pagesz = getpagesize();
+	pagesz = (size_t)getpagesize();
 
 #define OVERHEAD (4*sizeof(unsigned char) +	\
 		  2*sizeof(unsigned short) +	\
@@ -308,7 +308,7 @@ bu_malloc_len_roundup(register int nbytes)
     while (nbytes > amt + n) {
 	amt <<= 1;
     }
-    return amt-OVERHEAD-sizeof(int);
+    return amt-OVERHEAD-sizeof(size_t);
 #endif
 }
 

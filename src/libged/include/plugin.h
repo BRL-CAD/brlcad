@@ -1,7 +1,7 @@
 /*                        P L U G I N . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,6 +93,9 @@ struct ged_cmd_impl {
     unsigned long long opts;
 };
 
+struct ged_cmd_process_impl {
+    ged_process_ptr func;
+};
 
 /*
  * Local Variables:

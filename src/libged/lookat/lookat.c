@@ -1,7 +1,7 @@
 /*                         L O O K A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,8 +43,8 @@ ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
     fastf_t new_az, new_el;
     double scan[3];
     static const char *usage = "x y z";
+    double lbval = (gedp->dbip) ? gedp->dbip->dbi_local2base : 1.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -87,7 +87,7 @@ ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(look, scan);
     }
 
-    VSCALE(look, look, gedp->dbip->dbi_local2base);
+    VSCALE(look, look, lbval);
 
     VSET(tmp, 0.0, 0.0, 1.0);
     MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, tmp);

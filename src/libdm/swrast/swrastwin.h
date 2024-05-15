@@ -1,7 +1,7 @@
 /*                   S W R A S T W I N . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,14 +28,14 @@
 
 #include <QMainWindow>
 #include "dm.h"
-#include "qtcad/QtSW.h"
+#include "qtcad/QgSW.h"
 
-class QtSWWin : public QMainWindow
+class QgSWWin : public QMainWindow
 {
     Q_OBJECT
     public:
-	QtSWWin(struct fb *fbp);
-	QtSW *canvas = NULL;
+	QgSWWin(struct fb *fbp);
+	QgSW *canvas = NULL;
 };
 
 #endif /* QTSWRASTWIN_H */

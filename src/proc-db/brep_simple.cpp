@@ -1,7 +1,7 @@
 /*                 B R E P _ S I M P L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  */
 /** @file proc-db/brep_simple.cpp
  *
- * Creates a brep with the following topology making direct use of
- * the openNURBS API:
+ * Creates a brep with the following topology making direct use of the
+ * openNURBS API:
  *
  *             H-------e6-------G
  *            /                /|
@@ -41,12 +41,10 @@
  *   |                |/
  *   A-------e0-------B
  *
- * Copied almost verbatim from the file
- * src/other/openNURBS/example_brep.cpp in order to explore the API
- * for creating B-Reps. There is a slight bit more relevant
- * documentation in this version than the other. In addition, this
- * version uses the wdb interface to add the B-Rep to a BRL-CAD
- * geometry file.
+ * Copied almost verbatim from the openNURBS file example_brep.cpp in order to
+ * explore the API for creating B-Reps. There is a slight bit more relevant
+ * documentation in this version than the other. In addition, this version uses
+ * the wdb interface to add the B-Rep to a BRL-CAD geometry file.
  */
 
 #include "common.h"

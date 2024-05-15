@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2023 United States Government as represented by
+ * Copyright (c) 1990-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2839,6 +2839,24 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
+}
+
+void
+rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_extrude_internal* ip;
+
+    intern->idb_type = ID_EXTRUDE;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_extrude_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+    ip->sketch_name = bu_strdup("");
 }
 
 

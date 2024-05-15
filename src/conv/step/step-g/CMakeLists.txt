@@ -1,14 +1,6 @@
-set(AP203_INCLUDE_DIRS
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${OPENNURBS_INCLUDE_DIR}
-  ${STEPCODE_INCLUDE_DIRS}
-  )
-BRLCAD_INCLUDE_DIRS(AP203_INCLUDE_DIRS)
-
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap203/ap203.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203.exp)
 add_definitions(-DAP203)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} stepg)
@@ -460,14 +452,23 @@ if (BRLCAD_ENABLE_STEP)
     librt
     libbu
     libbrep
-    steputils
-    stepeditor
-    stepdai
-    stepcore
+    ${STEPCODE_UTILS_LIBRARY}
+    ${STEPCODE_EDITOR_LIBRARY}
+    ${STEPCODE_DAI_LIBRARY}
+    ${STEPCODE_CORE_LIBRARY}
     ${OPENNURBS_LIBRARIES}
     )
 
+  set(AP203_INCLUDE_DIRS
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${STEPCODE_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
+    )
+
   BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT FOLDER Conv)
+  target_include_directories(step-g BEFORE PRIVATE ${AP203_INCLUDE_DIRS})
   add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
   set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
   target_compile_definitions(step-g PRIVATE SC_SCHEMA_DLL_EXPORTS)
@@ -480,7 +481,10 @@ if (BRLCAD_ENABLE_STEP)
   endif(HIDE_INTERNAL_SYMBOLS)
 endif (BRLCAD_ENABLE_STEP)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ap203.exp
+  )
 
 # Local Variables:
 # tab-width: 8

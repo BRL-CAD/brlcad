@@ -1,7 +1,7 @@
 /*                             A R T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@
 #include "renderer/api/object.h"
 
 /* appleseed.foundation headers */
-#include "foundation/utility/containers/dictionary.h"
+#include "foundation/containers/dictionary.h"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop

@@ -1,7 +1,7 @@
 /*                         B O T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -426,7 +426,6 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-
 extern "C" int
 _bot_cmd_sync(void *bs, int argc, const char **argv)
 {
@@ -741,6 +740,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "get",        _bot_cmd_get},
     { "isect",      _bot_cmd_isect},
     { "remesh",     _bot_cmd_remesh},
+    { "repair",     _bot_cmd_repair},
     { "set",        _bot_cmd_set},
     { "smooth",     _bot_cmd_smooth},
     { "split",      _bot_cmd_split},

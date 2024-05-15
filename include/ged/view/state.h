@@ -1,7 +1,7 @@
 /*                       S T A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ struct draw_update_data_t {
     struct db_full_path *fp;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
-    struct bg_mesh_lod_context *mesh_c;
+    struct bv_mesh_lod_context *mesh_c;
     struct resource *res;
 };
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # *******************************************************************
-# ***                   env2c CMakeLists.txt                      ***
+# ***                      CMakeLists.txt                         ***
 # *******************************************************************
 
 # Minimum required version of CMake

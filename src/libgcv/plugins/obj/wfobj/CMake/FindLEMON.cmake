@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -86,7 +86,7 @@ endif (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
 
 if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
   # look for the template in bin dir
-  get_filename_component(lemon_path ${LEMON_EXECUTABLE} PATH)
+  get_filename_component(lemon_path ${LEMON_EXECUTABLE} DIRECTORY)
   if (lemon_path)
     if (EXISTS ${lemon_path}/lempar.c)
       set (LEMON_TEMPLATE "${lemon_path}/lempar.c")
@@ -153,7 +153,7 @@ if(NOT COMMAND LEMON_TARGET)
     if ("${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
       set(${LVAR_PREFIX}_OUT_SRC_FILE ${${LVAR_PREFIX}_WORKING_DIR}/${IN_FILE_WE}.c)
     else ("${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
-      get_filename_component(specified_out_dir ${${LVAR_PREFIX}_OUT_SRC_FILE} PATH)
+      get_filename_component(specified_out_dir ${${LVAR_PREFIX}_OUT_SRC_FILE} DIRECTORY)
       if(NOT "${specified_out_dir}" STREQUAL "")
 	message(FATAL_ERROR "\nFull path specified for OUT_SRC_FILE - should be filename only.\n")
       endif(NOT "${specified_out_dir}" STREQUAL "")
@@ -164,7 +164,7 @@ if(NOT COMMAND LEMON_TARGET)
     if ("${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
       set(${LVAR_PREFIX}_OUT_HDR_FILE ${${LVAR_PREFIX}_WORKING_DIR}/${IN_FILE_WE}.h)
     else ("${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
-      get_filename_component(specified_out_dir ${${LVAR_PREFIX}_OUT_HDR_FILE} PATH)
+      get_filename_component(specified_out_dir ${${LVAR_PREFIX}_OUT_HDR_FILE} DIRECTORY)
       if(NOT "${specified_out_dir}" STREQUAL "")
 	message(FATAL_ERROR "\nFull path specified for OUT_HDR_FILE - should be filename only.\n")
       endif(NOT "${specified_out_dir}" STREQUAL "")

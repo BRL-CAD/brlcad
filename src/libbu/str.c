@@ -1,7 +1,7 @@
 /*                          S T R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2023 United States Government as represented by
+ * Copyright (c) 2007-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -267,7 +267,6 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
     return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
 #endif
 }
-
 
 /*
  * Local Variables:

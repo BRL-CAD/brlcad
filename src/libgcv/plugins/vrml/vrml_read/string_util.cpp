@@ -1,7 +1,7 @@
 /*                    S T R I N G _ U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2023 United States Government as represented by
+ * Copyright (c) 2015-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,6 @@
 #include "bu.h"
 
 #include "string_util.h"
-
-using namespace std;
 
 static char *ptr = NULL;   //pointer to current position in input file data
 static const char *keyword[]= { "DEF", "USE", "PROTO"};
@@ -98,7 +96,7 @@ findKeyWord(char *inputstring, int kw)
 }
 
 void
-stringcopy(string &str1, char *str2)
+stringcopy(std::string &str1, char *str2)
 {
     int i;
 
@@ -109,7 +107,7 @@ stringcopy(string &str1, char *str2)
 }
 
 int
-stringcompare(string &str1, char *str2)
+stringcompare(std::string &str1, char *str2)
 {
     return bu_strcmp(str1.c_str(), str2);
 }
@@ -142,10 +140,10 @@ getNextWord(char *nextword)
 }
 
 void
-replaceStringChars(string &str, char ch, const char *rstring)
+replaceStringChars(std::string &str, char ch, const char *rstring)
 {
     int pos = str.find(ch);
-    int n = static_cast<int>(string::npos);
+    int n = static_cast<int>(std::string::npos);
 
     while (pos != n) {
 	str.replace(pos, 1, rstring, 0, 3);
@@ -156,7 +154,7 @@ replaceStringChars(string &str, char ch, const char *rstring)
 void
 formatString(char *instring)
 {
-    string str;
+    std::string str;
     stringcopy(str, instring);
 
     replaceStringChars(str, '#', "\n# ");
@@ -218,7 +216,7 @@ getFloat(float &n)
 }
 
 void
-getCoordIndex(vector<int> &ccoordindex)
+getCoordIndex(std::vector<int> &ccoordindex)
 {
     int n;
     char val[MAXSTRSIZE];
@@ -239,7 +237,7 @@ getCoordIndex(vector<int> &ccoordindex)
 }
 
 void
-getPoint(vector<float> &cpoint)
+getPoint(std::vector<float> &cpoint)
 {
     float n;
     char val[MAXSTRSIZE];

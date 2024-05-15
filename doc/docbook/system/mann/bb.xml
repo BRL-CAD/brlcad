@@ -1,4 +1,4 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bb1" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bb" xmlns:xlink="http://www.w3.org/1999/xlink">
   <refmeta>
     <refentrytitle>BB</refentrytitle>
     <manvolnum>nged</manvolnum>
@@ -117,14 +117,14 @@
 
 
       <para>
-	<userinput>bb havoc</userinput>
-<literallayout class="normal">
+	<literallayout class="normal">
+<prompt>mged&gt; </prompt><userinput>bb havoc</userinput>
 Bounding Box Dimensions, Object(s) havoc:
 X Length: 1988.4 cm
 Y Length: 1683.6 cm
 Z Length: 625.0 cm
 Bounding Box Volume: 2092246392.4 cm^3
-</literallayout>
+	</literallayout>
       </para>
 
     </example>
@@ -132,10 +132,10 @@ Bounding Box Volume: 2092246392.4 cm^3
 
 
       <para>
-	<userinput>bb -q -e havoc</userinput>
-<literallayout class="normal">
+	<literallayout class="normal">
+<prompt>mged&gt; </prompt><userinput>bb -q -e havoc</userinput>
 min {-759.447479 -8437.866455 -890.000000} max {19124.621094 8397.693207 5360.000000}
-</literallayout>
+	</literallayout>
       </para>
 
     </example>
@@ -143,33 +143,33 @@ min {-759.447479 -8437.866455 -890.000000} max {19124.621094 8397.693207 5360.00
 
 
       <para>
-	<userinput>bb havoc_front havoc_middle havoc_tail</userinput>
-<literallayout class="normal">
+	<literallayout class="normal">
+<prompt>mged&gt; </prompt><userinput>bb havoc_front havoc_middle havoc_tail</userinput>
 Bounding Box Dimensions, Object(s) havoc_front,  havoc_middle,  havoc_tail:
 X Length: 1775.9 cm
 Y Length: 358.0 cm
 Z Length: 536.0 cm
 Bounding Box Volume: 340782488.9 cm^3
-</literallayout>
+	</literallayout>
       </para>
 
     </example>
-    <example><title>Create Bounding Box ARB8 in database</title>
-
+    <example><title>Create ARB8 Bounding Box</title>
 
       <para>
-	<userinput>bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail</userinput>
-<literallayout class="normal">
-mged&gt; bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail
+	<literallayout class="normal">
+<prompt>mged&gt; </prompt><userinput>bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail</userinput>
 Bounding Box Dimensions, Object(s) havoc_front,  havoc_middle,  havoc_tail:
 X Length: 1775.9 cm
 Y Length: 358.0 cm
 Z Length: 536.0 cm
 Bounding Box Volume: 340782488.9 cm^3
+	</literallayout>
+      </para>
 
-
-havoc havoc_tail havoc_middle havoc_parts_bbox.s havoc_front
-mged&gt; l havoc_parts_bbox.s
+      <para>
+	<literallayout class="normal">
+<prompt>mged&gt; </prompt><userinput>l havoc_parts_bbox.s</userinput>
 havoc_parts_bbox.s:  ARB8
 	1 (-75.9447, -158, -4.86374e-06)
 	2 (-75.9447, -158, 536)
@@ -179,8 +179,7 @@ havoc_parts_bbox.s:  ARB8
 	6 (1700, -158, 536)
 	7 (1700, 200, 536)
 	8 (1700, 200, -4.86374e-06)
-
-</literallayout>
+	</literallayout>
       </para>
 
     </example>
@@ -195,7 +194,7 @@ havoc_parts_bbox.s:  ARB8
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
-      This software is Copyright (c) 2009-2023 United States Government as represented by the
+      This software is Copyright (c) 2009-2024 United States Government as represented by the
       U.S. Army Research Laboratory.
     </para>
   </refsection>

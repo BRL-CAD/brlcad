@@ -38,6 +38,10 @@
 	# cherry-pick without making a commit, and when when recording the commit, append a line that says "(cherry picked from commit ...)"
 	cpn = cherry-pick --no-commit -x
 
+        # Print the date a tag was made
+        # https://stackoverflow.com/questions/13208734/get-the-time-and-date-of-git-tags
+        tagdate = !"f() { git for-each-ref --format=\"%(creatordate)\" refs/tags/$@ ;};f"
+
 	# Compact log that also prints out stat summaries of how much individual
 	# files changed.  A good way to hunt for commits that altered particular
 	# portions of the source tree
@@ -49,6 +53,14 @@
 
         # Show the diff between a sha1 and its immediate parent
 	pdiff = !"f() { git diff $@^1 $@ ;};f"
+
+	# Squash N commits, e.g. to merge the last two commits and have a chance
+	# to edit the commit message:
+	#
+	# git nsquash 2
+	#
+	# https://stackoverflow.com/a/5201642/2037687
+	nsquash = !"f() { git reset --soft HEAD~$@ && git commit --edit -m\"$(git log --format=%B --reverse HEAD..HEAD@{1})\" ;};f"
 
         # churn: show log of files that have many changes
         #

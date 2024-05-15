@@ -1,7 +1,7 @@
 /*                         H A S H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,6 +168,48 @@ BU_EXPORT extern int bu_hash_key(bu_hash_entry *e, uint8_t **key, size_t *key_le
 BU_EXPORT extern void *bu_hash_value(bu_hash_entry *e, void *nval);
 
 /** @} */
+
+
+
+/***************************************************************************
+ * Given data, return an unsigned long long value based on a hashing
+ * calculation.  Unlike bu_hash_tbl and its related functions, this
+ * functionality does not implement key/value data storage - it's current
+ * primary use case is generation of content-based UUIDs.
+ *
+ * We are deliberately not documenting the hashing algorithm used
+ * to allow for "under the hood" improvements to its properties over time, and
+ * there should be no assumption of the equality of the hashed value between
+ * different versions of BRL-CAD.
+ *
+ * One of the uses for this function is to provide a "good enough" content-
+ * based universally unique identifier, similarly to how Git uses SHA1 hashes
+ * as UUIDs for commits.
+ **************************************************************************/
+BU_EXPORT unsigned long long
+bu_data_hash(const void *data, size_t len);
+
+/* bu_data_hash is the simple API, but there are situations where we need to
+ * build up the data to be used for hashing from multiple inputs.  For that
+ * case, the below API allows for updating a persistent hash state.
+ */
+struct bu_data_hash_impl;
+struct bu_data_hash_state {
+    struct bu_data_hash_impl *i;
+};
+
+BU_EXPORT struct bu_data_hash_state *
+bu_data_hash_create(void);
+
+BU_EXPORT void
+bu_data_hash_destroy(struct bu_data_hash_state *s);
+
+BU_EXPORT void
+bu_data_hash_update(struct bu_data_hash_state *s, const void *data, size_t len);
+
+BU_EXPORT unsigned long long
+bu_data_hash_val(struct bu_data_hash_state *s);
+
 
 __END_DECLS
 

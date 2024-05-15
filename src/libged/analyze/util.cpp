@@ -1,7 +1,7 @@
 /*                        U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,8 @@ extern "C" {
 extern "C" {
 #include "bu/malloc.h"
 #include "bu/vls.h"
-#include "./ged_analyze.h"
 }
+#include "./ged_analyze.h"
 #include "../ged_private.h"
 
 void get_dashes(field_t *f, const int ndashes)

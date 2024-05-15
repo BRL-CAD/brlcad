@@ -1,7 +1,7 @@
 /*			 N O D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2023 United States Government as represented by
+ * Copyright (c) 2015-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,8 +43,6 @@
 #include "bn.h"
 #include "bu.h"
 
-
-using namespace std;
 
 static const char *fields[] = {
     "",
@@ -99,8 +97,8 @@ void getSFVec3f(float *p);
 void getSFVec4f(float *p);
 void getInt(int &n);
 void getFloat(float &n);
-void getCoordIndex(vector<int> &ccoordindex);
-void getPoint(vector<float> &cpoint);
+void getCoordIndex(std::vector<int> &ccoordindex);
+void getPoint(std::vector<float> &cpoint);
 
 //Initialize transform node data
 void
@@ -536,7 +534,7 @@ NODE::getPolyRep(NODE *node) {
 
 //Gets and stores vertices for nodes pointed to by noderef vector
 void
-NODE::doMakePoly(vector<NODE*> &noderef)
+NODE::doMakePoly(std::vector<NODE*> &noderef)
 {
 
     int ssize = static_cast<int>(noderef.size());

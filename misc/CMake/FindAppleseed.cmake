@@ -52,7 +52,7 @@ find_path (Appleseed_INCLUDE_DIR renderer/api/project.h
 	)
 
 find_library (Appleseed_LIBRARY
-  	NAMES Appleseed
+	NAMES Appleseed appleseed
 	HINTS
 	${Appleseed_ROOT}
 	PATH_SUFFIXES

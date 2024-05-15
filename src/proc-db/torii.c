@@ -1,7 +1,7 @@
 /*                         T O R I I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -155,8 +155,6 @@ output_torii(const char *fileName, int levels, const torusLevels_t UNUSED(torii)
 int
 main(int ac, char *av[])
 {
-    char *progname ="torii";
-
     torusLevels_t torii;
     const char *prototypeName="torus";
 
@@ -180,7 +178,7 @@ main(int ac, char *av[])
 
     bu_setprogname(av[0]);
 
-    progname = *av;
+    char *progname = *av;
 
     if (ac < 2) usage(progname);
 

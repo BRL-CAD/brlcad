@@ -10,6 +10,7 @@ set(art_ignore_files
   )
 CMAKEFILES(${art_ignore_files})
 
+set(Appleseed_ROOT "${CMAKE_BINARY_DIR}")
 find_package(Appleseed)
 if(NOT Appleseed_FOUND)
   message("'art' appleseed ray tracing is DISABLED")
@@ -17,6 +18,7 @@ if(NOT Appleseed_FOUND)
 endif(NOT Appleseed_FOUND)
 message("Found Appleseed: ${Appleseed_LIBRARIES}")
 
+set(Boost_ROOT "${CMAKE_BINARY_DIR}")
 set(Boost_USE_STATIC_LIBS OFF)
 find_package(Boost COMPONENTS chrono date_time filesystem regex system thread wave)
 if(NOT Boost_FOUND)
@@ -27,19 +29,6 @@ message("Found Boost: ${Boost_LIBRARIES}")
 
 string(REPLACE "\\" "/" APPLESEED_CONF_ROOT ${Appleseed_ROOT}) # use forward slashes
 CONFIG_H_APPEND(BRLCAD "#define APPLESEED_ROOT \"${APPLESEED_CONF_ROOT}\"\n")
-
-set(ART_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${OPTICAL_INCLUDE_DIRS}
-  ${FB_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${Appleseed_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  )
-list(REMOVE_DUPLICATES ART_INCLUDE_DIRS)
-BRLCAD_INCLUDE_DIRS(ART_INCLUDE_DIRS)
-
 
 set(ART_LIBS
   Threads::Threads
@@ -54,6 +43,10 @@ set(ART_LIBS
   ${M_LIBRARY}
   )
 
+set(ART_INCLUDE_DIRS
+  ${Appleseed_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  )
 
 set(ART_SRCS
   ../rt/do.c
@@ -67,7 +60,8 @@ set(ART_SRCS
 
 add_definitions(-DBOOST_ALL_DYN_LINK)
 BRLCAD_ADDEXEC(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
-
+target_include_directories(art BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(art PRIVATE ${ART_INCLUDE_DIRS})
 
 # copy precompiled appleseed.dll into same dir as art.exe
 

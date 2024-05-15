@@ -1,7 +1,7 @@
 /*                        B V . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,9 @@
 
 #include "./bv/defines.h"
 #include "./bv/adc.h"
+#include "./bv/lod.h"
+#include "./bv/polygon.h"
+#include "./bv/snap.h"
 #include "./bv/util.h"
 #include "./bv/vlist.h"
 #include "./bv/view_sets.h"

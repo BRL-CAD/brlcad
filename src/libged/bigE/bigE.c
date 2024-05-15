@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2023 United States Government as represented by
+ * Copyright (c) 1997-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2002,6 +2002,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
     /* XXX: where is this released? */
     BU_ALLOC(dgcdp, struct _ged_client_data);
     dgcdp->gedp = gedp;
+    dgcdp->v = gedp->ged_gvp;
     dgcdp->wdbp = wdb_dbopen(dgcdp->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     dgcdp->do_polysolids = 0;
     dgcdp->vs.color_override = 0;

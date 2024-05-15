@@ -26,8 +26,8 @@
 
   <para>Closes the current database file and
     opens <emphasis>database.g</emphasis>.
-    If <emphasis>database.g</emphasis> is not found, the current
-    database is left open.  If <emphasis> database.g</emphasis> is not
+    If <emphasis>database.g</emphasis> is not found, the user is prompted to create a new 
+    database of that name. If <emphasis>database.g</emphasis> is not
     specified on the command line, the name of the current database
     file is returned.
   </para>
@@ -39,6 +39,11 @@
   <para>Binary-incompatible v4 geometry database files that can be
     auto-detected will be automatically converted if all resulting
     matrices are valid.
+  </para>
+  <para>The <command>opendb</command>command will look in the current
+    working directory for the file. If the file is in another directory,
+    use the relative or full path to the file or use the <command>pwd</command>
+    and <command>cd</command> commands to navigate to the file's directory.
   </para>
 </refsection>
 
@@ -71,12 +76,26 @@
   <example><title>Open and upgrade a binary-incompatible v4 file.</title>
 
     <para>
-      <prompt>mged&gt; </prompt><userinput>opendb -f model.g</userinput>
-      <prompt>mged&gt; </prompt><userinput>dbupgrade</userinput>
+    <literallayout>
+<prompt>mged&gt; </prompt><userinput>opendb -f model.g</userinput>
+<prompt>mged&gt; </prompt><userinput>dbupgrade</userinput>
+    </literallayout>
     </para>
     <para>Closes any currently open database and
       opens <emphasis>model.g</emphasis> as a binary-incompatible v4
       geometry database.
+    </para>
+  </example>
+
+   <example><title>Open a database using the full path to the file.</title>
+
+    <para>
+    <literallayout>
+  <prompt>mged&gt; </prompt><userinput>opendb C:/cad_work/model.g</userinput>
+    </literallayout>
+    </para>
+    <para>Closes any currently open database and
+      opens <emphasis>model.g</emphasis> located at C:\cad_work\.
     </para>
   </example>
 

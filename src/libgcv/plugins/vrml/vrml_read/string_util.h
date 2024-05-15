@@ -1,7 +1,7 @@
 /*		     S T R I N G _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2023 United States Government as represented by
+ * Copyright (c) 2015-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,22 +38,20 @@
 #define KWPROTO        2
 #define MAXSTRSIZE     512
 
-using namespace std;
-
 char *nextWord(char *inputstring, char *nextwd);
 bool findKeyWord(char *inputstring, int kw);
-void stringcopy(string &str1, char *str2);
-int stringcompare(string &str1, char *str2);
+void stringcopy(std::string &str1, char *str2);
+int stringcompare(std::string &str1, char *str2);
 char *getNextWord(char *instring, char *nextword);
 char *getNextWord(char *nextword);
-void replaceStringChars(string &str, char ch,const char *rstring);
+void replaceStringChars(std::string &str, char ch,const char *rstring);
 void formatString(char *instring);
 int findFieldName(char *instring);
 void getSFVec4f(float *p);
 void getInt(int &n);
 void getFloat(float &n);
-void getCoordIndex(vector<int> &ccoordindex);
-void getPoint(vector<float> &cpoint);
+void getCoordIndex(std::vector<int> &ccoordindex);
+void getPoint(std::vector<float> &cpoint);
 
 #endif
 

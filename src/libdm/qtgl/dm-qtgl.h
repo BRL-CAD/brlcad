@@ -1,7 +1,7 @@
 /*                          D M - O G L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,10 +38,11 @@
 #endif
 
 #ifdef __cplusplus
-#  ifdef USE_QT6
-#    include <QOpenGLWidget>
-#  else
+#  include <QtGlobal>
+#  if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #    include <QtWidgets/QOpenGLWidget>
+#  else
+#    include <QOpenGLWidget>
 #  endif
 #endif
 

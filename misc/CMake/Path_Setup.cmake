@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,16 @@
 # Define relative install locations.  Don't set these if they have already
 # been set by some other means (like a higher level CMakeLists.txt file
 # including this one).
+
+# Note - Windows has different constraints than other platforms on the
+# relative placement of libraries and binaries.  We don't know of a
+# proven way to make the bin/lib layout work on Windows the way we do
+# on other platforms yet - the best candidate is probably:
+#
+# https://stackoverflow.com/a/2003775/2037687
+#
+# but it's implications for behavior and performance (or even whether
+# it can succeed at all with our code) are unknown.
 
 # The location in which to install BRL-CAD executables.
 if(NOT BIN_DIR)
@@ -100,61 +110,30 @@ endforeach(instdir ${INSTALL_DIRS})
 # build systems, so it is necessary to handle both cases on a
 # conditional basis.
 
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  # If we're not doing multi-configuration, just set the three main
-  # variables to the correct values.
-  if(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all libraries.")
-  endif(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  if(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all archives.")
-  endif(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  if(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building all executables.")
-  endif(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  # Multi-configuration is more difficult.  Not only do we need to
-  # properly set the output directories, but we also need to
-  # identify the "toplevel" directory for each configuration so
-  # we can place files, documentation, etc. in the correct
-  # relative positions.  Because files may be placed by CMake
-  # without a build target to put them in their proper relative build
-  # directory position using these paths, we must fully qualify them
-  # without using CMAKE_CFG_INTDIR.
-  #
-  # We define directories that may not be quite "standard"
-  # for a particular build tool - for example, native VS2010 projects use
-  # another directory to denote CPU type being compiled for - but CMake only
-  # supports multi-configuration setups having multiple configurations,
-  # not multiple compilers.
-  #
-  # One additional wrinkle we must watch for here is the case where
-  # a multi-configuration setup uses "." for its internal directory -
-  # if that's the case, we need to just set the various config output
-  # directories to the same value.
+# Set the three main variables to the correct values.
+if(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all libraries.")
+endif(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+if(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all archives.")
+endif(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+if(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building all executables.")
+endif(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+
+if (CMAKE_CONFIGURATION_TYPES)
+  # If the generator thinks it's doing multiconfig, we need to override its
+  # output variables to avoid the use of subdirectories
   set(CFG_ROOT ${${PROJECT_NAME}_BINARY_DIR})
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-      set(CFG_ROOT ${${PROJECT_NAME}_BINARY_DIR}/${CFG_TYPE})
-    endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    if(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
-      set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CFG_ROOT}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
-    endif(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
-    if(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
-      set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CFG_ROOT}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
-    endif(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
-    if(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
-      set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CFG_ROOT}/${BIN_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
-    endif(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
-    if(NOT DEFINED CMAKE_BINARY_DIR_${CFG_TYPE_UPPER})
-      set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${CFG_ROOT} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
-    endif(NOT DEFINED CMAKE_BINARY_DIR_${CFG_TYPE_UPPER})
-    if(NOT DEFINED ${PROJECT_NAME}_BINARY_DIR_${CFG_TYPE_UPPER})
-      set("${PROJECT_NAME}_BINARY_DIR_${CFG_TYPE_UPPER}" ${CFG_ROOT} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
-    endif(NOT DEFINED ${PROJECT_NAME}_BINARY_DIR_${CFG_TYPE_UPPER})
+    set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} CACHE INTERNAL "Single output directory for building all libraries.")
+    set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} CACHE INTERNAL "Single output directory for building all archives.")
+    set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} CACHE INTERNAL "Single output directory for building all executables.")
+    set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${CMAKE_BINARY_DIR} CACHE INTERNAL "Toplevel binary dir for all building.")
+    set("${PROJECT_NAME}_BINARY_DIR_${CFG_TYPE_UPPER}" ${CMAKE_BINARY_DIR} CACHE INTERNAL "Toplevel binary dir for all building.")
   endforeach()
-endif(NOT CMAKE_CONFIGURATION_TYPES)
+endif (CMAKE_CONFIGURATION_TYPES)
 
 # Local Variables:
 # tab-width: 8

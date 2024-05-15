@@ -1,7 +1,7 @@
 /*                     B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2023 United States Government as represented by
+ * Copyright (c) 2007-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,6 @@
 #include <algorithm>
 #include <set>
 #include <utility>
-
-#include "poly2tri/poly2tri.h"
 
 #include "assert.h"
 
@@ -81,6 +79,7 @@ extern "C" {
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
     int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
+    void rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
     RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
     struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
@@ -2395,11 +2394,13 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	RT_BREP_CK_MAGIC(bi);
 	model.Read(archive, &log);
 	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
-	ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(model.ImageFromIndex(0).ExclusiveModelComponent());
+
+	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
+	ON_ModelComponentReference cr = it.FirstComponentReference();
+	const ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->Geometry(nullptr)));
-	return 0;
     }
-    return -1;
+    return BRLCAD_OK;
 }
 
 
@@ -2530,6 +2531,24 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     bu_vls_strcat(str, description);
 
     return 0;
+}
+
+void
+rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_brep_internal* ip;
+
+    intern->idb_type = ID_BREP;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_brep_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->magic = RT_BREP_INTERNAL_MAGIC;
+    ip->brep = (ON_Brep *)brep_create();
 }
 
 
@@ -3001,17 +3020,17 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
     }
 }
 
-int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
+int rt_brep_plot_poly(struct bu_list *vhead, const struct directory *dp, struct rt_db_internal *ip,
 		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
 		      const struct bview *UNUSED(info))
 {
     TRACE1("rt_brep_plot");
 
-    if (!vhead || !pathp || pathp->fp_len <= 0 || !ip || !ttol || !tol)
+    if (!vhead || dp == RT_DIR_NULL || !ip || !ttol || !tol)
 	return -1;
 
     struct rt_brep_internal* bi;
-    const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
+    const char *solid_name =  dp->d_namep;
     ON_wString wstr;
     ON_TextLog tl(wstr);
 

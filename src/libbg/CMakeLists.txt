@@ -1,16 +1,5 @@
-# Include directories needed by libbg users
-set(BG_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BN_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
-  ${POLY2TRI_INCLUDE_DIRS}
-  ${SPSR_INCLUDE_DIR}
-  ${LMDB_INCLUDE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/other/ext/Eigen
-  )
-
-BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
+find_package_eigen(REQUIRED)
+BRLCAD_Find_Package(POLY2TRI REQUIRED)
 
 set(SPSR_srcs
   spsr/Allocator.h
@@ -60,19 +49,15 @@ set(LIBBG_SOURCES
   chull3d.cpp
   clip.c
   clipper.cpp
-  lod.cpp
   lseg_lseg.c
   lseg_pt.c
   obr.c
   plane.cpp
   polygon.c
-  polygon_bview.c
-  polygon_fill.cpp
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
   sat.c
-  snap.c
   spsr.c
   ${SPSR_srcs}
   tri_pt.c
@@ -87,7 +72,21 @@ set(LIBBG_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbv;libbn;libbu;${POLY2TRI_LIBRARIES};${LMDB_LIBRARIES}")
+# Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+set(BG_LIBS
+  ${libbg_deps}
+  ${POLY2TRI_LIBRARIES}
+  ${LMDB_LIBRARIES}
+  )
+
+set(BG_INCLUDE_DIRS
+  ${POLY2TRI_INCLUDE_DIRS}
+  ${SPSR_INCLUDE_DIR}
+  ${LMDB_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIR}
+  )
+
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
@@ -108,6 +107,15 @@ if (TARGET libbg-obj)
   set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
 endif (TARGET libbg-obj)
 
+# With newer GCC, optimized linking of SPSR triggers a compiler warning about a
+# new allocation potentially exceeding maximum object size.
+if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+  check_c_compiler_flag(-Wno-error=alloc-size-larger-than= HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+  if (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+    target_link_options(libbg PRIVATE -Wno-error=alloc-size-larger-than=)
+  endif (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
+
 add_subdirectory(tests)
 
 set(bg_ignore
@@ -115,6 +123,7 @@ set(bg_ignore
   bg_private.h
   clipper.hpp
   delaunator.hpp
+  detria.hpp
   earcut.hpp
   pointgen.c
   spsr/LICENSE

@@ -39,6 +39,11 @@ VALIDATE_STYLE("${bn_test_srcs}" bn_test)
 # WIP - needs to become real test
 BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
 
+# Testing with Eigen
+find_package_eigen(REQUIRED)
+BRLCAD_ADDEXEC(bn_eigen eigen.cpp "libbu;libbn" TEST)
+target_include_directories(bn_eigen SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+
 #
 #  *********** poly.c tests *************
 #
@@ -363,8 +368,33 @@ BRLCAD_ADD_TEST(NAME bn_ae_vec_2             COMMAND bn_test mat 15 -23.78,42,3.
 # The value of the returned vector seems to always have the same z value
 # irrespective of the input.
 
-BRLCAD_ADD_TEST(NAME bn_vec_ae_1             COMMAND bn_test mat 16 1 1 0.291926581820,0.454648713558,0.841470984697)
-BRLCAD_ADD_TEST(NAME bn_vec_ae_2             COMMAND bn_test mat 16 0.5 1.2 0.317998846662,0.173723561699,0.932039085893)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_00 COMMAND bn_test mat 16 0 0 1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_01 COMMAND bn_test mat 16 0  1.57079632679 0,0,1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_02 COMMAND bn_test mat 16 0 -1.57079632679 0,0,-1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_03 COMMAND bn_test mat 16 0  3.14159265359 -1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_04 COMMAND bn_test mat 16 0 -3.14159265359 -1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_05 COMMAND bn_test mat 16 1.57079632679 0 0,1,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_06 COMMAND bn_test mat 16 1.57079632679  1.57079632679 0,0,1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_07 COMMAND bn_test mat 16 1.57079632679 -1.57079632679 0,0,-1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_08 COMMAND bn_test mat 16 1.57079632679  3.14159265359 0,-1,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_09 COMMAND bn_test mat 16 1.57079632679 -3.14159265359 0,-1,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_10 COMMAND bn_test mat 16 -1.57079632679 0 0,-1,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_11 COMMAND bn_test mat 16 -1.57079632679  1.57079632679 0,0,1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_12 COMMAND bn_test mat 16 -1.57079632679 -1.57079632679 0,0,-1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_13 COMMAND bn_test mat 16 -1.57079632679  3.14159265359 0,1,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_14 COMMAND bn_test mat 16 -1.57079632679 -3.14159265359 0,1,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_15 COMMAND bn_test mat 16  3.14159265359 0 -1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_16 COMMAND bn_test mat 16  3.14159265359  1.57079632679 0,0,1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_17 COMMAND bn_test mat 16  3.14159265359 -1.57079632679 0,0,-1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_18 COMMAND bn_test mat 16  3.14159265359  3.14159265359 1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_19 COMMAND bn_test mat 16  3.14159265359 -3.14159265359 1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_20 COMMAND bn_test mat 16 -3.14159265359 0 -1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_21 COMMAND bn_test mat 16 -3.14159265359  1.5707963267 0,0,1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_22 COMMAND bn_test mat 16 -3.14159265359 -1.5707963267 0,0,-1)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_23 COMMAND bn_test mat 16 -3.14159265359  3.14159265359 1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_24 COMMAND bn_test mat 16 -3.14159265359 -3.14159265359 1,0,0)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_25 COMMAND bn_test mat 16 1 1 0.291926581820,0.454648713558,0.841470984697)
+BRLCAD_ADD_TEST(NAME bn_vec_ae_26 COMMAND bn_test mat 16 0.5 1.2 0.317998846662,0.173723561699,0.932039085893)
 
 # For function #17 (bn_vec_aed), the <args> format is as follows:
 #
@@ -394,7 +424,7 @@ BRLCAD_ADD_TEST(NAME bn_mat_angles_2         COMMAND bn_test mat 18 84.23 19.5 3
 # For function #19 (bn_mat_angles_rad), the <args> format is as follows:
 #
 # x y z <expected_result>
-#
+##
 # where x, y, z are the angles to rotate about their respective axes
 # x, y, z are floating point numbers and are in radians.
 

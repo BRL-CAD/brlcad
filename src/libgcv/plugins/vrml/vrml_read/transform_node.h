@@ -1,7 +1,7 @@
 /*		T R A N S F O R M _ N O D E. H
  * BRL-CAD
  *
- * Copyright (c) 2015-2023 United States Government as represented by
+ * Copyright (c) 2015-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ class TRANSFORM
     public:
     void transformChild(NODE *pnode);
     void matrotate(double *Result, double Theta, double x, double y, double z);
-    void transformSceneVert(vector<NODE *> &scenenoderef);
+    void transformSceneVert(std::vector<NODE *> &scenenoderef);
 };
 
 

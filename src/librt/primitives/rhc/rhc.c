@@ -1,7 +1,7 @@
 /*                           R H C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2023 United States Government as represented by
+ * Copyright (c) 1990-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1749,6 +1749,28 @@ rt_rhc_ifree(struct rt_db_internal *ip)
 
     bu_free((char *)xip, "rhc ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
+}
+
+void
+rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_rhc_internal* rhc_ip;
+
+    intern->idb_type = ID_RHC;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(rhc_ip, struct rt_rhc_internal);
+    intern->idb_ptr = (void *)rhc_ip;
+
+    rhc_ip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+    VSETALL(rhc_ip->rhc_V, 0);
+    VSET(rhc_ip->rhc_H, 0.0, 0.0, 1.0);
+    VSET(rhc_ip->rhc_B, 0.0, 1.0, 0.0);
+    rhc_ip->rhc_r = 1.0;
+    rhc_ip->rhc_c = 1.0;
 }
 
 

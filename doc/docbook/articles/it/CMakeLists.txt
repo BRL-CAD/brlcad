@@ -13,15 +13,19 @@ set(articles_IT_IMAGES
   images/brlcad-overview-data-flow.png
   images/sflogo.png
   )
-if(BRLCAD_EXTRADOCS)
-  ADD_DOC(articles_IT_IMAGES html/articles/it/images)
-else(BRLCAD_EXTRADOCS)
-  CMAKEFILES(${articles_IT_IMAGES})
-endif(BRLCAD_EXTRADOCS)
 
-ADD_DOCBOOK("HTML;PHP;PDF" articles_IT articles/it articles_IT_IMAGES_cp)
+if (TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    ADD_DOC(articles_IT_IMAGES html/articles/it/images)
+    ADD_DOCBOOK("HTML;PHP;PDF" articles_IT articles/it articles_IT_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif (TARGET mged OR TARGET qged OR TARGET archer)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${articles_IT}
+  ${articles_IT_IMAGES}
+  )
 
 # Local Variables:
 # tab-width: 8

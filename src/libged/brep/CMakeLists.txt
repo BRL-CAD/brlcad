@@ -1,5 +1,8 @@
-
 set(DPLOT_READER dplot)
+
+BRLCAD_Find_Package(PERPLEX REQUIRED NOINSTALL)
+BRLCAD_Find_Package(LEMON REQUIRED NOINSTALL)
+BRLCAD_Find_Package(RE2C REQUIRED NOINSTALL)
 
 PERPLEX_TARGET(
   ${DPLOT_READER}_scanner
@@ -16,6 +19,7 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${DPLOT_READER}_parser_${DPLOT_READER}_par
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
@@ -27,17 +31,18 @@ include_directories(
 set(BREP_SRCS
   ${PERPLEX_${DPLOT_READER}_scanner_SRC}
   ${LEMON_${DPLOT_READER}_parser_SRC}
-  curve.cpp
-  dplot.c
   brep.cpp
   conversion.cpp
   csg.cpp
+  dplot.c
+  geometry.cpp
   info.cpp
   intersect.cpp
   pick.cpp
   plot.cpp
-  surface.cpp
+  repair.cpp
   tikz.cpp
+  topology.cpp
   valid.cpp
   )
 

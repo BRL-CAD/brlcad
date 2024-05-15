@@ -1,7 +1,7 @@
 /*                    P O L Y C L I P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2023 United States Government as represented by
+ * Copyright (c) 2011-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -294,7 +294,10 @@ ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polyg
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
-    return bg_polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
+    plane_t pl;
+    bv_view_plane(&pl, gedp->ged_gvp);
+
+    return bg_polygons_overlap(polyA, polyB, &pl, &wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
 }
 
 static int

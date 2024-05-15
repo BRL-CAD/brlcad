@@ -1,7 +1,7 @@
 /*                     F B - Q T G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 1989-2023 United States Government as represented by
+ * Copyright (c) 1989-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ struct qtglinfo {
     int ac;
     char **av;
     QApplication *qapp = NULL;
-    QtGLWin *mw = NULL;
+    QgGLWin *mw = NULL;
 
     int cmap_size;		/* hardware colormap size */
     int win_width;              /* actual window width */
@@ -395,7 +395,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     fmt.setDepthBufferSize(24);
     QSurfaceFormat::setDefaultFormat(fmt);
 
-    qi->mw = new QtGLWin(ifp);
+    qi->mw = new QgGLWin(ifp);
     qi->mw->canvas->setFixedSize(width, height);
     qi->mw->adjustSize();
     qi->mw->setFixedSize(qi->mw->size());

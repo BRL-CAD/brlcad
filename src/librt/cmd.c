@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2023 United States Government as represented by
+ * Copyright (c) 1987-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,13 +97,11 @@ rt_read_cmd(register FILE *fp)
 #define MAXWORDS 4096	/* Max # of args per command */
 
 
+/* FUTURE: rtip for globbing */
 int
 rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab *tp)
-/* FUTURE:  for globbing */
-
-
 {
-    register int nwords;			/* number of words seen */
+    register int nwords;	/* number of words seen */
     char *cmd_args[MAXWORDS+1];	/* array of ptrs to args */
     char *lp;
     int retval;
@@ -131,8 +129,10 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 
     for (; tp->ct_cmd != (char *)0; tp++) {
 	if (cmd_args[0][0] != tp->ct_cmd[0] ||
-	    /* the length of "n" is not significant, just needs to be big enough */
-	   bu_strncmp(cmd_args[0], tp->ct_cmd, MAXWORDS) != 0)
+	    /* length of "n" is not significant, just needs to be big
+	     * enough
+	     */
+	    bu_strncmp(cmd_args[0], tp->ct_cmd, MAXWORDS) != 0)
 	    continue;
 	if ((nwords >= tp->ct_min)
 	    && ((tp->ct_max < 0) || (nwords <= tp->ct_max)))
@@ -150,6 +150,7 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
     bu_free(lp, "rt_do_cmd lp");
     return -1;			/* ERROR */
 }
+
 
 /* Note - see attr.cpp for the rt_cmd_attr implementation */
 
@@ -197,6 +198,7 @@ _rt_color_putrec(struct bu_vls *msg, struct db_i *dbip, struct mater *mp)
     }
 }
 
+
 /**
  * Used to release database resources occupied by a material record.
  */
@@ -223,6 +225,7 @@ _rt_color_zaprec(struct bu_vls *msg, struct db_i *dbip, struct mater *mp)
     mp->mt_daddr = MATER_NO_ADDR;
 }
 
+
 int
 rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
@@ -245,8 +248,9 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     }
 
     /* The -e option is not supported by this portion of the command
-     * implementation - see LIBGED's color command for how to handle the -e
-     * (edcolor) option at a higher level. */
+     * implementation - see LIBGED's color command for how to handle
+     * the -e (edcolor) option at a higher level.
+     */
     if (argc == 2) {
         if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
 	    if (msg)
@@ -317,6 +321,7 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+
 int
 rt_cmd_put(struct bu_vls *msg, struct rt_wdb *wdbp, int argc, const char **argv)
 {
@@ -344,57 +349,60 @@ rt_cmd_put(struct bu_vls *msg, struct rt_wdb *wdbp, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-     int i;
-     char type[16] = {0};
-     for (i = 0; argv[2][i] != 0 && i < 15; i++) {
-	 type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) : argv[2][i];
-     }
-     type[i] = 0;
+    int i;
+    char type[16] = {0};
+    for (i = 0; argv[2][i] != 0 && i < 15; i++) {
+	type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) : argv[2][i];
+    }
+    type[i] = 0;
 
-     const struct rt_functab *ftp = rt_get_functab_by_label(type);
-     if (ftp == NULL) {
-	 if (msg)
-	     bu_vls_printf(msg, "rt_cmd_put: %s is an unknown object type.", type);
-	 return BRLCAD_ERROR;
-     }
+    const struct rt_functab *ftp = rt_get_functab_by_label(type);
+    if (ftp == NULL) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_put: %s is an unknown object type.", type);
+	return BRLCAD_ERROR;
+    }
 
-     RT_CK_FUNCTAB(ftp);
+    RT_CK_FUNCTAB(ftp);
 
-     struct rt_db_internal intern;
-     RT_DB_INTERNAL_INIT(&intern);
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
 
-     if (ftp->ft_make) {
-	 ftp->ft_make(ftp, &intern);
-     } else {
-	 rt_generic_make(ftp, &intern);
-     }
+    if (ftp->ft_make) {
+	ftp->ft_make(ftp, &intern);
+    } else {
+	rt_generic_make(ftp, &intern);
+    }
 
-     /* The LIBBU struct parsing commands require a non-NULL logstr to work (??) -
-      * if the caller hasn't provided us a logging buffer, make a temporary one */
-     struct bu_vls *amsg;
-     struct bu_vls tmpmsg = BU_VLS_INIT_ZERO;
-     amsg = (msg) ? msg : &tmpmsg;
+    /* The LIBBU struct parsing commands require a non-NULL logstr to
+     * work (??) - if the caller hasn't provided us a logging buffer,
+     * make a temporary one
+     */
+    struct bu_vls *amsg;
+    struct bu_vls tmpmsg = BU_VLS_INIT_ZERO;
+    amsg = (msg) ? msg : &tmpmsg;
 
-     if (!ftp->ft_adjust || ftp->ft_adjust(amsg, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
-	 if (msg)
-	     bu_vls_printf(msg, "rt_cmd_put: error calling ft_adjust");
-	 bu_vls_free(&tmpmsg);
-	 rt_db_free_internal(&intern);
-	 return BRLCAD_ERROR;
-     }
-     bu_vls_free(&tmpmsg);
+    if (!ftp->ft_adjust || ftp->ft_adjust(amsg, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_put: error calling ft_adjust");
+	bu_vls_free(&tmpmsg);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&tmpmsg);
 
-     if (wdb_put_internal(wdbp, argv[1], &intern, 1.0) < 0) {
-	 if (msg)
-	     bu_vls_printf(msg, "rt_cmd_put: wdb_put_internal(%s)", argv[1]);
-	 rt_db_free_internal(&intern);
-	 return BRLCAD_ERROR;
-     }
+    if (wdb_put_internal(wdbp, argv[1], &intern, 1.0) < 0) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_put: wdb_put_internal(%s)", argv[1]);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
 
-     rt_db_free_internal(&intern);
+    rt_db_free_internal(&intern);
 
-     return BRLCAD_OK;
+    return BRLCAD_OK;
 }
+
 
 int
 rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
@@ -415,7 +423,9 @@ rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    /* If doing anything other than reporting, we need to be able to write */
+    /* If doing anything other than reporting, we need to be able to
+     * write.
+     */
     if (dbip->dbi_read_only) {
 	if (msg)
 	    bu_vls_printf(msg, "rt_cmd_title: database is read-only\n");
@@ -435,6 +445,7 @@ rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 
     return BRLCAD_OK;
 }
+
 
 int
 rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
@@ -478,7 +489,7 @@ rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 		bu_vls_printf(msg, "%s", str);
 	    else
 		bu_vls_printf(msg, "You are editing in '%s'.  1 %s = %g mm \n",
-			str, str, dbip->dbi_local2base);
+			      str, str, dbip->dbi_local2base);
 	}
 
 	return BRLCAD_OK;
@@ -496,8 +507,8 @@ rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     if ((loc2mm = bu_mm_value(argv[1])) <= 0) {
 	if (msg)
 	    bu_vls_printf(msg,
-		    "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
-		    argv[1]);
+			  "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
+			  argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -513,7 +524,7 @@ rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     if (!str) str = "Unknown_unit";
     if (msg)
 	bu_vls_printf(msg, "You are now editing in '%s'.  1 %s = %g mm \n",
-		str, str, dbip->dbi_local2base);
+		      str, str, dbip->dbi_local2base);
 
     return BRLCAD_OK;
 }

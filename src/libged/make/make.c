@@ -1,7 +1,7 @@
 /*                         M A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -646,10 +646,10 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	VSET(&bot_ip->vertices[3], origin[X]-0.5*scale, origin[Y]+0.5*scale, origin[Z]-scale);
 	VSET(&bot_ip->vertices[6], origin[X]-0.5*scale, origin[Y]-0.5*scale, origin[Z]-scale);
 	VSET(&bot_ip->vertices[9], origin[X]+0.5*scale, origin[Y]+0.5*scale, origin[Z]-scale);
-	VSET(&bot_ip->faces[0], 0, 1, 3);
+	VSET(&bot_ip->faces[0], 0, 3, 1);
 	VSET(&bot_ip->faces[3], 0, 1, 2);
 	VSET(&bot_ip->faces[6], 0, 2, 3);
-	VSET(&bot_ip->faces[9], 1, 2, 3);
+	VSET(&bot_ip->faces[9], 1, 3, 2);
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "extrude")) {
 	char *av[8];
 	char center_str[512];

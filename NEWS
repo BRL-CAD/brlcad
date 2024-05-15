@@ -10,7 +10,91 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 202X-XX-XX  Release 7.36.0                                     ---
+--- 202X-XX-XX  Release 7.XX.X                                     ---
+----------------------------------------------------------------------
+
+* updated OpenNURBS library to version 8.3.23346.03050 - Cliff Yapp
+* added man pages for 'bot check' and 'bot extrude' cmds - Cliff Yapp
+* enhanced bot extrude command to output a BoT mesh - Cliff Yapp
+* added bot check manifold cmd for bot validity testing - Cliff Yapp
+* added bot repair command for filling holes in meshes - Cliff Yapp
+* added Utah RLE image reading and writing to libicv - Cliff Yapp
+* added "standardize" option to GED attr command - Cliff Yapp
+* added -L option to dbconcat for lazy prefix/suffix use - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2024-03-18  Release 7.38.2                                     ---
+----------------------------------------------------------------------
+
+* added "rtsurf" exterior surface area tool prototype - Sean Morrison
+* updated sqlite3 to version 3.45.1 - Cliff Yapp
+* updated libpng to version 1.6.43 - Cliff Yapp
+* updated zlib to version 1.3.1 - Cliff Yapp
+* updated and corrected dbconcat man page - Cliff Yapp
+* improved ambient occlusion rt during -k cut planes - Sean Morrison
+* changed rt ambient occlusion randomization default - Sean Morrison
+* added ambient occlusion example to rt manual pages - Sean Morrison
+* fixed rtweight output display inside MGED - Chris McGregor
+* added shipping container example geometry model - Josh Baker
+* added traffic light example geometry model - Chris McGregor
+* improved rtwizard command-line option reporting - Sean Morrison
+* added self-intersecting torus ray tracing support - Sean Morrison
+* fixed rt crash rendering to -F/dev/null - Sean Morrison
+* added mater man page density table example - Chris McGregor
+* adjusted default ghosting intensity in rtwizard - Josh Baker
+* fixed MGED command line handling of objects named 'y' - Cliff Yapp
+* fix double printing of last 'search -exec' result - Chris McGregor
+* improve 'search -v' to support multiple levels - Chris McGregor
+* update 'search -v' to report # of objects found - Chris McGregor
+* added a "bots only" mode to conversion.sh script - Cliff Yapp
+* fixed asc2g/g2asc support for brep primitives - Cliff Yapp
+* added brep and bot versions of pinewood .g model - Josh Baker
+* added new .g example file "Annual Gift Man" - Josh Baker
+* fixed dsp terrain file data loading for relative paths - Cliff Yapp
+* updated Manifold lib for improved facetize robustness - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2023-11-06  Release 7.38.0                                     ---
+----------------------------------------------------------------------
+This major release of BRL-CAD introduces significant improvements to
+the robustness of the facetize command by leveraging the Manifold
+library for boolean evaluation of meshes. Facetization is an operation
+that converts boolean CSG hierarchies to evaluated triangle meshes,
+commonly used as a preliminary step in geometry export.  As an
+example, the following results show before-and-after differences when
+processing high level assemblies in BRL-CAD's example geometry files:
+
+% success, old: 88.9%  (249 of 280) Time elapsed:  7256 seconds
+% success, new: 98.9%  (277 of 280) Time elapsed:  1044 seconds
+
+* add 'brep dump' subcommand to write out brep objects - Cliff Yapp
+* improve 'x' default behavior in MGED - Chris McGregor
+* fixed 'edcolor' and 'color -e' on Windows - Chris McGregor
+* ported fbcolor, fblabel, fbpoint, fbzoom to Windows - Sean Morrison
+* new 'gist' tool for generating 1-page geometry info summary reports
+	- Allyson Hoskinson, Andrew Plant, Mark Sturtevant,
+        - Danny Chen, Michael Tao, Sean Morrison
+* add support for dbconcat -O (overwrite) - Chris McGregor
+* improved 'lc' -d and -m interactions with aircodes - Chris McGregor
+* fixed 'make bot' inverted face normals - Chris McGregor
+* fixed 'l' evaluation for pathed objects - Chris McGregor
+* improved MGED faceplate params control, added font_size - Cliff Yapp
+* fix MGED 'brep' command crashing without database open - Cliff Yapp
+* fix MGED 'pnts read' and 'make_pnts' commands - Chris McGregor
+* improved NURBS editing functionality - Gregory Li
+* fix MGED 'listval' crashing with max path lengths - Chris McGregor
+* fixed garbage_collect MGED command on Windows - Cliff Yapp
+* fixed archer crashing with 'make' command - Cliff Yapp
+* improved and restructured rtwizard's manual page - Sean Morrison
+* fixed E command in MGED - Cliff Yapp
+* made improvements to a variety of manual pages - Josh Baker
+* remove bundled burst tool (DEPRECATED 7.32) - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2023-07-26  Release 7.36.0                                     ---
 ----------------------------------------------------------------------
 This major release of BRL-CAD introduces significant updates to
 geometry conversion support. The update includes modernization for

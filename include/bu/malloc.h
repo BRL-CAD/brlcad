@@ -1,7 +1,7 @@
 /*                     M A L L O C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -140,7 +140,7 @@ BU_EXPORT extern void *bu_realloc(void *ptr,
  * consume the memory in somewhat larger chunks, but overall little
  * unused memory will be consumed.
  */
-BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
+BU_EXPORT extern size_t bu_malloc_len_roundup(size_t nbytes);
 
 /**
  * really fast heap-based memory allocation intended for "small"

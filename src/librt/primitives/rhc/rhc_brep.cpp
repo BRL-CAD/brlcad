@@ -1,7 +1,7 @@
 /*                    R H C _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -114,9 +114,15 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     bp->SetExtents(0, bp->Domain(0));
     bp->SetExtents(1, bp->Domain(1));
     (*b)->m_S.Append(bp);
+
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
     (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true);
+
+    /* boundary curves should be copied by this point */
+    delete hypnurbscurve;
+    delete straightedge;
+
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
     bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
     bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);

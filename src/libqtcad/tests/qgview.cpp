@@ -1,7 +1,7 @@
 /*                     Q G V I E W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2021-2023 United States Government as represented by
+ * Copyright (c) 2021-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,8 +46,6 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
     itm->open();
     for (int j = 0; j < itm->childCount(); j++) {
 	QgItem *c = itm->child(j);
-	if (s->instances->find(c->ihash) == s->instances->end())
-	    continue;
 	open_children(c, s, depth+1, max_depth);
     }
 }

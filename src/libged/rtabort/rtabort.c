@@ -1,7 +1,7 @@
 /*                         R T A B O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,13 +60,13 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
 	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	const char *cmd;
-	int argcnt = bu_process_args(&cmd, NULL, rrp->p);
+	int argcnt = bu_process_args_n(rrp->p, &cmd, NULL);
 	bu_vls_trunc(&cmdroot, 0);
 	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
 	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt") ||
 		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtwizard") || BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "art") ||
 		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtcheck"))  {
-		bu_terminate(bu_process_pid(rrp->p));
+		bu_pid_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 	    }
 	}

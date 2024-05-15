@@ -1,7 +1,7 @@
 /*                        G - A C A D . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2023 United States Government as represented by
+ * Copyright (c) 1996-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -636,7 +636,7 @@ main(int argc, char **argv)
 			&tree_state,
 			0,			/* take all regions */
 			do_region_end,
-			nmg_booltree_leaf_tess,
+			rt_booltree_leaf_tess,
 			(void *)NULL);	/* in librt/nmg_bool.c */
 
     if (regions_tried>0) {

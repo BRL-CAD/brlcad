@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2023 United States Government as represented by
+ * Copyright (c) 2001-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,9 @@
 #include "bu/malloc.h"
 #include "bu/time.h"
 #include "bu/vls.h"
+#include "bu/str.h"
+#include "bu/parallel.h"
+#include "bu/process.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
@@ -147,6 +150,29 @@ temp_add_to_list(const char *fn, int fd)
     all_temp_files.size++;
 }
 
+#define MAX_FILELEN 25	/* arbitrary len */
+const char*
+bu_temp_file_name(char* filename, size_t len)
+{
+    static char buf[MAX_FILELEN] = {0};
+
+    memset(buf, 0, MAX_FILELEN);
+
+    /* create name in form of prefix_procID_threadID */
+    char* prefix = (filename && filename[0]) ? filename : PACKAGE_NAME;
+    int procID = bu_pid();
+    int threadID = bu_thread_id();
+    snprintf(buf, MAX_FILELEN, "%s_%d_%d", prefix, procID, threadID);
+
+    /* if user supplied buffer, copy over */
+    if (len > 0 && strlen(buf) > 0) {
+	int maxlen = len > MAX_FILELEN ? MAX_FILELEN : len; /* cap len at MAX_FILELEN */
+	bu_strlcpy(filename, buf, maxlen);
+	return filename;
+    }
+
+    return buf;
+}
 
 #ifndef HAVE_MKSTEMP
 static int

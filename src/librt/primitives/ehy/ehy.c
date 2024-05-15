@@ -1,7 +1,7 @@
 /*                           E H Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2023 United States Government as represented by
+ * Copyright (c) 1990-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1944,6 +1944,29 @@ rt_ehy_ifree(struct rt_db_internal *ip)
 
     bu_free((char *)xip, "ehy ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
+}
+
+void
+rt_ehy_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_ehy_internal* ehy_ip;
+
+    intern->idb_type = ID_EHY;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ehy_ip, struct rt_ehy_internal);
+    intern->idb_ptr = (void *)ehy_ip;
+
+    ehy_ip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+    VSETALL(ehy_ip->ehy_V, 0);
+    VSET(ehy_ip->ehy_H, 0.0, 0.0, 1.0);
+    VSET(ehy_ip->ehy_Au, 0.0, 1.0, 0.0);
+    ehy_ip->ehy_r1 = 1.0;
+    ehy_ip->ehy_r2 = 1.0;
+    ehy_ip->ehy_c = 1.0;
 }
 
 

@@ -1,7 +1,7 @@
 /*                       T R I M E S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -381,7 +381,8 @@ bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
 	bedge_cnt = bg_trimesh_solid2(vcnt, fcnt, v, f, NULL);
     }
 
-    return bedge_cnt;
+    /* returns true when not solid */
+    return (bedge_cnt > 0) ? 1 : 0;
 }
 
 int

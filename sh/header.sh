@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2023 United States Government as represented by
+# Copyright (c) 2004-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 #
 #   sh/header.sh BSD configure.ac
 #
-#   find . -type f -name CMakeLists.txt -not -regex '.*src/other.*' -exec sh/header.sh BSD {} \;
+#   find . -type f -name CMakeLists.txt -exec sh/header.sh BSD {} \;
 #
 #   find src/lib* -type f \( -name \*.c -or -name \*.h \) -exec sh/header.sh LGPL {} \;
 #

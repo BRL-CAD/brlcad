@@ -1,7 +1,7 @@
 /*                     D B 5 _ A T T R . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2023 United States Government as represented by
+ * Copyright (c) 2000-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,109 +37,114 @@
 #include "rt/db5.h"
 #include "raytrace.h"
 
-/* this is the master source of standard and registered attribute information */
+/* this is the master source of standard and registered attribute
+ * information
+ */
 const struct db5_attr_ctype db5_attr_std[] = {
     { ATTR_REGION, 0, ATTR_STANDARD,
-	"region",
-	"boolean",
-	"Yes, R, 1, 0", /* example */
-	"", /* aliases, if any */
-	"Region Flag", /* property, if any */
-	/* long_description, if any: */
-	"The Region Flag identifies a particular geometric combination as being a solid material; in other words, any geometry below this combination in the tree can overlap without the overlap being regarded as a non-physical description, since it is the combination of all descriptions in the region object that defines the physical volume in space."
+      "region",
+      "boolean",
+      "Yes, R, 1, 0", /* example */
+      "", /* aliases, if any */
+      "Region Flag", /* property, if any */
+      /* long_description, if any: */
+      "The Region Flag identifies a particular geometric combination as being a solid material; in other words, any geometry below this combination in the tree can overlap without the overlap being regarded as a non-physical description, since it is the combination of all descriptions in the region object that defines the physical volume in space."
 
     },
     { ATTR_REGION_ID, 0, ATTR_STANDARD,
-	"region_id",
-	"an integer",
-	"0, -1, and positive integers", /* examples */
-	"id",  /* aliases, if any */
-	"Region Identifier Number",  /* property, if any */
-	/* long_description, if any: */
-	"The Region Identifier Number identifies a particular region with a unique number. This allows multiple region objects to be regarded as being the same type of region, without requiring that they be included in the same combination object."
+      "region_id",
+      "an integer",
+      "0, -1, and positive integers", /* examples */
+      "id",  /* aliases, if any */
+      "Region Identifier Number",  /* property, if any */
+      /* long_description, if any: */
+      "The Region Identifier Number identifies a particular region with a unique number. This allows multiple region objects to be regarded as being the same type of region, without requiring that they be included in the same combination object."
     },
     { ATTR_MATERIAL_ID, 0, ATTR_STANDARD,
-	"material_id",
-	"zero or positive integer (user-defined)",
-	"", /* examples */
-	"giftmater,mat",  /* aliases, if any */
-	"Material Identifier Number",  /* property, if any */
-	/* long_description, if any: */
-	"The Material ID Number corresponds to an entry in a DENSITIES table, usually contained in a text file.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
+      "material_id",
+      "zero or positive integer (user-defined)",
+      "", /* examples */
+      "giftmater, mat",  /* aliases, if any */
+      "Material Identifier Number",  /* property, if any */
+      /* long_description, if any: */
+      "The Material ID Number corresponds to an entry in a DENSITIES table, usually contained in a text file.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
     },
-	{ ATTR_MATERIAL_NAME, 0, ATTR_STANDARD,
-	"material_name",
-	"empty or content-filled string (user-defined)",
-	"", /* examples */
-	"material",  /* aliases, if any */
-	"Material Name",  /* property, if any */
-	/* long_description, if any: */
-	"The Material Name corresponds to an entry in a DENSITIES table or material objects, usually contained in a text file that are imported through the material command.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
+    { ATTR_MATERIAL_NAME, 0, ATTR_STANDARD,
+      "material_name",
+      "empty or content-filled string (user-defined)",
+      "", /* examples */
+      "material",  /* aliases, if any */
+      "Material Name",  /* property, if any */
+      /* long_description, if any: */
+      "The Material Name corresponds to an entry in a DENSITIES table or material objects, usually contained in a text file that are imported through the material command.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
     },
     { ATTR_AIR, 0, ATTR_STANDARD,
-	"aircode",
-	"an integer (application defined)",
-	"'0', '1', or '-2'", /* examples */
-	"air",  /* aliases, if any */
-	"Air Code",  /* property, if any */
-	/* long_description, if any: */
-	"Any non-zero Air Code alerts the raytracer that the region in question is modeling air which is handled by specialized rules in LIBRT."
+      "aircode",
+      "an integer (application defined)",
+      "'0', '1', or '-2'", /* examples */
+      "air",  /* aliases, if any */
+      "Air Code",  /* property, if any */
+      /* long_description, if any: */
+      "Any non-zero Air Code alerts the raytracer that the region in question is modeling air which is handled by specialized rules in LIBRT."
     },
     { ATTR_LOS, 0, ATTR_STANDARD,
-	"los",
-	"an integer in the inclusive range: 0 to 100",
-	"'24' or '100'", /* examples */
-	"",  /* aliases, if any */
-	"Line of Sight Thickness Equivalence",  /* property, if any */
-	/* long_description, if any: */
-	""
+      "los",
+      "an integer in the inclusive range: 0 to 100",
+      "'24' or '100'", /* examples */
+      "",  /* aliases, if any */
+      "Line of Sight Thickness Equivalence",  /* property, if any */
+      /* long_description, if any: */
+      ""
     },
     { ATTR_COLOR, 0, ATTR_STANDARD,
-	"color",
-	"a 3-tuple of RGB values",
-	"\"0 255 255\"", /* examples */
-	"rgb",  /* aliases, if any */
-	"Color",  /* property, if any */
-	""  /* long_description, if any */
+      "color",
+      "a 3-tuple of RGB values",
+      "\"0 255 255\"", /* examples */
+      "rgb",  /* aliases, if any */
+      "Color",  /* property, if any */
+      ""  /* long_description, if any */
     },
     { ATTR_SHADER, 0, ATTR_STANDARD,
-	"shader",
-	"a string of shader characteristics in a standard format",
-	"", /* examples */
-	"oshader",  /* aliases, if any */
-	"Shader Name",  /* property, if any */
-	/* long_description, if any: */
-	"LIBRT can use a variety of shaders when rendering.  This attribute holds a text string which corresponds to the name and other details of the shader to be used."
+      "shader",
+      "a string of shader characteristics in a standard format",
+      "", /* examples */
+      "oshader",  /* aliases, if any */
+      "Shader Name",  /* property, if any */
+      /* long_description, if any: */
+      "LIBRT can use a variety of shaders when rendering.  This attribute holds a text string which corresponds to the name and other details of the shader to be used."
     },
     { ATTR_INHERIT, 0, ATTR_STANDARD,
-	"inherit",
-	"boolean",
-	"Yes, 1, 0", /* examples */
-	"",  /* aliases, if any */
-	"Inherit Properties",  /* property, if any */
-	/* long_description, if any: */
-	"The Inherit Properties value, if true, indicates all child objects inherit the attributes of this parent object."
+      "inherit",
+      "boolean",
+      "Yes, 1, 0", /* examples */
+      "",  /* aliases, if any */
+      "Inherit Properties",  /* property, if any */
+      /* long_description, if any: */
+      "The Inherit Properties value, if true, indicates all child objects inherit the attributes of this parent object."
     },
     { ATTR_TIMESTAMP, 1, ATTR_STANDARD, /* first binary attribute */
-	"mtime",
+      "mtime",
 
-	"a binary time stamp for an object's last mod time (the time is displayed in human-readable form with the 'attr' command)",
+      "a binary time stamp for an object's last mod time (the time is displayed in human-readable form with the 'attr' command)",
 
-	"", /* examples */
-	"timestamp,time_stamp,modtime,mod_time,mtime",  /* aliases, if any */
-	"Time Stamp",  /* property, if any */
-	/* long_description, if any: */
-	""
+      "", /* examples */
+      "timestamp, time_stamp, modtime, mod_time, mtime",  /* aliases, if any */
+      "Time Stamp",  /* property, if any */
+      /* long_description, if any: */
+      ""
     },
     { ATTR_NULL, 0, ATTR_UNKNOWN_ORIGIN, "", "", "", "", "", "" }
 };
 
+
 const char *
 db5_standard_attribute(int idx)
 {
-    if (idx >= ATTR_NULL) return NULL;
+    if (idx >= ATTR_NULL)
+	return NULL;
     return db5_attr_std[idx].name;
 }
+
 
 int
 db5_is_standard_attribute(const char *attr_want)
@@ -147,15 +152,20 @@ db5_is_standard_attribute(const char *attr_want)
     int i = 0;
     const char *attr_have = NULL;
 
-    if (!attr_want) return 0;
+    if (!attr_want)
+	return 0;
 
     for (i = 0; (attr_have = db5_standard_attribute(i)) != NULL; i++) {
-	if (BU_STR_EQUIV(attr_want, attr_have)) return 1;
+	if (BU_STR_EQUIV(attr_want, attr_have)) {
+	    return 1;
+	}
     }
 
     return 0;
 }
 
+
+#define COMMA ','
 
 int
 db5_standardize_attribute(const char *attr)
@@ -163,7 +173,8 @@ db5_standardize_attribute(const char *attr)
     int curr_attr = 0;
     struct bu_vls alias;
     const char *curr_pos, *next_pos;
-    if (!attr) return ATTR_NULL;
+    if (!attr)
+	return ATTR_NULL;
     bu_vls_init(&alias);
     while (db5_attr_std[curr_attr].attr_type != ATTR_NULL) {
 	if (BU_STR_EQUIV(attr, db5_attr_std[curr_attr].name)) {
@@ -172,7 +183,7 @@ db5_standardize_attribute(const char *attr)
 	}
 	curr_pos = db5_attr_std[curr_attr].aliases;
 	while (curr_pos && strlen(curr_pos) > 0) {
-	    next_pos = strchr(curr_pos+1, ',');
+	    next_pos = strchr(curr_pos+1, COMMA);
 	    if (next_pos) {
 		bu_vls_strncpy(&alias, curr_pos, next_pos - curr_pos);
 		if (BU_STR_EQUIV(attr, bu_vls_addr(&alias))) {
@@ -283,12 +294,16 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 	    (void)attr_add(&newavs, attr_type, stdattr, avpp->value);
 	} else if (attr_type != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
 
-	    /* case 2: name is "standardizable", but we already added the same value */
+	    /* case 2: name is "standardizable", but we already added
+	     * the same value
+	     */
 
 	    /* ignore/skip it (because it's the same value) */
 	} else if (attr_type != ATTR_NULL && !BU_STR_EQUAL(added, avpp->value)) {
 
-	    /* case 3: name is "standardizable", but we already added something else */
+	    /* case 3: name is "standardizable", but we already added
+	     * something else
+	     */
 
 	    /* preserve the conflict, keep the old value too */
 	    (void)attr_add(&newavs, attr_type, avpp->name, avpp->value);
@@ -314,7 +329,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     int ret;
     size_t i;
     long int attr_num_val;
-	char *attr_char_val;
+    char *attr_char_val;
     /*double attr_float_val;*/
     char *endptr = NULL;
     int color[3] = {-1, -1, -1};
@@ -367,15 +382,15 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 	comb->GIFTmater = 0;
     }
 
-	/* material_name */
+    /* material_name */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_MATERIAL_NAME)));
     bu_vls_trimspace(&newval);
     if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
-  endptr = bu_vls_addr(&newval) +  strlen(bu_vls_addr(&newval));
+	endptr = bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval));
 	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
-		attr_char_val = bu_vls_strdup(&newval);
-		bu_vls_strcpy(&comb->material, attr_char_val);
-		// set the material_id using this material_name
+	    attr_char_val = bu_vls_strdup(&newval);
+	    bu_vls_strcpy(&comb->material, attr_char_val);
+	    // set the material_id using this material_name
 	} else {
 	    bu_log("WARNING: [%s] has invalid material_name value [%s]\nmaterial_name remains at %s\n", name, bu_vls_addr(&newval), bu_vls_strdup(&comb->material));
 	}
@@ -405,8 +420,9 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     if (bu_vls_strlen(&newval) != 0
 	&& !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")
 	&& !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
-	/* Currently, struct rt_comb_internal lists los as a long.  Probably should allow
-	 * floating point, but as it's DEPRECATED anyway I suppose we can wait for that? */
+	/* Currently, struct rt_comb_internal lists los as a long.
+	 * Probably should allow floating point, but as it's
+	 * DEPRECATED anyway I suppose we can wait for that? */
 	/* attr_float_val = strtod(bu_vls_addr(&newval), &endptr); */
 	attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
 	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
@@ -501,7 +517,7 @@ db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_i
 	bu_avs_remove(avs, db5_standard_attribute(ATTR_MATERIAL_ID));
     }
 
-	/* Material Name */
+    /* Material Name */
     if (bu_vls_strlen(&comb->material) != 0) {
 	bu_vls_sprintf(&newval, "%s", bu_vls_strdup(&comb->material));
 	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_NAME), &newval);

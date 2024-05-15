@@ -20,11 +20,11 @@ endif(BRLCAD_ENABLE_QT)
 
 set(view_info_srcs
   view_info.cpp
-  view_model.cpp
+  CADViewModel.cpp
   )
 
 set(view_info_moc_headers
-  view_model.h
+  CADViewModel.h
   )
 
 if(BRLCAD_ENABLE_QT)
@@ -49,7 +49,7 @@ if(BRLCAD_ENABLE_QT)
 
   DISTCLEAN(
     icon.qrc.depends
-    moc_view_model.cpp_parameters
+    moc_CADViewModel.cpp_parameters
     )
 
 endif(BRLCAD_ENABLE_QT)

@@ -1,7 +1,7 @@
 /*                           S A T . C
  * BRL-CAD
  *
- * Copyright (c) 2022-2023 United States Government as represented by
+ * Copyright (c) 2022-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "bu.h"
+#include "bn.h"
 #include "bg.h"
 
 void

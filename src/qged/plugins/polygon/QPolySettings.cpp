@@ -1,7 +1,7 @@
 /*                 Q P O L Y S E T T I N G S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,8 @@
 
 #include <QLabel>
 #include <QString>
+#include <QMessageBox>
+#include "bu/malloc.h"
 #include "bg/polygon.h"
 #include "QPolySettings.h"
 
@@ -56,15 +58,15 @@ QPolySettings::QPolySettings()
     sn->setLayout(snl);
     l->addWidget(sn);
 
-    edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
+    edge_color = new QgColorRGB(this, "Edge:", QColor(Qt::yellow));
     l->addWidget(edge_color);
-    QObject::connect(edge_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
+    QObject::connect(edge_color, &QgColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
     fill_poly = new QCheckBox("Shade polygon interiors");
     l->addWidget(fill_poly);
     QObject::connect(fill_poly, &QCheckBox::toggled, this, &QPolySettings::do_settings_changed);
-    fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
+    fill_color = new QgColorRGB(this, "Fill:", QColor(Qt::blue));
     l->addWidget(fill_color);
-    QObject::connect(fill_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
+    QObject::connect(fill_color, &QgColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
 
     QFont f("");
     f.setStyleHint(QFont::Monospace);
@@ -115,11 +117,69 @@ QPolySettings::QPolySettings()
     dw->setLayout(hd);
     l->addWidget(dw);
 
+    QWidget *zw = new QWidget();
+    QHBoxLayout *zl = new QHBoxLayout();
+    zl->setSpacing(0);
+    zl->setContentsMargins(1,1,1,1);
+    QLabel *zlbl = new QLabel("vZ");
+    vZ = new QLineEdit(QString("0"));
+    QObject::connect(vZ, &QLineEdit::editingFinished, this, &QPolySettings::do_settings_changed);
+    zl->addWidget(zlbl);
+    zl->addWidget(vZ);
+    zw->setLayout(zl);
+    l->addWidget(zw);
+
+    line_snapping = new QCheckBox("Line Snapping");
+    l->addWidget(line_snapping);
+    QObject::connect(line_snapping, &QCheckBox::toggled, this, &QPolySettings::do_line_snapping_changed);
+
+    grid_snapping = new QCheckBox("Grid Snapping");
+    l->addWidget(grid_snapping);
+    QObject::connect(grid_snapping, &QCheckBox::toggled, this, &QPolySettings::do_grid_snapping_changed);
+
     this->setLayout(l);
 }
 
 QPolySettings::~QPolySettings()
 {
+}
+
+bool
+QPolySettings::uniq_obj_name(struct bu_vls *oname, struct bview *v)
+{
+    if (!v || !oname)
+	return false;
+
+    char *vname = NULL;
+    if (view_name->placeholderText().length()) {
+	vname = bu_strdup(view_name->placeholderText().toLocal8Bit().data());
+    }
+    // If we have a full entry, overwrite the placeholder
+    if (view_name->text().length()) {
+	bu_free(vname, "vname");
+	vname = bu_strdup(view_name->text().toLocal8Bit().data());
+    }
+
+    // See if the supplied name will collide.  If it will, then reject.  If we want
+    // an output name, fail with a message box
+    struct bu_vls ovname = BU_VLS_INIT_ZERO;
+    bv_uniq_obj_name(&ovname, vname, v);
+    if (!BU_STR_EQUAL(bu_vls_cstr(&ovname), vname)) {
+	if (!oname)
+	    return false;
+	QMessageBox msgBox;
+	msgBox.setText("Proposed object name already exists in view.");
+	msgBox.exec();
+	bu_vls_free(&ovname);
+	bu_free(vname, "vname");
+	return false;
+    }
+
+    // Unique.  If we want it returned, do the printing
+    if (oname)
+	bu_vls_sprintf(oname, "%s", vname);
+
+    return true;
 }
 
 void
@@ -142,6 +202,20 @@ QPolySettings::do_settings_changed()
 {
     emit settings_changed();
 }
+
+
+void
+QPolySettings::do_line_snapping_changed()
+{
+    emit line_snapping_changed(line_snapping->isChecked());
+}
+
+void
+QPolySettings::do_grid_snapping_changed()
+{
+    emit grid_snapping_changed(grid_snapping->isChecked());
+}
+
 
 void
 QPolySettings::settings_sync(struct bv_scene_obj *p)
@@ -181,6 +255,10 @@ QPolySettings::settings_sync(struct bv_scene_obj *p)
 	fill_poly->setChecked(false);
     }
     fill_poly->blockSignals(false);
+
+    vZ->blockSignals(true);
+    vZ->setText(QVariant(ip->vZ).toString());
+    vZ->blockSignals(false);
 
     // Values set, now update the button colors
     this->blockSignals(true);

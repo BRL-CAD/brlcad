@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2023 United States Government as represented by
+ * Copyright (c) 1988-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -192,11 +192,13 @@ db_open(const char *name, const char *mode)
      * dbip->dbi_filepath to argv.  arg values and array memory are
      * released during db_close.
      */
+    char *nname = bu_file_realpath(name, NULL);
     argv = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
     argv[0] = bu_strdup(".");
-    argv[1] = bu_path_dirname(name);
+    argv[1] = bu_path_dirname(nname);
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
+    bu_free(nname, "realpath");
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* If not a full path */
@@ -507,6 +509,38 @@ db_close(register struct db_i *dbip)
 
     dbip->dbi_magic = (uint32_t)0x10101010;
     bu_free((char *)dbip, "struct db_i");
+}
+
+int
+db_filetype(const char *fname)
+{
+    // If we can't open it, there's no way to tell if it's
+    // a .g file
+    if (!fname)
+	return -1;
+    FILE *fp = fopen(fname, "rb");
+    if (!fp)
+	return -1;
+
+    // Get the file header - if we can't do that, it's not
+    // a .g file
+    unsigned char header[8];
+    if (fread(header, sizeof(header), 1, fp) != 1) {
+	fclose(fp);
+	return -1;
+    }
+    fclose(fp);
+
+    // Have a header - decide based on the header contents
+    if (db5_header_is_valid(header))
+	return 5;
+    // Have encountered a leading 'I' character in some .tif
+    // files, so check for 'v' and '4' as well.
+    if (header[0] == 'I' && header[2] == 'v' && header[3] == '4')
+	return 4;
+
+    // Could not recognize
+    return -1;
 }
 
 int

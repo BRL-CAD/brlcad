@@ -23,7 +23,7 @@
     <arg choice="opt" rep="norepeat">norm<replaceable>#</replaceable></arg>
     <arg choice="opt" rep="norepeat">dist<replaceable>#</replaceable></arg>
     <arg choice="opt" rep="norepeat">perp<replaceable>#</replaceable></arg>
-   <arg choice="opt" rep="norepeat"/>
+
   </cmdsynopsis>
 </refsynopsisdiv>
 

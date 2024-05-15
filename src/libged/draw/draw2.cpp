@@ -1,7 +1,7 @@
 /*                         D R A W 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,77 +36,11 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
-#include "bg/lod.h"
 #include "nmg.h"
 #include "rt/view.h"
 
 #include "ged/view/state.h"
-#define ALPHANUM_IMPL
-#include "../alphanum.h"
 #include "../ged_private.h"
-
-/**
- * This walker builds up scene size and bounding information.
- */
-static void
-_bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
-{
-    struct directory *dp;
-    struct draw_data_t *dd = (struct draw_data_t *)client_data;
-    RT_CK_FULL_PATH(path);
-    RT_CK_DBI(dd->dbip);
-
-    dp = DB_FULL_PATH_CUR_DIR(path);
-    if (!dp)
-	return;
-    if (dp->d_flags & RT_DIR_COMB) {
-	// Have a comb - keep going
-	struct rt_db_internal in;
-	struct rt_comb_internal *comb;
-	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, dd->res) < 0)
-	    return;
-	comb = (struct rt_comb_internal *)in.idb_ptr;
-	draw_walk_tree(path, comb->tree, curr_mat, _bound_fp, client_data, NULL);
-	rt_db_free_internal(&in);
-	// Use bbox to update sizing
-	if (dd->have_bbox) {
-	    dd->g->s_size = dd->g->bmax[X] - dd->g->bmin[X];
-	    V_MAX(dd->g->s_size, dd->g->bmax[Y] - dd->g->bmin[Y]);
-	    V_MAX(dd->g->s_size, dd->g->bmax[Z] - dd->g->bmin[Z]);
-	}
-    } else {
-	// If we're skipping subtractions there's no
-	// point in going further.
-	if (dd->skip_subtractions && dd->bool_op == 4) {
-	    return;
-	}
-
-	// On initialization we don't have any wireframes to establish sizes, and if
-	// we're adaptive we need some idea of object size to get a reasonable result.
-	// Try for a bounding box, if the method is available.  Otherwise try the
-	// bounding the default plot.
-	point_t bmin, bmax;
-	int bbret = rt_bound_instance(&bmin, &bmax, DB_FULL_PATH_CUR_DIR(path), dd->dbip, dd->ttol, dd->tol, curr_mat, dd->res);
-	if (bbret >= 0) {
-
-	    // Got bounding box, use it to update sizing
-	    fastf_t s_size = bmax[X] - bmin[X];
-	    V_MAX(s_size, bmax[Y] - bmin[Y]);
-	    V_MAX(s_size, bmax[Z] - bmin[Z]);
-
-	    // Got bounding box, use it to update sizing
-	    (*dd->s_size)[dp] = s_size;
-	    VMINMAX(dd->min, dd->max, bmin);
-	    VMINMAX(dd->min, dd->max, bmax);
-	    VMINMAX(dd->g->bmin, dd->g->bmax, bmin);
-	    VMINMAX(dd->g->bmin, dd->g->bmax, bmax);
-	    dd->g->s_size = s_size;
-	    dd->have_bbox = 1;
-	}
-    }
-}
-
-
 
 static int
 draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
@@ -119,355 +53,6 @@ draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
 	bu_color_to_rgb_chars(&c, vs->color);
     }
     return ret;
-}
-
-static int
-alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
-    struct bv_scene_group *ga = *(struct bv_scene_group **)a;
-    struct bv_scene_group *gb = *(struct bv_scene_group **)b;
-    return alphanum_impl(bu_vls_cstr(&ga->s_name), bu_vls_cstr(&gb->s_name), NULL);
-}
-
-/* This function digests the paths into scene object sets.  It does NOT trigger
- * the routines that will actually produce the scene geometry and add it to the
- * scene objects - it only prepares the inputs to be used for that process. */
-static int
-ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int refresh, int argc, const char *argv[])
-{
-    struct db_i *dbip = gedp->dbip;
-    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct resource *local_res;
-    BU_GET(local_res, struct resource);
-    rt_init_resource(local_res, 0, NULL);
-
-    // If we have no active groups and no view objects, we are drawing into a
-    // blank canvas - unless options specifically disable it, if we are doing
-    // adaptive plotting we need to do a preliminary view characterization.
-    struct draw_data_t bounds_data;
-    std::map<struct directory *, fastf_t> s_size;
-    bounds_data.bound_only = 1;
-    bounds_data.res = local_res;
-    bounds_data.have_bbox = 0;
-    bounds_data.dbip = dbip;
-    bounds_data.skip_subtractions = 1;
-    bounds_data.bool_op = 2;
-    bounds_data.v = v;
-    VSET(bounds_data.min, INFINITY, INFINITY, INFINITY);
-    VSET(bounds_data.max, -INFINITY, -INFINITY, -INFINITY);
-    bounds_data.s_size = &s_size;
-
-    /* Validate that the supplied args are current, valid paths in the
-     * database.  If one or more are not, bail */
-    std::set<struct db_full_path *> fps;
-    std::vector<struct db_full_path *> fps_free;
-    std::set<struct db_full_path *>::iterator f_it;
-    for (size_t i = 0; i < (size_t)argc; ++i) {
-	struct db_full_path *fp;
-	BU_GET(fp, struct db_full_path);
-	db_full_path_init(fp);
-	int ret = db_string_to_path(fp, dbip, argv[i]);
-	if (ret < 0) {
-	    // If that didn't work, there's one other thing we have to check
-	    // for - a really strange path with the "/" character in it.
-	    struct directory *fdp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
-	    if (fdp == RT_DIR_NULL) {
-		// Invalid path
-		db_free_full_path(fp);
-		BU_PUT(fp, struct db_full_path);
-		bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
-		continue;
-	    } else {
-		// Object name contained forward slash (urk!)
-		db_free_full_path(fp);
-		db_full_path_init(fp);
-		db_add_node_to_full_path(fp, fdp);
-	    }
-	}
-	fps.insert(fp);
-	fps_free.push_back(fp);
-    }
-    if (fps.size() != (size_t)argc) {
-	for (size_t i = 0; i < fps_free.size(); i++) {
-	    db_free_full_path(fps_free[i]);
-	    BU_PUT(fps_free[i], struct db_full_path);
-	}
-	return BRLCAD_ERROR;
-    }
-    // If we had no args, we're refreshing all drawn objects
-    if (!argc) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	    struct db_full_path *fp = (struct db_full_path *)s->s_path;
-	    fps.insert(fp);
-	}
-    }
-
-    // As a preliminary step, check the already drawn paths to see if the
-    // proposed new path impacts them.  If we need to set up for adaptive
-    // plotting, do initial bounds calculations to pave the way for an
-    // initial view setup.
-    std::map<struct db_full_path *, struct bv_scene_group *> fp_g;
-
-    for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
-	struct bv_scene_group *g = NULL;
-	struct db_full_path *fp = *f_it;
-
-	// Get the "seed" matrix from the path - everything we draw at or below
-	// the path will be positioned using it.  We don't need the matrix
-	// itself in this stage, but if we can't get it the path isn't going to
-	// be workable anyway so we may as well check now and yank it if there
-	// is a problem.
-	mat_t mat;
-	MAT_IDN(mat);
-	if (!db_path_to_mat(dbip, fp, mat, 0, local_res)) {
-	    continue;
-	}
-
-	// Check all the current groups against the candidate.
-	std::set<struct bv_scene_group *> clear;
-	std::set<struct bv_scene_group *>::iterator g_it;
-	struct bv_obj_settings fpvs;
-	bv_obj_settings_sync(&fpvs, vs);
-	bool clear_invalid_only = false;
-	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	    // If we already know we're clearing this one, don't check
-	    // again
-	    if (clear.find(cg) != clear.end()) {
-		continue;
-	    }
-
-	    // Not already clearing, need to check
-	    struct db_full_path *gfp = (struct db_full_path *)cg->s_path;
-
-	    // If we found an encompassing path, we don't need to do any more work
-	    if (clear_invalid_only) {
-		continue;
-	    }
-
-	    // Two conditions to check for here:
-	    // 1.  proposed draw path is a top match for existing path
-	    if (db_full_path_match_top(fp, gfp)) {
-		// New path will replace the currently drawn path - clear it
-		clear.insert(cg);
-		if (refresh)
-		    bv_obj_settings_sync(&fpvs, cg->s_os);
-		continue;
-	    }
-	    // 2.  existing path is a top match encompassing the proposed path
-	    if (db_full_path_match_top(gfp, fp)) {
-		// Already drawn - replace just the children of g that match this
-		// path to update their contents
-		g = cg;
-		if (refresh)
-		    bv_obj_settings_sync(&fpvs, cg->s_os);
-		// We continue to weed out any other invalid paths in sg, even
-		// though cg should be the only path in sg that matches in this
-		// condition.  However, we no longer need to do the top matches,
-		// so let the loop know
-		clear_invalid_only = true;
-		continue;
-	    }
-	}
-
-	// IFF we are just redrawing part or all of an already drawn path, we don't
-	// need to create a new scene object.  Otherwise, we do.
-	if (g) {
-	    // Remove children that match fp - we will be adding new versions
-	    // to g to update them.  If g has no children, it was probably an
-	    // evaluated shape - in that case, replace it with a fresh instance.
-	    if (!BU_PTBL_LEN(&g->children)) {
-		struct db_full_path *fpcpy;
-		BU_GET(fpcpy, struct db_full_path);
-		db_full_path_init(fpcpy);
-		db_dup_full_path(fpcpy, fp);
-		bv_obj_put(g);
-		g = bv_obj_get(v, BV_DB_OBJS);
-		db_path_to_vls(&g->s_name, fpcpy);
-		g->s_path = fpcpy;
-		bv_obj_settings_sync(g->s_os, &fpvs);
-	    } else {
-		std::set<struct bv_scene_obj *> sclear;
-		std::set<struct bv_scene_obj *>::iterator s_it;
-		for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
-		    if (db_full_path_match_top((struct db_full_path *)s->s_path, fp)) {
-			sclear.insert(s);
-		    }
-		}
-		for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
-		    struct bv_scene_obj *s = *s_it;
-		    bv_obj_put(s);
-		}
-	    }
-	} else {
-	    // Create new scene object.  Typically this will be a "parent"
-	    // object and the actual per-solid wireframes or triangles will
-	    // live in child objects below this object.  However, in
-	    // "evaluated" drawing modes the visualization in the scene is
-	    // unique to this object and in those cases drawing information
-	    // will be stored in this object directly.
-	    struct db_full_path *fpcpy;
-	    BU_GET(fpcpy, struct db_full_path);
-	    db_full_path_init(fpcpy);
-	    db_dup_full_path(fpcpy, fp);
-	    g = bv_obj_get(v, BV_DB_OBJS);
-	    db_path_to_vls(&g->s_name, fp);
-	    g->s_path = fpcpy;
-	    bv_obj_settings_sync(g->s_os, &fpvs);
-	}
-
-	// If we're a blank slate, we're adaptive, and autoview isn't off
-	// we need to be building up some sense of the view and object
-	// sizes as we go, ahead of trying to draw anything.  That means
-	// for each group we're going to be using mat and walking the tree
-	// of fp (or getting its box directly if fp is a solid with no
-	// parents) to build up bounding info.
-	mat_t cmat;
-	MAT_COPY(cmat, mat);
-	VSETALL(g->bmin, INFINITY);
-	VSETALL(g->bmax, -INFINITY);
-	bounds_data.g = g;
-	_bound_fp(fp, &cmat, (void *)&bounds_data);
-
-	fp_g[fp] = g;
-
-	if (clear.size()) {
-	    // Clear anything superseded by the new path
-	    for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
-		struct bv_scene_group *cg = *g_it;
-		bv_obj_put(cg);
-	    }
-	}
-    }
-
-    // Initial setup is done, we now have the set of paths to walk to create
-    // the children objects.
-    std::map<struct db_full_path *, struct bv_scene_group *>::iterator fpg_it;
-    for (fpg_it = fp_g.begin(); fpg_it != fp_g.end(); fpg_it++) {
-	struct db_full_path *fp = fpg_it->first;
-	struct bv_scene_group *g = fpg_it->second;
-
-	// Seed initial matrix from the path
-	mat_t mat;
-	MAT_IDN(mat);
-	if (!db_path_to_mat(dbip, fp, mat, 0, local_res)) {
-	    continue;
-	}
-
-	// Get an initial color from the path, if we're not overridden
-	struct bu_color c;
-	if (!vs->color_override) {
-	    unsigned char dc[3];
-	    dc[0] = 255;
-	    dc[1] = 0;
-	    dc[2] = 0;
-	    bu_color_from_rgb_chars(&c, dc);
-	    db_full_path_color(&c, fp, dbip, local_res);
-	}
-
-	// Prepare tree walking data container
-	struct draw_data_t dd;
-	dd.dbip = gedp->dbip;
-	dd.v = v;
-	dd.tol = &wdbp->wdb_tol;
-	dd.ttol = &wdbp->wdb_ttol;
-	dd.mesh_c = gedp->ged_lod;
-	dd.color_inherit = 0;
-	dd.bound_only = 0;
-	dd.res = local_res;
-	dd.bool_op = 2; // Default to union
-	if (vs->color_override) {
-	    bu_color_from_rgb_chars(&dd.c, vs->color);
-	} else {
-	    HSET(dd.c.buc_rgb, c.buc_rgb[0], c.buc_rgb[1], c.buc_rgb[2], c.buc_rgb[3]);
-	}
-	dd.s_size = &s_size;
-	dd.vs = vs;
-	dd.g = g;
-
-	// In drawing modes 3 (bigE) and 5 (points) we are producing an
-	// evaluated shape, rather than iterating to get the solids
-	if (vs->s_dmode == 3 || vs->s_dmode == 5) {
-	    if (vs->color_override) {
-		VMOVE(g->s_color, vs->color);
-	    } else {
-		bu_color_to_rgb_chars(&c, g->s_color);
-	    }
-	    // TODO - check object against default GED selection set
-	    struct draw_update_data_t *ud;
-	    BU_GET(ud, struct draw_update_data_t);
-	    ud->fp = (struct db_full_path *)g->s_path;
-	    ud->dbip = dd.dbip;
-	    ud->tol = dd.tol;
-	    ud->ttol = dd.ttol;
-	    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
-	    ud->mesh_c = dd.mesh_c;
-	    g->s_i_data = (void *)ud;
-	    g->s_v = dd.v;
-	    continue;
-	}
-
-	// Walk the tree to build up the set of scene objects that will hold
-	// each instance's wireframe.  These scene objects will be stored as
-	// children of g (which is the "who" level drawn object).
-	draw_gather_paths(fp, &mat, (void *)&dd);
-    }
-    rt_clean_resource_basic(NULL, local_res);
-    BU_PUT(local_res, struct resource);
-
-    // Sort
-    bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
-
-    // Clean up
-    for (size_t i = 0; i < fps_free.size(); i++) {
-	db_free_full_path(fps_free[i]);
-	BU_PUT(fps_free[i], struct db_full_path);
-    }
-
-    // Scene objects are created and stored. The next step is to generate
-    // wireframes, triangles, etc. for each object based on current settings.
-    // It is then the job of the dm to display the scene objects supplied by
-    // the view.
-    return BRLCAD_OK;
-}
-
-static int
-ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_slate)
-{
-    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-
-    /* Bot threshold is managed as a per-view setting internally. */
-    if (bot_threshold >= 0) {
-	v->gv_s->bot_threshold = bot_threshold;
-    }
-
-    // Make sure the view knows how to update the obb
-    v->gv_bounds_update = &bg_view_bounds;
-
-    // Do an initial autoview so adaptive routines will have approximately
-    // the right starting point
-    if (blank_slate && !no_autoview) {
-	bv_autoview(v, BV_AUTOVIEW_SCALE_DEFAULT, 0);
-    }
-
-    // Do the actual drawing
-    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	draw_scene(s, v);
-    }
-
-    // Make sure what we've drawn is visible, unless we've a reason not to.
-    if (blank_slate && !no_autoview) {
-	bv_autoview(v, BV_AUTOVIEW_SCALE_DEFAULT, 0);
-    }
-
-    // Scene objects are created and stored. The application may now call each
-    // object's update callback to generate wireframes, triangles, etc. for
-    // that object based on current settings.  It is then the job of the dm to
-    // display the scene objects supplied by the view.
-    return BRLCAD_OK;
 }
 
 /*
@@ -521,11 +106,25 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
     }
+
+    // If we don't have a specified view, and the default view isn't a shared view, see if
+    // we can find a shared view in the view set.
+    if (!bu_vls_strlen(&cvls) && (!cv || cv->independent)) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *bv = (struct bview *)BU_PTBL_GET(views, i);
+	    if (!bv->independent) {
+		cv = bv;
+		break;
+	    }
+	}
+    }
+
     bu_vls_free(&cvls);
 
     // We need a current view, either from gedp or from the options
     if (!cv) {
-	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
+	bu_vls_printf(gedp->ged_result_str, "No view specified and no shared views found");
 	return BRLCAD_ERROR;
     }
 
@@ -536,27 +135,25 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     if (cv)
 	bv_obj_settings_sync(&vs, &cv->gv_s->obj_s);
 
-
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
-    int refresh = 0;
     struct bu_opt_desc d[18];
     BU_OPT(d[0],  "h", "help",          "",                 NULL, &print_help,         "Print help and exit");
     BU_OPT(d[1],  "?", "",              "",                 NULL, &print_help,         "");
     BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
     BU_OPT(d[3],   "", "wireframe",     "",                 NULL, &drawing_modes[1],  "Draw using only wireframes (mode = 0)");
-    BU_OPT(d[4],   "", "shaded",        "",                 NULL, &drawing_modes[2],  "Shade bots and polysolids (mode = 1)");
+    BU_OPT(d[4],   "", "shaded",        "",                 NULL, &drawing_modes[2],  "Shade bots, breps and polysolids (mode = 1)");
     BU_OPT(d[5],   "", "shaded-all",    "",                 NULL, &drawing_modes[3],  "Shade all solids, not evaluated (mode = 2)");
     BU_OPT(d[6],  "E", "evaluate",      "",                 NULL, &drawing_modes[4],  "Wireframe with evaluate booleans (mode = 3)");
     BU_OPT(d[7],   "", "hidden-line",   "",                 NULL, &drawing_modes[5],  "Hidden line wireframes");
-    BU_OPT(d[8],  "t", "transparency", "#",      &bu_opt_fastf_t, &vs.transparency,   "Set transparency level in drawing: range 0 (clear) to 1 (opaque)");
-    BU_OPT(d[9],  "x", "",             "#",      &bu_opt_fastf_t, &vs.transparency,   "");
-    BU_OPT(d[10], "L", "",             "#",          &bu_opt_int, &bot_threshold,     "Set face count level for drawing bounding boxes instead of BoT triangles (NOTE: passing this updates the global view setting - bot_threshold is a view property).");
-    BU_OPT(d[11], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
-    BU_OPT(d[12],  "", "no-dash",       "",                 NULL, &vs.draw_solid_lines_only,  "Use solid lines rather than dashed for subtraction solids");
-    BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
-    BU_OPT(d[14],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
-    BU_OPT(d[15], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
-    BU_OPT(d[16], "",  "refresh",       "",                 NULL, &refresh,       "Try to keep properties of existing drawn objects when updating.");
+    BU_OPT(d[8],  "A", "add-mode",      "",                 NULL, &vs.mixed_modes,    "Don't erase other drawn modes for specified paths (allows simultaneous shaded and wireframe drawing for the same object)");
+    BU_OPT(d[9],  "t", "transparency", "#",      &bu_opt_fastf_t, &vs.transparency,   "Set transparency level in drawing: range 0 (clear) to 1 (opaque)");
+    BU_OPT(d[10], "x", "",             "#",      &bu_opt_fastf_t, &vs.transparency,   "");
+    BU_OPT(d[11], "L", "",             "#",          &bu_opt_int, &bot_threshold,     "Set face count level for drawing bounding boxes instead of BoT triangles (NOTE: passing this updates the global view setting - bot_threshold is a view property).");
+    BU_OPT(d[12], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
+    BU_OPT(d[13],  "", "no-dash",       "",                 NULL, &vs.draw_solid_lines_only,  "Use solid lines rather than dashed for subtraction solids");
+    BU_OPT(d[14], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
+    BU_OPT(d[15],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
+    BU_OPT(d[16], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
     BU_OPT_NULL(d[17]);
 
     /* If no args, must be wanting help */
@@ -610,73 +207,64 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // Before we start doing anything with the object set, record if things are
     // starting out empty.
     int blank_slate = 0;
+    struct bu_ptbl *dobjs = bv_view_objs(cv, BV_DB_OBJS);
+    struct bu_ptbl *local_dobjs = bv_view_objs(cv, BV_DB_OBJS);
     struct bu_ptbl *vobjs = bv_view_objs(cv, BV_VIEW_OBJS);
     struct bu_ptbl *vlobjs = bv_view_objs(cv, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-    if (!BU_PTBL_LEN(bv_view_objs(cv, BV_DB_OBJS)) && !BU_PTBL_LEN(vobjs) && !BU_PTBL_LEN(vlobjs)) {
+    if ((!dobjs || !BU_PTBL_LEN(dobjs)) && (!local_dobjs || !BU_PTBL_LEN(local_dobjs)) &&
+	    (!vobjs || !BU_PTBL_LEN(vobjs)) && (!vlobjs || !BU_PTBL_LEN(vlobjs))) {
 	blank_slate = 1;
     }
-
-    // For the non-adaptive views, the object list is shared.  We process the
-    // current list once to update the object set, but this step does not also
-    // update the geometries of the objects.  Once we have the scene obj set,
-    // we must process it on a per-view basis in case the objects have view
-    // specific visualizations (such as in adaptive plotting.)
-    ged_update_objs(gedp, cv, &vs, refresh, argc, argv);
 
     // Drawing can get complicated when we have multiple active views with
     // different settings. The simplest case is when the current or specified
     // view is an independent view - we just update it and return.
     if (cv->independent) {
-	return ged_draw_view(cv, bot_threshold, no_autoview, blank_slate);
+	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
+	for (size_t i = 0; i < (size_t)argc; ++i)
+	    bvs->add_path(argv[i]);
+	std::unordered_set<struct bview *> vset;
+	vset.insert(cv);
+	bvs->redraw(&vs, vset, !(blank_slate && !no_autoview));
+	return BRLCAD_OK;
     }
 
     // If we have multiple views, we have to handle each view.  Most of the
     // time the work will be done in the first pass (when objects do not have
     // view specific geometry to generate) but this is not true when adaptive
     // plotting is enabled.
+    std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
     struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	if (v->independent) {
-	    // Independent views are handled individually by the above case -
-	    // this logic doesn't reference them.
+	if (v->independent)
 	    continue;
-	}
-	ged_draw_view(v, bot_threshold, no_autoview, blank_slate);
+	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
+	if (!bvs)
+	    continue;
+	vmap[bvs].insert(v);
+    }
+    std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
+    for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
+	for (size_t i = 0; i < (size_t)argc; ++i)
+	    bv_it->first->add_path(argv[i]);
+	bv_it->first->redraw(&vs, bv_it->second, !(blank_slate && !no_autoview));
     }
 
     return BRLCAD_OK;
 }
 
 static int
-_ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[])
+_ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char **argv)
 {
-    if (!gedp || !v)
+    if (!gedp || !gedp->dbi_state || !v)
 	return BRLCAD_ERROR;
-
-    int ac = (v->independent) ? 5 : 3;
-    const char *av[7] = {NULL};
-    av[0] = "draw";
-    av[1] = "-R";
-    av[2] = "--refresh";
-    av[3] = (v->independent) ? "--view" : NULL;
-    av[4] = (v->independent) ? bu_vls_cstr(&v->gv_name) : NULL;
-    int oind = (v->independent) ? 5 : 3;
-    if (!argc) {
-	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	    av[oind] = bu_vls_cstr(&cg->s_name);
-	    ged_exec(gedp, ac, (const char **)av);
-	}
-	return BRLCAD_OK;
-    } else {
-	for (int i = 0; i < argc; i++) {
-	    av[oind] = argv[i];
-	    ged_exec(gedp, ac, (const char **)av);
-	}
-	return BRLCAD_OK;
-    }
+    std::unordered_set<struct bview *> vset;
+    BViewState *bvs = gedp->dbi_state->get_view_state(v);
+    if (!bvs)
+	return BRLCAD_ERROR;
+    bvs->refresh(v, argc, argv);
+    return BRLCAD_OK;
 }
 
 extern "C" int

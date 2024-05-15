@@ -1,0 +1,33 @@
+Although it is more typical for Qt to be pre-installed using system packages or
+installers, it is also possible to compile Qt from its source code.
+
+Before getting started, you'll want to be sure the necessary development
+packages are present.  For Linux, this is a good starting point:
+https://doc.qt.io/qt-6/linux-requirements.html
+
+A full download and build of Qt is quite large, but fortunately BRL-CAD does
+not require the full Qt system.  Currently, qtbase and qtsvg are sufficient.
+
+To install, first download and build qtbase (URLs happen to be for version
+6.5.2 in this example - use the links for the latest version when building):
+
+wget https://download.qt.io/official_releases/qt/6.5/6.5.2/submodules/qtbase-everywhere-src-6.5.2.tar.xz
+tar -xvf qtbase-everywhere-src-6.5.2.tar.xz && cd qtbase-everywhere-src-6.5.2
+./configure --prefix=/opt/Qt6
+cmake --build . --parallel
+cmake --install .
+
+(Depending on the prefix for installation, the latter command may need root
+access to succeed in writing the files.)
+
+Next, we need the qtsvg module.  This module's build assumes qtbase, so we
+need to specify the installed directory to it's build
+
+wget https://download.qt.io/official_releases/qt/6.5/6.5.2/submodules/qtsvg-everywhere-src-6.5.2.tar.xz
+tar -xvf qtsvg-everywhere-src-6.5.2.tar.xz && cd qtsvg-everywhere-src-6.5.2 && mkdir build && cd build
+cmake .. -G Ninja -DQt6_DIR=/opt/Qt6
+cmake --build . --parallel
+cmake --install .
+
+BRL-CAD's build can now use /opt/Qt6 for it's Qt6_DIR target.
+

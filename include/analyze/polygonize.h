@@ -1,7 +1,7 @@
 /*                    P O L Y G O N I Z E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,11 +37,13 @@
 
 __BEGIN_DECLS
 struct analyze_polygonize_params {
+    int time_offset;
     int max_time;
+    int max_cycle_time;
     size_t minimum_free_mem;
     int verbosity;
 };
-#define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 30, 150000000, 0 }
+#define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 0, 0, 30, 150000000, 0 }
 ANALYZE_EXPORT extern int
 analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, struct analyze_polygonize_params *p);
 

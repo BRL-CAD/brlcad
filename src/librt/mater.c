@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2023 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ static struct mater *material_head = MATER_NULL;
 void
 rt_pr_mater(register const struct mater *mp)
 {
-    bu_log("%5d..%d\t", mp->mt_low, mp->mt_high);
+    bu_log("%5ld..%ld\t", mp->mt_low, mp->mt_high);
     bu_log("%d, %d, %d\t", mp->mt_r, mp->mt_g, mp->mt_b);
 }
 
@@ -224,7 +224,7 @@ rt_vls_color_map(struct bu_vls *str)
 
     for (mp = material_head; mp != MATER_NULL; mp = mp->mt_forw) {
 	bu_vls_printf(str,
-		      "{%d %d %d %d %d} ",
+		      "{%ld %ld %d %d %d} ",
 		      mp->mt_low,
 		      mp->mt_high,
 		      mp->mt_r,

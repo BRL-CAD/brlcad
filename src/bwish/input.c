@@ -1,7 +1,7 @@
 /*                         I N P U T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2023 United States Government as represented by
+ * Copyright (c) 1998-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,10 @@
 
 /* interface headers */
 #include "tcl.h"
-#include "libtermio.h"
+
+#ifndef HAVE_WINDOWS_H
+#  include "libtermio.h"
+#endif
 
 /* for strict c90 */
 #ifndef HAVE_DECL_GETTIMEOFDAY

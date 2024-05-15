@@ -1,7 +1,7 @@
 /*                      I S S T G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2021-2023 United States Government as represented by
+ * Copyright (c) 2021-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <QOpenGLWidget>
 #include <QKeyEvent>
 #include <QGuiApplication> // for qGuiApp
+#include <QtGlobal>
 
 #include "bu/parallel.h"
 #include "isstgl.h"
@@ -339,20 +340,20 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
 
 void isstGL::mouseMoveEvent(QMouseEvent *e)
 {
-#ifdef USE_QT6
-    bu_log("(%f,%f)\n", e->position().x(), e->position().y());
-    if (x_prev > -INT_MAX && y_prev > -INT_MAX) {
-	bu_log("Delta: (%f,%f)\n", e->position().x() - x_prev, e->position().y() - y_prev);
-    }
-    x_prev = e->position().x();
-    y_prev = e->position().y();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     bu_log("(%d,%d)\n", e->x(), e->y());
     if (x_prev > -INT_MAX && y_prev > -INT_MAX) {
 	bu_log("Delta: (%d,%d)\n", e->x() - x_prev, e->y() - y_prev);
     }
     x_prev = e->x();
     y_prev = e->y();
+#else
+    bu_log("(%f,%f)\n", e->position().x(), e->position().y());
+    if (x_prev > -INT_MAX && y_prev > -INT_MAX) {
+	bu_log("Delta: (%f,%f)\n", e->position().x() - x_prev, e->position().y() - y_prev);
+    }
+    x_prev = e->position().x();
+    y_prev = e->position().y();
 #endif
 
     QOpenGLWidget::mouseMoveEvent(e);

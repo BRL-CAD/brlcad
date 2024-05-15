@@ -1,7 +1,7 @@
 /*                        C O L O R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,6 +69,12 @@ typedef struct bu_color bu_color_t;
  * struct.  does not allocate memory.
  */
 #define BU_COLOR_INIT_ZERO {{0, 0, 0, 0}}
+
+/* Initializers for commonly used colors */
+#define BU_COLOR_RED    {{1, 0, 0, 0}}
+#define BU_COLOR_GREEN  {{0, 1, 0, 0}}
+#define BU_COLOR_BLUE   {{0, 0, 1, 0}}
+#define BU_COLOR_YELLOW {{1, 1, 0, 0}}
 
 /**
  * Copy a bu_color

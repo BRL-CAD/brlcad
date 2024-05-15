@@ -1,7 +1,7 @@
 /*                          M A T E R . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,8 +48,8 @@ struct mater_info {
 #define RT_MATER_INFO_INIT_IDN { {1.0, 0.0, 0.0} , -1.0, 0, 0, 0, NULL }
 
 struct mater {
-    short		mt_low;		/**< @brief bounds of region IDs, inclusive */
-    short		mt_high;
+    long		mt_low;		/**< @brief bounds of region IDs, inclusive */
+    long		mt_high;
     unsigned char	mt_r;		/**< @brief color */
     unsigned char	mt_g;
     unsigned char	mt_b;

@@ -4,6 +4,15 @@ set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(GCHECKER_CF "@GCHECKER_CLEAN_FILE@")
 set(LOGFILE "@LOG_FILE@")
 
+set(BU_DIR_CACHE ${CBDIR}/cache)
+set(LIBRT_CACHE ${CBDIR}/rtcache)
+set(ENV{BU_DIR_CACHE} ${BU_DIR_CACHE})
+set(ENV{LIBRT_CACHE} ${LIBRT_CACHE})
+file(REMOVE_RECURSE "${BU_DIR_CACHE}")
+file(REMOVE_RECURSE "${LIBRT_CACHE}")
+file(MAKE_DIRECTORY "${BU_DIR_CACHE}")
+file(MAKE_DIRECTORY "${LIBRT_CACHE}")
+
 file(WRITE "${LOGFILE}" "Starting gchecker test run\n")
 
 # The executable locations aren't know at CMake configure time, so one of them
@@ -39,6 +48,10 @@ if(gchecker_result)
   file(READ "${LOGFILE}" LOG)
   message(FATAL_ERROR "[gchecker] Failure, see ${LOGFILE} for more info.\n${LOG}")
 endif(gchecker_result)
+
+# Cleanup
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_DIR_CACHE})
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE})
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2023 United States Government as represented by
+ * Copyright (c) 2009-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -351,7 +351,10 @@ face_GetBoundingBox(
     // may be a smaller trimmed subset of surface so worth getting
     // face boundary
     bool growcurrent = bGrowBox != 0;
-    ON_3dPoint min, max;
+    // ON_Geometry::GetBoundingBox treats an invalid box input as
+    // empty, which is what we want for the initial calculation
+    ON_3dPoint min(DBL_MAX, DBL_MAX, DBL_MAX);
+    ON_3dPoint max(-DBL_MAX, -DBL_MAX, -DBL_MAX);
     for (int li = 0; li < face.LoopCount(); li++) {
 	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
 	    ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
@@ -2036,16 +2039,12 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
 
 
 double
-#ifdef NDEBUG
 randomPointFromRange(PBCData& UNUSED(data), ON_2dPoint& UNUSED(out), double lo, double hi)
-#else
-randomPointFromRange(PBCData& data, ON_2dPoint& out, double lo, double hi)
-#endif
 {
     assert(lo < hi);
     double random_pos = drand48() * (RANGE_HI - RANGE_LO) + RANGE_LO;
     double newt = random_pos * (hi - lo) + lo;
-    assert(toUV(data, out, newt));
+    //assert(toUV(data, out, newt));
     return newt;
 }
 

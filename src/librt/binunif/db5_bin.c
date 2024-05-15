@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2023 United States Government as represented by
+ * Copyright (c) 2000-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -208,7 +208,11 @@ rt_binunif_export5(struct bu_external		*ep,
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     RT_CK_BINUNIF(bip);
 
+    /* inputs valid, so init before return */
     BU_EXTERNAL_INIT(ep);
+
+    if (bip->count <= 0)    /* nothing to convert */
+	return 0;
 
     /*
      * Convert from internal (host) to database (network) format
@@ -475,9 +479,9 @@ int
 rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_binunif_internal *bip=(struct rt_binunif_internal *)intern->idb_ptr;
-    struct bu_external	ext;
-    size_t		i;
-    unsigned char	*c;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+    size_t i;
+    unsigned char *c;
 
     RT_CHECK_BINUNIF(bip);
 

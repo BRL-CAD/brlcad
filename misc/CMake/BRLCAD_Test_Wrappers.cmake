@@ -2,7 +2,7 @@
 #
 # BRL-CAD
 #
-# Copyright (c) 2020-2023 United States Government as represented by
+# Copyright (c) 2020-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,13 +54,9 @@ else(NOT N EQUAL 0)
   set(JFLAG)
 endif(NOT N EQUAL 0)
 
-if(CMAKE_CONFIGURATION_TYPES)
-  set(CONFIG $<CONFIG>)
-else(CMAKE_CONFIGURATION_TYPES)
-  if ("${CONFIG}" STREQUAL "")
-    set(CONFIG "\"\"")
-  endif ("${CONFIG}" STREQUAL "")
-endif(CMAKE_CONFIGURATION_TYPES)
+if ("${CONFIG}" STREQUAL "")
+  set(CONFIG "\"\"")
+endif ("${CONFIG}" STREQUAL "")
 
 if (NOT TARGET check)
   add_custom_target(check
@@ -88,20 +84,8 @@ if (NOT TARGET unit)
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
 endif (NOT TARGET unit)
 
-# we wrap the CMake add_test() function in order to automatically set up test
+# We wrap the CMake add_test() function in order to automatically set up test
 # dependencies for the 'unit' and 'check' test targets.
-#
-# this function extravagantly tries to work around a bug in CMake where we
-# cannot pass an empty string through this wrapper to add_test().  passed as a
-# list (e.g., via ARGN, ARGV, or manually composed), the empty string is
-# skipped(!).  passed as a string, it is all treated as command name with no
-# arguments.
-#
-# manual workaround used here involves invoking _add_test() with all args
-# individually recreated/specified (i.e., not as a list) as this preserves
-# empty strings.  this approach means we cannot generalize and only support a
-# limited variety of empty string arguments, but we do test and halt if someone
-# unknowingly tries.
 function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
   # CMake 3.18, cmake_language based wrapper for add_test, replaces the

@@ -8,6 +8,6 @@ datadir=@datadir@
 Name: libnmg
 Description: BRL-CAD N-Manifold Geometry Library
 Version: @BRLCAD_VERSION@
-Requires: libbu libbn libbg
-Libs: -L${libdir} -lbg -lbn -lbu @LIBM@
+Requires: libbv libbg libbn libbu
+Libs: -L${libdir} -lbv -lbg -lbn -lbu @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

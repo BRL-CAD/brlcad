@@ -1,7 +1,7 @@
 /*                      B V I E W _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,8 +56,10 @@ BV_EXPORT extern void bv_autoview(struct bview *v, fastf_t scale, int all_view_o
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 
-/* Copy settings (potentially) common to the view and scene objects */
-BV_EXPORT extern void bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src);
+/* Copy settings (potentially) common to the view and scene objects.
+ * Return 0 if no changes were made to dest.  If dest did have one
+ * or more settings updated from src, return 1. */
+BV_EXPORT extern int bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src);
 
 /* Sync values within the bv, perform callbacks if any are defined */
 BV_EXPORT extern void bv_update(struct bview *gvp);
@@ -108,6 +110,16 @@ BV_EXPORT extern int bv_adjust(struct bview *v, int dx, int dy, point_t keypoint
 /* Return -1 if width and/or height are unset (and hence a meaningful
  * calculation is impossible), else 0. */
 BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
+
+/* Return -1 if width and/or height are unset (and hence a meaningful
+ * calculation is impossible), else 0.
+ *
+ * x and y will normally be integers, but the types are float to allow for
+ * the possibility of sub-pixel coordinate specifications.
+ */
+BV_EXPORT extern int bv_screen_pt(point_t *p, fastf_t x, fastf_t y, struct bview *v);
+
+
 
 /* Compute the min, max, and center points of the scene object.
  * Return 1 if a bound was computed, else 0 */
@@ -173,6 +185,14 @@ bv_find_child(struct bv_scene_obj *s, const char *vname);
 BV_EXPORT struct bv_scene_obj *
 bv_find_obj(struct bview *v, const char *vname);
 
+/* Given a seed name, generate a name that does not collide with any existing
+ * object names in the top level.  If the seed name does not collide, it is
+ * returned as the result - otherwise, a name based on the seed name will be
+ * generated.
+ */
+BV_EXPORT void
+bv_uniq_obj_name(struct bu_vls *oname, const char *seed, struct bview *v);
+
 /* For the specified object/view pairing, return the appropriate scene object
  * to use with that view.  Usually this will return s, but if a Level of Detail
  * scheme or some other view-aware rendering of the object is active, that object
@@ -180,10 +200,23 @@ bv_find_obj(struct bview *v, const char *vname);
 BV_EXPORT struct bv_scene_obj *
 bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
 
-/* Stash a view-specific object vobj for view v on object s.  If vobj is NULL,
- * this will clear the object for that particular view.  */
-BV_EXPORT void
-bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *vobj);
+/* Get a view-specific object vobj for view v on object s.  */
+BV_EXPORT struct bv_scene_obj *
+bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v);
+
+/* Check for the presence of view-specific objects */
+BV_EXPORT int
+bv_obj_have_vo(struct bv_scene_obj *s, struct bview *v);
+
+/* Clear view-specific objects */
+BV_EXPORT int
+bv_clear_view_obj(struct bv_scene_obj *s, struct bview *v);
+
+/* Set the illumination state on the object and its children to ill_state.
+ * Returns 0 if no states were changed, and 1 if one or more states were
+ * updated. */
+BV_EXPORT int
+bv_illum_obj(struct bv_scene_obj *s, char ill_state);
 
 /* For the given view, return a pointer to the bu_ptbl holding active scene
  * objects with the specified type.  Note that view-specific db objects are not
@@ -191,6 +224,24 @@ bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *vo
  * set with bv_obj_for_view. */
 BV_EXPORT struct bu_ptbl *
 bv_view_objs(struct bview *v, int type);
+
+/* Given a view, construct the view plane */
+BV_EXPORT int
+bv_view_plane(plane_t *p, struct bview *v);
+
+
+/* Environment variable controlled logging.
+ *
+ * Set BV_LOG to numerical levels to get increasingly
+ * verbose reporting of drawing info */
+#define BV_ENABLE_ENV_LOGGING 1
+BV_EXPORT void
+bv_log(int level, const char *fmt, ...)  _BU_ATTR_PRINTF23;
+
+
+/* Debugging function for printing contents of views */
+BV_EXPORT void
+bv_view_print(const char *title, struct bview *v, int verbosity);
 
 __END_DECLS
 

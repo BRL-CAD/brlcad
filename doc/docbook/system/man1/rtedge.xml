@@ -852,7 +852,7 @@
 	    valid modes. Mode 2 is the default.
 	  </para>
 	  <para>
-	    <emphasis remap="B" role="B">mode 1 - EDGES</emphasis> An
+	    <emphasis remap="B" role="B">mode 1 - EDGES</emphasis>
 	    Only edge pixels are drawn.  Edges detected in the first
 	    set of geometry are written to the framebuffer if and only
 	    if they are NOT occluded by the second set of geometry.
@@ -1051,7 +1051,7 @@ EOF
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 2001-2023 United States Government as
+  <para>This software is Copyright (c) 2001-2024 United States Government as
   represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 

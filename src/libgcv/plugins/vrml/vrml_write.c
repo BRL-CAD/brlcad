@@ -1,7 +1,7 @@
 /*                    V R M L _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2023 United States Government as represented by
+ * Copyright (c) 1995-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -305,7 +305,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
 
     if (ip->idb_type != ID_BOT) {
 	data->pmp->num_nonbots++;
-	return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
+	return rt_booltree_leaf_tess(tsp, pathp, ip, client_data);
     }
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -1300,7 +1300,7 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
 			   &tree_state,
 			   0,
 			   nmg_region_end,
-			   nmg_booltree_leaf_tess,
+			   rt_booltree_leaf_tess,
 			   (void *)&region_end_data);	/* in librt/nmg_bool.c */
 	goto out;
     }

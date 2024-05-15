@@ -1,7 +1,5 @@
 add_subdirectory(ref)
 
-include_directories(${BU_INCLUDE_DIRS})
-
 add_definitions(-DCONSOLE)
 
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
@@ -17,6 +15,9 @@ configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/benchmark" COPYONLY)
 install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/benchmark" DESTINATION ${BIN_DIR})
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/benchmark")
 
+# TODO - with CMake 3.20, add_custom_command supports generator expressions in
+# OUTPUT, so once we can require that version we should look at retiring this
+# use of CMAKE_CFG_INTDIR
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/run.sh $<TARGET_FILE_DIR:bark>/benchmark
@@ -25,14 +26,7 @@ add_custom_command(
   )
 add_custom_target(benchmark_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done)
 set_target_properties(benchmark_cp PROPERTIES FOLDER "Benchmark")
-if(CMAKE_CONFIGURATION_TYPES)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/benchmark)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-else(CMAKE_CONFIGURATION_TYPES)
-  DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/benchmark)
-endif(CMAKE_CONFIGURATION_TYPES)
+DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/benchmark)
 
 file(WRITE  "${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake" "message(\"---\")\n")
 file(APPEND "${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake" "message(\"Run 'make benchmark-clean' in the bench directory to delete the logic\")\n")

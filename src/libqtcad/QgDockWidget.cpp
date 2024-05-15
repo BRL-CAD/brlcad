@@ -1,7 +1,7 @@
 /*                 Q G D O C K W I D G E T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QRect>
+#include <QtGlobal>
 #include "qtcad/QgDockWidget.h"
 
 QgDockWidget::QgDockWidget(const QString &title, QWidget *parent)
@@ -36,6 +37,8 @@ QgDockWidget::QgDockWidget(const QString &title, QWidget *parent)
 void
 QgDockWidget::toWindow(bool floating)
 {
+    QTCAD_SLOT("QgDockWidget::toWindow", 1);
+
     if (floating) {
 	setWindowFlags(
 		Qt::CustomizeWindowHint |
@@ -62,10 +65,10 @@ QgDockWidget::event(QEvent *e)
 	moving = false;
 	return QDockWidget::event(e);
     }
-#ifdef USE_QT6
-    QPoint gpos = m_e->globalPosition().toPoint();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QPoint gpos = m_e->globalPos();
+#else
+    QPoint gpos = m_e->globalPosition().toPoint();
 #endif
     QRect trect = this->geometry();
     if (!trect.contains(gpos))

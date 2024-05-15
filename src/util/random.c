@@ -1,7 +1,7 @@
 /*                        R A N D O M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
     struct bn_gauss *gp;
     struct bn_unif *up;
 
-    int seed = bu_process_id();
+    int seed = bu_pid();
     int high, low;
     double center = 0;
     int verbose = 0;

@@ -2,7 +2,7 @@
 #
 # BRL-CAD
 #
-# Copyright (c) 2011-2023 United States Government as represented by
+# Copyright (c) 2011-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,12 +42,15 @@ set(NOT_DISTCHECK_READY 0)
 set(CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@")
 
 # Avoid empty items in lists, so we don't trigger a CMake warning
+# Also ignore src/bext submodule
 function(scrub_list SLIST)
   set(NONEMPTY)
   foreach(sf ${${SLIST}})
-    if(NOT "${sf}" STREQUAL "")
-      list(APPEND NONEMPTY "${sf}")
-    endif(NOT "${sf}" STREQUAL "")
+    if (NOT "${sf}" STREQUAL "src/bext")
+      if(NOT "${sf}" STREQUAL "")
+	list(APPEND NONEMPTY "${sf}")
+      endif(NOT "${sf}" STREQUAL "")
+    endif (NOT "${sf}" STREQUAL "src/bext")
   endforeach(sf ${${SLIST}})
   string(REGEX REPLACE "^;" "" NONEMPTY "${NONEMPTY}")
   set(${SLIST} ${NONEMPTY} PARENT_SCOPE)

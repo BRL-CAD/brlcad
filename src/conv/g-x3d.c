@@ -1,7 +1,7 @@
 /*                         G - X 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -265,7 +265,7 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
     if (ip->idb_type != ID_BOT) {
 	pmp->num_nonbots++;
-	return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
+	return rt_booltree_leaf_tess(tsp, pathp, ip, client_data);
     }
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -288,7 +288,7 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
     pmp->num_nonbots++;
 
-    return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
+    return rt_booltree_leaf_tess(tsp, pathp, ip, client_data);
 }
 
 

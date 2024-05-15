@@ -1,7 +1,7 @@
 /*                         V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,11 @@ _view_cmd_aet(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    return ged_aet_core(gd->gedp, argc, argv);
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_aet_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
 }
 
 int
@@ -73,7 +77,11 @@ _view_cmd_center(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    return ged_center_core(gd->gedp, argc, argv);
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_center_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
 }
 
 int
@@ -86,7 +94,11 @@ _view_cmd_eye(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    return ged_eye_core(gd->gedp, argc, argv);
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_eye_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
 }
 
 int
@@ -99,7 +111,11 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    return ged_faceplate_core(gd->gedp, argc, argv);
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_faceplate_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
 }
 
 /* When a view is "independent", it displays only those objects when have been
@@ -176,7 +192,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "0")) {
 	v->independent = 0;
 	// Clear local containers
-	struct bu_ptbl *sg = v->gv_objs.db_objs;
+	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
@@ -225,7 +241,11 @@ _view_cmd_quat(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    return ged_quat_core(gd->gedp, argc, argv);
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_quat_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
 }
 
 int
@@ -261,7 +281,11 @@ _view_cmd_size(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    return ged_size_core(gd->gedp, argc, argv);
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_size_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
 }
 
 int
@@ -274,7 +298,11 @@ _view_cmd_snap(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    return ged_view_snap(gd->gedp, argc, argv);
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_view_snap(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
 }
 
 int
@@ -287,7 +315,11 @@ _view_cmd_ypr(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    return ged_ypr_core(gd->gedp, argc, argv);
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_ypr_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
 }
 
 
@@ -336,7 +368,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     argc = ac;
 
     if (print_help || (calc_near.set && calc_far.set)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage_string);
+	bu_vls_printf(gedp->ged_result_str, "[WARNING] this command is deprecated - vZ values should be set on data objects\n\nUsage:\n%s", usage_string);
 	return GED_HELP;
     }
 
@@ -357,34 +389,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 	struct bview *v = gd->cv;
 	if (bu_vls_strlen(&calc_target)) {
 	    // User has specified a view object to use - try to find it
-struct bv_scene_obj *wobj = NULL;
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
-		if (!bu_vls_strcmp(&s->s_uuid, &calc_target)) {
-		    wobj = s;
-		    break;
-		}
-	    }
-	    if (!wobj) {
-		struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    if (bu_list_len(&cg->s_vlist)) {
-			if (!bu_vls_strcmp(&cg->s_name, &calc_target)) {
-			    wobj = cg;
-			    break;
-			}
-		    } else {
-			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			    if (!bu_vls_strcmp(&s->s_name, &calc_target)) {
-				wobj = s;
-				break;
-			    }
-			}
-		    }
-		}
-	    }
+	    struct bv_scene_obj *wobj = bv_find_obj(v, bu_vls_cstr(&calc_target));
 	    if (wobj) {
 		fastf_t vZ = bv_vZ_calc(wobj, gd->cv, calc_mode);
 		bu_vls_sprintf(gedp->ged_result_str, "%0.15f", vZ);
@@ -397,28 +402,16 @@ struct bv_scene_obj *wobj = NULL;
 	} else {
 	    // No specific view object to use - check all drawn
 	    // view objects.
+	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+	    struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
+	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
+	    struct bu_ptbl *local_db_objs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
 	    double vZ = (calc_mode) ? -DBL_MAX : DBL_MAX;
 	    int have_vz = 0;
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
-		fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
-		if (calc_mode) {
-		    if (calc_val > vZ) {
-			vZ = calc_mode;
-			have_vz = 1;
-		    }
-		} else {
-		    if (calc_val < vZ) {
-			vZ = calc_mode;
-			have_vz = 1;
-		    }
-		}
-	    }
-	    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		if (bu_list_len(&cg->s_vlist)) {
-		    fastf_t calc_val = bv_vZ_calc(cg, gd->cv, calc_mode);
+	    if (view_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+		    fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
 		    if (calc_mode) {
 			if (calc_val > vZ) {
 			    vZ = calc_mode;
@@ -430,10 +423,31 @@ struct bv_scene_obj *wobj = NULL;
 			    have_vz = 1;
 			}
 		    }
-		} else {
-		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
+		}
+	    }
+	    if (local_view_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
+		    fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
+		    if (calc_mode) {
+			if (calc_val > vZ) {
+			    vZ = calc_mode;
+			    have_vz = 1;
+			}
+		    } else {
+			if (calc_val < vZ) {
+			    vZ = calc_mode;
+			    have_vz = 1;
+			}
+		    }
+		}
+	    }
+
+	    if (db_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
+		    if (bu_list_len(&cg->s_vlist)) {
+			fastf_t calc_val = bv_vZ_calc(cg, gd->cv, calc_mode);
 			if (calc_mode) {
 			    if (calc_val > vZ) {
 				vZ = calc_mode;
@@ -443,6 +457,57 @@ struct bv_scene_obj *wobj = NULL;
 			    if (calc_val < vZ) {
 				vZ = calc_mode;
 				have_vz = 1;
+			    }
+			}
+		    } else {
+			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
+			    fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
+			    if (calc_mode) {
+				if (calc_val > vZ) {
+				    vZ = calc_mode;
+				    have_vz = 1;
+				}
+			    } else {
+				if (calc_val < vZ) {
+				    vZ = calc_mode;
+				    have_vz = 1;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	    if (local_db_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(local_db_objs, i);
+		    if (bu_list_len(&cg->s_vlist)) {
+			fastf_t calc_val = bv_vZ_calc(cg, gd->cv, calc_mode);
+			if (calc_mode) {
+			    if (calc_val > vZ) {
+				vZ = calc_mode;
+				have_vz = 1;
+			    }
+			} else {
+			    if (calc_val < vZ) {
+				vZ = calc_mode;
+				have_vz = 1;
+			    }
+			}
+		    } else {
+			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
+			    fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
+			    if (calc_mode) {
+				if (calc_val > vZ) {
+				    vZ = calc_mode;
+				    have_vz = 1;
+				}
+			    } else {
+				if (calc_val < vZ) {
+				    vZ = calc_mode;
+				    have_vz = 1;
+				}
 			    }
 			}
 		    }
@@ -457,7 +522,7 @@ struct bv_scene_obj *wobj = NULL;
 
 
     if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "%g\n", gd->cv->gv_data_vZ);
+	bu_vls_printf(gedp->ged_result_str, "%g\n", gd->cv->gv_tcl.gv_data_vZ);
 	return BRLCAD_OK;
     }
 
@@ -465,7 +530,7 @@ struct bv_scene_obj *wobj = NULL;
     if (argc == 1) {
 	fastf_t val;
 	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) == 1) {
-	    gd->cv->gv_data_vZ = val;
+	    gd->cv->gv_tcl.gv_data_vZ = val;
 	    return BRLCAD_OK;
 	}
     }
@@ -480,7 +545,7 @@ struct bv_scene_obj *wobj = NULL;
 	}
 	vect_t vpt;
 	MAT4X3PNT(vpt, gd->cv->gv_model2view, mpt);
-	gd->cv->gv_data_vZ = vpt[Z];
+	gd->cv->gv_tcl.gv_data_vZ = vpt[Z];
 	return BRLCAD_OK;
     }
 
@@ -534,6 +599,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},
     { "obj",        _view_cmd_objs},
+    { "objs",       _view_cmd_objs},
     { "quat",       _view_cmd_quat},
     { "selections", _view_cmd_selections},
     { "size",       _view_cmd_size},
@@ -662,7 +728,6 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "quat|ypr|aet|center|eye|size [args]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 

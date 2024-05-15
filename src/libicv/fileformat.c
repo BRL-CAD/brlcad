@@ -1,7 +1,7 @@
 /*                      F I L E F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2023 United States Government as represented by
+ * Copyright (c) 2007-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,6 +98,8 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
 	    return dpix_read(filename, width, height);
 	case BU_MIME_IMAGE_PPM :
 	    return ppm_read(filename);
+	case BU_MIME_IMAGE_RLE :
+	    return rle_read(filename);
 	default:
 	    bu_log("icv_read not implemented for this format\n");
 	    return NULL;
@@ -137,6 +139,9 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 	    break;
 	case BU_MIME_IMAGE_DPIX :
 	    ret = dpix_write(bif, ofname);
+	    break;
+	case BU_MIME_IMAGE_RLE :
+	    ret = rle_write(bif, ofname);
 	    break;
 	default:
 	    ret = pix_write(bif, ofname);

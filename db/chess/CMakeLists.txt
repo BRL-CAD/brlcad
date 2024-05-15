@@ -9,7 +9,7 @@ set(CHESS_PARTS
   )
 
 foreach(piece ${CHESS_PARTS})
-  ADD_G_TARGET(${piece} "BRL-CAD Geometry Models/Sample/Chess")
+  G_TARGET(${piece} "BRL-CAD Geometry Models/Sample/Chess")
 endforeach(piece ${CHESS_PARTS})
 
 CMAKEFILES(

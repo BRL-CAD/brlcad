@@ -1,7 +1,7 @@
 /*                           I S S T  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2023 United States Government as represented by
+ * Copyright (c) 2005-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -160,7 +160,7 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     /* Set the initial az and el values in Tcl/Tk */
     VSUB2(vec, isst->camera.pos, isst->camera.focus);
     VUNITIZE(vec);
-    AZEL_FROM_V3DIR(az, el, vec);
+    bn_ae_vec(&az, &el, vec);
     az = az * -DEG2RAD;
     el = el * -DEG2RAD;
     bu_vls_sprintf(&tclstr, "%f", az);
@@ -462,10 +462,10 @@ aetolookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj 
 
     VSUB2(vecdfoc, isst->camera.pos, isst->camera.focus);
     VUNITIZE(vecdfoc);
-    AZEL_FROM_V3DIR(az, el, vecdfoc);
+    bn_ae_vec(&az, &el, vecdfoc);
     az = az * -DEG2RAD + x;
     el = el * -DEG2RAD + y;
-    V3DIR_FROM_AZEL(vecdfoc, az, el);
+    bn_vec_ae(vecdfoc, az, el);
     VUNITIZE(vecdfoc);
     VSCALE(vecdfoc, vecdfoc, mag_vec);
     VADD2(isst->camera.focus, isst->camera.pos, vecdfoc);
@@ -499,7 +499,7 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 
     VSUB2(vecdpos, isst->camera_focus_init, isst->camera.pos);
     VUNITIZE(vecdpos);
-    AZEL_FROM_V3DIR(az, el, vecdpos);
+    bn_ae_vec(&az, &el, vecdpos);
     az = az * -DEG2RAD - x;
     el = el * -DEG2RAD + y;
 
@@ -509,13 +509,13 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     if (el>M_PI_2) el=M_PI_2 - 0.001;
     if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
-    V3DIR_FROM_AZEL(vecdpos, az, el);
+    bn_vec_ae(vecdfoc, az, el);
     VSCALE(vecdpos, vecdpos, mag_pos);
     VADD2(isst->camera.pos, isst->camera_focus_init, vecdpos);
     if (mag_focus > 0) {
 	VSUB2(vecdfoc, isst->camera_focus_init, isst->camera.focus);
 	VUNITIZE(vecdfoc);
-	AZEL_FROM_V3DIR(az, el, vecdfoc);
+	bn_ae_vec(&az, &el, vecdfoc);
 	az = az * -DEG2RAD - x;
 	el = el * -DEG2RAD + y;
 
@@ -525,14 +525,14 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	if (el>M_PI_2) el=M_PI_2 - 0.001;
 	if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
-	V3DIR_FROM_AZEL(vecdfoc, az, el);
+	bn_vec_ae(vecdfoc, az, el);
 	VSCALE(vecdfoc, vecdfoc, mag_focus);
 	VADD2(isst->camera.focus, isst->camera_focus_init, vecdfoc);
     }
     /* Update the tcl copies of the az/el vars */
     VSUB2(vec, isst->camera.focus, isst->camera.pos);
     VUNITIZE(vec);
-    AZEL_FROM_V3DIR(az, el, vec);
+    bn_ae_vec(&az, &el, vec);
     bu_vls_sprintf(&tclstr, "%f", az);
     Tcl_SetVar(interp, "az", bu_vls_addr(&tclstr), 0);
     bu_vls_sprintf(&tclstr, "%f", el);

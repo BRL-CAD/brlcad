@@ -5,6 +5,9 @@ set(cmake_ignore_files
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
   BRLCAD_Environment_Setup.cmake
+  BRLCAD_EXT_Setup.cmake
+  BRLCAD_ExternalDeps.cmake
+  BRLCAD_Find_Package.cmake
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake
   BRLCAD_Regress_Util.cmake
@@ -16,10 +19,6 @@ set(cmake_ignore_files
   CMakeLists.txt
   CheckCInline.cmake
   CheckCSourceRuns.cmake
-  CheckCXX11Features.cmake
-  CheckCXX11Features/cxx11-test-nullptr.cpp
-  CheckCXX11Features/cxx11-test-nullptr_fail_compile.cpp
-  CheckCXX11Features/cxx11-test-lib_regex.cpp
   CheckStructHasMember.cmake
   CompilerFlags.cmake
   Distcheck.cmake
@@ -33,19 +32,26 @@ set(cmake_ignore_files
   FindBSON.cmake
   FindFontconfig.cmake
   FindGECODE.cmake
+  FindGeogram.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
+  FindLINENOISE.cmake
+  FindLMDB.cmake
   FindLibUV.cmake
+  FindMANIFOLD.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOpenMesh.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
+  FindOSMESA.cmake
   FindOpenCL.cmake
+  FindOpenCV.cmake
   FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
+  FindPNG.cmake
   FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
@@ -61,6 +67,7 @@ set(cmake_ignore_files
   FindWix.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
+  FindZLIB.cmake
   NSIS.template.in
   NSIS_silent.template.in
   OpenVDBUtils.cmake
@@ -68,6 +75,7 @@ set(cmake_ignore_files
   RPath_Setup.cmake
   ResetCache.cmake
   TCL_PKGINDEX.cmake
+  TrackFiles.cmake
   compat/README
   compat/README.compat
   compat/README.compat.c99
@@ -91,8 +99,6 @@ set(cmake_ignore_files
   compat/test_strcasecmp.c
   compat/test_strncasecmp.c
   compat/test_strtok_r.c
-  configure_prefix.sh
-  configure_suffix.sh
   date_delta.cpp
   distcheck_in_src_dir.cmake.in
   distcheck_no_tcl.cmake.in
@@ -100,8 +106,6 @@ set(cmake_ignore_files
   distcheck_target.cmake.in
   distclean.cmake.in
   docbook.cmake.in
-  multiconfig_path_clean.cmake.in
-  multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
   scripts/printtime.cmake

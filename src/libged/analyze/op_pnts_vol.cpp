@@ -1,7 +1,7 @@
 /*                 O P _ P N T S _ V O L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,10 +35,10 @@ extern "C" {
 extern "C" {
 #include "rt/geom.h"
 #include "analyze.h"
+}
 #include "../ged_private.h"
 #include "../pnts_util.h"
 #include "./ged_analyze.h"
-}
 
 struct ray_result {
     point_t *p;

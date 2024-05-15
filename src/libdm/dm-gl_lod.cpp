@@ -1,7 +1,7 @@
 /*                    D M - G L _ L O D . C P P
  * BRL-CAD
  *
- * Copyright (c) 1988-2023 United States Government as represented by
+ * Copyright (c) 1988-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "bn.h"
 extern "C" {
 #include "bv/defines.h"
-#include "bg/lod.h"
+#include "bv/lod.h"
 #include "dm.h"
 #include "./dm-gl.h"
 #include "./include/private.h"
@@ -92,6 +92,69 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     if (s->s_dlist_stale) {
 	glDeleteLists(s->s_dlist, 1);
 	s->s_dlist = 0;
+
+	if (!pcnt || !fcnt) {
+	    // If we've had a memshrink, the loaded data isn't
+	    // going to be correct to generate new draw info.
+	    // First, find out the current level:
+	    int curr_level = bv_mesh_lod_level(s, -1, 0);
+
+	    // Trigger a load operation to restore it
+	    bv_mesh_lod_level(s, curr_level, 1);
+
+	    fcnt = lod->fcnt;
+	    pcnt = lod->pcnt;
+	    faces = lod->faces;
+	    points = lod->points;
+	    points_orig = lod->points_orig;
+	    normals = lod->normals;
+	}
+    }
+
+    // We don't want color to be part of the dlist, to allow the app
+    // to change it without regeneration - hence, we need to do it
+    // up front
+    if (mode == 0) {
+	if (s->s_iflag == UP) {
+	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+	}
+	if (mvars->lighting_on) {
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+	    if (mvars->transparency_on)
+		glDisable(GL_BLEND);
+	}
+    } else {
+	if (s->s_iflag == UP) {
+	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+	}
+	if (mvars->lighting_on) {
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
+	    glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
+	    switch (mvars->lighting_on) {
+		case 1:
+		    break;
+		case 2:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
+		    break;
+		case 3:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
+		    break;
+		default:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
+		    break;
+	    }
+	}
+	if (mvars->lighting_on) {
+	    if (mvars->transparency_on) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	    }
+	}
     }
 
     // If we have a dlist in the correct mode, use it
@@ -104,6 +167,8 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glCallList(s->s_dlist);
 	    dm_loadmatrix(dmp, save_mat, 0);
 	    glLineWidth(originalLineWidth);
+	    if (mvars->transparency_on)
+		glDisable(GL_BLEND);
 	    return BRLCAD_OK;
 	} else {
 	    // Display list mode is incorrect (wireframe when we
@@ -131,20 +196,14 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	glNewList(s->s_dlist, GL_COMPILE);
     } else {
 	bu_log("Not using dlist\n");
+	// Straight-up drawing - set up the matrix
+	MAT_COPY(save_mat, s->s_v->gv_model2view);
+	bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
+	dm_loadmatrix(dmp, draw_mat, 0);
     }
 
     // Wireframe
     if (mode == 0) {
-
-	if (mvars->lighting_on) {
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-	    if (mvars->transparency_on)
-		glDisable(GL_BLEND);
-	}
-
 	// Draw all the triangles in faces array
 	for (int i = 0; i < fcnt; i++) {
 
@@ -171,9 +230,6 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glVertex3dv(dpt);
 	    glEnd();
 	}
-	if (mvars->lighting_on && mvars->transparency_on)
-	    glDisable(GL_BLEND);
-
 	if (gen_dlist) {
 	    glEndList();
 	    s->s_dlist_stale = 0;
@@ -181,7 +237,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 		// If the original data is sizable, clear it to save system memory.
 		// The dlist has what it needs, and the LoD code will re-load info
 		// as needed for updates.
-		bg_mesh_lod_memshrink(s);
+		bv_mesh_lod_memshrink(s);
 	    }
 
 	    MAT_COPY(save_mat, s->s_v->gv_model2view);
@@ -192,6 +248,13 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	}
 
 	glLineWidth(originalLineWidth);
+
+	if (mvars->transparency_on)
+	    glDisable(GL_BLEND);
+
+	// Without dlist, we had to set the matrix - restore
+	if (!s->s_dlist)
+	    dm_loadmatrix(dmp, save_mat, 0);
 
 	return BRLCAD_OK;
     }
@@ -206,34 +269,6 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	GLint two_sided;
 	glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, &two_sided);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-
-	if (mvars->lighting_on) {
-
-
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
-	    glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
-
-	    switch (mvars->lighting_on) {
-		case 1:
-		    break;
-		case 2:
-		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
-		    break;
-		case 3:
-		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
-		    break;
-		default:
-		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
-		    break;
-	    }
-
-	    if (mvars->transparency_on) {
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	    }
-	}
 
 	glBegin(GL_TRIANGLES);
 
@@ -302,12 +337,6 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	glEnd();
 
-	if (mvars->lighting_on && mvars->transparency_on)
-	    glDisable(GL_BLEND);
-
-	// Put the lighting model back where it was prior to this operation
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, two_sided);
-
 	if (gen_dlist) {
 	    glEndList();
 	    s->s_dlist_stale = 0;
@@ -315,7 +344,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 		// If the original data is sizable, clear it to save system memory.
 		// The dlist has what it needs, and the LoD code will re-load info
 		// as needed for updates.
-		bg_mesh_lod_memshrink(s);
+		bv_mesh_lod_memshrink(s);
 	    }
 
 	    MAT_COPY(save_mat, s->s_v->gv_model2view);
@@ -325,7 +354,18 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    dm_loadmatrix(dmp, save_mat, 0);
 	}
 
+	if (mvars->lighting_on && mvars->transparency_on)
+	    glDisable(GL_BLEND);
+
+	// Put the lighting model back where it was prior to this operation
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, two_sided);
+
 	glLineWidth(originalLineWidth);
+
+	// If we're not using a pre-baked dlist, restore matrix
+	if (!s->s_dlist)
+	    dm_loadmatrix(dmp, save_mat, 0);
+
 	return BRLCAD_OK;
     }
 
@@ -355,6 +395,21 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     if (s->s_dlist_stale) {
 	glDeleteLists(s->s_dlist, 1);
 	s->s_dlist = 0;
+    }
+
+    // We don't want color to be part of the dlist, to allow the app
+    // to change it without regeneration - hence, we need to do it
+    // up front
+    if (s->s_iflag == UP) {
+	dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+    }
+    if (mvars->lighting_on) {
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+	if (mvars->transparency_on)
+	    glDisable(GL_BLEND);
     }
 
     // If we have a dlist in the correct mode, use it
@@ -393,16 +448,10 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 	glNewList(s->s_dlist, GL_COMPILE);
     } else {
 	bu_log("Not using dlist\n");
-    }
-
-    // Wireframe
-    if (mvars->lighting_on) {
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-	if (mvars->transparency_on)
-	    glDisable(GL_BLEND);
+	// Straight-up drawing - set up the matrix
+	MAT_COPY(save_mat, s->s_v->gv_model2view);
+	bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
+	dm_loadmatrix(dmp, draw_mat, 0);
     }
 
     int first = 1;
@@ -450,9 +499,6 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     if (first == 0)
 	glEnd();
 
-    if (mvars->lighting_on && mvars->transparency_on)
-	glDisable(GL_BLEND);
-
     if (gen_dlist) {
 	glEndList();
 	s->s_dlist_stale = 0;
@@ -480,8 +526,15 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 	dm_loadmatrix(dmp, save_mat, 0);
     }
 
+    if (mvars->lighting_on && mvars->transparency_on)
+	glDisable(GL_BLEND);
+
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
+
+    // Without dlist, we had to set the matrix - restore
+    if (!s->s_dlist)
+	dm_loadmatrix(dmp, save_mat, 0);
 
     return BRLCAD_OK;
 }

@@ -1,7 +1,7 @@
 /*                   C R A S H R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2023 United States Government as represented by
+ * Copyright (c) 2007-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ bu_crashreport_app(const char *filename, const char *argv0)
 	     "Date: %s\n",	/* date/time */
 	     brlcad_ident("Crash Report"),
 	     bu_getprogname(),
-	     bu_process_id(),
+	     bu_pid(),
 	     path ? path : "Unknown",
 	     ctime(&now));
 

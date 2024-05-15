@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2023 United States Government as represented by
+ * Copyright (c) 1998-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,10 @@
 #include <locale.h>
 #include "bio.h"
 
-#include "libtermio.h"
+#ifndef HAVE_WINDOWS_H
+#  define LIBTERMIO_IMPLEMENTATION
+#  include "libtermio.h"
+#endif
 
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h> /* for select */

@@ -1,7 +1,7 @@
 /*                        F B Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2023 United States Government as represented by
+ * Copyright (c) 1986-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include "vmath.h"
 
 #include "dm.h"
+#define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
 
 
@@ -174,8 +175,13 @@ doKeyPad(void)
 {
     int ch;
 
+#if defined(HAVE_CONIO_H)
+    if ((ch = getch()) == EOF)
+	return 0;		/* done */
+#else
     if ((ch = getchar()) == EOF)
 	return 0;		/* done */
+#endif
     ch &= ~0x80;			/* strip off parity bit */
     switch (ch) {
 	case '?' :

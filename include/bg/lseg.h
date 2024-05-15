@@ -1,7 +1,7 @@
 /*                        L S E G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "bv.h"
 #include "bg/defines.h"
 
 __BEGIN_DECLS
@@ -51,25 +50,6 @@ bg_distsq_lseg3_pt(point_t *c, const point_t P0, const point_t P1, const point_t
 BG_EXPORT double
 bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
 	const point_t P0, const point_t P1, const point_t Q0, const point_t Q1);
-
-
-/* Logic for snapping points to their closes view lines.
- * TODO - really should make this generic to any line set, not just the
- * bv structures. */
-
-/* Snap sample 2D point to lines active in the view */
-BG_EXPORT extern int bv_snap_lines_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
-
-/* Snap sample 2D point to grid active in the view */
-BG_EXPORT extern int bv_snap_grid_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
-
-/* Snap sample 3D point to lines active in the view */
-BG_EXPORT extern int bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p);
-
-
-BG_EXPORT extern void bv_view_center_linesnap(struct bview *v);
-
-
 
 __END_DECLS
 

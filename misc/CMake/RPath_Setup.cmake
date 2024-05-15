@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -71,13 +71,7 @@ endfunction(relative_rpath)
 
 # Set (or restore) a standard BRL-CAD setting for CMAKE_BUILD_RPATH.
 function(std_build_rpath)
-  # If we're in multiconfig mode, we need to look relative to the current
-  # build configuration, not the top level lib directory.
-  if (CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}")
-  else (CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-  endif (CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}")
 
   # Done - let the parent know what the answers are
   set(CMAKE_BUILD_RPATH "${CMAKE_BUILD_RPATH}" PARENT_SCOPE)
@@ -133,12 +127,6 @@ function(longest_rpath outvar)
   # Find the longest of the configuration string names
   # (this will be zero in a non-multiconfig build)
   set(CONF_LEN 0)
-  foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-    string(LENGTH "/${cfg}" CLEN)
-    if ("${CLEN}" GREATER "${CONF_LEN}")
-      set(CONF_LEN ${CLEN})
-    endif ("${CLEN}" GREATER "${CONF_LEN}")
-  endforeach(cfg ${CMAKE_CONFIGURATION_TYPES})
 
   # The length of LIB_DIR itself needs to be factored in
   if (R_SUFFIX)
@@ -183,21 +171,11 @@ function(ext_build_rpath)
     longest_rpath(LLEN)
   endif (R_SUFFIX)
 
-  # If we're in multiconfig mode, we want to target the config subdir, not just
-  # the build dir itself.
-  if (CMAKE_CONFIGURATION_TYPES)
-    if (R_SUFFIX)
-      set(BUILD_RPATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${R_SUFFIX}")
-    else (R_SUFFIX)
-      set(BUILD_RPATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}")
-    endif (R_SUFFIX)
-  else (CMAKE_CONFIGURATION_TYPES)
-    if (R_SUFFIX)
-      set(BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}/${R_SUFFIX}")
-    else (R_SUFFIX)
-      set(BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-    endif (R_SUFFIX)
-  endif (CMAKE_CONFIGURATION_TYPES)
+  if (R_SUFFIX)
+    set(BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}/${R_SUFFIX}")
+  else (R_SUFFIX)
+    set(BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}")
+  endif (R_SUFFIX)
 
   # This is the key to the process - the ":" characters appended to the build
   # time path result in a path string in the compile outputs that has

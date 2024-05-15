@@ -38,9 +38,9 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt; </prompt><userinput>g shape1.nmg f</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>g group.c shape1.s</userinput></term>
 	   <listitem>
-	     <para>Creates or extends shape1.nmg by unioning in <emphasis>f</emphasis>.
+	     <para>Creates or extends group.c by unioning in <emphasis>shape1.s</emphasis>.
 		     </para>
 	   </listitem>
       </varlistentry>

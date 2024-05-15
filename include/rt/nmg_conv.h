@@ -1,7 +1,7 @@
 /*                     N M G _ C O N V . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -166,10 +166,6 @@ RT_EXPORT extern struct rt_bot_internal *nmg_mdl_to_bot(struct model *m,
 							struct bu_list *vlfree,
 							const struct bn_tol *tol);
 struct db_tree_state; /* forward declaration */
-RT_EXPORT extern union tree *nmg_booltree_leaf_tess(struct db_tree_state *tsp,
-						    const struct db_full_path *pathp,
-						    struct rt_db_internal *ip,
-						    void *client_data);
 RT_EXPORT extern union tree *nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
 						     const struct db_full_path *pathp,
 						     struct rt_db_internal *ip,

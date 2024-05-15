@@ -1,59 +1,54 @@
-Contained in this directory are the sources to BRL-CAD.  This
-presently includes over 400+ tools and more than two dozen libraries
-across more than a million lines of source code.  The contents of the
-individual directories are briefly described below.
-	It is part of BRL-CAD's intentional build infrastructure
-design consideration to not require the installation of minor 3rd
-party external codes in order for the package to compile or operate
-correctly.  As part of this philosophy, the majority of BRL-CAD's
-required and optional dependencies are preconfigured and bundled with
-the package in the "other" directory.  For those components of BRL-CAD
-that have library dependencies that are not easily bundled in a
-cross-platform sustainable manner, such as linkages to commercial
-libraries, said components are included in the "external" directory.
+BRL-CAD's source code is more than a million lines of logic spanning
+over 400+ tools and more than two dozen libraries.  Most of BRL-CAD's
+3rd-party dependencies are preconfigured and bundled in the "other"
+subdirectory.  Public interface headers to BRL-CAD's libraries are
+alongside this 'src' directory in the top-level 'include' directory.
 
 Contents
 --------
 
-adrt - Advanced Distributed Ray-Tracer, high-performance triangle ray-trace tools
-anim - animation tools
-archer - Archer, a geometry modeler implemented in Tcl
-brlman - a 'man' tool that knows where to look for BRL-CAD manual pages
-burst - tool for simulation of burst effects
-bwish - BRL-CAD's version of 'tclsh' and 'wish' Tcl/Tk interpreters
-canon - tool to spool/queue image data to Canon printers via MDQS
-conv - codes for converting to/from BRL-CAD .g format and other TGM formats
-external - codes that require non-bundled external functionality
-fb - tools for displaying images to and reading from a framebuffer
-fbed - a framebuffer editor
-fbserv - the framebuffer server
-gtools - geometry processing tools (validation, transferring, comparing)
-halftone - tool for producing halftoned images from B&W images
-irprep - Infrared processing tools
-lgt - an interactive geometry rendering tool
-libbg - a computational geometry routines library
-libbn - the BRL-CAD numerics library
-libbrep - the BRL-CAD NURBS B-Rep library
-libbu - the BRL-CAD utility library
-libdm - a 3D display manager library
-libfb - a 2D framebuffer library
-libfft - a fast Fourier transform library
-libged - the geometry editor library
-libgcv - the geometry conversion library
-liboptical - an optics library for raster image ray-tracing
-libpkg - a network package transport library
-librt - the BRL-CAD ray-trace library
-libtclcad - a library for Tcl routines related to CAD
-libtermio - a terminal I/O library
-libwdb - the write database library, for creating BRL-CAD geometry models
-mged - the Multi-device Geometry Editor, a CSG solid modeler
-nirt - Natalie's Interactive Ray-Tracer, an interactive ray-trace tool
-other - 3rd party code optionally utilized by BRL-CAD
-proc-db - tools for procedurally creating geometry models
-remrt - remote distributed ray-trace tools, a client and server
-rt - the BRL-CAD ray-tracers, various analytic and visual ray-trace-based tools
-shapes - tools for creating various common geometry objects (bolts, handles, windows, etc.)
-sig - signal processing tools, data conversion and manipulation of raw data
-tab - table processing tools, used primarily in conjunction with animation tools
-tclscripts - a library of Tcl routines used by mged, rtwizard, and archer
-util - various image processing and conversion utilities
+adrt       - fast triangle ray-tracing tools
+archer     - geometry modeler functional prototype and GUI application
+art        - physically-based renderer
+brlman     - 'man' replacement that knows where to find BRL-CAD manual pages
+bwish      - BRL-CAD's version of 'tclsh' and 'wish' Tcl/Tk interpreters
+conv       - geometry converters
+external   - 3rd party integrations that require a license
+fb         - framebuffer tools, for displaying and manipulating images
+fbserv     - framebuffer server, for processing images
+gtools     - geometry tools for processing, inspecting, comparison, etc.
+isst       - interactive shotine selection tool, GUI for viewing geometry
+libanalyze - library for analyzing solid geometry
+libbg      - library for basic computational geometry routines
+libbn      - library for basic 2D/3D numerics, vector, matrix, random, etc.
+libbrep    - library for boundary representation (NURBS) geometry
+libbu      - library for basic utility, logging, files, parallelism, etc.
+libbv      - library for basic 3D view management
+libdm      - library for 3D display and 2D framebuffer management
+libfft     - library for fast Fourier transforms
+libged     - library for geometry editing commands, used by mged/archer
+libgcv     - library for geometry conversion
+libicv     - library for image conversion
+liboptical - library for ray trace shading, optical effects for 'rt'
+libnmg     - library for n-manifold (general polygonal mesh) geometry
+libpc      - library for parametric constraint geometry
+libpkg     - library for networking, sending/receiving data packages
+libqtcad   - library for Qt CAD application support, used by qged
+librt      - library for ray tracing and representing BRL-CAD geometry
+libtclcad  - library for Tcl CAD application support, used by mged/archer
+libtermio  - library for terminal I/O, legacy console application support
+libwdb     - library for writing BRL-CAD geometry database models
+mged       - main BRL-CAD geometry modeler application with GUI and CLI modes
+nirt       - CLI tool for querying paths through geometry via ray tracing
+other      - 3rd party dependencies bundled for convenience
+proc-db    - miscellaneous demo tools for procedurally creating geometry
+qged       - experimental geometry modeler GUI developed using Qt
+remrt      - client/server tools for ray tracing across multiple machines
+rt         - ray tracing, analyzing, and rendering tools for BRL-CAD geometry
+rtwizard   - GUI and CLI wizard-style tool for geometry model visualizations
+shapes     - general purpose tools for creating common objects
+sig        - signal processing tools, converting and manipulation of raw data
+tclscripts - scripts in Tcl for routines used by mged, rtwizard, and archer
+util       - various image processing and data conversion utilities
+
+Please e-mail questions, corrections or feedback to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*               P O L Y G O N  _ T O O L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 
 #include "QPolyCreate.h"
 #include "QPolyMod.h"
-#include "qtcad/QToolPalette.h"
+#include "qtcad/QgToolPalette.h"
 #include "../plugin.h"
 
 void *
@@ -34,12 +34,14 @@ polygon_tool_create()
     QPolyCreate *poly_create = new QPolyCreate();
     poly_create->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_create);
+    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, poly_create);
 
     // These creates may change the view - connect the internal widget signal
-    // to the QToolPaletteElement slot so the application can get the word when
+    // to the QgToolPaletteElement slot so the application can get the word when
     // that happens.
-    QObject::connect(poly_create, &QPolyCreate::view_updated, el, &QToolPaletteElement::element_view_changed);
+    QObject::connect(el, &QgToolPaletteElement::element_view_update, poly_create, &QPolyCreate::checkbox_refresh);
+    QObject::connect(poly_create, &QPolyCreate::settings_changed, el, &QgToolPaletteElement::element_view_changed);
+    QObject::connect(poly_create, &QPolyCreate::view_updated, el, &QgToolPaletteElement::element_view_changed);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.
@@ -56,18 +58,20 @@ polygon_tool_modify()
     QPolyMod *poly_mod = new QPolyMod();
     poly_mod->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_mod);
+    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, poly_mod);
 
     // These mods may change the view - connect the internal widget signal
-    // to the QToolPaletteElement slot so the application can get the word when
+    // to the QgToolPaletteElement slot so the application can get the word when
     // that happens.
-    QObject::connect(poly_mod, &QPolyMod::view_updated, el, &QToolPaletteElement::element_view_changed);
+    QObject::connect(el, &QgToolPaletteElement::element_view_update, poly_mod, &QPolyMod::checkbox_refresh);
+    QObject::connect(poly_mod, &QPolyMod::settings_changed, el, &QgToolPaletteElement::element_view_changed);
+    QObject::connect(poly_mod, &QPolyMod::view_updated, el, &QgToolPaletteElement::element_view_changed);
 
     // However the view changed, we need to make sure our list is current
     QObject::connect(poly_mod, &QPolyMod::view_updated, poly_mod, &QPolyMod::mod_names_reset);
-    QObject::connect(el, &QToolPaletteElement::element_view_update, poly_mod, &QPolyMod::mod_names_reset);
+    QObject::connect(el, &QgToolPaletteElement::element_view_update, poly_mod, &QPolyMod::mod_names_reset);
     // //Make sure the list is current whenever we display the control widget
-    QObject::connect(el, &QToolPaletteElement::element_unhide, poly_mod, &QPolyMod::mod_names_reset);
+    QObject::connect(el, &QgToolPaletteElement::element_unhide, poly_mod, &QPolyMod::mod_names_reset);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.

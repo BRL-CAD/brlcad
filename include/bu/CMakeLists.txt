@@ -3,6 +3,7 @@ set(bu_headers
   assert.h
   avs.h
   bitv.h
+  cache.h
   cmd.h
   color.h
   cv.h
@@ -40,13 +41,14 @@ set(bu_headers
   tc.h
   time.h
   units.h
+  user.h
   uuid.h
   version.h
   vfont.h
   vlb.h
   vls.h
   )
-BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu)
+BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu REQUIRED libbu)
 
 CMAKEFILES(CMakeLists.txt)
 CMAKEFILES(column.h)

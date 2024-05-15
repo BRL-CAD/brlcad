@@ -1,7 +1,7 @@
 /*                  I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2023 United States Government as represented by
+ * Copyright (c) 2013-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@
 #include "brep_except.h"
 #include "brep_defines.h"
 
-extern DebugPlot *dplot;
+//extern DebugPlot *dplot;
 
 // Whether to output the debug messages about b-rep intersections.
 static int DEBUG_BREP_INTERSECT = 0;
@@ -3579,8 +3579,8 @@ find_overlap_boundary_curves(
 	    ON_Intersect(surf1_isocurve, surf2, events, isect_tol,
 			 overlap_tol, 0, 0, 0, &overlap2d);
 
-	    dplot->IsoCSX(events, surf1_isocurve, is_surfA_iso);
-	    dplot->WriteLog();
+	    //dplot->IsoCSX(events, surf1_isocurve, is_surfA_iso);
+	    //dplot->WriteLog();
 
 	    append_csx_event_points(isocurve_3d, isocurve2_2d, events);
 

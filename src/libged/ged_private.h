@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,6 +68,7 @@ __BEGIN_DECLS
 #define _GED_BOOL_EVAL          3
 #define _GED_HIDDEN_LINE        4
 #define _GED_SHADED_MODE_EVAL   5
+#define _GED_WIREFRAME_EVAL     6
 
 #define _GED_DRAW_WIREFRAME 1
 #define _GED_DRAW_NMG_POLY  3
@@ -201,7 +202,7 @@ struct draw_data_t {
     int color_inherit;
     int bool_op;
     struct resource *res;
-    struct bg_mesh_lod_context *mesh_c;
+    struct bv_mesh_lod_context *mesh_c;
 
     /* To avoid the need for multiple subtree walking
      * functions, we also set up to support a bounding
@@ -215,7 +216,6 @@ struct draw_data_t {
     std::map<struct directory *, fastf_t> *s_size;
 #endif
 };
-GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
 GED_EXPORT void draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
           void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
           void *client_data, void *comb_inst_map);
@@ -397,7 +397,7 @@ _ged_rt_output_handler(void *clientData, int mask);
 
 GED_EXPORT extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-GED_EXPORT extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv);
+GED_EXPORT extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt);
 GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
 			  vect_t eye_model,
@@ -645,63 +645,6 @@ GED_EXPORT extern int _ged_read_densities(struct analyze_densities **dens, char 
 GED_EXPORT extern int
 _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
 
-/* Ideally all of this could be in facetize.cpp, but the open() calls
- * used by the logging routines are problematic in C++ with Visual C++. */
-struct _ged_facetize_opts {
-    int quiet;
-    int verbosity;
-    int regions;
-    int resume;
-    int retry;
-    int in_place;
-    fastf_t feature_size;
-    fastf_t feature_scale;
-    fastf_t d_feature_size;
-    int max_time;
-    struct bg_tess_tol *tol;
-    struct bu_vls *faceted_suffix;
-
-    /* NMG specific options */
-    int triangulate;
-    int make_nmg;
-    int nmgbool;
-    int irmb;
-    int screened_poisson;
-    int continuation;
-    int method_flags;
-    int nmg_use_tnurbs;
-
-    /* Poisson specific options */
-    int max_pnts;
-    struct bg_3d_spsr_opts s_opts;
-
-    /* Brep specific options */
-    double nonovlp_threshold;
-
-    /* internal */
-    struct bu_attribute_value_set *c_map;
-    struct bu_attribute_value_set *s_map;
-    struct bu_hook_list *saved_bomb_hooks;
-    struct bu_hook_list *saved_log_hooks;
-    struct bu_vls *nmg_log;
-    struct bu_vls *nmg_log_header;
-    int nmg_log_print_header;
-    int stderr_stashed;
-    int serr;
-    int fnull;
-
-    struct bu_vls *froot;
-    struct bu_vls *irmb_comb;
-    struct bu_vls *nmg_comb;
-    struct bu_vls *continuation_comb;
-    struct bu_vls *spsr_comb;
-};
-
-void
-_ged_facetize_log_nmg(struct _ged_facetize_opts *o);
-void
-_ged_facetize_log_default(struct _ged_facetize_opts *o);
-
 
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
@@ -719,6 +662,27 @@ _ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
        	int help, int cmd_pos);
 
 
+// TODO:  alternative approach to the command structure supported by
+// _ged_subcmd_help - if we successfully migrate all the uses of the above
+// functions, rename this from subcmd2 to subcmd...
+//
+// Prototyping with edit/edit2.cpp
+#ifdef __cplusplus
+
+#include <string>
+#include <map>
+
+class ged_subcmd {
+    public:
+	virtual std::string usage()   { return std::string(""); }
+	virtual std::string purpose() { return std::string(""); }
+	virtual int exec(struct ged *, void *, int, const char **) { return BRLCAD_ERROR; }
+};
+
+GED_EXPORT extern int
+_ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::string, ged_subcmd *> &subcmds, const char *cmdname, const char *cmdargs, int argc, const char **argv);
+
+#endif
 
 __END_DECLS
 

@@ -1,7 +1,7 @@
 /*                    G C H E C K E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -161,12 +161,7 @@ main(int argc, const char **argv)
     }
 
     // Make the working directory
-#ifdef HAVE_WINDOWS_H
-    CreateDirectory(bu_vls_cstr(&wdir), NULL);
-#else
-    /* mode: 775 */
-    mkdir(bu_vls_cstr(&wdir), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
+    bu_mkdir(bu_vls_cstr(&wdir));
 
     // Put a copy of the .g file in the working directory
     std::ifstream sgfile(bu_vls_cstr(&gfile), std::ios::binary);

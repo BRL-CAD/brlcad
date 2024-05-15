@@ -1,7 +1,7 @@
 /*                    P O I N T S _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2023 United States Government as represented by
+ * Copyright (c) 1997-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,13 +50,13 @@ draw_points(struct bv_scene_obj *s)
 	return BRLCAD_OK; /* nothing to do is fine */
 
     struct db_full_path *fp = (struct db_full_path *)s->s_path;
-    if (!fp)
+    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
+    if (!dp)
 	return BRLCAD_OK; /* nothing to do is fine */
 
     /* there's a path to draw */
     struct bn_tol btol = BN_TOL_INIT_TOL;
     struct db_i* dbip = d->dbip;
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
     if (!dbip || !dp)
 	return BRLCAD_ERROR;
 

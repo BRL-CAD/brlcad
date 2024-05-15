@@ -2,7 +2,6 @@ Rendering Analysis Tools
 ========================
 adrt_master
 adrt_slave
-burst
 remrt
 reshoot
 rt
@@ -49,7 +48,6 @@ obj-g
 off-g
 patch-g
 ply-g
-proe-g
 step-g
 stl-g
 tankill-g
@@ -173,7 +171,6 @@ fbclear
 fbcmap
 fbcmrot
 fbcolor
-fbed
 fbfade
 fbframe
 fbfree
@@ -195,7 +192,6 @@ pix-fb
 pixflip-fb
 plot3-fb
 polar-fb
-pp-fb
 rle-fb
 show.sh
 spm-fb

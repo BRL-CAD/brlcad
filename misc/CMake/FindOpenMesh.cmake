@@ -59,94 +59,41 @@
 #===========================================================================
 
 #if already found via finder or simulated finder in openmesh CMakeLists.txt, skip the search
-IF (NOT OPENMESH_FOUND)
-  SET (SEARCH_PATHS
-    "${OPENMESH_ROOT}"
-    /usr/local/
-    /usr/
-    "${CMAKE_SOURCE_DIR}/OpenMesh/src/OpenMesh"
-    "${CMAKE_SOURCE_DIR}/libs_required/OpenMesh/src/OpenMesh"
-    "${CMAKE_SOURCE_DIR}/../OpenMesh/src/OpenMesh"
-    "C:/Program Files/OpenMesh 8.1"
-    "C:/Program Files/OpenMesh 8.0"
-    "C:/Program Files/OpenMesh 7.2"
-    "C:/Program Files/OpenMesh 7.1"
-    "C:/Program Files/OpenMesh 7.0"
-    "C:/Program Files/OpenMesh 6.3"
-    "C:/Program Files/OpenMesh 6.2"
-    "C:/Program Files/OpenMesh 6.1"
-    "C:/Program Files/OpenMesh 6.0"
-    "C:/Program Files/OpenMesh 5.2"
-    "C:/Program Files/OpenMesh 5.1"
-    "C:/Program Files/OpenMesh 5.0"
-    "C:/Program Files/OpenMesh 4.2"
-    "C:/Program Files/OpenMesh 4.1"
-    "C:/Program Files/OpenMesh 4.0"
-    "C:/Program Files/OpenMesh 3.4"
-    "C:/Program Files/OpenMesh 3.3"
-    "C:/Program Files/OpenMesh 3.2"
-    "C:/Program Files/OpenMesh 3.1"
-    "C:/Program Files/OpenMesh 3.0"
-    "C:/Program Files/OpenMesh 2.4.1"
-    "C:/Program Files/OpenMesh 2.4"
-    "C:/Program Files/OpenMesh 2.0/include"
-    "C:/libs/OpenMesh 8.1"
-    "C:/libs/OpenMesh 8.0"
-    "C:/libs/OpenMesh 7.1"
-    "C:/libs/OpenMesh 7.0"
-    "C:/libs/OpenMesh 6.3"
-    "C:/libs/OpenMesh 6.2"
-    "C:/libs/OpenMesh 6.1"
-    "C:/libs/OpenMesh 6.0"
-    "C:/libs/OpenMesh 5.2"
-    "C:/libs/OpenMesh 5.1"
-    "C:/libs/OpenMesh 5.0"
-    "C:/libs/OpenMesh 4.2"
-    "C:/libs/OpenMesh 4.1"
-    "C:/libs/OpenMesh 4.0"
-    "C:/libs/OpenMesh 3.4"
-    "C:/libs/OpenMesh 3.3"
-    "C:/libs/OpenMesh 3.2"
-    "C:/libs/OpenMesh 3.1"
-    "C:/libs/OpenMesh 3.0"
-    "C:/libs/OpenMesh 2.4.1"
-    "C:/libs/OpenMesh 2.4"
-    "${OPENMESH_LIBRARY_DIR}"
-  )
+if(NOT OPENMESH_FOUND)
+	set(SEARCH_PATHS
+		"${OpenMesh_ROOT}"
+		/usr/local/
+		/usr/
+		"${CMAKE_SOURCE_DIR}/OpenMesh/src/OpenMesh"
+		"${CMAKE_SOURCE_DIR}/libs_required/OpenMesh/src/OpenMesh"
+		"${CMAKE_SOURCE_DIR}/../OpenMesh/src/OpenMesh"
+		"C:/Program Files/OpenMesh 8.1"
+		"C:/libs/OpenMesh 8.1"
+		"C:/libs/OpenMesh 8.0"
+		"${OPENMESH_LIBRARY_DIR}"
+		)
 
-  FIND_PATH (OPENMESH_INCLUDE_DIR OpenMesh/Core/Mesh/PolyMeshT.hh
-    PATHS ${SEARCH_PATHS}
-    PATH_SUFFIXES include)
+	foreach(sp ${SEARCH_PATHS})
+		find_path(OPENMESH_INCLUDE_DIR NAMES OpenMesh/Core/Mesh/PolyMeshT.hh ${sp} PATH_SUFFIXES include)
+		find_library(OPENMESH_CORE_LIBRARY_RELEASE NAMES OpenMeshCore ${sp} PATH_SUFFIXES lib lib64)
+		find_library(OPENMESH_CORE_LIBRARY_DEBUG NAMES OpenMeshCored ${sp} PATH_SUFFIXES lib lib64)
+		find_library(OPENMESH_TOOLS_LIBRARY_RELEASE NAMES OpenMeshTools ${sp} PATH_SUFFIXES lib lib64)
+		find_library(OPENMESH_TOOLS_LIBRARY_DEBUG NAMES OpenMeshToolsd ${sp} PATH_SUFFIXES lib lib64)
+	endforeach(sp ${SEARCH_PATHS})
 
-  FIND_LIBRARY(OPENMESH_CORE_LIBRARY_RELEASE NAMES OpenMeshCore
-    PATHS ${SEARCH_PATHS}
-    PATH_SUFFIXES lib lib64)
+	#select configuration depending on platform (optimized... on windows)
+	include(SelectLibraryConfigurations)
+	select_library_configurations(OPENMESH_TOOLS)
+	select_library_configurations(OPENMESH_CORE)
 
-  FIND_LIBRARY(OPENMESH_CORE_LIBRARY_DEBUG NAMES OpenMeshCored 
-    PATHS ${SEARCH_PATHS}
-    PATH_SUFFIXES lib lib64)
+	set(OPENMESH_LIBRARIES ${OPENMESH_CORE_LIBRARY} ${OPENMESH_TOOLS_LIBRARY} CACHE STRING "OpenMesh Core and Tools libraries" FORCE)
+	set(OPENMESH_INCLUDE_DIRS ${OPENMESH_INCLUDE_DIR} CACHE STRING "OpenMesh include directory" FORCE)
 
-  FIND_LIBRARY(OPENMESH_TOOLS_LIBRARY_RELEASE NAMES OpenMeshTools
-    PATHS ${SEARCH_PATHS}
-    PATH_SUFFIXES lib lib64)
+	#checks, if OPENMESH was found and sets OPENMESH_FOUND if so
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(OpenMesh  DEFAULT_MSG
+		OPENMESH_CORE_LIBRARY OPENMESH_TOOLS_LIBRARY OPENMESH_INCLUDE_DIR)
 
-  FIND_LIBRARY(OPENMESH_TOOLS_LIBRARY_DEBUG NAMES OpenMeshToolsd
-    PATHS ${SEARCH_PATHS}
-    PATH_SUFFIXES lib lib64)
-
-#select configuration depending on platform (optimized... on windows)
-  include(SelectLibraryConfigurations)
-  select_library_configurations( OPENMESH_TOOLS )
-  select_library_configurations( OPENMESH_CORE )
-
-  set(OPENMESH_LIBRARIES ${OPENMESH_CORE_LIBRARY} ${OPENMESH_TOOLS_LIBRARY} CACHE STRING "OpenMesh Core and Tools libraries" FORCE)
-  set(OPENMESH_INCLUDE_DIRS ${OPENMESH_INCLUDE_DIR} CACHE STRING "OpenMesh include directory" FORCE)
-
-#checks, if OPENMESH was found and sets OPENMESH_FOUND if so
-  include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(OpenMesh  DEFAULT_MSG
-                                    OPENMESH_CORE_LIBRARY OPENMESH_TOOLS_LIBRARY OPENMESH_INCLUDE_DIR)
-  
- 
-  mark_as_advanced(OPENMESH_INCLUDE_DIR OPENMESH_CORE_LIBRARY_RELEASE OPENMESH_CORE_LIBRARY_DEBUG OPENMESH_TOOLS_LIBRARY_RELEASE OPENMESH_TOOLS_LIBRARY_DEBUG)
+	mark_as_advanced(OPENMESH_INCLUDE_DIR OPENMESH_CORE_LIBRARY_RELEASE OPENMESH_CORE_LIBRARY_DEBUG OPENMESH_TOOLS_LIBRARY_RELEASE OPENMESH_TOOLS_LIBRARY_DEBUG)
 endif()
+

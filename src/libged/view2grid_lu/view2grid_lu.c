@@ -1,7 +1,7 @@
 /*                         V I E W 2 G R I D _ L U . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@ ged_view2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
     point_t mo_view_pt;           /* model origin in view space */
     point_t diff;
     static const char *usage = "x y z";
+    double b2lval = (gedp->dbip) ? gedp->dbip->dbi_base2local : 1.0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -60,7 +61,7 @@ ged_view2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
 	goto bad;
 
     MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    f = gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local;
+    f = gedp->ged_gvp->gv_scale * b2lval;
     VSCALE(mo_view_pt, mo_view_pt, f);
     VSUB2(diff, view_pt, mo_view_pt);
 

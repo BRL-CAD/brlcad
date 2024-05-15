@@ -1,7 +1,7 @@
 /*                         L I N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,8 +32,8 @@ extern "C" {
 #include "bu/opt.h"
 #include "bg/trimesh.h"
 #include "raytrace.h"
-#include "../ged_private.h"
 }
+#include "../ged_private.h"
 
 struct _ged_lint_opts {
     int verbosity;

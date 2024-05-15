@@ -1,7 +1,7 @@
 /*         P O L Y G O N _ T R I A N G U L A T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2023 United States Government as represented by
+ * Copyright (c) 2019-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "RTree.h"
 #include "clipper.hpp"
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -47,6 +46,9 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 #include "./earcut.hpp"
+#ifdef USE_DETRIA
+#include "detria.hpp"
+#endif
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -56,12 +58,19 @@
 
 #include "delaunator.hpp"
 
+#ifndef USE_DETRIA
 #include "poly2tri/poly2tri.h"
+#endif
+
+#define PLOT_PREFIX_STR bg_plot3_ // needed by RTree.h and plot3.h
+
+#include "RTree.h"
 
 #include "bu/malloc.h"
 #include "bn/rand.h"
 #include "bv/plot3.h"
 #include "bg/polygon.h"
+#include "bg/plane.h"
 
 extern int polyline_2d_plot3(const char *fname, std::vector<std::pair<int64_t, int64_t>> &xy, fastf_t scale, struct bu_color *c);
 
@@ -545,6 +554,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	rtree_2d.Search(fMin, fMax, LSteinClbk, (void *)&lctx);
     }
 
+#ifndef USE_DETRIA
     // 5.  The output of the above process is fed to the poly2tri algorithm,
     // along with the snapped steiner points.
     std::map<p2t::Point *, long> p2t_to_ind;
@@ -646,11 +656,13 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	bu_log("Poly2Tri CDT failed!\n");
 	return BRLCAD_ERROR;
     }
+#endif
 
     // If the loops need new points (??) bug we don't have out_pnts, error out.
     if (new_pnts && (!out_pts || !num_outpts))
 	return BRLCAD_ERROR;
 
+#ifndef USE_DETRIA
     // 6. Unpack the Poly2Tri faces into a C container
     std::unordered_set<p2t::Point *> p2t_active_pnts;
     std::unordered_map<p2t::Point *, size_t> npt_map;
@@ -724,11 +736,125 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	delete cdt;
     }
     (*faces) = nfaces;
-
+#endif
     return 0;
 }
 
+#ifdef USE_DETRIA
+int
+bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+	    const int *poly, const size_t poly_pnts,
+	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	    const int *steiner, const size_t steiner_npts,
+	    const point2d_t *pts)
+{
+    std::unordered_map<int, int> det2pts, pts2det;
+    std::set<int> active_pts;
 
+    // Find active points
+    for (size_t i = 0; i < poly_pnts; i++)
+	active_pts.insert(poly[i]);
+    for (size_t i = 0; i < nholes; i++) {
+	for (size_t j = 0; j < holes_npts[i]; j++)
+	    active_pts.insert(holes_array[i][j]);
+    }
+    // Note - for detria, all points added that are not part of a polygon are
+    // steiner points - so the only thing we need to do with them is flag them
+    // as active in the set.
+    for (size_t i = 0; i < steiner_npts; i++)
+	active_pts.insert(steiner[i]);
+
+    // Set up a points array holding the active points
+    std::vector<detria::PointD> tpnts;
+    std::set<int>::iterator a_it;
+    for (a_it = active_pts.begin(); a_it != active_pts.end(); a_it++) {
+	detria::PointD npt;
+	npt.x = pts[*a_it][X];
+	npt.y = pts[*a_it][Y];
+	tpnts.push_back(npt);
+	int detind = (int)tpnts.size() - 1;
+	det2pts[detind] = *a_it;
+	pts2det[*a_it] = detind;
+    }
+
+    // Let the triangulation structure know about the points
+    detria::Triangulation<detria::PointD, int> tri;
+    tri.setPoints(tpnts);
+
+    // Outer polygon is defined first
+    std::vector<int> outer_polyline;
+    for (size_t i = 0; i < poly_pnts; i++)
+	outer_polyline.push_back(pts2det[poly[i]]);
+    tri.addOutline(outer_polyline);
+
+    // Next are the holes
+    std::vector<std::vector<int>> inner_holes;
+    for (size_t i = 0; i < nholes; i++) {
+	std::vector<int> hv;
+	for (size_t j = 0; j < holes_npts[i]; j++)
+	    hv.push_back(holes_array[i][j]);
+	tri.addHole(hv);
+    }
+
+    // Run the core triangulation routine
+    bool tri_success = false;
+    {
+	try {
+	    tri_success = tri.triangulate(true);
+	}
+	catch (...) {
+	    return 1;
+	}
+    }
+
+    // Did we succeed?
+    if (!tri_success) {
+	return 1;
+    }
+
+    // Should the result triangles be in CW order?
+    bool cwTriangles = true;
+
+    // Count the number of interior triangles so we can allocate an output array
+    int tri_cnt = 0;
+    tri.forEachTriangle([&](const detria::Triangle<int> &){tri_cnt++;}, cwTriangles);
+
+    (*num_faces) = tri_cnt;
+    int *nfaces = (int *)bu_calloc(*num_faces * 3, sizeof(int), "faces array");
+
+    // We may want to report the number of unique active points, so
+    // track this as we iterate the triangles
+    active_pts.clear();
+
+    int tri_ind = 0;
+    tri.forEachTriangle([&](const detria::Triangle<int> triangle)
+    {
+        // `triangle` contains the point indices
+	nfaces[3*tri_ind] = det2pts[triangle.x];
+	nfaces[3*tri_ind+1] = det2pts[triangle.y];
+	nfaces[3*tri_ind+2] = det2pts[triangle.z];
+	active_pts.insert(nfaces[3*tri_ind]);
+	active_pts.insert(nfaces[3*tri_ind+1]);
+	active_pts.insert(nfaces[3*tri_ind+2]);
+	tri_ind++;
+    }, cwTriangles);
+
+    (*faces) = nfaces;
+
+    // We're not generating a new points array, so if out_pts exists set it to the
+    // input points array
+    if (out_pts) {
+	(*out_pts) = (point2d_t *)pts;
+    }
+    if (num_outpts) {
+	(*num_outpts) = (int)active_pts.size();
+    }
+
+    return 0;
+}
+#endif
+
+#ifndef USE_DETRIA
 int
 bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	    const int *poly, const size_t poly_pnts,
@@ -827,10 +953,11 @@ bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
     return 0;
 }
+#endif
 
 
 extern "C" int
-bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 			      const int *poly, const size_t poly_pnts,
 			      const int **holes_array, const size_t *holes_npts, const size_t nholes,
 			      const int *steiner, const size_t steiner_npts,
@@ -846,8 +973,13 @@ bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, 
     //if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
     if (type == TRI_ANY || type == TRI_CONSTRAINED_DELAUNAY) {
+#ifdef USE_DETRIA
+	int detria_ret = bg_detria(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
+	return detria_ret;
+#else
 	int p2t_ret = bg_poly2tri(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
 	return p2t_ret;
+#endif
     }
 
     if (type == TRI_DELAUNAY) {
@@ -924,7 +1056,7 @@ bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, 
 }
 
 extern "C" int
-bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *steiner, const size_t steiner_pnts,
 	const point2d_t *pts, const size_t npts, triangulation_t type)
 {
@@ -938,12 +1070,11 @@ bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *nu
 	verts_ind[i] = (int)i;
     }
 
-    ret = bg_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, steiner, steiner_pnts, pts, npts, type);
+    ret = bg_nested_poly_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, steiner, steiner_pnts, pts, npts, type);
 
     bu_free(verts_ind, "vert indices");
     return ret;
 }
-
 
 extern "C" void
 bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b)
@@ -967,7 +1098,82 @@ bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const poin
     fclose(plot_file);
 }
 
+extern "C" int
+bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_outpts,
+	struct bg_polygon *p, triangulation_t type)
+{
+    if (!faces || !num_faces || !out_pts || !num_outpts || !p)
+	return -1;
 
+    // Fit the outer contour to get a 2D plane (bg_polygon is in principle a 3D data structure)
+    point_t pcenter;
+    vect_t  pnorm;
+    plane_t pl;
+    if (bg_fit_plane(&pcenter, &pnorm, p->contour[0].num_points, p->contour[0].point)) {
+	return -1;
+    }
+    bg_plane_pt_nrml(&pl, pcenter, pnorm);
+
+    // Count all points
+    int pnt_cnt = 0;
+    for (size_t i = 0; i < p->num_contours; ++i) {
+	pnt_cnt += p->contour[i].num_points;
+    }
+
+    // Translate the bg_polygon into bg_nested_poly_triangulate inputs
+    point2d_t *pnts_2d = (point2d_t *)bu_calloc(pnt_cnt, sizeof(point2d_t), "projected points");
+    int *ocontour = NULL;
+    int ocontour_cnt = 0;
+    int **holes_array = (int **)bu_calloc(p->num_contours - 1, sizeof(int *), "holes");
+    size_t *holes_npts = (size_t *)bu_calloc(p->num_contours - 1, sizeof(size_t), "holes_cnt");
+    int curr_pnt = 0;
+    for (size_t i = 0; i < p->num_contours; ++i) {
+	int *cpnts = (int *)bu_calloc(p->contour[i].num_points, sizeof(int), "point indices");
+	if (i > 0) {
+	    holes_array[i-1] = cpnts;
+	    holes_npts[i-1] = p->contour[i].num_points;
+	} else {
+	    ocontour = cpnts;
+	    ocontour_cnt = p->contour[i].num_points;
+	}
+	for (size_t j = 0; j < p->contour[i].num_points; ++j) {
+	    vect2d_t p2d;
+	    bg_plane_closest_pt(&p2d[0], &p2d[1], pl, p->contour[i].point[j]);
+	    V2MOVE(pnts_2d[curr_pnt], p2d);
+	    cpnts[j] = curr_pnt;
+	    curr_pnt++;
+	}
+    }
+
+    int *tri_faces = NULL;
+    int tri_num_faces = 0;
+    point2d_t *tri_out_pts = NULL;
+    int tri_num_outpts = 0;
+    int ret = bg_nested_poly_triangulate(&tri_faces, &tri_num_faces, &tri_out_pts, &tri_num_outpts, ocontour, ocontour_cnt, (const int **)holes_array, (const size_t *)holes_npts, p->num_contours - 1, NULL, 0, pnts_2d, pnt_cnt, type); 
+
+
+    // Translate 2D plane points into 3D points
+    point_t *pnts_3d = (point_t *)bu_calloc(pnt_cnt, sizeof(point_t), "3D points");
+    for (int i = 0; i < pnt_cnt; i++) {
+	bg_plane_pt_at(&pnts_3d[i], pl, pnts_2d[i][0], pnts_2d[i][1]);
+    }
+
+    // Assign outputs
+    *faces = tri_faces;
+    *num_faces = tri_num_faces;
+    *out_pts = pnts_3d;
+    *num_outpts = tri_num_outpts;
+
+    // Clean up 2D and translation arrays
+    bu_free(ocontour, "free ocontour");
+    for (size_t i = 0; i < p->num_contours - 1; i++) {
+	bu_free(holes_array[i], "free holes array");
+    }
+    bu_free(holes_npts, "hole cnts");
+    bu_free(pnts_2d, "2d pnts");
+
+    return ret;
+}
 
 // Local Variables:
 // tab-width: 8

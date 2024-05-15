@@ -9,5 +9,5 @@ Name: libicv
 Description: BRL-CAD Image Conversion Library
 Version: @BRLCAD_VERSION@
 Requires: libbn libbu
-Libs: -L${libdir} -licv -lbn -lbu @LIBTCL@ @LIBM@
+Libs: -L${libdir} -licv -lbn -lbu @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

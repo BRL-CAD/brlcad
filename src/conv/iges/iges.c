@@ -1,7 +1,7 @@
 /*                          I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -2766,7 +2766,7 @@ has_non_union_ops(union tree *tp)
     RT_CK_TREE(tp);
 
     if (tp->tr_op == OP_SOLID || tp->tr_op == OP_REGION || tp->tr_op == OP_NOP ||
-	tp->tr_op == OP_NMG_TESS || tp->tr_op == OP_DB_LEAF) {
+	tp->tr_op == OP_TESS || tp->tr_op == OP_DB_LEAF) {
 	return 0;
     }
 

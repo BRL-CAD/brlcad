@@ -1,7 +1,7 @@
 /*                        Q E L L. H
  * BRL-CAD
  *
- * Copyright (c) 2022-2023 United States Government as represented by
+ * Copyright (c) 2022-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include "raytrace.h"
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
 
 class QEll : public QWidget
 {

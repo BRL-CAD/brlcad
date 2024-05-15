@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2023 United States Government as represented by
+ * Copyright (c) 1999-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,11 +27,8 @@
 
 #include <string.h>
 
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#include "xxhash.h"
-
 #include "vmath.h"
+#include "bu/hash.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/time.h"
@@ -829,7 +826,7 @@ dm_get_mvars(struct dm *dmp)
 }
 
 void
-_bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, const char *base)
+_bu_structparse_hash(struct bu_data_hash_state *state, struct bu_structparse *parsetab, const char *base)
 {
     const struct bu_structparse *sdp;
     char *loc;
@@ -846,15 +843,15 @@ _bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, cons
 	    case 's':
 		if (sdp->sp_count == 1) {
 		    if (*loc != '\0')
-			XXH64_update(state, loc, strlen((char *)loc));
+			bu_data_hash_update(state, loc, strlen((char *)loc));
 		} else {
-		    XXH64_update(state, loc, strlen((char *)loc));
+		    bu_data_hash_update(state, loc, strlen((char *)loc));
 		}
 		break;
 	    case 'V':
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
-		    XXH64_update(state, bu_vls_cstr(vls), bu_vls_strlen(vls));
+		    bu_data_hash_update(state, bu_vls_cstr(vls), bu_vls_strlen(vls));
 		}
 		break;
 	    case 'i':
@@ -862,7 +859,7 @@ _bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, cons
 		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
 		    while (--i > 0)
-			XXH64_update(state, &(*sp++), sizeof(short));
+			bu_data_hash_update(state, &(*sp++), sizeof(short));
 		}
 		break;
 	    case 'd':
@@ -870,7 +867,7 @@ _bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, cons
 		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 		    while (--i > 0)
-			XXH64_update(state, &(*dp++), sizeof(int));
+			bu_data_hash_update(state, &(*dp++), sizeof(int));
 		}
 		break;
 	    case 'f':
@@ -878,7 +875,7 @@ _bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, cons
 		    register size_t i = sdp->sp_count;
 		    register fastf_t *dp = (fastf_t *)loc;
 		    while (--i > 0)
-			XXH64_update(state, &(*dp++), sizeof(fastf_t));
+			bu_data_hash_update(state, &(*dp++), sizeof(fastf_t));
 		}
 		break;
 	    case 'g':
@@ -886,7 +883,7 @@ _bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, cons
 		    register size_t i = sdp->sp_count;
 		    register double *dp = (double *)loc;
 		    while (--i > 0) {
-			XXH64_update(state, &(*dp++), sizeof(fastf_t));
+			bu_data_hash_update(state, &(*dp++), sizeof(fastf_t));
 		    }
 		    break;
 		}
@@ -895,7 +892,7 @@ _bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, cons
 		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 		    while (--i > 0)
-			XXH64_update(state, &(*dp++), sizeof(int));
+			bu_data_hash_update(state, &(*dp++), sizeof(int));
 		}
 		break;
 	    case 'p':
@@ -914,30 +911,27 @@ dm_hash(struct dm *dmp)
     if (!dmp)
 	return 0;
 
-    XXH64_hash_t hash_val;
-    XXH64_state_t *state;
-    state = XXH64_createState();
+    struct bu_data_hash_state *state = bu_data_hash_create();
     if (!state)
 	return 0;
-    XXH64_reset(state, 0);
 
     // Note:  deliberately not checking names - a rename doesn't change the dm.
     // Also deliberately not checking dirty flag - that's usually what we're
     // using this hash to set or not set.
-    XXH64_update(state, &dmp->i->dm_stereo, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_width, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_height, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_lineWidth, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_lineStyle, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_aspect, sizeof(fastf_t));
-    XXH64_update(state, &dmp->i->dm_bg1, sizeof(unsigned char[3]));
-    XXH64_update(state, &dmp->i->dm_bg2, sizeof(unsigned char[3]));
-    XXH64_update(state, &dmp->i->dm_fg, sizeof(unsigned char[3]));
-    XXH64_update(state, &dmp->i->dm_clipmin, sizeof(vect_t));
-    XXH64_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));
-    XXH64_update(state, &dmp->i->dm_perspective, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_depthMask, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_fontsize, sizeof(int));
+    bu_data_hash_update(state, &dmp->i->dm_stereo, sizeof(int));
+    bu_data_hash_update(state, &dmp->i->dm_width, sizeof(int));
+    bu_data_hash_update(state, &dmp->i->dm_height, sizeof(int));
+    bu_data_hash_update(state, &dmp->i->dm_lineWidth, sizeof(int));
+    bu_data_hash_update(state, &dmp->i->dm_lineStyle, sizeof(int));
+    bu_data_hash_update(state, &dmp->i->dm_aspect, sizeof(fastf_t));
+    bu_data_hash_update(state, &dmp->i->dm_bg1, sizeof(unsigned char[3]));
+    bu_data_hash_update(state, &dmp->i->dm_bg2, sizeof(unsigned char[3]));
+    bu_data_hash_update(state, &dmp->i->dm_fg, sizeof(unsigned char[3]));
+    bu_data_hash_update(state, &dmp->i->dm_clipmin, sizeof(vect_t));
+    bu_data_hash_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));
+    bu_data_hash_update(state, &dmp->i->dm_perspective, sizeof(int));
+    bu_data_hash_update(state, &dmp->i->dm_depthMask, sizeof(int));
+    bu_data_hash_update(state, &dmp->i->dm_fontsize, sizeof(int));
 
     if (dmp->i->fbp) {
 	// TODO - check for framebuffer changes as well...
@@ -951,11 +945,10 @@ dm_hash(struct dm *dmp)
 	_bu_structparse_hash(state, pt, (const char *)mvars);
     }
 
+    unsigned long long hash_val = bu_data_hash_val(state);
+    bu_data_hash_destroy(state);
 
-    hash_val = XXH64_digest(state);
-    XXH64_freeState(state);
-
-    return (unsigned long long)hash_val;
+    return hash_val;
 }
 
 /* Routines for drawing based on a list of display_list

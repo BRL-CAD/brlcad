@@ -33,6 +33,7 @@
   <option>-n</option> flag is passed.  The <option>-n</option> flag
   causes the command to return a string of the objects that would be
   killed in a scriptable list format without actually killing them.
+  See also the <command>killrefs</command> command.
   </para>
 
   <para><emphasis remap="B" role="bold">Use this command with

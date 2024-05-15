@@ -1,33 +1,20 @@
-# Include directories needed by librt users
-set(RT_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${BG_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
-  ${BREP_INCLUDE_DIRS}
-  ${P2T_INCLUDE_DIR}
-  ${OPENNURBS_INCLUDE_DIRS}
-  )
+BRLCAD_Find_Package(MANIFOLD REQUIRED)
+BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
+BRLCAD_Find_Package(REGEX REQUIRED)
+if (BRLCAD_ENABLE_ASSETIMPORT)
+  BRLCAD_Find_Package(ASSETIMPORT)
+endif (BRLCAD_ENABLE_ASSETIMPORT)
+BRLCAD_Find_Package(Geogram REQUIRED SYSPATTERN geogram)
+add_definitions(-DUSE_GEOGRAM)
+
+if(ASSETIMPORT_LIBRARIES)
+  add_definitions(-DUSE_ASSETIMPORT)
+endif(ASSETIMPORT_LIBRARIES)
+
 
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
-  set(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
 endif (BRLCAD_ENABLE_OPENCL)
-
-# locally used but not needed by users of the library
-set(RT_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/vds
-  ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
-  ${REGEX_INCLUDE_DIRS}
-  )
-# FIXME: needs materialX
-#  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
-
-
-BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 
 # FIXME: needs materialX
 #  material/materialX.cpp
@@ -38,6 +25,7 @@ set(LIBRT_SOURCES
   binunif/binunif.c
   binunif/db5_bin.c
   bool.c
+  bool_tess.c
   bundle.c
   cache.c
   cache_lz4.c
@@ -105,6 +93,8 @@ set(LIBRT_SOURCES
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/bot/decimate.c
+  primitives/bot/plate.cpp
+  primitives/bot/repair.cpp
   primitives/brep/brep.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
@@ -378,8 +368,42 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
+# Note - librt_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+set(LIBRT_LIBS
+  ${OPENCL_LIBS}
+  ${librt_deps}
+  ${OPENNURBS_LIBRARIES}
+  ${MANIFOLD_LIBRARIES}
+  ${ASSETIMPORT_LIBRARIES}
+  ${GEOGRAM_LIBRARY}
+  ${REGEX_LIBRARIES}
+  ${WINSOCK_LIB}
+  ${RPCRT_LIB}
+  ${STDCXX_LIBRARIES}
+  )
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+# Include directories needed by librt users
+set(RT_INCLUDE_DIRS
+  ${OPENNURBS_INCLUDE_DIRS}
+  ${OPENCL_INCLUDE_DIRS}
+  )
+
+# locally used but not needed by users of the library
+set(RT_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/vds
+  ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
+  ${REGEX_INCLUDE_DIRS}
+  ${GEOGRAM_INCLUDE_DIR}
+  ${MANIFOLD_INCLUDE_DIRS}
+  ${ASSETIMPORT_INCLUDE_DIR}
+  ${MANIFOLD_INCLUDE_DIRS}
+  ${ASSETIMPORT_INCLUDE_DIR}
+  )
+# FIXME: needs materialX
+#  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
+
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}")
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
@@ -395,9 +419,10 @@ if(HIDE_INTERNAL_SYMBOLS)
   endif (TARGET librt-obj)
 endif(HIDE_INTERNAL_SYMBOLS)
 
-# loudly append an underscore on musl so that we build by default but           
+# loudly append an underscore on musl so that we build by default but
 # not without protest.
-find_program(MUSL_LD NAMES /lib/ld-musl-x86_64.so.1) 
+find_program(MUSL_LD NAMES /lib/ld-musl-x86_64.so.1)
+mark_as_advanced(MUSL_LD)
 if (MUSL_LD)
   message("WARNING: MUSL LibC Detected.  Protecting BRL-CAD's librt.
 
@@ -427,8 +452,9 @@ endif (MUSL_LD)
 # The following is build code for test applications used during
 # development
 #
+# find_package_eigen(REQUIRED)
 #include_directories(
-#  ${CMAKE_SOURCE_DIR}/src/other/Eigen
+#  ${EIGEN3_INCLUDE_DIR}
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
 #  )
 #

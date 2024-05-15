@@ -1,7 +1,7 @@
 /*                  Q P O L Y S E T T I N G S . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include "bv.h"
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
 
 class QPolySettings : public QWidget
 {
@@ -38,9 +38,9 @@ class QPolySettings : public QWidget
 	QPolySettings();
 	~QPolySettings();
 
-	QColorRGB *edge_color;
+	QgColorRGB *edge_color;
 	QCheckBox *fill_poly;
-	QColorRGB *fill_color;
+	QgColorRGB *fill_color;
 	QLineEdit *fill_slope_x;
 	QLineEdit *fill_slope_y;
 	QLineEdit *fill_density;
@@ -49,11 +49,22 @@ class QPolySettings : public QWidget
 	QLineEdit *sketch_name;
 	QCheckBox *sketch_sync;
 
+	QLineEdit *vZ;
+
+	QCheckBox *line_snapping;
+	QCheckBox *grid_snapping;
+
+	bool uniq_obj_name(struct bu_vls *oname, struct bview *v);
+
     signals:
 	void settings_changed();
+	void line_snapping_changed(bool);
+	void grid_snapping_changed(bool);
 
     public slots:
 	void do_settings_changed();
+	void do_line_snapping_changed();
+	void do_grid_snapping_changed();
 	void settings_sync(struct bv_scene_obj *p);
 
     private slots:

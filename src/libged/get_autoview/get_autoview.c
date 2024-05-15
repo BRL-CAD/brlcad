@@ -1,7 +1,7 @@
 /*                         G E T _ A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,8 +47,8 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
     fastf_t size;
     int pflag = 0;
     int c;
+    double sval = (gedp->dbip) ? gedp->dbip->dbi_base2local : 1.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -88,8 +88,8 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
     if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
 	VSETALL(radial, 1.0);
 
-    VSCALE(center, center, gedp->dbip->dbi_base2local);
-    VSCALE(radial, radial, gedp->dbip->dbi_base2local * 2.0);
+    VSCALE(center, center, sval);
+    VSCALE(radial, radial, sval * 2.0);
     size = radial[X];
     V_MAX(size, radial[Y]);
     V_MAX(size, radial[Z]);

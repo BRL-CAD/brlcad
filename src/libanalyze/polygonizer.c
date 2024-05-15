@@ -1,7 +1,7 @@
 /*
  * C code from the article
  * "An Implicit Surface Polygonizer"
- * http::www.unchainedgeometry.com/jbloom/papers/polygonizer.pdf
+ * https://www.bloomenthal.com/JBloom/pdf/polygonizer.pdf
  * by Jules Bloomenthal, jules@bloomenthal.com
  * in "Graphics Gems IV", Academic Press, 1994
 
@@ -748,7 +748,7 @@ analyze_polygonize(
     struct rt_i *rtip;
     fastf_t timestamp;
     fastf_t timestamp2;
-    fastf_t mt = (params && params->max_time > 0) ? (fastf_t)params->max_time : 0.0;
+    fastf_t mt = (params && params->max_cycle_time > 0) ? (fastf_t)params->max_cycle_time : 0.0;
 
     if (!faces || !num_faces || !vertices || !num_vertices || !obj || !dbip) return -1;
 
@@ -850,11 +850,18 @@ analyze_polygonize(
 	testface(c.i, c.j, c.k-1, &c, N, LBN, LTN, RBN, RTN, &p);
 	testface(c.i, c.j, c.k+1, &c, F, LBF, LTF, RBF, RTF, &p);
 
-	if (((bu_gettime() - timestamp)/1e6) > mt) {
+	if (mt > 0 && ((bu_gettime() - timestamp)/1e6) > mt) {
 	    /* Taking too long, bail */
 	    ret = 2;
 	    goto analyze_polygonizer_memfree;
 	}
+
+	if (params->max_time && ((bu_gettime() - timestamp)/1e6) + params->time_offset > params->max_time) {
+	    /* Getting close to the overall time limit, bail */
+	    ret = 2;
+	    goto analyze_polygonizer_memfree;
+	}
+
 
 	if (params && params->minimum_free_mem > 0) {
 	    avail_mem = bu_mem(BU_MEM_AVAIL, NULL);

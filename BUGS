@@ -15,6 +15,46 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtcheck_handler_cleanup() throws 'invalid handle specified' on Windows
+  in closing of STDOUT (see FIXME comment). Does not affect normal running,
+  but a debug build complains.
+
+* very peculiar non-linear memory issue in rt when allocating a large
+  flat hierarchy of objects.  I have three combs, each with 10k
+  members unioned. Each member is an rcc.  Rendering with just one
+  comb results in about 2GB usage.  Two combs result in about 3.5GB
+  usage.  Three combs results in 18GB usage.  Four is killed after
+  24GB.  Suspect there is some 32-bit issue once we exceed 4GB that is
+  causing subsequent allocations to be bigger than necessary.  Looking
+  at allocation stack, rt_ct_get() appears to be allocating 10MB
+  chunks.
+
+* rt from mged is not outputting overlap log messages or rt summary.
+  Stops printing after opendb line. (Observed on Mac)
+
+* mged running an rt with excessive overlaps ends up in a deadlock.
+  Backtrace indicates write buffer is full, likely because no output
+  is going to terminal. (Observed on Mac)
+
+* gcv on a glTF file (at least a binary .glb) crashes hard with a NULL
+  pointer bomb (workaround: gltf-g succeeds albeit incomplete
+  conversion).  Takes out the entire Terminal app on Mac for some
+  reason (consistently).
+
+* Running"mged -c test.g" exits automatically on default prompt:
+  ...
+  Create new database (y|n)[n]? 
+  Warning: no database is currently open!
+  morrison@Miniagua .build %
+
+* TGC tess fails when we have a near-zero c axis and a larger d
+  axis, or vice versa.
+
+* MGED crashes trying to open the repository file
+  doc/docbook/resources/other/standard/xsl/images/important.tif
+  It is mis-identified as a v4 .g file due to the file header's
+  first character matching the v4 .g first character.
+
 * MGED on Mac hides the main command window on File->Open when you
   cancel the open.  Presumably the withdraw is somehow getting routed
   to the window and not just the open dialog.

@@ -1,7 +1,7 @@
 /*                           L O D . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2023 United States Government as represented by
+ * Copyright (c) 2013-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include "bu/time.h"
 #include "bu/units.h"
 #include "bg.h"
-#include "bg/lod.h"
+#include "bv/lod.h"
 #include "raytrace.h"
 
 int
@@ -73,13 +73,13 @@ main(int argc, char *argv[])
     if (!bot->num_faces)
 	bu_exit(1, "ERROR: %s - no faces found\n", argv[2]);
 
-    struct bg_mesh_lod_context *c = bg_mesh_lod_context_create(argv[1]);
+    struct bv_mesh_lod_context *c = bv_mesh_lod_context_create(argv[1]);
 
-    unsigned long long key = bg_mesh_lod_cache(c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+    unsigned long long key = bv_mesh_lod_cache(c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
     if (!key)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
 
-    struct bv_mesh_lod *mlod = bg_mesh_lod_create(c, key);
+    struct bv_mesh_lod *mlod = bv_mesh_lod_create(c, key);
     if (!mlod)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
 
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
     start = bu_gettime();
 
     for (int i = 0; i < 16; i++) {
-	bg_mesh_lod_level(s, i, 0);
+	bv_mesh_lod_level(s, i, 0);
     }
 
     elapsed = bu_gettime() - start;
@@ -104,8 +104,8 @@ main(int argc, char *argv[])
     bu_log("lod level setting: %f sec\n", seconds);
 
     BU_PUT(s, struct bv_scene_obj);
-    bg_mesh_lod_destroy(mlod);
-    bg_mesh_lod_context_destroy(c);
+    bv_mesh_lod_destroy(mlod);
+    bv_mesh_lod_context_destroy(c);
 
     return 0;
 }

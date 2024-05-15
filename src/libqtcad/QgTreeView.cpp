@@ -1,7 +1,7 @@
 /*                    Q G T R E E V I E W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgTreeView.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -51,7 +51,7 @@ void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     }
 
     aflag = index.data(QgModel::HighlightDisplayRole).toInt();
-    if (!cadtreeview->isExpanded(index) && aflag == 1) {
+    if (aflag == 1) {
 	painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
 	goto text_string;
     }
@@ -164,7 +164,7 @@ QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
-    QObject::connect(this, &QgTreeView::clicked, sm, &QgTreeSelectionModel::update_selected_node_relationships);
+    //QObject::connect(this, &QgTreeView::clicked, sm, &QgTreeSelectionModel::update_selected_node_relationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
     QObject::connect(this, &QgTreeView::doubleClicked, (QgTreeView *)this, &QgTreeView::do_draw_toggle);
 }
@@ -231,11 +231,13 @@ void QgTreeView::mousePressEvent(QMouseEvent *e)
 
 void QgTreeView::tree_column_size(const QModelIndex &)
 {
+    QTCAD_SLOT("QgTreeView::tree_column_size", 1);
     header_state();
 }
 
 void QgTreeView::context_menu(const QPoint &point)
 {
+    QTCAD_SLOT("QgTreeView::context_menu", 1);
     QModelIndex index = indexAt(point);
     QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
 
@@ -272,6 +274,7 @@ void QgTreeView::context_menu(const QPoint &point)
 
 void QgTreeView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
+    QTCAD_SLOT("QgTreeView::selectionChanged", 1);
     if (selected.indexes().size()) {
 	// Stash a valid selection for potential post-model rebuild restoration.
 	QModelIndex nindex = selected.indexes().first();
@@ -293,6 +296,7 @@ QModelIndex QgTreeView::selected()
 void
 QgTreeView::do_draw_toggle(const QModelIndex &index)
 {
+    QTCAD_SLOT("QgTreeView::do_draw_toggle", 1);
     QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
 
     if (!m->gedp)
@@ -302,32 +306,28 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
     if (!v)
 	return;
 
-    struct db_full_path *clicked_path = cnode->fp();
+    BViewState *sv =  m->gedp->dbi_state->get_view_state(v);
+    if (!sv)
+	return;
 
-    bool do_draw = true;
-    struct bu_ptbl *sg = bv_view_objs(m->gedp->ged_gvp, BV_DB_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	if (db_full_path_match_top((struct db_full_path *)cg->s_path, clicked_path)) {
-	    do_draw = false;
-	    break;
-	}
-    }
-    db_free_full_path(clicked_path);
-    BU_PUT(clicked_path, struct db_full_path);
-
-    QString cnode_path = cnode->toString();
-    if (do_draw) {
-	m->draw(cnode_path);
+    std::vector<unsigned long long> path_hashes = cnode->path_items();
+    unsigned long long phash = m->gedp->dbi_state->path_hash(path_hashes, 0);
+    if (!sv->is_hdrawn(-1, phash)) {
+	sv->add_hpath(path_hashes);
+	std::unordered_set<struct bview *> views;
+	views.insert(v);
+	sv->redraw(NULL, views, 1);
     } else {
-	m->erase(cnode_path);
+	unsigned long long c_hash = path_hashes[path_hashes.size() - 1];
+	path_hashes.pop_back();
+	sv->erase_hpath(-1, c_hash, path_hashes, true);
     }
-
 }
 
 void
 QgTreeView::redo_expansions(void *)
 {
+    QTCAD_SLOT("QgTreeView::redo_expansions", 1);
     std::unordered_set<QgItem *>::iterator i_it;
     for (i_it = m->items->begin(); i_it != m->items->end(); i_it++) {
 	QgItem *itm = *i_it;
@@ -338,9 +338,12 @@ QgTreeView::redo_expansions(void *)
     }
 }
 
+
+// TODO - probably no longer needed?
 void
 QgTreeView::redo_highlights()
 {
+    QTCAD_SLOT("QgTreeView::redo_highlights", 1);
     // Restore the previous selection, if we have no replacement and its still valid
     QModelIndex selected_idx = selected();
     if (!selected_idx.isValid()) {
@@ -353,10 +356,11 @@ QgTreeView::redo_highlights()
 	}
     }
 
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    selm->update_selected_node_relationships(selected_idx);
+    //QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
+    //selm->update_selected_node_relationships(selected_idx);
 }
 
+#if 0
 void QgTreeView::expand_path(QString path)
 {
     int i = 0;
@@ -395,38 +399,18 @@ void QgTreeView::expand_link(const QUrl &link)
 {
     expand_path(link.path());
 }
+#endif
 
 
-void QgTreeView::qgitem_select_sync(QgItem *itm)
+void QgTreeView::qgitem_select_sync(QgItem *)
 {
-    struct ged *gedp = m->gedp;
-    struct ged_selection_set *gs = NULL;
-    if (gedp->ged_selection_sets) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt == 1)
-	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-	bu_ptbl_free(&ssets);
-    }
-    if (!gs)
-	return;
-
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    selm->ged_selection_sync(itm, gs);
-    selm->ged_drawn_sync(itm, gedp);
+    QTCAD_SLOT("QgTreeView::qgitem_select_sync", 1);
+    emit m->layoutChanged();
 }
 
-void QgTreeView::do_view_update(unsigned long long flags)
+void QgTreeView::do_view_update(unsigned long long UNUSED(flags))
 {
-    struct ged *gedp = m->gedp;
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-
-    if (flags & QTCAD_VIEW_SELECT && gedp->ged_cset)
-	selm->ged_selection_sync(NULL, gedp->ged_cset);
-
-    if (flags & QTCAD_VIEW_DRAWN)
-	selm->ged_drawn_sync(NULL, gedp);
-
+    QTCAD_SLOT("QgTreeView::do_view_update", 1);
     // TODO - can the mode logic be triggered from here as well?
 
     emit m->layoutChanged();

@@ -1,13 +1,3 @@
-set(PROC_DB_INCLUDE_DIRS
-  ${NMG_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${OPENNURBS_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
-list(REMOVE_DUPLICATES PROC_DB_INCLUDE_DIRS)
-BRLCAD_INCLUDE_DIRS(PROC_DB_INCLUDE_DIRS)
-
 # DEVELOPMENT DEMO & TESTING TOOLS
 #
 # these are development demonstrations and testing tools that are not
@@ -18,8 +8,10 @@ BRLCAD_INCLUDE_DIRS(PROC_DB_INCLUDE_DIRS)
 BRLCAD_ADDEXEC(bottest bottest.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
+target_include_directories(brep_cube BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_ADDEXEC(brep_invalid "brep_invalid.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL) # NOTE: has manual page
+target_include_directories(brep_simple BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_ADDEXEC(brep_surface "brep_surface.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_trimmed "brep_trimmed.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
@@ -30,7 +22,9 @@ BRLCAD_ADDEXEC(nmgmodel nmgmodel.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(pipetest pipetest.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(spltest spltest.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
+target_include_directories(surfaceintersect BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_ADDEXEC(tea_nmg tea_nmg.c "libwdb;libnmg" NO_INSTALL)
+target_include_directories(tea_nmg BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_ADDEXEC(tube tube.c "libwdb;libnmg;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb NO_INSTALL) # NOTE: has manual page
 
@@ -54,6 +48,7 @@ BRLCAD_ADDEXEC(masonry masonry.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(menger menger.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(metaball metaball.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(mkbuilding "mkbuilding.c;makebuilding/makebuilding.c" libwdb NO_INSTALL)
+target_include_directories(mkbuilding BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_ADDEXEC(molecule molecule.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(pdb-g pdb-g.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(pipe pipe.c "libwdb;${M_LIBRARY}" NO_INSTALL)
@@ -63,8 +58,10 @@ BRLCAD_ADDEXEC(ringworld ringworld.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(sketch sketch.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(sphflake sphflake.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(tea tea.c "libwdb;libnmg" NO_INSTALL)
+target_include_directories(tea BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_ADDEXEC(torii torii.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(vegetation vegetation.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+target_include_directories(vegetation BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_ADDEXEC(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
 
 

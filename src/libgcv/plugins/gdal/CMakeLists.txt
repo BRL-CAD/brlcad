@@ -1,3 +1,7 @@
+if (BRLCAD_ENABLE_GDAL)
+  BRLCAD_Find_Package(GDAL REQUIRED)
+endif (BRLCAD_ENABLE_GDAL)
+
 set(GDAL_SRCS
   gdal.cpp
   gdal_ll.cpp

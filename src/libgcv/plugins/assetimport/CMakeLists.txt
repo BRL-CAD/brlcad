@@ -3,7 +3,7 @@ set(ASSETIMPORT_SRCS
   assetimport_write.cpp
   )
 
-find_package(ASSETIMPORT)
+BRLCAD_Find_Package(ASSETIMPORT)
 
 if(BRLCAD_ENABLE_ASSETIMPORT AND ASSETIMPORT_LIBRARY AND ASSETIMPORT_INCLUDE_DIR)
   message("assetimport plugin FOUND and ENABLED")

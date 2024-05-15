@@ -1,7 +1,7 @@
 /*                         G - S T L . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2023 United States Government as represented by
+ * Copyright (c) 2003-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -475,7 +475,7 @@ main(int argc, char *argv[])
 			&tree_state,
 			0,			/* take all regions */
 			use_mc?gcv_region_end_mc:gcv_region_end,
-			use_mc?NULL:nmg_booltree_leaf_tess,
+			use_mc?NULL:rt_booltree_leaf_tess,
 			(void *)&gcvwriter);
 
     if (regions_tried>0) {

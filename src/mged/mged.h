@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2023 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,6 +90,15 @@ extern struct ged *GEDP;    /* defined in mged.c */
 extern struct db_i *DBIP;   /* defined in mged.c */
 extern struct rt_wdb *WDBP; /* defined in mged.c */
 
+/* initialization states */
+extern int mged_init_flag;	/* >0 means in initialization stage */
+extern int classic_mged;        /* >0 means interactive. gets set to 0 if
+			         * there's libdm graphics support, and forced
+			         * with -c option. */
+extern char *dpy_string;
+extern int mged_db_upgrade;
+extern int mged_db_version;
+extern int mged_db_warn;
 
 /*
  * All GED files are stored in a fixed base unit (MM).  These factors
@@ -436,7 +445,6 @@ int mged_attach(const char *wp_name, int argc, const char *argv[]);
 void mged_link_vars(struct mged_dm *p);
 void mged_slider_free_vls(struct mged_dm *p);
 int gui_setup(const char *dstr);
-int gui_output(void *clientData, void *str);
 
 
 /* buttons.c */
@@ -466,6 +474,8 @@ extern void view_ring_destroy(struct mged_dm *dlp);
 int cmdline(struct bu_vls *vp, int record);
 int mged_cmd(int argc, const char *argv[], struct funtab in_functions[]);
 void mged_print_result(int status);
+int gui_output(void *clientData, void *str);
+void mged_pr_output(Tcl_Interp *interp);
 
 /* color_scheme.c */
 void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *);
@@ -514,6 +524,29 @@ extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
 void find_ars_nearest_pnt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
+
+/* f_db.c */
+struct mged_opendb_ctx {
+    int argc;
+    const char **argv;
+    int force_create;
+    int no_create;
+    int created_new_db;
+    int ret;
+    int ged_ret;
+    Tcl_Interp *interpreter;
+    struct db_i *old_dbip;
+    int post_open_cnt;
+};
+extern struct mged_opendb_ctx mged_global_db_ctx;
+int f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
+int f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
+void mged_output_handler(struct ged *, char *line);
+void mged_refresh_handler(void *clientdata);
+void mged_pre_opendb_clbk(struct ged *gedp, void *ctx);
+void mged_post_opendb_clbk(struct ged *gedp, void *ctx);
+void mged_pre_closedb_clbk(struct ged *gedp, void *ctx);
+void mged_post_closedb_clbk(struct ged *gedp, void *ctx);
 
 /* mged.c */
 int event_check(int non_blocking);

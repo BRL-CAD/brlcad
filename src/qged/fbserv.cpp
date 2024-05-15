@@ -1,7 +1,7 @@
 /*                      F B S E R V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,12 +38,13 @@
 #include "bu/vls.h"
 #include "dm.h"
 #include "./fbserv.h"
-#include "qtcad/QtGL.h"
-#include "qtcad/QtSW.h"
+#include "qtcad/QgGL.h"
+#include "qtcad/QgSW.h"
 
 void
 QFBSocket::client_handler()
 {
+    QTCAD_SLOT("QFBSocket::client_handler", 1);
     bu_log("client_handler\n");
 
     // Get the current libpkg connection
@@ -115,7 +116,6 @@ QFBSocket::client_handler()
 
 QFBServer::QFBServer(struct fbserv_obj *fp)
 {
-    bu_log("create QFBServer\n");
     fbsp = fp;
 }
 
@@ -126,6 +126,7 @@ QFBServer::~QFBServer()
 void
 QFBServer::on_Connect()
 {
+    QTCAD_SLOT("QFBServer::on_Connect", 1);
     // Have a new connection pending, accept it.
     QTcpSocket *tcps = nextPendingConnection();
 
@@ -204,15 +205,23 @@ qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
     QFBSocket *s = (QFBSocket *)data;
     QObject::connect(s->s, &QTcpSocket::readyRead, s, &QFBSocket::client_handler, Qt::QueuedConnection);
 
-    QtGL *ctx = (QtGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
+    QgGL *ctx = (QgGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
-	QObject::connect(s, &QFBSocket::updated, ctx, &QtGL::need_update, Qt::QueuedConnection);
+	QObject::connect(s, &QFBSocket::updated, ctx, &QgGL::need_update, Qt::QueuedConnection);
     }
 }
 #endif
 
-// Because swrast uses a bview as its context pointer, we need to unpack the app data
-// when using that display method
+// Because swrast uses a bview as its context pointer, we need to unpack the
+// app data to get our Qt widget ctx when using that display method.  In other
+// words, the swrast backend is generic - it has no knowledge of Qt - and the
+// Qt widget we need to notify for update/redraw purposes is coming (from the
+// libdm perspective) solely from the application - which is why it lives in
+// the user data slot rather than the context.  (The swrast offscreen rendering
+// context is still present and relevant, hence the need for a separate user
+// pointer.)  The advantage of using a generic swrast backend is that such a
+// setup allows us to use the same logic both for Qt widget rendering and
+// headless image generation.
 void
 qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 {
@@ -221,9 +230,9 @@ qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data)
     QFBSocket *s = (QFBSocket *)data;
     QObject::connect(s->s, &QTcpSocket::readyRead, s, &QFBSocket::client_handler, Qt::QueuedConnection);
 
-    QtSW *ctx = (QtSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
+    QgSW *ctx = (QgSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
-	QObject::connect(s, &QFBSocket::updated, ctx, &QtSW::need_update, Qt::QueuedConnection);
+	QObject::connect(s, &QFBSocket::updated, ctx, &QgSW::need_update, Qt::QueuedConnection);
     }
 }
 

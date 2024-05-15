@@ -1,7 +1,7 @@
 /*                    G E D _ V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@ struct _ged_view_info {
     const char *vobj;
     struct bview *cv;
     struct bv_scene_obj *s;
+    int local_obj;
 };
 extern int _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 extern int _view_cmd_lines(void *bs, int argc, const char **argv);

@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,6 +68,11 @@ __BEGIN_DECLS
 DEPRECATED BU_EXPORT extern int bu_is_parallel(void);
 
 /**
+ * returns the thread ID of the calling thread
+ */
+BU_EXPORT extern int bu_thread_id(void);
+
+/**
  * returns the CPU number of the current bu_parallel() invoked thread.
  */
 BU_EXPORT extern int bu_parallel_id(void);
@@ -111,7 +116,7 @@ BU_EXPORT extern size_t bu_avail_cpus(void);
  *
  * Locking and work dispatching are handled by 'func' using a
  * "self-dispatching" paradigm.  This means you must manually protect
- * shared data structures, e.g., via BU_SEMAPHORE_ACQUIRE().
+ * shared data structures, e.g., via bu_semaphore_acquire().
  * Lock-free execution is often possible by creating data containers
  * with MAX_PSW elements as bu_parallel will never execute more than
  * that many threads of execution.

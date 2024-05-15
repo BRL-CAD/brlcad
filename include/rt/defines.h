@@ -1,7 +1,7 @@
 /*                       D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2023 United States Government as represented by
+ * Copyright (c) 2011-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,6 +69,12 @@
 #endif
 
 #include "bg/defines.h"
+
+/* The most modern version of the .g database format.
+ * Code wanting to create the newest database format
+ * should use this define rather than hard coding the
+ * current latest format */
+#define BRLCAD_DB_FORMAT_LATEST 5
 
 /*
  * Values for Solid ID.

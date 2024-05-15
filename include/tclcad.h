@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,14 +34,11 @@
 
 #include "common.h"
 
-__BEGIN_DECLS
 
 #include "tclcad/defines.h"
 #include "tclcad/draw.h"
 #include "tclcad/misc.h"
 #include "tclcad/setup.h"
-
-__END_DECLS
 
 #endif /* TCLCAD_H */
 /** @} */

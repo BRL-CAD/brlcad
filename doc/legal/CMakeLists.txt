@@ -3,10 +3,9 @@ set(doc_legal
   bdl.txt
   lgpl.txt
   )
-ADD_DOC(doc_legal legal)
+BRLCAD_MANAGE_FILES(doc_legal ${DOC_DIR}/legal)
 
 add_subdirectory(embedded)
-add_subdirectory(other)
 
 CMAKEFILES(bsd.txt bdl.txt lgpl.txt)
 CMAKEFILES(README.txt)

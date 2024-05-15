@@ -1,9 +1,0 @@
-<map id="OpenMesh::Subdivider::Uniform::CompositeSqrt3T&lt; MeshType, RealType &gt;" name="OpenMesh::Subdivider::Uniform::CompositeSqrt3T&lt; MeshType, RealType &gt;">
-<area shape="rect" id="node1" title="Uniform composite sqrt(3) subdivision algorithm." alt="" coords="856,45,1043,101"/>
-<area shape="rect" id="node2" href="$a03678.html" title="This class provides the composite subdivision rules for the uniform case." alt="" coords="562,5,731,61"/>
-<area shape="rect" id="node3" href="$a03762.html" title="Abstract base class for uniform subdivision algorithms." alt="" coords="259,5,428,61"/>
-<area shape="rect" id="node4" href="$a02846.html" title="This class demonstrates the non copyable idiom." alt="" coords="5,20,209,47"/>
-<area shape="rect" id="node5" href="$a03718.html" title="Helper class." alt="" coords="533,85,760,141"/>
-<area shape="rect" id="node6" href="$a03682.html" title="Abstract base class for coefficient functions." alt="" coords="316,92,371,119"/>
-<area shape="rect" id="node7" title=" " alt="" coords="270,143,417,169"/>
-</map>

@@ -59,7 +59,7 @@
 	   </listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged</prompt><userinput>attach ogl</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>attach ogl</userinput></term>
 	<listitem>
 	  <para>
 	    Opens an ogl display window named .dm_ogl1.

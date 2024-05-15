@@ -1,7 +1,7 @@
 /*                   D E C I M A T E  . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2023 United States Government as represented by
+ * Copyright (c) 2022-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -184,14 +184,14 @@ om_bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, double max_
 
 #else /* BUILD_OPENMESH_TOOLS */
 
-static bool
-om_bot_decimate(struct ged* gedp, struct rt_bot_internal* UNUSED(bot), int UNUSED(alg), double UNUSED(max_err))
+static struct rt_bot_internal *
+om_bot_decimate(struct ged *gedp, struct rt_bot_internal *UNUSED(input_bot), double UNUSED(max_err))
 {
     bu_vls_printf(gedp->ged_result_str,
 	"WARNING: BoT OpenMesh subcommands are unavailable.\n"
 	"BRL-CAD needs to be compiled with OpenMesh support.\n"
 	"(cmake -DBRLCAD_ENABLE_OPENMESH=ON or set -DOPENMESH_ROOT=/path/to/openmesh)\n");
-    return false;
+    return NULL;
 }
 
 #endif /* BUILD_OPENMESH_TOOLS */

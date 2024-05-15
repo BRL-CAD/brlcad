@@ -1,22 +1,4 @@
-set(UTIL_INCLUDE_DIRS
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${DM_INCLUDE_DIRS}
-  ${FB_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${SYSV_INCLUDE_DIRS}
-  ${TCLCAD_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  )
-
-set(UTIL_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${UTAHRLE_INCLUDE_DIRS}
-  ${PNG_INCLUDE_DIRS}
-  )
-
-set(UTIL_ALL_INCLUDE_DIRS ${UTIL_INCLUDE_DIRS} ${UTIL_LOCAL_INCLUDE_DIRS})
-BRLCAD_INCLUDE_DIRS(UTIL_ALL_INCLUDE_DIRS)
+BRLCAD_Find_Package(PNG REQUIRED)
 
 if(MSVC)
   add_definitions(
@@ -77,6 +59,10 @@ ADD_TARGET_DEPS(halftone dm_plugins)
 
 # This is intended to replace all of the img-img utils eventually
 BRLCAD_ADDEXEC(icv icv.cpp "libicv;libbu" FOLDER Util)
+
+# Should (eventually) have the pixdiff functionality, but be more
+# flexible about input and output formats...
+BRLCAD_ADDEXEC(imgdiff imgdiff.cpp "libicv;libbu" FOLDER Util)
 
 BRLCAD_ADDEXEC(imgdims imgdims.c "libdm;libbu" FOLDER Util)
 ADD_TARGET_DEPS(imgdims dm_plugins)
@@ -143,8 +129,8 @@ BRLCAD_ADDEXEC(png-bw png-bw.c "libbn;libbu;${PNG_LIBRARIES}" FOLDER Util)
 BRLCAD_ADDEXEC(png-pix png-pix.c "libbn;libbu;${PNG_LIBRARIES}" FOLDER Util)
 BRLCAD_ADDEXEC(sun-pix sun-pix.c libbu FOLDER Util)
 BRLCAD_ADDEXEC(terrain terrain.c "libbn;libbu;${M_LIBRARY}" FOLDER Util)
-#FIXME - Need to look at pcattcp port to Windows - ttcp should be
-#maintained and ported
+#FIXME - Need to look at https://github.com/microsoft/ntttcp to see if ttcp
+# can be ported to Windows - ttcp should be cross platform
 if(NOT WIN32)
   BRLCAD_ADDEXEC(ttcp ttcp.c "${SOCKET_LIBRARY};${NSL_LIBRARY};${NETWORK_LIBRARY}" FOLDER Util)
 else(NOT WIN32)

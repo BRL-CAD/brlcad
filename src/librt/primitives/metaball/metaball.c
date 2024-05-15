@@ -1,7 +1,7 @@
 /*			  M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2023 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -859,6 +859,24 @@ rt_metaball_add_point(struct rt_metaball_internal *mb, const point_t *loc, const
     BU_LIST_INSERT(&mb->metaball_ctrl_head, &mbpt->l);
 
     return 0;
+}
+
+void
+rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_metaball_internal* ip;
+
+    intern->idb_type = ID_METABALL;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_metaball_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->magic = RT_METABALL_INTERNAL_MAGIC;
+    BU_LIST_INIT(&ip->metaball_ctrl_head);
 }
 
 

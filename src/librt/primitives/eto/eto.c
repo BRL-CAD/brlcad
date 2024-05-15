@@ -1,7 +1,7 @@
 /*                           E T O . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2023 United States Government as represented by
+ * Copyright (c) 1992-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1585,6 +1585,28 @@ rt_eto_ifree(struct rt_db_internal *ip)
 
     bu_free((char *)tip, "eto ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
+}
+
+void
+rt_eto_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_eto_internal* eto_ip;
+
+    intern->idb_type = ID_ETO;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(eto_ip, struct rt_eto_internal);
+    intern->idb_ptr = (void *)eto_ip;
+
+    eto_ip->eto_magic = RT_ETO_INTERNAL_MAGIC;
+    VSETALL(eto_ip->eto_V, 0);
+    VSET(eto_ip->eto_N, 0.0, 0.0, 1.0);
+    VSET(eto_ip->eto_C, 1.0, 0.0, 0.0);
+    eto_ip->eto_r = 1.0;
+    eto_ip->eto_rd = 1.0;
 }
 
 

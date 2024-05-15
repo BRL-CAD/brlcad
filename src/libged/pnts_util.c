@@ -1,7 +1,7 @@
 /*                    P N T S _ U T I L. C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -236,7 +236,7 @@ _ged_pnts_fmt_type(const char *fc)
     if (has_pnt && has_nrm) return RT_PNT_TYPE_NRM;
     if (has_pnt && has_s && has_c) return RT_PNT_TYPE_COL_SCA;
     if (has_pnt && has_s) return RT_PNT_TYPE_SCA;
-    if (has_pnt && has_c) return RT_PNT_TYPE_SCA;
+    if (has_pnt && has_c) return RT_PNT_TYPE_COL;
     if (has_pnt) return RT_PNT_TYPE_PNT;
 
     return RT_PNT_UNKNOWN;

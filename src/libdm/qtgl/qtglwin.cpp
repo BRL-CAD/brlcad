@@ -1,7 +1,7 @@
 /*                      Q T G L W I N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,9 +23,9 @@
 
 #include "qtglwin.h"
 
-QtGLWin::QtGLWin(struct fb *fbp)
+QgGLWin::QgGLWin(struct fb *fbp)
 {
-    canvas = new QtGL(this, fbp);
+    canvas = new QgGL(this, fbp);
     this->setCentralWidget(canvas);
     canvas->setMinimumSize(1,1);
 }

@@ -1,7 +1,7 @@
 /*                        S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 2017-2023 United States Government as represented by
+ * Copyright (c) 2017-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -347,6 +347,24 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
     }
 
     return BRLCAD_OK;
+}
+
+void
+rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_script_internal* ip;
+
+    intern->idb_type = ID_SCRIPT;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_script_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
+    BU_VLS_INIT(&ip->s_type);
 }
 
 

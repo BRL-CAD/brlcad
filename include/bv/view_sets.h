@@ -1,7 +1,7 @@
 /*                      V I E W _ S E T S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,8 @@ BV_EXPORT void
 bv_set_add_view(struct bview_set *s, struct bview *v);
 
 /**
- * Remove view v from set s
+ * Remove view v from set s.  If v == NULL, all views
+ * are removed from the set.
  */
 BV_EXPORT void
 bv_set_rm_view(struct bview_set *s, struct bview *v);

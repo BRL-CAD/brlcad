@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2023 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -219,8 +219,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 	ss.rstep[Z] = 0;
     }
 
-    /*
-     * If ray does not enter the model RPP, skip on.
+    /* If ray does not enter the model RPP, skip on.
      * If ray ends exactly at the model RPP, trace it.
      */
     if (!rt_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
@@ -234,8 +233,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 	goto out;
     }
 
-    /*
-     * The interesting part of the ray starts at distance 0.  If the
+    /* The interesting part of the ray starts at distance 0.  If the
      * ray enters the model at a negative distance, (i.e., the ray
      * starts within the model RPP), we only look at little bit behind
      * (BACKING_DIST) to see if we are just coming out of something,
@@ -569,6 +567,7 @@ bundle_miss(register struct application *ap)
 
     return 0;
 }
+
 
 #ifdef SHOOTRAYS_IN_PARALLEL
 static void

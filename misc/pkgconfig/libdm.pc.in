@@ -8,6 +8,6 @@ datadir=@datadir@
 Name: libdm
 Description: BRL-CAD Display Manager Library
 Version: @BRLCAD_VERSION@
-Requires: librt libbn libbu
-Libs: -L${libdir} -ldm -lrt -lbn -lbu @LIBTCL@ @LIBPNG@ @X_LIBS@ @LIBM@
+Requires: libicv librt libnmg libbrep libbv libbg libbn libpkg libbu
+Libs: -L${libdir} -ldm -licv -lrt -lnmg -lbrep -lbv -lbg -lbn -lpkg -lbu @LIBPNG@ @X_LIBS@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

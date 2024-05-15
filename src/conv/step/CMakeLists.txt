@@ -1,3 +1,7 @@
+if (BRLCAD_ENABLE_STEP)
+  BRLCAD_Find_Package(STEPCODE REQUIRED)
+endif (BRLCAD_ENABLE_STEP)
+
 # Because the exp2cxx outputs are used by both step-g and g-step,
 # the logic both commands need is the same and is defined up front.
 
@@ -16,17 +20,6 @@ CHECK_CXX_FLAG("wd4800") # implicit conversions to bool
 CHECK_CXX_FLAG("Wno-ignored-qualifiers")
 
 find_package(STEPCODE)
-
-set(STEP_INCLUDE_DIRS
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BU_INCLUDE_DIRS}
-  ${RT_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  ${STEPCODE_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
-  )
-BRLCAD_INCLUDE_DIRS(STEP_INCLUDE_DIRS)
 
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   if (BRLCAD_ENABLE_STEP)
@@ -99,23 +92,15 @@ add_subdirectory(g-step)
 # until they do something useful.  It may be that work in STEPcode
 # to generate multiple files instead of single huge files will
 # help alleviate the issue - something to check into.
-if(BRLCAD_ENABLE_AP203E2)
-  add_subdirectory(g-ap203e2)
-  add_subdirectory(ap203e2-g)
-endif(BRLCAD_ENABLE_AP203E2)
-if(BRLCAD_ENABLE_AP214)
-  add_subdirectory(ap214-g)
-  add_subdirectory(g-ap214)
-endif(BRLCAD_ENABLE_AP214)
-if(BRLCAD_ENABLE_AP242)
-  add_subdirectory(ap242-g)
-  add_subdirectory(g-ap242)
-endif(BRLCAD_ENABLE_AP242)
+add_subdirectory(g-ap203e2)
+add_subdirectory(ap203e2-g)
+add_subdirectory(ap214-g)
+add_subdirectory(g-ap214)
+add_subdirectory(ap242-g)
+add_subdirectory(g-ap242)
 
 # FIXME: the IFC converter is incomplete
-if(BRLCAD_ENABLE_IFC)
-  add_subdirectory(ifc-g)
-endif(BRLCAD_ENABLE_IFC)
+add_subdirectory(ifc-g)
 
 add_subdirectory(util)
 
@@ -125,40 +110,9 @@ CMAKEFILES(
   CMakeLists.txt
   STEPWrapper.h
   ap203_elements.txt
-  ap203e2-g/CMakeLists.txt
   ap203e2_elements.txt
-  ap214-g/CMakeLists.txt
   ap214e3_elements.txt
-  ap242-g/CMakeLists.txt
-  ap242-g/Factory.cpp
-  ap242-g/GlobalUnitAssignedContext.cpp
-  ap242-g/GlobalUnitAssignedContext.h
-  ap242-g/MeasureValue.cpp
-  ap242-g/MeasureValue.h
-  ap242-g/MeasureWithUnit.cpp
-  ap242-g/MeasureWithUnit.h
-  ap242-g/PropertyDefinitionRepresentation.cpp
-  ap242-g/PropertyDefinitionRepresentation.h
-  ap242-g/RepresentedDefinition.cpp
-  ap242-g/RepresentedDefinition.h
   ap_schema.h
-  g-ap203e2/AP203e2.h
-  g-ap203e2/CMakeLists.txt
-  g-ap203e2/g-ap203e2.cpp
-  g-ap214/AP214e3.h
-  g-ap214/Add_Tree.cpp
-  g-ap214/CMakeLists.txt
-  g-ap214/Comb.cpp
-  g-ap214/G_Objects.cpp
-  g-ap214/Shape_Definition_Representation.cpp
-  g-ap214/g-ap214.cpp
-  g-ap242/AP242.h
-  g-ap242/CMakeLists.txt
-  g-ap242/g-ap242.cpp
-  ifc-g/CMakeLists.txt
-  ifc-g/IFCWrapper.cpp
-  ifc-g/IFCWrapper.h
-  ifc-g/ifc-g.cpp
   )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)

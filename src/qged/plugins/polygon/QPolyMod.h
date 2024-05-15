@@ -1,7 +1,7 @@
 /*                       Q P O L Y M O D . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,8 +27,10 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QRadioButton>
-#include "qtcad/QColorRGB.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgColorRGB.h"
+#include "qtcad/QgPolyFilter.h"
+#include "qtcad/QgView.h"
+#include "qtcad/QgSignalFlags.h"
 #include "QPolySettings.h"
 
 class QPolyMod : public QWidget
@@ -67,12 +69,15 @@ class QPolyMod : public QWidget
 	QPushButton *remove_poly;
 
     signals:
+	void settings_changed(unsigned long long);
 	void view_updated(unsigned long long);
 
     public slots:
 	void app_mod_names_reset(void *);
+	void checkbox_refresh(unsigned long long);
 	void mod_names_reset();
 	void polygon_update_props();
+	void propagate_update(int);
 
     private slots:
 	void toplevel_config(bool);
@@ -91,6 +96,8 @@ class QPolyMod : public QWidget
 	void view_name_edit_str(const QString &);
 	void view_name_edit();
 	void view_name_update();
+	void toggle_line_snapping(bool);
+	void toggle_grid_snapping(bool);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
@@ -100,6 +107,12 @@ class QPolyMod : public QWidget
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
 	bool do_bool = false;
+
+	QgPolyFilter *cf = NULL;
+	QPolyUpdateFilter *puf;
+	QPolySelectFilter *psf;
+	QPolyPointFilter *ppf;
+	QPolyMoveFilter *pmf;
 };
 
 

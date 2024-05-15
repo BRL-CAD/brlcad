@@ -111,13 +111,6 @@ etc.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>libtermio</emphasis></term>
-  <listitem>
-<para>A library to handle terminal mode setting
-on both Berkeley or SystemV machines.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>libplot3</emphasis></term>
   <listitem>
 <para>A public-domain version of the UNIX-Plot library
@@ -199,21 +192,12 @@ See
 <citerefentry><refentrytitle>pixstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixtile</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>pp-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>wavelet</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>fbed</emphasis></term>
-  <listitem>
-<para>An interactive, termcap-based frame-buffer image editor.
-See
-<citerefentry><refentrytitle>fbed</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -399,7 +383,7 @@ a convention for the number of frames/reel exists:</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2023 by the United States
+<para>This software is Copyright (c) 1989-2024 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

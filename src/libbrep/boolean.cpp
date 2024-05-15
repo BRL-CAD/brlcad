@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2023 United States Government as represented by
+ * Copyright (c) 2013-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
 #include "brep_except.h"
 #include "brep_defines.h"
 
-DebugPlot *dplot = NULL;
+//DebugPlot *dplot = NULL;
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0
@@ -1415,6 +1415,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 		LinkedCurve new_curve;
 		new_curve.Append(*c1);
 		if (dist > ON_ZERO_TOLERANCE) {
+		    /* FIXME: memory leak, we never delete the ON_LineCurve */
 		    new_curve.Append(SSICurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart())));
 		}
 		new_curve.Append(*c2);
@@ -1425,6 +1426,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 	    // Check whether tmp[i] is closed within a tolerance
 	    if (tmp[i].PointAtStart().DistanceTo(tmp[i].PointAtEnd()) < INTERSECTION_TOL && !tmp[i].IsClosed()) {
 		// make IsClosed() true
+		/* FIXME: memory leak, we never delete the ON_LineCurve */
 		tmp[i].Append(SSICurve(new ON_LineCurve(tmp[i].PointAtEnd(), tmp[i].PointAtStart())));
 	    }
 	}
@@ -3595,8 +3597,8 @@ get_face_intersection_curves(
 		    continue;
 		}
 
-		dplot->SSX(events, brep1, brep1->m_F[i].m_si, brep2, brep2->m_F[j].m_si);
-		dplot->WriteLog();
+		//dplot->SSX(events, brep1, brep1->m_F[i].m_si, brep2, brep2->m_F[j].m_si);
+		//dplot->WriteLog();
 
 		ON_SimpleArray<ON_Curve *> face1_curves, face2_curves;
 		for (int k = 0; k < events.Count(); k++) {
@@ -3625,8 +3627,8 @@ get_face_intersection_curves(
 			}
 		    }
 		}
-		dplot->ClippedFaceCurves(surf1, surf2, face1_curves, face2_curves);
-		dplot->WriteLog();
+		//dplot->ClippedFaceCurves(surf1, surf2, face1_curves, face2_curves);
+		//dplot->WriteLog();
 
 		if (DEBUG_BREP_BOOLEAN) {
 		    // Look for coplanar faces
@@ -3851,8 +3853,8 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     for (int i = 0; i < original_faces.Count(); i++) {
 	TrimmedFace *first = original_faces[i];
 	ON_ClassArray<LinkedCurve> linked_curves = link_curves(curves_array[i]);
-	dplot->LinkedCurves(first->m_face->SurfaceOf(), linked_curves);
-	dplot->WriteLog();
+	//dplot->LinkedCurves(first->m_face->SurfaceOf(), linked_curves);
+	//dplot->WriteLog();
 
 	ON_SimpleArray<TrimmedFace *> splitted = split_trimmed_face(first, linked_curves);
 	trimmed_faces.Append(splitted);
@@ -3881,8 +3883,8 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 
     categorize_trimmed_faces(trimmed_faces, brep1, brep2, surf_tree1, surf_tree2, operation);
 
-    dplot->SplitFaces(trimmed_faces);
-    dplot->WriteLog();
+    //dplot->SplitFaces(trimmed_faces);
+    //dplot->WriteLog();
 
     for (int i = 0; i < surf_tree1.Count(); i++) {
 	delete surf_tree1[i];
@@ -3976,9 +3978,9 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
     ++calls;
     std::ostringstream prefix;
     prefix << "bool" << calls;
-    dplot = new DebugPlot(prefix.str().c_str());
-    dplot->Surfaces(brep1, brep2);
-    dplot->WriteLog();
+    //dplot = new DebugPlot(prefix.str().c_str());
+    //dplot->Surfaces(brep1, brep2);
+    //dplot->WriteLog();
 
     ON_ClassArray<ON_SimpleArray<TrimmedFace *> > trimmed_faces;
     try {
@@ -4000,17 +4002,17 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
 	    }
 	    evaluated_brep->ShrinkSurfaces();
 	    evaluated_brep->Compact();
-	    dplot->WriteLog();
+	    //dplot->WriteLog();
 	    return 0;
 	}
 	trimmed_faces = get_evaluated_faces(brep1, brep2, operation);
     } catch (InvalidBooleanOperation &e) {
 	bu_log("%s", e.what());
-	dplot->WriteLog();
+	//dplot->WriteLog();
 	return -1;
     } catch (GeometryGenerationError &e) {
 	bu_log("%s", e.what());
-	dplot->WriteLog();
+	//dplot->WriteLog();
 	return -1;
     }
 
@@ -4073,9 +4075,9 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
 	bu_log("%s", ON_String(ws).Array());
     }
 
-    dplot->WriteLog();
-    delete dplot;
-    dplot = NULL;
+    //dplot->WriteLog();
+    //delete dplot;
+    //dplot = NULL;
 
     return 0;
 }

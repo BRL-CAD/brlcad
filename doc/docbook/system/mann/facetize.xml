@@ -25,6 +25,7 @@
       <arg choice="opt" rep="norepeat">-r</arg>
       <arg choice="opt" rep="norepeat">-n</arg>
       <arg choice="opt" rep="norepeat">-T</arg>
+      <arg choice="opt" rep="norepeat">--MANIFOLD</arg>
       <arg choice="opt" rep="norepeat">--NMG</arg>
       <arg choice="opt" rep="norepeat">--CM</arg>
       <arg choice="opt" rep="norepeat">--SPSR</arg>
@@ -129,8 +130,8 @@
     <example>
       <title>Facetize all regions in a hierarchy, attempting only NMG conversion.</title>
       <para>
-	This runs the per region conversion on all regions, but in the case of failure will not attempt
-	any fallback conversion methods.
+        This runs the NMG approach per region conversion on all regions, but in
+        the case of failure will not attempt any fallback conversion methods.
       </para>
       <para>
 	<prompt>mged&gt; </prompt><userinput>facetize -r --NMG model model.f</userinput>
@@ -141,7 +142,7 @@
       <title>Retry failed conversion objects in a previous facetization attempt with new methodology.</title>
       <para>
 	This retries the per region conversion on all regions that didn't originally succeed in the initial
-	conversion attempt, attempting only CM reconstruction without first retrying NMG conversion.
+	conversion attempt, attempting only methods that haven't already been tried.
       </para>
       <para>
 	<prompt>mged&gt; </prompt><userinput>facetize -r --resume model.f</userinput>
@@ -194,9 +195,11 @@ CM: decimation succeeded, final BoT has 247642 faces
       very important to maximizing the success of a conversion.
     </para>
     <para>
-      By default, conversions will first attempt a standard NMG facetization and boolean evaluation of
-      the existing geometry.  When it succeeds, NMG's output is generally the best quality output that
-      can be produced by any of BRL-CAD's available facetization methods.  If NMG booleans fail, a fall-back method based
+      By default, conversions will first attempt facetization using the Manifold library to evaluate boolean
+      operations on individual meshes.  If that fails, the libnmg boolean evaluation is tried instead.
+      When one of those two approaches succeeds, the output (based of of individual NMG conversion of primitives)
+      is generally the best quality output that can be produced by any of BRL-CAD's available facetization methods.
+      If NMG based boolean methods fail, a fall-back method based
       on Bloomenthal's continuation method (CM) polygonalizer will be attempted by default.Note
       that if any of the methodology flags (<emphasis>--NMG</emphasis>,<emphasis>--CM</emphasis>,
       or <emphasis>--SPSR</emphasis>) are explicitly enabled, the other methodologies will be disabled unless they
@@ -204,7 +207,7 @@ CM: decimation succeeded, final BoT has 247642 faces
     </para>
     <para>
       While the <command>facetize</command> command does not itself expose options to adjust the behavior of
-      the NMG boolean methodology, it will respect MGED's settings for absolute (<emphasis>abs</emphasis>),
+      NMG-based methodologies, it will respect MGED's settings for absolute (<emphasis>abs</emphasis>),
       relative (<emphasis>rel</emphasis>), and normal (<emphasis>norm</emphasis>) tolerances which are set with
       the MGED <command>tol</command> command.  These settings may be changed between repeated runs of the
       facetize command to attempt different NMG evaluations.
@@ -234,8 +237,8 @@ CM: decimation succeeded, final BoT has 247642 faces
       the moss.g ellipsoid region.
     </para>
     <para>
-      Both NMG and CM assume a geometry hierarchy containing only
-      valid solid objects.  Both methods will refuse to process any tree containing recognizably
+      MANIFOLD, NMG and CM assume a geometry hierarchy containing only
+      valid solid objects.  Those methods will refuse to process any tree containing recognizably
       non-solid objects, as these tend to cause run-time problems and generate invalid outputs.  For non-solid
       objects, the "--SPSR" methodology may be enabled - it will apply the Kazhdan et. al. Screened Poisson Surface
       Reconstruction (SPSR) process to a pseudo-randomly sampled point set generated from <emphasis>old_object</emphasis>.  This

@@ -1,7 +1,7 @@
 /*                         E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1961,6 +1961,8 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 }
 
 
+extern int ged_edit2_core(struct ged *gedp, int argc, const char *argv[]);
+
 /**
  * A command line interface to the edit commands. Will handle any new
  * commands without modification. Validates as much as possible in a
@@ -1970,6 +1972,10 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 int
 ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_edit2_core(gedp, argc, argv);
+
     const char *const cmd_name = argv[0];
     union edit_cmd subcmd;
     const char *subcmd_name = NULL;

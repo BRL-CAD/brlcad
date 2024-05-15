@@ -1,7 +1,7 @@
 /*                      N M G _ M I S C . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1276,6 +1276,9 @@ nmg_loop_plane_newell(const struct loopuse *lu, plane_t pl)
 	eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 	vg_next = eu_next->vu_p->v_p->vg_p;
 
+	if (!vg || !vg_next)
+	    return;
+
 	pl_tmp[X] += (vg->coord[Y] - vg_next->coord[Y]) * (vg->coord[Z] + vg_next->coord[Z]);
 	pl_tmp[Y] += (vg->coord[Z] - vg_next->coord[Z]) * (vg->coord[X] + vg_next->coord[X]);
 	pl_tmp[Z] += (vg->coord[X] - vg_next->coord[X]) * (vg->coord[Y] + vg_next->coord[Y]);
@@ -1292,6 +1295,9 @@ nmg_loop_plane_newell(const struct loopuse *lu, plane_t pl)
 	fastf_t htest;
 
 	vg = eu->vu_p->v_p->vg_p;
+	if (!vg)
+	    return;
+
 	htest = VDOT(vg->coord, pl);
 	if (htest > hmax)
 	    hmax = htest;

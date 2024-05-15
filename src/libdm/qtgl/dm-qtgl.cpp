@@ -1,7 +1,7 @@
 /*                      D M - Q T G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 1988-2023 United States Government as represented by
+ * Copyright (c) 1988-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,6 +124,39 @@ qtgl_configureWin(struct dm *dmp, int UNUSED(force))
 
     return BRLCAD_OK;
 }
+
+static int
+qtgl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
+{
+    gl_debug_print(dmp, "qgl_getDisplayImage", dmp->i->dm_debugLevel);
+
+    struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
+    QImage qimg = privars->qw->grabFramebuffer();
+    unsigned char *idata;
+    int width;
+    int height;
+
+    width = dmp->i->dm_width;
+    height = dmp->i->dm_height;
+
+    if (!alpha) {
+	QImage img32 = qimg.convertToFormat(QImage::Format_RGB888);
+	idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
+	memcpy(idata, img32.bits(), height * width * 3);
+	*image = idata;
+    } else {
+	QImage img32 = qimg.convertToFormat(QImage::Format_RGBA8888);
+	idata = (unsigned char*)bu_calloc(height * width * 4, sizeof(unsigned char), "rgba data");
+	memcpy(idata, img32.bits(), height * width * 4);
+	*image = idata;
+    }
+    if (!flip)
+	flip_display_image_vertically(*image, width, height, alpha);
+
+    return BRLCAD_OK; /* caller will need to bu_free(idata, "image data"); */
+
+}
+
 
 /*
  * Gracefully release the display.
@@ -597,7 +630,7 @@ struct dm_impl dm_qtgl_impl = {
     gl_freeDLists,
     gl_genDLists,
     gl_draw_display_list,
-    gl_getDisplayImage, /* display to image function */
+    qtgl_getDisplayImage, /* display to image function */
     gl_reshape,
     qtgl_makeCurrent,
     null_SwapBuffers,

@@ -1,7 +1,7 @@
 /*                      U T I L I T Y 1 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2023 United States Government as represented by
+ * Copyright (c) 1990-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -237,8 +237,10 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     av[3] = argv[1];
 
     if ( ged_exec(GEDP, 4, (const char **)av) & BRLCAD_ERROR ) {
+	mged_pr_output(interpreter);
 	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(GEDP->ged_result_str), (char *)NULL);
     } else {
+	mged_pr_output(interpreter);
 	Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), (char *)NULL);
     }
 

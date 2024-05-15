@@ -3,7 +3,7 @@ set(COMGEOM_V5_MODELS
 )
 
 foreach(comgeom_input ${COMGEOM_V5_MODELS})
-  ADD_G_TARGET(${comgeom_input} "BRL-CAD Geometry Models/Sample")
+  G_TARGET(${comgeom_input} "BRL-CAD Geometry Models/Sample")
 endforeach(comgeom_input ${COMGEOM_V5_MODELS})
 
 CMAKEFILES(

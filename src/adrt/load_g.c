@@ -1,7 +1,7 @@
 /*                        L O A D _ G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2009-2023 United States Government as represented by
+ * Copyright (c) 2009-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -308,7 +308,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
 			&tree_state,		/* initial tree state */
 			nmg_to_adrt_regstart,	/* region start function */
 			gcv_region_end,		/* region end function */
-			nmg_booltree_leaf_tess,	/* leaf func */
+			rt_booltree_leaf_tess,	/* leaf func */
 			(void *)&gcvwriter);	/* client data */
 
     /* Release dynamic storage */

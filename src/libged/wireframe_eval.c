@@ -1,7 +1,7 @@
 /*                 W I R E F R A M E _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2023 United States Government as represented by
+ * Copyright (c) 1997-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1820,11 +1820,16 @@ draw_m3(struct bv_scene_obj *s)
     dgcdp.ap->a_rt_i = dgcdp.rtip;
     dgcdp.nvectors = 0;
 
+    const char *path = NULL;
     struct bu_vls ppath = BU_VLS_INIT_ZERO;
-    db_path_to_vls(&ppath, dgcdp.fp);
-    const char *path = bu_vls_cstr(&ppath);
+    if (dgcdp.fp) {
+	db_path_to_vls(&ppath, dgcdp.fp);
+	path = bu_vls_cstr(&ppath);
+    } else {
+	path = bu_vls_cstr(&s->s_name);
+    }
 
-    if (rt_gettrees(dgcdp.rtip, 1, (const char **)&path, 1)) {
+    if (!path || rt_gettrees(dgcdp.rtip, 1, (const char **)&path, 1)) {
 	bu_ptbl_free(&dgcdp.leaf_list);
 
 	/* do not do an rt_free_rti() (closes the database!!!!) */

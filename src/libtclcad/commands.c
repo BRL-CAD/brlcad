@@ -1,7 +1,7 @@
 /*                     C O M M A N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2023 United States Government as represented by
+ * Copyright (c) 2000-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2814,7 +2814,7 @@ to_data_vZ(struct ged *gedp,
 
     /* Get the data vZ */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gv_data_vZ);
+	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gv_tcl.gv_data_vZ);
 	return BRLCAD_OK;
     }
 
@@ -2824,7 +2824,7 @@ to_data_vZ(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp->gv_data_vZ = vZ;
+    gdvp->gv_tcl.gv_data_vZ = vZ;
 
     return BRLCAD_OK;
 }
@@ -3333,11 +3333,7 @@ to_fit_png_image(struct ged *gedp,
 	int UNUSED(maxargs))
 {
     icv_image_t *img;
-    size_t i_w, i_n;
     size_t o_w_requested, o_n_requested;
-    size_t o_w_used, o_n_used;
-    size_t x_offset, y_offset;
-    fastf_t ar_w;
     fastf_t sf;
 
     /* initialize result */
@@ -3363,61 +3359,11 @@ to_fit_png_image(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    i_w = img->width;
-    i_n = img->height;
-    ar_w = o_w_requested / (fastf_t)i_w;
-
-    o_w_used = (size_t)(i_w * ar_w * sf);
-    o_n_used = (size_t)(i_n * ar_w * sf);
-
-    if (icv_resize(img, ICV_RESIZE_BINTERP, o_w_used, o_n_used, 1) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: icv_resize failed", argv[0]);
+    int ret = icv_fit(img, gedp->ged_result_str, o_w_requested, o_n_requested, sf);
+    if (ret == BRLCAD_ERROR) {
 	icv_destroy(img);
-	return BRLCAD_ERROR;
+	return ret;
     }
-
-    if (NEAR_EQUAL(sf, 1.0, BN_TOL_DIST)) {
-	fastf_t ar_n = o_n_requested / (fastf_t)i_n;
-
-	if (ar_w > ar_n && !NEAR_EQUAL(ar_w, ar_n, BN_TOL_DIST)) {
-	    /* need to crop final image height so that we keep the center of the image */
-	    size_t x_orig = 0;
-	    size_t y_orig = (o_n_used - o_n_requested) * 0.5;
-
-	    if (icv_rect(img, x_orig, y_orig, o_w_requested, o_n_requested) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "%s: icv_rect failed", argv[0]);
-		icv_destroy(img);
-		return BRLCAD_ERROR;
-	    }
-
-	    x_offset = 0;
-	    y_offset = 0;
-	} else {
-	    /* user needs to offset final image in the window */
-	    x_offset = 0;
-	    y_offset = (size_t)((o_n_requested - o_n_used) * 0.5);
-	}
-    } else {
-	if (sf > 1.0) {
-	    size_t x_orig = (o_w_used - o_w_requested) * 0.5;
-	    size_t y_orig = (o_n_used - o_n_requested) * 0.5;
-
-	    if (icv_rect(img, x_orig, y_orig, o_w_requested, o_n_requested) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "%s: icv_rect failed", argv[0]);
-		icv_destroy(img);
-		return BRLCAD_ERROR;
-	    }
-
-	    x_offset = 0;
-	    y_offset = 0;
-	} else {
-	    /* user needs to offset final image in the window */
-	    x_offset = (size_t)((o_w_requested - o_w_used) * 0.5);
-	    y_offset = (size_t)((o_n_requested - o_n_used) * 0.5);
-	}
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "%zu %zu %zu %zu", img->width, img->height, x_offset, y_offset);
 
     /* icv_write should return < 0 for errors but doesn't */
     if (icv_write(img, argv[5], BU_MIME_IMAGE_PNG) == 0) {
@@ -4582,6 +4528,7 @@ to_new_view(struct ged *gedp,
     bv_init(new_gdvp, &current_top->to_gedp->ged_views);
     new_gdvp->callbacks = callbacks;
     bv_set_add_view(&current_top->to_gedp->ged_views, new_gdvp);
+    bu_ptbl_ins(&gedp->ged_free_views, (long *)new_gdvp);
 
     new_gdvp->gv_s->point_scale = 1.0;
     new_gdvp->gv_s->curve_scale = 1.0;
@@ -4617,6 +4564,11 @@ to_new_view(struct ged *gedp,
 		(ClientData)new_gdvp,
 		NULL);
     }
+
+    // If we don't already have a default ged_gvp, set the one we just
+    // created as the new default
+    if (!gedp->ged_gvp)
+	gedp->ged_gvp = new_gdvp;
 
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&new_gdvp->gv_name));
     return BRLCAD_OK;
@@ -5831,6 +5783,7 @@ to_snap_view(struct ged *gedp,
 
     int snapped = 0;
     if (gedp->ged_gvp->gv_s->gv_snap_lines) {
+	gedp->ged_gvp->gv_s->gv_snap_flags = BV_SNAP_TCL;
 	snapped = bv_snap_lines_2d(gedp->ged_gvp, &fvx, &fvy);
     }
     if (!snapped && gedp->ged_gvp->gv_s->gv_grid.snap) {

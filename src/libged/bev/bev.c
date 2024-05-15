@@ -1,7 +1,7 @@
 /*                         B E V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -169,7 +169,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 			 &wdbp->wdb_initial_tree_state,
 			 0,			/* take all regions */
 			 bev_facetize_region_end,
-			 nmg_booltree_leaf_tess,
+			 rt_booltree_leaf_tess,
 			 (void *)gedp);
 
 	if (i < 0) {

@@ -36,6 +36,7 @@ set(bu_test_srcs
   sort.c
   str.c
   str_isprint.c
+  temp_filename.c
   vls.c
   vls_vprintf.c
   )
@@ -137,6 +138,12 @@ BRLCAD_ADD_TEST(NAME bu_file_mime_stp   COMMAND bu_test file_mime stp 5 BU_MIME_
 BRLCAD_ADD_TEST(NAME bu_file_mime_png   COMMAND bu_test file_mime png 3 BU_MIME_IMAGE_PNG) # tests png extension in image context
 
 #BRLCAD_ADD_TEST(NAME bu_file_glob   COMMAND bu_test file_glob) # runs a series of built-in unit tests
+
+####################################
+#      bu_temp_filename testing    #
+####################################
+BRLCAD_ADD_TEST(NAME bu_temp_filename  COMMAND bu_test temp_filename "single")
+#BRLCAD_ADD_TEST(NAME bu_temp_filename  COMMAND bu_test temp_filename "parallel")
 
 #
 #  ************ bitv.c tests *************
@@ -722,8 +729,7 @@ BRLCAD_ADD_TEST(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
 # bu_test runs its process tests
 BRLCAD_ADDEXEC(bu_subprocess subprocess.cpp libbu TEST)
 add_dependencies(bu_test bu_subprocess)
-BRLCAD_ADD_TEST(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" basic)
-BRLCAD_ADD_TEST(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
+BRLCAD_ADD_TEST(NAME bu_process_all COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" all)
 
 #  *********** mappedfile.c tests ************
 BRLCAD_ADD_TEST(NAME bu_mappedfile_serial_1 COMMAND bu_test mappedfile 1 1)

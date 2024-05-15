@@ -1,7 +1,7 @@
 /*                        I N F O . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -638,8 +638,8 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 	const ON_Surface* trim_srf = trim.SurfaceOf();
 	const ON_BrepLoop &loop = brep->m_L[trim.m_li];
 	const ON_BrepFace &face = brep->m_F[loop.m_fi];
-	const char* sTrimType = "?";
-	const char* sTrimIso = "-?";
+	const char *sTrimType = NULL;
+	const char *sTrimIso = NULL;
 	const ON_Curve* c2 = trim.TrimCurveOf();
 	ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
 	c2->GetNurbForm(*nc2, 0.0);

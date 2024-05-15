@@ -1,7 +1,7 @@
 /*			 N O D E _ T Y P E . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2023 United States Government as represented by
+ * Copyright (c) 2015-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,14 +33,12 @@
 
 #define NODETYPEMAX             14
 
-using namespace std;
-
 class NODE;  //forward declaration of class
 
 class NODETYPE
 {
     public:
-    int findNodeType(string instring);
+    int findNodeType(std::string instring);
     int findNodeType(NODE *innode);
 };
 

@@ -9,6 +9,7 @@ set(rt_headers
   calc.h
   cmd.h
   comb.h
+  conv.h
   db4.h
   db5.h
   db_attr.h
@@ -58,7 +59,7 @@ set(rt_headers
   wdb.h
   xray.h
   )
-BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt)
+BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt REQUIRED librt)
 
 CMAKEFILES(CMakeLists.txt)
 

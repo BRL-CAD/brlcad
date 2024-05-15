@@ -1,3 +1,5 @@
+BRLCAD_Find_Package(OSMESA REQUIRED)
+
 set(SWRAST_SRCS
   dm-swrast.cpp
   fb-swrast.cpp
@@ -10,6 +12,8 @@ set(SWRAST_SRCS
 # in a "headless" configuration, with screengrab able to retrieve and save
 # images of the drawn scene.
 if(BRLCAD_ENABLE_QT)
+
+  find_package_qt(REQUIRED)
 
   add_definitions(-DSWRAST_QT)
 
@@ -43,12 +47,12 @@ set(SWRAST_SRCS ${SWRAST_SRCS} ${swrast_moc_srcs})
 dm_plugin_library(dm-swrast SHARED ${SWRAST_SRCS})
 if(BRLCAD_ENABLE_QT)
   if(Qt6Widgets_FOUND)
-    target_link_libraries(dm-swrast libqtcad libdm libbu osmesa Qt6::Core Qt6::Widgets)
+    target_link_libraries(dm-swrast libqtcad libdm libbu ${OSMESA_LIBRARY} Qt6::Core Qt6::Widgets)
   else()
-    target_link_libraries(dm-swrast libqtcad libdm libbu osmesa Qt5::Core Qt5::Widgets)
+    target_link_libraries(dm-swrast libqtcad libdm libbu ${OSMESA_LIBRARY} Qt5::Core Qt5::Widgets)
   endif(Qt6Widgets_FOUND)
 else(BRLCAD_ENABLE_QT)
-  target_link_libraries(dm-swrast libdm libbu osmesa)
+  target_link_libraries(dm-swrast libdm libbu ${OSMESA_LIBRARY})
 endif(BRLCAD_ENABLE_QT)
 set_property(TARGET dm-swrast APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H OSMESA)
 VALIDATE_STYLE(dm-swrast "${SWRAST_SRCS}")

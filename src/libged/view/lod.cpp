@@ -1,7 +1,7 @@
 /*                         L O D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,8 +30,10 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/hash.h"
+#include "bu/str.h"
 #include "bu/vls.h"
-#include "bg/lod.h"
+#include "bv/lod.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -181,7 +183,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
 	    // Clear any old cache in memory
-	    bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
+	    bv_mesh_lod_clear_cache(gedp->ged_lod, 0);
 
 	    int done = 0;
 	    int total = 0;
@@ -224,9 +226,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			bu_vls_free(&pname);
 			struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 			RT_BOT_CK_MAGIC(bot);
-			key = bg_mesh_lod_cache(gedp->ged_lod, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+			key = bv_mesh_lod_cache(gedp->ged_lod, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
 			if (key)
-			    bg_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
+			    bv_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
 			rt_db_free_internal(&dbintern);
 		    }
 
@@ -234,7 +236,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
 			if (db_get_external(&ext, dp, gedp->dbip))
 			    continue;
-			key = bg_mesh_lod_custom_key((void *)ext.ext_buf,  ext.ext_nbytes);
+			key = bu_data_hash((void *)ext.ext_buf,  ext.ext_nbytes);
 			bu_free_external(&ext);
 			if (!key)
 			    continue;
@@ -278,10 +280,10 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
 			// Because we won't have the internal data to use for a full detail scenario, we set the ratio
 			// to 1 rather than .66 for breps...
-			key = bg_mesh_lod_cache(gedp->ged_lod, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
+			key = bv_mesh_lod_cache(gedp->ged_lod, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
 
 			if (key)
-			    bg_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
+			    bv_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
 
 			rt_db_free_internal(&dbintern);
 			bu_free(faces, "faces");
@@ -296,13 +298,13 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	}
 	if (argc == 2) {
 	    if (BU_STR_EQUAL(argv[1], "clear")) {
-		bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
+		bv_mesh_lod_clear_cache(gedp->ged_lod, 0);
 		return BRLCAD_OK;
 	    }
 	}
 	if (argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "clear") && BU_STR_EQUAL(argv[2], "all_files")) {
-		bg_mesh_lod_clear_cache(NULL, 0);
+		bv_mesh_lod_clear_cache(NULL, 0);
 		return BRLCAD_OK;
 	    }
 	}

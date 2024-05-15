@@ -1,7 +1,7 @@
 /*                         L C . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -368,7 +368,9 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	    int jm = im + 1;
 	    int mismatch = 0;
 	    while (!found_all_matches) {
-		if (jm == (int)BU_PTBL_LEN(&results2) || bu_strcmp(regions[im].region_id, regions[jm].region_id)) {
+		if (jm == (int)BU_PTBL_LEN(&results2) || 
+		    bu_strcmp(regions[im].region_id, regions[jm].region_id) || 
+		    !bu_strcmp(regions[im].region_id, "--")) {
 		    /* Found all matches - set ignore flags */
 		    int km = 0;
 		    int ignored = (mismatch) ? 0 : 1;
@@ -417,11 +419,24 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 			    regions[im].ignore = 0;
 			    regions[jm].ignore = 0;
 			}
+		    } else if (BU_STR_EQUAL(regions[im].region_id, "--") &&
+			      !BU_STR_EQUAL(regions[im].aircode, regions[jm].aircode)) {
+			 /* edge case:
+			  * aircodes usually do not have region_id
+			  *     if region_id are matching empty and aircodes do not match - this is not a match
+			  *
+			  * ie do nothing
+			  */
 		    } else {
 			/* Found match - set ignore flags */
 			regions[im].ignore = 0;
 			regions[jm].ignore = 0;
 		    }
+		} else if (BU_STR_EQUAL(regions[im].aircode, regions[jm].aircode) &&
+			  !BU_STR_EQUAL(regions[im].aircode, "--")) {
+		    /* Found matching aircodes - set ignore flags */
+		    regions[im].ignore = 0;
+		    regions[jm].ignore = 0;
 		}
 		jm++;
 	    }

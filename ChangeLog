@@ -1,401 +1,2089 @@
-commit 9ccc64779361b5a87c63f129346cd20c72bfb7f5
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Feb 27 12:32:58 2023 -0500
-
-    correct NEWS release date
-
-commit 5c481242c038cc0d9c72e3be60fc996c05a7764f
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Feb 27 12:25:04 2023 -0500
-
-    set misc version numbers
-
-commit 6d317d3bfd57c6c05dddc7a762da8503dac94ebc
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Tue Feb 14 14:23:58 2023 -0500
-
-    add remaining NEWS lines for cherry-picked commits
-
-commit 1b804ae999bb6a0742d99195018f8c225697fc37
+commit f6252b8a24fac86866b5b26972895bc5785e521f
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Feb 10 09:12:10 2023 -0500
+Date:   Mon Mar 18 10:59:36 2024 -0400
 
-    Add a few of the needed NEWS items
-    
-    This just adds a few - there are more (man page viewer scrollbar, reair,
-    nirt items, etc.) in the previous thirty commits cherry-picked into
-    RELEASE that still need to be added.
+    Update version numbers
 
-commit ea9330eb91c0f9c29378dd6b3461956f7876e24d
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Thu Feb 2 10:30:08 2023 -0500
-
-    correct an off-by-one error
-    
-    since our loop starts at i=1, we are not able to request a top matrix.
-    ie when requesting depth=1, the loop breaks on the first iteration -
-    always incorrectly returning the initialized identity matrix
-    
-    (cherry picked from commit fef36ef63d4cacf066f6d580747643dec259be0e)
-
-commit 6b138de6b0dd53ca8a7ecf7d788ec0608e45e3f7
+commit b9388f75ae6fd3d9ffaa43b8c8e42b90cf8d30e2
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jan 24 20:40:32 2023 -0500
+Date:   Mon Mar 18 10:54:45 2024 -0400
 
-    Initialize a couple of spsr variables
-    
-    (cherry picked from commit e236ad15d15423a9a38054e13bfffaf5e63c0a56)
+    Bump concave arb8 TODO item down one release iteration
 
-commit 3a6eb9b362755dd5e20126af72213451bb429161
+commit a56bcb8e45ed33b3d752c69437ce55c7741b8795
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jan 24 20:39:11 2023 -0500
+Date:   Fri Mar 15 20:23:14 2024 -0400
 
-    Initialize bestArea in RTree.h
-    
-    (cherry picked from commit 832d3dd11f6d4526a62ba7b04c412beccb87d153)
+    Need to allow for local override of the standard LoD cache directory
 
-commit 8025339f1f31c8c44567ae9b50ad7b8d63012508
+commit 986d4d7232fc39db5a56a6f70d997e4268f5198c
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jan 24 17:26:51 2023 -0500
+Date:   Fri Mar 15 15:13:22 2024 -0400
 
-    Opening wdbp on the wrong dbip pointer for read - stashing data on the inmem, not the source disk dbip
-    
-    (cherry picked from commit f609047ab4561bf365b71c53f7bc2facd3df7b32)
+    Fix indexing
 
-commit b279259a9b3d528bf8a0f0930ba6be4cef2eb8ca
+commit 393e22730a2cde0d85409ea28a6f6c442873c121
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Dec 13 19:56:25 2022 -0500
+Date:   Fri Mar 15 14:33:01 2024 -0400
 
-    Remove duplicate call to ged_init
+    mColors needs an array of entries, not just one
     
-    (cherry picked from commit c24595731fb063ddbb2a8db6bcbeea4fae43ca00)
+    If I'm following the Asset Import logic correctly, it's looking for a
+    per-vertex array of entries here, not just a single entry.  We were
+    seeing crashing on GhostBSD in release mode, and valgrind in debug mode
+    was flagging reads from here with the previous assignment.
 
-commit b4f2c871acb7358c00409e065b82a09d2940f172
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Jan 23 12:54:08 2023 -0500
-
-    add support to nirt non-drawn objects
-    
-    when in mged, pass supplied trailing object names to nirt and ignore
-    drawn objects.
-    Update 'help' usage string
-    
-    (cherry picked from commit 7145df050954ab983326be68a7b8169705375c7e)
-
-commit 18cd3bc737f79dabcade5b6d095d0170127b3f43
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Thu Jan 19 09:52:31 2023 -0500
-
-    default to terse listing for high-data primitives
-    
-    output minimal description for explicit shapes (bot, brep, datum,
-    nmg, pnts, sketch) rather than listing all data by default.
-    Add -v (verbose) flag to l command so all data can still be printed.
-    
-    (cherry picked from commit 8f278a9a728de18e2ec4776dcd32bb25e516d9df)
-
-commit d5e2fee85f288b8d234197622d18367f6d5bd757
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Jan 18 15:39:23 2023 -0500
-
-    static analyzer caught unused assignment here
-    
-    (cherry picked from commit 595a5542834c84dfeee9b22c81b11e57ca6347ca)
-
-commit 11dd09c47f72cfc1a87a3cb48e1c55ac805da5b0
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Jan 18 10:03:39 2023 -0500
-
-    don't cmp specific outputs available
-    
-    regex replace list of available formats with 'LIST' as long as 'default'
-    is availble. This will minimize false failures in the future should formats
-    be added / removed.
-    
-    (cherry picked from commit ccb3aa1b53cda6603b91d75cc2c3a83a44fca948)
-
-commit c8d9812f51554d62ebd19f6ed85b86b7e87dcc4d
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Tue Jan 17 13:17:45 2023 -0500
-
-    attr is aircode, not air
-    
-    (cherry picked from commit 9395cc24a024137ee68d6e559059147bc70337ee)
-
-commit c46af05e774399b62adf61b9dd97ad0ad3d54b01
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Fri Jan 13 12:17:24 2023 -0500
-
-    fix man page mouse scrolling on Windows
-    
-    (cherry picked from commit 061a0944c446d33b58262f2b988daacb3247723f)
-
-commit c6fca5935321a90163e12b0d34691c5b386b6dc6
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Thu Jan 12 09:45:43 2023 -0500
-
-    read from stderr before stdout
-    
-    nirt can write to stderr when loading in the model and obj. If this
-    happens stdin and stdout can get stuck while waiting to read.
-    
-    (cherry picked from commit 56e6887171a71ce369a282dce6819e4fe491ad31)
-
-commit 04bf933dc1fa94ed5dc010ced532c2b22165f40c
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Fri Jan 6 13:23:37 2023 -0500
-
-    use strncmp instead of strcmp
-    
-    check using just the string length to not worry with platform specific
-    terminations
-    
-    (cherry picked from commit 9003032cee94f38032bc229fd75474aa85b4385f)
-
-commit 8382a9b4cca409cc0f84e75db11e92653ddc2375
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Fri Jan 6 11:03:36 2023 -0500
-
-    creating a new file sets the extension by default
-    
-    add the -defaultextension option to tK_getSaveFile so when creating a
-    file from the MGED gui (File>New) the creation will use the extension
-    from the type dropdown if not explicitly specified
-    
-    (cherry picked from commit 81a6065b6fbf1713946cc9aff966fe17f1376e37)
-
-commit 1492b20ef21852d7606a28fe7b7a964aa4f9025b
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Thu Jan 5 15:49:52 2023 -0500
-
-    create 'reair' tcl proc and consolidate code
-    
-    create reair - shorthand to change air attribute for regions.
-    relos, remat, reid and now reair are all similar procedures. Consolidate
-    the four into one file and create a namespace for shared code blocks to
-    eliminate redundant code across multiple files.
-    
-    (cherry picked from commit ecc3d862606792f446f41c0a8cfe0d1424d40486)
-
-commit c489cb507dae065ac2f12349bbe0ab853f26f61c
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Jan 4 12:32:29 2023 -0500
-
-    add error checking when searching int attributes
-    
-    when using atol to convert a string, there is no guarantee
-    that there is an int at all - all strings without an int return 0. So if
-    searching for an attribute with value = 0 there are potentially
-    incorrect results.
-    Additionally, add a check to ensure the converted value fits inside the
-    long container.
-    
-    (cherry picked from commit 1ddec343404cdf757051b77bab77b710077a3521)
-
-commit b6dba0280a62e4784d58cd8d9ad42f78f6a9a4a3
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Dec 14 17:21:21 2022 -0500
-
-    update default nirt print formatting in mged
-    
-    trim down some of the decimal places, and shift headers to align better
-    with columns
-    
-    (cherry picked from commit 8449ce3209f22a3cfc8e6ba7fb6e96c5b6fd0e67)
-
-commit a3b10e1e25d12a6bdc2ef877629642368e64ca1f
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Dec 14 16:14:54 2022 -0500
-
-    reorder nirt ray firing order when in libged
-    
-    when run with graphics, restructure to fire nirt rays in order of
-    console printing ray -> partition report ray -> overlap report ray
-    instead of having the console printing ray last. Doing it this way
-    allows the formatting string to be changed from most to least
-    restrictive. Allowing for more user options (-f and -A) to be
-    used.
-    
-    (cherry picked from commit b8fc46cb9673aeddb4860d3dc85e1ee03e0a779c)
-
-commit 438db3418771e5463e3dc6012cce0a7d95ad6e72
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Dec 14 11:57:52 2022 -0500
-
-    dont try to run mged if it isnt in the path
-    
-    (cherry picked from commit 8a0e332ece5b9b37ddd0b0c6edc1afc8fcc38465)
-
-commit b195c2ba61796cc561f82ee4978a5da702a17357
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Tue Dec 13 10:38:16 2022 -0500
-
-    need to check for string equal instead of strstr
-    
-    an object with -e in the name (i.e. solid-extra.s) invoked just right will incorrectly
-    fall in strstr and sends the next drawn object name to nirt as a command
-    
-    (cherry picked from commit 15ce11e843f09c1b6e5cb2fd466a956d3017370c)
-
-commit c02279ef1acb3fe42ace2c46633cf583613a81d8
+commit 1602a19e0b32f9261f348fe3893b6f86efc6b954
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Dec 5 14:06:00 2022 -0500
+Date:   Fri Mar 15 13:08:26 2024 -0400
 
-    Doh - would help to use the right option.
-    
-    (cherry picked from commit f27a4a6d195e3aaa5cf91560438d7baf1370bad5)
+    db_free_tree handles the nmg_kr calls
 
-commit 57025cb1b3ead4d91909b69bb52e591fcea3b6a0
+commit a9ef35d900121aa365bc9ab28364550e56da05e2
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Dec 5 13:51:57 2022 -0500
+Date:   Fri Mar 15 11:45:25 2024 -0400
 
-    For this to work the way it should, we need to use --restart
-    
-    (cherry picked from commit 6a17bdce0427efd1de1900e33d12277d04d807e9)
+    Tweak lmdb to build on HaikuOS
 
-commit 88190f4cd6fea6ccc746cdc4f502a18715f2662c
+commit b1c17e04b3f5a4263040daafd3e7f1b80d0462e1
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Dec 2 15:55:20 2022 -0500
+Date:   Fri Mar 15 11:25:56 2024 -0400
 
-    Don't report back points where we couldn't get a non-zero normal.
-    
-    (cherry picked from commit 3f3a0c536f99650f8f72802c81e268f15f599001)
+    Couple libbu build fixes for HaikuOS
 
-commit b58c1e6335d7aff0ecec456c769345488d38efaa
+commit 0f87d8e6dc4f729da259f6630f9d930d31e357d9
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Nov 30 13:36:11 2022 -0500
+Date:   Fri Mar 15 09:10:07 2024 -0400
 
-    install(CODE) needs $ENV{DESTDIR} for CPack RPM
+    Revert "Test a method for bot vertex fusing"
     
-    Thanks to Brad King for spotting the missing element - we need to mimic
-    the cmake_install.cmake scripts and prepend with DESTDIR for RPM:
-    https://gitlab.kitware.com/cmake/cmake/-/issues/24212#note_1283057
-    
-    TGZ and TBZ2 don't use DESTDIR, which is why they work without it.
-    Rather an unintuitive failure mode, but I suppose the use case is also
-    rather obscure.
-    
-    (cherry picked from commit 76aa62f026dfb99596a93010893e498ce82be105)
+    This reverts commit 715384fb412b61c363eb5747213569c59435d212.
 
-commit 43002bd3a2263b7d98155753e61d86369ede5dc6
+commit 715384fb412b61c363eb5747213569c59435d212
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Nov 30 13:29:52 2022 -0500
+Date:   Wed Mar 13 20:42:45 2024 -0400
 
-    Remove debug line
+    Test a method for bot vertex fusing
     
-    (cherry picked from commit a836579d86019c73709ae9fce12649863eb9e3e9)
+    The Asset Import "x" regression test is producing an "arb4" bot that is
+    plate mode and not sharing vertices.  Intuitively we ought to be able to
+    "fuse" this into a proper arb4 solid.
+    
+    This can be done with the sequence:
+    
+    bot set type unnamed.s solid
+    bot_fuse tetra.s unnamed.s
+    
+    but that logic goes through libnmg and it's not clear how well it would
+    scale.  I was curious to see if a simple vertex binning approach might
+    be able to achieve a similar result, which is what this code implements.
+    It's a "quick and dirty" test so far, so not announcing as a user
+    feature for now.
 
-commit c8be8b45e7c35e934dca9ad801be83a5670d8f03
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Nov 30 12:31:47 2022 -0500
-
-    Be a little more aggressive about path replacement
-    
-    Looking at tclConfig.sh and friends, the paths produced by a straight-up
-    replacement of the build directory with the install directory aren't
-    enough in all cases to produce valid results.  For the situations where
-    a Tcl source or build directory are referenced there's not much we can
-    do beyond pointing at the install directory - the original directories
-    won't be available in an install - but in some other cases a more
-    aggressive updating will improve the situation.
-    
-    (cherry picked from commit 5a526aea613cc291f1fdff157d78f12a3ab9af9c)
-
-commit a70f1e1ecd31640461d327fde4d858dd9e0ee8be
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Nov 30 12:06:11 2022 -0500
-
-    Replace install(CODE) approach to path correction
-    
-    Hit an issue with CPack and RPM package generation.  TGZ and TBZ2
-    versions of this work, but something about the internals of how RPM
-    package building works with CPack results in CMAKE_INSTALL_PREFIX being
-    set incorrectly for install(CODE).  Issue has been filed at
-    https://gitlab.kitware.com/cmake/cmake/-/issues/24212
-    
-    Until either we figure out a way to make this work with some currently
-    unknown setting or upstream makes an adjustment to how CPack+RPM handle
-    this case, fall back on making two copies of the file in question and
-    using the _install version for the installation process.
-    
-    (cherry picked from commit 5ae46bad5b8328acf371e82cc4d401a9bd1158b1)
-
-commit 4998e8cc551063c67d9deecc0c47f42e012e4f5a
+commit 96430e03fe5e5f65d9469a016f1dfbda9e06678e
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Nov 28 13:30:20 2022 -0500
+Date:   Thu Mar 14 13:42:40 2024 -0400
 
-    Bump to next revision after the 7.34.0 release
+    we always want to read from stderr
+
+commit 7fe918f2c7b79c88a102b8bc1625e499b7ead619
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Thu Mar 14 11:40:14 2024 -0400
+
+    add updated pinewood
     
-    (cherry picked from commit 552e8f748d5134ea953d7771c78b7b8cd57a3076)
+    remove bogus material_name attributes from bots
 
-commit 45ddc6be581d95288e172ccbde0d85e5916a74c9
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Nov 28 12:06:17 2022 -0500
+commit 213586b9d68e14de22033bcca7523f09de4c7cc7
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Thu Mar 14 10:46:11 2024 -0400
 
-    Update log with commits since 2022-11-23
+    Update rtweight.xml
+    
+    further info
 
-commit 72aca86c6abeac1ba23abf18de59ece35eca35fb
-Merge: 6eae7d24a4 c575918408
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Nov 28 12:02:02 2022 -0500
+commit 413391bb35897ee74563e644dedc5e1bf2dc5d65
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Thu Mar 14 09:24:54 2024 -0400
 
-    merge of main c575918408a into RELEASE branch
+    Update help.tcl
+    
+    add note on gqa help statement to facilitate searching with apropos
 
-commit c5759184088c560bf80d1858fc76169b2a0ebea8
+commit 62006fd1c683ad846a97abb1283e58f4b2a6c607
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Thu Mar 14 09:12:53 2024 -0400
+
+    Update helplib.tcl
+    
+    add "volume" to help statement for rtweight (so it will show up in apropos search for volume)
+
+commit 58bc2e135ead50217cfa9276915f88400665f7ba
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Thu Mar 14 09:08:29 2024 -0400
+
+    Update rtweight.xml
+    
+    update language, fix some typos
+
+commit 1cfafe4de85686f7112fc99d70e079c655302531
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Thu Mar 14 07:14:43 2024 -0400
+
+    Update CMakeLists.txt
+    
+    add rtweight.xml
+
+commit 896a6d64e12f79543eca82cd67e1bca5cb6f88e9
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Thu Mar 14 07:14:10 2024 -0400
+
+    Create rtweight.xml
+    
+    add rtweight mann page based largely on man1 page
+
+commit 72bd6c7dfc4d1fe979fa422eada10ed72f448d7d
 Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Fri Nov 25 01:43:30 2022 -0500
+Date:   Wed Mar 13 16:21:46 2024 -0400
 
-    add a -C non-classic mode flag.
+    right, shell can't do float maths
+
+commit b7711bc68698b2a4d93c3626d1c5b6a336e3be86
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Wed Mar 13 15:11:59 2024 -0400
+
+    Update rtcheck.xml
     
-    this essentially performs the opposite of the -c classic console mode flag.  It requests the GUI and interactivity.  note using the flag does not preclude non-GUI initialization if the command-line arguments indicate batch/scripting/redirection.
+    point to man1 manual (previously just said man)
 
-commit 2184ef26ef9fd5b66cce3d12b40c5c9a36cea2a6
+commit 4ab0282e3c1b400d301af4577dd865b3ff4a9c42
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 12 20:12:15 2024 -0400
+
+    Add vector include
+
+commit 8113badad5d79cf243eb2ad6cb97ebc41f543aab
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 12 19:01:41 2024 -0400
+
+    Note changes needed for new way of handling FPS in libbv
+
+commit cfedcf07744da6444b0cad73b7fa6629e284021a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 12 16:10:34 2024 -0400
+
+    Only report the status of dependencies that are enabled in the summary (bext mode).
+
+commit 4e0c5dfce74b23fa18fad2384dad00cf66ba6601
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Tue Mar 12 13:34:47 2024 -0400
+
+    include <algorithm> for std::sort
+
+commit 2c4adbff342c002ec071ebad50f6a12741e866bd
 Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Fri Nov 25 00:26:05 2022 -0500
+Date:   Tue Mar 12 04:00:15 2024 -0400
 
-    check for select error, which should restore previous behavior on Windows
+    we're shooting in parallel now
 
-commit 84a0f08af2dcc58efc3e3ea5f1aae46a2c3f9a2b
+commit 692baa99fea1d6bad94fb7d65bcf8a7c86245d36
 Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Thu Nov 24 12:30:24 2022 -0500
+Date:   Tue Mar 12 03:59:55 2024 -0400
 
-    And need errno for errno..
-
-commit d72998b13cce41d6cad4a441553bdcb4783f241b
-Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Thu Nov 24 10:04:45 2022 -0500
-
-    Add string header for strerror
-
-commit d73c697158164dfe5e0fdb8f9172fb7f9949a05f
-Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Wed Nov 23 19:15:58 2022 -0500
-
-    only check if stdin is a tty.
+    and like that, we're now running in parallel.
     
-    just because stdout has been redirected doesn't necessarily mean we don't want a gui or don't want to be able to type commands.  it could be that mged's output is being redirected to a file for logging purposes, invoked via some wrapper, but we can still issue commands via stdin.
+    still doing point generating and tallying single-threaded, but this is more than enough for now, leveraging all cores to handle the sampling.
 
-commit 2f2908d66292909d34d7ef74a5f8a54150ce2c4c
+commit 5e6c4a81492f559522ca17deeae234a169a64229
 Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Wed Nov 23 19:06:12 2022 -0500
+Date:   Tue Mar 12 03:58:39 2024 -0400
 
-    print the error when select fails
+    not a macro
 
-commit 6eae7d24a412cca42b32cbcacd07f474202787ca
+commit 1a1cad3df365b35c4f6d64743ac59b33d5e706a4
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Mar 12 02:31:29 2024 -0400
+
+    see if we can set the stage for parallel
+
+commit 43e740319dcce292d96eda7f8024503ee3adfaf4
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Mar 12 01:00:02 2024 -0400
+
+    couple more examples showing additional options
+
+commit bc32dfc3980c0b03d1eabf7ea2ded45c6c5be15a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Mar 12 00:55:00 2024 -0400
+
+    now tracking hits per region, per material, and even per assembly
+
+commit 1dd0e6fdc4e5d1e77ed2007249ebf1eb374d556e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Mar 12 00:54:14 2024 -0400
+
+    don't print region paths since they have their own option, only combs above
+
+commit 3785e75d059944fb958cba9ce7487b2ac1459777
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Mar 12 00:48:10 2024 -0400
+
+    add aggregation tracking to print areas up the hierarchy.
+    
+    added a -g option to print groups, and changed the script output option to -o as well.  when printing up the hierarchy, we take care to print the list from deepest to most shallow.
+
+commit d134bebf1e8e37e858c7fd7b661b1613a725e2e7
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Mar 12 00:30:31 2024 -0400
+
+    test aggregating hits on assemblies up the hierarchy
+
+commit c26194957e75638e93b01e1ef78f9ea8830564d1
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 23:58:12 2024 -0400
+
+    switch to std::map for ordered output, fix -r option.
+    
+    might need unordered_map for really large databases but take the order hit for now since its more than fast enough.
+
+commit b4f329b127e20eca094ef22c1000e09be31dad1c
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 23:49:54 2024 -0400
+
+    add -r flag to print regions, change -p to -g to output geometry script.
+    
+    no longer printing regions by default.
+
+commit d20eacd92e944c31f436855eaeb51582a00d48d3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 23:42:13 2024 -0400
+
+    keep track of the total shot count.
+    
+    this lets us not have to reset counts after every iteration allowing for faster convergence and final areas and counts that will match the total iteration counts.
+
+commit 1c25f5beda9cc91f6fa32e16c3df117b6c7c2b95
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 19:23:10 2024 -0400
+
+    short term fix to area computation when there are iterations.
+    
+    we need to know the total number of samples to divide properly, and we're not currently tracking that so just reset the stats each loop for now so it's at least right.
+
+commit e011cc3a066e8e010df31af54741077dd1fc29e5
+Merge: 2e8d13c031 e3ec091c54
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 17:47:43 2024 -0400
+
+    Merge branch 'main' of https://github.com/BRL-CAD/brlcad
+
+commit 2e8d13c0312b801743f7e94dbe2ee9c8510bf04b
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 17:47:34 2024 -0400
+
+    add density file option to usage
+
+commit e3ec091c5406b112041f4a99bddfbd96c9ac923d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 11 10:12:08 2024 -0400
+
+    Clear Werror=c++-compat warning on Ubuntu
+
+commit 61992f2652d9c6028c760e0c2d58ab416762c410
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 04:01:09 2024 -0400
+
+    and last but not least, turn those hits into areas.
+    
+    changed to %.1lf printing since we're in mm^2, but will probably want to adapt if we ever support local units.
+
+commit 920d221e7ea00f04d39081a56b71d758e9baf200
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 02:50:12 2024 -0400
+
+    fuuuuggg that was a tricky bug to find.
+    
+    nice demo of the perils casting through void*.  the map was off by a couple bytes, didn't crash but didn't find matches either.  all good now.
+
+commit 9c0300254682dba2235e1dee14bdd7dc9e587043
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 01:27:40 2024 -0400
+
+    that's right, we need to register both the entry and exit hit.
+
+commit b3b2764fe1338b5e7ac43cb62c6b16df65181cd3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 01:23:21 2024 -0400
+
+    luckily we stash the rtip, so doesn't need to be static.
+    
+    fix missed name refactoring on total_hitpairs too.
+
+commit d9adc67fa507422acd38c60864b1b56e7a1e46a9
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 01:21:07 2024 -0400
+
+    clarify some of the variable names and comments to make it more clear.
+    
+    there are some points where we're referring to the number of hits along a given shotline (i.e., in+out) and other times, we're only concerned with whether the ray encountered a hit or not.  for area purposes, it obviously matters which of those we're dealing with.
+
+commit 2212a08fbdd5077ba3e73aaf3cbb6239fdc39faa
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 11 00:28:35 2024 -0400
+
+    lookup material names if a density file is provided.
+    
+    required restructuring the callbacks to pass back the context for looking up density names, but done cleanly through a data pointer passed to each call.
+
+commit a05e0dacb049750489e556dea22a001382ebd839
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 22:23:44 2024 -0400
+
+    switch to the region name instead of region ID.
+    
+    region name has the unique path and IDs are not unique. don't want to print out lists of objects for a given ID too.
+
+commit be46763143df2c474eef70919956c71cee344c8d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 21:02:39 2024 -0400
+
+    call into the new hit-tracking for materials and regions.
+
+commit 732382d59a62ae4b8fef5bf58763f922c71c8575
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 21:02:00 2024 -0400
+
+    add interface for recording per-region and per-material hits.
+    
+    this keeps proper separation of the c++ implementation from the c side usage.  implementations uses an unordered map and mutext for thread safety even though rtsurf is presently single-threaded.
+
+commit db3e53b5814f0c01966d9f530fc3d7a12c23913a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 18:18:52 2024 -0400
+
+    rti_air_discards to size_t
+
+commit d793450235735e4fa1fe4ab53588898252c0aeb3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 18:11:55 2024 -0400
+
+    more size_t conversions, albeit relatively unused fields
+
+commit 0e6e4be67d533a641c12a5ea8740ba5afb8bf7e9
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 17:38:12 2024 -0400
+
+    rt_cut_maxdepth to size_t
+
+commit 8b04228929d110f15fb6c404aa774b8c165d9305
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 17:28:18 2024 -0400
+
+    highly unused, but rti_cut_totobj to size_t
+
+commit c0ce85a465b44fd31a3ec8ab58f46d7e273baf1f
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 17:09:52 2024 -0400
+
+    switch rti_ncut_by_type to size_t
+
+commit f80b0be3663b506594bab78757d58b652ba377a9
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 16:53:26 2024 -0400
+
+    switch rti_cut_maxlen to size_t
+
+commit 2b7258029deeee315eaf3b952649d5624035496d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 10 16:45:16 2024 -0400
+
+    upgrade nlights to size_t.
+    
+    doesn't appear to be any reason we were looping from last to first light, and tests all pass.
+
+commit 41f8899e306065d190e26b4e36baddfedc6a886e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 9 03:12:07 2024 -0500
+
+    more size_t
+
+commit cdcaa337786ad01f4c5f7e03b42c56c567bf4c79
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 9 03:07:56 2024 -0500
+
+    make rt_split_mostly_empty_cells be a local func, upgrade size_t
+
+commit 7ec63abd12f73e24478b1adf646c2a1e168e3c24
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 9 08:57:11 2024 -0500
+
+    On GhostBSD we're getting a nirt.out.raw-E file
+
+commit ebb702189b2ab11612461232997c66d094cd0de5
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 9 03:02:04 2024 -0500
+
+    looks like this function has potential 32-bit limits, and an uninitialized static.
+    
+    updated.  however, doesn't appear to be the culprit in testing (even if bypassed).
+
+commit 4fa6a95ab072d27d69acf85e50f9ab4bd1ca65a7
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 9 02:52:30 2024 -0500
+
+    debugging is hardless
+
+commit b1e37a81fefd8044c603e847f589dd027cc6199a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 9 02:34:33 2024 -0500
+
+    spatial partition bug when the scene gets really big
+
+commit 7e5a09a49269c1a3e2a0c707a064a6f6104ccb0b
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 9 00:54:12 2024 -0500
+
+    group into regions so we don't get too overlap-happy
+
+commit b6434550ddec0e77a5f5e60497e7f7f1bfcf6897
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 9 00:33:19 2024 -0500
+
+    fixed the groupings, script generation improved
+
+commit 841e6ffb7956569b73523e3442329d08af608581
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 8 18:32:06 2024 -0500
+
+    Need to set the timestamps for updated files or they'll get copied every time.
+
+commit da87d6f55d7098766b0a896090029bf2b7b85f77
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 8 16:28:11 2024 -0500
+
+    We checked bext outputs, and we should have working subprocess outputs now.
+
+commit dd4455b72371f0e782283e0a7372a1e87028b7a1
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 8 15:31:31 2024 -0500
+
+    More extensive Qt specific notes added in bext
+
+commit b8e495cef88e81a6d2ad6b6b856d23c8f41ec557
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 8 14:20:36 2024 -0500
+
+    Remove unused var
+
+commit d4015faa357319c7c77941b48ccb9ae676107bcf
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 8 12:20:54 2024 -0500
+
+    Looks like it's just rtweight that needs this
+    
+    rtarea is writing to stderr.  Also, if we try to listen to both stdout
+    and stderr for rtweight, when running rtweight on M35 component with the
+    GQA_SAMPLE_DENSITIES file imported for densities the output hangs.  If
+    we need to pick one for now, go with stdout.
+
+commit 4677b5ce86a1e2ff5c56f1f74cd5e3491dbbf4b7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 8 12:12:39 2024 -0500
+
+    Only handle stdout for the TXT mode rt commands
+    
+    We don't want to interfere with the use of stdout by embedded rt et.
+    al., but we want the full txt output for rtweight and rtarea.
+    
+    Note that this has another problem - if rtweight has a very verbose
+    output, we end up waiting on a read...
+
+commit 7a0ba8eb5edda74ccd64b463e0b17bdc6a7fd671
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 8 10:47:58 2024 -0500
+
+    Correct bext url
+
+commit 0c04313c7cbdf5b6f546325f87c13fdace660a66
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Mar 8 02:41:44 2024 -0500
+
+    fix and organize the printed geometry output.  now grouped.
+
+commit 5f9bf4831d0799bcf481fc1e89de3cb97310298a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Mar 8 01:23:08 2024 -0500
+
+    simplify mac debugging flags; 10.5 was ancient ago.
+
+commit 706cb9c281b67f4e84b13a6d81e2688d0fd319f7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 8 00:08:10 2024 -0500
+
+    Make a few notes on the Qt6 building problem.
+
+commit 08c4d107f00fa60783310382da701c5f7430809c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 7 22:06:00 2024 -0500
+
+    Update Redhat build setup instructions.
+
+commit 8ede4ba842770837d82bf93f3290b556dcda4618
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 7 19:13:19 2024 -0500
+
+    Pull in Quickhull fix from 9f81d1e
+
+commit 06f45990494b1a5b04df72a7d26b48ba0e7bc131
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 7 15:06:58 2024 -0500
+
+    Check return of system to quell a release mode warning for GCC.
+
+commit 7dcf5938fb68784a10ced1cb75af4775946731d8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 7 14:58:59 2024 -0500
+
+    BRL-CAD may define DEBUG, but it is problematic for the OpenCV headers - make sure we don't set it before including them.
+
+commit fbcb8431a9a25ef0d059c0c6baed01bd32584ab4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 7 12:52:44 2024 -0500
+
+    Be more flexible about the 3dm->g file size
+    
+    bext is using a newer opennurbs than src/other, and it looks like the .g
+    file size difference between the older and newer versions is
+    significant.  Update the test function to allow specifying a local
+    expected delta in lieu of the 3% default.
+
+commit eebef27124891fc8fb1040eaa1a3484a8b7369b2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 7 12:35:15 2024 -0500
+
+    Consistency
+
+commit ca6e4d0d48ad31ef2a6047c8ba13347b26d42720
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 7 12:34:34 2024 -0500
+
+    LIBGCV_PLUGINS_PATH isn't used
+
+commit 650825b4ae222a59d041d6ed1ca78845a9a5fe89
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 6 19:08:31 2024 -0500
+
+    Update ttcp note
+
+commit 3b396c12cfbe61c5544a90c08e9e53243271c760
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Mar 7 11:02:15 2024 -0500
+
+    oops, windows no likey
+
+commit 9fa285255788617be31e98495016879ad5beef54
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Mar 7 00:43:00 2024 -0500
+
+    yep, found a bunch.  new baseline is back up to 242.
+
+commit 5bd11c7bcd5edd8a6e0303e2a1dea280e80b6556
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Mar 7 00:12:34 2024 -0500
+
+    make regress repository test fail even harder.
+    
+    it started failing recently because we weren't previously matching on #elif lines and a reordering in libbu made a platform symbol suddenly be seen.  this should catch more of the possible conditions, so our counts may go up further still.  this should be a more accurate (and now documented) match now catching more C/C++ and CMake cases.
+
+commit 12e95e3cbdc6118e24094c1125b458ddc5653788
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 6 23:35:04 2024 -0500
+
+    here's the laundry remaining
+
+commit 9e5b5a1b21b6a3ee0e9680ac67dcaf303419a329
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 6 23:12:27 2024 -0500
+
+    new rtsurf utility.  not yet wired into mged/archer, no docs.  capability demonstration.
+
+commit b0cb69584082f1186c09f2ab3d264dbe03e1d537
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 6 22:59:27 2024 -0500
+
+    track total shots and total hits in aggregate for faster and more stable convergence
+
+commit 908afab235107cc333f5b5cac19305b8be6ec5bb
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 6 22:24:27 2024 -0500
+
+    fix threshold logic so we can do single size or increasing batches
+
+commit 409f301475f4cd4f1d11939b11ba99c1df15c6a6
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 6 21:46:23 2024 -0500
+
+    fix ssize printing, default threshold to 0 to halt -n on first pass
+
+commit f5b71acdd2639cd0d444e9ba29340df485a097ab
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 6 21:34:37 2024 -0500
+
+    document the different modes, offer a threshold option, more.
+    
+    make it so specifying a sample count shoots only that many samples without iterating. also cut memory usage down by not using xrays, instead just defining our own (76 to 48 bytes per ray), and reducing peak memory usage by releasing our points before shooting.
+
+commit c0ac02c2f4aabb2776476a1707fffad7deeb30e0
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 17:07:49 2024 -0500
+
+    document the approach and a couple related citations I found
+
+commit 4ec9abaccf7d3075bef1e51961f87e34e49d777a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 6 17:32:31 2024 -0500
+
+    Correct OpenBSD version setting
+
+commit 35363620a5d623cfe51181e9ff71ab95531e48e4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 6 16:30:34 2024 -0500
+
+    GhostBSD tries to do syscall and shouldn't - check the more specific functions first.
+
+commit 91ac178438f495a13cf1da63ab32b6289ac7bb9e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 6 16:09:23 2024 -0500
+
+    Make a note of the basics needed on GhostBSD.
+
+commit 31016efcb0f8416b49684617aeadb0a7777b4ddf
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 6 12:40:39 2024 -0500
+
+    gcc 13 on Ubuntu doesn't seem to like this reserve allocation in the constructor?
+
+commit c32b4e6d9b7d6da4f10b535d89c730f5222e551f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 5 16:15:47 2024 -0500
+
+    Missed a few adjustments to the PNG logic.
+
+commit d8b7e2d535b55c2f7fdcdcd6f55d72dcf2a2130f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 5 16:00:22 2024 -0500
+
+    Update lmdb to upstream b8e54b4
+
+commit 266e79d7c494066fb5823700cd6278865c0fb9bd
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 5 15:53:06 2024 -0500
+
+    Update sqlite3 to version 3.45.1
+
+commit fd5294b583c1562a145d166a1f7e5e56743aeb5d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 5 15:45:34 2024 -0500
+
+    Pull in fix for CVE-2022-45748
+
+commit 735e70d0d54c5df6e2880d25ccc70debca3f8969
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Nov 23 16:48:13 2022 -0500
+Date:   Tue Mar 5 15:50:59 2024 -0500
 
-    Update log with commits since 2022-11-22
+    handle cleanup of stdout and stderr independently
 
-commit d82e981c99a755e4615e5b9553c7be41c2703c60
-Merge: 5ea2cbbf4c 74a3a9b76a
+commit a541b103d2d2f95c1026f7e2120bef472e1a458e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 5 15:36:15 2024 -0500
+
+    Update libpng to v1.6.43
+
+commit 09cfc83e939c40d5bf4e3776570feb9e611564c9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 5 15:21:07 2024 -0500
+
+    Update zlib to version 1.3.1
+
+commit 22881bd5785525cc09b3126e8e46a1b23acfe152
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 5 13:24:58 2024 -0500
+
+    Disable new bot extrude feature for patch release.
+
+commit 60e1d2dbae0299dc7ca670322f13b9bc41e6f94e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 5 10:52:18 2024 -0500
+
+    Need brep.h to sort out brep type in rt/geom.h
+
+commit f3c52bbe9df4b084896de5e141cee6ae7232c690
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 20:58:28 2024 -0500
+
+    Include some of the headers as C files
+
+commit 84d026bb1ab4417837db72a58564c9dcaee1a6b0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 19:25:01 2024 -0500
+
+    dbconcat updates comb names - update man page.
+
+commit 93972e525740736edb1fd947a411439c7918df21
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 19:03:15 2024 -0500
+
+    Note fix to rtweight output in MGED
+
+commit 7a9d9fb8a0ea4564d935ae4d13aca6776dae7077
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 18:55:30 2024 -0500
+
+    Chris updated the mater man page
+
+commit 6767bef910b38552944ead928e9ecaa2df3ecf62
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 18:53:52 2024 -0500
+
+    Josh adjusted rtwizard's default ghosting intensity value.
+
+commit 6a4c1972db4bd349039d232aaf6a80bcfc4eb8e0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 18:52:38 2024 -0500
+
+    MGED handling of objects named 'y' or 'Y' is user visible.
+
+commit cddad46ae8a5679e2c387320d964d6affe293610
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 18:50:07 2024 -0500
+
+    conversion.sh is installed - note addition of --bot mode.
+
+commit 4350a5bc3d7bf45843997fce5c428675d5c7c96d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 18:48:28 2024 -0500
+
+    Note sample geometry additions from Josh Baker
+
+commit be28f20e5982f8ec6a8791e868f2303c84ab72e9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 18:45:14 2024 -0500
+
+    Manifold bug fix is user visible - will result in improved facetize behavior.
+
+commit 146335a6da9cb74f27aa3ab6f6ac990e71e9c677
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 18:37:36 2024 -0500
+
+    Add the glm include dir
+
+commit 25a4e99b68ee0c52f99429d753f6f93e8a27a7eb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 11:44:13 2024 -0500
+
+    Teach bot extrude to produce volumetric BoT output
+    
+    Rather than the large CSG tree originally produced by bot extrude, take
+    advantage of the new Manifold library's capabilities to make an
+    explicitly evaluated volumetric BoT by doing facetization of the
+    individual CSG elements and then evaluating the unions.
+    
+    This can be quite slow - the boolean problem is a difficult one, with
+    thousands of elements even for modestly sized meshes - so users should
+    allow for that when preparing to convert large numbers of plate mode
+    solids.  For example, the FAA's Generic_Twin example in BRL-CAD takes
+    about an hour to complete a conversion of all its plate mode BoTs to
+    volumetric BoTs.
+    
+    Bringing this work over from the facetize branch, since it doesn't
+    require Geogram or any of the new facetize logic itself.
+
+commit e95db2e86cc693c8aafc3d437ed532d6e7f1a1d4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 4 10:37:53 2024 -0500
+
+    Add bu/getopt.h for bu_optind
+
+commit d8a389477bc331820bd0c4dbcc4f2e90195c5ef9
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 16:47:51 2024 -0500
+
+    make the annotative geometry a bit bigger.
+    
+    also don't need to iterate all partitions, just the first in and last out point.  interestingly, we could probably get a good estimate of the entire surface area if we accounted for all surfaces, but the focus for now is exterior surface area only.
+
+commit 02ec01755f42d40eb27d95b7c4236a70af41340e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 03:13:26 2024 -0500
+
+    started in 2024
+
+commit cc62d16f0ebc95d1bc369664a89fd0cfe8e17ba6
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 03:12:48 2024 -0500
+
+    totally need to keep track of the running tally, but that'll require some surgery
+
+commit 5716f9b3a6a33f8ef4e709296a0d1c1eb9c3093d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 03:07:03 2024 -0500
+
+    bit more stable to simply check the previous two area estimates for agreement
+
+commit a4e914625cd59175634689de9843d4983a968d6a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 02:11:27 2024 -0500
+
+    comment needs to match
+
+commit 85a6bdc23aa6d845481d2f8dbb4ac6106d544dbf
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 02:10:45 2024 -0500
+
+    back to 0.1%, though percentage by itself is inadequate.
+    
+    depends heavily on the random sampling, if we get a good set or not.  we might also randomly get a result very close to the previous, which might still be far from the ground truth.
+
+commit 6eea62fc46cd2f5009bfc8ea2f08a0b5a2b335db
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 02:07:38 2024 -0500
+
+    add montecarlo iterations so we can progressively refine the area
+
+commit b446cfd1c35d90726a679c3a95bf4b2ac7f6c5b3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Mar 2 00:24:11 2024 -0500
+
+    woo hoo, working like a charm.
+    
+    new method is based on montecarlo integration, randomly sampling rays through the bounding volume and using cauchy-crofton estimation to determine area based solely on the number of hits.  this appears to work very well, providing precise results for sphere and box test cases with known areas.
+
+commit c8258da7f5c300c6869d807a5752c6210483a492
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Mar 1 17:13:56 2024 -0500
+
+    stub in a new calculation method for volume sampling based on cauchy-crofton
+
+commit 090a9bb47cc3af1c031254cbcfe8b088b4c2927c
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Mar 1 15:58:41 2024 -0500
+
+    colocate options into a struct
+
+commit cff7e2dcdbfa35b9b069269688a15d2bb040d48e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Mar 1 15:46:43 2024 -0500
+
+    separate ray setup from ray shooting, prep for next approach
+
+commit 123d8e13962f939be43481d31b97ccb20ad984a3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 22:47:43 2024 -0500
+
+    speed up by zapping after in, and don't log overlaps
+
+commit 7485f1abd62066900a27ae6b5518ca899cb9ab24
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 22:15:45 2024 -0500
+
+    print hit spheres proportional to the bounding sphere
+
+commit e443f69599bd23baceb9273bf526944986478608
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 22:08:15 2024 -0500
+
+    make printing optional
+
+commit f26141e623cfb2f19642e603b710811288d66d46
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 21:36:16 2024 -0500
+
+    consolidate usage
+
+commit 1a2e443412d622e00bdaf1fae4df35615f9e2c28
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 21:34:00 2024 -0500
+
+    start tracking weighted area, refactor option handling
+
+commit 33c9cf9bd068e423cb94645eaff88d62608fe9f6
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 02:49:23 2024 -0500
+
+    separate sample generation from shooting
+
+commit 3a914a129ed387afa2f9d95e9d1cd2fcda138f62
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 02:28:13 2024 -0500
+
+    make ray tracing an implementation detail
+
+commit 5454100b2f95329384b524050854ce0027295e18
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 02:21:20 2024 -0500
+
+    stub estimate
+
+commit 1b2a006d7f92ec86490e0664e2a71b13212b6240
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 01:21:19 2024 -0500
+
+    random rays fired from bounding sphere
+
+commit 6736bf19c5271395f31406da6875995193112e3e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 01:11:44 2024 -0500
+
+    subprocess output appears broken and is hanging mged for me on mac
+
+commit 3dc31970657048025da0430b1b8f3025a84e3fc8
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 29 01:10:55 2024 -0500
+
+    subprocess output appears to be busted
+
+commit b96f92d6bda234b574ac1cc81f331d639c063999
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 28 21:59:38 2024 -0500
+
+    initial app structure setup
+
+commit d9634eb2bb78b6c22ca6dcf9c1892c8282adbee9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 1 13:32:24 2024 -0500
+
+    Make the dbconcat man page easier to use.
+    
+    Add an options table, adjust the explanation of what the implications of
+    affix, suffix and straight import are.
+    
+    The behavior of this command needs to be improved - we should be
+    capable of maintaining the integrity of imported combs through renaming
+    automatically, rather than requiring hunting around with dup to find
+    a non-conflicting affix string for the purpose.
+
+commit 2cd39a4656c49892dfcedfa8b8f8eb7af01f20b5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Feb 29 10:12:48 2024 -0500
+
+    Allow for importing of empty BoT objects
+    
+    There's no inherent reason as far as I can see that we can't have an empty BoT
+    object - Boolean operations may generate such things to distinguish between a
+    failed operation and one that legitimately results in a zero volume evaluation.
+    Intermediate bot editing states could also conceivably result in an empty bot
+    needing to serve as a placeholder getting written in and out during user
+    modification.  At any rate, don't flag this as an import error - the routine is
+    reading in the information from disk correctly.
+
+commit 59be7d9aedd5838d966a1dc6cd69d48809f3344d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 28 17:00:01 2024 -0500
+
+    make sure it's not a macro too
+
+commit 360730c5c2225d43e43a9b69a4698706c5b01508
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 28 16:12:04 2024 -0500
+
+    Fix ws change to search string.
+
+commit d386071905ab72561b42a55b921b3d7f4ad874d0
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 28 10:40:30 2024 -0500
+
+    oops, missed adding CMakeLists.txt for syscall changes
+
+commit 6e6d04d1dce324f088554394ac4a767e7d20686c
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 28 10:36:04 2024 -0500
+
+    missing cmake checks for bu_thread_id's syscall method.
+    
+    we don't get syscall() declared in our c11 compilation mode as it's a gnu extension, but can use it if its available.  interestingly, we were apparently falling through to other thread id methods.  we probably should have some asserts to make sure the ID is expected (positive number).
+
+commit bbc3e3aeef7f10bc9a4dbd9818ad5338a84e361e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 28 02:06:49 2024 -0500
+
+    note improved ao with -k option, even if incomplete
+
+commit db15cc68dfa5708e8d0302c7bcad333fab5c49ab
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 28 02:00:37 2024 -0500
+
+    incomplete, but improve -k cut plane support with ao.
+    
+    this at least allows for interior portions to remain lit, but still have to figure out the cut surfaces.
+    
+    also, fix the ambSlow unresolved symbol.
+
+commit c2382125bfa8b0d33109453b4ed6e14de00dd2ee
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 28 01:00:47 2024 -0500
+
+    removed the non-merzenne twister spherical sampling during ao rendering.
+    
+    while slower, there's not a use case where you want ao but would be okay with the pattern artifacts from the fast random number generator.  this change leaves the ambSlow variable to allow time for scripts to transition without hitting an error, but it's a no-op.  simplifies usability and docs.
+
+commit 88aea5ee7e047d7552268db31f1d1465b5dc62c6
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 21:52:09 2024 -0500
+
+    and finally, restructure to address potentially clobbering after longjmp().
+    
+    to do that, we push the usage to where it's needed and refactor the function further to eliminate nesting depth.  compiles cleanly on gcc9 optimized.
+
+commit 17ceaaabce55219c55a16391361b1a705dcb56e6
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 21:45:10 2024 -0500
+
+    potentially unused, so ifdef on USE_MANIFOLD
+
+commit 00e470b93d35c9c456110003c90836242d849a5a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 21:43:11 2024 -0500
+
+    refactor duplication to a function
+
+commit a57d151ac8b2025b0b821243602b103ec258ccc5
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 21:36:03 2024 -0500
+
+    deal with omesh getting clobbered by pushing it down to where it's used.
+
+commit be93c94e2a599b8ac468debf20ed8219106fb91e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 21:00:42 2024 -0500
+
+    deal with manifold_op getting clobbered after longjmp()
+    
+    and also accidental ws cleanup.
+
+commit 6bb3bb81962c3097dff083a09212c165d15351d4
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 16:18:02 2024 -0500
+
+    document an ambient occlusion example I often use
+
+commit b71f95418881afe22c921d233a1d10beb16be6d1
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 14:43:38 2024 -0500
+
+    document rt scripts a bit
+
+commit ec20adc13ce1ff50b8954600b93c9bdaf807fa71
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 14:43:06 2024 -0500
+
+    include an ambient occlusion example
+
+commit be147e8dff25fc0e855ae0d0fc8862e6301d61d3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 14:18:11 2024 -0500
+
+    need to document rt scripts, consolidate other doc tasks to doc section
+
+commit 2a6545273883dd1318cc0d625d51d0865a0dc4b4
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 14:16:10 2024 -0500
+
+    remove references to the obsoleted animation tools.
+    
+    need to re-add documentation on the input scripting format.
+
+commit e1c6a34ddc471eabe9e16a5645cb256bd49f6989
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 27 14:13:11 2024 -0500
+
+    clean up formatting
+
+commit a4cb953d2ff4903292ce456406ac36fe9d9d5571
+Merge: 0b6d4edd23 2149f60df3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 23 16:44:52 2024 -0500
+
+    Merge pull request #115 from drossberg/main_msvs-fix
+    
+    moved the contents of tgc_tess.c and tgc_tnurb.c into tgc.c
+
+commit 2149f60df3be0ef580683b6181471775fc1c7bd8
+Author: Daniel Rossberg <33295041+drossberg@users.noreply.github.com>
+Date:   Wed Feb 21 16:30:40 2024 +0100
+
+    moved the contents of tgc_tess.c and tgc_tnurb.c into tgc.c
+    
+    this works around an individuality of the MS Visual C/C++ linker, which
+    removes the content of seemingly unused .obj files from the resulting
+    library; this way, the rt_tgc_tess() and rt_tgc_tnurb() function symbols
+    were removed from the librt-static.lib on MS Windows
+
+commit 0b6d4edd230fcd376fe35c5bce8955e6799aadf2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Feb 20 23:26:57 2024 -0500
+
+    Add a few more status messages to source_archive_contents script.
+
+commit 79eb024ab36baa239993773b8c1ea90114b42ed8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Feb 20 23:15:50 2024 -0500
+
+    More work on having CPack runs populate a bext directory.
+
+commit 4bd70887f5108be92380ed38251c2aa750bb9f7e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Feb 20 17:04:12 2024 -0500
+
+    Correct file listing
+
+commit 11551e64d87377129bd047412dd037d580e26a20
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Feb 20 15:39:29 2024 -0500
+
+    Look at populating a dir with the bext contents for CPack's source packaging.
+
+commit edb9b1538bbd9883570569316bf2614c6903ed3f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Feb 20 14:18:05 2024 -0500
+
+    Be more consistent with EXT variable names
+
+commit 89563f451cb95c99d60ddb1fd89fa997201836ba
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Feb 17 11:14:46 2024 -0500
+
+    Make some of the internal plot3 functions static
+
+commit fba137b55921635e17d301e2d739396ebb8642e9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Feb 17 11:09:35 2024 -0500
+
+    Don't look for Tcl unless it is enabled
+
+commit d1e3c62b6d52b17d06c452fa9bc7ffd902468638
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Feb 17 10:55:51 2024 -0500
+
+    reorder includes so pd redefine doesn't mess with Wdocumentation warning when building with clang.
+
+commit 45f7c805091c26fa8a01fcdd165b86edafcb6523
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Feb 17 10:52:32 2024 -0500
+
+    List file for CMake
+
+commit 0dab38615f52d03a2078584f26ac3c37ba3b1be9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 16 21:28:07 2024 -0500
+
+    Make a note to add support for multi-line quoted strings to the gcv asc_v5 reader to handle pinewood's new brep objects.
+
+commit b70fdae2fa0ea7a70998ac4e181047da2c9c1c4f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 16 21:19:47 2024 -0500
+
+    Correct set syntax for EXT dirs
+
+commit 8f78b7fcc67c9fa5fd3478eb5ac4437550a83208
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 16 20:57:03 2024 -0500
+
+    Key the Tcl defines for brlcad_config.h based on whether we have local copies of the packages.
+
+commit e5b694bd50d60943644dcb330abd8175ab587b78
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 16 20:44:14 2024 -0500
+
+    Leave it up to the user to determine when to update bext
+
+commit db638fed78548b66b3f21d13c48f0ab50190f2e3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 16 15:50:55 2024 -0500
+
+    Adjust logic for looking for the bext output dir
+    
+    Now that the main build can do its own setup, don't automatically
+    default to bext_output in the home directory.  Check for a CMake
+    command line define and an environment variable (the latter can be
+    set to achieve the same result that the original check in
+    $HOME/bext_output achieved.)
+
+commit b62a8e7263110054cf00df7a3de59e7097deb7f1
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 16 13:57:35 2024 -0500
+
+    Pass some BRL-CAD high level options to bext configure.
+
+commit 3a19adc6ad121c2ecb4f79fee7568aabc19f300d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 16 13:02:31 2024 -0500
+
+    Allow for a pre-supplied bext that isn't a git repo
+
+commit 3e828208e8e823627291b790284d7b6d115e8328
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Feb 16 12:49:28 2024 -0500
+
+    Test having BRL-CAD configure build bext
+
+commit edf24b93809be7e0faf788e6c7fcaf0d8d73aae5
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Feb 16 01:02:31 2024 -0500
+
+    upgrade the script to do it all.  add more sanity checks too.
+
+commit bb3eecf106b5c5688631bfea5525e13049a75ffc
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Nov 23 16:45:37 2022 -0500
+Date:   Wed Feb 14 16:59:24 2024 -0500
 
-    Merge branch 'main' into RELEASE
+    fix rtweight printing inside mged
+    
+    rtweight was only printing stderr output when run inside mged despite
+    writing to both stderr and stdout - add an io hook for stdout. Also,
+    since _ged_rt_output_handler() is setup to handle BOTH stderr and
+    stdout, we need to restructure slightly so that successful reads are
+    printed to the console before the next overwrites the buffer.
 
-commit 74a3a9b76a51764db98fa1b90b6c759aa0730d2d
+commit 070c9176d4dd6558e84e464d1f3f58bca3bf0613
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 14 10:53:22 2024 -0500
+
+    Note removal of pl_mat_* defines in favor of basic vmath versions
+
+commit f5f1e19d376b2acdbc142cf16665eb1e5ab94aa5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 14 10:47:50 2024 -0500
+
+    Add support for prefixing to plot3.h
+    
+    In order to allow libbg to use plot3.h independently of libbv and not cause
+    problems when static linking with other libs, use the same trick we use for
+    zlib and allow for a custom prefix.  In the libbg uses of plot3 we define a
+    separate libbg specific prefix, and for all other code just use the default
+    behavior.  This should allow libbg to define PLOT3_IMPLEMENTATION without
+    causing conflicts with libbv's use of PLOT3_IMPLEMENTATION, but needs to be
+    tested.
+
+commit 011e742d1d211b2a497265ab052d63ac54a1f042
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 21:49:50 2024 -0500
+
+    saveview/loadview could use some upgrades.
+    
+    lots of tedium and frailty with the view scripts getting written as shell scripts that re-invoke rt and reference a database.  better would be pure view specification, perhaps writing the database/objects as comments or hints.
+
+commit 412eaba66ba9c284e7069eac9174e3dded48b9d6
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 21:34:16 2024 -0500
+
+    spit out an animated gif and mpg by default
+
+commit 2a2cad202963ba679f15da66c94e21145f91fb4a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 03:53:58 2024 -0500
+
+    every 3 degrees
+
+commit 689744505654027e53a276bc93f0a65e2b529eb1
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 03:48:16 2024 -0500
+
+    fix base pattern for convert
+
+commit 09ca7368906b95053fbb1ffa125269194101b6a7
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 03:30:25 2024 -0500
+
+    remove debug printing, create animated gif
+
+commit 729ac2ecee78b56fa098284b92b928ddb473ea62
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 03:18:41 2024 -0500
+
+    upgrade the orbit script.
+    
+    get rid of all the option parsing and just pass all arguments through to rt.  this lets the caller do more advanced depictions like turning on ambient occlusion, setting a background, and more.
+
+commit a595f4e68406191112ead9d32be7d39feba9f3e4
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 02:33:50 2024 -0500
+
+    register the orbit script
+
+commit f3425e55d91b2699561791b455575d48adaaf44e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 02:33:12 2024 -0500
+
+    move orbit.sh into sandbox since it relies on 3rd party to compose the animation.
+
+commit 4d06601b9b742057f62c6cb6e88a684f8b13ea5a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 02:32:23 2024 -0500
+
+    update copyright, remove deprecation notice
+
+commit a86dbee67cafddfcc52a17e1fb0fe85131a06fc2
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 13 02:31:29 2024 -0500
+
+    recover the orbit.sh script.
+    
+    very useful script for generating basic visualizations, not in the same vein as the animation tools.  it was modern, complete, self-contained, and useful script, so keep it on hand for quickly making spinning visualizations.
+
+commit d81bc26ddda30e8d0cec4a526f00f86396d37b63
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Feb 12 14:10:14 2024 -0500
+
+    Add a note about what to look at for bu_utttime in C++
+
+commit 14cf80ec3913532ae988e1c152a53f9405e5a6e2
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Feb 12 00:54:54 2024 -0500
+
+    update write-up to remove very outdated information.
+    
+    brep/nurbs are predominantly done, but the information here is still of use as a record on what was done, why, and issues involved.  these notes should probably migrate to a doxygen api/group preamble.
+
+commit bbfdcfa3f6b9266e73fb87dc74d5948a59032f42
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Feb 12 00:16:00 2024 -0500
+
+    update the list of source dirs.
+    
+    also restructure and rephrase Contents for bevity.
+
+commit e6ab685484abe941b1b0e3a417f892b1787233be
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 11 23:28:58 2024 -0500
+
+    update the preamble.  be more concise.
+
+commit f853d89719674202a402b7aba0e01e44d38ae472
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Feb 10 14:23:13 2024 -0500
+
+    note the new shipping container and traffic light geometry models.
+    
+    traffic light was contributed quite a while back, but doesn't appear to have made the correspond release notes.  could have back-ported the entry, but just decided to announce as if new since the precision is not critical.
+
+commit 593cec29c316a4e5e81a0583968f578cb7dc49f1
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Feb 10 14:21:20 2024 -0500
+
+    finally add the shipping_container demo model that was put together by josh last year.
+    
+    model was contributed by DAC, and used in collaboration with TAMU capstone team working on geometry V&V tooling.  model has intentional errors and issues, but still renders great and has decent detail.  I didn't do any cleanup other than setting title and a README attribute.
+
+commit f7d1d64e47f9e80748e710fbd10958ad242aa8b8
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Feb 10 12:41:47 2024 -0500
+
+    stash.  non-functional code for converting arb to bot.
+
+commit 5407d11da189cac4e0146b1c5c59c9a0c4dcefa3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Feb 10 12:37:41 2024 -0500
+
+    note that glb conversion via gcv appears to be busted
+
+commit 253ddc37dfed7beba24052ab6d50929a31eb6b21
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 7 17:56:10 2024 -0500
+
+    update copyright line to 2024..year of the wooded dragon
+
+commit 303588a5963750538edee691991338422776592c
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 7 17:52:21 2024 -0500
+
+    rtwizard option reworded
+
+commit 67f4ddee5a083a90a62c8fbf49cef7a60dee965a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 7 17:49:48 2024 -0500
+
+    add a script that characterizes a surface area metric based off of presented area and edge rendering information.
+    
+    the script uses rtedge, rtarea, rtwizard, pixcount, and imagemagick to compose an image with metrics that characterize external surface area complexity.  this complexity metric can be views as a proxy for surface area.  using edge information, and some baked-in notions of time/effort, we could even give a rough order of magnitude effort estimate for what it'd take to go over the surface (e.g., to paint it,  wash it, apply coatings, examine, etc).  everything is generated automatically and composited (with labels) via  imagemagick tools.
+
+commit 9884bbb41ed3e3e2d8f303bfab196be4393e1049
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 7 17:43:07 2024 -0500
+
+    massive overhaul of rtwizards option printing.
+    
+    turns out, there was a bug where -h simply displayed all options in triplicate.  now correctly filters to a subset, with subsets reorganized and ordered according to functionality, priority, and simplicity of presentation.  Should be a lot easier for a passing user to set up a valid rendering via command line.
+
+commit 251af33360f49af5d7000901595a7f949fe7b59d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 7 16:36:53 2024 -0500
+
+    change -ghosting-options to -ghost-options.
+    
+    for bevity and aligns with the other ghost option.  also clean up usage printing to try and improve readability.  needs more work.
+
+commit 723923f76cfbe4b7063873df1f1b77b683e72f31
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 7 16:34:36 2024 -0500
+
+    stray word
+
+commit 67818591fb35d4b1124abdc28209d8fe43c0e7f9
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Nov 23 16:42:05 2022 -0500
+Date:   Wed Feb 7 11:24:46 2024 -0500
 
-    remove ifdef to correct launching behavior
+    add search_tests.g to distcheck
+
+commit 08371d9891a1df11027ed05573e5ece420893046
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Wed Feb 7 10:31:04 2024 -0500
+
+    fix compiler warnings in test_search
+
+commit 7b4d77b77e2a8f9596b1d2386096da56ab187917
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Tue Feb 6 15:33:46 2024 -0500
+
+    fix search counts
+    
+    db_search() returns the amount of items that match the current filter
+    but may have already been added to the ptbl. Instead of counting
+    db_search returns, keep track of the items printed and report that for
+    the total count.
+
+commit 151e911653f38d68af6cea6370db76feec503838
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Tue Feb 6 14:59:10 2024 -0500
+
+    add some unit tests for 'search'
+
+commit c736e4c87d9e4419c638a8c775078cc43cedf4f8
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Tue Feb 6 09:30:51 2024 -0500
+
+    fix search bug
+    
+    since path is optional, a search string such as 'search -type region'
+    would attempt to use '-type' as a bu_opt
+
+commit d9f0b71c620e9ab72461ab4a57a9f50861e56113
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Feb 5 02:18:19 2024 -0500
+
+    implement a basic test for concave arbs
+
+commit df0e89849283653d388fb832b38ef59f15962036
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Feb 5 00:07:33 2024 -0500
+
+    new bug, mged appears to exit automatically in console mode
+
+commit 269f1ba1990f207baa7f31e64c007890a1feb122
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 02:44:35 2024 -0500
+
+    even if export succeeded, was possible to return and access uninit'd array.
+    
+    init the bu_external right away and make it explicit during export also.
+
+commit dbc83293d0b1d3edf5329429dac00941b1307df3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 02:37:24 2024 -0500
+
+    don't init to out-of-bounds array indices as there are conceivable code paths that could result in an invalid write
+
+commit 72d4c2035e1481c68bf17ba995ecb5bb94044b8d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 02:09:03 2024 -0500
+
+    same issue as rhc, fix the boundary cuve leaks.
+
+commit c959f2f52b0602f552918da9cbf6c5b23393771d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 02:06:35 2024 -0500
+
+    fix some memory leaks.
+    
+    NewPlanarFaceLoop() copies the boundary curves, so should be good to delete afterwards.
+
+commit a98b87cf466d3a9de54d22d867ae8a5f06a67d21
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 01:57:44 2024 -0500
+
+    document the leaks
+
+commit 46dc2d909b86fe70cda7f5bfee3b79c9ba6ed768
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 01:47:38 2024 -0500
+
+    this is a bonefide leak, but not as trivial to fix.  leaving a note for now since this is a demo.
+
+commit bf4d992210249219dc6137c5d0e17f0c09a8cf33
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 01:39:03 2024 -0500
+
+    if we explicitly call new or New(), supposed to call delete
+
+commit e45bda9c3af21d18b66db2a29007029131dc30c3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 01:31:58 2024 -0500
+
+    null return
+
+commit 909b2ba1816ccdf465f8f6340bdbef4c6182eb68
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 01:31:14 2024 -0500
+
+    add some nullity checks
+
+commit dcc458b0b50680a840eff495e16acf1e42ff893d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 00:50:40 2024 -0500
+
+    quell clang static analyzer report, potential false-positive, confused by the shadowing
+
+commit b4f76cacc3e76abed907457a496453ad8517f626
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Feb 4 00:40:53 2024 -0500
+
+    added/expanded torus ray tracing support to include self-intersecting tori.
+    
+    this lets the torus definition extend past a horn torus to a spindle torus with self-intersection.  this allow for the full specturm of positive radius parings (major and minor).
+
+commit fbb807aefba6653cbf519eecda594404064ef16e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Feb 3 23:27:19 2024 -0500
+
+    add support for self-intersecting torus.
+    
+    this extends support for defining and editing torus so that the minor radius (r_h aka r2) can be bigger than the major radius (r_a aka r1).  intersection logic is updated to report hits correctly (i.e., only one segment through the overlapped interior).  leaving plotting as-is since it is useful for the user to have some visual cue.
+    
+    this helps improve usability a smidge so objects can be edited through a larger spectrum of valid values, and supports definition of some shapes that are otherwise impossible with the implicits.
+
+commit d65203cc0d30457a84876d8ebcd10b7d99ba05f3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Feb 3 01:42:48 2024 -0500
+
+    fixed crash rendering to /dev/null, as ifp ends up being null
+
+commit 156d27a7211f0da71d0deca93691d7ba566862d7
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 1 13:01:06 2024 -0500
+
+    fix build errors, apologies for not being diligent!
+
+commit 5197d07777a57e0e58ff67d3c32207bf4c95d44c
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 11 03:26:53 2024 -0500
+
+    fix naming inconsistency and fix aliasing in bn_flt_epsilon()
+
+commit 0911b56c02f7eed06ea6b438add8ba350d8fba6b
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 11 02:29:53 2024 -0500
+
+    adjust bn_epsilon/bn_epsilonf so they only calculate manually once.  fixing alaising.
+
+commit ab0ff2b96ea5eed202551c571b494522e7eef588
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 11 02:00:11 2024 -0500
+
+    same expansion for bn_flt_min(), support aliasing proper
+
+commit 826ae1c7fe9336f2d12ccaac2db354310c6a55cc
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 11 01:44:42 2024 -0500
+
+    expand bn_dbl_min() with method to avoid aliasing portability issues
+
+commit 1cc26d5a3aa60d2b2a9392869d6b24334caf5d2d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 1 12:49:48 2024 -0500
+
+    preliminary user account name api design
+
+commit 56e918ee40c085b1f5241b92ebcff742e3030f43
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 1 12:46:48 2024 -0500
+
+    more consistently check for null ifp in all of the generic callbacks. getting crashes.
+
+commit a2dbfe2587c7930c4f2bd3a5a7672d13f4e39595
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Nov 19 23:17:00 2023 -0500
+
+    OpenCV_DIR specified but cv.h can't be found, badness ensues
+
+commit 11340b7f8c146d70814fb8bd816eadc1afbec03f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jan 24 14:49:22 2024 -0500
+
+    Rename axis variables to make it easier to follow them through the logic.
+
+commit 7e5acf5206034ebd6a44abd4a7ede7b6f5b53bce
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jan 24 14:01:52 2024 -0500
+
+    Document a bug with TGC primitive tessellation
+    
+    When one and only one of the c or d axis of a tgc is at or below the threshold
+    length of tol->dist/2, the rt_tgc_tess function fails to produce valid
+    output.  If both c and d are sufficiently small we succeed, but zeroing
+    out just one of them currently produces bad results.
+
+commit a8e1f328d99855fe8c44b25226fbf219d608459c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jan 24 13:19:21 2024 -0500
+
+    Break tgc tnurb and tess functionality out into their own files.
+
+commit 6e255f724f2edddd232fc7b95ec737051c92fc61
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jan 23 18:35:37 2024 -0500
+
+    Add a note about the possibility of DELAYLOAD + SetDllDirectory on Windows.
+
+commit 90d2c879d36b2cb411bff60a822b3d586974874b
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jan 22 14:58:11 2024 -0500
+
+    Adjust comments for verbosity options.
+
+commit cf0d6f19f0930b92711a5ae724243eec1fc65204
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon Jan 22 12:35:43 2024 -0500
+
+    silence -Werror, these are intentional
+
+commit 28857e3ca3e54675c8a47833c41266d5c3023c03
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon Jan 22 11:40:49 2024 -0500
+
+    update documentation and usage for d1b0c541
+
+commit d1b0c547959b6fd6a44f4a476d694ffcaf9ec5f0
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon Jan 22 10:35:21 2024 -0500
+
+    rework 17bfde2: use v instead of adding new flag
+    
+    incorporate total printing to the v (verbose) flag instead of
+    introducing a new flag. Rework v to use growing verbosity instead of a
+    binary on/off.
+    
+    Allow verbosity to be supplied as both an argument as well as
+    independent flags. ie (search -vvv..) and (search -v -v -v ..)
+
+commit 822306d3676f3891fdaa9cb8acd60db21feb6b17
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Fri Jan 19 12:45:09 2024 -0500
+
+    improve mater man page
+    
+    add an example for mater -d to printout the current default density
+    table, if any.
+
+commit 724ad8a24fcdd69d660949dfa1565db7b3cd00b7
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Fri Jan 19 12:42:04 2024 -0500
+
+    add TODO for checking windows externals size
+    
+    on windows, noticing bext is taking a lot of space (100+ gigs). This is
+    likey just because it's doing a lot of copies instead of symlinks, but
+    adding the TODO for a sanity check before we've fully committed to
+    switching that build logic on.
+
+commit 129461aff376c73512cf2339cbf00ad0f4081369
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jan 19 16:40:55 2024 -0500
+
+    Put back previous brep struct - logic isn't quite right
+    
+    This reverts commit a879e772eade7a6da41aed05a78b10c48ce69a18.
+
+commit a879e772eade7a6da41aed05a78b10c48ce69a18
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jan 19 15:54:42 2024 -0500
+
+    Set up to structurally allow the possibility of passing in multiple directory pointers to the subcommands.
+
+commit 63b09bfcd2d23f5247b628b2d2f4af1563d3f3e7
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Fri Jan 19 15:29:02 2024 -0500
+
+    update pinewood.asc (fix nurbs and bots)
+    
+    fixed nurb solids and bot solids so that lint does not flag them as bad
+
+commit 17bfde2862c9d3542ad7d4d78a9d8f3e9369fa6e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jan 17 18:44:03 2024 -0500
+
+    Switch on-by-default -s search behavior to off-by-default
+    
+    conversion.sh exposed a problem with the new behavior controlled by -s -
+    the results were broken for processing.  Switch the option to -c for
+    "count" and instead enable the printing at user request.
+
+commit ee673972d23b5efaa5b0d1029dd855b494dfb102
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Wed Jan 17 12:39:05 2024 -0500
+
+    Update main.c
+    
+    adjust default ghost intensity from 12 to 6
+
+commit acb6fa212434201950b51b306e6abf3f995f2280
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jan 16 09:48:18 2024 -0500
+
+    Undo 'y' argv filter from 4b6850a671
+    
+    Unfortunately, this filter breaks MGED command line processing.  The
+    following command illustrates the problem:
+    
+    ./bin/mged share/db/axis.g l y
+    
+    It should print out the info for the 'y' TGC, but the filter strips out
+    the 'y' primitive name and it never reaches the 'l' routine.
+    
+    We'll need to find another way to handle the "unrecognized command"
+    errors.
+
+commit a95b9e7d3b5bac91a6da65d57184252b681f1ce3
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Tue Jan 2 16:06:41 2024 -0500
+
+    fix double printing of last 'search -exec' result
+
+commit 209416942cf52bff70b79fb1bfc7f9ff8aad183c
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Tue Jan 2 15:34:15 2024 -0500
+
+    print the amount of items found in 'search'
+    
+    add -s flag to silence the count printing
+
+commit 0cf2e1d7fa2c580bfca168d6bda8c374739fe440
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Dec 18 11:59:16 2023 -0500
+
+    Conditionalize summary printing on method enablement
+
+commit fa3c5d57f6655962a731ee01b5d59a871d215cdf
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Dec 18 11:50:34 2023 -0500
+
+    Adjust reporting to conditionalize formats
+    
+    If we have specified just one format, we don't want the reporting for
+    the others.  Still need to rework the summary, but this adjusts the
+    per-object reports
+
+commit 0557d44fcde64e82d8b457cccd6472e072626f75
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 18:54:52 2023 -0500
+
+    Guard the various conversion modes with checks for enablement
+
+commit 1f456b9a0fc3535830f533abd95aaca2b8942cee
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 18:47:09 2023 -0500
+
+    Check for conversion type enabling options
+
+commit d35d7eef1d8e513739894a06eda3be18cc8a7003
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 16:36:29 2023 -0500
+
+    Start reorganizing conversion.sh logic
+    
+    Break each method (nmg, bot, brep) into a function.  At this point there
+    should be no changes to functionality - the idea is to set things up to
+    make it easer to be able to optionally run JUST nmg, bot or brep rather
+    than having to do all of them.
+
+commit af21ffcd48ace4f7a19862bd17d34a6e77939c4b
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 16:14:11 2023 -0500
+
+    Whoops, forgot the CMake line for DLL_EXPORTS
+
+commit c70529472378bcdd541d2365f8ad4452afbfda3f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 14:32:12 2023 -0500
+
+    Restore DLL import/export setup.
+
+commit feef04388d50bce15ec55d35c4fadd6c1ed1aa9d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 14:27:14 2023 -0500
+
+    Correct header location
+
+commit e53084df4277cf5a683e3fc0e0d7261328de51b8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 12:34:39 2023 -0500
+
+    Remove hidden files - not needed for this use case
+
+commit 86b2b942109f3cd0e21f41542c8a644dfe86d19a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 10:45:17 2023 -0500
+
+    Need to link assetimport lib if we're using it
+
+commit e1b5a11e9facd7cd6560d34886fe36b0d33c7019
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 10:30:34 2023 -0500
+
+    Remove stray files from dist
+
+commit 848fa85b5c964af099d4ac267ced4d8fba5aa448
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 10:26:49 2023 -0500
+
+    remove top level duplicates of manifold third party srcs
+
+commit 8803fbd3e6bf69079ace1d1c57d57d9d4b705c95
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Dec 15 10:18:28 2023 -0500
+
+    Update manifold library to the latest master upstream
+    
+    Since upstream is currently quite active, rearrange our local version to
+    more closely match the upstream layout.  Roughly basing this on the bext
+    work for manifold.
+
+commit 62428afa6b793439b9ce4eca036a4feb74b31abd
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Dec 14 20:02:02 2023 -0500
+
+    NURBS g2asc/asc2g fix is user visible
+
+commit 0d1543f738e62f028381ace1100cab5533aa43ab
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Dec 13 13:04:59 2023 -0500
+
+    We're only processing one component here - remove the iteration.
+
+commit 7e728448a7f09655ddf5578448c6e3532b4eddb3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Dec 13 13:03:10 2023 -0500
+
+    Restore brep version of pinewood, fix rt_brep_adjust
+
+commit 6fd5f1fcbe3e91e433ac953534d1c168e734e9eb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Dec 13 10:21:26 2023 -0500
+
+    Dll build fixes from kennethsdavis, Issue #105
+
+commit 03ffae5bfd5434867ed54710035c0315cd3316c9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Dec 13 10:19:26 2023 -0500
+
+    Missed a few of the nmg_booltree_leaf_tess -> rt_booltree_leaf_tess renames
+
+commit 798f4c61e4837bfc981da1d222aa4a6b10ff2c67
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Fri Dec 8 13:34:11 2023 -0500
+
+    add new pinewood.asc
+    
+    last one failed because nurbs don't like going from g to asc and back to g. This one only has bots and csg solids.
+
+commit 9f1a59cd9d7693a8a7807ad698a0690c650972c1
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Fri Dec 8 11:43:36 2023 -0500
+
+    update pinewood.asc
+    
+    add pinewood example file that includes bots and nurbs
+
+commit b9d3fe6c5e37a12cd35affc54a78090918684d0f
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Fri Dec 8 11:23:19 2023 -0500
+
+    Update CMakeLists.txt
+    
+    added annual gift man geometry to db directory
+
+commit c77b8e48d71b0d6c1690c9acc0770c3ab21888b1
+Author: joshbaker22 <141415098+joshbaker22@users.noreply.github.com>
+Date:   Fri Dec 8 11:21:49 2023 -0500
+
+    Add files via upload
+
+commit 82464c30096ee2c0d2fe6f7300a142983c074dd6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Dec 2 23:56:06 2023 -0500
+
+    Update link for polygonizer paper
+
+commit 9f48dd2cbc194bc06c6b77e0ce0bd4399a6cc29a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Nov 29 22:05:12 2023 -0500
+
+    Switch to v4 checkout for the main workflows
+
+commit 8dc11c8115d679afb23fa5414c4118d753bcdcd0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Nov 17 20:13:16 2023 -0500
+
+    Use realpath for a more robust dbi_filepath entry
+    
+    This has been driving me nuts for ages... The terra.g terrain example
+    won't work if you open it with a relative path, i.e.:
+    
+    ./bin/mged share/db/terra.g
+    
+    You get:
+    
+    mapped file open failure: ./terra.bin
+    
+    unless the working directory for MGED happens to be the same directory
+    as the .g file.  Digging into it a little, the mechanism that opens the
+    dsp is actually smart about looking relative to the .g file path, but
+    only when the .g path is fully qualified - i.e., specifying something
+    like /usr/brlcad/rel-7.38.0/share/db/terra.g DOES work.
+    
+    For better robustness, use bu_file_realpath to resolve such paths before
+    doing the dbi_filepath assignment.  This allows us to find terra.bin
+    even with the "./bin/mged share/db/terra.g" command launch, and won't
+    cause any changes if the full path is already specified.
+
+commit d2815e8e6a128f3da66662e128ca5934891cf8c0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 13 19:33:39 2023 -0500
+
+    Fix dist list for manifold
+
+commit e43056387ee40d997a456db016e8b6dc75872725
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 13 17:16:18 2023 -0500
+
+    Add MANIFOLD_EXPORT to ExportMesh declarations
+
+commit 4c0baa3cf0ebf9fc805ef9a3e48622ba818fb29c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 13 12:46:26 2023 -0500
+
+    Try to conditionalize assetimport the same way for Manifold as for our main code.
+
+commit d61be47fea33657b5cf12a19453d4de0fe005ad2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 13 12:29:15 2023 -0500
+
+    Pull in Manifold fix from 'Fix odd number halfedges' (7273c9b)
+
+commit e37685fbeefaefd51868b5160357f69fe41c9fd7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 13 12:27:01 2023 -0500
+
+    Write out .glb files (preferred for debugging by upstream Manifold project).
+
+commit d8be559f3c267ddf3c3b4103c651cba31cb98157
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 13 12:20:34 2023 -0500
+
+    Per upstream, STL won't cut it for capturing inputs for debugging - need to do this right.  Since we already use assimp for gcv, it should be possible.
+
+commit b9e069bc11bee21e78ebf7b0c91d908566e7e3cc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Nov 11 09:37:56 2023 -0500
+
+    Add commented out logic for debugging - trying to zero in on an infinite loop case.
+
+commit d60da791a05248c76d1842fc95eda5b43baa74e9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Nov 10 19:49:24 2023 -0500
+
+    Use spheres and cylinders to fill in bot extrude
+    
+    Not 100% sure how well this will work, but attempt to "fill in" the gaps
+    left by extruding bot face arb6 primitives straight out with cylinders
+    and rccs.  Subtracting a plate mode bot from this comb won't result in
+    an empty raytrace, since the result defines solid volumes extruding out
+    from the edges perpendicular to the plane of the faces, but arguably
+    that's OK as those volumes can be interpreted as being in the "solidity
+    depends on interrogation angle" ambiguities inherent to the plate mode
+    methodology.
+    
+    In theory it may be possible to use facetize to evaluate this and
+    actually get an evaluated mesh, but initial experiments suggest that for
+    anything beyond fairly trivial surfaces the boolean eval will be
+    prohibitively expensive even if it succeeds.
+
+commit 01c8d64bd78ce1a67659c47d834ef3e1600baa4f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 20:25:23 2023 -0500
+
+    Make a few adjustments and TODO notes for HACKING
+
+commit 8c0a9942a8a266c98a0f63f1c3c00fce65a6162d
+Merge: a4c563800c a17ff9bd2c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 20:08:13 2023 -0500
+
+    Merge branch 'RELEASE'
+
+commit a17ff9bd2c12f518ac007b1a6589e955e2d75381
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 19:57:43 2023 -0500
+
+    Remove the NEWS writeup mention of gist
+    
+    Chris and I both tried, but something about our bext opencv build is
+    giving us linking errors on Windows so we can't roll binaries with it
+    included.  Leaving the NEWS line, as it is available to build if a
+    system OpenCV is available.
+
+commit 1f0e8bc6ff27393938d102fc8b0e44aa065bf927
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 16:18:41 2023 -0500
+
+    Typo
+
+commit a4c563800c73fa4b19de3263a0d3249546979941
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 15:38:40 2023 -0500
+
+    Bump to next development revision after tagging the 7.38.0 release
+
+commit d8e417bc4431869cd02bd779c366fb30f1482268
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 10:26:03 2023 -0500
+
+    Update log with commits since 2023-07-26
+
+commit 677fe0b3fb8f5fe2ba2a1ff6ba83388bf6e5cea8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 10:24:43 2023 -0500
+
+    Version number updates
+
+commit 01ae447bdfc678a21eebc974980304f0274d4277
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 10:23:44 2023 -0500
+
+    Stray parenthesis
+
+commit 453f1eae98f0095e124f9faf65f623fdbc1202a9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 10:22:42 2023 -0500
+
+    typo
+
+commit 5dad26403a8de09c5cb9609bce66741e0f7f32b5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 10:21:36 2023 -0500
+
+    Adjust wording for facetize writeup
+
+commit cdcba538cfc23d9728e7cc9229feda5d92083bfe
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 6 10:13:53 2023 -0500
+
+    Note initial efforts for edge curve repair

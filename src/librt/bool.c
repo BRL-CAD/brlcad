@@ -1,7 +1,7 @@
 /*                          B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2023 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,8 +102,9 @@ bool_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *
      * Cases: seg at start of pt, in middle of pt, at end of pt, or
      * past end of pt but before start of next pt.
      *
-     * XXX For the first 3 cases, we might want to make a new 0-len pt,
-     * XXX especially as the NMG ray-tracer starts reporting wire hits.
+     * XXX For the first 3 cases, we might want to make a new 0-len
+     * pt, XXX especially as the NMG ray-tracer starts reporting wire
+     * hits.
      */
     for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
 	if (NEAR_EQUAL(segp->seg_in.hit_dist, pp->pt_inhit->hit_dist, tol_dist) ||
@@ -286,8 +287,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	     */
 	    if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 		bu_log("seg starts beyond last partition end. (%g, %g) Appending new partition\n",
-			PartHdp->pt_back->pt_inhit->hit_dist,
-			PartHdp->pt_back->pt_outhit->hit_dist);
+		       PartHdp->pt_back->pt_inhit->hit_dist,
+		       PartHdp->pt_back->pt_outhit->hit_dist);
 	    }
 	    GET_PT_INIT(rtip, pp, res);
 	    bu_ptbl_ins_unique(&pp->pt_seglist, (long *)segp);
@@ -298,11 +299,11 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    APPEND_PT(pp, PartHdp->pt_back);
 	} else {
 	    /* Loop through current partition list weaving the current
-	     * input segment into the list. The following three variables
-	     * keep track of the current starting point of the input
-	     * segment. The starting point of the segment moves to higher
-	     * hit_dist values (as it is woven in) until it is entirely
-	     * consumed.
+	     * input segment into the list. The following three
+	     * variables keep track of the current starting point of
+	     * the input segment. The starting point of the segment
+	     * moves to higher hit_dist values (as it is woven in)
+	     * until it is entirely consumed.
 	     */
 	    lastseg = segp;
 	    lasthit = &segp->seg_in;
@@ -312,9 +313,9 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 		    bu_log("At start of loop:\n");
 		    bu_log("	remaining input segment: (%.12e - %.12e)\n",
-			    lasthit->hit_dist, segp->seg_out.hit_dist);
+			   lasthit->hit_dist, segp->seg_out.hit_dist);
 		    bu_log("	current partition: (%.12e - %.12e)\n",
-			    pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+			   pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
 		    rt_pr_partitions(rtip, PartHdp, "At start of loop");
 		}
 
@@ -328,8 +329,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		     */
 		    if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 			bu_log("seg start beyond partition end, skipping.  (%g, %g)\n",
-				pp->pt_inhit->hit_dist,
-				pp->pt_outhit->hit_dist);
+			       pp->pt_inhit->hit_dist,
+			       pp->pt_outhit->hit_dist);
 		    }
 		    continue;
 		}
@@ -382,31 +383,32 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		    if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 			bu_log("seg starts within p. Split p at seg start, advance. (diff = %g)\n", diff);
 			bu_log("newpp starts at %.12e, pp starts at %.12e\n",
-				newpp->pt_inhit->hit_dist,
-				pp->pt_inhit->hit_dist);
+			       newpp->pt_inhit->hit_dist,
+			       pp->pt_inhit->hit_dist);
 			bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
 		    }
 		} else if (diff > -(tol_dist)) {
 		    /*
-		     * Make a subtle but important distinction here.  Even
-		     * though the two distances are "equal" within
-		     * tolerance, they are not exactly the same.  If the
-		     * new segment is slightly closer to the ray origin,
-		     * then use its IN point.
+		     * Make a subtle but important distinction here.
+		     * Even though the two distances are "equal"
+		     * within tolerance, they are not exactly the
+		     * same.  If the new segment is slightly closer to
+		     * the ray origin, then use its IN point.
 		     *
-		     * This is an attempt to reduce the deflected normals
-		     * sometimes seen along the edges of e.g. a cylinder
-		     * unioned with an ARB8, where the ray hits the top of
-		     * the cylinder and the *side* face of the ARB8 rather
-		     * than the top face of the ARB8.
+		     * This is an attempt to reduce the deflected
+		     * normals sometimes seen along the edges of
+		     * e.g. a cylinder unioned with an ARB8, where the
+		     * ray hits the top of the cylinder and the *side*
+		     * face of the ARB8 rather than the top face of
+		     * the ARB8.
 		     */
 		    diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
 		    if (!pp->pt_back ||
-			    pp->pt_back == PartHdp ||
-			    pp->pt_back->pt_outhit->hit_dist <=
-			    segp->seg_in.hit_dist) {
+			pp->pt_back == PartHdp ||
+			pp->pt_back->pt_outhit->hit_dist <=
+			segp->seg_in.hit_dist) {
 			if (NEAR_ZERO(diff, tol_dist) &&
-				diff < 0) {
+			    diff < 0) {
 			    if (RT_G_DEBUG&RT_DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
 			    pp->pt_inseg = segp;
 			    pp->pt_inhit = &segp->seg_in;
@@ -543,8 +545,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		    if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 			bu_log("start together, seg shorter than partition\n");
 			bu_log("newpp starts at %.12e, pp starts at %.12e\n",
-				newpp->pt_inhit->hit_dist,
-				pp->pt_inhit->hit_dist);
+			       newpp->pt_inhit->hit_dist,
+			       pp->pt_inhit->hit_dist);
 			bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
 		    }
 		    break;
@@ -587,9 +589,7 @@ rt_defoverlap(register struct application *ap, register struct partition *pp, st
     RT_CK_REGION(reg1);
     RT_CK_REGION(reg2);
 
-    /*
-     * Apply heuristics as to which region should claim partition.
-     */
+    /* Apply heuristics as to which region should claim partition. */
     if (reg1->reg_aircode != 0) {
 	/* reg1 was air, replace with reg2 */
 	return 2;
@@ -805,7 +805,7 @@ bool_plate_vol_overlap(struct region **fr1, struct region **fr2, struct partitio
 	return;
     }
 
-    /* need to test sensitivity before changing to distance tolerance. */
+    /* test sensitivity before changing to distance tolerance. */
     if (!NEAR_EQUAL(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist, 0.001)) {
 	/* There is a gap between previous partition and this one.  So
 	 * both plate and vol start at same place, d=0, plate wins.
@@ -869,8 +869,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	if (regp->reg_is_fastgen != REGION_NON_FASTGEN) n_fastgen++;
     }
 
-    /*
-     * Resolve all FASTGEN overlaps before considering BRL-CAD
+    /* Resolve all FASTGEN overlaps before considering BRL-CAD
      * overlaps, because FASTGEN overlaps have strict rules.
      */
     if (n_fastgen >= 2) {
@@ -885,8 +884,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	    }
 	}
 
-	/*
-	 * First, resolve volume_mode/volume_mode overlaps because
+	/* First, resolve volume_mode/volume_mode overlaps because
 	 * they are a simple choice.  The searches run from high to
 	 * low in the ptbl array.
 	 */
@@ -939,8 +937,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
     RT_CK_REGION(lastregion);
 
     if (BU_PTBL_LEN(regiontable) > 1 && ap->a_rt_i->rti_save_overlaps != 0) {
-	/*
-	 * Snapshot current state of overlap list, so that downstream
+	/* Snapshot current state of overlap list, so that downstream
 	 * application code can resolve any FASTGEN plate/plate
 	 * overlaps.  The snapshot is not taken at the top of the
 	 * routine because nobody is interested in FASTGEN vol/plate
@@ -976,8 +973,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	    /* both are same air, keep last */
 	    code = 1;
 
-	    /*
-	     * If a FASTGEN region overlaps a non-FASTGEN region, the
+	    /* If a FASTGEN region overlaps a non-FASTGEN region, the
 	     * non-FASTGEN ("traditional BRL-CAD") region wins.  No
 	     * mixed-mode geometry like this will be built by the
 	     * fastgen-to-BRL-CAD converters, only by human editors.
@@ -987,10 +983,9 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	} else if (lastregion->reg_is_fastgen != regp->reg_is_fastgen && regp->reg_is_fastgen) {
 	    code = 1;		/* keep lastregion */
 
-	    /*
-	     * To support ray bundles, find partition with the lower
-	     * contributing ray number (closer to center of bundle), and
-	     * retain that one.
+	    /* To support ray bundles, find partition with the lower
+	     * contributing ray number (closer to center of bundle),
+	     * and retain that one.
 	     */
 	} else {
 	    int r1 = bool_max_raynum(lastregion->reg_treetop, pp);
@@ -1008,9 +1003,9 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		    code = 2;	/* keep regp */
 		}
 	    } else {
-		/*
-		 * Hand overlap to old-style application-specific
+		/* Hand overlap to old-style application-specific
 		 * overlap handler, or default.
+		 *
 		 * 0 = destroy partition,
 		 * 1 = keep part, claiming region=lastregion
 		 * 2 = keep part, claiming region=regp
@@ -1033,7 +1028,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		/* Keep partition, claiming region = lastregion */
 		if (RT_G_DEBUG&RT_DEBUG_PARTITION)
 		    bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
-			    code, lastregion->reg_name);
+			   code, lastregion->reg_name);
 		BU_PTBL_SET(regiontable, i, (long*)0);
 		break;
 	    case 2:
@@ -1042,7 +1037,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		lastregion = regp;
 		if (RT_G_DEBUG&RT_DEBUG_PARTITION)
 		    bu_log("rt_default_multioverlap:  overlap policy!=(0, 1) code=%d, p retained in region=%s\n",
-			    code, lastregion->reg_name);
+			   code, lastregion->reg_name);
 		break;
 	}
     }
@@ -1085,7 +1080,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
     bu_vls_extend(&str, 80*8);
     bu_vls_putc(&str, '\n');
 
-    /* List all the regions which evaluated to BOOL_TRUE in this partition */
+    /* List all regions that evaluate to BOOL_TRUE in this partition */
     for (i=0; i < BU_PTBL_LEN(regiontable); i++) {
 	struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
 
@@ -1520,7 +1515,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    if (!ZERO(diff)) {
 		if (NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
 		    if (RT_G_DEBUG&RT_DEBUG_PARTITION) bu_log("rt_boolfinal:  fusing 2 partitions %p %p\n",
-							   (void *)pp, (void *)pp->pt_forw);
+							      (void *)pp, (void *)pp->pt_forw);
 		    pp->pt_forw->pt_inhit->hit_dist = pp->pt_outhit->hit_dist;
 		} else if (diff > 0) {
 		    bu_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d, diff = %g\n",
@@ -1538,8 +1533,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    }
 	}
 
-	/*
-	 * If partition is behind ray start point, discard it.
+	/* If partition is behind ray start point, discard it.
 	 *
 	 * Partition may start before current box starts, because it's
 	 * still waiting for all its solids to be shot.
@@ -1556,8 +1550,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    continue;
 	}
 
-	/*
-	 * If partition begins beyond current box end, the state of
+	/* If partition begins beyond current box end, the state of
 	 * the partition is not fully known yet, and new partitions
 	 * might be added in front of this one, so stop now.
 	 */
@@ -1570,8 +1563,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    goto out;
 	}
 
-	/*
-	 * If partition ends somewhere beyond the end of the current
+	/* If partition ends somewhere beyond the end of the current
 	 * box, the condition of the outhit information is not fully
 	 * known yet.  The partition might be broken or shortened by
 	 * subsequent segments, not discovered until entering future
@@ -1599,8 +1591,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	/* Start with a clean slate when evaluating this partition */
 	bu_ptbl_reset(regiontable);
 
-	/*
-	 * For each segment's solid that lies in this partition, add
+	/* For each segment's solid that lies in this partition, add
 	 * the list of regions that refer to that solid into the
 	 * "regiontable" array.
 	 */
@@ -1631,8 +1622,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	if (indefinite_outpt) {
 	    if (RT_G_DEBUG&RT_DEBUG_PARTITION)
 		bu_log("indefinite out point, checking partition eligibility for early evaluation.\n");
-	    /*
-	     * More hits still needed.  HITS_TODO > 0.  If every solid
+	    /* More hits still needed.  HITS_TODO > 0.  If every solid
 	     * in every region participating in this partition has
 	     * been intersected, then it is OK to evaluate it now.
 	     */
@@ -1965,13 +1955,16 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
 			pp_reg->reg_is_fastgen != REGION_FASTGEN_PLATE)
 			continue;
 
-		    /* if the original partition is available, just use it */
+		    /* if the original partition is available, just
+		     * use it.
+		     */
 		    if (!pp->pt_regionp || pp->pt_regionp == pp_reg) {
 			pp->pt_regionp = pp_reg;
 			bu_ptbl_ins(&open_parts, (long *)pp);
 		    } else {
-			/* create a new partition, link it to the end of the current pp,
-			 * and add it to the open list */
+			/* create a new partition, link it to the end
+			 * of the current pp, and add it to the open
+			 * list */
 			RT_DUP_PT(ap->a_rt_i, new_pp, pp, ap->a_resource)
 			    new_pp->pt_regionp = pp_reg;
 			new_pp->pt_overlap_reg = (struct region **)NULL;

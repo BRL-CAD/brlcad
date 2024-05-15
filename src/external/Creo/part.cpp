@@ -2,7 +2,7 @@
  *                   P A R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2023 United States Government as represented by
+ * Copyright (c) 2017-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1125,7 +1125,6 @@ have_part:
         bu_vls_free(&vstr);
     }
 
-    db5_standardize_avs(&cinfo->avs);
     db5_update_attributes(sdp, &cinfo->avs, cinfo->wdbp->dbip);
 
     /* Set the Creo attributes for the region */
@@ -1267,7 +1266,6 @@ have_part:
     param_export(cinfo, model, pname);
 
     /* Update attributes stored on disk */
-    db5_standardize_avs(&cinfo->avs);
     db5_update_attributes(rdp, &cinfo->avs, cinfo->wdbp->dbip);
 
     /* Increment the region id - this is a concern if we move to multithreaded generation... */

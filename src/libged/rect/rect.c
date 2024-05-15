@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2023 United States Government as represented by
+ * Copyright (c) 1998-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -131,8 +131,6 @@ rect_rt(struct ged *gedp, int port)
     int xmin, xmax;
     int ymin, ymax;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-
     /* initialize result in case we need to report something here */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -221,7 +219,6 @@ rect_zoom(struct ged *gedp)
     point_t old_view_center;
     point_t new_view_center;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     /* initialize result */
@@ -289,7 +286,6 @@ ged_rect_core(struct ged *gedp,
     point_t user_pt;		/* Value(s) provided by user */
     int i;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 

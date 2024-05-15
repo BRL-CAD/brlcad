@@ -1,7 +1,7 @@
 /*              F A S T G E N 4 _ W R I T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2023 United States Government as represented by
+ * Copyright (c) 2015-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2414,7 +2414,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	if (!facetize && subtracted)
 	    data.m_failed_regions.insert(region_dir);
 	else
-	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+	    return rt_booltree_leaf_tess(tree_state, path, internal, client_data);
     }
 
     tree *result;

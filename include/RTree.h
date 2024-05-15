@@ -33,6 +33,7 @@
 #include <cmath>
 #include <set>
 #include "vmath.h"
+#include "bu/color.h"
 #include "bv/plot3.h"
 #include "bg/aabb_ray.h"
 
@@ -442,6 +443,7 @@ public:
     size_t Intersects(Ray *a_ray, std::set<DataType> *result);
 
     void plot(const char *fname);
+    void plot2d(const char *fname);
 };
 
 // Because there is not stream support, this is a quick and dirty file I/O helper.
@@ -1756,6 +1758,46 @@ void RTREE_QUAL::plot(const char *fname)
     fclose(plot_file);
 }
 
+#define BB_PLOT2D(min, max) {                 \
+        fastf_t pt[8][3];                       \
+        VSET(pt[0], max[X], min[Y], 0);    \
+        VSET(pt[1], max[X], max[Y], 0);    \
+        VSET(pt[2], max[X], max[Y], 0);    \
+        VSET(pt[3], max[X], min[Y], 0);    \
+        VSET(pt[4], min[X], min[Y], 0);    \
+        VSET(pt[5], min[X], max[Y], 0);    \
+        VSET(pt[6], min[X], max[Y], 0);    \
+        VSET(pt[7], min[X], min[Y], 0);    \
+        TREE_LEAF_FACE_3D(pt, 0, 1, 2, 3);      \
+        TREE_LEAF_FACE_3D(pt, 4, 0, 3, 7);      \
+        TREE_LEAF_FACE_3D(pt, 5, 4, 7, 6);      \
+        TREE_LEAF_FACE_3D(pt, 1, 5, 6, 2);      \
+}
+
+RTREE_TEMPLATE
+void RTREE_QUAL::plot2d(const char *fname)
+{
+    if (!m_root) return;
+
+    if (kNumDimensions != 2) return;
+
+    FILE* plot_file = fopen(fname, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    RTREE_QUAL::Iterator tree_it;
+    this->GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	double m_min[2];
+	double m_max[2];
+	tree_it.GetBounds(m_min, m_max);
+	BB_PLOT2D(m_min, m_max);
+	++tree_it;
+    }
+
+    fclose(plot_file);
+}
 
 
 #undef RTREE_TEMPLATE

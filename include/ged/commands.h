@@ -1,7 +1,7 @@
 /*                       C O M M A N D S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -900,6 +900,8 @@ DEPRECATED GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
                                         int use_air,
                                         point_t rpp_min,
                                         point_t rpp_max);
+
+GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
 
 /** @} */
 

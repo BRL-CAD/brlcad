@@ -4,7 +4,7 @@ set(PS_SRCS
 
 if(BRLCAD_ENABLE_TCL)
 
-  find_package(TCL)
+  find_package_tcl(REQUIRED)
 
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}

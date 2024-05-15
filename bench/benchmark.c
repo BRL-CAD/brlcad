@@ -1,7 +1,7 @@
 /*                     B E N C H M A R K . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2023 United States Government as represented by
+ * Copyright (c) 2011-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -562,7 +562,7 @@ main(int ac, char *av[])
     {
 	int fd;
 	const char *logfile;
-	bu_vls_printf(&str, "run-%d-benchmark.log", bu_process_id());
+	bu_vls_printf(&str, "run-%d-benchmark.log", bu_pid());
 	logfile = bu_vls_addr(&str);
 	bu_setenv("LOGFILE", logfile, 1);
 	fd = open(logfile, O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);

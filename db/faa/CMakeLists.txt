@@ -4,7 +4,7 @@ set(FAA_SAMPLE_MODELS
   )
 
 foreach(faa_input ${FAA_SAMPLE_MODELS})
-  ADD_G_TARGET(${faa_input} "BRL-CAD Geometry Models/Sample")
+  G_TARGET(${faa_input} "BRL-CAD Geometry Models/Sample")
 endforeach(faa_input ${FAA_SAMPLE_MODELS})
 
 CMAKEFILES(

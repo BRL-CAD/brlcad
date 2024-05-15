@@ -22,19 +22,50 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install clang-tools-14
-          # We want as many deps pre-installed as we can for this - the analyzer setup slows their compilation
-          sudo apt-get install libproj-dev libgdal-dev tcl-dev tk-dev itcl3-dev itk3-dev libpng-dev zlib1g-dev libxml2-dev libxslt1-dev xsltproc libxml2-utils astyle xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils liblief-dev
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Cleanup (we want to avoid wasting disk space)
+          sudo apt-get clean
+
+      - name: Setup - System Qt Build Requirements
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
           sudo apt-get clean
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Directory setup
+        run: |
+          cmake -E make_directory ./build_clangstatic
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
 
       - name: Run Analyzer
         run: |
           pwd
           export PATH=$ENV{GITHUB_WORKSPACE}:/usr/share/clang/scan-build-14/bin:/usr/share/clang/scan-build-14/libexec:$PATH
-          mkdir build && cd build && cp ../misc/clang-static-analyzer-run.sh .
+          cd build_clangstatic && cp ../misc/clang-static-analyzer-run.sh .
           ./clang-static-analyzer-run.sh
+
+      - name: Summary
+        if: success() || failure()
+        run: |
+          sudo apt-get install html2text
+          html2text build_clangstatic/scan-reports-all/*/index.html
+
 
   linux_cov:
     # See https://app.codecov.io/gh/BRL-CAD/brlcad for analysis results
@@ -46,39 +77,58 @@ jobs:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      - name: Setup
+      - name: Setup - System
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
           # Get the lcov tool and its dependencies
           sudo apt-get install lcov
-          # We want as many deps pre-installed as we can for this - the analyzer setup slows their compilation
-          sudo apt-get install libproj-dev libgdal-dev tcl-dev tk-dev itcl3-dev itk3-dev libpng-dev zlib1g-dev libxml2-dev libxslt1-dev xsltproc libxml2-utils astyle xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev
+          # Install X/OpenGL dev pkgs
+          sudo apt install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt install astyle re2c xsltproc libxml2-utils liblief-dev
+          # Install dependency dev pkgs
+          sudo apt install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Cleanup (we want to avoid wasting disk space)
+          sudo apt clean
+
+      - name: Setup - System Qt Build Requirements
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
           sudo apt-get clean
 
-#     - name: Setup - Qt
-#       uses: jurplel/install-qt-action@v3
-#       with:
-#         cache: 'true'
-
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Directory setup
+        run: |
+          cmake -E make_directory ./build_lcov
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
 
       - name: Configure
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake -S . -B build -DBRLCAD_ENABLE_COVERAGE=ON
+          cmake -S . -B build_lcov -DBRLCAD_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cd build && make && cd ..
+          cmake --build build_lcov -j1
 
       - name: Run Coverage Test
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cd build
+          cd build_lcov
           find . -name '*.gcda' -exec rm {} \;
           make check
           lcov --capture --directory . --output-file coverage.info
@@ -89,7 +139,7 @@ jobs:
           mv coverage_cad.info ..
 
       - name: Upload
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./coverage_cad.info
 

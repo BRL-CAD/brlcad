@@ -1,13 +1,9 @@
-set(ICV_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${PNG_INCLUDE_DIRS}
-  ${NETPBM_INCLUDE_DIR}
-  )
-BRLCAD_LIB_INCLUDE_DIRS(icv ICV_INCLUDE_DIRS "")
+BRLCAD_Find_Package(NETPBM REQUIRED)
+BRLCAD_Find_Package(PNG REQUIRED)
+BRLCAD_Find_Package(UTAHRLE REQUIRED)
 
 set(LIBICV_SOURCES
+  PImgHash.cpp
   fileformat.c
   rot.c
   color_space.c
@@ -15,16 +11,31 @@ set(LIBICV_SOURCES
   filter.c
   encoding.c
   operations.c
+  pdiff.cpp
   stat.c
   size.c
   pix.c
   png.c
   ppm.c
+  rle.c
   bw.c
   dpix.c
   )
 
-BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARIES};${NETPBM_LIBRARY}")
+# Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+set(ICV_LIBS
+  ${libicv_deps}
+  ${PNG_LIBRARIES}
+  ${NETPBM_LIBRARY}
+  ${UTAHRLE_LIBRARY}
+  )
+set(LOCAL_ICV_INCLUDE_DIRS
+  ${PNG_INCLUDE_DIRS}
+  ${NETPBM_INCLUDE_DIR}
+  ${UTAHRLE_INCLUDE_DIR}
+  )
+
+BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "${ICV_LIBS}" "" "${LOCAL_ICV_INCLUDE_DIRS}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(stgts png netpbm)
@@ -50,6 +61,7 @@ add_subdirectory(tests)
 CMAKEFILES(
   CMakeLists.txt
   TODO
+  PImgHash.h
   icv_private.h
   )
 

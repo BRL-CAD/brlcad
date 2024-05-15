@@ -1,7 +1,7 @@
 /*                        Q G E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2014-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,9 +83,9 @@ class QTCAD_EXPORT QVectEdit: public QWidget
  *
  * Rot,Tra,Scale,Center,Add,(Clone?),Write,Revert */
 //
-// Related to QToolPalette and QToolPaletteButton, but we don't have panel
+// Related to QgToolPalette and QgToolPaletteButton, but we don't have panel
 // elements for this application so it's probably a bit different.  Not sure
-// yet whether to try and generalize QToolPalette in some fashion or define
+// yet whether to try and generalize QgToolPalette in some fashion or define
 // a simpler widget for this purpose.
 
 

@@ -1,7 +1,7 @@
 /*                      A N A L Y Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2023 United States Government as represented by
+ * Copyright (c) 2020-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,8 @@ extern "C" {
 extern "C" {
 #include "bu/cmd.h"
 #include "bu/opt.h"
-#include "./ged_analyze.h"
 }
+#include "./ged_analyze.h"
 #include "../ged_private.h"
 
 #define DB_SOLID INT_MAX

@@ -1,7 +1,7 @@
 /*                       A R C H E R  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2023 United States Government as represented by
+ * Copyright (c) 2005-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -134,9 +134,9 @@ main(int argc, const char **argv)
     }
     Tcl_DeleteInterp(interp);
 
-#endif /* HAVE_TK */
 
     bu_free((void *)av, "argv cpy");
+#endif /* HAVE_TK */
 
     return status;
 }
