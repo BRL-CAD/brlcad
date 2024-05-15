@@ -466,16 +466,6 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 #include <dlfcn.h>
 #include <stdbool.h>
 
-#if defined(HAVE_DLADDR) && !defined(HAVE_DECL_DLADDR) && !defined(dladdr)
-typedef struct dl_info {
-        const char      *dli_fname;     /* Pathname of shared object */
-        void            *dli_fbase;     /* Base address of shared object */
-        const char      *dli_sname;     /* Name of nearest symbol */
-        void            *dli_saddr;     /* Address of nearest symbol */
-} Dl_info;
-extern int dladdr(const void *, Dl_info *);
-#endif /* HAVE_DLADDR */
-
 WAI_FUNCSPEC
 int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 {
