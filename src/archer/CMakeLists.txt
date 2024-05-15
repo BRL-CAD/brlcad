@@ -23,13 +23,8 @@ if (BRLCAD_ENABLE_TCL)
     # depend on ALL the managed files, rather than trying to list specifics
     add_dependencies(archer managed_files)
 
-    # stage targets
-    set(stgts tcl tk itcl itk iwidgets)
-    foreach(ST ${stgts})
-      if (TARGET ${ST}_stage)
-	add_dependencies(archer ${ST}_stage)
-      endif (TARGET ${ST}_stage)
-    endforeach(ST ${stgts})
+    # Archer needs the tclIndex and pkgIndex files set up correctly
+    add_dependencies(archer TclIndexBld)
 
     # Archer is one of the programs that gets a start menu entry
     set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:archer>"
