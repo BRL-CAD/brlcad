@@ -43,6 +43,14 @@ extractFileName(std::string filePath) {
     return filePath.substr(filePath.find_last_of("/\\") + 1);
 }
 
+static std::string getCmdPath(std::string exeDir, char* cmd) {
+    char buf[MAXPATHLEN] = {0};
+    if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
+        bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
+
+    return std::string(buf);
+}
+
 
 std::string
 renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
@@ -75,48 +83,57 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     }
 
     std::string render;
+    std::string cmd;
 
     int a, e;
     switch (face) {
         case FRONT:
+            cmd = getCmdPath(opt.getExeDir(), "rtedge");
             a = 0, e = 0;
             outputname += "_front.png";
-            render = opt.getExeDir() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
             break;
         case RIGHT:
+            cmd = getCmdPath(opt.getExeDir(), "rtedge");
             a = 90, e = 0;
             outputname += "_right.png";
-            render = opt.getExeDir() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
             break;
         case BACK:
+            cmd = getCmdPath(opt.getExeDir(), "rtedge");
             a = 180, e = 0;
             outputname += "_back.png";
-            render = opt.getExeDir() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
             break;
         case LEFT:
+            cmd = getCmdPath(opt.getExeDir(), "rtedge");
             a = 270, e = 0;
             outputname += "_left.png";
-            render = opt.getExeDir() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
             break;
         case TOP:
+            cmd = getCmdPath(opt.getExeDir(), "rtedge");
             a = 0, e = 90; // may need to change "a"?
             outputname += "_top.png";
-            render = opt.getExeDir() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
             break;
         case BOTTOM:
+            cmd = getCmdPath(opt.getExeDir(), "rtedge");
             a = 0, e = 270;
             outputname += "_bottom.png";
-            render = opt.getExeDir() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
             break;
         case DETAILED:
+            cmd = getCmdPath(opt.getExeDir(), "rt");
             a = 45, e = 45;
             outputname += "_detailed.png";
-            render = opt.getExeDir() + "rt -C 255/255/255 -s 1024  -a " + std::to_string(a) + " -e " + std::to_string(e) + " -A 1.5 -W -R -c \"set ambSamples=64 ambSlow=1\" -o " + outputname + " " + pathToInput + " " + component;
+            render = cmd + " -C 255/255/255 -s 1024  -a " + std::to_string(a) + " -e " + std::to_string(e) + " -A 1.5 -W -R -c \"set ambSamples=64 ambSlow=1\" -o " + outputname + " " + pathToInput + " " + component;
             break;
         case GHOST:
+            cmd = getCmdPath(opt.getExeDir(), "rtwizard");
             a = 35, e = 25;
             outputname += "_ghost.png";
-            render = opt.getExeDir() + "rtwizard -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
+            render = cmd + " -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
             // render2 = "../../../build/bin/rtwizard -s 1024 -a " + a + " -e " + e + " -i " + pathToInput + " -g " + ghost + " -G 3 -o " + outputname;
             break;
         default:
