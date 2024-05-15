@@ -33,10 +33,11 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
  <para>The 'reair' command assigns the 'aircode'
  attribute value for all regions within a specified combination.
-# commented out for proposed -n addition
-# Optionally, the increment between consecutive 'aircode' can be
-# specified.  Once the command is complete, the highest 'aircode' set
-# is reported.
+<!-- commented out for proposed -n addition
+ Optionally, the increment between consecutive 'aircode' can be
+ specified.  Once the command is complete, the highest 'aircode' set
+ is reported.
+-->
  </para>
 </refsection>
 
