@@ -250,8 +250,8 @@ else
 fi
 
 # Cleanup
-rm -rf $BU_DIR_CACHE
-rm -rf $LIBRT_CACHE
+rm -rf "$BU_DIR_CACHE"
+rm -rf "$LIBRT_CACHE"
 
 exit $FAILURES
 

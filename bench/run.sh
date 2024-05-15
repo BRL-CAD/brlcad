@@ -1623,8 +1623,8 @@ fi
 $ECHO
 
 # Cleanup
-rm -rf $BU_DIR_CACHE
-rm -rf $LIBRT_CACHE
+rm -rf "$BU_DIR_CACHE"
+rm -rf "$LIBRT_CACHE"
 
 $ECHO "Output was saved to $LOGFILE from `pwd`"
 $ECHO "Benchmark testing complete."
