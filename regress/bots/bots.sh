@@ -46,10 +46,19 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+# Tests should use a local cache
+BU_DIR_CACHE="`pwd`/cache"
+rm -rf $BU_DIR_CACHE && mkdir $BU_DIR_CACHE
+export BU_DIR_CACHE
+LIBRT_CACHE="`pwd`/rtcache"
+rm -rf $LIBRT_CACHE && mkdir $LIBRT_CACHE
+export LIBRT_CACHE
+
 if test "x$LOGFILE" = "x" ; then
     LOGFILE=`pwd`/bots.log
     rm -f $LOGFILE
 fi
+
 log "=== TESTING BoT primitive ==="
 
 MGED="`ensearch mged`"
@@ -70,6 +79,7 @@ fi
 
 log "creating a geometry database (bots.g) with a BoT of each type"
 rm -f bots.g
+
 $MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb bots.g y
 make sph sph
@@ -232,6 +242,10 @@ else
     log "-> BoT check FAILED, see $LOGFILE"
     cat "$LOGFILE"
 fi
+
+# Cleanup
+rm -rf "$BU_DIR_CACHE"
+rm -rf "$LIBRT_CACHE"
 
 exit $FAILED
 

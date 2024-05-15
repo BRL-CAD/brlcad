@@ -121,6 +121,9 @@ if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL
   brlcad_ext_setup()
 endif ()
 
+# If we have a bext_output in the build directory, we need to clear it
+DISTCLEAN("${CMAKE_BINARY_DIR}/bext_output")
+
 # If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to expand it so
 # we can spot the path that would have been used in ${BRLCAD_EXT_DIR}/install files
 #
@@ -716,6 +719,10 @@ if (NTEXT_FILES)
   message("Replacing paths in new 3rd party text files... done.")
 endif (NTEXT_FILES)
 
+# Tell the build cleanup about all the copied-in files - otherwise it won't
+# the distcheck cleaning logic won't know to scrub them.
+DISTCLEAN("${TP_FILES}")
+
 # Everything until now has been setting the stage in the build directory. Now
 # we set up the install rules.  It is for these stages that we need complete
 # knowledge of the third party files, since configure re-defines all of these
@@ -848,9 +855,11 @@ macro(find_package_zlib)
   else ()
     find_package(ZLIB)
   endif ()
-  if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+  list(GET ZLIB_LIBRARIES 0 ZLIB_FILE)
+  IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ZLIB_FILE}" ZLIB_LOCAL_TEST)
+  if (ZLIB_LOCAL_TEST)
     set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
-  endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+  endif (ZLIB_LOCAL_TEST)
 
 endmacro(find_package_zlib)
 

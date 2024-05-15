@@ -901,6 +901,7 @@ main(int argc, const char *argv[])
 		"misc/repowork",
 		"misc/tools",
 		"pkg.h",
+		"subprocess.h",
 		"src/libdm/wgl/wintk/",
 		"src/libpkg",
 		"~",

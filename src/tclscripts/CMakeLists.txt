@@ -51,9 +51,11 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   # make each new target depend on all previous targets, so they are forced
   # execute one at a time.
   set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
-  file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir})\n")
+  file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\")\n")
 
   list(APPEND index_install_files ${targetdir}/${outfile})
+
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile}")
 
 endmacro(general_tcl_index_BUILD name targetdir)
 
@@ -109,25 +111,28 @@ endif (BRLCAD_ENABLE_TCL)
 # that relies on the other tclscripts being set up.
 add_subdirectory(rtwizard)
 
-# We've collected all the commands - now add add a single command
-# to run all of them at once.
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-  COMMAND ${CMAKE_COMMAND} -DCONFIG=$<CONFIG> -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
-  COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-  DEPENDS ${index_depends_files} ${index_cpy_targets}
-  )
-add_custom_target(TclIndexBld ALL
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-  )
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
+if (TARGET btclsh)
+  # We've collected all the commands - now add add a single command
+  # to run all of them at once.
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    COMMAND ${CMAKE_COMMAND} -DCONFIG=$<CONFIG> -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    DEPENDS ${index_depends_files} ${index_cpy_targets}
+    )
+  add_custom_target(TclIndexBld ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    )
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
 
-foreach(ifile ${index_install_files})
-  # Install logic for index file.
-  get_filename_component(targetdir "${ifile}" DIRECTORY)
-  get_filename_component(outfile "${ifile}" NAME)
-  install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
-endforeach(ifile ${index_install_files})
+  foreach(ifile ${index_install_files})
+    # Install logic for index file.
+    get_filename_component(targetdir "${ifile}" DIRECTORY)
+    get_filename_component(outfile "${ifile}" NAME)
+    install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+  endforeach(ifile ${index_install_files})
+
+endif (TARGET btclsh)
 
 CMAKEFILES(
   CMakeLists.txt

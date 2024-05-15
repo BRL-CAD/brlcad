@@ -36,6 +36,8 @@
 #include <math.h>
 #endif
 
+#define _CRT_SECURE_NO_WARNINGS
+
 /* 4127 conditional expression is constant
  * 4244 conversion from type 1 to type 2
  * 4305 truncation

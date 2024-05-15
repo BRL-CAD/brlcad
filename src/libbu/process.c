@@ -270,11 +270,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
     /* Make a copy of the final execvp args */
     (*pinfo)->cmd = bu_strdup(cmd);
     (*pinfo)->argc = argc;
-    (*pinfo)->argv = (const char **)bu_calloc(argc, sizeof(char *), "bu_process argv cpy");
+    (*pinfo)->argv = (const char **)bu_calloc(argc + 1, sizeof(char *), "bu_process argv cpy"); // +1 for NULL termination
     for (int i = 0; i < argc; i++) {
 	(*pinfo)->argv[i] = bu_strdup(argv[i]);
     }
-    //(*pinfo)->argv[ac] = (char *)NULL;	// SHOULD ALREADY BE NULL? 
+    (*pinfo)->argv[argc] = (char *)NULL;	// sanity check
 
 #ifdef HAVE_UNISTD_H
     int pret;
@@ -426,8 +426,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_creat
 
     /* Create_Process uses a string, not a char array */
     for (int i = 0; i < argc; i++) {
-	/* Quote all path names or arguments with spaces for CreateProcess */
-	if (strstr(argv[i], " ") || bu_file_exists(argv[i], NULL)) {
+	/* Quote all path names or arguments with spaces for CreateProcess
+	 * unless supplier has already supplied quotes
+	 */
+	if (!strstr(argv[i], "\"") && 
+	    (strstr(argv[i], " ") || bu_file_exists(argv[i], NULL))) {
 	    bu_vls_printf(&cp_cmd, "\"%s\" ", argv[i]);
 	} else {
 	    bu_vls_printf(&cp_cmd, "%s ", argv[i]);
@@ -513,27 +516,32 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
     close(pinfo->fd_out);
     close(pinfo->fd_err);
 
-    /* wait for process to end, or timeout */
-    int64_t start_time = bu_gettime();
-    int rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
-    while (rpid != pinfo->pid) {
-	if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
-	    break;
-        rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
-    }
+    if (kill((pid_t)pinfo->pid, 0) == 0) {      // make sure the process exists
+        /* wait for process to end, or timeout */
+        int64_t start_time = bu_gettime();
+        int rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
+        while (rpid != pinfo->pid) {
+                if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
+                break;
+                rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
+        }
 
-    /* check wait() status and filter retcode */
-    if (rpid == -1 || rpid == 0) {
-	/* timed-out */
-	bu_pid_terminate(pinfo->pid);
-	rc = 0;	// process concluded, albeit forcibly
+        /* check wait() status and filter retcode */
+        if (rpid == -1 || rpid == 0) {
+                /* timed-out */
+                bu_pid_terminate(pinfo->pid);
+                rc = 0;	// process concluded, albeit forcibly
+        } else {
+                if (WIFEXITED(retcode))		    // normal exit
+                rc = 0;
+                else if (WIFSIGNALED(retcode))	    // terminated
+                rc = ERROR_PROCESS_ABORTED;
+                else
+                rc = retcode;
+        }
     } else {
-	if (WIFEXITED(retcode))		    // normal exit
-	    rc = 0;
-	else if (WIFSIGNALED(retcode))	    // terminated
-	    rc = ERROR_PROCESS_ABORTED;
-	else
-	    rc = retcode;
+        /* process doesn't exist or has already been waited on */
+        rc = 0;
     }
 #else
     DWORD retcode = 0;
@@ -664,7 +672,7 @@ bu_pid_alive(int pid)
 	return ret == win_wait_timeout;
     }
 #else
-    return kill((pid_t)pid, 0) == 0;
+    return waitpid(pid, NULL, WNOHANG) == 0;
 #endif
 
 
@@ -788,6 +796,32 @@ bu_interactive(void)
     } /* read_set */
 
     return interactive;
+}
+
+int
+bu_process_alive_id(int pid)
+{
+    if (!pid)
+	return 0;
+
+#if defined(_WIN32)
+    HANDLE pHandle = OpenProcess(SYNCHRONIZE, FALSE, (DWORD)pid);
+    if (pHandle == NULL) { // couldn't open - process is not alive
+	return 0;
+    } else {
+	const unsigned long win_wait_timeout = 0x00000102L;
+
+	// if process is alive, timeout should immediately come back
+	DWORD ret = WaitForSingleObject(pHandle, 0);
+	CloseHandle(pHandle);
+	return ret == win_wait_timeout;
+    }
+#else
+    return kill((pid_t)pid, 0) == 0;
+#endif
+
+
+    return 0;
 }
 
 /*

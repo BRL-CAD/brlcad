@@ -156,9 +156,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Directory setup
+      - name: Directory setup
         run: |
           cmake -E make_directory ./build_linux
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
 
       - name: Configure
         run: |
@@ -199,6 +201,8 @@ jobs:
       - name: Build Directory setup
         run: |
           cmake -E make_directory ./build_osx
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
 
       - name: Setup - bext
         run: |

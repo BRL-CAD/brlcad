@@ -46,6 +46,7 @@
 
 #include "../nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
+#include "brep/defines.h"
 
 
 __BEGIN_DECLS

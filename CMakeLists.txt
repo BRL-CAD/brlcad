@@ -213,9 +213,11 @@ if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
   endif (NOT EXISTS ${CMAKE_SOURCE_DIR}/src/bext/README.md)
 endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 
-# Tell CPack to bundle bext into the source tarball
+# By default, we don't bundle bext into the source tarball for performance
+# reasons, but the support is there if the dev wants to pay the price in time
+# and disk space.
 if (NOT DEFINED CPACK_INCLUDE_EXT)
-  set(CPACK_INCLUDE_EXT ON)
+  set(CPACK_INCLUDE_EXT OFF)
 endif (NOT DEFINED CPACK_INCLUDE_EXT)
 
 # Before we do a lot of configure work, check whether we've got a type mismatch
@@ -232,14 +234,14 @@ if (CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
       OUTPUT_VARIABLE DB_OUT
       ERROR_VARIABLE DB_OUT)
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-      if ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+      if ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" OR "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
 	message(FATAL_ERROR "Release build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Debug binaries.")
-      endif ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+      endif ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" OR "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
     endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-      if (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+      if (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" AND NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
 	message(FATAL_ERROR "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Release binaries.")
-      endif (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*")
+      endif (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" AND NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
     endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   endif (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
 endif (CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
@@ -2057,7 +2059,7 @@ if (BRLCAD_EXTRADOCS)
 
   # Style sheet for XSLT transformation to manual pages
   if(BRLCAD_EXTRADOCS_MAN)
-    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad/brlcad-man-stylesheet.xsl)
+    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-stylesheet.xsl)
     DISTCLEAN("${D_BRDIR}/brlcad-man-stylesheet.xsl")
   endif(BRLCAD_EXTRADOCS_MAN)
 
@@ -2295,32 +2297,6 @@ endif("${CMAKE_GENERATOR}" MATCHES "Ninja*")
 # whether BRL-CAD is in a distribution ready state.  Default to the standard
 # set of tests - Debug and Release build configurations
 include(Distcheck)
-
-# Define some custom distcheck targets for distcheck-full (not run by default)
-#
-# CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
-CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(no_tcl "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TCL=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install" distcheck_no_tcl.cmake.in)
-CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(no_object "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-# The odd pathnames test cannot work with bundled autoconf builds, so disable
-# if any of them have set the flag.  This isn't perfect, since a configure
-# with BRLCAD_BUNDLED_LIBS= BUNDLED will disable this test even if a viable
-# system component is present.  However, the complexity/fragility of
-# attempting to stash the system detections when we want the variables set to
-# the bundled versions outweighs the minor benefit of trying harder to enable
-# this test (which may or may not be viable anyway depending on system
-# component availability.)
-if (NOT BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
-  CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED ${BRLCAD_DISABLE_ODD_PATHNAMES_FLAGS}" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
-endif (NOT BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
-CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
-
-# Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
-DEFINE_DISTCHECK_TARGET(STD)
 
 # ----------------------------------------------------------------------------
 # Mark various miscellaneous things as advanced that we don't want in our
