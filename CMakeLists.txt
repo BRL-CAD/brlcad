@@ -229,8 +229,10 @@ if (CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   find_program(DUMPBIN_EXEC dumpbin)
   set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
   if (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+    # dumpbin doesn't like CMake style paths
+    file(TO_NATIVE_PATH "${TEST_BINFILE}" TBFN)
     # https://stackoverflow.com/a/28304716/2037687
-    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TEST_BINFILE}
+    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TBFN}
       OUTPUT_VARIABLE DB_OUT
       ERROR_VARIABLE DB_OUT)
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
