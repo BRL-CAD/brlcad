@@ -55,7 +55,7 @@ else(NOT N EQUAL 0)
 endif(NOT N EQUAL 0)
 
 if ("${CONFIG}" STREQUAL "")
-  set(CONFIG "\"\"")
+  set(CONFIG "\"${CMAKE_BUILD_TYPE}\"")
 endif ("${CONFIG}" STREQUAL "")
 
 if (NOT TARGET check)
