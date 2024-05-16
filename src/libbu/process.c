@@ -246,7 +246,7 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_
 }
 
 void
-bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts)
+bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 {
     if (!pinfo || !argv)
 	return;
