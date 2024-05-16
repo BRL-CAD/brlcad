@@ -56,6 +56,13 @@ set(BREP_LIBS
 BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "${BREP_LIBS}" "${BREP_INCLUDE_DIRS}" "${BREP_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+if (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+  if (TARGET libbrep)
+    set_property(TARGET libbrep APPEND PROPERTY LINK_OPTIONS "-Wno-alloc-size-larger-than")
+  endif (TARGET libbrep)
+endif (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+
+
 if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET libbrep APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
   # Anyone who needs to import libbrep will also need to import openNURBS
