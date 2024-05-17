@@ -1941,7 +1941,6 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
 endif(MSVC)
 
-add_definitions(-DUSE_DETRIA=1)
 
 #-----------------------------------------------------------------------------
 # Add misc/tools for tools that are used in BRL-CAD's build process or for
