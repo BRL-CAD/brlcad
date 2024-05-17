@@ -1233,6 +1233,12 @@ if(NOT MSVC)
   # TODO - figure out if this should be integrated above
   CHECK_COMPILER_FLAG(C "-Wunused-const-variable" HAVE_C_WUNUSED_CONST_VARIABLE)
 
+else()
+
+  # Whether a debug or release build, we want our own code
+  # to be usable with a debugger
+  add_link_options(/DEBUG)
+
 endif(NOT MSVC)
 
 
