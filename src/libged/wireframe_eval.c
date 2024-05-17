@@ -1800,6 +1800,7 @@ draw_m3(struct bv_scene_obj *s)
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
 
     dgcdp.dbip = d->dbip;
+    dgcdp.do_polysolids = 0;
     dgcdp.fp = (struct db_full_path *)s->s_path;
     dgcdp.tol = d->tol;
     dgcdp.ttol = d->ttol;
