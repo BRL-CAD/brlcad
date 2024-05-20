@@ -46,30 +46,37 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
 {
     // Run RTArea to get surface area
     std::string rtarea = getCmdPath(opt->getExeDir(), "rtarea");
+    std::string in_file(opt->getInFile());  // need local copy for av array copy
+    const char* rtarea_av[10] = {rtarea.c_str(),
+                                 "-u", unit.c_str(),
+                                 "-a", az.c_str(),
+                                 "-e", el.c_str(),
+                                 in_file.c_str(),
+                                 comp.c_str(),
+                                 NULL};
+    struct bu_process* p;
+    bu_process_create(&p, rtarea_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
-    std::string command = rtarea + " -u " + unit + " -a " + az + " -e " + el + " " + opt->getInFile() + " " + comp + " 2>&1";
+    if (bu_process_pid(p) <= 0) {
+        bu_exit(BRLCAD_ERROR, "Problem with getSurfaceArea, aborting\n");
+    }
+
     char buffer[128];
     std::string result = "";
-    FILE* pipe = popen(command.c_str(), "r");
-
-    if (!pipe)
-	throw std::runtime_error("popen() failed!");
-
-    try {
-        while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
-            result += buffer;
-        }
-    } catch (...) {
-        pclose(pipe);
-        throw;
+    int read_cnt = 0;
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 128-1, buffer)) > 0) {
+        /* NOTE: read does not ensure null-termination, thus buffersize-1 */
+        buffer[read_cnt] = '\0';
+        result += buffer;
     }
-    pclose(pipe);
 
-    //If rtarea didn't fail, calculate area
-    if (result.find("Total Exposed Area") != std::string::npos) {
+    // If rtarea didn't fail, calculate area
+    if (bu_process_wait_n(p, 0) == 0) {
+        /* pull out the surface area */
         result = result.substr(result.find("Total Exposed Area"));
         result = result.substr(0, result.find("square") - 1);
         result = result.substr(result.find("=") + 1);
+
         try {
             surfArea += stod(result);
         } catch (const std::invalid_argument& ia) {
