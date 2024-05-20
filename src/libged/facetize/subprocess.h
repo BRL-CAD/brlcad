@@ -949,8 +949,6 @@ int subprocess_create_ex(const char *const commandLine[], int options,
 
   posix_spawn_file_actions_destroy(&actions);
 
-  close(stdoutfd[0]);
-  close(stderrfd[0]);
   return 0;
 #endif
 }

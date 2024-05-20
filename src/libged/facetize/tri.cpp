@@ -554,6 +554,9 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
 	bu_log("%s\n", mraw2);
     }
 
+    // Needed to clean up file handles
+    subprocess_destroy(&p);
+
     return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
 }
 
