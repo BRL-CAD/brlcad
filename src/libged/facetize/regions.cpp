@@ -261,6 +261,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     }
     av[argc+2] = NULL;
     ged_exec(wgedp, argc+2, av);
+    ged_close(wgedp);
 
     /* Capture the current tops list.  If we're not doing an in-place overwrite, we
      * need to know what the new top level objects are for the assembly of the
