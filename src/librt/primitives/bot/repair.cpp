@@ -59,6 +59,7 @@
 #include "geogram/mesh/mesh_fill_holes.h"
 #endif
 
+#include "bg/trimesh.h"
 #include "rt/defines.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
@@ -89,7 +90,11 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
 	return -1;
     }
 
-    if (!bot_gl.Merge()) {
+    int num_vertices = (int)bot->num_vertices;
+    int num_faces = (int)bot->num_faces;
+    int bg_not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, NULL);
+
+    if (!bot_gl.Merge() && !bg_not_solid) {
 	// BoT is already manifold
 	return 1;
     }
