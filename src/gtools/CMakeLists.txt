@@ -7,6 +7,7 @@ target_include_directories(ganalyze BEFORE PRIVATE ${LINENOISE_INCLUDE_DIRS})
 set_property(TARGET ganalyze APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
 
 BRLCAD_ADDEXEC(gchecker gchecker.cpp "libged;librt;libbu")
+add_dependencies(gchecker ged-check)
 BRLCAD_ADDEXEC(gex "gex.cpp" "libbu;librt")
 BRLCAD_ADDEXEC(glint glint.cpp "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(gqa gqa.c "libged;librt")
