@@ -1614,7 +1614,7 @@ _ged_rt_output_handler2(void *clientData, int type)
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait_n(rrtp->p, 120);
+	retcode = bu_process_wait_n(&rrtp->p, 120);
 	int aborted = (retcode == ERROR_PROCESS_ABORTED);
 
 	if (aborted)
@@ -1710,7 +1710,7 @@ _ged_rt_output_handler(void *clientData, int mask)
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait_n(rrtp->p, 120);
+	retcode = bu_process_wait_n(&rrtp->p, 120);
 	int aborted = (retcode == ERROR_PROCESS_ABORTED);
 
 	if (aborted)

@@ -99,7 +99,7 @@ BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **
  * @return
  * 0 on success; ERROR_PROCESS_ABORTED for aborted process; Otherwise, platform specific exit status
  */
- BU_EXPORT extern int bu_process_wait_n(struct bu_process *pinfo, int wtime);
+ BU_EXPORT extern int bu_process_wait_n(struct bu_process **pinfo, int wtime);
 
 
 /**

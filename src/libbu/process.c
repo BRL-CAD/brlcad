@@ -503,7 +503,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 }
 
 int
-bu_process_wait_n(struct bu_process *pinfo, int wtime)
+bu_process_wait_n(struct bu_process **pinfo, int wtime)
 {
     if (!pinfo)
 	return -1;
@@ -512,24 +512,24 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
 #ifndef _WIN32
     int retcode = 0;
 
-    close(pinfo->fd_in);
-    close(pinfo->fd_out);
-    close(pinfo->fd_err);
+    close((*pinfo)->fd_in);
+    close((*pinfo)->fd_out);
+    close((*pinfo)->fd_err);
 
-    if (kill((pid_t)pinfo->pid, 0) == 0) {      // make sure the process exists
+    if (kill((pid_t)(*pinfo)->pid, 0) == 0) {      // make sure the process exists
         /* wait for process to end, or timeout */
         int64_t start_time = bu_gettime();
-        int rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
-        while (rpid != pinfo->pid) {
+        int rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
+        while (rpid != (*pinfo)->pid) {
                 if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
                 break;
-                rpid = waitpid((pid_t)-pinfo->pid, &retcode, WNOHANG);
+                rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
         }
 
         /* check wait() status and filter retcode */
         if (rpid == -1 || rpid == 0) {
                 /* timed-out */
-                bu_pid_terminate(pinfo->pid);
+                bu_pid_terminate((*pinfo)->pid);
                 rc = 0;	// process concluded, albeit forcibly
         } else {
                 if (WIFEXITED(retcode))		    // normal exit
@@ -548,18 +548,18 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
 
     /* wait for the forked process */
     if (wtime > 0) {
-	WaitForSingleObject(pinfo->hProcess, wtime);
+	WaitForSingleObject((*pinfo)->hProcess, wtime);
     } else {
-	WaitForSingleObject(pinfo->hProcess, INFINITE);
+	WaitForSingleObject((*pinfo)->hProcess, INFINITE);
     }
 
-    if (GetExitCodeProcess(pinfo->hProcess, &retcode)) {    // make sure function succeeds
+    if (GetExitCodeProcess((*pinfo)->hProcess, &retcode)) {    // make sure function succeeds
 	if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == BU_MSVC_ABORT_EXIT) {
 	    // collapse abort into our abort code
 	    rc = ERROR_PROCESS_ABORTED;
 	} else if (retcode == STILL_ACTIVE) {
 	    /* timed out */
-	    bu_pid_terminate(pinfo->pid);
+	    bu_pid_terminate((*pinfo)->pid);
 	    rc = 0;
 	} else {
 	    rc = (int)retcode;
@@ -568,22 +568,22 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
 	rc = -1;
     }
 
-    CloseHandle(pinfo->hProcess);
+    CloseHandle((*pinfo)->hProcess);
 #endif
     /* Clean up */
-    bu_process_file_close(pinfo, BU_PROCESS_STDOUT);
-    bu_process_file_close(pinfo, BU_PROCESS_STDERR);
+    bu_process_file_close((*pinfo), BU_PROCESS_STDOUT);
+    bu_process_file_close((*pinfo), BU_PROCESS_STDERR);
 
     /* Free copy of exec args */
-    bu_free((void *)pinfo->cmd, "pinfo cmd copy");
+    bu_free((void *)(*pinfo)->cmd, "pinfo cmd copy");
 
-    if (pinfo->argv) {
-	for (int i = 0; i < pinfo->argc; i++) {
-	    bu_free((void *)pinfo->argv[i], "pinfo argv member");
+    if ((*pinfo)->argv) {
+	for (int i = 0; i < (*pinfo)->argc; i++) {
+	    bu_free((void *)(*pinfo)->argv[i], "(*pinfo) argv member");
 	}
-	bu_free((void *)pinfo->argv, "pinfo argv array");
+	bu_free((void *)(*pinfo)->argv, "pinfo argv array");
     }
-    BU_PUT(pinfo, struct bu_process);
+    BU_PUT(*pinfo, struct bu_process);
 
     return rc;
 }
@@ -591,7 +591,7 @@ bu_process_wait_n(struct bu_process *pinfo, int wtime)
 int
 bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
 {
-    int wait_ret = bu_process_wait_n(pinfo, wtime);
+    int wait_ret = bu_process_wait_n(&pinfo, wtime);
 
     if (aborted && wait_ret == ERROR_PROCESS_ABORTED)
 	(*aborted) = 1;

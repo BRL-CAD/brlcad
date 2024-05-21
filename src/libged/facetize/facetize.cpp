@@ -58,7 +58,7 @@ _facetize_methods_help(struct ged *gedp)
       bu_process_create(&mp, tess_cmd, BU_PROCESS_HIDE_WINDOW);
       char mraw[MAXPATHLEN] = {'\0'};
       int read_res = bu_process_read_n(mp, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
-      if (bu_process_wait_n(mp, 0) || (read_res <= 0))
+      if (bu_process_wait_n(&mp, 0) || (read_res <= 0))
 	  return;   // wait error or read error
       std::string method_list(mraw);
 
@@ -69,7 +69,7 @@ _facetize_methods_help(struct ged *gedp)
       bu_process_create(&mop, tess_cmd, BU_PROCESS_HIDE_WINDOW);
       char moraw[MAXPATHLEN*10] = {'\0'};
       read_res = bu_process_read_n(mop, BU_PROCESS_STDOUT, MAXPATHLEN*10, moraw);
-      if (bu_process_wait_n(mop, 0) || (read_res <= 0))
+      if (bu_process_wait_n(&mop, 0) || (read_res <= 0))
 	  return;   // wait error
       std::string method_options(moraw);
 

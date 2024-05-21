@@ -429,7 +429,7 @@ tess_avail_methods()
     char mraw[MAXPATHLEN] = {'\0'};
     int read_res = bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
 
-    if (bu_process_wait_n(p, 0) || (read_res <= 0)) {
+    if (bu_process_wait_n(&p, 0) || (read_res <= 0)) {
 	// wait error or read error
 	bu_log("%s %s - wait or read error\n", tess_cmd[0], tess_cmd[1]);
 	std::vector<std::string> empty;
