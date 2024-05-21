@@ -71,7 +71,7 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     }
 
     // If rtarea didn't fail, calculate area
-    if (bu_process_wait_n(p, 0) == 0) {
+    if (bu_process_wait_n(&p, 0) == 0) {
         /* pull out the surface area */
         result = result.substr(result.find("Total Exposed Area"));
         result = result.substr(0, result.find("square") - 1);
@@ -139,76 +139,66 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     }
 
     std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
+    std::string units = lUnit + ",\"cu " + lUnit + "\"," + mUnit;
+    std::string in_file = opt->getInFile();
+    struct bu_process* p;
+    int read_cnt = 0;
+    char buffer[128] = {0};
+    std::string result = "";
 
     for (size_t i = 0; i < toVisit.size(); i++) {
         std::string val2 = toVisit[i];
-        // Get volume of region
-        std::string command = gqa + " -Av -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\" " + opt->getInFile() + " " + val2 + " 2>&1";
-        bu_log("command: %s\n", command.c_str());
-        char buffer[128];
-        std::string result = "";
-        FILE* pipe = popen(command.c_str(), "r");
+        /* Get volume of region */
+        const char* vol_av[10] = { gqa.c_str(),
+                                   "-Avm",
+                                   "-q",
+                                   "-g", "2",
+                                   "-u", units.c_str(),
+                                   in_file.c_str(),
+                                   val2.c_str(),
+                                   NULL };
 
-	if (!pipe)
-	    throw std::runtime_error("popen() failed!");
+        bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
-        try {
-            while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
-                result += buffer;
-            }
-        } catch (...) {
-            pclose(pipe);
-            throw;
-        }
-        pclose(pipe);
-
-        //Extract volume value
-        result = result.substr(result.find("Average total volume:") + 22);
-        result = result.substr(0, result.find("cu") - 1);
-        if (result.find("inf") == std::string::npos) {
-            try {
-                volume += stod(result);
-            } catch (const std::invalid_argument& ia) {
-                std::cerr << "Invalid argument for volume: " << result << " " << ia.what() << '\n';
-                bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
-            }
+	if (bu_process_pid(p) <= 0) {
+            bu_exit(BRLCAD_ERROR, "Problem with getVerificationData volume, aborting\n");
         }
 
-        //Get mass of region
-        command = gqa + " -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getInFile() + " " + val2 + " 2>&1";
         result = "";
-        pipe = popen(command.c_str(), "r");
-        if (!pipe)
-	    throw std::runtime_error("popen() failed!");
-        try {
-            while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
-                result += buffer;
-            }
-        } catch (...) {
-            pclose(pipe);
-            throw;
+        read_cnt = 0;
+        while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 128-1, buffer)) > 0) {
+            buffer[read_cnt] = '\0';
+            result += buffer;
         }
-        pclose(pipe);
 
-        if (result.find("Average total weight:") != std::string::npos) {
-            //Extract mass value
-            result = result.substr(result.find("Average total weight:") + 22);
-            result = result.substr(0, result.find(" "));
-            //Mass cannot be negative or infinite
+        if (bu_process_wait_n(&p, 0) == 0) {
+            // Extract volume value
+            std::string vol_raw = result.substr(result.find("Average total volume:") + 22);
+            vol_raw = vol_raw.substr(0, vol_raw.find("cu") - 1);
+            if (vol_raw.find("inf") == std::string::npos) {
+                try {
+                    volume += stod(vol_raw);
+                } catch (const std::invalid_argument& ia) {
+                    bu_exit(BRLCAD_ERROR, "getVerificationData volume got: (%s) %s, aborting.\n", vol_raw.c_str(), ia.what());
+                }
+            }
 
+            // Extract mass value
+            std::string weight_raw = result.substr(result.find("Average total weight:") + 22);
+            weight_raw = weight_raw.substr(0, weight_raw.find(" "));
             try {
-                if (result.find("inf") == std::string::npos) {
-                    if (result[0] == '-') {
-                        result = result.substr(1);
-                        mass += stod(result);
+                // weight cannot be inf or negative
+                if (weight_raw.find("inf") == std::string::npos) {
+                    if (weight_raw[0] == '-') {
+                        weight_raw = weight_raw.substr(1);
+                        mass += stod(weight_raw);
                     }
                     else {
-                        mass += stod(result);
+                        mass += stod(weight_raw);
                     }
                 }
             } catch (const std::invalid_argument& ia) {
-                std::cerr << "Invalid argument for mass: " << result << " " << ia.what() << '\n';
-                bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+                bu_exit(BRLCAD_ERROR, "getVerificationData mass got: (%s) %s, aborting.\n", weight_raw.c_str(), ia.what());
             }
         }
     }
