@@ -63,7 +63,7 @@ static int _param_set_std_str(struct bu_vls *msg, size_t argc, const char **argv
 }
 
 bool Options::readParameters(int argc, const char **argv) {
-    const char* usage = "[options] model.g";
+    const char* usage = "[options] (-F model/dir | model.g)";
 
     int print_help = 0;			// user requested help
     int param_overwrite = 0;		// user requested to overwrite existing report
@@ -74,25 +74,25 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_Umass = "";	// user requested mass units
 
     struct bu_opt_desc d[20];
-    BU_OPT(d[0],  "p", "",     "filepath",        &_param_set_std_str,     &this->inFile,         "filepath to .g");
-    BU_OPT(d[1],  "P", "",     "#",		  &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)");
-    BU_OPT(d[2],  "F", "",     "path",            &_param_set_std_str,     &this->inFolderName,   "path to folder of .g models to generate");
-    BU_OPT(d[3],  "E", "",     "dir_name",        &_param_set_std_str,     &this->outFolderName,  "set export folder's name");
-    BU_OPT(d[4],  "g", "",     "",                NULL,                    &this->openGUI,        "GUI output");
-    BU_OPT(d[5],  "f", "",     "filepath",        &_param_set_std_str,     &this->outFile,        "set output name, MUST end in .png");
-    BU_OPT(d[6],  "n", "",     "preparer_name",   &_param_set_std_str,     &this->preparer,       "name of preparer, to be us in report");
-    BU_OPT(d[7],  "T", "",     "path/to/rt",      &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables");
-    BU_OPT(d[8],  "c", "",     "classification",  &_param_set_std_str,     &this->classification, "classification of generated report, displayed in top/bottom banner");
-    BU_OPT(d[9],  "o", "",     "",                NULL,                    &param_Lhand,          "use left-handed coordinate system (default is right-handed)");
-    BU_OPT(d[10], "O", "",     "",                NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
-    BU_OPT(d[11], "N", "",     "notes..",         &_param_set_std_str,     &this->notes,          "add additional notes to report");
-    BU_OPT(d[12], "Z", "",     "",                NULL,                    &this->overrideImages, "reuse previous renders, when running on the same model multiple times");
-    BU_OPT(d[13], "r", "",     "",                NULL,                    &param_overwrite,      "overwrite existing report if it exists");
-    BU_OPT(d[14], "t", "",     "top_component",   &_param_set_std_str,     &this->topComp,        "specify primary \"top\" component of the model");
-    BU_OPT(d[15], "l", "",     "unit_str",        &_param_set_std_str,     &param_Ulength,        "specify length units");
-    BU_OPT(d[16], "m", "",     "unit_str",        &_param_set_std_str,     &param_Umass,          "specify mass units");
-    BU_OPT(d[17], "h", "help", "",                NULL,                    &print_help,           "Print help and exit");
-    BU_OPT(d[18], "?", "",     "",                NULL,                    &print_help,           "");
+    BU_OPT(d[0],  "i", "",     "filename",          &_param_set_std_str,     &this->inFile,         "input .g");
+    BU_OPT(d[1],  "o", "",     "filename",          &_param_set_std_str,     &this->outFile,        "output file name");
+    BU_OPT(d[2],  "F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate");
+    BU_OPT(d[3],  "e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name");
+    BU_OPT(d[4],  "g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window");
+    BU_OPT(d[5],  "f", "",     "",                  NULL,                    &param_overwrite,      "overwrite existing report if it exists");
+    BU_OPT(d[6],  "Z", "",     "",                  NULL,                    &this->overrideImages, "reuse renders if .working directory is found");
+    BU_OPT(d[7],  "t", "",     "component",         &_param_set_std_str,     &this->topComp,        "specify primary component of the report");
+    BU_OPT(d[8],  "p", "",     "#",		    &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)");
+    BU_OPT(d[9],  "n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report");
+    BU_OPT(d[10], "T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables");
+    BU_OPT(d[11], "c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner");
+    BU_OPT(d[12], "N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report");
+    BU_OPT(d[13], "L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system");
+    BU_OPT(d[14], "A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
+    BU_OPT(d[15], "l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units");
+    BU_OPT(d[16], "w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units");
+    BU_OPT(d[17], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
+    BU_OPT(d[18], "?", "",     "",                  NULL,                    &print_help,           "");
     BU_OPT_NULL(d[19]);
 
     /* set progname and move on */
