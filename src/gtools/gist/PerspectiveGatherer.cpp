@@ -84,56 +84,123 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 
     std::string render;
     std::string cmd;
+    // setup av for rtedge since that's the majority of our work. The outliers (rt / rtwizard) will
+    // reset the av to their needs
+    const char* av[20] = { NULL,    // av[0]: cmd
+                           "-s",
+                           "1024",
+                           "-W",
+                           "-R",
+                           "-a",
+                           NULL,    // av[6]: 'a' value
+                           "-e",
+                           NULL,    // av[8]: 'e' value
+                           "-c",
+                           "set bs=1",
+                           "-o",
+                           NULL,   // av[12]: output file name
+                           pathToInput.c_str(),
+                           component.c_str(),
+                           NULL,   // EXTRA for other renders
+                           NULL,   // EXTRA for other renders
+                           NULL,   // EXTRA for other renders
+                           NULL,   // EXTRA for other renders
+                           NULL,   // null-termination
+                          };
 
-    int a, e;
     switch (face) {
         case FRONT:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
-            a = 0, e = 0;
             outputname += "_front.png";
-            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+
+            av[0] = cmd.c_str();
+            av[6] = "0";
+            av[8] = "0";
+            av[12] = outputname.c_str();
+            av[15] = NULL;
             break;
         case RIGHT:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
-            a = 90, e = 0;
             outputname += "_right.png";
-            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+
+            av[0] = cmd.c_str();
+            av[6] = "90";
+            av[8] = "0";
+            av[12] = outputname.c_str();
+            av[15] = NULL;
             break;
         case BACK:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
-            a = 180, e = 0;
             outputname += "_back.png";
-            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+
+            av[0] = cmd.c_str();
+            av[6] = "180";
+            av[8] = "0";
+            av[12] = outputname.c_str();
+            av[15] = NULL;
             break;
         case LEFT:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
-            a = 270, e = 0;
             outputname += "_left.png";
-            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+
+            av[0] = cmd.c_str();
+            av[6] = "270";
+            av[8] = "0";
+            av[12] = outputname.c_str();
+            av[15] = NULL;
             break;
         case TOP:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
-            a = 0, e = 90; // may need to change "a"?
             outputname += "_top.png";
-            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+
+            av[0] = cmd.c_str();
+            av[6] = "0";
+            av[8] = "90";
+            av[12] = outputname.c_str();
+            av[15] = NULL;
             break;
         case BOTTOM:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
-            a = 0, e = 270;
             outputname += "_bottom.png";
-            render = cmd + " -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+
+            av[0] = cmd.c_str();
+            av[6] = "0";
+            av[8] = "270";
+            av[12] = outputname.c_str();
+            av[15] = NULL;
             break;
         case DETAILED:
             cmd = getCmdPath(opt.getExeDir(), "rt");
-            a = 45, e = 45;
             outputname += "_detailed.png";
-            render = cmd + " -C 255/255/255 -s 1024  -a " + std::to_string(a) + " -e " + std::to_string(e) + " -A 1.5 -W -R -c \"set ambSamples=64 ambSlow=1\" -o " + outputname + " " + pathToInput + " " + component;
+
+            av[0] = cmd.c_str();
+            av[1] = "-s"; av[2] = "1024";
+            av[3] = "-W";
+            av[4] = "-R";
+            av[5] = "-a";  av[6] = "45";
+            av[7] = "-e";  av[8] = "45";
+            av[9] = "-C";  av[10] = "255/255/255";
+            av[11] = "-A"; av[12] = "1.5";
+            av[13] = "-c"; av[14] = "set ambSamples=64 ambSlow=1";
+            av[15] = "-o"; av[16] = outputname.c_str();
+            av[17] = pathToInput.c_str();
+            av[18] = component.c_str();
+            av[19] = NULL;
             break;
         case GHOST:
             cmd = getCmdPath(opt.getExeDir(), "rtwizard");
-            a = 35, e = 25;
             outputname += "_ghost.png";
-            render = cmd + " -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
+
+            av[0] = cmd.c_str();
+            av[1] = "-s";  av[2] = "1024";
+            av[3] = "-a";  av[4] = "35";
+            av[5] = "-e";  av[6] = "25";
+            av[7] = "-i";  av[8] = pathToInput.c_str();
+            av[9] = "-c";  av[10] = component.c_str();
+            av[11] = "-g"; av[12] = "ghost";
+            av[13] = "-G"; av[14] = "10";
+            av[15] = "-o"; av[16] = outputname.c_str();
+            av[17] = NULL;
             // render2 = "../../../build/bin/rtwizard -s 1024 -a " + a + " -e " + e + " -i " + pathToInput + " -g " + ghost + " -G 3 -o " + outputname;
             break;
         default:
@@ -148,15 +215,12 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 	std::cerr << "Did not remove " << outputname << std::endl;
     }
 
-    try {
-        auto result2 = system(render.c_str());
-	if (result2 < 0 || result2 == 127) {
-	    bu_log("ERROR: failed to run: %s\n", render.c_str());
-	    bu_exit(BRLCAD_ERROR, "system() failed\n");
-	}
-    } catch (std::exception& er) {
-        std::cerr << er.what() << std::endl;
-    }
+    struct bu_process* p;
+    bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW);
+
+    // TODO: do we care about output?
+
+    (void)bu_process_wait_n(&p, 0);
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", outputname.c_str());
