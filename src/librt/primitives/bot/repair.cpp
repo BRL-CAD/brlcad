@@ -206,7 +206,11 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     // value used in the Geogram code for a large hole size.
     double hole_size = 1e30;
 
+    // Stash the bounding box diagonal
+    double bbox_diag = GEO::bbox_diagonal(gm);
+
     // See if the settings override the default
+    area = GEO::Geom::mesh_area(gm,3);
     if (!NEAR_ZERO(settings->max_hole_area, SMALL_FASTF)) {
 	hole_size = settings->max_hole_area;
     } else if (!NEAR_ZERO(settings->max_hole_area_percent, SMALL_FASTF)) {
@@ -221,6 +225,29 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 
     // Post repair, make sure mesh is still a triangle mesh
     gm.facets.triangulate();
+
+    // Sanity check the area - shouldn't go down, and if it went up by more
+    // than 3x it's concerning - that's a lot of new area even for a swiss
+    // cheese mesh.  Can revisit reporting failure if we hit a legit case
+    // like that, but we also want to know if something went badly wrong with
+    // the hole filling itself and crazy new geometry was added...
+    double new_area = GEO::Geom::mesh_area(gm,3);
+    if (new_area < area) {
+	bu_log("Mesh area decreased after hole filling - error\n");
+	return -1;
+    }
+    if (new_area > 3*area) {
+	bu_log("Mesh area more than tripled after hole filling.  At the moment this is considered an error - if a legitimate case exists where this is expected behavior, please report it upstream to the BRL-CAD developers.\n");
+	return -1;
+    }
+
+    // Sanity check the bounding box diagonal - should be very close to the
+    // original value
+    double new_bbox_diag = GEO::bbox_diagonal(gm);
+    if (!NEAR_EQUAL(bbox_diag, new_bbox_diag, BN_TOL_DIST)) {
+	bu_log("Mesh bounding box is different after hole filling - error\n");
+	return -1;
+    }
 
     // Once Geogram is done with it, ask Manifold what it thinks
     // of the result - if Manifold doesn't think we're there, then
