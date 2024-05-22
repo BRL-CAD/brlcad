@@ -65,9 +65,9 @@
 #include "rt/primitives/bot.h"
 
 int
-rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
+rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct rt_bot_repair_info *settings)
 {
-    if (!bot || !obot)
+    if (!bot || !obot || !settings)
 	return -1;
 
     // Unless we produce something, obot will be NULL
@@ -202,17 +202,19 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
 	}
     }
 
+    // To try to to fill in ALL holes we default to 1e30, which is a
+    // value used in the Geogram code for a large hole size.
+    double hole_size = 1e30;
+
+    // See if the settings override the default
+    if (!NEAR_ZERO(settings->max_hole_area, SMALL_FASTF)) {
+	hole_size = settings->max_hole_area;
+    } else if (!NEAR_ZERO(settings->max_hole_area_percent, SMALL_FASTF)) {
+	hole_size = area * (settings->max_hole_area_percent/100.0);
+    }
+
     // Do the hole filling.
-    //
-    // TODO: Right now we're basically trying to fill in ALL holes (1e30 is a
-    // value used in the Geogram code for a large hole size. That large a value
-    // may not be a good default for automatic processing - we might be better
-    // off starting with something like a percentage of the surface area of the
-    // mesh, so we don't end up "repairing" something with a giant hole in such
-    // a way that it is unlikely to represent the original modeling intent.  We
-    // could then let the user override that default with something more
-    // extreme manually if they deem the result useful.
-    GEO::fill_holes(gm, 1e30);
+    GEO::fill_holes(gm, hole_size);
 
     // Make sure we're still repaired post filling
     GEO::mesh_repair(gm, GEO::MeshRepairMode(GEO::MESH_REPAIR_DEFAULT));

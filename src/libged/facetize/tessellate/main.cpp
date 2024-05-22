@@ -164,8 +164,9 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    // not we need to try and repair it.
 	    if (!bot_is_manifold(bot)) {
 		// Nope - try repairing
+		struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
 		bu_vls_sprintf(method_flag, "REPAIR");
-		ret = rt_bot_repair(obot, bot);
+		ret = rt_bot_repair(obot, bot, &settings);
 	    } else {
 		// Already a valid BoT - tessellate is a no-op.
 		*obot = NULL;

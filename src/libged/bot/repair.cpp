@@ -57,10 +57,10 @@
 #include "../ged_private.h"
 
 static struct rt_bot_internal *
-bot_repair(struct rt_bot_internal *bot)
+bot_repair(struct rt_bot_internal *bot, struct rt_bot_repair_info *i)
 {
     struct rt_bot_internal *obot = NULL;
-    int rep_ret = rt_bot_repair(&obot, bot);
+    int rep_ret = rt_bot_repair(&obot, bot, i);
     if (rep_ret < 0) {
 	// bot repair failed
 	return NULL;
@@ -87,7 +87,7 @@ repair_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
 extern "C" int
 _bot_cmd_repair(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot repair <objname> [repaired_obj_name]";
+    const char *usage_string = "bot repair [options] <objname> [repaired_obj_name]";
     const char *purpose_string = "Attempt to produce a manifold output using objname's geometry as an input.  If successful, the resulting manifold geometry will either overwrite the original objname object (if no repaired_obj_name is supplied) or be written to repaired_obj_name.  Note that in-place repair is destructive - the original BoT data is lost.  If the input is already manifold repair is a no-op.";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -100,10 +100,13 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
 
     int print_help = 0;
     int in_place_repair = 0;
+    struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
 
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,      "Print help");
-    BU_OPT_NULL(d[1]);
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h",  "help",             "",              NULL,            &print_help,  "Print help");
+    BU_OPT(d[1], "p",  "max-hole-percent", "#",   bu_opt_fastf_t, &settings.max_hole_area_percent,  "Maximum hole area to repair (percentage of mesh surface area, range 0-100.) 0 and 100 mean always attempt filling operations. Overridden by -a option.");
+    BU_OPT(d[2], "a",  "max-hole-area",   " #",   bu_opt_fastf_t, &settings.max_hole_area,          "Maximum hole area to repair in mm (Hard upper limit regardless of mesh size, overrides -p option.)");
+    BU_OPT_NULL(d[3]);
 
     int ac = bu_opt_parse(NULL, argc, argv, d);
     argc = ac;
@@ -136,7 +139,12 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct rt_bot_internal *mbot = bot_repair(bot);
+    /* Adjust settings */
+    if (NEAR_EQUAL(settings.max_hole_area_percent, 100, VUNITIZE_TOL)) {
+	settings.max_hole_area_percent = 0.0;
+    }
+
+    struct rt_bot_internal *mbot = bot_repair(bot, &settings);
 
     // If we were already manifold, there's nothing to do
     if (mbot && mbot == bot) {
