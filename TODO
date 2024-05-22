@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* rtarea is sometimes missing regions on summary reporting, at least on
+  Windwos, possibly a threading issue setting up the results container.
+
 * complete preliminary concave arb8 support
 
 * Rework ged_tessellate exec into a generic ged_exec along
