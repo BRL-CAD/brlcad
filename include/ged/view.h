@@ -31,7 +31,6 @@
 #include "common.h"
 #include "ged/defines.h"
 #include "bg/polygon.h"
-#include "ged/view/adc.h"
 #include "ged/view/matrix.h"
 #include "ged/view/select.h"
 #include "ged/view/state.h"
