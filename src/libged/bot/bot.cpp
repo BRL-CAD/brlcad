@@ -342,7 +342,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_flip(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot flip <objname>";
+    const char *usage_string = "bot flip [-t] <objname>";
     const char *purpose_string = "Flip BoT triangle normal directions (turns the BoT \"inside out\")";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -351,6 +351,15 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
     argc--; argv++;
+
+    // See if we have any high level options set
+    int test_flipped = 0;
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "t", "test",    "",      NULL,                 &test_flipped,         "Test if the specified bot is inside-out");
+    BU_OPT_NULL(d[1]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    argc = ac;
 
     if (argc != 1) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -362,6 +371,18 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+
+    if (test_flipped) {
+	int ftest = rt_bot_inside_out(bot);
+	if (ftest < 0)
+	    return BRLCAD_ERROR;
+	if (!ftest) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "OK");
+	} else {
+	    bu_vls_printf(gb->gedp->ged_result_str, "BoT is inside out");
+	}
+	return BRLCAD_OK;
+    }
 
     rt_bot_flip(bot);
 

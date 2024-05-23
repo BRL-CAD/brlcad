@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* added a -t option to bot flip to check BoT orientation - Cliff Yapp
 * fixed shaded drawing of CW BoT solids - Cliff Yapp
 * updated OpenNURBS library to version 8.3.23346.03050 - Cliff Yapp
 * added man pages for 'bot check' and 'bot extrude' cmds - Cliff Yapp

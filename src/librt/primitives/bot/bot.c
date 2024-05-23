@@ -39,6 +39,7 @@
 #include "bu/cv.h"
 #include "bg/polygon.h"
 #include "bg/trimesh.h"
+#include "bg/tri_ray.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
@@ -4293,20 +4294,107 @@ rt_bot_flip(struct rt_bot_internal *bot)
 	bot->faces[i*3+2] = tmp_index;
     }
 
-    switch (bot->orientation) {
-	case RT_BOT_CCW:
-	    bot->orientation = RT_BOT_CW;
-	    break;
-	case RT_BOT_CW:
-	    bot->orientation = RT_BOT_CCW;
-	    break;
-	case RT_BOT_UNORIENTED:
-	default:
+    return 0;
+}
+
+/*****************************************************************************
+ * One common form of incorrect BoT geometry is an inside-out BoT - for
+ * example, a sphere where all the triangle normals are pointed in towards the
+ * center rather than outward.  This error is visually simple to spot when
+ * drawing a shaded view in OpenGL, but harder to see in a data inspection.  We
+ * define a test with raytracing to determine whether a given BoT is inside-out
+ * or not. */
+
+int
+rt_bot_inside_out(struct rt_bot_internal *bot)
+{
+    int is_flipped = -1;
+
+    if (!bot || bot->mode != RT_BOT_SOLID || bot->orientation == RT_BOT_UNORIENTED)
+	return 0;
+
+    point_t bmin, bmax;
+    if (bg_trimesh_aabb(&bmin, &bmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices))
+	return 0;
+
+    point_t rpnt;
+    VADD2SCALE(rpnt, bmin, bmax, 0.5);
+
+    // Move the bbox center point out of the bounding box in the z direction to
+    // give us a starting point for the ray guaranteed to be outside the mesh
+    double bdiag = DIST_PNT_PNT(bmin, bmax);
+    rpnt[Z] += bdiag;
+
+    // We want to shoot an interrogation ray in a direction that gives us an
+    // unambiguous result for the first hit point (i.e. a non-grazing hit), but
+    // there is no way to know in advance what a "good" direction is.  So
+    // instead we iterate over the faces of the mesh and use their center
+    // points as targets - sooner or later (most likely sooner) a shotline
+    // through one of them will give us our answer.
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	point_t verts[3];
+	point_t tcenter;
+	VMOVE(verts[0], &bot->vertices[bot->faces[i*3+0]*3]);
+	VMOVE(verts[1], &bot->vertices[bot->faces[i*3+1]*3]);
+	VMOVE(verts[2], &bot->vertices[bot->faces[i*3+2]*3]);
+	VADD3(tcenter, verts[0], verts[1], verts[2]);
+	VSCALE(tcenter, tcenter, 1.0/3.0);
+
+	vect_t rdir;
+	VSUB2(rdir, tcenter, rpnt);
+	VUNITIZE(rdir);
+
+	// The LIBRT raytracer a) requires an rtip setup using the parent
+	// database and b) corrects the normal we want to use for this test
+	// anyway, so use the low level bg_isect_tri_ray test and a naive walk
+	// over faces.  After we merge in the new high performance BoT
+	// raytracing work it will probably make sense to revisit this, but for
+	// now this will do the job. The parent loop quits as soon as it can
+	// make a determination, so it won't be the full n^2 hit in practice.
+	point_t cpnt = {FLT_MAX, FLT_MAX, FLT_MAX};
+	double cdsq = DIST_PNT_PNT_SQ(rpnt, cpnt);
+	vect_t cnorm = VINIT_ZERO;
+	for (size_t j = 0; j < bot->num_faces; j++) {
+	    point_t isect;
+	    point_t jverts[3];
+	    VMOVE(jverts[0], &bot->vertices[bot->faces[j*3+0]*3]);
+	    VMOVE(jverts[1], &bot->vertices[bot->faces[j*3+1]*3]);
+	    VMOVE(jverts[2], &bot->vertices[bot->faces[j*3+2]*3]);
+	    int is_hit = bg_isect_tri_ray(rpnt, rdir, jverts[0], jverts[1], jverts[2], &isect);
+	    if (!is_hit)
+		continue;
+
+	    double wdsq = DIST_PNT_PNT_SQ(rpnt, isect);
+	    if (wdsq < cdsq) {
+		VMOVE(cpnt, isect);
+		vect_t vnorm, v1, v2;
+		VSUB2(v1, jverts[1], jverts[0]);
+		VSUB2(v2, jverts[2], jverts[0]);
+		VCROSS(vnorm, v1, v2);
+		VUNITIZE(vnorm);
+		VMOVE(cnorm, vnorm);
+	    }
+	}
+
+	// If we found a normal that works, set is_flipped
+	if (MAGNITUDE(cnorm) > 0.9) {
+	    double ndot = VDOT(rdir, cnorm);
+	    if (!NEAR_ZERO(ndot, VUNITIZE_TOL))
+		is_flipped = (ndot < 0) ? 0 : 1;
+	}
+
+	// If we're >= 0, we have our answer
+	if (is_flipped != -1)
 	    break;
     }
 
-    return 0;
+    if (is_flipped == -1)
+	return is_flipped;
+
+    return (bot->orientation == RT_BOT_CCW) ? is_flipped : !is_flipped;
 }
+
+/*****************************************************************************/
 
 
 struct tri_edges {
