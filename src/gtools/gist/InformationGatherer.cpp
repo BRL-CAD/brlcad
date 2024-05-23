@@ -340,30 +340,30 @@ InformationGatherer::getEntityData(char* buf)
 void
 InformationGatherer::getSubComp()
 {
-    // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
     std::string mged = getCmdPath(opt->getExeDir(), "mged");
-    std::string pathToOutput = "output/sub_comp.txt";
-    std::string retrieveSub = mged + " -c " + opt->getInFile() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
-    if (system(retrieveSub.c_str()))
-	bu_log("warning: non-zero system return for %s\n",retrieveSub.c_str());
+    std::string inFile = opt->getInFile();
+    std::string tclScript = " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\"";
+    const char* av[5] = {mged.c_str(), "-c", inFile.c_str(), tclScript.c_str(), NULL};
 
-    if (!bu_file_exists(pathToOutput.c_str(), NULL)) {
-        bu_log("ERROR: %s doesn't exist\n", pathToOutput.c_str());
-        bu_log("Make sure to create output directory at the same level as main.cpp!\n");
-        bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+    struct bu_process* p;
+    bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW);
+
+    int read_cnt = 0;
+    char buf[1024] = {0};
+    std::string result = "";
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buf)) > 0) {
+        buf[read_cnt] = '\0';
+        result += buf;
     }
 
-    std::fstream scFile(pathToOutput);
-    if (!scFile.is_open()) {
-        std::cerr << "failed to open file\n";
-        return;
-    }
+    (void)bu_process_wait_n(&p, 0);
 
+    std::stringstream ss(result);
     std::string comp;
     int numEntities = 0;
     std::vector<ComponentData> subComps;
 
-    while (scFile >> comp >> numEntities) {
+    while (ss >> comp >> numEntities) {
         double volume = getVolume(comp);
         subComps.push_back({numEntities, volume, comp});
         // std::cout << " in subcomp " << comp << " " << numEntities << " " << volume << std::endl;
@@ -371,7 +371,6 @@ InformationGatherer::getSubComp()
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
     largestComponents.insert(largestComponents.end(), subComps.begin(), subComps.end());
-    scFile.close();
 }
 
 
