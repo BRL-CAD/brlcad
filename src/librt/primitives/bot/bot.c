@@ -963,8 +963,13 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    continue; /* sanity */
 
 	VMOVE(aa, &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
-	VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-	VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+	if (bot_ip->orientation == RT_BOT_CW) {
+	    VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+	    VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
+	} else {
+	    VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
+	    VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+	}
 
 	VSUB2(ab, aa, bb);
 	VSUB2(ac, aa, cc);
@@ -977,8 +982,13 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    vect_t na, nb, nc;
 
 	    VMOVE(na, &bot_ip->normals[bot_ip->face_normals[i*3+0]*3]);
-	    VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
-	    VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
+	    if (bot_ip->orientation == RT_BOT_CW) {
+		VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
+		VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
+	    } else {
+		VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
+		VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
+	    }
 	    BV_ADD_VLIST(vlfree, vhead, na, BV_VLIST_TRI_VERTNORM);
 	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_MOVE);
 	    BV_ADD_VLIST(vlfree, vhead, nb, BV_VLIST_TRI_VERTNORM);
