@@ -38,10 +38,6 @@ GED_EXPORT extern void ged_calc_adc_pos(struct bview *gvp);
 GED_EXPORT extern void ged_calc_adc_a1(struct bview *gvp);
 GED_EXPORT extern void ged_calc_adc_a2(struct bview *gvp);
 GED_EXPORT extern void ged_calc_adc_dst(struct bview *gvp);
-/**
- * Angle distance cursor.
- */
-GED_EXPORT extern int ged_adc(struct ged *gedp, int argc, const char *argv[]);
 
 __END_DECLS
 
