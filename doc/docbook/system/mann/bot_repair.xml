@@ -18,10 +18,10 @@
     <cmdsynopsis sepchar=" ">
       <command>bot repair</command>
       <arg choice="opt" rep="norepeat">-h</arg>
-      <arg choice="opt" rep="norepeat">-a</arg>
-      <arg choice="opt" rep="norepeat">-p</arg>
-      <arg choice="req" rep="norepeat"> <replaceable>input_bot</replaceable></arg>
-      <arg choice="opt" rep="norepeat"> <replaceable>output_bot</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-a #</arg>
+      <arg choice="opt" rep="norepeat">-p #</arg>
+      <arg choice="opt" rep="norepeat">-o output_obj</arg>
+      <arg choice="req" rep="repeat"> <replaceable>input_bot</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -71,7 +71,7 @@
 
     <variablelist remap="TP">
       <varlistentry>
-	<term><emphasis remap="B" role="bold">-a</emphasis></term>
+	<term><emphasis remap="B" role="bold">-a #</emphasis></term>
 	<listitem>
 	  <para>
 	    Specify an absolute maximum area in mm for a hole size on which repair will
@@ -88,7 +88,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis remap="B" role="bold">-p</emphasis></term>
+	<term><emphasis remap="B" role="bold">-p #</emphasis></term>
 	<listitem>
 	  <para>
 	    Specify the largest viable hole size for repair as a percentage (0-100) of the
@@ -115,7 +115,7 @@
 
     <example><title>Outputting Repaired Mesh to Another Object.</title>
 
-      <para><prompt>mged&gt; </prompt><userinput>bot repair input.bot output.bot</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>bot repair -o output.bot input.bot </userinput></para>
       <para>
         If a repair was needed, output.bot holds the altered mesh.  The input.bot original is unaltered.
       </para>
@@ -123,11 +123,22 @@
 
     <example><title>Try Repairing Larger Holes.</title>
 
-      <para><prompt>mged&gt; </prompt><userinput>bot repair -p 10 input.bot output.bot</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>bot repair -p 10.2 input.bot output.bot</userinput></para>
       <para>
-         Attempt repairing holes with area up to 10 percent of the mesh area.
+         Attempt repairing holes with area up to 10.2 percent of the mesh area.
       </para>
     </example>
+
+    <example><title>Repair all BoT Solids in Database</title>
+
+      <para><prompt>mged&gt; </prompt><userinput>bot repair *</userinput></para>
+      <para>
+        Attempt in-place repair of all BoT solids.  Any object matching the pattern that is not of the appropriate
+	type is ignored.  This option is useful when batch processing large numbers of objects.  Output
+	for the user is a list of repaired BoTs, as well as any attempted repairs that failed.
+      </para>
+    </example>
+
 
   </refsection>
   
