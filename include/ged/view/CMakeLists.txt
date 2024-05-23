@@ -1,5 +1,4 @@
 set(ged_view_headers
-  adc.h
   matrix.h
   select.h
   state.h
