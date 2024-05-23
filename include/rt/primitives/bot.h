@@ -181,9 +181,16 @@ RT_EXPORT extern int rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_
  * CCW vs CW BoT orientation settings, and will interpret the
  * results of the test accordingly.  The idea is for this function
  * to return "1" in the same situations that would result in an
- * OpenGL shaded drawing of the BoT to show black faces due to
+ * OpenGL shaded drawing of the BoT showing black faces due to
  * incorrect orientation. */
 RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
+
+/* Test whether a solid BoT has faces that are <tol distance away from nearby
+ * faces.  This is (at the moment) a ray interrogation based test, so it is not
+ * absolutely guaranteed to find all near self-intersections - it is intended
+ * to catch situations such as boolean operations on meshes producing exceedingly
+ * thin volumes. Returns 1 if a problem is found, else 0 */
+RT_EXPORT extern int rt_bot_thin_check(struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
 
 /** @} */
 

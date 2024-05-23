@@ -373,11 +373,26 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
     return ret;
 }
 
+static int
+do_thin_check(struct ged *gedp, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
+{
+    int ret = 0;
+    if (!gedp || !bot)
+	return ret;
+
+    struct rt_i *rtip = rt_new_rti(gedp->dbip);
+    rt_gettree(rtip, dp->d_namep);
+    rt_prep(rtip);
+    ret = rt_bot_thin_check(bot, rtip, VUNITIZE_TOL, verbosity);
+    rt_free_rti(rtip);
+    return ret;
+}
+
 /* Someday, when we have parametric constraint evaluation for parameters for primitives, we can hook
  * that into this logic as well... for now, run various special-case routines that are available to
- * spot various categories of problematic primtivies. */
+ * spot various categories of problematic primitives. */
 void
-_ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struct directory *dp)
+_ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struct directory *dp, int verbosity)
 {
     struct invalid_obj obj;
     struct rt_db_internal intern;
@@ -400,11 +415,35 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
 	    RT_BOT_CK_MAGIC(bot);
 	    if (bot->mode == RT_BOT_SOLID) {
+
+		if (!bot->num_faces) {
+		    not_valid = 1;
+		    obj.name = std::string(dp->d_namep);
+		    obj.type= std::string("bot");
+		    obj.error = std::string("empty BoT");
+		    rt_db_free_internal(&intern);
+		    break;
+		}
+
 		not_valid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
 		if (not_valid) {
 		    obj.name = std::string(dp->d_namep);
 		    obj.type= std::string("bot");
 		    obj.error = std::string("failed solidity test, but BoT type is RT_BOT_SOLID");
+		    rt_db_free_internal(&intern);
+		    break;
+		}
+
+		// TODO - check for flipped bot
+
+		// check for bot with super-thin areas
+		not_valid = do_thin_check(gedp, dp, bot, verbosity);
+		if (not_valid) {
+		    obj.name = std::string(dp->d_namep);
+		    obj.type= std::string("bot");
+		    obj.error = std::string("failed thinness check, BoT type is RT_BOT_SOLID");
+		    rt_db_free_internal(&intern);
+		    break;
 		}
 	    }
 	    rt_db_free_internal(&intern);
@@ -443,7 +482,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 }
 
 int
-_ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int argc, struct directory **dpa)
+_ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int argc, struct directory **dpa, int verbosity)
 {
     int ret = BRLCAD_OK;
     struct directory *dp;
@@ -459,7 +498,7 @@ _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int 
     } else {
 	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	    dp = (struct directory *)BU_PTBL_GET(pc, i);
-	    _ged_invalid_prim_check(idata, gedp, dp);
+	    _ged_invalid_prim_check(idata, gedp, dp, verbosity);
 	}
 	bu_ptbl_free(pc);
 	bu_free(pc, "pc table");
@@ -568,7 +607,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     if (opts->invalid_shape_check) {
 	bu_log("Checking for invalid objects...\n");
 	idata->o = opts;
-	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa);
+	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa, opts->verbosity);
 	if (ret != BRLCAD_OK) {
 	    goto ged_lint_memfree;
 	}

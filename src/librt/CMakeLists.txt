@@ -95,6 +95,7 @@ set(LIBRT_SOURCES
   primitives/bot/decimate.c
   primitives/bot/plate.cpp
   primitives/bot/repair.cpp
+  primitives/bot/thin_check.cpp
   primitives/brep/brep.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp

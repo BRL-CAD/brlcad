@@ -4297,14 +4297,12 @@ rt_bot_flip(struct rt_bot_internal *bot)
     return 0;
 }
 
-/*****************************************************************************
- * One common form of incorrect BoT geometry is an inside-out BoT - for
+/* One common form of incorrect BoT geometry is an inside-out BoT - for
  * example, a sphere where all the triangle normals are pointed in towards the
  * center rather than outward.  This error is visually simple to spot when
  * drawing a shaded view in OpenGL, but harder to see in a data inspection.  We
  * define a test with raytracing to determine whether a given BoT is inside-out
  * or not. */
-
 int
 rt_bot_inside_out(struct rt_bot_internal *bot)
 {
