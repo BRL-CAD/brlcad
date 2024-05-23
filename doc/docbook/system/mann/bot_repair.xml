@@ -68,14 +68,15 @@
     Note that this command will not (currently) perform any work on plate mode or
     surface mode BoTs.  If a user is not aware that they have those types of BoT
     objects in a database, they may be surprised at <command>bot repair</command>
-    not operating on those objects.  To fine plate mode bots in a database the
-    command <command>search -type bot -type plate</command> may be used and to find
+    not operating on those objects.  To verify the type of an individual bot, use the
+    command <command>bot get type objname</command>.  To find all plate mode bots in a database the
+    command <command>search -type bot -type plate</command> may be used and to find all
     surface mode BoTs the command <command>search -type bot ! -type plate ! -type solid</command>
-    will work.  If a BoT is incorrectly identified as surface, its type may be changed
-    with the command <command>bot set type objname solid</command>.  Note, however, that
-    changing a BoT's type and repairing it when it is <emphasis>intended</emphasis> to
-    be plate mode or solid mode may result in incorrect geometry per modeling intent,
-    even if the result is topologically manifold.
+    will work.  If a BoT is <emphasis>incorrectly</emphasis> identified as surface, its
+    type may be changed with the command <command>bot set type objname solid</command>.
+    Note, however, that changing a BoT's type and repairing it when it is
+    <emphasis>intended</emphasis> to be plate mode or surface may result in incorrect
+    geometry per modeling intent, even if the result ends up topologically valid.
   </para>
   </refsection>
 
