@@ -153,7 +153,7 @@ bool Options::readParameters(int argc, const char **argv) {
     /* make sure we have a .g file or folder specified */
     if (!getIsFolder() && !bu_file_exists(this->inFile.c_str(), NULL)) {
 	bu_log("\nUsage:  %s %s\n", cmd_progname, usage);
-        bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
+        bu_log("\nPlease specify the path to the file for report generation, use flag (-?) to see all options\n");
         return false;
     }
 
@@ -166,7 +166,7 @@ bool Options::readParameters(int argc, const char **argv) {
     /* make sure we're not unintentionally overwriting an existing report */
     if (bu_file_exists(this->outFile.c_str(), NULL)) {
 	if (!param_overwrite) {
-	    bu_log("ERROR: output file \"%s\" already exists. Re-run with overwrite flag (-r) or remove file.", this->outFile.c_str());
+	    bu_log("ERROR: output file \"%s\" already exists. Re-run with force flag (-f) or remove file.", this->outFile.c_str());
 	    return false;
 	} else {
 	    bu_file_delete(this->outFile.c_str());
@@ -179,7 +179,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	// user specified a directory with -T
 	if (!bu_dir(NULL, 0, this->exeDir.c_str(), "mged", BU_DIR_EXT, NULL)) {
 	    // couldn't find mged in exeDir
-	    bu_log("ERROR: File to executables (%s) is invalid\nPlease use (or check) the -T parameter\n",this->exeDir.c_str());
+	    bu_log("ERROR: File to executables (%s) is invalid\nPlease use (or check) the (-T) parameter\n",this->exeDir.c_str());
 	    return false;
 	}
     } else {
@@ -188,7 +188,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	    exeDir = std::string(bu_dir(NULL, 0, BU_DIR_BIN, NULL));
 	} else {
 	    // couldn't find mged in BU_DIR_BIN
-	    bu_log("ERROR: Could not find BRL-CAD executables.\nPlease use (or check) the -T parameter\n");
+	    bu_log("ERROR: Could not find BRL-CAD executables.\nPlease use (or check) the (-T) parameter\n");
 	    return false;
 	}
     }
@@ -207,7 +207,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	// found dir, should we have?
 	if (getReuseImages() == false) {
 	    bu_log("ERROR: Working directory (%s) found.\n", getWorkingDir().c_str());
-	    bu_log("       Use (-Z) to re-use work, or remove working directory.\n");
+	    bu_log("       Re-run with (-Z) to re-use work. Or remove working directory \"%s\".\n", getWorkingDir().c_str());
 	    return false;
 	}
     } else {
