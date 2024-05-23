@@ -168,7 +168,6 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
     int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
 
     // main component
-    std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
     //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
     img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
 
@@ -188,6 +187,7 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 
 
     // sub components
+    std::string render;
     for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
         // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
