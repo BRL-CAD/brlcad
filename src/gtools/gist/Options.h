@@ -49,7 +49,7 @@ public:
     void setExportToFile();
     void setReuseImages(bool reuse);
     void setOutFolder(std::string fldr);
-    void setOutFile(std::string n);
+    bool setOutFile(std::string n);
     void setInFolder(std::string n);
     void setPreparer(std::string n);
     void setClassification(std::string c);

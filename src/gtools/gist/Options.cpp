@@ -73,10 +73,11 @@ bool Options::readParameters(int argc, const char **argv) {
     int param_Yup = 0;			// user requested y-up
     std::string param_Ulength = "";	// user requested length units
     std::string param_Umass = "";	// user requested mass units
+    std::string param_oFile = "";
 
     struct bu_opt_desc d[20];
     BU_OPT(d[0],  "i", "",     "filename",          &_param_set_std_str,     &this->inFile,         "input .g");
-    BU_OPT(d[1],  "o", "",     "filename",          &_param_set_std_str,     &this->outFile,        "output file name");
+    BU_OPT(d[1],  "o", "",     "filename",          &_param_set_std_str,     &param_oFile,          "output file name");
     BU_OPT(d[2],  "F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate");
     BU_OPT(d[3],  "e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name");
     BU_OPT(d[4],  "g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window");
@@ -129,6 +130,11 @@ bool Options::readParameters(int argc, const char **argv) {
     }
 
     /* use internal setters for options that require extra attention */
+    if (param_oFile.empty()) {	// no output file supplied, default to gui pop-up
+	bu_log("WARNING: no output file given, use (-o) to save report\n");
+	setOpenGUI();
+    } else if (!setOutFile(param_oFile))    // out file was supplied, make sure .png
+	return false;
     if (param_ppi)
 	setPPI(param_ppi);
     if (param_Lhand)
@@ -141,8 +147,6 @@ bool Options::readParameters(int argc, const char **argv) {
 	setUnitMass(param_Umass);
     if (!this->inFolderName.empty())
 	setIsFolder();
-    if (!this->outFile.empty())
-	setExportToFile();
     if (!this->exeDir.empty())
 	setExeDir(this->exeDir);
 
@@ -266,8 +270,25 @@ void Options::setInFolder(std::string n) {
 }
 
 
-void Options::setOutFile(std::string n) {
-    outFile = n;
+bool Options::setOutFile(std::string n) {
+    // output file must be png
+    auto dot = n.find_last_of('.');
+    if (dot != std::string::npos) {
+	// extension given, ensure it's png
+	const std::string ext = n.substr(dot + 1);
+	if (ext != "png") {
+	    bu_log("ERROR: output file must be .png\n");
+	    return false;
+	}
+
+	outFile = n;
+    } else {
+	// no extension given - append .png
+	outFile = n + ".png";
+    }
+
+    setExportToFile();
+    return true;
 }
 
 
