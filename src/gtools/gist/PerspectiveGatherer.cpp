@@ -41,7 +41,7 @@ getFaceDetails()
 static std::string createOutputBase(std::string inFile, std::string workingDir, std::string component) {
     /* create output filename using the base of input file _component, with working directory path 
     i.e. workingDir/inFileBASE_COMPONENT */
-    
+
     // get input file base name
     std::string inFileBase = inFile.substr(inFile.find_last_of("/\\") + 1); // strip at last path separator
     inFileBase = inFileBase.substr(0, inFileBase.find_last_of("."));        // remove .ext
@@ -208,9 +208,13 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 
     // std::cout << render << std::endl;
 
-
-    if (opt.getOverrideImages() || std::remove(outputname.c_str()) != 0) {
-	std::cerr << "Did not remove " << outputname << std::endl;
+    // TODO/ FIXME: why is _detailed being generated twice?
+    if (bu_file_exists(outputname.c_str(), NULL) && opt.getReuseImages()) {
+        // found previous render, and user doesn't want to override
+        bu_log("Found %s, skipping\n", outputname.c_str());
+        return outputname;
+    } else {
+        bu_file_delete(outputname.c_str());
     }
 
     struct bu_process* p;

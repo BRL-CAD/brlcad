@@ -47,7 +47,7 @@ public:
     void setIsFolder();
     void setOpenGUI();
     void setExportToFile();
-    void setOverrideImages();
+    void setReuseImages(bool reuse);
     void setOutFolder(std::string fldr);
     void setOutFile(std::string n);
     void setInFolder(std::string n);
@@ -72,7 +72,7 @@ public:
     bool getIsFolder();
     bool getOpenGUI();
     bool getExportToFile();
-    bool getOverrideImages();
+    bool getReuseImages();
     std::string getOutFile();
     std::string getInFolder();
     std::string getOutFolder();
@@ -110,7 +110,7 @@ private:
     //Whether user decides to export to a png
     bool exportToFile;
     // Whether or not to override pre-existing rt/rtwizard output files
-    int overrideImages;
+    int reuseImages;
     // Name of export file
     std::string outFile;
     // Name of folder that contains input models

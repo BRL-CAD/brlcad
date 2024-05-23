@@ -33,7 +33,7 @@ Options::Options()
     inFolderName = "";
     openGUI = false;
     exportToFile = false;
-    overrideImages = false;
+    reuseImages = false;
     outFolderName = "";
     outFile = "";
     preparer = "N/A";
@@ -81,7 +81,7 @@ bool Options::readParameters(int argc, const char **argv) {
     BU_OPT(d[3],  "e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name");
     BU_OPT(d[4],  "g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window");
     BU_OPT(d[5],  "f", "",     "",                  NULL,                    &param_overwrite,      "overwrite existing report if it exists");
-    BU_OPT(d[6],  "Z", "",     "",                  NULL,                    &this->overrideImages, "reuse renders if .working directory is found");
+    BU_OPT(d[6],  "Z", "",     "",                  NULL,                    &this->reuseImages,    "reuse renders if .working directory is found");
     BU_OPT(d[7],  "t", "",     "component",         &_param_set_std_str,     &this->topComp,        "specify primary component of the report");
     BU_OPT(d[8],  "p", "",     "#",		    &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)");
     BU_OPT(d[9],  "n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report");
@@ -189,7 +189,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	}
     }
 
-    /* check for working directory, or build it */
+    /* build working directory path if not supplied */
     if (getWorkingDir().empty()) {
 	std::string working = getInFile();
 	// if input file ends in .g - strip the g and replace with .working
@@ -198,8 +198,16 @@ bool Options::readParameters(int argc, const char **argv) {
 	working += "working";
 	this->workingDir = working;
     }
-    // create, if we need to
-    if (!bu_file_directory(getWorkingDir().c_str())) {
+    /* handle working directory existence */
+    if (bu_file_directory(getWorkingDir().c_str())) {
+	// found dir, should we have?
+	if (getReuseImages() == false) {
+	    bu_log("ERROR: Working directory (%s) found.\n", getWorkingDir().c_str());
+	    bu_log("       Use (-Z) to re-use work, or remove working directory.\n");
+	    return false;
+	}
+    } else {
+	// create
 	bu_mkdir(getWorkingDir().c_str());
 	bu_log("Intermediate files writing to: %s\n", getWorkingDir().c_str());
     }
@@ -243,8 +251,8 @@ void Options::setExportToFile() {
 }
 
 
-void Options::setOverrideImages() {
-    overrideImages = true;
+void Options::setReuseImages(bool reuse) {
+    reuseImages = reuse;
 }
 
 
@@ -351,8 +359,8 @@ bool Options::getExportToFile() {
 }
 
 
-bool Options::getOverrideImages() {
-    return overrideImages;
+bool Options::getReuseImages() {
+    return reuseImages;
 }
 
 
