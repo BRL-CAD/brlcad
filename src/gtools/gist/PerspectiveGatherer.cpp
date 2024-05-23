@@ -38,10 +38,32 @@ getFaceDetails()
 }
 
 
-std::string
-extractFileName(std::string filePath) {
-    return filePath.substr(filePath.find_last_of("/\\") + 1);
+static std::string createOutputBase(std::string inFile, std::string workingDir, std::string component) {
+    /* create output filename using the base of input file _component, with working directory path 
+    i.e. workingDir/inFileBASE_COMPONENT */
+    
+    // get input file base name
+    std::string inFileBase = inFile.substr(inFile.find_last_of("/\\") + 1); // strip at last path separator
+    inFileBase = inFileBase.substr(0, inFileBase.find_last_of("."));        // remove .ext
+
+    // it shouldn't, but make sure workingDir string does not end in path separator
+    std::string working = workingDir;
+    char lastChar = working[working.size() - 1];
+    if (lastChar == '/' || lastChar == '\\')
+        working.pop_back();
+
+    // when doing ghost render for hierarchy '...' component is space separated list
+    // in that case rename to etc to elim spaces and not have too long of a file name
+    std::string comp = component;
+    if (comp.find(" ") != std::string::npos)
+        comp = "etc";
+
+    // put it all together
+    std::string ret = working + BU_DIR_SEPARATOR + inFileBase + "_" + comp;
+
+    return ret;
 }
+
 
 static std::string getCmdPath(std::string exeDir, char* cmd) {
     char buf[MAXPATHLEN] = {0};
@@ -55,32 +77,8 @@ static std::string getCmdPath(std::string exeDir, char* cmd) {
 std::string
 renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
 {
-    // hardcode filename until options come out
     std::string pathToInput = opt.getInFile();
-    std::string fileInput = extractFileName(pathToInput);
-    std::string pathToOutput = "output/";
-    std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
-    // std::cout << "Path to input: " << pathToInput << " " << fileOutput << std::endl;
-    // std::cout << "Component: " << component << std::endl;
-
-    // do directory traversal checks
-    if (fileOutput.find("../") != std::string::npos) {
-        std::cout << "ERROR: Output file name cannot contain ../\n";
-        return "";
-    }
-
-    // std::cout << "Path to output: " << pathToOutput << std::endl;
-    // std::cout << "Processing file: " << fileInput << std::endl;
-
-    std::string fileString = component.substr(0, component.find("."));
-    fileString = fileString.substr(0, fileString.find("/"));
-    // std::cout << "File string: " << fileString << std::endl;
-    std::string outputname = pathToOutput + fileOutput + "_" + fileString;
-    std::replace(outputname.begin(), outputname.end(), ' ', '_');
-
-    if (outputname.size() > 150) {
-        outputname = outputname.substr(0, 150);
-    }
+    std::string outputname = createOutputBase(opt.getInFile(), opt.getWorkingDir(), component);
 
     std::string render;
     std::string cmd;
@@ -227,7 +225,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
         bu_log("Rendering not generated");
         bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
     }
-    std::cout << "Successfully generated perspective rendering png file\n";
+    std::cout << "Successfully generated " << outputname << "\n";
 
     return outputname;
 }

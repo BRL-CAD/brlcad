@@ -66,6 +66,7 @@ public:
     //Getter functions
     std::string getInFile();
     std::string getExeDir();
+    std::string getWorkingDir();
     int getWidth();
     int getLength();
     bool getIsFolder();
@@ -95,6 +96,8 @@ private:
     std::string inFile;
     // Path to directory with BRL-CAD executables (rt/rtarea/mged/gqa/..)
     std::string exeDir;
+    // Path to working directory where output is stored. Default pattern is "inFile".working
+    std::string workingDir;
     // Pixels per inch
     int ppi;
     // Dimensions of the output, in pixels

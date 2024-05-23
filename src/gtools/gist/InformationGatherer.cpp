@@ -389,14 +389,6 @@ InformationGatherer::~InformationGatherer()
 bool
 InformationGatherer::gatherInformation(std::string name)
 {
-    //Create folder output if needed
-    std::string path = std::filesystem::current_path().string() + "\\output";
-    std::cout << "Writing intermediate output files to " << path << std::endl;
-
-    if (!std::filesystem::exists(std::filesystem::path(path))) {
-        std::filesystem::create_directory("output");
-    }
-
     //Open database
     std::string filePath = opt->getInFile();
     g = ged_open("db", filePath.c_str(), 1);

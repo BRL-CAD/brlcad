@@ -25,6 +25,7 @@ Options::Options()
 {
     inFile = "";
     exeDir = "";
+    workingDir = "";
     ppi = 300;
     width = 3508;
     length = 2480;
@@ -188,6 +189,21 @@ bool Options::readParameters(int argc, const char **argv) {
 	}
     }
 
+    /* check for working directory, or build it */
+    if (getWorkingDir().empty()) {
+	std::string working = getInFile();
+	// if input file ends in .g - strip the g and replace with .working
+	if (working.size() > 2 && working[working.size() - 2] == '.' && working[working.size() - 1] == 'g')
+	    working.pop_back();
+	working += "working";
+	this->workingDir = working;
+    }
+    // create, if we need to
+    if (!bu_file_directory(getWorkingDir().c_str())) {
+	bu_mkdir(getWorkingDir().c_str());
+	bu_log("Intermediate files writing to: %s\n", getWorkingDir().c_str());
+    }
+
     return true;
 }
 
@@ -291,6 +307,9 @@ std::string Options::getInFile() {
     return inFile;
 }
 
+std::string Options::getWorkingDir() {
+    return workingDir;
+}
 
 std::string Options::getInFolder() {
     return inFolderName;
