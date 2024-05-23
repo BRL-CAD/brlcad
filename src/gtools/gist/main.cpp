@@ -37,7 +37,7 @@ generateReport(Options opt)
 
     // read in all information from model file
     if (!info.gatherInformation(opt.getPreparer())) {
-        std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
+        bu_log("ERROR: Information gathering failed.\n");
         return;
     }
 
@@ -94,11 +94,11 @@ handleFolder(Options& options)
         std::string filename = options.getInFile();
         filename = filename.substr(filename.find_last_of("/\\") + 1);
         filename = filename.substr(0, filename.find_last_of("."));
-        std::cout << "Processing: " << filename << std::endl;
+        bu_log("Processing: %s\n", filename.c_str());
         std::string exportPath = options.getOutFolder() + "/" + filename + "_report.png";
         options.setOutFile(exportPath);
         generateReport(options);
-        std::cout << "Finished Processing: " << cnt++ << std::endl;
+        bu_log("...Finished (%s)\n", filename.c_str());
     }
 }
 

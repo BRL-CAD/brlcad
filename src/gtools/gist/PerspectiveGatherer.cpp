@@ -202,7 +202,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             // render2 = "../../../build/bin/rtwizard -s 1024 -a " + a + " -e " + e + " -i " + pathToInput + " -g " + ghost + " -G 3 -o " + outputname;
             break;
         default:
-            std::cerr<< "mark added this\n";
+            /* how'd we get here? */
             break;
     }
 
@@ -229,7 +229,6 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
         bu_log("Rendering not generated");
         bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
     }
-    std::cout << "Successfully generated " << outputname << "\n";
 
     return outputname;
 }

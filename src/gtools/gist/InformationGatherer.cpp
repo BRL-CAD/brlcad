@@ -80,8 +80,7 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
         try {
             surfArea += stod(result);
         } catch (const std::invalid_argument& ia) {
-            std::cerr << "Invalid argument for surface area: " << result << " " << ia.what() << '\n';
-            bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+            bu_exit(BRLCAD_ERROR, "Invalid argument for getSurfaceArea. Got (%s), aborting.\n", ia.what());
         }
     }
 }
@@ -258,14 +257,12 @@ InformationGatherer::getMainComp()
     const std::string topcomp = opt->getTopComp();
     if (topcomp != "") {
 	const char *topname = topcomp.c_str();
-        std::cout << "User input top: " << topname << std::endl;
         // check if main comp exists
         const char* cmd[3] = { "l", topname, NULL };
         ged_exec(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
         if (res.size() == 0) {
-            std::cerr << "Could not find component: " << topname << std::endl;
-            bu_exit(BRLCAD_ERROR, "aborting.\n");
+            bu_exit(BRLCAD_ERROR, "Coult not find component (%s), aborting.\n", topname);
         }
 
         int entities = getNumEntities(topname);
@@ -455,11 +452,6 @@ InformationGatherer::gatherInformation(std::string name)
         return false;
 
     getSubComp();
-    std::cout << "Largest Components\n";
-
-    for (ComponentData x : largestComponents) {
-        std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
-    }
 
     // Gather dimensions
     cmd[0] = "bb";

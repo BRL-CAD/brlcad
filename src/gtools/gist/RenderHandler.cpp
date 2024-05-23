@@ -187,7 +187,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 		    case '-': case '|': case '.':
 			continue;
 		    case '\n': case ' ': case 'A':
-			std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+			bu_log("WARNING: Found unexpected character!\n");
 			/* fallthrough */
 		    default:
 			ModelDimension dim = faceDetails[map[ambientR * rowLen + i]].widthContributor;
@@ -209,7 +209,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 		    case '-': case '|': case '.':
 			continue;
 		    case '\n': case ' ': case 'A':
-			std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+			bu_log("WARNING: Found unexpected character!\n");
 			/* fallthrough */
 		    default:
 			ModelDimension dim = faceDetails[map[i * rowLen + ambientC]].heightContributor;
@@ -293,7 +293,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 			} else if (r < numRows - 1 && faceDetails.find(map[i + rowLen]) != faceDetails.end()) {
 			    fdet = faceDetails[map[i + rowLen]];
 			} else {
-			    std::cerr << "FATAL: couldn't find a width to use for rendering!" << std::endl;
+			    bu_log("ERROR: couldn't find a width to use for rendering\n");
 			}
 
 			ModelDimension dim = fdet.widthContributor;
@@ -365,7 +365,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 			} else if (c < numCols - 1 && faceDetails.find(map[i + 1]) != faceDetails.end()) {
 			    fdet = faceDetails[map[i + 1]];
 			} else {
-			    std::cerr << "FATAL: couldn't find a height to use for rendering!" << std::endl;
+			    bu_log("ERROR: couldn't find a height to use for rendering\n");
 			}
 
 			ModelDimension dim = fdet.heightContributor;
@@ -538,7 +538,6 @@ LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 		break;
 	    default:
 		if (coordinates[i].empty()) {
-		    std::cerr << "ISSUE: coordinates for an important map section not initialized!" << std::endl;
 		    break;
 		}
 		sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
@@ -629,7 +628,6 @@ selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, doubl
     }
 
     if (bestLayout == NULL) {
-	std::cerr << "ISSUE: no layouts found.  This is a major problem!  In selectLayout() in RenderHandler.cpp" << std::endl;
 	return LayoutChoice("", true);
     }
 
