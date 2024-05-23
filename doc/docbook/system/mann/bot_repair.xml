@@ -48,12 +48,24 @@
   </para>
   <para>
     For those cases which may be suitable for automatic repair, the <command>bot repair</command>
-    command can be used to attempt to produce valid manifold solid meshes automatically
-    using various mesh repair algorithms.  A "repaired" mesh may either be output as
-    an overwrite of the input mesh (an "in place" repair) or output to a user-specified
-    object name as a new mesh.  Note that in-place repair is destructive - the original
-    mesh is lost - but that method of repair useful when working on large numbers of
-    meshes in a hierarchical model.
+    command attempts to produce valid manifold solid meshes automatically
+    using mesh repair algorithms.  By default, topological repairs and hole filling for
+    holes with a size up to five percent of the overall mesh area are the techniques that
+    <command>bot repair</command> will attempt to employ. There are also options to adjust
+    the hole sizes considered viable for repair attempts.  However, be aware that attempting
+    to repair holes that are <emphasis>very</emphasis> large may produce unexpected results - an output may be
+    closed and manifold, but end up changing the shape of a mesh.  Parts of the mesh that are intended
+    to be separate may end up being connected to "close" the shape, losing concave features.
+    Outputs should be inspected - <emphasis>particularly</emphasis> when large hole sizes are
+    specified - to insure the new shape is true to the original intent as
+    well as topologically valid.
+  </para>
+  <para>
+    A "repaired" mesh may either be output as an overwrite of the input mesh (an "in-place" repair)
+    or (if only one input mesh is specified) written to a user-specified object name as a new mesh.
+    Note that in-place repair <emphasis>is</emphasis> destructive - the original
+    mesh is lost - but that method of repair is <emphasis>very</emphasis> useful when correcting
+    large numbers of meshes in a hierarchical model.
   </para>
   <para>
     If an input mesh is already a valid solid, no work is done.  If a repair cannot be
@@ -65,7 +77,7 @@
     area of the mesh decreases that is interpreted as an error.
   </para>
   <para>
-    Note that this command will not (currently) perform any work on plate mode or
+    Note that this command will <emphasis>not</emphasis> (currently) perform any work on plate mode or
     surface mode BoTs.  If a user is not aware that they have those types of BoT
     objects in a database, they may be surprised at <command>bot repair</command>
     not operating on those objects.  To verify the type of an individual bot, use the
