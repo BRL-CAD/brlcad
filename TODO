@@ -37,6 +37,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* restore libged commands that were only exposed via archer but lost
+  during libged ged_exec() refactoring.
+
+  see 5f8aa3204bd for a number of them, but need to check all of the
+  archer command mappings.
+
 * add rt* option to output reusable view specification similar to
   saveview scripts, but perhaps just the command portion.  this would
   be similar to what 'art' does, so a given rendering can be reloaded.
