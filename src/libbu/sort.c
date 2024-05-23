@@ -345,7 +345,7 @@ loop:	if (n < 7) {
 	pn = a + n * es;
 	r = min(pa - a, pb - pa);
 	vecswap(a, pb - r, r);
-	r = min((long unsigned int)pd - (long unsigned int)pc, pn - pd - es);
+	r = min((uintptr_t)pd - (uintptr_t)pc, pn - pd - es);
 	vecswap(pb, pn - r, r);
 	/*
 	 * To save stack space we sort the smaller side of the partition first
