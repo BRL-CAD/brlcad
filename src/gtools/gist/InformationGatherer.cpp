@@ -143,7 +143,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     std::string in_file = opt->getInFile();
     struct bu_process* p;
     int read_cnt = 0;
-    char buffer[128] = {0};
+    char buffer[1024] = {0};
     std::string result = "";
 
     for (size_t i = 0; i < toVisit.size(); i++) {
@@ -166,7 +166,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
 
         result = "";
         read_cnt = 0;
-        while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 128-1, buffer)) > 0) {
+        while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
             buffer[read_cnt] = '\0';
             result += buffer;
         }
