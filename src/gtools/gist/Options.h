@@ -106,11 +106,11 @@ private:
     // Whether path is a folder with multiple files or not
     bool isFolder;
     // Whether user specifices to open GUI as well
-    bool openGUI;
+    int openGUI;
     //Whether user decides to export to a png
     bool exportToFile;
     // Whether or not to override pre-existing rt/rtwizard output files
-    bool overrideImages;
+    int overrideImages;
     // Name of export file
     std::string outFile;
     // Name of folder that contains input models
