@@ -66,11 +66,24 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
     struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
 
     struct partition *pp = PartHeadp->pt_forw;
-    double dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 
-    bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
-    bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-    bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+    // Make sure the in hit point is close to the ray point
+    if (pp->pt_inhit->hit_dist > 2*SQRT_SMALL_FASTF) {
+	if (tinfo->verbose) {
+	    bu_log("	First hit wasn't from our triangle\n");
+	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+	}
+	tinfo->is_thin = 1;
+	return 0;
+    }
+
+    double dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+    if (tinfo->verbose > 1) {
+	bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
+	bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+    }
 
     if (dist < tinfo->ttol) {
 	if (tinfo->verbose) {
@@ -79,6 +92,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
 	}
 	tinfo->is_thin = 1;
+	return 0;
     }
 
     return 0;
@@ -92,9 +106,30 @@ _tc_miss(struct application *ap)
     // something is problematic.
     struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
     tinfo->is_thin = 1;
-    bu_log("		miss");
-    bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-    bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+    if (tinfo->verbose) {
+	bu_log("		miss\n");
+	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+    }
+    return 0;
+}
+
+/* I don't think this is supposed to happen with a single primitive, but just
+ * in case we get an overlap report somehow flag it as trouble */
+static int
+_tc_overlap(struct application *ap,
+             struct partition *UNUSED(pp),
+             struct region *UNUSED(reg1),
+             struct region *UNUSED(reg2),
+             struct partition *UNUSED(hp))
+{
+    struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
+    tinfo->is_thin = 1;
+    if (tinfo->verbose) {
+	bu_log("		overlap\n");
+	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+    }
     return 0;
 }
 
@@ -110,13 +145,14 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
     tinfo.verbose = verbose;
 
     // Set up the raytrace
-    if (rt_uniresource.re_magic == 0)
+    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
 	rt_init_resource(&rt_uniresource, 0, rtip);
     struct application ap;
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = rtip;     /* application uses this instance */
     ap.a_hit = _tc_hit;    /* where to go on a hit */
     ap.a_miss = _tc_miss;  /* where to go on a miss */
+    ap.a_overlap = _tc_overlap;  /* where to go if an overlap is found */
     ap.a_resource = &rt_uniresource;
     ap.a_uptr = (void *)&tinfo;
 

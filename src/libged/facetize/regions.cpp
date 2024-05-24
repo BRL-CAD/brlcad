@@ -255,27 +255,19 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
 	    if (have_thin_faces) {
 
-		bu_log("%s - Found %zd thin faces to remove.\n", bu_vls_cstr(&bname), BU_PTBL_LEN(&tfaces));
-
 		// First order of business - get the problematic faces out of
 		// the mesh
 		nbot = rt_bot_remove_faces(&tfaces, bot);
-		if (nbot->num_faces < 3) {
-		    // TODO - I think this may warrant an empty BoT?  Havoc r.rot37 triggers this
-		    bu_log("Too few non-removed faces to form a valid manifold, halting repair attempt.\n");
-		    rt_bot_internal_free(nbot);
-                    BU_PUT(nbot, struct rt_bot_internal);
-		    nbot = NULL;
-		}
 
 		// If we took away manifoldness removing faces (likely) we need
 		// to try and rebuild it.
-		if (nbot) {
+		if (nbot && nbot->num_faces) {
 		    struct rt_bot_internal *rbot = NULL;
 		    struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
+		    rs.max_hole_area_percent = 10;
 		    int repair_result = rt_bot_repair(&rbot, nbot, &rs);
-		    bu_log("repair_result: %d\n", repair_result);
 		    if (repair_result < 0) {
+			bu_log("%s removed %zd thin faces, but repair failed.  Retaining manifold result.\n", bu_vls_cstr(&bname), BU_PTBL_LEN(&tfaces));
 			// The repair didn't succeed.  That means we weren't able
 			// to produce a manifold mesh after removing the thin
 			// triangles.  In that situation, we return the manifold

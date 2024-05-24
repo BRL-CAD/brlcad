@@ -345,7 +345,7 @@ manifold_do_bool(
 	if (!failed) {
 	    // We should have valid inputs - proceed
 
-	    if (!s->quiet)
+	    if (s->verbosity)
 		bu_log("Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
 
 	    manifold::Manifold bool_out;
@@ -925,7 +925,6 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     }
 
     if (ac) {
-	bu_log("Preparing Manifold inputs...\n");
 	s->error_flag = 0;
 	struct db_tree_state init_state;
 	db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
@@ -957,8 +956,6 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    bu_free(av, "av");
 	    return BRLCAD_ERROR;
 	}
-
-	bu_log("Preparing Manifold inputs... done.\n");
     }
     bu_free(av, "av");
 
@@ -985,12 +982,10 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     }
 
     // Third stage is to execute the boolean operations
-    bu_log("Evaluating Boolean expressions...\n");
     ftree = rt_booltree_evaluate(s->facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &manifold_do_bool, 0, (void *)s);
     if (!ftree) {
 	return BRLCAD_ERROR;
     }
-    bu_log("Evaluating Boolean expressions... done.\n");
 
     if (ftree->tr_d.td_d) {
 	manifold::Manifold *om = (manifold::Manifold *)ftree->tr_d.td_d;

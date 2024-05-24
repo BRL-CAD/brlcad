@@ -347,7 +347,16 @@ rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_interna
     int *nfacesarray = NULL;
     point_t *npointsarray = NULL;
     int npntcnt = 0;
-    int new_num_faces = bg_trimesh_3d_gc(&nfacesarray, &npointsarray, &npntcnt, nfaces, nfaces_ind+1, (const point_t *)orig_bot->vertices);
+    int new_num_faces = bg_trimesh_3d_gc(&nfacesarray, &npointsarray, &npntcnt, nfaces, nfaces_ind, (const point_t *)orig_bot->vertices);
+
+    if (new_num_faces < 3) {
+	new_num_faces = 0;
+	npntcnt = 0;
+	bu_free(nfacesarray, "nfacesarray");
+	nfacesarray = NULL;
+	bu_free(npointsarray, "npointsarray");
+	npointsarray = NULL;
+    }
 
     // Done with the nfaces array
     bu_free(nfaces, "free unmapped new faces array");
