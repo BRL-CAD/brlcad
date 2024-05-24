@@ -363,7 +363,6 @@ InformationGatherer::getSubComp()
     while (ss >> comp >> numEntities) {
         double volume = getVolume(comp);
         subComps.push_back({numEntities, volume, comp});
-        // std::cout << " in subcomp " << comp << " " << numEntities << " " << volume << std::endl;
     }
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());

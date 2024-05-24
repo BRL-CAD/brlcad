@@ -199,22 +199,19 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[13] = "-G"; av[14] = "10";
             av[15] = "-o"; av[16] = outputname.c_str();
             av[17] = NULL;
-            // render2 = "../../../build/bin/rtwizard -s 1024 -a " + a + " -e " + e + " -i " + pathToInput + " -g " + ghost + " -G 3 -o " + outputname;
             break;
         default:
             /* how'd we get here? */
             break;
     }
 
-    // std::cout << render << std::endl;
-
-    // TODO/ FIXME: why is _detailed being generated twice?
     if (bu_file_exists(outputname.c_str(), NULL) && opt.getReuseImages()) {
-        // found previous render, and user doesn't want to override
+        // reuse previous render
         if (opt.verbosePrinting())
             bu_log("\tFound %s, skipping\n", outputname.c_str());
         return outputname;
     } else {
+        // sanity delete
         bu_file_delete(outputname.c_str());
     }
 
