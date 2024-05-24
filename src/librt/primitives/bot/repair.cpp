@@ -19,11 +19,7 @@
  */
 /** @file repair.cpp
  *
- * Try repairing a BoT to produce a manifold volume
- *
- * TODO - investigate:
- *
- * https://github.com/wjakob/instant-meshes (see also https://github.com/Volumental/instant-meshes)
+ * Routines related to repairing BoTs
  */
 
 #include "common.h"
