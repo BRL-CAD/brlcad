@@ -597,6 +597,71 @@ bot_split_done:
     return ret;
 }
 
+extern "C" int
+_bot_cmd_strip(void *bs, int argc, const char **argv)
+{
+    int ret = BRLCAD_OK;
+    const char *usage_string = "bot strip <objname> <outputname>";
+    const char *purpose_string = "Remove triangles forming degenerate volume from a mesh.";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+
+    argc--; argv++;
+
+    if (argc != 2) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    if (db_lookup(gb->gedp->dbip, argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+    struct rt_i *rtip = rt_new_rti(gb->gedp->dbip);
+    rt_gettree(rtip, argv[0]);
+    rt_prep(rtip);
+    struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
+    int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
+    rt_free_rti(rtip);
+    if (have_thin_faces) {
+	struct rt_bot_internal *nbot = rt_bot_remove_faces(&tfaces, bot);
+	struct rt_db_internal intern;
+	struct directory *dp = RT_DIR_NULL;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *)nbot;
+	dp = db_diradd(gb->gedp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Cannot add %s to directory\n", argv[1]);
+	    rt_db_free_internal(&intern);
+	    ret = BRLCAD_ERROR;
+	    goto bot_strip_done;
+	}
+
+	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", argv[1]);
+	    rt_db_free_internal(&intern);
+	    ret = BRLCAD_ERROR;
+	    goto bot_strip_done;
+	}
+    }
+
+bot_strip_done:
+
+    return ret;
+}
+
 static void
 bot_output(ft_table_t *table, struct db_i *dbip, struct directory *dp)
 {
@@ -766,6 +831,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "smooth",     _bot_cmd_smooth},
     { "split",      _bot_cmd_split},
     { "stat",       _bot_cmd_stat},
+    { "strip",      _bot_cmd_strip},
     { "subd",       _bot_cmd_subd},
     { "sync",       _bot_cmd_sync},
     { (char *)NULL,      NULL}
