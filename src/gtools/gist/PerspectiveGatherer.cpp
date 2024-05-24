@@ -65,7 +65,7 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
 }
 
 
-static std::string getCmdPath(std::string exeDir, char* cmd) {
+static std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
         bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
@@ -75,7 +75,7 @@ static std::string getCmdPath(std::string exeDir, char* cmd) {
 
 
 std::string
-renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
+renderPerspective(RenderingFace face, Options& opt, std::string component, std::string UNUSED(ghost))
 {
     std::string pathToInput = opt.getInFile();
     std::string outputname = createOutputBase(opt.getInFile(), opt.getWorkingDir(), component);

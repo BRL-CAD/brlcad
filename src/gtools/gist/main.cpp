@@ -100,8 +100,6 @@ generateReport(Options opt)
 static void
 handleFolder(Options& options)
 {
-    int cnt = 1;
-
     for (const auto & entry : std::filesystem::directory_iterator(options.getInFolder())) {
         options.setInFile(entry.path().string());
         options.setExportToFile();
