@@ -226,7 +226,35 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	    wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
 	    db_update_nref(wdbip, &rt_uniresource);
+
+
+	    // We've written out the evaluated BoT, but there is a chance we have degenerately
+	    // thin volumes where we had coplanar interactions.  Check with the raytracer, and
+	    // if we find such a case try to remove the degenerate faces and produce a new mesh.
+	    struct directory *bot_dp = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
+	    if (!bot_dp) {
+		db_close(wdbip);
+		continue;
+	    }
+	    struct rt_db_internal bot_intern;
+	    RT_DB_INTERNAL_INIT(&bot_intern);
+	    if (rt_db_get_internal(&bot_intern, bot_dp, wdbip, NULL, &rt_uniresource) < 0) {
+		db_close(wdbip);
+		continue;
+	    }
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)(bot_intern.idb_ptr);
+	    struct rt_i *rtip = rt_new_rti(wdbip);
+	    rt_gettree(rtip, bu_vls_cstr(&bname));
+	    rt_prep(rtip);
+	    struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
+	    if (rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0)) {
+		bu_log("%s - Found %zd thin faces to remove.\n", bu_vls_cstr(&bname), BU_PTBL_LEN(&tfaces));
+		bu_ptbl_free(&tfaces);
+	    }
+	    rt_free_rti(rtip);
+
 	    db_close(wdbip);
+
 	} else {
 	    have_failure = true;
 	}

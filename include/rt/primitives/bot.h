@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/ptbl.h"
 #include "bn/tol.h"
 #include "rt/geom.h"
 #include "rt/defines.h"
@@ -189,8 +190,9 @@ RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
  * faces.  This is (at the moment) a ray interrogation based test, so it is not
  * absolutely guaranteed to find all near self-intersections - it is intended
  * to catch situations such as boolean operations on meshes producing exceedingly
- * thin volumes. Returns 1 if a problem is found, else 0 */
-RT_EXPORT extern int rt_bot_thin_check(struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+ * thin volumes. Returns 1 if a problem is found, else 0.  If ofaces is non-NULL,
+ * store the indices of the specific faces found to be problematic. */
+RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
 
 /** @} */
 

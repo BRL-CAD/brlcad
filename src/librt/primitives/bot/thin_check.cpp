@@ -87,11 +87,12 @@ _tc_miss(struct application *UNUSED(ap))
 }
 
 int
-rt_bot_thin_check(struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
+    int found_thin = 0;
     struct tc_info tinfo;
     tinfo.ttol = ttol;
     tinfo.is_thin = 0;
@@ -130,11 +131,17 @@ rt_bot_thin_check(struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, i
 	VADD2(ap.a_ray.r_pt, tcenter, backout);
 	(void)rt_shootray(&ap);
 
-	if (tinfo.is_thin)
+	if (tinfo.is_thin) {
+	    found_thin = 1;
+	    if (ofaces)
+		bu_ptbl_ins(ofaces, (long *)(long)i);
+	}
+
+	if (!ofaces && found_thin)
 	    break;
     }
 
-    return tinfo.is_thin;
+    return found_thin;
 }
 
 

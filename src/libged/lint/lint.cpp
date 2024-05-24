@@ -383,7 +383,7 @@ do_thin_check(struct ged *gedp, struct directory *dp, struct rt_bot_internal *bo
     struct rt_i *rtip = rt_new_rti(gedp->dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
-    ret = rt_bot_thin_check(bot, rtip, VUNITIZE_TOL, verbosity);
+    ret = rt_bot_thin_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
     rt_free_rti(rtip);
     return ret;
 }
