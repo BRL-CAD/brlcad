@@ -37,6 +37,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "manifold/manifold.h"
@@ -307,11 +308,73 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     return 0;
 #else
     // Without geogram, we can't repair (TODO - implement other options
-    // like OpenMesh hole filling, maybe Instant Meshes?)
+    // like OpenMesh hole filling)
     return -1;
 #endif
 }
 
+
+struct rt_bot_internal *
+rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_internal *orig_bot)
+{
+    if (!rm_face_indices || !BU_PTBL_LEN(rm_face_indices))
+	return NULL;
+
+
+    std::unordered_set<size_t> rm_indices;
+    for (size_t i = 0; i < BU_PTBL_LEN(rm_face_indices); i++) {
+	int ind = (int)(long)BU_PTBL_GET(rm_face_indices, i);
+	rm_indices.insert(ind);
+    }
+
+    int *nfaces = (int *)bu_calloc(orig_bot->num_faces * 3, sizeof(int), "new faces array");
+    size_t nfaces_ind = 0;
+    for (size_t i = 0; i < orig_bot->num_faces; i++) {
+	if (rm_indices.find(i) != rm_indices.end()) {
+	    bu_log("skipping thin face %ld\n", i);
+	    continue;
+	}
+	nfaces[3*nfaces_ind + 0] = orig_bot->faces[3*i+0];
+	nfaces[3*nfaces_ind + 1] = orig_bot->faces[3*i+1];
+	nfaces[3*nfaces_ind + 2] = orig_bot->faces[3*i+2];
+	nfaces_ind++;
+    }
+
+    // Having built a faces array with the specified triangles removed, we now
+    // garbage collect to produce re-indexed face and point arrays with just the
+    // active data (vertices may be no longer active in the BoT depending on
+    // which faces were removed.
+    int *nfacesarray = NULL;
+    point_t *npointsarray = NULL;
+    int npntcnt = 0;
+    int new_num_faces = bg_trimesh_3d_gc(&nfacesarray, &npointsarray, &npntcnt, nfaces, nfaces_ind+1, (const point_t *)orig_bot->vertices);
+
+    // Done with the nfaces array
+    bu_free(nfaces, "free unmapped new faces array");
+
+    // Make the new rt_bot_internal
+    struct rt_bot_internal *bot = NULL;
+    BU_GET(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = orig_bot->mode;
+    bot->orientation = orig_bot->orientation;
+    bot->bot_flags = orig_bot->bot_flags;
+    bot->num_vertices = npntcnt;
+    bot->num_faces = new_num_faces;
+    bot->vertices = (fastf_t *)npointsarray;
+    bot->faces = nfacesarray;
+
+    // TODO - need to properly rebuild these arrays as well, if orig_bot has them - bg_trimesh_3d_gc only
+    // handles the vertices themselves
+    bot->thickness = NULL;
+    bot->face_mode = NULL;
+    bot->normals = NULL;
+    bot->face_normals = NULL;
+    bot->uvs = NULL;
+    bot->face_uvs = NULL;
+
+    return bot;
+}
 
 
 // Local Variables:

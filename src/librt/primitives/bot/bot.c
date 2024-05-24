@@ -706,7 +706,6 @@ rt_bot_free(struct soltab *stp)
 #endif
 }
 
-
 static vdsNode *
 build_vertex_tree(struct vdsState *s, struct rt_bot_internal *bot)
 {
@@ -1844,47 +1843,48 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 }
 
 
-static void
-bot_ifree2(struct rt_bot_internal *bot_ip)
+void
+rt_bot_internal_free(struct rt_bot_internal *bot_ip)
 {
+    if (!bot_ip)
+	return;
+
     RT_BOT_CK_MAGIC(bot_ip);
     bot_ip->magic = 0;			/* sanity */
+    bot_ip->tie = NULL;
+    bot_ip->mode = '\0';
+    bot_ip->orientation = '\0';
+    bot_ip->bot_flags = '\0';
 
-    if (bot_ip->tie != NULL) {
-	bot_ip->tie = NULL;
-    }
+    bu_free(bot_ip->faces, "BOT faces");
+    bot_ip->faces = NULL;
+    bot_ip->num_faces = 0;
 
-    if (bot_ip->vertices != NULL) {
-	bu_free(bot_ip->vertices, "BOT vertices");
-	bot_ip->vertices = NULL;
-	bot_ip->num_vertices = 0;
-    }
-    if (bot_ip->faces != NULL) {
-	bu_free(bot_ip->faces, "BOT faces");
-	bot_ip->faces = NULL;
-	bot_ip->num_faces = 0;
-    }
+    bu_free(bot_ip->vertices, "BOT vertices");
+    bot_ip->vertices = NULL;
+    bot_ip->num_vertices = 0;
 
-    if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
-	if (bot_ip->thickness != NULL) {
-	    bu_free(bot_ip->thickness, "BOT thickness");
-	    bot_ip->thickness = NULL;
-	}
-	if (bot_ip->face_mode != NULL) {
-	    bu_free(bot_ip->face_mode, "BOT face_mode");
-	    bot_ip->face_mode = NULL;
-	}
-    }
+    bu_free(bot_ip->thickness, "BOT thickness");
+    bot_ip->thickness = NULL;
 
-    if (bot_ip->normals != NULL) {
-	bu_free(bot_ip->normals, "BOT normals");
-    }
+    bu_free(bot_ip->face_mode, "face_mode");
+    bot_ip->face_mode = NULL;
 
-    if (bot_ip->face_normals != NULL) {
-	bu_free(bot_ip->face_normals, "BOT normals");
-    }
+    bu_free(bot_ip->normals, "BOT normals");
+    bot_ip->normals = NULL;
+    bot_ip->num_normals = 0;
 
-    bu_free(bot_ip, "bot ifree");
+    bu_free(bot_ip->face_normals, "BOT face normals");
+    bot_ip->face_normals = NULL;
+    bot_ip->num_face_normals = 0;
+
+    bu_free(bot_ip->uvs, "BOT uvs");
+    bot_ip->uvs = NULL;
+    bot_ip->num_uvs = 0;
+
+    bu_free(bot_ip->face_uvs, "BOT face uvs");
+    bot_ip->face_uvs = NULL;
+    bot_ip->num_face_uvs = 0;
 }
 
 
@@ -1900,7 +1900,9 @@ rt_bot_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
-    bot_ifree2(bot_ip);
+    rt_bot_internal_free(bot_ip);
+    bu_free(bot_ip, "bot ifree");
+
     ip->idb_ptr = NULL; /* sanity */
 }
 
@@ -4942,7 +4944,7 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 	BU_LIST_DEQUEUE(&rblp->l);
 
 	if (fbflag)
-	    bot_ifree2(rblp->bot);
+	    rt_bot_internal_free(rblp->bot);
 
 	bu_free(rblp, "rt_bot_list_free: rblp");
     }

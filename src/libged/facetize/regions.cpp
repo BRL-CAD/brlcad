@@ -247,11 +247,67 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    rt_gettree(rtip, bu_vls_cstr(&bname));
 	    rt_prep(rtip);
 	    struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
-	    if (rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0)) {
-		bu_log("%s - Found %zd thin faces to remove.\n", bu_vls_cstr(&bname), BU_PTBL_LEN(&tfaces));
-		bu_ptbl_free(&tfaces);
-	    }
+	    int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 1);
 	    rt_free_rti(rtip);
+
+	    // If we have work to do, we'll need a new BoT
+	    struct rt_bot_internal *nbot = NULL;
+
+	    if (have_thin_faces) {
+
+		bu_log("%s - Found %zd thin faces to remove.\n", bu_vls_cstr(&bname), BU_PTBL_LEN(&tfaces));
+
+		// First order of business - get the problematic faces out of
+		// the mesh
+		nbot = rt_bot_remove_faces(&tfaces, bot);
+		if (nbot->num_faces < 3) {
+		    // TODO - I think this may warrant an empty BoT?  Havoc r.rot37 triggers this
+		    bu_log("Too few non-removed faces to form a valid manifold, halting repair attempt.\n");
+		    rt_bot_internal_free(nbot);
+                    BU_PUT(nbot, struct rt_bot_internal);
+		    nbot = NULL;
+		}
+
+		// If we took away manifoldness removing faces (likely) we need
+		// to try and rebuild it.
+		if (nbot) {
+		    struct rt_bot_internal *rbot = NULL;
+		    struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
+		    int repair_result = rt_bot_repair(&rbot, nbot, &rs);
+		    bu_log("repair_result: %d\n", repair_result);
+		    if (repair_result < 0) {
+			// The repair didn't succeed.  That means we weren't able
+			// to produce a manifold mesh after removing the thin
+			// triangles.  In that situation, we return the manifold
+			// result we do have, thin triangles or not, rather than
+			// produce something invalid.
+			rt_bot_internal_free(nbot);
+			BU_PUT(nbot, struct rt_bot_internal);
+			nbot = NULL;
+		    } else {
+			// If we produced a new repaired mesh, replace nbot with
+			// the final result.
+			if (rbot && rbot != nbot) {
+			    rt_bot_internal_free(nbot);
+			    BU_PUT(nbot, struct rt_bot_internal);
+			    nbot = rbot;
+			}
+		    }
+		}
+	    }
+	    bu_ptbl_free(&tfaces);
+
+	    // Done with bot_intern
+	    rt_db_free_internal(&bot_intern);
+
+	    if (nbot) {
+		// Write out new version of BoT
+		db_delete(wdbip, bot_dp);
+		db_dirdelete(wdbip, bot_dp);
+		if (_ged_facetize_write_bot(wdbip, nbot, bu_vls_cstr(&bname), s->verbosity) != BRLCAD_OK) {
+		    bu_log("Error writing out finalized version of %s\n", bu_vls_cstr(&bname));
+		}
+	    }
 
 	    db_close(wdbip);
 

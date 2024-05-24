@@ -68,11 +68,15 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
     struct partition *pp = PartHeadp->pt_forw;
     double dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 
+    bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
+    bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+    bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+
     if (dist < tinfo->ttol) {
 	if (tinfo->verbose) {
-	    bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
-	    bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	    bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+	    bu_log("	%s thin dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
+	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
 	}
 	tinfo->is_thin = 1;
     }
@@ -81,8 +85,16 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 }
 
 static int
-_tc_miss(struct application *UNUSED(ap))
+_tc_miss(struct application *ap)
 {
+    // We are shooting directly into the center of a triangle from right above
+    // it.  If we miss under those conditions, it can only happen because
+    // something is problematic.
+    struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
+    tinfo->is_thin = 1;
+    bu_log("		miss");
+    bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+    bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
     return 0;
 }
 
@@ -95,7 +107,6 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
     int found_thin = 0;
     struct tc_info tinfo;
     tinfo.ttol = ttol;
-    tinfo.is_thin = 0;
     tinfo.verbose = verbose;
 
     // Set up the raytrace
@@ -128,6 +139,7 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 	VSCALE(tcenter, tcenter, 1.0/3.0);
 
 	// Take the shot
+	tinfo.is_thin = 0;
 	VMOVE(ap.a_ray.r_dir, rdir);
 	VADD2(ap.a_ray.r_pt, tcenter, backout);
 	(void)rt_shootray(&ap);

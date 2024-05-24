@@ -125,6 +125,8 @@ RT_EXPORT extern struct rt_bot_list * rt_bot_patches(struct rt_bot_internal *bot
 RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
 				       int fbflag);
 
+RT_EXPORT extern void rt_bot_internal_free(struct rt_bot_internal *bot);
+
 RT_EXPORT extern int rt_bot_same_orientation(const int *a,
 					     const int *b);
 
@@ -193,6 +195,10 @@ RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
  * thin volumes. Returns 1 if a problem is found, else 0.  If ofaces is non-NULL,
  * store the indices of the specific faces found to be problematic. */
 RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+
+/* Function to remove a set of faces from a BoT and produce a new BoT */
+RT_EXPORT struct rt_bot_internal *
+rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_internal *obot);
 
 /** @} */
 
