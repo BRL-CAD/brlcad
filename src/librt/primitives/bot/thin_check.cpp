@@ -57,6 +57,16 @@ struct tc_info {
     int verbose;
 };
 
+// TODO - this isn't enough, by itself.  There are "interior" triangles that also do
+// the degenerately close bit from Manifold - they will mess up the shot line partitions,
+// rather than reporting as super-thin (those are actually worse from a shotline
+// perspective.  Drawing two copies of such a BoT and running rtcheck shows areas in
+// the raytrace where overlaps weren't found (!).
+//
+// It looks as if hit_surfno is recording the triangles from hits, so we may have enough
+// info to flag those problematic triangles as well, but we'll need to look beyond
+// first hit info to catch them.  Probably also to do one-hit shots "up" from triangles
+// as well, to see if there is a coplanar face immediately "above" the current triangle.
 static int
 _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
@@ -71,6 +81,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
     if (pp->pt_inhit->hit_dist > 2*SQRT_SMALL_FASTF) {
 	if (tinfo->verbose) {
 	    bu_log("	First hit wasn't from our triangle\n");
+	    bu_log("	surfno: %d\n", pp->pt_inhit->hit_surfno);
 	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
 	}
@@ -80,6 +91,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 
     double dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
     if (tinfo->verbose > 1) {
+	bu_log("surfno: %d\n", pp->pt_inhit->hit_surfno);
 	bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
 	bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
@@ -87,6 +99,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 
     if (dist < tinfo->ttol) {
 	if (tinfo->verbose) {
+	    bu_log("	surfno: %d\n", pp->pt_inhit->hit_surfno);
 	    bu_log("	%s thin dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
 	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
