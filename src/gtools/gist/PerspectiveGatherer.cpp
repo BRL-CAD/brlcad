@@ -211,7 +211,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     // TODO/ FIXME: why is _detailed being generated twice?
     if (bu_file_exists(outputname.c_str(), NULL) && opt.getReuseImages()) {
         // found previous render, and user doesn't want to override
-        bu_log("Found %s, skipping\n", outputname.c_str());
+        if (opt.verbosePrinting())
+            bu_log("\tFound %s, skipping\n", outputname.c_str());
         return outputname;
     } else {
         bu_file_delete(outputname.c_str());
@@ -226,8 +227,9 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", outputname.c_str());
-        bu_log("Rendering not generated");
-        bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+        bu_exit(BRLCAD_ERROR, "Rendering not generated, aborting.\n");
+    } else if (opt.verbosePrinting()) {
+        bu_log("\tGenerated %s\n", outputname.c_str());
     }
 
     return outputname;

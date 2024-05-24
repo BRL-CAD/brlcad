@@ -45,6 +45,7 @@ Options::Options()
     defaultLength = true;
     uMass = "g";
     defaultMass = true;
+    verbosePrint = 0;
 }
 
 
@@ -73,9 +74,9 @@ bool Options::readParameters(int argc, const char **argv) {
     int param_Yup = 0;			// user requested y-up
     std::string param_Ulength = "";	// user requested length units
     std::string param_Umass = "";	// user requested mass units
-    std::string param_oFile = "";
+    std::string param_oFile = "";	// user supplied output file
 
-    struct bu_opt_desc d[20];
+    struct bu_opt_desc d[21];
     BU_OPT(d[0],  "i", "",     "filename",          &_param_set_std_str,     &this->inFile,         "input .g");
     BU_OPT(d[1],  "o", "",     "filename",          &_param_set_std_str,     &param_oFile,          "output file name");
     BU_OPT(d[2],  "F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate");
@@ -93,9 +94,10 @@ bool Options::readParameters(int argc, const char **argv) {
     BU_OPT(d[14], "A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
     BU_OPT(d[15], "l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units");
     BU_OPT(d[16], "w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units");
-    BU_OPT(d[17], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
-    BU_OPT(d[18], "?", "",     "",                  NULL,                    &print_help,           "");
-    BU_OPT_NULL(d[19]);
+    BU_OPT(d[17], "v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing");
+    BU_OPT(d[18], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
+    BU_OPT(d[19], "?", "",     "",                  NULL,                    &print_help,           "");
+    BU_OPT_NULL(d[20]);
 
     /* set progname and move on */
     const char* cmd_progname = argv[0];
@@ -213,7 +215,8 @@ bool Options::readParameters(int argc, const char **argv) {
     } else {
 	// create
 	bu_mkdir(getWorkingDir().c_str());
-	bu_log("Intermediate files writing to: %s\n", getWorkingDir().c_str());
+	if (verbosePrinting())
+	    bu_log("Intermediate files writing to: %s\n", getWorkingDir().c_str());
     }
 
     return true;
@@ -459,6 +462,10 @@ bool Options::isDefaultLength() {
 
 bool Options::isDefaultMass() {
     return defaultMass;
+}
+
+bool Options::verbosePrinting() {
+    return verbosePrint;
 }
 
 // Local Variables:

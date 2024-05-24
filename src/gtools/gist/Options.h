@@ -91,6 +91,8 @@ public:
     bool isDefaultLength();
     bool isDefaultMass();
 
+    bool verbosePrinting();
+
 private:
     // Path to input file that will be used to generate report
     std::string inFile;
@@ -136,6 +138,9 @@ private:
     // Unit mass
     std::string uMass;
     bool defaultMass;
+
+    // print verbose status messages
+    int verbosePrint;
 };
 
 

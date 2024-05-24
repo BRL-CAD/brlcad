@@ -21,6 +21,14 @@
 #include "pch.h"
 
 
+/* Wrap bu_log to clean up code */
+static void
+statusPrint(std::string msg, int verbosePrinting)
+{
+    if (verbosePrinting)
+        bu_log("%s\n", msg.c_str());
+}
+
 /**
  * Calls the necessary functions to generate the reports.
  *
@@ -36,10 +44,12 @@ generateReport(Options opt)
     InformationGatherer info(&opt);
 
     // read in all information from model file
+    statusPrint("*Gathering geometry information", opt.verbosePrinting());
     if (!info.gatherInformation(opt.getPreparer())) {
         bu_log("ERROR: Information gathering failed.\n");
         return;
     }
+    statusPrint("...Finished gathering information", opt.verbosePrinting());
 
     // Define commonly used ratio variables
     int margin = opt.getWidth() / 150;
@@ -63,8 +73,12 @@ generateReport(Options opt)
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
+    statusPrint("*Starting renderings", opt.verbosePrinting());
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
+    statusPrint("...Finished renderings", opt.verbosePrinting());
+    statusPrint("*Creating hierarchy graphic", opt.verbosePrinting());
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
+    statusPrint("...Finished hierarchy graphic", opt.verbosePrinting());
 
     // paint renderings
 
@@ -94,11 +108,11 @@ handleFolder(Options& options)
         std::string filename = options.getInFile();
         filename = filename.substr(filename.find_last_of("/\\") + 1);
         filename = filename.substr(0, filename.find_last_of("."));
-        bu_log("Processing: %s\n", filename.c_str());
+        statusPrint("Processing: " + filename, options.verbosePrinting());
         std::string exportPath = options.getOutFolder() + "/" + filename + "_report.png";
         options.setOutFile(exportPath);
         generateReport(options);
-        bu_log("...Finished (%s)\n", filename.c_str());
+        statusPrint("...Finished (" + filename + ")", options.verbosePrinting());
     }
 }
 
