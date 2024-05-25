@@ -23,6 +23,8 @@
 
 #include "common.h"
 
+#include <set>
+
 #include "vmath.h"
 #include "rt/application.h"
 #include "rt/rt_instance.h"
@@ -55,6 +57,8 @@ struct tc_info {
     double ttol;
     int is_thin;
     int verbose;
+    int curr_tri;
+    std::set<int> problem_indices;
 };
 
 // TODO - this isn't enough, by itself.  There are "interior" triangles that also do
@@ -81,11 +85,14 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
     if (pp->pt_inhit->hit_dist > 2*SQRT_SMALL_FASTF) {
 	if (tinfo->verbose) {
 	    bu_log("	First hit wasn't from our triangle\n");
-	    bu_log("	surfno: %d\n", pp->pt_inhit->hit_surfno);
+	    bu_log("	in_surfno: %d\n", pp->pt_inhit->hit_surfno);
+	    bu_log("	out_surfno: %d\n", pp->pt_outhit->hit_surfno);
 	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
 	}
 	tinfo->is_thin = 1;
+	tinfo->problem_indices.insert(pp->pt_inhit->hit_surfno);
+	tinfo->problem_indices.insert(pp->pt_outhit->hit_surfno);
 	return 0;
     }
 
@@ -99,12 +106,52 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 
     if (dist < tinfo->ttol) {
 	if (tinfo->verbose) {
-	    bu_log("	surfno: %d\n", pp->pt_inhit->hit_surfno);
+	    bu_log("	in_surfno: %d\n", pp->pt_inhit->hit_surfno);
+	    bu_log("	out_surfno: %d\n", pp->pt_outhit->hit_surfno);
 	    bu_log("	%s thin dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
 	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
 	}
 	tinfo->is_thin = 1;
+	tinfo->problem_indices.insert(pp->pt_inhit->hit_surfno);
+	tinfo->problem_indices.insert(pp->pt_outhit->hit_surfno);
+	return 0;
+    }
+
+    return 0;
+}
+
+static int
+_tc_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+{
+    if (PartHeadp->pt_forw == PartHeadp)
+	return 1;
+
+    struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
+
+    struct partition *pp = PartHeadp->pt_forw;
+
+    // Make sure the in hit point is close to the ray point
+    // TODO - probably need to flag the smaller triangle for removal,
+    // if there's a big surface area difference...  However, if
+    // we do have two slightly disjoint but distinct surfaces, it's
+    // not clear what we can do short of fixing the CSG, since repair
+    // won't know to split the larger triangle and remove part of its
+    // interior to seal the hole...
+    //
+    // TODO - should we be using segs to get more detailed info about
+    // what's along the shotline?
+    if (pp->pt_inhit->hit_dist < VUNITIZE_TOL) {
+	// TODO check normals to see if triangles are parallel
+	if (tinfo->verbose) {
+	    bu_log("	Another triangle right above our triangle\n");
+	    bu_log("	in_surfno: %d\n", pp->pt_inhit->hit_surfno);
+	    bu_log("	out_surfno: %d\n", pp->pt_outhit->hit_surfno);
+	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+	}
+	tinfo->is_thin = 1;
+	tinfo->problem_indices.insert(pp->pt_inhit->hit_surfno);
 	return 0;
     }
 
@@ -126,6 +173,13 @@ _tc_miss(struct application *ap)
     }
     return 0;
 }
+
+static int
+_tc_up_miss(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
 
 /* I don't think this is supposed to happen with a single primitive, but just
  * in case we get an overlap report somehow flag it as trouble */
@@ -170,14 +224,18 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
     ap.a_uptr = (void *)&tinfo;
 
     for (size_t i = 0; i < bot->num_faces; i++) {
-	vect_t rdir, n, backout;
+	tinfo.curr_tri = (int)i;
+	vect_t rnorm, n, backout;
 	if (!bot_face_normal(&n, bot, i))
 	    continue;
 	// We want backout to get the ray origin off the triangle surface
+	ap.a_hit = _tc_hit;    /* where to go on a hit */
+	ap.a_onehit = 0;
+
 	VMOVE(backout, n);
 	VSCALE(backout, backout, SQRT_SMALL_FASTF);
 	// Reverse the triangle normal for a ray direction
-	VREVERSE(rdir, n);
+	VREVERSE(rnorm, n);
 
 	point_t rpnts[3];
 	point_t tcenter;
@@ -189,18 +247,33 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 
 	// Take the shot
 	tinfo.is_thin = 0;
-	VMOVE(ap.a_ray.r_dir, rdir);
+	VMOVE(ap.a_ray.r_dir, rnorm);
 	VADD2(ap.a_ray.r_pt, tcenter, backout);
 	(void)rt_shootray(&ap);
 
 	if (tinfo.is_thin) {
 	    found_thin = 1;
-	    if (ofaces)
-		bu_ptbl_ins(ofaces, (long *)(long)i);
 	}
+
+	ap.a_hit = _tc_up_hit;     /* where to go on a hit */
+	ap.a_miss = _tc_up_miss;   /* where to go on a miss */
+	ap.a_onehit = 1;
+	VMOVE(ap.a_ray.r_dir, n);
+	VMOVE(backout, rnorm);
+	VSCALE(backout, backout, SMALL_FASTF);
+	VADD2(ap.a_ray.r_pt, tcenter, backout);
+	(void)rt_shootray(&ap);
 
 	if (!ofaces && found_thin)
 	    break;
+    }
+
+    if (ofaces) {
+	std::set<int>::iterator p_it;
+	for (p_it = tinfo.problem_indices.begin(); p_it != tinfo.problem_indices.end(); ++p_it) {
+	    int ind = *p_it;
+	    bu_ptbl_ins(ofaces, (long *)(long)ind);
+	}
     }
 
     return found_thin;
