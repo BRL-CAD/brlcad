@@ -121,6 +121,15 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
     return 0;
 }
 
+// TODO - we want to flag this category of issue, since it is definitely an
+// error, but we may want to report it differently than the actual "hanging
+// in space thin" surfaces.  The latter are better candidates for automatic
+// repair - this category of problem occurs when interior triangles are very
+// close to each other, and that's not a situation well suited to automatic
+// resolution.  (Unfortunate, since it's a common problem when geometry is
+// exactly aligned and unioned, but a proper solution requires a boolean
+// operation on the coplanar triangle sets and if we were able to do that
+// with the current inputs it would already have happened.)
 static int
 _tc_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
@@ -132,17 +141,7 @@ _tc_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     struct partition *pp = PartHeadp->pt_forw;
 
     // Make sure the in hit point is close to the ray point
-    // TODO - probably need to flag the smaller triangle for removal,
-    // if there's a big surface area difference...  However, if
-    // we do have two slightly disjoint but distinct surfaces, it's
-    // not clear what we can do short of fixing the CSG, since repair
-    // won't know to split the larger triangle and remove part of its
-    // interior to seal the hole...
-    //
-    // TODO - should we be using segs to get more detailed info about
-    // what's along the shotline?
     if (pp->pt_inhit->hit_dist < VUNITIZE_TOL) {
-	// TODO check normals to see if triangles are parallel
 	if (tinfo->verbose) {
 	    bu_log("	Another triangle right above our triangle\n");
 	    bu_log("	in_surfno: %d\n", pp->pt_inhit->hit_surfno);
