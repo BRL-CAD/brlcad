@@ -122,14 +122,18 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 }
 
 // TODO - we want to flag this category of issue, since it is definitely an
-// error, but we may want to report it differently than the actual "hanging
-// in space thin" surfaces.  The latter are better candidates for automatic
-// repair - this category of problem occurs when interior triangles are very
-// close to each other, and that's not a situation well suited to automatic
-// resolution.  (Unfortunate, since it's a common problem when geometry is
-// exactly aligned and unioned, but a proper solution requires a boolean
-// operation on the coplanar triangle sets and if we were able to do that
-// with the current inputs it would already have happened.)
+// error, but we may want to report it differently than the actual "hanging in
+// space thin" surfaces.  The latter are better candidates for automatic repair
+// - this category of problem occurs when interior triangles are very close to
+// each other, and that's not a situation well suited to automatic resolution.
+// (Unfortunate, since it's a common problem when geometry is exactly aligned
+// and unioned, but a proper solution requires a boolean operation on the
+// coplanar triangle sets and if we were able to do that with the current
+// inputs it would already have happened.)
+//
+// A useful correctness audit for a BoT might be to shotline both the CSG and
+// the BoT using the same rays constructed from the triangle centers - if the
+// CSG reports a non-zero LOS but the BoT reports zero, we have a problem.
 static int
 _tc_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
