@@ -247,7 +247,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    rt_gettree(rtip, bu_vls_cstr(&bname));
 	    rt_prep(rtip);
 	    struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
-	    int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 1);
+	    int have_thin_faces = rt_bot_coplanar_check(&tfaces, bot, rtip, VUNITIZE_TOL, 1);
 	    rt_free_rti(rtip);
 
 	    // If we have work to do, we'll need a new BoT

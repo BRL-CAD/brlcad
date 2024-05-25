@@ -92,10 +92,10 @@ set(LIBRT_SOURCES
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
+  primitives/bot/coplanar_check.cpp
   primitives/bot/decimate.c
   primitives/bot/plate.cpp
   primitives/bot/repair.cpp
-  primitives/bot/thin_check.cpp
   primitives/brep/brep.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp

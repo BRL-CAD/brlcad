@@ -630,7 +630,7 @@ _bot_cmd_strip(void *bs, int argc, const char **argv)
     rt_gettree(rtip, argv[0]);
     rt_prep(rtip);
     struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
-    int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, gb->verbosity);
+    int have_thin_faces = rt_bot_coplanar_check(&tfaces, bot, rtip, VUNITIZE_TOL, gb->verbosity);
     rt_free_rti(rtip);
     if (have_thin_faces) {
 	struct rt_bot_internal *nbot = rt_bot_remove_faces(&tfaces, bot);

@@ -374,7 +374,7 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
 }
 
 static int
-do_thin_check(struct ged *gedp, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
+do_coplanar_check(struct ged *gedp, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
 {
     int ret = 0;
     if (!gedp || !bot)
@@ -383,7 +383,7 @@ do_thin_check(struct ged *gedp, struct directory *dp, struct rt_bot_internal *bo
     struct rt_i *rtip = rt_new_rti(gedp->dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
-    ret = rt_bot_thin_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
+    ret = rt_bot_coplanar_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
     rt_free_rti(rtip);
     return ret;
 }
@@ -437,7 +437,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 		// TODO - check for flipped bot
 
 		// check for bot with super-thin areas
-		not_valid = do_thin_check(gedp, dp, bot, verbosity);
+		not_valid = do_coplanar_check(gedp, dp, bot, verbosity);
 		if (not_valid) {
 		    obj.name = std::string(dp->d_namep);
 		    obj.type= std::string("bot");
