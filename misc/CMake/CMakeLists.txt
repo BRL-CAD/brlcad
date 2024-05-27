@@ -52,7 +52,6 @@ set(cmake_ignore_files
   FindPERPLEX.cmake
   FindPkgMacros.cmake
   FindPNG.cmake
-  FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
@@ -106,8 +105,6 @@ set(cmake_ignore_files
   distcheck_target.cmake.in
   distclean.cmake.in
   docbook.cmake.in
-  multiconfig_path_clean.cmake.in
-  multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
   scripts/printtime.cmake

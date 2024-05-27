@@ -129,6 +129,18 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.40
+----
+include/bu/process.h
+	bu_process_exec: replaced by bu_process_create
+	bu_process_wait: replaced by bu_process_wait_n
+	bu_process_read: replaced by bu_process_read_n
+	bu_process_open: replaced by bu_process_file_open
+	bu_process_close: replaced by bu_process_file_close
+	bu_process_args: replaced by bu_process_args_n
+	bu_process_id: replaced by bu_pid
+	bu_terminate: replaced by bu_pid_terminate
+
 7.38
 ----
 MGED commands

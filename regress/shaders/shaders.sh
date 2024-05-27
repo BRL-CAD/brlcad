@@ -42,6 +42,14 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+# Tests should use a local cache
+BU_DIR_CACHE="`pwd`/cache"
+rm -rf $BU_DIR_CACHE && mkdir $BU_DIR_CACHE
+export BU_DIR_CACHE
+LIBRT_CACHE="`pwd`/rtcache"
+rm -rf $LIBRT_CACHE && mkdir $LIBRT_CACHE
+export LIBRT_CACHE
+
 if test "x$LOGFILE" = "x" ; then
     LOGFILE=`pwd`/shaders.log
     rm -f $LOGFILE
@@ -276,7 +284,11 @@ else
     cat "$LOGFILE"
 fi
 
+# Cleanup
+rm -rf "$BU_DIR_CACHE"
+rm -rf "$LIBRT_CACHE"
 rm -f $EAGLECAD
+
 exit $NUMBER_WRONG
 
 # Local Variables:

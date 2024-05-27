@@ -1324,7 +1324,7 @@ Catch(int sig)
 
     (void)signal(sig, SIG_DFL);
 
-    pid = bu_process_id();
+    pid = bu_pid();
 
     if (pid > 1) {
 #ifdef HAVE_KILL

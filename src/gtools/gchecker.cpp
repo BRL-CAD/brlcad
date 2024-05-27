@@ -111,24 +111,6 @@ main(int argc, const char **argv)
 	return 1;
     }
 
-
-    char gqa_exe[MAXPATHLEN] = {0};
-    char mged_exe[MAXPATHLEN] = {0};
-    char rtcheck_exe[MAXPATHLEN] = {0};
-    bu_dir(gqa_exe, MAXPATHLEN, BU_DIR_BIN, "gqa", BU_DIR_EXT, NULL);
-    bu_dir(mged_exe, MAXPATHLEN, BU_DIR_BIN, "mged", BU_DIR_EXT, NULL);
-    bu_dir(rtcheck_exe, MAXPATHLEN, BU_DIR_BIN, "rtcheck", BU_DIR_EXT, NULL);
-
-    if (!bu_file_exists(gqa_exe, NULL)) {
-	bu_exit(1, "could not locate gqa executable");
-    }
-    if (!bu_file_exists(mged_exe, NULL)) {
-	bu_exit(1, "could not locate mged executable");
-    }
-    if (!bu_file_exists(rtcheck_exe, NULL)) {
-	bu_exit(1, "could not locate rtcheck executable");
-    }
-
     // Have programs - see if we have the .g file
     struct bu_vls gfile = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&gfile, "%s", argv[0]);

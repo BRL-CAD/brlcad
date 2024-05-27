@@ -83,9 +83,9 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp, int type)
 
     bu_log("doing cleanup: %d\n", type);
 
-    bu_process_close(p->p, BU_PROCESS_STDOUT);
+    bu_process_file_close(p->p, BU_PROCESS_STDOUT);
     /* wait for the forked process */
-    int retcode = bu_process_wait(NULL, p->p, 0);
+    int retcode = bu_process_wait_n(&p->p, 0);
     if (retcode != 0) {
 	_ged_wait_status(gedp->ged_result_str, retcode);
     }
@@ -172,7 +172,7 @@ rtcheck_output_handler(void *clientData, int type)
     struct ged *gedp = rrtp->gedp;
 
     /* Get textual output from rtcheck */
-    if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+    if ((count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	rtcp->read_failed = 1;
 	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    gedp->ged_gdp->gd_rtCmdNotify(0);
@@ -268,7 +268,7 @@ ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    bu_process_exec(&p, gd_rt_cmd[0], gd_rt_cmd_len, (const char **)gd_rt_cmd, 0, 0);
+    bu_process_create(&p, (const char **)gd_rt_cmd, BU_PROCESS_DEFAULT);
 
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
@@ -280,16 +280,16 @@ ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    fp = bu_process_open(p, BU_PROCESS_STDIN);
+    fp = bu_process_file_open(p, BU_PROCESS_STDIN);
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp, eye_model, -1, NULL);
 
-    bu_process_close(p, BU_PROCESS_STDIN);
+    bu_process_file_close(p, BU_PROCESS_STDIN);
 
     /* create the rtcheck struct */
     BU_GET(rtcp, struct ged_rtcheck);
-    rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
+    rtcp->fp = bu_process_file_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(fileno(rtcp->fp), O_BINARY);
     rtcp->vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);

@@ -37,6 +37,7 @@
 #include "bu/log.h"
 #include "bu/mime.h"
 #include "bu/file.h"
+#include "bu/snooze.h"
 #include "icv.h"
 
 
@@ -204,7 +205,8 @@ main(int argc, char **argv)
 
     icv_write(img, out_file, BU_MIME_IMAGE_BW);
 
-    if (!isatty(fileno(stdout)) && out_file != NULL) {
+    int fno = fileno(stdout);
+    if ((fno > 0) && !isatty(fno) && (out_file != NULL)) {
 	icv_write(img, NULL, BU_MIME_IMAGE_BW);
     }
 

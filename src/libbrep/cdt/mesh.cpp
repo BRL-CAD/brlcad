@@ -945,7 +945,7 @@ cpolygon_t::point_in_polygon(long v, bool flip)
 
     cpolyedge_t *pe = (*poly.begin());
     if (v == pe->v2d[0] || v == pe->v2d[1]) {
-	return -1;
+	return true;
     }
 
     point2d_t *polypnts = NULL;

@@ -292,6 +292,7 @@ set mged_help_data(rcc-cap)     {{rccname newname [height] [b|t]}      {create a
 set mged_help_data(rcc-tgc)     {{rccname newname x y z [b|t]}     {create a tgc with the specified apex at an end of an rcc}}
 set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc}}
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
+set mged_help_data(reair)	{{comb aircode}	{assign same aircode to all regions under a given combination}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
 set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}

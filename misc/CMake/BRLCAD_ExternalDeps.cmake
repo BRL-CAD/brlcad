@@ -32,9 +32,84 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 # Logic to set up third party dependences (either system installed
 # versions or prepared local versions to be bundled with BRL-CAD.)
+#
+# BRLCAD_EXT_DIR is the successor to the old src/other method for managing
+# third party dependencies in BRL-CAD.  It utilizes a separate Git
+# repository (https://github.com/BRL-CAD/bext.git) to track and manage
+# changes to dependencies.  This separation was introduced in order to
+# allow BRL-CAD to contemplate using dependencies too large and complex
+# for integration directly in our own build.  BRL-CAD's logic will try
+# to make bext work as seamlessly as possible, but there are some problems
+# that are simply inherent to the nature of the dependencies themselves.
+# Foremost among these is compilation time - if Appleseed rendering,
+# for example, need all of its dependencies compiled the wait can be
+# very long.
+#
+# To alleviate that problem, the recommended way for BRL-CAD developers
+# who do frequent BRL-CAD builds from scratch to use bext is to build it
+# separately from BRL-CAD proper, and use BRLCAD_EXT_DIR to specify where
+# the prepared outputs can be found.  BRLCAD_EXT_DIR can be defined on
+# the command line directly (or via GUI):
+#
+#  cmake ../brlcad -DBRLCAD_EXT_DIR=/home/user/bext_output
+#
+# However, since this is still a bit cumbersome to type, we can make things
+# easier for ourselves by utilizing a CMakeUserPresets.json file in the BRL-CAD
+# root source directory (this file should not be checked in to the repository
+# and is listed in .gitignore):
+#
+# {
+#   "version": 6,
+#   "configurePresets": [
+#     {
+#       "name": "hb",
+#       "cacheVariables": {
+#         "BRLCAD_EXT_DIR": {
+#           "type": "PATH",
+#           "value": "/home/user/bext_output"
+#         }
+#       }
+#     }
+#   ]
+# }
+#
+# With the above file in place, the above cmake line can be shortened to
+#
+# cmake ../brlcad --preset=hb
+#
+# Note the name "hb" is arbitrary - in this case a shorthand for "Home Bext
+# directory".  It could equally be called bext_home, bext_debug, or whatever
+# else the user finds convenient to type and remember.
+#
+# Multiple presets can also be defined to allow rapid selection of various
+# build configurations.  For example, we could define a second preset to also
+# enable Qt, in addition to setting BRLCAD_EXT_DIR:
+#
+# {
+#   "version": 6,
+#   "configurePresets": [
+#     {
+#       "name": "hb",
+#       "cacheVariables": {
+#         "BRLCAD_EXT_DIR": {
+#           "type": "PATH",
+#           "value": "/home/cyapp/bext_output"
+#         }
+#       }
+#     },
+#     {
+#       "name": "hbq",
+#       "inherits": "hb",
+#       "cacheVariables": {
+#         "BRLCAD_ENABLE_QT": "ON"
+#       }
+#     }
+#   ]
+# }
+
+
 
 # When we need to have CMake treat includes as system paths to avoid warnings,
 # we add those patterns to the SYS_INCLUDE_PATTERNS list
@@ -45,6 +120,9 @@ if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL
   include(BRLCAD_EXT_Setup)
   brlcad_ext_setup()
 endif ()
+
+# If we have a bext_output in the build directory, we need to clear it
+DISTCLEAN("${CMAKE_BINARY_DIR}/bext_output")
 
 # If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to expand it so
 # we can spot the path that would have been used in ${BRLCAD_EXT_DIR}/install files
@@ -282,24 +360,6 @@ function(INITIALIZE_TP_FILES)
     endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
     message("Expanding ${sd}.tar in build directory... done.")
 
-    # For multi-config, we'll also need to decompress once for each active configuration's build dir
-    # so the executables will work locally...
-    if (CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${sd})
-	message("Expanding ${sd}.tar in configuration: ${CFG_TYPE} build directory...")
-	if ("${CMAKE_VERSION}" VERSION_LESS "3.24")
-	  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	else ("${CMAKE_VERSION}" VERSION_LESS "3.24")
-	  # If we have it, use --touch instead of the (very slow) per file -E touch update
-	  # https://cmake.org/cmake/help/latest/manual/cmake.1.html#cmdoption-cmake-E_tar-touch
-	  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar --touch WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
-	message("Expanding ${sd}.tar in configuration: ${CFG_TYPE} build directory... done.")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif (CMAKE_CONFIGURATION_TYPES)
-
     # Copying complete - remove the archive file
     execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${sd}.tar)
   endforeach(sd ${SDIRS})
@@ -308,12 +368,6 @@ function(INITIALIZE_TP_FILES)
   # files we don't wish to include
   message("Removing files indicated by exclude patterns...")
   STRIP_EXCLUDED("${CMAKE_BINARY_DIR}" EXCLUDED_PATTERNS)
-  if (CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      STRIP_EXCLUDED("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" EXCLUDED_PATTERNS)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (CMAKE_CONFIGURATION_TYPES)
   message("Removing files indicated by exclude patterns... done.")
 
   # In older CMake, unpacking the files didn't come with the option to update
@@ -521,12 +575,6 @@ if (BRLCAD_TP_FULL_RESET)
     # Clear old files
     foreach (ef ${TP_PREVIOUS})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-      if (CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_PREVIOUS})
 
     # Redo full copy
@@ -545,13 +593,6 @@ else (BRLCAD_TP_FULL_RESET)
     foreach (ef ${TP_STALE})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
       message("  ${CMAKE_BINARY_DIR}/${ef}")
-      if (CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_STALE})
     message("Removing stale 3rd party files in build directory... done.")
   endif (TP_STALE)
@@ -571,14 +612,6 @@ else (BRLCAD_TP_FULL_RESET)
       get_filename_component(EF_NAME ${ef} NAME)
       file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
       message("  ${CMAKE_BINARY_DIR}/${ef}")
-      if (CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	  file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${EF_DIR})
-	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_CHANGED})
     message("Staging new 3rd party files from ${BRLCAD_EXT_DIR}/install... done.")
   endif (TP_NEW)
@@ -593,15 +626,6 @@ else (BRLCAD_TP_FULL_RESET)
       file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
       execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate "${CMAKE_BINARY_DIR}/${ef}")
       message("  ${CMAKE_BINARY_DIR}/${ef}")
-      if (CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	  file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${EF_DIR})
-	  execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_CHANGED})
     message("Staging changed 3rd party files from ${BRLCAD_EXT_DIR}/install... done.")
   endif (TP_CHANGED)
@@ -660,23 +684,10 @@ file(WRITE "${TP_INVENTORY_BINARIES}" "${TP_B}")
 
 if (NBINARY_FILES)
   message("Setting rpath on new 3rd party lib and exe files...")
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    # Set local RPATH so the files will work during build
-    foreach(lf ${NBINARY_FILES})
-      RPATH_BUILD_DIR_PROCESS("${CMAKE_BINARY_DIR}" "${lf}")
-    endforeach(lf ${NBINARY_FILES})
-  else (NOT CMAKE_CONFIGURATION_TYPES)
-    # For multi-config, we set the RPATHs for each active configuration's build dir
-    # so the executables will work locally.  We don't need to set the top level copy
-    # being used for the install target since in multi-config those copies won't be
-    # used by build directory executables
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      foreach(lf ${NBINARY_FILES})
-	RPATH_BUILD_DIR_PROCESS("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" "${lf}")
-      endforeach(lf ${NBINARY_FILES})
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (NOT CMAKE_CONFIGURATION_TYPES)
+  # Set local RPATH so the files will work during build
+  foreach(lf ${NBINARY_FILES})
+    RPATH_BUILD_DIR_PROCESS("${CMAKE_BINARY_DIR}" "${lf}")
+  endforeach(lf ${NBINARY_FILES})
   message("Setting rpath on new 3rd party lib and exe files... done.")
 endif (NBINARY_FILES)
 
@@ -707,6 +718,10 @@ if (NTEXT_FILES)
   endforeach(tf ${NTEXT_FILES})
   message("Replacing paths in new 3rd party text files... done.")
 endif (NTEXT_FILES)
+
+# Tell the build cleanup about all the copied-in files - otherwise it won't
+# the distcheck cleaning logic won't know to scrub them.
+DISTCLEAN("${TP_FILES}")
 
 # Everything until now has been setting the stage in the build directory. Now
 # we set up the install rules.  It is for these stages that we need complete
@@ -840,9 +855,11 @@ macro(find_package_zlib)
   else ()
     find_package(ZLIB)
   endif ()
-  if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+  list(GET ZLIB_LIBRARIES 0 ZLIB_FILE)
+  IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ZLIB_FILE}" ZLIB_LOCAL_TEST)
+  if (ZLIB_LOCAL_TEST)
     set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
-  endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+  endif (ZLIB_LOCAL_TEST)
 
 endmacro(find_package_zlib)
 

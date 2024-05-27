@@ -4,15 +4,13 @@ BRLCAD_Find_Package(REGEX REQUIRED)
 if (BRLCAD_ENABLE_ASSETIMPORT)
   BRLCAD_Find_Package(ASSETIMPORT)
 endif (BRLCAD_ENABLE_ASSETIMPORT)
-BRLCAD_Find_Package(Geogram SYSPATTERN geogram)
+BRLCAD_Find_Package(Geogram REQUIRED SYSPATTERN geogram)
+add_definitions(-DUSE_GEOGRAM)
 
 if(ASSETIMPORT_LIBRARIES)
   add_definitions(-DUSE_ASSETIMPORT)
 endif(ASSETIMPORT_LIBRARIES)
 
-if(GEOGRAM_LIBRARY)
-  add_definitions(-DUSE_GEOGRAM)
-endif(GEOGRAM_LIBRARY)
 
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
@@ -94,6 +92,7 @@ set(LIBRT_SOURCES
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
+  primitives/bot/coplanar_check.cpp
   primitives/bot/decimate.c
   primitives/bot/plate.cpp
   primitives/bot/repair.cpp

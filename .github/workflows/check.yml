@@ -43,7 +43,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1.3
+        uses: microsoft/setup-msbuild@v2
 
       - name: Add cl.exe to PATH
         uses: ilammy/msvc-dev-cmd@v1
@@ -156,9 +156,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Directory setup
+      - name: Directory setup
         run: |
           cmake -E make_directory ./build_linux
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
 
       - name: Configure
         run: |
@@ -192,9 +194,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Xquartz
+        run: |
+          brew install xquartz --cask
+
       - name: Build Directory setup
         run: |
           cmake -E make_directory ./build_osx
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
 
       - name: Setup - bext
         run: |

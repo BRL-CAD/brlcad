@@ -28,7 +28,7 @@ IFPainter::IFPainter(int width, int height)
     , heightToFontSizeMap()
 {
     if (img.empty()) {
-	std::cerr << "ISSUE: Image Frame failed to load (in IFPainter.cpp)" << std::endl;
+	bu_log("ERROR: Image Frame failed to load\n");
     }
 }
 
@@ -71,7 +71,7 @@ IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
     try {
 	destRoi = img(cv::Rect(x, y, resized_image.cols, resized_image.rows));
     } catch (...) {
-	std::cerr << "Trying to create roi out of image boundaries" << std::endl;
+	bu_log("WARNING: Trying to create roi out of image boundaries\n");
 	return;
     }
     resized_image.copyTo(destRoi);
@@ -124,7 +124,7 @@ IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgP
     try {
 	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
     } catch (...) {
-	std::cerr << "Trying to create roi out of image boundaries" << std::endl;
+	bu_log("WARNING: Tyring to create roi out of image boundaries\n");
 	return;
     }
     resized_image.copyTo(destRoi);
@@ -172,7 +172,7 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     try {
 	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
     } catch (...) {
-	std::cerr << "Trying to create roi out of image boundaries" << std::endl;
+	bu_log("WARNING: Trying to create roi out of image boundaries\n");
 	return;
     }
     resized_image.copyTo(destRoi);
@@ -506,13 +506,15 @@ IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 void
 IFPainter::openInGUI()
 {
-    cv::namedWindow("Report", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Report", this->img);
+    cv::String win_name("Report Preview");
+    cv::namedWindow(win_name, cv::WINDOW_AUTOSIZE);
+    cv::moveWindow(win_name, 0, 0);
+    cv::imshow(win_name, this->img);
 
     cv::waitKey(0); //wait infinite time for a keypress
 
     try {
-	cv::destroyWindow("Report");
+	cv::destroyWindow(win_name);
     } catch (std::exception& e) {
     }
 }

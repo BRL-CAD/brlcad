@@ -342,7 +342,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_flip(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot flip <objname>";
+    const char *usage_string = "bot flip [-t] <objname>";
     const char *purpose_string = "Flip BoT triangle normal directions (turns the BoT \"inside out\")";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -351,6 +351,15 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
     argc--; argv++;
+
+    // See if we have any high level options set
+    int test_flipped = 0;
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "t", "test",    "",      NULL,                 &test_flipped,         "Test if the specified bot is inside-out");
+    BU_OPT_NULL(d[1]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    argc = ac;
 
     if (argc != 1) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -362,6 +371,18 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+
+    if (test_flipped) {
+	int ftest = rt_bot_inside_out(bot);
+	if (ftest < 0)
+	    return BRLCAD_ERROR;
+	if (!ftest) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "OK");
+	} else {
+	    bu_vls_printf(gb->gedp->ged_result_str, "BoT is inside out");
+	}
+	return BRLCAD_OK;
+    }
 
     rt_bot_flip(bot);
 
@@ -576,6 +597,71 @@ bot_split_done:
     return ret;
 }
 
+extern "C" int
+_bot_cmd_strip(void *bs, int argc, const char **argv)
+{
+    int ret = BRLCAD_OK;
+    const char *usage_string = "bot strip <objname> <outputname>";
+    const char *purpose_string = "Remove triangles forming degenerate volume from a mesh.";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+
+    argc--; argv++;
+
+    if (argc != 2) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    if (db_lookup(gb->gedp->dbip, argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+    struct rt_i *rtip = rt_new_rti(gb->gedp->dbip);
+    rt_gettree(rtip, argv[0]);
+    rt_prep(rtip);
+    struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
+    int have_thin_faces = rt_bot_coplanar_check(&tfaces, bot, rtip, VUNITIZE_TOL, gb->verbosity);
+    rt_free_rti(rtip);
+    if (have_thin_faces) {
+	struct rt_bot_internal *nbot = rt_bot_remove_faces(&tfaces, bot);
+	struct rt_db_internal intern;
+	struct directory *dp = RT_DIR_NULL;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *)nbot;
+	dp = db_diradd(gb->gedp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Cannot add %s to directory\n", argv[1]);
+	    rt_db_free_internal(&intern);
+	    ret = BRLCAD_ERROR;
+	    goto bot_strip_done;
+	}
+
+	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", argv[1]);
+	    rt_db_free_internal(&intern);
+	    ret = BRLCAD_ERROR;
+	    goto bot_strip_done;
+	}
+    }
+
+bot_strip_done:
+
+    return ret;
+}
+
 static void
 bot_output(ft_table_t *table, struct db_i *dbip, struct directory *dp)
 {
@@ -745,6 +831,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "smooth",     _bot_cmd_smooth},
     { "split",      _bot_cmd_split},
     { "stat",       _bot_cmd_stat},
+    { "strip",      _bot_cmd_strip},
     { "subd",       _bot_cmd_subd},
     { "sync",       _bot_cmd_sync},
     { (char *)NULL,      NULL}

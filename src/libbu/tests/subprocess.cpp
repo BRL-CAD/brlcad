@@ -31,9 +31,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 #include <time.h>
 
 #include "bu.h"
+
+const char* lorem_25 = "sagittis id consectetur purus ut faucibus pulvinar elementum integer enim neque volutpat ac tincidunt vitae semper quis lectus nulla at volutpat diam ut venenatis tellus";
 
 int
 main(int argc, const char *argv[])
@@ -46,19 +49,68 @@ main(int argc, const char *argv[])
     bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "basic")) {
-	// https://stackoverflow.com/a/11276503
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	fprintf(stdout, "Hello world!\n");
+        // just return
 	return 0;
     }
 
-    if (BU_STR_EQUAL(argv[1], "abort")) {
-	// https://stackoverflow.com/a/11276503
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	fprintf(stderr, "Not aborted!\n");
+    if (BU_STR_EQUAL(argv[1], "output")) {
+	// single write to stdout and stderr
+	fprintf(stdout, "Howdy from stdout!\n");
+	fprintf(stderr, "Howdy from stderr!\n");
 	return 0;
     }
 
+    if (BU_STR_EQUAL(argv[1], "echo")) {
+	// echo incoming line on stdout and stderr
+	char line[25];
+	std::cin.get(line, 25);
+
+	fprintf(stdout, "%s", line);
+	fprintf(stderr, "%s", line);
+	return 0;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "flood")) {
+	// 1000 writes to stdout and stderr
+	const int STDOUT_WRITE_CNT = 1000;
+
+	for (int i = 0; i < STDOUT_WRITE_CNT; i++) {
+	    fprintf(stdout, "out: %s[%d]\n", lorem_25, i);
+	    fprintf(stderr, "err: %s[%d]\n", lorem_25, i);
+	}
+
+	return 0;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "flood_unbal")) {
+	// 1000 writes to stdout, 100 writes to stderr
+	const int STDOUT_WRITE_CNT = 1000;
+
+	for (int i = 0; i < STDOUT_WRITE_CNT; i++) {
+	    fprintf(stdout, "out: %s[%d]\n", lorem_25, i);
+
+	    if ((i % 10) == 0)
+		fprintf(stderr, "err: %s[%d]\n", lorem_25, i);
+	}
+
+	return 0;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "alive")) {
+	// delay 100ms to give time for an alive check
+	// cross-plat sleep function: https://stackoverflow.com/a/11276503
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+	return 0;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "timeout")) {
+	// long, but reasonable sleep to allow for time checks
+	// cross-plat sleep function: https://stackoverflow.com/a/11276503
+	std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+	return 0;
+    }
 
     return 1;
 }

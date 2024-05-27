@@ -75,13 +75,8 @@ if (BRLCAD_ENABLE_TCL)
   target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS})
   ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex TclIndexBld dm_plugins)
 
-  # stage targets
-  set(stgts tcl tk itcl itk iwidgets)
-  foreach(ST ${stgts})
-    if (TARGET ${ST}_stage)
-      add_dependencies(mged ${ST}_stage)
-    endif (TARGET ${ST}_stage)
-  endforeach(ST ${stgts})
+  # MGED needs the tclIndex and pkgIndex files set up correctly
+  add_dependencies(mged TclIndexBld)
 
   # MGED is one of the programs that gets a start menu entry
   set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"

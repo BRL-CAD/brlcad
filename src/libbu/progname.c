@@ -88,12 +88,15 @@ bu_argv0_full_path(void)
 
 #ifdef HAVE_WINDOWS_H
     if (argv0[0] == '\0') {
-	TCHAR exeFileName[MAXPATHLEN] = {0};
+#  ifdef UNICODE
+	wchar_t exeFileName[MAXPATHLEN] = {0};
 	GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
-	if (sizeof(TCHAR) == sizeof(char))
-	    bu_strlcpy(tbuf, exeFileName, MAXPATHLEN);
-	else
-	    wcstombs(tbuf, exeFileName, wcslen(tbuf)+1);
+	wcstombs(tbuf, exeFileName, MAXPATHLEN);
+#  else
+	char exeFileName[MAXPATHLEN] = { 0 };
+	GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
+	bu_strlcpy(tbuf, exeFileName, MAXPATHLEN);
+#  endif
 	argv0 = tbuf;
     }
 #endif

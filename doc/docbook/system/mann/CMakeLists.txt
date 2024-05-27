@@ -189,6 +189,7 @@ set(mann_EN
   rcc-tor.xml
   rcodes.xml
   red.xml
+  reair.xml
   refresh.xml
   regdebug.xml
   regdef.xml

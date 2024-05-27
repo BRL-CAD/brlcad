@@ -66,7 +66,7 @@ main (int argc, char **argv)
     double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
     bu_setprogname(argv[0]);
-    pid = bu_process_id();
+    pid = bu_pid();
 
     *rayname = '\0';
     /* Handle command-line options */

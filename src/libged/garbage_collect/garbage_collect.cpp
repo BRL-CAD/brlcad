@@ -128,7 +128,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     /* See if we have a stale backup file */
     bu_path_component(&fdir, gedp->dbip->dbi_filename, BU_PATH_DIRNAME);
     bu_path_component(&fname, gedp->dbip->dbi_filename, BU_PATH_BASENAME);
-    bu_vls_sprintf(&bkup_file, "%s/%d_gc_backup_%s", bu_vls_cstr(&fdir), bu_process_id(), bu_vls_cstr(&fname));
+    bu_vls_sprintf(&bkup_file, "%s/%d_gc_backup_%s", bu_vls_cstr(&fdir), bu_pid(), bu_vls_cstr(&fname));
     if (bu_file_exists(bu_vls_cstr(&bkup_file), NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s is in the way, cannot proceed.\n", bu_vls_cstr(&bkup_file));
 	bu_vls_printf(gedp->ged_result_str, "Aborting garbage collect, database unchanged.");
@@ -169,7 +169,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Create "working" database. */
     bu_vls_sprintf(&working_file, "%s/%d_gc_%s", bu_vls_cstr(&fdir),
-	    bu_process_id(), bu_vls_cstr(&fname));
+	    bu_pid(), bu_vls_cstr(&fname));
     bu_file_delete(bu_vls_cstr(&working_file));
     if (bu_file_exists(bu_vls_cstr(&working_file), NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s is in the way, cannot proceed.\n", bu_vls_cstr(&working_file));

@@ -14,13 +14,8 @@ if (TARGET libtclcad)
   target_include_directories(rtwizard BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   ADD_TARGET_DEPS(rtwizard rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb tkpng TclIndexBld dm_plugins)
 
-  # stage targets
-  set(stgts tcl tk itcl itk iwidgets)
-  foreach(ST ${stgts})
-    if (TARGET ${ST}_stage)
-      add_dependencies(rtwizard ${ST}_stage)
-    endif (TARGET ${ST}_stage)
-  endforeach(ST ${stgts})
+  # rtwizard needs the tclIndex and pkgIndex files set up correctly
+  add_dependencies(rtwizard TclIndexBld)
 
   # RtWizard is one of the programs that gets a start menu entry
   set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:rtwizard>"

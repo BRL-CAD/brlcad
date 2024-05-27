@@ -19,11 +19,7 @@
  */
 /** @file repair.cpp
  *
- * Try repairing a BoT to produce a manifold volume
- *
- * TODO - investigate:
- *
- * https://github.com/wjakob/instant-meshes (see also https://github.com/Volumental/instant-meshes)
+ * Routines related to repairing BoTs
  */
 
 #include "common.h"
@@ -41,6 +37,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "manifold/manifold.h"
@@ -59,14 +56,15 @@
 #include "geogram/mesh/mesh_fill_holes.h"
 #endif
 
+#include "bg/trimesh.h"
 #include "rt/defines.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
 
 int
-rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
+rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct rt_bot_repair_info *settings)
 {
-    if (!bot || !obot)
+    if (!bot || !obot || !settings)
 	return -1;
 
     // Unless we produce something, obot will be NULL
@@ -89,7 +87,11 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
 	return -1;
     }
 
-    if (!bot_gl.Merge()) {
+    int num_vertices = (int)bot->num_vertices;
+    int num_faces = (int)bot->num_faces;
+    int bg_not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, NULL);
+
+    if (!bot_gl.Merge() && !bg_not_solid) {
 	// BoT is already manifold
 	return 1;
     }
@@ -160,7 +162,6 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
 	fflush(stdout);
 	dup2(stdout_stashed, sout);
 	close(stdout_stashed);
-	fnull = -1;
     }
 
     // Use the default hole filling algorithm
@@ -198,23 +199,52 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
 	}
     }
 
+    // To try to to fill in ALL holes we default to 1e30, which is a
+    // value used in the Geogram code for a large hole size.
+    double hole_size = 1e30;
+
+    // Stash the bounding box diagonal
+    double bbox_diag = GEO::bbox_diagonal(gm);
+
+    // See if the settings override the default
+    area = GEO::Geom::mesh_area(gm,3);
+    if (!NEAR_ZERO(settings->max_hole_area, SMALL_FASTF)) {
+	hole_size = settings->max_hole_area;
+    } else if (!NEAR_ZERO(settings->max_hole_area_percent, SMALL_FASTF)) {
+	hole_size = area * (settings->max_hole_area_percent/100.0);
+    }
+
     // Do the hole filling.
-    //
-    // TODO: Right now we're basically trying to fill in ALL holes (1e30 is a
-    // value used in the Geogram code for a large hole size. That large a value
-    // may not be a good default for automatic processing - we might be better
-    // off starting with something like a percentage of the surface area of the
-    // mesh, so we don't end up "repairing" something with a giant hole in such
-    // a way that it is unlikely to represent the original modeling intent.  We
-    // could then let the user override that default with something more
-    // extreme manually if they deem the result useful.
-    GEO::fill_holes(gm, 1e30);
+    GEO::fill_holes(gm, hole_size);
 
     // Make sure we're still repaired post filling
     GEO::mesh_repair(gm, GEO::MeshRepairMode(GEO::MESH_REPAIR_DEFAULT));
 
     // Post repair, make sure mesh is still a triangle mesh
     gm.facets.triangulate();
+
+    // Sanity check the area - shouldn't go down, and if it went up by more
+    // than 3x it's concerning - that's a lot of new area even for a swiss
+    // cheese mesh.  Can revisit reporting failure if we hit a legit case
+    // like that, but we also want to know if something went badly wrong with
+    // the hole filling itself and crazy new geometry was added...
+    double new_area = GEO::Geom::mesh_area(gm,3);
+    if (new_area < area) {
+	bu_log("Mesh area decreased after hole filling - error\n");
+	return -1;
+    }
+    if (new_area > 3*area) {
+	bu_log("Mesh area more than tripled after hole filling.  At the moment this is considered an error - if a legitimate case exists where this is expected behavior, please report it upstream to the BRL-CAD developers.\n");
+	return -1;
+    }
+
+    // Sanity check the bounding box diagonal - should be very close to the
+    // original value
+    double new_bbox_diag = GEO::bbox_diagonal(gm);
+    if (!NEAR_EQUAL(bbox_diag, new_bbox_diag, BN_TOL_DIST)) {
+	bu_log("Mesh bounding box is different after hole filling - error\n");
+	return -1;
+    }
 
     // Once Geogram is done with it, ask Manifold what it thinks
     // of the result - if Manifold doesn't think we're there, then
@@ -278,11 +308,82 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot)
     return 0;
 #else
     // Without geogram, we can't repair (TODO - implement other options
-    // like OpenMesh hole filling, maybe Instant Meshes?)
+    // like OpenMesh hole filling)
     return -1;
 #endif
 }
 
+
+struct rt_bot_internal *
+rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_internal *orig_bot)
+{
+    if (!rm_face_indices || !BU_PTBL_LEN(rm_face_indices))
+	return NULL;
+
+
+    std::unordered_set<size_t> rm_indices;
+    for (size_t i = 0; i < BU_PTBL_LEN(rm_face_indices); i++) {
+	int ind = (int)(long)BU_PTBL_GET(rm_face_indices, i);
+	rm_indices.insert(ind);
+    }
+
+    int *nfaces = (int *)bu_calloc(orig_bot->num_faces * 3, sizeof(int), "new faces array");
+    size_t nfaces_ind = 0;
+    for (size_t i = 0; i < orig_bot->num_faces; i++) {
+	if (rm_indices.find(i) != rm_indices.end()) {
+	    bu_log("skipping thin face %ld\n", i);
+	    continue;
+	}
+	nfaces[3*nfaces_ind + 0] = orig_bot->faces[3*i+0];
+	nfaces[3*nfaces_ind + 1] = orig_bot->faces[3*i+1];
+	nfaces[3*nfaces_ind + 2] = orig_bot->faces[3*i+2];
+	nfaces_ind++;
+    }
+
+    // Having built a faces array with the specified triangles removed, we now
+    // garbage collect to produce re-indexed face and point arrays with just the
+    // active data (vertices may be no longer active in the BoT depending on
+    // which faces were removed.
+    int *nfacesarray = NULL;
+    point_t *npointsarray = NULL;
+    int npntcnt = 0;
+    int new_num_faces = bg_trimesh_3d_gc(&nfacesarray, &npointsarray, &npntcnt, nfaces, nfaces_ind, (const point_t *)orig_bot->vertices);
+
+    if (new_num_faces < 3) {
+	new_num_faces = 0;
+	npntcnt = 0;
+	bu_free(nfacesarray, "nfacesarray");
+	nfacesarray = NULL;
+	bu_free(npointsarray, "npointsarray");
+	npointsarray = NULL;
+    }
+
+    // Done with the nfaces array
+    bu_free(nfaces, "free unmapped new faces array");
+
+    // Make the new rt_bot_internal
+    struct rt_bot_internal *bot = NULL;
+    BU_GET(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = orig_bot->mode;
+    bot->orientation = orig_bot->orientation;
+    bot->bot_flags = orig_bot->bot_flags;
+    bot->num_vertices = npntcnt;
+    bot->num_faces = new_num_faces;
+    bot->vertices = (fastf_t *)npointsarray;
+    bot->faces = nfacesarray;
+
+    // TODO - need to properly rebuild these arrays as well, if orig_bot has them - bg_trimesh_3d_gc only
+    // handles the vertices themselves
+    bot->thickness = NULL;
+    bot->face_mode = NULL;
+    bot->normals = NULL;
+    bot->face_normals = NULL;
+    bot->uvs = NULL;
+    bot->face_uvs = NULL;
+
+    return bot;
+}
 
 
 // Local Variables:

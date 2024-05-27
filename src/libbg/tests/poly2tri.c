@@ -63,7 +63,7 @@ main(int argc, const char **argv)
     if (argc > 1 && BU_STR_EQUAL(argv[1], "--plot")) {
 	plot_files = 1;
     }
-#if 0
+
     {
 	size_t num_points = 0;
 	int num_faces = 0;
@@ -135,7 +135,7 @@ main(int argc, const char **argv)
 	    _tess_report(faces, num_faces, (const point2d_t *)points, 1, 1);
 	}
     }
-#endif
+
     {
 	int num_faces = 0;
 	int *faces = NULL;
@@ -171,11 +171,9 @@ main(int argc, const char **argv)
 	V2SET(points[14], 10, 4);
 	V2SET(points[15], 10, 1);
 
-#if 0
 	size_t num_points = sizeof(points) / sizeof(point2d_t);
 	if (plot_files)
 	    bg_polygon_plot_2d("test_1_polygon.plot3", (const point2d_t *)points, num_points, 255, 0, 0);
-#endif
 
 	point2d_t *opnts = NULL;
 	int noutpnts = 0;
@@ -189,7 +187,6 @@ main(int argc, const char **argv)
 	}
     }
 
-#if 0
     /* Nested test case 1 */
     {
 	int num_faces;
@@ -304,7 +301,6 @@ main(int argc, const char **argv)
 	    _tess_report(faces, num_faces, (const point2d_t *)points, 5, 1);
 	}
     }
-#endif
 
     return 0;
 }

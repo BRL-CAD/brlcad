@@ -280,7 +280,7 @@ CM: decimation succeeded, final BoT has 247642 faces
     <example>
       <title>List invalid BoT objects below a comb</title>
       <para>
-	Use lint -M to report on invalid objects below a comb.
+	Use lint -I to report on invalid objects below a comb.
       </para>
       <para>
 	<prompt>mged&gt; </prompt><userinput> lint -M model.f</userinput>

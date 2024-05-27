@@ -116,7 +116,7 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
     curiX++;
     img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getOrientationRightLeft() + ", " + opt.getOrientationZYUp());
+    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getCoordSystem_asString() + ", " + opt.getUpAxis_asString());
     curiX++;
     img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
@@ -168,7 +168,6 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
     int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
 
     // main component
-    std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
     //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
     img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
 
@@ -188,9 +187,9 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 
 
     // sub components
+    std::string render;
     for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
-        // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
         img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
         img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, width, info.largestComponents[i].name, TO_BOLD);
         img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));

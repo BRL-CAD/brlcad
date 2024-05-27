@@ -74,7 +74,7 @@ bu_crashreport_app(const char *filename, const char *argv0)
 	     "Date: %s\n",	/* date/time */
 	     brlcad_ident("Crash Report"),
 	     bu_getprogname(),
-	     bu_process_id(),
+	     bu_pid(),
 	     path ? path : "Unknown",
 	     ctime(&now));
 
