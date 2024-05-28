@@ -453,6 +453,9 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 		    if (unexpected_miss)
 			error_str.append(std::string(" unexpected_miss"));
 
+		    obj.error = error_str;
+
+		    not_valid = 1;
 		    rt_db_free_internal(&intern);
 		    break;
 		}

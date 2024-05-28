@@ -58,6 +58,7 @@ struct coplanar_info {
     int is_thin;
     int have_above;
     int unexpected_miss;
+    struct rt_bot_internal *bot;
 
     int verbose;
     int curr_tri;
@@ -78,37 +79,41 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     struct seg *s = (struct seg *)segs->l.forw;
     if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
 	if (tinfo->verbose) {
-	    bu_log("	WARNING: First hit wasn't from our triangle\n");
+	    bu_log("	WARNING: First hit wasn't from triangle %d: distance %g\n", tinfo->curr_tri, s->seg_in.hit_dist);
 	    bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
 	    bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
 	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+	    tinfo->problem_indices.insert(tinfo->curr_tri);
 	}
 	return 0;
     }
 
+    for (BU_LIST_FOR(s, seg, &(segs->l))) {
+	if (s->seg_in.hit_dist > tinfo->ttol)
+	    continue;
 
-    double dist = s->seg_out.hit_dist - s->seg_in.hit_dist;
-    if (tinfo->verbose > 1) {
-	bu_log("surfno: %d\n", s->seg_in.hit_surfno);
-	bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
-	bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-    }
-
-    if (dist < tinfo->ttol) {
-	if (tinfo->verbose) {
-	    bu_log("	dist: %f\n", dist);
-	    bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
-	    bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
-	    bu_log("	%s thin dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
-	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+	double dist = s->seg_out.hit_dist - s->seg_in.hit_dist;
+	if (tinfo->verbose > 1) {
+	    bu_log("surfno: %d\n", s->seg_in.hit_surfno);
+	    bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
+	    bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	    bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
 	}
-	tinfo->is_thin = 1;
-	tinfo->problem_indices.insert(s->seg_in.hit_surfno);
-	tinfo->problem_indices.insert(s->seg_out.hit_surfno);
-	return 0;
+
+	if (dist < tinfo->ttol) {
+	    if (tinfo->verbose) {
+		bu_log("	dist: %f\n", dist);
+		bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
+		bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
+		bu_log("	%s thin dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
+		bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+		bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+	    }
+	    tinfo->is_thin = 1;
+	    tinfo->problem_indices.insert(s->seg_in.hit_surfno);
+	    tinfo->problem_indices.insert(s->seg_out.hit_surfno);
+	}
     }
 
     return 0;
@@ -121,7 +126,7 @@ _tc_miss(struct application *ap)
     // it.  If we miss under those conditions, it can only happen because
     // something is wrong.
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
-    //tinfo->is_thin = 1;
+    tinfo->is_thin = 1;
     if (tinfo->verbose) {
 	bu_log("		miss\n");
 	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
@@ -159,6 +164,7 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
     struct coplanar_info tinfo;
     tinfo.ttol = ttol;
     tinfo.verbose = verbose;
+    tinfo.bot = bot;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -263,10 +269,11 @@ rt_bot_close_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct r
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
-    int found_thin = 0;
+    int have_above = 0;
     struct coplanar_info cpinfo;
     cpinfo.ttol = ttol;
     cpinfo.verbose = verbose;
+    cpinfo.have_above = 0;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -302,6 +309,9 @@ rt_bot_close_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct r
 	VADD2(ap.a_ray.r_pt, tcenter, backout);
 	(void)rt_shootray(&ap);
 
+	if (cpinfo.have_above)
+	    have_above = 1;
+
 	if (!ofaces && cpinfo.have_above)
 	    break;
     }
@@ -314,7 +324,7 @@ rt_bot_close_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct r
 	}
     }
 
-    return found_thin;
+    return have_above;
 }
 
 
@@ -363,6 +373,7 @@ rt_bot_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
     struct coplanar_info minfo;
     minfo.ttol = ttol;
     minfo.verbose = verbose;
+    minfo.unexpected_miss = 0;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))

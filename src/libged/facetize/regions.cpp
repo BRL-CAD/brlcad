@@ -264,8 +264,13 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		if (nbot && nbot->num_faces) {
 		    struct rt_bot_internal *rbot = NULL;
 		    struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
-		    rs.max_hole_area_percent = 30;
 		    int repair_result = rt_bot_repair(&rbot, nbot, &rs);
+		    if (repair_result < 0) {
+			// If a conservative repair fails, try being a little
+			// more aggressive
+			rs.max_hole_area_percent = 30;
+			repair_result = rt_bot_repair(&rbot, nbot, &rs);
+		    }
 		    if (repair_result < 0) {
 			bu_log("%s removed %zd thin faces, but repair failed.  Retaining manifold result.\n", bu_vls_cstr(&bname), BU_PTBL_LEN(&tfaces));
 			// The repair didn't succeed.  That means we weren't able
