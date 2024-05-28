@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file coplanar_check.cpp
+/** @file thin_check.cpp
  *
  */
 
@@ -134,10 +134,6 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 // A useful correctness audit for a BoT might be to shotline both the CSG and
 // the BoT using the same rays constructed from the triangle centers - if the
 // CSG reports a non-zero LOS but the BoT reports zero, we have a problem.
-//
-// For BoTs, we can also check the shotline estimate of the volume against
-// the analytic calculation of the mesh volume, as long as the result
-// is manifold.
 static int
 _tc_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
@@ -208,7 +204,7 @@ _tc_overlap(struct application *ap,
 }
 
 int
-rt_bot_coplanar_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;

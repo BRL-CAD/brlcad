@@ -191,15 +191,10 @@ RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
 /* Test whether a solid BoT has faces that are <tol distance away from nearby
  * faces.  This is (at the moment) a ray interrogation based test, so it is not
  * absolutely guaranteed to find all near self-intersections - it is intended
- * to catch situations such as boolean operations on meshes producing
- * exceedingly thin volumes or aligned interior triangles. Returns 1 if a
- * problem is found, else 0.  If ofaces is non-NULL, store the indices of the
- * specific faces found to be problematic.
- *
- * TODO - there are multiple categories of problem here - need more nuanced
- * reporting
- */
-RT_EXPORT extern int rt_bot_coplanar_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+ * to catch situations such as boolean operations on meshes producing exceedingly
+ * thin volumes. Returns 1 if a problem is found, else 0.  If ofaces is non-NULL,
+ * store the indices of the specific faces found to be problematic. */
+RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
 
 /* Function to remove a set of faces from a BoT and produce a new BoT */
 RT_EXPORT struct rt_bot_internal *
