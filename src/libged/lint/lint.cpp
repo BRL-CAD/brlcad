@@ -373,19 +373,19 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
     return ret;
 }
 
-static int
-do_thin_check(struct ged *gedp, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
+static void
+do_sampling_checks(int *thin, int *close, int *miss, struct ged *gedp, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
 {
-    int ret = 0;
     if (!gedp || !bot)
-	return ret;
+	return;
 
     struct rt_i *rtip = rt_new_rti(gedp->dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
-    ret = rt_bot_thin_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
+    *thin = rt_bot_thin_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
+    *close = rt_bot_close_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
+    *miss = rt_bot_miss_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
     rt_free_rti(rtip);
-    return ret;
 }
 
 /* Someday, when we have parametric constraint evaluation for parameters for primitives, we can hook
@@ -436,12 +436,23 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 
 		// TODO - check for flipped bot
 
-		// check for bot with super-thin areas
-		not_valid = do_thin_check(gedp, dp, bot, verbosity);
-		if (not_valid) {
+		// check for bot problems with sampling
+		int thin_volumes = 0;
+		int close_triangles = 0;
+		int unexpected_miss = 0;
+		do_sampling_checks(&thin_volumes, &close_triangles, &unexpected_miss, gedp, dp, bot, verbosity);
+		if (thin_volumes || close_triangles || unexpected_miss) {
 		    obj.name = std::string(dp->d_namep);
 		    obj.type= std::string("bot");
-		    obj.error = std::string("failed thinness check, BoT type is RT_BOT_SOLID");
+
+		    std::string error_str = std::string("RT_BOT_SOLID BoT problems found: ");
+		    if (thin_volumes)
+			error_str.append(std::string(" thin_volume"));
+		    if (close_triangles)
+			error_str.append(std::string(" close_triangles"));
+		    if (unexpected_miss)
+			error_str.append(std::string(" unexpected_miss"));
+
 		    rt_db_free_internal(&intern);
 		    break;
 		}

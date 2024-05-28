@@ -188,13 +188,40 @@ RT_EXPORT extern int rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_
  * incorrect orientation. */
 RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
 
-/* Test whether a solid BoT has faces that are <tol distance away from nearby
- * faces.  This is (at the moment) a ray interrogation based test, so it is not
- * absolutely guaranteed to find all near self-intersections - it is intended
- * to catch situations such as boolean operations on meshes producing exceedingly
- * thin volumes. Returns 1 if a problem is found, else 0.  If ofaces is non-NULL,
- * store the indices of the specific faces found to be problematic. */
+/* Test whether a solid BoT has faces that are <tol distance away when shooting
+ * "into" the solid.  This is (at the moment) a ray interrogation based test,
+ * so it is not absolutely guaranteed to find all near self-intersections.
+ *
+ * It is intended to catch situations such as boolean operations on meshes
+ * producing exceedingly thin volumes.
+ *
+ * Returns 1 if a problem is found, else 0.  If ofaces is non-NULL, store the
+ * indices of the specific faces found to be problematic. */
 RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+
+/* Test whether a solid BoT has faces that are <tol distance "above" nearby
+ * faces.  This is (at the moment) a ray interrogation based test, so it is not
+ * absolutely guaranteed to find all near self-intersections.
+ *
+ * It is intended to catch situations such as boolean operations on meshes
+ * producing effectively coplanar interior triangles in a mesh.
+ *
+ * Returns 1 if a problem is found, else 0.  If ofaces is non-NULL, store the
+ * indices of the specific faces found to be problematic. */
+RT_EXPORT extern int rt_bot_close_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+
+/* Test whether a solid BoT has faces that report a miss when shooting directly
+ * "down" into their centers.
+ *
+ * It is intended to catch situations where internal triangles in meshes cause
+ * problems with solid shotlining.  It is not a guarantee of correctness for
+ * all shotlines, since it is sampling based, but it should catch many problem
+ * cases.
+ *
+ * Returns 1 if a miss is found, else 0.  If ofaces is non-NULL, store the
+ * indices of the specific faces found to be problematic. */
+RT_EXPORT extern int rt_bot_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+
 
 /* Function to remove a set of faces from a BoT and produce a new BoT */
 RT_EXPORT struct rt_bot_internal *
