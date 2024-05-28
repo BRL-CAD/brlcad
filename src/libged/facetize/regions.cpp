@@ -313,6 +313,13 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	}
     }
 
+    // TODO - need to have an option to shotline through the new triangle faces and compare
+    // with the old CSG shotline results to try and spot any gross problems with the new
+    // mesh.  The nature of facetization means the shotlines won't be 1-1 identical, but
+    // if we have a shot from a triangle with LoS in the CSG and none in the BoT, that's
+    // a definite problem.  If the BoT is manifold we'll still return it, but with a warning
+    // that there may be a problem.
+
     // If any of the regions failed (implicit or explicit), don't keep or
     // dbconcat - the operation wasn't a full success.
     if (have_failure) {
