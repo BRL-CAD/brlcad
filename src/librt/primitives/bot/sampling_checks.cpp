@@ -66,7 +66,7 @@ struct coplanar_info {
 
 
 static int
-_tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+_tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     if (PartHeadp->pt_forw == PartHeadp)
 	return 1;
@@ -75,21 +75,22 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 
     struct partition *pp = PartHeadp->pt_forw;
 
-    // Make sure the in hit point is close to the ray point
-    if (pp->pt_inhit->hit_dist > 2*SQRT_SMALL_FASTF) {
+    struct seg *s = (struct seg *)segs->l.forw;
+    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
 	if (tinfo->verbose) {
 	    bu_log("	WARNING: First hit wasn't from our triangle\n");
-	    bu_log("	in_surfno: %d\n", pp->pt_inhit->hit_surfno);
-	    bu_log("	out_surfno: %d\n", pp->pt_outhit->hit_surfno);
+	    bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
+	    bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
 	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
 	}
 	return 0;
     }
 
-    double dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+
+    double dist = s->seg_out.hit_dist - s->seg_in.hit_dist;
     if (tinfo->verbose > 1) {
-	bu_log("surfno: %d\n", pp->pt_inhit->hit_surfno);
+	bu_log("surfno: %d\n", s->seg_in.hit_surfno);
 	bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
 	bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
@@ -97,15 +98,16 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 
     if (dist < tinfo->ttol) {
 	if (tinfo->verbose) {
-	    bu_log("	in_surfno: %d\n", pp->pt_inhit->hit_surfno);
-	    bu_log("	out_surfno: %d\n", pp->pt_outhit->hit_surfno);
+	    bu_log("	dist: %f\n", dist);
+	    bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
+	    bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
 	    bu_log("	%s thin dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
 	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
 	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
 	}
 	tinfo->is_thin = 1;
-	tinfo->problem_indices.insert(pp->pt_inhit->hit_surfno);
-	tinfo->problem_indices.insert(pp->pt_outhit->hit_surfno);
+	tinfo->problem_indices.insert(s->seg_in.hit_surfno);
+	tinfo->problem_indices.insert(s->seg_out.hit_surfno);
 	return 0;
     }
 
@@ -119,7 +121,7 @@ _tc_miss(struct application *ap)
     // it.  If we miss under those conditions, it can only happen because
     // something is wrong.
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
-    tinfo->is_thin = 1;
+    //tinfo->is_thin = 1;
     if (tinfo->verbose) {
 	bu_log("		miss\n");
 	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
@@ -138,7 +140,7 @@ _tc_overlap(struct application *ap,
 	struct partition *UNUSED(hp))
 {
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
-    tinfo->is_thin = 1;
+    //tinfo->is_thin = 1;
     if (tinfo->verbose) {
 	bu_log("		overlap\n");
 	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
@@ -199,6 +201,7 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 
 	if (tinfo.is_thin) {
 	    found_thin = 1;
+	    tinfo.problem_indices.insert(i);
 	}
 
 	if (!ofaces && found_thin)
