@@ -20,6 +20,14 @@
 /** @file libged/lint.cpp
  *
  * The lint command for finding and reporting problems in .g files.
+ *
+ * TODO - there are lots of potential checks to add here, some of which
+ * would need verbose reporting to be truly useful (problems with BoTs
+ * being the current case in point, but it's not likely to be a unique
+ * need.)  Thinking the way to deal with this may be to write out a
+ * json data file in the style of recent rtcmp work, and then add some
+ * facilities to lint to work with such a file for visualization and/or
+ * detailed per-object reporting.
  */
 
 #include "common.h"
