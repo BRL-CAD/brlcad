@@ -39,17 +39,8 @@
 extern "C" {
 #include "bu/opt.h"
 #include "bg/trimesh.h"
-#include "raytrace.h"
 }
-#include "../ged_private.h"
-
-struct _ged_lint_opts {
-    int verbosity;
-    int cyclic_check;
-    int missing_check;
-    int invalid_shape_check;
-    struct bu_vls filter;
-};
+#include "./ged_lint.h"
 
 struct _ged_lint_opts *
 _ged_lint_opts_create()
@@ -88,31 +79,6 @@ _ged_lint_opts_verify(struct _ged_lint_opts *o)
 	o->invalid_shape_check = 1;
     }
 }
-
-struct _ged_cyclic_data {
-    struct ged *gedp;
-    struct bu_ptbl *paths;
-};
-
-
-struct _ged_missing_data {
-    struct ged *gedp;
-    std::set<std::string> missing;
-};
-
-struct invalid_obj {
-    std::string name;
-    std::string type;
-    std::string error;
-};
-
-struct _ged_invalid_data {
-    struct ged *gedp;
-    struct _ged_lint_opts *o;
-    std::set<struct directory *> invalid_dps;
-    std::map<struct directory *, struct invalid_obj> invalid_msgs;
-};
-
 /* Because lint is intended to be a deep inspection of the .g looking for problems,
  * we need to do this check using the low level tree walk rather than operating on
  * a search result set (which has checks to filter out cyclic paths.) */
@@ -390,9 +356,9 @@ do_sampling_checks(int *thin, int *close, int *miss, struct ged *gedp, struct di
     struct rt_i *rtip = rt_new_rti(gedp->dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
-    *thin = rt_bot_thin_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
-    *close = rt_bot_close_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
-    *miss = rt_bot_miss_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
+    *thin = _ged_lint_bot_thin_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
+    *close = _ged_lint_bot_close_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
+    *miss = _ged_lint_bot_miss_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
     rt_free_rti(rtip);
 }
 

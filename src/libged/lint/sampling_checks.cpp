@@ -31,6 +31,9 @@
 #include "rt/shoot.h"
 #include "rt/primitives/bot.h"
 
+#include "./ged_lint.h"
+
+
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 {
@@ -155,7 +158,7 @@ _tc_overlap(struct application *ap,
 }
 
 int
-rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+_ged_lint_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
@@ -224,6 +227,215 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 
     return found_thin;
 }
+
+
+// TODO - A useful correctness audit for a BoT might be to shotline both the
+// CSG and the BoT using the same rays constructed from the triangle centers -
+// if the CSG reports a non-zero LOS but the BoT reports zero, we have a
+// problem.
+static int
+_ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+{
+    if (PartHeadp->pt_forw == PartHeadp)
+	return 1;
+
+    struct coplanar_info *pinfo = (struct coplanar_info *)ap->a_uptr;
+
+    struct partition *pp = PartHeadp->pt_forw;
+
+    // If we've got something too close above our triangle, it's trouble
+    if (pp->pt_inhit->hit_dist < VUNITIZE_TOL) {
+	if (pinfo->verbose) {
+	    bu_log("	Another triangle right above our triangle\n");
+	    bu_log("	in_surfno: %d\n", pp->pt_inhit->hit_surfno);
+	    bu_log("	out_surfno: %d\n", pp->pt_outhit->hit_surfno);
+	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+	}
+	pinfo->have_above = 1;
+	pinfo->problem_indices.insert(pp->pt_inhit->hit_surfno);
+	return 0;
+    }
+
+    return 0;
+}
+
+static int
+_ck_up_miss(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
+int
+_ged_lint_bot_close_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+{
+    if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
+	return 0;
+
+    int have_above = 0;
+    struct coplanar_info cpinfo;
+    cpinfo.ttol = ttol;
+    cpinfo.verbose = verbose;
+    cpinfo.have_above = 0;
+
+    // Set up the raytrace
+    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
+	rt_init_resource(&rt_uniresource, 0, rtip);
+    struct application ap;
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;     /* application uses this instance */
+    ap.a_hit = _ck_up_hit;     /* where to go on a hit */
+    ap.a_miss = _ck_up_miss;   /* where to go on a miss */
+    ap.a_onehit = 1;
+    ap.a_resource = &rt_uniresource;
+    ap.a_uptr = (void *)&cpinfo;
+
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	cpinfo.curr_tri = (int)i;
+	vect_t rnorm, n, backout;
+	if (!bot_face_normal(&n, bot, i))
+	    continue;
+
+	point_t rpnts[3];
+	point_t tcenter;
+	VMOVE(rpnts[0], &bot->vertices[bot->faces[i*3+0]*3]);
+	VMOVE(rpnts[1], &bot->vertices[bot->faces[i*3+1]*3]);
+	VMOVE(rpnts[2], &bot->vertices[bot->faces[i*3+2]*3]);
+	VADD3(tcenter, rpnts[0], rpnts[1], rpnts[2]);
+	VSCALE(tcenter, tcenter, 1.0/3.0);
+
+	VMOVE(ap.a_ray.r_dir, n);
+
+	VREVERSE(rnorm, n);
+	VMOVE(backout, rnorm);
+	VSCALE(backout, backout, SMALL_FASTF);
+	VADD2(ap.a_ray.r_pt, tcenter, backout);
+	(void)rt_shootray(&ap);
+
+	if (cpinfo.have_above)
+	    have_above = 1;
+
+	if (!ofaces && cpinfo.have_above)
+	    break;
+    }
+
+    if (ofaces) {
+	std::set<int>::iterator p_it;
+	for (p_it = cpinfo.problem_indices.begin(); p_it != cpinfo.problem_indices.end(); ++p_it) {
+	    int ind = *p_it;
+	    bu_ptbl_ins(ofaces, (long *)(long)ind);
+	}
+    }
+
+    return have_above;
+}
+
+
+static int
+_mc_hit(struct application *UNUSED(ap), struct partition *PartHeadp, struct seg *UNUSED(segs))
+{
+    if (PartHeadp->pt_forw == PartHeadp)
+	return 1;
+
+    return 0;
+}
+
+static int
+_mc_miss(struct application *ap)
+{
+    // We are shooting directly into the center of a triangle from right above
+    // it.  If we miss under those conditions, it can only happen because
+    // something is wrong.
+    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    tinfo->unexpected_miss = 1;
+    if (tinfo->verbose) {
+	bu_log("		miss\n");
+	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
+	bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
+    }
+    return 0;
+}
+
+static int
+_mc_overlap(struct application *UNUSED(ap),
+	struct partition *UNUSED(pp),
+	struct region *UNUSED(reg1),
+	struct region *UNUSED(reg2),
+	struct partition *UNUSED(hp))
+{
+    return 0;
+}
+
+int
+_ged_lint_bot_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+{
+    if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
+	return 0;
+
+    int found_miss = 0;
+    struct coplanar_info minfo;
+    minfo.ttol = ttol;
+    minfo.verbose = verbose;
+    minfo.unexpected_miss = 0;
+
+    // Set up the raytrace
+    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
+	rt_init_resource(&rt_uniresource, 0, rtip);
+    struct application ap;
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;     /* application uses this instance */
+    ap.a_hit = _mc_hit;    /* where to go on a hit */
+    ap.a_miss = _mc_miss;  /* where to go on a miss */
+    ap.a_overlap = _mc_overlap;  /* where to go if an overlap is found */
+    ap.a_onehit = 0; /* One hit isn't enough - we want to know we've got something solid */
+    ap.a_resource = &rt_uniresource;
+    ap.a_uptr = (void *)&minfo;
+
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	minfo.curr_tri = (int)i;
+	vect_t rnorm, n, backout;
+	if (!bot_face_normal(&n, bot, i))
+	    continue;
+
+	// We want backout to get the ray origin off the triangle surface
+	VMOVE(backout, n);
+	VSCALE(backout, backout, SQRT_SMALL_FASTF);
+	// Reverse the triangle normal for a ray direction
+	VREVERSE(rnorm, n);
+
+	point_t rpnts[3];
+	point_t tcenter;
+	VMOVE(rpnts[0], &bot->vertices[bot->faces[i*3+0]*3]);
+	VMOVE(rpnts[1], &bot->vertices[bot->faces[i*3+1]*3]);
+	VMOVE(rpnts[2], &bot->vertices[bot->faces[i*3+2]*3]);
+	VADD3(tcenter, rpnts[0], rpnts[1], rpnts[2]);
+	VSCALE(tcenter, tcenter, 1.0/3.0);
+
+	// Take the shot
+	minfo.is_thin = 0;
+	VMOVE(ap.a_ray.r_dir, rnorm);
+	VADD2(ap.a_ray.r_pt, tcenter, backout);
+	(void)rt_shootray(&ap);
+
+	if (minfo.unexpected_miss) {
+	    found_miss = 1;
+	}
+
+	if (!ofaces && found_miss)
+	    break;
+    }
+
+    if (ofaces) {
+	std::set<int>::iterator p_it;
+	for (p_it = minfo.problem_indices.begin(); p_it != minfo.problem_indices.end(); ++p_it) {
+	    int ind = *p_it;
+	    bu_ptbl_ins(ofaces, (long *)(long)ind);
+	}
+    }
+
+    return found_miss;
+}
+
 
 // Local Variables:
 // tab-width: 8
