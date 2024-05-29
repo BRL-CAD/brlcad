@@ -23,7 +23,11 @@
 
 #include "common.h"
 
+#include <iomanip>
+#include <limits>
 #include <set>
+#include <sstream>
+#include "json.hpp"
 
 #include "vmath.h"
 #include "rt/application.h"
@@ -32,6 +36,44 @@
 #include "rt/primitives/bot.h"
 
 #include "./ged_lint.h"
+
+class lint_tri {
+    public:
+	point_t v[3];
+	vect_t n;
+
+	void plot(struct bview *);
+
+	point_t center = VINIT_ZERO;
+	struct bu_color c;
+};
+
+void
+lint_tri::plot(struct bview *view)
+{
+    if (!view)
+	return;
+}
+
+double
+s2d(std::string s)
+{
+    double d;
+    std::stringstream ss(s);
+    size_t prec = std::numeric_limits<double>::max_digits10;
+    ss >> std::setprecision(prec) >> std::fixed >> d;
+    return d;
+}
+
+std::string
+d2s(double d)
+{
+    size_t prec = std::numeric_limits<double>::max_digits10;
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(prec) << d;
+    std::string sd = ss.str();
+    return sd;
+}
 
 
 static bool
@@ -56,17 +98,84 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
     return true;
 }
 
-struct coplanar_info {
-    double ttol;
-    int is_thin;
-    int have_above;
-    int unexpected_miss;
-    struct rt_bot_internal *bot;
+void
+pt_to_json(nlohmann::json *pc, const char *key, point_t pt)
+{
+   (*pc)[key]["X"] = d2s(pt[X]);
+   (*pc)[key]["Y"] = d2s(pt[Y]);
+   (*pc)[key]["Z"] = d2s(pt[Z]);
+}
 
-    int verbose;
-    int curr_tri;
-    std::set<int> problem_indices;
-};
+void
+ray_to_json(nlohmann::json *pc, struct xray *r)
+{
+    nlohmann::json ray;
+    pt_to_json(&ray, "P", r->r_pt);
+    pt_to_json(&ray, "N", r->r_dir);
+    (*pc)["ray"].push_back(ray);
+}
+
+void
+tri_to_json(nlohmann::json *pc, const char *oname, struct rt_bot_internal *bot, int ind)
+{
+    nlohmann::json tri;
+    point_t v[3];
+    for (int i = 0; i < 3; i++)
+	VMOVE(v[i], &bot->vertices[bot->faces[ind*3+i]*3]);
+
+    tri["bot_name"] = std::string(oname);
+    tri["face_index"] = ind;
+    pt_to_json(&tri, "V0", v[0]);
+    pt_to_json(&tri, "V1", v[1]);
+    pt_to_json(&tri, "V2", v[2]);
+
+    vect_t n = VINIT_ZERO;
+    bot_face_normal(&n, bot, ind);
+    pt_to_json(&tri, "N", n);
+
+    (*pc)["tris"].push_back(tri);
+}
+
+static void
+parse_pt(point_t *p, const nlohmann::json &sdata)
+{
+    if (sdata.contains("X")) {
+	std::string s(sdata["X"]);
+	(*p)[X] = s2d(s);
+    }
+    if (sdata.contains("Y")) {
+	std::string s(sdata["Y"]);
+	(*p)[Y] = s2d(s);
+    }
+    if (sdata.contains("Z")) {
+	std::string s(sdata["Z"]);
+	(*p)[Z] = s2d(s);
+    }
+}
+
+void
+json_to_tri(class lint_tri &tri, nlohmann::json &jtri)
+{
+    if (jtri.contains("V0")) {
+	const nlohmann::json &jv = jtri["V0"];
+	parse_pt(&tri.v[0], jv);
+    }
+    if (jtri.contains("V1")) {
+	const nlohmann::json &jv = jtri["V1"];
+	parse_pt(&tri.v[1], jv);
+    }
+    if (jtri.contains("V2")) {
+	const nlohmann::json &jv = jtri["V2"];
+	parse_pt(&tri.v[2], jv);
+    }
+    VADD3(tri.center, tri.v[0], tri.v[1], tri.v[2]);
+    VSCALE(tri.center, tri.center, 1.0/3.0);
+
+    if (jtri.contains("N")) {
+	const nlohmann::json &jv = jtri["N"];
+	parse_pt(&tri.n, jv);
+    }
+}
 
 
 static int
@@ -81,14 +190,10 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     struct seg *s = (struct seg *)segs->l.forw;
     if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
-	if (tinfo->verbose) {
-	    bu_log("	WARNING: First hit wasn't from triangle %d: distance %g\n", tinfo->curr_tri, s->seg_in.hit_dist);
-	    bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
-	    bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
-	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-	    tinfo->problem_indices.insert(tinfo->curr_tri);
-	}
+	nlohmann::json terr;
+	ray_to_json(&terr, &ap->a_ray);
+	terr["indices"].push_back(tinfo->curr_tri);
+	tinfo->data->push_back(terr);
 	return 0;
     }
 
@@ -105,17 +210,13 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	}
 
 	if (dist < tinfo->ttol) {
-	    if (tinfo->verbose) {
-		bu_log("	dist: %f\n", dist);
-		bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
-		bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
-		bu_log("	%s thin dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
-		bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-		bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-	    }
+	    nlohmann::json terr;
+	    ray_to_json(&terr, &ap->a_ray);
+	    terr["indices"].push_back(s->seg_in.hit_surfno);
+	    terr["indices"].push_back(s->seg_out.hit_surfno);
+	    terr["dist"] = d2s(dist);
+	    tinfo->data->push_back(terr);
 	    tinfo->is_thin = 1;
-	    tinfo->problem_indices.insert(s->seg_in.hit_surfno);
-	    tinfo->problem_indices.insert(s->seg_out.hit_surfno);
 	}
     }
 
@@ -130,11 +231,10 @@ _tc_miss(struct application *ap)
     // something is wrong.
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
     tinfo->is_thin = 1;
-    if (tinfo->verbose) {
-	bu_log("		miss\n");
-	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-    }
+    nlohmann::json terr;
+    ray_to_json(&terr, &ap->a_ray);
+    terr["indices"].push_back(tinfo->curr_tri);
+    tinfo->data->push_back(terr);
     return 0;
 }
 
@@ -148,26 +248,27 @@ _tc_overlap(struct application *ap,
 	struct partition *UNUSED(hp))
 {
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
-    //tinfo->is_thin = 1;
-    if (tinfo->verbose) {
-	bu_log("		overlap\n");
-	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-    }
+    tinfo->is_thin = 1;
+    nlohmann::json terr;
+    ray_to_json(&terr, &ap->a_ray);
+    terr["indices"].push_back(tinfo->curr_tri);
+    tinfo->data->push_back(terr);
     return 0;
 }
 
 int
-_ged_lint_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+_ged_lint_bot_thin_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
+    nlohmann::json terr;
     int found_thin = 0;
     struct coplanar_info tinfo;
     tinfo.ttol = ttol;
     tinfo.verbose = verbose;
     tinfo.bot = bot;
+    tinfo.data = &terr;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -212,18 +313,10 @@ _ged_lint_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, st
 	    found_thin = 1;
 	    tinfo.problem_indices.insert(i);
 	}
-
-	if (!ofaces && found_thin)
-	    break;
     }
 
-    if (ofaces) {
-	std::set<int>::iterator p_it;
-	for (p_it = tinfo.problem_indices.begin(); p_it != tinfo.problem_indices.end(); ++p_it) {
-	    int ind = *p_it;
-	    bu_ptbl_ins(ofaces, (long *)(long)ind);
-	}
-    }
+    if (found_thin)
+	(*cdata->thin)[pname].push_back(terr);
 
     return found_thin;
 }
@@ -245,15 +338,12 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
     // If we've got something too close above our triangle, it's trouble
     if (pp->pt_inhit->hit_dist < VUNITIZE_TOL) {
-	if (pinfo->verbose) {
-	    bu_log("	Another triangle right above our triangle\n");
-	    bu_log("	in_surfno: %d\n", pp->pt_inhit->hit_surfno);
-	    bu_log("	out_surfno: %d\n", pp->pt_outhit->hit_surfno);
-	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-	}
+	nlohmann::json terr;
+	ray_to_json(&terr, &ap->a_ray);
+	terr["indices"].push_back(pp->pt_inhit->hit_surfno);
+	terr["indices"].push_back(pp->pt_outhit->hit_surfno);
+	pinfo->data->push_back(terr);
 	pinfo->have_above = 1;
-	pinfo->problem_indices.insert(pp->pt_inhit->hit_surfno);
 	return 0;
     }
 
@@ -267,16 +357,18 @@ _ck_up_miss(struct application *UNUSED(ap))
 }
 
 int
-_ged_lint_bot_close_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+_ged_lint_bot_close_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
+    nlohmann::json cerr;
     int have_above = 0;
     struct coplanar_info cpinfo;
     cpinfo.ttol = ttol;
     cpinfo.verbose = verbose;
     cpinfo.have_above = 0;
+    cpinfo.data = &cerr;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -314,18 +406,10 @@ _ged_lint_bot_close_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, s
 
 	if (cpinfo.have_above)
 	    have_above = 1;
-
-	if (!ofaces && cpinfo.have_above)
-	    break;
     }
 
-    if (ofaces) {
-	std::set<int>::iterator p_it;
-	for (p_it = cpinfo.problem_indices.begin(); p_it != cpinfo.problem_indices.end(); ++p_it) {
-	    int ind = *p_it;
-	    bu_ptbl_ins(ofaces, (long *)(long)ind);
-	}
-    }
+    if (have_above)
+	(*cdata->coplanar)[pname].push_back(cerr);
 
     return have_above;
 }
@@ -348,11 +432,10 @@ _mc_miss(struct application *ap)
     // something is wrong.
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
     tinfo->unexpected_miss = 1;
-    if (tinfo->verbose) {
-	bu_log("		miss\n");
-	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-    }
+    nlohmann::json terr;
+    ray_to_json(&terr, &ap->a_ray);
+    terr["indices"].push_back(tinfo->curr_tri);
+    tinfo->data->push_back(terr);
     return 0;
 }
 
@@ -367,16 +450,18 @@ _mc_overlap(struct application *UNUSED(ap),
 }
 
 int
-_ged_lint_bot_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+_ged_lint_bot_miss_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
+    nlohmann::json merr;
     int found_miss = 0;
     struct coplanar_info minfo;
     minfo.ttol = ttol;
     minfo.verbose = verbose;
     minfo.unexpected_miss = 0;
+    minfo.data = &merr;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -420,18 +505,10 @@ _ged_lint_bot_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, st
 	if (minfo.unexpected_miss) {
 	    found_miss = 1;
 	}
-
-	if (!ofaces && found_miss)
-	    break;
     }
 
-    if (ofaces) {
-	std::set<int>::iterator p_it;
-	for (p_it = minfo.problem_indices.begin(); p_it != minfo.problem_indices.end(); ++p_it) {
-	    int ind = *p_it;
-	    bu_ptbl_ins(ofaces, (long *)(long)ind);
-	}
-    }
+    if (found_miss)
+	(*cdata->misses)[pname].push_back(merr);
 
     return found_miss;
 }

@@ -577,7 +577,7 @@ endif (NOT COMMAND IS_SUBPATH)
 
 function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
-  cmake_parse_arguments(M "" "" "REQUIRED" ${ARGN})
+  cmake_parse_arguments(M "" "" "REQUIRED;TRIGGER" ${ARGN})
 
   # Handle both a list of one or more files and variable holding a
   # list of files - find out what we've got.
@@ -593,6 +593,22 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
       endif (NOT TARGET ${mt})
     endforeach(mt ${M_REQUIRED})
   endif (M_REQUIRED)
+
+
+  # Unlike REQUIRED, a TRIGGER option indicates we DON'T need this target
+  # unless at least one of the listed targets is defined
+  if (M_TRIGGER)
+    set(IS_ENABLED 0)
+    foreach(mt ${M_TRIGGER})
+      if (TARGET ${mt})
+	set(IS_ENABLED 1)
+      endif (TARGET ${mt})
+    endforeach(mt ${M_TRIGGER})
+    if (NOT IS_ENABLED)
+      return()
+    endif (NOT IS_ENABLED)
+  endif (M_TRIGGER)
+
 
   if (NOT TARGET managed_files)
     add_custom_target(managed_files ALL)

@@ -35,6 +35,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include "json.hpp"
 
 extern "C" {
 #include "bu/opt.h"
@@ -348,7 +349,7 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
 }
 
 static void
-do_sampling_checks(int *thin, int *close, int *miss, struct ged *gedp, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
+do_sampling_checks(struct _ged_invalid_data *idata, struct ged *gedp, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
 {
     if (!gedp || !bot)
 	return;
@@ -356,9 +357,11 @@ do_sampling_checks(int *thin, int *close, int *miss, struct ged *gedp, struct di
     struct rt_i *rtip = rt_new_rti(gedp->dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
-    *thin = _ged_lint_bot_thin_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
-    *close = _ged_lint_bot_close_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
-    *miss = _ged_lint_bot_miss_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
+
+    idata->pinfo->thin_problem = _ged_lint_bot_thin_check(idata->pinfo, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
+    idata->pinfo->close_problem = _ged_lint_bot_close_check(idata->pinfo, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
+    idata->pinfo->miss_problem = _ged_lint_bot_miss_check(idata->pinfo, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
+
     rt_free_rti(rtip);
 }
 
@@ -414,7 +417,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 		int thin_volumes = 0;
 		int close_triangles = 0;
 		int unexpected_miss = 0;
-		do_sampling_checks(&thin_volumes, &close_triangles, &unexpected_miss, gedp, dp, bot, verbosity);
+		do_sampling_checks(idata, gedp, dp, bot, verbosity);
 		if (thin_volumes || close_triangles || unexpected_miss) {
 		    obj.name = std::string(dp->d_namep);
 		    obj.type= std::string("bot");
@@ -484,6 +487,10 @@ _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int 
 	ret = BRLCAD_ERROR;
 	bu_free(pc, "pc table");
     } else {
+	idata->pinfo->thin = new nlohmann::json;
+	idata->pinfo->coplanar = new nlohmann::json;
+	idata->pinfo->misses = new nlohmann::json;
+
 	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	    dp = (struct directory *)BU_PTBL_GET(pc, i);
 	    _ged_invalid_prim_check(idata, gedp, dp, verbosity);
@@ -595,6 +602,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     if (opts->invalid_shape_check) {
 	bu_log("Checking for invalid objects...\n");
 	idata->o = opts;
+	idata->pinfo = new lint_json;
 	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa, opts->verbosity);
 	if (ret != BRLCAD_OK) {
 	    goto ged_lint_memfree;

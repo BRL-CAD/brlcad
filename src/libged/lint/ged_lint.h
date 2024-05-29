@@ -32,6 +32,7 @@
 #include <string>
 #include <map>
 #include <time.h>
+#include "json.hpp"
 
 extern "C" {
 #include "bu/ptbl.h"
@@ -40,6 +41,31 @@ extern "C" {
 #include "rt/primitives/bot.h"
 }
 #include "../ged_private.h"
+
+class lint_json {
+    public:
+	int thin_problem = 0;
+	int close_problem = 0;
+	int miss_problem = 0;
+	nlohmann::json *thin = NULL;
+	nlohmann::json *coplanar = NULL;
+	nlohmann::json *misses = NULL;
+};
+
+struct coplanar_info {
+    double ttol;
+    int is_thin;
+    int have_above;
+    int unexpected_miss;
+    struct rt_bot_internal *bot;
+    const char *pname;
+    nlohmann::json *data = NULL;
+
+    int verbose;
+    int curr_tri;
+    std::set<int> problem_indices;
+};
+
 
 struct _ged_lint_opts {
     int verbosity;
@@ -71,16 +97,17 @@ struct _ged_invalid_data {
     struct _ged_lint_opts *o;
     std::set<struct directory *> invalid_dps;
     std::map<struct directory *, struct invalid_obj> invalid_msgs;
+    lint_json *pinfo;
 };
 
 extern struct _ged_lint_opts *_ged_lint_opts_create();
 extern void _ged_lint_opts_destroy(struct _ged_lint_opts *o);
 
-extern int _ged_lint_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
+extern int _ged_lint_bot_thin_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
 
-extern int _ged_lint_bot_close_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
+extern int _ged_lint_bot_close_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
 
-extern int _ged_lint_bot_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
+extern int _ged_lint_bot_miss_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
 
 #endif /* LIBGED_LINT_GED_PRIVATE_H */
 
