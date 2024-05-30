@@ -894,6 +894,7 @@ main(int argc, const char *argv[])
 		"/shapelib/",
 		"gltf/",
 		"/detria.hpp",
+		"/json.hpp",
 		"/xxhash.h",
 		"misc/CMake/Find",
 		"misc/debian",
