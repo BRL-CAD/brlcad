@@ -7,8 +7,11 @@ include_directories(
   )
 
 set(LINT_SRCS
+  bot.cpp
+  cyclic.cpp
+  invalid_shape.cpp
   lint.cpp
-  sampling_checks.cpp
+  missing.cpp
   )
 
 add_definitions(-DGED_PLUGIN)

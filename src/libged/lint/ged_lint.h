@@ -42,72 +42,23 @@ extern "C" {
 }
 #include "../ged_private.h"
 
-class lint_json {
+class lint_data {
     public:
-	int thin_problem = 0;
-	int close_problem = 0;
-	int miss_problem = 0;
-	nlohmann::json *thin = NULL;
-	nlohmann::json *coplanar = NULL;
-	nlohmann::json *misses = NULL;
+	nlohmann::json j;
+	struct ged *gedp;
+
+	std::string filter;
+
+	std::string summary(int verbosity);
+
+	//std::vector<std::string> problem_types(std::string &filter);
+	//std::vector<std::string> problem_objects(std::string &filter);
 };
 
-struct coplanar_info {
-    double ttol;
-    int is_thin;
-    int have_above;
-    int unexpected_miss;
-    struct rt_bot_internal *bot;
-    const char *pname;
-    nlohmann::json *data = NULL;
-
-    int verbose;
-    int curr_tri;
-    std::set<int> problem_indices;
-};
-
-
-struct _ged_lint_opts {
-    int verbosity;
-    int cyclic_check;
-    int missing_check;
-    int invalid_shape_check;
-    struct bu_vls filter;
-};
-
-struct _ged_cyclic_data {
-    struct ged *gedp;
-    struct bu_ptbl *paths;
-};
-
-
-struct _ged_missing_data {
-    struct ged *gedp;
-    std::set<std::string> missing;
-};
-
-struct invalid_obj {
-    std::string name;
-    std::string type;
-    std::string error;
-};
-
-struct _ged_invalid_data {
-    struct ged *gedp;
-    struct _ged_lint_opts *o;
-    std::set<struct directory *> invalid_dps;
-    std::map<struct directory *, struct invalid_obj> invalid_msgs;
-    lint_json *pinfo;
-};
-
-extern struct _ged_lint_opts *_ged_lint_opts_create();
-extern void _ged_lint_opts_destroy(struct _ged_lint_opts *o);
-
-extern int _ged_lint_bot_thin_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
-
-extern int _ged_lint_bot_close_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
-
-extern int _ged_lint_bot_miss_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose);
+extern void bot_checks(lint_data *cdata, struct directory *dp, struct rt_bot_internal *bot, int verbose);
+extern int _ged_cyclic_check(lint_data *cdata, int argc, struct directory **dpa);
+extern int _ged_invalid_shape_check(lint_data *ldata, int argc, struct directory **dpa, int verbosity);
+extern int _ged_missing_check(lint_data *mdata, int argc, struct directory **dpa);
 
 #endif /* LIBGED_LINT_GED_PRIVATE_H */
 

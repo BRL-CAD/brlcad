@@ -1,4 +1,4 @@
-/*              S A M P L I N G _ C H E C K S . C P P
+/*                        B O T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2024 United States Government as represented by
@@ -17,8 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sampling_checks.cpp
+/** @file bot.cpp
  *
+ * Routines specific to invalid BoTs
  */
 
 #include "common.h"
@@ -36,6 +37,19 @@
 #include "rt/primitives/bot.h"
 
 #include "./ged_lint.h"
+
+struct coplanar_info {
+    double ttol;
+    int is_thin;
+    int have_above;
+    int unexpected_miss;
+    struct rt_bot_internal *bot;
+    const char *pname;
+    nlohmann::json *data = NULL;
+
+    int verbose;
+    int curr_tri;
+};
 
 class lint_tri {
     public:
@@ -193,7 +207,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	nlohmann::json terr;
 	ray_to_json(&terr, &ap->a_ray);
 	terr["indices"].push_back(tinfo->curr_tri);
-	tinfo->data->push_back(terr);
+	(*tinfo->data)["errors"].push_back(terr);
 	return 0;
     }
 
@@ -215,7 +229,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    terr["indices"].push_back(s->seg_in.hit_surfno);
 	    terr["indices"].push_back(s->seg_out.hit_surfno);
 	    terr["dist"] = d2s(dist);
-	    tinfo->data->push_back(terr);
+	    (*tinfo->data)["errors"].push_back(terr);
 	    tinfo->is_thin = 1;
 	}
     }
@@ -234,7 +248,7 @@ _tc_miss(struct application *ap)
     nlohmann::json terr;
     ray_to_json(&terr, &ap->a_ray);
     terr["indices"].push_back(tinfo->curr_tri);
-    tinfo->data->push_back(terr);
+    (*tinfo->data)["errors"].push_back(terr);
     return 0;
 }
 
@@ -252,17 +266,21 @@ _tc_overlap(struct application *ap,
     nlohmann::json terr;
     ray_to_json(&terr, &ap->a_ray);
     terr["indices"].push_back(tinfo->curr_tri);
-    tinfo->data->push_back(terr);
+    (*tinfo->data)["errors"].push_back(terr);
     return 0;
 }
 
-int
-_ged_lint_bot_thin_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+static int
+bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
     nlohmann::json terr;
+
+    terr["problem_type"] = "invalid_bot_thin_volume";
+    terr["object_name"] = pname;
+
     int found_thin = 0;
     struct coplanar_info tinfo;
     tinfo.ttol = ttol;
@@ -311,12 +329,11 @@ _ged_lint_bot_thin_check(lint_json *cdata, const char *pname, struct rt_bot_inte
 
 	if (tinfo.is_thin) {
 	    found_thin = 1;
-	    tinfo.problem_indices.insert(i);
 	}
     }
 
     if (found_thin)
-	(*cdata->thin)[pname].push_back(terr);
+	cdata->j.push_back(terr);
 
     return found_thin;
 }
@@ -342,7 +359,7 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	ray_to_json(&terr, &ap->a_ray);
 	terr["indices"].push_back(pp->pt_inhit->hit_surfno);
 	terr["indices"].push_back(pp->pt_outhit->hit_surfno);
-	pinfo->data->push_back(terr);
+	(*pinfo->data)["errors"].push_back(terr);
 	pinfo->have_above = 1;
 	return 0;
     }
@@ -356,13 +373,17 @@ _ck_up_miss(struct application *UNUSED(ap))
     return 0;
 }
 
-int
-_ged_lint_bot_close_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+static int
+bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
     nlohmann::json cerr;
+
+    cerr["problem_type"] = "invalid_bot_close_face";
+    cerr["object_name"] = pname;
+
     int have_above = 0;
     struct coplanar_info cpinfo;
     cpinfo.ttol = ttol;
@@ -409,7 +430,7 @@ _ged_lint_bot_close_check(lint_json *cdata, const char *pname, struct rt_bot_int
     }
 
     if (have_above)
-	(*cdata->coplanar)[pname].push_back(cerr);
+	cdata->j.push_back(cerr);
 
     return have_above;
 }
@@ -435,7 +456,7 @@ _mc_miss(struct application *ap)
     nlohmann::json terr;
     ray_to_json(&terr, &ap->a_ray);
     terr["indices"].push_back(tinfo->curr_tri);
-    tinfo->data->push_back(terr);
+    (*tinfo->data)["errors"].push_back(terr);
     return 0;
 }
 
@@ -449,13 +470,17 @@ _mc_overlap(struct application *UNUSED(ap),
     return 0;
 }
 
-int
-_ged_lint_bot_miss_check(lint_json *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+static int
+bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
     nlohmann::json merr;
+
+    merr["problem_type"] = "invalid_bot_unexpected_miss";
+    merr["object_name"] = pname;
+
     int found_miss = 0;
     struct coplanar_info minfo;
     minfo.ttol = ttol;
@@ -508,10 +533,52 @@ _ged_lint_bot_miss_check(lint_json *cdata, const char *pname, struct rt_bot_inte
     }
 
     if (found_miss)
-	(*cdata->misses)[pname].push_back(merr);
+	cdata->j.push_back(merr);
 
     return found_miss;
 }
+
+void
+bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
+{
+    if (!bdata || !dp || !bot)
+	return;
+
+    if (!bot->num_faces) {
+	nlohmann::json berr;
+	berr["problem_type"] = "invalid_bot_empty";
+	berr["object_name"] = dp->d_namep;
+	bdata->j.push_back(berr);
+	return;
+    }
+
+    // We can report any empty bot, but for the rest of these it only makes
+    // sense to do them for SOLID bots
+    if (bot->mode != RT_BOT_SOLID)
+	return;
+
+    int not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
+    if (not_solid) {
+	nlohmann::json berr;
+	berr["problem_type"] = "invalid_bot_not_solid";
+	berr["object_name"] = dp->d_namep;
+	bdata->j.push_back(berr);
+	return;
+    }
+
+    // TODO check for flipped bot
+
+    // The next tests check the solid raytracing behavior of the BoT, so we
+    // need to prepare a raytrace instance
+    struct rt_i *rtip = rt_new_rti(bdata->gedp->dbip);
+    rt_gettree(rtip, dp->d_namep);
+    rt_prep(rtip);
+    bot_thin_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
+    bot_close_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
+    bot_miss_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
+    rt_free_rti(rtip);
+}
+
 
 
 // Local Variables:
