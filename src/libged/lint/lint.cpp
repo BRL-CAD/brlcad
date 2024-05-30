@@ -28,6 +28,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include "json.hpp"
 
 extern "C" {
@@ -130,6 +131,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     int invalid_shape_check = 0;
     struct directory **dpa = NULL;
     struct bu_vls filter = BU_VLS_INIT_ZERO;
+    struct bu_vls ofile = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -138,14 +140,15 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     lint_data ldata;
     ldata.gedp = gedp;
 
-    struct bu_opt_desc d[7];
-    BU_OPT(d[0],  "h", "help",          "",  NULL,         &print_help,           "Print help and exit");
-    BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,   &verbosity,            "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[2],  "C", "cyclic",        "",  NULL,         &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
-    BU_OPT(d[3],  "M", "missing",       "",  NULL,         &missing_check,        "Check for objects referenced by other objects that are not in the database");
-    BU_OPT(d[4],  "I", "invalid-shape", "",  NULL,         &invalid_shape_check,  "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
-    BU_OPT(d[5],  "F", "filter",        "",  &bu_opt_vls,  &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
-    BU_OPT_NULL(d[6]);
+    struct bu_opt_desc d[8];
+    BU_OPT(d[0],  "h", "help",           "",  NULL,         &print_help,           "Print help and exit");
+    BU_OPT(d[1],  "v", "verbose",        "",  &_ged_vopt,   &verbosity,            "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[2],  "C", "cyclic",         "",  NULL,         &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
+    BU_OPT(d[3],  "M", "missing",        "",  NULL,         &missing_check,        "Check for objects referenced by other objects that are not in the database");
+    BU_OPT(d[4],  "I", "invalid-shape",  "",  NULL,         &invalid_shape_check,  "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
+    BU_OPT(d[5],  "F", "filter",  "pattern",  &bu_opt_vls,  &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
+    BU_OPT(d[6],  "j", "json-file", "fname",  &bu_opt_vls,  &ofile,                "Write out the full lint data to a json file");
+    BU_OPT_NULL(d[7]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -159,8 +162,13 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&filter);
+	bu_vls_free(&ofile);
 	return BRLCAD_OK;
     }
+
+    if (bu_vls_strlen(&filter))
+	ldata.filter = std::string(bu_vls_cstr(&filter));
+    bu_vls_free(&filter);
 
     if (argc) {
 	dpa = (struct directory **)bu_calloc(argc+1, sizeof(struct directory *), "dp array");
@@ -172,7 +180,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, " %s\n", argv[i]);
 	    }
 	    bu_free(dpa, "dpa");
-	    bu_vls_free(&filter);
+	    bu_vls_free(&ofile);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -203,6 +211,13 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     std::string report = ldata.summary(verbosity);
     bu_vls_printf(gedp->ged_result_str, "%s", report.c_str());
 
+    if (bu_vls_strlen(&ofile)) {
+	std::ofstream jfile(bu_vls_cstr(&ofile));
+	jfile << std::setw(2) << ldata.j << "\n";
+	jfile.close();
+    }
+
+    bu_vls_free(&ofile);
     return ret;
 }
 
