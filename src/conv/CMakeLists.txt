@@ -11,6 +11,7 @@ verbose_add_subdirectory("src/conv" gltf)
 
 verbose_add_subdirectory("src/conv" iges)
 verbose_add_subdirectory("src/conv" intaval)
+verbose_add_subdirectory("src/conv" k-g)
 verbose_add_subdirectory("src/conv" ply)
 verbose_add_subdirectory("src/conv" raw)
 verbose_add_subdirectory("src/conv" vdeck)
@@ -33,8 +34,6 @@ BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}" F
 BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu" FOLDER Conv)
 
 BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb;librt;libbu" FOLDER Conv)
-
-BRLCAD_ADDEXEC(k-g k-g.cpp "libwdb;librt;libbu;${M_LIBRARY}" FOLDER Conv)
 
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 

@@ -26,9 +26,9 @@ return -code 1
 set(index_cmds_file "${CMAKE_BINARY_DIR}/CMakeTmp/index_cmds.cmake")
 file(REMOVE "${index_cmds_file}")
 
-define_property(GLOBAL PROPERTY index_cpy_targets)
-define_property(GLOBAL PROPERTY index_depends_files)
-define_property(GLOBAL PROPERTY index_install_files)
+define_property(GLOBAL PROPERTY index_cpy_targets BRIEF_DOCS "tclindex cpy" FULL_DOCS "tclIndex cpy targets")
+define_property(GLOBAL PROPERTY index_depends_files BRIEF_DOCS "index depends" FULL_DOCS "tclIndex depends files")
+define_property(GLOBAL PROPERTY index_install_files BRIEF_DOCS "index install files" FULL_DOCS "tclIndex install files")
 
 # Wrap the logic needed for defining build targets that generate
 # tclIndex and pkgIndex.tcl files
