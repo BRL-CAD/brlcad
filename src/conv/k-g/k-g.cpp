@@ -87,8 +87,6 @@ int main
 			else
 			    std::cout << "Missing section to part" << partName.c_str() << '\n';
 
-			bool partOnlyOfTriangles = false;
-
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
 			    point_t point1;
 			    point_t point2;
@@ -116,20 +114,7 @@ int main
 			    point4[Y] = kData.nodes[n4].y * factor;
 			    point4[Z] = kData.nodes[n4].z * factor;
 
-			    if (!partOnlyOfTriangles) {
-				if (n3 == n4) {
-				    std::map<int, KPart>::iterator it_ = --it;
-				    std::string previousPartName = std::to_string(it_->first) + "_" + (it_->second).title;
-				    it++;
-				    bot = regions.getBot(previousPartName);
-				    std::string botName = partName + ".bot";
-				    bot.setName(botName.c_str());
-				    regions.deleteRegion(previousPartName);
-				    partOnlyOfTriangles = true;
-				}
-			    }
-
-			    if (partOnlyOfTriangles) {
+			    if (n3==n4) {
 				bot.addTriangle(point1, point2, point3);
 			    }
 			    else {
