@@ -168,39 +168,36 @@ techniques_parse(std::map<std::string, std::set<std::string>> *im_techniques, co
     // For each specifier, we should have a primitive type and technique name
     for (size_t i = 0; i < methods.size(); i++) {
 	std::string wopt = methods[i];
+	if (wopt.find(':') == std::string::npos)
+	    continue;
 	std::stringstream ostream(wopt);
 	std::string optstr;
 	std::vector<std::string> key_val;
 	while (std::getline(ostream, optstr, ':')) {
 	    key_val.push_back(optstr);
 	}
-	if (key_val.size() != 2) {
-	    return -1;
-	}
+	if (key_val.size() != 2)
+	    continue;
 	(*im_techniques)[key_val[0]].insert(key_val[1]);
     }
 
-    return 0;
+    return (im_techniques->size() > 0) ? 1 : 0;
 }
 
 static
-int invalid_opt_read(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+int invalid_opt_read(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
 {
-    int ret = 0;
     struct invalid_shape_methods *m = (struct invalid_shape_methods *)set_var;
     m->do_invalid = 1;
-    struct bu_vls opt_str = BU_VLS_INIT_ZERO;
-    if (bu_opt_vls(msg, argc, argv, (void *)&opt_str) == 1)
-	ret = 1;
 
-    if (bu_vls_strlen(&opt_str)) {
-	if (techniques_parse(m->im_techniques, bu_vls_cstr(&opt_str)))
-	    return -1;
+    if (argc) {
+	if (!strchr(argv[0], ':'))
+	    return 0;
+
+	return techniques_parse(m->im_techniques, argv[0]);
     }
 
-    bu_vls_free(&opt_str);
-
-    return ret;
+    return 0;
 }
 
 
