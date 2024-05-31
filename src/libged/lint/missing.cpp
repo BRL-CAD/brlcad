@@ -142,20 +142,20 @@ shape_find_missing(lint_data *mdata, struct db_i *dbip, struct directory *dp)
 }
 
 int
-_ged_missing_check(lint_data *mdata, int argc, struct directory **dpa)
+_ged_missing_check(lint_data *mdata)
 {
     if (!mdata)
 	return BRLCAD_ERROR;
-    if (argc && !dpa)
+    if (mdata->argc && !mdata->dpa)
 	return BRLCAD_ERROR;
 
     int ret = BRLCAD_OK;
     struct ged *gedp = mdata->gedp;
 
-    if (argc) {
+    if (mdata->argc) {
 	const char *osearch = "-type comb";
 	struct bu_ptbl pc = BU_PTBL_INIT_ZERO;
-	if (db_search(&pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->dbip, NULL) < 0) {
+	if (db_search(&pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, mdata->argc, mdata->dpa, gedp->dbip, NULL) < 0) {
 	    ret = BRLCAD_ERROR;
 	} else {
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(&pc); i++) {

@@ -53,21 +53,25 @@ class lint_data {
 
 	std::string filter;
 
-	std::string summary(int verbosity);
+	std::string summary();
+
+	bool print_help = false;
+	int verbosity = 0;
+	int argc = 0;
+	struct directory **dpa = NULL;
 
 	bool do_plot = false;
 	struct bu_color *color;
 	struct bv_vlblock *vbp;
 	struct bu_list *vlfree;
 
-	//std::vector<std::string> problem_types(std::string &filter);
-	//std::vector<std::string> problem_objects(std::string &filter);
+	std::map<std::string, std::set<std::string>> im_techniques;
 };
 
-extern void bot_checks(lint_data *cdata, struct directory *dp, struct rt_bot_internal *bot, int verbose);
-extern int _ged_cyclic_check(lint_data *cdata, int argc, struct directory **dpa);
-extern int _ged_invalid_shape_check(lint_data *ldata, int argc, struct directory **dpa, int verbosity);
-extern int _ged_missing_check(lint_data *mdata, int argc, struct directory **dpa);
+extern void bot_checks(lint_data *cdata, struct directory *dp, struct rt_bot_internal *bot);
+extern int _ged_cyclic_check(lint_data *cdata);
+extern int _ged_invalid_shape_check(lint_data *ldata);
+extern int _ged_missing_check(lint_data *mdata);
 
 #endif /* LIBGED_LINT_GED_PRIVATE_H */
 

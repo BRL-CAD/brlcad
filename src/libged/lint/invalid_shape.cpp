@@ -32,13 +32,15 @@
  * that into this logic as well... for now, run various special-case routines that are available to
  * spot various categories of problematic primitives. */
 void
-_ged_invalid_prim_check(lint_data *ldata, struct directory *dp, int verbosity)
+_ged_invalid_prim_check(lint_data *ldata, struct directory *dp)
 {
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct bu_vls vlog = BU_VLS_INIT_ZERO;
     int not_valid = 0;
     if (!ldata || !dp) return;
+
+    std::map<std::string, std::set<std::string>> &imt = ldata->im_techniques;
 
     if (dp->d_flags & RT_DIR_HIDDEN) return;
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
@@ -53,27 +55,36 @@ _ged_invalid_prim_check(lint_data *ldata, struct directory *dp, int verbosity)
 	case DB5_MINORTYPE_BRLCAD_BOT:
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
 	    RT_BOT_CK_MAGIC(bot);
-	    bot_checks(ldata, dp, bot, verbosity);
+	    bot_checks(ldata, dp, bot);
 	    rt_db_free_internal(&intern);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_BREP:
+	    if (imt.size() && imt.find(std::string("brep")) == imt.end())
+		return;
 	    not_valid = !rt_brep_valid(&vlog, &intern, 0);
 	    if (not_valid) {
 		nlohmann::json berr;
-		berr["problem_type"] = "invalid_brep_opennurbs";
+		berr["problem_type"] = "opennurbs_invalid";
+		berr["object_type"] = "brep";
 		berr["object_name"] = dp->d_namep;
 		berr["verbose_log"] = std::string(bu_vls_cstr(&vlog));
 		ldata->j.push_back(berr);
 	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
+	    if (imt.size() && imt.find(std::string("arb")) == imt.end())
+		return;
 	    // TODO - check for twisted arbs.
 	    break;
 	case DB5_MINORTYPE_BRLCAD_DSP:
+	    if (imt.size() && imt.find(std::string("dsp")) == imt.end())
+		return;
 	    // TODO - check for empty data object and zero length dimension vectors.
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	    // TODO - check for empty sketch and zero length dimension vectors.
+	    if (imt.size() && imt.find(std::string("extrude")) == imt.end())
+		return;
+	    // TODO - check for zero length dimension vectors.
 	    break;
 	default:
 	    break;
@@ -83,7 +94,7 @@ _ged_invalid_prim_check(lint_data *ldata, struct directory *dp, int verbosity)
 }
 
 int
-_ged_invalid_shape_check(lint_data *ldata, int argc, struct directory **dpa, int verbosity)
+_ged_invalid_shape_check(lint_data *ldata)
 {
     int ret = BRLCAD_OK;
     struct directory *dp;
@@ -92,13 +103,13 @@ _ged_invalid_shape_check(lint_data *ldata, int argc, struct directory **dpa, int
     struct bu_vls sopts = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sopts, "! -type comb %s", ldata->filter.c_str());
     BU_ALLOC(pc, struct bu_ptbl);
-    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, ldata->gedp->dbip, NULL) < 0) {
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), ldata->argc, ldata->dpa, ldata->gedp->dbip, NULL) < 0) {
 	ret = BRLCAD_ERROR;
 	bu_free(pc, "pc table");
     } else {
 	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	    dp = (struct directory *)BU_PTBL_GET(pc, i);
-	    _ged_invalid_prim_check(ldata, dp, verbosity);
+	    _ged_invalid_prim_check(ldata, dp);
 	}
 	bu_ptbl_free(pc);
 	bu_free(pc, "pc table");

@@ -121,7 +121,7 @@ cyclic_search(struct db_full_path *fp, void *client_data)
 }
 
 int
-_ged_cyclic_check(lint_data *cdata, int argc, struct directory **dpa)
+_ged_cyclic_check(lint_data *cdata)
 {
     int i;
     struct directory *dp;
@@ -129,15 +129,15 @@ _ged_cyclic_check(lint_data *cdata, int argc, struct directory **dpa)
     int ret = BRLCAD_OK;
     if (!cdata)
 	return BRLCAD_ERROR;
-    if (argc && !dpa)
+    if (cdata->argc && !cdata->dpa)
 	return BRLCAD_ERROR;
 
     BU_GET(start_path, struct db_full_path);
     db_full_path_init(start_path);
 
-    if (argc) {
-	for (i = 0; i < argc; i++) {
-	    db_add_node_to_full_path(start_path, dpa[i]);
+    if (cdata->argc) {
+	for (i = 0; i < cdata->argc; i++) {
+	    db_add_node_to_full_path(start_path, cdata->dpa[i]);
 	    cyclic_search(start_path, (void *)cdata);
 	    DB_FULL_PATH_POP(start_path);
 	}

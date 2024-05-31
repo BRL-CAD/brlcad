@@ -51,7 +51,7 @@ lint_data::~lint_data()
 }
 
 std::string
-lint_data::summary(int verbosity)
+lint_data::summary()
 {
     if (verbosity < 0)
 	return std::string("");
@@ -83,15 +83,24 @@ lint_data::summary(int verbosity)
 	    std::string mpath(pdata["path"]);
 	    categories[std::string("missing")].insert(mpath);
 	}
-	if (!ptype.compare(0, 7, std::string("invalid"))) {
-	    if (!pdata.contains("object_name")) {
-		bu_log("Error - malformed invalid object reference JSON data\n");
-		continue;
-	    }
-	    std::string oname(pdata["object_name"]);
-	    categories[std::string("invalid")].insert(oname);
-	    obj_problems[oname].insert(ptype);
+
+	// If it's not one of the above types, we're looking for an
+	// object name and type
+	if (!pdata.contains("object_name")) {
+	    bu_log("JSON entry missing object name\n");
+	    continue;
 	}
+	std::string oname(pdata["object_name"]);
+
+	if (!pdata.contains("object_type")) {
+	    bu_log("JSON entry missing object type\n");
+	    continue;
+	}
+	std::string otype(pdata["object_type"]);
+
+	categories[std::string("invalid")].insert(oname);
+	std::string prob_type = otype + std::string(":") + ptype;
+	obj_problems[oname].insert(prob_type);
     }
 
     std::string ostr;
@@ -131,6 +140,70 @@ lint_data::summary(int verbosity)
     return ostr;
 }
 
+struct invalid_shape_methods {
+    int do_invalid = 0;
+    std::map<std::string, std::set<std::string>> *im_techniques;
+};
+
+static int
+techniques_parse(std::map<std::string, std::set<std::string>> *im_techniques, const char *instr)
+{
+    if (!im_techniques || !instr)
+	return -1;
+
+    // Split out individual specifiers
+    std::string av0 = std::string(instr);
+    std::stringstream astream(av0);
+    std::string s;
+    std::vector<std::string> methods;
+    if (av0.find(' ') != std::string::npos) {
+	while (std::getline(astream, s, ' ')) {
+	    if (s.length())
+		methods.push_back(s);
+	}
+    } else {
+	methods.push_back(av0);
+    }
+
+    // For each specifier, we should have a primitive type and technique name
+    for (size_t i = 0; i < methods.size(); i++) {
+	std::string wopt = methods[i];
+	std::stringstream ostream(wopt);
+	std::string optstr;
+	std::vector<std::string> key_val;
+	while (std::getline(ostream, optstr, ':')) {
+	    key_val.push_back(optstr);
+	}
+	if (key_val.size() != 2) {
+	    return -1;
+	}
+	(*im_techniques)[key_val[0]].insert(key_val[1]);
+    }
+
+    return 0;
+}
+
+static
+int invalid_opt_read(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    int ret = 0;
+    struct invalid_shape_methods *m = (struct invalid_shape_methods *)set_var;
+    m->do_invalid = 1;
+    struct bu_vls opt_str = BU_VLS_INIT_ZERO;
+    if (bu_opt_vls(msg, argc, argv, (void *)&opt_str) == 1)
+	ret = 1;
+
+    if (bu_vls_strlen(&opt_str)) {
+	if (techniques_parse(m->im_techniques, bu_vls_cstr(&opt_str)))
+	    return -1;
+    }
+
+    bu_vls_free(&opt_str);
+
+    return ret;
+}
+
+
 extern "C" int
 ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -140,7 +213,6 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     int verbosity = 0;
     int cyclic_check = 0;
     int missing_check = 0;
-    int invalid_shape_check = 0;
     int visualize = 0;
     struct directory **dpa = NULL;
     struct bu_vls filter = BU_VLS_INIT_ZERO;
@@ -153,15 +225,18 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     lint_data ldata;
     ldata.gedp = gedp;
 
+    struct invalid_shape_methods imethods;
+    imethods.im_techniques = &ldata.im_techniques;
+
     struct bu_opt_desc d[9];
-    BU_OPT(d[0],  "h", "help",           "",  NULL,         &print_help,           "Print help and exit");
-    BU_OPT(d[1],  "v", "verbose",        "",  &_ged_vopt,   &verbosity,            "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[2],  "C", "cyclic",         "",  NULL,         &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
-    BU_OPT(d[3],  "M", "missing",        "",  NULL,         &missing_check,        "Check for objects referenced by other objects that are not in the database");
-    BU_OPT(d[4],  "I", "invalid-shape",  "",  NULL,         &invalid_shape_check,  "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
-    BU_OPT(d[5],  "F", "filter",  "pattern",  &bu_opt_vls,  &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
-    BU_OPT(d[6],  "j", "json-file", "fname",  &bu_opt_vls,  &ofile,                "Write out the full lint data to a json file");
-    BU_OPT(d[7],  "V", "visualize",      "",  NULL,         &visualize,            "When problems can be visually represented, do so");
+    BU_OPT(d[0],  "h", "help",                              "",  NULL,              &print_help,           "Print help and exit");
+    BU_OPT(d[1],  "v", "verbose",                           "",  &_ged_vopt,        &verbosity,            "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[2],  "C", "cyclic",                            "",  NULL,              &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
+    BU_OPT(d[3],  "M", "missing",                           "",  NULL,              &missing_check,        "Check for objects referenced by other objects that are not in the database");
+    BU_OPT(d[4],  "I", "invalid-shape",  "[check [check ...]]",  &invalid_opt_read, &imethods,             "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
+    BU_OPT(d[5],  "F", "filter",                     "pattern",  &bu_opt_vls,       &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
+    BU_OPT(d[6],  "j", "json-file",                    "fname",  &bu_opt_vls,       &ofile,                "Write out the full lint data to a json file");
+    BU_OPT(d[7],  "V", "visualize",                         "",  NULL,              &visualize,            "When problems can be visually represented, do so");
     BU_OPT_NULL(d[8]);
 
     /* skip command name argv[0] */
@@ -175,6 +250,14 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
+	// TODO - autogenerate this list rather than hard coding...
+	bu_vls_printf(gedp->ged_result_str, "\nInvalidity checks:\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:close_face\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:empty\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:non_solid\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:thin_volume\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:unexpected_miss\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbrep:opennurbs\n");
 	bu_vls_free(&filter);
 	bu_vls_free(&ofile);
 	return BRLCAD_OK;
@@ -201,23 +284,28 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    int have_specific_test = cyclic_check+missing_check+invalid_shape_check;
+    ldata.argc = argc;
+    ldata.dpa = dpa;
+    ldata.verbosity = verbosity;
+
+
+    int have_specific_test = cyclic_check+missing_check+imethods.do_invalid;
 
     if (!have_specific_test || cyclic_check) {
 	bu_log("Checking for cyclic paths...\n");
-	if (_ged_cyclic_check(&ldata, argc, dpa) != BRLCAD_OK)
+	if (_ged_cyclic_check(&ldata) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
     }
 
     if (!have_specific_test || missing_check) {
 	bu_log("Checking for references to non-extant objects...\n");
-	if (_ged_missing_check(&ldata, argc, dpa) != BRLCAD_OK)
+	if (_ged_missing_check(&ldata) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
     }
 
-    if (!have_specific_test || invalid_shape_check) {
+    if (!have_specific_test || imethods.do_invalid) {
 	bu_log("Checking for invalid objects...\n");
-	if (_ged_invalid_shape_check(&ldata, argc, dpa, verbosity) != BRLCAD_OK)
+	if (_ged_invalid_shape_check(&ldata) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
     }
 
@@ -234,7 +322,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     if (dpa)
 	bu_free(dpa, "dp array");
 
-    std::string report = ldata.summary(verbosity);
+    std::string report = ldata.summary();
     bu_vls_printf(gedp->ged_result_str, "%s", report.c_str());
 
     if (bu_vls_strlen(&ofile)) {

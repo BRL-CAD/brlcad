@@ -352,20 +352,28 @@ _tc_overlap(struct application *ap,
 }
 
 static int
-bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
+    std::map<std::string, std::set<std::string>> &imt = cdata->im_techniques;
+    if (imt.size()) {
+	std::set<std::string> &bt = imt[std::string("bot")];
+	if (bt.find(std::string("thin_volume")) == bt.end())
+	    return 0;
+    }
+
     nlohmann::json terr;
 
-    terr["problem_type"] = "invalid_bot_thin_volume";
+    terr["problem_type"] = "thin_volume";
+    terr["object_type"] = "bot";
     terr["object_name"] = pname;
 
     int found_thin = 0;
     struct coplanar_info tinfo;
     tinfo.ttol = ttol;
-    tinfo.verbose = verbose;
+    tinfo.verbose = cdata->verbosity;
     tinfo.bot = bot;
     tinfo.data = &terr;
     tinfo.color = cdata->color;
@@ -485,20 +493,29 @@ _ck_up_miss(struct application *UNUSED(ap))
 }
 
 static int
-bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
+    std::map<std::string, std::set<std::string>> &imt = cdata->im_techniques;
+    if (imt.size()) {
+	std::set<std::string> &bt = imt[std::string("bot")];
+	if (bt.find(std::string("close_face")) == bt.end())
+	    return 0;
+    }
+
     nlohmann::json cerr;
 
-    cerr["problem_type"] = "invalid_bot_close_face";
+    cerr["problem_type"] = "close_face";
+    cerr["object_type"] = "bot";
     cerr["object_name"] = pname;
 
     int have_above = 0;
     struct coplanar_info cpinfo;
     cpinfo.ttol = ttol;
-    cpinfo.verbose = verbose;
+    cpinfo.verbose = cdata->verbosity;
+    cpinfo.bot = bot;
     cpinfo.have_above = 0;
     cpinfo.data = &cerr;
     cpinfo.color = cdata->color;
@@ -607,20 +624,29 @@ _mc_overlap(struct application *UNUSED(ap),
 }
 
 static int
-bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol, int verbose)
+bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
 	return 0;
 
+    std::map<std::string, std::set<std::string>> &imt = cdata->im_techniques;
+    if (imt.size()) {
+	std::set<std::string> &bt = imt[std::string("bot")];
+	if (bt.find(std::string("unexpected_miss")) == bt.end())
+	    return 0;
+    }
+
     nlohmann::json merr;
 
-    merr["problem_type"] = "invalid_bot_unexpected_miss";
+    merr["problem_type"] = "unexpected_miss";
+    merr["object_type"] = "bot";
     merr["object_name"] = pname;
 
     int found_miss = 0;
     struct coplanar_info minfo;
     minfo.ttol = ttol;
-    minfo.verbose = verbose;
+    minfo.verbose = cdata->verbosity;
+    minfo.bot = bot;
     minfo.unexpected_miss = 0;
     minfo.data = &merr;
     minfo.color = cdata->color;
@@ -679,14 +705,26 @@ bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
 }
 
 void
-bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
+bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
 {
     if (!bdata || !dp || !bot)
 	return;
 
+    std::map<std::string, std::set<std::string>> &imt = bdata->im_techniques;
+    if (imt.size() && imt.find(std::string("bot")) == imt.end())
+	return;
+
     if (!bot->num_faces) {
+
+	if (imt.size()) {
+	    std::set<std::string> &bt = imt[std::string("bot")];
+	    if (bt.find(std::string("empty")) == bt.end())
+		return;
+	}
+
 	nlohmann::json berr;
-	berr["problem_type"] = "invalid_bot_empty";
+	berr["problem_type"] = "empty";
+	berr["object_type"] = "bot";
 	berr["object_name"] = dp->d_namep;
 	bdata->j.push_back(berr);
 	return;
@@ -699,8 +737,15 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot, 
 
     int not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
     if (not_solid) {
+	if (imt.size()) {
+	    std::set<std::string> &bt = imt[std::string("bot")];
+	    if (bt.find(std::string("not_solid")) == bt.end())
+		return;
+	}
+
 	nlohmann::json berr;
-	berr["problem_type"] = "invalid_bot_not_solid";
+	berr["problem_type"] = "not_solid";
+	berr["object_type"] = "bot";
 	berr["object_name"] = dp->d_namep;
 	bdata->j.push_back(berr);
 	return;
@@ -713,9 +758,9 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot, 
     struct rt_i *rtip = rt_new_rti(bdata->gedp->dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
-    bot_thin_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
-    bot_close_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
-    bot_miss_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL, verbosity);
+    bot_thin_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
+    bot_close_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
+    bot_miss_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
     rt_free_rti(rtip);
 }
 
