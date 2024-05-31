@@ -47,6 +47,11 @@ struct coplanar_info {
     const char *pname;
     nlohmann::json *data = NULL;
 
+    struct bu_color *color = NULL;
+    struct bv_vlblock *vbp = NULL;
+    struct bu_list *vlfree = NULL;
+    bool do_plot = false;
+
     int verbose;
     int curr_tri;
 };
@@ -199,6 +204,14 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	return 1;
 
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct rt_bot_internal *bot = tinfo->bot;
+    struct bu_color *color = tinfo->color;
+    struct bv_vlblock *vbp = tinfo->vbp;
+    struct bu_list *vlfree = tinfo->vlfree;
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 
     struct partition *pp = PartHeadp->pt_forw;
 
@@ -208,6 +221,15 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	ray_to_json(&terr, &ap->a_ray);
 	terr["indices"].push_back(tinfo->curr_tri);
 	(*tinfo->data)["errors"].push_back(terr);
+	if (tinfo->do_plot) {
+	    point_t v[3];
+	    for (int i = 0; i < 3; i++)
+		VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+	}
 	return 0;
     }
 
@@ -231,6 +253,23 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    terr["dist"] = d2s(dist);
 	    (*tinfo->data)["errors"].push_back(terr);
 	    tinfo->is_thin = 1;
+
+	    if (tinfo->do_plot) {
+		point_t v[3];
+		for (int i = 0; i < 3; i++)
+		    VMOVE(v[i], &bot->vertices[bot->faces[s->seg_in.hit_surfno*3+i]*3]);
+		BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+		for (int i = 0; i < 3; i++)
+		    VMOVE(v[i], &bot->vertices[bot->faces[s->seg_out.hit_surfno*3+i]*3]);
+		BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+	    }
+
 	}
     }
 
@@ -244,11 +283,32 @@ _tc_miss(struct application *ap)
     // it.  If we miss under those conditions, it can only happen because
     // something is wrong.
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct rt_bot_internal *bot = tinfo->bot;
+    struct bu_color *color = tinfo->color;
+    struct bv_vlblock *vbp = tinfo->vbp;
+    struct bu_list *vlfree = tinfo->vlfree;
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
+
     tinfo->is_thin = 1;
     nlohmann::json terr;
     ray_to_json(&terr, &ap->a_ray);
     terr["indices"].push_back(tinfo->curr_tri);
     (*tinfo->data)["errors"].push_back(terr);
+
+    if (tinfo->do_plot) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+    }
+
     return 0;
 }
 
@@ -262,11 +322,32 @@ _tc_overlap(struct application *ap,
 	struct partition *UNUSED(hp))
 {
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct rt_bot_internal *bot = tinfo->bot;
+    struct bu_color *color = tinfo->color;
+    struct bv_vlblock *vbp = tinfo->vbp;
+    struct bu_list *vlfree = tinfo->vlfree;
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
+
     tinfo->is_thin = 1;
     nlohmann::json terr;
     ray_to_json(&terr, &ap->a_ray);
     terr["indices"].push_back(tinfo->curr_tri);
     (*tinfo->data)["errors"].push_back(terr);
+
+    if (tinfo->do_plot) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+    }
+
     return 0;
 }
 
@@ -287,6 +368,10 @@ bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     tinfo.verbose = verbose;
     tinfo.bot = bot;
     tinfo.data = &terr;
+    tinfo.color = cdata->color;
+    tinfo.vbp = cdata->vbp;
+    tinfo.vlfree = cdata->vlfree;
+    tinfo.do_plot = cdata->do_plot;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -350,6 +435,15 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	return 1;
 
     struct coplanar_info *pinfo = (struct coplanar_info *)ap->a_uptr;
+    struct rt_bot_internal *bot = pinfo->bot;
+    struct bu_color *color = pinfo->color;
+    struct bv_vlblock *vbp = pinfo->vbp;
+    struct bu_list *vlfree = pinfo->vlfree;
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
 
     struct partition *pp = PartHeadp->pt_forw;
 
@@ -361,6 +455,23 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	terr["indices"].push_back(pp->pt_outhit->hit_surfno);
 	(*pinfo->data)["errors"].push_back(terr);
 	pinfo->have_above = 1;
+
+	if (pinfo->do_plot) {
+	    point_t v[3];
+	    for (int i = 0; i < 3; i++)
+		VMOVE(v[i], &bot->vertices[bot->faces[pp->pt_inhit->hit_surfno*3+i]*3]);
+	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+	    for (int i = 0; i < 3; i++)
+		VMOVE(v[i], &bot->vertices[bot->faces[pp->pt_outhit->hit_surfno*3+i]*3]);
+	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+	}
+
 	return 0;
     }
 
@@ -390,6 +501,11 @@ bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot
     cpinfo.verbose = verbose;
     cpinfo.have_above = 0;
     cpinfo.data = &cerr;
+    cpinfo.color = cdata->color;
+    cpinfo.vbp = cdata->vbp;
+    cpinfo.vlfree = cdata->vlfree;
+    cpinfo.do_plot = cdata->do_plot;
+
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -452,11 +568,31 @@ _mc_miss(struct application *ap)
     // it.  If we miss under those conditions, it can only happen because
     // something is wrong.
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct rt_bot_internal *bot = tinfo->bot;
+    struct bu_color *color = tinfo->color;
+    struct bv_vlblock *vbp = tinfo->vbp;
+    struct bu_list *vlfree = tinfo->vlfree;
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
     tinfo->unexpected_miss = 1;
     nlohmann::json terr;
     ray_to_json(&terr, &ap->a_ray);
     terr["indices"].push_back(tinfo->curr_tri);
     (*tinfo->data)["errors"].push_back(terr);
+
+    if (tinfo->do_plot) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+    }
+
     return 0;
 }
 
@@ -487,6 +623,10 @@ bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     minfo.verbose = verbose;
     minfo.unexpected_miss = 0;
     minfo.data = &merr;
+    minfo.color = cdata->color;
+    minfo.vbp = cdata->vbp;
+    minfo.vlfree = cdata->vlfree;
+    minfo.do_plot = cdata->do_plot;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))

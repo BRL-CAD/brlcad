@@ -44,12 +44,21 @@ extern "C" {
 
 class lint_data {
     public:
+
+	lint_data();
+	~lint_data();
+
 	nlohmann::json j;
 	struct ged *gedp;
 
 	std::string filter;
 
 	std::string summary(int verbosity);
+
+	bool do_plot = false;
+	struct bu_color *color;
+	struct bv_vlblock *vbp;
+	struct bu_list *vlfree;
 
 	//std::vector<std::string> problem_types(std::string &filter);
 	//std::vector<std::string> problem_objects(std::string &filter);

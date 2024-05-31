@@ -36,6 +36,20 @@ extern "C" {
 }
 #include "./ged_lint.h"
 
+lint_data::lint_data()
+{
+    color = NULL;
+    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    vlfree = &RTG.rtg_vlfree;
+}
+
+lint_data::~lint_data()
+{
+    bv_vlblock_free(vbp);
+    vbp = NULL;
+    vlfree = NULL;
+}
+
 std::string
 lint_data::summary(int verbosity)
 {
@@ -104,14 +118,12 @@ lint_data::summary(int verbosity)
 	ostr.append(std::string("Found invalid objects:\n"));
 	for (s_it = invobjs.begin(); s_it != invobjs.end(); s_it++) {
 	    ostr.append(std::string("\t") + *s_it);
-	    if (verbosity) {
-		ostr.append(std::string(" ["));
-		for (o_it = obj_problems[*s_it].begin(); o_it != obj_problems[*s_it].end(); o_it++) {
-		    ostr.append(*o_it + std::string(","));
-		}
-		ostr.pop_back();
-		ostr.append(std::string("]"));
+	    ostr.append(std::string(" ["));
+	    for (o_it = obj_problems[*s_it].begin(); o_it != obj_problems[*s_it].end(); o_it++) {
+		ostr.append(*o_it + std::string(","));
 	    }
+	    ostr.pop_back();
+	    ostr.append(std::string("]"));
 	    ostr.append(std::string("\n"));
 	}
     }
@@ -129,6 +141,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     int cyclic_check = 0;
     int missing_check = 0;
     int invalid_shape_check = 0;
+    int visualize = 0;
     struct directory **dpa = NULL;
     struct bu_vls filter = BU_VLS_INIT_ZERO;
     struct bu_vls ofile = BU_VLS_INIT_ZERO;
@@ -140,7 +153,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     lint_data ldata;
     ldata.gedp = gedp;
 
-    struct bu_opt_desc d[8];
+    struct bu_opt_desc d[9];
     BU_OPT(d[0],  "h", "help",           "",  NULL,         &print_help,           "Print help and exit");
     BU_OPT(d[1],  "v", "verbose",        "",  &_ged_vopt,   &verbosity,            "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "C", "cyclic",         "",  NULL,         &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
@@ -148,7 +161,8 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[4],  "I", "invalid-shape",  "",  NULL,         &invalid_shape_check,  "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
     BU_OPT(d[5],  "F", "filter",  "pattern",  &bu_opt_vls,  &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
     BU_OPT(d[6],  "j", "json-file", "fname",  &bu_opt_vls,  &ofile,                "Write out the full lint data to a json file");
-    BU_OPT_NULL(d[7]);
+    BU_OPT(d[7],  "V", "visualize",      "",  NULL,         &visualize,            "When problems can be visually represented, do so");
+    BU_OPT_NULL(d[8]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -169,6 +183,8 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     if (bu_vls_strlen(&filter))
 	ldata.filter = std::string(bu_vls_cstr(&filter));
     bu_vls_free(&filter);
+
+    ldata.do_plot = (visualize) ? true : false;
 
     if (argc) {
 	dpa = (struct directory **)bu_calloc(argc+1, sizeof(struct directory *), "dp array");
@@ -203,6 +219,16 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_log("Checking for invalid objects...\n");
 	if (_ged_invalid_shape_check(&ldata, argc, dpa, verbosity) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
+    }
+
+    if (visualize) {
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	struct bview *view = gedp->ged_gvp;
+	if (BU_STR_EQUAL(nview, "1")) {
+	    bv_vlblock_obj(ldata.vbp, view, "lint_visual");
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, ldata.vbp, "lint_visual", 0);
+	}
     }
 
     if (dpa)
