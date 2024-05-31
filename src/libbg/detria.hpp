@@ -21,7 +21,7 @@
 // IN THE SOFTWARE.
 //
 // (Note - official licenses are at the bottom of the file - this copy is
-// placed here to indiciate which one BRL-CAD is using detria under and to
+// placed here to indicate which license BRL-CAD is using detria under and to
 // make it easier for our license scanner to find.)
 
 //
