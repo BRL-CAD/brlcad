@@ -2241,6 +2241,15 @@ BREP/NURBS
 NMG/BoT
 -------
 
+* getting some unexpected misses when testing facetization of havoc
+  regions.  If the issue is super-thin triangles in raytrace, see if
+  we can handle by solving the plane intersection to get a 3D point,
+  then returning that if we're within tol distance of the triangle
+  edges and we don't get any hits from topological neighbors.  If
+  the triangle is thin enough, that should be a reasonable answer
+  (at least for a 3D point - the normal may be something else again
+  if the 3 points aren't distinct enough to properly calc the plane.)
+
 * bot overlaps when unoriented, when clearly not overlapping
 
 * resolve bot bin sort optimization crash, disabled during release
