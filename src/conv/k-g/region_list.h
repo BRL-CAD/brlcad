@@ -43,6 +43,8 @@ public:
 
     void deleteRegion(const std::string& name);
 
+    void setAttribute(const char* key, const char* value);
+
     void create(rt_wdb* wdbp);
 
     void printNames(void) const;

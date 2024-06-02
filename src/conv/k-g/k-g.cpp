@@ -60,7 +60,7 @@ int main
 		title += argv[1];
 
 		db_update_ident(wdbp->dbip, title.c_str(), wdbp->dbip->dbi_base2local);
-
+		
 		const double factor = 10.0;
 
 		for (std::map<int, KPart>::iterator it = kData.parts.begin(); it != kData.parts.end(); it++) {
@@ -122,6 +122,10 @@ int main
 				bot.addTriangle(point1, point3, point4);
 			    }
 			}
+		    }
+		    if ((it->second).avp.key.size()>0) {
+			//regions.setAttribute();
+
 		    }
 		}
 

@@ -48,10 +48,16 @@ struct KElement {
 };
 
 
+struct KPart_avp {
+    std::string   key;
+    std::string   value;
+};
+
 struct KPart {
     std::string   title;
     std::set<int> elements;
     int           section;
+    KPart_avp     avp;
 };
 
 

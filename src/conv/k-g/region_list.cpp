@@ -59,9 +59,15 @@ void RegionList::create
     for (std::map<std::string, Bot>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
 	const std::string& region_name = it->first;
 	Bot&               bot         = it->second;
-
+	struct rt_db_internal region_internal;
+	struct directory* dp ;
+	struct db_i *dbip ;
+	bu_attribute_value_set* avs;
+	dbip = wdbp->dbip;
+	
+	
 	bot.write(wdbp);
-
+	
 	wmember bot_head;
 	BU_LIST_INIT(&bot_head.l);
 
@@ -69,7 +75,21 @@ void RegionList::create
 	mk_lfcomb(wdbp, region_name.c_str(), &bot_head, 0);
 	mk_addmember(region_name.c_str(), &(all_head.l), NULL, WMOP_UNION);
 
+	
+	dp = db_lookup(dbip, region_name.c_str(), 0);
+	rt_db_get_internal(&region_internal, dp, dbip, bn_mat_identity, &rt_uniresource);
+	std::cout << "rt_db_get_internal: " << rt_db_get_internal(&region_internal, dp, dbip, bn_mat_identity, &rt_uniresource)<<"\n";
+	avs = &region_internal.idb_avs;
+	const char* key= "adabtive_Mesh";
+	const char* value= "0.2";
+	const char* title = "exprment";
+	bu_avs_add(avs, key, value);
+	
+ 
+	bu_avs_print(avs, title);
+	db5_update_attributes(dp,  avs, dbip);
 	mk_freemembers(&bot_head.l);
+	bu_avs_free( avs);
     }
 
     mk_lfcomb(wdbp, "all.g", &all_head, 0);
