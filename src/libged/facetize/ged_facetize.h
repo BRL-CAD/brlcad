@@ -54,11 +54,13 @@ struct _ged_facetize_state {
     // Settings
     int max_time;
     int max_pnts;
+    struct bu_vls *prefix;
+    struct bu_vls *suffix;
 
     /* Brep specific */
     struct bg_tess_tol *tol;
     double nonovlp_threshold;
-    struct bu_vls *faceted_suffix;
+    struct bu_vls *solid_suffix;
 
     /* Implementation */
     int error_flag;

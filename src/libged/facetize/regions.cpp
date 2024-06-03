@@ -363,17 +363,37 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_free(tlist, "tlist");
     tlist = NULL;
 
+    /* The user may have specified a naming preference - if so, honor it */
+    struct bu_vls prefix_str = BU_VLS_INIT_ZERO;
+    struct bu_vls suffix_str = BU_VLS_INIT_ZERO;
+    const char *affix = NULL;
+    int use_prefix = 1;
+    if (bu_vls_strlen(s->prefix)) {
+	bu_vls_sprintf(&prefix_str, "%s", bu_vls_cstr(s->prefix));
+    } else {
+	bu_vls_sprintf(&prefix_str, "facetize_");
+    }
+
+    if (bu_vls_strlen(s->suffix)) {
+	bu_vls_sprintf(&suffix_str, "%s", bu_vls_cstr(s->suffix));
+	use_prefix = 0;
+    }
+    affix = (use_prefix) ? bu_vls_cstr(&prefix_str) : bu_vls_cstr(&suffix_str);
 
     // dbconcat output .g into original .g - either using -O to overwrite
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.
     av[0] = "dbconcat";
     av[1] = (s->in_place) ? "-O" : "-L";
-    av[2] = kfname;
-    av[3] = "facetize_"; // TODO - customize
-    av[4] = NULL;
-    ged_exec(s->gedp, 4, av);
+    av[2] = (use_prefix) ? "-p" : "-s";
+    av[3] = kfname;
+    av[4] = affix;
+    av[5] = NULL;
+    ged_exec(s->gedp, 5, av);
     bu_free(av, "av");
+
+    bu_vls_free(&prefix_str);
+    bu_vls_free(&suffix_str);
 
     /* Done importing stuff - update nref. */
     db_update_nref(dbip, &rt_uniresource);
