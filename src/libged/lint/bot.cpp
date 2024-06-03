@@ -43,6 +43,7 @@ struct coplanar_info {
     int is_thin;
     int have_above;
     int unexpected_miss;
+    int unexpected_hit;
     struct rt_bot_internal *bot;
     const char *pname;
     nlohmann::json *data = NULL;
@@ -196,6 +197,28 @@ json_to_tri(class lint_tri &tri, nlohmann::json &jtri)
     }
 }
 
+static int
+_miss_noop(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
+
+struct tc_info {
+    double ttol;
+    int is_thin;
+    struct rt_bot_internal *bot;
+    const char *pname;
+    nlohmann::json *data = NULL;
+
+    struct bu_color *color = NULL;
+    struct bv_vlblock *vbp = NULL;
+    struct bu_list *vlfree = NULL;
+    bool do_plot = false;
+
+    int verbose;
+    int curr_tri;
+};
 
 static int
 _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
@@ -203,7 +226,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     if (PartHeadp->pt_forw == PartHeadp)
 	return 1;
 
-    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
     struct bu_color *color = tinfo->color;
     struct bv_vlblock *vbp = tinfo->vbp;
@@ -217,24 +240,8 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     struct seg *s = (struct seg *)segs->l.forw;
     if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
-	nlohmann::json terr;
-	ray_to_json(&terr, &ap->a_ray);
-	terr["indices"].push_back(tinfo->curr_tri);
-	(*tinfo->data)["errors"].push_back(terr);
-	// This condition doesn't (necessarily) mean we have a thin solid, but
-	// it still indicates some sort of problem since our first hit from a
-	// segment didn't come from the expected triangle - flag for reporting.
-	// This might actually make sense as a separate test.
-	tinfo->is_thin = 1;
-	if (tinfo->do_plot) {
-	    point_t v[3];
-	    for (int i = 0; i < 3; i++)
-		VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
-	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
-	}
+	// This is a problem but it's not the thin volume problem - no point in
+	// continuing
 	return 0;
     }
 
@@ -281,42 +288,6 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     return 0;
 }
 
-static int
-_tc_miss(struct application *ap)
-{
-    // We are shooting directly into the center of a triangle from right above
-    // it.  If we miss under those conditions, it can only happen because
-    // something is wrong.
-    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
-    struct rt_bot_internal *bot = tinfo->bot;
-    struct bu_color *color = tinfo->color;
-    struct bv_vlblock *vbp = tinfo->vbp;
-    struct bu_list *vlfree = tinfo->vlfree;
-    unsigned char rgb[3] = {255, 255, 0};
-    if (color)
-	bu_color_to_rgb_chars(color, rgb);
-    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-
-
-    tinfo->is_thin = 1;
-    nlohmann::json terr;
-    ray_to_json(&terr, &ap->a_ray);
-    terr["indices"].push_back(tinfo->curr_tri);
-    (*tinfo->data)["errors"].push_back(terr);
-
-    if (tinfo->do_plot) {
-	point_t v[3];
-	for (int i = 0; i < 3; i++)
-	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
-	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
-    }
-
-    return 0;
-}
-
 /* I don't think this is supposed to happen with a single primitive, but just
  * in case we get an overlap report somehow flag it as trouble */
 static int
@@ -326,7 +297,7 @@ _tc_overlap(struct application *ap,
 	struct region *UNUSED(reg2),
 	struct partition *UNUSED(hp))
 {
-    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
     struct bu_color *color = tinfo->color;
     struct bv_vlblock *vbp = tinfo->vbp;
@@ -335,7 +306,6 @@ _tc_overlap(struct application *ap,
     if (color)
 	bu_color_to_rgb_chars(color, rgb);
     struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-
 
     tinfo->is_thin = 1;
     nlohmann::json terr;
@@ -376,7 +346,7 @@ bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     terr["object_name"] = pname;
 
     int found_thin = 0;
-    struct coplanar_info tinfo;
+    struct tc_info tinfo;
     tinfo.ttol = ttol;
     tinfo.verbose = cdata->verbosity;
     tinfo.bot = bot;
@@ -393,7 +363,7 @@ bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = rtip;     /* application uses this instance */
     ap.a_hit = _tc_hit;    /* where to go on a hit */
-    ap.a_miss = _tc_miss;  /* where to go on a miss */
+    ap.a_miss = _miss_noop;  /* where to go on a miss */
     ap.a_overlap = _tc_overlap;  /* where to go if an overlap is found */
     ap.a_onehit = 0;
     ap.a_resource = &rt_uniresource;
@@ -436,6 +406,21 @@ bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     return found_thin;
 }
 
+struct ab_info {
+    double ttol;
+    int have_above;
+    struct rt_bot_internal *bot;
+    const char *pname;
+    nlohmann::json *data = NULL;
+
+    struct bu_color *color = NULL;
+    struct bv_vlblock *vbp = NULL;
+    struct bu_list *vlfree = NULL;
+    bool do_plot = false;
+
+    int verbose;
+    int curr_tri;
+};
 
 // TODO - A useful correctness audit for a BoT might be to shotline both the
 // CSG and the BoT using the same rays constructed from the triangle centers -
@@ -447,7 +432,7 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     if (PartHeadp->pt_forw == PartHeadp)
 	return 1;
 
-    struct coplanar_info *pinfo = (struct coplanar_info *)ap->a_uptr;
+    struct ab_info *pinfo = (struct ab_info *)ap->a_uptr;
     struct rt_bot_internal *bot = pinfo->bot;
     struct bu_color *color = pinfo->color;
     struct bv_vlblock *vbp = pinfo->vbp;
@@ -461,6 +446,11 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     struct partition *pp = PartHeadp->pt_forw;
 
     // If we've got something too close above our triangle, it's trouble
+    //
+    // TODO - validate whether the vector between the two hit points is
+    // parallel to the ray.  Saw one case where it seemed as if we were getting
+    // an offset that resulted in a higher distance, but only because there was
+    // a shift of one of the hit points off the ray by more than VUNITIZE_TOL
     if (pp->pt_inhit->hit_dist < VUNITIZE_TOL) {
 	nlohmann::json terr;
 	ray_to_json(&terr, &ap->a_ray);
@@ -492,12 +482,6 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 }
 
 static int
-_ck_up_miss(struct application *UNUSED(ap))
-{
-    return 0;
-}
-
-static int
 bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol)
 {
     if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
@@ -517,7 +501,7 @@ bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot
     cerr["object_name"] = pname;
 
     int have_above = 0;
-    struct coplanar_info cpinfo;
+    struct ab_info cpinfo;
     cpinfo.ttol = ttol;
     cpinfo.verbose = cdata->verbosity;
     cpinfo.bot = bot;
@@ -535,8 +519,8 @@ bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot
     struct application ap;
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = rtip;     /* application uses this instance */
-    ap.a_hit = _ck_up_hit;     /* where to go on a hit */
-    ap.a_miss = _ck_up_miss;   /* where to go on a miss */
+    ap.a_hit = _ck_up_hit;    /* where to go on a hit */
+    ap.a_miss = _miss_noop;   /* where to go on a miss */
     ap.a_onehit = 1;
     ap.a_resource = &rt_uniresource;
     ap.a_uptr = (void *)&cpinfo;
@@ -574,6 +558,23 @@ bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot
 }
 
 
+struct miss_info {
+    double ttol;
+    int unexpected_miss;
+    struct rt_bot_internal *bot;
+    const char *pname;
+    nlohmann::json *data = NULL;
+
+    struct bu_color *color = NULL;
+    struct bv_vlblock *vbp = NULL;
+    struct bu_list *vlfree = NULL;
+    bool do_plot = false;
+
+    int verbose;
+    int curr_tri;
+};
+
+
 static int
 _mc_hit(struct application *UNUSED(ap), struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
@@ -589,7 +590,7 @@ _mc_miss(struct application *ap)
     // We are shooting directly into the center of a triangle from right above
     // it.  If we miss under those conditions, it can only happen because
     // something is wrong.
-    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct miss_info *tinfo = (struct miss_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
     struct bu_color *color = tinfo->color;
     struct bv_vlblock *vbp = tinfo->vbp;
@@ -648,7 +649,7 @@ bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     merr["object_name"] = pname;
 
     int found_miss = 0;
-    struct coplanar_info minfo;
+    struct miss_info minfo;
     minfo.ttol = ttol;
     minfo.verbose = cdata->verbosity;
     minfo.bot = bot;
@@ -693,7 +694,7 @@ bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
 	VSCALE(tcenter, tcenter, 1.0/3.0);
 
 	// Take the shot
-	minfo.is_thin = 0;
+	minfo.unexpected_miss = 0;
 	VMOVE(ap.a_ray.r_dir, rnorm);
 	VADD2(ap.a_ray.r_pt, tcenter, backout);
 	(void)rt_shootray(&ap);
@@ -708,6 +709,181 @@ bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
 
     return found_miss;
 }
+
+struct uh_info {
+    double ttol;
+    int unexpected_hit;
+    struct rt_bot_internal *bot;
+    const char *pname;
+    nlohmann::json *data = NULL;
+
+    struct bu_color *color = NULL;
+    struct bv_vlblock *vbp = NULL;
+    struct bu_list *vlfree = NULL;
+    bool do_plot = false;
+
+    int verbose;
+    int curr_tri;
+};
+
+static int
+_uh_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+{
+    if (PartHeadp->pt_forw == PartHeadp)
+	return 1;
+
+    struct uh_info *tinfo = (struct uh_info *)ap->a_uptr;
+    struct rt_bot_internal *bot = tinfo->bot;
+    struct bu_color *color = tinfo->color;
+    struct bv_vlblock *vbp = tinfo->vbp;
+    struct bu_list *vlfree = tinfo->vlfree;
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
+    struct seg *s = (struct seg *)segs->l.forw;
+    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
+	// Segment's first hit didn't come from the expected triangle.
+	nlohmann::json terr;
+	ray_to_json(&terr, &ap->a_ray);
+	terr["indices"].push_back(tinfo->curr_tri);
+	(*tinfo->data)["errors"].push_back(terr);
+	tinfo->unexpected_hit = 1;
+	if (tinfo->do_plot) {
+	    point_t v[3];
+	    for (int i = 0; i < 3; i++)
+		VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+	}
+	return 0;
+    }
+
+    return 0;
+}
+
+/* I don't think this is supposed to happen with a single primitive, but just
+ * in case we get an overlap report somehow flag it as trouble */
+static int
+_uh_overlap(struct application *ap,
+	struct partition *UNUSED(pp),
+	struct region *UNUSED(reg1),
+	struct region *UNUSED(reg2),
+	struct partition *UNUSED(hp))
+{
+    struct uh_info *tinfo = (struct uh_info *)ap->a_uptr;
+    struct rt_bot_internal *bot = tinfo->bot;
+    struct bu_color *color = tinfo->color;
+    struct bv_vlblock *vbp = tinfo->vbp;
+    struct bu_list *vlfree = tinfo->vlfree;
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
+    tinfo->unexpected_hit = 1;
+    nlohmann::json terr;
+    ray_to_json(&terr, &ap->a_ray);
+    terr["indices"].push_back(tinfo->curr_tri);
+    (*tinfo->data)["errors"].push_back(terr);
+
+    if (tinfo->do_plot) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+    }
+
+    return 0;
+}
+
+static int
+bot_hit_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol)
+{
+    if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
+	return 0;
+
+    std::map<std::string, std::set<std::string>> &imt = cdata->im_techniques;
+    if (imt.size()) {
+	std::set<std::string> &bt = imt[std::string("bot")];
+	if (bt.find(std::string("unexpected_hit")) == bt.end())
+	    return 0;
+    }
+
+    nlohmann::json terr;
+
+    terr["problem_type"] = "unexpected_hit";
+    terr["object_type"] = "bot";
+    terr["object_name"] = pname;
+
+    int unexpected_hit = 0;
+    struct uh_info tinfo;
+    tinfo.ttol = ttol;
+    tinfo.verbose = cdata->verbosity;
+    tinfo.bot = bot;
+    tinfo.data = &terr;
+    tinfo.color = cdata->color;
+    tinfo.vbp = cdata->vbp;
+    tinfo.vlfree = cdata->vlfree;
+    tinfo.do_plot = cdata->do_plot;
+
+    // Set up the raytrace
+    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
+	rt_init_resource(&rt_uniresource, 0, rtip);
+    struct application ap;
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;     /* application uses this instance */
+    ap.a_hit = _uh_hit;    /* where to go on a hit */
+    ap.a_miss = _miss_noop;  /* where to go on a miss */
+    ap.a_overlap = _uh_overlap;  /* where to go if an overlap is found */
+    ap.a_onehit = 0;
+    ap.a_resource = &rt_uniresource;
+    ap.a_uptr = (void *)&tinfo;
+
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	tinfo.curr_tri = (int)i;
+	vect_t rnorm, n, backout;
+	if (!bot_face_normal(&n, bot, i))
+	    continue;
+
+	// We want backout to get the ray origin off the triangle surface
+	VMOVE(backout, n);
+	VSCALE(backout, backout, SQRT_SMALL_FASTF);
+	// Reverse the triangle normal for a ray direction
+	VREVERSE(rnorm, n);
+
+	point_t rpnts[3];
+	point_t tcenter;
+	VMOVE(rpnts[0], &bot->vertices[bot->faces[i*3+0]*3]);
+	VMOVE(rpnts[1], &bot->vertices[bot->faces[i*3+1]*3]);
+	VMOVE(rpnts[2], &bot->vertices[bot->faces[i*3+2]*3]);
+	VADD3(tcenter, rpnts[0], rpnts[1], rpnts[2]);
+	VSCALE(tcenter, tcenter, 1.0/3.0);
+
+	// Take the shot
+	tinfo.unexpected_hit = 0;
+	VMOVE(ap.a_ray.r_dir, rnorm);
+	VADD2(ap.a_ray.r_pt, tcenter, backout);
+	(void)rt_shootray(&ap);
+
+	if (tinfo.unexpected_hit) {
+	    unexpected_hit = 1;
+	}
+    }
+
+    if (unexpected_hit)
+	cdata->j.push_back(terr);
+
+    return unexpected_hit;
+}
+
+
 
 void
 bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
@@ -766,6 +942,7 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
     bot_thin_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
     bot_close_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
     bot_miss_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
+    bot_hit_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
     rt_free_rti(rtip);
 }
 
