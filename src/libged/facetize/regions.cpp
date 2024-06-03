@@ -412,6 +412,31 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     std::set<std::string> new_tobjs;
     std::set_difference(ntops.begin(), ntops.end(), otops.begin(), otops.end(), std::inserter(new_tobjs, new_tobjs.begin()));
 
+    /* Check to see if oname ended up being created in the
+     * dbconcat.  If it was, rename it. */
+    struct directory *cdp  = db_lookup(s->gedp->dbip, oname, LOOKUP_QUIET);
+    if (cdp != RT_DIR_NULL) {
+	// Find a new name
+	struct bu_vls nname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&nname, "%s_0", oname);
+	cdp  = db_lookup(s->gedp->dbip, bu_vls_cstr(&nname), LOOKUP_QUIET);
+	if (cdp != RT_DIR_NULL) {
+	    if (bu_vls_incr(&nname, NULL, NULL, &_db_uniq_test, (void *)s->gedp->dbip) < 0) {
+		bu_vls_free(&nname);
+		return BRLCAD_ERROR;
+	    }
+	}
+	const char *mav[4];
+	mav[0] = "mvall";
+	mav[1] = oname;
+	mav[2] = bu_vls_cstr(&nname);
+	mav[3] = NULL;
+	ged_exec(s->gedp, 3, mav);
+	new_tobjs.erase(std::string(oname));
+	new_tobjs.insert(std::string(bu_vls_cstr(&nname)));
+	bu_vls_free(&nname);
+    }
+
     /* Make a new comb to hold the output */
     struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
