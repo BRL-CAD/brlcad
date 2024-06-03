@@ -462,8 +462,8 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     // TODO - validate whether the vector between the two hit points is
     // parallel to the ray.  Saw one case where it seemed as if we were getting
     // an offset that resulted in a higher distance, but only because there was
-    // a shift of one of the hit points off the ray by more than VUNITIZE_TOL
-    if (pp->pt_inhit->hit_dist < VUNITIZE_TOL) {
+    // a shift of one of the hit points off the ray by more than ttol
+    if (pp->pt_inhit->hit_dist < pinfo->ttol) {
 	nlohmann::json terr;
 	ray_to_json(&terr, &ap->a_ray);
 	terr["indices"].push_back(pp->pt_inhit->hit_surfno);
@@ -962,10 +962,10 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
     struct rt_i *rtip = rt_new_rti(bdata->gedp->dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
-    bot_thin_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
-    bot_close_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
-    bot_miss_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
-    bot_hit_check(bdata, dp->d_namep, bot, rtip, VUNITIZE_TOL);
+    bot_thin_check(bdata, dp->d_namep, bot, rtip, bdata->ftol);
+    bot_close_check(bdata, dp->d_namep, bot, rtip, bdata->ftol);
+    bot_miss_check(bdata, dp->d_namep, bot, rtip, bdata->ftol);
+    bot_hit_check(bdata, dp->d_namep, bot, rtip, bdata->ftol);
     rt_free_rti(rtip);
 }
 

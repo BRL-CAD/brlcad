@@ -59,6 +59,7 @@ class lint_data {
 	int verbosity = 0;
 	int argc = 0;
 	struct directory **dpa = NULL;
+	fastf_t ftol;
 
 	bool do_plot = false;
 	struct bu_color *color;

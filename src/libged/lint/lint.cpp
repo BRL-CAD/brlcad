@@ -211,6 +211,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     int cyclic_check = 0;
     int missing_check = 0;
     int visualize = 0;
+    fastf_t ftol = VUNITIZE_TOL;
     struct directory **dpa = NULL;
     struct bu_vls filter = BU_VLS_INIT_ZERO;
     struct bu_vls ofile = BU_VLS_INIT_ZERO;
@@ -225,7 +226,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     struct invalid_shape_methods imethods;
     imethods.im_techniques = &ldata.im_techniques;
 
-    struct bu_opt_desc d[9];
+    struct bu_opt_desc d[10];
     BU_OPT(d[0],  "h", "help",                              "",  NULL,              &print_help,           "Print help and exit");
     BU_OPT(d[1],  "v", "verbose",                           "",  &_ged_vopt,        &verbosity,            "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "C", "cyclic",                            "",  NULL,              &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
@@ -234,6 +235,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[5],  "F", "filter",                     "pattern",  &bu_opt_vls,       &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
     BU_OPT(d[6],  "j", "json-file",                    "fname",  &bu_opt_vls,       &ofile,                "Write out the full lint data to a json file");
     BU_OPT(d[7],  "V", "visualize",                         "",  NULL,              &visualize,            "When problems can be visually represented, do so");
+    BU_OPT(d[8],  "t", "tol",                              "#",  &bu_opt_fastf_t,   &ftol,                 "Numerical value to use when testing involves tolerances (defaults to VUNITIZE_TOL)");
     BU_OPT_NULL(d[8]);
 
     /* skip command name argv[0] */
@@ -253,6 +255,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tbot:empty\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbot:non_solid\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbot:thin_volume\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:unexpected_hit\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbot:unexpected_miss\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbrep:opennurbs\n");
 	bu_vls_free(&filter);
@@ -284,7 +287,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     ldata.argc = argc;
     ldata.dpa = dpa;
     ldata.verbosity = verbosity;
-
+    ldata.ftol = ftol;
 
     int have_specific_test = cyclic_check+missing_check+imethods.do_invalid;
 
