@@ -57,10 +57,16 @@ void RegionList::create
     BU_LIST_INIT(&all_head.l);
 
     for (std::map<std::string, Bot>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
-	const std::string& region_name = it->first;
-	Bot&               bot         = it->second;
+	const std::string&      region_name = it->first;
+	Bot&                    bot         = it->second;
+	bu_attribute_value_pair avp;
 
 	bot.write(wdbp);
+
+	avp = bot.getAttributes();
+	if (std::strlen(avp.name) > 0) {
+	    bot.writeAttributes(wdbp, bot.getName(), avp);
+	}
 
 	wmember bot_head;
 	BU_LIST_INIT(&bot_head.l);

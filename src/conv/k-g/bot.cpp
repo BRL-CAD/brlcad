@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include "wdb.h"
+
 #include "bot.h"
 
 
@@ -169,9 +171,22 @@ void Bot::addTriangle
     bot_internal.num_face_normals = bot_internal.num_faces;
 }
 
+void Bot::setAttributes
+(
+    const char* key,
+    const char* value
+) {
+    avp.name = key;
+    avp.value = value;
+}
+
 
 const char* Bot::getName(void) const {
     return name.c_str();
+}
+
+bu_attribute_value_pair Bot::getAttributes(void) const{
+    return avp;
 }
 
 
@@ -223,6 +238,27 @@ void Bot::write
     }
 
     wdb_export(wdbp, name.c_str(), bot_wdb, ID_BOT, 1.);
+}
+
+void Bot::writeAttributes
+(
+    rt_wdb*                 wdbp,
+    const char*             name,
+    bu_attribute_value_pair avp) {
+    struct rt_db_internal     bot_internal;
+    struct directory* dp;
+    struct db_i* dbip;
+    bu_attribute_value_set* avs;
+
+    dbip = wdbp->dbip;
+    dp = db_lookup(dbip, name, 0);
+
+    rt_db_get_internal(&bot_internal, dp, dbip, bn_mat_identity, &rt_uniresource);
+    avs = &bot_internal.idb_avs;
+
+    bu_avs_add(avs, avp.name, avp.value);
+    bu_avs_print(avs, "Attributes:");
+    db5_update_attributes(dp, avs, dbip);
 }
 
 

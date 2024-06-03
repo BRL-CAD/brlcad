@@ -44,14 +44,20 @@ public:
     void        addTriangle(const point_t& point1,
 			    const point_t& point2,
 			    const point_t& point3);
+    void        setAttributes(const char* key,
+			      const char* value);
 
-    const char* getName(void) const;
-    void        write(rt_wdb* wdbp);
-
+    const char*             getName(void) const;
+    bu_attribute_value_pair getAttributes(void) const;
+    void                    write(rt_wdb* wdbp);
+    void                    writeAttributes(rt_wdb* wdbp,
+					    const char* name,
+					    bu_attribute_value_pair avp);
 private:
-    std::string     name;
-    rt_bot_internal bot_internal;
-    double          thickness;
+    std::string             name;
+    rt_bot_internal         bot_internal;
+    double                  thickness;
+    bu_attribute_value_pair avp;
 };
 
 

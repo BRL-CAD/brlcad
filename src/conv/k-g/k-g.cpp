@@ -122,6 +122,12 @@ int main
 				bot.addTriangle(point1, point3, point4);
 			    }
 			}
+			if ((it->second).avp.key.size() > 0 && (it->second).avp.value.size() > 0) {
+			    bot.setAttributes((it->second).avp.key.c_str(), (it->second).avp.value.c_str());
+			}
+			else {
+			    bot.setAttributes("", "");
+			}
 		    }
 		}
 
