@@ -97,6 +97,9 @@ _ged_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const ch
     intern.idb_meth = &OBJ[ID_BOT];
     intern.idb_ptr = (void *)bot;
 
+    bu_avs_init_empty(&intern.idb_avs);
+    (void)bu_avs_add(&intern.idb_avs, "facetized", "1");
+
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	if (verbosity)
