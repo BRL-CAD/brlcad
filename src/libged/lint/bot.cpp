@@ -288,6 +288,44 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     return 0;
 }
 
+static int
+_tc_miss(struct application *ap)
+{
+    // A straight-up miss is one of the possible reporting scenarios
+    // for thin triangle pairs - if it happens, we need to flag what
+    // we can find (unfortunately we only know which triangle prompted
+    // the report in this case - hopefully the other triangle will also
+    // trigger a thin report and get itself queued for removal.
+    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct rt_bot_internal *bot = tinfo->bot;
+
+    tinfo->is_thin = 1;
+    nlohmann::json terr;
+    ray_to_json(&terr, &ap->a_ray);
+    terr["indices"].push_back(tinfo->curr_tri);
+    (*tinfo->data)["errors"].push_back(terr);
+
+    if (tinfo->do_plot) {
+	struct bu_color *color = tinfo->color;
+	struct bv_vlblock *vbp = tinfo->vbp;
+	struct bu_list *vlfree = tinfo->vlfree;
+	unsigned char rgb[3] = {255, 255, 0};
+	if (color)
+	    bu_color_to_rgb_chars(color, rgb);
+	struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+    }
+
+    return 0;
+}
+
 /* I don't think this is supposed to happen with a single primitive, but just
  * in case we get an overlap report somehow flag it as trouble */
 static int
@@ -299,13 +337,6 @@ _tc_overlap(struct application *ap,
 {
     struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
-    struct bu_color *color = tinfo->color;
-    struct bv_vlblock *vbp = tinfo->vbp;
-    struct bu_list *vlfree = tinfo->vlfree;
-    unsigned char rgb[3] = {255, 255, 0};
-    if (color)
-	bu_color_to_rgb_chars(color, rgb);
-    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 
     tinfo->is_thin = 1;
     nlohmann::json terr;
@@ -314,6 +345,14 @@ _tc_overlap(struct application *ap,
     (*tinfo->data)["errors"].push_back(terr);
 
     if (tinfo->do_plot) {
+	struct bu_color *color = tinfo->color;
+	struct bv_vlblock *vbp = tinfo->vbp;
+	struct bu_list *vlfree = tinfo->vlfree;
+	unsigned char rgb[3] = {255, 255, 0};
+	if (color)
+	    bu_color_to_rgb_chars(color, rgb);
+	struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
 	point_t v[3];
 	for (int i = 0; i < 3; i++)
 	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
@@ -363,7 +402,7 @@ bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = rtip;     /* application uses this instance */
     ap.a_hit = _tc_hit;    /* where to go on a hit */
-    ap.a_miss = _miss_noop;  /* where to go on a miss */
+    ap.a_miss = _tc_miss;  /* where to go on a miss */
     ap.a_overlap = _tc_overlap;  /* where to go if an overlap is found */
     ap.a_onehit = 0;
     ap.a_resource = &rt_uniresource;
@@ -434,14 +473,6 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
     struct ab_info *pinfo = (struct ab_info *)ap->a_uptr;
     struct rt_bot_internal *bot = pinfo->bot;
-    struct bu_color *color = pinfo->color;
-    struct bv_vlblock *vbp = pinfo->vbp;
-    struct bu_list *vlfree = pinfo->vlfree;
-    unsigned char rgb[3] = {255, 255, 0};
-    if (color)
-	bu_color_to_rgb_chars(color, rgb);
-    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-
 
     struct partition *pp = PartHeadp->pt_forw;
 
@@ -460,6 +491,14 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	pinfo->have_above = 1;
 
 	if (pinfo->do_plot) {
+	    struct bu_color *color = pinfo->color;
+	    struct bv_vlblock *vbp = pinfo->vbp;
+	    struct bu_list *vlfree = pinfo->vlfree;
+	    unsigned char rgb[3] = {255, 255, 0};
+	    if (color)
+		bu_color_to_rgb_chars(color, rgb);
+	    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
 	    point_t v[3];
 	    for (int i = 0; i < 3; i++)
 		VMOVE(v[i], &bot->vertices[bot->faces[pp->pt_inhit->hit_surfno*3+i]*3]);
@@ -592,13 +631,6 @@ _mc_miss(struct application *ap)
     // something is wrong.
     struct miss_info *tinfo = (struct miss_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
-    struct bu_color *color = tinfo->color;
-    struct bv_vlblock *vbp = tinfo->vbp;
-    struct bu_list *vlfree = tinfo->vlfree;
-    unsigned char rgb[3] = {255, 255, 0};
-    if (color)
-	bu_color_to_rgb_chars(color, rgb);
-    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 
     tinfo->unexpected_miss = 1;
     nlohmann::json terr;
@@ -607,6 +639,14 @@ _mc_miss(struct application *ap)
     (*tinfo->data)["errors"].push_back(terr);
 
     if (tinfo->do_plot) {
+	struct bu_color *color = tinfo->color;
+	struct bv_vlblock *vbp = tinfo->vbp;
+	struct bu_list *vlfree = tinfo->vlfree;
+	unsigned char rgb[3] = {255, 255, 0};
+	if (color)
+	    bu_color_to_rgb_chars(color, rgb);
+	struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
 	point_t v[3];
 	for (int i = 0; i < 3; i++)
 	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
@@ -734,13 +774,6 @@ _uh_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     struct uh_info *tinfo = (struct uh_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
-    struct bu_color *color = tinfo->color;
-    struct bv_vlblock *vbp = tinfo->vbp;
-    struct bu_list *vlfree = tinfo->vlfree;
-    unsigned char rgb[3] = {255, 255, 0};
-    if (color)
-	bu_color_to_rgb_chars(color, rgb);
-    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 
     struct seg *s = (struct seg *)segs->l.forw;
     if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
@@ -751,6 +784,14 @@ _uh_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	(*tinfo->data)["errors"].push_back(terr);
 	tinfo->unexpected_hit = 1;
 	if (tinfo->do_plot) {
+	    struct bu_color *color = tinfo->color;
+	    struct bv_vlblock *vbp = tinfo->vbp;
+	    struct bu_list *vlfree = tinfo->vlfree;
+	    unsigned char rgb[3] = {255, 255, 0};
+	    if (color)
+		bu_color_to_rgb_chars(color, rgb);
+	    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
 	    point_t v[3];
 	    for (int i = 0; i < 3; i++)
 		VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
@@ -776,13 +817,6 @@ _uh_overlap(struct application *ap,
 {
     struct uh_info *tinfo = (struct uh_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
-    struct bu_color *color = tinfo->color;
-    struct bv_vlblock *vbp = tinfo->vbp;
-    struct bu_list *vlfree = tinfo->vlfree;
-    unsigned char rgb[3] = {255, 255, 0};
-    if (color)
-	bu_color_to_rgb_chars(color, rgb);
-    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 
     tinfo->unexpected_hit = 1;
     nlohmann::json terr;
@@ -791,6 +825,14 @@ _uh_overlap(struct application *ap,
     (*tinfo->data)["errors"].push_back(terr);
 
     if (tinfo->do_plot) {
+	struct bu_color *color = tinfo->color;
+	struct bv_vlblock *vbp = tinfo->vbp;
+	struct bu_list *vlfree = tinfo->vlfree;
+	unsigned char rgb[3] = {255, 255, 0};
+	if (color)
+	    bu_color_to_rgb_chars(color, rgb);
+	struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
 	point_t v[3];
 	for (int i = 0; i < 3; i++)
 	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
