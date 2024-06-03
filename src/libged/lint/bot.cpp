@@ -38,25 +38,6 @@
 
 #include "./ged_lint.h"
 
-struct coplanar_info {
-    double ttol;
-    int is_thin;
-    int have_above;
-    int unexpected_miss;
-    int unexpected_hit;
-    struct rt_bot_internal *bot;
-    const char *pname;
-    nlohmann::json *data = NULL;
-
-    struct bu_color *color = NULL;
-    struct bv_vlblock *vbp = NULL;
-    struct bu_list *vlfree = NULL;
-    bool do_plot = false;
-
-    int verbose;
-    int curr_tri;
-};
-
 class lint_tri {
     public:
 	point_t v[3];
@@ -296,7 +277,7 @@ _tc_miss(struct application *ap)
     // we can find (unfortunately we only know which triangle prompted
     // the report in this case - hopefully the other triangle will also
     // trigger a thin report and get itself queued for removal.
-    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
+    struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
 
     tinfo->is_thin = 1;
