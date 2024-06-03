@@ -33,6 +33,7 @@
 
 extern "C" {
 #include "bu/opt.h"
+#include "wdb.h"
 }
 #include "./ged_lint.h"
 
@@ -215,6 +216,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     struct directory **dpa = NULL;
     struct bu_vls filter = BU_VLS_INIT_ZERO;
     struct bu_vls ofile = BU_VLS_INIT_ZERO;
+    struct bu_vls gname = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -226,7 +228,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     struct invalid_shape_methods imethods;
     imethods.im_techniques = &ldata.im_techniques;
 
-    struct bu_opt_desc d[10];
+    struct bu_opt_desc d[11];
     BU_OPT(d[0],  "h", "help",                              "",  NULL,              &print_help,           "Print help and exit");
     BU_OPT(d[1],  "v", "verbose",                           "",  &_ged_vopt,        &verbosity,            "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "C", "cyclic",                            "",  NULL,              &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
@@ -236,7 +238,8 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[6],  "j", "json-file",                    "fname",  &bu_opt_vls,       &ofile,                "Write out the full lint data to a json file");
     BU_OPT(d[7],  "V", "visualize",                         "",  NULL,              &visualize,            "When problems can be visually represented, do so");
     BU_OPT(d[8],  "t", "tol",                              "#",  &bu_opt_fastf_t,   &ftol,                 "Numerical value to use when testing involves tolerances (defaults to VUNITIZE_TOL)");
-    BU_OPT_NULL(d[8]);
+    BU_OPT(d[9],  "g", "group",                         "name",  &bu_opt_vls,       &gname,                "Name of comb object in which to group all shape objects that report issues (will not contain cyclic paths or missing references).");
+    BU_OPT_NULL(d[10]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -260,7 +263,25 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tbrep:opennurbs\n");
 	bu_vls_free(&filter);
 	bu_vls_free(&ofile);
+	bu_vls_free(&gname);
 	return BRLCAD_OK;
+    }
+
+    if (bu_vls_strlen(&gname)) {
+	if (gedp->dbip->dbi_read_only) {
+	    bu_vls_printf(gedp->ged_result_str, "Database is read only, cannot write output comb %s\n", bu_vls_cstr(&gname));
+	    bu_vls_free(&filter);
+	    bu_vls_free(&ofile);
+	    bu_vls_free(&gname);
+	    return BRLCAD_ERROR;
+	}
+	if (db_lookup(gedp->dbip, bu_vls_cstr(&gname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Output comb %s already exists in the database\n", bu_vls_cstr(&gname));
+	    bu_vls_free(&filter);
+	    bu_vls_free(&ofile);
+	    bu_vls_free(&gname);
+	    return BRLCAD_ERROR;
+	}
     }
 
     if (bu_vls_strlen(&filter))
@@ -279,6 +300,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, " %s\n", argv[i]);
 	    }
 	    bu_free(dpa, "dpa");
+	    bu_vls_free(&gname);
 	    bu_vls_free(&ofile);
 	    return BRLCAD_ERROR;
 	}
@@ -331,6 +353,37 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	jfile.close();
     }
 
+    if (bu_vls_strlen(&gname)) {
+	std::set<std::string> onames;
+	for(nlohmann::json::const_iterator it = ldata.j.begin(); it != ldata.j.end(); ++it) {
+	    const nlohmann::json &pdata = *it;
+	    if (!pdata.contains("problem_type"))
+		continue;
+	    std::string ptype(pdata["problem_type"]);
+	    if (ptype == std::string("cyclic_path"))
+		continue;
+	    if (!ptype.compare(0, 7, std::string("missing")))
+		continue;
+	    if (!pdata.contains("object_name"))
+		continue;
+
+	    std::string oname(pdata["object_name"]);
+	    onames.insert(oname);
+	}
+
+	// Make a comb to hold the union of the new solid primitives
+	if (onames.size()) {
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    struct wmember wcomb;
+	    BU_LIST_INIT(&wcomb.l);
+	    std::set<std::string>::iterator o_it;
+	    for (o_it = onames.begin(); o_it != onames.end(); o_it++)
+		(void)mk_addmember(o_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
+	    mk_lcomb(wdbp, bu_vls_cstr(&gname), &wcomb, 1, NULL, NULL, NULL, 0);
+	}
+    }
+
+    bu_vls_free(&gname);
     bu_vls_free(&ofile);
     return ret;
 }
