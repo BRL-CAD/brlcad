@@ -221,6 +221,11 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	ray_to_json(&terr, &ap->a_ray);
 	terr["indices"].push_back(tinfo->curr_tri);
 	(*tinfo->data)["errors"].push_back(terr);
+	// This condition doesn't (necessarily) mean we have a thin solid, but
+	// it still indicates some sort of problem since our first hit from a
+	// segment didn't come from the expected triangle - flag for reporting.
+	// This might actually make sense as a separate test.
+	tinfo->is_thin = 1;
 	if (tinfo->do_plot) {
 	    point_t v[3];
 	    for (int i = 0; i < 3; i++)
