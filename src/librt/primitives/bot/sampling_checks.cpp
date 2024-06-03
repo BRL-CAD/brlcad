@@ -77,17 +77,11 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     struct partition *pp = PartHeadp->pt_forw;
 
     struct seg *s = (struct seg *)segs->l.forw;
-    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
-	if (tinfo->verbose) {
-	    bu_log("	WARNING: First hit wasn't from triangle %d: distance %g\n", tinfo->curr_tri, s->seg_in.hit_dist);
-	    bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
-	    bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
-	    bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	    bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-	    tinfo->problem_indices.insert(tinfo->curr_tri);
-	}
+    // This is a problem, but not the thin volume problem - can occur when
+    // there are geometric issues elsewhere along the shotline.  See the
+    // lint command for logic that can report these issues.
+    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF)
 	return 0;
-    }
 
     for (BU_LIST_FOR(s, seg, &(segs->l))) {
 	if (s->seg_in.hit_dist > tinfo->ttol)
@@ -138,19 +132,12 @@ _tc_miss(struct application *ap)
 /* I don't think this is supposed to happen with a single primitive, but just
  * in case we get an overlap report somehow flag it as trouble */
 static int
-_tc_overlap(struct application *ap,
+_tc_overlap(struct application *UNUSED(ap),
 	struct partition *UNUSED(pp),
 	struct region *UNUSED(reg1),
 	struct region *UNUSED(reg2),
 	struct partition *UNUSED(hp))
 {
-    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
-    //tinfo->is_thin = 1;
-    if (tinfo->verbose) {
-	bu_log("		overlap\n");
-	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-    }
     return 0;
 }
 
