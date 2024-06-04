@@ -617,7 +617,7 @@ class DpCompare
 #define CMD_LEN_MAX 8000
 
 int
-_ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps)
+_ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct bu_ptbl *leaf_dps)
 {
     // Sort dp objects by d_len using a priority queue
     std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> pq;
@@ -675,7 +675,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     std::vector<std::string> avail_methods = tess_avail_methods();
     if (avail_methods.size() == 0) {
 	bu_log("No methods for tessellation found.\n");
-	bu_dirclear(wdir);
+	bu_dirclear(s->wdir);
 	return BRLCAD_ERROR;
     }
 
@@ -693,7 +693,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
 
     if (mo->methods.size() && !method_flags.size()) {
 	bu_log("Error: all user requested tessellation methods unsupported.\n");
-	bu_dirclear(wdir);
+	bu_dirclear(s->wdir);
 	return BRLCAD_ERROR;
     }
 
@@ -724,7 +724,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, char *wfile, char *wdir,
     tess_cmd[ 0] = tess_exec;
     tess_cmd[ 1] = "facetize_process";
     tess_cmd[ 2] = "-O";
-    tess_cmd[ 3] = wfile;
+    tess_cmd[ 3] = bu_vls_cstr(s->wfile);
     tess_cmd[ 4] = "--methods";
     tess_cmd[ 5] = NULL;
     tess_cmd[ 6] = "--method-opts";
@@ -1046,7 +1046,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 }
 
 int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *oname, char *pwdir, char *pwfile, bool output_to_working)
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *oname, bool output_to_working, bool cleanup)
 {
     int ret = BRLCAD_OK;
 
@@ -1070,47 +1070,23 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	return BRLCAD_OK;
     }
 
-    /* OK, we have work to do. Set up a working copy of the .g file, if the
-     * parent function hasn't already taken care of that for us. */
-    char *wdir = pwdir;
-    char *wfile = pwfile;
-    if (!wdir || !wfile) {
-	if (_ged_facetize_working_file_setup(&wfile, &wdir, gedp->dbip, &leaf_dps, s->resume) != BRLCAD_OK) {
-	    if (wdir && wdir != pwdir)
-		bu_free(wdir, "wdir");
-	    if (wfile && wfile != pwfile)
-		bu_free(wfile, "wfile");
-	    return BRLCAD_ERROR;
-	}
-    }
-
-
-    if (_ged_facetize_leaves_tri(s, wfile, wdir, gedp->dbip, &leaf_dps)) {
-	if (wdir != pwdir)
-	    bu_free(wdir, "wdir");
-	if (wfile != pwfile)
-	    bu_free(wfile, "wfile");
+    /* OK, we have work to do. Set up a working copy of the .g file. */
+    if (_ged_facetize_working_file_setup(s, &leaf_dps) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-    }
+
+    if (_ged_facetize_leaves_tri(s, gedp->dbip, &leaf_dps))
+	return BRLCAD_ERROR;
 
     // Re-open working .g copy after BoTs have replaced CSG solids and perform
     // the tree walk to set up Manifold data.
-    struct db_i *wdbip = db_open(wfile, (output_to_working) ? DB_OPEN_READWRITE :  DB_OPEN_READONLY);
+    struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), (output_to_working) ? DB_OPEN_READWRITE :  DB_OPEN_READONLY);
     if (!wdbip) {
-	bu_dirclear(wdir);
-	if (wdir != pwdir)
-	    bu_free(wdir, "wdir");
-	if (wfile != pwfile)
-	    bu_free(wfile, "wfile");
+	bu_dirclear(s->wdir);
 	return BRLCAD_ERROR;
     }
-    if (db_dirbuild(wdbip) < 0) {
-	if (wdir != pwdir)
-	    bu_free(wdir, "wdir");
-	if (wfile != pwfile)
-	    bu_free(wfile, "wfile");
+    if (db_dirbuild(wdbip) < 0)
 	return BRLCAD_ERROR;
-    }
+
     db_update_nref(wdbip, &rt_uniresource);
 
     // Need wdbp in the next two stages for tolerances
@@ -1134,14 +1110,9 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     bu_free(av, "av");
     db_close(wdbip);
 
-    if (!pwdir && !pwfile)
-	bu_dirclear(wdir);
+    if (cleanup)
+	bu_dirclear(s->wdir);
 
-    if (wdir != pwdir) {
-	bu_free(wdir, "wdir");
-    }
-    if (wfile != pwfile)
-	bu_free(wfile, "wfile");
     return ret;
 }
 

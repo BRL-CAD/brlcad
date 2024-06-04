@@ -39,6 +39,14 @@
 #include "./ged_facetize.h"
 
 int
+facetize_log(struct _ged_facetize_state *s, int v)
+{
+    if (!s || v < 0)
+	return -1;
+    return 0;
+}
+
+int
 _db_uniq_test(struct bu_vls *n, void *data)
 {
     struct db_i *dbip = (struct db_i *)data;
@@ -156,43 +164,28 @@ dsp_data_cpy(struct db_i *dbip, struct rt_dsp_internal *dsp_ip, const char *dirp
 
 #define PID_KEY "facetize_pid"
 int
-_ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, struct bu_ptbl *leaf_dps, int resume)
+_ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *leaf_dps)
 {
-    if (!dbip || !wfile || !wdir)
+    if (!s)
 	return BRLCAD_ERROR;
 
+    struct db_i *dbip = s->gedp->dbip;
+    int resume = s->resume;
 
-    if (!*wfile || !*wdir) {
-	(*wfile) = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wfile");
-	(*wdir) = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wdir");
-	/* Figure out the working .g filename */
+    if (!bu_vls_strlen(s->wfile)) {
+	char tmpwfile[MAXPATHLEN];
 	struct bu_vls wfilename = BU_VLS_INIT_ZERO;
-	struct bu_vls bname = BU_VLS_INIT_ZERO;
-	struct bu_vls dname = BU_VLS_INIT_ZERO;
-	char rfname[MAXPATHLEN];
-	bu_file_realpath(dbip->dbi_filename, rfname);
-
-	// Get the root filename, so we can give the working file a relatable name
-	bu_path_component(&bname, rfname, BU_PATH_BASENAME);
-
-	// Hash the path string and construct
-	unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(&bname), bu_vls_strlen(&bname));
-	bu_vls_sprintf(&dname, "facetize_%llu", hash_num);
-	bu_vls_sprintf(&wfilename, "facetize_%s", bu_vls_cstr(&bname));
-	bu_vls_free(&bname);
-
-	// Have filename, get a location in the cache directory
-	bu_dir(*wdir, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), NULL);
-	bu_dir(*wfile, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), bu_vls_cstr(&wfilename), NULL);
-	bu_vls_free(&dname);
+	bu_vls_sprintf(&wfilename, "facetize_%s", bu_vls_cstr(s->bname));
+	bu_dir(tmpwfile, MAXPATHLEN, s->wdir, bu_vls_cstr(&wfilename), NULL);
+	bu_vls_sprintf(s->wfile, "%s",tmpwfile);
 	bu_vls_free(&wfilename);
     }
 
     // If we have a wfile, check for a pid and see if that pid is still active.  If it is, bail - we
     // can't collide with another active process trying to facetize the same .g file
     int pid;
-    if (bu_file_exists(*wfile, NULL)) {
-	struct db_i *wdbip = db_open(*wfile, DB_OPEN_READONLY);
+    if (bu_file_exists(bu_vls_cstr(s->wfile), NULL)) {
+	struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
 	if (wdbip) {
 	    if (db_dirbuild(wdbip) < 0)
 		return BRLCAD_ERROR;
@@ -205,7 +198,7 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 		const char *val = bu_avs_get(&avs, PID_KEY);
 		if (bu_opt_int(NULL, 1, (const char **)&val, (void *)&pid) == 1) {
 		    if (bu_pid_alive(pid)) {
-			bu_log("Error - %s _GLOBAL attribute process id %d is still active.  This indicates another process is actively working on this file.  Please terminate process %d before trying a facetize operation on this .g file.", *wfile, pid, pid);
+			bu_log("Error - %s _GLOBAL attribute process id %d is still active.  This indicates another process is actively working on this file.  Please terminate process %d before trying a facetize operation on this .g file.", bu_vls_cstr(s->wfile), pid, pid);
 			bu_avs_free(&avs);
 			db_close(wdbip);
 			return BRLCAD_ERROR;
@@ -217,28 +210,18 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	}
     }
 
-    // If we're starting over, clear the old working directory
-    if (!resume && bu_file_directory(*wdir)) {
-	bu_dirclear(*wdir);
-    }
-
-    if (!bu_file_directory(*wdir)) {
-	// Set up the directory
-	bu_mkdir(*wdir);
-    }
-
     // If we're resuming, the resuming process is taking ownership of the
     // existing working file
     int write_pid = resume;
 
-    if (!bu_file_exists(*wfile, NULL)) {
+    if (!bu_file_exists(bu_vls_cstr(s->wfile), NULL)) {
 	// Populate the working copy with original .g data
 	// (TODO - should use the dbip's FILE pointer for this rather than
 	// opening it again if we can (see FIO24-C), but that's a private entry
 	// in db_i per the header.  Maybe need a function to return a FILE *
 	// from a struct db_i?)
 	std::ifstream orig_file(dbip->dbi_filename, std::ios::binary);
-	std::ofstream work_file(*wfile, std::ios::binary);
+	std::ofstream work_file(bu_vls_cstr(s->wfile), std::ios::binary);
 	if (!orig_file.is_open() || !work_file.is_open())
 	    return BRLCAD_ERROR;
 	work_file << orig_file.rdbuf();
@@ -257,7 +240,7 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 		    struct rt_db_internal intern;
 		    if (rt_db_get_internal(&intern, ldp, dbip, NULL, &rt_uniresource) < 0)
 			continue;
-		    dsp_data_cpy(dbip, (struct rt_dsp_internal *)intern.idb_ptr, *wdir);
+		    dsp_data_cpy(dbip, (struct rt_dsp_internal *)intern.idb_ptr, s->wdir);
 		    rt_db_free_internal(&intern);
 		}
 
@@ -272,7 +255,7 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
     if (write_pid) {
 	// Write the current pid to the working file as a _GLOBAL attribute
 	pid = bu_pid();
-	struct db_i *wdbip = db_open(*wfile, DB_OPEN_READWRITE);
+	struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
 	if (wdbip) {
 	    if (db_dirbuild(wdbip) < 0)
 		return BRLCAD_ERROR;
@@ -292,7 +275,7 @@ _ged_facetize_working_file_setup(char **wfile, char **wdir, struct db_i *dbip, s
 	}
     }
 
-    if (!bu_file_exists(*wfile, NULL))
+    if (!bu_file_exists(bu_vls_cstr(s->wfile), NULL))
 	return BRLCAD_ERROR;
 
     return BRLCAD_OK;

@@ -88,6 +88,17 @@ _ged_facetize_state_create()
     s->make_nmg = 0;
     s->nonovlp_brep = 0;
 
+    s->wdir = NULL;
+
+    BU_GET(s->log_file, struct bu_vls);
+    bu_vls_init(s->log_file);
+
+    BU_GET(s->wfile, struct bu_vls);
+    bu_vls_init(s->wfile);
+
+    BU_GET(s->bname, struct bu_vls);
+    bu_vls_init(s->bname);
+
     s->regions = 0;
     s->resume = 0;
     s->in_place = 0;
@@ -116,6 +127,24 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
 {
     if (!s)
        	return;
+
+    if (s->wdir)
+	bu_free(s->wdir, "wdir");
+
+    if (s->bname) {
+	bu_vls_free(s->bname);
+	BU_PUT(s->bname, struct bu_vls);
+    }
+
+    if (s->log_file) {
+	bu_vls_free(s->log_file);
+	BU_PUT(s->log_file, struct bu_vls);
+    }
+
+    if (s->wfile) {
+	bu_vls_free(s->wfile);
+	BU_PUT(s->wfile, struct bu_vls);
+    }
 
     if (s->prefix) {
 	bu_vls_free(s->prefix);
@@ -182,12 +211,12 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 
     // If we're not doing NMG, use the Manifold booleval
     if (!s->in_place) {
-	ret = _ged_facetize_booleval(s, newobj_cnt, dpa, oname, NULL, NULL, false);
+	ret = _ged_facetize_booleval(s, newobj_cnt, dpa, oname, false, true);
     } else {
 	for (i = 0; i < argc; i++) {
 	    idpa[0] = dpa[i];
 	    idpa[1] = NULL;
-	    ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], NULL, NULL, false);
+	    ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], false, true);
 	    if (ret == BRLCAD_ERROR)
 		goto booleval_cleanup;
 	}
@@ -292,6 +321,33 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	_facetize_methods_help(gedp);
 	ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;
 	goto ged_facetize_memfree;
+    }
+
+    /* Beyond this point, we're likely to need info on the cache directory. Generate some
+     * paths and strings we will need. */
+    {
+	// Get the root filename
+	char rfname[MAXPATHLEN];
+	bu_file_realpath(gedp->dbip->dbi_filename, rfname);
+	bu_path_component(s->bname, rfname, BU_PATH_BASENAME);
+
+	// Hash the path string and construct a location in the cache directory
+	unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(s->bname), bu_vls_strlen(s->bname));
+	struct bu_vls dname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&dname, "facetize_%llu", hash_num);
+	s->wdir = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wdir");
+	bu_dir(s->wdir, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), NULL);
+	bu_vls_free(&dname);
+
+	// If we're starting over, clear the old working directory
+	if (!s->resume && bu_file_directory(s->wdir)) {
+	    bu_dirclear(s->wdir);
+	}
+
+	if (!bu_file_directory(s->wdir)) {
+	    // Set up the directory
+	    bu_mkdir(s->wdir);
+	}
     }
 
     /* If we're doing the experimental brep-only logic, it's a separate process */

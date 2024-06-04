@@ -113,38 +113,26 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	return BRLCAD_OK;
     }
 
-    char *wdir= (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wfile");
-    char *wfile = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wfile");
     char kfname[MAXPATHLEN];
+    char tmpwfile[MAXPATHLEN];
 
     /* Figure out the working .g filename */
     struct bu_vls wfilename = BU_VLS_INIT_ZERO;
-    struct bu_vls bname = BU_VLS_INIT_ZERO;
-    struct bu_vls dname = BU_VLS_INIT_ZERO;
-    char rfname[MAXPATHLEN];
-    bu_file_realpath(dbip->dbi_filename, rfname);
-
-    // Get the root filename, so we can give the working file a relatable name
-    bu_path_component(&bname, rfname, BU_PATH_BASENAME);
-
     // Hash the path string and construct
-    unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(&bname), bu_vls_strlen(&bname));
-    bu_vls_sprintf(&dname, "facetize_regions_%llu", hash_num);
-    bu_vls_sprintf(&wfilename, "facetize_regions_%s", bu_vls_cstr(&bname));
-    bu_vls_free(&bname);
+    unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(s->bname), bu_vls_strlen(s->bname));
+    bu_vls_sprintf(&wfilename, "facetize_regions_%s_%llu", bu_vls_cstr(s->bname), hash_num);
 
     // Have filename, get a location in the cache directory
-    bu_dir(wdir, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), NULL);
-    bu_dir(wfile, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), bu_vls_cstr(&wfilename), NULL);
+    bu_dir(tmpwfile, MAXPATHLEN, s->wdir, bu_vls_cstr(&wfilename), NULL);
+    bu_vls_sprintf(s->wfile, "%s", tmpwfile);
     bu_vls_printf(&wfilename, "_keep");
-    bu_dir(kfname, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), bu_vls_cstr(&wfilename), NULL);
-    bu_vls_free(&dname);
+    bu_dir(kfname, MAXPATHLEN, s->wdir, bu_vls_cstr(&wfilename), NULL);
     bu_vls_free(&wfilename);
 
     // Set up working file.  We will reuse this for each region->bot conversion.
     // We pass in the list of all active solids so any necessary supporting data
     // files also get copied over.
-    if (_ged_facetize_working_file_setup(&wfile, &wdir, dbip, as, s->resume) != BRLCAD_OK) {
+    if (_ged_facetize_working_file_setup(s, as) != BRLCAD_OK) {
 	bu_ptbl_free(as);
 	bu_free(as, "as table");
 	bu_ptbl_free(ar);
@@ -168,8 +156,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    bu_log("Problem searching for implicit regions - aborting.\n");
 	}
 	bu_ptbl_free(ar);
-	bu_free(wdir, "wdir");
-	bu_free(wfile, "wfile");
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
 	return BRLCAD_OK;
@@ -177,7 +163,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bool have_failure = false;
     if (BU_PTBL_LEN(ir)) {
 
-	if (_ged_facetize_leaves_tri(s, wfile, wdir, dbip, ir) != BRLCAD_OK) {
+	if (_ged_facetize_leaves_tri(s, dbip, ir) != BRLCAD_OK) {
 	    have_failure = true;
 	}
     }
@@ -186,13 +172,14 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
     // For proper regions, we're reducing the CSG tree to a single BoT and
     // swapping that BoT in under the region comb
+    struct bu_vls bname = BU_VLS_INIT_ZERO;
     for (size_t i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(ar, i);
 
 	// Get a name for the region's output BoT
 	bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
-	struct db_i *cdbip = db_open(wfile, DB_OPEN_READONLY);
+	struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
 	db_dirbuild(cdbip);
 	db_update_nref(cdbip, &rt_uniresource);
 	struct directory *dcheck = db_lookup(cdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
@@ -200,9 +187,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)cdbip);
 	db_close(cdbip);
 
-	if (_ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), wdir, wfile, true) == BRLCAD_OK) {
+	if (_ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), true, false) == BRLCAD_OK) {
 	    // Replace the region's comb tree with the new BoT
-	    struct db_i *wdbip = db_open(wfile, DB_OPEN_READWRITE);
+	    struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
 	    db_dirbuild(wdbip);
 	    db_update_nref(wdbip, &rt_uniresource);
 	    struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
@@ -316,6 +303,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    have_failure = true;
 	}
     }
+    bu_vls_free(&bname);
 
     // TODO - need to have an option to shotline through the new triangle faces and compare
     // with the old CSG shotline results to try and spot any gross problems with the new
@@ -330,19 +318,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
-	bu_free(wdir, "wdir");
-	bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
     }
 
     // keep active regions into .g copy
-    struct ged *wgedp = ged_open("db", wfile, 1);
+    struct ged *wgedp = ged_open("db", bu_vls_cstr(s->wfile), 1);
     if (!wgedp) {
     	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
-	bu_free(wdir, "wdir");
-	bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
     }
     const char **av = (const char **)bu_calloc(argc+10, sizeof(const char *), "av");
@@ -457,9 +441,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_ptbl_free(ar);
     bu_free(ar, "ar table");
     bu_free(dpa, "free dpa");
-    bu_dirclear(wdir);
-    bu_free(wdir, "wdir");
-    bu_free(wfile, "wfile");
+    bu_dirclear(s->wdir);
     return ret;
 }
 

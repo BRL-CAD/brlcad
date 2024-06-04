@@ -70,23 +70,17 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     }
 
     /* OK, we have work to do. Set up a working copy of the .g file. */
-    char *wdir = NULL;
-    char *wfile = NULL;
     //char kfname[MAXPATHLEN];
-    if (_ged_facetize_working_file_setup(&wfile, &wdir, s->gedp->dbip, NULL, s->resume) != BRLCAD_OK) {
+    if (_ged_facetize_working_file_setup(s, NULL) != BRLCAD_OK) {
 	bu_free(dpa, "dp array");
-	bu_free(wdir, "wdir");
-	bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
     }
 
     /* We need all of the inputs for this method to be xpushed - do the xpush
      * operations in the working copy of the .g file. */
-    struct ged *wgedp = ged_open("db", wfile, 1);
+    struct ged *wgedp = ged_open("db", bu_vls_cstr(s->wfile), 1);
     if (!wgedp) {
 	bu_free(dpa, "dp array");
-	bu_free(wdir, "wdir");
-	bu_free(wfile, "wfile");
 	return BRLCAD_ERROR;
     }
     for (int i = 0; i < newobj_cnt;  i++) {
@@ -111,8 +105,6 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     BU_ALLOC(br, struct bu_ptbl);
     if (db_search(br, DB_SEARCH_RETURN_UNIQ_DP, active_breps, newobj_cnt, dpa, wgedp->dbip, NULL) < 0) {
 	bu_free(dpa, "dp array");
-	bu_free(wdir, "wdir");
-	bu_free(wfile, "wfile");
 	bu_free(br, "brep results");
 	return BRLCAD_ERROR;
     }
@@ -120,8 +112,6 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	/* No active breps (unlikely but technically possible), nothing to do */
 	bu_vls_printf(s->gedp->ged_result_str, "No brep objects present in specified inputs - nothing to convert.\n");
 	bu_free(dpa, "dp array");
-	bu_free(wdir, "wdir");
-	bu_free(wfile, "wfile");
 	bu_free(br, "brep results");
 	return BRLCAD_OK;
     }
@@ -229,7 +219,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 
     /* Keep out just what we asked for into a .g file */
     struct bu_vls kwfile = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&kwfile, "%s_keep", wfile);
+    bu_vls_sprintf(&kwfile, "%s_keep", bu_vls_cstr(s->wfile));
     const char **av = (const char **)bu_calloc(argc+10, sizeof(const char *), "av");
     av[0] = "keep";
     av[1] = bu_vls_cstr(&kwfile);
@@ -250,9 +240,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     bu_vls_free(&kwfile);
 
     /* Clean up */
-    bu_dirclear(wdir);
-    bu_free(wfile, "wfile");
-    bu_free(wdir, "wdir");
+    bu_dirclear(s->wdir);
 
     return BRLCAD_OK;
 }
