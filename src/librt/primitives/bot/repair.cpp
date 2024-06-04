@@ -330,10 +330,8 @@ rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_interna
     int *nfaces = (int *)bu_calloc(orig_bot->num_faces * 3, sizeof(int), "new faces array");
     size_t nfaces_ind = 0;
     for (size_t i = 0; i < orig_bot->num_faces; i++) {
-	if (rm_indices.find(i) != rm_indices.end()) {
-	    bu_log("skipping thin face %ld\n", i);
+	if (rm_indices.find(i) != rm_indices.end())
 	    continue;
-	}
 	nfaces[3*nfaces_ind + 0] = orig_bot->faces[3*i+0];
 	nfaces[3*nfaces_ind + 1] = orig_bot->faces[3*i+1];
 	nfaces[3*nfaces_ind + 2] = orig_bot->faces[3*i+2];
