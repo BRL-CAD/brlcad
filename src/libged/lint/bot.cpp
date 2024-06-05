@@ -196,6 +196,7 @@ struct tc_info {
     struct bv_vlblock *vbp = NULL;
     struct bu_list *vlfree = NULL;
     bool do_plot = false;
+    fastf_t min_tri_area;
 
     int verbose;
     int curr_tri;
@@ -239,6 +240,16 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	}
 
 	if (dist < tinfo->ttol) {
+
+	    if (tinfo->min_tri_area > 0) {
+		point_t v[3];
+		for (int i = 0; i < 3; i++)
+		    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+		double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
+		if (tri_area < tinfo->min_tri_area)
+		    return 0;
+	    }
+
 	    nlohmann::json terr;
 	    ray_to_json(&terr, &ap->a_ray);
 	    terr["indices"].push_back(s->seg_in.hit_surfno);
@@ -280,6 +291,15 @@ _tc_miss(struct application *ap)
     struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
 
+    if (tinfo->min_tri_area > 0) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
+	if (tri_area < tinfo->min_tri_area)
+	    return 0;
+    }
+
     tinfo->is_thin = 1;
     nlohmann::json terr;
     ray_to_json(&terr, &ap->a_ray);
@@ -318,6 +338,15 @@ _tc_overlap(struct application *ap,
 {
     struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
+
+    if (tinfo->min_tri_area > 0) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
+	if (tri_area < tinfo->min_tri_area)
+	    return 0;
+    }
 
     tinfo->is_thin = 1;
     nlohmann::json terr;
@@ -375,6 +404,7 @@ bot_thin_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     tinfo.vbp = cdata->vbp;
     tinfo.vlfree = cdata->vlfree;
     tinfo.do_plot = cdata->do_plot;
+    tinfo.min_tri_area = cdata->min_tri_area;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -589,6 +619,7 @@ struct miss_info {
     struct bv_vlblock *vbp = NULL;
     struct bu_list *vlfree = NULL;
     bool do_plot = false;
+    fastf_t min_tri_area = 0.0;
 
     int verbose;
     int curr_tri;
@@ -612,6 +643,15 @@ _mc_miss(struct application *ap)
     // something is wrong.
     struct miss_info *tinfo = (struct miss_info *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
+
+    if (tinfo->min_tri_area > 0) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
+	if (tri_area < tinfo->min_tri_area)
+	    return 0;
+    }
 
     tinfo->unexpected_miss = 1;
     nlohmann::json terr;
@@ -680,6 +720,7 @@ bot_miss_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot,
     minfo.vbp = cdata->vbp;
     minfo.vlfree = cdata->vlfree;
     minfo.do_plot = cdata->do_plot;
+    minfo.min_tri_area = cdata->min_tri_area;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
@@ -742,6 +783,7 @@ struct uh_info {
     struct bv_vlblock *vbp = NULL;
     struct bu_list *vlfree = NULL;
     bool do_plot = false;
+    fastf_t min_tri_area = 0.0;
 
     int verbose;
     int curr_tri;
@@ -758,6 +800,16 @@ _uh_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     struct seg *s = (struct seg *)segs->l.forw;
     if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
+
+	if (tinfo->min_tri_area > 0) {
+	    point_t v[3];
+	    for (int i = 0; i < 3; i++)
+		VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
+	    double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
+	    if (tri_area < tinfo->min_tri_area)
+		return 0;
+	}
+
 	// Segment's first hit didn't come from the expected triangle.
 	nlohmann::json terr;
 	ray_to_json(&terr, &ap->a_ray);
@@ -855,6 +907,7 @@ bot_hit_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, 
     tinfo.vbp = cdata->vbp;
     tinfo.vlfree = cdata->vlfree;
     tinfo.do_plot = cdata->do_plot;
+    tinfo.min_tri_area = cdata->min_tri_area;
 
     // Set up the raytrace
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))

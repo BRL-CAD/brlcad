@@ -213,6 +213,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     int missing_check = 0;
     int visualize = 0;
     fastf_t ftol = VUNITIZE_TOL;
+    fastf_t min_tri_area = 0.0;
     struct directory **dpa = NULL;
     struct bu_vls filter = BU_VLS_INIT_ZERO;
     struct bu_vls ofile = BU_VLS_INIT_ZERO;
@@ -228,18 +229,19 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     struct invalid_shape_methods imethods;
     imethods.im_techniques = &ldata.im_techniques;
 
-    struct bu_opt_desc d[11];
-    BU_OPT(d[0],  "h", "help",                              "",  NULL,              &print_help,           "Print help and exit");
-    BU_OPT(d[1],  "v", "verbose",                           "",  &_ged_vopt,        &verbosity,            "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[2],  "C", "cyclic",                            "",  NULL,              &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
-    BU_OPT(d[3],  "M", "missing",                           "",  NULL,              &missing_check,        "Check for objects referenced by other objects that are not in the database");
-    BU_OPT(d[4],  "I", "invalid-shape",  "[check [check ...]]",  &invalid_opt_read, &imethods,             "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
-    BU_OPT(d[5],  "F", "filter",                     "pattern",  &bu_opt_vls,       &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
-    BU_OPT(d[6],  "j", "json-file",                    "fname",  &bu_opt_vls,       &ofile,                "Write out the full lint data to a json file");
-    BU_OPT(d[7],  "V", "visualize",                         "",  NULL,              &visualize,            "When problems can be visually represented, do so");
-    BU_OPT(d[8],  "t", "tol",                              "#",  &bu_opt_fastf_t,   &ftol,                 "Numerical value to use when testing involves tolerances (defaults to VUNITIZE_TOL)");
-    BU_OPT(d[9],  "g", "group",                         "name",  &bu_opt_vls,       &gname,                "Name of comb object in which to group all shape objects that report issues (will not contain cyclic paths or missing references).");
-    BU_OPT_NULL(d[10]);
+    struct bu_opt_desc d[12];
+    BU_OPT(d[ 0],  "h", "help",                              "",  NULL,              &print_help,           "Print help and exit");
+    BU_OPT(d[ 1],  "v", "verbose",                           "",  &_ged_vopt,        &verbosity,            "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[ 2],  "C", "cyclic",                            "",  NULL,              &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
+    BU_OPT(d[ 3],  "M", "missing",                           "",  NULL,              &missing_check,        "Check for objects referenced by other objects that are not in the database");
+    BU_OPT(d[ 4],  "I", "invalid-shape",  "[check [check ...]]",  &invalid_opt_read, &imethods,             "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
+    BU_OPT(d[ 5],  "F", "filter",                     "pattern",  &bu_opt_vls,       &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
+    BU_OPT(d[ 6],  "j", "json-file",                    "fname",  &bu_opt_vls,       &ofile,                "Write out the full lint data to a json file");
+    BU_OPT(d[ 7],  "V", "visualize",                         "",  NULL,              &visualize,            "When problems can be visually represented, do so");
+    BU_OPT(d[ 8],  "t", "tol",                              "#",  &bu_opt_fastf_t,   &ftol,                 "Numerical value to use when testing involves tolerances (defaults to VUNITIZE_TOL)");
+    BU_OPT(d[ 9],  "g", "group",                         "name",  &bu_opt_vls,       &gname,                "Name of comb object in which to group all shape objects that report issues (will not contain cyclic paths or missing references).");
+    BU_OPT(d[10],   "", "min-tri-area",                     "#",  &bu_opt_fastf_t,   &min_tri_area,         "Units are mm^2.  If specified, lint will not report any sampling problems where the seed triangle has < min-tri-area surface area (default is to report all problems).  Note that a miss of a problematically small triangle elsewhere in the shotline may still result in a shotlining error report - this filters only based on the first hit triangles.");
+    BU_OPT_NULL(d[11]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -310,6 +312,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     ldata.dpa = dpa;
     ldata.verbosity = verbosity;
     ldata.ftol = ftol;
+    ldata.min_tri_area = min_tri_area;
 
     int have_specific_test = cyclic_check+missing_check+imethods.do_invalid;
 
