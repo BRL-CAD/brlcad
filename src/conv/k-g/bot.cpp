@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include "wdb.h"
+
 #include "bot.h"
 
 
@@ -169,9 +171,20 @@ void Bot::addTriangle
     bot_internal.num_face_normals = bot_internal.num_faces;
 }
 
+void Bot::setAttributes
+(
+    std::map<std::string, std::string> attr
+) {
+    attributes = attr;
+}
+
 
 const char* Bot::getName(void) const {
     return name.c_str();
+}
+
+std::map<std::string, std::string> Bot::getAttributes(void) const{
+    return attributes;
 }
 
 
@@ -223,6 +236,31 @@ void Bot::write
     }
 
     wdb_export(wdbp, name.c_str(), bot_wdb, ID_BOT, 1.);
+}
+
+void Bot::writeAttributes
+(
+    rt_wdb* wdbp,
+    const char* name,
+    std::map<std::string, std::string> attributes
+) {
+    struct rt_db_internal     bot_internal;
+    struct directory*         dp;
+    struct db_i*              dbip;
+    bu_attribute_value_set*   avs;
+
+    dbip = wdbp->dbip;
+    dp = db_lookup(dbip, name, 0);
+
+    rt_db_get_internal(&bot_internal, dp, dbip, bn_mat_identity, &rt_uniresource);
+    avs = &bot_internal.idb_avs;
+    for (std::map<std::string,std::string>::iterator it= attributes.begin(); it!= attributes.end() ; it++)
+    {
+	bu_avs_add(avs, it->first.c_str(), it->second.c_str());
+    }
+
+    bu_avs_print(avs, "BOT Attributes:");
+    db5_update_attributes(dp, avs, dbip);
 }
 
 

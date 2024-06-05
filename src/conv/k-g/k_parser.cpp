@@ -39,7 +39,8 @@ enum class KState {
     Node,
     Element_Shell,
     Part,
-    Section_Shell
+    Section_Shell,
+    PART_ADAPTIVE_FAILURE
 };
 
 
@@ -188,6 +189,9 @@ bool parse_k
 				state         = KState::Part;
 				partLinesRead = 0;
 				partTitle     = "";
+			    }
+			    else if ((command.size() == 3)) {
+				state = KState::PART_ADAPTIVE_FAILURE;
 			    }
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
@@ -346,6 +350,22 @@ bool parse_k
 			}
 
 			++sectionLinesRead;
+			break;
+		    }
+		    case KState::Part_ADAPTIVE_FAILURE: {
+			if (tokens.size() == 0) {
+			    std::cout << "Too short PART_ADAPTIVE_FAILURE in k-file" << fileName << "\n";
+			    break;
+			}
+			int pid = stoi(tokens[0]);
+
+			if (tokens.size() == 2) {
+			    data.parts[pid].attributes["ADAPTIVE_FAILURE_STARTING_TIME"]=tokens[1];
+			}
+			else {
+			    std::cout << "Attributes should come in pairs in k-file" << fileName << "\n";
+			    break;
+			}
 			break;
 		    }
 
