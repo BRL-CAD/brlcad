@@ -122,6 +122,10 @@ int main
 				bot.addTriangle(point1, point3, point4);
 			    }
 			}
+			if ((it->second).attributes.size() > 0) {
+			    bot.setAttributes((it->second).attributes);
+			    regions.setAttributes(partName,(it->second).attributes);
+			}
 		    }
 		}
 

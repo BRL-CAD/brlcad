@@ -52,6 +52,7 @@ struct KPart {
     std::string   title;
     std::set<int> elements;
     int           section;
+    std::map<std::string, std::string> attributes;
 };
 
 
