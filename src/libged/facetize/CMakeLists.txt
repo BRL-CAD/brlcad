@@ -45,6 +45,7 @@ CMAKEFILES(
   tess_opts.h
   ged_facetize.h
   subprocess.h
+  TODO
   ${FACETIZE_SRCS}
   )
 
