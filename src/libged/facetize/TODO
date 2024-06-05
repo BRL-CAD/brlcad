@@ -8,15 +8,6 @@ full log copy that to a specified file
 make lint ray testing parallel - doesn't matter much for small samples, but for
 large models it DOES matter.
 
-figure out what to do about small triangles in meshes - they cause lint failures
-if the raytracer can't intersect them.  Can we decimate if it looks like small
-triangles are in play
-
-add an option to lint to filter out results based on surface area of problematic
-triangles as a percentage of the total mesh area - that'll let us distinguish
-between the "one tiny triangle causing raytracer trouble" vs. "serious problem
-with whole mesh" cases, rather than being all or nothing
-
 investigate whether it makes sense to add a gdiff mode to validate conversions
 against the original input
 
