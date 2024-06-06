@@ -122,6 +122,8 @@ int main
 				bot.addTriangle(point1, point3, point4);
 			    }
 			}
+
+			    regions.setAttributes(partName,(it->second).attributes);
 		    }
 		}
 
