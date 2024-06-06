@@ -32,6 +32,10 @@
 
 #include "bot.h"
 
+struct Region {
+    Bot                                bot;
+    std::map<std::string, std::string> attributes;
+};
 
 class RegionList {
 public:
@@ -39,9 +43,17 @@ public:
 
     Bot& addRegion(const std::string& name);
 
-    Bot& getBot(const std::string& name);
+    Bot&                                getBot(const std::string& name);
+    std::map<std::string, std::string>& getAttributes(const std::string& name) ;
 
     void deleteRegion(const std::string& name);
+
+    void setAttributes(const std::string& name,
+		       const std::map<std::string, std::string>& attributes);
+
+    void writeAttributes(rt_wdb* wdbp,
+			 const char* name,
+			 const std::map<std::string, std::string>& attributes);
 
     void create(rt_wdb* wdbp);
 
@@ -49,7 +61,7 @@ public:
     void printStat(void) const;
 
 private:
-    std::map<std::string, Bot> m_list;
+    std::map<std::string, Region> m_list;
 };
 
 
