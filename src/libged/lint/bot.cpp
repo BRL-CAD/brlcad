@@ -694,7 +694,7 @@ bot_miss_check(std::vector<lint_worker_data *> &wdata)
     for (size_t i = 0; i < wdata.size(); i++) {
 	wdata[i]->ap.a_hit = _hit_noop;
 	wdata[i]->ap.a_miss = _mc_miss;
-	wdata[i]->ap.a_onehit = 0; /* One hit isn't enough - looking for something solid */
+	wdata[i]->ap.a_onehit = 1; /* Check the intersection behavior of the individual triangle */
     }
 
     // The concurrent queue is how we will use multiple threads to do
