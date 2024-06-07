@@ -26,7 +26,6 @@ CMAKEFILES(
   ${LINT_SRCS}
   ged_lint.h
   json.hpp
-  concurrentqueue.h
   )
 
 # Local Variables:
