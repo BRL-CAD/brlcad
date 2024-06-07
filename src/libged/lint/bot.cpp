@@ -641,9 +641,6 @@ _mc_miss(struct application *ap)
     lint_worker_data *tinfo = (lint_worker_data *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
 
-    // Debugging - to be removed
-    bu_log("%s tri_ind %d missed\n", tinfo->pname.c_str(), tinfo->curr_tri);
-
     // Minimum area filter check
     if (tinfo->min_tri_area > 0) {
 	point_t v[3];
@@ -653,6 +650,9 @@ _mc_miss(struct application *ap)
 	if (tri_area < tinfo->min_tri_area)
 	    return 0;
     }
+
+    // Debugging - to be removed
+    bu_log("%s tri_ind %d missed\n", tinfo->pname.c_str(), tinfo->curr_tri);
 
     // We're using this triangle - report a problem
     tinfo->condition_flag = true;
@@ -718,8 +718,8 @@ bot_miss_check(std::vector<lint_worker_data *> &wdata)
 	// https://stackoverflow.com/a/25536984
 	threads.emplace_back(
 		std::thread(
-		    // Using a lambda function to execute the work, with ind as the lo
-		    [&](int ind)  // ind is the lambda variable holding the current wdata index
+		    // Using a lambda function to execute the work
+		    [&](int ind)  // lambda scoped variable holding the passed-in wdata index
 		    {
 		       size_t tri_ind;
 		       // As long as there's still work in q to do, have the thread keep getting
