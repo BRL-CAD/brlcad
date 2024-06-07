@@ -231,12 +231,11 @@ class lint_worker_data {
 	int curr_tri = -1;
 	double ttol = 0.0;
 
-	const lint_data *ldata = NULL;
+	lint_data *ldata = NULL;
 	struct application ap;
 	struct rt_bot_internal *bot = NULL;
 
 	std::string pname;
-	std::string problem_type;
 
 	// Accumulated set of all faces flagged
 	// by any tests using this worker container.
@@ -642,8 +641,10 @@ _mc_miss(struct application *ap)
     lint_worker_data *tinfo = (lint_worker_data *)ap->a_uptr;
     struct rt_bot_internal *bot = tinfo->bot;
 
+    // Debugging - to be removed
     bu_log("%s tri_ind %d missed\n", tinfo->pname.c_str(), tinfo->curr_tri);
 
+    // Minimum area filter check
     if (tinfo->min_tri_area > 0) {
 	point_t v[3];
 	for (int i = 0; i < 3; i++)
@@ -653,6 +654,7 @@ _mc_miss(struct application *ap)
 	    return 0;
     }
 
+    // We're using this triangle - report a problem
     tinfo->condition_flag = true;
     nlohmann::json terr;
     ray_to_json(&terr, &ap->a_ray);
@@ -665,10 +667,14 @@ _mc_miss(struct application *ap)
 static int
 bot_miss_check(std::vector<lint_worker_data *> &wdata)
 {
+    // We always need at least one worker data container to do any work at all,
+    // so pull the values we need for preliminary checks from that one.
     lint_worker_data *w0 = wdata[0];
     if (!w0->bot || !w0->bot->num_faces)
 	return 0;
 
+    // If this test hasn't been specified, and we have specific tests called
+    // out, skip.
     const std::map<std::string, std::set<std::string>> &imt = w0->ldata->im_techniques;
     if (imt.size()) {
 	std::map<std::string, std::set<std::string>>::const_iterator i_it;
@@ -677,29 +683,55 @@ bot_miss_check(std::vector<lint_worker_data *> &wdata)
 	    return 0;
     }
 
-    nlohmann::json merr;
+    nlohmann::json terr;
+    terr["problem_type"] = "unexpected_miss";
+    terr["object_type"] = "bot";
+    terr["object_name"] = w0->pname;
 
+    // Much of the information needed for different tests is common and thus can be
+    // reused, but some aspects are specific to each test - let all the worker data
+    // containers know what the specifics are for this test.
     for (size_t i = 0; i < wdata.size(); i++) {
-	wdata[i]->problem_type = std::string("unexpected_miss");
 	wdata[i]->ap.a_hit = _hit_noop;
 	wdata[i]->ap.a_miss = _mc_miss;
 	wdata[i]->ap.a_onehit = 0; /* One hit isn't enough - looking for something solid */
     }
 
+    // The concurrent queue is how we will use multiple threads to do
+    // raytracing more quickly.  The advantage over bu_parallel here is it
+    // should be simple to keep each thread busy - all of them will be pulling
+    // their "next" TODO triangle from the same common source.
     moodycamel::ConcurrentQueue<size_t> q;
+
+    // We only need one "source" of triangles to process, since the list is
+    // known in advance and fixed.  Use a ProducerToken, since our use case
+    // supports it.
     moodycamel::ProducerToken ptok(q);
-    std::vector<std::thread> threads;
     for (size_t i = 0; i < w0->bot->num_faces; i++)
 	q.enqueue(ptok, i);
 
-    // Do the work
+    // Do the work in multiple threads.
+    std::vector<std::thread> threads;
+    // https://stackoverflow.com/a/39266640
+    threads.reserve(wdata.size());
     for (size_t i = 0; i < wdata.size(); i++) {
-	threads.emplace_back(std::thread([&](int ind) {
-		size_t tri_ind;
-		while (q.try_dequeue_from_producer(ptok, tri_ind)) {
-		       wdata[ind]->shoot(tri_ind, false);
-		}
-		}, i));
+	// https://stackoverflow.com/a/25536984
+	threads.emplace_back(
+		std::thread(
+		    // Using a lambda function to execute the work, with ind as the lo
+		    [&](int ind)  // ind is the lambda variable holding the current wdata index
+		    {
+		       size_t tri_ind;
+		       // As long as there's still work in q to do, have the thread keep getting
+		       // more triangles to process
+		       while (q.try_dequeue_from_producer(ptok, tri_ind)) {
+		          // Perform an individual triangle test
+		          wdata[ind]->shoot(tri_ind, false);
+		       }
+		    }
+		    , i  // Value being passed into ind to id this thread's wdata container
+		    )
+		);
     }
 
     // Wait for all threads
@@ -707,16 +739,27 @@ bot_miss_check(std::vector<lint_worker_data *> &wdata)
 	threads[i].join();
     }
 
-    // Clean up anything left
+    // Clean up anything left (TODO - shouldn't be anything, since our producer
+    // isn't making new work - this may be unnecessary.)
     size_t tri_ind;
     while (q.try_dequeue_from_producer(ptok, tri_ind)) {
 	wdata[0]->shoot(tri_ind, false);
     }
 
-    // TODO - to make this properly multithreaded and still report an overall
-    // summary as a single json file, we'll need to  merge the results at the
-    // end.  Probably will use either obj1.update(obj2), or
-    // obj1.merge_patch(obj2) per https://github.com/nlohmann/json/issues/1807
+
+    // Gather the thread results and reset the individual json containers
+    bool found = false;
+    for (size_t i = 0; i < wdata.size(); i++) {
+	nlohmann::json &sdata = wdata[i]->tresults;
+	for(nlohmann::json::const_iterator it = sdata.begin(); it != sdata.end(); ++it) {
+	    found = true;
+	    terr["errors"].push_back(*it);
+	}
+	wdata[i]->tresults.clear();
+    }
+
+    if (found)
+	w0->ldata->j.push_back(terr);
 
     return 0;
 }
