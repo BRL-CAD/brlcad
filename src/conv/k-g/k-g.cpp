@@ -123,7 +123,7 @@ int main
 			    }
 			}
 
-			    regions.setAttributes(partName,(it->second).attributes);
+			regions.setAttributes(partName,(it->second).attributes);
 		    }
 		}
 

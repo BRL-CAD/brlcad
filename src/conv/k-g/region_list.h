@@ -43,7 +43,7 @@ public:
 
     Bot& addRegion(const std::string& name);
 
-    Bot&                                getBot(const std::string& name);
+    Bot& getBot(const std::string& name);
 
     void deleteRegion(const std::string& name);
 

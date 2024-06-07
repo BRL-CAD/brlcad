@@ -353,6 +353,11 @@ bool parse_k
 			break;
 		    }
 		    case KState::Part_Adaptive_Failure: {
+			if (tokens.size() < 2) {
+			    std::cout << "Too short PART_ADAPTIVE_FAILURE in k-file " << fileName << "\n";
+			    break;
+			}
+
 			int pid = stoi(tokens[0]);
 
 			if (tokens.size() == 2) {
@@ -360,7 +365,6 @@ bool parse_k
 			}
 			else {
 			    std::cout << "Attributes should come in pairs in k-file" << fileName << "\n";
-			    break;
 			}
 			break;
 		    }

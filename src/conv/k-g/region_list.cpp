@@ -65,22 +65,19 @@ static void  writeAttributes
 ) {
 
     struct rt_db_internal     region_internal;
-    struct directory*         dp;
-    struct db_i*              dbip;
-    bu_attribute_value_set*   avs;
 
-    dbip = wdbp->dbip;
-    dp = db_lookup(dbip, name, 0);
+    struct db_i*      dbip = wdbp->dbip;
+    struct directory* dp = db_lookup(dbip, name, 0);
 
-    rt_db_get_internal(&region_internal, dp, dbip, bn_mat_identity, &rt_uniresource);
-    avs = &region_internal.idb_avs;
+    rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource);
+    bu_attribute_value_set* avs = &region_internal.idb_avs;
     for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++)
     {
 	bu_avs_add(avs, it->first.c_str(), it->second.c_str());
     }
 
-    bu_avs_print(avs, name);
     db5_update_attributes(dp, avs, dbip);
+    rt_db_free_internal(&region_internal);
 }
 
 
