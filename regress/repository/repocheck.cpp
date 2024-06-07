@@ -893,6 +893,7 @@ main(int argc, const char *argv[])
 		"/qtads/",
 		"/shapelib/",
 		"gltf/",
+		"/concurrentqueue.h",
 		"/detria.hpp",
 		"/json.hpp",
 		"/xxhash.h",
