@@ -69,7 +69,10 @@ static void  writeAttributes
     struct db_i*      dbip = wdbp->dbip;
     struct directory* dp = db_lookup(dbip, name, 0);
 
-    rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource);
+    if (rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource) <= 0) {
+	bu_log("writeAttributes() rt_db_get_internal(%s) FAIL, Can't write attributes\n", dp->d_namep);
+	return;
+    }
     bu_attribute_value_set* avs = &region_internal.idb_avs;
     for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++)
     {
