@@ -69,6 +69,11 @@ static void  writeAttributes
     struct db_i*      dbip = wdbp->dbip;
     struct directory* dp = db_lookup(dbip, name, 0);
 
+    if (dp == RT_DIR_NULL) {
+	bu_log("writeAttributes() Cannot find %s\n", name);
+	return;
+    }
+
     if (rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource) <= 0) {
 	bu_log("writeAttributes() rt_db_get_internal(%s) FAIL, Can't write attributes\n", dp->d_namep);
 	return;
