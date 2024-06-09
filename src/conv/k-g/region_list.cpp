@@ -74,17 +74,19 @@ static void  writeAttributes
 	return;
     }
 
-    if (rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource) <= 0) {
-	bu_log("writeAttributes() rt_db_get_internal(%s) FAIL, Can't write attributes\n", dp->d_namep);
-	return;
+    if (rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource) > 0) {
+	bu_attribute_value_set* avs = &region_internal.idb_avs;
+
+	for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++) {
+	    bu_avs_add(avs, it->first.c_str(), it->second.c_str());
+	}
+
+	db5_update_attributes(dp, avs, dbip);
     }
-    bu_attribute_value_set* avs = &region_internal.idb_avs;
-    for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++)
-    {
-	bu_avs_add(avs, it->first.c_str(), it->second.c_str());
+    else {
+	bu_log("writeAttributes() rt_db_get_internal(%s) FAIL, Can't write attributes\n", dp->d_namep);
     }
 
-    db5_update_attributes(dp, avs, dbip);
     rt_db_free_internal(&region_internal);
 }
 
