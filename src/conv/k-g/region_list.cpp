@@ -74,7 +74,7 @@ static void  writeAttributes
 	return;
     }
 
-    if (rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource) > 0) {
+    if (rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource) >= 0) {
 	bu_attribute_value_set* avs = &region_internal.idb_avs;
 
 	for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++) {
