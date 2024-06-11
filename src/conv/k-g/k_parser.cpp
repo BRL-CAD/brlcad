@@ -66,7 +66,7 @@ static std::string read_line
     return ret;
 }
 
-
+// The standard node line format is I8,3E16.0,2F8.0 (8 digit integer, 3x 16 digit doubles, 2x 8 digit floats).
 static std::vector<std::string> read_line_node_standard
 (
     const char* line
