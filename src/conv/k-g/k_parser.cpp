@@ -66,6 +66,46 @@ static std::string read_line
     return ret;
 }
 
+// The standard node line format is I8,3E16.0,2F8.0 (8 digit integer, 3x 16 digit doubles, 2x 8 digit floats).
+static std::vector<std::string> read_line_node_standard
+(
+    const char* line
+) {
+    std::vector<std::string> ret;
+
+    if (line != nullptr) {
+	std::string temp;
+
+	for (size_t i = 0; i < strlen(line); ++i) {
+	    if ((i == 8) || (i == 24) || (i == 40) || (i == 56) || (i == 64) || (i == 72)) {
+		if (temp.size() > 0) {
+		    ret.push_back(temp);
+		    temp.clear();
+
+		    if (!(line[i] == ' ')) {
+			temp += line[i];
+		    }
+		}
+		else
+		    continue;
+	    }
+	    else if ((line[i] == ' ')) {
+		continue;
+	    }
+	    else if ((line[i] == '\t')) {
+		break;
+	    }
+	    else
+		temp += line[i];
+	}
+
+	if (temp.size() > 0)
+	    ret.push_back(temp);
+    }
+
+    return ret;
+}
+
 
 static std::vector<std::string> parse_line
 (
@@ -227,6 +267,8 @@ bool parse_k
 			break;
 
 		    case KState::Node: {
+			tokens = read_line_node_standard(line.c_str());
+
 			if (tokens.size() < 4) {
 			    std::cout << "Too short NODE in k-file " << fileName << "\n";
 			    break;
