@@ -330,8 +330,18 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!have_specific_test || imethods.do_invalid) {
 	bu_log("Checking for invalid objects...\n");
+
+	// bu_log wipes out MGED when doing this - stash hooks
+	struct bu_hook_list ohooks;
+	bu_hook_list_init(&ohooks);
+	bu_log_hook_save_all(&ohooks);
+	bu_log_hook_delete_all();
+
 	if (_ged_invalid_shape_check(&ldata) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
+
+	// Restore hooks
+	bu_log_hook_restore_all(&ohooks);
     }
 
     if (visualize) {

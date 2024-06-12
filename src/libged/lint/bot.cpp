@@ -165,14 +165,13 @@ ray_to_json(nlohmann::json *pc, struct xray *r)
 }
 
 void
-tri_to_json(nlohmann::json *pc, const char *oname, struct rt_bot_internal *bot, int ind)
+tri_to_json(nlohmann::json *pc, struct rt_bot_internal *bot, int ind)
 {
     nlohmann::json tri;
     point_t v[3];
     for (int i = 0; i < 3; i++)
 	VMOVE(v[i], &bot->vertices[bot->faces[ind*3+i]*3]);
 
-    tri["bot_name"] = std::string(oname);
     tri["face_index"] = ind;
     pt_to_json(&tri, "V0", v[0]);
     pt_to_json(&tri, "V1", v[1]);
@@ -186,7 +185,8 @@ tri_to_json(nlohmann::json *pc, const char *oname, struct rt_bot_internal *bot, 
 }
 
 
-
+typedef int (*fhit_t)(struct application *, struct partition *, struct seg *);
+typedef int (*fmiss_t)(struct application *); 
 
 static int
 _hit_noop(struct application *UNUSED(ap),
@@ -270,6 +270,17 @@ lint_worker_data::shoot(int ind, bool reverse)
     // Set curr_tri so the callbacks know what our origin triangle is
     curr_tri = ind;
 
+    // Minimum area filter check
+    if (ldata && ldata->min_tri_area > 0) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+	    VMOVE(v[i], &bot->vertices[bot->faces[curr_tri*3+i]*3]);
+	double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
+	if (tri_area < ldata->min_tri_area)
+	    return;
+    }
+
+    // Triangle passes filters, continue processing
     vect_t rnorm, n, backout;
     if (!bot_face_normal(&n, bot, ind))
 	return;
@@ -324,26 +335,13 @@ lint_worker_data::plot_bad_tris(struct bv_vlblock *vbp, struct bu_list *vhead, s
     }
 };
 
-#if 0
 static int
 _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     if (PartHeadp->pt_forw == PartHeadp)
 	return 1;
 
-    lint_work_data *tinfo = (lint_work_data *)ap->a_uptr;
-    struct rt_bot_internal *bot = tinfo->bot;
-
-    // If we're dealing with a triangle that is too small per the
-    // user specified filter, skip it
-    if (tinfo->min_tri_area > 0) {
-	point_t v[3];
-	for (int i = 0; i < 3; i++)
-	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
-	double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
-	if (tri_area < tinfo->min_tri_area)
-	    return 0;
-    }
+    lint_worker_data *tinfo = (lint_worker_data *)ap->a_uptr;
 
     struct seg *s = (struct seg *)segs->l.forw;
     if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
@@ -353,148 +351,66 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     }
 
     for (BU_LIST_FOR(s, seg, &(segs->l))) {
-	// We're only interested in thin interactions with the triangle
-	// in question - other triangles along the shotline will be checked in
+	// We're only interested in thin interactions centering around the
+	// triangle in question - other triangles along the shotline will be
+	// checked in different shots
 	if (s->seg_in.hit_dist > tinfo->ttol)
 	    break;
 
-	nlohmann::json terr;
-	terr["problem_type"] = -"unexpected_miss";
-	terr["object_type"] = "bot";
-	terr["object_name"] = pname;
-
-
-	ray_to_json(&terr, &ap->a_ray);
-	terr["indices"].push_back(s->seg_in.hit_surfno);
-	terr["indices"].push_back(s->seg_out.hit_surfno);
 	double dist = s->seg_out.hit_dist - s->seg_in.hit_dist;
+	if (dist > VUNITIZE_TOL)
+	    continue;
+
+	nlohmann::json terr;
+	terr["in_index"] = s->seg_in.hit_surfno;
+	terr["out_index"] = s->seg_out.hit_surfno;
+	if (tinfo->ldata && tinfo->ldata->verbosity > 1) {
+	    ray_to_json(&terr, &ap->a_ray);
+	    tri_to_json(&terr, tinfo->bot, s->seg_in.hit_surfno);
+	    tri_to_json(&terr, tinfo->bot, s->seg_out.hit_surfno);
+	}
 	terr["dist"] = d2s(dist);
 	tinfo->tresults["errors"].push_back(terr);
 	tinfo->condition_flag = true;
 
-	// Plot both the triangles involved with this interaction
-	flagged_tris.insert(s->seg_in.hit_surfno);
-	flagged_tris.insert(s->seg_out.hit_surfno);
-    }
+	// Plot both the triangles involved
+	tinfo->flagged_tris.insert(s->seg_in.hit_surfno);
+	tinfo->flagged_tris.insert(s->seg_out.hit_surfno);
 
+	// Debugging - to be removed
+	//bu_log("%s tri_ind %d tc hit: %g\n", tinfo->pname.c_str(), tinfo->curr_tri, dist);
+
+    }
     return 0;
 }
 
 static int
 _tc_miss(struct application *ap)
 {
-    // A straight-up miss is one of the possible reporting scenarios
-    // for thin triangle pairs - if it happens, we need to flag what
-    // we can find (unfortunately we only know which triangle prompted
-    // the report in this case - hopefully the other triangle will also
-    // trigger a thin report and get itself queued for removal.
-    struct tc_info *tinfo = (struct tc_info *)ap->a_uptr;
-    struct rt_bot_internal *bot = tinfo->bot;
-
-    if (tinfo->min_tri_area > 0) {
-	point_t v[3];
-	for (int i = 0; i < 3; i++)
-	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
-	double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
-	if (tri_area < tinfo->min_tri_area)
-	    return 0;
-    }
+    // A straight-up miss is one of the possible reporting scenarios for thin
+    // triangle pairs - if it happens, we need to flag what we can find
+    // (unfortunately we only know which triangle prompted the report in this
+    // case - hopefully the other triangle will also trigger a thin report and
+    // get itself queued for removal.
+    lint_worker_data *tinfo = (lint_worker_data *)ap->a_uptr;
 
     tinfo->condition_flag = true;
     nlohmann::json terr;
-    ray_to_json(&terr, &ap->a_ray);
-    terr["indices"].push_back(tinfo->curr_tri);
+    terr["index"] = tinfo->curr_tri;
+    if (tinfo->ldata && tinfo->ldata->verbosity > 1) {
+	ray_to_json(&terr, &ap->a_ray);
+	tri_to_json(&terr, tinfo->bot, tinfo->curr_tri);
+    }
     tinfo->tresults["errors"].push_back(terr);
 
     // Plot the missed triangle
-    flagged_tris.insert(tinfo->curr_tri);
+    tinfo->flagged_tris.insert(tinfo->curr_tri);
+
+    // Debugging - to be removed
+    //bu_log("%s tri_ind %d tc miss\n", tinfo->pname.c_str(), tinfo->curr_tri);
 
     return 0;
 }
-
-static int
-bot_thin_check(std::vector<lint_worker_data *> worker_data, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol)
-{
-    if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
-	return 0;
-
-    std::map<std::string, std::set<std::string>> &imt = cdata->im_techniques;
-    if (imt.size()) {
-	std::set<std::string> &bt = imt[std::string("bot")];
-	if (bt.find(std::string("thin_volume")) == bt.end())
-	    return 0;
-    }
-
-    nlohmann::json terr;
-
-    terr["problem_type"] = "thin_volume";
-    terr["object_type"] = "bot";
-    terr["object_name"] = pname;
-
-    int found_thin = 0;
-    struct tc_info tinfo;
-    tinfo.ttol = ttol;
-    tinfo.verbose = cdata->verbosity;
-    tinfo.bot = bot;
-    tinfo.data = &terr;
-    tinfo.color = cdata->color;
-    tinfo.vbp = cdata->vbp;
-    tinfo.vlfree = cdata->vlfree;
-    tinfo.do_plot = cdata->do_plot;
-    tinfo.min_tri_area = cdata->min_tri_area;
-
-    // Set up the raytrace
-    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
-	rt_init_resource(&rt_uniresource, 0, rtip);
-    struct application ap;
-    RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = rtip;     /* application uses this instance */
-    ap.a_hit = _tc_hit;    /* where to go on a hit */
-    ap.a_miss = _tc_miss;  /* where to go on a miss */
-    ap.a_overlap = _tc_overlap;  /* where to go if an overlap is found */
-    ap.a_onehit = 0;
-    ap.a_resource = &rt_uniresource;
-    ap.a_uptr = (void *)&tinfo;
-
-    for (size_t i = 0; i < bot->num_faces; i++) {
-	tinfo.curr_tri = (int)i;
-	vect_t rnorm, n, backout;
-	if (!bot_face_normal(&n, bot, i))
-	    continue;
-
-	// We want backout to get the ray origin off the triangle surface
-	VMOVE(backout, n);
-	VSCALE(backout, backout, SQRT_SMALL_FASTF);
-	// Reverse the triangle normal for a ray direction
-	VREVERSE(rnorm, n);
-
-	point_t rpnts[3];
-	point_t tcenter;
-	VMOVE(rpnts[0], &bot->vertices[bot->faces[i*3+0]*3]);
-	VMOVE(rpnts[1], &bot->vertices[bot->faces[i*3+1]*3]);
-	VMOVE(rpnts[2], &bot->vertices[bot->faces[i*3+2]*3]);
-	VADD3(tcenter, rpnts[0], rpnts[1], rpnts[2]);
-	VSCALE(tcenter, tcenter, 1.0/3.0);
-
-	// Take the shot
-	tinfo.is_thin = 0;
-	VMOVE(ap.a_ray.r_dir, rnorm);
-	VADD2(ap.a_ray.r_pt, tcenter, backout);
-	(void)rt_shootray(&ap);
-
-	if (tinfo.is_thin) {
-	    found_thin = 1;
-	}
-    }
-
-    if (found_thin)
-	cdata->j.push_back(terr);
-
-    return found_thin;
-}
-#endif
-
-#if 0
 
 // TODO - A useful correctness audit for a BoT might be to shotline both the
 // CSG and the BoT using the same rays constructed from the triangle centers -
@@ -506,10 +422,7 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     if (PartHeadp->pt_forw == PartHeadp)
 	return 1;
 
-    struct ab_info *pinfo = (struct ab_info *)ap->a_uptr;
-    struct rt_bot_internal *bot = pinfo->bot;
-
-    struct partition *pp = PartHeadp->pt_forw;
+    lint_worker_data *tinfo = (lint_worker_data *)ap->a_uptr;
 
     // If we've got something too close above our triangle, it's trouble
     //
@@ -517,120 +430,30 @@ _ck_up_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     // parallel to the ray.  Saw one case where it seemed as if we were getting
     // an offset that resulted in a higher distance, but only because there was
     // a shift of one of the hit points off the ray by more than ttol
-    if (pp->pt_inhit->hit_dist < pinfo->ttol) {
-	nlohmann::json terr;
-	ray_to_json(&terr, &ap->a_ray);
-	terr["indices"].push_back(pp->pt_inhit->hit_surfno);
-	terr["indices"].push_back(pp->pt_outhit->hit_surfno);
-	(*pinfo->data)["errors"].push_back(terr);
-	pinfo->have_above = 1;
-
-	if (pinfo->do_plot) {
-	    struct bu_color *color = pinfo->color;
-	    struct bv_vlblock *vbp = pinfo->vbp;
-	    struct bu_list *vlfree = pinfo->vlfree;
-	    unsigned char rgb[3] = {255, 255, 0};
-	    if (color)
-		bu_color_to_rgb_chars(color, rgb);
-	    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-
-	    point_t v[3];
-	    for (int i = 0; i < 3; i++)
-		VMOVE(v[i], &bot->vertices[bot->faces[pp->pt_inhit->hit_surfno*3+i]*3]);
-	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
-	    for (int i = 0; i < 3; i++)
-		VMOVE(v[i], &bot->vertices[bot->faces[pp->pt_outhit->hit_surfno*3+i]*3]);
-	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
-	}
-
+    struct partition *pp = PartHeadp->pt_forw;
+    if (pp->pt_inhit->hit_dist > tinfo->ttol)
 	return 0;
-    }
+
+    nlohmann::json terr;
+	terr["in_index"] = pp->pt_inhit->hit_surfno;
+	terr["out_index"] = pp->pt_outhit->hit_surfno;
+	if (tinfo->ldata && tinfo->ldata->verbosity > 1) {
+	    ray_to_json(&terr, &ap->a_ray);
+	    tri_to_json(&terr, tinfo->bot, pp->pt_inhit->hit_surfno);
+	    tri_to_json(&terr, tinfo->bot, pp->pt_outhit->hit_surfno);
+	}
+    tinfo->tresults["errors"].push_back(terr);
+    tinfo->condition_flag = true;
+
+    // Plot both the triangles involved
+    tinfo->flagged_tris.insert(pp->pt_inhit->hit_surfno);
+    tinfo->flagged_tris.insert(pp->pt_outhit->hit_surfno);
+
+    // Debugging - to be removed
+    //bu_log("%s tri_ind %d close\n", tinfo->pname.c_str(), tinfo->curr_tri);
 
     return 0;
 }
-
-static int
-bot_close_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol)
-{
-    if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
-	return 0;
-
-    std::map<std::string, std::set<std::string>> &imt = cdata->im_techniques;
-    if (imt.size()) {
-	std::set<std::string> &bt = imt[std::string("bot")];
-	if (bt.find(std::string("close_face")) == bt.end())
-	    return 0;
-    }
-
-    nlohmann::json cerr;
-
-    cerr["problem_type"] = "close_face";
-    cerr["object_type"] = "bot";
-    cerr["object_name"] = pname;
-
-    int have_above = 0;
-    struct ab_info cpinfo;
-    cpinfo.ttol = ttol;
-    cpinfo.verbose = cdata->verbosity;
-    cpinfo.bot = bot;
-    cpinfo.have_above = 0;
-    cpinfo.data = &cerr;
-    cpinfo.color = cdata->color;
-    cpinfo.vbp = cdata->vbp;
-    cpinfo.vlfree = cdata->vlfree;
-    cpinfo.do_plot = cdata->do_plot;
-
-
-    // Set up the raytrace
-    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
-	rt_init_resource(&rt_uniresource, 0, rtip);
-    struct application ap;
-    RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = rtip;     /* application uses this instance */
-    ap.a_hit = _ck_up_hit;    /* where to go on a hit */
-    ap.a_miss = _miss_noop;   /* where to go on a miss */
-    ap.a_onehit = 1;
-    ap.a_resource = &rt_uniresource;
-    ap.a_uptr = (void *)&cpinfo;
-
-    for (size_t i = 0; i < bot->num_faces; i++) {
-	cpinfo.curr_tri = (int)i;
-	vect_t rnorm, n, backout;
-	if (!bot_face_normal(&n, bot, i))
-	    continue;
-
-	point_t rpnts[3];
-	point_t tcenter;
-	VMOVE(rpnts[0], &bot->vertices[bot->faces[i*3+0]*3]);
-	VMOVE(rpnts[1], &bot->vertices[bot->faces[i*3+1]*3]);
-	VMOVE(rpnts[2], &bot->vertices[bot->faces[i*3+2]*3]);
-	VADD3(tcenter, rpnts[0], rpnts[1], rpnts[2]);
-	VSCALE(tcenter, tcenter, 1.0/3.0);
-
-	VMOVE(ap.a_ray.r_dir, n);
-
-	VREVERSE(rnorm, n);
-	VMOVE(backout, rnorm);
-	VSCALE(backout, backout, SMALL_FASTF);
-	VADD2(ap.a_ray.r_pt, tcenter, backout);
-	(void)rt_shootray(&ap);
-
-	if (cpinfo.have_above)
-	    have_above = 1;
-    }
-
-    if (have_above)
-	cdata->j.push_back(cerr);
-
-    return have_above;
-}
-#endif
 
 static int
 _mc_miss(struct application *ap)
@@ -639,52 +462,86 @@ _mc_miss(struct application *ap)
     // it.  If we miss under those conditions, it can only happen because
     // something is wrong.
     lint_worker_data *tinfo = (lint_worker_data *)ap->a_uptr;
-    struct rt_bot_internal *bot = tinfo->bot;
-
-    // Minimum area filter check
-    if (tinfo->min_tri_area > 0) {
-	point_t v[3];
-	for (int i = 0; i < 3; i++)
-	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
-	double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
-	if (tri_area < tinfo->min_tri_area)
-	    return 0;
+    nlohmann::json terr;
+    terr["index"] = tinfo->curr_tri;
+    if (tinfo->ldata && tinfo->ldata->verbosity > 1) {
+	ray_to_json(&terr, &ap->a_ray);
+	tri_to_json(&terr, tinfo->bot, tinfo->curr_tri);
     }
+    tinfo->tresults["errors"].push_back(terr);
+    tinfo->condition_flag = true;
+
+    // Flag for plotting
+    tinfo->flagged_tris.insert(tinfo->curr_tri);
 
     // Debugging - to be removed
-    bu_log("%s tri_ind %d missed\n", tinfo->pname.c_str(), tinfo->curr_tri);
-
-    // We're using this triangle - report a problem
-    tinfo->condition_flag = true;
-    nlohmann::json terr;
-    ray_to_json(&terr, &ap->a_ray);
-    terr["indices"].push_back(tinfo->curr_tri);
-    tinfo->tresults["errors"].push_back(terr);
+    //bu_log("%s tri_ind %d missed\n", tinfo->pname.c_str(), tinfo->curr_tri);
 
     return 0;
 }
 
 static int
-bot_miss_check(std::vector<lint_worker_data *> &wdata)
+_uh_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
-    // We always need at least one worker data container to do any work at all,
-    // so pull the values we need for preliminary checks from that one.
+    if (PartHeadp->pt_forw == PartHeadp)
+	return 1;
+
+    lint_worker_data *tinfo = (lint_worker_data *)ap->a_uptr;
+
+    struct seg *s = (struct seg *)segs->l.forw;
+    if (s->seg_in.hit_dist < 2*SQRT_SMALL_FASTF)
+	return 0;
+
+    // Segment's first hit didn't come from the expected triangle.
+    nlohmann::json terr;
+    terr["index"] = s->seg_in.hit_surfno;
+    if (tinfo->ldata && tinfo->ldata->verbosity > 1) {
+	ray_to_json(&terr, &ap->a_ray);
+	tri_to_json(&terr, tinfo->bot, tinfo->curr_tri);
+    }
+    tinfo->tresults["errors"].push_back(terr);
+    tinfo->condition_flag = true;
+
+    // Flag for plotting
+    tinfo->flagged_tris.insert(tinfo->curr_tri);
+
+    // Debugging - to be removed
+    //bu_log("%s tri_ind %d unexpected hit\n", tinfo->pname.c_str(), tinfo->curr_tri);
+
+    return 0;
+}
+
+static int
+bot_check(std::vector<lint_worker_data *> &wdata, const char *test_type, fhit_t hf, fmiss_t mf, int onehit, bool reverse)
+{
+    // Make a std::string of the test type for easier processing
+    std::string ttype(test_type);
+
+    // We always need at least one worker data container to do any work at all.
+    if (!wdata.size())
+	return 0;
+
+    // Pull the values we need for preliminary checks from the first container
+    // - the above check guarantees we have at least that one, and if properly
+    // prepared all wdata worker data containers will have the same values for
+    // any check we will do at this stage.
     lint_worker_data *w0 = wdata[0];
     if (!w0->bot || !w0->bot->num_faces)
 	return 0;
 
-    // If this test hasn't been specified, and we have specific tests called
-    // out, skip.
+    // If we have specific tests called out and this test hasn't been
+    // specified, skip.
     const std::map<std::string, std::set<std::string>> &imt = w0->ldata->im_techniques;
     if (imt.size()) {
 	std::map<std::string, std::set<std::string>>::const_iterator i_it;
 	i_it = imt.find(std::string("bot"));
-	if (i_it->second.find(std::string("unexpected_miss")) == i_it->second.end())
+	if (i_it->second.find(ttype) == i_it->second.end())
 	    return 0;
     }
 
+    // Define the common identifying properties for the results container
     nlohmann::json terr;
-    terr["problem_type"] = "unexpected_miss";
+    terr["problem_type"] = ttype;
     terr["object_type"] = "bot";
     terr["object_name"] = w0->pname;
 
@@ -692,15 +549,15 @@ bot_miss_check(std::vector<lint_worker_data *> &wdata)
     // reused, but some aspects are specific to each test - let all the worker data
     // containers know what the specifics are for this test.
     for (size_t i = 0; i < wdata.size(); i++) {
-	wdata[i]->ap.a_hit = _hit_noop;
-	wdata[i]->ap.a_miss = _mc_miss;
-	wdata[i]->ap.a_onehit = 1; /* Check the intersection behavior of the individual triangle */
+	wdata[i]->ap.a_hit = hf;
+	wdata[i]->ap.a_miss = mf;
+	wdata[i]->ap.a_onehit = onehit;
     }
 
     // The concurrent queue is how we will use multiple threads to do
     // raytracing more quickly.  The advantage over bu_parallel here is it
     // should be simple to keep each thread busy - all of them will be pulling
-    // their "next" TODO triangle from the same common source.
+    // their "next" work triangle from the same common source.
     moodycamel::ConcurrentQueue<size_t> q;
 
     // We only need one "source" of triangles to process, since the list is
@@ -726,7 +583,7 @@ bot_miss_check(std::vector<lint_worker_data *> &wdata)
 		       // more triangles to process
 		       while (q.try_dequeue_from_producer(ptok, tri_ind)) {
 		          // Perform an individual triangle test
-		          wdata[ind]->shoot(tri_ind, false);
+		          wdata[ind]->shoot(tri_ind, reverse);
 		       }
 		    }
 		    , i  // Value being passed into ind to id this thread's wdata container
@@ -746,7 +603,6 @@ bot_miss_check(std::vector<lint_worker_data *> &wdata)
 	wdata[0]->shoot(tri_ind, false);
     }
 
-
     // Gather the thread results and reset the individual json containers
     bool found = false;
     for (size_t i = 0; i < wdata.size(); i++) {
@@ -763,196 +619,6 @@ bot_miss_check(std::vector<lint_worker_data *> &wdata)
 
     return 0;
 }
-
-#if 0
-struct uh_info {
-    double ttol;
-    int unexpected_hit;
-    struct rt_bot_internal *bot;
-    const char *pname;
-    nlohmann::json *data = NULL;
-
-    struct bu_color *color = NULL;
-    struct bv_vlblock *vbp = NULL;
-    struct bu_list *vlfree = NULL;
-    bool do_plot = false;
-    fastf_t min_tri_area = 0.0;
-
-    int verbose;
-    int curr_tri;
-};
-
-static int
-_uh_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
-{
-    if (PartHeadp->pt_forw == PartHeadp)
-	return 1;
-
-    struct uh_info *tinfo = (struct uh_info *)ap->a_uptr;
-    struct rt_bot_internal *bot = tinfo->bot;
-
-    struct seg *s = (struct seg *)segs->l.forw;
-    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
-
-	if (tinfo->min_tri_area > 0) {
-	    point_t v[3];
-	    for (int i = 0; i < 3; i++)
-		VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
-	    double tri_area = bg_area_of_triangle(v[0], v[1], v[2]);
-	    if (tri_area < tinfo->min_tri_area)
-		return 0;
-	}
-
-	// Segment's first hit didn't come from the expected triangle.
-	nlohmann::json terr;
-	ray_to_json(&terr, &ap->a_ray);
-	terr["indices"].push_back(tinfo->curr_tri);
-	(*tinfo->data)["errors"].push_back(terr);
-	tinfo->unexpected_hit = 1;
-	if (tinfo->do_plot) {
-	    struct bu_color *color = tinfo->color;
-	    struct bv_vlblock *vbp = tinfo->vbp;
-	    struct bu_list *vlfree = tinfo->vlfree;
-	    unsigned char rgb[3] = {255, 255, 0};
-	    if (color)
-		bu_color_to_rgb_chars(color, rgb);
-	    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-
-	    point_t v[3];
-	    for (int i = 0; i < 3; i++)
-		VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
-	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
-	}
-	return 0;
-    }
-
-    return 0;
-}
-
-/* I don't think this is supposed to happen with a single primitive, but just
- * in case we get an overlap report somehow flag it as trouble */
-static int
-_uh_overlap(struct application *ap,
-	struct partition *UNUSED(pp),
-	struct region *UNUSED(reg1),
-	struct region *UNUSED(reg2),
-	struct partition *UNUSED(hp))
-{
-    struct uh_info *tinfo = (struct uh_info *)ap->a_uptr;
-    struct rt_bot_internal *bot = tinfo->bot;
-
-    tinfo->unexpected_hit = 1;
-    nlohmann::json terr;
-    ray_to_json(&terr, &ap->a_ray);
-    terr["indices"].push_back(tinfo->curr_tri);
-    (*tinfo->data)["errors"].push_back(terr);
-
-    if (tinfo->do_plot) {
-	struct bu_color *color = tinfo->color;
-	struct bv_vlblock *vbp = tinfo->vbp;
-	struct bu_list *vlfree = tinfo->vlfree;
-	unsigned char rgb[3] = {255, 255, 0};
-	if (color)
-	    bu_color_to_rgb_chars(color, rgb);
-	struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-
-	point_t v[3];
-	for (int i = 0; i < 3; i++)
-	    VMOVE(v[i], &bot->vertices[bot->faces[tinfo->curr_tri*3+i]*3]);
-	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
-    }
-
-    return 0;
-}
-
-static int
-bot_hit_check(lint_data *cdata, const char *pname, struct rt_bot_internal *bot, struct rt_i *rtip, double ttol)
-{
-    if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
-	return 0;
-
-    std::map<std::string, std::set<std::string>> &imt = cdata->im_techniques;
-    if (imt.size()) {
-	std::set<std::string> &bt = imt[std::string("bot")];
-	if (bt.find(std::string("unexpected_hit")) == bt.end())
-	    return 0;
-    }
-
-    nlohmann::json terr;
-
-    terr["problem_type"] = "unexpected_hit";
-    terr["object_type"] = "bot";
-    terr["object_name"] = pname;
-
-    int unexpected_hit = 0;
-    struct uh_info tinfo;
-    tinfo.ttol = ttol;
-    tinfo.verbose = cdata->verbosity;
-    tinfo.bot = bot;
-    tinfo.data = &terr;
-    tinfo.color = cdata->color;
-    tinfo.vbp = cdata->vbp;
-    tinfo.vlfree = cdata->vlfree;
-    tinfo.do_plot = cdata->do_plot;
-    tinfo.min_tri_area = cdata->min_tri_area;
-
-    // Set up the raytrace
-    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
-	rt_init_resource(&rt_uniresource, 0, rtip);
-    struct application ap;
-    RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = rtip;     /* application uses this instance */
-    ap.a_hit = _uh_hit;    /* where to go on a hit */
-    ap.a_miss = _miss_noop;  /* where to go on a miss */
-    ap.a_overlap = _uh_overlap;  /* where to go if an overlap is found */
-    ap.a_onehit = 0;
-    ap.a_resource = &rt_uniresource;
-    ap.a_uptr = (void *)&tinfo;
-
-    for (size_t i = 0; i < bot->num_faces; i++) {
-	tinfo.curr_tri = (int)i;
-	vect_t rnorm, n, backout;
-	if (!bot_face_normal(&n, bot, i))
-	    continue;
-
-	// We want backout to get the ray origin off the triangle surface
-	VMOVE(backout, n);
-	VSCALE(backout, backout, SQRT_SMALL_FASTF);
-	// Reverse the triangle normal for a ray direction
-	VREVERSE(rnorm, n);
-
-	point_t rpnts[3];
-	point_t tcenter;
-	VMOVE(rpnts[0], &bot->vertices[bot->faces[i*3+0]*3]);
-	VMOVE(rpnts[1], &bot->vertices[bot->faces[i*3+1]*3]);
-	VMOVE(rpnts[2], &bot->vertices[bot->faces[i*3+2]*3]);
-	VADD3(tcenter, rpnts[0], rpnts[1], rpnts[2]);
-	VSCALE(tcenter, tcenter, 1.0/3.0);
-
-	// Take the shot
-	tinfo.unexpected_hit = 0;
-	VMOVE(ap.a_ray.r_dir, rnorm);
-	VADD2(ap.a_ray.r_pt, tcenter, backout);
-	(void)rt_shootray(&ap);
-
-	if (tinfo.unexpected_hit) {
-	    unexpected_hit = 1;
-	}
-    }
-
-    if (unexpected_hit)
-	cdata->j.push_back(terr);
-
-    return unexpected_hit;
-}
-
-#endif
 
 void
 bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
@@ -982,9 +648,9 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
 
 
     // The remainder of the checks only make sense for solid BoTs.
-    if (bot->mode != RT_BOT_SOLID) {
+    if (bot->mode != RT_BOT_SOLID)
 	return;
-    }
+
 
     int not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
     if (not_solid) {
@@ -1027,21 +693,35 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
 	wdata.push_back(d);
     }
 
-    bot_miss_check(wdata);
-    //bot_thin_check(bdata, dp->d_namep, bot, rtip, bdata->ftol);
-    //bot_close_check(bdata, dp->d_namep, bot, rtip, bdata->ftol);
-    //bot_hit_check(bdata, dp->d_namep, bot, rtip, bdata->ftol);
+    /* Note that we are deliberately using onehit=1 for the miss test to check
+     * the intersection behavior of the individual triangles */
+    bot_check(wdata, "unexpected_miss", _hit_noop, _mc_miss, 1, false);
 
-#if 0
-    struct bu_color *color = bdata->color;
-    struct bv_vlblock *vbp = bdata->vbp;
-    struct bu_list *vlfree = bdata->vlfree;
-    unsigned char rgb[3] = {255, 255, 0};
-    if (color)
-	bu_color_to_rgb_chars(color, rgb);
-    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+    /* Thin face pairings are a common artifact of coplanar faces in boolean
+     * evaluations */
+    bot_check(wdata, "thin_volume", _tc_hit, _tc_miss, 0, false);
 
-#endif
+    /* When testing for faces that are too close to a given face, we need to
+     * reverse the ray direction */
+    bot_check(wdata, "close_face", _ck_up_hit, _miss_noop, 0, true);
+
+    /* Checking for the case where we end up with a hit from a triangle other
+     * than the one we derive the ray from. */
+    bot_check(wdata, "unexpected_hit", _uh_hit, _miss_noop, 0, false);
+
+    if (bdata->do_plot) {
+	struct bu_color *color = bdata->color;
+	struct bv_vlblock *vbp = bdata->vbp;
+	struct bu_list *vlfree = bdata->vlfree;
+	unsigned char rgb[3] = {255, 255, 0};
+	if (color)
+	    bu_color_to_rgb_chars(color, rgb);
+	struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	// Triangle plotting order doesn't matter particularly, just
+	// iterate over all the workers
+	for (size_t i = 0; i < wdata.size(); i++)
+	    wdata[i]->plot_bad_tris(vbp, vhead, vlfree);
+    }
 
     rt_free_rti(rtip);
     bu_free(resp, "resp");
