@@ -40,70 +40,6 @@
 
 #include "./ged_lint.h"
 
-#if 0
-class lint_tri {
-    public:
-	point_t v[3];
-	vect_t n;
-
-	void plot(struct bview *);
-
-	point_t center = VINIT_ZERO;
-	struct bu_color c;
-};
-
-void
-lint_tri::plot(struct bview *v, struct bv_vlblock *vbp, struct bu_list *vlfree)
-{
-    if (!v || !vbp || !vlfree)
-	return;
-    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-    BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
-}
-
-static void
-parse_pt(point_t *p, const nlohmann::json &sdata)
-{
-    if (sdata.contains("X")) {
-	std::string s(sdata["X"]);
-	(*p)[X] = s2d(s);
-    }
-    if (sdata.contains("Y")) {
-	std::string s(sdata["Y"]);
-	(*p)[Y] = s2d(s);
-    }
-    if (sdata.contains("Z")) {
-	std::string s(sdata["Z"]);
-	(*p)[Z] = s2d(s);
-    }
-}
-
-void
-json_to_tri(class lint_tri &tri, nlohmann::json &jtri)
-{
-    if (jtri.contains("V0")) {
-	const nlohmann::json &jv = jtri["V0"];
-	parse_pt(&tri.v[0], jv);
-    }
-    if (jtri.contains("V1")) {
-	const nlohmann::json &jv = jtri["V1"];
-	parse_pt(&tri.v[1], jv);
-    }
-    if (jtri.contains("V2")) {
-	const nlohmann::json &jv = jtri["V2"];
-	parse_pt(&tri.v[2], jv);
-    }
-    VADD3(tri.center, tri.v[0], tri.v[1], tri.v[2]);
-    VSCALE(tri.center, tri.center, 1.0/3.0);
-
-    if (jtri.contains("N")) {
-	const nlohmann::json &jv = jtri["N"];
-	parse_pt(&tri.n, jv);
-    }
-}
-#endif
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
@@ -127,17 +63,7 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
     return true;
 }
 
-double
-s2d(std::string s)
-{
-    double d;
-    std::stringstream ss(s);
-    size_t prec = std::numeric_limits<double>::max_digits10;
-    ss >> std::setprecision(prec) >> std::fixed >> d;
-    return d;
-}
-
-std::string
+static std::string
 d2s(double d)
 {
     size_t prec = std::numeric_limits<double>::max_digits10;
@@ -147,7 +73,7 @@ d2s(double d)
     return sd;
 }
 
-void
+static void
 pt_to_json(nlohmann::json *pc, const char *key, point_t pt)
 {
    (*pc)[key]["X"] = d2s(pt[X]);
@@ -155,7 +81,7 @@ pt_to_json(nlohmann::json *pc, const char *key, point_t pt)
    (*pc)[key]["Z"] = d2s(pt[Z]);
 }
 
-void
+static void
 ray_to_json(nlohmann::json *pc, struct xray *r)
 {
     nlohmann::json ray;
@@ -164,7 +90,7 @@ ray_to_json(nlohmann::json *pc, struct xray *r)
     (*pc)["ray"].push_back(ray);
 }
 
-void
+static void
 tri_to_json(nlohmann::json *pc, struct rt_bot_internal *bot, int ind)
 {
     nlohmann::json tri;
@@ -186,7 +112,7 @@ tri_to_json(nlohmann::json *pc, struct rt_bot_internal *bot, int ind)
 
 
 typedef int (*fhit_t)(struct application *, struct partition *, struct seg *);
-typedef int (*fmiss_t)(struct application *); 
+typedef int (*fmiss_t)(struct application *);
 
 static int
 _hit_noop(struct application *UNUSED(ap),
@@ -234,6 +160,7 @@ class lint_worker_data {
 	lint_data *ldata = NULL;
 	struct application ap;
 	struct rt_bot_internal *bot = NULL;
+	const std::unordered_set<int> *bad_faces = NULL;
 
 	std::string pname;
 
@@ -269,6 +196,10 @@ lint_worker_data::shoot(int ind, bool reverse)
 
     // Set curr_tri so the callbacks know what our origin triangle is
     curr_tri = ind;
+
+    // If we already know this face is no good, skip
+    if (bad_faces && bad_faces->find(curr_tri) != bad_faces->end())
+	return;
 
     // Minimum area filter check
     if (ldata && ldata->min_tri_area > 0) {
@@ -676,6 +607,12 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
 
+    // If we can't hit a triangle face, there's no point in doing other tests
+    // with it - that'll just complicate the reporting results.  If the
+    // missing test isn't enabled this filter will be as well, but for the
+    // most common case (multi-test) it should help.
+    std::unordered_set<int> bad_faces;
+
     // Grr.  Would prefer to have this managed as a per-worker resource, but
     // the initialization isn't having it.
     size_t ncpus = bu_avail_cpus();
@@ -688,6 +625,7 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
 	d->ldata = bdata;
 	d->pname = std::string(dp->d_namep);
 	d->bot = bot;
+	d->bad_faces = &bad_faces;
 	d->ttol = bdata->ftol;
 	d->min_tri_area = bdata->min_tri_area;
 	wdata.push_back(d);
@@ -696,6 +634,14 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
     /* Note that we are deliberately using onehit=1 for the miss test to check
      * the intersection behavior of the individual triangles */
     bot_check(wdata, "unexpected_miss", _hit_noop, _mc_miss, 1, false);
+
+    // Missed faces get flagged to avoid repeated testing, since they are known
+    // not to raytrace appropriately after the above check.
+    for (size_t i = 0; i < wdata.size(); i++) {
+	std::unordered_set<int>::iterator f_it;
+	for (f_it = wdata[i]->flagged_tris.begin(); f_it != wdata[i]->flagged_tris.end(); f_it++)
+	    bad_faces.insert(*f_it);
+    }
 
     /* Thin face pairings are a common artifact of coplanar faces in boolean
      * evaluations */
