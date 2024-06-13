@@ -75,6 +75,7 @@ lint_data::summary()
 	    }
 	    std::string cpath(pdata["path"]);
 	    categories[ptype].insert(cpath);
+	    continue;
 	}
 	if (!ptype.compare(0, 7, std::string("missing"))) {
 	    if (!pdata.contains("path")) {
@@ -83,6 +84,7 @@ lint_data::summary()
 	    }
 	    std::string mpath(pdata["path"]);
 	    categories[std::string("missing")].insert(mpath);
+	    continue;
 	}
 
 	// If it's not one of the above types, we're looking for an
