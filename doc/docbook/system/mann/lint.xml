@@ -1,171 +1,272 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="lint">
 
-  <refmeta>
-    <refentrytitle>LINT</refentrytitle>
-    <manvolnum>nged</manvolnum>
-    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
-  </refmeta>
+	<refmeta>
+		<refentrytitle>LINT</refentrytitle>
+		<manvolnum>nged</manvolnum>
+		<refmiscinfo class="source">BRL-CAD</refmiscinfo>
+		<refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+	</refmeta>
 
-  <refnamediv xml:id="name">
-    <refname>lint</refname>
-    <refpurpose>Detect and report problems with subsets or all of a .g database.
-    </refpurpose>
-  </refnamediv>
+	<refnamediv xml:id="name">
+		<refname>lint</refname>
+		<refpurpose>Detect and report problems with subsets or all of a .g database.
+		</refpurpose>
+	</refnamediv>
 
-  <!-- body begins here -->
-  <refsynopsisdiv xml:id="synopsis">
-    <cmdsynopsis sepchar=" ">
-      <command>lint</command>
-      <arg choice="opt" rep="norepeat">-h</arg>
-      <arg choice="opt" rep="norepeat">-C</arg>
-      <arg choice="opt" rep="norepeat">-M</arg>
-      <arg choice="opt" rep="norepeat">-I</arg>
-      <arg choice="opt" rep="norepeat">-F "filters"</arg>
-      <arg choice="opt" rep="norepeat"><replaceable>ObjectName</replaceable></arg>
-    </cmdsynopsis>
-  </refsynopsisdiv>
+	<!-- body begins here -->
+	<refsynopsisdiv xml:id="synopsis">
+		<cmdsynopsis sepchar=" ">
+			<command>lint</command>
+			<arg choice="opt" rep="norepeat">-h</arg>
+			<arg choice="opt" rep="norepeat">-C</arg>
+			<arg choice="opt" rep="norepeat">-M</arg>
+			<arg choice="opt" rep="norepeat">-I</arg>
+			<arg choice="opt" rep="norepeat">-F "filters"</arg>
+			<arg choice="opt" rep="norepeat"><replaceable>ObjectName</replaceable></arg>
+		</cmdsynopsis>
+	</refsynopsisdiv>
 
-  <refsection xml:id="description"><title>DESCRIPTION</title>
-  <para>
-    The 'lint' command analyzes the currently open geometry database (or a subset of
-    that database if object names are supplied as arguments) and searches for a variety
-    of problems know to sometimes occur.  By default all defect types are searched for -
-    if one or more of the options enabling a search for a specific type of problem are
-    supplied, only those searches will be performed.
-  </para>
-  </refsection>
+	<refsection xml:id="description"><title>DESCRIPTION</title>
+		<para>
+			The 'lint' command analyzes the currently open geometry database (or a subset of
+			that database if object names are supplied as arguments), searching for a variety
+			of problems.  By default all defect types are searched for - if one or more of the
+			options enabling a search for a specific type of problem are supplied, only those
+			searches will be performed.
+		</para>
+	</refsection>
 
-  <refsection xml:id="options"><title>OPTIONS</title>
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-h</option></term>
-      <listitem>
-	<para>
-	  Print help message.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term><option>-C</option>, <option>--cyclic</option></term>
-      <listitem>
-	<para>
-	  Check for full paths that are cyclic - i.e. a situation where a high
-	  level object incorporates in its definition tree a reference to itself.
-	  Such definitions are always considered invalid, and are sometimes problematic
-	  for tools working with geometry hierarchy.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term><option>-M</option>, <option>--missing</option></term>
-      <listitem>
-	<para>
-	  Check for references to objects or files that are missing (not present
-	  in the database or on the file system.)  Primarily this is a check for
-	  comb objects referring to missing objects, but it will also check for
-	  and report invalid object and file references in extrude
-	  and dsp primitives.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term><option>-I</option>, <option>--invalid</option></term>
-      <listitem>
-	<para>
-	  Check for shapes in the database that do not satisfy one or more properties
-	  required for them to be valid definitions, where correcting the problem requires
-	  a change to the object's definition.  (As of this writing the only implemented
-	  check is for BoT object solidity, but many more are possible and planned.)
-	  (Objects invalid due to missing objects are potentially valid without the necessity
-	  of changing the object's own definition - e.g. the missing object/file can be added.
-	  That category of error can be searched for with the <option>-M</option> check.)
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term><option>-F</option>, <option>--filter</option></term>
-      <listitem>
-	<para>
-	  Apply search command style filters to the set of objects to be tested.  Allows,
-	  (for example) a user to test only brep objects and not bot objects or only objects
-	  matching a particular name pattern.  Does not impact the checks for missing or
-	  cylic geometry - the underlying search mechanism assumes inputs do not have those
-	  particular categories of problem and thus can't be reliably applied in those cases.
-	</para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  </refsection>
-  
-  <refsection xml:id="examples"><title>EXAMPLES</title>
+	<refsection xml:id="options"><title>OPTIONS</title>
+		<variablelist remap="TP">
+			<varlistentry>
+				<term><option>-h</option></term>
+				<listitem>
+					<para>
+						Print help message.
+					</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-C</option>, <option>--cyclic</option></term>
+				<listitem>
+					<para>
+						Check for full paths that are cyclic - i.e. a situation where a high
+						level object incorporates in its definition tree a reference to itself.
+						Such definitions are always considered invalid, and are sometimes problematic
+						for tools working with geometry hierarchy.
+					</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-M</option>, <option>--missing</option></term>
+				<listitem>
+					<para>
+						Check for references to objects or files that are missing (not present
+						in the database or on the file system.)  Primarily this is a check for
+						comb objects referring to missing objects, but it will also check for
+						and report invalid object and file references in extrude
+						and dsp primitives.
+					</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-I</option>, <option>--invalid</option></term>
+				<listitem>
+					<para>
+						Check for shapes in the database that do not satisfy one or more properties
+						required for them to be valid definitions, where correcting the problem requires
+						a change to the object's definition.  (As of this writing the only implemented
+						check is for BoT object solidity, but many more are possible and planned.)
+						(Objects invalid due to missing objects are potentially valid without the necessity
+						of changing the object's own definition - e.g. the missing object/file can be added.
+						That category of error can be searched for with the <option>-M</option> check.)
+					</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-F</option>, <option>--filter</option></term>
+				<listitem>
+					<para>
+						Apply search command style filters to the set of objects to be tested.  Allows,
+						(for example) a user to test only brep objects and not BoT objects or only objects
+						matching a particular name pattern.  Does not impact the checks for missing or
+						cylic geometry - the underlying search mechanism assumes inputs do not have those
+						particular categories of problem and thus can't be reliably applied in those cases.
+					</para>
+				</listitem>
+			</varlistentry>
+		</variablelist>
+	</refsection>
 
-   <example>
-    <title>Examine entire database for all defect categories</title>
+	<refsection xml:id="examples"><title>EXAMPLES</title>
 
-    <para>
-      <prompt>mged&gt; </prompt><userinput>lint</userinput>
-      <literallayout class="normal">
+		<example>
+			<title>
+				Examine entire database for all defect categories (using lint_tests.g from BRL-CAD
+				repository)
+			</title>
+
+			<para>
+				<prompt>mged&gt; </prompt><userinput>lint</userinput>
+				<literallayout class="normal">
 Checking for cyclic paths...
 Checking for references to non-extant objects...
 Checking for invalid objects...
 Found cyclic paths:
-  /c1/c2/c1
-  /c2/c1/c2
-Found references to missing objects:
-  invalid_dsp_missing_binary_obj.s/missing_binary_object.s
-  invalid_dsp_missing_file.s/missing_file.data
-  invalid_extrude_missing_sketch.s/missing_sketch.s
-  missingentry.c/missing.s
+	/c1/c2/c1
+	/c2/c1/c2
+Found references to missing objects or files:
+	invalid_dsp_missing_binary_obj.s/missing_binary_object.s
+	invalid_dsp_missing_file.s/missing_file.data
+	invalid_extrude_missing_sketch.s/missing_sketch.s
+	missingentry.c/missing.s
 Found invalid objects:
-  nonsolid.bot[bot] failed solidity test, but BoT type is RT_BOT_SOLID
+	nonsolid.bot [bot:not_solid]
+				</literallayout>
+			</para>
+		</example>
 
-      </literallayout>
-    </para>
-  </example>
+		<example>
+			<title>
+				Check the validity of a single geometry object (using lint_tests.g from BRL-CAD
+				repository)
+			</title>
 
-  <example>
-    <title>Check the validity of a single geometry object</title>
-
-    <para>
-      <prompt>mged&gt; </prompt><userinput>lint -I nonsolid.bot</userinput>
-      <literallayout class="normal">
+			<para>
+				<prompt>mged&gt; </prompt><userinput>lint -I nonsolid.bot</userinput>
+				<literallayout class="normal">
 Checking for invalid objects...
 Found invalid objects:
-  nonsolid.bot[bot] failed solidity test, but BoT type is RT_BOT_SOLID
+	nonsolid.bot [bot:not_solid]
+				</literallayout>
+			</para>
+		</example>
 
-      </literallayout>
-    </para>
-  </example>
+		<example>
+			<title>
+				Examine all non-BoT objects in the database matching the name pattern "*_1.*" for
+				invalidity (using VIA OpenBook part d STEP conversion)
+			</title>
 
-  <example>
-    <title>Examine all non-BoT objects in the database matching the name pattern "*_1.*" for invalidity</title>
+			<para>
+				<prompt>mged&gt; </prompt><userinput>lint -F "! -type bot -name *_1.*"</userinput>
+				<literallayout class="normal">
+Checking for cyclic paths...
+Checking for references to non-extant objects...
+Checking for invalid objects...
+brep.m_L[1332] loop is not valid.
+	end of brep.m_T[loop.m_ti[0]=6991]=(8.79673,0.628202) and start
+	of brep.m_T[loop.m_ti[1]=6990]=(8.79673,0.630829) do not match.
+brep.m_F[1180] face is not valid.
+	brep.m_L[face.m_li[0]=1332] is not valid.
+ON_Brep.m_F[1180] is invalid.
+Found invalid objects:
+	D.s [brep:opennurbs_invalid]
+				</literallayout>
+			</para>
+		</example>
 
-    <para>
-      <prompt>mged&gt; </prompt><userinput>lint -F "! -type bot -name *_1.*"</userinput>
-      <literallayout class="normal">
+		<example>
+			<title>
+				Test for empty bots (using havoc model facetized with -r option)
+			</title>
+
+			<para>
+				<prompt>mged&gt; </prompt><userinput>lint -I bot:empty havoc.bot</userinput>
+				<literallayout class="normal">
 Checking for invalid objects...
 Found invalid objects:
-  Brep_1.s[brep] failed OpenNURBS validity test
-brep.m_L[27] loop is not valid.
-	end of brep.m_T[loop.m_ti[5]=147]=(0,-1.309) and start 
-	of brep.m_T[loop.m_ti[6]=148]=(0,-5.63995e-08) do not match.
-brep.m_F[25] face is not valid.
-	brep.m_L[face.m_li[0]=27] is not valid.
-ON_Brep.m_F[25] is invalid.
+	r.rot137.bot [bot:empty]
+	r.rot237.bot [bot:empty]
+	r.rot337.bot [bot:empty]
+	r.rot37.bot [bot:empty]
+	r.rot437.bot [bot:empty]
+				</literallayout>
+			</para>
+		</example>
 
-      </literallayout>
-    </para>
-  </example>
-  </refsection>
-  
-  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
+	</refsection>
 
-  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+	<refsection xml:id="lint_repair"><title>Repairing Invalid Geometry</title>
+		<para>
+			The procedures for repairing invalid geometry are specific to the problem and the
+			object.  For cyclic paths and invalid references the answer is generally
+			straightforward.  For cyclic paths, the cycle must be broken by editing comb
+			definitions so the hierarchy is not self-referencial.  For invalid references,
+			either the reference is edited or the missing object is added.  When it comes
+			to invalid objects, however, matters become more challenging.
+		</para>
+		<para>
+			Generally speaking, BRL-CAD (as of 2024) does not have a lot of capability when
+			it comes to repairing NURBS B-Rep objects - the best option there is going to be
+			to work with the object in an external editor (individual brep objects can be
+			written out to 3dm files with the <command>brep dump</command> subcommand.)
+		</para>
+		<para>
+			For empty BoTs, there are two possibilities.  One is the original geometric
+			definition has an error causing it to be interpreted as empty, and the other is that
+			the modeling intent was indeed to remove a region and the definitions just weren't
+			adjusted accordingly.  If the "empty" object really shouldn't be there, the best
+			course is to remove the original definitions and delete the empty BoT.  If the BoT's
+			emptiness is a result of geometric error, the original CSG definition needs to be
+			fixed.
+		</para>
+		<para>
+			Non-solid BoTs are a consequence of topological errors.  Sometimes
+			<command>bot repair</command> can perform hole filling to close such meshes, but
+			there are more subtle categories of failures such as t-junctions that need to be
+			fixed in mesh editing tools (rebuilding the object may also be easier than repairing
+			a badly mangled mesh, in severe cases.)
+		</para>
+		<para>
+			Unexpected misses and hits in BoTs can be caused by a number of issues, but one
+			frequent encountered problem is a mesh with triangles too small for BRL-CAD's
+			intersection solver to resolve.  Generally such triangles are artifacts rather than
+			intentional features, and can frequently be removed by decimation:
+			<command>bot decimate -f 0.005 in.bot out.bot</command> If decimation does clear the
+			error, the user must manually replace the original BoT with the new one.
+		</para>
+		<para>
+			Thin volumes and close faces are a frequent consequence of coplanar faces being
+			present in the original CSG inputs - the inherent limits of floating point math
+			cause difficulty for coplanar boolean evaluation.  The Manifold library is able to
+			successfully produce meshes with them, but it often does so by introducing
+			near-degenerate thin triangle pairings along formerly coplanar faces.  As a rule
+			these boolean artifacts are undesirable for BRL-CAD purposes - the former introduce
+			visual artifacts, particularly in shaded viewing.  For NIRT and other solid
+			shotlining tools, close faces can "break up" what should be a single solid segment
+			into multiple separate segments with a near-zero length "gap" between them.
+		</para>
+		<para>
+			For BoTs where BRL-CAD's internal tools are inadequate and it is worthwhile to
+			attempt mesh repairs, the <command>bot_dump</command> command can
+			write out obj or stl files.  After editing, importers for obj, stl and other mesh
+			formats can import a repaired mesh back into BRL-CAD.  Generally speaking the
+			imported mesh names will have to be adjusted and the original invalid objects
+			removed manually.  (Converter-generated names will usually be different.)
+		</para>
+		<para>
+			Facetize (when run with the -r option) already tries to clear thin volumes
+			automatically - occasionally it is possible, but in many cases the mesh cannot be
+			automatically repaired without manual intervention in a mesh editing tool.  In
+			situtations where coplanar faces are the cause of thin volumes or close faces, the
+			recommended solution is to adjust the original source geometry to avoid coplanarity
+			- slightly "bumping" faces in or out tiny amounts to avoid the mathematically
+			problematic alignments.  If a mesh does need to be exported, the
+			<command>bot strip</command> command can remove some of the problematic faces as a
+			preliminary step.  (Note that there may still be problem triangles present - lint's
+			current BoT testing samples only the center of each triangle, so triangles that are
+			coplanar but not overlapping in the center will not be detected.)
+		</para>
+	</refsection>
 
-  <para>
-    Reports of bugs or problems should be submitted via electronic
-    mail to <email>devs@brlcad.org</email>
-  </para>
-  </refsection>
+	<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
+
+	<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+		<para>
+			Reports of bugs or problems should be submitted via electronic
+			mail to <email>devs@brlcad.org</email>
+		</para>
+	</refsection>
 </refentry>

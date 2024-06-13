@@ -252,7 +252,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
 
-    if (print_help) {
+    if (print_help || argc < 0) {
 	_ged_cmd_help(gedp, usage, d);
 	// TODO - autogenerate this list rather than hard coding...
 	bu_vls_printf(gedp->ged_result_str, "\nInvalidity checks:\n");
