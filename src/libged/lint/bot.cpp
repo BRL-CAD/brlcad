@@ -509,13 +509,12 @@ bot_check(std::vector<lint_worker_data *> &wdata, const char *test_type, fhit_t 
 		    // Using a lambda function to execute the work
 		    [&](int ind)  // lambda scoped variable holding the passed-in wdata index
 		    {
+		       size_t tri_ind;
 		       // As long as there's still work in q to do, have the thread keep getting
 		       // more triangles to process
-		       size_t tri_inds[20];
-		       while (size_t got_cnt = q.try_dequeue_bulk_from_producer(ptok, tri_inds, 20) != 0) {
+		       while (q.try_dequeue_from_producer(ptok, tri_ind)) {
 		          // Perform an individual triangle test
-			  for (size_t c = 0; c < got_cnt; c++)
-		              wdata[ind]->shoot(tri_inds[c], reverse);
+		          wdata[ind]->shoot(tri_ind, reverse);
 		       }
 		    }
 		    , i  // Value being passed into ind to id this thread's wdata container
