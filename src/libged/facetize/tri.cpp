@@ -909,11 +909,25 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     if (!dbip || !wdbp || !argv || !oname)
 	return BRLCAD_ERROR;
 
-    // Make need inputs that can be fed to db_walk_tree - if not, db_walk_tree
-    // will produce an error, which we don't want.  What we do want in such a
-    // case - where there are NO valid walking candidates - is to indicate that
-    // there wasn't a logic failure.  That means we need an empty bot to be
-    // generated - i.e. we don't want to trigger the db_walk_tree error path.
+    // Unlike the -r flag processing regions, where each individual region
+    // processed is semantically a single solid , there is no guarantee in
+    // general that the output is representing a single, well behaved solid.
+    // Consequently, thin volumes and close faces may be expected features and
+    // it's more problematic to do the fixup check.  However, if we were given
+    // a single primitive or region, those outputs should satisfy the fixup
+    // criteria.
+    bool do_fixup = false;
+    if (argc == 1) {
+	struct directory *dp = db_lookup(dbip, argv[0], LOOKUP_QUIET);
+	if ((dp->d_flags & RT_DIR_REGION) || (dp->d_flags & RT_DIR_SOLID))
+	    do_fixup = true;
+    }
+
+    // If we don't have inputs that can be fed to db_walk_tree it will produce
+    // an error, which we don't want.  What we do want in such a case - where
+    // there are NO valid walking candidates - is to indicate that there wasn't
+    // a logic failure.  That means we need an empty bot to be generated - i.e.
+    // we don't want to trigger the db_walk_tree error path.
     int ac = 0;
     const char **av = (const char **)bu_calloc(argc, sizeof(const char *), "av");
     for (int i = 0; i < argc; i++) {
@@ -1042,6 +1056,23 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	}
     }
 
+    // If we meet the conditions, apply the fixup logic
+    if (do_fixup) {
+	struct directory *dp = db_lookup(dbip, argv[0], LOOKUP_QUIET);
+	if ((dp->d_flags & RT_DIR_REGION) || (!(dp->d_flags & RT_DIR_COMB))) {
+	    struct directory *bot_dp = db_lookup(odbip, oname, LOOKUP_QUIET);
+	    struct rt_bot_internal *nbot = bot_fixup(odbip, bot_dp, oname);
+	    if (nbot) {
+		// Write out new version of BoT
+		db_delete(odbip, bot_dp);
+		db_dirdelete(odbip, bot_dp);
+		if (_ged_facetize_write_bot(odbip, nbot, oname, s->verbosity) != BRLCAD_OK) {
+		    bu_log("Error writing out finalized version of %s\n", oname);
+		}
+	    }
+	}
+    }
+
     return BRLCAD_OK;
 }
 
@@ -1112,6 +1143,8 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 
     if (cleanup)
 	bu_dirclear(s->wdir);
+
+    bu_ptbl_free(&leaf_dps);
 
     return ret;
 }

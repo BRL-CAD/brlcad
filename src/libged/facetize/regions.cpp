@@ -219,75 +219,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    // thin volumes where we had coplanar interactions.  Check with the raytracer, and
 	    // if we find such a case try to remove the degenerate faces and produce a new mesh.
 	    // If we have work to do, we'll need a new BoT
-	    struct rt_bot_internal *nbot = NULL;
-
-	    // Unpack the existing bot
 	    struct directory *bot_dp = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
-	    if (!bot_dp) {
-		db_close(wdbip);
-		continue;
-	    }
-	    struct rt_db_internal bot_intern;
-	    RT_DB_INTERNAL_INIT(&bot_intern);
-	    if (rt_db_get_internal(&bot_intern, bot_dp, wdbip, NULL, &rt_uniresource) < 0) {
-		db_close(wdbip);
-		continue;
-	    }
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)(bot_intern.idb_ptr);
-	    if (bot->num_faces) {
-		// Have faces, test with raytracer
-		struct rt_i *rtip = rt_new_rti(wdbip);
-		rt_gettree(rtip, bu_vls_cstr(&bname));
-		rt_prep(rtip);
-		struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
-		int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
-		rt_free_rti(rtip);
-
-		if (have_thin_faces) {
-
-		    // First order of business - get the problematic faces out of
-		    // the mesh
-		    nbot = rt_bot_remove_faces(&tfaces, bot);
-
-		    // If we took away manifoldness removing faces (likely) we need
-		    // to try and rebuild it.
-		    if (nbot && nbot->num_faces) {
-			struct rt_bot_internal *rbot = NULL;
-			struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
-			int repair_result = rt_bot_repair(&rbot, nbot, &rs);
-			if (repair_result < 0) {
-			    // If a conservative repair fails, try being a little
-			    // more aggressive
-			    rs.max_hole_area_percent = 30;
-			    repair_result = rt_bot_repair(&rbot, nbot, &rs);
-			}
-			if (repair_result < 0) {
-			    bu_log("%s removed %zd thin faces, but repair failed.  Retaining manifold result.\n", bu_vls_cstr(&bname), BU_PTBL_LEN(&tfaces));
-			    // The repair didn't succeed.  That means we weren't able
-			    // to produce a manifold mesh after removing the thin
-			    // triangles.  In that situation, we return the manifold
-			    // result we do have, thin triangles or not, rather than
-			    // produce something invalid.
-			    rt_bot_internal_free(nbot);
-			    BU_PUT(nbot, struct rt_bot_internal);
-			    nbot = NULL;
-			} else {
-			    // If we produced a new repaired mesh, replace nbot with
-			    // the final result.
-			    if (rbot && rbot != nbot) {
-				rt_bot_internal_free(nbot);
-				BU_PUT(nbot, struct rt_bot_internal);
-				nbot = rbot;
-			    }
-			}
-		    }
-		}
-		bu_ptbl_free(&tfaces);
-	    }
-
-	    // Done with bot_intern
-	    rt_db_free_internal(&bot_intern);
-
+	    struct rt_bot_internal *nbot = bot_fixup(wdbip, bot_dp, bu_vls_cstr(&bname));
 	    if (nbot) {
 		// Write out new version of BoT
 		db_delete(wdbip, bot_dp);

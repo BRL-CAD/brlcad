@@ -35,6 +35,7 @@
 #include "bu/ptbl.h"
 #include "rt/search.h"
 #include "rt/db_instance.h"
+#include "rt/primitives/bot.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
@@ -281,6 +282,80 @@ _ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *
     return BRLCAD_OK;
 }
 
+
+struct rt_bot_internal *
+bot_fixup(struct db_i *wdbip, struct directory *bot_dp, const char *bname)
+{
+    struct rt_bot_internal *nbot = NULL;
+
+    // Unpack the existing bot
+    if (!bot_dp)
+	return NULL;
+
+    struct rt_db_internal bot_intern;
+    RT_DB_INTERNAL_INIT(&bot_intern);
+    if (rt_db_get_internal(&bot_intern, bot_dp, wdbip, NULL, &rt_uniresource) < 0) {
+	return NULL;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(bot_intern.idb_ptr);
+    if (bot->num_faces) {
+	// Have faces, test with raytracer
+	struct rt_i *rtip = rt_new_rti(wdbip);
+	rt_gettree(rtip, bname);
+	rt_prep(rtip);
+	struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
+	int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
+	rt_free_rti(rtip);
+
+	if (have_thin_faces) {
+
+	    // First order of business - get the problematic faces out of
+	    // the mesh
+	    nbot = rt_bot_remove_faces(&tfaces, bot);
+
+	    // If we took away manifoldness removing faces (likely) we need
+	    // to try and rebuild it.
+	    if (nbot && nbot->num_faces) {
+		struct rt_bot_internal *rbot = NULL;
+		struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
+		int repair_result = rt_bot_repair(&rbot, nbot, &rs);
+		if (repair_result < 0) {
+		    // If a conservative repair fails, try being a little
+		    // more aggressive
+		    rs.max_hole_area_percent = 30;
+		    repair_result = rt_bot_repair(&rbot, nbot, &rs);
+		}
+		if (repair_result < 0) {
+		    bu_log("%s removed %zd thin faces, but repair failed.  Retaining manifold result.\n", bname, BU_PTBL_LEN(&tfaces));
+		    // The repair didn't succeed.  That means we weren't able
+		    // to produce a manifold mesh after removing the thin
+		    // triangles.  In that situation, we return the manifold
+		    // result we do have, thin triangles or not, rather than
+		    // produce something invalid.
+		    rt_bot_internal_free(nbot);
+		    BU_PUT(nbot, struct rt_bot_internal);
+		    nbot = NULL;
+		} else {
+		    // If we produced a new repaired mesh, replace nbot with
+		    // the final result.
+		    if (rbot && rbot != nbot) {
+			rt_bot_internal_free(nbot);
+			BU_PUT(nbot, struct rt_bot_internal);
+			nbot = rbot;
+		    }
+		}
+	    }
+	}
+	bu_ptbl_free(&tfaces);
+    }
+
+    // Done with bot_intern
+    rt_db_free_internal(&bot_intern);
+
+    // Return the new bot, if we made one
+    return nbot;
+}
 
 // Local Variables:
 // tab-width: 8

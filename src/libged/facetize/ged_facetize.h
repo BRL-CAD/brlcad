@@ -32,6 +32,7 @@
 #include "bu/vls.h"
 #include "bn/tol.h"
 #include "bg/spsr.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "ged/defines.h"
 
@@ -104,6 +105,9 @@ extern int
 _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *newname, bool output_to_working);
 
 extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv);
+
+extern struct rt_bot_internal *
+bot_fixup(struct db_i *wdbip, struct directory *bot_dp, const char *bname);
 
 __END_DECLS
 
