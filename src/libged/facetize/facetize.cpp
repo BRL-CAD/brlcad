@@ -93,6 +93,8 @@ _ged_facetize_state_create()
     BU_GET(s->log_file, struct bu_vls);
     bu_vls_init(s->log_file);
 
+    s->lfile = NULL;
+
     BU_GET(s->wfile, struct bu_vls);
     bu_vls_init(s->wfile);
 
@@ -134,6 +136,11 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
     if (s->bname) {
 	bu_vls_free(s->bname);
 	BU_PUT(s->bname, struct bu_vls);
+    }
+
+    if (s->lfile) {
+	fclose(s->lfile);
+	s->lfile = NULL;
     }
 
     if (s->log_file) {
@@ -337,7 +344,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(&dname, "facetize_%llu", hash_num);
 	s->wdir = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wdir");
 	bu_dir(s->wdir, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), NULL);
-	bu_vls_free(&dname);
 
 	// If we're starting over, clear the old working directory
 	if (!s->resume && bu_file_directory(s->wdir)) {
@@ -348,6 +354,14 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	    // Set up the directory
 	    bu_mkdir(s->wdir);
 	}
+
+	char tmplfile[MAXPATHLEN];
+	bu_vls_sprintf(&dname, "facetize_%s.log", bu_vls_cstr(s->bname));
+	bu_dir(tmplfile, MAXPATHLEN, s->wdir, bu_vls_cstr(&dname), NULL);
+	bu_vls_sprintf(s->log_file, "%s", tmplfile);
+	s->lfile = fopen(bu_vls_cstr(s->log_file), "w");
+
+	bu_vls_free(&dname);
     }
 
     /* If we're doing the experimental brep-only logic, it's a separate process */
