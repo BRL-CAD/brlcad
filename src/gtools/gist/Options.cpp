@@ -41,9 +41,9 @@ Options::Options()
     axis_orientation = POS_Z_UP;
     notes = "N/A";
     uLength = "m";
-    defaultLength = true;
+    originalUnitsLength = true;
     uMass = "g";
-    defaultMass = true;
+    originalUnitsMass = true;
     verbosePrint = 0;
 }
 
@@ -302,10 +302,9 @@ void Options::setPreparer(std::string n) {
     preparer = n;
 }
 
-void
-Options::setOwner(std::string n)
+void Options::setOwner(std::string n)
 {
-	owner = n;
+    owner = n;
 }
 
 void Options::setClassification(std::string c) {
@@ -333,13 +332,13 @@ void Options::setTopComp(std::string t) {
 }
 void Options::setUnitLength(std::string l) {
     uLength = l;
-    defaultLength = false;
+    originalUnitsLength = false;
 }
 
 
 void Options::setUnitMass(std::string m) {
     uMass = m;
-    defaultMass = false;
+    originalUnitsMass = false;
 }
 
 
@@ -411,12 +410,12 @@ std::string Options::getPreparer() {
 
 std::string Options::getOwner()
 {
-	return owner;
+    return owner;
 }
 
 std::string Options::getClassification()
 {
-	return classification;
+    return classification;
 }
 
 
@@ -472,13 +471,13 @@ std::string Options::getUnitMass() {
 }
 
 
-bool Options::isDefaultLength() {
-    return defaultLength;
+bool Options::isOriginalUnitsLength() {
+    return originalUnitsLength;
 }
 
 
-bool Options::isDefaultMass() {
-    return defaultMass;
+bool Options::isOriginalUnitsMass() {
+    return originalUnitsMass;
 }
 
 bool Options::verbosePrinting() {

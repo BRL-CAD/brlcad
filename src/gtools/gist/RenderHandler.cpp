@@ -530,8 +530,8 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 		for (int r = 0; r < numRows; ++r)
 		{
 			int i = r * rowLen + 1;
-			minX = std::min(minX, coordinates[i][0]);
-			maxX = std::max(maxX, coordinates[i][2]);
+			minX = min(minX, coordinates[i][0]);
+			maxX = max(maxX, coordinates[i][2]);
 		}
 		for (int r = 0; r < numRows; ++r)
 		{
@@ -549,7 +549,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 		for (int r = ambientR; r < numRows; ++r)
 		{
 			int i = r * rowLen + ambientC;
-			coordinates[coordinates.size() - 1][0] = std::max(coordinates[coordinates.size() - 1][0], coordinates[i][0]);
+			coordinates[coordinates.size() - 1][0] = max(coordinates[coordinates.size() - 1][0], coordinates[i][0]);
 		}
 	}
 	coordinates[coordinates.size() - 1].push_back(0);
@@ -558,7 +558,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 		for (int c = ambientC; c < numCols; ++c)
 		{
 			int i = ambientR * rowLen + c;
-			coordinates[coordinates.size() - 1][1] = std::max(coordinates[coordinates.size() - 1][1], coordinates[i][1]);
+			coordinates[coordinates.size() - 1][1] = max(coordinates[coordinates.size() - 1][1], coordinates[i][1]);
 		}
 	}
 

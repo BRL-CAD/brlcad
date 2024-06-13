@@ -283,7 +283,7 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
 	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
     } catch (...) {
 	bu_log("WARNING: Trying to create roi out of image boundaries\n");
-	return;
+	return -1;
     }
     resized_image.copyTo(destRoi);
 
@@ -454,7 +454,7 @@ IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string
  * words combined and then the spacing is the total length divided by
  * how many words there are
  */
-void
+int
 IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
 	int totalTextWidth = 0;

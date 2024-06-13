@@ -126,7 +126,7 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getOrientationRightLeft() + ", " + opt.getOrientationZYUp());
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getCoordSystem_asString() + ", " + opt.getUpAxis_asString());
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, summaryTitle, TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions_parts") + " regions");
@@ -191,6 +191,7 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 
 
 		// sub components
+		std::string render = "";
 		for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
 			render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
 			// std::cout << "INSIDE factshandler DBG: " << render << std::endl;

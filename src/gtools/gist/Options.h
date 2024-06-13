@@ -53,15 +53,14 @@ public:
     bool setOutFile(std::string n);
     void setInFolder(std::string n);
     void setPreparer(std::string n);
+    void setOwner(std::string n);
     void setClassification(std::string c);
     void setCoordSystem(coord_system sys);
     void setUpAxis(up_axis axis);
     void setNotes(std::string n);
-
-	void setTopComp(std::string t);
-
-	void setUnitLength(std::string l);
-	void setUnitMass(std::string m);
+    void setTopComp(std::string t);
+    void setUnitLength(std::string l);
+    void setUnitMass(std::string m);
 
 
     //Getter functions
@@ -79,19 +78,19 @@ public:
     std::string getInFolder();
     std::string getOutFolder();
     std::string getPreparer();
+    std::string getOwner();
     std::string getClassification();
     coord_system getCoordSystem();
     std::string getCoordSystem_asString();
     up_axis getUpAxis();
     std::string getUpAxis_asString();
     std::string getNotes();
+    std::string getTopComp();
+    std::string getUnitLength();
+    std::string getUnitMass();
 
-	std::string getTopComp();
-
-	std::string getUnitLength();
-	std::string getUnitMass();
-	bool isOriginalUnitsLength();
-	bool isOriginalUnitsMass();
+    bool isOriginalUnitsLength();
+    bool isOriginalUnitsMass();
 
     bool verbosePrinting();
 
@@ -138,12 +137,12 @@ private:
     // top component
     std::string topComp;
 
-	// Unit length
-	std::string uLength;
-	bool originalUnitsLength;
-	// Unit mass
-	std::string uMass;
-	bool originalUnitsMass;
+    // Unit length
+    std::string uLength;
+    bool originalUnitsLength;
+    // Unit mass
+    std::string uMass;
+    bool originalUnitsMass;
 
     // print verbose status messages
     int verbosePrint;

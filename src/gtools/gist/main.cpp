@@ -20,10 +20,6 @@
 
 #include "pch.h"
 
-bool readParameters(int argc, char** argv, Options &opt);
-void generateReport(Options opt);
-void handleFolder(Options& opt);
-
 /* Wrap bu_log to clean up code */
 static void
 statusPrint(std::string msg, int verbosePrinting)
@@ -118,8 +114,8 @@ static void
 handleFolder(Options& options)
 {
     int cnt = 1;
-    for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
-        options.setFilepath(entry.path().string());
+    for (const auto & entry : std::filesystem::directory_iterator(options.getInFolder())) {
+        options.setInFile(entry.path().string());
         options.setExportToFile();
         std::string filename = options.getInFile();
         filename = filename.substr(filename.find_last_of("/\\") + 1);
