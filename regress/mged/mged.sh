@@ -2,7 +2,7 @@
 #                       M G E D . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2023 United States Government as represented by
+# Copyright (c) 2008-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,7 @@ check_command ( ) {
 	log "Output: $output"
 	return 1
     fi
-    if test "x`echo \"$output\" | grep -i invalid`" != "x" ; then
+    if test "x`echo \"$output\" | grep -i invalid\ command`" != "x" ; then
 	log "ERROR: $cmd does not exist!"
 	log "Output: $output"
 	return 1

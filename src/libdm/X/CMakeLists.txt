@@ -7,7 +7,7 @@ set(X_SRCS
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
   find_package(X11)
-  find_package(TCL)
+  find_package_tcl()
 
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -30,6 +30,9 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   dm_plugin_library(dm-X SHARED ${X_SRCS})
   target_link_libraries(dm-X libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
   set_property(TARGET dm-X APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+  if (TK_LIBRARY)
+    set_property(TARGET dm-X APPEND PROPERTY COMPILE_DEFINITIONS HAVE_TK)
+  endif (TK_LIBRARY)
   VALIDATE_STYLE(dm-X "${X_SRCS}")
 
   PLUGIN_SETUP(dm-X dm)

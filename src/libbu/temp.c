@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2023 United States Government as represented by
+ * Copyright (c) 2001-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -160,7 +160,7 @@ bu_temp_file_name(char* filename, size_t len)
 
     /* create name in form of prefix_procID_threadID */
     char* prefix = (filename && filename[0]) ? filename : PACKAGE_NAME;
-    int procID = bu_process_id();
+    int procID = bu_pid();
     int threadID = bu_thread_id();
     snprintf(buf, MAX_FILELEN, "%s_%d_%d", prefix, procID, threadID);
 

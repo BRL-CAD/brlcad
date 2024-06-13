@@ -1,7 +1,7 @@
 /*                        V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@
 #include "common.h"
 #include "ged/defines.h"
 #include "bg/polygon.h"
-#include "ged/view/adc.h"
 #include "ged/view/matrix.h"
 #include "ged/view/select.h"
 #include "ged/view/state.h"

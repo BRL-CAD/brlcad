@@ -1,7 +1,7 @@
 #                  T R A C K F I L E S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2023 United States Government as represented by
+# Copyright (c) 2011-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -202,18 +202,6 @@ if (NOT COMMAND cmakefiles)
 
   endfunction(CMAKEFILES FILESLIST)
 endif (NOT COMMAND cmakefiles)
-
-# Routine to tell distcheck to ignore a series of items in a directory.
-# Primarily useful when working with src/other dist lists.
-if (NOT COMMAND cmakefiles_in_dir)
-  function(cmakefiles_in_dir filestoignore targetdir)
-    set(CMAKE_IGNORE_LIST "")
-    foreach(filepath ${${filestoignore}})
-      set(CMAKE_IGNORE_LIST ${CMAKE_IGNORE_LIST} "${targetdir}/${filepath}")
-    endforeach(filepath ${filestoignore})
-    cmakefiles(${CMAKE_IGNORE_LIST})
-  endfunction(cmakefiles_in_dir)
-endif (NOT COMMAND cmakefiles_in_dir)
 
 #-----------------------------------------------------------------------------
 # The "distclean" build target will clear all CMake-generated files from a

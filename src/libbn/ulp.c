@@ -1,7 +1,7 @@
 /*                           U L P . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2023 United States Government as represented by
+ * Copyright (c) 2010-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,13 +29,6 @@
  * In this context, ULP is the distance to the next normalized
  * floating point value larger than a given input value.
  *
- * TODO: handle NaN, +-Inf, underflow, overflow, non-IEEE, float.h
- *
- * This file is completely in flux, incomplete, limited, and subject
- * to drastic changes.  Do NOT use it for anything.
- *
- * It also assumes an IEEE 754 compliant floating point
- * representation.
  */
 
 #include "common.h"
@@ -44,7 +37,9 @@
 #include <limits.h>
 #include <float.h>
 
-/* #define HAVE_IEEE754 1 */
+#if defined(__STDC_IEC_559__)
+#  define HAVE_IEEE754 1
+#endif
 
 #if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
 extern int isnan(double x);
@@ -54,41 +49,64 @@ extern int isnan(double x);
 extern int isinf(double x);
 #endif
 
+
 double
-bn_epsilon(void)
+bn_dbl_epsilon(void)
 {
 #if defined(DBL_EPSILON)
     return DBL_EPSILON;
 #elif defined(HAVE_IEEE754)
-    static const double val = 1.0;
-    long long next = *(long long*)&val + 1;
-    return val - *(double *)&next;
+    union {
+        double d;
+        long long ll;
+    } val;
+    val.d = 1.0;
+    val.ll += 1LL;
+    return val.d - 1.0;
 #else
-    /* must be volatile to avoid long registers */
-    volatile double tol = 1.0;
-    while (1.0 + (tol * 0.5) > 1.0) {
-	tol *= 0.5;
+    /* static for computed epsilon so it's only calculated once. */
+    static double tol = 0.0;
+
+    if (tol == 0.0) {
+        /* volatile to avoid long registers and compiler optimizing away the loop */
+        volatile double temp_tol = 1.0;
+        while (1.0 + (temp_tol * 0.5) > 1.0) {
+            temp_tol *= 0.5;
+        }
+        tol = temp_tol;
     }
+
     return tol;
 #endif
 }
 
 
 float
-bn_epsilonf(void)
+bn_flt_epsilon(void)
 {
 #if defined(FLT_EPSILON)
     return FLT_EPSILON;
 #elif defined(HAVE_IEEE754)
-    static const float val = 1.0;
-    long next = *(long*)&val + 1;
-    return val - *(float *)&next;
+    union {
+        float f;
+        long long ll;
+    } val;
+    val.f = 1.0;
+    val.ll += 1LL;
+    return val.f - 1.0;
 #else
-    /* must be volatile to avoid long registers */
-    volatile float tol = 1.0f;
-    while (1.0f + (tol * 0.5f) > 1.0f) {
-	tol *= 0.5f;
+    /* static for computed epsilon so it's only calculated once. */
+    static float tol = 0.0;
+
+    if (tol == 0.0) {
+        /* volatile to avoid long registers and compiler optimizing away the loop */
+        volatile float temp_tol = 1.0f;
+        while (1.0f + (temp_tol * 0.5f) > 1.0f) {
+            temp_tol *= 0.5f;
+        }
+        tol = temp_tol;
     }
+
     return tol;
 #endif
 }
@@ -97,8 +115,19 @@ bn_epsilonf(void)
 double
 bn_dbl_min(void)
 {
-    long long val = (1LL<<52);
-    return *(double *)&val;
+#if defined(DBL_MIN)
+    return DBL_MIN;
+#else
+    union {
+        double d;
+        unsigned long long ull;
+    } minVal;
+
+    /* set exponent to min non-subnormal value (i.e., 1) */
+    minVal.ull = 1ULL << 52; /* 52 zeros for the fraction*/
+
+    return minVal.d;
+#endif
 }
 
 
@@ -108,24 +137,54 @@ bn_dbl_max(void)
 #if defined(DBL_MAX)
     return DBL_MAX;
 #elif defined(INFINITY)
-    static const double val = INFINITY;
-    long long next = *(long long*)&val - 1;
-    return *(double *)&next;
+    union {
+        double d;
+        long long ll;
+    } val;
+    val.d = INFINITY;
+    val.ll -= 1LL;
+    return val.d;
 #else
-    return 1.0/bn_dbl_min();
+    static double max_val = 0.0;
+
+    if (max_val == 0.0) {
+        double val = 1.0;
+        double prev_val;
+
+	/* double until it no longer doubles */
+        do {
+            prev_val = val;
+            val *= 2.0;
+        } while (!isinf(val) && val > prev_val);
+
+        max_val = prev_val;
+    }
+
+    return max_val;
 #endif
 }
 
 
-double
+float
 bn_flt_min(void)
 {
-    long val = (1LL<<23);
-    return *(float *)&val;
+#if defined(FLT_MIN)
+    return FLT_MIN;
+#else
+    union {
+        float f;
+        long long ll;
+    } minVal;
+
+    // set exponent to min non-subnormal value (i.e., 1)
+    minVal.ll = 1LL << 23; // 23 zeros for the fraction
+
+    return minVal.f;
+#endif
 }
 
 
-double
+float
 bn_flt_max(void)
 {
 #if defined(FLT_MAX)
@@ -140,14 +199,14 @@ bn_flt_max(void)
 }
 
 
-double
+float
 bn_flt_min_sqrt(void)
 {
     return sqrt(bn_flt_min());
 }
 
 
-double
+float
 bn_flt_max_sqrt(void)
 {
     return sqrt(bn_flt_max());

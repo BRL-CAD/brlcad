@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2023 United States Government as represented by
+ * Copyright (c) 1999-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include "bu/cv.h"
 #include "bg/polygon.h"
 #include "bg/trimesh.h"
+#include "bg/tri_ray.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
@@ -705,7 +706,6 @@ rt_bot_free(struct soltab *stp)
 #endif
 }
 
-
 static vdsNode *
 build_vertex_tree(struct vdsState *s, struct rt_bot_internal *bot)
 {
@@ -963,8 +963,13 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    continue; /* sanity */
 
 	VMOVE(aa, &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
-	VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-	VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+	if (bot_ip->orientation == RT_BOT_CW) {
+	    VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+	    VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
+	} else {
+	    VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
+	    VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+	}
 
 	VSUB2(ab, aa, bb);
 	VSUB2(ac, aa, cc);
@@ -977,8 +982,13 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    vect_t na, nb, nc;
 
 	    VMOVE(na, &bot_ip->normals[bot_ip->face_normals[i*3+0]*3]);
-	    VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
-	    VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
+	    if (bot_ip->orientation == RT_BOT_CW) {
+		VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
+		VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
+	    } else {
+		VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
+		VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
+	    }
 	    BV_ADD_VLIST(vlfree, vhead, na, BV_VLIST_TRI_VERTNORM);
 	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_MOVE);
 	    BV_ADD_VLIST(vlfree, vhead, nb, BV_VLIST_TRI_VERTNORM);
@@ -1367,31 +1377,34 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     if (bip->vertices == NULL || bip->faces == NULL) {
 	bu_log("WARNING: BoT contains %zu vertices, %zu faces\n", bip->num_vertices, bip->num_faces);
-	return -1;
     }
 
     if (mat == NULL)
 	mat = bn_mat_identity;
 
-    for (i = 0; i < bip->num_vertices; i++) {
-	/* must be double for import and export */
-	double tmp[ELEMENTS_PER_POINT];
+    if (bip->vertices) {
+	for (i = 0; i < bip->num_vertices; i++) {
+	    /* must be double for import and export */
+	    double tmp[ELEMENTS_PER_POINT];
 
-	bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_POINT);
-	cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
-	MAT4X3PNT(&(bip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
+	    bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_POINT);
+	    cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
+	    MAT4X3PNT(&(bip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
+	}
     }
 
-    for (i = 0; i < bip->num_faces; i++) {
-	bip->faces[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
-	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
-	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
-	cp += SIZEOF_NETWORK_LONG;
+    if (bip->faces) {
+	for (i = 0; i < bip->num_faces; i++) {
+	    bip->faces[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+	    cp += SIZEOF_NETWORK_LONG;
+	    bip->faces[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+	    cp += SIZEOF_NETWORK_LONG;
+	    bip->faces[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+	    cp += SIZEOF_NETWORK_LONG;
+	}
     }
 
-    if (bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS) {
+    if (bip->num_faces && (bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS)) {
 	bip->thickness = (fastf_t *)bu_calloc(bip->num_faces, sizeof(fastf_t), "BOT thickness");
 	for (i = 0; i < bip->num_faces; i++) {
 	    double scan;
@@ -1830,47 +1843,48 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 }
 
 
-static void
-bot_ifree2(struct rt_bot_internal *bot_ip)
+void
+rt_bot_internal_free(struct rt_bot_internal *bot_ip)
 {
+    if (!bot_ip)
+	return;
+
     RT_BOT_CK_MAGIC(bot_ip);
     bot_ip->magic = 0;			/* sanity */
+    bot_ip->tie = NULL;
+    bot_ip->mode = '\0';
+    bot_ip->orientation = '\0';
+    bot_ip->bot_flags = '\0';
 
-    if (bot_ip->tie != NULL) {
-	bot_ip->tie = NULL;
-    }
+    bu_free(bot_ip->faces, "BOT faces");
+    bot_ip->faces = NULL;
+    bot_ip->num_faces = 0;
 
-    if (bot_ip->vertices != NULL) {
-	bu_free(bot_ip->vertices, "BOT vertices");
-	bot_ip->vertices = NULL;
-	bot_ip->num_vertices = 0;
-    }
-    if (bot_ip->faces != NULL) {
-	bu_free(bot_ip->faces, "BOT faces");
-	bot_ip->faces = NULL;
-	bot_ip->num_faces = 0;
-    }
+    bu_free(bot_ip->vertices, "BOT vertices");
+    bot_ip->vertices = NULL;
+    bot_ip->num_vertices = 0;
 
-    if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
-	if (bot_ip->thickness != NULL) {
-	    bu_free(bot_ip->thickness, "BOT thickness");
-	    bot_ip->thickness = NULL;
-	}
-	if (bot_ip->face_mode != NULL) {
-	    bu_free(bot_ip->face_mode, "BOT face_mode");
-	    bot_ip->face_mode = NULL;
-	}
-    }
+    bu_free(bot_ip->thickness, "BOT thickness");
+    bot_ip->thickness = NULL;
 
-    if (bot_ip->normals != NULL) {
-	bu_free(bot_ip->normals, "BOT normals");
-    }
+    bu_free(bot_ip->face_mode, "face_mode");
+    bot_ip->face_mode = NULL;
 
-    if (bot_ip->face_normals != NULL) {
-	bu_free(bot_ip->face_normals, "BOT normals");
-    }
+    bu_free(bot_ip->normals, "BOT normals");
+    bot_ip->normals = NULL;
+    bot_ip->num_normals = 0;
 
-    bu_free(bot_ip, "bot ifree");
+    bu_free(bot_ip->face_normals, "BOT face normals");
+    bot_ip->face_normals = NULL;
+    bot_ip->num_face_normals = 0;
+
+    bu_free(bot_ip->uvs, "BOT uvs");
+    bot_ip->uvs = NULL;
+    bot_ip->num_uvs = 0;
+
+    bu_free(bot_ip->face_uvs, "BOT face uvs");
+    bot_ip->face_uvs = NULL;
+    bot_ip->num_face_uvs = 0;
 }
 
 
@@ -1886,7 +1900,9 @@ rt_bot_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
-    bot_ifree2(bot_ip);
+    rt_bot_internal_free(bot_ip);
+    bu_free(bot_ip, "bot ifree");
+
     ip->idb_ptr = NULL; /* sanity */
 }
 
@@ -4280,20 +4296,105 @@ rt_bot_flip(struct rt_bot_internal *bot)
 	bot->faces[i*3+2] = tmp_index;
     }
 
-    switch (bot->orientation) {
-	case RT_BOT_CCW:
-	    bot->orientation = RT_BOT_CW;
-	    break;
-	case RT_BOT_CW:
-	    bot->orientation = RT_BOT_CCW;
-	    break;
-	case RT_BOT_UNORIENTED:
-	default:
+    return 0;
+}
+
+/* One common form of incorrect BoT geometry is an inside-out BoT - for
+ * example, a sphere where all the triangle normals are pointed in towards the
+ * center rather than outward.  This error is visually simple to spot when
+ * drawing a shaded view in OpenGL, but harder to see in a data inspection.  We
+ * define a test with raytracing to determine whether a given BoT is inside-out
+ * or not. */
+int
+rt_bot_inside_out(struct rt_bot_internal *bot)
+{
+    int is_flipped = -1;
+
+    if (!bot || bot->mode != RT_BOT_SOLID || bot->orientation == RT_BOT_UNORIENTED)
+	return 0;
+
+    point_t bmin, bmax;
+    if (bg_trimesh_aabb(&bmin, &bmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices))
+	return 0;
+
+    point_t rpnt;
+    VADD2SCALE(rpnt, bmin, bmax, 0.5);
+
+    // Move the bbox center point out of the bounding box in the z direction to
+    // give us a starting point for the ray guaranteed to be outside the mesh
+    double bdiag = DIST_PNT_PNT(bmin, bmax);
+    rpnt[Z] += bdiag;
+
+    // We want to shoot an interrogation ray in a direction that gives us an
+    // unambiguous result for the first hit point (i.e. a non-grazing hit), but
+    // there is no way to know in advance what a "good" direction is.  So
+    // instead we iterate over the faces of the mesh and use their center
+    // points as targets - sooner or later (most likely sooner) a shotline
+    // through one of them will give us our answer.
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	point_t verts[3];
+	point_t tcenter;
+	VMOVE(verts[0], &bot->vertices[bot->faces[i*3+0]*3]);
+	VMOVE(verts[1], &bot->vertices[bot->faces[i*3+1]*3]);
+	VMOVE(verts[2], &bot->vertices[bot->faces[i*3+2]*3]);
+	VADD3(tcenter, verts[0], verts[1], verts[2]);
+	VSCALE(tcenter, tcenter, 1.0/3.0);
+
+	vect_t rdir;
+	VSUB2(rdir, tcenter, rpnt);
+	VUNITIZE(rdir);
+
+	// The LIBRT raytracer a) requires an rtip setup using the parent
+	// database and b) corrects the normal we want to use for this test
+	// anyway, so use the low level bg_isect_tri_ray test and a naive walk
+	// over faces.  After we merge in the new high performance BoT
+	// raytracing work it will probably make sense to revisit this, but for
+	// now this will do the job. The parent loop quits as soon as it can
+	// make a determination, so it won't be the full n^2 hit in practice.
+	point_t cpnt = {FLT_MAX, FLT_MAX, FLT_MAX};
+	double cdsq = DIST_PNT_PNT_SQ(rpnt, cpnt);
+	vect_t cnorm = VINIT_ZERO;
+	for (size_t j = 0; j < bot->num_faces; j++) {
+	    point_t isect;
+	    point_t jverts[3];
+	    VMOVE(jverts[0], &bot->vertices[bot->faces[j*3+0]*3]);
+	    VMOVE(jverts[1], &bot->vertices[bot->faces[j*3+1]*3]);
+	    VMOVE(jverts[2], &bot->vertices[bot->faces[j*3+2]*3]);
+	    int is_hit = bg_isect_tri_ray(rpnt, rdir, jverts[0], jverts[1], jverts[2], &isect);
+	    if (!is_hit)
+		continue;
+
+	    double wdsq = DIST_PNT_PNT_SQ(rpnt, isect);
+	    if (wdsq < cdsq) {
+		VMOVE(cpnt, isect);
+		vect_t vnorm, v1, v2;
+		VSUB2(v1, jverts[1], jverts[0]);
+		VSUB2(v2, jverts[2], jverts[0]);
+		VCROSS(vnorm, v1, v2);
+		VUNITIZE(vnorm);
+		VMOVE(cnorm, vnorm);
+	    }
+	}
+
+	// If we found a normal that works, set is_flipped
+	if (MAGNITUDE(cnorm) > 0.9) {
+	    double ndot = VDOT(rdir, cnorm);
+	    if (!NEAR_ZERO(ndot, VUNITIZE_TOL))
+		is_flipped = (ndot < 0) ? 0 : 1;
+	}
+
+	// If we're >= 0, we have our answer
+	if (is_flipped != -1)
 	    break;
     }
 
-    return 0;
+    if (is_flipped == -1)
+	return is_flipped;
+
+    return (bot->orientation == RT_BOT_CCW) ? is_flipped : !is_flipped;
 }
+
+/*****************************************************************************/
 
 
 struct tri_edges {
@@ -4843,7 +4944,7 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 	BU_LIST_DEQUEUE(&rblp->l);
 
 	if (fbflag)
-	    bot_ifree2(rblp->bot);
+	    rt_bot_internal_free(rblp->bot);
 
 	bu_free(rblp, "rt_bot_list_free: rblp");
     }

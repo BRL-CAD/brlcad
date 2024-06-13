@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,8 @@
 #if !defined(__cplusplus)
 #include <math.h>
 #endif
+
+#define _CRT_SECURE_NO_WARNINGS
 
 /* 4127 conditional expression is constant
  * 4244 conversion from type 1 to type 2

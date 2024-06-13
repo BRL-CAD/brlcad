@@ -1,0 +1,13 @@
+write out problematic solids to combs
+	- failed conversions
+	- fallback conversions
+
+log details of conversion to temporary file in cache dir, and if user requests
+full log copy that to a specified file
+
+make lint ray testing parallel - doesn't matter much for small samples, but for
+large models it DOES matter.
+
+investigate whether it makes sense to add a gdiff mode to validate conversions
+against the original input
+

@@ -14,7 +14,7 @@ set(bv_headers
   vlist.h
   view_sets.h
   )
-BRLCAD_MANAGE_FILES(bv_headers ${INCLUDE_DIR}/brlcad/bv)
+BRLCAD_MANAGE_FILES(bv_headers ${INCLUDE_DIR}/brlcad/bv REQUIRED libbv)
 
 CMAKEFILES(CMakeLists.txt)
 

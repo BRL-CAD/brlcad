@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,6 +60,7 @@
 #include "bn.h"
 #include "./rt/db5.h"
 #include "nmg.h"
+// Note - libpc development is not currently active.  Should unwire this
 #include "pc.h"
 #include "./rt/geom.h"
 

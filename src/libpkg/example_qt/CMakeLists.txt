@@ -1,5 +1,7 @@
 if (BRLCAD_ENABLE_QT)
 
+  find_package_qt(REQUIRED)
+
   # Include directories needed by libpkg users
   set(PKG_EXAMPLE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}

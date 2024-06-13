@@ -1,15 +1,4 @@
 if (BRLCAD_ENABLE_TCL)
-  set(ARCHER_INCLUDE_DIRS
-    ${BU_INCLUDE_DIRS}
-    ${TCLCAD_INCLUDE_DIRS}
-    ${TCL_INCLUDE_PATH}
-    )
-  if (TK_INCLUDE_PATH)
-    set(ARCHER_INCLUDE_DIRS ${ARCHER_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
-  endif (TK_INCLUDE_PATH)
-  list(REMOVE_DUPLICATES ARCHER_INCLUDE_DIRS)
-  BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
-
   BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer/init)
 
   # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
@@ -26,24 +15,16 @@ if (BRLCAD_ENABLE_TCL)
       set(archer_srcs ${archer_srcs} archer.rc)
     endif (HAVE_WINDOWS_H)
     BRLCAD_ADDEXEC(archer "${archer_srcs}" "${archer_libs}" GUI)
+    target_compile_definitions(archer PRIVATE HAVE_TK)
     add_dependencies(archer rtwizard)
-    ADD_TARGET_DEPS(archer Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm_plugins)
+    ADD_TARGET_DEPS(archer Tkhtml Tktable itcl_pkgIndex itk_pkgIndex TclIndexBld dm_plugins)
 
     # Archer needs a lot of files to be copied into place to work - just have it
     # depend on ALL the managed files, rather than trying to list specifics
     add_dependencies(archer managed_files)
 
-    foreach(item ${tclindex_target_list})
-      add_dependencies(archer ${item})
-    endforeach(item ${tclindex_target_list})
-
-    # stage targets
-    set(stgts tcl tk itcl itk iwidgets)
-    foreach(ST ${stgts})
-      if (TARGET ${ST}_stage)
-	add_dependencies(archer ${ST}_stage)
-      endif (TARGET ${ST}_stage)
-    endforeach(ST ${stgts})
+    # Archer needs the tclIndex and pkgIndex files set up correctly
+    add_dependencies(archer TclIndexBld)
 
     # Archer is one of the programs that gets a start menu entry
     set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:archer>"

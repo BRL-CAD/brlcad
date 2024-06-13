@@ -2,7 +2,7 @@
 #                       S O L I D S . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,14 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
+
+# Tests should use a local cache
+BU_DIR_CACHE="`pwd`/cache"
+rm -rf $BU_DIR_CACHE && mkdir $BU_DIR_CACHE
+export BU_DIR_CACHE
+LIBRT_CACHE="`pwd`/rtcache"
+rm -rf $LIBRT_CACHE && mkdir $LIBRT_CACHE
+export LIBRT_CACHE
 
 if test "x$LOGFILE" = "x" ; then
     LOGFILE=`pwd`/solids.log
@@ -189,6 +197,10 @@ else
     log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
     cat "$LOGFILE"
 fi
+
+# Cleanup
+rm -rf "$BU_DIR_CACHE"
+rm -rf "$LIBRT_CACHE"
 
 exit $NUMBER_WRONG
 

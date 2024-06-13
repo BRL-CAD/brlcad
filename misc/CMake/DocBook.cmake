@@ -1,7 +1,7 @@
 #                   D O C B O O K . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2023 United States Government as represented by
+# Copyright (c) 2011-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,8 @@
 #
 # Note that rnv must be in the system path for this to work.
 
+if (NOT COMMAND ADD_DOCBOOK)
+
 find_program(XSLTPROC_EXECUTABLE xsltproc HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 mark_as_advanced(XSLTPROC_EXECUTABLE)
 find_program(XMLLINT_EXECUTABLE xmllint HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
@@ -86,18 +88,11 @@ else(NOT DEFINED PDF_CONF_EXECUTABLE)
   endif(NOT EXISTS "${BRLCAD_SOURCE_DIR}/misc/CMake/${PDF_CONF_EXECUTABLE}.cmake.in")
 endif(NOT DEFINED PDF_CONV_EXECUTABLE)
 
-# Get our root path
-if(CMAKE_CONFIGURATION_TYPES)
-  set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
-else(CMAKE_CONFIGURATION_TYPES)
-  set(bin_root "${CMAKE_BINARY_DIR}")
-endif(CMAKE_CONFIGURATION_TYPES)
-
 # xsltproc is finicky about slashes in names - do some sanity
 # scrubbing of the full root path string in preparation for generating
 # DocBook scripts
-string(REGEX REPLACE "/+" "/" bin_root "${bin_root}")
-string(REGEX REPLACE "/$" "" bin_root "${bin_root}")
+string(REGEX REPLACE "/+" "/" ${CMAKE_BINARY_DIR} "${${CMAKE_BINARY_DIR}}")
+string(REGEX REPLACE "/$" "" ${CMAKE_BINARY_DIR} "${${CMAKE_BINARY_DIR}}")
 
 set(OUTPUT_FORMATS)
 if(BRLCAD_EXTRADOCS_HTML)
@@ -137,23 +132,11 @@ set(MAN5_DIR "${DOC_DIR}/../man/")
 set(MANN_DIR "${DOC_DIR}/../man/")
 set(PDF_DIR "${DOC_DIR}/pdf/")
 
-# The general pattern of the BRL-CAD build is to use CMAKE_CFG_INTDIR
-# when multi-configuration builds complicate the location of binaries.
-# In this case, however, we are using a generated script with a
-# different mechanism for handling this situation, and we need to
-# update the executable paths accordingly if they are configuration
-# dependent.
-#
 # TODO - is there some way generator expressions could be used to
 # improve this?  Maybe pass the build time location of these programs
 # to the scripts as -D arguments?
-if(CMAKE_CONFIGURATION_TYPES)
-  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
-  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
-else(CMAKE_CONFIGURATION_TYPES)
-  set(XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
-  set(XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
-endif(CMAKE_CONFIGURATION_TYPES)
+set(XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
+set(XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
 
 # Convenience target to launch all DocBook builds
 add_custom_target(docbook ALL)
@@ -162,47 +145,48 @@ if (TARGET brlcad_css)
   add_dependencies(docbook brlcad_css)
 endif (TARGET brlcad_css)
 
-# man1 or man3 man pages for which it is expected that there is no associated
-# build target.
-#
-# NOTE:  for now, remrt is listed because the target is disabled on Windows.
-# If/when it works there, remove from this list
-set(filtered_man
-  brlcad
-  brlcad-config
-  redblack
-  remrt
-  benchmark
-  dbclean
-  )
-
 function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
+
+  cmake_parse_arguments(A "" "" "REQUIRED" ${ARGN})
+
+  if (A_REQUIRED)
+    foreach (rdep ${A_REQUIRED})
+      if (NOT TARGET ${rdep})
+	return()
+      endif (NOT TARGET ${rdep})
+    endforeach (rdep ${A_REQUIRED})
+  endif (A_REQUIRED)
 
   # If we got the name of a list or an explicit list, translate into
   # the form we need.
   list(GET ${in_xml_files} 0 xml_files)
   if("${xml_files}" MATCHES "NOTFOUND")
     set(xml_files ${in_xml_files})
+    get_filename_component(abs_xml_file_path "${xml_files}" ABSOLUTE)
+    get_filename_component(dname_root1 "${abs_xml_file_path}" NAME_WE)
+    get_filename_component(dname_path1  "${abs_xml_file_path}" PATH)
+    get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
+    get_filename_component(dname_path2  "${dname_path1}" PATH)
+    get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
+    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
   else("${xml_files}" MATCHES "NOTFOUND")
+    get_filename_component(abs_xml_file_path "${xml_files}" ABSOLUTE)
+    get_filename_component(abs_path "${abs_xml_file_path}" PATH)
+    get_filename_component(dname_root1 "${abs_path}" NAME_WE)
+    get_filename_component(dname_path1  "${abs_path}" PATH)
+    get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
+    get_filename_component(dname_path2  "${dname_path1}" PATH)
+    get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
+    set(inc_num 0)
+    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
+    while(TARGET docbook-${target_root})
+      math(EXPR inc_num "${inc_num} + 1")
+      set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
+    endwhile(TARGET docbook-${target_root})
+
+    # Unpack the list
     set(xml_files ${${in_xml_files}})
   endif("${xml_files}" MATCHES "NOTFOUND")
-
-  # Get a target name that is unique but at least has some information
-  # about what/where the target is.
-  get_filename_component(dname_root1 "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
-  get_filename_component(dname_path1  "${CMAKE_CURRENT_SOURCE_DIR}" PATH)
-  get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
-  get_filename_component(dname_path2  "${dname_path1}" PATH)
-  get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
-  set(inc_num 0)
-  set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
-  while(TARGET docbook-${target_root})
-    math(EXPR inc_num "${inc_num} + 1")
-    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
-  endwhile(TARGET docbook-${target_root})
-
-  # Mark files for distcheck
-  CMAKEFILES(${xml_files})
 
   if(BRLCAD_EXTRADOCS)
     set(all_outfiles)
@@ -213,31 +197,7 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     foreach(fname ${xml_files})
       get_filename_component(fname_root "${fname}" NAME_WE)
 
-      # Almost all of the man1 and man3 man pages should have build targets -
-      # check and handle accordingly
-      if ("${outdir}" MATCHES "man*")
-	if (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
-	  list(FIND filtered_man "${fname_root}" IS_FILTERED)
-	  if ("${IS_FILTERED}" EQUAL "-1")
-	    if (NOT TARGET "${fname_root}")
-	      message("WARNING: ${outdir} man page ${fname_root} has no associated build target.")
-	      # TODO - if we disable Tcl, we don't build some of the man page tools - we need
-	      # to conditionalize the man page building the same way we do the targets for
-	      # this to be a fatal error...
-	      #math(EXPR errors "${errors} + 1")
-	    endif (NOT TARGET "${fname_root}")
-	 # TODO - until we can ensure uniformity across all platforms for
-	 # definition of man1/man3 targets, we need to skip this check.
-	 # Instead we just ignore anything in the filtered list completely.
-	 #else ("${IS_FILTERED}" EQUAL "-1")
-	 #  if (TARGET "${fname_root}")
-	 #    message("WARNING: ${outdir} man page ${fname_root} is listed as not having a build target but one was found - remove from filtered list.")
-	 #    math(EXPR errors "${errors} + 1")
-	 #  endif (TARGET "${fname_root}")
-	 endif ("${IS_FILTERED}" EQUAL "-1")
-	endif (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
-      endif ("${outdir}" MATCHES "man*")
-
+      # Used in cmake.in scripts
       get_filename_component(filename "${fname}" ABSOLUTE)
 
       # Find out which outputs we're actually going to produce,
@@ -256,16 +216,8 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
       foreach(fmt ${fmts})
 	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
 	if(NOT "${IN_LIST}" STREQUAL "-1")
-	  set(${fmt}_OUTFILE_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
-	  # Use CMAKE_CFG_INTDIR for build system output list, but
-	  # need BUILD_TYPE form of path for scripts and install
-	  # commands.
-	  if(CMAKE_CONFIGURATION_TYPES)
-	    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
-	  else(CMAKE_CONFIGURATION_TYPES)
-	    set(${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
-	  endif(CMAKE_CONFIGURATION_TYPES)
-	  set(outputs ${outputs} ${${fmt}_OUTFILE_RAW})
+	  set(${fmt}_OUTFILE "${CMAKE_BINARY_DIR}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
+	  set(outputs ${outputs} ${${fmt}_OUTFILE})
 	  install(FILES "${${fmt}_OUTFILE}" DESTINATION ${${fmt}_DIR}${outdir})
 	endif(NOT "${IN_LIST}" STREQUAL "-1")
       endforeach(fmt ${OUTPUT_FORMATS})
@@ -286,13 +238,8 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	    # Use CMAKE_CFG_INTDIR for build system output list, but
 	    # need BUILD_TYPE form of path for scripts and install
 	    # commands.
-	    set(${fmt}_EXTRA_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${extra_out}")
-	    if(CMAKE_CONFIGURATION_TYPES)
-	      string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
-	    else(CMAKE_CONFIGURATION_TYPES)
-	      set(${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
-	    endif(CMAKE_CONFIGURATION_TYPES)
-	    set(outputs ${outputs} ${${fmt}_EXTRA_RAW})
+	    set(${fmt}_EXTRA "${CMAKE_BINARY_DIR}/${${fmt}_DIR}${outdir}/${extra_out}")
+	    set(outputs ${outputs} ${${fmt}_EXTRA})
 	    install(FILES "${${fmt}_EXTRA}" DESTINATION ${${fmt}_DIR}${outdir})
 	  endforeach(extra_out ${EXTRA_OUTPUTS})
 	endif(NOT "${IN_LIST}" STREQUAL "-1")
@@ -329,13 +276,19 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     endif (errors GREATER "0")
 
     if(NOT "${all_outfiles}" STREQUAL "")
-      add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})
+      if (NOT TARGET docbook-${target_root})
+	add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})
+      else (NOT TARGET docbook-${target_root})
+	add_dependencies(docbook-${target_root} ${all_outfiles})
+      endif (NOT TARGET docbook-${target_root})
       set_target_properties(docbook-${target_root} PROPERTIES FOLDER "DocBook")
       add_dependencies(docbook docbook-${target_root})
     endif(NOT "${all_outfiles}" STREQUAL "")
   endif(BRLCAD_EXTRADOCS)
 
 endfunction(ADD_DOCBOOK)
+
+endif (NOT COMMAND ADD_DOCBOOK)
 
 # Local Variables:
 # tab-width: 8

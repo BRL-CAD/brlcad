@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1094,7 +1094,6 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
     /* Make sure the attributes have gotten the message */
     db5_sync_comb_to_attr(&intern->idb_avs, comb);
-    db5_standardize_avs(&intern->idb_avs);
 
     return BRLCAD_OK;
 

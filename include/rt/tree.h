@@ -1,7 +1,7 @@
 /*                          T R E E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -172,6 +172,7 @@ union tree {
 	const char *td_name;            /**< @brief  If non-null, dynamic string describing heritage of this region */
 	struct nmgregion *td_r;         /**< @brief  ptr to NMG region */
 	void *td_d;                     /**< @brief  tessellation related data */
+	struct rt_db_internal *td_i;    /**< @brief  For special cases like half spaces */
     } tr_d;
     struct tree_db_leaf {
 	uint32_t magic;

@@ -1,3 +1,23 @@
+/*         I N F O R M A T I O N G A T H E R E R . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2023-2024 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
 #include "pch.h"
 #include "InformationGatherer.h"
 
@@ -11,35 +31,56 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/log.h"
+
+static std::string getCmdPath(std::string exeDir, const char* cmd) {
+    char buf[MAXPATHLEN] = {0};
+    if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
+        bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
+
+    return std::string(buf);
+}
+
 void
 getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
 {
-    //Run RTArea to get surface area
-    std::string command = opt->getTemppath() + "rtarea -u " + unit + " -a " + az + " -e " + el + " " + opt->getFilepath() + " " + comp + " 2>&1";
+    // Run RTArea to get surface area
+    std::string rtarea = getCmdPath(opt->getExeDir(), "rtarea");
+    std::string in_file(opt->getInFile());  // need local copy for av array copy
+    const char* rtarea_av[10] = {rtarea.c_str(),
+                                 "-u", unit.c_str(),
+                                 "-a", az.c_str(),
+                                 "-e", el.c_str(),
+                                 in_file.c_str(),
+                                 comp.c_str(),
+                                 NULL};
+    struct bu_process* p;
+    bu_process_create(&p, rtarea_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+
+    if (bu_process_pid(p) <= 0) {
+        bu_exit(BRLCAD_ERROR, "Problem with getSurfaceArea, aborting\n");
+    }
+
     char buffer[128];
     std::string result = "";
-    FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) throw std::runtime_error("popen() failed!");
-    try {
-        while (fgets(buffer, sizeof buffer, pipe) != NULL) {
-            result += buffer;
-        }
+    int read_cnt = 0;
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 128-1, buffer)) > 0) {
+        /* NOTE: read does not ensure null-termination, thus buffersize-1 */
+        buffer[read_cnt] = '\0';
+        result += buffer;
     }
-    catch (...) {
-        pclose(pipe);
-        throw;
-    }
-    pclose(pipe);
-    //If rtarea didn't fail, calculate area
-    if (result.find("Total Exposed Area") != std::string::npos) {
+
+    // If rtarea didn't fail, calculate area
+    if (bu_process_wait_n(&p, 0) == 0) {
+        /* pull out the surface area */
         result = result.substr(result.find("Total Exposed Area"));
         result = result.substr(0, result.find("square") - 1);
         result = result.substr(result.find("=") + 1);
+
         try {
             surfArea += stod(result);
         } catch (const std::invalid_argument& ia) {
-            std::cerr << "Invalid argument for surface area: " << result << " " << ia.what() << '\n';
-            bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+            bu_exit(BRLCAD_ERROR, "Invalid argument for getSurfaceArea. Got (%s), aborting.\n", ia.what());
         }
     }
 }
@@ -87,79 +128,68 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         }
     }
 
-    //Get presented area of region
-    for (int i = 0; i < toVisit.size(); i++) {
+    std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
+    std::string units = lUnit + ",\"cu " + lUnit + "\"," + mUnit;
+    std::string in_file = opt->getInFile();
+    struct bu_process* p;
+    int read_cnt = 0;
+    char buffer[1024] = {0};
+    std::string result = "";
+
+    for (size_t i = 0; i < toVisit.size(); i++) {
         std::string val = toVisit[i];
-        std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\" " + opt->getFilepath() + " " + val + " 2>&1";
-        char buffer[128];
-        std::string result = "";
-        FILE* pipe = popen(command.c_str(), "r");
-        if (!pipe) throw std::runtime_error("popen() failed!");
-        try {
-            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
-                result += buffer;
-            }
-        }
-        catch (...) {
-            pclose(pipe);
-            throw;
-        }
-        pclose(pipe);
-        //Extract volume value
-        result = result.substr(result.find("Average total volume:") + 22);
-        result = result.substr(0, result.find("cu") - 1);
-        if (result.find("inf") == std::string::npos) {
-            try {
-                volume += stod(result);
-            } catch (const std::invalid_argument& ia) {
-                std::cerr << "Invalid argument for volume: " << result << " " << ia.what() << '\n';
-                bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
-            }
-        }
-    }
+        // TODO: significant divergence from main and PR. Need to ensure density information is present before attempting to get mass
+        /* Get volume and mass */
+        const char* vol_av[10] = { gqa.c_str(),
+                                   "-Avm",
+                                   "-q",
+                                   "-g", "2",
+                                   "-u", units.c_str(),
+                                   in_file.c_str(),
+                                   val.c_str(),
+                                   NULL };
 
-    // See if component has densities
-        std::string command = opt->getTemppath() + "mged -c " + opt->getFilepath() + " mater -d get * " + "2>&1";
-        char buffer[128];
-        std::string result = "";
-        FILE* pipe = popen(command.c_str(), "r");
-        if (!pipe) throw std::runtime_error("popen() failed!");
-        try {
-            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
-                result += buffer;
-            }
-        }
-        catch (...) {
-            pclose(pipe);
-            throw;
-        }
-        pclose(pipe);
-        if (result.find("no density information found in database") != std::string::npos) {
-            mass = 0;
-            hasDensities = false;
-            return;
+        bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+
+	if (bu_process_pid(p) <= 0) {
+            bu_exit(BRLCAD_ERROR, "Problem with getVerificationData volume, aborting\n");
         }
 
+        result = "";
+        read_cnt = 0;
+        while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
+            buffer[read_cnt] = '\0';
+            result += buffer;
+        }
 
-    for (int i = 0; i < toVisit.size(); i++) {
-        std::string val = toVisit[i];
+        if (bu_process_wait_n(&p, 0) == 0) {
+            // Extract volume value
+            std::string vol_raw = result.substr(result.find("Average total volume:") + 22);
+            vol_raw = vol_raw.substr(0, vol_raw.find("cu") - 1);
+            if (vol_raw.find("inf") == std::string::npos) {
+                try {
+                    volume += stod(vol_raw);
+                } catch (const std::invalid_argument& ia) {
+                    bu_exit(BRLCAD_ERROR, "getVerificationData volume got: (%s) %s, aborting.\n", vol_raw.c_str(), ia.what());
+                }
+            }
 
         //Get mass of region
-        std::string command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\"," + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
-        char buffer[128];
-        std::string result = "";
-        FILE* pipe = popen(command.c_str(), "r");
-        if (!pipe) throw std::runtime_error("popen() failed!");
+        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getFilepath() + " " + val2 + " 2>&1";
+        result = "";
+        pipe = popen(command.c_str(), "r");
+        if (!pipe)
+	    throw std::runtime_error("popen() failed!");
         try {
-            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+            while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
                 result += buffer;
             }
-        }
-        catch (...) {
+        } catch (...) {
             pclose(pipe);
             throw;
         }
         pclose(pipe);
+
         if (result.find("Average total weight:") != std::string::npos) {
             //Extract mass value
             result = result.substr(result.find("Average total weight:") + 22);
@@ -167,18 +197,18 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
             //Mass cannot be negative or infinite
 
             try {
-                if (result.find("inf") == std::string::npos) {
-                    if (result[0] == '-') {
-                        result = result.substr(1);
-                        mass += stod(result);
+                // weight cannot be inf or negative
+                if (weight_raw.find("inf") == std::string::npos) {
+                    if (weight_raw[0] == '-') {
+                        weight_raw = weight_raw.substr(1);
+                        mass += stod(weight_raw);
                     }
                     else {
-                        mass += stod(result);
+                        mass += stod(weight_raw);
                     }
                 }
             } catch (const std::invalid_argument& ia) {
-                std::cerr << "Invalid argument for mass: " << result << " " << ia.what() << '\n';
-                bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+                bu_exit(BRLCAD_ERROR, "getVerificationData mass got: (%s) %s, aborting.\n", weight_raw.c_str(), ia.what());
             }
         }
     }
@@ -220,7 +250,7 @@ InformationGatherer::getVolume(std::string component)
 }
 
 int
-InformationGatherer::getNumEntities(std::string component)
+InformationGatherer::getNumEntities(std::string UNUSED(component))
 {
     // Find number of entities
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
@@ -237,15 +267,15 @@ InformationGatherer::getNumEntities(std::string component)
 void
 InformationGatherer::getMainComp()
 {
-    if (opt->getTopComp() != "") {
-        std::cout << "User input top: " << opt->getTopComp() << std::endl;
+    const std::string topcomp = opt->getTopComp();
+    if (!topcomp.empty()) {
+	const char *topname = topcomp.c_str();
         // check if main comp exists
-        const char* cmd[3] = { "l", opt->getTopComp().c_str(), NULL };
+        const char* cmd[3] = { "l", topname, NULL };
         ged_exec(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
         if (res.size() == 0) {
-            std::cerr << "Could not find component: " << opt->getTopComp() << std::endl;
-            bu_exit(BRLCAD_ERROR, "aborting.\n");
+            bu_exit(BRLCAD_ERROR, "Coult not find component (%s), aborting.\n", topname);
         }
 
         int entities = getNumEntities(opt->getTopComp());
@@ -268,8 +298,8 @@ InformationGatherer::getMainComp()
     }
 
     sort(topComponents.rbegin(), topComponents.rend());
-    for (int i = 0; i < topComponents.size(); i++) {
-        if (topComponents[i].volume != std::numeric_limits<double>::infinity()) {
+    for (size_t i = 0; i < topComponents.size(); i++) {
+        if (!EQUAL(topComponents[i].volume, std::numeric_limits<double>::infinity())) {
             largestComponents.push_back(topComponents[i]);
             break;
         }
@@ -278,23 +308,23 @@ InformationGatherer::getMainComp()
     if (largestComponents.size() != 0) {
         return;
     } else {
-        const char* cmd[5] = { "search",  ".",  "-type", "comb", NULL };
+        const char* search_cmd[5] = { "search",  ".",  "-type", "comb", NULL };
 
-        ged_exec(g, 4, cmd);
-        std::stringstream ss(bu_vls_addr(g->ged_result_str));
-        std::string val;
-        std::vector<ComponentData> topComponents;
+        ged_exec(g, 4, search_cmd);
+        std::stringstream ss2(bu_vls_addr(g->ged_result_str));
+        std::string val2;
+        std::vector<ComponentData> topComponents2;
 
-        while (getline(ss, val)) {
-            int entities = getNumEntities(val);
-            double volume = getVolume(val);
-            topComponents.push_back({entities, volume, val});
+        while (getline(ss2, val2)) {
+            int entities = getNumEntities(val2);
+            double volume = getVolume(val2);
+            topComponents2.push_back({entities, volume, val2});
         }
 
-        sort(topComponents.rbegin(), topComponents.rend());
-        for (int i = 0; i < topComponents.size(); i++) {
-            if (topComponents[i].volume != std::numeric_limits<double>::infinity()) {
-                largestComponents.push_back(topComponents[i]);
+        sort(topComponents2.rbegin(), topComponents2.rend());
+        for (size_t i = 0; i < topComponents2.size(); i++) {
+            if (!EQUAL(topComponents2[i].volume, std::numeric_limits<double>::infinity())) {
+                largestComponents.push_back(topComponents2[i]);
                 break;
             }
         }
@@ -317,42 +347,36 @@ InformationGatherer::getEntityData(char* buf)
 void
 InformationGatherer::getSubComp()
 {
-    // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
+    std::string mged = getCmdPath(opt->getExeDir(), "mged");
+    std::string inFile = opt->getInFile();
+    std::string tclScript = " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\"";
+    const char* av[5] = {mged.c_str(), "-c", inFile.c_str(), tclScript.c_str(), NULL};
 
-    if (!bu_file_exists((opt->getTemppath() + "mged").c_str(), NULL) && !bu_file_exists((opt->getTemppath() + "mged.exe").c_str(), NULL)) {
-        bu_log("ERROR: File to executables (%s) is invalid or mged is missing\nPlease use (or check) the -T parameter\n", opt->getTemppath().c_str());
-        bu_exit(BRLCAD_ERROR, "Bad folder, aborting.\n");
+    struct bu_process* p;
+    bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW);
+
+    int read_cnt = 0;
+    char buf[1024] = {0};
+    std::string result = "";
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buf)) > 0) {
+        buf[read_cnt] = '\0';
+        result += buf;
     }
 
-    std::string pathToOutput = "output/sub_comp.txt";
-    std::string retrieveSub = opt->getTemppath() + "mged -c " + opt->getFilepath() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
-    system(retrieveSub.c_str());
+    (void)bu_process_wait_n(&p, 0);
 
-    if (!bu_file_exists(pathToOutput.c_str(), NULL)) {
-        bu_log("ERROR: %s doesn't exist\n", pathToOutput.c_str());
-        bu_log("Make sure to create output directory at the same level as main.cpp!\n");
-        bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
-    }
-
-    std::fstream scFile(pathToOutput);
-    if (!scFile.is_open()) {
-        std::cerr << "failed to open file\n";
-        return;
-    }
-
+    std::stringstream ss(result);
     std::string comp;
     int numEntities = 0;
     std::vector<ComponentData> subComps;
 
-    while (scFile >> comp >> numEntities) {
+    while (ss >> comp >> numEntities) {
         double volume = getVolume(comp);
         subComps.push_back({numEntities, volume, comp});
-        // std::cout << " in subcomp " << comp << " " << numEntities << " " << volume << std::endl;
     }
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
     largestComponents.insert(largestComponents.end(), subComps.begin(), subComps.end());
-    scFile.close();
 }
 
 
@@ -366,18 +390,13 @@ InformationGatherer::~InformationGatherer()
 
 }
 
-bool InformationGatherer::gatherInformation(std::string name)
-{
-    //Create folder output if needed
-    std::string path = std::filesystem::current_path().string() + "\\output";
-    std::cout << "Writing intermediate output files to " << path << std::endl;
-    if (!std::filesystem::exists(std::filesystem::path(path))) {
-        std::filesystem::create_directory("output");
-    }
 
-	//Open database
-    std::string filePath = opt->getFilepath();
-	g = ged_open("db", filePath.c_str(), 1);
+bool
+InformationGatherer::gatherInformation(std::string name)
+{
+    //Open database
+    std::string filePath = opt->getInFile();
+    g = ged_open("db", filePath.c_str(), 1);
 
 	//Gather title
 	const char* cmd[6] = { "title", NULL, NULL, NULL, NULL };
@@ -443,11 +462,6 @@ bool InformationGatherer::gatherInformation(std::string name)
         return false;
 
     getSubComp();
-    std::cout << "Largest Components\n";
-
-    for (ComponentData x : largestComponents) {
-        std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
-    }
 
     // Gather dimensions
 	cmd[0] = "bb";
@@ -606,7 +620,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     }
 #else   // UNIX-like systems
     struct stat fileInfo;
-    stat(opt->getFilepath().c_str(), &fileInfo);
+    stat(opt->getInFile().c_str(), &fileInfo);
     uid_t ownerUID = fileInfo.st_uid;
     struct passwd *pw = getpwuid(ownerUID);
     if (pw && pw->pw_gecos && pw->pw_gecos[0]) {
@@ -641,29 +655,29 @@ bool InformationGatherer::gatherInformation(std::string name)
 
     //Gather last date updated
     struct stat info;
-    stat(opt->getFilepath().c_str(), &info);
+    stat(opt->getInFile().c_str(), &info);
     std::time_t update = info.st_mtime;
     tm* ltm = localtime(&update);
     std::string date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
     infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
 
-	//Gather source file
-    std::size_t last1 = opt->getFilepath().find_last_of("/");
-    std::size_t last2 = opt->getFilepath().find_last_of("\\");
+    //Gather source file
+    std::size_t last1 = opt->getInFile().find_last_of("/");
+    std::size_t last2 = opt->getInFile().find_last_of("\\");
     last = last1 < last2 ? last1 : last2;
 
-	std::string file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
+    std::string file = opt->getInFile().substr(last+1, opt->getInFile().length()-1);
 
 	infoMap.insert(std::pair < std::string, std::string>("file", file));
 
-	//Gather date of generation
-	std::time_t now = time(0);
-	ltm = localtime(&now);
-	date = std::to_string(ltm->tm_mon+1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year+1900);
+    //Gather date of generation
+    std::time_t now = time(0);
+    ltm = localtime(&now);
+    date = std::to_string(ltm->tm_mon+1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year+1900);
     infoMap["dateGenerated"] = date;
 
     //Gather name of preparer
-    infoMap.insert(std::pair < std::string, std::string>("preparer", opt->getName()));
+    infoMap.insert(std::pair < std::string, std::string>("preparer", opt->getPreparer()));
 
     //Gather classification
     std::string classification = opt->getClassification();
@@ -675,7 +689,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     //Gather checksum
     struct bu_mapped_file* gFile = NULL;
     char* buf = NULL;
-    gFile = bu_open_mapped_file(opt->getFilepath().c_str(), ".g file");
+    gFile = bu_open_mapped_file(opt->getInFile().c_str(), ".g file");
     picohash_ctx_t ctx;
     char digest[PICOHASH_MD5_DIGEST_LENGTH];
     std::string output;
@@ -700,7 +714,7 @@ bool InformationGatherer::gatherInformation(std::string name)
 
 	infoMap.insert(std::pair<std::string, std::string>("checksum", ss2.str()));
 
-	return true;
+    return true;
 }
 
 void
@@ -880,6 +894,14 @@ InformationGatherer::checkScientificNotation()
         std::stringstream ss;
         ss << std::scientific << std::setprecision(precision) << value;
         infoMap[key] = ss.str();
-
     }
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

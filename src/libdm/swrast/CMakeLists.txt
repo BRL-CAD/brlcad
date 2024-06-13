@@ -1,3 +1,5 @@
+BRLCAD_Find_Package(OSMESA REQUIRED)
+
 set(SWRAST_SRCS
   dm-swrast.cpp
   fb-swrast.cpp
@@ -10,6 +12,8 @@ set(SWRAST_SRCS
 # in a "headless" configuration, with screengrab able to retrieve and save
 # images of the drawn scene.
 if(BRLCAD_ENABLE_QT)
+
+  find_package_qt(REQUIRED)
 
   add_definitions(-DSWRAST_QT)
 

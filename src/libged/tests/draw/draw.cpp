@@ -1,7 +1,7 @@
 /*                       D R A W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2023 United States Government as represented by
+ * Copyright (c) 2018-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@
 /** @file draw.cpp
  *
  * Testing routines for new drawing logic
- *
  */
 
 #include "common.h"
@@ -229,6 +228,12 @@ main(int ac, char *av[]) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;
     }
+
+    /* We want a local working dir cache */
+    char lcache[MAXPATHLEN] = {0};
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_draw_test_cache", NULL);
+    bu_mkdir(lcache);
+    bu_setenv("BU_DIR_CACHE", lcache, 1);
 
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
@@ -751,6 +756,9 @@ main(int ac, char *av[]) {
     bu_log("Done.\n");
 
     ged_close(dbp);
+
+    /* Remove the local cache files */
+    bu_dirclear(lcache);
 
     return 0;
 }

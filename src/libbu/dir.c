@@ -1,7 +1,7 @@
 /*                           D I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2023 United States Government as represented by
+ * Copyright (c) 2018-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file dir.c
  *
- * Implementation of path-finding functions for general app use.
+ * Implementation of path related functions for general app use.
  *
  * TODO: make sure returned paths are absolute and exist
  * TODO: check for trailing path separator (e.g., temp)
@@ -35,6 +35,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h> /* for mkdir */
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -45,7 +48,6 @@
 #ifdef HAVE_WINDOWS_H
 #  include <ShlObj.h>
 #endif
-
 #include "whereami.h"
 
 #include "bu/app.h"
@@ -55,6 +57,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
+#include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 
@@ -667,6 +670,58 @@ bu_dir(char *result, size_t len, .../*, NULL */)
     return ret;
 }
 
+void
+bu_mkdir(const char *path)
+{
+    // If there's already something there, we can't proceed.
+    if (bu_file_exists(path, NULL) || bu_file_directory(path))
+	return;
+
+    /* Make sure the target and any missing parents
+     * are created. */
+    struct bu_ptbl ndirs = BU_PTBL_INIT_ZERO;
+    struct bu_vls c = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&c, "%s", path);
+    while (!bu_file_directory(bu_vls_cstr(&c))) {
+	char *npath = bu_strdup(bu_vls_cstr(&c));
+	bu_ptbl_ins(&ndirs, (long *)npath);
+	bu_path_component(&c, npath, BU_PATH_DIRNAME);
+    }
+
+    for (int i = (int)BU_PTBL_LEN(&ndirs) - 1; i >= 0; i--) {
+	char *npath = (char *)BU_PTBL_GET(&ndirs, i);
+#ifdef HAVE_WINDOWS_H
+	CreateDirectory(npath, NULL);
+#else
+	/* mode: 775 */
+	mkdir(npath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
+	bu_free(npath, "npath");
+    }
+
+    bu_vls_free(&c);
+    bu_ptbl_free(&ndirs);
+}
+
+void
+bu_dirclear(const char *d)
+{
+    if (bu_file_directory(d)) {
+	char **filenames;
+	size_t nfiles = bu_file_list(d, "*", &filenames);
+	for (size_t i = 0; i < nfiles; i++) {
+	    if (BU_STR_EQUAL(filenames[i], "."))
+		continue;
+	    if (BU_STR_EQUAL(filenames[i], ".."))
+		continue;
+	    char cdir[MAXPATHLEN] = {0};
+	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
+	    bu_dirclear((const char *)cdir);
+	}
+	bu_argv_free(nfiles, filenames);
+    }
+    bu_file_delete(d);
+}
 
 /*
  * Local Variables:

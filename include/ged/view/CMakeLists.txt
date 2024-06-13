@@ -1,10 +1,9 @@
 set(ged_view_headers
-  adc.h
   matrix.h
   select.h
   state.h
   )
-BRLCAD_MANAGE_FILES(ged_view_headers ${INCLUDE_DIR}/brlcad/ged/view)
+BRLCAD_MANAGE_FILES(ged_view_headers ${INCLUDE_DIR}/brlcad/ged/view REQUIRED libged)
 
 CMAKEFILES(CMakeLists.txt)
 

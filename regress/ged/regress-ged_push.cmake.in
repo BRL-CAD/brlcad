@@ -3,6 +3,15 @@ set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(LOGFILE "${CBDIR}/regress-ged_push.log")
 
+set(BU_DIR_CACHE ${CBDIR}/cache)
+set(LIBRT_CACHE ${CBDIR}/rtcache)
+set(ENV{BU_DIR_CACHE} ${BU_DIR_CACHE})
+set(ENV{LIBRT_CACHE} ${LIBRT_CACHE})
+file(REMOVE_RECURSE "${BU_DIR_CACHE}")
+file(REMOVE_RECURSE "${LIBRT_CACHE}")
+file(MAKE_DIRECTORY "${BU_DIR_CACHE}")
+file(MAKE_DIRECTORY "${LIBRT_CACHE}")
+
 set(OUTPUT_FILES
   "${CBDIR}/ged_push.g"
   "${CBDIR}/ged_xpush.g"
@@ -71,11 +80,12 @@ if(ged_push_result)
   message(FATAL_ERROR "[regress-ged_push] Failure: ${ged_push_result}. See ${LOGFILE} for more info.\n${LOG}")
 endif(ged_push_result)
 
-
 # Clean up
 foreach(of ${OUTPUT_FILES})
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
 endforeach(of ${OUTPUT_FILES})
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_DIR_CACHE})
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE})
 
 # Local Variables:
 # tab-width: 8

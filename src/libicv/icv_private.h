@@ -1,7 +1,7 @@
 /*                  I C V _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2023 United States Government as represented by
+ * Copyright (c) 2007-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,6 +45,10 @@ extern icv_image_t* png_read(const char *filename);
 /* defined in ppm.c */
 extern int ppm_write(icv_image_t *bif, const char *filename);
 extern icv_image_t* ppm_read(const char *filename);
+
+/* defined in rle.c */
+extern int rle_write(icv_image_t *bif, const char *filename);
+extern icv_image_t* rle_read(const char *filename);
 
 #endif /* ICV_PRIVATE_H */
 

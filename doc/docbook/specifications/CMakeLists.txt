@@ -29,10 +29,17 @@ set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-sp
 set(specifications_EN
   BRL_CAD_g_format_V5.xml
   )
-ADD_DOCBOOK("HTML;PHP;PDF" specifications_EN specifications/en "")
+if (TARGET librt)
+  if (BRLCAD_EXTRADOCS)
+    ADD_DOCBOOK("HTML;PHP;PDF" specifications_EN specifications/en "")
+  endif (BRLCAD_EXTRADOCS)
+endif (TARGET librt)
 
-CMAKEFILES(BRL_CAD_g_format_V6.xml)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  ${specifications_EN}
+  BRL_CAD_g_format_V6.xml
+  CMakeLists.txt
+  )
 
 # Local Variables:
 # tab-width: 8

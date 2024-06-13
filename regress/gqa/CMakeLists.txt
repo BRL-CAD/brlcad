@@ -1,3 +1,8 @@
+set(GQA_GFILE "${CMAKE_SOURCE_DIR}/src/libged/tests/ged_tests.g")
+set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-gqa_plot.cmake.in")
+if (TARGET gqa AND TARGET bview_plot3)
+  BRLCAD_REGRESSION_TEST(regress-gqa_plot "bview_plot3;gqa" TEST_SCRIPT "${TSCRIPT}" EXEC gqa VEXEC bview_plot3)
+endif (TARGET gqa AND TARGET bview_plot3)
 
 if (SH_EXEC AND TARGET mged AND TARGET gqa)
 
@@ -5,10 +10,6 @@ if (SH_EXEC AND TARGET mged AND TARGET gqa)
   BRLCAD_REGRESSION_TEST(regress-gqa "gqa;mged" TEST_DEFINED)
 
 endif (SH_EXEC AND TARGET mged AND TARGET gqa)
-
-CMAKEFILES(
-  gqa.sh
-  )
 
 # list of temporary files
 set(gqa_outfiles
@@ -21,12 +22,18 @@ set(gqa_outfiles
   gqa.mged
   gqa.overlaps.plot3
   gqa.volume.plot3
+  ovlp_overlaps.plot3
+  ovlpmulti_overlaps.plot3
   )
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${gqa_outfiles}")
 DISTCLEAN(${gqa_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  gqa.sh
+  regress-gqa_plot.cmake.in
+  )
 
 # Local Variables:
 # tab-width: 8

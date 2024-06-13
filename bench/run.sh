@@ -2,7 +2,7 @@
 #                          R U N . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2023 United States Government as represented by
+# Copyright (c) 2004-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -105,6 +105,13 @@ case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
     *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
 esac
 
+# Use a local cache
+BU_DIR_CACHE="`pwd`/cache-$$-benchmark"
+rm -rf $BU_DIR_CACHE && mkdir $BU_DIR_CACHE
+export BU_DIR_CACHE
+LIBRT_CACHE="`pwd`/rtcache-$$-benchmark"
+rm -rf $LIBRT_CACHE && mkdir $LIBRT_CACHE
+export LIBRT_CACHE
 
 #######################
 # log to tty and file #
@@ -1614,6 +1621,10 @@ else
     $ECHO "The document is available at $BENCHMARK_TR"
 fi
 $ECHO
+
+# Cleanup
+rm -rf "$BU_DIR_CACHE"
+rm -rf "$LIBRT_CACHE"
 
 $ECHO "Output was saved to $LOGFILE from `pwd`"
 $ECHO "Benchmark testing complete."

@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -397,7 +397,7 @@ _ged_rt_output_handler(void *clientData, int mask);
 
 GED_EXPORT extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-GED_EXPORT extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv);
+GED_EXPORT extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt);
 GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
 			  vect_t eye_model,
@@ -644,63 +644,6 @@ GED_EXPORT extern int _ged_read_densities(struct analyze_densities **dens, char 
  */
 GED_EXPORT extern int
 _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
-
-/* Ideally all of this could be in facetize.cpp, but the open() calls
- * used by the logging routines are problematic in C++ with Visual C++. */
-struct _ged_facetize_opts {
-    int quiet;
-    int verbosity;
-    int regions;
-    int resume;
-    int retry;
-    int in_place;
-    fastf_t feature_size;
-    fastf_t feature_scale;
-    fastf_t d_feature_size;
-    int max_time;
-    struct bg_tess_tol *tol;
-    struct bu_vls *faceted_suffix;
-
-    /* NMG specific options */
-    int triangulate;
-    int make_nmg;
-    int nmgbool;
-    int manifold;
-    int screened_poisson;
-    int continuation;
-    int method_flags;
-    int nmg_use_tnurbs;
-
-    /* Poisson specific options */
-    int max_pnts;
-    struct bg_3d_spsr_opts s_opts;
-
-    /* Brep specific options */
-    double nonovlp_threshold;
-
-    /* internal */
-    struct bu_attribute_value_set *c_map;
-    struct bu_attribute_value_set *s_map;
-    struct bu_hook_list *saved_bomb_hooks;
-    struct bu_hook_list *saved_log_hooks;
-    struct bu_vls *nmg_log;
-    struct bu_vls *nmg_log_header;
-    int nmg_log_print_header;
-    int stderr_stashed;
-    int serr;
-    int fnull;
-
-    struct bu_vls *froot;
-    struct bu_vls *manifold_comb;
-    struct bu_vls *nmg_comb;
-    struct bu_vls *continuation_comb;
-    struct bu_vls *spsr_comb;
-};
-
-void
-_ged_facetize_log_nmg(struct _ged_facetize_opts *o);
-void
-_ged_facetize_log_default(struct _ged_facetize_opts *o);
 
 
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);

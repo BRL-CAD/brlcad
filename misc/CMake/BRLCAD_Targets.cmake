@@ -1,7 +1,7 @@
 #              B R L C A D _ T A R G E T S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2023 United States Government as represented by
+# Copyright (c) 2011-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,11 +48,9 @@ check_cxx_compiler_flag(-Wno-error NOERROR_FLAG_CXX)
 function(SET_LANG_CXX SRC_FILES)
   if(ENABLE_ALL_CXX_COMPILE)
     foreach(srcfile ${SRC_FILES})
-      if(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}" MATCHES "src/other")
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-          set_source_files_properties(${srcfile} PROPERTIES LANGUAGE CXX)
-        endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-      endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}" MATCHES "src/other")
+      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+	set_source_files_properties(${srcfile} PROPERTIES LANGUAGE CXX)
+      endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
     endforeach(srcfile ${SRC_FILES})
   endif(ENABLE_ALL_CXX_COMPILE)
 endfunction(SET_LANG_CXX SRC_FILES)
@@ -94,339 +92,7 @@ function(VALIDATE_STYLE targetname srcslist)
 
 endfunction(VALIDATE_STYLE)
 
-# Determine if a given file is a C or C++ file
-function(FILE_LANG sfile outvar)
-
-  if("${srcfile}" MATCHES "<TARGET_OBJECTS:")
-    set(${outvar} "" PARENT_SCOPE)
-    return()
-  endif("${srcfile}" MATCHES "<TARGET_OBJECTS:")
-
-  # If we're building all CXX, assume CXX
-  if(ENABLE_ALL_CXX_COMPILE)
-    set(file_language CXX)
-  endif(ENABLE_ALL_CXX_COMPILE)
-
-  # Try LANGUAGE property
-  get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
-
-  # If we still don't know, go with extension
-  if(NOT file_language)
-
-    get_filename_component(srcfile_ext ${srcfile} EXT)
-    string(SUBSTRING "${srcfile_ext}" 1 -1 f_ext)
-    while(NOT "${f_ext}" STREQUAL "")
-      get_filename_component(f_ext ${f_ext} EXT)
-      if(f_ext)
-        set(srcfile_ext ${f_ext})
-        string(SUBSTRING "${f_ext}" 1 -1 f_ext)
-      endif(f_ext)
-    endwhile(NOT "${f_ext}" STREQUAL "")
-
-    # C++
-    if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
-      set(file_language CXX)
-    endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
-    if(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
-      set(file_language CXX)
-    endif(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
-
-    # C
-    if(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h" OR ${srcfile_ext} STREQUAL ".m")
-      set(file_language C)
-    endif(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h" OR ${srcfile_ext} STREQUAL ".m")
-
-    # If we can't figure it out, assume C...
-    if(NOT file_language)
-      message(WARNING "Can't determine the source language of ${sfile}, assuming C...")
-      set(file_language C)
-    endif(NOT file_language)
-
-  endif(NOT file_language)
-
-  set(${outvar} "${file_language}" PARENT_SCOPE)
-
-endfunction(FILE_LANG)
-
 define_property(GLOBAL PROPERTY BRLCAD_EXEC_FILES BRIEF_DOCS "BRL-CAD binaries" FULL_DOCS "List of installed BRL-CAD binary programs")
-
-#-----------------------------------------------------------------------------
-# Core routines for adding executables and libraries to the build and
-# install lists of CMake
-function(BRLCAD_ADDEXEC execname srcslist libslist)
-
-  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
-
-  # Go all C++ if the settings request it
-  SET_LANG_CXX("${srcslist}")
-
-  # Add the executable.  If the caller indicates this is a GUI type
-  # executable, add the correct flag for Visual Studio building (where
-  # it matters)
-  if(E_GUI)
-    add_executable(${execname} WIN32 ${srcslist})
-  else(E_GUI)
-    add_executable(${execname} ${srcslist})
-  endif(E_GUI)
-
-  # Set the standard build definitions for all BRL-CAD targets
-  target_compile_definitions(${execname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
-
-  # Let CMAKEFILES know what's going on
-  CMAKEFILES(${srcslist})
-
-  # If this is an installed program, note that
-  if (NOT E_NO_INSTALL AND NOT E_TEST)
-    set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_FILES "${execname}")
-  endif (NOT E_NO_INSTALL AND NOT E_TEST)
-
-  # Check at compile time the standard BRL-CAD style rules
-  VALIDATE_STYLE("${execname}" "${srcslist}")
-
-  # If we have libraries to link, link them.
-  if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-    target_link_libraries(${execname} ${libslist})
-  endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-
-  # In some situations (usually test executables) we want to be able
-  # to force the executable to remain in the local compilation
-  # directory regardless of the global CMAKE_RUNTIME_OUTPUT_DIRECTORY
-  # setting.  The NO_INSTALL flag is used to denote such executables.
-  # If an executable isn't to be installed or needs to be installed
-  # somewhere other than the default location, the NO_INSTALL argument
-  # bypasses the standard install command call.
-  #
-  # If we *are* installing, do so to the binary directory (BIN_DIR)
-  if(E_NO_INSTALL OR E_TEST)
-    # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
-    if(NOT WIN32 AND NOT E_TEST_USESDATA)
-      if(NOT CMAKE_CONFIGURATION_TYPES)
-        set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-      else(NOT CMAKE_CONFIGURATION_TYPES)
-        foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-          string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-          set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}")
-        endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif(NOT CMAKE_CONFIGURATION_TYPES)
-    endif(NOT WIN32 AND NOT E_TEST_USESDATA)
-  else(E_NO_INSTALL OR E_TEST)
-    if (NOT E_TEST_USESDATA)
-      install(TARGETS ${execname} DESTINATION ${BIN_DIR})
-    endif (NOT E_TEST_USESDATA)
-  endif(E_NO_INSTALL OR E_TEST)
-
-
-  # Set the folder property (used in programs such as Visual Studio to
-  # organize build targets.
-  if(E_NO_INSTALL AND NOT E_FOLDER)
-    set(SUBFOLDER "/Build Only")
-  endif(E_NO_INSTALL AND NOT E_FOLDER)
-  if(E_TEST AND NOT E_FOLDER AND NOT SUBFOLDER)
-    set(SUBFOLDER "/Test Programs")
-  endif(E_TEST AND NOT E_FOLDER AND NOT SUBFOLDER)
-  if(E_TEST_USESDATA AND NOT E_FOLDER AND NOT SUBFOLDER)
-    set(SUBFOLDER "/Test Programs")
-  endif(E_TEST_USESDATA AND NOT E_FOLDER AND NOT SUBFOLDER)
-  if(E_FOLDER)
-    set(SUBFOLDER "/${E_FOLDER}")
-  endif(E_FOLDER)
-  set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables${SUBFOLDER}")
-
-
-endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
-
-
-#---------------------------------------------------------------------
-# Library function handles both shared and static libs, so one
-# "BRLCAD_ADDLIB" statement will cover both automatically
-function(BRLCAD_ADDLIB libname srcslist libslist)
-
-  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
-
-  # The naming convention used for variables is the upper case of the
-  # library name, without the lib prefix.
-  string(REPLACE "lib" "" LOWERCORE "${libname}")
-  string(TOUPPER ${LOWERCORE} UPPER_CORE)
-
-  # Let CMAKEFILES know what's going on
-  CMAKEFILES(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
-
-  # Go all C++ if the settings request it
-  SET_LANG_CXX("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}")
-
-  # Local copy of srcslist in case manipulation is needed
-  set(lsrcslist ${srcslist})
-
-  # If we're going to have a specified subfolder, prepare the
-  # appropriate string:
-  if(L_FOLDER)
-    set(SUBFOLDER "/${L_FOLDER}")
-  endif(L_FOLDER)
-
-  # If we need it, set up the OBJECT library build
-  if(USE_OBJECT_LIBS)
-    add_library(${libname}-obj OBJECT ${lsrcslist})
-    if(${libname} MATCHES "^lib*")
-      set_target_properties(${libname}-obj PROPERTIES PREFIX "")
-    endif(${libname} MATCHES "^lib*")
-    set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
-    set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
-
-    # Set the standard build definitions for all BRL-CAD targets
-    target_compile_definitions(${libname}-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
-
-    if(HIDE_INTERNAL_SYMBOLS)
-      set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
-    endif(HIDE_INTERNAL_SYMBOLS)
-
-    # If the library depends on other targets in this build, not just system
-    # libraries, make sure the object targets depends them as well.  In
-    # principle this isn't always required - object compilation may be
-    # independent of the dependencies needed at link time - but if compilation
-    # DOES depends on those targets having first performed some action (like
-    # staging a header in an expected location) NOT setting this dependency
-    # explicitly will eventually cause build failures.
-    #
-    # Without setting the OBJECT dependencies, success in the above case would
-    # depend on whether or not the high level build ordering happened to run
-    # the required targets before performing this step.  That failure mode is
-    # semi-random and intermittent (top level build ordering without explicit
-    # dependencies varies depending on -j flag values) making it hard to debug.
-    # Ask me how I know.
-    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-      foreach(ll ${libslist})
-        if (TARGET ${ll})
-          add_dependencies(${libname}-obj ${ll})
-        endif (TARGET ${ll})
-      endforeach(ll ${libslist})
-    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-
-  endif(USE_OBJECT_LIBS)
-
-  # Handle the shared library
-  if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
-
-    add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
-    if(${libname} MATCHES "^lib*")
-      set_target_properties(${libname} PROPERTIES PREFIX "")
-    endif(${libname} MATCHES "^lib*")
-
-    # Set the standard build definitions for all BRL-CAD targets
-    target_compile_definitions(${libname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
-
-    if(HIDE_INTERNAL_SYMBOLS)
-      set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
-      set_property(TARGET ${libname} APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS  "${UPPER_CORE}_DLL_IMPORTS")
-    endif(HIDE_INTERNAL_SYMBOLS)
-
-  endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
-
-  if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
-    if(L_STATIC)
-      set(libstatic ${libname})
-    else(L_STATIC)
-      set(libstatic ${libname}-static)
-    endif(L_STATIC)
-    add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
-    if(${libstatic} MATCHES "^lib*")
-      set_target_properties(${libstatic} PROPERTIES PREFIX "")
-    endif(${libstatic} MATCHES "^lib*")
-
-    # Set the standard build definitions for all BRL-CAD targets
-    target_compile_definitions(${libstatic} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
-
-    if(NOT MSVC)
-      set_target_properties(${libstatic} PROPERTIES OUTPUT_NAME "${libname}")
-    endif(NOT MSVC)
-  endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
-
-  # Make sure we don't end up with outputs named liblib...
-  set(possible_targets ${libname} ${libname}-static)
-  foreach(pt ${possible_targets})
-    if(TARGET ${pt} AND ${pt} MATCHES "^lib*")
-      set_target_properties(${pt} PROPERTIES PREFIX "")
-    endif(TARGET ${pt} AND ${pt} MATCHES "^lib*")
-  endforeach(pt ${possible_targets})
-
-  # Extra static lib specific work
-  if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
-    # Make sure the target depends on any targets in the libslist
-    foreach(ll ${libslist})
-      if (TARGET ${ll})
-        add_dependencies(${libstatic} ${ll})
-      endif (TARGET ${ll})
-    endforeach(ll ${libslist})
-    set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
-    VALIDATE_STYLE("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
-
-    if(NOT L_NO_INSTALL)
-      install(TARGETS ${libstatic}
-        RUNTIME DESTINATION ${BIN_DIR}
-        LIBRARY DESTINATION ${LIB_DIR}
-        ARCHIVE DESTINATION ${LIB_DIR})
-    endif(NOT L_NO_INSTALL)
-  endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
-
-  # Extra shared lib specific work
-  if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
-    set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries${SUBFOLDER}")
-    VALIDATE_STYLE("${libname}" "${srcslist};${L_SHARED_SRCS}")
-    # If we have libraries to link for a shared library, link them.
-    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-      target_link_libraries(${libname} ${libslist})
-    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-    if(NOT L_NO_INSTALL)
-      install(TARGETS ${libname}
-        RUNTIME DESTINATION ${BIN_DIR}
-        LIBRARY DESTINATION ${LIB_DIR}
-        ARCHIVE DESTINATION ${LIB_DIR})
-    endif(NOT L_NO_INSTALL)
-  endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
-
-endfunction(BRLCAD_ADDLIB libname srcslist libslist)
-
-
-#-----------------------------------------------------------------------------
-# We need a way to tell whether one path is a subpath of another path without
-# relying on regular expressions, since file paths may have characters in them
-# that will trigger regex matching behavior when we don't want it.  (To test,
-# for example, use a build directory name of build++)
-#
-# Sets ${result_var} to 1 if the candidate subpath is actually a subpath of
-# the supplied "full" path, otherwise sets it to 0.
-#
-# The routine below does the check without using regex matching, in order to
-# handle path names that contain characters that would be interpreted as active
-# in a regex string.
-if (NOT COMMAND IS_SUBPATH)
-  function(IS_SUBPATH candidate_subpath full_path result_var)
-
-    # Just assume it isn't until we prove it is
-    set(${result_var} 0 PARENT_SCOPE)
-
-    # get the CMake form of the path so we have something consistent to work on
-    file(TO_CMAKE_PATH "${full_path}" c_full_path)
-    file(TO_CMAKE_PATH "${candidate_subpath}" c_candidate_subpath)
-
-    # check the string lengths - if the "subpath" is longer than the full path,
-    # there's not point in going further
-    string(LENGTH "${c_full_path}" FULL_LENGTH)
-    string(LENGTH "${c_candidate_subpath}" SUB_LENGTH)
-    if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-      return()
-    endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-
-    # OK, maybe it's a subpath - time to actually check
-    string(SUBSTRING "${c_full_path}" 0 ${SUB_LENGTH} c_full_subpath)
-    if(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
-      return()
-    endif(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
-
-    # If we get here, it's a subpath
-    set(${result_var} 1 PARENT_SCOPE)
-
-  endfunction(IS_SUBPATH)
-endif (NOT COMMAND IS_SUBPATH)
 
 #---------------------------------------------------------------------
 # For situations when a local 3rd party library (say, zlib) has been
@@ -527,30 +193,22 @@ function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   endif(${DIR_LIST})
 endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 
-#---------------------------------------------------------------------
-# Wrapper to properly include directories for a BRL-CAD build.
-# Handles the SYSTEM option to the include_directories command, as
-# well as calling the sort function.
-function(BRLCAD_INCLUDE_DIRS DIR_LIST)
+function(BRLCAD_INCLUDE_DIRS targetname dirlist itype)
 
-  # TODO - We don't want parent directories values augmenting DIR_LIST
-  # for subsequent targets - if we're calling this, we're taking full
-  # control of all inclusions for all targets in this and subsequent
-  # directories.  We should probably use the target level
-  # INCLUDE_DIRECTORIES property and stop setting include_directories
-  # on entire directories all together for maximal precision and
-  # minimum surprises...
-  #
-  # set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
+  set(INCLUDE_DIRS)
+  foreach(idr ${${dirlist}})
+    if (NOT "${idr}" MATCHES ".*NOTFOUND")
+      list(APPEND INCLUDE_DIRS ${idr})
+    endif (NOT "${idr}" MATCHES ".*NOTFOUND")
+  endforeach(idr ${INCLUDE_DIRS})
+  if (NOT INCLUDE_DIRS)
+    return()
+  endif (NOT INCLUDE_DIRS)
 
-  set(INCLUDE_DIRS ${${DIR_LIST}})
-  if(INCLUDE_DIRS)
-    list(REMOVE_DUPLICATES INCLUDE_DIRS)
-  endif(INCLUDE_DIRS)
-
+  list(REMOVE_DUPLICATES INCLUDE_DIRS)
   BRLCAD_SORT_INCLUDE_DIRS(INCLUDE_DIRS)
 
-  foreach(inc_dir ${INCLUDE_DIRS})
+  foreach (inc_dir ${INCLUDE_DIRS})
     get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
     IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
     if (NOT IS_LOCAL)
@@ -559,39 +217,339 @@ function(BRLCAD_INCLUDE_DIRS DIR_LIST)
     set(IS_SYSPATH 0)
     foreach(sp ${SYS_INCLUDE_PATTERNS})
       if("${inc_dir}" MATCHES "${sp}")
-        set(IS_SYSPATH 1)
+	set(IS_SYSPATH 1)
       endif("${inc_dir}" MATCHES "${sp}")
     endforeach(sp ${SYS_INCLUDE_PATTERNS})
     if(IS_SYSPATH OR NOT IS_LOCAL)
       if(IS_SYSPATH)
-        include_directories(SYSTEM ${inc_dir})
+	target_include_directories(${targetname} SYSTEM ${itype} ${inc_dir})
       else(IS_SYSPATH)
-        include_directories(AFTER SYSTEM ${inc_dir})
+	target_include_directories(${targetname} SYSTEM AFTER ${itype} ${inc_dir})
       endif(IS_SYSPATH)
     else(IS_SYSPATH OR NOT IS_LOCAL)
-      include_directories(BEFORE ${inc_dir})
+      target_include_directories(${targetname} BEFORE ${itype} ${inc_dir})
     endif(IS_SYSPATH OR NOT IS_LOCAL)
-  endforeach(inc_dir ${ALL_INCLUDES})
+  endforeach (inc_dir ${INCLUDE_DIRS})
 
-endfunction(BRLCAD_INCLUDE_DIRS DIR_LIST)
+endfunction(BRLCAD_INCLUDE_DIRS)
+
+#-----------------------------------------------------------------------------
+# Core routines for adding executables and libraries to the build and
+# install lists of CMake
+function(BRLCAD_ADDEXEC execname srcslist libslist)
+
+  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
+
+  # Go all C++ if the settings request it
+  SET_LANG_CXX("${srcslist}")
+
+  # Add the executable.  If the caller indicates this is a GUI type
+  # executable, add the correct flag for Visual Studio building (where
+  # it matters)
+  if(E_GUI)
+    add_executable(${execname} WIN32 ${srcslist})
+  else(E_GUI)
+    add_executable(${execname} ${srcslist})
+  endif(E_GUI)
+
+  # Set the standard build definitions for all BRL-CAD targets
+  target_compile_definitions(${execname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+  # Let CMAKEFILES know what's going on
+  CMAKEFILES(${srcslist})
+
+  # If this is an installed program, note that
+  if (NOT E_NO_INSTALL AND NOT E_TEST)
+    set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_FILES "${execname}")
+  endif (NOT E_NO_INSTALL AND NOT E_TEST)
+
+  # Check at compile time the standard BRL-CAD style rules
+  VALIDATE_STYLE("${execname}" "${srcslist}")
+
+  # If we have libraries to link, link them.
+  if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+    target_link_libraries(${execname} ${libslist})
+  endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+
+  # Handle include directories from targets
+  if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+    set(dep_includes)
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
+	if (IDIRS)
+	  list(APPEND dep_includes ${IDIRS})
+	endif (IDIRS)
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
+    BRLCAD_INCLUDE_DIRS(${execname} dep_includes PRIVATE) 
+  endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+
+  # In some situations (usually test executables) we want to be able
+  # to force the executable to remain in the local compilation
+  # directory regardless of the global CMAKE_RUNTIME_OUTPUT_DIRECTORY
+  # setting.  The NO_INSTALL flag is used to denote such executables.
+  # If an executable isn't to be installed or needs to be installed
+  # somewhere other than the default location, the NO_INSTALL argument
+  # bypasses the standard install command call.
+  #
+  # If we *are* installing, do so to the binary directory (BIN_DIR)
+  if(E_NO_INSTALL OR E_TEST)
+    # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
+    if(NOT WIN32 AND NOT E_TEST_USESDATA)
+      set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    endif(NOT WIN32 AND NOT E_TEST_USESDATA)
+  else(E_NO_INSTALL OR E_TEST)
+    if (NOT E_TEST_USESDATA)
+      install(TARGETS ${execname} DESTINATION ${BIN_DIR})
+    endif (NOT E_TEST_USESDATA)
+  endif(E_NO_INSTALL OR E_TEST)
+
+
+  # Set the folder property (used in programs such as Visual Studio to
+  # organize build targets.
+  if(E_NO_INSTALL AND NOT E_FOLDER)
+    set(SUBFOLDER "/Build Only")
+  endif(E_NO_INSTALL AND NOT E_FOLDER)
+  if(E_TEST AND NOT E_FOLDER AND NOT SUBFOLDER)
+    set(SUBFOLDER "/Test Programs")
+  endif(E_TEST AND NOT E_FOLDER AND NOT SUBFOLDER)
+  if(E_TEST_USESDATA AND NOT E_FOLDER AND NOT SUBFOLDER)
+    set(SUBFOLDER "/Test Programs")
+  endif(E_TEST_USESDATA AND NOT E_FOLDER AND NOT SUBFOLDER)
+  if(E_FOLDER)
+    set(SUBFOLDER "/${E_FOLDER}")
+  endif(E_FOLDER)
+  set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables${SUBFOLDER}")
+
+  if (BRLCAD_EXTRADOCS)
+    if (NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL AND NOT E_NO_MAN)
+      if (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+	ADD_DOCBOOK("HTML;PHP;MAN1;PDF" ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml man1 "")
+      else (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+	message("No man page defined for ${execname}")
+      endif (EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+    endif (NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL AND NOT E_NO_MAN)
+  endif (BRLCAD_EXTRADOCS)
+
+endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
+
 
 #---------------------------------------------------------------------
-# Wrapper to handle include directories specific to libraries.
-# Removes duplicates and makes sure the <LIB>_INCLUDE_DIRS list is in
-# the cache immediately, so it can be used by other libraries.  These
-# lists are not intended as toplevel user settable options so mark as
-# advanced.
-function(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
-  string(TOUPPER ${libname} LIB_UPPER)
+# Library function handles both shared and static libs, so one
+# "BRLCAD_ADDLIB" statement will cover both automatically
+function(BRLCAD_ADDLIB libname srcslist libslist include_dirs local_include_dirs)
 
-  list(REMOVE_DUPLICATES ${DIR_LIST})
-  set(${LIB_UPPER}_INCLUDE_DIRS ${${DIR_LIST}} CACHE STRING "Include directories for lib${libname}" FORCE)
-  mark_as_advanced(${DIR_LIST})
+  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
-  set(ALL_INCLUDES ${${DIR_LIST}} ${${LOCAL_DIR_LIST}})
-  BRLCAD_INCLUDE_DIRS(ALL_INCLUDES)
-endfunction(BRLCAD_LIB_INCLUDE_DIRS)
+  # The naming convention used for variables is the upper case of the
+  # library name, without the lib prefix.
+  string(REPLACE "lib" "" LOWERCORE "${libname}")
+  string(TOUPPER ${LOWERCORE} UPPER_CORE)
 
+  # Let CMAKEFILES know what's going on
+  CMAKEFILES(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
+
+  # Go all C++ if the settings request it
+  SET_LANG_CXX("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}")
+
+  # Local copy of srcslist in case manipulation is needed
+  set(lsrcslist ${srcslist})
+
+  # If we're going to have a specified subfolder, prepare the
+  # appropriate string:
+  if(L_FOLDER)
+    set(SUBFOLDER "/${L_FOLDER}")
+  endif(L_FOLDER)
+
+  # Set up includes
+  set(PUBLIC_HDRS ${include_dirs})
+  foreach(ll ${libslist})
+    if (TARGET ${ll})
+      get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
+      if (IDIRS)
+	list(APPEND PUBLIC_HDRS ${IDIRS})
+      endif (IDIRS)
+    endif (TARGET ${ll})
+  endforeach(ll ${libslist})
+  set(PRIVATE_HDRS ${local_include_dirs})
+
+  # If we need it, set up the OBJECT library build
+  if(USE_OBJECT_LIBS)
+    add_library(${libname}-obj OBJECT ${lsrcslist})
+    if(${libname} MATCHES "^lib*")
+      set_target_properties(${libname}-obj PROPERTIES PREFIX "")
+    endif(${libname} MATCHES "^lib*")
+    set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
+    set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
+
+    # Set the standard build definitions for all BRL-CAD targets
+    target_compile_definitions(${libname}-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    # Set includes on obj target
+    BRLCAD_INCLUDE_DIRS(${libname}-obj PUBLIC_HDRS PUBLIC)
+    BRLCAD_INCLUDE_DIRS(${libname}-obj PRIVATE_HDRS PRIVATE)
+
+    if(HIDE_INTERNAL_SYMBOLS)
+      set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+    endif(HIDE_INTERNAL_SYMBOLS)
+
+    # If the library depends on other targets in this build, not just system
+    # libraries, make sure the object targets depends them as well.  In
+    # principle this isn't always required - object compilation may be
+    # independent of the dependencies needed at link time - but if compilation
+    # DOES depends on those targets having first performed some action (like
+    # staging a header in an expected location) NOT setting this dependency
+    # explicitly will eventually cause build failures.
+    #
+    # Without setting the OBJECT dependencies, success in the above case would
+    # depend on whether or not the high level build ordering happened to run
+    # the required targets before performing this step.  That failure mode is
+    # semi-random and intermittent (top level build ordering without explicit
+    # dependencies varies depending on -j flag values) making it hard to debug.
+    # Ask me how I know.
+    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+      foreach(ll ${libslist})
+        if (TARGET ${ll})
+          add_dependencies(${libname}-obj ${ll})
+        endif (TARGET ${ll})
+      endforeach(ll ${libslist})
+    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+
+  endif(USE_OBJECT_LIBS)
+
+  # Handle the shared library
+  if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+
+    add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
+    if(${libname} MATCHES "^lib*")
+      set_target_properties(${libname} PROPERTIES PREFIX "")
+    endif(${libname} MATCHES "^lib*")
+
+    # Set the standard build definitions for all BRL-CAD targets
+    target_compile_definitions(${libname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    # Set includes on shared target
+    BRLCAD_INCLUDE_DIRS(${libname} PUBLIC_HDRS PUBLIC)
+    BRLCAD_INCLUDE_DIRS(${libname} PRIVATE_HDRS PRIVATE)
+
+    if(HIDE_INTERNAL_SYMBOLS)
+      set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+      set_property(TARGET ${libname} APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS  "${UPPER_CORE}_DLL_IMPORTS")
+    endif(HIDE_INTERNAL_SYMBOLS)
+
+  endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+
+  if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+    if(L_STATIC)
+      set(libstatic ${libname})
+    else(L_STATIC)
+      set(libstatic ${libname}-static)
+    endif(L_STATIC)
+    add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
+    if(${libstatic} MATCHES "^lib*")
+      set_target_properties(${libstatic} PROPERTIES PREFIX "")
+    endif(${libstatic} MATCHES "^lib*")
+
+    # Set the standard build definitions for all BRL-CAD targets
+    target_compile_definitions(${libstatic} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    # Set includes on static target
+    BRLCAD_INCLUDE_DIRS(${libstatic} PUBLIC_HDRS PUBLIC)
+    BRLCAD_INCLUDE_DIRS(${libstatic} PRIVATE_HDRS PRIVATE)
+
+    if(NOT MSVC)
+      set_target_properties(${libstatic} PROPERTIES OUTPUT_NAME "${libname}")
+    endif(NOT MSVC)
+  endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+
+  # Make sure we don't end up with outputs named liblib...
+  set(possible_targets ${libname} ${libname}-static)
+  foreach(pt ${possible_targets})
+    if(TARGET ${pt} AND ${pt} MATCHES "^lib*")
+      set_target_properties(${pt} PROPERTIES PREFIX "")
+    endif(TARGET ${pt} AND ${pt} MATCHES "^lib*")
+  endforeach(pt ${possible_targets})
+
+  # Extra static lib specific work
+  if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+    # Make sure the target depends on any targets in the libslist
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+        add_dependencies(${libstatic} ${ll})
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
+    set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
+    VALIDATE_STYLE("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
+
+    if(NOT L_NO_INSTALL)
+      install(TARGETS ${libstatic}
+        RUNTIME DESTINATION ${BIN_DIR}
+        LIBRARY DESTINATION ${LIB_DIR}
+        ARCHIVE DESTINATION ${LIB_DIR})
+    endif(NOT L_NO_INSTALL)
+  endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+
+  # Extra shared lib specific work
+  if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+    set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries${SUBFOLDER}")
+    VALIDATE_STYLE("${libname}" "${srcslist};${L_SHARED_SRCS}")
+    # If we have libraries to link for a shared library, link them.
+    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+      target_link_libraries(${libname} ${libslist})
+    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+    if(NOT L_NO_INSTALL)
+      install(TARGETS ${libname}
+        RUNTIME DESTINATION ${BIN_DIR}
+        LIBRARY DESTINATION ${LIB_DIR}
+        ARCHIVE DESTINATION ${LIB_DIR})
+    endif(NOT L_NO_INSTALL)
+  endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+
+endfunction(BRLCAD_ADDLIB)
+
+
+#-----------------------------------------------------------------------------
+# We need a way to tell whether one path is a subpath of another path without
+# relying on regular expressions, since file paths may have characters in them
+# that will trigger regex matching behavior when we don't want it.  (To test,
+# for example, use a build directory name of build++)
+#
+# Sets ${result_var} to 1 if the candidate subpath is actually a subpath of
+# the supplied "full" path, otherwise sets it to 0.
+#
+# The routine below does the check without using regex matching, in order to
+# handle path names that contain characters that would be interpreted as active
+# in a regex string.
+if (NOT COMMAND IS_SUBPATH)
+  function(IS_SUBPATH candidate_subpath full_path result_var)
+
+    # Just assume it isn't until we prove it is
+    set(${result_var} 0 PARENT_SCOPE)
+
+    # get the CMake form of the path so we have something consistent to work on
+    file(TO_CMAKE_PATH "${full_path}" c_full_path)
+    file(TO_CMAKE_PATH "${candidate_subpath}" c_candidate_subpath)
+
+    # check the string lengths - if the "subpath" is longer than the full path,
+    # there's not point in going further
+    string(LENGTH "${c_full_path}" FULL_LENGTH)
+    string(LENGTH "${c_candidate_subpath}" SUB_LENGTH)
+    if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+      return()
+    endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+
+    # OK, maybe it's a subpath - time to actually check
+    string(SUBSTRING "${c_full_path}" 0 ${SUB_LENGTH} c_full_subpath)
+    if(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+      return()
+    endif(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+
+    # If we get here, it's a subpath
+    set(${result_var} 1 PARENT_SCOPE)
+
+  endfunction(IS_SUBPATH)
+endif (NOT COMMAND IS_SUBPATH)
 
 #---------------------------------------------------------------------
 # Files needed by BRL-CAD need to be both installed and copied into
@@ -619,6 +577,39 @@ endfunction(BRLCAD_LIB_INCLUDE_DIRS)
 
 function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
+  cmake_parse_arguments(M "" "" "REQUIRED;TRIGGER" ${ARGN})
+
+  # Handle both a list of one or more files and variable holding a
+  # list of files - find out what we've got.
+  NORMALIZE_FILE_LIST("${inputdata}" RLIST datalist FPLIST fullpath_datalist TARGET targetname)
+
+  # Identify the source files for CMake
+  CMAKEFILES(${datalist})
+
+  if (M_REQUIRED)
+    foreach(mt ${M_REQUIRED})
+      if (NOT TARGET ${mt})
+	return()
+      endif (NOT TARGET ${mt})
+    endforeach(mt ${M_REQUIRED})
+  endif (M_REQUIRED)
+
+
+  # Unlike REQUIRED, a TRIGGER option indicates we DON'T need this target
+  # unless at least one of the listed targets is defined
+  if (M_TRIGGER)
+    set(IS_ENABLED 0)
+    foreach(mt ${M_TRIGGER})
+      if (TARGET ${mt})
+	set(IS_ENABLED 1)
+      endif (TARGET ${mt})
+    endforeach(mt ${M_TRIGGER})
+    if (NOT IS_ENABLED)
+      return()
+    endif (NOT IS_ENABLED)
+  endif (M_TRIGGER)
+
+
   if (NOT TARGET managed_files)
     add_custom_target(managed_files ALL)
     set_target_properties(managed_files PROPERTIES FOLDER "BRL-CAD File Copying")
@@ -628,13 +619,6 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   if(${ARGC} GREATER 2)
     CMAKE_PARSE_ARGUMENTS(${VAR_PREFIX} "EXEC" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 2)
-
-  # Handle both a list of one or more files and variable holding a
-  # list of files - find out what we've got.
-  NORMALIZE_FILE_LIST("${inputdata}" RLIST datalist FPLIST fullpath_datalist TARGET targetname)
-
-  # Identify the source files for CMake
-  CMAKEFILES(${datalist})
 
   #-------------------------------------------------------------------
   # Some of the more advanced build system features in BRL-CAD's CMake
@@ -670,14 +654,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
     # Make sure the target directory exists (symlinks need the target
     # directory already in place)
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-      execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${targetdir}")
-    else(NOT CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif(NOT CMAKE_CONFIGURATION_TYPES)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${targetdir}")
 
     # Using symlinks - in this case, the custom command doesn't
     # actually have to do the work every time the source file changes
@@ -686,14 +663,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     # the configure stage.
     foreach(filename ${fullpath_datalist})
       get_filename_component(ITEM_NAME ${filename} NAME)
-      if(NOT CMAKE_CONFIGURATION_TYPES)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
-      else(NOT CMAKE_CONFIGURATION_TYPES)
-        foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-          string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-          execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ITEM_NAME}")
-        endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      endif(NOT CMAKE_CONFIGURATION_TYPES)
+      execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
     endforeach(filename ${fullpath_datalist})
 
     # check for and remove any dead symbolic links from a previous run
@@ -720,14 +690,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     # Write out script for copying from source dir to build dir
     set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${fullpath_datalist}\")\n")
     set(${targetname}_cmake_contents "${${targetname}_cmake_contents}foreach(filename \${FILES_TO_COPY})\n")
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-      set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${targetdir}\")\n")
-    else(NOT CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-        set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}\")\n")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif(NOT CMAKE_CONFIGURATION_TYPES)
+    set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${targetdir}\")\n")
     set(${targetname}_cmake_contents "${${targetname}_cmake_contents}endforeach(filename \${CURRENT_FILE_LIST})\n")
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake" "${${targetname}_cmake_contents}")
 
@@ -764,14 +727,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   # handle the single and multiconfig cases.
   foreach(filename ${fullpath_datalist})
     get_filename_component(ITEM_NAME "${filename}" NAME)
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-      DISTCLEAN("${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
-    else(NOT CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-        DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ITEM_NAME}")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif(NOT CMAKE_CONFIGURATION_TYPES)
+    DISTCLEAN("${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
   endforeach(filename ${fullpath_datalist})
 
   # The installation rule relates only to the original source
@@ -786,7 +742,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
 endfunction(BRLCAD_MANAGE_FILES)
 
 #-----------------------------------------------------------------------------
-# Specific uses of the BRLCAD_MANAGED_FILES functionality - these
+# Specific uses of the BRLCAD_MANAGE_FILES functionality - these
 # cover most of the common cases in BRL-CAD.
 
 function(BRLCAD_ADDDATA datalist targetdir)
@@ -794,6 +750,20 @@ function(BRLCAD_ADDDATA datalist targetdir)
 endfunction(BRLCAD_ADDDATA)
 
 function(ADD_DOC doclist targetdir)
+
+  cmake_parse_arguments(A "" "" "REQUIRED" ${ARGN})
+
+  # Identify the source files for CMake
+  CMAKEFILES(${${doclist}})
+
+  if (A_REQUIRED)
+    foreach (rdep ${A_REQUIRED})
+      if (NOT TARGET ${rdep})
+	return()
+      endif (NOT TARGET ${rdep})
+    endforeach (rdep ${A_REQUIRED})
+  endif (A_REQUIRED)
+
   if (BRLCAD_INSTALL_DOCS)
     set(doc_target_dir ${DOC_DIR}/${targetdir})
     BRLCAD_MANAGE_FILES(${doclist} ${doc_target_dir})
@@ -863,7 +833,15 @@ endfunction(ADD_MAN_PAGES)
 
 function(BRLCAD_REGRESSION_TEST testname depends_list)
 
-  cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC" "" ${ARGN})
+  cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC;VEXEC" "" ${ARGN})
+
+  if (depends_list)
+    foreach(dep ${depends_list})
+      if (NOT TARGET ${dep})
+	return()
+      endif (NOT TARGET ${dep})
+    endforeach(dep ${depends_list})
+  endif (depends_list)
 
   if (NOT ${testname}_TEST_DEFINED)
 
@@ -876,7 +854,11 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
 
     if (TARGET ${${testname}_EXEC})
-      add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+      if (TARGET ${${testname}_VEXEC})
+	add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -DVEXEC=$<TARGET_FILE:${${testname}_VEXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+      else (TARGET ${${testname}_VEXEC})
+	add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+      endif (TARGET ${${testname}_VEXEC})
     else (TARGET ${${testname}_EXEC})
       add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
     endif (TARGET ${${testname}_EXEC})
@@ -885,17 +867,10 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
 
   # Every regression test gets a build target
-  if (CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(${testname}
-      COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R^${testname}$ --output-on-failure
-      VERBATIM
-      )
-  else (CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(${testname}
-      COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname}$ --output-on-failure
-      VERBATIM
-      )
-  endif (CMAKE_CONFIGURATION_TYPES)
+  add_custom_target(${testname}
+    COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname}$ --output-on-failure
+    VERBATIM
+    )
   if (depends_list)
     add_dependencies(${testname} ${depends_list})
   endif (depends_list)

@@ -1,7 +1,7 @@
 /*                        P O L Y G O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -108,7 +108,7 @@ BV_EXPORT extern void bv_polygon_cpy(struct bv_polygon *dest , struct bv_polygon
 // lines to highlight interior holes.
 BV_EXPORT extern int bv_polygon_calc_fdelta(struct bv_polygon *p);
 
-BG_EXPORT extern struct bg_polygon *
+BV_EXPORT extern struct bg_polygon *
 bv_polygon_fill_segments(struct bg_polygon *poly, plane_t *vp, vect2d_t line_slope, fastf_t line_spacing);
 
 // For all polygon bv_scene_objs in the objs table, apply the specified boolean

@@ -1,16 +1,35 @@
+/*                   I F P A I N T E R . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2023-2024 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
 #include "IFPainter.h"
 
 
 IFPainter::IFPainter(int width, int height)
-	: img(width, height, CV_8UC3, cv::Scalar(255, 255, 255))
-	, standardTextWeight(2)
-	, boldTextWeight(4)
-	, heightToFontSizeMap()
+    : img(width, height, CV_8UC3, cv::Scalar(255, 255, 255))
+    , standardTextWeight(2)
+    , boldTextWeight(4)
+    , heightToFontSizeMap()
 {
-	if (img.empty())
-	{
-		std::cerr << "ISSUE: Image Frame failed to load (in IFPainter.cpp)" << std::endl;
-	}
+    if (img.empty()) {
+	bu_log("ERROR: Image Frame failed to load\n");
+    }
 }
 
 IFPainter::~IFPainter()
@@ -20,42 +39,40 @@ IFPainter::~IFPainter()
 std::pair<int, int>
 IFPainter::getCroppedImageDims(std::string imgPath)
 {
-	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
-	// Convert the image to grayscale for creating the mask
-	cv::Mat gray_image;
-	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
-	// Create a mask of non-white pixels
-	cv::Mat mask = gray_image < 255;
-	// Find the bounding rectangle of non-white pixels
-	cv::Rect bounding_rect = boundingRect(mask);
-	// Crop the image to the bounding rectangle
-	cv::Mat lilImage = imageRaw(bounding_rect);
+    cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+    // Convert the image to grayscale for creating the mask
+    cv::Mat gray_image;
+    cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
+    // Create a mask of non-white pixels
+    cv::Mat mask = gray_image < 255;
+    // Find the bounding rectangle of non-white pixels
+    cv::Rect bounding_rect = boundingRect(mask);
+    // Crop the image to the bounding rectangle
+    cv::Mat lilImage = imageRaw(bounding_rect);
 
+    int imgWidth = lilImage.size().width;
+    int imgHeight = lilImage.size().height;
 
-	int imgWidth = lilImage.size().width;
-	int imgHeight = lilImage.size().height;
-
-	return std::pair(imgWidth, imgHeight);
+    return std::pair<int, int>(imgWidth, imgHeight);
 }
 
 
 void
 IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
 {
-	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
-	cv::Mat resized_image;
-	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+    cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+    cv::Mat resized_image;
+    resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
-	//Trying to copyto the image on to the private image frame, img
-	cv::Mat destRoi;
-	try {
-		destRoi = img(cv::Rect(x, y, resized_image.cols, resized_image.rows));
-	}
-	catch (...) {
-		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
-		return;
-	}
-	resized_image.copyTo(destRoi);
+    //Trying to copyto the image on to the private image frame, img
+    cv::Mat destRoi;
+    try {
+	destRoi = img(cv::Rect(x, y, resized_image.cols, resized_image.rows));
+    } catch (...) {
+	bu_log("WARNING: Trying to create roi out of image boundaries\n");
+	return;
+    }
+    resized_image.copyTo(destRoi);
 }
 
 void
@@ -114,22 +131,21 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
 void
 IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
-	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
-	// Convert the image to grayscale for creating the mask
-	cv::Mat gray_image;
-	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
-	// Create a mask of non-white pixels
-	cv::Mat mask = gray_image < 255;
-	// Find the bounding rectangle of non-white pixels
-	cv::Rect bounding_rect = boundingRect(mask);
-	// Crop the image to the bounding rectangle
-	cv::Mat lilImage = imageRaw(bounding_rect);
+    cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+    // Convert the image to grayscale for creating the mask
+    cv::Mat gray_image;
+    cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
+    // Create a mask of non-white pixels
+    cv::Mat mask = gray_image < 255;
+    // Find the bounding rectangle of non-white pixels
+    cv::Rect bounding_rect = boundingRect(mask);
+    // Crop the image to the bounding rectangle
+    cv::Mat lilImage = imageRaw(bounding_rect);
 
-
-	int imgWidth = lilImage.size().width;
-	int imgHeight = lilImage.size().height;
-	int heightOffset = 0;
-	int widthOffset = 0;
+    int imgWidth = lilImage.size().width;
+    int imgHeight = lilImage.size().height;
+    int heightOffset = 0;
+    int widthOffset = 0;
 
 	if ((double)imgWidth / imgHeight > (double)width / height)
 	{
@@ -154,16 +170,15 @@ IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgP
 
 	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
-	//Trying to copyto the image on to the private image frame, img
-	cv::Mat destRoi;
-	try {
-		destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
-	}
-	catch (...) {
-		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
-		return;
-	}
-	resized_image.copyTo(destRoi);
+    //Trying to copyto the image on to the private image frame, img
+    cv::Mat destRoi;
+    try {
+	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
+    } catch (...) {
+	bu_log("WARNING: Tyring to create roi out of image boundaries\n");
+	return;
+    }
+    resized_image.copyTo(destRoi);
 }
 
 void
@@ -262,16 +277,15 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
 	cv::Mat resized_image;
 	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
-	//Trying to copyto the image on to the private image frame, img
-	cv::Mat destRoi;
-	try {
-		destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
-	}
-	catch (...) {
-		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
-		return -1;
-	}
-	resized_image.copyTo(destRoi);
+    //Trying to copyto the image on to the private image frame, img
+    cv::Mat destRoi;
+    try {
+	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
+    } catch (...) {
+	bu_log("WARNING: Trying to create roi out of image boundaries\n");
+	return;
+    }
+    resized_image.copyTo(destRoi);
 
 	// truncate title until it fits on line
 	int countCharDisplayedText = text.length();
@@ -434,9 +448,13 @@ IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string
     }
 }
 
-/*This function will evenly space out all of the texts in the header and footer. The algorithm is to get the total lenght of all of the words combined and then the spacing is the total
-length divided by how many words there are*/
-int
+
+/* This function will evenly space out all of the texts in the header
+ * and footer. The algorithm is to get the total lenght of all of the
+ * words combined and then the spacing is the total length divided by
+ * how many words there are
+ */
+void
 IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
 	int totalTextWidth = 0;
@@ -458,9 +476,17 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
 	}
 	return xPosition-spacing;	//end of text xPosition
 }
-/*This is justification with a word being centered right in the middle. This is tricky now since the spacing is not going to be super straightforward. Essentially I split the section
-into 2 and I used the same justify algorithm for the left and right side. Which ever side had the smallest spacing is the spacing I will choose for between the words.*/
-void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
+
+
+/* This is justification with a word being centered right in the
+ * middle. This is tricky now since the spacing is not going to be
+ * super straightforward. Essentially I split the section into 2 and I
+ * used the same justify algorithm for the left and right side. Which
+ * ever side had the smallest spacing is the spacing I will choose for
+ * between the words.
+ */
+void
+IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
 {
 	int confidentialWidth = getTextWidth(height, width, centerWord, flags | TO_BOLD);
 	drawTextCentered(width / 2, y, height, width, centerWord, flags | TO_BOLD);
@@ -503,7 +529,10 @@ void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::
 	}
 }
 
-//This is a text wrapping function. If a text goes beyond the set x or y, it will wrap around to the next line. It also has ellipsis fucntion.
+
+// This is a text wrapping function. If a text goes beyond the set x
+// or y, it will wrap around to the next line. It also has ellipsis
+// fucntion.
 void
 IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
 {
@@ -592,22 +621,31 @@ IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 void
 IFPainter::openInGUI()
 {
-	cv::namedWindow("Report", cv::WINDOW_AUTOSIZE);
-	cv::imshow("Report", this->img);
+    cv::String win_name("Report Preview");
+    cv::namedWindow(win_name, cv::WINDOW_AUTOSIZE);
+    cv::moveWindow(win_name, 0, 0);
+    cv::imshow(win_name, this->img);
 
-	cv::waitKey(0); //wait infinite time for a keypress
+    cv::waitKey(0); //wait infinite time for a keypress
 
-	try
-	{
-		cv::destroyWindow("Report");
-	}
-	catch (std::exception& e)
-	{
-	}
+    try {
+	cv::destroyWindow(win_name);
+    } catch (std::exception& e) {
+    }
 }
 
 void
 IFPainter::exportToFile(std::string filePath)
 {
-	cv::imwrite(filePath, this->img);
+    cv::imwrite(filePath, this->img);
 }
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

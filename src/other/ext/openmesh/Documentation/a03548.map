@@ -1,9 +1,0 @@
-<map id="OpenMesh::Smoother::JacobiLaplaceSmootherT&lt; Mesh &gt;" name="OpenMesh::Smoother::JacobiLaplaceSmootherT&lt; Mesh &gt;">
-<area shape="rect" id="node1" title="Laplacian Smoothing." alt="" coords="40,487,217,543"/>
-<area shape="rect" id="node2" href="$a03554.html" title="Laplacian Smoothing." alt="" coords="54,381,203,437"/>
-<area shape="rect" id="node3" href="$a03558.html" title="Base class for smoothing algorithms." alt="" coords="53,291,204,332"/>
-<area shape="rect" id="node4" href="$a02846.html" title="This class demonstrates the non copyable idiom." alt="" coords="5,194,209,221"/>
-<area shape="rect" id="node5" href="$a02690.html" title="Polygonal mesh based on the ArrayKernel." alt="" coords="234,187,397,228"/>
-<area shape="rect" id="node6" href="$a02694.html" title="Base type for a polygonal mesh." alt="" coords="225,81,406,137"/>
-<area shape="rect" id="node7" title=" " alt="" coords="286,5,345,32"/>
-</map>

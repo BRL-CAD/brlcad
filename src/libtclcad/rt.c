@@ -1,7 +1,7 @@
 /*                              R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -481,13 +481,13 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 		  rtip->needprep
 	);
 
-    bu_vls_printf(&str, " space_partition_type %s n_cutnode %d n_boxnode %d n_empty %zu",
+    bu_vls_printf(&str, " space_partition_type %s n_cutnode %zu n_boxnode %zu n_empty %zu",
 		  rtip->rti_space_partition == RT_PART_NUBSPT ?
 		  "NUBSP" : "unknown",
 		  rtip->rti_ncut_by_type[CUT_CUTNODE],
 		  rtip->rti_ncut_by_type[CUT_BOXNODE],
 		  rtip->nempty_cells);
-    bu_vls_printf(&str, " maxdepth %d maxlen %d",
+    bu_vls_printf(&str, " maxdepth %zu maxlen %zu",
 		  rtip->rti_cut_maxdepth,
 		  rtip->rti_cut_maxlen);
     if (rtip->rti_ncut_by_type[CUT_BOXNODE]) bu_vls_printf(&str, " avglen %g",

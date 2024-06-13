@@ -1,13 +1,3 @@
-# Include directories needed by libnmg users
-set(NMG_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${BG_INCLUDE_DIRS}
-  )
-BRLCAD_LIB_INCLUDE_DIRS(nmg NMG_INCLUDE_DIRS "")
-
 set(LIBNMG_SOURCES
   nurb_basis.c
   nurb_bezier.c
@@ -65,7 +55,8 @@ CMAKEFILES(
   nmg_private.h
 )
 
-BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "${libnmg_deps};${STDCXX_LIBRARIES}")
+# Note - libnmg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "${libnmg_deps};${STDCXX_LIBRARIES}" "" "")
 
 add_subdirectory(tests)
 

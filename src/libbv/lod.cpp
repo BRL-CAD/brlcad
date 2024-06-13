@@ -1,7 +1,7 @@
 /*                       L O D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2023 United States Government as represented by
+ * Copyright (c) 2022-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from https://github.com/bhaettasch/pop-buffer-demo
@@ -71,14 +71,7 @@
 #include <sstream>
 #include <string>
 
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h> /* for mkdir */
-#endif
-
 extern "C" {
-#define XXH_STATIC_LINKING_ONLY
-#include "xxhash.h"
-
 #include "lmdb.h"
 }
 
@@ -87,6 +80,7 @@ extern "C" {
 #include "bu/app.h"
 #include "bu/bitv.h"
 #include "bu/color.h"
+#include "bu/hash.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
@@ -134,17 +128,6 @@ extern "C" {
 #define CACHE_TRI_LEVEL "t"
 
 typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
-
-static void
-lod_dir(char *dir)
-{
-#ifdef HAVE_WINDOWS_H
-    CreateDirectory(dir, NULL);
-#else
-    /* mode: 775 */
-    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
-}
 
 static void
 obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct bview *v)
@@ -630,18 +613,14 @@ bv_mesh_lod_context_create(const char *name)
 	return NULL;
 
     // Hash the input filename to generate a key for uniqueness
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&fname, "%s", bu_path_normalize(name));
     // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    // (may have fixed this - need to check...)
     if (bu_vls_strlen(&fname) < 10) {
 	bu_vls_printf(&fname, "GGGGGGGGGGGGG");
     }
-    XXH64_update(&h_state, bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
+    unsigned long long hash = bu_data_hash(bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
     bu_path_component(&fname, bu_path_normalize(name), BU_PATH_BASENAME_EXTLESS);
     bu_vls_printf(&fname, "_%llu", hash);
 
@@ -687,12 +666,15 @@ bv_mesh_lod_context_create(const char *name)
 
     // Ensure the necessary top level dirs are present
     char dir[MAXPATHLEN];
+    // TODO - need to support a LIBBV_LOD_CACHE environment variable,
+    // similar to LIBRT_CACHE, so we can run parallel tests without
+    // LoD generating routines colliding
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
     if (!bu_file_exists(dir, NULL))
-	lod_dir(dir);
+	bu_mkdir(dir);
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL)) {
-	lod_dir(dir);
+	bu_mkdir(dir);
     }
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, "format", NULL);
     if (!bu_file_exists(dir, NULL)) {
@@ -723,7 +705,7 @@ bv_mesh_lod_context_create(const char *name)
     // Create the specific LoD LMDB cache dir, if not already present
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
     if (!bu_file_exists(dir, NULL))
-	lod_dir(dir);
+	bu_mkdir(dir);
 
     // Need to call mdb_env_sync() at appropriate points.
     if (mdb_env_open(i->lod_env, dir, MDB_NOSYNC, 0664))
@@ -733,13 +715,14 @@ bv_mesh_lod_context_create(const char *name)
     bu_vls_printf(&fname, "_namekey");
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
     if (!bu_file_exists(dir, NULL))
-	lod_dir(dir);
+	bu_mkdir(dir);
 
     // Need to call mdb_env_sync() at appropriate points.
     if (mdb_env_open(i->name_env, dir, MDB_NOSYNC, 0664))
 	goto lod_context_close_fail;
 
     // Success - return the context
+    bu_vls_free(&fname);
     return c;
 
     // If something went wrong, clean up and return NULL
@@ -774,18 +757,14 @@ bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
 
     // Database object names may be of arbitrary length - hash
     // to get the lookup key
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&keystr, "%s", name);
     // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    // (may have fixed this - need to check...)
     if (bu_vls_strlen(&keystr) < 10) {
 	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
     }
-    XXH64_update(&h_state, bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
+    unsigned long long hash = bu_data_hash(bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
     bu_vls_sprintf(&keystr, "%llu", hash);
 
     mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
@@ -811,18 +790,14 @@ bv_mesh_lod_key_put(struct bv_mesh_lod_context *c, const char *name, unsigned lo
 {
     // Database object names may be of arbitrary length - hash
     // to get something appropriate for a lookup key
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&keystr, "%s", name);
     // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    // (may have fixed this - need to check...)
     if (bu_vls_strlen(&keystr) < 10) {
 	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
     }
-    XXH64_update(&h_state, bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
+    unsigned long long hash = bu_data_hash(bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
     bu_vls_sprintf(&keystr, "%llu", hash);
 
     MDB_val mdb_key;
@@ -1107,13 +1082,11 @@ POPState::POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcn
 
     // Hash the data to generate a key, if the user didn't supply us with one
     if (!user_key) {
-	XXH64_state_t h_state;
-	XXH64_reset(&h_state, 0);
-	XXH64_update(&h_state, v, vcnt*sizeof(point_t));
-	XXH64_update(&h_state, faces, 3*fcnt*sizeof(int));
-	XXH64_hash_t hash_val;
-	hash_val = XXH64_digest(&h_state);
-	hash = (unsigned long long)hash_val;
+	struct bu_data_hash_state *s = bu_data_hash_create();
+	bu_data_hash_update(s, v, vcnt*sizeof(point_t));
+	bu_data_hash_update(s, faces, 3*fcnt*sizeof(int));
+	hash = bu_data_hash_val(s);
+	bu_data_hash_destroy(s);
     } else {
 	hash = user_key;
     }
@@ -1941,20 +1914,6 @@ bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, 
     return key;
 }
 
-
-extern "C" unsigned long long
-bv_mesh_lod_custom_key(void *data, size_t data_size)
-{
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, data, data_size);
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    unsigned long long hash = (unsigned long long)hash_val;
-    return hash; 
-}
-
-
 extern "C" struct bv_mesh_lod *
 bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key)
 {
@@ -2105,26 +2064,6 @@ bv_mesh_lod_memshrink(struct bv_scene_obj *s)
 }
 
 static void
-bv_clear(const char *d)
-{
-    if (bu_file_directory(d)) {
-	char **filenames;
-	size_t nfiles = bu_file_list(d, "*", &filenames);
-	for (size_t i = 0; i < nfiles; i++) {
-	    if (BU_STR_EQUAL(filenames[i], "."))
-		continue;
-	    if (BU_STR_EQUAL(filenames[i], ".."))
-		continue;
-	    char cdir[MAXPATHLEN] = {0};
-	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
-	    bv_clear((const char *)cdir);
-	}
-	bu_argv_free(nfiles, filenames);
-    }
-    bu_file_delete(d);
-}
-
-static void
 cache_del(struct bv_mesh_lod_context *c, unsigned long long hash, const char *component)
 {
     // Construct lookup key
@@ -2238,7 +2177,7 @@ bv_mesh_lod_clear_cache(struct bv_mesh_lod_context *c, unsigned long long key)
 
     // Clear everything
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    bv_clear((const char *)dir);
+    bu_dirclear((const char *)dir);
 }
 
 extern "C" void

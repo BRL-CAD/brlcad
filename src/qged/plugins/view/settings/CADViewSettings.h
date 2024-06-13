@@ -1,7 +1,7 @@
 /*               C A D V I E W S E T T I N G S . H
  * BRL-CAD
  *
- * Copyright (c) 2023 United States Government as represented by
+ * Copyright (c) 2023-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,12 @@
  */
 /** @file CADViewSettings.h
  *
- * Brief description
+ * TODO - update widget for bv/faceplate.h bv_params_state
+ * mode of operation - FPS isn't separate, it's one of the
+ * parameters.  Need to have an overall on-of box and a
+ * set of specific flags for each individual drawing
+ * element, similar to how General Polygon Modes box
+ * works in QPolyMod.cpp
  *
  */
 

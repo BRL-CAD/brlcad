@@ -3,34 +3,19 @@ add_definitions(
   -DBRLCAD_DLL
   )
 
-set(ASC_CONV_INCLUDE_DIRS
-  ${BU_INCLUDE_DIRS}
-  )
-BRLCAD_INCLUDE_DIRS(ASC_CONV_INCLUDE_DIRS)
-
 BRLCAD_ADDEXEC(asc2dsp asc2dsp.c libbu FOLDER Conv)
 
-BRLCAD_ADDEXEC(asc2pix asc2pix.c libbu FOLDER Conv)
+# With BRLCAD_ADDEXEC enabling the man page, we need to
+# set the man page source property before adding the exec
+set_source_files_properties(../../../doc/docbook/system/man1/pix2asc.xml PROPERTIES EXTRA_MAN1_OUTPUTS "asc2pix.1")
+
+BRLCAD_ADDEXEC(asc2pix asc2pix.c libbu FOLDER Conv NO_MAN)
 
 BRLCAD_ADDEXEC(pix2asc pix2asc.c libbu FOLDER Conv)
 
 if (TARGET libtclcad)
-
-  set(ASC_CONV_INCLUDE_DIRS
-    ${BN_INCLUDE_DIRS}
-    ${RT_INCLUDE_DIRS}
-    ${GED_INCLUDE_DIRS}
-    ${GCV_INCLUDE_DIRS}
-    ${SYSV_INCLUDE_DIRS}
-    ${WDB_INCLUDE_DIRS}
-    ${TCLCAD_INCLUDE_DIRS}
-    ${REGEX_INCLUDE_DIR}
-    )
-  BRLCAD_INCLUDE_DIRS(ASC_CONV_INCLUDE_DIRS)
-
   BRLCAD_ADDEXEC(asc2g asc2g.c "libtclcad;libged;libwdb;librt;libnmg;libbu;${WINSOCK_LIB};${M_LIBRARY}" FOLDER Conv)
   BRLCAD_ADDEXEC(g2asc g2asc.c "libtclcad;librt;libnmg;libbu;${WINSOCK_LIB}" FOLDER Conv)
-
 endif (TARGET libtclcad)
 
 CMAKEFILES(

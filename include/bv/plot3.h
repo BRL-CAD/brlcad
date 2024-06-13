@@ -1,7 +1,7 @@
 /*                         P L O T 3 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,13 +101,61 @@
 #endif
 
 __BEGIN_DECLS
-
-#define	pl_mat_idn( _mat )		MAT_IDN( _mat )
-#define pl_mat_zero( _mat )		MAT_ZERO( _mat )
-#define pl_mat_copy( _mat1, _mat2 )	MAT_COPY( _mat1, _mat2 )
-
 #define PL_OUTPUT_MODE_BINARY 0
 #define PL_OUTPUT_MODE_TEXT 1
+
+#if !defined(PLOT_PREFIX_STR)
+#  define PLOT_PREFIX_STR plot3_
+#endif
+#define PL_CONCAT2(a, b) a ## b
+#define PL_CONCAT(a, b) PL_CONCAT2(a,b)
+#define PL_ADD_PREFIX(b) PL_CONCAT(PLOT_PREFIX_STR,b)
+
+/* All linked symbols */
+#define pd_3box          PL_ADD_PREFIX(pd_3box)
+#define pd_3cont         PL_ADD_PREFIX(pd_3cont)
+#define pd_3line         PL_ADD_PREFIX(pd_3line)
+#define pd_3move         PL_ADD_PREFIX(pd_3move)
+#define pd_3point        PL_ADD_PREFIX(pd_3point)
+#define pd_3space        PL_ADD_PREFIX(pd_3space)
+#define pd_arc           PL_ADD_PREFIX(pd_arc)
+#define pd_box           PL_ADD_PREFIX(pd_box)
+#define pd_circle        PL_ADD_PREFIX(pd_circle)
+#define pd_cont          PL_ADD_PREFIX(pd_cont)
+#define pd_line          PL_ADD_PREFIX(pd_line)
+#define pd_move          PL_ADD_PREFIX(pd_move)
+#define pd_point         PL_ADD_PREFIX(pd_point)
+#define pd_space         PL_ADD_PREFIX(pd_space)
+#define pdv_3box         PL_ADD_PREFIX(pdv_3box)
+#define pdv_3cont        PL_ADD_PREFIX(pdv_3cont)
+#define pdv_3line        PL_ADD_PREFIX(pdv_3line)
+#define pdv_3move        PL_ADD_PREFIX(pdv_3move)
+#define pdv_3point       PL_ADD_PREFIX(pdv_3point)
+#define pdv_3ray         PL_ADD_PREFIX(pdv_3ray)
+#define pdv_3space       PL_ADD_PREFIX(pdv_3space)
+#define pl_3box          PL_ADD_PREFIX(pl_3box)
+#define pl_3cont         PL_ADD_PREFIX(pl_3cont)
+#define pl_3line         PL_ADD_PREFIX(pl_3line)
+#define pl_3move         PL_ADD_PREFIX(pl_3move)
+#define pl_3point        PL_ADD_PREFIX(pl_3point)
+#define pl_3space        PL_ADD_PREFIX(pl_3space)
+#define pl_arc           PL_ADD_PREFIX(pl_arc)
+#define pl_box           PL_ADD_PREFIX(pl_box)
+#define pl_circle        PL_ADD_PREFIX(pl_circle)
+#define pl_color         PL_ADD_PREFIX(pl_color)
+#define pl_color_buc     PL_ADD_PREFIX(pl_color_buc)
+#define pl_cont          PL_ADD_PREFIX(pl_cont)
+#define pl_erase         PL_ADD_PREFIX(pl_erase)
+#define pl_flush         PL_ADD_PREFIX(pl_flush)
+#define pl_getOutputMode PL_ADD_PREFIX(pl_getOutputMode)
+#define pl_label         PL_ADD_PREFIX(pl_label)
+#define pl_line          PL_ADD_PREFIX(pl_line)
+#define pl_linmod        PL_ADD_PREFIX(pl_linmod)
+#define pl_move          PL_ADD_PREFIX(pl_move)
+#define pl_point         PL_ADD_PREFIX(pl_point)
+#define pl_setOutputMode PL_ADD_PREFIX(pl_setOutputMode)
+#define pl_space         PL_ADD_PREFIX(pl_space)
+#define plot3_invalid    PL_ADD_PREFIX(plot3_invalid)
 
 
 PLOT3_EXPORT extern int pl_getOutputMode(void);
@@ -305,8 +353,8 @@ static int pl_outputMode = PL_OUTPUT_MODE_BINARY;
 #define putsi(a)	putc(a, plotfp); putc((a>>8), plotfp)
 
 /* Making a common pd_3 to be used in pd_3cont and pd_3move */
-void
-pd_3(register FILE *plotfp, double x, double y, double z, char c)
+static void
+pd_3(FILE *plotfp, double x, double y, double z, char c)
 {
     size_t ret;
     double in[3];
@@ -329,8 +377,8 @@ pd_3(register FILE *plotfp, double x, double y, double z, char c)
 }
 
 /* Making a common pdv_3 to be used in pdv_3cont and pdv_3move */
-void
-pdv_3(register FILE *plotfp, const fastf_t *pt, char c)
+static void
+pdv_3(FILE *plotfp, const fastf_t *pt, char c)
 {
     size_t ret;
     unsigned char out[3*8+1];
@@ -349,8 +397,8 @@ pdv_3(register FILE *plotfp, const fastf_t *pt, char c)
 }
 
 /* Making a common pd to be used in pd_cont and pd_move */
-void
-pd(register FILE *plotfp, double x, double y, char c)
+static void
+common_pd(FILE *plotfp, double x, double y, char c)
 {
     size_t ret;
     double in[2];
@@ -372,8 +420,8 @@ pd(register FILE *plotfp, double x, double y, char c)
 }
 
 /* Making a common pl_3 to be used in pl_3cont and pl_3move */
-void
-pl_3(register FILE *plotfp, int x, int y, int z, char c)
+static void
+pl_3(FILE *plotfp, int x, int y, int z, char c)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( c, plotfp);
@@ -404,7 +452,7 @@ pl_setOutputMode(int mode) {
  * plot a point
  */
 void
-pl_point(register FILE *plotfp, int x, int y)
+pl_point(FILE *plotfp, int x, int y)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('p', plotfp);
@@ -416,7 +464,7 @@ pl_point(register FILE *plotfp, int x, int y)
 }
 
 void
-pl_line(register FILE *plotfp, int px1, int py1, int px2, int py2)
+pl_line(FILE *plotfp, int px1, int py1, int px2, int py2)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('l', plotfp);
@@ -430,7 +478,7 @@ pl_line(register FILE *plotfp, int px1, int py1, int px2, int py2)
 }
 
 void
-pl_linmod(register FILE *plotfp, const char *s)
+pl_linmod(FILE *plotfp, const char *s)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('f', plotfp);
@@ -443,7 +491,7 @@ pl_linmod(register FILE *plotfp, const char *s)
 }
 
 void
-pl_move(register FILE *plotfp, int x, int y)
+pl_move(FILE *plotfp, int x, int y)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('m', plotfp);
@@ -455,7 +503,7 @@ pl_move(register FILE *plotfp, int x, int y)
 }
 
 void
-pl_cont(register FILE *plotfp, int x, int y)
+pl_cont(FILE *plotfp, int x, int y)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('n', plotfp);
@@ -467,7 +515,7 @@ pl_cont(register FILE *plotfp, int x, int y)
 }
 
 void
-pl_label(register FILE *plotfp, const char *s)
+pl_label(FILE *plotfp, const char *s)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('t', plotfp);
@@ -480,7 +528,7 @@ pl_label(register FILE *plotfp, const char *s)
 }
 
 void
-pl_space(register FILE *plotfp, int px1, int py1, int px2, int py2)
+pl_space(FILE *plotfp, int px1, int py1, int px2, int py2)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('s', plotfp);
@@ -494,7 +542,7 @@ pl_space(register FILE *plotfp, int px1, int py1, int px2, int py2)
 }
 
 void
-pl_erase(register FILE *plotfp)
+pl_erase(FILE *plotfp)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY)
 	putc('e', plotfp);
@@ -503,7 +551,7 @@ pl_erase(register FILE *plotfp)
 }
 
 void
-pl_circle(register FILE *plotfp, int x, int y, int r)
+pl_circle(FILE *plotfp, int x, int y, int r)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('c', plotfp);
@@ -516,7 +564,7 @@ pl_circle(register FILE *plotfp, int x, int y, int r)
 }
 
 void
-pl_arc(register FILE *plotfp, int xc, int yc, int px1, int py1, int px2, int py2)
+pl_arc(FILE *plotfp, int xc, int yc, int px1, int py1, int px2, int py2)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('a', plotfp);
@@ -532,7 +580,7 @@ pl_arc(register FILE *plotfp, int xc, int yc, int px1, int py1, int px2, int py2
 }
 
 void
-pl_box(register FILE *plotfp, int px1, int py1, int px2, int py2)
+pl_box(FILE *plotfp, int px1, int py1, int px2, int py2)
 {
     pl_move(plotfp, px1, py1);
     pl_cont(plotfp, px1, py2);
@@ -548,7 +596,7 @@ pl_box(register FILE *plotfp, int px1, int py1, int px2, int py2)
 
 /* Warning: r, g, b are ints.  The output is chars. */
 void
-pl_color(register FILE *plotfp, int r, int g, int b)
+pl_color(FILE *plotfp, int r, int g, int b)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('C', plotfp);
@@ -561,7 +609,7 @@ pl_color(register FILE *plotfp, int r, int g, int b)
 }
 
 void
-pl_color_buc(register FILE *plotfp, struct bu_color *c)
+pl_color_buc(FILE *plotfp, struct bu_color *c)
 {
     int r = 0;
     int g = 0;
@@ -571,7 +619,7 @@ pl_color_buc(register FILE *plotfp, struct bu_color *c)
 }
 
 void
-pl_flush(register FILE *plotfp)
+pl_flush(FILE *plotfp)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('F', plotfp);
@@ -583,7 +631,7 @@ pl_flush(register FILE *plotfp)
 }
 
 void
-pl_3space(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int pz2)
+pl_3space(FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int pz2)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('S', plotfp);
@@ -599,25 +647,25 @@ pl_3space(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, in
 }
 
 void
-pl_3point(register FILE *plotfp, int x, int y, int z)
+pl_3point(FILE *plotfp, int x, int y, int z)
 {
     pl_3(plotfp, x, y, z, 'P'); /* calling common function pl_3 */
 }
 
 void
-pl_3move(register FILE *plotfp, int x, int y, int z)
+pl_3move(FILE *plotfp, int x, int y, int z)
 {
     pl_3(plotfp, x, y, z, 'M'); /* calling common function pl_3 */
 }
 
 void
-pl_3cont(register FILE *plotfp, int x, int y, int z)
+pl_3cont(FILE *plotfp, int x, int y, int z)
 {
     pl_3(plotfp, x, y, z, 'N'); /* calling common function pl_3 */
 }
 
 void
-pl_3line(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int pz2)
+pl_3line(FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int pz2)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('L', plotfp);
@@ -633,7 +681,7 @@ pl_3line(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int
 }
 
 void
-pl_3box(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int pz2)
+pl_3box(FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int pz2)
 {
     pl_3move(plotfp, px1, py1, pz1);
     /* first side */
@@ -664,13 +712,13 @@ pl_3box(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int 
  */
 
 void
-pd_point(register FILE *plotfp, double x, double y)
+pd_point(FILE *plotfp, double x, double y)
 {
-    pd( plotfp, x, y, 'x'); /* calling common function pd */
+    common_pd( plotfp, x, y, 'x'); /* calling common function pd */
 }
 
 void
-pd_line(register FILE *plotfp, double px1, double py1, double px2, double py2)
+pd_line(FILE *plotfp, double px1, double py1, double px2, double py2)
 {
     size_t ret;
     double in[4];
@@ -696,19 +744,19 @@ pd_line(register FILE *plotfp, double px1, double py1, double px2, double py2)
 /* Note: no pd_linmod(), just use pl_linmod() */
 
 void
-pd_move(register FILE *plotfp, double x, double y)
+pd_move(FILE *plotfp, double x, double y)
 {
-    pd( plotfp, x, y, 'o'); /* calling common function pd */
+    common_pd( plotfp, x, y, 'o'); /* calling common function pd */
 }
 
 void
-pd_cont(register FILE *plotfp, double x, double y)
+pd_cont(FILE *plotfp, double x, double y)
 {
-    pd( plotfp, x, y, 'q'); /* calling common function pd */
+    common_pd( plotfp, x, y, 'q'); /* calling common function pd */
 }
 
 void
-pd_space(register FILE *plotfp, double px1, double py1, double px2, double py2)
+pd_space(FILE *plotfp, double px1, double py1, double px2, double py2)
 {
     size_t ret;
     double in[4];
@@ -732,7 +780,7 @@ pd_space(register FILE *plotfp, double px1, double py1, double px2, double py2)
 }
 
 void
-pd_circle(register FILE *plotfp, double x, double y, double r)
+pd_circle(FILE *plotfp, double x, double y, double r)
 {
     size_t ret;
     double in[3];
@@ -755,7 +803,7 @@ pd_circle(register FILE *plotfp, double x, double y, double r)
 }
 
 void
-pd_arc(register FILE *plotfp, double xc, double yc, double px1, double py1, double px2, double py2)
+pd_arc(FILE *plotfp, double xc, double yc, double px1, double py1, double px2, double py2)
 {
     size_t ret;
     double in[6];
@@ -781,7 +829,7 @@ pd_arc(register FILE *plotfp, double xc, double yc, double px1, double py1, doub
 }
 
 void
-pd_box(register FILE *plotfp, double px1, double py1, double px2, double py2)
+pd_box(FILE *plotfp, double px1, double py1, double px2, double py2)
 {
     pd_move(plotfp, px1, py1);
     pd_cont(plotfp, px1, py2);
@@ -793,7 +841,7 @@ pd_box(register FILE *plotfp, double px1, double py1, double px2, double py2)
 
 /* Double 3-D, both in vector and enumerated versions */
 void
-pdv_3space(register FILE *plotfp, const vect_t min, const vect_t max)
+pdv_3space(FILE *plotfp, const vect_t min, const vect_t max)
 {
     size_t ret;
     unsigned char out[6*8+1];
@@ -813,7 +861,7 @@ pdv_3space(register FILE *plotfp, const vect_t min, const vect_t max)
 }
 
 void
-pd_3space(register FILE *plotfp, double px1, double py1, double pz1, double px2, double py2, double pz2)
+pd_3space(FILE *plotfp, double px1, double py1, double pz1, double px2, double py2, double pz2)
 {
     size_t ret;
     double in[6];
@@ -839,43 +887,43 @@ pd_3space(register FILE *plotfp, double px1, double py1, double pz1, double px2,
 }
 
 void
-pdv_3point(register FILE *plotfp, const point_t pt)
+pdv_3point(FILE *plotfp, const point_t pt)
 {
     pdv_3(plotfp, pt, 'X'); /* calling common function pdv_3 */
 }
 
 void
-pd_3point(register FILE *plotfp, double x, double y, double z)
+pd_3point(FILE *plotfp, double x, double y, double z)
 {
     pd_3(plotfp, x, y, z, 'X'); /* calling common function pd_3 */
 }
 
 void
-pdv_3move(register FILE *plotfp, const point_t pt)
+pdv_3move(FILE *plotfp, const point_t pt)
 {
     pdv_3(plotfp, pt, 'O'); /* calling common function pdv_3 */
 }
 
 void
-pd_3move(register FILE *plotfp, double x, double y, double z)
+pd_3move(FILE *plotfp, double x, double y, double z)
 {
     pd_3(plotfp, x, y, z, 'O'); /* calling common function pd_3 */
 }
 
 void
-pdv_3cont(register FILE *plotfp, const point_t pt)
+pdv_3cont(FILE *plotfp, const point_t pt)
 {
     pdv_3(plotfp, pt, 'Q'); /* calling common function pdv_3 */
 }
 
 void
-pd_3cont(register FILE *plotfp, double x, double y, double z)
+pd_3cont(FILE *plotfp, double x, double y, double z)
 {
     pd_3(plotfp, x, y, z, 'Q'); /* calling common function pd_3 */
 }
 
 void
-pdv_3line(register FILE *plotfp, const vect_t a, const vect_t b)
+pdv_3line(FILE *plotfp, const vect_t a, const vect_t b)
 {
     size_t ret;
     unsigned char out[6*8+1];
@@ -895,7 +943,7 @@ pdv_3line(register FILE *plotfp, const vect_t a, const vect_t b)
 }
 
 void
-pd_3line(register FILE *plotfp, double px1, double py1, double pz1, double px2, double py2, double pz2)
+pd_3line(FILE *plotfp, double px1, double py1, double pz1, double px2, double py2, double pz2)
 {
     size_t ret;
     double in[6];
@@ -921,7 +969,7 @@ pd_3line(register FILE *plotfp, double px1, double py1, double pz1, double px2, 
 }
 
 void
-pdv_3box(register FILE *plotfp, const vect_t a, const vect_t b)
+pdv_3box(FILE *plotfp, const vect_t a, const vect_t b)
 {
     pd_3move(plotfp, a[X], a[Y], a[Z]);
     /* first side */
@@ -948,7 +996,7 @@ pdv_3box(register FILE *plotfp, const vect_t a, const vect_t b)
 }
 
 void
-pd_3box(register FILE *plotfp, double px1, double py1, double pz1, double px2, double py2, double pz2)
+pd_3box(FILE *plotfp, double px1, double py1, double pz1, double px2, double py2, double pz2)
 {
     pd_3move(plotfp, px1, py1, pz1);
     /* first side */

@@ -17,19 +17,7 @@ endwhile (NOT "${LBIN_DIR}" STREQUAL "")
 
 # Use the custom binary output directory to set the standard
 # CMake variables controlling binary output locations
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CVTEST_BINARY_DIR}/${BIN_DIR})
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-      set(CFG_ROOT ${CVTEST_BINARY_DIR}/${CFG_TYPE})
-    else(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-      set(CFG_ROOT ${CVTEST_BINARY_DIR})
-    endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CFG_ROOT}/${BIN_DIR})
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-endif(NOT CMAKE_CONFIGURATION_TYPES)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CVTEST_BINARY_DIR}/${BIN_DIR})
 
 # Define a target to provide generator properties
 add_executable(dir_info dir_info.c)

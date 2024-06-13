@@ -1,42 +1,52 @@
-set(FACETIZE_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  )
+BRLCAD_Find_Package(MANIFOLD REQUIRED)
+BRLCAD_Find_Package(ASSETIMPORT)
 
 set(FACETIZE_LOCAL_INCLUDE_DIRS)
 
 if (MANIFOLD_LIBRARIES)
-  set(FACETIZE_LOCAL_INCLUDE_DIRS
-    ${FACETIZE_LOCAL_INCLUDE_DIRS}
-    ${MANIFOLD_INCLUDE_DIRS}
-    )
+  list(APPEND FACETIZE_LOCAL_INCLUDE_DIRS ${MANIFOLD_INCLUDE_DIRS})
   add_definitions(-DUSE_MANIFOLD)
 
   if (ASSETIMPORT_LIBRARY)
-    include_directories(SYSTEM ${ASSETIMPORT_INCLUDE_DIR})
+    list(APPEND FACETIZE_LOCAL_INCLUDE_DIRS ${ASSETIMPORT_INCLUDE_DIR})
     add_definitions(-DUSE_ASSETIMPORT)
   endif (ASSETIMPORT_LIBRARY)
 endif (MANIFOLD_LIBRARIES)
-# We want to include 3rd party libraries with -isystem - use
-# BRLCAD_LIB_INCLUDE_DIRS for that purpose
-BRLCAD_LIB_INCLUDE_DIRS(facetize FACETIZE_INCLUDE_DIRS FACETIZE_LOCAL_INCLUDE_DIRS)
 
 set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES} ${ASSETIMPORT_LIBRARIES})
 
+add_subdirectory(tessellate)
+
+set(FACETIZE_SRCS
+  brep.cpp
+  facetize.cpp
+  nmg.cpp
+  regions.cpp
+  tri.cpp
+  util.cpp
+  )
+
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-facetize SHARED facetize.cpp facetize_log.c)
+ged_plugin_library(ged-facetize SHARED ${FACETIZE_SRCS})
+target_include_directories(ged-facetize BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if (FACETIZE_LOCAL_INCLUDE_DIRS)
+  target_include_directories(ged-facetize SYSTEM BEFORE PRIVATE ${FACETIZE_LOCAL_INCLUDE_DIRS})
+endif (FACETIZE_LOCAL_INCLUDE_DIRS)
 target_link_libraries(ged-facetize ${FACETIZE_LIBS})
 set_property(TARGET ged-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
 VALIDATE_STYLE(ged-facetize facetize.cpp)
 PLUGIN_SETUP(ged-facetize ged)
 
+# Plugin requires subprocess to work
+add_dependencies(ged-facetize ged_exec facetize_process)
+
 CMAKEFILES(
   CMakeLists.txt
-  facetize.cpp
-  facetize_log.c
+  tess_opts.h
+  ged_facetize.h
+  subprocess.h
+  TODO
+  ${FACETIZE_SRCS}
   )
 
 # Local Variables:

@@ -1,3 +1,23 @@
+/*                F A C T S H A N D L E R . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2023-2024 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
 #include "FactsHandler.h"
 #include "RenderHandler.h"
 
@@ -150,10 +170,9 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 
 	int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
 
-	// main component
-	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
-	//img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
-	img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
+    // main component
+    //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
+    img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
 
 	img.drawLine(offX + imgW/2, offY - 100, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY - 100, 3, cv::Scalar(94, 58, 32));
 	img.drawLine(centerPt, offY-100, centerPt, offY-130, 3, cv::Scalar(94, 58, 32));

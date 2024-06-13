@@ -1,7 +1,7 @@
 /*                         D R A W 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,11 +38,6 @@
 #include "bu/sort.h"
 #include "nmg.h"
 #include "rt/view.h"
-
-extern "C" {
-#define XXH_STATIC_LINKING_ONLY
-#include "xxhash.h"
-}
 
 #include "ged/view/state.h"
 #include "../ged_private.h"

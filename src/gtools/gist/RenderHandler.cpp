@@ -1,3 +1,23 @@
+/*               R E N D E R H A N D L E R . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2023-2024 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
 #include "RenderHandler.h"
 
 
@@ -296,7 +316,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 						fdet = faceDetails[map[i + rowLen]];
 					else
 					{
-						std::cerr << "FATAL: couldn't find a width to use for rendering!" << std::endl;
+						bu_log("ERROR: couldn't find a width to use for rendering\n");
 					}
 
 					ModelDimension dim = fdet.widthContributor;
@@ -378,7 +398,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 						fdet = faceDetails[map[i + 1]];
 					else
 					{
-						std::cerr << "FATAL: couldn't find a height to use for rendering!" << std::endl;
+						bu_log("ERROR: couldn't find a height to use for rendering\n");
 					}
 
 					ModelDimension dim = fdet.heightContributor;
@@ -569,7 +589,7 @@ double
 LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 {
 	double sum = 0;
-	for (int i = 0; i < map.size(); ++i)
+	for (size_t i = 0; i < map.size(); ++i)
 	{
 		switch (map[i])
 		{
@@ -578,7 +598,7 @@ LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 		default:
 			if (coordinates[i].empty())
 			{
-				std::cerr << "ISSUE: coordinates for an important map section not initialized!" << std::endl;
+			    bu_log("ISSUE: coordinates for an important map section not initialized!\n");
 				break;
 			}
 			sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
@@ -674,7 +694,7 @@ selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, doubl
 
 	if (bestLayout == NULL)
 	{
-		std::cerr << "ISSUE: no layouts found.  This is a major problem!  In selectLayout() in RenderHandler.cpp" << std::endl;
+		bu_log("ISSUE: no layouts found.  This is a major problem!  In selectLayout() in RenderHandler.cpp\n");
 		return LayoutChoice("", true);
 	}
 
@@ -822,3 +842,12 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 		}
     }
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

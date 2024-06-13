@@ -1,6 +1,6 @@
 #               C M A K E L I S T S . T X T
 #
-# This file is Copyright (c) 2010-2023 United States Government as
+# This file is Copyright (c) 2010-2024 United States Government as
 # represented by the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,10 @@ endif(WFOBJ_IS_SUBBUILD)
 include(${WFOBJ_CMAKE_DIR}/Path_Setup.cmake)
 
 # Includes are in current dir
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/include # some files use common.h
+  )
 
 # Check if we should be using unique_ptr
 include(CheckCXXSourceCompiles)
@@ -77,12 +80,9 @@ if(HAVE_UNIQUE_PTR)
 endif(HAVE_UNIQUE_PTR)
 
 # Find tools for generating source files
-set(LEMON_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-find_package(LEMON REQUIRED)
-set(RE2C_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-find_package(RE2C REQUIRED)
-set(PERPLEX_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
-find_package(PERPLEX REQUIRED)
+BRLCAD_Find_Package(PERPLEX REQUIRED NOINSTALL)
+BRLCAD_Find_Package(LEMON REQUIRED NOINSTALL)
+BRLCAD_Find_Package(RE2C REQUIRED NOINSTALL)
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_SO")
 set(WFOBJ_SCANNER_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_SO")

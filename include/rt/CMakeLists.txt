@@ -59,7 +59,7 @@ set(rt_headers
   wdb.h
   xray.h
   )
-BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt)
+BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt REQUIRED librt)
 
 CMAKEFILES(CMakeLists.txt)
 

@@ -26,7 +26,7 @@ set(qtcad_headers
   QgViewCtrl.h
   defines.h
   )
-BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad)
+BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad REQUIRED libqtcad)
 
 CMAKEFILES(CMakeLists.txt)
 

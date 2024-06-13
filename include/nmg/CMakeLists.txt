@@ -21,7 +21,7 @@ set(nmg_headers
   vertex.h
   visit.h
   )
-BRLCAD_MANAGE_FILES(nmg_headers ${INCLUDE_DIR}/brlcad/nmg)
+BRLCAD_MANAGE_FILES(nmg_headers ${INCLUDE_DIR}/brlcad/nmg REQUIRED libnmg)
 
 CMAKEFILES(CMakeLists.txt)
 

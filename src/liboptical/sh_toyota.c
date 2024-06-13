@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2023 United States Government as represented by
+ * Copyright (c) 1992-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2248,7 +2248,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	theta,
 	transmitted_light,
 	trans_radiance;		/* Radiance of transmitted ray. */
-    int i;
+    size_t i;
     register struct light_specific *lp;
     struct toyota_specific *ts =
 	(struct toyota_specific *)dp;
@@ -2264,7 +2264,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
     i_refl = 0.0;
     /* Consider effects of light source (>1 doesn't make sense really). */
-    for (i=ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
+    for (i = 0; i < ap->a_rt_i->rti_nlights; i++) {
 
 /* WHY DOES THIS CAUSE THE BLACK CRESCENT ON THE SPHERE? */
 	if ((lp = (struct light_specific *)swp->sw_visible[i])

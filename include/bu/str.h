@@ -1,7 +1,7 @@
 /*                         S T R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -362,7 +362,6 @@ BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const c
  * proceed up to an internally defined calculation limit. */
 BU_EXPORT size_t
 bu_editdist(const char *s1, const char *s2);
-
 
 __END_DECLS
 

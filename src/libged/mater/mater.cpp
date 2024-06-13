@@ -1,7 +1,7 @@
 /*                       M A T E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -239,9 +239,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     }
-    db5_standardize_avs(&avs);
     db5_sync_comb_to_attr(&avs, comb);
-    db5_standardize_avs(&avs);
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
 

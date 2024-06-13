@@ -1,7 +1,7 @@
 /*                  S U B D I V I D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2023 United States Government as represented by
+ * Copyright (c) 2019-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,6 +52,7 @@
 #  pragma clang diagnostic ignored "-Wunused-parameter"
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #  pragma clang diagnostic ignored "-Wdocumentation"
+#  pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 #include "OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh"
 #include "OpenMesh/Core/Utils/Property.hh"

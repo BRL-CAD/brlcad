@@ -1,7 +1,7 @@
 /*                     L I B T E R M I O . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,10 +47,6 @@ void set_Raw(int fd);
 #    define COMPAT_43TTY 1
 #  endif
 #  include <sys/ioctl_compat.h>
-#  if !defined(OCRNL)
-#    define OCRNL 0000010
-#  endif
-
 #endif
 
 #include "bio.h"

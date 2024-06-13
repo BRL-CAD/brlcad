@@ -8,6 +8,6 @@ datadir=@datadir@
 Name: libbg
 Description: BRL-CAD Geometry Library
 Version: @BRLCAD_VERSION@
-Requires: libbu libbn
-Libs: -L${libdir} -lbn -lbu @LIBM@
+Requires: libbn libbu
+Libs: -L${libdir} -lbn -lbu -llmdb @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

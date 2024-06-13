@@ -1,7 +1,7 @@
 /*                 W I R E F R A M E _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2023 United States Government as represented by
+ * Copyright (c) 1997-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1800,6 +1800,7 @@ draw_m3(struct bv_scene_obj *s)
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
 
     dgcdp.dbip = d->dbip;
+    dgcdp.do_polysolids = 0;
     dgcdp.fp = (struct db_full_path *)s->s_path;
     dgcdp.tol = d->tol;
     dgcdp.ttol = d->ttol;

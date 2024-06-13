@@ -1,7 +1,7 @@
 /*                      S H O W S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2023 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ main (int argc, char **argv)
     double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
     bu_setprogname(argv[0]);
-    pid = bu_process_id();
+    pid = bu_pid();
 
     *rayname = '\0';
     /* Handle command-line options */

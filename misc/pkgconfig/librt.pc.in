@@ -8,6 +8,6 @@ datadir=@datadir@
 Name: librt
 Description: BRL-CAD Ray-Trace Library
 Version: @BRLCAD_VERSION@
-Requires: libbn libbu
-Libs: -L${libdir} -lrt -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBTCL@ @LIBREGEX@ @LIBM@
+Requires: libnmg libbrep libbv libbg libbn libbu
+Libs: -L${libdir} -lrt -lnmg -lbrep -lbv -lbg -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBREGEX@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

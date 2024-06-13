@@ -1,21 +1,12 @@
-# Include directories needed by libfft users
-set(FFT_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  )
-
-# local directories
-set(FFT_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
-
-BRLCAD_LIB_INCLUDE_DIRS(fft FFT_INCLUDE_DIRS FFT_LOCAL_INCLUDE_DIRS)
-
 add_executable(fftc fftc.c splitditc.c)
+target_include_directories(fftc BEFORE PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include)
 set_property(TARGET fftc APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 SetTargetFolder(fftc "Compilation Utilities")
 target_link_libraries(fftc ${M_LIBRARY})
 CMAKEFILES(fftc.c splitditc.c)
 
 add_executable(ifftc ifftc.c ditsplitc.c)
+target_include_directories(ifftc BEFORE PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include)
 set_property(TARGET ifftc APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 SetTargetFolder(ifftc "Compilation Utilities")
 target_link_libraries(ifftc ${M_LIBRARY})
@@ -53,12 +44,17 @@ set(LIBFFT_SRCS
   )
 fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/shared" FFT_GEN_SHARED_SRCS)
 fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/static" FFT_GEN_STATIC_SRCS)
-BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${libfft_deps};${M_LIBRARY}" SHARED_SRCS "${FFT_GEN_SHARED_SRCS}" STATIC_SRCS "${FFT_GEN_STATIC_SRCS}")
+
+# Note - libfft_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${libfft_deps};${M_LIBRARY}"
+  "" "${CMAKE_BINARY_DIR}/include;${CMAKE_SOURCE_DIR}/include"
+  SHARED_SRCS "${FFT_GEN_SHARED_SRCS}" STATIC_SRCS "${FFT_GEN_STATIC_SRCS}")
 
 set_target_properties(libfft PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_executable(fftest fftest.c)
+target_include_directories(fftest BEFORE PRIVATE ${CMAKE_BINARY_DIR}/include ${CMAKE_SOURCE_DIR}/include)
 set_property(TARGET fftest APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 SetTargetFolder(fftest "Compilation Utilities")
 target_link_libraries(fftest libfft ${M_LIBRARY})

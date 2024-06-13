@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -122,7 +122,7 @@ mark_as_advanced(PERPLEX_TEMPLATE)
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -166,10 +166,6 @@ if(NOT COMMAND PERPLEX_TARGET)
   macro(PERPLEX_TARGET Name Input)
     get_filename_component(IN_FILE_WE ${Input} NAME_WE)
     set(PVAR_PREFIX ${Name}_${IN_FILE_WE})
-
-    if (TARGET perplex_stage)
-      set(DEP_TARGET perplex_stage)
-    endif (TARGET perplex_stage)
 
     if(${ARGC} GREATER 3)
       CMAKE_PARSE_ARGUMENTS(${PVAR_PREFIX} "" "TEMPLATE;OUT_SRC_FILE;OUT_HDR_FILE;WORKING_DIR" "" ${ARGN})

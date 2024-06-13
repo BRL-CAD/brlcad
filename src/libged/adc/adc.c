@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2023 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,11 @@
 
 #include "vmath.h"
 #include "ged.h"
+
+void ged_calc_adc_pos(struct bview *gvp);
+void ged_calc_adc_a1(struct bview *gvp);
+void ged_calc_adc_a2(struct bview *gvp);
+void ged_calc_adc_dst(struct bview *gvp);
 
 static void
 adc_vls_print(struct bview *gvp, fastf_t base2local, struct bu_vls *out_vp)

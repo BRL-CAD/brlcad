@@ -16,7 +16,7 @@ set(bg_headers
   trimesh.h
   vert_tree.h
   )
-BRLCAD_MANAGE_FILES(bg_headers ${INCLUDE_DIR}/brlcad/bg)
+BRLCAD_MANAGE_FILES(bg_headers ${INCLUDE_DIR}/brlcad/bg REQUIRED libbg)
 
 CMAKEFILES(pointgen.h)
 CMAKEFILES(CMakeLists.txt)

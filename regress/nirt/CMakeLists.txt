@@ -18,6 +18,7 @@ set(nirt_outfiles
   nirt.mged
   nirt.out
   nirt.ref
+  nirt.out.raw-E
   )
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${nirt_outfiles}")

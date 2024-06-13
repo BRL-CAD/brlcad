@@ -1,7 +1,7 @@
 /*                       K - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2010-2023 United States Government as represented by
+ * Copyright (c) 2010-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -613,7 +613,7 @@ main(int argc, char **argv)
 	bu_exit(1, "Error: file %s already exists.\n", argv[1]);
     }
 
-    std::ifstream infile(argv[0]);
+    std::ifstream infile(argv[0], std::ios::binary);
     if (!infile.is_open()) {
 	bu_exit(1, "Error: unable to open %s for reading.\n", argv[0]);
     }

@@ -1,10 +1,5 @@
-set(VDECK_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${RT_INCLUDE_DIRS}
-  )
-BRLCAD_INCLUDE_DIRS(VDECK_INCLUDE_DIRS)
-
 BRLCAD_ADDEXEC(vdeck "cgarbs.c;match.c;parsarg.c;vdeck.c" "librt;${M_LIBRARY}" FOLDER Conv)
+target_include_directories(vdeck BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 CMAKEFILES(std.h vextern.h)
 CMAKEFILES(CMakeLists.txt)
 

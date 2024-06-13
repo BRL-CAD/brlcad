@@ -124,6 +124,8 @@ CMAKEFILES(
   m35.bw.tbz2
   regress-icv_export.cmake.in
   regress-icv_import.cmake.in
+  teapot.rle
+  teapot.ppm
   )
 
 # Local Variables:

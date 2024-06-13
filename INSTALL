@@ -41,12 +41,12 @@ walk-through including instructions for building on Windows.
 
 Required tools:
   - Git must be 2.17 or later
-  - CMake must be 3.12 or later
-  - Compiler must be C++11-compliant
-    - If using Visual Studio, version 2015 (14.0+) or later
-    - If using GCC/G++, version 4.8.1 or later
-    - If using LLVM/Clang 3.3 or later
-    - If using Intel, version 2015 (15.0+) or later
+  - CMake must be 3.18 or later
+  - Compiler must be C++17-compliant
+    - If using Visual Studio, version 2019 (16.8+) or later
+    - If using GCC/G++, version 7 or later
+    - If using LLVM/Clang 5 or later
+    - If using Intel, version 19.0.1 or later
 
 Steps to compile, test, and install an optimized BRL-CAD on
 non-Windows platforms:
@@ -342,17 +342,16 @@ Please report any bugs, support requests, or feature requests to:
   https://github.com/BRL-CAD/brlcad/issues
 
 
+
 CONFIGURATION OPTIONS
 ---------------------
 
 --- BRLCAD_BUNDLED_LIBS ---
 
-Enables compilation of all 3rd party sources that are provided within a BRL-CAD
-source distribution.  If used this option sets all other 3rd party library
-build flags to ON by default.  However, that setting can be overridden by
-manually setting individual variables. Default is "AUTO" - 3rd party sources
-are compiled only if they are not detected as being available and functioning
-as expected.
+If set to BUNDLED, and the BRL-CAD configure process is managing the bext
+dependencies, instructs bext to default to building local copies of the
+dependencies it will enable per the BRL-CAD feature settings, rather than
+searching for system versions.
 
 Aliases:  ENABLE_ALL
 
@@ -427,161 +426,3 @@ permissions).
 
 Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
 
-
---- BRLCAD_ASTYLE ---
-
-Option for enabling and disabling compilation of the Artistic Style
-(astyle) utility provided with BRL-CAD's source distribution.  Default is
-AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_ASTYLE
-
-
---- BRLCAD_XSLTPROC ---
-
-Option for enabling and disabling compilation of the xsltproc XML
-transformation utility provided with BRL-CAD's source distribution.
-Used for DocBook documentation processing.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-Depends on BRLCAD_EXTRADOCS.
-
-Aliases:  ENABLE_XSLTPROC
-
-
---- BRLCAD_XMLLINT ---
-
-Option for enabling and disabling compilation of the xmllint XML
-validation utility provided with BRL-CAD's source distribution.  Used
-for DocBook documentation validation.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_XMLLINT
-
-
---- BRLCAD_ZLIB ---
-
-Option for enabling and disabling compilation of the zlib library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
-
-
---- BRLCAD_REGEX ---
-
-Option for enabling and disabling compilation of the Regular
-Expression Library provided with BRL-CAD's source distribution.
-Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
-and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_REGEX
-
-
---- BRLCAD_NETPBM ---
-
-Option for enabling and disabling compilation of the netpbm library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_NETPBM
-
-
---- BRLCAD_PNG ---
-
-Option for enabling and disabling compilation of the Portable Network
-Graphics library provided with BRL-CAD's source distribution.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_PNG
-
-
---- BRLCAD_SC ---
-
-Option for enabling and disabling compilation of the NIST Step Class
-Libraries provided with BRL-CAD's source code.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_SCL, ENABLE_STEP, ENABLE_STEP_CLASS_LIBRARIES
-
-
---- BRLCAD_SQLITE3 ---
-
-Option for enabling and disabling compilation of the sqlite3 database command
-and library provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a
-system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_SQLITE3, ENABLE_SQLITE3
-
-
---- BRLCAD_PROJ ---
-
-Option for enabling and disabling compilation of the PROJ geographic
-projection library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_PROJ
-
-
---- BRLCAD_GDAL ---
-
-Option for enabling and disabling compilation of the GDAL geographic
-library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_GDAL
-
-
---- BRLCAD_ASSETIMPORT ---
-
-Option for enabling and disabling compilation of the Open
-Asset Import Library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_ASSETIMPORT
-
-
---- BRLCAD_OPENMESH ---
-
-Option for enabling and disabling compilation of the OpenMesh 
-Library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_OPENMESH
-
-
---- BRLCAD_TCL ---
-
-Option for enabling and disabling compilation of the Tcl library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_TCL
-
-
-
-*** Note - Do not add or edit configuration option descriptions and alias
-   lists in this file - those entries are auto-generated from information in
-   the toplevel CMakeLists.txt file and src/other/CMakeLists.txt - any changes
-   should be made in those files.  The CMake configuration process will
-   automatically re-generate INSTALL with the new descriptions and alias
-   information.

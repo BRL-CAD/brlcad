@@ -1,7 +1,7 @@
 /*                     C L O S E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
 	    struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	    if (!rrp->aborted) {
-		bu_terminate(bu_process_pid(rrp->p));
+		bu_pid_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 	    }
 	    bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);

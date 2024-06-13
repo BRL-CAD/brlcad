@@ -19,23 +19,29 @@ return -code 1
 }
 }")
 
+# Trying to generate Tcl index files in parallel has proven impractical, and
+# even the current efforts to do it in series don't seem to always succeed.
+# New approach - collect all of the commands that we need to run into a file
+# and execute them in series with one script and one custom target
+set(index_cmds_file "${CMAKE_BINARY_DIR}/CMakeTmp/index_cmds.cmake")
+file(REMOVE "${index_cmds_file}")
+
+define_property(GLOBAL PROPERTY index_cpy_targets BRIEF_DOCS "tclindex cpy" FULL_DOCS "tclIndex cpy targets")
+define_property(GLOBAL PROPERTY index_depends_files BRIEF_DOCS "index depends" FULL_DOCS "tclIndex depends files")
+define_property(GLOBAL PROPERTY index_install_files BRIEF_DOCS "index install files" FULL_DOCS "tclIndex install files")
+
 # Wrap the logic needed for defining build targets that generate
 # tclIndex and pkgIndex.tcl files
 
-# Reset list of tclIndex targets, so we can build up a clean list
-# each time for dependency purposes
-set(tclindex_target_list "" CACHE STRING "clear tclindex target list" FORCE)
-
 macro(general_tcl_index_BUILD cmd outfile targetdir)
-  # normalize so we can use it as a name
-  string(REGEX REPLACE "/" "_" name ${targetdir})
-
   # get file copy target(s) so we can make tclindex.tcl depend on them
   BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
+  set_property(GLOBAL APPEND PROPERTY index_cpy_targets ${data_target_list})
 
   # We want to be out of date if any of the tcl files in the current directory
   # change, since both pkgIndex and tclIndex are going to scan the directory
   file(GLOB tcl_files "*.tcl")
+  set_property(GLOBAL APPEND PROPERTY index_depends_files ${tcl_files})
 
   # Command that builds the index when the dependency is resolved.  We need
   # to use btclsh here to generate files correctly for Archer, but btclsh
@@ -44,41 +50,14 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   # btclsh to try to read the partial output of another.  To avoid this, we
   # make each new target depend on all previous targets, so they are forced
   # execute one at a time.
-  set(tclindex_outdir "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir}")
-  add_custom_command(
-    OUTPUT ${tclindex_outdir}/${outfile}
-    COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir}
-    DEPENDS btclsh ${data_target_list} ${tcl_files} ${tclindex_target_list}
-    )
-  add_custom_command(
-    OUTPUT ${tclindex_outdir}/${outfile}.done
-    COMMAND "${CMAKE_COMMAND}" -E touch ${tclindex_outdir}/${outfile}.done
-    DEPENDS ${tclindex_outdir}/${outfile}
-    )
+  set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
+  file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\" RESULT_VARIABLE BRES)\nif(BRES)\n  message(FATAL_ERROR \"Failed to process ${tclindex_outdir}\")\nendif()\n")
 
-  # Install logic for index file.
-  if(CMAKE_CONFIGURATION_TYPES)
-    # Need to use $<CONFIG> here rather than CMAKE_CFG_INTDIR
-    # as install in interpreted by CMake, not by the build tool.  See
-    # https://discourse.cmake.org/t/cmake-cfg-intdir-and-file-install/2169
-    install(FILES ${CMAKE_BINARY_DIR}/$<CONFIG>/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
-  else(CMAKE_CONFIGURATION_TYPES)
-    # CMAKE_CFG_INTDIR expands to "." in non-multiconfig builds, which is why we can use it universally in
-    # the add_custom_command logic.  However, $<CONFIG> may be Debug or Release even in a singlei
-    # configuration.  Therefore, we use a non-config specific path if we're not in multiconfig build mode.
-    install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
-  endif(CMAKE_CONFIGURATION_TYPES)
+  set_property(GLOBAL APPEND PROPERTY index_install_files ${targetdir}/${outfile})
 
-  # convenience target
-  add_custom_target(${name}_${cmd}.tcl ALL DEPENDS ${tclindex_outdir}/${outfile}.done)
-  set_target_properties(${name}_${cmd}.tcl PROPERTIES FOLDER "BRL-CAD Tcl Scripts")
-
-  # Maintain a list of all tclindex targets for dependency purposes
-  set(tclindex_target_list ${tclindex_target_list} ${name}_${cmd}.tcl)
-  set(tclindex_target_list "${tclindex_target_list}" CACHE STRING "tclindex target list" FORCE)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile}")
 
 endmacro(general_tcl_index_BUILD name targetdir)
-mark_as_advanced(tclindex_target_list)
 
 # Type specific generalizations of the general_tcl_index_BUILD macro
 macro(pkgIndex_BUILD targetdir)
@@ -131,6 +110,35 @@ endif (BRLCAD_ENABLE_TCL)
 # Put rtwizard last so we can define a build target
 # that relies on the other tclscripts being set up.
 add_subdirectory(rtwizard)
+
+if (TARGET btclsh)
+
+  # Unpack the full lists
+  get_property(index_cpy_targets GLOBAL PROPERTY index_cpy_targets)
+  get_property(index_depends_files GLOBAL PROPERTY index_depends_files)
+  get_property(index_install_files GLOBAL PROPERTY index_install_files)
+
+  # We've collected all the commands - now add add a single command
+  # to run all of them at once.
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    COMMAND ${CMAKE_COMMAND} -DCONFIG=$<CONFIG> -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    DEPENDS ${index_depends_files} ${index_cpy_targets}
+    )
+  add_custom_target(TclIndexBld ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
+    )
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
+
+  foreach(ifile ${index_install_files})
+    # Install logic for index file.
+    get_filename_component(targetdir "${ifile}" DIRECTORY)
+    get_filename_component(outfile "${ifile}" NAME)
+    install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+  endforeach(ifile ${index_install_files})
+
+endif (TARGET btclsh)
 
 CMAKEFILES(
   CMakeLists.txt

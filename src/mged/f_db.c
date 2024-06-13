@@ -1,7 +1,7 @@
 /*                           F _ D B . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -341,6 +341,7 @@ int
 f_opendb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct mged_opendb_ctx ctx;
+    ctx.old_dbip = NULL;
 
     if (argc <= 1) {
 	/* Invoked without args, return name of current database */
@@ -437,6 +438,7 @@ f_closedb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     struct mged_opendb_ctx ctx;
     ctx.interpreter = interpreter;
     ctx.ret = TCL_OK;
+    ctx.old_dbip = NULL;
 
     if (argc != 1) {
 	Tcl_AppendResult(interpreter, "Unexpected argument [%s]\n", (const char *)argv[1], NULL);

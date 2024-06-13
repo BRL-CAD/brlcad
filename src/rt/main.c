@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2023 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,16 +45,16 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/endian.h"
-#include "bu/getopt.h"
 #include "bu/bitv.h"
 #include "bu/debug.h"
-#include "bu/malloc.h"
+#include "bu/endian.h"
+#include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/ptbl.h"
-#include "bu/vls.h"
 #include "bu/version.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"

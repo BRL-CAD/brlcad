@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2023 United States Government as represented by
+# Copyright (c) 2004-2024 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -182,7 +182,7 @@ set mged_help_data(g)		$helplib_data(wdb_group)
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set mged_help_data(gdiff)	{{[-h][-g #][-l|-r|-b][-G][-S] left_object right_object}	{compare two objects}}
 set mged_help_data(get)		$helplib_data(wdb_get)
-set mged_help_data(gqa)       {{[options] object}    {check and analyze geometry}}
+set mged_help_data(gqa)       {{[options] object}    {check and analyze geometry, including bounding box dimensions, weight, volume, overlaps, centroid, and air checking}}
 set mged_help_data(graph)       {{}    {query and manipulate properties of the graph that corresponds to the currently opened .g database}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
     [-gd graphics_display_string] [-dt graphics_type]
@@ -211,8 +211,8 @@ set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|a
 set mged_help_data(l)		$helplib_data(wdb_list)
 set mged_help_data(labelface)	{{object[s]}	{label faces of wireframes of objects}}
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
-set mged_help_data(lc)          {{[-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}} {list codes within a group or combination}}
-set mged_help_data(lc)          {{[options] object} {check/analyze/validate the given object}}
+set mged_help_data(lc)          {{[-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}} {list ident, material id, LOS, and aircode of regions within a group}}
+set mged_help_data(lint)        {{[options] object} {check/analyze/validate the given object}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
@@ -292,6 +292,7 @@ set mged_help_data(rcc-cap)     {{rccname newname [height] [b|t]}      {create a
 set mged_help_data(rcc-tgc)     {{rccname newname x y z [b|t]}     {create a tgc with the specified apex at an end of an rcc}}
 set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc}}
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
+set mged_help_data(reair)	{{comb aircode}	{assign same aircode to all regions under a given combination}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
 set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}

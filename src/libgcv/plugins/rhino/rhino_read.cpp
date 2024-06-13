@@ -1,7 +1,7 @@
 /*                  R H I N O _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2023 United States Government as represented by
+ * Copyright (c) 2016-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -488,7 +488,7 @@ get_object_material(const ON_3dmObjectAttributes *attributes,
 		    bool &out_own_shader, bool &out_own_rgb)
 {
     if (attributes) {
-	const ON_Material *temp = ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
+	const ON_Material *temp = ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
 	out_shader = get_shader(temp);
 	out_own_shader = attributes->MaterialSource() != ON::material_from_parent;
 
@@ -499,7 +499,7 @@ get_object_material(const ON_3dmObjectAttributes *attributes,
 	out_own_rgb = attributes->ColorSource() != ON::color_from_parent;
 
 	if (!out_rgb[0] && !out_rgb[1] && !out_rgb[2]) {
-	    const ON_Material *material= ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
+	    const ON_Material *material= ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
 	    if (material) {
 		out_rgb[0] = static_cast<unsigned char>(material->m_diffuse.Red());
 		out_rgb[1] = static_cast<unsigned char>(material->m_diffuse.Green());
@@ -674,7 +674,8 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model, std::unordered_map<std::
 	    continue;
 
 	if (idef->IsLinkedType()) {
-	    std::cout << "Warning - instance " << idef->Name().Array() << " is defined using external file, unsupported\n";
+	    ON_String iname = ON_String(idef->Name());
+	    std::cout << "Warning - instance " << iname.Array() << " is defined using external file, unsupported\n";
 	    continue;
 	}
 
@@ -809,7 +810,7 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model,
     ON_UuidToString(l->Id(), id);
     std::string name = uuid_to_names[std::string(id.Array())];
     ON_Color wc = (l->Color() == ON_UNSET_COLOR) ? l->PlotColor() : l->Color();
-    ON_ModelComponentReference mref = model.RenderMaterialFromIndex(l->RenderMaterialIndex());
+    ON_ModelComponentReference mref = model.MaterialFromIndex(l->RenderMaterialIndex());
     const ON_Material *mp = ON_Material::Cast(mref.ModelComponent());
 
     // TODO - there's also wc.Alpha() - should translate that to shader settings if not 0

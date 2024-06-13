@@ -8,7 +8,7 @@ if(BRLCAD_ENABLE_BULLET)
   # Additionally, when compiling Bullet to produce static libs on Ubuntu,
   # it proved necessary to add -DCMAKE_POSITION_INDEPENDENT_CODE=ON to
   # avoid linking errors.
-  # 
+  #
   # The need for static libs complicates searching for system installs, since
   # Linux package managers do provide shared versions (at least on Ubuntu,
   # there doesn't even seem to be an option for static libraries provided by
@@ -22,18 +22,6 @@ if(BRLCAD_ENABLE_BULLET)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ${CFLS_TMP})
 
 endif(BRLCAD_ENABLE_BULLET)
-
-# Now that we have the bullet include dir (if any), do the includes
-set(SIM_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/simulate
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${BULLET_INCLUDE_DIR}
-  )
-BRLCAD_INCLUDE_DIRS(SIM_INCLUDE_DIRS)
 
 if(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
   add_definitions(-DHAVE_BULLET=1)
@@ -55,8 +43,15 @@ set(bullet_srcs
   utility.cpp
   )
 
+set(SIM_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/simulate
+  ${BULLET_INCLUDE_DIR}
+  )
+
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-simulate SHARED ${bullet_srcs})
+target_include_directories(ged-simulate BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
 target_link_libraries(ged-simulate libged libbu ${BULLET_LIBRARIES})
 set_property(TARGET ged-simulate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-simulate ${bullet_srcs})

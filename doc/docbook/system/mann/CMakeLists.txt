@@ -24,11 +24,14 @@ set(mann_EN
   bev.xml
   bo.xml
   bot.xml
+  bot_check.xml
   bot_condense.xml
   bot_decimate.xml
+  bot_extrude.xml
   bot_face_fuse.xml
   bot_face_sort.xml
   bot_flip.xml
+  bot_repair.xml
   bot_split.xml
   bot_sync.xml
   bot_vertex_fuse.xml
@@ -186,6 +189,7 @@ set(mann_EN
   rcc-tor.xml
   rcodes.xml
   red.xml
+  reair.xml
   refresh.xml
   regdebug.xml
   regdef.xml
@@ -206,6 +210,7 @@ set(mann_EN
   rtarea.xml
   rtcheck.xml
   rtedge.xml
+  rtweight.xml
   saveview.xml
   sca.xml
   screengrab.xml
@@ -265,16 +270,24 @@ set(mann_EN
 # extra outputs without being told.
 set_source_files_properties(gr.xml PROPERTIES EXTRA_MANN_OUTPUTS "dg.nged")
 
-ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann "")
+if (BRLCAD_EXTRADOCS)
+  ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann "" REQUIRED "libged")
+endif (BRLCAD_EXTRADOCS)
 
 set(mann_INTRO
   Introduction.xml
   )
-ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
+if (TARGET libged AND BRLCAD_EXTRADOCS)
+  ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
+endif (TARGET libged AND BRLCAD_EXTRADOCS)
 
 
-CMAKEFILES(mged_cmd_template.xml)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${mann_EN}
+  ${mann_INTRO}
+  mged_cmd_template.xml
+  )
 
 # Local Variables:
 # tab-width: 8

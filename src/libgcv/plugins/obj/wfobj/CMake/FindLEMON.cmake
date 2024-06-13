@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2023 United States Government as represented by
+# Copyright (c) 2010-2024 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -138,10 +138,6 @@ if(NOT COMMAND LEMON_TARGET)
     if(${ARGC} GREATER 3)
       CMAKE_PARSE_ARGUMENTS(${LVAR_PREFIX} "" "OUT_SRC_FILE;OUT_HDR_FILE;WORKING_DIR;EXTRA_ARGS" "" ${ARGN})
     endif(${ARGC} GREATER 3)
-
-    if (TARGET perplex_stage)
-      set(DEPS_TARGET perplex_stage)
-    endif (TARGET perplex_stage)
 
     # Need a working directory
     if("${${LVAR_PREFIX}_WORKING_DIR}" STREQUAL "")

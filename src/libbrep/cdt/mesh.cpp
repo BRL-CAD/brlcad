@@ -1,7 +1,7 @@
 /*                    C D T _ M E S H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2023 United States Government as represented by
+ * Copyright (c) 2019-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -945,7 +945,7 @@ cpolygon_t::point_in_polygon(long v, bool flip)
 
     cpolyedge_t *pe = (*poly.begin());
     if (v == pe->v2d[0] || v == pe->v2d[1]) {
-	return -1;
+	return true;
     }
 
     point2d_t *polypnts = NULL;
@@ -4640,7 +4640,11 @@ cdt_mesh_t::best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname
  * approximating is locally semi-planar, but if the repair area is not one
  * that can be projected into a plane without introducing self intersections,
  * we will need something more sophisticated.  Take a look at
- * https://github.com/jpcy/xatlas to see if it might be a good starting point.
+ * Geogram's uv projection capabilities to see if they can help here.
+ *
+ * Also possibilities:
+ * https://github.com/educelab/OpenABF
+ * https://github.com/jpcy/xatlas
  */
 
 bool

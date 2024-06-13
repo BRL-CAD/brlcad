@@ -1,7 +1,7 @@
 /*                         C A C H E . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2023 United States Government as represented by
+ * Copyright (c) 2016-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,9 +32,6 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h> /* for mkdir */
-#endif
 
 #include "bio.h"
 #include "bnetwork.h"
@@ -135,12 +132,7 @@ cache_ensure_path(const char *path, int is_file)
     bu_free(dir, "dirname");
 
     if (!is_file && !bu_file_directory(path)) {
-#ifdef HAVE_WINDOWS_H
-	CreateDirectory(path, NULL);
-#else
-	/* mode: 775 */
-	mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
+	bu_mkdir(path);
     } else if (is_file && !bu_file_exists(path, NULL)) {
 	/* touch file */
 	FILE *fp = fopen(path, "w");
@@ -257,7 +249,7 @@ cache_init(struct rt_cache *cache)
     char dirsep[2] = {BU_DIR_SEPARATOR, '\0'};
 
     if (!bu_file_exists(dir, NULL)) {
-	cache_warn(cache, dir, "Directory does not exist.  Initializing.");
+	//cache_warn(cache, dir, "Directory does not exist.  Initializing.");
 	if (!cache_ensure_path(dir, 0)) {
 	    cache_warn(cache, dir, "Cannot create cache directory.  Caching disabled.");
 	    return 0;
@@ -372,7 +364,7 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
 	compressed = 1;
 
     if (!compressed) {
-	CACHE_DEBUG("++++++ [%lu.%lu] Compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", bu_process_id(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
+	CACHE_DEBUG("++++++ [%lu.%lu] Compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", bu_pid(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
 	return;
     }
 
@@ -404,7 +396,7 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 	uncompressed = 1;
 
     if (!uncompressed) {
-	CACHE_DEBUG("++++++ [%lu.%lu] decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", bu_process_id(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
+	CACHE_DEBUG("++++++ [%lu.%lu] decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", bu_pid(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
 	return;
     }
 
@@ -504,7 +496,7 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
-    CACHE_DEBUG("++++ [%lu.%lu] Trying to LOAD %s\n", bu_process_id(), bu_parallel_id(), name);
+    CACHE_DEBUG("++++ [%lu.%lu] Trying to LOAD %s\n", bu_pid(), bu_parallel_id(), name);
 
     e = cache_read_entry(cache, name);
     if (!e) {
@@ -568,10 +560,10 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
-    CACHE_DEBUG("++++ [%lu.%lu] Trying to STORE %s\n", bu_process_id(), bu_parallel_id(), name);
+    CACHE_DEBUG("++++ [%lu.%lu] Trying to STORE %s\n", bu_pid(), bu_parallel_id(), name);
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1) {
-	CACHE_DEBUG("++++++ [%lu.%lu] Failed to serialize %s\n", bu_process_id(), bu_parallel_id(), name);
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to serialize %s\n", bu_pid(), bu_parallel_id(), name);
 	return 0; /* can't serialize */
     }
 
@@ -613,13 +605,13 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     }
 
     /* get a temporary name unlikely to exist */
-    snprintf(tmpname, MAXPATHLEN, "%s.%d.%d.%lld", name, bu_process_id(), bu_parallel_id(), (long long int)bu_gettime());
+    snprintf(tmpname, MAXPATHLEN, "%s.%d.%d.%lld", name, bu_pid(), bu_parallel_id(), (long long int)bu_gettime());
 
     cache_get_objfile(cache, tmpname, tmppath, MAXPATHLEN);
     bu_file_delete(tmppath); /* okay if it doesn't exist */
 
     if (!cache_create_dir(cache, tmpname)) {
-	CACHE_DEBUG("++++++ [%lu.%lu] Failed to create cache dir %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to create cache dir %s\n", bu_pid(), bu_parallel_id(), tmpname);
 	bu_free_external(&attributes_external);
 	bu_free_external(&data_external);
 	return 0; /* no storage */
@@ -631,7 +623,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     focache = fopen(tmppath, "wb");
     if (!focache) {
-	CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_pid(), bu_parallel_id(), tmpname);
 	return 0; /* can't stash */
     }
 
@@ -641,12 +633,12 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	bu_free_external(&db_external);
 	bu_free_external(&attributes_external);
 	bu_free_external(&data_external);
-	CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_pid(), bu_parallel_id(), tmpname);
 	return 0; /* can't stash */
     }
     fclose(focache);
 
-    CACHE_DEBUG("++++++ [%lu.%lu] Successfully wrote cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+    CACHE_DEBUG("++++++ [%lu.%lu] Successfully wrote cache temp %s\n", bu_pid(), bu_parallel_id(), tmpname);
 
     bu_free_external(&db_external);
     bu_free_external(&attributes_external);
@@ -665,7 +657,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	int checkpnt_size = 0;
 	int check_cnt = 0;
 
-	CACHE_DEBUG("++++++ [%lu.%lu] Someone else finished %s first\n", bu_process_id(), bu_parallel_id(), name);
+	CACHE_DEBUG("++++++ [%lu.%lu] Someone else finished %s first\n", bu_pid(), bu_parallel_id(), name);
 
 	while (tmp_file_size != final_file_size && final_file_size > checkpnt_size && check_cnt < 3) {
 	    checkpnt_size = final_file_size;
@@ -675,23 +667,23 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	}
 
 	if (tmp_file_size != final_file_size) {
-	    CACHE_DEBUG("++++++ [%lu.%lu] BUT the file size of %s (%d) doesn't match that of %s (%d)!!!  Giving up.\n", bu_process_id(), bu_parallel_id(), path, final_file_size, tmpname, tmp_file_size);
+	    CACHE_DEBUG("++++++ [%lu.%lu] BUT the file size of %s (%d) doesn't match that of %s (%d)!!!  Giving up.\n", bu_pid(), bu_parallel_id(), path, final_file_size, tmpname, tmp_file_size);
 	    if (!cache->debug) {
 		bu_file_delete(tmppath);
 	    } else {
-		CACHE_DEBUG("++++++ [%lu.%lu] Note: temporary file %s has been left intact for debugging examination.\n", bu_process_id(), bu_parallel_id(), path, tmpname);
+		CACHE_DEBUG("++++++ [%lu.%lu] Note: temporary file %s has been left intact for debugging examination.\n", bu_pid(), bu_parallel_id(), path, tmpname);
 	    }
 	    return 0;
 	}
 
-	CACHE_DEBUG("++++++ [%lu.%lu] No longer need %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+	CACHE_DEBUG("++++++ [%lu.%lu] No longer need %s\n", bu_pid(), bu_parallel_id(), tmpname);
 	bu_file_delete(tmppath);
 
 	if (cache_read_entry(cache, name) != NULL) {
-	    CACHE_DEBUG("++++++ [%lu.%lu] Successfully read %s\n", bu_process_id(), bu_parallel_id(), name);
+	    CACHE_DEBUG("++++++ [%lu.%lu] Successfully read %s\n", bu_pid(), bu_parallel_id(), name);
 	    return 1;
 	} else {
-	    CACHE_DEBUG("++++++ [%lu.%lu] BUT we can't read %s !!!  Giving up.\n", bu_process_id(), bu_parallel_id(), name);
+	    CACHE_DEBUG("++++++ [%lu.%lu] BUT we can't read %s !!!  Giving up.\n", bu_pid(), bu_parallel_id(), name);
 	    return 0;
 	}
     }
@@ -748,7 +740,7 @@ rt_cache_close(struct rt_cache *cache)
     if (!cache)
 	return;
 
-    CACHE_DEBUG("++ [%lu.%lu] Closing cache at %s\n", bu_process_id(), bu_parallel_id(), cache->dir);
+    CACHE_DEBUG("++ [%lu.%lu] Closing cache at %s\n", bu_pid(), bu_parallel_id(), cache->dir);
 
     entry = bu_hash_next(cache->entry_hash, NULL);
     while (entry) {
@@ -797,7 +789,7 @@ rt_cache_open(void)
 	return NULL;
     }
 
-    CACHE_DEBUG("++ [%lu.%lu] Opening cache at %s\n", bu_process_id(), bu_parallel_id(), dir);
+    CACHE_DEBUG("++ [%lu.%lu] Opening cache at %s\n", bu_pid(), bu_parallel_id(), dir);
 
     format = cache_format(cache);
     if (format < 0) {
@@ -833,7 +825,7 @@ rt_cache_open(void)
 
 	count = bu_file_list(bu_vls_cstr(&path), "[A-Z0-9][A-Z0-9]", &matches);
 
-	CACHE_DEBUG("++++ [%lu.%lu] Found V%d cache, deleting %zu object dirs in %s", bu_process_id(), bu_parallel_id(), format, count, bu_vls_cstr(&path));
+	CACHE_DEBUG("++++ [%lu.%lu] Found V%d cache, deleting %zu object dirs in %s", bu_pid(), bu_parallel_id(), format, count, bu_vls_cstr(&path));
 
 	for (i = 0; i < count; i++) {
 	    struct bu_vls subpath = BU_VLS_INIT_ZERO;
@@ -860,7 +852,7 @@ rt_cache_open(void)
 		bu_vls_printf(&subpath, "%s%cobjects%c%s%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i], BU_DIR_SEPARATOR, submatches[j]);
 		bu_file_delete(bu_vls_cstr(&subpath));
 
-		CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_process_id(), bu_parallel_id(), bu_vls_cstr(&subpath));
+		CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_pid(), bu_parallel_id(), bu_vls_cstr(&subpath));
 	    }
 	    bu_argv_free(subcount, submatches);
 
@@ -868,7 +860,7 @@ rt_cache_open(void)
 	    bu_vls_printf(&subpath, "%s%cobjects%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i]);
 	    bu_file_delete(bu_vls_cstr(&subpath));
 
-	    CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_process_id(), bu_parallel_id(), bu_vls_cstr(&subpath));
+	    CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_pid(), bu_parallel_id(), bu_vls_cstr(&subpath));
 
 	    bu_vls_free(&subpath);
 	}
@@ -876,7 +868,7 @@ rt_cache_open(void)
 
 	bu_file_delete(bu_vls_cstr(&path));
 
-	CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_process_id(), bu_parallel_id(), bu_vls_cstr(&path));
+	CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_pid(), bu_parallel_id(), bu_vls_cstr(&path));
 
 	bu_vls_trunc(&path, 0);
 	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");

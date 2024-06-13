@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -397,6 +397,19 @@ struct ged_plugin {
     const struct ged_cmd ** const cmds;
     int cmd_cnt;
 };
+
+
+struct ged_cmd_process_impl;
+struct ged_cmd_process {
+    struct ged_cmd_process_impl *i;
+};
+
+struct ged_process_plugin {
+    uint32_t api_version; /* must be first in struct */
+    const struct ged_cmd_process * const p;
+};
+
+typedef int (*ged_process_ptr)(int, const char *[]);
 
 /* Report any messages from libged when plugins were initially loaded.
  * Can be important when diagnosing command errors. */

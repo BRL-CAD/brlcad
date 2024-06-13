@@ -1,7 +1,7 @@
 /*                       A T T R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,11 +56,12 @@ typedef enum {
     ATTR_APPEND,
     ATTR_COPY,
     ATTR_GET,
+    ATTR_LIST,
     ATTR_RM,
     ATTR_SET,
     ATTR_SHOW,
     ATTR_SORT,
-    ATTR_LIST,
+    ATTR_STANDARDIZE,
     ATTR_UNKNOWN
 } attr_cmd_t;
 
@@ -151,6 +152,7 @@ attr_cmd(const char* arg)
     const char SET[]    = "set";
     const char SHOW[]   = "show";
     const char SORT[]   = "sort";
+    const char STD[]    = "standardize";
 
     /* in one user's predicted order of frequency: */
     if (BU_STR_EQUIV(SHOW, arg))
@@ -169,6 +171,8 @@ attr_cmd(const char* arg)
 	return ATTR_LIST;
     else if (BU_STR_EQUIV(COPY, arg))
 	return ATTR_COPY;
+    else if (BU_STR_EQUIV(STD, arg))
+	return ATTR_STANDARDIZE;
     else
 	return ATTR_UNKNOWN;
 }
@@ -592,7 +596,6 @@ rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 	    val = bu_avs_get(&lavs, oattr);
 	    if (val) {
 		(void)bu_avs_add(&lavs, nattr, val);
-		db5_standardize_avs(&lavs);
 		if (db5_update_attributes(dp, &lavs, dbip)) {
 		    if (msg)
 			bu_vls_printf(msg, "rt_cmd_attr: failed to update attributes\n");
@@ -639,7 +642,6 @@ rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 		(void)bu_avs_add(&avs, argv[j], argv[j+1]);
 		j += 2;
 	    }
-	    db5_standardize_avs(&avs);
 	    if (db5_update_attributes(dp, &avs, dbip)) {
 		if (msg)
 		    bu_vls_printf(msg, "rt_cmd_attr: failed to update attributes\n");
@@ -783,6 +785,29 @@ rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 		attr_print(msg, &avs, argc - 3, argv + 3);
 	    }
 	}
+    } else if (scmd == ATTR_STANDARDIZE) {
+
+	for (i = 0; i < path_cnt; i++) {
+	    struct bu_attribute_value_set lavs;
+	    bu_avs_init_empty(&lavs);
+	    dp = paths[i];
+	    if (db5_get_attributes(dbip, &lavs, dp)) {
+		if (msg)
+		    bu_vls_printf(msg, "rt_cmd_attr: cannot get attributes for object %s\n", dp->d_namep);
+		ret = BRLCAD_ERROR;
+		bu_avs_free(&lavs);
+		goto rt_attr_core_memfree;
+	    }
+	    db5_standardize_avs(&lavs);
+	    if (db5_update_attributes(dp, &lavs, dbip)) {
+		if (msg)
+		    bu_vls_printf(msg, "rt_cmd_attr: failed to update attributes\n");
+		ret = BRLCAD_ERROR;
+	    }
+	    bu_avs_free(&lavs);
+	}
+	goto rt_attr_core_memfree;
+
     } else {
 	if (msg) {
 	    bu_vls_printf(msg, "rt_cmd_attr: unrecognized attr subcommand %s\n", argv[1]);

@@ -1,7 +1,7 @@
 /*                       U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2023 United States Government as represented by
+ * Copyright (c) 2018-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,6 @@
 #include <inttypes.h>
 #include <fstream>
 
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#include "xxhash.h"
-
 #include <bu.h>
 #include <bv/lod.h>
 #include <icv.h>
@@ -47,7 +43,6 @@
 extern "C" void
 ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    XXH64_state_t h_state;
     unsigned long long hash;
     struct ged *gedp = (struct ged *)u_data;
     DbiState *ctx = gedp->dbi_state;
@@ -75,9 +70,7 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 	    // When this callback is made, dp is still valid, but in subsequent
 	    // processing it will not be.  We need to capture everything we
 	    // will need from this dp now, for later use when updating state
-	    XXH64_reset(&h_state, 0);
-	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    hash = (unsigned long long)XXH64_digest(&h_state);
+	    hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
 	    ctx->removed.insert(hash);
 	    ctx->old_names[hash] = std::string(dp->d_namep);
 	    break;

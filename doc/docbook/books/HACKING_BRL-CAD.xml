@@ -646,15 +646,6 @@
 
           <varlistentry>
             <term>
-              <filename>src/other/</filename>
-            </term>
-            <listitem>
-              <para>3rd party frameworks (Tcl/Tk, libpng, zlib, etc.)</para>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>
               <filename>src/proc-db/</filename>
             </term>
             <listitem>

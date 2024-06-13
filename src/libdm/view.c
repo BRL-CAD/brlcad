@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2023 United States Government as represented by
+ * Copyright (c) 2007-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -471,7 +471,8 @@ dm_draw_label(struct dm *dmp, struct bv_scene_obj *s)
     if (!l->line_flag)
 	return;
 
-    point_t l3d, mpt;
+    point_t l3d = VINIT_ZERO;
+    point_t mpt = VINIT_ZERO;
 
     if (txt_ok == BRLCAD_OK) {
 	vect2d_t bmid;

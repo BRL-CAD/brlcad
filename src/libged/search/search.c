@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -279,13 +279,13 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
 }
 
 
-static void
+static int
 search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
 {
     size_t len;
 
     if (!objs || !out)
-	return;
+	return 0;
 
     len = BU_PTBL_LEN(objs);
     if (len > 0) {
@@ -296,6 +296,53 @@ search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
 	    bu_vls_printf(out, "%s\n", uniq_dp->d_namep);
 	}
     }
+
+    return BU_PTBL_LEN(objs);
+}
+
+/* -v can be supplied multiple times for growing verbosity
+ * first v: will print search totals
+ * next  v: will print boolean operations
+ * next  v: will print types
+ */
+static void
+_handle_verbosity(int* search_flags, int* fp_flags)
+{
+    if (bu_optarg) {
+	// unless succeeded by another flag, bu_getopt assumes -v is either supplied
+	// an argument or is at the end of the string, neither of which are likely
+	// for search - filter out a following arg from the optarg if it's not a 'v'
+	if (bu_optarg[0] != 'v')
+	    bu_optind--;
+	else {
+	    // handle -vv, -vvv, -vvvv..
+	    switch (strnlen(bu_optarg, 2)) {
+	        case 2:
+		    *fp_flags |= DB_FP_PRINT_TYPE;
+		    /* fallthrough */
+	        case 1:
+		    *fp_flags |= DB_FP_PRINT_BOOL;
+		    /* fallthrough */
+	        default:
+		    *search_flags |= DB_SEARCH_PRINT_TOTAL;
+		    break;
+	    }
+	    return;
+	}
+    }
+
+    // else - handle separate instance of -v (ie -v -v -v)
+    if (!(*search_flags & DB_SEARCH_PRINT_TOTAL)) {
+	*search_flags |= DB_SEARCH_PRINT_TOTAL;
+	return;					// first time, enable totals
+    }
+
+    if (!(*fp_flags & DB_FP_PRINT_BOOL)) {
+	*fp_flags |= DB_FP_PRINT_BOOL;
+	return;					// second time, enable bools
+    }
+
+    *fp_flags |= DB_FP_PRINT_TYPE;		// max verbosity, enable types (everything else is already on)
 }
 
 
@@ -314,11 +361,12 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int path_found = 0;
     int all_local = 1;
     int print_verbose_info = DB_FP_PRINT_COMB_INDEX;
+    int search_cnt = 0; /* used to keep a running total of all items printed from search */
     struct bu_vls prefix = BU_VLS_INIT_ZERO;
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
     struct bu_ptbl *search_set;
-    const char *usage = "[-a] [-v] [-Q] [-h] [path] [expressions...]\n";
+    const char *usage = "[-a] [-v[v..]] [-Q] [-h] [path] [expressions...]\n";
     /* COPY argv_orig to argv; */
     char **argv = NULL;
     struct db_search_context *ctx = db_search_context_create();
@@ -333,8 +381,11 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
      * toplevel path specifiers, etc. */
     optcnt = 0;
     for (i = 1; i < (size_t)argc; i++) {
-	if ((argv_orig[i][0] == '-') && (strlen(argv_orig[i]) == 2)) {
-	    optcnt++;
+	if ((argv_orig[i][0] == '-')) {
+	    int len = strlen(argv_orig[i]);
+	    if ((len == 2) || (len > 1 && argv_orig[i][1] == 'v'))
+		// ugly, but verbosity is currently the only option that can have more than 1 character
+		optcnt++;
 	} else {
 	    break;
 	}
@@ -343,7 +394,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* Options have to come before paths and search expressions, so don't look
      * any further than the max possible option count */
     bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv")) != -1)) {
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv::")) != -1)) {
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
@@ -351,8 +402,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		flags |= DB_SEARCH_HIDDEN;
 		break;
 	    case 'v':
-		print_verbose_info |= DB_FP_PRINT_BOOL;
-		print_verbose_info |= DB_FP_PRINT_TYPE;
+		_handle_verbosity(&flags, &print_verbose_info);
 		break;
 
 	    case 'Q':
@@ -546,7 +596,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	    }
 	}
 
-	search_print_objs_to_vls(uniq_db_objs, gedp->ged_result_str);
+	search_cnt += search_print_objs_to_vls(uniq_db_objs, gedp->ged_result_str);
 
 	bu_ptbl_free(uniq_db_objs);
 	bu_free(uniq_db_objs, "free unique object container");
@@ -590,7 +640,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			}
 		    }
 
-		    search_print_objs_to_vls(search_results, gedp->ged_result_str);
+		    search_cnt += search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
 		    db_search_free(search_results);
 		    bu_free(search_results, "free search container");
@@ -627,13 +677,15 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 					    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&fullpath_string));
 					}
 				    }
+
+				    search_cnt += sr_len;
 				}
 				break;
 			    case 1:
 				flags |= DB_SEARCH_RETURN_UNIQ_DP;
 				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
 
-				search_print_objs_to_vls(search_results, gedp->ged_result_str);
+				search_cnt += search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
 				break;
 			    default:
@@ -657,6 +709,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	BU_PUT(sdata->right, struct bu_vls);
 	BU_PUT(sdata, struct fp_cmp_vls);
     }
+
+    if (flags & DB_SEARCH_PRINT_TOTAL)
+	bu_vls_printf(gedp->ged_result_str, "[%d] items found in search\n", search_cnt);
 
     /* Done - free memory */
     bu_vls_free(&bname);

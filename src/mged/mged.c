@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2023 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1538,14 +1538,7 @@ main(int argc, char *argv[])
 	 * access to Tcl/Tk is possible.
 	 */
 	for (argc -= 1, argv += 1; argc; --argc, ++argv) {
-	    /* in order to process interactively, an old optional y/n argument
-	    * intended for f_opendb must be filtered out here to remove
-	    * garbage "unrecognized command" line prints
-	    */
-	    if (!BU_STR_EQUAL("y", argv[0]) && !BU_STR_EQUAL("Y", argv[0])
-	     && !BU_STR_EQUAL("n", argv[0]) && !BU_STR_EQUAL("N", argv[0])) {
 	    bu_vls_printf(&input_str, "%s ", *argv);
-	    }
 	}
 
 	cmdline(&input_str, TRUE);
@@ -2468,9 +2461,8 @@ mged_finish(int exitcode)
 	struct bu_ptbl rmp = BU_PTBL_INIT_ZERO;
 	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(&GEDP->ged_subp); i++) {
-		int aborted = 0;
 		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&GEDP->ged_subp, i);
-		if (bu_process_wait(&aborted, rrp->p, 1) != -1) {
+		if (!bu_process_wait_n(&rrp->p, 1)) {
 		    bu_ptbl_ins(&rmp, (long *)rrp);
 		}
 	    }

@@ -1,0 +1,181 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bot_flip">
+  <refmeta>
+    <refentrytitle>BOT_REPAIR</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>bot_repair</refname>
+    <refpurpose>
+      Given an existing BoT object as input, try to generate a manifold solid mesh. 
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>bot repair</command>
+      <arg choice="opt" rep="norepeat">-h</arg>
+      <arg choice="opt" rep="norepeat">-a #</arg>
+      <arg choice="opt" rep="norepeat">-p #</arg>
+      <arg choice="opt" rep="norepeat">-o output_obj</arg>
+      <arg choice="req" rep="repeat"> <replaceable>input_bot</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
+  <para>
+    It is quite common in CAD modeling to encounter a triangle mesh (a Bag of
+    Triangles or "BoT" object in BRL-CAD terms) that does not define an enclosed
+    volume in space.  Sometimes this is intentional (such as "plate mode" meshes
+    whose volume is implicitly defined) but more commonly it represents a modeling
+    error - i.e. the <emphasis>intent</emphasis> was to define a closed volume in
+    space, but the mesh elements as defined do not successfully do so.
+  </para>
+  <para>
+    In the fully general case it is impossible to repair such a mesh without manual
+    intervention - if a huge majority of a spherical mesh is cut away, for example,
+    there is no way to know automatically if the original modeling intent was to
+    define the whole sphere or to define (say) a lens shape.  However, in many cases
+    the flaws are small compared to the overall shape, and there are simply "holes"
+    in the mesh that can be filled in to produce a valid manifold.  There are also
+    even more basic categories of problem where the geoemtry itself does (or rather,
+    <emphasis>can</emphasis>) define a closed volume, but the topology of the mesh
+    itself is incorrect.
+  </para>
+  <para>
+    For those cases which may be suitable for automatic repair, the <command>bot repair</command>
+    command attempts to produce valid manifold solid meshes automatically
+    using mesh repair algorithms.  By default, topological repairs and hole filling for
+    holes with a size up to five percent of the overall mesh area are the techniques that
+    <command>bot repair</command> will attempt to employ. There are also options to adjust
+    the hole sizes considered viable for repair attempts.  However, be aware that attempting
+    to repair holes that are <emphasis>very</emphasis> large may produce unexpected results - an output may be
+    closed and manifold, but end up changing the shape of a mesh.  Parts of the mesh that are intended
+    to be separate may end up being connected to "close" the shape, losing concave features.
+    Outputs should be inspected - <emphasis>particularly</emphasis> when large hole sizes are
+    specified - to insure the new shape is true to the original intent as
+    well as topologically valid.
+  </para>
+  <para>
+    A "repaired" mesh may either be output as an overwrite of the input mesh (an "in-place" repair)
+    or (if only one input mesh is specified) written to a user-specified object name as a new mesh.
+    Note that in-place repair <emphasis>is</emphasis> destructive - the original
+    mesh is lost - but that method of repair is <emphasis>very</emphasis> useful when correcting
+    large numbers of meshes in a hierarchical model.
+  </para>
+  <para>
+    If an input mesh is already a valid solid, no work is done.  If a repair cannot be
+    successfully made, an error is returned.
+  </para>
+  <para>
+    A number of checks are made on a repaired mesh to try and ensure the processing
+    results are valid - in particular, if the bounding box size changes or the surface
+    area of the mesh decreases that is interpreted as an error.
+  </para>
+  <para>
+    Note that this command will <emphasis>not</emphasis> (currently) perform any work on plate mode or
+    surface mode BoTs.  If a user is not aware that they have those types of BoT
+    objects in a database, they may be surprised at <command>bot repair</command>
+    not operating on those objects.  To verify the type of an individual bot, use the
+    command <command>bot get type objname</command>.  To find all plate mode bots in a database the
+    command <command>search -type bot -type plate</command> may be used and to find all
+    surface mode BoTs the command <command>search -type bot ! -type plate ! -type solid</command>
+    will work.  If a BoT is <emphasis>incorrectly</emphasis> identified as surface, its
+    type may be changed with the command <command>bot set type objname solid</command>.
+    Note, however, that changing a BoT's type and repairing it when it is
+    <emphasis>intended</emphasis> to be plate mode or surface may result in incorrect
+    geometry per modeling intent, even if the result ends up topologically valid.
+  </para>
+  </refsection>
+
+  <refsection xml:id="search_options"><title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-a #</emphasis></term>
+	<listitem>
+	  <para>
+	    Specify an absolute maximum area in mm for a hole size on which repair will
+	    be attempted.  Unset by default.  Overrides the <option>p</option> if specified.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-h</emphasis></term>
+	<listitem>
+	  <para>
+	    Print command help.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-p #</emphasis></term>
+	<listitem>
+	  <para>
+	    Specify the largest viable hole size for repair as a percentage (0-100) of the
+	    mesh area.  By default the limit is set to 5 percent.  0 and 100 are interpreted
+	    as attempting to fill all holes, which may produce unexpected results.  If
+	    the <option>a</option> is specified it overrides this option.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsection>
+
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+    <example><title>In-Place Repair</title>
+
+      <para><prompt>mged&gt; </prompt><userinput>bot repair input.bot</userinput></para>
+      <para>
+        If a repair is needed, input.bot will be replaced by a new input.bot primitive with the repairs applied.
+      </para>
+    </example>
+
+    <example><title>Outputting Repaired Mesh to Another Object.</title>
+
+      <para><prompt>mged&gt; </prompt><userinput>bot repair -o output.bot input.bot </userinput></para>
+      <para>
+        If a repair was needed, output.bot holds the altered mesh.  The input.bot original is unaltered.
+      </para>
+    </example>
+
+    <example><title>Try Repairing Larger Holes.</title>
+
+      <para><prompt>mged&gt; </prompt><userinput>bot repair -p 10.2 input.bot output.bot</userinput></para>
+      <para>
+         Attempt repairing holes with area up to 10.2 percent of the mesh area.
+      </para>
+    </example>
+
+    <example><title>Repair all BoT Solids in Database</title>
+
+      <para><prompt>mged&gt; </prompt><userinput>bot repair *</userinput></para>
+      <para>
+        Attempt in-place repair of all BoT solids.  Any object matching the pattern that is not of the appropriate
+	type is ignored.  This option is useful when batch processing large numbers of objects.  Output
+	for the user is a list of repaired BoTs, as well as any attempted repairs that failed.
+      </para>
+    </example>
+
+
+  </refsection>
+  
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to <email>devs@brlcad.org</email>
+    </para>
+  </refsection>
+</refentry>

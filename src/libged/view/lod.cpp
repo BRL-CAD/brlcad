@@ -1,7 +1,7 @@
 /*                         L O D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2023 United States Government as represented by
+ * Copyright (c) 2008-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,8 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/hash.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 #include "bv/lod.h"
 
@@ -234,7 +236,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
 			if (db_get_external(&ext, dp, gedp->dbip))
 			    continue;
-			key = bv_mesh_lod_custom_key((void *)ext.ext_buf,  ext.ext_nbytes);
+			key = bu_data_hash((void *)ext.ext_buf,  ext.ext_nbytes);
 			bu_free_external(&ext);
 			if (!key)
 			    continue;
