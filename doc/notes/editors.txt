@@ -73,6 +73,9 @@ set cinoptions+=t0
 " http://www.vim.org/scripts/script.php?script_id=1717
 :autocmd BufRead,BufNewFile *.tcl,*.tcl.in setf tcl
 
+" XML
+:autocmd BufRead,BufNewFile *.xml set shiftwidth=2 tabstop=2 softtabstop=0
+
 " Git commit settings
 " https://csswizardry.com/2017/03/configuring-git-and-vim/
 autocmd FileType gitcommit set textwidth=72
