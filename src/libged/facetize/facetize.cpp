@@ -366,7 +366,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_vls_free(&dname);
 
-	s->lfile = fopen(bu_vls_cstr(s->log_file), "w");
+	s->lfile = fopen(bu_vls_cstr(s->log_file), "a");
 	if (!s->lfile) {
 	    bu_vls_printf(gedp->ged_result_str, "Unable to open log file %s for writing\n", bu_vls_cstr(s->log_file));
 	    ret = BRLCAD_ERROR;
