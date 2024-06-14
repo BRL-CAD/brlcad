@@ -86,6 +86,7 @@ _ged_facetize_state_create()
     s->no_empty = 0;
     s->make_nmg = 0;
     s->nonovlp_brep = 0;
+    s->no_fixup = 0;
 
     s->wdir = NULL;
 
@@ -248,7 +249,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     s->method_opts = method_options;
 
     /* General options */
-    struct bu_opt_desc d[18];
+    struct bu_opt_desc d[19];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",            &_ged_vopt,       &(s->verbosity), "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
@@ -264,9 +265,10 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[12],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
     BU_OPT(d[13],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
     BU_OPT(d[14],  "", "log-file",                        "<filename>",           &bu_opt_vls,           s->log_file, "Specify a location to use for the log file.");
-    BU_OPT(d[15], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[16], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
-    BU_OPT_NULL(d[17]);
+    BU_OPT(d[15],  "", "disable-fixup",                             "",                  NULL,          &s->no_fixup, "Disable post-processing steps intended to improve generated meshes.");
+    BU_OPT(d[16], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
+    BU_OPT(d[17], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
+    BU_OPT_NULL(d[18]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);

@@ -954,7 +954,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     // a single primitive or region, those outputs should satisfy the fixup
     // criteria.
     bool do_fixup = false;
-    if (argc == 1) {
+    if (argc == 1 && !s->no_fixup) {
 	struct directory *dp = db_lookup(dbip, argv[0], LOOKUP_QUIET);
 	if ((dp->d_flags & RT_DIR_REGION) || (dp->d_flags & RT_DIR_SOLID))
 	    do_fixup = true;
