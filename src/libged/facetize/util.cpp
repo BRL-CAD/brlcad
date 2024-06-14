@@ -39,12 +39,29 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
-int
-facetize_log(struct _ged_facetize_state *s, int v)
+void
+facetize_log(struct _ged_facetize_state *s, int msg_level, const char *fmt, ...)
 {
-    if (!s || v < 0)
-	return -1;
-    return 0;
+    va_list ap;
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+
+    if (!s)
+	return;
+    if (UNLIKELY(!fmt || strlen(fmt) == 0))
+	return;
+
+    va_start(ap, fmt);
+    bu_vls_vprintf(&output, fmt, ap);
+    va_end(ap);
+
+    if (s->lfile)
+	fprintf(s->lfile, "%s", bu_vls_cstr(&output));
+
+    // If verbosity level is high enough, also print immediately
+    if (s->verbosity >= msg_level)
+	bu_log("%s", bu_vls_cstr(&output));
+
+    bu_vls_free(&output);
 }
 
 int
@@ -111,13 +128,13 @@ _ged_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const ch
 
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
-	if (verbosity)
+	if (verbosity >= 0)
 	    bu_log("Cannot add %s to directory\n", name);
 	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	if (verbosity)
+	if (verbosity >= 0)
 	    bu_log("Failed to write %s to database\n", name);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
@@ -284,7 +301,7 @@ _ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *
 
 
 struct rt_bot_internal *
-bot_fixup(struct db_i *wdbip, struct directory *bot_dp, const char *bname)
+bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname)
 {
     struct rt_bot_internal *nbot = NULL;
 
@@ -327,7 +344,7 @@ bot_fixup(struct db_i *wdbip, struct directory *bot_dp, const char *bname)
 		    repair_result = rt_bot_repair(&rbot, nbot, &rs);
 		}
 		if (repair_result < 0) {
-		    bu_log("%s removed %zd thin faces, but repair failed.  Retaining manifold result.\n", bname, BU_PTBL_LEN(&tfaces));
+		    facetize_log(s, 0, "\t%s attempted to remove %zd thin faces, but unable to produce a new manifold BoT.  Retaining original manifold result.\n", bname, BU_PTBL_LEN(&tfaces));
 		    // The repair didn't succeed.  That means we weren't able
 		    // to produce a manifold mesh after removing the thin
 		    // triangles.  In that situation, we return the manifold
@@ -337,6 +354,7 @@ bot_fixup(struct db_i *wdbip, struct directory *bot_dp, const char *bname)
 		    BU_PUT(nbot, struct rt_bot_internal);
 		    nbot = NULL;
 		} else {
+		    facetize_log(s, 0, "\t%s removed %zd thin faces, new manifold BoT created.\n", bname, BU_PTBL_LEN(&tfaces));
 		    // If we produced a new repaired mesh, replace nbot with
 		    // the final result.
 		    if (rbot && rbot != nbot) {

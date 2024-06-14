@@ -269,14 +269,14 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
 
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
-	if (s->verbosity) {
+	if (s->verbosity > 0) {
 	    bu_log("Cannot add %s to directory\n", name);
 	}
 	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	if (s->verbosity) {
+	if (s->verbosity > 0) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
 	rt_db_free_internal(&intern);
@@ -304,7 +304,7 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
     ret = _write_nmg(s, nmg_model, oname);
 
 ged_nmg_obj_memfree:
-    if (!s->quiet && ret != BRLCAD_OK) {
+    if (s->verbosity >= 0 && ret != BRLCAD_OK) {
 	bu_log("NMG: failed to generate %s\n", oname);
     }
 

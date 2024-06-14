@@ -332,31 +332,29 @@ manifold_do_bool(
 	// Before we try a boolean, validate that our inputs satisfy Manifold's
 	// criteria.
 	if (!lm || lm->Status() != manifold::Manifold::Error::NoError) {
-	    bu_log("Error - left manifold invalid\n");
+	    facetize_log(s, 0, "Error - left manifold invalid: %s\n", tl->tr_d.td_name);
 	    lm = NULL;
 	    failed = 1;
 	}
 	if (!rm || rm->Status() != manifold::Manifold::Error::NoError) {
-	    bu_log("Error - right manifold invalid\n");
+	    facetize_log(s, 0, "Error - right manifold invalid: %s\n", tr->tr_d.td_name);
 	    rm = NULL;
 	    failed = 1;
 	}
 
 	if (!failed) {
 	    // We should have valid inputs - proceed
-
-	    if (s->verbosity)
-		bu_log("Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
+	    facetize_log(s, 1, "Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
 
 	    manifold::Manifold bool_out;
 	    try {
 		bool_out = lm->Boolean(*rm, manifold_op);
 		if (bool_out.Status() != manifold::Manifold::Error::NoError) {
-		    bu_log("Error - bool result invalid\n");
+		    facetize_log(s, 0, "Error - bool result invalid:\n\t%s\n\t%s\n", tl->tr_d.td_name, tr->tr_d.td_name);
 		    failed = 1;
 		}
 	    } catch (...) {
-		bu_log("Manifold boolean library threw failure\n");
+		facetize_log(s, 0, "Manifold boolean library threw failure\n");
 #ifdef USE_ASSETIMPORT
 		const char *evar = getenv("GED_MANIFOLD_DEBUG");
 		// write out the failing inputs to files to aid in debugging
@@ -448,7 +446,7 @@ tess_avail_methods()
 }
 
 int
-tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
+tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int ocnt)
 {
     std::string wfile(tess_cmd[3]);
     std::string wfilebak = wfile + std::string(".bak");
@@ -456,19 +454,27 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
 	// Before the run, prepare a backup file
 	std::ifstream workfile(wfile, std::ios::binary);
 	std::ofstream bakfile(wfilebak, std::ios::binary);
-	if (!workfile.is_open() || !bakfile.is_open())
+	if (!workfile.is_open() || !bakfile.is_open()) {
+	    bu_log("Unable to create backup file %s\n", wfilebak.c_str());
 	    return BRLCAD_ERROR;
+	}
 	bakfile << workfile.rdbuf();
 	workfile.close();
 	bakfile.close();
     }
 
-    // Debugging
+    // Record the actual command being use to trigger the subprocess
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     for (int i = 0; i < tess_cmd_cnt ; i++)
 	bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-    bu_log("%s\n", bu_vls_cstr(&cmd));
+    facetize_log(s, 2, "%s\n", bu_vls_cstr(&cmd));
     bu_vls_free(&cmd);
+
+    // If we're not being verbose, just report how many objects we're working on
+    if (ocnt == 1)
+	facetize_log(s, 0, "Attempting to triangulate %s...", tess_cmd[tess_cmd_cnt-ocnt]);
+    if (ocnt > 1)
+	facetize_log(s, 0, "Attempting to triangulate %d solids...", ocnt);
 
     int64_t start = bu_gettime();
     int64_t elapsed = 0;
@@ -477,8 +483,9 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
     struct subprocess_s p;
     if (subprocess_create(tess_cmd, subprocess_option_no_window|subprocess_option_enable_async, &p)) {
 	// Unable to create subprocess??
-	if (!quiet)
-	    bu_log("Unable to create subprocess\n");
+	facetize_log(s, 0, " FAILED.\n");
+	facetize_log(s, 0, "Unable to create subprocess\n");
+
 	return BRLCAD_ERROR;
     }
     while (subprocess_alive(&p)) {
@@ -489,27 +496,30 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
 	// Check for and pass along intermediate output
 	char curr_out[MAXPATHLEN*10] = {'\0'};
 	subprocess_read_stdout(&p, curr_out, MAXPATHLEN*10);
-	if (!quiet && strlen(curr_out))
-	    bu_log("%s", curr_out);
+	if (strlen(curr_out))
+	    facetize_log(s, 1, "%s", curr_out);
 	char curr_err[MAXPATHLEN*10] = {'\0'};
 	subprocess_read_stderr(&p, curr_err, MAXPATHLEN*10);
-	if (!quiet && strlen(curr_err))
-	    bu_log("%s", curr_err);
+	if (strlen(curr_err))
+	    facetize_log(s, 1, "%s", curr_err);
 
 	if (seconds > max_time) {
 	    // if we timeout, cleanup and return error
 	    subprocess_terminate(&p);
 
-	    if (!quiet) {
-		bu_log("tess_run subprocess killed %g %g\n", seconds, max_time);
+	    facetize_log(s, 0, " FAILED.\n");
+
+	    facetize_log(s, 0, "tess_run subprocess killed %g %g\n", seconds, max_time);
+	    if (s->verbosity >= 0) {
 		char mraw[MAXPATHLEN*10] = {'\0'};
 		subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-		bu_log("%s\n", mraw);
+		if (strlen(mraw))
+		    facetize_log(s, 0, "%s\n", mraw);
 		char mraw2[MAXPATHLEN*10] = {'\0'};
 		subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-		bu_log("%s\n", mraw2);
+		if (strlen(mraw2))
+		    facetize_log(s, 0, "%s\n", mraw2);
 	    }
-
 	    subprocess_destroy(&p);
 
 	    // Because we had to kill the process, there's no way of knowing
@@ -525,46 +535,61 @@ tess_run(const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int quiet)
 	    workfile.close();
 	    bakfile.close();
 
+
 	    return BRLCAD_ERROR;
 	}
     }
     int w_rc;
     if (subprocess_join(&p, &w_rc)) {
 	// Unable to join??
-	if (!quiet) {
-	    bu_log("tess_run subprocess unable to join\n");
+	facetize_log(s, 0, " FAILED.\n");
+	facetize_log(s, 0, "tess_run subprocess unable to join\n");
+	if (s->verbosity >= 0) {
 	    char mraw[MAXPATHLEN*10] = {'\0'};
 	    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	    bu_log("%s\n", mraw);
+	    if (strlen(mraw))
+		facetize_log(s, 0, "%s\n", mraw);
 	    char mraw2[MAXPATHLEN*10] = {'\0'};
 	    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	    bu_log("%s\n", mraw2);
+	    if (strlen(mraw2))
+		facetize_log(s, 0, "%s\n", mraw2);
 	}
 	return BRLCAD_ERROR;
     }
 
     bu_file_delete(wfilebak.c_str());
 
-    if (!quiet) {
+    if (s->verbosity >= 0) {
 	char mraw[MAXPATHLEN*10] = {'\0'};
 	subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	bu_log("%s\n", mraw);
+	if (strlen(mraw))
+	    facetize_log(s, 0, "%s\n", mraw);
 	char mraw2[MAXPATHLEN*10] = {'\0'};
 	subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	bu_log("%s\n", mraw2);
+	if (strlen(mraw2))
+	    facetize_log(s, 0, "%s\n", mraw2);
     }
 
     // Needed to clean up file handles
     subprocess_destroy(&p);
 
+    if (!s->verbosity) {
+	if (w_rc == BRLCAD_OK) {
+	    facetize_log(s, 0, " Success.\n");
+	} else {
+	    facetize_log(s, 0, " FAILED.\n");
+	    bu_log(" FAILED.\n");
+	}
+    }
+
     return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
 }
 
 int
-bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int quiet);
+bisect_run(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int ocnt);
 
 int
-bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int quiet)
+bisect_failing_inputs(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time)
 {
     std::vector<struct directory *> left_inputs;
     std::vector<struct directory *> right_inputs;
@@ -573,13 +598,13 @@ bisect_failing_inputs(std::vector<struct directory *> &bad_dps, std::vector<stru
     for (size_t i =  inputs.size()/2; i < inputs.size(); i++)
 	right_inputs.push_back(inputs[i]);
 
-    int lret = bisect_run(bad_dps, left_inputs, orig_cmd, cmd_cnt, max_time, quiet);
-    int rret = bisect_run(bad_dps, right_inputs, orig_cmd, cmd_cnt, max_time, quiet);
+    int lret = bisect_run(s, bad_dps, left_inputs, orig_cmd, cmd_cnt, max_time, left_inputs.size());
+    int rret = bisect_run(s, bad_dps, right_inputs, orig_cmd, cmd_cnt, max_time, right_inputs.size());
     return lret + rret;
 }
 
 int
-bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int quiet)
+bisect_run(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int ocnt)
 {
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     // The initial part of the re-run is the same.
@@ -590,10 +615,10 @@ bisect_run(std::vector<struct directory *> &bad_dps, std::vector<struct director
 	tess_cmd[cmd_cnt+i] = inputs[i]->d_namep;
     }
 
-    int ret = tess_run(tess_cmd, cmd_cnt+inputs.size(), max_time, quiet);
+    int ret = tess_run(s, tess_cmd, cmd_cnt+inputs.size(), max_time, ocnt);
     if (ret) {
 	if (inputs.size() > 1) {
-	    return bisect_failing_inputs(bad_dps, inputs, tess_cmd, cmd_cnt, max_time, quiet);
+	    return bisect_failing_inputs(s, bad_dps, inputs, tess_cmd, cmd_cnt, max_time);
 	}
 	bad_dps.push_back(inputs[0]);
 	return 1;
@@ -732,6 +757,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
     tess_cmd[ 8] = "--cache-dir";
     tess_cmd[ 9] = lcache;
     int cmd_fixed_cnt = 10;
+    int obj_cnt = 0;
     while (!pq.empty()) {
 	// Starting a new round of object processing - reset method flags
 	method_flags = method_flags_bak;
@@ -761,6 +787,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 		// This would be too long -  we've listed all we can
 		break;
 	    }
+	    obj_cnt++;
 	    pq.pop();
 	    dps.push_back(ldp);
 	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
@@ -773,14 +800,14 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	int err_cnt = 0;
 	while (bu_vls_strlen(&method_str)) {
 	    if (BU_STR_EQUAL(bu_vls_cstr(&method_str), "NMG")) {
-		err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time, s->quiet);
+		err_cnt = bisect_run(s, bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time, obj_cnt);
 	    } else {
 		// If we're in fallback territory, process individually rather
 		// than doing the bisect - at least for now, those methods are
 		// much more expensive and likely to fail as compared to NMG.
 		for (size_t i = 0; i < dps.size(); i++) {
 		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-		    int tess_ret = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time, s->quiet);
+		    int tess_ret = tess_run(s, tess_cmd, cmd_fixed_cnt + 1, l_max_time, 1);
 		    if (tess_ret != BRLCAD_OK) {
 			bad_dps.push_back(dps[i]);
 			err_cnt++;
@@ -852,7 +879,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	// primitives
 	for (size_t i = 0; i < dps.size(); i++) {
 	    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-	    int err_cnt = tess_run(tess_cmd, cmd_fixed_cnt + 1, l_max_time, s->quiet);
+	    int err_cnt = tess_run(s, tess_cmd, cmd_fixed_cnt + 1, l_max_time, 1);
 	    if (err_cnt)
 		failed_dps.push_back(dps[i]);
 	}
@@ -872,6 +899,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 	for (int i = 0; i < cmd_fixed_cnt; i++)
 	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
+	obj_cnt = 0;
 	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
 	    if (q_pbot.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
 		break;
@@ -880,6 +908,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 		// This would be too long -  we've listed all we can
 		break;
 	    }
+	    obj_cnt++;
 	    q_pbot.pop();
 	    dps.push_back(ldp);
 	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
@@ -887,11 +916,11 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	bu_vls_free(&cmd);
 
 
-	int err_cnt = bisect_run(bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time * dps.size(), s->quiet);
+	int err_cnt = bisect_run(s, bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time * dps.size(), obj_cnt);
 	if (err_cnt) {
 	    // If we couldn't handle the plate mode conversion, we can't do the
 	    // boolean evaluation
-	    bu_log("Plate mode conversion wasn't able to complete\n");
+	    facetize_log(s, 0, "Plate mode conversion wasn't able to complete\n");
 	    return BRLCAD_ERROR;
 	}
     }
@@ -908,6 +937,14 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     union tree *ftree;
     if (!dbip || !wdbp || !argv || !oname)
 	return BRLCAD_ERROR;
+
+    if (s->verbosity == 0) {
+	if (argc == 1) {
+	    bu_log("%s: evaluating booleans\n", argv[0]);
+	} else {
+	    bu_log("Evaluating booleans for the trees of %d input objects\n", argc);
+	}
+    }
 
     // Unlike the -r flag processing regions, where each individual region
     // processed is semantically a single solid , there is no guarantee in
@@ -1061,13 +1098,13 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	struct directory *dp = db_lookup(dbip, argv[0], LOOKUP_QUIET);
 	if ((dp->d_flags & RT_DIR_REGION) || (!(dp->d_flags & RT_DIR_COMB))) {
 	    struct directory *bot_dp = db_lookup(odbip, oname, LOOKUP_QUIET);
-	    struct rt_bot_internal *nbot = bot_fixup(odbip, bot_dp, oname);
+	    struct rt_bot_internal *nbot = bot_fixup(s, odbip, bot_dp, oname);
 	    if (nbot) {
 		// Write out new version of BoT
 		db_delete(odbip, bot_dp);
 		db_dirdelete(odbip, bot_dp);
 		if (_ged_facetize_write_bot(odbip, nbot, oname, s->verbosity) != BRLCAD_OK) {
-		    bu_log("Error writing out finalized version of %s\n", oname);
+		    facetize_log(s, 0, "Error writing out finalized version of %s\n", oname);
 		}
 	    }
 	}
@@ -1133,7 +1170,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     }
 
     if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, oname, output_to_working) != BRLCAD_OK) {
-	if (!s->quiet) {
+	if (s->verbosity >= 0) {
 	    bu_log("FACETIZE: failed to generate %s\n", oname);
 	}
     }

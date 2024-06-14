@@ -82,7 +82,6 @@ _ged_facetize_state_create()
 {
     struct _ged_facetize_state *s = NULL;
     BU_GET(s, struct _ged_facetize_state);
-    s->quiet= 0;
     s->verbosity = 0;
     s->no_empty = 0;
     s->make_nmg = 0;
@@ -241,6 +240,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "Usage: facetize [options] [old_obj1 ...] [new_obj]\n";
     int print_help = 0;
     int need_help = 0;
+    int quiet = 0;
     method_options_t *method_options = new method_options_t;
     std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
@@ -248,10 +248,10 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     s->method_opts = method_options;
 
     /* General options */
-    struct bu_opt_desc d[17];
+    struct bu_opt_desc d[18];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",            &_ged_vopt,       &(s->verbosity), "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,           &(s->quiet), "Suppress all output (overrides verbose flag)");
+    BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
     BU_OPT(d[ 3], "n", "nmg-output",                                "",                  NULL,        &(s->make_nmg), "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh).  Note that this will disable most other processing options and may reduce the conversion success rate.");
     BU_OPT(d[ 4], "r", "regions",                                   "",                  NULL,         &(s->regions), "For combs, walk the trees and create new copies of the hierarchies with each region's CSG tree replaced by a facetized evaluation of that region. (Default is to create one facetized object.)");
     BU_OPT(d[ 5], "s", "suffix",                               "<str>",           &bu_opt_vls,             s->suffix, "When creating new objects for facetize outputs, use this suffix to avoid conflicts");
@@ -263,9 +263,10 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[11],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
     BU_OPT(d[12],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
     BU_OPT(d[13],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
-    BU_OPT(d[14], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[15], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
-    BU_OPT_NULL(d[16]);
+    BU_OPT(d[14],  "", "log-file",                        "<filename>",           &bu_opt_vls,           s->log_file, "Specify a location to use for the log file.");
+    BU_OPT(d[15], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
+    BU_OPT(d[16], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
+    BU_OPT_NULL(d[17]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -302,8 +303,8 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Sync -q and -v options */
-    if (s->quiet && s->verbosity)
-       	s->verbosity = 0;
+    if (quiet)
+	s->verbosity = -1;
 
     /* Don't allow incorrect type suffixes */
     if (s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".bot")) {
@@ -355,20 +356,28 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_mkdir(s->wdir);
 	}
 
-	char tmplfile[MAXPATHLEN];
-	bu_vls_sprintf(&dname, "facetize_%s.log", bu_vls_cstr(s->bname));
-	bu_dir(tmplfile, MAXPATHLEN, s->wdir, bu_vls_cstr(&dname), NULL);
-	bu_vls_sprintf(s->log_file, "%s", tmplfile);
-	s->lfile = fopen(bu_vls_cstr(s->log_file), "w");
-
+	if (!bu_vls_strlen(s->log_file)) {
+	    char tmplfile[MAXPATHLEN];
+	    bu_vls_sprintf(&dname, "facetize_%s.log", bu_vls_cstr(s->bname));
+	    bu_dir(tmplfile, MAXPATHLEN, s->wdir, bu_vls_cstr(&dname), NULL);
+	    bu_vls_sprintf(s->log_file, "%s", tmplfile);
+	}
 	bu_vls_free(&dname);
+
+	s->lfile = fopen(bu_vls_cstr(s->log_file), "w");
+	if (!s->lfile) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to open log file %s for writing\n", bu_vls_cstr(s->log_file));
+	    ret = BRLCAD_ERROR;
+	    goto ged_facetize_memfree;
+	}
     }
 
     /* If we're doing the experimental brep-only logic, it's a separate process */
     if (s->nonovlp_brep) {
 	if (NEAR_ZERO(s->nonovlp_threshold, SMALL_FASTF)) {
 	    bu_vls_printf(gedp->ged_result_str, "-B option requires a specified length threshold\n");
-	    return BRLCAD_ERROR;
+	    ret = BRLCAD_ERROR;
+	    goto ged_facetize_memfree;
 	}
 	ret = _nonovlp_brep_facetize(s, argc, argv);
 	goto ged_facetize_memfree;

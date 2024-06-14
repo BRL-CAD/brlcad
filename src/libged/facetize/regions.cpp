@@ -71,7 +71,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct bu_ptbl *ar = NULL;
     BU_ALLOC(ar, struct bu_ptbl);
     if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
-	if (s->verbosity) {
+	if (s->verbosity >= 0) {
 	    bu_log("Problem searching for active regions - aborting.\n");
 	}
 	bu_ptbl_free(ar);
@@ -93,7 +93,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct bu_ptbl *as = NULL;
     BU_ALLOC(as, struct bu_ptbl);
     if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, argc, dpa, dbip, NULL) < 0) {
-	if (s->verbosity) {
+	if (s->verbosity >= 0) {
 	    bu_log("Problem searching for active solids - aborting.\n");
 	}
 	bu_ptbl_free(as);
@@ -152,7 +152,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct bu_ptbl *ir = NULL;
     BU_ALLOC(ir, struct bu_ptbl);
     if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, argc, dpa, dbip, NULL) < 0) {
-	if (s->verbosity) {
+	if (s->verbosity >= 0) {
 	    bu_log("Problem searching for implicit regions - aborting.\n");
 	}
 	bu_ptbl_free(ar);
@@ -213,23 +213,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	    wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
 	    db_update_nref(wdbip, &rt_uniresource);
-
-
-	    // We've written out the evaluated BoT, but there is a chance we have degenerately
-	    // thin volumes where we had coplanar interactions.  Check with the raytracer, and
-	    // if we find such a case try to remove the degenerate faces and produce a new mesh.
-	    // If we have work to do, we'll need a new BoT
-	    struct directory *bot_dp = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
-	    struct rt_bot_internal *nbot = bot_fixup(wdbip, bot_dp, bu_vls_cstr(&bname));
-	    if (nbot) {
-		// Write out new version of BoT
-		db_delete(wdbip, bot_dp);
-		db_dirdelete(wdbip, bot_dp);
-		if (_ged_facetize_write_bot(wdbip, nbot, bu_vls_cstr(&bname), s->verbosity) != BRLCAD_OK) {
-		    bu_log("Error writing out finalized version of %s\n", bu_vls_cstr(&bname));
-		}
-	    }
-
 	    db_close(wdbip);
 
 	} else {
