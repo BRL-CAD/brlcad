@@ -54,8 +54,10 @@ facetize_log(struct _ged_facetize_state *s, int msg_level, const char *fmt, ...)
     bu_vls_vprintf(&output, fmt, ap);
     va_end(ap);
 
-    if (s->lfile)
+    if (s->lfile) {
 	fprintf(s->lfile, "%s", bu_vls_cstr(&output));
+	fflush(s->lfile);
+    }
 
     // If verbosity level is high enough, also print immediately
     if (s->verbosity >= msg_level)
