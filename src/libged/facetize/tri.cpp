@@ -940,9 +940,9 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 
     if (s->verbosity == 0) {
 	if (argc == 1) {
-	    bu_log("%s: evaluating booleans\n", argv[0]);
+	    bu_log("%s: evaluating booleans...\n", argv[0]);
 	} else {
-	    bu_log("Evaluating booleans for the trees of %d input objects\n", argc);
+	    bu_log("Evaluating booleans for the trees of %d input objects...\n", argc);
 	}
     }
 
@@ -1005,6 +1005,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	// Do not generate a BoT, empty or otherwise.
 	if (i < 0 || s->error_flag) {
 	    bu_free(av, "av");
+	    facetize_log(s, 0, "FAILED.\n");
 	    return BRLCAD_ERROR;
 	}
     }
@@ -1027,8 +1028,10 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	bot->vertices = NULL;
 	bot->faces = NULL;
 	if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
+	    facetize_log(s, 0, "FAILED.\n");
 	    return BRLCAD_ERROR;
 	}
+	facetize_log(s, 0, " Success.\n");
 	return BRLCAD_OK;
     }
 
@@ -1068,6 +1071,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 
 	// If we have a manifold_mesh, write it out as a bot
 	if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
+	    facetize_log(s, 0, "FAILED.\n");
 	    return BRLCAD_ERROR;
 	}
     } else {
@@ -1087,8 +1091,10 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    bot->vertices = NULL;
 	    bot->faces = NULL;
 	    if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
+		facetize_log(s, 0, "FAILED.\n");
 		return BRLCAD_ERROR;
 	    }
+	    facetize_log(s, 0, "Success.\n");
 	    return BRLCAD_OK;
 	}
     }
@@ -1104,12 +1110,13 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 		db_delete(odbip, bot_dp);
 		db_dirdelete(odbip, bot_dp);
 		if (_ged_facetize_write_bot(odbip, nbot, oname, s->verbosity) != BRLCAD_OK) {
-		    facetize_log(s, 0, "Error writing out finalized version of %s\n", oname);
+		    facetize_log(s, 0, "FAILED.\n");
 		}
 	    }
 	}
     }
 
+    facetize_log(s, 0, "Success.\n");
     return BRLCAD_OK;
 }
 

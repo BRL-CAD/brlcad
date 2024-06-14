@@ -177,6 +177,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(ar, i);
 
+	facetize_log(s, 0, "Processing %s\n", dpw[0]->d_namep);
+
 	// Get a name for the region's output BoT
 	bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
 	struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
