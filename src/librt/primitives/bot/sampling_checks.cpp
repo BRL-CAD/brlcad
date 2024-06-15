@@ -56,7 +56,6 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 struct coplanar_info {
     double ttol;
     int is_thin;
-    int unexpected_miss;
     struct rt_bot_internal *bot;
 
     int verbose;
@@ -109,25 +108,6 @@ _tc_miss(struct application *ap)
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
     tinfo->is_thin = 1;
     tinfo->problem_indices.insert(tinfo->curr_tri);
-    return 0;
-}
-
-static int
-_hit_noop(struct application *UNUSED(ap),
-	struct partition *PartHeadp,
-	struct seg *UNUSED(segs))
-{
-    if (PartHeadp->pt_forw == PartHeadp)
-	return 1;
-
-    return 0;
-}
-
-static int
-_um_miss(struct application *ap)
-{
-    struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
-    tinfo->unexpected_miss = 1;
     return 0;
 }
 
@@ -191,17 +171,6 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 	// Set up the ray
 	VMOVE(ap.a_ray.r_dir, rnorm);
 	VADD2(ap.a_ray.r_pt, tcenter, backout);
-
-	// Before we do the solid shot, make sure we can hit
-	// this triangle.  If not, there's no point in checking
-	// for a thin pairing.
-	tinfo.unexpected_miss = 0;
-	ap.a_hit = _hit_noop;    /* where to go on a hit */
-	ap.a_miss = _um_miss;  /* where to go on a miss */
-	ap.a_onehit = 1;
-	(void)rt_shootray(&ap);
-	if (tinfo.unexpected_miss)
-	    continue;
 
 	// Take the solid shot
 	ap.a_hit = _tc_hit;    /* where to go on a hit */

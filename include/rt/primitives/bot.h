@@ -203,6 +203,10 @@ RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_int
 RT_EXPORT struct rt_bot_internal *
 rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_internal *obot);
 
+/* Function to copy an rt_bot_internal structure */
+RT_EXPORT struct rt_bot_internal *
+rt_bot_dup(const struct rt_bot_internal *bot);
+
 /** @} */
 
 __END_DECLS

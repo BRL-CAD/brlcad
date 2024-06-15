@@ -305,7 +305,6 @@ _ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *
 struct rt_bot_internal *
 bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname)
 {
-    struct rt_bot_internal *nbot = NULL;
 
     // Unpack the existing bot
     if (!bot_dp)
@@ -318,63 +317,132 @@ bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *b
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(bot_intern.idb_ptr);
-    if (bot->num_faces) {
-	// Have faces, test with raytracer
-	struct rt_i *rtip = rt_new_rti(wdbip);
-	rt_gettree(rtip, bname);
-	rt_prep(rtip);
-	struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
-	int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
-	rt_free_rti(rtip);
-
-	if (have_thin_faces) {
-
-	    // First order of business - get the problematic faces out of
-	    // the mesh
-	    nbot = rt_bot_remove_faces(&tfaces, bot);
-
-	    // If we took away manifoldness removing faces (likely) we need
-	    // to try and rebuild it.
-	    if (nbot && nbot->num_faces) {
-		struct rt_bot_internal *rbot = NULL;
-		struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
-		int repair_result = rt_bot_repair(&rbot, nbot, &rs);
-		if (repair_result < 0) {
-		    // If a conservative repair fails, try being a little
-		    // more aggressive
-		    rs.max_hole_area_percent = 30;
-		    repair_result = rt_bot_repair(&rbot, nbot, &rs);
-		}
-		if (repair_result < 0) {
-		    facetize_log(s, 0, "\t%s attempted to remove %zd thin faces, but unable to produce a new manifold BoT.  Retaining original manifold result.\n", bname, BU_PTBL_LEN(&tfaces));
-		    // The repair didn't succeed.  That means we weren't able
-		    // to produce a manifold mesh after removing the thin
-		    // triangles.  In that situation, we return the manifold
-		    // result we do have, thin triangles or not, rather than
-		    // produce something invalid.
-		    rt_bot_internal_free(nbot);
-		    BU_PUT(nbot, struct rt_bot_internal);
-		    nbot = NULL;
-		} else {
-		    facetize_log(s, 0, "\t%s removed %zd thin faces, new manifold BoT created.\n", bname, BU_PTBL_LEN(&tfaces));
-		    // If we produced a new repaired mesh, replace nbot with
-		    // the final result.
-		    if (rbot && rbot != nbot) {
-			rt_bot_internal_free(nbot);
-			BU_PUT(nbot, struct rt_bot_internal);
-			nbot = rbot;
-		    }
-		}
-	    }
-	}
-	bu_ptbl_free(&tfaces);
+    if (!bot->num_faces) {
+	rt_db_free_internal(&bot_intern);
+	return NULL;
     }
 
-    // Done with bot_intern
+    // Have faces, test with raytracer
+    struct rt_i *rtip = rt_new_rti(wdbip);
+    rt_gettree(rtip, bname);
+    rt_prep(rtip);
+    struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
+    int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
+    rt_free_rti(rtip);
+
+    // No problematic faces reported, nothing to do
+    if (!have_thin_faces) {
+	rt_db_free_internal(&bot_intern);
+	bu_ptbl_free(&tfaces);
+	return NULL;
+    }
+
+    // If we do have a problem, first order of business - get the problematic faces out of
+    // the mesh
+    struct rt_bot_internal *nbot = rt_bot_remove_faces(&tfaces, bot);
+    size_t removed_face_cnt = BU_PTBL_LEN(&tfaces);
+
+    // Done with original bot
     rt_db_free_internal(&bot_intern);
 
-    // Return the new bot, if we made one
-    return nbot;
+    // If we didn't get a new bot, we're done
+    if (!nbot) {
+	bu_ptbl_free(&tfaces);
+	return NULL;
+    }
+
+    // Return an empty bot, if that's what was created (can happen legitimately
+    // when all the faces are thin - i.e. a degenerate volume.)
+    if (!nbot->num_faces) {
+	bu_ptbl_free(&tfaces);
+	return nbot;
+    }
+
+    // If we took away manifoldness removing faces (very likely) we need to try
+    // and rebuild it.
+    struct rt_bot_internal *rbot = NULL;
+    struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
+    int repair_result = rt_bot_repair(&rbot, nbot, &rs);
+    if (repair_result < 0) {
+	// If a conservative repair fails, try being a little
+	// more aggressive
+	rs.max_hole_area_percent = 30;
+	repair_result = rt_bot_repair(&rbot, nbot, &rs);
+    }
+
+    if (repair_result < 0 || !rbot || !rbot->num_faces) {
+	facetize_log(s, 2, "\t%s attempted to remove %zd thin faces, but unable to produce a new manifold BoT.  Retaining original manifold result.\n", bname, removed_face_cnt);
+	// The repair didn't succeed.  That means we weren't able to produce a
+	// manifold mesh after removing the thin triangles.  In that situation,
+	// we return the manifold result we do have, thin triangles or not,
+	// rather than produce something invalid.
+	if (rbot && rbot != nbot) {
+	    rt_bot_internal_free(rbot);
+	    BU_PUT(rbot, struct rt_bot_internal);
+	}
+	rt_bot_internal_free(nbot);
+	BU_PUT(nbot, struct rt_bot_internal);
+	bu_ptbl_free(&tfaces);
+	return NULL;
+    }
+
+    // If repair didn't have to change anything (very unlikely) go with the result
+    if (UNLIKELY(rbot == nbot)) {
+	bu_ptbl_free(&tfaces);
+	return nbot;
+    }
+
+    // We have a repaired mesh, and it's different from nbot - done with nbot
+    rt_bot_internal_free(nbot);
+    BU_PUT(nbot, struct rt_bot_internal);
+
+    // Nominally successful - check to see if the new output is free of the
+    // problems seen in the original.  If so, use it - if not, stick with the
+    // original.
+    const char *test_name = "__facetize_repair_check.bot__";
+    // Delete a conflicting test object name, if present
+    struct directory *odp = db_lookup(wdbip, test_name, LOOKUP_QUIET);
+    if (odp) {
+	db_delete(wdbip, odp);
+	db_dirdelete(wdbip, odp);
+    }
+
+    // Writing the bot is destructive to the rbot container, so we need a copy.
+    struct rt_bot_internal *test_bot = rt_bot_dup(rbot);
+    if (_ged_facetize_write_bot(wdbip, test_bot, test_name, 0)) {
+	// Couldn't test - we're done
+	rt_bot_internal_free(rbot);
+	BU_PUT(rbot, struct rt_bot_internal);
+	bu_ptbl_free(&tfaces);
+	return NULL;
+    }
+
+    struct rt_i *crtip = rt_new_rti(wdbip);
+    rt_gettree(crtip, test_name);
+    rt_prep(crtip);
+    bu_ptbl_reset(&tfaces);
+    have_thin_faces = rt_bot_thin_check(&tfaces, rbot, crtip, VUNITIZE_TOL, 0);
+    rt_free_rti(crtip);
+    // Win or lose, delete the test obj
+    odp = db_lookup(wdbip, test_name, LOOKUP_QUIET);
+    if (odp) {
+	db_delete(wdbip, odp);
+	db_dirdelete(wdbip, odp);
+    }
+
+    if (have_thin_faces) {
+	// Still not clean - we're done
+	facetize_log(s, 2, "\t%s removed %zd thin faces, but new manifold did not pass rt_bot_thin_check - %zd thin faces were found after repair attempt.  Retaining original manifold result.\n", bname, removed_face_cnt, BU_PTBL_LEN(&tfaces));
+	rt_bot_internal_free(rbot);
+	bu_ptbl_free(&tfaces);
+	BU_PUT(rbot, struct rt_bot_internal);
+	return NULL;
+    }
+
+    // Successfully produced a new, clean mesh
+    facetize_log(s, 0, "\t%s removed %zd thin faces, new manifold BoT created.\n", bname, removed_face_cnt);
+    bu_ptbl_free(&tfaces);
+    return rbot;
 }
 
 // Local Variables:
