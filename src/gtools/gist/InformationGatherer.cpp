@@ -85,6 +85,49 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string
     }
 }
 
+static double
+parseVolume(std::string res)
+{
+    double ret = 0;
+    // Extract volume value
+    std::string vol_raw = res.substr(res.find("Average total volume:") + 22);
+    vol_raw = vol_raw.substr(0, vol_raw.find("cu") - 1);
+    if (vol_raw.find("inf") == std::string::npos) {
+        try {
+            ret = stod(vol_raw);
+        } catch (const std::invalid_argument& ia) {
+            bu_exit(BRLCAD_ERROR, "parseVolume got: (%s) %s, aborting.\n", vol_raw.c_str(), ia.what());
+        }
+    }
+
+    return ret;
+}
+
+static double
+parseMass(std::string res)
+{
+    double ret = 0;
+    // Extract mass value
+    std::string weight_raw = res.substr(res.find("Average total weight:") + 22);
+    weight_raw = weight_raw.substr(0, weight_raw.find(" "));
+    try {
+        // weight cannot be inf or negative
+        if (weight_raw.find("inf") == std::string::npos) {
+            if (weight_raw[0] == '-') {
+                weight_raw = weight_raw.substr(1);
+                ret += stod(weight_raw);
+            }
+            else {
+                ret += stod(weight_raw);
+            }
+        }
+    } catch (const std::invalid_argument& ia) {
+        bu_exit(BRLCAD_ERROR, "parseMass got: (%s) %s, aborting.\n", weight_raw.c_str(), ia.what());
+    }
+
+    return ret;
+}
+
 
 void
 getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &hasDensities, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
@@ -135,10 +178,10 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     int read_cnt = 0;
     char buffer[1024] = {0};
     std::string result = "";
+    std::string no_density_msg = "Could not find any density information";
 
     for (size_t i = 0; i < toVisit.size(); i++) {
         std::string val = toVisit[i];
-        // TODO: significant divergence from main and PR. Need to ensure density information is present before attempting to get mass
         /* Get volume and mass */
         const char* vol_av[10] = { gqa.c_str(),
                                    "-Avm",
@@ -152,6 +195,34 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
 	if (bu_process_pid(p) <= 0) {
+            bu_exit(BRLCAD_ERROR, "Problem in getVerificationData process creation, aborting\n");
+        }
+
+        result = "";
+        read_cnt = 0;
+        while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
+            buffer[read_cnt] = '\0';
+            result += buffer;
+        }
+
+        if (bu_process_wait_n(&p, 0) != 0) {
+            continue;
+        }
+
+        // attempt to get both volume and mass in the same run - 
+        // make sure we did not get 'no density file' error message
+        if (result.find(no_density_msg) == std::string::npos) {
+            volume += parseVolume(result);
+            mass += parseMass(result);
+            continue;
+        }
+
+
+        // no density data found. need to re-run, only getting volume data
+        vol_av[1] = "-Av";
+        bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+
+	if (bu_process_pid(p) <= 0) {
             bu_exit(BRLCAD_ERROR, "Problem with getVerificationData volume, aborting\n");
         }
 
@@ -162,55 +233,10 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
             result += buffer;
         }
 
-        if (bu_process_wait_n(&p, 0) == 0) {
-            // Extract volume value
-            std::string vol_raw = result.substr(result.find("Average total volume:") + 22);
-            vol_raw = vol_raw.substr(0, vol_raw.find("cu") - 1);
-            if (vol_raw.find("inf") == std::string::npos) {
-                try {
-                    volume += stod(vol_raw);
-                } catch (const std::invalid_argument& ia) {
-                    bu_exit(BRLCAD_ERROR, "getVerificationData volume got: (%s) %s, aborting.\n", vol_raw.c_str(), ia.what());
-                }
-            }
+        if (bu_process_wait_n(&p, 0) != 0)
+            continue;
 
-        //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getFilepath() + " " + val2 + " 2>&1";
-        result = "";
-        pipe = popen(command.c_str(), "r");
-        if (!pipe)
-	    throw std::runtime_error("popen() failed!");
-        try {
-            while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
-                result += buffer;
-            }
-        } catch (...) {
-            pclose(pipe);
-            throw;
-        }
-        pclose(pipe);
-
-        if (result.find("Average total weight:") != std::string::npos) {
-            //Extract mass value
-            result = result.substr(result.find("Average total weight:") + 22);
-            result = result.substr(0, result.find(" "));
-            //Mass cannot be negative or infinite
-
-            try {
-                // weight cannot be inf or negative
-                if (weight_raw.find("inf") == std::string::npos) {
-                    if (weight_raw[0] == '-') {
-                        weight_raw = weight_raw.substr(1);
-                        mass += stod(weight_raw);
-                    }
-                    else {
-                        mass += stod(weight_raw);
-                    }
-                }
-            } catch (const std::invalid_argument& ia) {
-                bu_exit(BRLCAD_ERROR, "getVerificationData mass got: (%s) %s, aborting.\n", weight_raw.c_str(), ia.what());
-            }
-        }
+        volume += parseVolume(result);
     }
 }
 
