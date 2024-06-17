@@ -578,7 +578,6 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt,
 	    facetize_log(s, 0, " Success.\n");
 	} else {
 	    facetize_log(s, 0, " FAILED.\n");
-	    bu_log(" FAILED.\n");
 	}
     }
 
