@@ -29,7 +29,6 @@
 #include "rt/search.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
-#include "../tess_opts.h"
 
 struct rt_bot_internal *
 _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size)

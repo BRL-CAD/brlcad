@@ -35,7 +35,6 @@
 #include "analyze/polygonize.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
-#include "../tess_opts.h"
 
 #define FACETIZE_MEMORY_THRESHOLD 150000000
 
