@@ -224,13 +224,14 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_vls_free(&bname);
 
     {
+	std::map<std::string, std::set<std::string>> method_sets;
+	std::map<std::string, std::set<std::string>>::iterator m_it;
+	std::set<std::string>::iterator s_it;
 	struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
 	if (cdbip) {
 	    db_dirbuild(cdbip);
 	    db_update_nref(cdbip, &rt_uniresource);
-	    std::map<std::string, std::set<std::string>> method_sets;
 	    method_scan(&method_sets, cdbip);
-	    std::map<std::string, std::set<std::string>>::iterator m_it;
 	    for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
 		if (m_it->first == std::string("REPAIR")) {
 		    bu_log("%zd BoT(s) closed to form manifolds using 'bot repair'%s\n",
@@ -250,7 +251,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		    // bother listing those primitives
 		    if (m_it->first == std::string("NMG"))
 			continue;
-		    std::set<std::string>::iterator s_it;
 		    for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
 			bu_log("\t%s\n", (*s_it).c_str());
 		    }
@@ -258,6 +258,27 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    }
 	}
 	db_close(cdbip);
+
+	/* If we're not exiting with a failure, make combs with the various output
+	 * categories. */
+	if (!have_failure) {
+	    struct bu_vls cname = BU_VLS_INIT_ZERO;
+	    for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
+		if (m_it->first == std::string("NMG"))
+		    continue;
+		bu_vls_sprintf(&cname, "facetize_%s_objs", m_it->first.c_str());
+		if (db_lookup(dbip, bu_vls_cstr(&cname), LOOKUP_QUIET) != RT_DIR_NULL)
+		    bu_vls_incr(&cname, NULL, NULL, &_db_uniq_test, (void *)dbip);
+		struct wmember wcomb;
+		BU_LIST_INIT(&wcomb.l);
+		struct rt_wdb *cwdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+		for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
+		    (void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
+		}
+		mk_lcomb(cwdbp, bu_vls_cstr(&cname), &wcomb, 0, NULL, NULL, NULL, 0);
+	    }
+	    bu_vls_free(&cname);
+	}
     }
 
     // TODO - need to have an option to shotline through the new triangle faces and compare
@@ -298,7 +319,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
      * need to know what the new top level objects are for the assembly of the
      * final comb. */
     struct directory **tlist = NULL;
-    size_t tcnt = db_ls(s->gedp->dbip, DB_LS_TOPS, NULL, &tlist);
+    size_t tcnt = db_ls(dbip, DB_LS_TOPS, NULL, &tlist);
     std::set<std::string> otops;
     for (size_t i = 0; i < tcnt; i++) {
 	otops.insert(std::string(tlist[i]->d_namep));
@@ -343,7 +364,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
 
     /* Capture the new tops list. */
-    tcnt = db_ls(s->gedp->dbip, DB_LS_TOPS, NULL, &tlist);
+    tcnt = db_ls(dbip, DB_LS_TOPS, NULL, &tlist);
     std::set<std::string> ntops;
     for (size_t i = 0; i < tcnt; i++) {
 	ntops.insert(std::string(tlist[i]->d_namep));
@@ -357,14 +378,14 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
     /* Check to see if oname ended up being created in the
      * dbconcat.  If it was, rename it. */
-    struct directory *cdp  = db_lookup(s->gedp->dbip, oname, LOOKUP_QUIET);
+    struct directory *cdp  = db_lookup(dbip, oname, LOOKUP_QUIET);
     if (cdp != RT_DIR_NULL) {
 	// Find a new name
 	struct bu_vls nname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&nname, "%s_0", oname);
-	cdp  = db_lookup(s->gedp->dbip, bu_vls_cstr(&nname), LOOKUP_QUIET);
+	cdp  = db_lookup(dbip, bu_vls_cstr(&nname), LOOKUP_QUIET);
 	if (cdp != RT_DIR_NULL) {
-	    if (bu_vls_incr(&nname, NULL, NULL, &_db_uniq_test, (void *)s->gedp->dbip) < 0) {
+	    if (bu_vls_incr(&nname, NULL, NULL, &_db_uniq_test, (void *)dbip) < 0) {
 		bu_vls_free(&nname);
 		return BRLCAD_ERROR;
 	    }
@@ -383,7 +404,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     /* Make a new comb to hold the output */
     struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
-    struct rt_wdb *cwdbp = wdb_dbopen(s->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct rt_wdb *cwdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
     std::set<std::string>::iterator s_it;
     for (s_it = new_tobjs.begin(); s_it != new_tobjs.end(); ++s_it) {
 	(void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
