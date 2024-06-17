@@ -199,28 +199,34 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     struct bn_tol tol = BN_TOL_INIT_TOL;
 
     int structure_diff = 0;
+    int validate_mode = 0;
     int view_left = 0;
     int view_right = 0;
     int view_overlap = 0;
     int grazereport = 0;
     int print_help = 0;
+    struct bu_vls log_file = BU_VLS_INIT_ZERO;
     const char *left_obj;
     const char *right_obj;
     fastf_t len_tol = 0;
+    fastf_t valid_tol = BN_TOL_DIST;
     int ret_ac = 0;
     /* Skip command name */
     int ac = argc - 1;
     const char **av = argv+1;
 
-    struct bu_opt_desc d[8];
-    BU_OPT(d[0], "h", "help",         "",  NULL,            &print_help,   "Print help.");
-    BU_OPT(d[1], "g", "grid-spacing", "#", &bu_opt_fastf_t, &len_tol,      "Controls spacing of test ray grids (units are mm.)");
-    BU_OPT(d[2], "l", "view-left",    "",  NULL,            &view_left,    "Visualize volumes occurring only in the left object");
-    BU_OPT(d[3], "b", "view-both",    "",  NULL,            &view_overlap, "Visualize volumes common to both objects");
-    BU_OPT(d[4], "r", "view-right",   "",  NULL,            &view_right,   "Visualize volumes occurring only in the right object");
-    BU_OPT(d[5], "G", "grazing",      "",  NULL,            &grazereport,  "Report differences in grazing hits");
-    BU_OPT(d[6], "S", "structure",    "",  NULL,            &structure_diff,  "Do a diff of tree structures (matrices and objects, ignoring object names.)  This mode is not raytrace based.");
-    BU_OPT_NULL(d[7]);
+    struct bu_opt_desc d[11];
+    BU_OPT(d[ 0], "h", "help",           "",  NULL,            &print_help,     "Print help.");
+    BU_OPT(d[ 1], "g", "grid-spacing",   "#", &bu_opt_fastf_t, &len_tol,        "Controls spacing of test ray grids (units are mm.)");
+    BU_OPT(d[ 2], "l", "view-left",      "",  NULL,            &view_left,      "Visualize volumes occurring only in the left object");
+    BU_OPT(d[ 3], "b", "view-both",      "",  NULL,            &view_overlap,   "Visualize volumes common to both objects");
+    BU_OPT(d[ 4], "r", "view-right",     "",  NULL,            &view_right,     "Visualize volumes occurring only in the right object");
+    BU_OPT(d[ 5], "G", "grazing",        "",  NULL,            &grazereport,    "Report differences in grazing hits");
+    BU_OPT(d[ 6], "S", "structure",      "",  NULL,            &structure_diff, "Do a diff of tree structures (matrices and objects, ignoring object names.)  This mode is not raytrace based.");
+    BU_OPT(d[ 7],  "", "log-file",  "fname",  &bu_opt_vls,     &log_file,       "Specify a log file to write out JSON formatted diff info");
+    BU_OPT(d[ 8],  "", "validate",       "",  NULL,            &validate_mode,  "Shoot through object features (such as triangle centers) and report shotline differences");
+    BU_OPT(d[ 9],  "", "threshold",     "#",  &bu_opt_fastf_t, &valid_tol,      "Threshold below which shotline lengths are ignored.");
+    BU_OPT_NULL(d[10]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -237,6 +243,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "When visualizing raytrace based diff results, red segments are those generated\nonly from intersections with \"left_obj\" while blue segments represent\nintersections unique to \"right_obj\".  White segments represent intersections\ncommon to both objects. By default, in raytracing mode, segments unique to left and right objects are displayed.  ");
 	bu_vls_printf(gedp->ged_result_str, "If no tolerance is given, a default of 100mm is used.\n\n Be careful of using too fine a grid - finer grides will (up to a point) yield better visuals, but too fine a grid can cause very long raytracing times.");
 	bu_free(usage, "help str");
+	bu_vls_free(&log_file);
 	return BRLCAD_OK;
     }
 
@@ -244,6 +251,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
 	bu_vls_printf(gedp->ged_result_str, "wrong number of args.\nUsage: gdiff [opts] left_obj right_obj\nOptions:\n%s", usage);
 	bu_free((char *)usage, "help str");
+	bu_vls_free(&log_file);
 	return BRLCAD_ERROR;
     } else {
 	left_obj = av[0];
@@ -261,9 +269,11 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 
 	struct directory *dp1, *dp2;
 	if ((dp1 = db_lookup(gedp->dbip, left_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_vls_free(&log_file);
 	    return BRLCAD_ERROR;
 	}
 	if ((dp2 = db_lookup(gedp->dbip, right_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_vls_free(&log_file);
 	    return BRLCAD_ERROR;
 	}
 
@@ -281,10 +291,28 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&smsgs));
 
 	bu_vls_free(&smsgs);
+	bu_vls_free(&log_file);
 
 	bu_vls_printf(gedp->ged_result_str, "%d", diff);
 
 	return BRLCAD_OK;
+    }
+
+    if (validate_mode) {
+	// TODO - does implementing the guts of this in libanalyze make sense?  (probably...)
+
+	// Collect ray points and directions from left and right geometry
+	// files.  This will need a tree walk, since we want the instanced
+	// points associated with matrix-finalized positions.  We will be
+	// backing them out for the test shots, but sampling the points this
+	// way should give us a set of points that (in well behaved geometry)
+	// are expected to go through the volume in some fashion.
+
+	// The major use case of this is to check for facetize differences, so
+	// the threshold will be important - some differences are expected,
+	// since planar approximations of curved surfaces will lose volume, but
+	// they should be relatively minor as long as we're shooting squarely
+	// through the objects.
     }
 
     /* There are possible convention-based interpretations of 1, 2, 3, 4 and n args
@@ -322,9 +350,11 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
      */
 
     if (db_lookup(gedp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+	bu_vls_free(&log_file);
 	return BRLCAD_ERROR;
     }
     if (db_lookup(gedp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+	bu_vls_free(&log_file);
 	return BRLCAD_ERROR;
     }
 
@@ -427,6 +457,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     }
     analyze_raydiff_results_free(results);
 
+    bu_vls_free(&log_file);
     return BRLCAD_OK;
 }
 
