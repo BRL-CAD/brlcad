@@ -157,7 +157,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 		return BRLCAD_OK;
 	    // Plate mode BoTs need an explicit volume representation
 	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
-		//bu_log("plate_to_vol: %s\n", dp->d_namep);
+		bu_vls_sprintf(method_flag, "PLATE");
 		return rt_bot_plate_to_vol(obot, bot, 0, 1);
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
@@ -284,6 +284,8 @@ pnt_sampling_methods:
 	    return ret;
 	}
     }
+
+    bu_vls_sprintf(method_flag, "FAIL");
 
     if (pnts)
 	rt_pnts_free(pnts);

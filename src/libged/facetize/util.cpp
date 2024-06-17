@@ -316,7 +316,7 @@ method_scan(std::map<std::string, std::set<std::string>> *method_sets, struct db
 	    if (db5_get_attributes(dbip, &avs, dp))
 		continue;
 	    const char *method = bu_avs_get(&avs, FACETIZE_METHOD_ATTR);
-	    if (!method) {
+	    if (!method || !strlen(method)) {
 		bu_avs_free(&avs);
 		continue;
 	    }

@@ -232,15 +232,33 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    method_scan(&method_sets, cdbip);
 	    std::map<std::string, std::set<std::string>>::iterator m_it;
 	    for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
-		bu_log("%s:\n", m_it->first.c_str());
-		std::set<std::string>::iterator s_it;
-		for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
-		    bu_log("\t%s\n", (*s_it).c_str());
+		if (m_it->first == std::string("REPAIR")) {
+		    bu_log("%zd BoT(s) closed to form manifolds using 'bot repair'%s\n",
+			    m_it->second.size(), (s->verbosity > 0 && m_it->first != std::string("NMG")) ? ":" : ".");
+		} else if (m_it->first == std::string("PLATE")) {
+		    bu_log("%zd plate mode BoT(s) extruded to form manifold volumes%s\n",
+			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
+		} else if (m_it->first == std::string("FAIL")) {
+		    bu_log("%zd object(s) failed to facetize%s\n",
+			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
+		} else {
+		    bu_log("Facetized %zd object(s) using the %s method%s\n",
+			    m_it->second.size(), m_it->first.c_str(), (s->verbosity > 0) ? ":" : ".");
+		}
+		if (s->verbosity > 0) {
+		    // If we used NMG to facetize, that's considered normal - don't
+		    // bother listing those primitives
+		    if (m_it->first == std::string("NMG"))
+			continue;
+		    std::set<std::string>::iterator s_it;
+		    for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
+			bu_log("\t%s\n", (*s_it).c_str());
+		    }
 		}
 	    }
 	}
+	db_close(cdbip);
     }
-
 
     // TODO - need to have an option to shotline through the new triangle faces and compare
     // with the old CSG shotline results to try and spot any gross problems with the new
