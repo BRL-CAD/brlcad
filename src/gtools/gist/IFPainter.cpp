@@ -79,6 +79,11 @@ void
 IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold)
 {
 	cv::Mat imageRaw = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
+	if (imageRaw.empty()) {
+	    // read error
+	    bu_log("WARNING: could not use (%s)\n", imgPath.c_str());
+	    return;
+	}
 	// Convert the image to grayscale for creating the mask
 	cv::Mat gray_image;
 	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
