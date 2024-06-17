@@ -386,7 +386,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	    onames.insert(oname);
 	}
 
-	// Make a comb to hold the union of the new solid primitives
+	// Make a comb to hold the problematic primitives
 	if (onames.size()) {
 	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	    struct wmember wcomb;
