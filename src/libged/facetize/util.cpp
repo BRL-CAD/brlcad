@@ -310,8 +310,6 @@ method_scan(std::map<std::string, std::set<std::string>> *method_sets, struct db
     struct directory *dp;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
-		continue;
 	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 	    if (db5_get_attributes(dbip, &avs, dp))
 		continue;

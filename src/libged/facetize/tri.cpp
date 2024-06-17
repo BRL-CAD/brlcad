@@ -735,7 +735,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 
     // Call ged_exec to produce evaluated solids.
     // First step is to build up the command to run
-    std::vector<struct directory *> failed_dps;
+    std::vector<std::string> failed_dps;
     std::string mstrpp;
     int l_max_time;
     struct bu_vls method_str = BU_VLS_INIT_ZERO;
@@ -842,7 +842,8 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	    // error.  We'll keep trying to process all the leaves, since we want to
 	    // get a full picture of what the issues with the conversion are, but
 	    // we need to record these as a full-on failure.
-	    failed_dps.insert(failed_dps.end(), bad_dps.begin(), bad_dps.end());
+	    for (size_t i = 0; i < bad_dps.size(); i++)
+		failed_dps.push_back(std::string(bad_dps[i]->d_namep));
 	}
     }
 
@@ -878,7 +879,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
 	    int err_cnt = tess_run(s, tess_cmd, cmd_fixed_cnt + 1, l_max_time, 1);
 	    if (err_cnt)
-		failed_dps.push_back(dps[i]);
+		failed_dps.push_back(std::string(dps[i]->d_namep));
 	}
     }
 
@@ -922,8 +923,27 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	}
     }
 
-    if (failed_dps.size())
-	return BRLCAD_ERROR;
+    if (failed_dps.size()) {
+	// As the parent process, we can know when we've run out of options
+       // to try.  If we get there, flag the solid in the working copy so
+       // the summary knows to report it.
+       struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+       if (cdbip) {
+           db_dirbuild(cdbip);
+           db_update_nref(cdbip, &rt_uniresource);
+           for (size_t i = 0; i < failed_dps.size(); i++) {
+	       struct directory *dp = db_lookup(cdbip, failed_dps[i].c_str(), LOOKUP_QUIET);
+	       if (!dp)
+		   continue;
+               struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+               db5_get_attributes(cdbip, &avs, dp);
+               (void)bu_avs_add(&avs, FACETIZE_METHOD_ATTR, "FAIL");
+               (void)db5_update_attributes(dp, &avs, cdbip);
+           }
+           db_close(cdbip);
+       }
+       return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }

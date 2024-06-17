@@ -224,6 +224,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_vls_free(&bname);
 
     {
+	bu_log("\nPrimitive tessellation summary:\n\n");
 	std::map<std::string, std::set<std::string>> method_sets;
 	std::map<std::string, std::set<std::string>>::iterator m_it;
 	std::set<std::string>::iterator s_it;
@@ -240,10 +241,10 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		    bu_log("%zd plate mode BoT(s) extruded to form manifold volumes%s\n",
 			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
 		} else if (m_it->first == std::string("FAIL")) {
-		    bu_log("%zd object(s) failed to facetize%s\n",
+		    bu_log("%zd object(s) failed%s\n",
 			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
 		} else {
-		    bu_log("Facetized %zd object(s) using the %s method%s\n",
+		    bu_log("%zd object(s) succeeded using the %s method%s\n",
 			    m_it->second.size(), m_it->first.c_str(), (s->verbosity > 0 && m_it->first != std::string("NMG")) ? ":" : ".");
 		}
 		if (s->verbosity > 0) {
@@ -259,26 +260,24 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	}
 	db_close(cdbip);
 
-	/* If we're not exiting with a failure, make combs with the various output
-	 * categories. */
-	if (!have_failure) {
-	    struct bu_vls cname = BU_VLS_INIT_ZERO;
-	    for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
-		if (m_it->first == std::string("NMG"))
-		    continue;
-		bu_vls_sprintf(&cname, "facetize_%s_objs", m_it->first.c_str());
-		if (db_lookup(dbip, bu_vls_cstr(&cname), LOOKUP_QUIET) != RT_DIR_NULL)
-		    bu_vls_incr(&cname, NULL, NULL, &_db_uniq_test, (void *)dbip);
-		struct wmember wcomb;
-		BU_LIST_INIT(&wcomb.l);
-		struct rt_wdb *cwdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-		for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
-		    (void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
-		}
-		mk_lcomb(cwdbp, bu_vls_cstr(&cname), &wcomb, 0, NULL, NULL, NULL, 0);
+	// Make combs with the various categories of object that weren't a
+	// standard successful NMG ft_tessellate run
+	struct bu_vls cname = BU_VLS_INIT_ZERO;
+	for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
+	    if (m_it->first == std::string("NMG"))
+		continue;
+	    bu_vls_sprintf(&cname, "facetize_%s_objs", m_it->first.c_str());
+	    if (db_lookup(dbip, bu_vls_cstr(&cname), LOOKUP_QUIET) != RT_DIR_NULL)
+		bu_vls_incr(&cname, NULL, NULL, &_db_uniq_test, (void *)dbip);
+	    struct wmember wcomb;
+	    BU_LIST_INIT(&wcomb.l);
+	    struct rt_wdb *cwdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
+		(void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
 	    }
-	    bu_vls_free(&cname);
+	    mk_lcomb(cwdbp, bu_vls_cstr(&cname), &wcomb, 0, NULL, NULL, NULL, 0);
 	}
+	bu_vls_free(&cname);
     }
 
     // TODO - need to have an option to shotline through the new triangle faces and compare
