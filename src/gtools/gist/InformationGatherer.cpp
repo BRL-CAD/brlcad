@@ -634,13 +634,8 @@ InformationGatherer::gatherInformation(std::string name)
     * Code primarily taken from https://learn.microsoft.com/en-us/windows/win32/secauthz/finding-the-owner-of-a-file-object-in-c--
     */
     DWORD buffer_len = sizeof(buffer) / sizeof(buffer[0]);
-    if (!GetUserNameEx(NAME_DISPLAY, buffer, &buffer_len)) {
-        // If GetUserNameEx fails, fallback to GetUserName for the username
-        if (!GetUserName(buffer, &buffer_len)) {
-            owner = "Unknown";
-        } else {
-            owner = std::string(buffer);
-        }
+    if (!GetUserName(buffer, &buffer_len)) {
+        owner = "Unknown";
     } else {
         owner = std::string(buffer);
     }
@@ -751,13 +746,8 @@ GetFullNameOrUsername(std::string& name)
     #if defined(_WIN32) || defined(_WIN64) // Windows systems
 
     DWORD buffer_len = sizeof(buffer) / sizeof(buffer[0]);
-    if (!GetUserNameEx(NAME_DISPLAY, buffer, &buffer_len)) {
-        // If GetUserNameEx fails, fallback to GetUserName for the username
-        if (!GetUserName(buffer, &buffer_len)) {
-            name = "Unknown";
-        } else {
-            name = std::string(buffer);
-        }
+    if (!GetUserName(buffer, &buffer_len)) {
+        name = "Unknown";
     } else {
         name = std::string(buffer);
     }
