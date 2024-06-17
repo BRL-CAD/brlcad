@@ -1,7 +1,3 @@
-write out problematic solids to combs
-	- failed conversions
-	- fallback conversions
-
 investigate whether it makes sense to add a gdiff mode to validate conversions
 against the original input
 
