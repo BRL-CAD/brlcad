@@ -234,7 +234,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
 		if (m_it->first == std::string("REPAIR")) {
 		    bu_log("%zd BoT(s) closed to form manifolds using 'bot repair'%s\n",
-			    m_it->second.size(), (s->verbosity > 0 && m_it->first != std::string("NMG")) ? ":" : ".");
+			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
 		} else if (m_it->first == std::string("PLATE")) {
 		    bu_log("%zd plate mode BoT(s) extruded to form manifold volumes%s\n",
 			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
@@ -243,7 +243,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
 		} else {
 		    bu_log("Facetized %zd object(s) using the %s method%s\n",
-			    m_it->second.size(), m_it->first.c_str(), (s->verbosity > 0) ? ":" : ".");
+			    m_it->second.size(), m_it->first.c_str(), (s->verbosity > 0 && m_it->first != std::string("NMG")) ? ":" : ".");
 		}
 		if (s->verbosity > 0) {
 		    // If we used NMG to facetize, that's considered normal - don't
