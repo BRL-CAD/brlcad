@@ -673,10 +673,10 @@ InformationGatherer::gatherInformation(std::string name)
     infoMap.insert(std::pair<std::string, std::string>("owner", owner));
 
 	//Default name of preparer to owner if "N/A"
-    if(opt->getName() == "N/A"){
+    if(opt->getPreparer() == "N/A"){
         infoMap["preparer"] = owner;
     }else{
-        infoMap["preparer"] = opt->getName();
+        infoMap["preparer"] = opt->getPreparer();
     }
 
     //Gather last date updated
