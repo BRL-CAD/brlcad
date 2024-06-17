@@ -114,6 +114,9 @@ extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const
 extern struct rt_bot_internal *
 bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname);
 
+extern void
+facetize_primitives_summary(struct _ged_facetize_state *s);
+
 __END_DECLS
 
 extern int

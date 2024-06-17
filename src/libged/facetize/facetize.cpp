@@ -230,64 +230,11 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	}
     }
 
-    {
-	bu_log("\nPrimitive tessellation summary:\n\n");
-	std::map<std::string, std::set<std::string>> method_sets;
-	std::map<std::string, std::set<std::string>>::iterator m_it;
-	std::set<std::string>::iterator s_it;
-	struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
-	if (cdbip) {
-	    db_dirbuild(cdbip);
-	    db_update_nref(cdbip, &rt_uniresource);
-	    method_scan(&method_sets, cdbip);
-	    for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
-		if (m_it->first == std::string("REPAIR")) {
-		    bu_log("%zd BoT(s) closed to form manifolds using 'bot repair'%s\n",
-			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
-		} else if (m_it->first == std::string("PLATE")) {
-		    bu_log("%zd plate mode BoT(s) extruded to form manifold volumes%s\n",
-			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
-		} else if (m_it->first == std::string("FAIL")) {
-		    bu_log("%zd object(s) failed%s\n",
-			    m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
-		} else {
-		    bu_log("%zd object(s) succeeded using the %s method%s\n",
-			    m_it->second.size(), m_it->first.c_str(), (s->verbosity > 0 && m_it->first != std::string("NMG")) ? ":" : ".");
-		}
-		if (s->verbosity > 0) {
-		    // If we used NMG to facetize, that's considered normal - don't
-		    // bother listing those primitives
-		    if (m_it->first == std::string("NMG"))
-			continue;
-		    for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
-			bu_log("\t%s\n", (*s_it).c_str());
-		    }
-		}
-	    }
-	}
-	db_close(cdbip);
+    // Report on the primitive processing
+    facetize_primitives_summary(s);
 
-	// Make combs with the various categories of object that weren't a
-	// standard successful NMG ft_tessellate run
-	struct bu_vls cname = BU_VLS_INIT_ZERO;
-	for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
-	    if (m_it->first == std::string("NMG"))
-		continue;
-	    bu_vls_sprintf(&cname, "facetize_%s_objs", m_it->first.c_str());
-	    if (db_lookup(dbip, bu_vls_cstr(&cname), LOOKUP_QUIET) != RT_DIR_NULL)
-		bu_vls_incr(&cname, NULL, NULL, &_db_uniq_test, (void *)dbip);
-	    struct wmember wcomb;
-	    BU_LIST_INIT(&wcomb.l);
-	    struct rt_wdb *cwdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-	    for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
-		(void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
-	    }
-	    mk_lcomb(cwdbp, bu_vls_cstr(&cname), &wcomb, 0, NULL, NULL, NULL, 0);
-	}
-	bu_vls_free(&cname);
-
-	bu_dirclear(s->wdir);
-    }
+    // After collecting info for summary, we can now clean up working files
+    bu_dirclear(s->wdir);
 
 booleval_cleanup:
     bu_free(dpa, "dp array");
