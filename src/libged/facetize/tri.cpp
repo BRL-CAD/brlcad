@@ -573,12 +573,10 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt,
     // Needed to clean up file handles
     subprocess_destroy(&p);
 
-    if (!s->verbosity) {
-	if (w_rc == BRLCAD_OK) {
-	    facetize_log(s, 0, " Success.\n");
-	} else {
-	    facetize_log(s, 0, " FAILED.\n");
-	}
+    if (w_rc == BRLCAD_OK) {
+	facetize_log(s, 0, " Success.\n");
+    } else {
+	facetize_log(s, 0, " FAILED.\n");
     }
 
     return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
