@@ -194,6 +194,32 @@ static std::vector<std::string> read_line_node_i10
 }
 
 
+std::pair<std::string, std::string> split_key
+(
+    const char* key
+) {
+    std::pair<std::string, std::string> ret;
+    if (key != nullptr) {
+	std::string temp;
+	for (size_t i = 0; i < strlen(key); ++i) {
+	    if (key[i] == '=' ) {
+		if (temp.size() > 0) {
+		    ret.first = temp;
+		    temp.clear();
+		}
+	    }
+	    else if (key[i] != '=') {
+		temp += key[i];
+	    }
+	}
+	if (temp.size() > 0) {
+	    ret.second = temp;
+	}
+    }
+    return ret;
+}
+
+
 static std::vector<std::string> parse_line
 (
     const char* line
@@ -273,6 +299,7 @@ bool parse_k
 	std::string              line             = read_line(is);
 	ReadFormat               fileFormat       = ReadFormat::Standard;
 	ReadFormat               nodeFormat       = ReadFormat::Standard;
+	std::vector<std::string> nodeLines;//in old .k files a node with Long format is split in two lines.
 	std::vector<std::string> tokens;
 
 	if (line.size() > 0)
@@ -363,23 +390,20 @@ bool parse_k
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 			}
 			else if (command[0] == "KEYWORD") {
-			    if (tokens.size() == 2) {
-				if (tokens[1] == "LONG=Y" || tokens[1] == "LONG=S" || tokens[1] == "LONG=K") {
-				    fileFormat = ReadFormat::Long;
+			    if (tokens.size() > 1) {
+				for (size_t i = 1; i < tokens.size(); ++i) {
+				    std::pair<std::string, std::string> format = split_key((tokens[i]).c_str());
+				    if (format.first == "LONG") {
+					fileFormat = ReadFormat::Long;
+				    }
+				    else if (format.first == "I10") {
+					fileFormat = ReadFormat::I10;
+					break;
+				    }
 				}
-				else if (tokens[1] == "I10=Y") {
-				    fileFormat = ReadFormat::I10;
-				}
-				else
-				    std::cout << "Unhandeled file format" << tokens[1] << "in k-file" << fileName << "\n";
 			    }
-			    else if (tokens.size() == 3) {
-				if (tokens[1] == "I10=Y") {
-				    fileFormat = ReadFormat::I10;
-				}
-				else
-				    std::cout << "Unhandeled file format" << tokens[1] << "in k-file" << fileName << "\n";
-			    }
+			    else
+				fileFormat = ReadFormat::Standard;
 			}
 		    }
 
@@ -398,8 +422,28 @@ bool parse_k
 			    tokens = read_line_node_standard(line.c_str());
 			}
 			else if (nodeFormat == ReadFormat::Long) {
-			    tokens = read_line_node_long(line.c_str());
+			    std::vector<std::string> tempLine = read_line_node_long(line.c_str());
 
+			    if (nodeLines.size() == 0) {
+				if (tempLine.size() == 4) {
+				    nodeLines = tempLine;
+				    break;
+				}
+				else if (tempLine.size() == 6) {
+				    tokens = tempLine;
+				}
+				else
+				    std::cout << "Error a node with Long format can be written in one line of 6 variables or split in two lines, the first line should contain 4 variables ";
+			    }
+			    else{
+				if (tempLine.size() == 2) {
+				    nodeLines.insert(nodeLines.end(), tempLine.begin(), tempLine.end());
+				    tokens = nodeLines;
+				    nodeLines.clear();
+				}
+				else
+				    std::cout << "Error a node with Long format should be split in two lines, the second line should contain 2 variables";
+			    }
 			}
 			else if (nodeFormat == ReadFormat::I10) {
 			    tokens = read_line_node_i10(line.c_str());
