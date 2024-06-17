@@ -28,6 +28,7 @@
 #include "bu/ptbl.h"
 #include "rt/search.h"
 #include "../../ged_private.h"
+#include "../ged_facetize.h"
 #include "./tessellate.h"
 
 struct rt_bot_internal *
@@ -102,7 +103,7 @@ _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const c
 
     bu_avs_init_empty(&intern.idb_avs);
     if (method)
-	(void)bu_avs_add(&intern.idb_avs, "facetize_method", method);
+	(void)bu_avs_add(&intern.idb_avs, FACETIZE_METHOD_ATTR, method);
 
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {

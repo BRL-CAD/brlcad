@@ -223,6 +223,25 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     }
     bu_vls_free(&bname);
 
+    {
+	struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
+	if (cdbip) {
+	    db_dirbuild(cdbip);
+	    db_update_nref(cdbip, &rt_uniresource);
+	    std::map<std::string, std::set<std::string>> method_sets;
+	    method_scan(&method_sets, cdbip);
+	    std::map<std::string, std::set<std::string>>::iterator m_it;
+	    for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
+		bu_log("%s:\n", m_it->first.c_str());
+		std::set<std::string>::iterator s_it;
+		for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
+		    bu_log("\t%s\n", (*s_it).c_str());
+		}
+	    }
+	}
+    }
+
+
     // TODO - need to have an option to shotline through the new triangle faces and compare
     // with the old CSG shotline results to try and spot any gross problems with the new
     // mesh.  The nature of facetization means the shotlines won't be 1-1 identical, but

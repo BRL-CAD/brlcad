@@ -38,6 +38,8 @@
 
 __BEGIN_DECLS
 
+#define FACETIZE_METHOD_ATTR "facetize_method"
+
 struct _ged_facetize_state {
 
     // Output
@@ -113,6 +115,9 @@ extern struct rt_bot_internal *
 bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname);
 
 __END_DECLS
+
+extern int
+method_scan(std::map<std::string, std::set<std::string>> *method_sets, struct db_i *dbip);
 
 #endif /* LIBGED_FACETIZE_GED_PRIVATE_H */
 

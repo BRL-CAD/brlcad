@@ -301,6 +301,32 @@ _ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *
     return BRLCAD_OK;
 }
 
+int
+method_scan(std::map<std::string, std::set<std::string>> *method_sets, struct db_i *dbip)
+{
+    if (!method_sets || !dbip)
+	return BRLCAD_ERROR;
+
+    struct directory *dp;
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+		continue;
+	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	    if (db5_get_attributes(dbip, &avs, dp))
+		continue;
+	    const char *method = bu_avs_get(&avs, FACETIZE_METHOD_ATTR);
+	    if (!method) {
+		bu_avs_free(&avs);
+		continue;
+	    }
+	    (*method_sets)[std::string(method)].insert(std::string(dp->d_namep));
+	    bu_avs_free(&avs);
+	}
+    }
+
+    return BRLCAD_OK;
+}
 
 struct rt_bot_internal *
 bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname)
