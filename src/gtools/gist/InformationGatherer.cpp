@@ -424,76 +424,73 @@ InformationGatherer::gatherInformation(std::string name)
     std::string filePath = opt->getInFile();
     g = ged_open("db", filePath.c_str(), 1);
 
-	//Gather title
-	const char* cmd[6] = { "title", NULL, NULL, NULL, NULL };
-	ged_exec(g, 1, cmd);
+    //Gather title
+    const char* cmd[6] = { "title", NULL, NULL, NULL, NULL };
+    ged_exec(g, 1, cmd);
     infoMap["title"] = bu_vls_addr(g->ged_result_str);
 
 
-	//Gather DB Version
-	cmd[0] = "dbversion";
+    //Gather DB Version
+    cmd[0] = "dbversion";
     cmd[1] = NULL;
-	ged_exec(g, 1, cmd);
+    ged_exec(g, 1, cmd);
     infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // CHECK
-	//Gather primitives, regions, total objects
-	cmd[0] = "summary";
-	ged_exec(g, 1, cmd);
-	char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
-	int count = 0;
-	while (res != NULL) {
-		if (count == 1) {
-			infoMap.insert(std::pair < std::string, std::string>("primitives", res));
-		}
-		else if (count == 3) {
-			infoMap.insert(std::pair < std::string, std::string>("regions", res));
-		}
-		else if (count == 5) {
-			infoMap.insert(std::pair < std::string, std::string>("non-regions", res));
-		}
-		count++;
-		res = strtok(NULL, " ");
+    //Gather primitives, regions, total objects
+    cmd[0] = "summary";
+    ged_exec(g, 1, cmd);
+    char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
+    int count = 0;
+    while (res != NULL) {
+	if (count == 1) {
+	    infoMap.insert(std::pair < std::string, std::string>("primitives", res));
+	} else if (count == 3) {
+	    infoMap.insert(std::pair < std::string, std::string>("regions", res));
+	} else if (count == 5) {
+	    infoMap.insert(std::pair < std::string, std::string>("non-regions", res));
 	}
+	count++;
+	res = strtok(NULL, " ");
+    }
 
 
     // Gather units
-	cmd[0] = "units";
+    cmd[0] = "units";
     cmd[1] = NULL;
-	ged_exec(g, 1, cmd);
-	std::string result = bu_vls_addr(g->ged_result_str);
-	std::size_t first = result.find_first_of("\'");
-	std::size_t last = result.find_last_of("\'");
+    ged_exec(g, 1, cmd);
+    std::string result = bu_vls_addr(g->ged_result_str);
+    std::size_t first = result.find_first_of("\'");
+    std::size_t last = result.find_last_of("\'");
     infoMap["units"] = result.substr(first+1, last-first-1);
 
     //Get units to use
     std::string lUnit;
     if (opt->isOriginalUnitsLength()) {
         lUnit = infoMap["units"];
-    }
-    else {
+    } else {
         lUnit = opt->getUnitLength();
     }
     std::string mUnit;
     if (opt->isOriginalUnitsMass()) {
         mUnit = "g";
-    }
-    else {
+    } else {
         mUnit = opt->getUnitMass();
     }
 
 
     getMainComp();
-    if (largestComponents.size() == 0)
+    if (largestComponents.size() == 0) {
         return false;
+    }
 
     getSubComp();
 
     // Gather dimensions
-	cmd[0] = "bb";
-	cmd[1] = largestComponents[0].name.c_str();
-	cmd[2] = NULL;
-	ged_exec(g, 2, cmd);
+    cmd[0] = "bb";
+    cmd[1] = largestComponents[0].name.c_str();
+    cmd[2] = NULL;
+    ged_exec(g, 2, cmd);
 
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string token;
@@ -662,15 +659,15 @@ InformationGatherer::gatherInformation(std::string name)
         }
     }
 #endif
-    if(opt->getOwner() != ""){
+    if (opt->getOwner() != "") {
         owner = opt->getOwner();
     }
     infoMap.insert(std::pair<std::string, std::string>("owner", owner));
 
-	//Default name of preparer to owner if "N/A"
-    if(opt->getPreparer() == "N/A"){
+    //Default name of preparer to owner if "N/A"
+    if (opt->getPreparer() == "N/A") {
         infoMap["preparer"] = owner;
-    }else{
+    } else {
         infoMap["preparer"] = opt->getPreparer();
     }
 
@@ -689,7 +686,7 @@ InformationGatherer::gatherInformation(std::string name)
 
     std::string file = opt->getInFile().substr(last+1, opt->getInFile().length()-1);
 
-	infoMap.insert(std::pair < std::string, std::string>("file", file));
+    infoMap.insert(std::pair < std::string, std::string>("file", file));
 
     //Gather date of generation
     std::time_t now = time(0);
@@ -733,7 +730,7 @@ InformationGatherer::gatherInformation(std::string name)
         ss2 << curHex;
     }
 
-	infoMap.insert(std::pair<std::string, std::string>("checksum", ss2.str()));
+    infoMap.insert(std::pair<std::string, std::string>("checksum", ss2.str()));
 
     return true;
 }
@@ -781,7 +778,7 @@ GetFullNameOrUsername(std::string& name)
 std::string
 InformationGatherer::getInfo(std::string key)
 {
-	return infoMap[key];
+    return infoMap[key];
 }
 
 std::string
@@ -798,7 +795,7 @@ InformationGatherer::getFormattedInfo(std::string key)
     }
 
     // no units if power == 0 or no units mapping
-	return infoMap[key];
+    return infoMap[key];
 }
 
 Unit
@@ -847,7 +844,7 @@ void InformationGatherer::correctDefaultUnitsLength()
         const std::string& key = pair.first;
         Unit& unit = pair.second;
 
-        if(key == "mass") {
+        if (key == "mass") {
             continue;
         }
 

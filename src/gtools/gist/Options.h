@@ -148,7 +148,6 @@ private:
     int verbosePrint;
 };
 
-
 /*
  * Local Variables:
  * tab-width: 8

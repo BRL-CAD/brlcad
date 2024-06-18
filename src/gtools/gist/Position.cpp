@@ -213,6 +213,7 @@ Position::intersects(const Position& other) const
     return right() > other.left() && left() < other.right() &&
            bottom() > other.top() && top() < other.bottom();
 }
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

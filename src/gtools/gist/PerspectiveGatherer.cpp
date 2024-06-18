@@ -23,17 +23,17 @@
 std::map<char, FaceDetails>
 getFaceDetails()
 {
-	std::map<char, FaceDetails> output;
+    std::map<char, FaceDetails> output;
 
-	output['F'] = {FRONT, "Front", LENGTH, HEIGHT};
-	output['T'] = {TOP, "Top", LENGTH, DEPTH};
-	output['R'] = {RIGHT, "Right", DEPTH, HEIGHT};
-	output['L'] = {LEFT, "Left", DEPTH, HEIGHT};
-	output['B'] = {BACK, "Back", LENGTH, HEIGHT};
-	output['b'] = {BOTTOM, "Bottom", LENGTH, DEPTH};
-	//output['A'] = {DETAILED, "Ambient Occlusion"};
+    output['F'] = {FRONT, "Front", LENGTH, HEIGHT};
+    output['T'] = {TOP, "Top", LENGTH, DEPTH};
+    output['R'] = {RIGHT, "Right", DEPTH, HEIGHT};
+    output['L'] = {LEFT, "Left", DEPTH, HEIGHT};
+    output['B'] = {BACK, "Back", LENGTH, HEIGHT};
+    output['b'] = {BOTTOM, "Bottom", LENGTH, DEPTH};
+    //output['A'] = {DETAILED, "Ambient Occlusion"};
 
-	return output;
+    return output;
 }
 
 
@@ -48,14 +48,16 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
     // it shouldn't, but make sure workingDir string does not end in path separator
     std::string working = workingDir;
     char lastChar = working[working.size() - 1];
-    if (lastChar == '/' || lastChar == '\\')
+    if (lastChar == '/' || lastChar == '\\') {
         working.pop_back();
+    }
 
     // when doing ghost render for hierarchy '...' component is space separated list
     // in that case rename to etc to elim spaces and not have too long of a file name
     std::string comp = component;
-    if (comp.find(" ") != std::string::npos)
+    if (comp.find(" ") != std::string::npos) {
         comp = "etc";
+    }
 
     // put it all together
     std::string ret = working + BU_DIR_SEPARATOR + inFileBase + "_" + comp;
@@ -66,8 +68,9 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
 
 static std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
-    if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
+    if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL)) {
         bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
+    }
 
     return std::string(buf);
 }
@@ -230,7 +233,6 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 
 	return outputname;
 }
-
 
 // Local Variables:
 // tab-width: 8

@@ -40,11 +40,13 @@ struct ComponentData {
     std::string name;
 
     bool operator<(const ComponentData& other) const {
-        if (numEntities != other.numEntities)
+        if (numEntities != other.numEntities) {
             return numEntities < other.numEntities;
-        if (volume != other.volume)
+	}
+        if (volume != other.volume) {
             return volume < other.volume;
-        return name < other.name;
+	}
+	return name < other.name;
     }
 };
 
@@ -58,7 +60,7 @@ class InformationGatherer
 private:
     Options* opt;
     struct ged* g;
-	std::map<std::string, std::string> infoMap;
+    std::map<std::string, std::string> infoMap;
     std::map<std::string, Unit> unitsMap;
     double getVolume(std::string component);
     int getNumEntities(std::string component);
@@ -66,17 +68,15 @@ private:
     void getSubComp();
     int getEntityData(char* buf);
 
-
-
 public:
     std::vector<ComponentData> largestComponents;
-	InformationGatherer(Options* options);
-	~InformationGatherer();
+    InformationGatherer(Options* options);
+    ~InformationGatherer();
 
-	bool gatherInformation(std::string name);
+    bool gatherInformation(std::string name);
     void GetFullNameOrUsername(std::string& name);
 
-	std::string getInfo(std::string key);
+    std::string getInfo(std::string key);
     std::string getFormattedInfo(std::string key);
 
     Unit getUnit(std::string name);
@@ -86,7 +86,6 @@ public:
     void correctDefaultUnitsMass();
 
     void checkScientificNotation();
-
 };
 
 /*

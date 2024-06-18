@@ -98,23 +98,23 @@ class Options;
 struct LayoutChoice
 {
 private:
-	std::string map;
-	bool lockRows;
+    std::string map;
+    bool lockRows;
 
-	std::vector<std::vector<double>> coordinates;
+    std::vector<std::vector<double>> coordinates;
 public:
-	std::vector<std::pair<int, int>> dimDetails;
+    std::vector<std::pair<int, int>> dimDetails;
 
-	LayoutChoice(std::string map, bool lockRows);
+    LayoutChoice(std::string map, bool lockRows);
 
-	void initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);
+    void initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);
 
-	std::vector<int> getCoordinates(int mapIndex);
+    std::vector<int> getCoordinates(int mapIndex);
 
-	int getMapSize();
-	char getMapChar(int index);
+    int getMapSize();
+    char getMapChar(int index);
 
-	double getTotalCoverage(double ambientWidth, double ambientHeight);
+    double getTotalCoverage(double ambientWidth, double ambientHeight);
 };
 
 
