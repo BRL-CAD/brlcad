@@ -75,6 +75,7 @@ lint_data::summary()
 	    }
 	    std::string cpath(pdata["path"]);
 	    categories[ptype].insert(cpath);
+	    continue;
 	}
 	if (!ptype.compare(0, 7, std::string("missing"))) {
 	    if (!pdata.contains("path")) {
@@ -83,6 +84,7 @@ lint_data::summary()
 	    }
 	    std::string mpath(pdata["path"]);
 	    categories[std::string("missing")].insert(mpath);
+	    continue;
 	}
 
 	// If it's not one of the above types, we're looking for an
@@ -252,7 +254,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
 
-    if (print_help) {
+    if (print_help || argc < 0) {
 	_ged_cmd_help(gedp, usage, d);
 	// TODO - autogenerate this list rather than hard coding...
 	bu_vls_printf(gedp->ged_result_str, "\nInvalidity checks:\n");
@@ -330,8 +332,18 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!have_specific_test || imethods.do_invalid) {
 	bu_log("Checking for invalid objects...\n");
+
+	// bu_log wipes out MGED when doing this - stash hooks
+	struct bu_hook_list ohooks;
+	bu_hook_list_init(&ohooks);
+	bu_log_hook_save_all(&ohooks);
+	bu_log_hook_delete_all();
+
 	if (_ged_invalid_shape_check(&ldata) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
+
+	// Restore hooks
+	bu_log_hook_restore_all(&ohooks);
     }
 
     if (visualize) {
@@ -374,7 +386,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	    onames.insert(oname);
 	}
 
-	// Make a comb to hold the union of the new solid primitives
+	// Make a comb to hold the problematic primitives
 	if (onames.size()) {
 	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	    struct wmember wcomb;

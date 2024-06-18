@@ -15,7 +15,7 @@ endif (MANIFOLD_LIBRARIES)
 
 set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES} ${ASSETIMPORT_LIBRARIES})
 
-add_subdirectory(tessellate)
+add_subdirectory(subprocess)
 
 set(FACETIZE_SRCS
   brep.cpp

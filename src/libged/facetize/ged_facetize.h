@@ -32,19 +32,22 @@
 #include "bu/vls.h"
 #include "bn/tol.h"
 #include "bg/spsr.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "ged/defines.h"
 
 __BEGIN_DECLS
 
+#define FACETIZE_METHOD_ATTR "facetize_method"
+
 struct _ged_facetize_state {
 
     // Output
-    int quiet;
     int verbosity;
     int no_empty;
     int make_nmg;
     int nonovlp_brep;
+    int no_fixup;
 
     char *wdir;
     struct bu_vls *wfile;
@@ -76,6 +79,9 @@ struct _ged_facetize_state {
     void *log_s;
 };
 
+extern void
+facetize_log(struct _ged_facetize_state *, int msg_level, const char *, ...) _BU_ATTR_PRINTF34;
+
 extern int
 _db_uniq_test(struct bu_vls *n, void *data);
 
@@ -105,7 +111,16 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 
 extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv);
 
+extern struct rt_bot_internal *
+bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname);
+
+extern void
+facetize_primitives_summary(struct _ged_facetize_state *s);
+
 __END_DECLS
+
+extern int
+method_scan(std::map<std::string, std::set<std::string>> *method_sets, struct db_i *dbip);
 
 #endif /* LIBGED_FACETIZE_GED_PRIVATE_H */
 

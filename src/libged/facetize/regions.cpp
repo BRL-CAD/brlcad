@@ -71,7 +71,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct bu_ptbl *ar = NULL;
     BU_ALLOC(ar, struct bu_ptbl);
     if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
-	if (s->verbosity) {
+	if (s->verbosity >= 0) {
 	    bu_log("Problem searching for active regions - aborting.\n");
 	}
 	bu_ptbl_free(ar);
@@ -93,7 +93,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct bu_ptbl *as = NULL;
     BU_ALLOC(as, struct bu_ptbl);
     if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, argc, dpa, dbip, NULL) < 0) {
-	if (s->verbosity) {
+	if (s->verbosity >= 0) {
 	    bu_log("Problem searching for active solids - aborting.\n");
 	}
 	bu_ptbl_free(as);
@@ -152,7 +152,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct bu_ptbl *ir = NULL;
     BU_ALLOC(ir, struct bu_ptbl);
     if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, argc, dpa, dbip, NULL) < 0) {
-	if (s->verbosity) {
+	if (s->verbosity >= 0) {
 	    bu_log("Problem searching for implicit regions - aborting.\n");
 	}
 	bu_ptbl_free(ar);
@@ -176,6 +176,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     for (size_t i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(ar, i);
+
+	facetize_log(s, 0, "Processing %s\n", dpw[0]->d_namep);
 
 	// Get a name for the region's output BoT
 	bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
@@ -213,90 +215,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	    wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
 	    db_update_nref(wdbip, &rt_uniresource);
-
-
-	    // We've written out the evaluated BoT, but there is a chance we have degenerately
-	    // thin volumes where we had coplanar interactions.  Check with the raytracer, and
-	    // if we find such a case try to remove the degenerate faces and produce a new mesh.
-	    // If we have work to do, we'll need a new BoT
-	    struct rt_bot_internal *nbot = NULL;
-
-	    // Unpack the existing bot
-	    struct directory *bot_dp = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
-	    if (!bot_dp) {
-		db_close(wdbip);
-		continue;
-	    }
-	    struct rt_db_internal bot_intern;
-	    RT_DB_INTERNAL_INIT(&bot_intern);
-	    if (rt_db_get_internal(&bot_intern, bot_dp, wdbip, NULL, &rt_uniresource) < 0) {
-		db_close(wdbip);
-		continue;
-	    }
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)(bot_intern.idb_ptr);
-	    if (bot->num_faces) {
-		// Have faces, test with raytracer
-		struct rt_i *rtip = rt_new_rti(wdbip);
-		rt_gettree(rtip, bu_vls_cstr(&bname));
-		rt_prep(rtip);
-		struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
-		int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
-		rt_free_rti(rtip);
-
-		if (have_thin_faces) {
-
-		    // First order of business - get the problematic faces out of
-		    // the mesh
-		    nbot = rt_bot_remove_faces(&tfaces, bot);
-
-		    // If we took away manifoldness removing faces (likely) we need
-		    // to try and rebuild it.
-		    if (nbot && nbot->num_faces) {
-			struct rt_bot_internal *rbot = NULL;
-			struct rt_bot_repair_info rs = RT_BOT_REPAIR_INFO_INIT;
-			int repair_result = rt_bot_repair(&rbot, nbot, &rs);
-			if (repair_result < 0) {
-			    // If a conservative repair fails, try being a little
-			    // more aggressive
-			    rs.max_hole_area_percent = 30;
-			    repair_result = rt_bot_repair(&rbot, nbot, &rs);
-			}
-			if (repair_result < 0) {
-			    bu_log("%s removed %zd thin faces, but repair failed.  Retaining manifold result.\n", bu_vls_cstr(&bname), BU_PTBL_LEN(&tfaces));
-			    // The repair didn't succeed.  That means we weren't able
-			    // to produce a manifold mesh after removing the thin
-			    // triangles.  In that situation, we return the manifold
-			    // result we do have, thin triangles or not, rather than
-			    // produce something invalid.
-			    rt_bot_internal_free(nbot);
-			    BU_PUT(nbot, struct rt_bot_internal);
-			    nbot = NULL;
-			} else {
-			    // If we produced a new repaired mesh, replace nbot with
-			    // the final result.
-			    if (rbot && rbot != nbot) {
-				rt_bot_internal_free(nbot);
-				BU_PUT(nbot, struct rt_bot_internal);
-				nbot = rbot;
-			    }
-			}
-		    }
-		}
-		bu_ptbl_free(&tfaces);
-	    }
-
-	    // Done with bot_intern
-	    rt_db_free_internal(&bot_intern);
-
-	    if (nbot) {
-		// Write out new version of BoT
-		db_delete(wdbip, bot_dp);
-		db_dirdelete(wdbip, bot_dp);
-		if (_ged_facetize_write_bot(wdbip, nbot, bu_vls_cstr(&bname), s->verbosity) != BRLCAD_OK) {
-		    bu_log("Error writing out finalized version of %s\n", bu_vls_cstr(&bname));
-		}
-	    }
-
 	    db_close(wdbip);
 
 	} else {
@@ -304,6 +222,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	}
     }
     bu_vls_free(&bname);
+
+    // Report on the primitive processing
+    facetize_primitives_summary(s);
 
     // TODO - need to have an option to shotline through the new triangle faces and compare
     // with the old CSG shotline results to try and spot any gross problems with the new
@@ -343,7 +264,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
      * need to know what the new top level objects are for the assembly of the
      * final comb. */
     struct directory **tlist = NULL;
-    size_t tcnt = db_ls(s->gedp->dbip, DB_LS_TOPS, NULL, &tlist);
+    size_t tcnt = db_ls(dbip, DB_LS_TOPS, NULL, &tlist);
     std::set<std::string> otops;
     for (size_t i = 0; i < tcnt; i++) {
 	otops.insert(std::string(tlist[i]->d_namep));
@@ -388,7 +309,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
 
     /* Capture the new tops list. */
-    tcnt = db_ls(s->gedp->dbip, DB_LS_TOPS, NULL, &tlist);
+    tcnt = db_ls(dbip, DB_LS_TOPS, NULL, &tlist);
     std::set<std::string> ntops;
     for (size_t i = 0; i < tcnt; i++) {
 	ntops.insert(std::string(tlist[i]->d_namep));
@@ -402,14 +323,14 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
     /* Check to see if oname ended up being created in the
      * dbconcat.  If it was, rename it. */
-    struct directory *cdp  = db_lookup(s->gedp->dbip, oname, LOOKUP_QUIET);
+    struct directory *cdp  = db_lookup(dbip, oname, LOOKUP_QUIET);
     if (cdp != RT_DIR_NULL) {
 	// Find a new name
 	struct bu_vls nname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&nname, "%s_0", oname);
-	cdp  = db_lookup(s->gedp->dbip, bu_vls_cstr(&nname), LOOKUP_QUIET);
+	cdp  = db_lookup(dbip, bu_vls_cstr(&nname), LOOKUP_QUIET);
 	if (cdp != RT_DIR_NULL) {
-	    if (bu_vls_incr(&nname, NULL, NULL, &_db_uniq_test, (void *)s->gedp->dbip) < 0) {
+	    if (bu_vls_incr(&nname, NULL, NULL, &_db_uniq_test, (void *)dbip) < 0) {
 		bu_vls_free(&nname);
 		return BRLCAD_ERROR;
 	    }
@@ -428,7 +349,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     /* Make a new comb to hold the output */
     struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
-    struct rt_wdb *cwdbp = wdb_dbopen(s->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct rt_wdb *cwdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
     std::set<std::string>::iterator s_it;
     for (s_it = new_tobjs.begin(); s_it != new_tobjs.end(); ++s_it) {
 	(void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);

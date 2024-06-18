@@ -94,6 +94,11 @@
 #elif !defined(_BU_ATTR_PRINTF23)
 #  define _BU_ATTR_PRINTF23
 #endif
+#ifdef HAVE_PRINTF34_ATTRIBUTE
+#  define _BU_ATTR_PRINTF34 __attribute__((__format__ (__printf__, 3, 4)))
+#elif !defined(_BU_ATTR_PRINTF34)
+#  define _BU_ATTR_PRINTF34
+#endif
 #ifdef HAVE_SCANF23_ATTRIBUTE
 #  define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
 #elif !defined(_BU_ATTR_SCANF23)

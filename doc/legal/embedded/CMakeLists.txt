@@ -7,6 +7,7 @@ BRLCAD_MANAGE_FILES(breeze_style.txt           ${DOC_DIR}/legal/embedded TRIGGER
 BRLCAD_MANAGE_FILES(bullet.txt                 ${DOC_DIR}/legal/embedded TRIGGER mged)
 BRLCAD_MANAGE_FILES(chull2d.txt                ${DOC_DIR}/legal/embedded TRIGGER libbg)
 BRLCAD_MANAGE_FILES(clipper.txt                ${DOC_DIR}/legal/embedded TRIGGER libbg)
+BRLCAD_MANAGE_FILES(concurrentqueue.txt        ${DOC_DIR}/legal/embedded TRIGGER libged)
 BRLCAD_MANAGE_FILES(db_faa-info.txt            ${DOC_DIR}/legal/embedded TRIGGER libgcv)
 BRLCAD_MANAGE_FILES(db_nist-info.txt           ${DOC_DIR}/legal/embedded TRIGGER libgcv)
 BRLCAD_MANAGE_FILES(damlev.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbu)

@@ -56,8 +56,6 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 struct coplanar_info {
     double ttol;
     int is_thin;
-    int have_above;
-    int unexpected_miss;
     struct rt_bot_internal *bot;
 
     int verbose;
@@ -74,36 +72,24 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
 
-    struct partition *pp = PartHeadp->pt_forw;
-
     struct seg *s = (struct seg *)segs->l.forw;
-    // This is a problem, but not the thin volume problem - can occur when
-    // there are geometric issues elsewhere along the shotline.  See the
-    // lint command for logic that can report these issues.
-    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF)
+
+    // If we didn't get a hit involving nearby triangles, but we still
+    // passed the initial first-hit check, something is up.  Unfortunately
+    // the conditions that might trigger this aren't exclusively thin face
+    // pairings, but since it is possible go ahead and flag it.
+    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
+	tinfo->is_thin = 1;
+	tinfo->problem_indices.insert(tinfo->curr_tri);
 	return 0;
+    }
 
     for (BU_LIST_FOR(s, seg, &(segs->l))) {
 	if (s->seg_in.hit_dist > tinfo->ttol)
 	    continue;
 
 	double dist = s->seg_out.hit_dist - s->seg_in.hit_dist;
-	if (tinfo->verbose > 1) {
-	    bu_log("surfno: %d\n", s->seg_in.hit_surfno);
-	    bu_log("%s dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
-	    bu_log("center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	    bu_log("dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-	}
-
 	if (dist < tinfo->ttol) {
-	    if (tinfo->verbose) {
-		bu_log("	dist: %f\n", dist);
-		bu_log("	in_surfno: %d\n", s->seg_in.hit_surfno);
-		bu_log("	out_surfno: %d\n", s->seg_out.hit_surfno);
-		bu_log("	%s thin dist: %0.17f\n",  pp->pt_regionp->reg_name, dist);
-		bu_log("	center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-		bu_log("	dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-	    }
 	    tinfo->is_thin = 1;
 	    tinfo->problem_indices.insert(s->seg_in.hit_surfno);
 	    tinfo->problem_indices.insert(s->seg_out.hit_surfno);
@@ -121,11 +107,7 @@ _tc_miss(struct application *ap)
     // something is wrong.
     struct coplanar_info *tinfo = (struct coplanar_info *)ap->a_uptr;
     tinfo->is_thin = 1;
-    if (tinfo->verbose) {
-	bu_log("		miss\n");
-	bu_log("		center: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_pt));
-	bu_log("		dir: %0.17f %0.17f %0.17f\n" , V3ARGS(ap->a_ray.r_dir));
-    }
+    tinfo->problem_indices.insert(tinfo->curr_tri);
     return 0;
 }
 
@@ -186,10 +168,15 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 	VADD3(tcenter, rpnts[0], rpnts[1], rpnts[2]);
 	VSCALE(tcenter, tcenter, 1.0/3.0);
 
-	// Take the shot
-	tinfo.is_thin = 0;
+	// Set up the ray
 	VMOVE(ap.a_ray.r_dir, rnorm);
 	VADD2(ap.a_ray.r_pt, tcenter, backout);
+
+	// Take the solid shot
+	ap.a_hit = _tc_hit;    /* where to go on a hit */
+	ap.a_miss = _tc_miss;  /* where to go on a miss */
+	ap.a_onehit = 0;
+	tinfo.is_thin = 0;
 	(void)rt_shootray(&ap);
 
 	if (tinfo.is_thin) {

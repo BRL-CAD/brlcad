@@ -383,6 +383,63 @@ rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_interna
     return bot;
 }
 
+struct rt_bot_internal *
+rt_bot_dup(const struct rt_bot_internal *obot)
+{
+    if (!obot)
+	return NULL;
+
+    struct rt_bot_internal *bot = NULL;
+    BU_GET(bot, struct rt_bot_internal);
+    bot->magic = obot->magic;
+    bot->mode = obot->mode;
+    bot->orientation = obot->orientation;
+    bot->bot_flags = obot->bot_flags;
+
+    bot->num_faces = obot->num_faces;
+    bot->faces = (int *)bu_malloc(obot->num_faces * sizeof(int)*3, "bot faces");
+    memcpy(bot->faces, obot->faces, obot->num_faces * sizeof(int)*3);
+
+    bot->num_vertices = obot->num_vertices;
+    bot->vertices = (fastf_t*)bu_malloc(obot->num_vertices * sizeof(fastf_t)*3, "bot verts");
+    memcpy(bot->vertices, obot->vertices, obot->num_vertices * sizeof(fastf_t)*3);
+
+    if (obot->thickness) {
+	bot->thickness = (fastf_t*)bu_malloc(obot->num_faces * sizeof(fastf_t), "bot thicknesses");
+	memcpy(bot->thickness, obot->thickness, obot->num_faces * sizeof(fastf_t));
+    }
+
+    if (obot->face_mode) {
+	bot->face_mode = (struct bu_bitv *)bu_malloc(obot->num_faces * sizeof(struct bu_bitv), "bot face_mode");
+	memcpy(bot->face_mode, obot->face_mode, obot->num_faces * sizeof(struct bu_bitv));
+    }
+
+    if (obot->normals && obot->num_normals) {
+	bot->num_normals = obot->num_normals;
+	bot->normals = (fastf_t*)bu_malloc(obot->num_normals * sizeof(fastf_t)*3, "bot normals");
+	memcpy(bot->normals, obot->normals, obot->num_normals * sizeof(fastf_t)*3);
+    }
+
+    if (obot->face_normals && obot->num_face_normals) {
+	bot->num_face_normals = obot->num_face_normals;
+	bot->face_normals = (int*)bu_malloc(obot->num_face_normals * sizeof(int)*3, "bot face normals");
+	memcpy(bot->face_normals, obot->face_normals, obot->num_face_normals * sizeof(int)*3);
+    }
+
+    if (obot->num_uvs && obot->uvs) {
+	bot->num_uvs = obot->num_uvs;
+	bot->uvs = (fastf_t*)bu_malloc(obot->num_uvs * sizeof(fastf_t)*3, "bot uvs");
+	memcpy(bot->uvs, obot->uvs, obot->num_uvs * sizeof(fastf_t)*3);
+    }
+
+    if (obot->num_face_uvs && obot->face_uvs) {
+	bot->num_face_uvs = obot->num_face_uvs;
+	bot->face_uvs = (int*)bu_malloc(obot->num_face_uvs * sizeof(int)*3, "bot face_uvs");
+	memcpy(bot->face_uvs, obot->face_uvs, obot->num_face_uvs * sizeof(int)*3);
+    }
+
+    return bot;
+}
 
 // Local Variables:
 // tab-width: 8

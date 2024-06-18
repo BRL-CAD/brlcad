@@ -49,7 +49,6 @@
 #include "bg/spsr.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
-#include "../tess_opts.h"
 
 int
 co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s)
