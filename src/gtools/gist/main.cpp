@@ -84,7 +84,8 @@ generateReport(Options opt)
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
-    img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/assets/brlLogoW.jpg", 250);
+    std::string model_logo_path = info.getModelLogoPath();
+    img.drawTransparentImage(3250, 10, 200, 200, model_logo_path, 250);
     //branding logo
     if (opt.getLogopath() != ""){
         img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);

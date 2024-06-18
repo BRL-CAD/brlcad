@@ -86,6 +86,8 @@ public:
     void correctDefaultUnitsMass();
 
     void checkScientificNotation();
+
+    std::string getModelLogoPath();
 };
 
 /*

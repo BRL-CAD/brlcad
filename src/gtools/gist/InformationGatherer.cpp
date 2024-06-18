@@ -910,6 +910,23 @@ InformationGatherer::checkScientificNotation()
     }
 }
 
+std::string
+InformationGatherer::getModelLogoPath()
+{
+    /* NOTE: the idea here is to have a function that keys off of the file type
+     * and returns the appropriate path to its logo. But as of now, only BRL-CAD
+     * files are supported by gist.
+     */
+    const char* BRL_LOGO_FILE = "brlLogoW.png";
+
+    char buf[MAXPATHLEN] = {0};
+    if (!bu_dir(buf, MAXPATHLEN, BU_DIR_DATA, "images", BRL_LOGO_FILE, NULL)) {
+        return "";
+    }
+
+    return std::string(buf);
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
