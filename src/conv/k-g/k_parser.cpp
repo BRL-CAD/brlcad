@@ -79,12 +79,25 @@ static std::vector<std::string> read_line_node_standard
     const char* line
 ) {
     std::vector<std::string> ret;
+    bool commaSeparated = false;
 
     if (line != nullptr) {
 	std::string temp;
 
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if ((i == 8) || (i == 24) || (i == 40) || (i == 56) || (i == 64) || (i == 72)) {
+	    if (line[i] == ',' || line[i] == ' ') {
+		commaSeparated = true;
+		if (temp.size() > 0) {
+		    ret.push_back(temp);
+		    temp.clear();
+		}
+		else
+		    ret.push_back("0");
+
+		continue;
+	    }
+
+	    if (((i == 8) || (i == 24) || (i == 40) || (i == 56) || (i == 64) || (i == 72)) && !commaSeparated) {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
@@ -92,6 +105,9 @@ static std::vector<std::string> read_line_node_standard
 		    if (!(line[i] == ' ')) {
 			temp += line[i];
 		    }
+		}
+		else if (temp.size() == 0) {
+		    ret.push_back("0");
 		}
 		else
 		    continue;
@@ -108,6 +124,12 @@ static std::vector<std::string> read_line_node_standard
 
 	if (temp.size() > 0)
 	    ret.push_back(temp);
+    }
+
+    if (ret.size() < 6) {
+	for (size_t i_0 = ret.size(); i_0 < 6 ; ++i_0) {
+	    ret.push_back("0");
+	}
     }
 
     return ret;
@@ -119,12 +141,25 @@ static std::vector<std::string> read_line_node_long
     const char* line
 ) {
     std::vector<std::string> ret;
+    bool commaSeparated = false;
 
     if (line != nullptr) {
 	std::string temp;
 
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if ((i == 20) || (i == 40) || (i == 60) || (i == 80) || (i == 100) || (i == 120)) {
+	    if (line[i] == ',' || line[i] == ' ') {
+		commaSeparated = true;
+		if (temp.size() > 0) {
+		    ret.push_back(temp);
+		    temp.clear();
+		}
+		else
+		    ret.push_back("0");
+
+		continue;
+	    }
+
+	    if (((i == 20) || (i == 40) || (i == 60) || (i == 80) || (i == 100) || (i == 120)) && !commaSeparated) {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
@@ -132,6 +167,9 @@ static std::vector<std::string> read_line_node_long
 		    if (!(line[i] == ' ')) {
 			temp += line[i];
 		    }
+		}
+		else if (temp.size() == 0) {
+		    ret.push_back("0");
 		}
 		else
 		    continue;
@@ -150,6 +188,12 @@ static std::vector<std::string> read_line_node_long
 	    ret.push_back(temp);
     }
 
+    if (ret.size() < 6) {
+	for (size_t i_0 = ret.size(); i_0 < 6; ++i_0) {
+	    ret.push_back("0");
+	}
+    }
+
     return ret;
 }
 
@@ -159,12 +203,25 @@ static std::vector<std::string> read_line_node_i10
     const char* line
 ) {
     std::vector<std::string> ret;
+    bool commaSeparated = false;
 
     if (line != nullptr) {
 	std::string temp;
 
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if ((i == 10) || (i == 26) || (i == 42) || (i == 58) || (i == 68) || (i == 78)) {
+	    if (line[i] == ',' || line[i] == ' ') {
+		commaSeparated = true;
+		if (temp.size() > 0) {
+		    ret.push_back(temp);
+		    temp.clear();
+		}
+		else
+		    ret.push_back("0");
+
+		continue;
+	    }
+
+	    if (((i == 10) || (i == 26) || (i == 42) || (i == 58) || (i == 68) || (i == 78)) && !commaSeparated) {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
@@ -172,6 +229,9 @@ static std::vector<std::string> read_line_node_i10
 		    if (!(line[i] == ' ')) {
 			temp += line[i];
 		    }
+		}
+		else if (temp.size() == 0) {
+		    ret.push_back("0");
 		}
 		else
 		    continue;
@@ -188,6 +248,12 @@ static std::vector<std::string> read_line_node_i10
 
 	if (temp.size() > 0)
 	    ret.push_back(temp);
+    }
+
+    if (ret.size() < 6) {
+	for (size_t i_0 = ret.size(); i_0 < 6; ++i_0) {
+	    ret.push_back("0");
+	}
     }
 
     return ret;
@@ -230,7 +296,7 @@ static std::vector<std::string> parse_line
 	std::string temp;
 
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if ((line[i] == ' ') || (line[i] == '\t')) {
+	    if ((line[i] == ' ') || (line[i] == '\t') || (line[i] == ',')) {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
