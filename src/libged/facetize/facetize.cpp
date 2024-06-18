@@ -62,9 +62,10 @@ _facetize_methods_help(struct ged *gedp)
       if (bu_process_wait_n(&mp, 0) || (read_res <= 0))
 	  return;   // wait error or read error
       std::string method_list(mraw);
+      bu_vls_printf(gedp->ged_result_str, "Available BoT tessellation methods: %s\n", method_list.c_str());
 
-      tess_cmd[ 2] = "-h";
-      tess_cmd[ 3] = NULL;
+      tess_cmd[ 3] = "-h";
+      tess_cmd[ 4] = NULL;
 
       struct bu_process* mop;
       bu_process_create(&mop, tess_cmd, BU_PROCESS_HIDE_WINDOW);
@@ -74,8 +75,7 @@ _facetize_methods_help(struct ged *gedp)
 	  return;   // wait error
       std::string method_options(moraw);
 
-      bu_vls_printf(gedp->ged_result_str, "Available BoT tessellation methods: %s\n", method_list.c_str());
-      bu_vls_printf(gedp->ged_result_str, "Method specific options:\n%s\n", method_options.c_str());
+      bu_vls_printf(gedp->ged_result_str, "\nMethod specific options:\n\n%s\n", method_options.c_str());
 }
 
 struct _ged_facetize_state *
