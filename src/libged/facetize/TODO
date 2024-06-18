@@ -1,3 +1,4 @@
-investigate whether it makes sense to add a gdiff mode to validate conversions
-against the original input
+update facetize man page
 
+compare original facetize results and new versions by volume look at cmp.sh -
+will need to figure out naming so we can automatically do the comparisons.
