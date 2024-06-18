@@ -91,6 +91,8 @@ set(qged_ignore_srcs
   fonts/Inconsolata-LICENSE.txt
   fonts/Inconsolata.otf
   main.cpp
+  qged_signals.eps
+  qged_signals.dia
   )
 
 CMAKEFILES(${qged_ignore_srcs})
