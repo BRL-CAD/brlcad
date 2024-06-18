@@ -754,8 +754,9 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
     tess_cmd[ 8] = "--cache-dir";
     tess_cmd[ 9] = lcache;
     int cmd_fixed_cnt = 10;
-    int obj_cnt = 0;
     while (!pq.empty()) {
+	int obj_cnt = 0;
+
 	// Starting a new round of object processing - reset method flags
 	method_flags = method_flags_bak;
 
@@ -897,7 +898,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 	for (int i = 0; i < cmd_fixed_cnt; i++)
 	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	obj_cnt = 0;
+	int obj_cnt = 0;
 	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
 	    if (q_pbot.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
 		break;
