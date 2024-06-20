@@ -22,7 +22,6 @@
 
 #include "pch.h"
 
-
 /**
  * The RenderHandler code autonomously modifies a section of the
  * report page to include multiple visuals of the graphics file from a

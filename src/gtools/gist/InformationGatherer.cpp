@@ -42,7 +42,7 @@ static std::string getCmdPath(std::string exeDir, const char* cmd) {
 }
 
 void
-getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
+getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
 {
     // Run RTArea to get surface area
     std::string rtarea = getCmdPath(opt->getExeDir(), "rtarea");
@@ -85,48 +85,82 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     }
 }
 
+static double
+parseVolume(std::string res)
+{
+    double ret = 0;
+    // Extract volume value
+    std::string vol_raw = res.substr(res.find("Average total volume:") + 22);
+    vol_raw = vol_raw.substr(0, vol_raw.find("cu") - 1);
+    if (vol_raw.find("inf") == std::string::npos) {
+        try {
+            ret = stod(vol_raw);
+        } catch (const std::invalid_argument& ia) {
+            bu_exit(BRLCAD_ERROR, "parseVolume got: (%s) %s, aborting.\n", vol_raw.c_str(), ia.what());
+        }
+    }
+
+    return ret;
+}
+
+static double
+parseMass(std::string res)
+{
+    double ret = 0;
+    // Extract mass value
+    std::string weight_raw = res.substr(res.find("Average total weight:") + 22);
+    weight_raw = weight_raw.substr(0, weight_raw.find(" "));
+    try {
+        // weight cannot be inf or negative
+        if (weight_raw.find("inf") == std::string::npos) {
+            if (weight_raw[0] == '-') {
+                weight_raw = weight_raw.substr(1);
+                ret += stod(weight_raw);
+            }
+            else {
+                ret += stod(weight_raw);
+            }
+        }
+    } catch (const std::invalid_argument& ia) {
+        bu_exit(BRLCAD_ERROR, "parseMass got: (%s) %s, aborting.\n", weight_raw.c_str(), ia.what());
+    }
+
+    return ret;
+}
+
 
 void
-getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
+getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &hasDensities, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
 {
     //Get tops
-    const char* tops_cmd[3] = { "tops", NULL, NULL };
-
-    ged_exec(g, 1, tops_cmd);
-
+    const char* cmd[3] = { "tops", NULL, NULL };
+    ged_exec(g, 1, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     std::map<std::string, bool> listed;
     std::vector<std::string> toVisit;
-
     while (ss >> val) {
         //Get surface area
         getSurfaceArea(opt, map, "0", "0", val, surfArea00, lUnit);
         getSurfaceArea(opt, map, "0", "90", val, surfArea090, lUnit);
         getSurfaceArea(opt, map, "90", "0", val, surfArea900, lUnit);
-
         //Next, get regions underneath to calculate volume and mass
         const char* cmd[3] = { "l", val.c_str(), NULL };
-
         ged_exec(g, 2, cmd);
-
         std::stringstream ss2(bu_vls_addr(g->ged_result_str));
         std::string val2;
         std::getline(ss2, val2); // ignore first line
-
         //Get initial regions
         while (getline(ss2, val2)) {
             //Parse components
             val2 = val2.erase(0, val2.find_first_not_of(" ")); // left trim
             val2 = val2.erase(val2.find_last_not_of(" ") + 1); // right trim
-
             if (val2[0] == 'u') {
                 val2 = val2.substr(val2.find(' ') + 1); // extract out u
                 val2 = val2.substr(0, val2.find('['));
                 if (val2.find(' ') != std::string::npos) {
                     val2 = val2.substr(0, val2.find(' '));
                 }
-
                 std::map<std::string, bool>::iterator it;
                 it = listed.find(val2);
                 if (it == listed.end()) {
@@ -144,19 +178,48 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     int read_cnt = 0;
     char buffer[1024] = {0};
     std::string result = "";
+    std::string no_density_msg = "Could not find any density information";
 
     for (size_t i = 0; i < toVisit.size(); i++) {
-        std::string val2 = toVisit[i];
-        /* Get volume of region */
+        std::string val = toVisit[i];
+        /* Get volume and mass */
         const char* vol_av[10] = { gqa.c_str(),
                                    "-Avm",
                                    "-q",
                                    "-g", "2",
                                    "-u", units.c_str(),
                                    in_file.c_str(),
-                                   val2.c_str(),
+                                   val.c_str(),
                                    NULL };
 
+        bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+
+	if (bu_process_pid(p) <= 0) {
+            bu_exit(BRLCAD_ERROR, "Problem in getVerificationData process creation, aborting\n");
+        }
+
+        result = "";
+        read_cnt = 0;
+        while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
+            buffer[read_cnt] = '\0';
+            result += buffer;
+        }
+
+        if (bu_process_wait_n(&p, 0) != 0) {
+            continue;
+        }
+
+        // attempt to get both volume and mass in the same run - 
+        // make sure we did not get 'no density file' error message
+        if (result.find(no_density_msg) == std::string::npos) {
+            volume += parseVolume(result);
+            mass += parseMass(result);
+            continue;
+        }
+
+
+        // no density data found. need to re-run, only getting volume data
+        vol_av[1] = "-Av";
         bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
 	if (bu_process_pid(p) <= 0) {
@@ -170,37 +233,23 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
             result += buffer;
         }
 
-        if (bu_process_wait_n(&p, 0) == 0) {
-            // Extract volume value
-            std::string vol_raw = result.substr(result.find("Average total volume:") + 22);
-            vol_raw = vol_raw.substr(0, vol_raw.find("cu") - 1);
-            if (vol_raw.find("inf") == std::string::npos) {
-                try {
-                    volume += stod(vol_raw);
-                } catch (const std::invalid_argument& ia) {
-                    bu_exit(BRLCAD_ERROR, "getVerificationData volume got: (%s) %s, aborting.\n", vol_raw.c_str(), ia.what());
-                }
-            }
+        if (bu_process_wait_n(&p, 0) != 0)
+            continue;
 
-            // Extract mass value
-            std::string weight_raw = result.substr(result.find("Average total weight:") + 22);
-            weight_raw = weight_raw.substr(0, weight_raw.find(" "));
-            try {
-                // weight cannot be inf or negative
-                if (weight_raw.find("inf") == std::string::npos) {
-                    if (weight_raw[0] == '-') {
-                        weight_raw = weight_raw.substr(1);
-                        mass += stod(weight_raw);
-                    }
-                    else {
-                        mass += stod(weight_raw);
-                    }
-                }
-            } catch (const std::invalid_argument& ia) {
-                bu_exit(BRLCAD_ERROR, "getVerificationData mass got: (%s) %s, aborting.\n", weight_raw.c_str(), ia.what());
-            }
-        }
+        volume += parseVolume(result);
     }
+}
+
+std::string
+formatDouble(double d)
+{
+    int precision = 2; // arbitrary
+
+    std::stringstream ss;
+    ss << std::setprecision(precision) << std::fixed << d;
+    std::string str = ss.str();
+
+    return str;
 }
 
 
@@ -209,53 +258,43 @@ InformationGatherer::getVolume(std::string component)
 {
     // Gather dimensions
     const char* cmd[3] = { "bb", component.c_str(), NULL };
-
     ged_exec(g, 2, cmd);
-
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     int dim_idx = 0;
-
     while (ss >> val) {
         try {
+            double temp = stod(val);
             dim_idx++;
             if (dim_idx == 4)
                 return stod(val);
-        } catch (const std::exception& e) {
+        } catch (const std::exception& e){
             continue;
         }
     }
-
     return 0;
 }
-
 
 int
 InformationGatherer::getNumEntities(std::string UNUSED(component))
 {
     // Find number of entities
-
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
-
     ged_exec(g, 7, cmd);
-
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     int entities = 0;
-
     while (getline(ss, val)) {
         entities++;
     }
-
     return entities;
 }
-
 
 void
 InformationGatherer::getMainComp()
 {
     const std::string topcomp = opt->getTopComp();
-    if (topcomp != "") {
+    if (!topcomp.empty()) {
 	const char *topname = topcomp.c_str();
         // check if main comp exists
         const char* cmd[3] = { "l", topname, NULL };
@@ -265,9 +304,9 @@ InformationGatherer::getMainComp()
             bu_exit(BRLCAD_ERROR, "Coult not find component (%s), aborting.\n", topname);
         }
 
-        int entities = getNumEntities(topname);
-        double volume = getVolume(topname);
-        largestComponents.push_back({entities, volume, topname});
+        int entities = getNumEntities(opt->getTopComp());
+        double volume = getVolume(opt->getTopComp());
+        largestComponents.push_back({entities, volume, opt->getTopComp()});
         return;
     }
 
@@ -318,18 +357,15 @@ InformationGatherer::getMainComp()
     }
 }
 
-
 int
 InformationGatherer::getEntityData(char* buf)
 {
     std::stringstream ss(buf);
     std::string token;
     int count = 0;
-
     while (getline(ss, token)) {
         count++;
     }
-
     return count;
 }
 
@@ -375,7 +411,6 @@ InformationGatherer::InformationGatherer(Options* options)
     opt = options;
 }
 
-
 InformationGatherer::~InformationGatherer()
 {
 
@@ -410,16 +445,15 @@ InformationGatherer::gatherInformation(std::string name)
     while (res != NULL) {
 	if (count == 1) {
 	    infoMap.insert(std::pair < std::string, std::string>("primitives", res));
-	}
-	else if (count == 3) {
+	} else if (count == 3) {
 	    infoMap.insert(std::pair < std::string, std::string>("regions", res));
-	}
-	else if (count == 5) {
+	} else if (count == 5) {
 	    infoMap.insert(std::pair < std::string, std::string>("non-regions", res));
 	}
 	count++;
 	res = strtok(NULL, " ");
     }
+
 
     // Gather units
     cmd[0] = "units";
@@ -432,23 +466,23 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Get units to use
     std::string lUnit;
-    if (opt->isDefaultLength()) {
+    if (opt->isOriginalUnitsLength()) {
         lUnit = infoMap["units"];
-    }
-    else {
+    } else {
         lUnit = opt->getUnitLength();
     }
     std::string mUnit;
-    if (opt->isDefaultMass()) {
+    if (opt->isOriginalUnitsMass()) {
         mUnit = "g";
-    }
-    else {
+    } else {
         mUnit = opt->getUnitMass();
     }
 
+
     getMainComp();
-    if (largestComponents.size() == 0)
+    if (largestComponents.size() == 0) {
         return false;
+    }
 
     getSubComp();
 
@@ -466,10 +500,18 @@ InformationGatherer::gatherInformation(std::string name)
         try {
             double length = stod(token);
             double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
-            std::stringstream ss2 = std::stringstream();
-            ss2 << std::setprecision(5) << length*convFactor;
-            infoMap[dim_data[dim_idx++]] = ss2.str();
-        } catch (const std::exception& e) {
+            infoMap[dim_data[dim_idx]] = formatDouble(length*convFactor);
+
+            int dimensions = 1;
+            if (dim_idx == 3) {
+                dimensions = 3;
+            }
+
+            Unit u = {lUnit, dimensions};
+            unitsMap[dim_data[dim_idx]] = u;
+
+            dim_idx++;
+        } catch (const std::exception& e){
             continue;
         }
     }
@@ -499,60 +541,65 @@ InformationGatherer::gatherInformation(std::string name)
     ged_exec(g, 4, cmd);
     infoMap["regions_parts"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
 
-    //Gather name of preparer
-    infoMap["preparer"] = name;
-
     //Gather volume and mass
     double volume = 0;
     double mass = 0;
+    bool hasDensities = true;
     double surfArea00 = 0;
     double surfArea090 = 0;
     double surfArea900 = 0;
-    getVerificationData(g, opt, infoMap, volume, mass, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
-    ss = std::stringstream();
-    ss << std::setprecision(5) << volume;
-    std::string vol = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << mass;
-    std::string ma = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea00;
-    std::string surf00 = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea090;
-    std::string surf090 = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea900;
-    std::string surf900 = ss.str();
+    getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
+    std::string vol = formatDouble(volume);
+    std::string ma = formatDouble(mass);
+    std::string surf00 = formatDouble(surfArea00);
+    std::string surf090 = formatDouble(surfArea090);
+    std::string surf900 = formatDouble(surfArea900);
 
-    infoMap.insert(std::pair<std::string, std::string>("volume", vol + " " + lUnit + "^3"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00 + " " + lUnit + "^2"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090 + " " + lUnit + "^2"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900 + " " + lUnit + "^2"));
+    infoMap.insert(std::pair<std::string, std::string>("volume", vol));
+    Unit u = {lUnit, 3};
+    unitsMap["volume"] = u;
 
-    if (ZERO(mass)) {
-        infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900));
+    u = {lUnit, 2};
+    unitsMap["surfaceArea00"] = u;
+    unitsMap["surfaceArea090"] = u;
+    unitsMap["surfaceArea900"] = u;
+
+    if (!hasDensities) {
+        infoMap.insert(std::pair<std::string, std::string>("mass", "Not Available"));
+        u = {mUnit, 0};
+        unitsMap["mass"] = u;
     } else {
-        infoMap.insert(std::pair<std::string, std::string>("mass", ma + " " + mUnit));
+        if (mass == 0) {
+            infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
+            u = {mUnit, 0};
+            unitsMap["mass"] = u;
+        }
+        else {
+            infoMap.insert(std::pair<std::string, std::string>("mass", ma));
+            u = {mUnit, 1};
+            unitsMap["mass"] = u;
+        }
     }
 
     //Gather representation
     bool hasExplicit = false;
     bool hasImplicit = false;
     const char* tfilter = "-type brep -or -type bot -or -type vol -or -type sketch";
-
-    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep -not -type bot -not -type vol -not -type sketch";
-    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasImplicit = true;
     }
     if (hasExplicit && hasImplicit) {
         infoMap.insert(std::pair<std::string, std::string>("representation", "Hybrid (Explicit and Implicit)"));
     }
     else if (hasImplicit) {
-        infoMap.insert(std::pair<std::string, std::string>("representation", "Implicit with Booleans"));
+        infoMap.insert(std::pair<std::string, std::string>("representation", "Implicit w/ Booleans"));
     }
     else if (hasExplicit) {
         infoMap.insert(std::pair<std::string, std::string>("representation", "Explicit Boundary"));
@@ -563,7 +610,7 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Gather assemblies
     tfilter = "-above -type region";
-    int assemblies = db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL);
+    int assemblies = db_search(NULL, 0, tfilter, 0, 0, g->dbip, NULL);
     infoMap.insert(std::pair<std::string, std::string>("assemblies", std::to_string(assemblies)));
 
     //Gather entity total
@@ -575,67 +622,54 @@ InformationGatherer::gatherInformation(std::string name)
     //Next, use other commands to extract info
 
     //Gather filename
+    bool worked = true;
     std::string owner = "username";
 
+    char buffer[1024];  //for name of owner
 #ifdef HAVE_WINDOWS_H
     /*
-     * Code primarily taken from https://learn.microsoft.com/en-us/windows/win32/secauthz/finding-the-owner-of-a-file-object-in-c--
-     */
-    bool worked = true;
-    DWORD dwRtnCode = 0;
-    PSID pSidOwner = NULL;
-    BOOL bRtnBool = TRUE;
-    LPTSTR AcctName = NULL;
-    LPTSTR DomainName = NULL;
-    DWORD dwAcctName = 1, dwDomainName = 1;
-    SID_NAME_USE eUse = SidTypeUnknown;
-    HANDLE hFile;
-    PSECURITY_DESCRIPTOR pSD = NULL;
-
-    hFile = CreateFile(TEXT(opt->getInFile().c_str()), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (hFile == INVALID_HANDLE_VALUE) {
-        worked = false;
+    * Code primarily taken from https://learn.microsoft.com/en-us/windows/win32/secauthz/finding-the-owner-of-a-file-object-in-c--
+    */
+    DWORD buffer_len = sizeof(buffer) / sizeof(buffer[0]);
+    if (!GetUserName(buffer, &buffer_len)) {
+        owner = "Unknown";
     } else {
-        dwRtnCode = GetSecurityInfo(hFile, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION, &pSidOwner, NULL, NULL, NULL, &pSD);
-        if (dwRtnCode != ERROR_SUCCESS) {
-            worked = false;
-        } else {
-            bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
-            AcctName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwAcctName * sizeof(wchar_t));
-            if (AcctName == NULL) {
-                worked = false;
-            } else {
-                DomainName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwDomainName * sizeof(wchar_t));
-                if (DomainName == NULL) {
-                    worked = false;
-                } else {
-                    bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
-                    if (bRtnBool == FALSE) {
-                        worked = false;
-                    } else {
-                        owner = AcctName;
-                    }
-                }
-            }
-        }
+        owner = std::string(buffer);
     }
-    CloseHandle(hFile);
-#endif
-
-#ifdef __APPLE__
+#else   // UNIX-like systems
     struct stat fileInfo;
     stat(opt->getInFile().c_str(), &fileInfo);
     uid_t ownerUID = fileInfo.st_uid;
     struct passwd *pw = getpwuid(ownerUID);
-    if (pw == NULL) {
-        owner = "N/A";
+    if (pw && pw->pw_gecos && pw->pw_gecos[0]) {
+        // Try to extract the full name from pw_gecos, if available
+        std::string full_name(pw->pw_gecos);
+        std::size_t comma_pos = full_name.find(',');
+        if (comma_pos != std::string::npos) {
+            owner = full_name.substr(0, comma_pos); // Full name is before the first comma
+        } else {
+            owner = full_name; // Use the whole string if there's no comma
+        }
     } else {
-        owner = pw->pw_name;
+        // Fallback to login name
+        if (getlogin_r(buffer, sizeof(buffer)) == 0) {
+            owner = std::string(buffer);
+        } else {
+            owner = "Unknown";
+        }
     }
 #endif
-
+    if (opt->getOwner() != "") {
+        owner = opt->getOwner();
+    }
     infoMap.insert(std::pair<std::string, std::string>("owner", owner));
+
+    //Default name of preparer to owner if "N/A"
+    if (opt->getPreparer() == "N/A") {
+        infoMap["preparer"] = owner;
+    } else {
+        infoMap["preparer"] = opt->getPreparer();
+    }
 
     //Gather last date updated
     struct stat info;
@@ -665,13 +699,14 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Gather classification
     std::string classification = opt->getClassification();
-    for (size_t i = 0; i < classification.length(); i++) {
+    for (int i = 0; i < classification.length(); i++) {
         classification[i] = toupper(classification[i]);
     }
     infoMap.insert(std::pair < std::string, std::string>("classification", classification));
 
     //Gather checksum
     struct bu_mapped_file* gFile = NULL;
+    char* buf = NULL;
     gFile = bu_open_mapped_file(opt->getInFile().c_str(), ".g file");
     picohash_ctx_t ctx;
     char digest[PICOHASH_MD5_DIGEST_LENGTH];
@@ -700,6 +735,45 @@ InformationGatherer::gatherInformation(std::string name)
     return true;
 }
 
+void
+GetFullNameOrUsername(std::string& name)
+{
+    char buffer[1024];
+
+    #if defined(_WIN32) || defined(_WIN64) // Windows systems
+
+    DWORD buffer_len = sizeof(buffer) / sizeof(buffer[0]);
+    if (!GetUserName(buffer, &buffer_len)) {
+        name = "Unknown";
+    } else {
+        name = std::string(buffer);
+    }
+
+    #else // UNIX-like systems
+
+    struct passwd *pw;
+    uid_t uid = geteuid();
+    pw = getpwuid(uid);
+    if (pw && pw->pw_gecos && pw->pw_gecos[0]) {
+        // Try to extract the full name from pw_gecos, if available
+        std::string full_name(pw->pw_gecos);
+        std::size_t comma_pos = full_name.find(',');
+        if (comma_pos != std::string::npos) {
+            name = full_name.substr(0, comma_pos); // Full name is before the first comma
+        } else {
+            name = full_name; // Use the whole string if there's no comma
+        }
+    } else {
+        // Fallback to login name
+        if (getlogin_r(buffer, sizeof(buffer)) == 0) {
+            name = std::string(buffer);
+        } else {
+            name = "Unknown";
+        }
+    }
+
+    #endif
+}
 
 std::string
 InformationGatherer::getInfo(std::string key)
@@ -707,6 +781,151 @@ InformationGatherer::getInfo(std::string key)
     return infoMap[key];
 }
 
+std::string
+InformationGatherer::getFormattedInfo(std::string key)
+{
+    auto it = unitsMap.find(key);
+    if (it != unitsMap.end()) { // if units are mapped
+        Unit u = unitsMap[key];
+        if (u.power > 1) {
+            return infoMap[key] + " " + u.unit + "^" + std::to_string(u.power);
+        } else if (u.power == 1){
+            return infoMap[key] + " " + u.unit;
+        }
+    }
+
+    // no units if power == 0 or no units mapping
+    return infoMap[key];
+}
+
+Unit
+InformationGatherer::getUnit(std::string name)
+{
+    auto it = unitsMap.find(name);
+    if (it != unitsMap.end()) {
+        return it->second;
+    }
+
+    throw std::runtime_error("Unit not found for key: " + name);
+}
+
+bool
+InformationGatherer::dimensionSizeCondition()
+{
+    int size = 200; // arbitrary value
+    if (std::stod(infoMap["dimX"]) > size) return true;
+    if (std::stod(infoMap["dimY"]) > size) return true;
+    if (std::stod(infoMap["dimZ"]) > size) return true;
+    return false;
+}
+
+void InformationGatherer::correctDefaultUnitsLength()
+{
+    // length conditionals
+    bool isInches = infoMap["units"] == "in" || infoMap["units"] == "inch" || infoMap["units"] == "inches";
+    bool isCentimeters = infoMap["units"] == "cm";
+    bool isMillimeters = infoMap["units"] == "mm";
+
+    std::string toUnits = "";
+
+    if (dimensionSizeCondition()) {
+        if (isInches ) {
+            toUnits = "ft";
+        } else if (isCentimeters) {
+            toUnits = "m";
+        } else if (isMillimeters) {
+            toUnits = "cm";
+        }
+    }
+
+    if (toUnits.empty()) return;
+
+    for (auto& pair : unitsMap) {
+        const std::string& key = pair.first;
+        Unit& unit = pair.second;
+
+        if (key == "mass") {
+            continue;
+        }
+
+        double value = std::stod(getInfo(key));
+        double convFactor = pow(bu_units_conversion(unit.unit.c_str()), unit.power) / pow(bu_units_conversion(toUnits.c_str()), unit.power);
+        infoMap[key] = formatDouble(value*convFactor);
+        unit.unit = toUnits;
+    }
+}
+
+void
+InformationGatherer::correctDefaultUnitsMass()
+{
+    int size = 20000;
+    std::string toUnits = "";
+
+    bool isGrams = unitsMap["mass"].unit == "g";
+
+    if (isGrams) {
+        if (unitsMap["mass"].power != 0) { // mass exists
+            if (std::stod(infoMap["mass"]) > size) { // mass greater than 20,000 g
+                toUnits = "lbs";
+            }
+        }
+    }
+
+    if (toUnits.empty()) return;
+
+    Unit& unit = unitsMap["mass"];
+
+    double value = std::stod(getInfo("mass"));
+    double convFactor = bu_units_conversion(unit.unit.c_str()) / bu_units_conversion(toUnits.c_str());
+    infoMap["mass"] = formatDouble(value*convFactor);
+    unit.unit = toUnits;
+}
+
+void
+InformationGatherer::checkScientificNotation()
+{
+    int size = 15; // arbitrary
+    int precision = 2; // arbitrarty
+
+    for (auto& pair : unitsMap) {
+        const std::string& key = pair.first;
+        Unit& unit = pair.second;
+
+        if (unit.power == 0) continue;
+        if (getInfo(key).size() < size) continue;
+
+        double value;
+
+        try {
+            value = std::stod(getInfo(key));
+        } catch (const std::invalid_argument& e) {
+            throw std::runtime_error("Value for " + key + " is invalid");
+        } catch (const std::out_of_range& e) {
+            throw std::runtime_error("Value for " + key + " is out of range");
+        }
+
+        std::stringstream ss;
+        ss << std::scientific << std::setprecision(precision) << value;
+        infoMap[key] = ss.str();
+    }
+}
+
+std::string
+InformationGatherer::getModelLogoPath()
+{
+    /* NOTE: the idea here is to have a function that keys off of the file type
+     * and returns the appropriate path to its logo. But as of now, only BRL-CAD
+     * files are supported by gist.
+     */
+    const char* BRL_LOGO_FILE = "brlLogoW.png";
+
+    char buf[MAXPATHLEN] = {0};
+    if (!bu_dir(buf, MAXPATHLEN, BU_DIR_DATA, "images", BRL_LOGO_FILE, NULL)) {
+        return "";
+    }
+
+    return std::string(buf);
+}
 
 // Local Variables:
 // tab-width: 8

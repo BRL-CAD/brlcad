@@ -20,7 +20,6 @@
 
 #include "pch.h"
 
-
 /* Wrap bu_log to clean up code */
 static void
 statusPrint(std::string msg, int verbosePrinting)
@@ -34,7 +33,7 @@ statusPrint(std::string msg, int verbosePrinting)
  *
  * @opt options to be used in report generation
  */
-static void
+void
 generateReport(Options opt)
 {
     // create image frame
@@ -51,12 +50,21 @@ generateReport(Options opt)
     }
     statusPrint("...Finished gathering information", opt.verbosePrinting());
 
+    // Correct units and measurement presentation
+    if (opt.isOriginalUnitsLength()) {
+        info.correctDefaultUnitsLength();
+    }
+    if (opt.isOriginalUnitsMass()) {
+        info.correctDefaultUnitsMass();
+    }
+
+    info.checkScientificNotation();
+
     // Define commonly used ratio variables
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
     int padding = opt.getLength() / 250;
     int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
-
 
     // Has same height and width as V&V Checks, offset X by V&V checks width
     // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
@@ -65,20 +73,23 @@ generateReport(Options opt)
     Position imagePosition(0, 0, opt.getWidth(), opt.getLength());
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
-    Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
+    Position hierarchySection(imagePosition.right() - imagePosition.width()/3.5 - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.width()/3.5, vvHeight);
     Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
 
     // draw all sections
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
-    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
-    statusPrint("*Starting renderings", opt.verbosePrinting());
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
-    statusPrint("...Finished renderings", opt.verbosePrinting());
-    statusPrint("*Creating hierarchy graphic", opt.verbosePrinting());
-    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
-    statusPrint("...Finished hierarchy graphic", opt.verbosePrinting());
+    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
+    makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
+    //brl-cad logo
+    std::string model_logo_path = info.getModelLogoPath();
+    img.drawTransparentImage(3250, 10, 200, 200, model_logo_path, 250);
+    //branding logo
+    if (opt.getLogopath() != ""){
+        img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);
+    }
 
     // paint renderings
 
@@ -95,11 +106,15 @@ generateReport(Options opt)
 
 
 /**
- * Checks if we are processing a folder of models
+ * @brief
+ *
+ * @param options
+ * @return * Checks
  */
 static void
 handleFolder(Options& options)
 {
+    int cnt = 1;
     for (const auto & entry : std::filesystem::directory_iterator(options.getInFolder())) {
         options.setInFile(entry.path().string());
         options.setExportToFile();

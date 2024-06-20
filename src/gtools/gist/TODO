@@ -1,21 +1,9 @@
 Soon
 ----
 
-* Instead of total projected surface area, projected surface area for
-  front/back, left/right, and top/bottom would be more meaningful.
-
-* Compute mass data (lots of requests, need density data)
-
-* Showing axes vs showing "z up". Or give user options
-
-* Include hashing method on Checksum (SHA1):  120EAB...
-
-* Classification markings (overall with normal declass
-  instructions). _GLOBAL attribute. Use RED box if classified
-
 * Possibly include model filesize
 
-* Bounding box information in gray area
+* Possibly show how many components were not included in the hierarchy diagram instead of "..."
 
 
 Future
@@ -44,12 +32,9 @@ Future
   diagram. (Would be great if a bigger hierarchy can be displayed in
   another page. More subassemblies (hierarchy))
 
-* ability to add my agency/organization’s logo in the bottom
-  right-hand corner
-
-* show model origin?
-
 * both metric and imperial units
+
+* Possibly include model filesize
 
 NOTE:
 

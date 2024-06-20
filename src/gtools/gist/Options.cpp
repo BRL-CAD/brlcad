@@ -20,7 +20,6 @@
 
 #include "Options.h"
 
-
 Options::Options()
 {
     inFile = "";
@@ -42,12 +41,11 @@ Options::Options()
     axis_orientation = POS_Z_UP;
     notes = "N/A";
     uLength = "m";
-    defaultLength = true;
+    originalUnitsLength = true;
     uMass = "g";
-    defaultMass = true;
+    originalUnitsMass = true;
     verbosePrint = 0;
 }
-
 
 Options::~Options()
 {
@@ -76,7 +74,7 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_Umass = "";	// user requested mass units
     std::string param_oFile = "";	// user supplied output file
 
-    struct bu_opt_desc d[21];
+    struct bu_opt_desc d[23];
     BU_OPT(d[0],  "i", "",     "filename",          &_param_set_std_str,     &this->inFile,         "input .g");
     BU_OPT(d[1],  "o", "",     "filename",          &_param_set_std_str,     &param_oFile,          "output file name");
     BU_OPT(d[2],  "F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate");
@@ -85,19 +83,21 @@ bool Options::readParameters(int argc, const char **argv) {
     BU_OPT(d[5],  "f", "",     "",                  NULL,                    &param_overwrite,      "overwrite existing report if it exists");
     BU_OPT(d[6],  "Z", "",     "",                  NULL,                    &this->reuseImages,    "reuse renders if .working directory is found");
     BU_OPT(d[7],  "t", "",     "component",         &_param_set_std_str,     &this->topComp,        "specify primary component of the report");
-    BU_OPT(d[8],  "p", "",     "#",		    &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)");
-    BU_OPT(d[9],  "n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report");
-    BU_OPT(d[10], "T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables");
-    BU_OPT(d[11], "c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner");
-    BU_OPT(d[12], "N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report");
-    BU_OPT(d[13], "L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system");
-    BU_OPT(d[14], "A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
-    BU_OPT(d[15], "l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units");
-    BU_OPT(d[16], "w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units");
-    BU_OPT(d[17], "v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing");
-    BU_OPT(d[18], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
-    BU_OPT(d[19], "?", "",     "",                  NULL,                    &print_help,           "");
-    BU_OPT_NULL(d[20]);
+    BU_OPT(d[8],  "m", "",     "path/to/image",     &_param_set_std_str,     &this->logopath,       "path to logo image to be used in report");
+    BU_OPT(d[9],  "p", "",     "#",		    &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)");
+    BU_OPT(d[10], "n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report");
+    BU_OPT(d[11], "r", "",     "\"owner name\"",    &_param_set_std_str,     &this->owner,          "name of model's owner, to be used in report");
+    BU_OPT(d[12], "T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables");
+    BU_OPT(d[13], "c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner");
+    BU_OPT(d[14], "N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report");
+    BU_OPT(d[15], "L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system");
+    BU_OPT(d[16], "A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
+    BU_OPT(d[17], "l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units");
+    BU_OPT(d[18], "w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units");
+    BU_OPT(d[19], "v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing");
+    BU_OPT(d[20], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
+    BU_OPT(d[21], "?", "",     "",                  NULL,                    &print_help,           "");
+    BU_OPT_NULL(d[22]);
 
     /* set progname and move on */
     const char* cmd_progname = argv[0];
@@ -234,6 +234,11 @@ void Options::setExeDir(std::string f) {
     exeDir = f;
 }
 
+void
+Options::setLogopath(std::string f)
+{
+	logopath = f;
+}
 
 void Options::setPPI(int p) {
     ppi = p;
@@ -299,6 +304,10 @@ void Options::setPreparer(std::string n) {
     preparer = n;
 }
 
+void Options::setOwner(std::string n)
+{
+    owner = n;
+}
 
 void Options::setClassification(std::string c) {
     classification = c;
@@ -325,13 +334,13 @@ void Options::setTopComp(std::string t) {
 }
 void Options::setUnitLength(std::string l) {
     uLength = l;
-    defaultLength = false;
+    originalUnitsLength = false;
 }
 
 
 void Options::setUnitMass(std::string m) {
     uMass = m;
-    defaultMass = false;
+    originalUnitsMass = false;
 }
 
 
@@ -341,6 +350,10 @@ std::string Options::getInFile() {
 
 std::string Options::getWorkingDir() {
     return workingDir;
+}
+std::string Options::getLogopath()
+{
+	return logopath;
 }
 
 std::string Options::getInFolder() {
@@ -397,8 +410,13 @@ std::string Options::getPreparer() {
     return preparer;
 }
 
+std::string Options::getOwner()
+{
+    return owner;
+}
 
-std::string Options::getClassification() {
+std::string Options::getClassification()
+{
     return classification;
 }
 
@@ -455,13 +473,13 @@ std::string Options::getUnitMass() {
 }
 
 
-bool Options::isDefaultLength() {
-    return defaultLength;
+bool Options::isOriginalUnitsLength() {
+    return originalUnitsLength;
 }
 
 
-bool Options::isDefaultMass() {
-    return defaultMass;
+bool Options::isOriginalUnitsMass() {
+    return originalUnitsMass;
 }
 
 bool Options::verbosePrinting() {
