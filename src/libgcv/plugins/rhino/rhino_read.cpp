@@ -282,8 +282,11 @@ chk_name(const ON_wString& _name, std::unordered_map <std::string, int>& used_na
 std::unordered_map <std::string, std::string>
 load_model(const char* default_name, const std::string& path, ONX_Model& model)
 {
+    if (!bu_file_exists(path.c_str(), NULL))
+	throw InvalidRhinoModelError("Specified file not found.");
+
     if (!model.Read(path.c_str()))
-	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
+	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v8 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 
     std::unordered_map <std::string, std::string> uuid_to_name;
     std::unordered_map <std::string, int> used_names;			/* used names, times used */
