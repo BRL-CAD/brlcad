@@ -108,7 +108,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
 	// If we're not doing NMG, use the Manifold booleval
 	if (!s->in_place) {
-	    ret = _ged_facetize_booleval(s, newobjcnt, dpa, oname, false, false);
+	    ret = _ged_facetize_booleval(s, argc, dpa, oname, false, false);
 	} else {
 	    for (int i = 0; i < argc; i++) {
 		struct directory *idpa[2];

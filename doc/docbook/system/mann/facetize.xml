@@ -66,14 +66,16 @@
 			to resolve problematic triangle configurations.
 		</para>
 		<para>
-			By default all specified existing objects will be combined into a single mesh,
-			but that is often undesirable when working within BRL-CAD - information stored
-			on region combs such as color will be lost when converting in this fashion.
-			The <option>-r</option>	option will introspect into the specified objects
-			and perform facetization on a per-region basis. The output will be a new hierarchy
-			that references the facetized regions but retains the properties of parent regions.
-			Users looking to interact	visually with a shaded display of a model will likely find
-			the <option>-r</option>	output useful for that purpose.
+			By default all specified existing objects will be combined into a single mesh, but
+			that is often undesirable when working within BRL-CAD - information stored on region
+			combs such as color will be lost when converting in this fashion.  The
+			<option>-r</option>	option will introspect into the specified objects and perform
+			facetization on a per-region basis.  (If the specified input has no regions in its
+			tree, a normal facetization to a single object is performed instead.)	The output
+			will be a new hierarchy that references the facetized regions but retains the
+			properties of parent regions.  Users looking to interact	visually with a shaded
+			display of a model will likely find the <option>-r</option>	output useful for that
+			purpose.
 		</para>
 		<para>
 			There are a number of different verbosity levels available for the facetize command.
@@ -182,7 +184,8 @@
 						Rather than converting all specified inputs to one top level object, walk
 						specified trees and individually convert regions to facetized objects.  This
 						mode is useful when wanting to display models in shaded mode while preserving
-						color and region ID properties.
+						color and region ID properties.  If no regions are present a normal conversion
+						is performed instead.
 					</para>
 				</listitem>
 			</varlistentry>
