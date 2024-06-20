@@ -42,7 +42,6 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
     std::vector<std::string> text;
     std::vector<std::string> text2;
 
-    int endTextXPosition = 0;
     if (info.getInfo("classification") != "") {
 	text.push_back("Owner: " + info.getInfo("owner"));
 	text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
@@ -54,7 +53,7 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
 	text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 	text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
 	text.push_back("Source File: " + info.getInfo("file"));
-	endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
     }
 }
 
@@ -102,12 +101,6 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
     int textHeight = height / 50;
     int textYOffset = textHeight * 8 / 5;
 
-    // Verification Calculations
-    // Calculate column offsets
-    int col1Offset = (offsetX + width / 4) - textOffset;
-    int col2Offset = offsetX + width / 2;
-    int col3Offset = (offsetX + (width*3) / 4) + textOffset;
-
     int curiX = 1;
 
     std::string summaryTitle = "\"" + info.largestComponents[0].name + "\" Summary";
@@ -146,10 +139,7 @@ void
 makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
 
-    int textOffset = width / 10;
     int textHeight = height / 20;
-    int textXOffset = textHeight * 53 / 5;
-    int textYOffset = textHeight * 8 / 5;
 
     int N = 4; // number of sub components you want
     int offY = height * (2.6 - 1) / 3 + offsetY;
@@ -169,7 +159,7 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
     // img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
 
     // entity summary
-    int curiX = 0;
+    // int curiX = 0;
     // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Groups & Assemblies:", TO_BOLD);
     // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("groups_assemblies"), TO_BOLD);
     // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Regions & Parts:", TO_BOLD);
@@ -192,10 +182,10 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 	// img.drawLine(offX + (i-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (i-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
 
-    if (info.largestComponents.size() > N) {
+    if (info.largestComponents.size() > (size_t)N) {
 	// render the smaller sub components all in one
 	std::string subcomponents = "";
-	for (int i = N; i < info.largestComponents.size(); i++) {
+	for (size_t i = N; i < info.largestComponents.size(); i++) {
 	    subcomponents += info.largestComponents[i].name + " ";
 	}
 	render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);

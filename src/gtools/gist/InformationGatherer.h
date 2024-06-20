@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "vmath.h"
 #include "pch.h"
 
 /**
@@ -43,7 +44,7 @@ struct ComponentData {
         if (numEntities != other.numEntities) {
             return numEntities < other.numEntities;
 	}
-        if (volume != other.volume) {
+        if (!NEAR_EQUAL(volume, other.volume, SMALL_FASTF)) {
             return volume < other.volume;
 	}
 	return name < other.name;

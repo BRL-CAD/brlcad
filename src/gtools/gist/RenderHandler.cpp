@@ -25,7 +25,7 @@ LayoutChoice::LayoutChoice(std::string l_map, bool l_lockRows)
     : map(l_map), lockRows(l_lockRows), coordinates(), dimDetails()
 {
     // make a vector to store coordinates of each item on the map AND ALSO the ambient occlusion view
-    for (int i = 0; i < map.size() + 1; ++i) {
+    for (size_t i = 0; i < map.size() + 1; ++i) {
 	coordinates.emplace_back();
     }
     for (int i = 0; i < 3; ++i) {
@@ -46,7 +46,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
     std::vector<int> rowStartingIndex;
     rowStartingIndex.push_back(0);
 
-    for (int i = 1; i < map.size(); ++i) {
+    for (size_t i = 1; i < map.size(); ++i) {
 	// Each row starts after a "\n"
 	if (map[i - 1] == '\n') {
 	    rowStartingIndex.push_back(i);
@@ -190,6 +190,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 			continue;
 		    case '\n': case ' ': case 'A':
 		        std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+			/* fall through */
 		    default:
 			ModelDimension dim = faceDetails[map[ambientR * rowLen + i]].widthContributor;
 
@@ -211,6 +212,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 			continue;
 		    case '\n': case ' ': case 'A':
 			std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+			/* fall through */
 		    default:
 			ModelDimension dim = faceDetails[map[i * rowLen + ambientC]].heightContributor;
 
@@ -482,8 +484,8 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 	// iterate through the second column to align everything
 	for (int r = 0; r < numRows; ++r) {
 	    int i = r * rowLen + 1;
-	    minX = min(minX, coordinates[i][0]);
-	    maxX = max(maxX, coordinates[i][2]);
+	    minX = std::min(minX, coordinates[i][0]);
+	    maxX = std::max(maxX, coordinates[i][2]);
 	}
 	for (int r = 0; r < numRows; ++r) {
 	    int i = r * rowLen + 1;
@@ -498,14 +500,14 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
     if (ambientC != 0) {
 	for (int r = ambientR; r < numRows; ++r) {
 	    int i = r * rowLen + ambientC;
-	    coordinates[coordinates.size() - 1][0] = max(coordinates[coordinates.size() - 1][0], coordinates[i][0]);
+	    coordinates[coordinates.size() - 1][0] = std::max(coordinates[coordinates.size() - 1][0], coordinates[i][0]);
 	}
     }
     coordinates[coordinates.size() - 1].push_back(0);
     if (ambientR != 0) {
 	for (int c = ambientC; c < numCols; ++c) {
 	    int i = ambientR * rowLen + c;
-	    coordinates[coordinates.size() - 1][1] = max(coordinates[coordinates.size() - 1][1], coordinates[i][1]);
+	    coordinates[coordinates.size() - 1][1] = std::max(coordinates[coordinates.size() - 1][1], coordinates[i][1]);
 	}
     }
 
@@ -754,7 +756,7 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
     std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 
     std::string title = info.getInfo("title");
-    int countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
+    size_t countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
 
     if (countCharDisplayedTitle < title.length()) {
 	std::string continuation = title.substr(countCharDisplayedTitle);

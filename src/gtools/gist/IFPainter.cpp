@@ -94,7 +94,7 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
     // Crop the image to the bounding rectangle
     cv::Mat lilImage = imageRaw(bounding_rect);
 
-
+#if 0
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
     int heightOffset = 0;
@@ -111,6 +111,7 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
 	widthOffset = (width - newWidth) / 2;
 	width = newWidth;
     }
+#endif
 
     cv::Mat resized_image;
 
@@ -194,7 +195,7 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
     // Crop the image to the bounding rectangle
     cv::Mat lilImage = imageRaw(bounding_rect);
 
-
+#if 0
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
     int heightOffset = 0;
@@ -211,6 +212,7 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
 	widthOffset = (width - newWidth) / 2;
 	width = newWidth;
     }
+#endif
 
     cv::Mat resized_image;
 
@@ -284,7 +286,7 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     int countCharDisplayedText = text.length();
     getTextWidth(50, width, text, TO_BOLD); // needed for while loop to run correctly
     while (getTextWidth(50, width, text, TO_BOLD) > width) {
-	if (countCharDisplayedText == text.length()) {
+	if ((size_t)countCharDisplayedText == text.length()) {
 	    text = text + " ...";
 	}
 	if (text.length() >= 5) {
@@ -514,7 +516,7 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
     }
 
     xPosition = width / 2 + confidentialWidth / 2 + spacing;
-    for (int i = 0; i < rightText.size(); i++) {
+    for (size_t i = 0; i < rightText.size(); i++) {
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, rightText[i]);
 	cv::putText(img, rightText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
 	xPosition = xPosition + spacing + getTextWidth(height, width, rightText[i], flags);
@@ -529,7 +531,7 @@ void
 IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
 {
     if (ellipsis == TO_ELLIPSIS) {
-	if (numOfCharactersBeforeEllipsis < text.length()) {
+	if ((size_t)numOfCharactersBeforeEllipsis < text.length()) {
 	    text = text.substr(0, numOfCharactersBeforeEllipsis) + " ...";
 	}
     }
@@ -544,7 +546,6 @@ IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, s
     int y = y1;
     int wordWidth;
     int wordWidthWithSpace;
-    int totalWordWidth;
     for (const auto& w : words) {
 	wordWidth = getTextWidth(height, width, w, flags);
 	wordWidthWithSpace = getTextWidth(height, width, w + " ", flags);

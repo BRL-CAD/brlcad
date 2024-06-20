@@ -18,6 +18,7 @@
  * information.
  */
 
+#include "vmath.h"
 #include "pch.h"
 #include "InformationGatherer.h"
 
@@ -42,7 +43,7 @@ static std::string getCmdPath(std::string exeDir, const char* cmd) {
 }
 
 void
-getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
+getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
 {
     // Run RTArea to get surface area
     std::string rtarea = getCmdPath(opt->getExeDir(), "rtarea");
@@ -130,11 +131,13 @@ parseMass(std::string res)
 
 
 void
-getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &hasDensities, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
+getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &UNUSED(hasDensities), double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
 {
     //Get tops
-    const char* cmd[3] = { "tops", NULL, NULL };
-    ged_exec(g, 1, cmd);
+    {
+	const char* cmd[3] = { "tops", NULL, NULL };
+	ged_exec(g, 1, cmd);
+    }
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     std::map<std::string, bool> listed;
@@ -145,8 +148,10 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         getSurfaceArea(opt, map, "0", "90", val, surfArea090, lUnit);
         getSurfaceArea(opt, map, "90", "0", val, surfArea900, lUnit);
         //Next, get regions underneath to calculate volume and mass
-        const char* cmd[3] = { "l", val.c_str(), NULL };
-        ged_exec(g, 2, cmd);
+	{
+	    const char* cmd[3] = { "l", val.c_str(), NULL };
+	    ged_exec(g, 2, cmd);
+	}
         std::stringstream ss2(bu_vls_addr(g->ged_result_str));
         std::string val2;
         std::getline(ss2, val2); // ignore first line
@@ -181,7 +186,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     std::string no_density_msg = "Could not find any density information";
 
     for (size_t i = 0; i < toVisit.size(); i++) {
-        std::string val = toVisit[i];
+        std::string vval = toVisit[i];
         /* Get volume and mass */
         const char* vol_av[10] = { gqa.c_str(),
                                    "-Avm",
@@ -189,7 +194,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
                                    "-g", "2",
                                    "-u", units.c_str(),
                                    in_file.c_str(),
-                                   val.c_str(),
+                                   vval.c_str(),
                                    NULL };
 
         bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
@@ -267,7 +272,7 @@ InformationGatherer::getVolume(std::string component)
             double temp = stod(val);
             dim_idx++;
             if (dim_idx == 4)
-                return stod(val);
+                return temp;
         } catch (const std::exception& e){
             continue;
         }
@@ -418,7 +423,7 @@ InformationGatherer::~InformationGatherer()
 
 
 bool
-InformationGatherer::gatherInformation(std::string name)
+InformationGatherer::gatherInformation(std::string UNUSED(name))
 {
     //Open database
     std::string filePath = opt->getInFile();
@@ -572,7 +577,7 @@ InformationGatherer::gatherInformation(std::string name)
         u = {mUnit, 0};
         unitsMap["mass"] = u;
     } else {
-        if (mass == 0) {
+        if (NEAR_ZERO(mass, SMALL_FASTF)) {
             infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
             u = {mUnit, 0};
             unitsMap["mass"] = u;
@@ -588,11 +593,11 @@ InformationGatherer::gatherInformation(std::string name)
     bool hasExplicit = false;
     bool hasImplicit = false;
     const char* tfilter = "-type brep -or -type bot -or -type vol -or -type sketch";
-    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep -not -type bot -not -type vol -not -type sketch";
-    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasImplicit = true;
     }
     if (hasExplicit && hasImplicit) {
@@ -622,7 +627,6 @@ InformationGatherer::gatherInformation(std::string name)
     //Next, use other commands to extract info
 
     //Gather filename
-    bool worked = true;
     std::string owner = "username";
 
     char buffer[1024];  //for name of owner
@@ -699,14 +703,13 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Gather classification
     std::string classification = opt->getClassification();
-    for (int i = 0; i < classification.length(); i++) {
+    for (size_t i = 0; i < classification.length(); i++) {
         classification[i] = toupper(classification[i]);
     }
     infoMap.insert(std::pair < std::string, std::string>("classification", classification));
 
     //Gather checksum
     struct bu_mapped_file* gFile = NULL;
-    char* buf = NULL;
     gFile = bu_open_mapped_file(opt->getInFile().c_str(), ".g file");
     picohash_ctx_t ctx;
     char digest[PICOHASH_MD5_DIGEST_LENGTH];
@@ -884,7 +887,7 @@ InformationGatherer::correctDefaultUnitsMass()
 void
 InformationGatherer::checkScientificNotation()
 {
-    int size = 15; // arbitrary
+    size_t size = 15; // arbitrary
     int precision = 2; // arbitrarty
 
     for (auto& pair : unitsMap) {
