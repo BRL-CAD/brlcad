@@ -80,11 +80,57 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	return BRLCAD_OK;
     }
     if (!BU_PTBL_LEN(ar)) {
-	/* No active regions (unlikely but technically possible), nothing to do */
+	/* No active regions.  We'll just try a normal facetize */
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
+
+	/* If we're doing an NMG output, use the old-school libnmg booleval */
+	if (s->make_nmg) {
+	    if (!s->in_place) {
+		ret = _ged_facetize_nmgeval(s, argc, argv, oname);
+		bu_free(dpa, "dpa");
+		return ret;
+	    } else {
+		for (int i = 0; i < argc; i++) {
+		    const char *av[2];
+		    av[0] = argv[i];
+		    av[1] = NULL;
+		    ret = _ged_facetize_nmgeval(s, 1, av, argv[i]);
+		    if (ret == BRLCAD_ERROR) {
+			bu_free(dpa, "dpa");
+			return ret;
+		    }
+		}
+		bu_free(dpa, "dpa");
+		return ret;
+	    }
+	}
+
+	// If we're not doing NMG, use the Manifold booleval
+	if (!s->in_place) {
+	    ret = _ged_facetize_booleval(s, newobjcnt, dpa, oname, false, false);
+	} else {
+	    for (int i = 0; i < argc; i++) {
+		struct directory *idpa[2];
+		idpa[0] = dpa[i];
+		idpa[1] = NULL;
+		ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], false, false);
+		if (ret == BRLCAD_ERROR) {
+		    bu_free(dpa, "dpa");
+		    return ret;
+		}
+	    }
+	}
+
+	// Report on the primitive processing
+	facetize_primitives_summary(s);
+
+	// After collecting info for summary, we can now clean up working files
+	bu_dirclear(s->wdir);
+
+	// Cleanup
 	bu_free(dpa, "dpa");
-	return BRLCAD_OK;
+	return ret;
     }
 
     // For the working file setup, we need to check the solids to see if any
