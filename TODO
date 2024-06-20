@@ -23,12 +23,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * complete preliminary concave arb8 support
 
-* Rework ged_tessellate exec into a generic ged_exec along
-  the lines of what Sean proposed:
-
-  mged[main()] -> ged_exec() -> subprocess-exec("ged_exec search . -type region") ;
-  ged_exec[main()] -> dlload("ged_search") -> ged_search()
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
