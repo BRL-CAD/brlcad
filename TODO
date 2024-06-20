@@ -18,15 +18,15 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* rtarea is sometimes missing regions on summary reporting, at least on
-  Windwos, possibly a threading issue setting up the results container.
-
-* complete preliminary concave arb8 support
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
 * Validate and merge hlbvh BoT raytracing improvements
+
+* rtarea is sometimes missing regions on summary reporting, at least on
+  Windwos, possibly a threading issue setting up the results container.
+
+* complete preliminary concave arb8 support
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
