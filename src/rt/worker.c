@@ -531,26 +531,63 @@ worker(int cpu, void *UNUSED(arg))
 
 pat_found:
 
-    if (random_mode) {
-
-	/* FIXME: this currently runs forever. It should probably
-	 *        generate a list of random pixels and then process
-	 *        them in that order.
-	 */
-
-	while (1) {
-	    /* Generate a random pixel id between 0 and last_pixel
-	       inclusive - TODO: check if there is any issue related
-	       with multi-threaded RNG */
-	    pixelnum = rand()*1.0/RAND_MAX*(last_pixel + 1);
-	    if (pixelnum >= last_pixel)
-		pixelnum = last_pixel;
-	    do_pixel(cpu, pat_num, pixelnum);
-	}
-
-    } else {
 	int from;
 	int to;
+    if (random_mode) {
+
+	// FIXME: this is a error in Parallel case
+		int* pixel_ls = malloc(last_pixel * sizeof(int));
+		if (pixel_ls != NULL){
+			for (int i = 0; i < last_pixel; i++)
+				pixel_ls[i] = i;
+			//shuffle array
+			if (last_pixel > 1) {
+				for (int i = last_pixel - 1; i > 0; i--) {
+					int j = rand() % (i + 1);
+					int tmp = pixel_ls[i];
+					pixel_ls[i] = pixel_ls[j];
+					pixel_ls[j] = tmp;
+				}
+			}
+			while (1) {
+				int* sub_pixel_ls = malloc(per_processor_chunk * sizeof(int));
+				if (sub_pixel_ls != NULL) {
+					int sub_pixel_len = 0;
+					if (stop_worker)
+						return;
+
+					bu_semaphore_acquire(RT_SEM_WORKER);
+					pixel_start = cur_pixel;
+					for (int i = cur_pixel, j = 0; i < cur_pixel + per_processor_chunk && i < last_pixel; i++, j++) {
+						sub_pixel_ls[j] = pixel_ls[i];
+						sub_pixel_len++;
+					}
+					to = cur_pixel + sub_pixel_len;
+					cur_pixel += per_processor_chunk;
+					//bu_log("SPAN[%d -> %d] for %d pixels\n", pixel_start, pixel_start+per_processor_chunk, per_processor_chunk); 
+					bu_semaphore_release(RT_SEM_WORKER);
+
+					for (int i = 0; i < sub_pixel_len; i++) {
+						//bu_log("    PIXEL[%d]\n", sub_pixel_ls[i]);
+						do_pixel(cpu, pat_num, sub_pixel_ls[i]);
+					}
+					if (to >= last_pixel) {
+						free(sub_pixel_ls);
+						free(pixel_ls);
+						return;
+					}
+				}
+				else {
+					bu_log("malloc failed!");
+					return;
+				}
+			}
+		} else {
+			bu_log("malloc failed!");
+			return;
+		}
+
+    } else {
 
 	while (1) {
 	    if (stop_worker)
