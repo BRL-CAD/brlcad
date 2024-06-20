@@ -29,7 +29,6 @@
 #include "rt/geom.h"
 #include "brep.h"
 
-
 extern "C" void
 rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
@@ -168,6 +167,45 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     epacurvedsurf->SetCV(8, 1, pt26);
     ON_4dPoint pt27 = ON_4dPoint(0, r2, 0, 1);
     epacurvedsurf->SetCV(8, 2, pt27);
+
+    // caculate rigid transformation between local coordinate and world coordinate
+    vect_t origin_Y = { 0,1,0 };
+    vect_t origin_Z = { 0,0,1 };
+    vect_t origin_X;
+    VCROSS(origin_X, origin_Y, origin_Z);
+    vect_t end_X, end_Y, end_Z;
+    VMOVE(end_Y, eip->epa_Au);
+    VMOVE(end_Z, eip->epa_H);
+    VUNITIZE(end_Z);
+    VUNITIZE(end_Y);
+    VCROSS(end_X, end_Y, end_Z);
+
+    // note: there is a 90 degree rotation in the beginning, so swap +x and +y
+    mat_t origin_mat = {
+        0,1,0,0,
+        1,0,0,0,
+        0,0,1,0,
+        0,0,0,1,
+    };
+
+    // reference: https://stackoverflow.com/questions/34391968/how-to-find-the-rotation-matrix-between-two-coordinate-systems
+    mat_t rotate_mat = {
+        VDOT(end_X, origin_X), VDOT(end_Y, origin_X), VDOT(end_Z, origin_X), 0,
+        VDOT(end_X, origin_Y), VDOT(end_Y, origin_Y), VDOT(end_Z, origin_Y), 0,
+        VDOT(end_X, origin_Z), VDOT(end_Y, origin_Z), VDOT(end_Z, origin_Z), 0,
+        0, 0, 0, 1
+    };
+    mat_t transform_mat = { 0 };
+    // add origin rotation
+    bn_mat_mul(transform_mat, rotate_mat, origin_mat);
+
+    // add pan transform
+    transform_mat[3] = plane1_origin.x;
+    transform_mat[7] = plane1_origin.y;
+    transform_mat[11] = plane1_origin.z;
+
+    ON_Xform trans(transform_mat);
+    epacurvedsurf->Transform(trans);
 
     (*b)->m_S.Append(epacurvedsurf);
     int surfindex = (*b)->m_S.Count();
