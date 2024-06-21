@@ -166,7 +166,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     }
 
     std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
-    std::string units = lUnit + ",\"cu " + lUnit + "\"," + mUnit;
+    std::string units = lUnit + ",cu " + lUnit + "," + mUnit;
     std::string in_file = opt->getInFile();
     struct bu_process* p;
     int read_cnt = 0;
