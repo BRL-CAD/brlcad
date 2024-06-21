@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "common.h"
+
 // OpenCV header files
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
@@ -38,16 +40,14 @@
 #include<filesystem>
 
 // Necessary C++ headers to get user account name for Windows and Unix
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-#include <Lmcons.h>
-#elif defined(__unix__) || defined(__unix) || defined(unix) || defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__)
-#include <pwd.h>
-#include <unistd.h>
-#include <sys/types.h>
+#ifdef HAVE_WINDOWS_H
+#  include <Lmcons.h>
+#else
+#  include <pwd.h>
 #endif
 
 // BRL-CAD header files
+#include "bio.h"
 #include "bu/opt.h"
 #include "bu/app.h"
 #include "bu/log.h"

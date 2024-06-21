@@ -21,17 +21,6 @@
 #include "vmath.h"
 #include "pch.h"
 #include "InformationGatherer.h"
-
-#ifdef HAVE_WINDOWS_H
-#	include <windows.h>
-#	include <stdio.h>
-#	include <aclapi.h>
-#endif
-#ifdef __APPLE__
-#  include <pwd.h>
-#  include <unistd.h>
-#endif
-
 #include "bu/log.h"
 
 static std::string getCmdPath(std::string exeDir, const char* cmd) {
