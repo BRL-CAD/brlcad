@@ -104,13 +104,6 @@ generateReport(Options opt)
     }
 }
 
-
-/**
- * @brief
- *
- * @param options
- * @return * Checks
- */
 static void
 handleFolder(Options& options)
 {
