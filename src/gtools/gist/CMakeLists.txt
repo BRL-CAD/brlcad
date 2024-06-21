@@ -26,7 +26,11 @@ set(GIST_SRCS
   RenderHandler.cpp
 )
 
-CMAKEFILES(${gist_ignore_files} ${GIST_SRCS})
+CMAKEFILES(
+  ${gist_ignore_files}
+  ${GIST_SRCS}
+  TEST.png
+  )
 
 find_package_opencv()
 if(NOT OpenCV_FOUND)
