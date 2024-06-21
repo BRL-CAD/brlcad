@@ -222,9 +222,18 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     struct bu_process* p;
     bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW);
 
-    // TODO: do we care about output?
+    char buff[128];
+    std::string result = "";
+    int read_cnt = 0;
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDERR, 128-1, buff)) > 0) {
+        /* NOTE: read does not ensure null-termination, thus buffersize-1 */
+        buff[read_cnt] = '\0';
+        result += buff;
+    }
 
-    (void)bu_process_wait_n(&p, 0);
+    if (bu_process_wait_n(&p, 0) != 0) {
+        bu_exit(BRLCAD_ERROR, "ERROR: render process failed\n");
+    }
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", outputname.c_str());
