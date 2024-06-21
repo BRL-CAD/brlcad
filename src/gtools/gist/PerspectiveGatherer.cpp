@@ -207,14 +207,16 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             break;
     }
 
-    if (bu_file_exists(outputname.c_str(), NULL) && opt.getReuseImages()) {
-        // reuse previous render
-        if (opt.verbosePrinting())
-            bu_log("\tFound %s, skipping\n", outputname.c_str());
-        return outputname;
-    } else {
-        // sanity delete
-        bu_file_delete(outputname.c_str());
+    if (bu_file_exists(outputname.c_str(), NULL)) {
+         if (opt.getReuseImages()) {
+            // reuse previous render
+            if (opt.verbosePrinting())
+                bu_log("\tFound %s, skipping\n", outputname.c_str());
+            return outputname;
+        } else {
+            // sanity delete
+            bu_file_delete(outputname.c_str());
+        }
     }
 
     struct bu_process* p;
