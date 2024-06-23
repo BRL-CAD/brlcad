@@ -84,9 +84,12 @@ static std::vector<std::string> read_line_node_standard
     if (line != nullptr) {
 	std::string temp;
 
+	if (strchr(line, ',') != nullptr) {
+	    commaSeparated = true;
+	}
+
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if (line[i] == ',' || line[i] == ' ') {
-		commaSeparated = true;
+	    if (line[i] == ',') {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
@@ -146,9 +149,12 @@ static std::vector<std::string> read_line_node_long
     if (line != nullptr) {
 	std::string temp;
 
+	if (strchr(line, ',') != nullptr) {
+	    commaSeparated = true;
+	}
+
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if (line[i] == ',' || line[i] == ' ') {
-		commaSeparated = true;
+	    if (line[i] == ',') {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
@@ -208,9 +214,12 @@ static std::vector<std::string> read_line_node_i10
     if (line != nullptr) {
 	std::string temp;
 
+	if (strchr(line, ',') != nullptr) {
+	    commaSeparated = true;
+	}
+
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if (line[i] == ',' || line[i] == ' ') {
-		commaSeparated = true;
+	    if (line[i] == ',') {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
@@ -265,8 +274,10 @@ std::pair<std::string, std::string> split_key
     const char* key
 ) {
     std::pair<std::string, std::string> ret;
+
     if (key != nullptr) {
 	std::string temp;
+
 	for (size_t i = 0; i < strlen(key); ++i) {
 	    if (key[i] == '=' ) {
 		if (temp.size() > 0) {
@@ -278,10 +289,12 @@ std::pair<std::string, std::string> split_key
 		temp += key[i];
 	    }
 	}
+
 	if (temp.size() > 0) {
 	    ret.second = temp;
 	}
     }
+
     return ret;
 }
 
@@ -459,6 +472,7 @@ bool parse_k
 			    if (tokens.size() > 1) {
 				for (size_t i = 1; i < tokens.size(); ++i) {
 				    std::pair<std::string, std::string> format = split_key((tokens[i]).c_str());
+
 				    if (format.first == "LONG") {
 					fileFormat = ReadFormat::Long;
 				    }
