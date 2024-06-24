@@ -369,7 +369,7 @@ InformationGatherer::getSubComp()
 {
     std::string mged = getCmdPath(opt->getExeDir(), "mged");
     std::string inFile = opt->getInFile();
-    std::string tclScript = " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\"";
+    std::string tclScript = "foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }";
     const char* av[5] = {mged.c_str(), "-c", inFile.c_str(), tclScript.c_str(), NULL};
 
     struct bu_process* p;
