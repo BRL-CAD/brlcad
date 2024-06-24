@@ -24,12 +24,13 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Changes the name of <emphasis>old_name</emphasis> to <emphasis>new_name</emphasis>. This will also
+<para>Changes the name of <emphasis>old_name</emphasis> to <emphasis>new_name</emphasis>. This will also
 change any references to <emphasis>old_name</emphasis> that may occur in other combinations in the
 database. If the <emphasis>-f</emphasis> variation of the command is used, all <emphasis>old_name</emphasis>
- <emphasis>new_name</emphasis> pairings are read from the <emphasis>mapping_file</emphasis> and processed as
- previously stated.
-  </para>
+<emphasis>new_name</emphasis> pairings are read from the <emphasis>mapping_file</emphasis> and processed as
+previously stated. The <emphasis>-n</emphasis> flag returns all groups that will be affected if the command were
+run but without changing the name, essentially running a <command>dbfind</command> on the <emphasis>old_name</emphasis>.
+</para>
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
