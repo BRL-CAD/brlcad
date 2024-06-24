@@ -22,10 +22,24 @@
 
 #include "common.h"
 
+#ifdef DEBUG
+#define OPENCV_QUELL_DEBUG
+// Due to OpenCV's opencv2/core/cvdef.h defining a debug_build_guard namespace
+// that keys off of whether DEBUG is defined, we need to make sure it is unset
+// here - otherwise Windows Release builds will end up being unable to link
+// properly - the gist includes of opencv will be looking for the namespace
+// prefixed names rather than the Release names.
+#undef DEBUG
+#endif
+
 // OpenCV header files
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include "opencv2/highgui/highgui.hpp"
+
+#ifdef OPENCV_QUELL_DEBUG
+#define DEBUG 1
+#endif
 
 // Necessary C++ header files
 #include <iostream>
