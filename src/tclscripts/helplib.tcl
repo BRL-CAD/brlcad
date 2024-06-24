@@ -131,9 +131,9 @@ set helplib_data(wdb_tree)		{{[-c] [-o outfile] [-i indentSize] [-d displayDepth
 set helplib_data(wdb_unhide)            {{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
 set helplib_data(wdb_units)		{{[mm|cm|m|in|ft|...]}	{get/set current working units for distance measurements}}
 set helplib_data(wdb_version)		{{} {returns the database version}}
-set helplib_data(wdb_whatid)		{{region} {return the specified region's id}}
+set helplib_data(wdb_whatid)		{{region} {return the specified region's ident}}
 set helplib_data(wdb_whichair)		{{code(s)} {find regions with the specified air code(s)}}
-set helplib_data(wdb_whichid)		{{[-s] id(s)} {find regions with the specified id(s)}}
+set helplib_data(wdb_whichid)		{{[-s] ident(s)} {find regions with the specified ident(s)}}
 set helplib_data(wdb_xpush)		{{object} {push matrices onto primitives, creating copies as needed}}
 
 set helplib_data(vo_aet)		{{[-i] ["az el tw"]} {set/get the azimuth, elevation and twist}}
