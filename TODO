@@ -40,6 +40,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add a flag to prefix command to remove prefix on a group hierarchy.
+
 * restore libged commands that were only exposed via archer but lost
   during libged ged_exec() refactoring.
 
