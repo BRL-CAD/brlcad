@@ -75,8 +75,8 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_oFile = "";	// user supplied output file
 
     struct bu_opt_desc d[23];
-    BU_OPT(d[0],  "i", "",     "filename",          &_param_set_std_str,     &this->inFile,         "input .g");
-    BU_OPT(d[1],  "o", "",     "filename",          &_param_set_std_str,     &param_oFile,          "output file name");
+    BU_OPT(d[0],  "i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g");
+    BU_OPT(d[1],  "o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name");
     BU_OPT(d[2],  "F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate");
     BU_OPT(d[3],  "e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name");
     BU_OPT(d[4],  "g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window");
