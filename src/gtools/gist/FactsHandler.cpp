@@ -115,10 +115,10 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions_parts") + " regions");
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("groups_assemblies") + " assemblies");
     curiX++;
-    img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions (x, y, z)", TO_BOLD);
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimX"));
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimY"));
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimZ"));
+    img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions", TO_BOLD);
+    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "x: " + info.getFormattedInfo("dimX"));
+    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "y: " + info.getFormattedInfo("dimY"));
+    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "z: " + info.getFormattedInfo("dimZ"));
     curiX++;
     img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Presented Area (az/el)", TO_BOLD);
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("surfaceArea00") + " (0/0)");
