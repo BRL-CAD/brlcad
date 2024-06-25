@@ -152,17 +152,15 @@ bool Options::readParameters(int argc, const char **argv) {
     if (!this->exeDir.empty())
 	setExeDir(this->exeDir);
 
-    /* make sure we have a .g file or folder specified */
-    if (!getIsFolder() && !bu_file_exists(this->inFile.c_str(), NULL)) {
-	bu_log("\nUsage:  %s %s\n", cmd_progname, usage);
-        bu_log("\nPlease specify the path to the file for report generation, use flag (-?) to see all options\n");
-        return false;
-    }
+    /* make sure valid input .g or folder is supplied */
+    if ((getIsFolder() && !bu_file_directory(this->inFolderName.c_str())) ||
+        !bu_file_exists(this->inFile.c_str(), NULL)) {
+	// which input was given
+	std::string given_input = getIsFolder() ? this->inFolderName : this->inFile;
 
-    /* make sure input .g exists */
-    if (!bu_file_exists(this->inFile.c_str(), NULL)) {
-	bu_log("ERROR: %s does not exist\n", this->inFile.c_str());
-	return false;
+	bu_log("Usage: %s %s\n\n", cmd_progname, usage);
+	bu_log("ERROR: given input \"%s\" does not exist. Please ensure the path is correct\n", given_input.c_str());
+        return false;
     }
 
     /* make sure we're not unintentionally overwriting an existing report */
