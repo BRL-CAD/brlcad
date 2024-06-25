@@ -80,11 +80,11 @@ makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 
     if (info.getInfo("classification") != "") {
 	text.push_back("Preparer: " + info.getInfo("preparer"));
-	text2.push_back("Date Generated : " + info.getInfo("dateGenerated"));
+	text2.push_back("Date Generated: " + info.getInfo("dateGenerated"));
 	img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
     } else {
 	text.push_back("Preparer: " + info.getInfo("preparer"));
-	text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
+	text.push_back("Date Generated: " + info.getInfo("dateGenerated"));
 	img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
     }
 }
