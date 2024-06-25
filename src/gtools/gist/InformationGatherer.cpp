@@ -677,7 +677,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     std::size_t last2 = opt->getInFile().find_last_of("\\");
     last = last1 < last2 ? last1 : last2;
 
-    std::string file = opt->getInFile().substr(last+1, opt->getInFile().length()-1);
+    std::string file = opt->getInFile();
 
     infoMap.insert(std::pair < std::string, std::string>("file", file));
 
