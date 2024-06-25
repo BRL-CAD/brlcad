@@ -751,8 +751,6 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 	}
     }
 
-    // render ambient occlusion view
-    std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
     std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 
     std::string title = info.getInfo("title");
