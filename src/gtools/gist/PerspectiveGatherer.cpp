@@ -211,7 +211,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
          if (opt.getReuseImages()) {
             // reuse previous render
             if (opt.verbosePrinting())
-                bu_log("\tFound %s, skipping\n", outputname.c_str());
+                bu_log("\tFound %s, skipping generation\n", outputname.c_str());
             return outputname;
         } else {
             // sanity delete

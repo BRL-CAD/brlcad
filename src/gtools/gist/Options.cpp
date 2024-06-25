@@ -212,11 +212,13 @@ bool Options::readParameters(int argc, const char **argv) {
 	    bu_log("       Re-run with (-Z) to re-use work. Or remove working directory \"%s\".\n", getWorkingDir().c_str());
 	    return false;
 	}
+	if (verbosePrinting())
+	    bu_log("Using working directory: %s\n\n", getWorkingDir().c_str());
     } else {
 	// create
 	bu_mkdir(getWorkingDir().c_str());
 	if (verbosePrinting())
-	    bu_log("Intermediate files writing to: %s\n", getWorkingDir().c_str());
+	    bu_log("Intermediate files writing to: %s\n\n", getWorkingDir().c_str());
     }
 
     return true;

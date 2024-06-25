@@ -43,7 +43,7 @@ generateReport(Options opt)
     InformationGatherer info(&opt);
 
     // read in all information from model file
-    statusPrint("*Gathering geometry information", opt.verbosePrinting());
+    statusPrint("*Gathering file information", opt.verbosePrinting());
     if (!info.gatherInformation(opt.getPreparer())) {
         bu_log("ERROR: Information gathering failed.\n");
         return;
@@ -78,11 +78,19 @@ generateReport(Options opt)
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
 
     // draw all sections
+    statusPrint("*Creating report sections", opt.verbosePrinting());
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
+    statusPrint("    *Raytracing main renderings", opt.verbosePrinting());
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
+    statusPrint("    ...Finished renderings", opt.verbosePrinting());
+    statusPrint("    *Writing file information", opt.verbosePrinting());
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
+    statusPrint("    ...Finished writing", opt.verbosePrinting());
+    statusPrint("    *Building hierarchy graphic", opt.verbosePrinting());
     makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
+    statusPrint("    ...Finished hierarchy", opt.verbosePrinting());
+    statusPrint("    *Drawing Logos", opt.verbosePrinting());
     //brl-cad logo
     std::string model_logo_path = info.getModelLogoPath();
     img.drawTransparentImage(3250, 10, 200, 200, model_logo_path, 250);
@@ -90,6 +98,8 @@ generateReport(Options opt)
     if (opt.getLogopath() != ""){
         img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);
     }
+    statusPrint("    ...Finished logos", opt.verbosePrinting());
+    statusPrint("...Finished report", opt.verbosePrinting());
 
     // paint renderings
 
