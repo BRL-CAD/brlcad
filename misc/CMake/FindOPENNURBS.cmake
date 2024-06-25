@@ -47,12 +47,12 @@ set(_OPENNURBS_SEARCH_NORMAL
 unset(_OPENNURBS_x86)
 list(APPEND _OPENNURBS_SEARCHES _OPENNURBS_SEARCH_NORMAL)
 
-set(OPENNURBS_NAMES openNURBS)
+set(OPENNURBS_NAMES openNURBS OpenNURBS)
 
 # Try each search configuration.
 foreach(search ${_OPENNURBS_SEARCHES})
-  find_path(OPENNURBS_INCLUDE_DIR NAMES opennurbs.h ${${search}} PATH_SUFFIXES include include/openNURBS openNURBS)
-  find_path(OPENNURBS_X_INCLUDE_DIR NAMES opennurbs_x.h ${${search}} PATH_SUFFIXES include include/openNURBS openNURBS)
+  find_path(OPENNURBS_INCLUDE_DIR NAMES opennurbs.h ${${search}} PATH_SUFFIXES include include/openNURBS openNURBS include/OpenNURBS OpenNURBS)
+  find_path(OPENNURBS_X_INCLUDE_DIR NAMES opennurbs_x.h ${${search}} PATH_SUFFIXES include include/openNURBS openNURBS include/OpenNURBS OpenNURBS)
 endforeach()
 
 # Allow OPENNURBS_LIBRARY to be set manually, as the location of the openNURBS library

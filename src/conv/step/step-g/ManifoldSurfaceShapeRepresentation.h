@@ -33,7 +33,7 @@
 #include <string>
 
 /* must come before step headers */
-#include "opennurbs.h"
+#include "brep/defines.h"
 
 /* interface headers */
 #include "ShapeRepresentation.h"

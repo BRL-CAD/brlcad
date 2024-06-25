@@ -21,7 +21,7 @@
 #ifndef CONV_IGES_PULLBACK_CURVE_H
 #define CONV_IGES_PULLBACK_CURVE_H
 
-#include "opennurbs.h"
+#include "brep/defines.h"
 
 
 /*

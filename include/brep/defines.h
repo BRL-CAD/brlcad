@@ -50,6 +50,9 @@ extern "C++" {
 #if defined(__GNUC__) && !defined(__clang__)
 #  if GCC_PREREQ(8,0)
 #    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#    pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#    pragma GCC diagnostic ignored "-Wcomment"
+#    pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #  endif
 #endif
 
