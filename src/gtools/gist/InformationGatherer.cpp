@@ -776,18 +776,31 @@ InformationGatherer::getInfo(std::string key)
 std::string
 InformationGatherer::getFormattedInfo(std::string key)
 {
+    // get number, insert commas if long enough
+    std::string number = infoMap[key];
+    size_t decimal_pos = number.find_last_of(".");
+    // start from end of whole number
+    size_t start_pos = (decimal_pos != std::string::npos) ? decimal_pos : number.size();
+    // offset 3 for potential first comma
+    start_pos -= 3;
+    // valid start position, start adding commas
+    for (int i = start_pos; i > 0; i -= 3) {
+        number.insert(i, ",");
+    }
+
+    // add units to string
     auto it = unitsMap.find(key);
     if (it != unitsMap.end()) { // if units are mapped
         Unit u = unitsMap[key];
         if (u.power > 1) {
-            return infoMap[key] + " " + u.unit + "^" + std::to_string(u.power);
+            return number + " " + u.unit + "^" + std::to_string(u.power);
         } else if (u.power == 1){
-            return infoMap[key] + " " + u.unit;
+            return number + " " + u.unit;
         }
     }
 
     // no units if power == 0 or no units mapping
-    return infoMap[key];
+    return number;
 }
 
 Unit
