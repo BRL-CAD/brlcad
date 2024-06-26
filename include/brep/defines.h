@@ -53,6 +53,7 @@ extern "C++" {
 #    pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #    pragma GCC diagnostic ignored "-Wcomment"
 #    pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#    pragma GCC diagnostic ignored "-Woverloaded-virtual"
 #  endif
 #endif
 
