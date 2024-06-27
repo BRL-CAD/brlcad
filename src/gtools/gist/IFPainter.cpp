@@ -183,21 +183,33 @@ void
 IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::string imgPath)
 {
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+
     // Convert the image to grayscale for creating the mask
     cv::Mat gray_image;
     cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
-    // Create a mask of non-white pixels
-    cv::Mat mask = gray_image < 255;
+
+    // threshold gray image to create mask
+    cv::Mat mask;
+    cv::threshold(gray_image, mask, 240, 255, cv::THRESH_BINARY_INV);
+
+    // create 4-channel RGBA - using mask as alpha
+    std::vector<cv::Mat> split_raw(3);
+    cv::split(imageRaw, split_raw);
+    split_raw.push_back(mask);
+    cv::Mat alphaRaw(imageRaw.rows, imageRaw.cols, CV_8UC4);
+    cv::merge(split_raw, alphaRaw);
+
     // Find the bounding rectangle of non-white pixels
     cv::Rect bounding_rect = boundingRect(mask);
     // Crop the image to the bounding rectangle
-    cv::Mat lilImage = imageRaw(bounding_rect);
+    cv::Mat lilImage = alphaRaw(bounding_rect);
 
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
     int heightOffset = 0;
     int widthOffset = 0;
 
+    // maintain original aspect ratio
     if ((double)imgWidth / imgHeight > (double)width / height) {
 	// image width is too large; bound on width
 	int newHeight = (int)(width * (double)imgHeight / imgWidth);
@@ -219,15 +231,18 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
     if (width <= 0) width = 1;
     if (height <= 0) height = 1;
 
+    // resize to fit location constraints
     resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
+    // copy pixels into final img with position offsets
     for(int r = 0; r < height; r++) {
 	for(int c = 0; c < width; c++) {
-	    for(int i=0; i<3; i++) {
-		cv::Vec3b color = resized_image.at<cv::Vec3b>(cv::Point(c,r));
-		if (color[0] < 240 && color[1] < 240 && color[2] < 240) {
-		    img.at<cv::Vec3b>(cv::Point(c+widthOffset,r+heightOffset)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
-		}
+	    // extract bgra
+	    cv::Vec4b color = resized_image.at<cv::Vec4b>(cv::Point(c,r));
+	    if (color[3]) {
+		// draw pixel, eliminate alpha component of blend
+		cv::Vec3b color_noAlpha(color[0], color[1], color[2]);
+		img.at<cv::Vec3b>(cv::Point(c+widthOffset,r+heightOffset)) = color_noAlpha;
 	    }
 	}
     }
