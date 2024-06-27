@@ -94,7 +94,6 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
     // Crop the image to the bounding rectangle
     cv::Mat lilImage = imageRaw(bounding_rect);
 
-#if 0
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
     int heightOffset = 0;
@@ -111,7 +110,6 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
 	widthOffset = (width - newWidth) / 2;
 	width = newWidth;
     }
-#endif
 
     cv::Mat resized_image;
 
@@ -125,7 +123,7 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
 	for (int c = 0; c < width; c++) {
 	    cv::Vec3b color = resized_image.at<cv::Vec3b>(cv::Point(c,r));
 	    if (!(color[0] >= threshold && color[1] >= threshold && color[2] >= threshold)) {
-		img.at<cv::Vec3b>(cv::Point(c+x,r+y)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
+		img.at<cv::Vec3b>(cv::Point(c+x+widthOffset,r+y+heightOffset)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
 	    }
 	}
     }
@@ -195,7 +193,6 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
     // Crop the image to the bounding rectangle
     cv::Mat lilImage = imageRaw(bounding_rect);
 
-#if 0
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
     int heightOffset = 0;
@@ -212,7 +209,9 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
 	widthOffset = (width - newWidth) / 2;
 	width = newWidth;
     }
-#endif
+    // factor in desired starting position
+    heightOffset += y;
+    widthOffset += x;
 
     cv::Mat resized_image;
 
@@ -227,7 +226,7 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
 	    for(int i=0; i<3; i++) {
 		cv::Vec3b color = resized_image.at<cv::Vec3b>(cv::Point(c,r));
 		if (color[0] < 240 && color[1] < 240 && color[2] < 240) {
-		    img.at<cv::Vec3b>(cv::Point(c+x,r+y)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
+		    img.at<cv::Vec3b>(cv::Point(c+widthOffset,r+heightOffset)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
 		}
 	    }
 	}
