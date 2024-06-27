@@ -922,7 +922,7 @@ InformationGatherer::getModelLogoPath()
      * and returns the appropriate path to its logo. But as of now, only BRL-CAD
      * files are supported by gist.
      */
-    const char* BRL_LOGO_FILE = "brlLogoW.png";
+    const char* BRL_LOGO_FILE = "brlLogo-nobg.png";
 
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, BU_DIR_DATA, "images", BRL_LOGO_FILE, NULL)) {

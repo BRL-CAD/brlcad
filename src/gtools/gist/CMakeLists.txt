@@ -50,7 +50,7 @@ if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
   )
 endif (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
-BRLCAD_ADDDATA(assets/brlLogoW.png images)
+BRLCAD_ADDDATA(assets/brlLogo-nobg.png images)
 
 # Local Variables:
 # tab-width: 8
