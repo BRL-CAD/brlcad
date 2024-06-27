@@ -92,12 +92,21 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
     cv::Mat mask;
     cv::threshold(gray_image, mask, threshold, 255, cv::THRESH_BINARY_INV);
 
-    // create 4-channel RGBA - using mask as alpha
-    std::vector<cv::Mat> split_raw(3);
-    cv::split(imageRaw, split_raw);
-    split_raw.push_back(mask);
+    // if image doesn't have alpha, manually try to mask out background
     cv::Mat alphaRaw(imageRaw.rows, imageRaw.cols, CV_8UC4);
-    cv::merge(split_raw, alphaRaw);
+    if (imageRaw.channels() == 3) {	    // BGR
+	// create 4-channel RGBA - using mask as alpha
+	std::vector<cv::Mat> split_raw(3);
+	cv::split(imageRaw, split_raw);
+	split_raw.push_back(mask);
+	cv::merge(split_raw, alphaRaw);
+    } else if (imageRaw.channels() == 4) {  // BGR-A
+	// input image already has alpha channel
+	alphaRaw = imageRaw;
+    } else {
+	bu_log("WARNING: error loading image (%s)\n", imgPath.c_str());
+	return;
+    }
 
     // Find the bounding rectangle of non-white pixels
     cv::Rect bounding_rect = boundingRect(mask);
@@ -125,12 +134,11 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
     heightOffset += y;
     widthOffset += x;
 
-    cv::Mat resized_image;
-
     // prevent crashes
     if (width <= 0) width = 1;
     if (height <= 0) height = 1;
 
+    cv::Mat resized_image;
     // resize to fit location constraints
     resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
