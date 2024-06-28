@@ -305,17 +305,18 @@ InformationGatherer::getMainComp()
         return;
     }
 
-    const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
+    // get top level objects
+    const char* cmd[3] = { "tops", "-n", NULL };
 
-    ged_exec(g, 7, cmd);
-    std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::string val;
+    ged_exec(g, 2, cmd);
+    std::istringstream ss(bu_vls_addr(g->ged_result_str));
+    std::string comp;
     std::vector<ComponentData> topComponents;
 
-    while (getline(ss, val)) {
-        int entities = getNumEntities(val);
-        double volume = getBBVolume(val);
-        topComponents.push_back({entities, volume, val});
+    while (ss >> comp) {
+        int entities = getNumEntities(comp);
+        double volume = getBBVolume(comp);
+        topComponents.push_back({entities, volume, comp});
     }
 
     sort(topComponents.rbegin(), topComponents.rend());
