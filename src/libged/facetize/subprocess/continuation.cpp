@@ -174,7 +174,7 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 	    }
 
 	    feature_size = successful_feature_size;
-	    if (bot->faces) {
+	    if (bot && bot->faces) {
 		if (s->cm_options.feature_size <= 0) {
 		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n",  s->cm_options.target_feature_size, (int)bot->num_faces, successful_feature_size);
 		} else {
