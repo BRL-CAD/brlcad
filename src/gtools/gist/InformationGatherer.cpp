@@ -248,24 +248,25 @@ formatDouble(double d)
 
 
 double
-InformationGatherer::getVolume(std::string component)
+InformationGatherer::getBBVolume(std::string component)
 {
-    // Gather dimensions
-    const char* cmd[3] = { "bb", component.c_str(), NULL };
-    ged_exec(g, 2, cmd);
-    std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::string val;
-    int dim_idx = 0;
-    while (ss >> val) {
-        try {
-            double temp = stod(val);
-            dim_idx++;
-            if (dim_idx == 4)
-                return temp;
-        } catch (const std::exception& e){
-            continue;
-        }
+    // Gather bounding box dimensions
+    const char* cmd[4] = { "bb", "-qv", component.c_str(), NULL };
+    ged_exec(g, 3, cmd);
+    std::istringstream ss(bu_vls_addr(g->ged_result_str));
+
+    // output always in form: "Bounding Box Volume: %d units^3"
+    std::string bounding, box, volume, val, units;
+    ss >> bounding >> box >> volume >> val >> units;
+
+    // make sure we parsed string correctly and got valid value
+    try {
+        double bb_value = stod(val);
+        return bb_value;
+    } catch (const std::exception& e){
+        return -1;
     }
+
     return 0;
 }
 
@@ -299,7 +300,7 @@ InformationGatherer::getMainComp()
         }
 
         int entities = getNumEntities(opt->getTopComp());
-        double volume = getVolume(opt->getTopComp());
+        double volume = getBBVolume(opt->getTopComp());
         largestComponents.push_back({entities, volume, opt->getTopComp()});
         return;
     }
@@ -313,7 +314,7 @@ InformationGatherer::getMainComp()
 
     while (getline(ss, val)) {
         int entities = getNumEntities(val);
-        double volume = getVolume(val);
+        double volume = getBBVolume(val);
         topComponents.push_back({entities, volume, val});
     }
 
@@ -337,7 +338,7 @@ InformationGatherer::getMainComp()
 
         while (getline(ss2, val2)) {
             int entities = getNumEntities(val2);
-            double volume = getVolume(val2);
+            double volume = getBBVolume(val2);
             topComponents2.push_back({entities, volume, val2});
         }
 
@@ -391,7 +392,7 @@ InformationGatherer::getSubComp()
     std::vector<ComponentData> subComps;
 
     while (ss >> comp >> numEntities) {
-        double volume = getVolume(comp);
+        double volume = getBBVolume(comp);
         subComps.push_back({numEntities, volume, comp});
     }
     sort(subComps.rbegin(), subComps.rend());

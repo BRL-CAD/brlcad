@@ -63,7 +63,7 @@ private:
     struct ged* g;
     std::map<std::string, std::string> infoMap;
     std::map<std::string, Unit> unitsMap;
-    double getVolume(std::string component);
+    double getBBVolume(std::string component);
     int getNumEntities(std::string component);
     void getMainComp();
     void getSubComp();
