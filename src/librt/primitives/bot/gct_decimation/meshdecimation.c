@@ -3953,7 +3953,8 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 
     if (mesh.updatestatusflag) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_STORE, &status);
-	operation->statuscallback(operation->statusopaquepointer, &status);
+	if (operation->statuscallback)
+	   operation->statuscallback(operation->statusopaquepointer, &status);
     }
 
     /* Write out the final mesh */
@@ -3969,7 +3970,8 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 
     if (mesh.updatestatusflag) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_DONE, &status);
-	operation->statuscallback(operation->statusopaquepointer, &status);
+	if (operation->statuscallback)
+	   operation->statuscallback(operation->statusopaquepointer, &status);
     }
 
     /* Free all global data */
