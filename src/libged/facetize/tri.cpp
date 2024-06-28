@@ -448,6 +448,9 @@ tess_avail_methods()
 int
 tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int ocnt)
 {
+    if (!s || !tess_cmd || !tess_cmd[3])
+	return BRLCAD_ERROR;
+
     std::string wfile(tess_cmd[3]);
     std::string wfilebak = wfile + std::string(".bak");
     {
