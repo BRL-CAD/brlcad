@@ -291,10 +291,10 @@ InformationGatherer::getMainComp()
     if (!topcomp.empty()) {
 	const char *topname = topcomp.c_str();
         // check if main comp exists
-        const char* cmd[3] = { "l", topname, NULL };
+        const char* cmd[3] = { "exists", topname, NULL };
         ged_exec(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
-        if (res.size() == 0) {
+        if (res != "1") {
             bu_exit(BRLCAD_ERROR, "Coult not find component (%s), aborting.\n", topname);
         }
 
