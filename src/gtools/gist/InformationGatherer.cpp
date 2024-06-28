@@ -271,18 +271,15 @@ InformationGatherer::getBBVolume(std::string component)
 }
 
 int
-InformationGatherer::getNumEntities(std::string UNUSED(component))
+InformationGatherer::getNumEntities(std::string component)
 {
-    // Find number of entities
-    const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
-    ged_exec(g, 7, cmd);
-    std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::string val;
-    int entities = 0;
-    while (getline(ss, val)) {
-        entities++;
-    }
-    return entities;
+    // Find number of unioned entities
+    // TODO/NOTE: is union the best heuristic for 'entities'?
+    struct directory* dp = db_lookup(g->dbip, component.c_str(), LOOKUP_QUIET);
+    const char* filter = "-bool u";
+    int entities = db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, filter, 1, &dp, g->dbip, NULL);
+
+    return entities > 0 ? entities : 0; // clamp errors to 0
 }
 
 void
