@@ -38,16 +38,11 @@ enum class KState {
     Include,
     Node,
     Element_Shell,
+    Element_Solid,
     Part,
     Part_Adaptive_Failure,
-    Section_Shell
-};
-
-
-enum class ReadFormat {
-    Standard,
-    Long,
-    I10
+    Section_Shell,
+    Section_Solid
 };
 
 
@@ -79,28 +74,12 @@ static std::vector<std::string> read_line_node_standard
     const char* line
 ) {
     std::vector<std::string> ret;
-    bool commaSeparated = false;
 
     if (line != nullptr) {
 	std::string temp;
 
-	if (strchr(line, ',') != nullptr) {
-	    commaSeparated = true;
-	}
-
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if (line[i] == ',') {
-		if (temp.size() > 0) {
-		    ret.push_back(temp);
-		    temp.clear();
-		}
-		else
-		    ret.push_back("0");
-
-		continue;
-	    }
-
-	    if (((i == 8) || (i == 24) || (i == 40) || (i == 56) || (i == 64) || (i == 72)) && !commaSeparated) {
+	    if ((i == 8) || (i == 24) || (i == 40) || (i == 56) || (i == 64) || (i == 72)) {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
@@ -108,9 +87,6 @@ static std::vector<std::string> read_line_node_standard
 		    if (!(line[i] == ' ')) {
 			temp += line[i];
 		    }
-		}
-		else if (temp.size() == 0) {
-		    ret.push_back("0");
 		}
 		else
 		    continue;
@@ -127,172 +103,6 @@ static std::vector<std::string> read_line_node_standard
 
 	if (temp.size() > 0)
 	    ret.push_back(temp);
-    }
-
-    if (ret.size() < 6) {
-	for (size_t i_0 = ret.size(); i_0 < 6 ; ++i_0) {
-	    ret.push_back("0");
-	}
-    }
-
-    return ret;
-}
-
-// Long node line format is I20,3E20.0,2F20.0  (20 digit integer, 3x 20 digit doubles, 2x 20 digit floats).
-static std::vector<std::string> read_line_node_long
-(
-    const char* line
-) {
-    std::vector<std::string> ret;
-    bool commaSeparated = false;
-
-    if (line != nullptr) {
-	std::string temp;
-
-	if (strchr(line, ',') != nullptr) {
-	    commaSeparated = true;
-	}
-
-	for (size_t i = 0; i < strlen(line); ++i) {
-	    if (line[i] == ',') {
-		if (temp.size() > 0) {
-		    ret.push_back(temp);
-		    temp.clear();
-		}
-		else
-		    ret.push_back("0");
-
-		continue;
-	    }
-
-	    if (((i == 20) || (i == 40) || (i == 60) || (i == 80) || (i == 100) || (i == 120)) && !commaSeparated) {
-		if (temp.size() > 0) {
-		    ret.push_back(temp);
-		    temp.clear();
-
-		    if (!(line[i] == ' ')) {
-			temp += line[i];
-		    }
-		}
-		else if (temp.size() == 0) {
-		    ret.push_back("0");
-		}
-		else
-		    continue;
-	    }
-	    else if ((line[i] == ' ')) {
-		continue;
-	    }
-	    else if ((line[i] == '\t')) {
-		break;
-	    }
-	    else
-		temp += line[i];
-	}
-
-	if (temp.size() > 0)
-	    ret.push_back(temp);
-    }
-
-    if (ret.size() < 6) {
-	for (size_t i_0 = ret.size(); i_0 < 6; ++i_0) {
-	    ret.push_back("0");
-	}
-    }
-
-    return ret;
-}
-
-// I10 node line format is I10,3E16.0,2F10.0 (10 digit integer, 3x 16 digit doubles, 2x 10 digit floats).
-static std::vector<std::string> read_line_node_i10
-(
-    const char* line
-) {
-    std::vector<std::string> ret;
-    bool commaSeparated = false;
-
-    if (line != nullptr) {
-	std::string temp;
-
-	if (strchr(line, ',') != nullptr) {
-	    commaSeparated = true;
-	}
-
-	for (size_t i = 0; i < strlen(line); ++i) {
-	    if (line[i] == ',') {
-		if (temp.size() > 0) {
-		    ret.push_back(temp);
-		    temp.clear();
-		}
-		else
-		    ret.push_back("0");
-
-		continue;
-	    }
-
-	    if (((i == 10) || (i == 26) || (i == 42) || (i == 58) || (i == 68) || (i == 78)) && !commaSeparated) {
-		if (temp.size() > 0) {
-		    ret.push_back(temp);
-		    temp.clear();
-
-		    if (!(line[i] == ' ')) {
-			temp += line[i];
-		    }
-		}
-		else if (temp.size() == 0) {
-		    ret.push_back("0");
-		}
-		else
-		    continue;
-	    }
-	    else if ((line[i] == ' ')) {
-		continue;
-	    }
-	    else if ((line[i] == '\t')) {
-		break;
-	    }
-	    else
-		temp += line[i];
-	}
-
-	if (temp.size() > 0)
-	    ret.push_back(temp);
-    }
-
-    if (ret.size() < 6) {
-	for (size_t i_0 = ret.size(); i_0 < 6; ++i_0) {
-	    ret.push_back("0");
-	}
-    }
-
-    return ret;
-}
-
-
-std::pair<std::string, std::string> split_key
-(
-    const char* key
-) {
-    std::pair<std::string, std::string> ret;
-
-    if (key != nullptr) {
-	std::string temp;
-
-	for (size_t i = 0; i < strlen(key); ++i) {
-	    if (key[i] == '=' ) {
-		if (temp.size() > 0) {
-		    ret.first = temp;
-		    temp.clear();
-		}
-	    }
-	    else if (key[i] != '=') {
-		temp += key[i];
-	    }
-	}
-
-	if (temp.size() > 0) {
-	    ret.second = temp;
-	}
     }
 
     return ret;
@@ -309,7 +119,7 @@ static std::vector<std::string> parse_line
 	std::string temp;
 
 	for (size_t i = 0; i < strlen(line); ++i) {
-	    if ((line[i] == ' ') || (line[i] == '\t') || (line[i] == ',')) {
+	    if ((line[i] == ' ') || (line[i] == '\t')) {
 		if (temp.size() > 0) {
 		    ret.push_back(temp);
 		    temp.clear();
@@ -376,9 +186,6 @@ bool parse_k
 	std::string              sectionTitle;
 	int                      sectionId        = -1;
 	std::string              line             = read_line(is);
-	ReadFormat               fileFormat       = ReadFormat::Standard;
-	ReadFormat               nodeFormat       = ReadFormat::Standard;
-	std::vector<std::string> nodeLines;//in old .k files a node with Long format is split in two lines.
 	std::vector<std::string> tokens;
 
 	if (line.size() > 0)
@@ -412,29 +219,13 @@ bool parse_k
 				state = KState::Node;
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
-
-			    if (tokens.size() == 1) {
-				nodeFormat = fileFormat;
-			    }
-			    else if (tokens.size() == 2) {
-				if (tokens[1][0] == '-') {
-				    nodeFormat = ReadFormat::Standard;
-				}
-				else if (tokens[1][0] == '+') {
-				    nodeFormat = ReadFormat::Long;
-				}
-				else if (tokens[1][0] == '%') {
-				    nodeFormat = ReadFormat::I10;
-				}
-				else
-				    std::cout << "Unhandeled format" << tokens[1] << "in k-file" << fileName << "\n";
-			    }
-			    else
-				std::cout << "Unhandeled node format in k-file" << fileName << "\n";
 			}
 			else if (command[0] == "ELEMENT") {
 			    if ((command.size() == 2) && (command[1] == "SHELL"))
 				state = KState::Element_Shell;
+			    else if ((command.size() == 2) && (command[1] == "SOLID")) {
+				state = KState::Element_Solid;
+			    }
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 			}
@@ -465,25 +256,20 @@ bool parse_k
 				else
 				    sectionLinesRead = 1;
 			    }
-			    else
-				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
-			}
-			else if (command[0] == "KEYWORD") {
-			    if (tokens.size() > 1) {
-				for (size_t i = 1; i < tokens.size(); ++i) {
-				    std::pair<std::string, std::string> format = split_key((tokens[i]).c_str());
+			    else if (command[1] == "SOLID") {
+				state        = KState::Section_Solid;
+				sectionTitle = "";
+				sectionId    = -1;
 
-				    if (format.first == "LONG") {
-					fileFormat = ReadFormat::Long;
-				    }
-				    else if (format.first == "I10") {
-					fileFormat = ReadFormat::I10;
-					break;
-				    }
+				if (command.size() == 3) {
+				    if (command[2] == "TITLE")
+					sectionLinesRead = 0;
+				    else
+					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 				}
 			    }
 			    else
-				fileFormat = ReadFormat::Standard;
+				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 			}
 		    }
 
@@ -498,36 +284,7 @@ bool parse_k
 			break;
 
 		    case KState::Node: {
-			if (nodeFormat == ReadFormat::Standard) {
-			    tokens = read_line_node_standard(line.c_str());
-			}
-			else if (nodeFormat == ReadFormat::Long) {
-			    std::vector<std::string> tempLine = read_line_node_long(line.c_str());
-
-			    if (nodeLines.size() == 0) {
-				if (tempLine.size() == 4) {
-				    nodeLines = tempLine;
-				    break;
-				}
-				else if (tempLine.size() == 6) {
-				    tokens = tempLine;
-				}
-				else
-				    std::cout << "Error a node with Long format can be written in one line of 6 variables or split in two lines, the first line should contain 4 variables ";
-			    }
-			    else{
-				if (tempLine.size() == 2) {
-				    nodeLines.insert(nodeLines.end(), tempLine.begin(), tempLine.end());
-				    tokens = nodeLines;
-				    nodeLines.clear();
-				}
-				else
-				    std::cout << "Error a node with Long format should be split in two lines, the second line should contain 2 variables";
-			    }
-			}
-			else if (nodeFormat == ReadFormat::I10) {
-			    tokens = read_line_node_i10(line.c_str());
-			}
+			tokens = read_line_node_standard(line.c_str());
 
 			if (tokens.size() < 4) {
 			    std::cout << "Too short NODE in k-file " << fileName << "\n";
@@ -566,11 +323,35 @@ bool parse_k
 
 			KElement element;
 
-			element.node1 = stoi(tokens[2]);
-			element.node2 = stoi(tokens[3]);
-			element.node3 = stoi(tokens[4]);
-			element.node4 = stoi(tokens[5]);
+			for (int i_n = 0; i_n < 4; ++i_n) {
+			    element.nodes.push_back(stoi(tokens[i_n + FIRST_NODE]));
+			}
 
+			data.elements[eid] = element;
+
+			int pid = stoi(tokens[1]);
+			data.parts[pid].elements.insert(eid);
+			break;
+		    }
+
+		    case KState::Element_Solid: {
+			if (tokens.size() < 10) {
+			    std::cout << "Too short ELEMENT_SOLID in k-file " << fileName << "\n";
+			    break;
+			}
+
+			int eid = stoi(tokens[0]);
+
+			if (data.elements.find(eid) != data.elements.end()) {
+			    std::cout << "Duplicated ELEMENT ID" << eid << "in k-file " << fileName << "\n";
+			}
+
+			KElement element;
+
+			for (int i_n = 0; i_n < 8; ++i_n) {
+			    element.nodes.push_back(stoi(tokens[i_n + FIRST_NODE]));
+			}
+			
 			data.elements[eid] = element;
 
 			int pid = stoi(tokens[1]);
@@ -649,6 +430,31 @@ bool parse_k
 
 			default:
 			    std::cout << "Unexpected SECTION length in k-file " << fileName << "\n";
+			}
+
+			++sectionLinesRead;
+			break;
+		    }
+		    case KState::Section_Solid: {
+			switch (sectionLinesRead) {
+			case 0:
+			    sectionTitle = line;
+			    break;
+
+			case 1: {
+			    if (tokens.size() == 0) {
+				std::cout << "Too short SECTION in k-file " << fileName << "\n";
+				break;
+			    }
+
+			    sectionId = stoi(tokens[0]);
+			    data.sections[sectionId].title = sectionTitle;
+			    break;
+			}
+
+			default:
+			    std::cout << "Unexpected SECTION length in k-file " << fileName << "\n";
+
 			}
 
 			++sectionLinesRead;
