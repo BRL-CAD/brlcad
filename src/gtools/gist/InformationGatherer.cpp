@@ -122,116 +122,78 @@ parseMass(std::string res)
 void
 getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &UNUSED(hasDensities), double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
 {
-    //Get tops
-    {
-	const char* cmd[3] = { "tops", NULL, NULL };
-	ged_exec(g, 1, cmd);
-    }
-    std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::string val;
-    std::map<std::string, bool> listed;
-    std::vector<std::string> toVisit;
-    while (ss >> val) {
-        //Get surface area
-        getSurfaceArea(opt, map, "0", "0", val, surfArea00, lUnit);
-        getSurfaceArea(opt, map, "0", "90", val, surfArea090, lUnit);
-        getSurfaceArea(opt, map, "90", "0", val, surfArea900, lUnit);
-        //Next, get regions underneath to calculate volume and mass
-	{
-	    const char* cmd[3] = { "l", val.c_str(), NULL };
-	    ged_exec(g, 2, cmd);
-	}
-        std::stringstream ss2(bu_vls_addr(g->ged_result_str));
-        std::string val2;
-        std::getline(ss2, val2); // ignore first line
-        //Get initial regions
-        while (getline(ss2, val2)) {
-            //Parse components
-            val2 = val2.erase(0, val2.find_first_not_of(" ")); // left trim
-            val2 = val2.erase(val2.find_last_not_of(" ") + 1); // right trim
-            if (val2[0] == 'u') {
-                val2 = val2.substr(val2.find(' ') + 1); // extract out u
-                val2 = val2.substr(0, val2.find('['));
-                if (val2.find(' ') != std::string::npos) {
-                    val2 = val2.substr(0, val2.find(' '));
-                }
-                std::map<std::string, bool>::iterator it;
-                it = listed.find(val2);
-                if (it == listed.end()) {
-                    listed[val2] = true;
-                    toVisit.push_back(val2);
-                }
-            }
-        }
-    }
+    std::string top_comp = opt->getTopComp();
+    std::string in_file = opt->getInFile();
 
+    //Get surface area
+    getSurfaceArea(opt, map, "0", "0", top_comp, surfArea00, lUnit);
+    getSurfaceArea(opt, map, "0", "90", top_comp, surfArea090, lUnit);
+    getSurfaceArea(opt, map, "90", "0", top_comp, surfArea900, lUnit);
+
+    //Get Volume and Mass (using gqa)
+    const std::string no_density_msg = "Could not find any density information";
     std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
     std::string units = lUnit + ",cu " + lUnit + "," + mUnit;
-    std::string in_file = opt->getInFile();
     struct bu_process* p;
     int read_cnt = 0;
     char buffer[1024] = {0};
     std::string result = "";
-    std::string no_density_msg = "Could not find any density information";
 
-    for (size_t i = 0; i < toVisit.size(); i++) {
-        std::string vval = toVisit[i];
-        /* Get volume and mass */
-        const char* vol_av[10] = { gqa.c_str(),
-                                   "-Avm",
-                                   "-q",
-                                   "-g", "2",
-                                   "-u", units.c_str(),
-                                   in_file.c_str(),
-                                   vval.c_str(),
-                                   NULL };
+    // attempt to get volume and mass in same run
+    const char* gqa_av[10] = { gqa.c_str(),
+                                "-Avm",
+                                "-q",
+                                "-g", "2",
+                                "-u", units.c_str(),
+                                in_file.c_str(),
+                                top_comp.c_str(),
+                                NULL };
 
-        bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
-	if (bu_process_pid(p) <= 0) {
-            bu_exit(BRLCAD_ERROR, "Problem in getVerificationData process creation, aborting\n");
-        }
-
-        result = "";
-        read_cnt = 0;
-        while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
-            buffer[read_cnt] = '\0';
-            result += buffer;
-        }
-
-        if (bu_process_wait_n(&p, 0) != 0) {
-            continue;
-        }
-
-        // attempt to get both volume and mass in the same run - 
-        // make sure we did not get 'no density file' error message
-        if (result.find(no_density_msg) == std::string::npos) {
-            volume += parseVolume(result);
-            mass += parseMass(result);
-            continue;
-        }
-
-
-        // no density data found. need to re-run, only getting volume data
-        vol_av[1] = "-Av";
-        bu_process_create(&p, vol_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
-
-	if (bu_process_pid(p) <= 0) {
-            bu_exit(BRLCAD_ERROR, "Problem with getVerificationData volume, aborting\n");
-        }
-
-        result = "";
-        read_cnt = 0;
-        while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
-            buffer[read_cnt] = '\0';
-            result += buffer;
-        }
-
-        if (bu_process_wait_n(&p, 0) != 0)
-            continue;
-
-        volume += parseVolume(result);
+    if (bu_process_pid(p) <= 0) {
+        bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
     }
+
+    result = "";
+    read_cnt = 0;
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
+        buffer[read_cnt] = '\0';
+        result += buffer;
+    }
+
+    if (bu_process_wait_n(&p, 0) != 0) {
+        bu_exit(BRLCAD_ERROR, "Problem collecting gqa volume and mass, aborting\n");
+    }
+
+    // make sure we did not get 'no density file' error message
+    if (result.find(no_density_msg) == std::string::npos) {
+        volume += parseVolume(result);
+        mass += parseMass(result);
+        return;
+    }
+
+
+    // no density data found. need to re-run, only getting volume data
+    gqa_av[1] = "-Av";
+    bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+
+    if (bu_process_pid(p) <= 0) {
+        bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
+    }
+
+    result = "";
+    read_cnt = 0;
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
+        buffer[read_cnt] = '\0';
+        result += buffer;
+    }
+
+    if (bu_process_wait_n(&p, 0) != 0) {
+        bu_exit(BRLCAD_ERROR, "Problem collecting gqa volume, aborting\n");
+    }
+
+    volume += parseVolume(result);
 }
 
 std::string
@@ -497,8 +459,11 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     getSubComp();
 
     // got largest component. Following information gathering should use it
-    const char* largestCompName = largestComponents[0].name.c_str();
-    struct directory *dp = db_lookup(g->dbip, largestCompName, LOOKUP_QUIET);
+    if (opt->getTopComp().empty()) {
+        // if largestComponent was auto generated, set top comp for consistency
+        opt->setTopComp(largestComponents[0].name);
+    }
+    struct directory *dp = db_lookup(g->dbip, opt->getTopComp().c_str(), LOOKUP_QUIET);
 
     // load bb dimensions in infoMap and unitsMap
     double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
