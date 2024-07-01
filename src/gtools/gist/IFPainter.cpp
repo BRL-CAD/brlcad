@@ -591,14 +591,14 @@ void
 IFPainter::openInGUI()
 {
     cv::String win_name("Report Preview");
-    cv::namedWindow(win_name, cv::WINDOW_AUTOSIZE);
+    cv::namedWindow(win_name, cv::WINDOW_NORMAL);
     cv::moveWindow(win_name, 0, 0);
     cv::imshow(win_name, this->img);
 
     cv::waitKey(0); //wait infinite time for a keypress
 
     try {
-	cv::destroyWindow(win_name);
+	cv::destroyAllWindows();
     } catch (std::exception& e) {
     }
 }
