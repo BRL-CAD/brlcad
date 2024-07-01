@@ -29,14 +29,11 @@
 
 
 Solid::Solid(void):name() {
-    //arb_internal.magic = RT_ARBN_INTERNAL_MAGIC;
-    arb_internal.magic = RT_ARB_INTERNAL_MAGIC;
+
 }
 
-Solid::~Solid(void)
-{
-    /*if (arb_internal.pt != nullptr)
-	bu_free(arb_internal.pt, "Solid::~Solid: pt");*/
+Solid::~Solid(void){
+
 }
 
 void Solid::setName(const char* value)
@@ -44,45 +41,28 @@ void Solid::setName(const char* value)
     name = value;
 }
 
-void Solid::addNodes(
-    const point_t& point1,
-    const point_t& point2,
-    const point_t& point3,
-    const point_t& point4,
-    const point_t& point5,
-    const point_t& point6,
-    const point_t& point7,
-    const point_t& point8
-) {
-    VSET(arb_internal.pt[0], point1[0], point1[1], point1[2]);
-    VSET(arb_internal.pt[1], point2[0], point2[1], point2[2]);
-    VSET(arb_internal.pt[2], point3[0], point3[1], point3[2]);
-    VSET(arb_internal.pt[3], point4[0], point4[1], point4[2]);
-    VSET(arb_internal.pt[4], point5[0], point5[1], point5[2]);
-    VSET(arb_internal.pt[5], point6[0], point6[1], point6[2]);
-    VSET(arb_internal.pt[6], point7[0], point7[1], point7[2]);
-    VSET(arb_internal.pt[7], point8[0], point8[1], point8[2]);
- //   for (int i = 0; i < nodes.size(); ++i) {
-	////VSET(arb_internal.pt[i], nodes[i][1],nodes[i][2],nodes[i][3]);
- //   }
+void Solid::addArb(Arb arb)
+{
+    arbs.push_back(arb);
 }
+
+
 
 const char* Solid::getName(void) const
 {
     return name.c_str();
 }
 
+std::vector<Arb> Solid::getArbs(void) const
+{
+    return arbs;
+}
+
 void Solid::write(rt_wdb* wdbp)
 {
-    rt_arb_internal* arb_wdb;
-
-    BU_GET(arb_wdb, rt_arb_internal);
-    arb_wdb->magic = RT_ARB_INTERNAL_MAGIC;
-
-    *arb_wdb = arb_internal;
-
-    wdb_export(wdbp, name.c_str(), arb_wdb, ID_ARB8, 1.);
-
+    for (int i = 0; i < arbs.size(); ++i) {
+	arbs[i].write(wdbp);
+    }
 }
 
 

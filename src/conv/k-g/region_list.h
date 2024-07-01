@@ -31,9 +31,11 @@
 #include <map>
 
 #include "bot.h"
+#include "solid.h"
 
 struct Region {
     Bot                                bot;
+    Solid                              solid;
     std::map<std::string, std::string> attributes;
 };
 
@@ -42,6 +44,7 @@ public:
     RegionList(void);
 
     Bot& addRegion(const std::string& name);
+    Solid& addRegion_solid(const std::string& name);
 
     Bot& getBot(const std::string& name);
 

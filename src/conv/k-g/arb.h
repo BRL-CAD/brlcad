@@ -40,7 +40,7 @@ public:
     ~Arb(void);
 
     void        setName(const char* value);
-    //void        setThickness(double value);
+
     void        addNodes(
 			const point_t& point1,
 			const point_t& point2,
@@ -57,7 +57,7 @@ public:
 private:
     std::string     name;
     rt_arb_internal arb_internal;
-    //double          thickness;
+
 };
 
 

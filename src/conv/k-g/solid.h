@@ -32,6 +32,7 @@
 
 #include "vmath.h"
 #include "rt/wdb.h"
+#include "arb.h"
 
 
 class Solid {
@@ -40,24 +41,18 @@ public:
     ~Solid(void);
 
     void        setName(const char* value);
-    //void        setThickness(double value);
-    void        addNodes(
-			const point_t& point1,
-			const point_t& point2,
-			const point_t& point3,
-			const point_t& point4,
-			const point_t& point5,
-			const point_t& point6,
-			const point_t& point7,
-			const point_t& point8);
 
-    const char* getName(void) const;
+    void        addArb(Arb arb);
+
+    const char*             getName(void) const;
+    std::vector<Arb>        getArbs(void) const;
+
     void        write(rt_wdb* wdbp);
 
 private:
     std::string     name;
-    rt_arb_internal arb_internal;
-    //double          thickness;
+    std::vector<Arb> arbs;
+
 };
 
 

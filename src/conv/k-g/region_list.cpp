@@ -49,6 +49,20 @@ Bot& RegionList::addRegion
 }
 
 
+Solid& RegionList::addRegion_solid
+(
+    const std::string& name
+) {
+    Solid& ret = m_list[name].solid;
+
+    std::string solidName(name);
+    solidName += ".s";
+    ret.setName(solidName.c_str());
+
+    return ret;
+}
+
+
 void RegionList::setAttributes
 (
     const std::string&                        name,
@@ -102,12 +116,20 @@ void RegionList::create
 	const std::string&                 region_name              = it->first;
 	Region&                            region                   = it->second;
 	Bot&                               bot                      = region.bot;
+	Solid                              solid                    = region.solid;
 	const std::map<std::string, std::string>& region_attributes = region.attributes;
 
 	bot.write(wdbp);
+	solid.write(wdbp);
 
 	wmember bot_head;
 	BU_LIST_INIT(&bot_head.l);
+
+	std::vector<Arb> arbs = solid.getArbs();
+
+	for (int i = 0; i < arbs.size(); ++i) {
+	    mk_addmember(arbs[i].getName(), &(all_head.l), NULL, WMOP_UNION);
+	}
 
 	mk_addmember(bot.getName(), &(bot_head.l), NULL, WMOP_UNION);
 	mk_lfcomb(wdbp, region_name.c_str(), &bot_head, 0);
