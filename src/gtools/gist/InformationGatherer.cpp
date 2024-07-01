@@ -122,7 +122,7 @@ parseMass(std::string res)
 
 
 void
-getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &UNUSED(hasDensities), double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
+getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &UNUSED(hasDensities), double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
 {
     std::string top_comp = opt->getTopComp();
     std::string in_file = opt->getInFile();
@@ -491,7 +491,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     // gather groups and regions
     const char* sFilter = "-above -type region";
     if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
-        int res_len = BU_PTBL_LEN(&results);
+        res_len = BU_PTBL_LEN(&results);
         infoMap["assemblies"] = std::to_string(res_len);
         totalEntities += res_len;
     }
