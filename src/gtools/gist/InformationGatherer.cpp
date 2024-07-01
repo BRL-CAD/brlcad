@@ -37,7 +37,9 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     // Run RTArea to get surface area
     std::string rtarea = getCmdPath(opt->getExeDir(), "rtarea");
     std::string in_file(opt->getInFile());  // need local copy for av array copy
-    const char* rtarea_av[10] = {rtarea.c_str(),
+    const char* rtarea_av[13] = {rtarea.c_str(),
+                                 "-R",
+                                 "-s", "1024",
                                  "-u", unit.c_str(),
                                  "-a", az.c_str(),
                                  "-e", el.c_str(),
