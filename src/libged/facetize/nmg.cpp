@@ -178,6 +178,11 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 
     struct _ged_facetize_logging_state *log_s;
     BU_GET(log_s, struct _ged_facetize_logging_state);
+    BU_GET(log_s->nmg_log, struct bu_vls);
+    bu_vls_init(log_s->nmg_log);
+    BU_GET(log_s->nmg_log_header, struct bu_vls);
+    bu_vls_init(log_s->nmg_log_header);
+
     s->log_s = log_s;
 
     _facetize_log_nmg(s);
@@ -207,6 +212,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 	/* catch */
 	BU_UNSETJUMP;
 	_facetize_log_default(s);
+	bu_vls_free(log_s->nmg_log_header);
+	bu_vls_free(log_s->nmg_log);
+	BU_PUT(log_s->nmg_log_header, struct _ged_facetize_logging_state);
+	BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	BU_PUT(log_s, struct _ged_facetize_logging_state);
 	s->log_s = NULL;
 	return NULL;
@@ -215,6 +224,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     if (i < 0) {
 	/* Destroy NMG */
 	_facetize_log_default(s);
+	bu_vls_free(log_s->nmg_log_header);
+	bu_vls_free(log_s->nmg_log);
+	BU_PUT(log_s->nmg_log_header, struct _ged_facetize_logging_state);
+	BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	BU_PUT(log_s, struct _ged_facetize_logging_state);
 	s->log_s = NULL;
 	return NULL;
@@ -228,6 +241,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 	    /* catch */
 	    BU_UNSETJUMP;
 	    _facetize_log_default(s);
+	    bu_vls_free(log_s->nmg_log_header);
+	    bu_vls_free(log_s->nmg_log);
+	    BU_PUT(log_s->nmg_log_header, struct _ged_facetize_logging_state);
+	    BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	    BU_PUT(log_s, struct _ged_facetize_logging_state);
 	    s->log_s = NULL;
 	    return NULL;
@@ -247,6 +264,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     }
 
     _facetize_log_default(s);
+    bu_vls_free(log_s->nmg_log_header);
+    bu_vls_free(log_s->nmg_log);
+    BU_PUT(log_s->nmg_log_header, struct _ged_facetize_logging_state);
+    BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
     BU_PUT(log_s, struct _ged_facetize_logging_state);
     s->log_s = NULL;
     return (failed) ? NULL : nmg_model;
