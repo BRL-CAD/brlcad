@@ -431,6 +431,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
     // CHECK
     //Gather primitives, regions, total objects
+    /*
     cmd[0] = "summary";
     ged_exec(g, 1, cmd);
     char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
@@ -446,6 +447,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 	count++;
 	res = strtok(NULL, " ");
     }
+    */
 
 
     // Gather units
@@ -479,9 +481,13 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
     getSubComp();
 
+    // got largest component. Following information gathering should use it
+    const char* largestCompName = largestComponents[0].name.c_str();
+    struct directory *dp = db_lookup(g->dbip, largestCompName, LOOKUP_QUIET);
+
     // Gather dimensions
     cmd[0] = "bb";
-    cmd[1] = largestComponents[0].name.c_str();
+    cmd[1] = largestCompName;
     cmd[2] = NULL;
     ged_exec(g, 2, cmd);
 
@@ -509,30 +515,42 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
         }
     }
 
-    // gather group & assemblies
-    cmd[0] = "search";
-    cmd[1] = largestComponents[0].name.c_str();
-    cmd[2] = "-above";
-    cmd[3] = "-type";
-    cmd[4] = "region";
-    cmd[5] = NULL;
-    ged_exec(g, 5, cmd);
-    infoMap["groups_assemblies"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
-
+    //Gather entity counts
+    // init infoMap incase searches fail
+    infoMap["assemblies"] = "ERROR";
+    infoMap["primitives"] = "ERROR";
+    infoMap["regions"] = "ERROR";
+    struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+    int res_len = 0;
+    int totalEntities = 0;
+    // gather groups and regions
+    const char* sFilter = "-above -type region";
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+        int res_len = BU_PTBL_LEN(&results);
+        infoMap["assemblies"] = std::to_string(res_len);
+        totalEntities += res_len;
+    }
+    db_search_free(&results);
+    res_len = 0;
     // gather primitive shapes
-    cmd[2] = "-not";
-    cmd[3] = "-type";
-    cmd[4] = "comb";
-    cmd[5] = NULL;
-    ged_exec(g, 5, cmd);
-    infoMap["primitives_mged"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
-
+    sFilter = "-not -type region -and -not -type comb";
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+        res_len = BU_PTBL_LEN(&results);
+        infoMap["primitives"] = std::to_string(res_len);
+        totalEntities += res_len;
+    }
+    db_search_free(&results);
+    res_len = 0;
     // gather primitive shapes
-    cmd[2] = "-type";
-    cmd[3] = "region";
-    cmd[4] = NULL;
-    ged_exec(g, 4, cmd);
-    infoMap["regions_parts"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
+    sFilter = "-type region";
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+        res_len = BU_PTBL_LEN(&results);
+        infoMap["regions"] = std::to_string(res_len);
+        totalEntities += res_len;
+    }
+    db_search_free(&results);
+    // store total
+    infoMap.insert(std::pair<std::string, std::string>("total", std::to_string(totalEntities)));
 
     //Gather volume and mass
     double volume = 0;
@@ -581,33 +599,24 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     bool hasExplicit = false;
     bool hasImplicit = false;
     const char* tfilter = "-type brep -or -type bot -or -type vol -or -type sketch";
-    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+
+    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL) > 0) {
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep -not -type bot -not -type vol -not -type sketch";
-    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL) > 0) {
         hasImplicit = true;
     }
+
     if (hasExplicit && hasImplicit) {
         infoMap.insert(std::pair<std::string, std::string>("representation", "Hybrid (Explicit and Implicit)"));
-    }
-    else if (hasImplicit) {
+    } else if (hasImplicit) {
         infoMap.insert(std::pair<std::string, std::string>("representation", "Implicit w/ Booleans"));
-    }
-    else if (hasExplicit) {
+    } else if (hasExplicit) {
         infoMap.insert(std::pair<std::string, std::string>("representation", "Explicit Boundary"));
-    }
-    else {
+    } else {
         infoMap.insert(std::pair<std::string, std::string>("representation", "ERROR: Type Unknown"));
     }
-
-    //Gather assemblies
-    tfilter = "-above -type region";
-    int assemblies = db_search(NULL, 0, tfilter, 0, 0, g->dbip, NULL);
-    infoMap.insert(std::pair<std::string, std::string>("assemblies", std::to_string(assemblies)));
-
-    //Gather entity total
-    infoMap.insert(std::pair<std::string, std::string>("total", std::to_string(assemblies + stoi(infoMap["primitives"]) + stoi(infoMap["regions"]))));
 
     //Close database
     ged_close(g);
