@@ -190,7 +190,7 @@ _ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *
     if (!s)
 	return BRLCAD_ERROR;
 
-    struct db_i *dbip = s->gedp->dbip;
+    struct db_i *dbip = s->dbip;
     int resume = s->resume;
 
     if (!bu_vls_strlen(s->wfile)) {
@@ -476,7 +476,7 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
     if (!s)
 	return;
 
-    struct db_i *dbip = s->gedp->dbip; 
+    struct db_i *dbip = s->dbip;
 
     bu_log("\nPrimitive tessellation summary:\n\n");
     std::map<std::string, std::set<std::string>> method_sets;

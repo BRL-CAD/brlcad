@@ -296,7 +296,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc) {
 	dpa = (struct directory **)bu_calloc(argc+1, sizeof(struct directory *), "dp array");
-	int nonexist_obj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+	int nonexist_obj_cnt = _ged_sort_existing_objs(gedp->dbip, argc, argv, dpa);
 	if (nonexist_obj_cnt) {
 	    int i;
 	    bu_vls_printf(gedp->ged_result_str, "Object argument(s) supplied to lint that do not exist in the database:\n");

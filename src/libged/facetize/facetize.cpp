@@ -88,6 +88,7 @@ _ged_facetize_state_create()
     s->make_nmg = 0;
     s->nonovlp_brep = 0;
     s->no_fixup = 0;
+    s->nmg_booleval = 0;
 
     s->wdir = NULL;
 
@@ -175,21 +176,20 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
 int
 _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 {
-    struct ged *gedp = s->gedp;
     int ret = BRLCAD_ERROR;
     int newobj_cnt, i;
     const char *oname = NULL;
     const char *av[2];
     struct directory **dpa = NULL;
     struct directory *idpa[2];
-    struct db_i *dbip = gedp->dbip;
+    struct db_i *dbip = s->dbip;
 
     RT_CHECK_DBI(dbip);
 
     if (argc < 0) return BRLCAD_ERROR;
 
     dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+    newobj_cnt = _ged_sort_existing_objs(dbip, argc, argv, dpa);
     if (_ged_validate_objs_list(s, argc, argv, newobj_cnt) == BRLCAD_ERROR) {
 	bu_free(dpa, "dp array");
 	return BRLCAD_ERROR;
@@ -200,8 +200,9 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	argc--;
     }
 
-    /* If we're doing an NMG output, use the old-school libnmg booleval */
-    if (s->make_nmg) {
+    /* If we're doing an NMG output, or we have been instructed to, use the
+     * old-school libnmg booleval */
+    if (s->make_nmg || s->nmg_booleval) {
 	if (!s->in_place) {
 	    ret = _ged_facetize_nmgeval(s, argc, argv, oname);
 	    goto booleval_cleanup;
@@ -209,7 +210,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	    for (i = 0; i < argc; i++) {
 		av[0] = argv[i];
 		av[1] = NULL;
-		ret = _ged_facetize_nmgeval(s, 1, av, argv[i]);
+		ret = _ged_facetize_nmgeval(s, 1, av, av[0]);
 		if (ret == BRLCAD_ERROR)
 		    goto booleval_cleanup;
 	    }
@@ -238,6 +239,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 
 booleval_cleanup:
     bu_free(dpa, "dp array");
+
     return ret;
 }
 
@@ -253,10 +255,11 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
     s->gedp = gedp;
+    s->dbip = gedp->dbip;
     s->method_opts = method_options;
 
     /* General options */
-    struct bu_opt_desc d[19];
+    struct bu_opt_desc d[20];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",            &_ged_vopt,       &(s->verbosity), "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
@@ -272,10 +275,11 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[12],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
     BU_OPT(d[13],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
     BU_OPT(d[14],  "", "log-file",                        "<filename>",           &bu_opt_vls,           s->log_file, "Specify a location to use for the log file.");
-    BU_OPT(d[15],  "", "disable-fixup",                             "",                  NULL,          &s->no_fixup, "Disable post-processing steps intended to improve generated meshes.");
-    BU_OPT(d[16], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[17], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
-    BU_OPT_NULL(d[18]);
+    BU_OPT(d[15],  "", "nmg-booleval",                               "",                  NULL,       &s->nmg_booleval, "Use libnmg Boolean evaluation algorithm, even if we're producing a BoT.  Less robust, but if it succeeds it may produce cleaner output for coplanar inputs.");
+    BU_OPT(d[16],  "", "disable-fixup",                             "",                  NULL,          &s->no_fixup, "Disable post-processing steps intended to improve generated meshes.");
+    BU_OPT(d[17], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
+    BU_OPT(d[18], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
+    BU_OPT_NULL(d[19]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -321,13 +325,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
     if (!s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".nmg")) {
 	bu_vls_sprintf(s->solid_suffix, ".bot");
-    }
-
-    /* We can only resume in region mode - TODO - this shouldn't be true any more... */
-    if (s->resume && !s->regions) {
-	bu_vls_printf(gedp->ged_result_str, "--resume is only supported with with region (-r) mode\n");
-	ret = BRLCAD_ERROR;
-	goto ged_facetize_memfree;
     }
 
     /* Check if we want/need help */

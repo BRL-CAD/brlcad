@@ -59,6 +59,7 @@ struct _ged_facetize_state {
     int regions;
     int resume;
     int in_place;
+    int nmg_booleval;
 
     // Settings
     int max_time;
@@ -74,6 +75,7 @@ struct _ged_facetize_state {
     /* Implementation */
     int error_flag;
     struct ged *gedp;
+    struct db_i *dbip;
     union tree *facetize_tree;
     void *method_opts;
     void *log_s;

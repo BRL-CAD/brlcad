@@ -44,9 +44,8 @@
 int
 _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv)
 {
-    struct ged *gedp = s->gedp;
     int ret = BRLCAD_OK;
-    struct db_i *dbip = gedp->dbip;
+    struct db_i *dbip = s->dbip;
 
     /* Used the libged tolerances */
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -55,12 +54,12 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     if (!argc) return BRLCAD_ERROR;
 
     struct directory **dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
-    int newobjcnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+    int newobjcnt = _ged_sort_existing_objs(dbip, argc, argv, dpa);
     if (newobjcnt != 1) {
 	if (!newobjcnt)
-	    bu_vls_printf(gedp->ged_result_str, "Need non-existent output comb name.");
+	    bu_vls_printf(s->gedp->ged_result_str, "Need non-existent output comb name.");
 	if (newobjcnt)
-	    bu_vls_printf(gedp->ged_result_str, "More than one non-existent object specified in region processing mode, aborting.");
+	    bu_vls_printf(s->gedp->ged_result_str, "More than one non-existent object specified in region processing mode, aborting.");
 	return BRLCAD_ERROR;
     }
 
@@ -191,6 +190,33 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_ptbl_free(as);
     bu_free(as, "as table");
 
+    // If we're going to be doing NMG outputs or NMG booleans,
+    // we'll need to have a facetize_state container that has
+    // info for the working .g, rather than the parent.  Set
+    // up accordingly.
+    struct _ged_facetize_state nmg_wstate;
+    nmg_wstate.verbosity = s->verbosity;
+    nmg_wstate.no_empty = s->no_empty;
+    nmg_wstate.make_nmg = s->make_nmg;
+    nmg_wstate.nonovlp_brep = s->nonovlp_brep;
+    nmg_wstate.no_fixup= s->no_fixup;
+    nmg_wstate.wdir = s->wdir;
+    nmg_wstate.wfile = s->wfile;
+    nmg_wstate.bname = s->bname;
+    nmg_wstate.log_file = s->log_file;
+    nmg_wstate.lfile = s->lfile;
+    nmg_wstate.regions = s->regions;
+    nmg_wstate.resume = s->resume;
+    nmg_wstate.in_place = s->in_place;
+    nmg_wstate.nmg_booleval = s->nmg_booleval;
+    nmg_wstate.max_time = s->max_time;
+    nmg_wstate.max_pnts = s->max_pnts;
+    nmg_wstate.prefix = s->prefix;
+    nmg_wstate.suffix = s->suffix;
+    nmg_wstate.tol = s->tol;
+    nmg_wstate.nonovlp_threshold = s->nonovlp_threshold;
+    nmg_wstate.solid_suffix = s->solid_suffix;
+    nmg_wstate.dbip = NULL;
 
     // If we have any solids in the hierarchies with only combs above them,
     // they are "implicit" regions and must be facetized individually.
@@ -204,20 +230,38 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
+	if (nmg_wstate.dbip)
+	    db_close(nmg_wstate.dbip);
 	return BRLCAD_OK;
     }
     bool have_failure = false;
     if (BU_PTBL_LEN(ir)) {
+	if (s->make_nmg || s->nmg_booleval) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(ir); i++) {
+		struct directory *idp = (struct directory *)BU_PTBL_GET(ir, i);
+		char *obj_name = bu_strdup(idp->d_namep);
+		struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+		db_dirbuild(wdbip);
+		db_update_nref(wdbip, &rt_uniresource);
+		nmg_wstate.dbip = wdbip;
 
-	if (_ged_facetize_leaves_tri(s, dbip, ir) != BRLCAD_OK) {
-	    have_failure = true;
+		if (_ged_facetize_nmgeval(s, 1, (const char **)&obj_name, obj_name) != BRLCAD_OK) {
+		    have_failure = true;
+		}
+		bu_free(obj_name, "obj_name");
+		db_close(wdbip);
+	    }
+	} else {
+	    if (_ged_facetize_leaves_tri(s, dbip, ir) != BRLCAD_OK) {
+		have_failure = true;
+	    }
 	}
     }
     bu_ptbl_free(ir);
     bu_free(ir, "ir table");
 
-    // For proper regions, we're reducing the CSG tree to a single BoT and
-    // swapping that BoT in under the region comb
+    // For proper regions, we're reducing the CSG tree to a single BoT or NMG and
+    // swapping that solid in under the region comb
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     for (size_t i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *dpw[2] = {NULL};
@@ -226,7 +270,12 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	facetize_log(s, 0, "Processing %s\n", dpw[0]->d_namep);
 
 	// Get a name for the region's output BoT
-	bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
+	if (s->make_nmg) {
+	    bu_vls_sprintf(&bname, "%s.nmg", dpw[0]->d_namep);
+	} else {
+	    bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
+	}
+
 	struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
 	db_dirbuild(cdbip);
 	db_update_nref(cdbip, &rt_uniresource);
@@ -235,8 +284,22 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)cdbip);
 	db_close(cdbip);
 
-	if (_ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), true, false) == BRLCAD_OK) {
-	    // Replace the region's comb tree with the new BoT
+	int bret = BRLCAD_OK;
+	if (s->make_nmg || s->nmg_booleval) {
+	    char *obj_name = bu_strdup(dpw[0]->d_namep);
+	    struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+	    db_dirbuild(wdbip);
+	    db_update_nref(wdbip, &rt_uniresource);
+	    nmg_wstate.dbip = wdbip;
+	    bret = _ged_facetize_nmgeval(&nmg_wstate, 1, (const char **)&obj_name, bu_vls_cstr(&bname));
+	    bu_free(obj_name, "obj_name");
+	    db_close(wdbip);
+	} else {
+	    bret = _ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), true, false);
+	}
+
+	if (bret == BRLCAD_OK) {
+	    // Replace the region's comb tree with the new solid
 	    struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
 	    db_dirbuild(wdbip);
 	    db_update_nref(wdbip, &rt_uniresource);
@@ -262,7 +325,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
 	    db_update_nref(wdbip, &rt_uniresource);
 	    db_close(wdbip);
-
 	} else {
 	    have_failure = true;
 	}
@@ -270,14 +332,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_vls_free(&bname);
 
     // Report on the primitive processing
-    facetize_primitives_summary(s);
-
-    // TODO - need to have an option to shotline through the new triangle faces and compare
-    // with the old CSG shotline results to try and spot any gross problems with the new
-    // mesh.  The nature of facetization means the shotlines won't be 1-1 identical, but
-    // if we have a shot from a triangle with LoS in the CSG and none in the BoT, that's
-    // a definite problem.  If the BoT is manifold we'll still return it, but with a warning
-    // that there may be a problem.
+    if (!s->make_nmg && !s->nmg_booleval)
+	facetize_primitives_summary(s);
 
     // If any of the regions failed (implicit or explicit), don't keep or
     // dbconcat - the operation wasn't a full success.

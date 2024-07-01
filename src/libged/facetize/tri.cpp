@@ -1032,7 +1032,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     }
     bu_free(av, "av");
 
-    struct db_i *odbip = (output_to_working) ? dbip : s->gedp->dbip;
+    struct db_i *odbip = (output_to_working) ? dbip : s->dbip;
 
     // We don't have a tree - unless we've been told not to, prepare an empty BoT
     if (!s->facetize_tree && !s->no_empty) {
@@ -1152,7 +1152,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     if (!argc || !dpa)
 	return BRLCAD_ERROR;
 
-    struct ged *gedp = s->gedp;
+    struct db_i *dbip = s->dbip;
     struct rt_wdb *wwdbp;
 
     /* First stage is to process the primitive instances.  We include points in
@@ -1161,7 +1161,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
      * to their data. */
     const char *sfilter = "-type shape -or -type pnts";
     struct bu_ptbl leaf_dps = BU_PTBL_INIT_ZERO;
-    if (db_search(&leaf_dps, DB_SEARCH_RETURN_UNIQ_DP, sfilter, argc, dpa, gedp->dbip, NULL) < 0) {
+    if (db_search(&leaf_dps, DB_SEARCH_RETURN_UNIQ_DP, sfilter, argc, dpa, dbip, NULL) < 0) {
 	// Empty input - nothing to facetize.
 	return BRLCAD_OK;
     }
@@ -1170,7 +1170,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     if (_ged_facetize_working_file_setup(s, &leaf_dps) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
-    if (_ged_facetize_leaves_tri(s, gedp->dbip, &leaf_dps))
+    if (_ged_facetize_leaves_tri(s, dbip, &leaf_dps))
 	return BRLCAD_ERROR;
 
     // Re-open working .g copy after BoTs have replaced CSG solids and perform
