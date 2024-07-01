@@ -246,28 +246,43 @@ formatDouble(double d)
     return str;
 }
 
-
-double
-InformationGatherer::getBBVolume(std::string component)
+boundingBox
+InformationGatherer::getBBData(std::string component)
 {
     // Gather bounding box dimensions
-    const char* cmd[4] = { "bb", "-qv", component.c_str(), NULL };
+    const char* cmd[4] = { "bb", "-q", component.c_str(), NULL };
     ged_exec(g, 3, cmd);
     std::istringstream ss(bu_vls_addr(g->ged_result_str));
 
-    // output always in form: "Bounding Box Volume: %d units^3"
-    std::string bounding, box, volume, val, units;
-    ss >> bounding >> box >> volume >> val >> units;
+    /* interested in saving X, Y, Z, Volume from output
+     * output is in form: "X Length: %d units^3
+     *                     Y Length: %d units^3
+     *                     Z Length: %d units^3
+     *                     Bounding Box Volume: %d units^3
+     */
+    std::string line, label;
+    double x = -1.0, y = -1.0, z = -1.0, vol = -1.0;
+    while (std::getline(ss, line)) {
+        std::istringstream lineStream(line);
 
-    // make sure we parsed string correctly and got valid value
-    try {
-        double bb_value = stod(val);
-        return bb_value;
-    } catch (const std::exception& e){
-        return -1;
+        // lazy try-catch error checking
+        try {
+            if (line.find("X Length:") != std::string::npos) {
+                lineStream >> label >> label >> x;
+            } else if (line.find("Y Length") != std::string::npos) {
+                lineStream >> label >> label >> y;
+            } else if (line.find("Z Length") != std::string::npos) {
+                lineStream >> label >> label >> z;
+            } else if (line.find("Bounding Box Volume") != std::string::npos) {
+                lineStream >> label >> label >> label >> vol;
+            }
+        } catch (const std::exception& e){
+            return {-1.0, -1.0, -1.0, -1.0};
+        }
+
     }
 
-    return 0;
+    return {x, y, z, vol};
 }
 
 int
@@ -297,8 +312,8 @@ InformationGatherer::getMainComp()
         }
 
         int entities = getNumEntities(opt->getTopComp());
-        double volume = getBBVolume(opt->getTopComp());
-        largestComponents.push_back({entities, volume, opt->getTopComp()});
+        boundingBox bb = getBBData(opt->getTopComp());
+        largestComponents.push_back({entities, bb, opt->getTopComp()});
         return;
     }
 
@@ -312,13 +327,13 @@ InformationGatherer::getMainComp()
 
     while (ss >> comp) {
         int entities = getNumEntities(comp);
-        double volume = getBBVolume(comp);
-        topComponents.push_back({entities, volume, comp});
+        boundingBox bb = getBBData(comp);
+        topComponents.push_back({entities, bb, comp});
     }
 
     sort(topComponents.rbegin(), topComponents.rend());
     for (size_t i = 0; i < topComponents.size(); i++) {
-        if (!EQUAL(topComponents[i].volume, std::numeric_limits<double>::infinity())) {
+        if (!EQUAL(topComponents[i].bb.volume, std::numeric_limits<double>::infinity())) {
             largestComponents.push_back(topComponents[i]);
             break;
         }
@@ -336,13 +351,13 @@ InformationGatherer::getMainComp()
 
         while (getline(ss2, val2)) {
             int entities = getNumEntities(val2);
-            double volume = getBBVolume(val2);
-            topComponents2.push_back({entities, volume, val2});
+            boundingBox bb = getBBData(val2);
+            topComponents2.push_back({entities, bb, val2});
         }
 
         sort(topComponents2.rbegin(), topComponents2.rend());
         for (size_t i = 0; i < topComponents2.size(); i++) {
-            if (!EQUAL(topComponents2[i].volume, std::numeric_limits<double>::infinity())) {
+            if (!EQUAL(topComponents2[i].bb.volume, std::numeric_limits<double>::infinity())) {
                 largestComponents.push_back(topComponents2[i]);
                 break;
             }
@@ -390,8 +405,8 @@ InformationGatherer::getSubComp()
     std::vector<ComponentData> subComps;
 
     while (ss >> comp >> numEntities) {
-        double volume = getBBVolume(comp);
-        subComps.push_back({numEntities, volume, comp});
+        boundingBox bb = getBBData(comp);
+        subComps.push_back({numEntities, bb, comp});
     }
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
@@ -485,35 +500,18 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     const char* largestCompName = largestComponents[0].name.c_str();
     struct directory *dp = db_lookup(g->dbip, largestCompName, LOOKUP_QUIET);
 
-    // Gather dimensions
-    cmd[0] = "bb";
-    cmd[1] = largestCompName;
-    cmd[2] = NULL;
-    ged_exec(g, 2, cmd);
-
-    std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::string token;
-    std::vector<std::string> dim_data = {"dimX", "dimY", "dimZ", "bbVolume"};
-    int dim_idx = 0;
-    while (ss >> token) {
-        try {
-            double length = stod(token);
-            double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
-            infoMap[dim_data[dim_idx]] = formatDouble(length*convFactor);
-
-            int dimensions = 1;
-            if (dim_idx == 3) {
-                dimensions = 3;
-            }
-
-            Unit u = {lUnit, dimensions};
-            unitsMap[dim_data[dim_idx]] = u;
-
-            dim_idx++;
-        } catch (const std::exception& e){
-            continue;
-        }
-    }
+    // load bb dimensions in infoMap and unitsMap
+    double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
+    Unit u1 = {lUnit, 1};
+    Unit u3 = {lUnit, 3};
+    infoMap["dimX"] = formatDouble(convFactor * largestComponents[0].bb.x);
+    unitsMap["dimX"] = u1;
+    infoMap["dimY"] = formatDouble(convFactor * largestComponents[0].bb.y);
+    unitsMap["dimY"] = u1;
+    infoMap["dimZ"] = formatDouble(convFactor * largestComponents[0].bb.z);
+    unitsMap["dimZ"] = u1;
+    infoMap["bbVolume"] = formatDouble(convFactor * largestComponents[0].bb.volume);
+    unitsMap["bbVolume"] = u3;
 
     //Gather entity counts
     // init infoMap incase searches fail

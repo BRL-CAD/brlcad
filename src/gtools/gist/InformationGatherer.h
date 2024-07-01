@@ -35,17 +35,25 @@
 
 class Options;
 
+struct boundingBox {
+    double x;
+    double y;
+    double z;
+
+    double volume;
+};
+
 struct ComponentData {
     int numEntities;
-    double volume;
+    boundingBox bb;
     std::string name;
 
     bool operator<(const ComponentData& other) const {
         if (numEntities != other.numEntities) {
             return numEntities < other.numEntities;
 	}
-        if (!NEAR_EQUAL(volume, other.volume, SMALL_FASTF)) {
-            return volume < other.volume;
+        if (!NEAR_EQUAL(bb.volume, other.bb.volume, SMALL_FASTF)) {
+            return bb.volume < other.bb.volume;
 	}
 	return name < other.name;
     }
@@ -63,7 +71,7 @@ private:
     struct ged* g;
     std::map<std::string, std::string> infoMap;
     std::map<std::string, Unit> unitsMap;
-    double getBBVolume(std::string component);
+    boundingBox getBBData(std::string component);
     int getNumEntities(std::string component);
     void getMainComp();
     void getSubComp();
