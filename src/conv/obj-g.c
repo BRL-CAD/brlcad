@@ -2660,6 +2660,9 @@ output_to_bot(struct ga_t *ga,
 		     ti.bot_face_mode);
     }
 
+    if (db5_update_attribute(bu_vls_cstr(gfi->primitive_name), "importer", "obj-g", outfp->dbip))
+	bu_bomb("db5_update_attribute() failed");
+
     if (ret) {
 	bu_log("ERROR: Make BOT failed for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
     }
@@ -2969,6 +2972,8 @@ output_to_nmg(struct ga_t *ga,
 			if ((verbose > 1) || debug) {
 			    bu_log("Completed mk_nmg for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 			}
+			if (db5_update_attribute(bu_vls_cstr(gfi->primitive_name), "importer", "obj-g", outfp->dbip))
+			    bu_bomb("db5_update_attribute() failed");
 			ret = 0; /* set return success */
 		    }
 		} else {
@@ -2993,6 +2998,8 @@ output_to_nmg(struct ga_t *ga,
 			if ((verbose > 1) || debug) {
 			    bu_log("Completed mk_bot_from_nmg for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 			}
+			if (db5_update_attribute(bu_vls_cstr(gfi->primitive_name), "importer", "obj-g", outfp->dbip))
+			    bu_bomb("db5_update_attribute() failed");
 			ret = 0; /* set return success */
 			nmg_km(m); /* required for mk_bot_from_nmg but not mk_nmg */
 		    }
