@@ -40,6 +40,7 @@
 #include "bu/app.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -62,7 +63,6 @@ static int binary=0;		/* flag indicating input is binary format */
 static FILE *fd_in;		/* input file */
 static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 static float conv_factor=1.0;	/* conversion factor from model units to mm */
-static unsigned int obj_count=0; /* Count of parts converted for "stl-g" conversions */
 static int *bot_faces=NULL;	 /* array of ints (indices into tree->the_array array) three per face */
 static int bot_fsize=0;		/* current size of the bot_faces array */
 static int bot_fcurr=0;		/* current bot face */
@@ -107,28 +107,51 @@ Add_face(int face[3])
     bot_fcurr++;
 }
 
+static int
+_db_uniq_test(struct bu_vls *n, void *data)
+{
+    struct db_i *dbip = (struct db_i *)data;
+    if (db_lookup(dbip, bu_vls_cstr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
+    return 0;
+}
+
 void
 mk_unique_brlcad_name(struct bu_vls *name)
 {
-    char *c;
-    int count=0;
-    size_t len;
+    struct db_i *dbip = fd_out->dbip;
 
-    c = bu_vls_addr(name);
-
+    struct bu_vls tname = BU_VLS_INIT_ZERO;
+    const char *c = bu_vls_cstr(name);
+    int skip = 0;
     while (*c != '\0') {
-	if (*c == '/' || !isprint((int)*c)) {
-	    *c = '_';
+	if (skip && *c != '>') {
+	    c++;
+	    continue;
 	}
+	if (*c == '<') {
+	    skip = 1;
+	    c++;
+	    continue;
+	}
+	if (*c == '>') {
+	    skip = 0;
+	    c++;
+	    continue;
+	}
+	bu_vls_putc(&tname, *c);
 	c++;
     }
 
-    len = bu_vls_strlen(name);
-    while (db_lookup(fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_trunc(name, len);
-	count++;
-	bu_vls_printf(name, "_%d", count);
-    }
+    const char *keep_chars = "+-=._";
+    const char *dedup_chars = "._ ";
+    const char *collapse_chars = "._ ";
+    bu_vls_simplify(&tname, keep_chars, dedup_chars, collapse_chars);
+
+    if (db_lookup(dbip, bu_vls_cstr(&tname), LOOKUP_QUIET) != RT_DIR_NULL)
+	bu_vls_incr(&tname, NULL, NULL, &_db_uniq_test, (void *)dbip);
+
+    bu_vls_sprintf(name, "%s", bu_vls_cstr(&tname));
+    bu_vls_free(&tname);
 }
 
 static void
@@ -151,67 +174,47 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     bot_fcurr = 0;
     BU_LIST_INIT(&head.l);
 
-    start = (-1);
-    /* skip leading blanks */
-    while (isspace((int)line[++start]) && line[start] != '\0');
-    if (bu_strncmp(&line[start], "solid", 5) && bu_strncmp(&line[start], "SOLID", 5)) {
+
+    bu_vls_sprintf(&region_name, "%s", line);
+    bu_vls_trimspace(&region_name);
+
+    /* Sanity */
+    if (bu_strncmp(bu_vls_cstr(&region_name), "solid", 5) && bu_strncmp(bu_vls_cstr(&region_name), "SOLID", 5)) {
 	bu_log("Convert_part_ascii: Called for non-part\n%s\n", line);
+	bu_vls_free(&region_name);
 	return;
     }
 
-    /* skip blanks before name */
-    start += 4;
-    while (isspace((int)line[++start]) && line[start] != '\0');
-
     if (forced_name) {
 	bu_vls_strcpy(&region_name, forced_name);
-    } else if (line[start] != '\0') {
-	char *ptr;
-
-	/* get name */
-	bu_vls_strcpy(&region_name, &line[start]);
-	bu_vls_trimspace(&region_name);
-	ptr = bu_vls_addr(&region_name);
-	while (*ptr != '\0') {
-	    if (isspace((int)*ptr)) {
-		bu_vls_trunc(&region_name, ptr - bu_vls_addr(&region_name));
-		break;
-	    }
-	    ptr++;
-	}
     } else {
-	/* build a name from the file name */
-
-	char *ptr;
-	int base_len;
-
-	obj_count++;
-
-	/* copy the file name into our work space (skip over path) */
-	ptr = strrchr(input_file, '/');
-	if (ptr) {
-	    ptr++;
-	    bu_vls_strcpy(&region_name, ptr);
-	} else {
-	    bu_vls_strcpy(&region_name, input_file);
-	}
-
-	/* eliminate a trailing ".stl" */
-	ptr = strstr(bu_vls_addr(&region_name), ".stl");
-	if ((base_len=(ptr - bu_vls_addr(&region_name))) > 0) {
-	    bu_vls_trunc(&region_name, base_len);
-	}
+	bu_vls_nibble(&region_name, 5);
+	bu_vls_trimspace(&region_name);
     }
 
+    if (!bu_vls_strlen(&region_name)) {
+	/* build a name from the file name */
+	bu_path_component(&region_name, input_file, BU_PATH_BASENAME_EXTLESS);
+    }
+
+    // Do the unique name check before adding the suffix to clean up the name
+    // as much as possible
     mk_unique_brlcad_name(&region_name);
-    bu_log("Converting Part: %s\n", bu_vls_addr(&region_name));
+
+    // Add the suffix
+    bu_vls_printf(&region_name, ".r");
+
+    // Make sure we're still unique
+    mk_unique_brlcad_name(&region_name);
+    bu_log("Converting Part: %s\n", bu_vls_cstr(&region_name));
 
     solid_count++;
-    bu_vls_strcpy(&solid_name, "s.");
-    bu_vls_vlscat(&solid_name, &region_name);
+    bu_path_component(&solid_name, bu_vls_cstr(&region_name), BU_PATH_BASENAME_EXTLESS);
+    mk_unique_brlcad_name(&solid_name);
+    bu_vls_printf(&solid_name, ".s");
     mk_unique_brlcad_name(&solid_name);
 
-    bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
+    bu_log("\tUsing solid name: %s\n", bu_vls_cstr(&solid_name));
 
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
@@ -312,7 +315,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     /* Check if this part has any solid parts */
     if (face_count == 0) {
-	bu_log("\t%s has no solid parts, ignoring\n", bu_vls_addr(&region_name));
+	bu_log("\t%s has no solid parts, ignoring\n", bu_vls_cstr(&region_name));
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
 	bu_vls_free(&region_name);
@@ -324,26 +327,26 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
     }
 
-    mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree->curr_vert, bot_fcurr,
+    mk_bot(fd_out, bu_vls_cstr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree->curr_vert, bot_fcurr,
 	   tree->the_array, bot_faces, NULL, NULL);
     bg_vert_tree_clean(tree);
 
     if (face_count && !solid_in_region) {
-	(void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
+	(void)mk_addmember(bu_vls_cstr(&solid_name), &head.l, NULL, WMOP_UNION);
     }
 
-    bu_log("\tMaking region (%s)\n", bu_vls_addr(&region_name));
+    bu_log("\tMaking region (%s)\n", bu_vls_cstr(&region_name));
 
     if (const_id >= 0) {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
+	mk_lrcomb(fd_out, bu_vls_cstr(&region_name), &head, 1, (char *)NULL,
 		  (char *)NULL, color, const_id, 0, mat_code, 100, 0);
 	if (face_count) {
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_cstr(&region_name), &all_head.l, NULL, WMOP_UNION);
 	}
     } else {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, color, id_no, 0, mat_code, 100, 0);
+	mk_lrcomb(fd_out, bu_vls_cstr(&region_name), &head, 1, (char *)NULL, (char *)NULL, color, id_no, 0, mat_code, 100, 0);
 	if (face_count)
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_cstr(&region_name), &all_head.l, NULL, WMOP_UNION);
 	id_no++;
     }
 
@@ -380,14 +383,13 @@ Convert_part_binary(void)
 
     solid_count++;
     if (forced_name) {
-	bu_vls_strcpy(&solid_name, "s.");
-	bu_vls_strcat(&solid_name, forced_name);
+	bu_vls_sprintf(&solid_name, "%s.s", forced_name);
 	bu_vls_strcpy(&region_name, forced_name);
     } else {
-	bu_vls_strcat(&solid_name, "s.stl");
-	bu_vls_strcat(&region_name, "r.stl");
+	bu_vls_strcat(&solid_name, "stl.s");
+	bu_vls_strcat(&region_name, "stl.r");
     }
-    bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
+    bu_log("\tUsing solid name: %s\n", bu_vls_cstr(&solid_name));
 
 
     ret = fread(buf, 4, 1, fd_in);
@@ -466,26 +468,26 @@ Convert_part_binary(void)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
     }
 
-    mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
+    mk_bot(fd_out, bu_vls_cstr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
 	   tree->curr_vert, bot_fcurr, tree->the_array, bot_faces, NULL, NULL);
     bg_vert_tree_clean(tree);
 
     BU_LIST_INIT(&head.l);
     if (face_count) {
-	(void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
+	(void)mk_addmember(bu_vls_cstr(&solid_name), &head.l, NULL, WMOP_UNION);
     }
-    bu_log("\tMaking region (%s)\n", bu_vls_addr(&region_name));
+    bu_log("\tMaking region (%s)\n", bu_vls_cstr(&region_name));
 
     if (const_id >= 0) {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL,
+	mk_lrcomb(fd_out, bu_vls_cstr(&region_name), &head, 1, (char *)NULL,
 		  (char *)NULL, NULL, const_id, 0, mat_code, 100, 0);
 	if (face_count) {
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_cstr(&region_name), &all_head.l, NULL, WMOP_UNION);
 	}
     } else {
-	mk_lrcomb(fd_out, bu_vls_addr(&region_name), &head, 1, (char *)NULL, (char *)NULL, NULL, id_no, 0, mat_code, 100, 0);
+	mk_lrcomb(fd_out, bu_vls_cstr(&region_name), &head, 1, (char *)NULL, (char *)NULL, NULL, id_no, 0, mat_code, 100, 0);
 	if (face_count)
-	    (void)mk_addmember(bu_vls_addr(&region_name), &all_head.l, NULL, WMOP_UNION);
+	    (void)mk_addmember(bu_vls_cstr(&region_name), &all_head.l, NULL, WMOP_UNION);
 	id_no++;
     }
 
