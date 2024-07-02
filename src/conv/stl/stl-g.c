@@ -331,6 +331,9 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	   tree->the_array, bot_faces, NULL, NULL);
     bg_vert_tree_clean(tree);
 
+    if (db5_update_attribute(bu_vls_cstr(&solid_name), "importer", "stl-g", fd_out->dbip))
+	bu_bomb("db5_update_attribute() failed");
+
     if (face_count && !solid_in_region) {
 	(void)mk_addmember(bu_vls_cstr(&solid_name), &head.l, NULL, WMOP_UNION);
     }
@@ -471,6 +474,9 @@ Convert_part_binary(void)
     mk_bot(fd_out, bu_vls_cstr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
 	   tree->curr_vert, bot_fcurr, tree->the_array, bot_faces, NULL, NULL);
     bg_vert_tree_clean(tree);
+
+    if (db5_update_attribute(bu_vls_cstr(&solid_name), "importer", "stl-g", fd_out->dbip))
+	bu_bomb("db5_update_attribute() failed");
 
     BU_LIST_INIT(&head.l);
     if (face_count) {
