@@ -316,7 +316,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
     if (mk_brep(&wdb, name.c_str(), (void *)b))
 	bu_bomb("mk_brep() failed");
     /* tag solid with converter attribute */
-    if (db5_update_attribute(name.c_str(), "converter", "3dm - BRL", wdb.dbip))
+    if (db5_update_attribute(name.c_str(), "importer", "3dm-g", wdb.dbip))
 	bu_bomb("db5_update_attribute() failed");
 }
 
@@ -390,7 +390,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 		   thicknesses.empty() ? NULL :  &thicknesses.at(0), bitv.ptr))
 	    bu_bomb("mk_bot() failed");
 	/* tag solid with converter attribute */
-	if (db5_update_attribute(name.c_str(), "converter", "3dm - BRL", wdb.dbip))
+	if (db5_update_attribute(name.c_str(), "importer", "3dm-g", wdb.dbip))
 	    bu_bomb("db5_update_attribute() failed");
 	return;
     }
