@@ -1,4 +1,5 @@
 if (BRLCAD_ENABLE_GDAL)
+  set(CMAKE_FIND_FRAMEWORK LAST) # bundled first
   BRLCAD_Find_Package(GDAL REQUIRED)
 endif (BRLCAD_ENABLE_GDAL)
 
