@@ -1,4 +1,4 @@
-/*                         B O T . C P P
+/*                           B O T . H
  * BRL-CAD
  *
  * Copyright (c) 2024 United States Government as represented by
@@ -17,53 +17,54 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file solid.cpp
+/** @file Arb.h
  *
  * LS Dyna keyword file to BRL-CAD converter:
- * intermediate solid data implementation
+ * intermediate Arb data declaration
  */
+
+#ifndef ARB_INCLUDED
+#define ARB_INCLUDED
 
 #include "common.h"
 
-#include "solid.h"
+#include <string>
+
+#include "vmath.h"
+#include "rt/wdb.h"
 
 
-Solid::Solid(void):name() {
+class Arbs {
+public:
+    Arbs(void);
+    ~Arbs(void);
 
-}
+    void        setName(const char* value);
 
-Solid::~Solid(void){
+    void        addArb(
+			const char*    arbName,
+			const point_t& point1,
+			const point_t& point2,
+			const point_t& point3,
+			const point_t& point4,
+			const point_t& point5,
+			const point_t& point6,
+			const point_t& point7,
+			const point_t& point8);
 
-}
+    const char* getName(void) const;
+    std::map<std::string, rt_arb_internal> getArbs(void) const;
 
-void Solid::setName(const char* value)
-{
-    name = value;
-}
+    void        write(rt_wdb* wdbp);
 
-void Solid::addArb(Arb arb)
-{
-    arbs.push_back(arb);
-}
+private:
+    std::string     name;
+    std::map<std::string, rt_arb_internal> arbs;
 
+};
 
 
-const char* Solid::getName(void) const
-{
-    return name.c_str();
-}
-
-std::vector<Arb> Solid::getArbs(void) const
-{
-    return arbs;
-}
-
-void Solid::write(rt_wdb* wdbp)
-{
-    for (int i = 0; i < arbs.size(); ++i) {
-	arbs[i].write(wdbp);
-    }
-}
+#endif //SOLID_INCLUDED
 
 
 // Local Variables:

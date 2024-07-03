@@ -68,7 +68,7 @@ int main
 			std::string partName = std::to_string(it->first) + "_" + (it->second).title;
 
 			Bot&   bot     = regions.addRegion(partName);
-			Solid& solid   = regions.addRegion_solid(partName);
+			Arbs&  arbs   = regions.addRegion_Arbs(partName);
 			int    section = (it->second).section;
 
 			if (section > 0) {
@@ -133,7 +133,6 @@ int main
 				point_t point6;
 				point_t point7;
 				point_t point8;
-				Arb     arb;
 
 				int     n1 = kData.elements[*itr].nodes[0];
 				int     n2 = kData.elements[*itr].nodes[1];
@@ -177,11 +176,9 @@ int main
 				point8[Z] = kData.nodes[n8].z * factor;
 
 				std::string arbName = std::to_string(*itr);
-				arb.setName(arbName.c_str());
-
-				arb.addNodes(point1, point2, point3, point4, point5, point6, point7, point8);
 				
-				solid.addArb(arb);
+
+				arbs.addArb(arbName.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
 			    }
 			    else
 				std::cout << "Un supported element in k-file " << argv[1] << "\n";
