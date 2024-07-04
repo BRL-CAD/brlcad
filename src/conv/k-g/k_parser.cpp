@@ -401,13 +401,13 @@ bool parse_k
 			ret = false;
 		    }
 		    else {
-			if (command[0] == "INCLUDE") {
+			if (command[0] == "INCLUDE" || command[0] == "include") {
 			    if (command.size() == 1)
 				state = KState::Include;
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 			}
-			else if (command[0] == "NODE") {
+			else if (command[0] == "NODE" || command[0] == "node") {
 			    if (command.size() == 1)
 				state = KState::Node;
 			    else
@@ -432,32 +432,32 @@ bool parse_k
 			    else
 				std::cout << "Unhandeled node format in k-file" << fileName << "\n";
 			}
-			else if (command[0] == "ELEMENT") {
-			    if ((command.size() == 2) && (command[1] == "SHELL"))
+			else if (command[0] == "ELEMENT" || command[0] == "element") {
+			    if ((command.size() == 2) && (command[1] == "SHELL" || command[1] == "shell"))
 				state = KState::Element_Shell;
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 			}
-			else if (command[0] == "PART") {
-			    if ((command.size() == 1) || (command[1] == "INERTIA")) {
+			else if (command[0] == "PART" || command[0] == "part") {
+			    if ((command.size() == 1) || (command[1] == "INERTIA" || command[1] == "inertia")) {
 				state         = KState::Part;
 				partLinesRead = 0;
 				partTitle     = "";
 			    }
-			    else if ((command.size() == 3) && (command[1]=="ADAPTIVE") && (command[2]=="FAILURE")) {
+			    else if ((command.size() == 3) && (command[1] == "ADAPTIVE" || command[1] == "adaptive") && (command[2] == "FAILURE" || command[2] == "failure")) {
 				state = KState::Part_Adaptive_Failure;
 			    }
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 			}
-			else if (command[0] == "SECTION") {
-			    if (command[1] == "SHELL") {
+			else if (command[0] == "SECTION" || command[0]= "section") {
+			    if (command[1] == "SHELL" || command[1]= "shell") {
 				state        = KState::Section_Shell;
 				sectionTitle = "";
 				sectionId    = -1;
 
 				if (command.size() == 3) {
-				    if (command[2] == "TITLE")
+				    if (command[2] == "TITLE" || command[2] == "title")
 					sectionLinesRead = 0;
 				    else
 					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
@@ -468,15 +468,15 @@ bool parse_k
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 			}
-			else if (command[0] == "KEYWORD") {
+			else if (command[0] == "KEYWORD" || command[0] == "keyword") {
 			    if (tokens.size() > 1) {
 				for (size_t i = 1; i < tokens.size(); ++i) {
 				    std::pair<std::string, std::string> format = split_key((tokens[i]).c_str());
 
-				    if (format.first == "LONG") {
+				    if (format.first == "LONG" || format.first == "long") {
 					fileFormat = ReadFormat::Long;
 				    }
-				    else if (format.first == "I10") {
+				    else if (format.first == "I10" || format.first == "i10") {
 					fileFormat = ReadFormat::I10;
 					break;
 				    }
