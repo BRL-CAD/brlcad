@@ -35,15 +35,15 @@
 RegionList::RegionList(void) : m_list() {}
 
 
-Bot& RegionList::addRegion
+Geometry& RegionList::addRegion
 (
     const std::string& name
 ) {
-    Bot& ret = m_list[name].bot;
+    Geometry& ret = m_list[name].geometry;
 
-    std::string botName(name);
-    botName += ".bot";
-    ret.setName(botName.c_str());
+    //std::string botName(name);
+    //botName += ".bot";
+    ret.setName(name.c_str());
 
     return ret;
 }
@@ -101,13 +101,27 @@ void RegionList::create
     for (std::map<std::string, Region>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
 	const std::string&                 region_name              = it->first;
 	Region&                            region                   = it->second;
-	Bot&                               bot                      = region.bot;
+	Bot&                               bot                      = region.geometry.getBot();
+	Arbs&                              arbs                     = region.geometry.getArbs();
 	const std::map<std::string, std::string>& region_attributes = region.attributes;
 
 	bot.write(wdbp);
+	arbs.write(wdbp);
 
 	wmember bot_head;
 	BU_LIST_INIT(&bot_head.l);
+
+	wmember arbs_head;
+	BU_LIST_INIT(&arbs_head.l);
+
+	std::map<std::string, rt_arb_internal> bagOfArbs = arbs.getArbs();
+
+	for (std::map<std::string, rt_arb_internal>::iterator it = bagOfArbs.begin(); it != bagOfArbs.end(); it++) {
+	    mk_addmember((it->first).c_str(), &(arbs_head.l), NULL, WMOP_UNION);
+	    mk_addmember((it->first).c_str(), &(all_head.l), NULL, WMOP_UNION);
+	}
+	mk_lfcomb(wdbp, arbs.getName(), &arbs_head, 0);
+
 
 	mk_addmember(bot.getName(), &(bot_head.l), NULL, WMOP_UNION);
 	mk_lfcomb(wdbp, region_name.c_str(), &bot_head, 0);
@@ -119,6 +133,7 @@ void RegionList::create
 	mk_addmember(region_name.c_str(), &(all_head.l), NULL, WMOP_UNION);
 	
 	mk_freemembers(&bot_head.l);
+	mk_freemembers(&arbs_head.l);
     }
 
     mk_lfcomb(wdbp, "all.g", &all_head, 0);
@@ -140,7 +155,7 @@ Bot& RegionList::getBot
 (
     const std::string& name
 ) {
-    return m_list[name].bot;
+    return m_list[name].geometry.getBot();
 }
 
 void RegionList::deleteRegion
