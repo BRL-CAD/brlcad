@@ -91,6 +91,8 @@ int main
 
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
 			    if (kData.elements[*itr].nodes.size() == 4) {
+				geometry.setType(GeometryType::Bot);
+
 				point_t point1;
 				point_t point2;
 				point_t point3;
@@ -126,6 +128,8 @@ int main
 				}
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 8) {
+				geometry.setType(GeometryType::Arbs);
+
 				point_t point1;
 				point_t point2;
 				point_t point3;

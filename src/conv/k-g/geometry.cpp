@@ -43,7 +43,7 @@ Geometry::~Geometry(void)
 {
 }
 
-void Geometry::setName
+void Geometry::setBaseName
 (
     const char* value
 ) {
@@ -52,13 +52,13 @@ void Geometry::setName
     else
 	name = "";
 
-    std::string botName(name);
-    std::string arbsName(name);
-    botName += ".bot";
-    arbsName += ".s";
+    //std::string botName(name);
+    //std::string arbsName(name);
+    //botName += ".bot";
+    //arbsName += ".s";
 
-    m_bot.setName(botName.c_str());
-    m_arbs.setName(arbsName.c_str());
+    //m_bot.setName(botName.c_str());
+    //m_arbs.setName(arbsName.c_str());
 }
 
 void Geometry::setThickness
@@ -66,6 +66,11 @@ void Geometry::setThickness
     double value
 ) {
     m_bot.setThickness(value);
+}
+
+void Geometry::setType(GeometryType type)
+{
+    m_type = type;
 }
 
 void Geometry::addTriangle
@@ -97,6 +102,27 @@ const char* Geometry::getName(void) const
     return name.c_str();
 }
 
+std::vector<std::string> Geometry::getNames(void) const
+{
+    std::vector<std::string> ret;
+    if (m_type == GeometryType::Bot) {
+	std::string botName = name;
+	botName += ".bot";
+	ret.push_back(botName);
+    }
+    else if (m_type == GeometryType::Arbs) {
+	std::map<std::string, rt_arb_internal> temp = m_arbs.getArbs();
+	for (std::map<std::string, rt_arb_internal>::iterator it = temp.begin(); it != temp.end(); it++) {
+	    std::string arbName = name;
+	    arbName.append(it->first);
+	    arbName += ".arb";
+	    ret.push_back(arbName);
+	}
+    }
+    
+    return ret;
+}
+
 Bot Geometry::getBot(void) const
 {
     return m_bot;
@@ -105,4 +131,9 @@ Bot Geometry::getBot(void) const
 Arbs Geometry::getArbs(void) const
 {
     return m_arbs;
+}
+
+GeometryType Geometry::getType(void) const
+{
+    return m_type;
 }

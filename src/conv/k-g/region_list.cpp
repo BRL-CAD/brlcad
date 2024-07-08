@@ -43,7 +43,7 @@ Geometry& RegionList::addRegion
 
     //std::string botName(name);
     //botName += ".bot";
-    ret.setName(name.c_str());
+    ret.setBaseName(name.c_str());
 
     return ret;
 }
@@ -104,6 +104,8 @@ void RegionList::create
 	Bot&                               bot                      = region.geometry.getBot();
 	Arbs&                              arbs                     = region.geometry.getArbs();
 	const std::map<std::string, std::string>& region_attributes = region.attributes;
+
+	std::vector<std::string> names = region.geometry.getNames();
 
 	bot.write(wdbp);
 	arbs.write(wdbp);
