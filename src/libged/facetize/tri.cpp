@@ -84,10 +84,10 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
 	bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
     if (nbot->orientation == RT_BOT_CW) {
 	for (size_t j = 0; j < nbot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+2], nbot->faces[3*j+1]));
+	    bot_mesh.triVerts.push_back(glm::ivec3(nbot->faces[3*j], nbot->faces[3*j+2], nbot->faces[3*j+1]));
     } else {
 	for (size_t j = 0; j < nbot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
+	    bot_mesh.triVerts.push_back(glm::ivec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
     }
 
     manifold::Manifold bot_manifold = manifold::Manifold(bot_mesh);

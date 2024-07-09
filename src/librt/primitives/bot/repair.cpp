@@ -75,10 +75,10 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
     if (bot->orientation == RT_BOT_CW) {
 	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
+	    bot_mesh.triVerts.push_back(glm::ivec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
     } else {
 	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
+	    bot_mesh.triVerts.push_back(glm::ivec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
     }
 
     manifold::MeshGL bot_gl(bot_mesh);
@@ -265,7 +265,7 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 	    tri_verts[i] = gm.facets.vertex(f, i);
 	}
 	// TODO - CW vs CCW orientation handling?
-	gmm.triVerts.push_back(glm::vec3(tri_verts[0], tri_verts[1], tri_verts[2]));
+	gmm.triVerts.push_back(glm::ivec3(tri_verts[0], tri_verts[1], tri_verts[2]));
     }
 
 #if 1
