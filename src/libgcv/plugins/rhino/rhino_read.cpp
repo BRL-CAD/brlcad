@@ -905,7 +905,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
 
     // Set region flags, add .r suffix to regions if not already present
     renamed.clear();
-    const char *reg_search = "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader";
+    const char *reg_search = "-type comb -above=1 -type shape";
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
     bu_ptbl found_instances = BU_PTBL_INIT_ZERO;
