@@ -40,6 +40,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* replace translations of various Geometric Tools algorithms in BRL-CAD
+  with calls to a bundled Geometric Tools.  With bext coming online,
+  bundling Geometric Tools would be simpler.  They have a lot of
+  algorithms that are of potential interest, not to mention being
+  actively maintained - we should really be using them as a backend
+  directly rather than porting various individual pieces to vmath.h
+
 * add a flag to prefix command to remove prefix on a group hierarchy.
 
 * restore libged commands that were only exposed via archer but lost
