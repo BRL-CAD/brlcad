@@ -23,7 +23,7 @@
 # create the actual build targets.  Application directories, on the other hand,
 # list the "highest level" directories that any of the programs contained in
 # them need since many of them contain large numbers of executables with
-# different requriements.
+# different requirements.
 
 if (NOT COMMAND)
   function(deps_expand seed_dir out_var)
@@ -91,8 +91,8 @@ set_deps(libqtcad   "libged;libdm")
 set_deps(libtclcad  "libged;libdm")
 
 
-# Note - brlman can be compliled with Tcl, Qt,
-# or no graphical support, so we list libbu explicitly
+# Note - brlman can be compiled with Tcl, Qt, or no graphical support, so we
+# list libbu explicitly
 set_deps(brlman     "libqtcad;libtclcad;libbu")
 set_deps(bwish      "libtclcad")
 set_deps(conv       "libged;libgcv")
@@ -109,11 +109,10 @@ set_deps(util       "libdm;libicv;libwdb")
 set_deps(qged       "libqtcad")
 set_deps(external   "libwdb")
 set_deps(remrt      "libdm;liboptical")
-# tclscripts must come before applications like
-# mged and archer that need the scripts in place to
-# run. The script target lists are defined when the tclscripts
-# directories are configured, and those lists are needed
-# as dependencies for the targets in these directories
+# tclscripts must come before applications like mged and archer that need the
+# scripts in place to run. The script target lists are defined when the
+# tclscripts directories are configured, and those lists are needed as
+# dependencies for the targets in these directories
 set_deps(tclscripts "libtclcad")
 set_deps(adrt       "libtclcad")
 set_deps(isst       "libtclcad;libqtcad")
