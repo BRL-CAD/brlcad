@@ -463,13 +463,13 @@ f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struc
     struct db_plan_t *p = NULL;
     int state = 0;
 
-    for (p = plan->p_un._p_data[0]; p && (state += (p->eval)(p, db_node, dbip, results)); p = p->next)
+    for (p = plan->p_un._p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
     if (state)
 	return 1;
 
-    for (p = plan->p_un._p_data[1]; p && (state += (p->eval)(p, db_node, dbip, results)); p = p->next)
+    for (p = plan->p_un._p_data[1]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
     db_node->matched_filters = (state > 0) ? 1 : 0;
