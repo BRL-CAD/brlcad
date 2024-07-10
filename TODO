@@ -46,6 +46,17 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   algorithms that are of potential interest, not to mention being
   actively maintained - we should really be using them as a backend
   directly rather than porting various individual pieces to vmath.h
+  Refactored code to replace with direct calls:
+
+  src/libbg/lseg_lseg.c
+  src/libbg/lseg_pt.c
+  src/libbg/obr.c
+  src/libbg/sat.c
+  src/libbg/tri_pt.c
+
+  There are probably a number of other algorithms in our code where
+  we should check to see if the GTE implementation would be better
+  than ours (line/point distance functionality, for example).
 
 * add a flag to prefix command to remove prefix on a group hierarchy.
 
