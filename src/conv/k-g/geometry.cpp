@@ -113,9 +113,12 @@ std::vector<std::string> Geometry::getNames(void) const
     else if (m_type == GeometryType::Arbs) {
 	std::map<std::string, rt_arb_internal> temp = m_arbs.getArbs();
 	for (std::map<std::string, rt_arb_internal>::iterator it = temp.begin(); it != temp.end(); it++) {
-	    std::string arbName = name;
-	    arbName.append(it->first);
-	    arbName += ".arb";
+	    //std::string arbName = name;
+	    //std::string arbNumber = it->first;
+	    //arbName.append(arbNumber);
+	    //arbName.append(it->first);
+	    //arbName += ".arb";
+	    std::string arbName = it->first;
 	    ret.push_back(arbName);
 	}
     }
@@ -136,4 +139,14 @@ Arbs Geometry::getArbs(void) const
 GeometryType Geometry::getType(void) const
 {
     return m_type;
+}
+
+void Geometry::write(rt_wdb* wdbp)
+{
+    if (m_type == GeometryType::Bot) {
+	m_bot.write(wdbp);
+    }
+    else if(m_type == GeometryType::Arbs) {
+	m_arbs.write(wdbp);
+    }
 }

@@ -180,8 +180,10 @@ int main
 				point8[Y] = kData.nodes[n8].y * factor;
 				point8[Z] = kData.nodes[n8].z * factor;
 
-				std::string arbName = std::to_string(*itr);
-				
+				std::string arbNumber = std::to_string(*itr);
+				std::string arbName = partName;
+				arbName.append(arbNumber);
+				arbName += ".arb";
 
 				geometry.addArb(arbName.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
 			    }

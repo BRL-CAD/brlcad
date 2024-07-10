@@ -63,6 +63,7 @@ public:
     Arbs         getArbs(void) const;
     GeometryType getType(void) const;
 
+    void         write(rt_wdb* wdbp);
 private:
     std::string name;
     Bot         m_bot;
