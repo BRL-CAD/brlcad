@@ -263,7 +263,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    db_close(nmg_wstate.dbip);
 	return BRLCAD_OK;
     }
-    bool have_failure = false;
     if (BU_PTBL_LEN(ir)) {
 	if (s->make_nmg || s->nmg_booleval) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(ir); i++) {
@@ -273,9 +272,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		db_dirbuild(wdbip);
 		db_update_nref(wdbip, &rt_uniresource);
 		nmg_wstate.dbip = wdbip;
-
-		if (_ged_facetize_nmgeval(s, 1, (const char **)&obj_name, obj_name) != BRLCAD_OK) {
-		    have_failure = true;
+		int nret = _ged_facetize_nmgeval(s, 1, (const char **)&obj_name, obj_name);
+		if (nret != BRLCAD_OK) {
+		    if (s->verbosity >= 0)
+			bu_log("regions.cpp:%d Failed to process %s.\n", __LINE__, obj_name);
+		    bu_ptbl_free(ar);
+		    bu_free(ar, "ar table");
+		    bu_free(obj_name, "obj_name");
+		    bu_free(dpa, "free dpa");
+		    return BRLCAD_ERROR;
 		}
 		bu_free(obj_name, "obj_name");
 		db_close(wdbip);
@@ -323,61 +328,52 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	    char *obj_name = bu_strdup(dpw[0]->d_namep);
 	    bret = _ged_facetize_booleval_tri(s, wdbip, wwdbp, 1, (const char **)&obj_name, bu_vls_cstr(&bname), 1);
-	    if (s->verbosity >= 0 && bret != BRLCAD_OK) {
-		bu_log("regions.cpp:%d Failed to generate %s.\n", __LINE__, bu_vls_cstr(&bname));
-	    }
 	    bu_free(obj_name, "obj_name");
 	    db_close(wdbip);
 	}
 
-	if (bret == BRLCAD_OK) {
-	    // Replace the region's comb tree with the new solid
-	    wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-	    db_dirbuild(wdbip);
-	    db_update_nref(wdbip, &rt_uniresource);
-	    struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
-	    struct rt_db_internal intern;
-	    struct rt_comb_internal *comb;
-	    rt_db_get_internal(&intern, wdp, wdbip, NULL, &rt_uniresource);
-	    comb = (struct rt_comb_internal *)(&intern)->idb_ptr;
-	    RT_CK_COMB(comb);
-	    db_free_tree(comb->tree, &rt_uniresource);
-	    union tree *tp;
-	    struct rt_tree_array *tree_list;
-	    BU_GET(tree_list, struct rt_tree_array);
-	    tree_list[0].tl_op = OP_UNION;
-	    BU_GET(tp, union tree);
-	    RT_TREE_INIT(tp);
-	    tree_list[0].tl_tree = tp;
-	    tp->tr_l.tl_op = OP_DB_LEAF;
-	    tp->tr_l.tl_name = bu_strdup(bu_vls_cstr(&bname));
-	    tp->tr_l.tl_mat = NULL;
-	    comb->tree = (union tree *)db_mkgift_tree(tree_list, 1, &rt_uniresource);
-	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
-	    wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
-	    db_update_nref(wdbip, &rt_uniresource);
-	    db_close(wdbip);
-	} else {
-	    have_failure = true;
+	if (bret != BRLCAD_OK) {
+	    if (s->verbosity >= 0)
+		bu_log("regions.cpp:%d Failed to generate %s.\n", __LINE__, bu_vls_cstr(&bname));
+	    bu_ptbl_free(ar);
+	    bu_free(ar, "ar table");
+	    bu_vls_free(&bname);
+	    bu_free(dpa, "free dpa");
+	    return BRLCAD_ERROR;
 	}
+
+	// Replace the region's comb tree with the new solid
+	wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+	db_dirbuild(wdbip);
+	db_update_nref(wdbip, &rt_uniresource);
+	struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	rt_db_get_internal(&intern, wdp, wdbip, NULL, &rt_uniresource);
+	comb = (struct rt_comb_internal *)(&intern)->idb_ptr;
+	RT_CK_COMB(comb);
+	db_free_tree(comb->tree, &rt_uniresource);
+	union tree *tp;
+	struct rt_tree_array *tree_list;
+	BU_GET(tree_list, struct rt_tree_array);
+	tree_list[0].tl_op = OP_UNION;
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
+	tree_list[0].tl_tree = tp;
+	tp->tr_l.tl_op = OP_DB_LEAF;
+	tp->tr_l.tl_name = bu_strdup(bu_vls_cstr(&bname));
+	tp->tr_l.tl_mat = NULL;
+	comb->tree = (union tree *)db_mkgift_tree(tree_list, 1, &rt_uniresource);
+	struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
+	wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
+	db_update_nref(wdbip, &rt_uniresource);
+	db_close(wdbip);
     }
     bu_vls_free(&bname);
 
     // Report on the primitive processing
     if (!s->make_nmg && !s->nmg_booleval)
 	facetize_primitives_summary(s);
-
-    // If any of the regions failed (implicit or explicit), don't keep or
-    // dbconcat - the operation wasn't a full success.
-    if (have_failure) {
-	if (s->verbosity >= 0) {
-	    bu_log("regions.cpp:%d Not all regions were successful - FAIL\n", __LINE__);
-	}
-	bu_ptbl_free(ar);
-	bu_free(ar, "ar table");
-	bu_free(dpa, "free dpa");
-	return BRLCAD_ERROR;
-    }
 
     // keep active regions into .g copy
     struct ged *wgedp = ged_open("db", bu_vls_cstr(s->wfile), 1);
