@@ -19,8 +19,13 @@
  */
 /** @file libged/facetize.cpp
  *
- * The facetize command.
+ * Logic implementing the per-region facetize mode.
  *
+ * Note:  we deliberately manage this somewhat differently from the "convert
+ * everything to one BoT" case to minimize the number of subprocesses we have
+ * to launch.  For very large models, if we just treat each region like its a
+ * complete conversion, we may end up launching too many subprocesses and run
+ * into operating system limitations.
  */
 
 #include "common.h"
@@ -66,20 +71,23 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *oname = argv[argc-1];
     argc--;
 
+    // Before we go any further, see if we actually have regions in the
+    // specified input(s).
     const char *active_regions = "( -type r ! -below -type r )";
     struct bu_ptbl *ar = NULL;
     BU_ALLOC(ar, struct bu_ptbl);
     if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
 	if (s->verbosity >= 0) {
-	    bu_log("Problem searching for active regions - aborting.\n");
+	    bu_log("regions.cpp:%d Problem searching for active regions - aborting.\n", __LINE__);
 	}
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
 	return BRLCAD_OK;
     }
+
+    // If we have none, just treat this as a normal facetize operation.
     if (!BU_PTBL_LEN(ar)) {
-	/* No active regions.  We'll just try a normal facetize */
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 
@@ -132,14 +140,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	return ret;
     }
 
-    // For the working file setup, we need to check the solids to see if any
-    // supporting files need to be copied
+    // We've got something warranting region processiong. For the working file
+    // setup, we need to check the solids to see if any supporting files need
+    // to be copied
     const char *active_solids = "! -type comb";
     struct bu_ptbl *as = NULL;
     BU_ALLOC(as, struct bu_ptbl);
     if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, argc, dpa, dbip, NULL) < 0) {
 	if (s->verbosity >= 0) {
-	    bu_log("Problem searching for active solids - aborting.\n");
+	    bu_log("regions.cpp:%d Problem searching for active solids - aborting.\n", __LINE__);
 	}
 	bu_ptbl_free(as);
 	bu_free(as, "as table");
@@ -178,12 +187,30 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     // We pass in the list of all active solids so any necessary supporting data
     // files also get copied over.
     if (_ged_facetize_working_file_setup(s, as) != BRLCAD_OK) {
+	if (s->verbosity >= 0) {
+	    bu_log("regions.cpp:%d Failed to set up working file - aborting.\n", __LINE__);
+	}
 	bu_ptbl_free(as);
 	bu_free(as, "as table");
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
 	return BRLCAD_ERROR;
+    }
+
+    // We need all the solids converted
+    if (!s->make_nmg && !s->nmg_booleval) {
+	if (_ged_facetize_leaves_tri(s, dbip, as)) {
+	    if (s->verbosity >= 0) {
+		bu_log("regions.cpp:%d Failed to tessellate all solids - aborting.\n", __LINE__);
+	    }
+	    bu_ptbl_free(as);
+	    bu_free(as, "as table");
+	    bu_ptbl_free(ar);
+	    bu_free(ar, "ar table");
+	    bu_free(dpa, "free dpa");
+	    return BRLCAD_ERROR;
+	}
     }
 
     // Done with solids table
@@ -219,7 +246,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     nmg_wstate.dbip = NULL;
 
     // If we have any solids in the hierarchies with only combs above them,
-    // they are "implicit" regions and must be facetized individually.
+    // they are "implicit" regions and must be facetized individually. For
+    // the non-NMG case we've already handled all primitives as part of the
+    // normal pipeline, but for NMG we need to handle them specifically
     const char *implicit_regions = "( ! -below -type r ! -type comb )";
     struct bu_ptbl *ir = NULL;
     BU_ALLOC(ir, struct bu_ptbl);
@@ -251,14 +280,11 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		bu_free(obj_name, "obj_name");
 		db_close(wdbip);
 	    }
-	} else {
-	    if (_ged_facetize_leaves_tri(s, dbip, ir) != BRLCAD_OK) {
-		have_failure = true;
-	    }
 	}
     }
     bu_ptbl_free(ir);
     bu_free(ir, "ir table");
+
 
     // For proper regions, we're reducing the CSG tree to a single BoT or NMG and
     // swapping that solid in under the region comb
@@ -276,31 +302,37 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
 	}
 
-	struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
-	db_dirbuild(cdbip);
-	db_update_nref(cdbip, &rt_uniresource);
-	struct directory *dcheck = db_lookup(cdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
+	struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+	wdbip->dbi_read_only = 1;
+	db_dirbuild(wdbip);
+	db_update_nref(wdbip, &rt_uniresource);
+	struct directory *dcheck = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
 	if (dcheck != RT_DIR_NULL)
-	    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)cdbip);
-	db_close(cdbip);
+	    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)wdbip);
+	wdbip->dbi_read_only = 0;
+	nmg_wstate.dbip = wdbip;
 
 	int bret = BRLCAD_OK;
 	if (s->make_nmg || s->nmg_booleval) {
 	    char *obj_name = bu_strdup(dpw[0]->d_namep);
-	    struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-	    db_dirbuild(wdbip);
-	    db_update_nref(wdbip, &rt_uniresource);
-	    nmg_wstate.dbip = wdbip;
 	    bret = _ged_facetize_nmgeval(&nmg_wstate, 1, (const char **)&obj_name, bu_vls_cstr(&bname));
 	    bu_free(obj_name, "obj_name");
 	    db_close(wdbip);
 	} else {
-	    bret = _ged_facetize_booleval(s, 1, dpw, bu_vls_cstr(&bname), true, false);
+	    // Need wdbp in the next two stages for tolerances
+	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
+	    char *obj_name = bu_strdup(dpw[0]->d_namep);
+	    bret = _ged_facetize_booleval_tri(s, wdbip, wwdbp, 1, (const char **)&obj_name, bu_vls_cstr(&bname), 1);
+	    if (s->verbosity >= 0 && bret != BRLCAD_OK) {
+		bu_log("regions.cpp:%d Failed to generate %s.\n", __LINE__, bu_vls_cstr(&bname));
+	    }
+	    bu_free(obj_name, "obj_name");
+	    db_close(wdbip);
 	}
 
 	if (bret == BRLCAD_OK) {
 	    // Replace the region's comb tree with the new solid
-	    struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+	    wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
 	    db_dirbuild(wdbip);
 	    db_update_nref(wdbip, &rt_uniresource);
 	    struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
@@ -338,6 +370,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     // If any of the regions failed (implicit or explicit), don't keep or
     // dbconcat - the operation wasn't a full success.
     if (have_failure) {
+	if (s->verbosity >= 0) {
+	    bu_log("regions.cpp:%d Not all regions were successful - FAIL\n", __LINE__);
+	}
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
@@ -347,6 +382,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     // keep active regions into .g copy
     struct ged *wgedp = ged_open("db", bu_vls_cstr(s->wfile), 1);
     if (!wgedp) {
+	if (s->verbosity >= 0) {
+	    bu_log("regions.cpp:%d unable to retrieve working data - FAIL\n", __LINE__);
+	}
     	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
@@ -433,6 +471,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	cdp  = db_lookup(dbip, bu_vls_cstr(&nname), LOOKUP_QUIET);
 	if (cdp != RT_DIR_NULL) {
 	    if (bu_vls_incr(&nname, NULL, NULL, &_db_uniq_test, (void *)dbip) < 0) {
+		if (s->verbosity >= 0) {
+		    bu_log("regions.cpp:%d unable to generate name - FAIL\n", __LINE__);
+		}
 		bu_vls_free(&nname);
 		return BRLCAD_ERROR;
 	    }
