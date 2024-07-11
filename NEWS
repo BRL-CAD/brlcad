@@ -22,6 +22,8 @@ changes made.  See document footer for additional details.
 * added a -t option to bot flip to check BoT orientation - Cliff Yapp
 * fixed shaded drawing of CW BoT solids - Cliff Yapp
 * updated OpenNURBS library to version 8.3.23346.03050 - Cliff Yapp
+* improved 'help lc' mged command help text - Josh Baker
+* added 'help lint' mged command help text - Josh Baker
 * added man pages for 'bot check' and 'bot extrude' cmds - Cliff Yapp
 * enhanced bot extrude command to output a BoT mesh - Cliff Yapp
 * added bot check manifold cmd for bot validity testing - Cliff Yapp
