@@ -35,6 +35,10 @@ include(CMakeParseArguments)
 
 function(brlcad_ext_setup)
 
+  if (BRLCAD_DISABLE_RELOCATION)
+    return()
+  endif (BRLCAD_DISABLE_RELOCATION)
+
   set(BRLCAD_EXT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_build)
   set(BRLCAD_EXT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
