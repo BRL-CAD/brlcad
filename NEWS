@@ -19,7 +19,7 @@ changes made.  See document footer for additional details.
 * fixed mged 'search -or' filter behavior - Cliff Yapp, Chris McGregor
 * major improvements to 'gist' features and usability
 	- Rohan Dhawan, Leo Feng, Sam Hollenbeck, Timothy Pham,
-	- Yida You, Chris McGregor
+	- Yida Zou, Chris McGregor
 * updated pinewood.g test model - Josh Baker
 * updated edcodes man page and help text - Josh Baker
 * update mvall man page - Josh Baker
