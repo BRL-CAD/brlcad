@@ -103,7 +103,7 @@ void RegionList::create
 	Region&                            region                   = it->second;
 	//Bot&                               bot                      = region.geometry.getBot();
 	//Arbs&                              arbs                     = region.geometry.getArbs();
-	Geometry                           geometry                 = region.geometry;
+	Geometry&                           geometry                 = region.geometry;
 	const std::map<std::string, std::string>& region_attributes = region.attributes;
 
 	std::vector<std::string> names = region.geometry.getNames();
