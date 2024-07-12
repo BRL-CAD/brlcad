@@ -32,6 +32,7 @@
 #include "bu/cmd.h"
 #include "bu/hash.h"
 #include "bu/str.h"
+#include "bu/time.h"
 #include "bu/vls.h"
 #include "bv/lod.h"
 
@@ -176,6 +177,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "cache")) {
 	if (argc == 1) {
+	    int64_t elapsedtime = bu_gettime();
 
 	    if (!gedp || !gedp->dbip)
 		return BRLCAD_ERROR;
@@ -293,7 +295,16 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		}
 	    }
 
-	    bu_vls_printf(gedp->ged_result_str, "Caching complete");
+	    elapsedtime = bu_gettime() - elapsedtime;
+	    {
+		int seconds = elapsedtime / 1000000;
+		int minutes = seconds / 60;
+		int hours = minutes / 60;
+
+		minutes = minutes % 60;
+		seconds = seconds %60;
+		bu_vls_printf(gedp->ged_result_str, "Caching complete (Elapsed time: %02d:%02d:%02d)\n", hours, minutes, seconds);
+	    }
 	    return BRLCAD_OK;
 	}
 	if (argc == 2) {
