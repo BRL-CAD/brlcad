@@ -53,7 +53,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     struct bview *gvp;
     int print_help = 0;
     static const char *usage = "view lod [csg|mesh] [0|1]\n"
-	"view lod cache [clear] [all_files]\n"
+	"view lod cache [clear [all_files] | exists] \n"
 	"view lod scale [factor]\n"
 	"view lod point_scale [factor]\n"
 	"view lod curve_scale [factor]\n"
@@ -310,6 +310,22 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	if (argc == 2) {
 	    if (BU_STR_EQUAL(argv[1], "clear")) {
 		bv_mesh_lod_clear_cache(gedp->ged_lod, 0);
+		return BRLCAD_OK;
+	    } else if (BU_STR_EQUAL(argv[1], "exists")) {
+		for (int i = 0; i < RT_DBNHASH; i++) {
+		    struct directory *dp;
+		    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+			if (dp->d_addr == RT_DIR_PHONY_ADDR)
+			    continue;
+
+			if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+			    unsigned long long key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+			    if (!key) {
+				return BRLCAD_ERROR;
+			    }
+			}
+		    }
+		}
 		return BRLCAD_OK;
 	    }
 	}
