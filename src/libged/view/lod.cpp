@@ -320,7 +320,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			// checking both BoTs and BREPs
 			if ((dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) ||
 			    (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
-			    unsigned long long key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+			    unsigned long long key = bv_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
 			    if (!key) {
 				return BRLCAD_ERROR;
 			    }
