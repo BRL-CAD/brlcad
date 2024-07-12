@@ -317,8 +317,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 			if (dp->d_addr == RT_DIR_PHONY_ADDR)
 			    continue;
-
-			if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+			// checking both BoTs and BREPs
+			if ((dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) ||
+			    (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
 			    unsigned long long key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
 			    if (!key) {
 				return BRLCAD_ERROR;
