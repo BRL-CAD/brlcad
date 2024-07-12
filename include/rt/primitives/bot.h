@@ -28,6 +28,7 @@
 #include "vmath.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
+#include "nmg.h"
 #include "rt/geom.h"
 #include "rt/defines.h"
 #include "rt/tol.h"
