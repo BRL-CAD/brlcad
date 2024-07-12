@@ -10,8 +10,47 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 202X-XX-XX  Release 7.XX.X                                     ---
+--- 2024-07-XX  Release 7.40.0                                     ---
 ----------------------------------------------------------------------
+
+This major release of BRL-CAD improves the robustness of the facetize
+command.  Building on work begun in 7.38.0, for the first time BRL-CAD
+is able to successfully facetize all of BRL-CAD's example geometries.
+This involves a major change to the processing pipeline of the
+facetize command, allowing handling of individual primitives to be
+fault tolerant and automatically attempt fallback methods.  Although
+historically BRL-CAD facetize has attempted to produce output meshes
+even when individual operations fail by silently skipping over failing
+inputs, this behavior is now changed to a stricter policy of halting
+if individual elements of the process do not succeed.
+
+Also new in this release are capabilities for testing and repairing
+triangle meshes.   The lint command will now validate solid BoT
+behavior with the raytracer, and the 'bot repair' command is able
+to perform hole filling operations on some categories of non-manifold
+BoTs.  Another related new feature allows users to generate explicit
+volumetric BoTs using plate mode BoTs as inputs via the 'bot extrude'
+command.
+
+This release also incorporates the tool 'gist' for generating a one
+page graphical overview and summary of the contents of a .g database.
+
+In this release we are introducing a significant change in the
+management of 3rd party dependencies.  The src/other directory has
+been replaced by an external repository specifically tasked with the
+job of managing 3rd party libraries:
+
+   http://github.com/BRL-CAD/bext
+
+By default BRL-CAD will download and build necessary dependencies as
+part of its build. However, note that an internet connection is
+required by default -  see the INSTALL file for more details and
+options for building without internet availability.
+
+Developers requiring only a subset of BRL-CAD (for example, if a
+project only needs librt and its dependencies) can now define subsets
+of BRL-CAD to build with the BRLCAD_COMPONENTS variable.  See INSTALL
+for more information.
 
 * added importer attr to stl-g and obj-g BoT objects - Cliff Yapp
 * improved object name generation for stl-g importer - Cliff Yapp
