@@ -16,7 +16,7 @@ changes made.  See document footer for additional details.
 * added importer attr to stl-g and obj-g BoT objects - Cliff Yapp
 * improved object name generation for stl-g importer - Cliff Yapp
 * updated 3dm-g input attribute: converter -> importer - Cliff Yapp
-* fixed mged 'search -or' filter behavior - Cliff Yapp
+* fixed mged 'search -or' filter behavior - Cliff Yapp, Chris McGregor
 * updated pinewood.g test model - Josh Baker
 * updated edcodes man page and help text - Josh Baker
 * update mvall man page - Josh Baker
@@ -25,7 +25,6 @@ changes made.  See document footer for additional details.
 * removed upper limit on MGED pnts cmd point count - Cliff Yapp
 * added a -t option to bot flip to check BoT orientation - Cliff Yapp
 * fixed shaded drawing of CW BoT solids - Cliff Yapp
-* updated 'bot repair' man page - Cliff Yapp
 * added reair man page - Josh Baker
 * added 'help reair' mged command help text - Josh Baker
 * added experimental 'imgdiff' command-line tool - Cliff Yapp
