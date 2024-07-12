@@ -21,6 +21,7 @@ changes made.  See document footer for additional details.
 * removed upper limit on MGED pnts cmd point count - Cliff Yapp
 * added a -t option to bot flip to check BoT orientation - Cliff Yapp
 * fixed shaded drawing of CW BoT solids - Cliff Yapp
+* updated 'bot repair' man page - Cliff Yapp
 * added reair man page - Josh Baker
 * added 'help reair' mged command help text - Josh Baker
 * added experimental 'imgdiff' command-line tool - Cliff Yapp
