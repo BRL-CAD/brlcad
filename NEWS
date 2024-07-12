@@ -16,6 +16,7 @@ changes made.  See document footer for additional details.
 * added importer attr to stl-g and obj-g BoT objects - Cliff Yapp
 * improved object name generation for stl-g importer - Cliff Yapp
 * updated 3dm-g input attribute: converter -> importer - Cliff Yapp
+* updated edcodes man page and help text - Josh Baker
 * update mvall man page - Josh Baker
 * improved 3dm-g error message when file does not exist - Cliff Yapp
 * added new BoT raytracing validity checks to lint cmd - Cliff Yapp
