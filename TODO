@@ -58,6 +58,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   we should check to see if the GTE implementation would be better
   than ours (line/point distance functionality, for example).
 
+* validate imgdiff difference reporting
+
 * add a flag to prefix command to remove prefix on a group hierarchy.
 
 * restore libged commands that were only exposed via archer but lost
