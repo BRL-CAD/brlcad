@@ -21,6 +21,7 @@ changes made.  See document footer for additional details.
 * removed upper limit on MGED pnts cmd point count - Cliff Yapp
 * added a -t option to bot flip to check BoT orientation - Cliff Yapp
 * fixed shaded drawing of CW BoT solids - Cliff Yapp
+* added 'help reair' mged command help text - Josh Baker
 * added experimental 'imgdiff' command-line tool - Cliff Yapp
 * updated OpenNURBS library to version 8.3.23346.03050 - Cliff Yapp
 * improved 'help lc' mged command help text - Josh Baker
