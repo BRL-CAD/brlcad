@@ -62,6 +62,12 @@ extern "C++" {
 #    pragma GCC diagnostic ignored "-Woverloaded-virtual"
 #  endif
 #endif
+#if defined(__clang__)
+#    pragma clang diagnostic ignored "-Wunknown-pragmas"
+#    pragma clang diagnostic ignored "-Wignored-qualifiers"
+#    pragma clang diagnostic ignored "-Woverloaded-virtual"
+#    pragma clang diagnostic ignored "-Wshadow"
+#endif
 
 /* don't let opennurbs include windows.h */
 #define ON_NO_WINDOWS 1
