@@ -343,8 +343,10 @@ static std::vector<std::string> parse_command
 		    temp.clear();
 		}
 	    }
-	    else
-		temp += command[i];
+	    else {
+		char uper = toupper(command[i]);
+		temp += uper;
+	    }
 	}
 
 	if (temp.size() > 0)
@@ -444,7 +446,7 @@ bool parse_k
 				partLinesRead = 0;
 				partTitle     = "";
 			    }
-			    else if ((command.size() == 3) && (command[1]=="ADAPTIVE") && (command[2]=="FAILURE")) {
+			    else if ((command.size() == 3) && (command[1] == "ADAPTIVE") && (command[2] == "FAILURE")) {
 				state = KState::Part_Adaptive_Failure;
 			    }
 			    else
