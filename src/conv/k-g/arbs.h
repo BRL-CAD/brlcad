@@ -55,7 +55,7 @@ public:
     const char* getName(void) const;
     std::map<std::string, rt_arb_internal> getArbs(void) const;
 
-    void        write(rt_wdb* wdbp);
+    std::vector<std::string>        write(rt_wdb* wdbp);
 
 private:
     std::string     name;

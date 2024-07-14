@@ -30,11 +30,6 @@
 #include "bot.h"
 #include "arbs.h"
 
-enum class GeometryType {
-    Bot,
-    Arbs
-};
-
 
 class Geometry {
 public:
@@ -43,7 +38,6 @@ public:
 
     void        setBaseName(const char* value);
     void        setThickness(double value);
-    void        setType(GeometryType type);
     void        addTriangle(const point_t& point1,
 			    const point_t& point2,
 			    const point_t& point3);
@@ -57,18 +51,15 @@ public:
 			const point_t& point7,
 			const point_t& point8);
 
-    const char*  getName(void) const;
-    std::vector<std::string> getNames(void) const;
+    const char*  getBaseName(void) const;
     Bot          getBot(void) const;
     Arbs         getArbs(void) const;
-    GeometryType getType(void) const;
 
-    void         write(rt_wdb* wdbp);
+    std::vector<std::string>       write(rt_wdb* wdbp);
 private:
     std::string name;
     Bot         m_bot;
     Arbs        m_arbs;
-    GeometryType m_type;
 };
 
 

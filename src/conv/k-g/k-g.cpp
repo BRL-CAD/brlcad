@@ -91,7 +91,6 @@ int main
 
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
 			    if (kData.elements[*itr].nodes.size() == 4) {
-				geometry.setType(GeometryType::Bot);
 
 				point_t point1;
 				point_t point2;
@@ -128,7 +127,6 @@ int main
 				}
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 8) {
-				geometry.setType(GeometryType::Arbs);
 
 				point_t point1;
 				point_t point2;
@@ -181,11 +179,8 @@ int main
 				point8[Z] = kData.nodes[n8].z * factor;
 
 				std::string arbNumber = std::to_string(*itr);
-				std::string arbName = partName;
-				arbName.append(arbNumber);
-				arbName += ".arb";
 
-				geometry.addArb(arbName.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
+				geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
 			    }
 			    else
 				std::cout << "Un supported element in k-file " << argv[1] << "\n";

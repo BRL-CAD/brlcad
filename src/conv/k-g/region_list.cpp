@@ -41,8 +41,6 @@ Geometry& RegionList::addRegion
 ) {
     Geometry& ret = m_list[name].geometry;
 
-    //std::string botName(name);
-    //botName += ".bot";
     ret.setBaseName(name.c_str());
 
     return ret;
@@ -99,45 +97,22 @@ void RegionList::create
     BU_LIST_INIT(&all_head.l);
 
     for (std::map<std::string, Region>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
-	const std::string&                 region_name              = it->first;
-	Region&                            region                   = it->second;
-	//Bot&                               bot                      = region.geometry.getBot();
-	//Arbs&                              arbs                     = region.geometry.getArbs();
-	Geometry&                           geometry                 = region.geometry;
-	const std::map<std::string, std::string>& region_attributes = region.attributes;
+	const std::string&                        region_name              = it->first;
+	Region&                                   region                   = it->second;
+	Geometry&                                 geometry                 = region.geometry;
+	const std::map<std::string, std::string>& region_attributes        = region.attributes;
 
-	std::vector<std::string> names = region.geometry.getNames();
-
-	//bot.write(wdbp);
-	//arbs.write(wdbp);
-	geometry.write(wdbp);
+	
+	std::vector<std::string> names = geometry.write(wdbp);
 
 	wmember geometry_head;
 	BU_LIST_INIT(&geometry_head.l);
-
-	/*wmember bot_head;
-	BU_LIST_INIT(&bot_head.l);
-
-	wmember arbs_head;
-	BU_LIST_INIT(&arbs_head.l);*/
-
-	//std::map<std::string, rt_arb_internal> bagOfArbs = arbs.getArbs();
 
 	for (int i = 0; i < names.size(); i++) {
 	    mk_addmember(names[i].c_str(), &(geometry_head.l), NULL, WMOP_UNION);
 	    mk_addmember(names[i].c_str(), &(all_head.l), NULL, WMOP_UNION);
 	}
-	mk_lfcomb(wdbp, geometry.getName(), &geometry_head, 0);
-
-	/*for (std::map<std::string, rt_arb_internal>::iterator it = bagOfArbs.begin(); it != bagOfArbs.end(); it++) {
-	    mk_addmember((it->first).c_str(), &(arbs_head.l), NULL, WMOP_UNION);
-	    mk_addmember((it->first).c_str(), &(all_head.l), NULL, WMOP_UNION);
-	}
-	mk_lfcomb(wdbp, arbs.getName(), &arbs_head, 0);*/
-
-
-	/*mk_addmember(bot.getName(), &(bot_head.l), NULL, WMOP_UNION);
-	mk_lfcomb(wdbp, region_name.c_str(), &bot_head, 0);*/
+	mk_lfcomb(wdbp, geometry.getBaseName(), &geometry_head, 0);
 
 	if (region_attributes.size() > 0) {
 	    writeAttributes(wdbp, region_name.c_str(), region_attributes);
@@ -145,8 +120,7 @@ void RegionList::create
 
 	mk_addmember(region_name.c_str(), &(all_head.l), NULL, WMOP_UNION);
 	
-	//mk_freemembers(&bot_head.l);
-	//mk_freemembers(&arbs_head.l);
+	mk_freemembers(&geometry_head.l);
     }
 
     mk_lfcomb(wdbp, "all.g", &all_head, 0);

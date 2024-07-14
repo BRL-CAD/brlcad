@@ -52,13 +52,8 @@ void Geometry::setBaseName
     else
 	name = "";
 
-    //std::string botName(name);
-    //std::string arbsName(name);
-    //botName += ".bot";
-    //arbsName += ".s";
-
-    //m_bot.setName(botName.c_str());
-    //m_arbs.setName(arbsName.c_str());
+    m_bot.setName(name.c_str());
+    m_arbs.setName(name.c_str());
 }
 
 void Geometry::setThickness
@@ -68,10 +63,6 @@ void Geometry::setThickness
     m_bot.setThickness(value);
 }
 
-void Geometry::setType(GeometryType type)
-{
-    m_type = type;
-}
 
 void Geometry::addTriangle
 (
@@ -97,34 +88,11 @@ void Geometry::addArb
     m_arbs.addArb(arbName, point1, point2, point3, point4, point5, point6, point7, point8);
 }
 
-const char* Geometry::getName(void) const
+const char* Geometry::getBaseName(void) const
 {
     return name.c_str();
 }
 
-std::vector<std::string> Geometry::getNames(void) const
-{
-    std::vector<std::string> ret;
-    if (m_type == GeometryType::Bot) {
-	std::string botName = name;
-	botName += ".bot";
-	ret.push_back(botName);
-    }
-    else if (m_type == GeometryType::Arbs) {
-	std::map<std::string, rt_arb_internal> temp = m_arbs.getArbs();
-	for (std::map<std::string, rt_arb_internal>::iterator it = temp.begin(); it != temp.end(); it++) {
-	    //std::string arbName = name;
-	    //std::string arbNumber = it->first;
-	    //arbName.append(arbNumber);
-	    //arbName.append(it->first);
-	    //arbName += ".arb";
-	    std::string arbName = it->first;
-	    ret.push_back(arbName);
-	}
-    }
-    
-    return ret;
-}
 
 Bot Geometry::getBot(void) const
 {
@@ -136,17 +104,13 @@ Arbs Geometry::getArbs(void) const
     return m_arbs;
 }
 
-GeometryType Geometry::getType(void) const
-{
-    return m_type;
-}
 
-void Geometry::write(rt_wdb* wdbp)
+std::vector<std::string> Geometry::write(rt_wdb* wdbp)
 {
-    if (m_type == GeometryType::Bot) {
-	m_bot.write(wdbp);
-    }
-    else if(m_type == GeometryType::Arbs) {
-	m_arbs.write(wdbp);
-    }
+    std::vector<std::string> ret      = m_bot.write(wdbp);
+    std::vector<std::string> arbNames = m_arbs.write(wdbp);
+
+    ret.insert(ret.end(), arbNames.begin(), arbNames.end());
+
+    return ret;
 }

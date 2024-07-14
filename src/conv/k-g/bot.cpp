@@ -175,10 +175,14 @@ const char* Bot::getName(void) const {
 }
 
 
-void Bot::write
+std::vector<std::string> Bot::write
 (
     rt_wdb* wdbp
 ) {
+    std::vector<std::string> ret;
+    std::string botName = name;
+    botName += ".bot";
+
     rt_bot_internal* bot_wdb;
 
     BU_GET(bot_wdb, rt_bot_internal);
@@ -223,6 +227,8 @@ void Bot::write
     }
 
     wdb_export(wdbp, name.c_str(), bot_wdb, ID_BOT, 1.);
+
+    return ret;
 }
 
 

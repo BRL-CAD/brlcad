@@ -81,19 +81,28 @@ std::map<std::string, rt_arb_internal> Arbs::getArbs(void) const
 }
 
 
-void Arbs::write
+std::vector<std::string> Arbs::write
 (
     rt_wdb* wdbp
 ){
+    std::vector<std::string> ret;
+
     for (std::map<std::string, rt_arb_internal>::iterator it = arbs.begin(); it != arbs.end(); it++) {
+	std::string arbName = name;
+	arbName += it->first;
+	arbName += ".arb";
+	ret.push_back(arbName);
+
 	rt_arb_internal* arb_wdb;
 
 	BU_GET(arb_wdb, rt_arb_internal);
 	arb_wdb->magic = RT_ARB_INTERNAL_MAGIC;
 	*arb_wdb = it->second;
 
-	wdb_export(wdbp, (it->first).c_str(), arb_wdb, ID_ARB8, 1.);
+	wdb_export(wdbp, arbName.c_str(), arb_wdb, ID_ARB8, 1.);
     }
+
+    return ret;
 }
 
 
