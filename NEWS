@@ -24,6 +24,12 @@ even when individual operations fail by silently skipping over failing
 inputs, this behavior is now changed to a stricter policy of halting
 if individual elements of the process do not succeed.
 
+This release also incorporates the tool 'gist' for generating a one
+page graphical overview and summary of the contents of a .g database.
+This tool is the culmination of work by multiple student teams from
+Texas A&M University and incorporates automatic layout features to
+produce appropriately configured summary layouts.
+
 Also new in this release are capabilities for testing and repairing
 triangle meshes.   The lint command will now validate solid BoT
 behavior with the raytracer, and the 'bot repair' command is able
@@ -32,20 +38,14 @@ BoTs.  Another related new feature allows users to generate explicit
 volumetric BoTs using plate mode BoTs as inputs via the 'bot extrude'
 command.
 
-This release also incorporates the tool 'gist' for generating a one
-page graphical overview and summary of the contents of a .g database.
-
 In this release we are introducing a significant change in the
 management of 3rd party dependencies.  The src/other directory has
 been replaced by an external repository specifically tasked with the
-job of managing 3rd party libraries:
-
-   http://github.com/BRL-CAD/bext
-
-By default BRL-CAD will download and build necessary dependencies as
-part of its build. However, note that an internet connection is
-required by default -  see the INSTALL file for more details and
-options for building without internet availability.
+job of managing 3rd party libraries.  By default BRL-CAD will
+download and build necessary dependencies as part of its build.
+However, note that an internet connection is required by default -
+see the INSTALL file for more details and options for preparing to
+build without internet availability.
 
 Developers requiring only a subset of BRL-CAD (for example, if a
 project only needs librt and its dependencies) can now define subsets
