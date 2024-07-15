@@ -52,6 +52,7 @@ project only needs librt and its dependencies) can now define subsets
 of BRL-CAD to build with the BRLCAD_COMPONENTS variable.  See INSTALL
 for more information.
 
+* improved obj-g import naming - Chris McGregor
 * added importer attr to stl-g and obj-g BoT objects - Cliff Yapp
 * improved object name generation for stl-g importer - Cliff Yapp
 * updated 3dm-g input attribute: converter -> importer - Cliff Yapp
