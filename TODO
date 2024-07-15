@@ -18,14 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Verify volume/area calculations between previous facetize outputs
-  and current outputs.
-
-* Update bext dependencies (including Appleseed stack) to
-  latest versions
-
-* Merge and test latest gist changes
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
