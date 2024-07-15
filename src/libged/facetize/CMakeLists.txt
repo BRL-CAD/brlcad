@@ -40,10 +40,26 @@ PLUGIN_SETUP(ged-facetize ged)
 # Plugin requires subprocess to work
 add_dependencies(ged-facetize ged_exec facetize_process)
 
+
+# Old version of facetize
+set(OLD_FACETIZE_SRCS
+  old_facetize.cpp
+  old_facetize_log.c
+  )
+ged_plugin_library(ged-old-facetize SHARED ${OLD_FACETIZE_SRCS})
+target_include_directories(ged-old-facetize BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if (FACETIZE_LOCAL_INCLUDE_DIRS)
+  target_include_directories(ged-old-facetize SYSTEM BEFORE PRIVATE ${FACETIZE_LOCAL_INCLUDE_DIRS})
+endif (FACETIZE_LOCAL_INCLUDE_DIRS)
+target_link_libraries(ged-old-facetize ${FACETIZE_LIBS})
+set_property(TARGET ged-old-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
+PLUGIN_SETUP(ged-old-facetize ged)
+
 CMAKEFILES(
   CMakeLists.txt
   tess_opts.h
   ged_facetize.h
+  old_facetize.h
   subprocess.h
   TODO
   ${FACETIZE_SRCS}
