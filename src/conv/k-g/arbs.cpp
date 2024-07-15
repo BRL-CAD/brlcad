@@ -89,6 +89,7 @@ std::vector<std::string> Arbs::write
 
     for (std::map<std::string, rt_arb_internal>::iterator it = arbs.begin(); it != arbs.end(); it++) {
 	std::string arbName = name;
+	arbName += ".";
 	arbName += it->first;
 	arbName += ".arb";
 	ret.push_back(arbName);
