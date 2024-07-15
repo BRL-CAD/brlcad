@@ -134,72 +134,58 @@ you need/want will determine which configuration options you should
 use.  See the CONFIGURATION OPTIONS section below for details on how
 to go about selecting which options are appropriate for you.
 
-BRL-CAD's dependencies are managed in a third party repository, located at
+BRL-CAD's dependencies are managed in a separate repository, located at
 https://github.com/BRL-CAD/bext  By default BRL-CAD's configure process will
-download and manage the necessary dependencies, but there are a number of
-scenarios and options defined that will allow developers to control how this
-process works.  The full dependency stack of BRL-CAD, with all optional and
-experimental features enabled, is a VERY large and a long compile.  Therefore,
-the bext build outputs can be built as their own separate, external project to
-allow for reuse of the compiled outputs.  In this mode, the main BRL-CAD build
-simply copies and tweaks the specified bext outputs for its own immediate uses,
-avoiding the need for a full rebuild every time the BRL-CAD build directory is
-cleared.  The downside of this approach is that ALL compiled output libraries
-of bext will always be included, regardless of whether changes in build
-configuration would have otherwise disabled them.  For example, if building
-BRL-CAD with Tcl/Tk support disabled, using a pre-existing bext with Tcl/Tk
-compiled into it will still result in the Tcl/Tk files getting bundled with
-BRL-CAD, even though it does not use them.  The advantage of letting BRL-CAD
-handle building bext is it can be more nuanced about what it compiles based
-on BRL-CAD feature settings, but that in turn means the BRL-CAD configure
-process will have to complete the bext build and install stages before it
-can finalized the main BRL-CAD build files.
+download and manage the necessary dependencies, avoiding the need for user
+awareness of the bext repository, but there are a number of scenarios where it
+is advantageous for developers to adjust how this process works.
 
-If no pre-supplied bext build outputs are supplied, BRL-CAD's configure
-process needs to create them - but if an existing bext clone is available,
-it can be pointed to with the BRLCAD_EXT_SOURCE_DIR variable rather than
-requiring another clone operation.  This is one mode that can be used for
-compilation when the internet isn't available.
+The full dependency stack of BRL-CAD, with all optional and experimental
+features enabled, is a VERY large and long compile.  Therefore, the bext build
+outputs can be built as their own separate, external project to allow for reuse
+of the compiled outputs.  Building bext separately means BRL-CAD won't get a
+chance to customize what is and is not built, but the trade-off is that outputs
+can be built once and reused over and over.  Doing so can significantly shorten
+time spent configuring BRL-CAD builds - reusing bext compiled outputs is
+recommended for serious developers.
 
-The simplest way to ensure everything is available for building is to do
-a recursive git clone on the main BRL-CAD repository, which will pull all
-sources that might be needed into src/bext within the BRL-CAD source tree.
-Note that this will be a full clone, so it will require a fair bit of disk
-space.  The configure-managed bext build process will populate only the
-modules needed based on the build settings, so it has the potential to be
-much lighter weight.
+Various useful configurations for working with bext:
 
-Various useful configurations:
+* Get a git clone that has everything which might be needed (large,
+  but useful for offline building)
 
-* Get a git clone that has everything which might be needed
 git clone --recurse-submodules https://github.com/BRL-CAD/brlcad
 
-* Have prebuilt bext outputs - just copy and prepare
+* Have prebuilt bext outputs to reuse - BRL-CAD will simply copy and prepare
+  the pre-existing files
+
 cmake .. -DBRLCAD_EXT_DIR=/home/user/bext_output
 
-* Have bext clone but want BRL-CAD to build
+* Already have an existing bext clone but want BRL-CAD to build bext outputs
+
 cmake .. -DBRLCAD_EXT_SOURCE_DIR=/home/user/bext
 
-* Download and build only what is needed for librt
+* Download, build and bundle only what is needed for librt
+
 cmake .. -DBRLCAD_COMPONENTS=librt
 
 * Build and bundle only what is needed, but don't require internet for bext clone
 cmake .. -DBRLCAD_EXT_SOURCE_DIR=/home/user/bext -DBRLCAD_COMPONENTS=librt
 
 
-By default, the default configuration will prepare the build system to perform
-a Debug build and install into the /usr/brlcad/dev-X.Y.Z directory.   The
-CMAKE_INSTALL_PREFIX option may be used to change that directory, or a Release
-build type may be specified to install to /usr/brlcad/rel-X.Y.Z - more on this
-below.  The tradition of non-system installation paths goes back a couple of
-decades and is a convenient means to isolate the BRL-CAD solid modeling system
-from your system, resolves conflicts, facilitates uninstalls, and simplifies
-upgrades.  The default configuration is performed by running `cmake'.  It is
-not required to do the build in a directory different from your source
-directory, but it is much cleaner and *highly* recommended - this guide will
-illustrate the build process with the assumption that the BRL-CAD source code
-is in the directory brlcad-X.Y.Z and the directory intended to hold the build
-output is brlcad-build, located in the same parent directory as brlcad-X.Y.Z:
+By default, the build system will prepare a Debug build and install into the
+/usr/brlcad/dev-X.Y.Z directory.   The CMAKE_INSTALL_PREFIX option may be used
+to change that directory, or a Release build type may be specified to install
+to /usr/brlcad/rel-X.Y.Z - more on this below.  The tradition of non-system
+installation paths goes back a couple of decades and is a convenient means to
+isolate the BRL-CAD solid modeling system from your system, resolves conflicts,
+facilitates uninstalls, and simplifies upgrades.  The default configuration is
+performed by running `cmake'.  It is not required to do the build in a
+directory different from your source directory, but it is much cleaner and
+*highly* recommended - this guide will illustrate the build process with the
+assumption that the BRL-CAD source code is in the directory brlcad-X.Y.Z and
+the directory intended to hold the build output is brlcad-build, located in the
+same parent directory as brlcad-X.Y.Z:
 
   .
   ./brlcad-X.Y.Z
@@ -234,30 +220,14 @@ override the ../brlcad-install default.  Build types are a convenient way
 to bundle sets of settings, but they do not prevent overrides if a more
 custom setup is needed.
 
-By default, all components and functionality will be built.
-Note that BRL-CAD does require and include several 3rd party
-components.  If your system does not include a sufficient version of
-those required 3rd party components, they will be automatically
-configured for compilation.
-
 If the autodetection mechanisms fail to produce a working configuration,
 the next simplest approach is typically to enable ALL the third party
 components - this is typically a well tested configuration, but will
 increase both the build time and final install size of BRL-CAD on
 the system.  To set this variable on the command line, use -D to
-define BRLCAD_BUNDLED_LIBS for CMake:
+define ENABLE_ALL for CMake:
 
-  -DBRLCAD_BUNDLED_LIBS=Bundled
-
-If the graphical interface (cmake-gui) is in use, it will list this
-and other common options by default, allowing the user change them
-graphically.  This is often quicker and more convenient than
-defining options on the command line, but both will work.
-
-You can also force on or off any individual 3rd party library by
-setting the BRL-CAD variable for that feature to either on or off:
-
-  -DBRLCAD_<LIBRARY>=ON
+  -DENABLE_ALL=ON
 
 To obtain an optimized build (for example, for BRL-CAD Benchmark
 performance evaluation), enable BRLCAD_FLAGS_OPTIMIZATION:
@@ -266,23 +236,6 @@ performance evaluation), enable BRLCAD_FLAGS_OPTIMIZATION:
 
 See the CONFIGURATION OPTIONS below for more details on all of the
 possible settings.
-
-You can specify options or preferences you want to always use by
-default.  For example, to always enable all local libs the following
-line can be added to your own configuration file:
-
-  set(BRLCAD_BUNDLED_LIBS "Bundled" CACHE STRING "Enable all local libs")
-
-You can define your own configuration file in one of three ways.  The
-build system will search for the file in this order:
-
-  ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL
-
-  ${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL
-
-  the file defined in the environment variable "BRLCAD_USER_GLOBAL_CONFIG_FILE"
-
-The build system will use the first file defined that exists.
 
 Once configured, you should be able to successfully build BRL-CAD via
 make:
@@ -422,6 +375,14 @@ If specified, BRL-CAD will look in this directory for bext compiled outputs to
 bundle and use during the build.
 
 
+--- BRLCAD_EXT_SOURCE_DIR ---
+
+If specified, BRL-CAD will look in this directory for bext source files. Use
+this when you have a pre-existing bext clone and don't want BRL-CAD's configure
+process to pull down another copy, but are still looking to have the BRL-CAD
+configure process manage producing bext build outputs.
+
+
 --- BRLCAD_DEBUGGING ---
 
 Add compiler flags to aid in program debugging.  Defaults to ON.
@@ -439,14 +400,6 @@ compilation.  Compile with this flag set, run the benchmark suite,
 clean the build, and then compile again with this flag set.  Supported
 compilers will utilize data from the first pass to guide optimization,
 typically resulting in a significant performance increase:
-
-
---- BRLCAD_EXT_SOURCE_DIR ---
-
-If specified, BRL-CAD will look in this directory for bext source files. Use
-this when you have a pre-existing bext clone and don't want BRL-CAD's configure
-process to pull down another copy, but are still looking to have the BRL-CAD
-configure process manage producing bext build outputs.
 
 
 --- BRLCAD_WARNINGS ---
