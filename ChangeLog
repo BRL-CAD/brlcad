@@ -1,3 +1,22 @@
+commit 2a56cc62e6178ccd78651e108a90d27cf1aae5fe
+Merge: 91ae60c3c1 85c1163f18
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 17 06:39:17 2024 -0400
+
+    Merge branch 'main' into RELEASE
+
+commit 85c1163f18ded49214617b0b16562ba432fd57e5
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Tue Jul 16 17:15:33 2024 -0400
+
+    triVerts is ivec3
+
+commit 91ae60c3c1bb587c9687c0a3054670dbe2db6e18
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 16 16:48:05 2024 -0400
+
+    Update log with commits since 2024-03-18
+
 commit 9321b2c5b6df0b3da834054fa175d664e8f4853f
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Tue Jul 16 16:45:50 2024 -0400
@@ -5023,3 +5042,28 @@ Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Tue Mar 19 17:05:52 2024 -0400
 
     Bump to next development revision after tagging the 7.38.2 release
+
+commit f69cdcf02dbced0bc6f50f9010826eeeddc41db3
+Merge: 9ebf41d81c 03adb9d321
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 18 11:03:38 2024 -0400
+
+    Merge branch 'RELEASE' into STABLE
+
+commit 03adb9d3210b46ef32b675fe26fb5f84fd0e067f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 18 11:00:29 2024 -0400
+
+    Update log with commits since 2023-11-06
+
+commit f6252b8a24fac86866b5b26972895bc5785e521f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 18 10:59:36 2024 -0400
+
+    Update version numbers
+
+commit b9388f75ae6fd3d9ffaa43b8c8e42b90cf8d30e2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 18 10:54:45 2024 -0400
+
+    Bump concave arb8 TODO item down one release iteration
