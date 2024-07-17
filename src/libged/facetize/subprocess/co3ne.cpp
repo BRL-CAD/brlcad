@@ -49,7 +49,6 @@
 #include "bg/spsr.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
-#include "../tess_opts.h"
 
 int
 co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s)
@@ -154,7 +153,7 @@ co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inte
 	tri_verts[0] = gm.facets.vertex(f, 0);
 	tri_verts[1] = gm.facets.vertex(f, 2);
 	tri_verts[2] = gm.facets.vertex(f, 1);
-	gmm.triVerts.push_back(glm::vec3(tri_verts[0], tri_verts[1], tri_verts[2]));
+	gmm.triVerts.push_back(glm::ivec3(tri_verts[0], tri_verts[1], tri_verts[2]));
     }
 
     manifold::Manifold gmanifold(gmm);

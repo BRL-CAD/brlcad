@@ -168,21 +168,26 @@ facetize_region_end(struct db_tree_state *tsp,
 static struct model *
 _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 {
-    struct ged *gedp = s->gedp;
+    struct db_i *dbip = s->dbip;
     int i;
     int failed = 0;
     struct db_tree_state init_state;
     union tree *facetize_tree;
     struct model *nmg_model;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     struct _ged_facetize_logging_state *log_s;
     BU_GET(log_s, struct _ged_facetize_logging_state);
+    BU_GET(log_s->nmg_log, struct bu_vls);
+    bu_vls_init(log_s->nmg_log);
+    BU_GET(log_s->nmg_log_header, struct bu_vls);
+    bu_vls_init(log_s->nmg_log_header);
+
     s->log_s = log_s;
 
     _facetize_log_nmg(s);
 
-    db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
 
 
     /* Establish tolerances */
@@ -195,7 +200,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 
     if (!BU_SETJUMP) {
 	/* try */
-	i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
+	i = db_walk_tree(dbip, argc, (const char **)argv,
 			 1,
 			&init_state,
 			 0,			/* take all regions */
@@ -207,6 +212,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 	/* catch */
 	BU_UNSETJUMP;
 	_facetize_log_default(s);
+	bu_vls_free(log_s->nmg_log_header);
+	bu_vls_free(log_s->nmg_log);
+	BU_PUT(log_s->nmg_log_header, struct _ged_facetize_logging_state);
+	BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	BU_PUT(log_s, struct _ged_facetize_logging_state);
 	s->log_s = NULL;
 	return NULL;
@@ -215,6 +224,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     if (i < 0) {
 	/* Destroy NMG */
 	_facetize_log_default(s);
+	bu_vls_free(log_s->nmg_log_header);
+	bu_vls_free(log_s->nmg_log);
+	BU_PUT(log_s->nmg_log_header, struct _ged_facetize_logging_state);
+	BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	BU_PUT(log_s, struct _ged_facetize_logging_state);
 	s->log_s = NULL;
 	return NULL;
@@ -228,6 +241,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 	    /* catch */
 	    BU_UNSETJUMP;
 	    _facetize_log_default(s);
+	    bu_vls_free(log_s->nmg_log_header);
+	    bu_vls_free(log_s->nmg_log);
+	    BU_PUT(log_s->nmg_log_header, struct _ged_facetize_logging_state);
+	    BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	    BU_PUT(log_s, struct _ged_facetize_logging_state);
 	    s->log_s = NULL;
 	    return NULL;
@@ -247,6 +264,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     }
 
     _facetize_log_default(s);
+    bu_vls_free(log_s->nmg_log_header);
+    bu_vls_free(log_s->nmg_log);
+    BU_PUT(log_s->nmg_log_header, struct _ged_facetize_logging_state);
+    BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
     BU_PUT(log_s, struct _ged_facetize_logging_state);
     s->log_s = NULL;
     return (failed) ? NULL : nmg_model;
@@ -255,10 +276,9 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 static int
 _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *name)
 {
-    struct ged *gedp = s->gedp;
+    struct db_i *dbip = s->dbip;
     struct rt_db_internal intern;
     struct directory *dp;
-    struct db_i *dbip = gedp->dbip;
 
     /* Export NMG as a new solid */
     RT_DB_INTERNAL_INIT(&intern);
@@ -269,14 +289,14 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
 
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
-	if (s->verbosity) {
+	if (s->verbosity > 0) {
 	    bu_log("Cannot add %s to directory\n", name);
 	}
 	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	if (s->verbosity) {
+	if (s->verbosity > 0) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
 	rt_db_free_internal(&intern);
@@ -285,13 +305,49 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
 
     return BRLCAD_OK;
 }
+
+static int
+_write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const char *name)
+{
+    struct db_i *dbip = s->dbip;
+    struct rt_db_internal intern;
+    struct directory *dp;
+
+    /* Export BoT as a new solid */
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_BOT;
+    intern.idb_meth = &OBJ[ID_BOT];
+    intern.idb_ptr = (void *)bot;
+
+    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
+	if (s->verbosity > 0) {
+	    bu_log("Cannot add %s to directory\n", name);
+	}
+	return BRLCAD_ERROR;
+    }
+
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	if (s->verbosity > 0) {
+	    bu_log("Failed to write %s to database\n", name);
+	}
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
 int
 _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *oname)
 {
     int ret = BRLCAD_OK;
-    struct model *nmg_model = NULL;
+    struct db_i *dbip = s->dbip;
+    struct rt_wdb *wdbp;
+    struct rt_bot_internal *bot = NULL;
+    struct model *nmg_model = _try_nmg_facetize(s, argc, argv);
 
-    nmg_model = _try_nmg_facetize(s, argc, argv);
     if (nmg_model == NULL) {
 	if (s->verbosity > 1) {
 	    bu_log("NMG(%s):  no resulting region, aborting\n", oname);
@@ -300,11 +356,29 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
 	goto ged_nmg_obj_memfree;
     }
 
-    /* Write the NMG */
-    ret = _write_nmg(s, nmg_model, oname);
+    if (!s->make_nmg) {
+
+	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+	if (!BU_SETJUMP) {
+	    /* try */
+	    bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	} else {
+	    /* catch */
+	    BU_UNSETJUMP;
+	    return BRLCAD_ERROR;
+	} BU_UNSETJUMP;
+
+	ret = _write_bot(s, bot, oname);
+
+    } else {
+
+	/* Write the NMG */
+	ret = _write_nmg(s, nmg_model, oname);
+
+    }
 
 ged_nmg_obj_memfree:
-    if (!s->quiet && ret != BRLCAD_OK) {
+    if (s->verbosity >= 0 && ret != BRLCAD_OK) {
 	bu_log("NMG: failed to generate %s\n", oname);
     }
 

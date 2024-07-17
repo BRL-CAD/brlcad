@@ -85,8 +85,8 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
     register long j;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_scan(%p, %lx)\n",
-				    (void *)dbip, (long unsigned int)handler);
+    if (RT_G_DEBUG&RT_DEBUG_DB)
+	bu_log("db_scan(%p, %llx)\n", (void *)dbip, (unsigned long long)(uintptr_t)handler);
 
     /* XXXX Note that this ignores dbip->dbi_inmem */
     /* In a portable way, read the header (even if not rewound) */

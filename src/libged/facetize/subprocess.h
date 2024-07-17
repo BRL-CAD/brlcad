@@ -795,6 +795,9 @@ int subprocess_create_ex(const char *const commandLine[], int options,
   posix_spawn_file_actions_t actions;
   char *const *used_environment;
 
+  if (!commandLine || !commandLine[0])
+      return -1;
+
   if (subprocess_option_inherit_environment ==
       (options & subprocess_option_inherit_environment)) {
     if (SUBPROCESS_NULL != environment) {
@@ -816,6 +819,7 @@ int subprocess_create_ex(const char *const commandLine[], int options,
       return -1;
     }
   }
+
 
   if (environment) {
 #ifdef __clang__
@@ -948,6 +952,7 @@ int subprocess_create_ex(const char *const commandLine[], int options,
   out_process->alive = 1;
 
   posix_spawn_file_actions_destroy(&actions);
+
   return 0;
 #endif
 }

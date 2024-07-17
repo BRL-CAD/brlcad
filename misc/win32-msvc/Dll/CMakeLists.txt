@@ -45,7 +45,6 @@ target_link_libraries(BrlcadCore
   libbrep-static
   libwdb-static
   libnmg-static
-  poly2tri-static
   zlib-static
   openNURBS-static
   )

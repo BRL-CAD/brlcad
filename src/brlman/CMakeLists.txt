@@ -39,6 +39,10 @@ if (NOT BRLCAD_ENABLE_QT AND TARGET brlman_tcl_cp)
   add_dependencies(brlman TclIndexBld)
 endif (NOT BRLCAD_ENABLE_QT AND TARGET brlman_tcl_cp)
 
+if (TARGET TclIndexBld)
+  add_dependencies(brlman TclIndexBld)
+endif (TARGET TclIndexBld)
+
 CMAKEFILES(
   CMakeLists.txt
   brlman.cpp

@@ -46,9 +46,7 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 #include "./earcut.hpp"
-#ifdef USE_DETRIA
 #include "detria.hpp"
-#endif
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -57,10 +55,6 @@
 #endif
 
 #include "delaunator.hpp"
-
-#ifndef USE_DETRIA
-#include "poly2tri/poly2tri.h"
-#endif
 
 #define PLOT_PREFIX_STR bg_plot3_ // needed by RTree.h and plot3.h
 
@@ -554,193 +548,17 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	rtree_2d.Search(fMin, fMax, LSteinClbk, (void *)&lctx);
     }
 
-#ifndef USE_DETRIA
-    // 5.  The output of the above process is fed to the poly2tri algorithm,
+    // 5.  TODO The output of the above process is fed to the detria algorithm,
     // along with the snapped steiner points.
-    std::map<p2t::Point *, long> p2t_to_ind;
-    std::vector<p2t::CDT *> cdts;
-    for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
-
-	std::vector<p2t::Point*> outer_polyline;
-	for (size_t i = 0; i < o_it->second.size(); i++) {
-	    int64_t xc = o_it->second[i].first;
-	    int64_t yc = o_it->second[i].second;
-
-	    double xcd = xc / scale;
-	    double ycd = yc / scale;
-	    p2t::Point *p = new p2t::Point(xcd, ycd);
-	    outer_polyline.push_back(p);
-
-	    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
-	    if (pind == -1) {
-		new_pnts = true;
-		bu_log("(O) Wait, what?  Need new point????\n");
-		//bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
-		//bu_log("%d: x,y: %f,%f\n", o_it->first, xcd, ycd);
-		//pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
-	    } else {
-		p2t_to_ind[p] = pind;
-	    }
-	}
-
-	p2t::CDT *cdt = new p2t::CDT(outer_polyline);
-
-	if (hole_loops.find(o_it->first) != hole_loops.end()) {
-	    std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator h_it;
-	    for (h_it = hole_loops[o_it->first].begin(); h_it != hole_loops[o_it->first].end(); h_it++) {
-		std::vector<p2t::Point*> polyline;
-		for (size_t i = 0; i < h_it->second.size(); i++) {
-		    int64_t xc = h_it->second[i].first;
-		    int64_t yc = h_it->second[i].second;
-		    //bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
-		    double xcd = xc / scale;
-		    double ycd = yc / scale;
-		    //bu_log("%d->h(%d): x,y: %f,%f\n", o_it->first, h_it->first, xcd, ycd);
-		    p2t::Point *p = new p2t::Point(xcd, ycd);
-		    polyline.push_back(p);
-
-		    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
-		    if (pind == -1) {
-			new_pnts = true;
-			bu_log("(H) Wait, what?  Need new point????\n");
-		    } else {
-			p2t_to_ind[p] = pind;
-		    }
-		    p2t_to_ind[p] = pind;
-		}
-		cdt->AddHole(polyline);
-	    }
-	}
-
-	for (size_t s = 0; s < steiner_npts; s++) {
-	    if (steiner_excluded.find(s) != steiner_excluded.end())
-		continue;
-	    int64_t xc = psnapped_pts[orig_to_snapped[steiner[s]]].first;
-	    int64_t yc = psnapped_pts[orig_to_snapped[steiner[s]]].second;
-	    double xcd = xc / scale;
-	    double ycd = yc / scale;
-	    p2t::Point *p = new p2t::Point(xcd, ycd);
-	    cdt->AddPoint(p);
-
-	    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
-	    if (pind == -1) {
-		new_pnts = true;
-		bu_log("(S) Wait, what?  Need new point????\n");
-	    } else {
-		p2t_to_ind[p] = pind;
-	    }
-	    p2t_to_ind[p] = pind;
-	}
-
-	try {
-	    cdt->Triangulate(true, -1);
-	}
-	catch (...) {
-	    delete cdt;
-	    cdt = NULL;
-	}
-
-	if (!cdt)
-	    continue;
-
-	// If we didn't get any triangles, we don't need this cdt
-	if (!cdt->GetTriangles().size()) {
-	    delete cdt;
-	} else {
-	    cdts.push_back(cdt);
-	}
-    }
-
-    // If all the CDT attempts failed, we have a problem
-    if (!cdts.size()) {
-	bu_log("Poly2Tri CDT failed!\n");
-	return BRLCAD_ERROR;
-    }
-#endif
 
     // If the loops need new points (??) bug we don't have out_pnts, error out.
     if (new_pnts && (!out_pts || !num_outpts))
 	return BRLCAD_ERROR;
 
-#ifndef USE_DETRIA
-    // 6. Unpack the Poly2Tri faces into a C container
-    std::unordered_set<p2t::Point *> p2t_active_pnts;
-    std::unordered_map<p2t::Point *, size_t> npt_map;
-    size_t total_tris = 0;
-    for (size_t i = 0; i < cdts.size(); i++) {
-	p2t::CDT *cdt = cdts[i];
-	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-	//bu_log("got %zd triangles\n", tris.size());
-	total_tris += tris.size();
-
-	if (!new_pnts)
-	    continue;
-	for (size_t j = 0; j < tris.size(); j++) {
-	    p2t::Triangle *t = tris[j];
-	    for (size_t k = 0; k < 3; k++) {
-		p2t_active_pnts.insert(t->GetPoint(k));
-	    }
-	}
-    }
-    if (new_pnts) {
-	size_t ind = 0;
-	std::unordered_set<p2t::Point *>::iterator pa_it;
-	for (pa_it = p2t_active_pnts.begin(); pa_it != p2t_active_pnts.end(); pa_it++) {
-	    npt_map[*pa_it] = ind;
-	    ind++;
-	}
-	(*num_outpts) = (int) p2t_active_pnts.size();
-	(*out_pts) = (point2d_t *)bu_calloc(*num_outpts, sizeof(point2d_t), "new pnts array");
-	ind = 0;
-	for (pa_it = p2t_active_pnts.begin(); pa_it != p2t_active_pnts.end(); pa_it++) {
-	    p2t::Point *p = *pa_it;
-	    //bu_log("p2t point %zd: %f %f\n", ind, p->x, p->y);
-	    fastf_t py = p->y - (bbmax[X] - p->x)/(bbmax[X] - bbmin[X]);
-	    V2SET((*out_pts)[ind], p->x, py);
-	    //bu_log("p2t point %zd descaled: %f %f\n", ind, p->x, py);
-	    ind++;
-	}
-    }
-    (*num_faces) = (int)total_tris;
-    int *nfaces = (int *)bu_calloc(*num_faces * 3, sizeof(int), "faces array");
-    int total_face_ind = 0;
-    for (size_t i = 0; i < cdts.size(); i++) {
-	p2t::CDT *cdt = cdts[i];
-	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-	//bu_log("got %zd triangles\n", tris.size());
-
-	if (new_pnts) {
-	    for (size_t j = 0; j < tris.size(); j++) {
-		p2t::Triangle *t = tris[j];
-		nfaces[3*total_face_ind] = npt_map[t->GetPoint(0)];
-		nfaces[3*total_face_ind+1] = npt_map[t->GetPoint(1)];
-		nfaces[3*total_face_ind+2] = npt_map[t->GetPoint(2)];
-		total_face_ind++;
-	    }
-	} else {
-	    for (size_t j = 0; j < tris.size(); j++) {
-		p2t::Triangle *t = tris[j];
-		for (size_t k = 0; k < 3; k++) {
-		    p2t::Point *p = t->GetPoint(k);
-		    if (p2t_to_ind[p] == -1) {
-			bu_log("T1 Point map error??: %f, %f\n", p->x, p->y);
-		    }
-		}
-		nfaces[3*total_face_ind] = p2t_to_ind[t->GetPoint(0)];
-		nfaces[3*total_face_ind+1] = p2t_to_ind[t->GetPoint(1)];
-		nfaces[3*total_face_ind+2] = p2t_to_ind[t->GetPoint(2)];
-		total_face_ind++;
-	    }
-	}
-
-	delete cdt;
-    }
-    (*faces) = nfaces;
-#endif
+    // 6.  TODO Unpack the detria faces into a C container
     return 0;
 }
 
-#ifdef USE_DETRIA
 int
 bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	    const int *poly, const size_t poly_pnts,
@@ -852,109 +670,6 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
     return 0;
 }
-#endif
-
-#ifndef USE_DETRIA
-int
-bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	    const int *poly, const size_t poly_pnts,
-	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	    const int *steiner, const size_t steiner_npts,
-	    const point2d_t *pts)
-{
-    std::map<p2t::Point *, size_t> p2t_to_ind;
-    std::set<p2t::Point *> p2t_pnts;
-    std::set<p2t::Point *>::iterator p_it;
-
-    // Outer polygon is defined first
-    std::vector<p2t::Point*> outer_polyline;
-    for (size_t i = 0; i < poly_pnts; i++) {
-	p2t::Point *p = new p2t::Point(pts[poly[i]][X], pts[poly[i]][Y]);
-	outer_polyline.push_back(p);
-	p2t_to_ind[p] = poly[i];
-	p2t_pnts.insert(p);
-    }
-
-    // Initialize the cdt structure
-    p2t::CDT *cdt = new p2t::CDT(outer_polyline);
-
-    // Add holes, if any
-    for (size_t h = 0; h < nholes; h++) {
-	std::vector<p2t::Point*> polyline;
-	for (size_t i = 0; i < holes_npts[h]; i++) {
-	    p2t::Point *p = new p2t::Point(pts[holes_array[h][i]][X], pts[holes_array[h][i]][Y]);
-	    polyline.push_back(p);
-	    p2t_to_ind[p] = holes_array[h][i];
-	    p2t_pnts.insert(p);
-	}
-	cdt->AddHole(polyline);
-    }
-
-    // Add steiner points, if any
-    for (size_t s = 0; s < steiner_npts; s++) {
-	p2t::Point *p = new p2t::Point(pts[steiner[s]][X], pts[steiner[s]][Y]);
-	p2t_to_ind[p] = steiner[s];
-	p2t_pnts.insert(p);
-	cdt->AddPoint(p);
-    }
-
-    // Run the core triangulation routine
-    {
-	try {
-	    cdt->Triangulate(true, -1);
-	}
-	catch (...) {
-	    delete cdt;
-	    return 1;
-	}
-    }
-
-    // If we didn't get any triangles, fail
-    if (!cdt->GetTriangles().size()) {
-	delete cdt;
-	return 1;
-    }
-
-    // Unpack the Poly2Tri faces into a C container
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-
-    (*num_faces) = (int)tris.size();
-    int *nfaces = (int *)bu_calloc(*num_faces * 3, sizeof(int), "faces array");
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
-	nfaces[3*i] = p2t_to_ind[t->GetPoint(0)];
-	nfaces[3*i+1] = p2t_to_ind[t->GetPoint(1)];
-	nfaces[3*i+2] = p2t_to_ind[t->GetPoint(2)];
-    }
-    (*faces) = nfaces;
-
-    // We're not generating a new points array, so if out_pts exists set it to the
-    // input points array
-    if (out_pts) {
-	(*out_pts) = (point2d_t *)pts;
-    }
-    if (num_outpts) {
-	// Build the set of unique points - even if num_outpts != npts the
-	// caller will be able to tell if all points were used, even though
-	// out_pts won't contain just the used set of points.
-	std::set<p2t::Point *> p2t_active_pnts;
-	for (size_t i = 0; i < tris.size(); i++) {
-	    p2t::Triangle *t = tris[i];
-	    for (size_t j = 0; j < 3; j++) {
-		p2t_active_pnts.insert(t->GetPoint(j));
-	    }
-	}
-
-	(*num_outpts) = (int) p2t_active_pnts.size();
-    }
-
-    // Cleanup
-    delete cdt;
-
-    return 0;
-}
-#endif
-
 
 extern "C" int
 bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
@@ -973,13 +688,8 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
     //if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
     if (type == TRI_ANY || type == TRI_CONSTRAINED_DELAUNAY) {
-#ifdef USE_DETRIA
 	int detria_ret = bg_detria(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
 	return detria_ret;
-#else
-	int p2t_ret = bg_poly2tri(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
-	return p2t_ret;
-#endif
     }
 
     if (type == TRI_DELAUNAY) {

@@ -28,8 +28,8 @@
 
 #include <set>
 
-#include "opennurbs.h"
 #include "bu/cmd.h"
+#include "brep/defines.h"
 #include "./ged_brep.h"
 
 struct _ged_brep_rinfo {

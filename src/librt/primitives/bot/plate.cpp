@@ -331,7 +331,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	for (size_t j = 0; j < sbot->num_vertices ; j++)
 	    sph_m.vertPos.push_back(glm::vec3(sbot->vertices[3*j], sbot->vertices[3*j+1], sbot->vertices[3*j+2]));
 	for (size_t j = 0; j < sbot->num_faces; j++)
-	    sph_m.triVerts.push_back(glm::vec3(sbot->faces[3*j], sbot->faces[3*j+1], sbot->faces[3*j+2]));
+	    sph_m.triVerts.push_back(glm::ivec3(sbot->faces[3*j], sbot->faces[3*j+1], sbot->faces[3*j+2]));
 
 	if (sbot->vertices)
 	    bu_free(sbot->vertices, "verts");
@@ -392,7 +392,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	for (int j = 0; j < vert_cnt; j++)
 	    rcc_m.vertPos.push_back(glm::vec3(vertices[j][X], vertices[j][Y], vertices[j][Z]));
 	for (int j = 0; j < face_cnt; j++)
-	    rcc_m.triVerts.push_back(glm::vec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
+	    rcc_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
 
 	if (vertices)
 	    bu_free(vertices, "verts");
@@ -504,7 +504,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	for (size_t j = 0; j < 6; j++)
 	    arb_m.vertPos.push_back(glm::vec3(pts[3*j], pts[3*j+1], pts[3*j+2]));
 	for (size_t j = 0; j < 8; j++)
-	    arb_m.triVerts.push_back(glm::vec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
+	    arb_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
 
 	manifold::Manifold left = c;
 	manifold::Manifold right(arb_m);

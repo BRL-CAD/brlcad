@@ -167,6 +167,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"exists", cmd_ged_plain_wrapper, ged_exec},
     {"facedef", f_facedef, GED_FUNC_PTR_NULL},
     {"facetize", cmd_ged_plain_wrapper, ged_exec},
+    {"facetize_old", cmd_ged_plain_wrapper, ged_exec},
     {"form", cmd_ged_plain_wrapper, ged_exec},
     {"fracture", cmd_ged_plain_wrapper, ged_exec},
     {"front", f_bv_front, GED_FUNC_PTR_NULL},

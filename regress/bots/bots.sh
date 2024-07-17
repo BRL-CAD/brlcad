@@ -86,6 +86,7 @@ make sph sph
 facetize sph.volume.rh.bot sph
 cp sph.volume.rh.bot sph.volume.lh.bot
 bot_flip sph.volume.lh.bot
+bot set orientation sph.volume.lh.bot cw
 bot_merge sph.volume.no.bot sph.volume.rh.bot
 bot_vertex_fuse sph.vertex.fused.volume.no.bot sph.volume.no.bot
 bot_face_fuse sph.face.fused.volume.no.bot sph.vertex.fused.volume.no.bot

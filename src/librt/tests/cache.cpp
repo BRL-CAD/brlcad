@@ -353,7 +353,7 @@ subprocess_launcher(int id, void *data)
 	memset(line, 0, MAXPATHLEN+501);
     }
 
-    if (bu_process_wait_n(p, 120)) {
+    if (bu_process_wait_n(&p, 120)) {
 	bu_vls_printf(sd->sd_result, "Test %ld(process %ld): rt_cache_subprocess failed\n", sd->test_num, sd->process_num);
 	sd->result = 1;
     }

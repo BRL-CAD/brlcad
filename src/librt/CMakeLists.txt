@@ -4,7 +4,7 @@ BRLCAD_Find_Package(REGEX REQUIRED)
 if (BRLCAD_ENABLE_ASSETIMPORT)
   BRLCAD_Find_Package(ASSETIMPORT)
 endif (BRLCAD_ENABLE_ASSETIMPORT)
-BRLCAD_Find_Package(Geogram REQUIRED SYSPATTERN geogram)
+BRLCAD_Find_Package(GEOGRAM REQUIRED SYSPATTERN geogram)
 add_definitions(-DUSE_GEOGRAM)
 
 if(ASSETIMPORT_LIBRARIES)
@@ -95,6 +95,7 @@ set(LIBRT_SOURCES
   primitives/bot/decimate.c
   primitives/bot/plate.cpp
   primitives/bot/repair.cpp
+  primitives/bot/sampling_checks.cpp
   primitives/brep/brep.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp

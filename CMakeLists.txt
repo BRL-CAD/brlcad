@@ -229,8 +229,10 @@ if (CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   find_program(DUMPBIN_EXEC dumpbin)
   set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
   if (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+    # dumpbin doesn't like CMake style paths
+    file(TO_NATIVE_PATH "${TEST_BINFILE}" TBFN)
     # https://stackoverflow.com/a/28304716/2037687
-    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TEST_BINFILE}
+    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TBFN}
       OUTPUT_VARIABLE DB_OUT
       ERROR_VARIABLE DB_OUT)
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -1231,6 +1233,12 @@ if(NOT MSVC)
   # TODO - figure out if this should be integrated above
   CHECK_COMPILER_FLAG(C "-Wunused-const-variable" HAVE_C_WUNUSED_CONST_VARIABLE)
 
+else()
+
+  # Whether a debug or release build, we want our own code
+  # to be usable with a debugger
+  add_link_options(/DEBUG)
+
 endif(NOT MSVC)
 
 
@@ -1932,6 +1940,7 @@ if(MSVC)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
 endif(MSVC)
+
 
 #-----------------------------------------------------------------------------
 # Add misc/tools for tools that are used in BRL-CAD's build process or for

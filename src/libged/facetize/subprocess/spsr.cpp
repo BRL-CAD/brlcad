@@ -33,7 +33,6 @@
 #include "bg/spsr.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
-#include "../tess_opts.h"
 
 static int
 _db_uniq_test(struct bu_vls *n, void *data)

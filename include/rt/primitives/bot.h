@@ -26,7 +26,9 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/ptbl.h"
 #include "bn/tol.h"
+#include "nmg.h"
 #include "rt/geom.h"
 #include "rt/defines.h"
 #include "rt/tol.h"
@@ -124,6 +126,8 @@ RT_EXPORT extern struct rt_bot_list * rt_bot_patches(struct rt_bot_internal *bot
 RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
 				       int fbflag);
 
+RT_EXPORT extern void rt_bot_internal_free(struct rt_bot_internal *bot);
+
 RT_EXPORT extern int rt_bot_same_orientation(const int *a,
 					     const int *b);
 
@@ -151,15 +155,58 @@ RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t
 /* Function to convert plate mode BoT to volumetric BoT */
 RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode);
 
+
+
+/* Container to hold various settings we may need to control the bot repair
+ * process.  May also be updated in the future to contain diagnostic info
+ * to report back to the caller - this struct is expected to change in
+ * response to the evolving setting needs of the repair process as various
+ * algorithms are explored.
+ */
+struct rt_bot_repair_info {
+    fastf_t max_hole_area;
+    fastf_t max_hole_area_percent;
+};
+
+/* For now the default upper hole size limit will be 5 percent of the mesh
+ * area, but calling codes should not rely on that value to remain consistent
+ * between versions.
+ */
+#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0};
+
 /* Function to attempt repairing a non-manifold BoT.  Returns 1 if ibot was
  * already manifold (obot will contain NULL), 0 if a manifold BoT was created
  * (*obot will be the new manifold BoT) and -1 for other cases to indicate
  * error.
+ */
+RT_EXPORT extern int rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *ibot, struct rt_bot_repair_info *i);
+
+/* Test whether a bot is "inside-out".  This function is aware of
+ * CCW vs CW BoT orientation settings, and will interpret the
+ * results of the test accordingly.  The idea is for this function
+ * to return "1" in the same situations that would result in an
+ * OpenGL shaded drawing of the BoT showing black faces due to
+ * incorrect orientation. */
+RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
+
+/* Test whether a solid BoT has faces that are <tol distance away when shooting
+ * "into" the solid.  This is (at the moment) a ray interrogation based test,
+ * so it is not absolutely guaranteed to find all near self-intersections.
  *
- * WARNING - this function is likely not in its final form - in particular,
- * it is likely that we will want some sort of parameters to control what
- * types of repairs we attempt. */
-RT_EXPORT extern int rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *ibot);
+ * It is intended to catch situations such as boolean operations on meshes
+ * producing exceedingly thin volumes.
+ *
+ * Returns 1 if a problem is found, else 0.  If ofaces is non-NULL, store the
+ * indices of the specific faces found to be problematic. */
+RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+
+/* Function to remove a set of faces from a BoT and produce a new BoT */
+RT_EXPORT struct rt_bot_internal *
+rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_internal *obot);
+
+/* Function to copy an rt_bot_internal structure */
+RT_EXPORT struct rt_bot_internal *
+rt_bot_dup(const struct rt_bot_internal *bot);
 
 /** @} */
 

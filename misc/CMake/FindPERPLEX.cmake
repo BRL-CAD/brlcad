@@ -167,10 +167,6 @@ if(NOT COMMAND PERPLEX_TARGET)
     get_filename_component(IN_FILE_WE ${Input} NAME_WE)
     set(PVAR_PREFIX ${Name}_${IN_FILE_WE})
 
-    if (TARGET perplex_stage)
-      set(DEP_TARGET perplex_stage)
-    endif (TARGET perplex_stage)
-
     if(${ARGC} GREATER 3)
       CMAKE_PARSE_ARGUMENTS(${PVAR_PREFIX} "" "TEMPLATE;OUT_SRC_FILE;OUT_HDR_FILE;WORKING_DIR" "" ${ARGN})
     endif(${ARGC} GREATER 3)

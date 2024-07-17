@@ -118,7 +118,10 @@ static void
 fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
     int i;
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
+
+    /* NOTE: assumes fd's will be small */
+    int fd = (uint16_t)((long)(uintptr_t)clientData & 0xFFFF);
+
     int npp;			/* number of processed packages */
     struct mged_dm *dlp = MGED_DM_NULL;
     struct mged_dm *scdlp;  /* save current dm_list pointer */

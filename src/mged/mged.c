@@ -2462,7 +2462,7 @@ mged_finish(int exitcode)
 	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(&GEDP->ged_subp); i++) {
 		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&GEDP->ged_subp, i);
-		if (!bu_process_wait_n(rrp->p, 1)) {
+		if (!bu_process_wait_n(&rrp->p, 1)) {
 		    bu_ptbl_ins(&rmp, (long *)rrp);
 		}
 	    }

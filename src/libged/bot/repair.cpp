@@ -57,10 +57,10 @@
 #include "../ged_private.h"
 
 static struct rt_bot_internal *
-bot_repair(struct rt_bot_internal *bot)
+bot_repair(struct rt_bot_internal *bot, struct rt_bot_repair_info *i)
 {
     struct rt_bot_internal *obot = NULL;
-    int rep_ret = rt_bot_repair(&obot, bot);
+    int rep_ret = rt_bot_repair(&obot, bot, i);
     if (rep_ret < 0) {
 	// bot repair failed
 	return NULL;
@@ -87,7 +87,7 @@ repair_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
 extern "C" int
 _bot_cmd_repair(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot repair <objname> [repaired_obj_name]";
+    const char *usage_string = "bot repair [options] <namepattern1> [namepattern2 ...]";
     const char *purpose_string = "Attempt to produce a manifold output using objname's geometry as an input.  If successful, the resulting manifold geometry will either overwrite the original objname object (if no repaired_obj_name is supplied) or be written to repaired_obj_name.  Note that in-place repair is destructive - the original BoT data is lost.  If the input is already manifold repair is a no-op.";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -99,86 +99,140 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     int print_help = 0;
-    int in_place_repair = 0;
+    int in_place_repair = 1;
+    struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
+    struct bu_vls obot_name = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,      "Print help");
-    BU_OPT_NULL(d[1]);
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h",  "help",                "",             NULL,                     &print_help,  "Print help");
+    BU_OPT(d[1], "p",  "max-hole-percent",   "#",   bu_opt_fastf_t, &settings.max_hole_area_percent,  "Maximum hole area to repair (percentage of mesh surface area, range 0-100.) 0 and 100 mean always attempt filling operations. Overridden by -a option.");
+    BU_OPT(d[2], "a",  "max-hole-area",     " #",   bu_opt_fastf_t,         &settings.max_hole_area,  "Maximum hole area to repair in mm (Hard upper limit regardless of mesh size, overrides -p option.)");
+    BU_OPT(d[3], "o",  "output-name",   "<name>",       bu_opt_vls,                      &obot_name,  "Output object name (write repaired BoT to this name - avoids overwriting input BoT)");
+    BU_OPT_NULL(d[4]);
 
     int ac = bu_opt_parse(NULL, argc, argv, d);
     argc = ac;
 
     if (print_help || !argc) {
 	repair_usage(gb->gedp->ged_result_str, "bot manifold", d);
+	bu_vls_free(&obot_name);
 	return GED_HELP;
     }
 
-    if (argc == 1)
-	in_place_repair = 1;
+    if (bu_vls_strlen(&obot_name))
+	in_place_repair = 0;
 
-    if (!in_place_repair && argc != 2) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    if (!in_place_repair && db_lookup(gb->gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
-	return BRLCAD_ERROR;
-    }
-
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
-    if (bot->mode != RT_BOT_SOLID) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s is a non-solid BoT, skipping", gb->dp->d_namep);
-	return BRLCAD_ERROR;
-    }
-
-    struct rt_bot_internal *mbot = bot_repair(bot);
-
-    // If we were already manifold, there's nothing to do
-    if (mbot && mbot == bot) {
-	bu_vls_printf(gb->gedp->ged_result_str, "BoT %s is valid", gb->dp->d_namep);
-	return BRLCAD_OK;
-    }
-
-    // Trying repair and couldn't, it's an error
-    if (!mbot) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Unable to repair BoT %s", gb->dp->d_namep);
-	return BRLCAD_ERROR;
-    }
-
-    // If we're repairing and we were able to fix it, write out the result
-    struct rt_db_internal intern;
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_BOT;
-    intern.idb_meth = &OBJ[ID_BOT];
-    intern.idb_ptr = (void *)mbot;
-
-    const char *rname;
-    struct directory *dp;
-    if (in_place_repair) {
-	rname = gb->dp->d_namep;
-	dp = gb->dp;
-    } else {
-	rname = argv[1];
-	dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-	if (dp == RT_DIR_NULL) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
+    if (!in_place_repair) {
+	if (argc != 1) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "When specifying an output object name, only one input at a time may be processed.");
+	    bu_vls_free(&obot_name);
+	    return BRLCAD_ERROR;
+	}
+	if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&obot_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&obot_name));
+	    bu_vls_free(&obot_name);
 	    return BRLCAD_ERROR;
 	}
     }
 
-    if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
-	return BRLCAD_ERROR;
+    /* Adjust settings */
+    if (NEAR_EQUAL(settings.max_hole_area_percent, 100, VUNITIZE_TOL)) {
+	settings.max_hole_area_percent = 0.0;
     }
 
-    bu_vls_printf(gb->gedp->ged_result_str, "Repair completed successfully and written to %s", rname);
-    return BRLCAD_OK;
+    int ret = BRLCAD_OK;
+    for (int i = 0; i < argc; i++) {
+
+	gb->dp = db_lookup(gb->gedp->dbip, argv[i], LOOKUP_NOISY);
+	if (gb->dp == RT_DIR_NULL)
+	    continue;
+	int real_flag = (gb->dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	if (!real_flag)
+	    continue;
+	if (gb->dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+	    continue;
+	if (gb->dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+	    continue;
+
+	gb->solid_name = std::string(argv[i]);
+
+	BU_GET(gb->intern, struct rt_db_internal);
+	GED_DB_GET_INTERNAL(gb->gedp, gb->intern, gb->dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	RT_CK_DB_INTERNAL(gb->intern);
+
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+	if (bot->mode != RT_BOT_SOLID) {
+	    rt_db_free_internal(gb->intern);
+	    BU_PUT(gb->intern, struct rt_db_internal);
+	    gb->intern = NULL;
+	    continue;
+	}
+
+	struct rt_bot_internal *mbot = bot_repair(bot, &settings);
+
+	// If we were already manifold, there's nothing to do
+	if (mbot && mbot == bot) {
+	    rt_db_free_internal(gb->intern);
+	    BU_PUT(gb->intern, struct rt_db_internal);
+	    gb->intern = NULL;
+	    continue;
+	}
+
+	// Trying repair and couldn't, it's an error
+	if (!mbot) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Unable to repair BoT %s\n", gb->dp->d_namep);
+	    rt_db_free_internal(gb->intern);
+	    BU_PUT(gb->intern, struct rt_db_internal);
+	    gb->intern = NULL;
+	    ret = BRLCAD_ERROR;
+	    continue;
+	}
+
+	// If we're repairing and we were able to fix it, write out the result
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *)mbot;
+
+	const char *rname;
+	struct directory *dp;
+	if (in_place_repair) {
+	    rname = gb->dp->d_namep;
+	    dp = gb->dp;
+	} else {
+	    rname = bu_vls_cstr(&obot_name);
+	    dp = db_diradd(gb->gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	    if (dp == RT_DIR_NULL) {
+		bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s\n", rname);
+		rt_db_free_internal(gb->intern);
+		BU_PUT(gb->intern, struct rt_db_internal);
+		gb->intern = NULL;
+		ret = BRLCAD_ERROR;
+		continue;
+	    }
+	}
+
+	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s\n", rname);
+	    rt_db_free_internal(gb->intern);
+	    BU_PUT(gb->intern, struct rt_db_internal);
+	    gb->intern = NULL;
+	    ret = BRLCAD_ERROR;
+	    continue;
+	}
+
+	bu_vls_printf(gb->gedp->ged_result_str, "Repair completed successfully and written to %s\n", rname);
+
+	rt_db_free_internal(gb->intern);
+	BU_PUT(gb->intern, struct rt_db_internal);
+	gb->intern = NULL;
+    }
+
+    bu_vls_free(&obot_name);
+
+    return ret;
 }
 
 // Local Variables:

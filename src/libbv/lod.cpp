@@ -722,6 +722,7 @@ bv_mesh_lod_context_create(const char *name)
 	goto lod_context_close_fail;
 
     // Success - return the context
+    bu_vls_free(&fname);
     return c;
 
     // If something went wrong, clean up and return NULL

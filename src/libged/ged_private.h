@@ -643,7 +643,7 @@ GED_EXPORT extern int _ged_read_densities(struct analyze_densities **dens, char 
  * sure the allocated array is large enough to hold up to argc pointers.
  */
 GED_EXPORT extern int
-_ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
+_ged_sort_existing_objs(struct db_i *dbip, int argc, const char *argv[], struct directory **dpa);
 
 
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);

@@ -34,6 +34,7 @@
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/opt.h"
+#include "wdb.h"
 
 #include "../ged_private.h"
 
@@ -58,23 +59,23 @@ _facetize_methods_help(struct ged *gedp)
       bu_process_create(&mp, tess_cmd, BU_PROCESS_HIDE_WINDOW);
       char mraw[MAXPATHLEN] = {'\0'};
       int read_res = bu_process_read_n(mp, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
-      if (bu_process_wait_n(mp, 0) || (read_res <= 0))
+      if (bu_process_wait_n(&mp, 0) || (read_res <= 0))
 	  return;   // wait error or read error
       std::string method_list(mraw);
+      bu_vls_printf(gedp->ged_result_str, "Available BoT tessellation methods: %s\n", method_list.c_str());
 
-      tess_cmd[ 2] = "-h";
-      tess_cmd[ 3] = NULL;
+      tess_cmd[ 3] = "-h";
+      tess_cmd[ 4] = NULL;
 
       struct bu_process* mop;
       bu_process_create(&mop, tess_cmd, BU_PROCESS_HIDE_WINDOW);
       char moraw[MAXPATHLEN*10] = {'\0'};
       read_res = bu_process_read_n(mop, BU_PROCESS_STDOUT, MAXPATHLEN*10, moraw);
-      if (bu_process_wait_n(mop, 0) || (read_res <= 0))
+      if (bu_process_wait_n(&mop, 0) || (read_res <= 0))
 	  return;   // wait error
       std::string method_options(moraw);
 
-      bu_vls_printf(gedp->ged_result_str, "Available BoT tessellation methods: %s\n", method_list.c_str());
-      bu_vls_printf(gedp->ged_result_str, "Method specific options:\n%s\n", method_options.c_str());
+      bu_vls_printf(gedp->ged_result_str, "\nMethod specific options:\n\n%s\n", method_options.c_str());
 }
 
 struct _ged_facetize_state *
@@ -82,19 +83,39 @@ _ged_facetize_state_create()
 {
     struct _ged_facetize_state *s = NULL;
     BU_GET(s, struct _ged_facetize_state);
-    s->quiet= 0;
     s->verbosity = 0;
     s->no_empty = 0;
     s->make_nmg = 0;
     s->nonovlp_brep = 0;
+    s->no_fixup = 0;
+    s->nmg_booleval = 0;
+
+    s->wdir = NULL;
+
+    BU_GET(s->log_file, struct bu_vls);
+    bu_vls_init(s->log_file);
+
+    s->lfile = NULL;
+
+    BU_GET(s->wfile, struct bu_vls);
+    bu_vls_init(s->wfile);
+
+    BU_GET(s->bname, struct bu_vls);
+    bu_vls_init(s->bname);
 
     s->regions = 0;
     s->resume = 0;
     s->in_place = 0;
 
-    BU_GET(s->faceted_suffix, struct bu_vls);
-    bu_vls_init(s->faceted_suffix);
-    bu_vls_sprintf(s->faceted_suffix, ".bot");
+    BU_GET(s->suffix, struct bu_vls);
+    bu_vls_init(s->suffix);
+
+    BU_GET(s->prefix, struct bu_vls);
+    bu_vls_init(s->prefix);
+
+    BU_GET(s->solid_suffix, struct bu_vls);
+    bu_vls_init(s->solid_suffix);
+    bu_vls_sprintf(s->solid_suffix, ".bot");
 
     s->max_time = 0;
     s->max_pnts = 0;
@@ -111,9 +132,42 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
     if (!s)
        	return;
 
-    if (s->faceted_suffix) {
-	bu_vls_free(s->faceted_suffix);
-	BU_PUT(s->faceted_suffix, struct bu_vls);
+    if (s->wdir)
+	bu_free(s->wdir, "wdir");
+
+    if (s->bname) {
+	bu_vls_free(s->bname);
+	BU_PUT(s->bname, struct bu_vls);
+    }
+
+    if (s->lfile) {
+	fclose(s->lfile);
+	s->lfile = NULL;
+    }
+
+    if (s->log_file) {
+	bu_vls_free(s->log_file);
+	BU_PUT(s->log_file, struct bu_vls);
+    }
+
+    if (s->wfile) {
+	bu_vls_free(s->wfile);
+	BU_PUT(s->wfile, struct bu_vls);
+    }
+
+    if (s->prefix) {
+	bu_vls_free(s->prefix);
+	BU_PUT(s->prefix, struct bu_vls);
+    }
+
+    if (s->suffix) {
+	bu_vls_free(s->suffix);
+	BU_PUT(s->suffix, struct bu_vls);
+    }
+
+    if (s->solid_suffix) {
+	bu_vls_free(s->solid_suffix);
+	BU_PUT(s->solid_suffix, struct bu_vls);
     }
 
     BU_PUT(s, struct _ged_facetize_state);
@@ -122,21 +176,20 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
 int
 _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 {
-    struct ged *gedp = s->gedp;
     int ret = BRLCAD_ERROR;
     int newobj_cnt, i;
     const char *oname = NULL;
     const char *av[2];
     struct directory **dpa = NULL;
     struct directory *idpa[2];
-    struct db_i *dbip = gedp->dbip;
+    struct db_i *dbip = s->dbip;
 
     RT_CHECK_DBI(dbip);
 
     if (argc < 0) return BRLCAD_ERROR;
 
     dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+    newobj_cnt = _ged_sort_existing_objs(dbip, argc, argv, dpa);
     if (_ged_validate_objs_list(s, argc, argv, newobj_cnt) == BRLCAD_ERROR) {
 	bu_free(dpa, "dp array");
 	return BRLCAD_ERROR;
@@ -147,8 +200,9 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	argc--;
     }
 
-    /* If we're doing an NMG output, use the old-school libnmg booleval */
-    if (s->make_nmg) {
+    /* If we're doing an NMG output, or we have been instructed to, use the
+     * old-school libnmg booleval */
+    if (s->make_nmg || s->nmg_booleval) {
 	if (!s->in_place) {
 	    ret = _ged_facetize_nmgeval(s, argc, argv, oname);
 	    goto booleval_cleanup;
@@ -156,7 +210,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	    for (i = 0; i < argc; i++) {
 		av[0] = argv[i];
 		av[1] = NULL;
-		ret = _ged_facetize_nmgeval(s, 1, av, argv[i]);
+		ret = _ged_facetize_nmgeval(s, 1, av, av[0]);
 		if (ret == BRLCAD_ERROR)
 		    goto booleval_cleanup;
 	    }
@@ -166,19 +220,26 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 
     // If we're not doing NMG, use the Manifold booleval
     if (!s->in_place) {
-	ret = _ged_facetize_booleval(s, newobj_cnt, dpa, oname, NULL, NULL, false);
+	ret = _ged_facetize_booleval(s, argc, dpa, oname, false, false);
     } else {
 	for (i = 0; i < argc; i++) {
 	    idpa[0] = dpa[i];
 	    idpa[1] = NULL;
-	    ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], NULL, NULL, false);
+	    ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], false, false);
 	    if (ret == BRLCAD_ERROR)
 		goto booleval_cleanup;
 	}
     }
 
+    // Report on the primitive processing
+    facetize_primitives_summary(s);
+
+    // After collecting info for summary, we can now clean up working files
+    bu_dirclear(s->wdir);
+
 booleval_cleanup:
     bu_free(dpa, "dp array");
+
     return ret;
 }
 
@@ -189,29 +250,36 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "Usage: facetize [options] [old_obj1 ...] [new_obj]\n";
     int print_help = 0;
     int need_help = 0;
+    int quiet = 0;
     method_options_t *method_options = new method_options_t;
     std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
     s->gedp = gedp;
+    s->dbip = gedp->dbip;
     s->method_opts = method_options;
 
     /* General options */
-    struct bu_opt_desc d[15];
+    struct bu_opt_desc d[20];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",            &_ged_vopt,       &(s->verbosity), "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,           &(s->quiet), "Suppress all output (overrides verbose flag)");
+    BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
     BU_OPT(d[ 3], "n", "nmg-output",                                "",                  NULL,        &(s->make_nmg), "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh).  Note that this will disable most other processing options and may reduce the conversion success rate.");
     BU_OPT(d[ 4], "r", "regions",                                   "",                  NULL,         &(s->regions), "For combs, walk the trees and create new copies of the hierarchies with each region's CSG tree replaced by a facetized evaluation of that region. (Default is to create one facetized object.)");
-    BU_OPT(d[ 5],  "", "in-place",                                  "",                  NULL,        &(s->in_place), "Replace the specified object(s) with their facetizations. (Warning: this option changes pre-existing geometry!)");
-    BU_OPT(d[ 6],  "", "max-time",                                 "#",           &bu_opt_int,        &(s->max_time), "Maximum time to spend per object (in seconds).  Default is method specific.  Note that specifying shorter times may cut off conversions (particularly using sampling methods) that could succeed with longer runtimes.  Per-method time limits can also be adjusted to allow longer runtimes on slower methods.");
-    BU_OPT(d[ 7],  "", "max-pnts",                                 "#",           &bu_opt_int,        &(s->max_pnts), "Maximum number of pnts per object to use when applying ray sampling methods.");
-    BU_OPT(d[ 8],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion");
-    BU_OPT(d[ 9],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
-    BU_OPT(d[10],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
-    BU_OPT(d[11],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
-    BU_OPT(d[12], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[13], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
-    BU_OPT_NULL(d[14]);
+    BU_OPT(d[ 5], "s", "suffix",                               "<str>",           &bu_opt_vls,             s->suffix, "When creating new objects for facetize outputs, use this suffix to avoid conflicts");
+    BU_OPT(d[ 6], "p", "prefix",                               "<str>",           &bu_opt_vls,             s->prefix, "When creating new objects for facetize, use this prefix to avoid conflicts");
+    BU_OPT(d[ 7],  "", "in-place",                                  "",                  NULL,        &(s->in_place), "Replace the specified object(s) with their facetizations. (Warning: this option changes pre-existing geometry!)");
+    BU_OPT(d[ 8],  "", "max-time",                                 "#",           &bu_opt_int,        &(s->max_time), "Maximum time to spend per object (in seconds).  Default is method specific.  Note that specifying shorter times may cut off conversions (particularly using sampling methods) that could succeed with longer runtimes.  Per-method time limits can also be adjusted to allow longer runtimes on slower methods.");
+    BU_OPT(d[ 9],  "", "max-pnts",                                 "#",           &bu_opt_int,        &(s->max_pnts), "Maximum number of pnts per object to use when applying ray sampling methods.");
+    BU_OPT(d[10],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion");
+    BU_OPT(d[11],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
+    BU_OPT(d[12],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
+    BU_OPT(d[13],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
+    BU_OPT(d[14],  "", "log-file",                        "<filename>",           &bu_opt_vls,           s->log_file, "Specify a location to use for the log file.");
+    BU_OPT(d[15],  "", "nmg-booleval",                               "",                  NULL,       &s->nmg_booleval, "Use libnmg Boolean evaluation algorithm, even if we're producing a BoT.  Less robust, but if it succeeds it may produce cleaner output for coplanar inputs.");
+    BU_OPT(d[16],  "", "disable-fixup",                             "",                  NULL,          &s->no_fixup, "Disable post-processing steps intended to improve generated meshes.");
+    BU_OPT(d[17], "B", "",                                          "",                  NULL,      &s->nonovlp_brep, "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
+    BU_OPT(d[18], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
+    BU_OPT_NULL(d[19]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -248,22 +316,15 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Sync -q and -v options */
-    if (s->quiet && s->verbosity)
-       	s->verbosity = 0;
+    if (quiet)
+	s->verbosity = -1;
 
     /* Don't allow incorrect type suffixes */
-    if (s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->faceted_suffix), ".bot")) {
-	bu_vls_sprintf(s->faceted_suffix, ".nmg");
+    if (s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".bot")) {
+	bu_vls_sprintf(s->solid_suffix, ".nmg");
     }
-    if (!s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->faceted_suffix), ".nmg")) {
-	bu_vls_sprintf(s->faceted_suffix, ".bot");
-    }
-
-    /* We can only resume in region mode - TODO - this shouldn't be true any more... */
-    if (s->resume && !s->regions) {
-	bu_vls_printf(gedp->ged_result_str, "--resume is only supported with with region (-r) mode\n");
-	ret = BRLCAD_ERROR;
-	goto ged_facetize_memfree;
+    if (!s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".nmg")) {
+	bu_vls_sprintf(s->solid_suffix, ".bot");
     }
 
     /* Check if we want/need help */
@@ -276,11 +337,53 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
 
+    /* Beyond this point, we're likely to need info on the cache directory. Generate some
+     * paths and strings we will need. */
+    {
+	// Get the root filename
+	char rfname[MAXPATHLEN];
+	bu_file_realpath(gedp->dbip->dbi_filename, rfname);
+	bu_path_component(s->bname, rfname, BU_PATH_BASENAME);
+
+	// Hash the path string and construct a location in the cache directory
+	unsigned long long hash_num = bu_data_hash((void *)bu_vls_cstr(s->bname), bu_vls_strlen(s->bname));
+	struct bu_vls dname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&dname, "facetize_%llu", hash_num);
+	s->wdir = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "wdir");
+	bu_dir(s->wdir, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&dname), NULL);
+
+	// If we're starting over, clear the old working directory
+	if (!s->resume && bu_file_directory(s->wdir)) {
+	    bu_dirclear(s->wdir);
+	}
+
+	if (!bu_file_directory(s->wdir)) {
+	    // Set up the directory
+	    bu_mkdir(s->wdir);
+	}
+
+	if (!bu_vls_strlen(s->log_file)) {
+	    char tmplfile[MAXPATHLEN];
+	    bu_vls_sprintf(&dname, "facetize_%s.log", bu_vls_cstr(s->bname));
+	    bu_dir(tmplfile, MAXPATHLEN, s->wdir, bu_vls_cstr(&dname), NULL);
+	    bu_vls_sprintf(s->log_file, "%s", tmplfile);
+	}
+	bu_vls_free(&dname);
+
+	s->lfile = fopen(bu_vls_cstr(s->log_file), "a");
+	if (!s->lfile) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to open log file %s for writing\n", bu_vls_cstr(s->log_file));
+	    ret = BRLCAD_ERROR;
+	    goto ged_facetize_memfree;
+	}
+    }
+
     /* If we're doing the experimental brep-only logic, it's a separate process */
     if (s->nonovlp_brep) {
 	if (NEAR_ZERO(s->nonovlp_threshold, SMALL_FASTF)) {
 	    bu_vls_printf(gedp->ged_result_str, "-B option requires a specified length threshold\n");
-	    return BRLCAD_ERROR;
+	    ret = BRLCAD_ERROR;
+	    goto ged_facetize_memfree;
 	}
 	ret = _nonovlp_brep_facetize(s, argc, argv);
 	goto ged_facetize_memfree;

@@ -26,9 +26,9 @@ return -code 1
 set(index_cmds_file "${CMAKE_BINARY_DIR}/CMakeTmp/index_cmds.cmake")
 file(REMOVE "${index_cmds_file}")
 
-set(index_cpy_targets)
-set(index_depends_files)
-set(index_install_files)
+define_property(GLOBAL PROPERTY index_cpy_targets BRIEF_DOCS "tclindex cpy" FULL_DOCS "tclIndex cpy targets")
+define_property(GLOBAL PROPERTY index_depends_files BRIEF_DOCS "index depends" FULL_DOCS "tclIndex depends files")
+define_property(GLOBAL PROPERTY index_install_files BRIEF_DOCS "index install files" FULL_DOCS "tclIndex install files")
 
 # Wrap the logic needed for defining build targets that generate
 # tclIndex and pkgIndex.tcl files
@@ -36,12 +36,12 @@ set(index_install_files)
 macro(general_tcl_index_BUILD cmd outfile targetdir)
   # get file copy target(s) so we can make tclindex.tcl depend on them
   BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
-  list(APPEND index_cpy_targets ${data_target_list})
+  set_property(GLOBAL APPEND PROPERTY index_cpy_targets ${data_target_list})
 
   # We want to be out of date if any of the tcl files in the current directory
   # change, since both pkgIndex and tclIndex are going to scan the directory
   file(GLOB tcl_files "*.tcl")
-  list(APPEND index_depends_files ${tcl_files})
+  set_property(GLOBAL APPEND PROPERTY index_depends_files ${tcl_files})
 
   # Command that builds the index when the dependency is resolved.  We need
   # to use btclsh here to generate files correctly for Archer, but btclsh
@@ -51,9 +51,9 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   # make each new target depend on all previous targets, so they are forced
   # execute one at a time.
   set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
-  file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\")\n")
+  file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\" RESULT_VARIABLE BRES)\nif(BRES)\n  message(FATAL_ERROR \"Failed to process ${tclindex_outdir}\")\nendif()\n")
 
-  list(APPEND index_install_files ${targetdir}/${outfile})
+  set_property(GLOBAL APPEND PROPERTY index_install_files ${targetdir}/${outfile})
 
   DISTCLEAN("${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile}")
 
@@ -112,6 +112,12 @@ endif (BRLCAD_ENABLE_TCL)
 add_subdirectory(rtwizard)
 
 if (TARGET btclsh)
+
+  # Unpack the full lists
+  get_property(index_cpy_targets GLOBAL PROPERTY index_cpy_targets)
+  get_property(index_depends_files GLOBAL PROPERTY index_depends_files)
+  get_property(index_install_files GLOBAL PROPERTY index_install_files)
+
   # We've collected all the commands - now add add a single command
   # to run all of them at once.
   add_custom_command(

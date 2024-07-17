@@ -53,10 +53,10 @@ manifold_check(struct rt_bot_internal *bot)
 	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
     if (bot->orientation == RT_BOT_CW) {
 	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
+	    bot_mesh.triVerts.push_back(glm::ivec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
     } else {
 	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
+	    bot_mesh.triVerts.push_back(glm::ivec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
     }
 
     manifold::Manifold omanifold(bot_mesh);

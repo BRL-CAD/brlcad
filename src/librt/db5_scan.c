@@ -48,8 +48,8 @@ db5_scan(
     b_off_t addr;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db5_scan(%p, %lx)\n",
-				    (void *)dbip, (long unsigned int)handler);
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db5_scan(%p, %llx)\n",
+				    (void *)dbip, (unsigned long long)(uintptr_t)handler);
 
     raw.magic = DB5_RAW_INTERNAL_MAGIC;
     nrec = 0L;
@@ -128,8 +128,8 @@ db5_scan_inmem(
     const unsigned char *cp = (const unsigned char *)data;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db5_scan_inmem(%p, %lx)\n",
-				    (void *)dbip, (long unsigned int)handler);
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db5_scan_inmem(%p, %llx)\n",
+				    (void *)dbip, (unsigned long long)(uintptr_t)handler);
 
     raw.magic = DB5_RAW_INTERNAL_MAGIC;
     nrec = 0L;

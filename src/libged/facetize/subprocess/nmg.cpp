@@ -33,7 +33,6 @@
 #include "bu/opt.h"
 #include "rt/primitives/bot.h"
 #include "ged.h"
-#include "../tess_opts.h"
 #include "./tessellate.h"
 
 int

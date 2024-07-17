@@ -1616,7 +1616,9 @@ bg_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     return FdotD;
 }
 
-
+// TODO - see if we can use Shewchuk's formula for robust triangle area in E^3
+// from https://people.eecs.berkeley.edu/~jrs/meshpapers/robnotes.pdf page 10
+// and https://github.com/wlenthe/GeometricPredicates to make this more robust
 double
 bg_area_of_triangle(const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {

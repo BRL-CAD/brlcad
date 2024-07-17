@@ -56,7 +56,7 @@ main(int ac, char *av[]) {
 		bu_log("read %d: [%s]\n", count, buffer);
 	    }
 #endif
-	    bu_process_wait_n(info, 0);
+	    bu_process_wait_n(&info, 0);
 	    invocations++;
 	    /* bu_snooze(BU_SEC2USEC(1)); */
 	}

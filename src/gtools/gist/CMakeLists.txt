@@ -26,7 +26,11 @@ set(GIST_SRCS
   RenderHandler.cpp
 )
 
-CMAKEFILES(${gist_ignore_files} ${GIST_SRCS})
+CMAKEFILES(
+  ${gist_ignore_files}
+  ${GIST_SRCS}
+  TEST.png
+  )
 
 find_package_opencv()
 if(NOT OpenCV_FOUND)
@@ -46,6 +50,7 @@ if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
   )
 endif (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
+BRLCAD_ADDDATA(assets/brlLogo-nobg.png images)
 
 # Local Variables:
 # tab-width: 8

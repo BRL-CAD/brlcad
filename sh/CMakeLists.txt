@@ -16,6 +16,7 @@ set(noinst_SCRIPTS
   copyright.sh
   enumerate.sh
   facetall.sh
+  facetize_cmp.sh
   footer.sh
   fs2org.sh
   header.sh

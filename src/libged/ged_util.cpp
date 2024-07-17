@@ -575,7 +575,7 @@ _ged_vopt(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(a
 /* Sort the argv array to list existing objects first and everything else at
  * the end.  Returns the number of argv entries where db_lookup failed */
 int
-_ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa)
+_ged_sort_existing_objs(struct db_i *dbip, int argc, const char *argv[], struct directory **dpa)
 {
     int i = 0;
     int exist_cnt = 0;
@@ -583,9 +583,10 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
     struct directory *dp;
     const char **exists = (const char **)bu_calloc(argc, sizeof(const char *), "obj exists array");
     const char **nonexists = (const char **)bu_calloc(argc, sizeof(const char *), "obj nonexists array");
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    if (dbip == DBI_NULL)
+	return BRLCAD_ERROR;
     for (i = 0; i < argc; i++) {
-	dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
+	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
 	    nonexists[nonexist_cnt] = argv[i];
 	    nonexist_cnt++;
@@ -1614,7 +1615,7 @@ _ged_rt_output_handler2(void *clientData, int type)
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait_n(rrtp->p, 120);
+	retcode = bu_process_wait_n(&rrtp->p, 120);
 	int aborted = (retcode == ERROR_PROCESS_ABORTED);
 
 	if (aborted)
@@ -1710,7 +1711,7 @@ _ged_rt_output_handler(void *clientData, int mask)
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait_n(rrtp->p, 120);
+	retcode = bu_process_wait_n(&rrtp->p, 120);
 	int aborted = (retcode == ERROR_PROCESS_ABORTED);
 
 	if (aborted)

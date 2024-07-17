@@ -70,12 +70,12 @@ DEPRECATED BU_EXPORT extern void bu_process_exec(struct bu_process **info, const
  *
  * @param[out] pinfo - bu_process struct to be created
  * @param[in] argv - array of command line arguments to executed. Last element MUST be NULL
- * @param[in] opts - creation options
+ * @param[in] process_creation_opts - bit field for bu_process_create_opts
  *
  * @note
  * does not guarantee child process started successfully. use bu_process_wait() to check exit status
  */
-BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **argv, bu_process_create_opts opts);
+BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **argv, int process_creation_opts);
 
 
 /**
@@ -99,7 +99,7 @@ BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **
  * @return
  * 0 on success; ERROR_PROCESS_ABORTED for aborted process; Otherwise, platform specific exit status
  */
- BU_EXPORT extern int bu_process_wait_n(struct bu_process *pinfo, int wtime);
+ BU_EXPORT extern int bu_process_wait_n(struct bu_process **pinfo, int wtime);
 
 
 /**

@@ -61,7 +61,7 @@ int _test_read(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait_n(p, 0)) {
+    if (bu_process_wait_n(&p, 0)) {
 	fprintf(stderr, "bu_process_test[\"read\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -91,7 +91,7 @@ int _test_read_flood(const char* cmd) {
 	    stderr_done = 1;
     }
 
-    if (bu_process_wait_n(p, 0)) {
+    if (bu_process_wait_n(&p, 0)) {
 	fprintf(stderr, "bu_process_test[\"read_flood\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -109,7 +109,7 @@ int _test_exec_wait(const char* cmd) {
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
-    if (bu_process_wait_n(p, 0)) {
+    if (bu_process_wait_n(&p, 0)) {
 	fprintf(stderr, "bu_process_test[\"exec_wait\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -144,7 +144,7 @@ int _test_create_opts(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait_n(p, 0)) {
+    if (bu_process_wait_n(&p, 0)) {
 	fprintf(stderr, "bu_process_test[\"create_opts\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -166,7 +166,7 @@ int _test_create_timeout(const char* cmd) {
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     int64_t start_time = bu_gettime();
-    if (bu_process_wait_n(p, 1)) {
+    if (bu_process_wait_n(&p, 1)) {
 	fprintf(stderr, "bu_process_test[\"create_timeout\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -211,7 +211,7 @@ int _test_ids(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait_n(p, 0)) {
+    if (bu_process_wait_n(&p, 0)) {
 	fprintf(stderr, "bu_process_test[\"ids\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -278,7 +278,7 @@ int _test_streams(const char* cmd) {
     bu_process_file_close(p, BU_PROCESS_STDOUT);
     bu_process_file_close(p, BU_PROCESS_STDERR);
 
-    if (bu_process_wait_n(p, 0) == -1) {
+    if (bu_process_wait_n(&p, 0)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -312,7 +312,7 @@ int _test_abort(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    int wait_status = bu_process_wait_n(p, 0);
+    int wait_status = bu_process_wait_n(&p, 0);
     if (wait_status != ERROR_PROCESS_ABORTED) {
         fprintf(stderr, "bu_process_test[\"abort\"] - wait should have reported abort code\n");
 	return PROCESS_FAIL;
@@ -356,7 +356,7 @@ int _test_args(const char* cmd) {
 	}
     }
 
-    if (bu_process_wait_n(p, 0)) {
+    if (bu_process_wait_n(&p, 0)) {
         fprintf(stderr, "bu_process_test[\"args\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -390,7 +390,7 @@ int _test_alive(const char* cmd) {
 	return PROCESS_FAIL;
     }
 
-    if (bu_process_wait_n(p, 0)) {
+    if (bu_process_wait_n(&p, 0)) {
 	fprintf(stderr, "bu_process_test[\"alive\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
@@ -427,7 +427,7 @@ int _test_alive(const char* cmd) {
 	}
     }
 
-    (void)bu_process_wait_n(p, 0);      // reap terminated process
+    (void)bu_process_wait_n(&p, 0);      // reap terminated process
 
     if (bu_process_alive(p)) {	// should be dead
 	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after terminate\n");
