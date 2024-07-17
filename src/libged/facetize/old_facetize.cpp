@@ -1574,12 +1574,12 @@ bool_meshes(
     for (int i = 0; i < a_ccnt; i++)
 	a_mesh.vertPos.push_back(glm::vec3(a_coords[3*i], a_coords[3*i+1], a_coords[3*i+2]));
     for (int i = 0; i < a_tricnt; i++)
-	a_mesh.triVerts.push_back(glm::vec3(a_tris[3*i], a_tris[3*i+1], a_tris[3*i+2]));
+	a_mesh.triVerts.push_back(glm::ivec3(a_tris[3*i], a_tris[3*i+1], a_tris[3*i+2]));
     manifold::Mesh b_mesh;
     for (int i = 0; i < b_ccnt; i++)
 	b_mesh.vertPos.push_back(glm::vec3(b_coords[3*i], b_coords[3*i+1], b_coords[3*i+2]));
     for (int i = 0; i < b_tricnt; i++)
-	b_mesh.triVerts.push_back(glm::vec3(b_tris[3*i], b_tris[3*i+1], b_tris[3*i+2]));
+	b_mesh.triVerts.push_back(glm::ivec3(b_tris[3*i], b_tris[3*i+1], b_tris[3*i+2]));
 
     manifold::Manifold a_manifold(a_mesh);
     if (a_manifold.Status() != manifold::Manifold::Error::NoError) {
