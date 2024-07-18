@@ -25,12 +25,19 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * Validate and merge hlbvh BoT raytracing improvements
 
 * rtarea is sometimes missing regions on summary reporting, at least on
-  Windwos, possibly a threading issue setting up the results container.
+  Windows, possibly a threading issue setting up the results container.
 
 * complete preliminary concave arb8 support
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* Newer SPSR code apparently has a header-only mode that we might be
+  able to use to replace our current embedded customized version:
+
+  https://github.com/mkazhdan/PoissonRecon
+
+  (See the HEADER-ONLY LIBRARY section of their README.md)
 
 * replace translations of various Geometric Tools algorithms in BRL-CAD
   with calls to a bundled Geometric Tools.  With bext coming online,
