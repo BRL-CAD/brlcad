@@ -57,6 +57,7 @@
 #include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
+#include "bg.h"
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
@@ -2681,6 +2682,85 @@ rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 
 }
 
+int
+rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int grow, int UNUSED(planar_only), fastf_t val)
+{
+
+    if (!oip || !ip || val < SMALL_FASTF)
+	return BRLCAD_ERROR;
+
+    struct rt_arb_internal *oarb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(oarb);
+
+    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
+    int arbType = rt_arb_std_type(ip, &arb_tol);
+
+    // For arbs, we bump all the faces in or out.  Rather than trying to
+    // update all the vertices to reflect all the planar moves without
+    // rotating any of the faces, we just construct the planes and return
+    // an ARBN.  This will take up to 6 planes.
+    plane_t planes[6];
+    if (rt_arb_calc_planes(NULL, oarb, arbType, planes, &arb_tol) < 0)
+	return BRLCAD_ERROR;
+
+    const int arb_faces[5][24] = rt_arb_faces;
+    int type = arbType - ARB4;  /* ARB4 is at 0, ARB5 at 1, etc. */
+
+    point_t arb_center;
+    rt_arb_centroid(&arb_center, ip);
+
+    // For each active plane, we:
+    // 1.  Determine the closest point on the plane to the arb center.
+    // 2.  Construct the scale vector based on the plane normal
+    // 3.  Apply that vector to the closest point
+    // 4.  Use the new point and original plane vector to define a new
+    //     plane
+    int afaces = 0;
+    for (int i = 0; i < 6; i++) {
+	if (arb_faces[type][i*4] == -1)
+	    continue;
+	fastf_t fx, fy;
+	bg_plane_closest_pt(&fx, &fy, planes[i], arb_center);
+	point_t cp;
+	bg_plane_pt_at(&cp, planes[i], fx, fy);
+	vect_t pnorm;
+	VMOVE(pnorm, planes[i]);
+	VUNITIZE(pnorm);
+	VSCALE(pnorm, pnorm, val);
+	point_t np;
+	if (!grow)
+	    VREVERSE(pnorm, pnorm);
+	VADD2(np, cp, pnorm);
+	plane_t nplane;
+	VMOVE(pnorm, planes[i]);
+	bg_plane_pt_nrml(&nplane, np, pnorm);
+	HMOVE(planes[i], nplane);
+	afaces++;
+    }
+
+    // Make the output ARBN
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_ARBN;
+    nip->idb_meth = &OBJ[ID_ARBN];
+    BU_ALLOC(nip->idb_ptr, struct rt_arbn_internal);
+    struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)ip->idb_ptr;
+    arbn->magic = RT_ARBN_INTERNAL_MAGIC;
+    arbn->neqn = afaces;
+    arbn->eqn = (plane_t *)bu_calloc(afaces, sizeof(plane_t), "arbn eqns");
+    afaces = 0;
+    for (int i = 0; i < 6; i++) {
+	if (arb_faces[type][i*4] == -1)
+	    continue;
+	HMOVE(arbn->eqn[afaces], planes[afaces]);
+	afaces++;
+    }
+
+    *oip = nip;
+    return BRLCAD_OK;
+}
 
 /** @} */
 

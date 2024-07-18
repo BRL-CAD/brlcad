@@ -81,7 +81,7 @@ extern "C" {
     extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op); \
     extern int rt_##name##_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version); \
     extern void rt_##name##_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip); \
-    extern int rt_##name##_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int in_or_out, fastf_t factor)
+    extern int rt_##name##_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int grow, int planar_only, fastf_t factor)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -305,7 +305,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* process_selection */
 	NULL, /* serialize */
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels), /* label */
-	NULL  /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb) /* perturb */
     },
 
     {
@@ -401,7 +401,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* process_selection */
 	NULL, /* serialize */
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_arb_labels), /* label */
-	NULL  /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arb_perturb) /* perturb */
     },
 
     {
