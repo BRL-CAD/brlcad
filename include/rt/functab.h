@@ -273,6 +273,11 @@ struct rt_functab {
     void (*ft_labels)(struct bv_scene_obj *ps, const struct rt_db_internal *ip);
 #define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(struct bv_scene_obj *, const struct rt_db_internal *))((void (*)(void))_func))
 
+    /** perturb geometry parameters of primitive */
+    void (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int grow, fastf_t factor);
+#define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((void (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
+
+
 };
 
 
