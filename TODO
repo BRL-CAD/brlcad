@@ -32,6 +32,19 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Add a "perturb" callback function to librt's primitive tables, that
+  will accept a primitive definition and return a version that has been
+  slightly increased or decreased in size.  For example, a "perturbed"
+  TGC would have its base and height planes bumped slightly in or out
+  and its radius slightly increased or decreased.  The intent would be
+  to see if we can automatically perturb primitives just slightly out
+  of numerical complanarity for facetize.  For union (and probably
+  intersection) we would bump out slightly, and for subtraction bump
+  in slightly.  Probably want to do this at the implicit level, rather
+  than after triangles have been produced, so it's easier to understand
+  what happens.  For things like pipes especially, getting the intended
+  effect post-triangulation might be tricky.
+
 * Newer SPSR code apparently has a header-only mode that we might be
   able to use to replace our current embedded customized version:
 
