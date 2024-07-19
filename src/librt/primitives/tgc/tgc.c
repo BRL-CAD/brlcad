@@ -3496,12 +3496,14 @@ rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
 
     if (!grow) {
 	// Shrink
-	VADD2(tgc->h, tgc->h, mrvec);
 	VADD2(tgc->v, tgc->v, mvec);
+	VSCALE(mrvec, mrvec, 2); // Offset for movement of v
+	VADD2(tgc->h, tgc->h, mrvec);
     } else {
 	// Grow
-	VADD2(tgc->h, tgc->h, mvec);
 	VADD2(tgc->v, tgc->v, mrvec);
+	VSCALE(mvec, mvec, 2); // Offset for movement of v
+	VADD2(tgc->h, tgc->h, mvec);
     }
 
     // If we're only bumping planar elements, we're done
@@ -3510,7 +3512,7 @@ rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
 	return BRLCAD_OK;
     }
 
-    // Bumping everying - scale the axis vecs
+    // Bumping everything - scale the axis vecs
     VMOVE(mvec, tgc->a);
     VUNITIZE(mvec);
     VSCALE(mvec, mvec, val);
