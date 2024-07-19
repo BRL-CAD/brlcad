@@ -3476,8 +3476,9 @@ rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     nip->idb_type = ID_TGC;
     nip->idb_meth = &OBJ[ID_TGC];
-    BU_ALLOC(nip->idb_ptr, struct rt_tgc_internal);
-    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    struct rt_tgc_internal *tgc = NULL;
+    BU_ALLOC(tgc, struct rt_tgc_internal);
+    nip->idb_ptr = tgc;
     tgc->magic = RT_TGC_INTERNAL_MAGIC;
     VMOVE(tgc->v, otgc->v);
     VMOVE(tgc->h, otgc->h);

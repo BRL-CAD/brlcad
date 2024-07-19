@@ -2745,8 +2745,9 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     nip->idb_type = ID_ARBN;
     nip->idb_meth = &OBJ[ID_ARBN];
-    BU_ALLOC(nip->idb_ptr, struct rt_arbn_internal);
-    struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)ip->idb_ptr;
+    struct rt_arbn_internal *arbn = NULL;
+    BU_ALLOC(arbn, struct rt_arbn_internal);
+    nip->idb_ptr = arbn;
     arbn->magic = RT_ARBN_INTERNAL_MAGIC;
     arbn->neqn = afaces;
     arbn->eqn = (plane_t *)bu_calloc(afaces, sizeof(plane_t), "arbn eqns");

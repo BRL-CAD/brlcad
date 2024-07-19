@@ -50,7 +50,7 @@ BRLCAD_ADDEXEC(db5_size db5_size.c "librt" TEST)
 #BRLCAD_ADD_TEST(NAME rt_datum_basic COMMAND rt_datum)
 
 # perturb testing
-#BRLCAD_ADDEXEC(rt_perturb rt_perturb.c "librt" TEST)
+#BRLCAD_ADDEXEC(rt_perturb rt_perturb.c "librt;libwdb" TEST)
 #BRLCAD_ADD_TEST(NAME rt_perturb_basic COMMAND rt_perturb)
 
 # cyclic path testing
