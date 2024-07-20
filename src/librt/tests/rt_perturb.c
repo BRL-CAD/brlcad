@@ -75,22 +75,52 @@ main(int UNUSED(argc), char *argv[])
     }
 
     {
-	// Initial ARB7 shape
+	// Initial ARB shape
 	struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-	vect_t pts7[7];
-	VSET(pts7[0], 1822.8,  1039.51, -1822.57);
-	VSET(pts7[1], 2610.28, 1199.34, -3654.06);
-	VSET(pts7[2], 4322.88, 411.084, -2986.49);
-	VSET(pts7[3], 2679.1,  645.381, -1488.79);
-	VSET(pts7[4], 2491.29, 2870.66, -1375.34);
-	VSET(pts7[5], 3278.76, 3030.49, -3206.83);
-	VSET(pts7[6], 4135.06, 2636.36, -2873.04);
-	mk_arb8(wdbp, "arb7_1.s", (const fastf_t *)pts7);
+	vect_t pts8[8];
+#if 0
+	VSET(pts8[0], 24.8507, -24.8507, -24.8507 );
+	VSET(pts8[1], 24.8507, 24.8507, -24.8507  );
+	VSET(pts8[2], 24.8507, 24.8507, 24.8507   );
+	VSET(pts8[3], 24.8507, -24.8507, 24.8507  );
+	VSET(pts8[4], -24.8507, 0, 0);
+	mk_arb5(wdbp, "arb8_1.s", (const fastf_t *)pts8);
+#endif
+	// If we're not centered around the origin, we're not making a valid ARBN...
+#if 0
+	VSET(pts8[0], 4.8507, -24.8507, -24.8507 );
+	VSET(pts8[1], 4.8507, 24.8507, -24.8507  );
+	VSET(pts8[2], 4.8507, 24.8507, 24.8507   );
+	VSET(pts8[3], 4.8507, -24.8507, 24.8507  );
+	VSET(pts8[4], -45.8507, 0, 0);
+	mk_arb5(wdbp, "arb8_1.s", (const fastf_t *)pts8);
+#endif
+#if 1
+	VSET(pts8[0], 3146.95649964142830867786,  -213.734397388383968063863,   967.2554952387024513882352);
+	VSET(pts8[1], 4835.946259752023252076469, -1081.969959924687827879097,  339.975176570206258475082 );
+	VSET(pts8[2], 5628.127176313613745151088, -857.7799790468159244483104,  2162.662272017370924004354);
+	VSET(pts8[3], 3543.046957922220371983713, -101.6394069494533027864236,  1878.599042962285693647573);
+	VSET(pts8[4], 3867.902396139355005288962,  1573.975271551538753556088,  434.0283823669653884280706);
+	VSET(pts8[5], 5556.892156249954496161081,  705.7397090152405780827394, -193.2519363015293833996111);
+	VSET(pts8[6], 5952.982614530745195224881,  817.8346994541723233851371,  718.0916114220510735322023);
+	mk_arb7(wdbp, "arb8_1.s", (const fastf_t *)pts8);
+#endif
+#if 0
+	VSET(pts8[0], 24.8507, -24.8507, -24.8507 );
+	VSET(pts8[1], 24.8507, 24.8507, -24.8507  );
+	VSET(pts8[2], 24.8507, 24.8507, 24.8507   );
+	VSET(pts8[3], 24.8507, -24.8507, 24.8507  );
+	VSET(pts8[4], -24.8507, -24.8507, -24.8507);
+	VSET(pts8[5], -24.8507, 24.8507, -24.8507 );
+	VSET(pts8[6], -24.8507, 24.8507, 24.8507  );
+	VSET(pts8[7], -24.8507, -24.8507, 24.8507 );
+	mk_arb8(wdbp, "arb8_1.s", (const fastf_t *)pts8);
+#endif
 	db_update_nref(dbip, &rt_uniresource);
     }
     {
 	/* Make a perturbed version */
-	struct directory *wdp = db_lookup(dbip, "arb7_1.s", LOOKUP_QUIET);
+	struct directory *wdp = db_lookup(dbip, "arb8_1.s", LOOKUP_QUIET);
 	struct rt_db_internal intern;
 	rt_db_get_internal(&intern, wdp, dbip, NULL, &rt_uniresource);
 

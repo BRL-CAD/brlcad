@@ -2683,7 +2683,7 @@ rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 }
 
 int
-rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int grow, int UNUSED(planar_only), fastf_t val)
+rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(grow), int UNUSED(planar_only), fastf_t val)
 {
 
     if (!oip || !ip || val < SMALL_FASTF)
@@ -2703,11 +2703,9 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     if (rt_arb_calc_planes(NULL, oarb, arbType, planes, &arb_tol) < 0)
 	return BRLCAD_ERROR;
 
+
     const int arb_faces[5][24] = rt_arb_faces;
     int type = arbType - ARB4;  /* ARB4 is at 0, ARB5 at 1, etc. */
-
-    point_t arb_center;
-    rt_arb_centroid(&arb_center, ip);
 
     // For each active plane, we:
     // 1.  Determine the closest point on the plane to the arb center.
@@ -2715,17 +2713,34 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     // 3.  Apply that vector to the closest point
     // 4.  Use the new point and original plane vector to define a new
     //     plane
+    point_t arb_center;
+    rt_arb_centroid(&arb_center, ip);
     int afaces = 0;
     for (int i = 0; i < 6; i++) {
 	if (arb_faces[type][i*4] == -1)
 	    continue;
 	fastf_t fx, fy;
+	// To get the point we want here, apparently we need to flip
+	// the sign of W(!?)  Need to look into what's going on...
+	// Eliminating the -1 from the bg functions breaks a unit
+	// test and some drawing routines...
+	planes[i][W] = planes[i][W]*-1;
 	bg_plane_closest_pt(&fx, &fy, planes[i], arb_center);
 	point_t cp;
 	bg_plane_pt_at(&cp, planes[i], fx, fy);
+	planes[i][W] = planes[i][W]*-1;
+	// Out of the box, rt_arb_calc_planes apparently aren't necessarily
+	// suitable for use in an ARBN primitive. Make sure normal points out
+	// from center.
+	vect_t cvec;
+	VSUB2(cvec, cp, arb_center);
+	VUNITIZE(cvec);
+	if (VDOT(planes[i], cvec) < 0) {
+	    HREVERSE(planes[i], planes[i]);
+	}
+#if 0
 	vect_t pnorm;
 	VMOVE(pnorm, planes[i]);
-	VUNITIZE(pnorm);
 	VSCALE(pnorm, pnorm, val);
 	point_t np;
 	if (!grow)
@@ -2733,8 +2748,10 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
 	VADD2(np, cp, pnorm);
 	plane_t nplane;
 	VMOVE(pnorm, planes[i]);
-	bg_plane_pt_nrml(&nplane, np, pnorm);
+	plane_t nplane;
+	bg_plane_pt_nrml(&nplane, cp, pnorm);
 	HMOVE(planes[i], nplane);
+#endif
 	afaces++;
     }
 
