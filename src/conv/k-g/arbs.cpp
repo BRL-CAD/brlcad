@@ -28,21 +28,14 @@
 #include "arbs.h"
 
 
-Arbs::Arbs(void):name() {
-    //arb_internal.magic = RT_ARBN_INTERNAL_MAGIC;
-    //arb_internal.magic = RT_ARB_INTERNAL_MAGIC;
-}
+Arbs::Arbs(void):name() {}
 
-Arbs::~Arbs(void)
-{
-    /*if (arb_internal.pt != nullptr)
-	bu_free(arb_internal.pt, "Solid::~Solid: pt");*/
-}
 
 void Arbs::setName(const char* value)
 {
     name = value;
 }
+
 
 void Arbs::addArb(
     const char* arbName,
@@ -70,10 +63,12 @@ void Arbs::addArb(
     arbs[arbName] = temp;
 }
 
+
 const char* Arbs::getName(void) const
 {
     return name.c_str();
 }
+
 
 std::map<std::string, rt_arb_internal> Arbs::getArbs(void) const
 {

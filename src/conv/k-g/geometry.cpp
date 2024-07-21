@@ -35,13 +35,6 @@
 // End:
 // ex: shiftwidth=4 tabstop=8
 
-Geometry::Geometry(void)
-{
-}
-
-Geometry::~Geometry(void)
-{
-}
 
 void Geometry::setBaseName
 (
@@ -69,7 +62,7 @@ void Geometry::addTriangle
     const point_t& point1,
     const point_t& point2,
     const point_t& point3
-){
+) {
     m_bot.addTriangle(point1, point2, point3);
 }
 
@@ -84,29 +77,29 @@ void Geometry::addArb
     const point_t& point6,
     const point_t& point7,
     const point_t& point8
-){
+) {
     m_arbs.addArb(arbName, point1, point2, point3, point4, point5, point6, point7, point8);
 }
 
-const char* Geometry::getBaseName(void) const
-{
+
+const char* Geometry::getBaseName(void) const{
     return name.c_str();
 }
 
 
-Bot Geometry::getBot(void) const
-{
+Bot Geometry::getBot(void) const{
     return m_bot;
 }
 
-Arbs Geometry::getArbs(void) const
-{
+Arbs Geometry::getArbs(void) const{
     return m_arbs;
 }
 
 
-std::vector<std::string> Geometry::write(rt_wdb* wdbp)
-{
+std::vector<std::string> Geometry::write
+(
+    rt_wdb* wdbp
+) {
     std::vector<std::string> ret      = m_bot.write(wdbp);
     std::vector<std::string> arbNames = m_arbs.write(wdbp);
 

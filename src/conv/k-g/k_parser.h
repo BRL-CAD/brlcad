@@ -25,7 +25,6 @@
 
 #ifndef KPARSER_INCLUDED
 #define KPARSER_INCLUDED
-#define FIRST_NODE 2
 
 #include "common.h"
 

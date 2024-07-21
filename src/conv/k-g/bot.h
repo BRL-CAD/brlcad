@@ -46,7 +46,7 @@ public:
 			    const point_t& point3);
 
     const char*                       getName(void) const;
-    std::vector <std::string>        write(rt_wdb* wdbp);
+    std::vector <std::string>         write(rt_wdb* wdbp);
 
 private:
     std::string     name;

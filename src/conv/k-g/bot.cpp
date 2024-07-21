@@ -226,7 +226,11 @@ std::vector<std::string> Bot::write
 	    bot_wdb->thickness[i] = thickness;
     }
 
-    wdb_export(wdbp, name.c_str(), bot_wdb, ID_BOT, 1.);
+    if (bot_internal.face_mode != 0 || bot_internal.normals != 0 || bot_internal.face_normals || 0) {
+	ret.push_back(botName);
+
+	wdb_export(wdbp, botName.c_str(), bot_wdb, ID_BOT, 1.);
+    }
 
     return ret;
 }

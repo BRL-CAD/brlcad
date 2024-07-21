@@ -33,15 +33,13 @@
 
 class Geometry {
 public:
-    Geometry(void);
-    ~Geometry(void);
 
-    void        setBaseName(const char* value);
-    void        setThickness(double value);
-    void        addTriangle(const point_t& point1,
-			    const point_t& point2,
-			    const point_t& point3);
-    void        addArb( const char* arbName,
+    void         setBaseName(const char* value);
+    void         setThickness(double value);
+    void         addTriangle(const point_t& point1,
+			     const point_t& point2,
+			     const point_t& point3);
+    void         addArb(const char* arbName,
 			const point_t& point1,
 			const point_t& point2,
 			const point_t& point3,

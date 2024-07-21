@@ -187,6 +187,7 @@ bool parse_k
 	int                      sectionId        = -1;
 	std::string              line             = read_line(is);
 	std::vector<std::string> tokens;
+	const size_t FirstNode = 2;
 
 	if (line.size() > 0)
 	    tokens = parse_line(line.c_str());
@@ -324,7 +325,7 @@ bool parse_k
 			KElement element;
 
 			for (int i_n = 0; i_n < 4; ++i_n) {
-			    element.nodes.push_back(stoi(tokens[i_n + FIRST_NODE]));
+			    element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
 			}
 
 			data.elements[eid] = element;
@@ -349,7 +350,7 @@ bool parse_k
 			KElement element;
 
 			for (int i_n = 0; i_n < 8; ++i_n) {
-			    element.nodes.push_back(stoi(tokens[i_n + FIRST_NODE]));
+			    element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
 			}
 			
 			data.elements[eid] = element;

@@ -37,7 +37,6 @@
 class Arbs {
 public:
     Arbs(void);
-    ~Arbs(void);
 
     void        setName(const char* value);
 
