@@ -35,6 +35,54 @@
 #include "region_list.h"
 
 
+static void AddArb(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8,KData& kData, std::string arbNumber, Geometry& geometry) {
+    point_t point1;
+    point_t point2;
+    point_t point3;
+    point_t point4;
+    point_t point5;
+    point_t point6;
+    point_t point7;
+    point_t point8;
+
+    const double factor = 10.0;
+
+    point1[X] = kData.nodes[n1].x * factor;
+    point1[Y] = kData.nodes[n1].y * factor;
+    point1[Z] = kData.nodes[n1].z * factor;
+
+    point2[X] = kData.nodes[n2].x * factor;
+    point2[Y] = kData.nodes[n2].y * factor;
+    point2[Z] = kData.nodes[n2].z * factor;
+
+    point3[X] = kData.nodes[n3].x * factor;
+    point3[Y] = kData.nodes[n3].y * factor;
+    point3[Z] = kData.nodes[n3].z * factor;
+
+    point4[X] = kData.nodes[n4].x * factor;
+    point4[Y] = kData.nodes[n4].y * factor;
+    point4[Z] = kData.nodes[n4].z * factor;
+
+    point5[X] = kData.nodes[n5].x * factor;
+    point5[Y] = kData.nodes[n5].y * factor;
+    point5[Z] = kData.nodes[n5].z * factor;
+
+    point6[X] = kData.nodes[n6].x * factor;
+    point6[Y] = kData.nodes[n6].y * factor;
+    point6[Z] = kData.nodes[n6].z * factor;
+
+    point7[X] = kData.nodes[n7].x * factor;
+    point7[Y] = kData.nodes[n7].y * factor;
+    point7[Z] = kData.nodes[n7].z * factor;
+
+    point8[X] = kData.nodes[n8].x * factor;
+    point8[Y] = kData.nodes[n8].y * factor;
+    point8[Z] = kData.nodes[n8].z * factor;
+
+    geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
+}
+
+
 int main
 (
     int   argc,
@@ -67,8 +115,6 @@ int main
 		    if ((it->second).elements.size() > 0) {
 			std::string partName = std::to_string(it->first) + "_" + (it->second).title;
 
-			//Bot&   bot     = regions.addRegion(partName);
-			//Arbs&  arbs   = regions.addRegion_Arbs(partName);'
 			Geometry& geometry = regions.addRegion(partName);
 			int    section = (it->second).section;
 
@@ -127,15 +173,6 @@ int main
 				}
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 8) {
-				point_t point1;
-				point_t point2;
-				point_t point3;
-				point_t point4;
-				point_t point5;
-				point_t point6;
-				point_t point7;
-				point_t point8;
-
 				int     n1 = kData.elements[*itr].nodes[0];
 				int     n2 = kData.elements[*itr].nodes[1];
 				int     n3 = kData.elements[*itr].nodes[2];
@@ -145,52 +182,13 @@ int main
 				int     n7 = kData.elements[*itr].nodes[6];
 				int     n8 = kData.elements[*itr].nodes[7];
 
-				point1[X] = kData.nodes[n1].x * factor;
-				point1[Y] = kData.nodes[n1].y * factor;
-				point1[Z] = kData.nodes[n1].z * factor;
-
-				point2[X] = kData.nodes[n2].x * factor;
-				point2[Y] = kData.nodes[n2].y * factor;
-				point2[Z] = kData.nodes[n2].z * factor;
-
-				point3[X] = kData.nodes[n3].x * factor;
-				point3[Y] = kData.nodes[n3].y * factor;
-				point3[Z] = kData.nodes[n3].z * factor;
-
-				point4[X] = kData.nodes[n4].x * factor;
-				point4[Y] = kData.nodes[n4].y * factor;
-				point4[Z] = kData.nodes[n4].z * factor;
-
-				point5[X] = kData.nodes[n5].x * factor;
-				point5[Y] = kData.nodes[n5].y * factor;
-				point5[Z] = kData.nodes[n5].z * factor;
-
-				point6[X] = kData.nodes[n6].x * factor;
-				point6[Y] = kData.nodes[n6].y * factor;
-				point6[Z] = kData.nodes[n6].z * factor;
-
-				point7[X] = kData.nodes[n7].x * factor;
-				point7[Y] = kData.nodes[n7].y * factor;
-				point7[Z] = kData.nodes[n7].z * factor;
-
-				point8[X] = kData.nodes[n8].x * factor;
-				point8[Y] = kData.nodes[n8].y * factor;
-				point8[Z] = kData.nodes[n8].z * factor;
-
 				std::string arbNumber = std::to_string(*itr);
 
-				geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
+				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
+
+
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 7) {
-				point_t point1;
-				point_t point2;
-				point_t point3;
-				point_t point4;
-				point_t point5;
-				point_t point6;
-				point_t point7;
-				point_t point8;
-
 				int     n1 = kData.elements[*itr].nodes[0];
 				int     n2 = kData.elements[*itr].nodes[1];
 				int     n3 = kData.elements[*itr].nodes[2];
@@ -200,53 +198,11 @@ int main
 				int     n7 = kData.elements[*itr].nodes[6];
 				int     n8 = kData.elements[*itr].nodes[4];
 
-				point1[X] = kData.nodes[n1].x * factor;
-				point1[Y] = kData.nodes[n1].y * factor;
-				point1[Z] = kData.nodes[n1].z * factor;
-
-				point2[X] = kData.nodes[n2].x * factor;
-				point2[Y] = kData.nodes[n2].y * factor;
-				point2[Z] = kData.nodes[n2].z * factor;
-
-				point3[X] = kData.nodes[n3].x * factor;
-				point3[Y] = kData.nodes[n3].y * factor;
-				point3[Z] = kData.nodes[n3].z * factor;
-
-				point4[X] = kData.nodes[n4].x * factor;
-				point4[Y] = kData.nodes[n4].y * factor;
-				point4[Z] = kData.nodes[n4].z * factor;
-
-				point5[X] = kData.nodes[n5].x * factor;
-				point5[Y] = kData.nodes[n5].y * factor;
-				point5[Z] = kData.nodes[n5].z * factor;
-
-				point6[X] = kData.nodes[n6].x * factor;
-				point6[Y] = kData.nodes[n6].y * factor;
-				point6[Z] = kData.nodes[n6].z * factor;
-
-				point7[X] = kData.nodes[n7].x * factor;
-				point7[Y] = kData.nodes[n7].y * factor;
-				point7[Z] = kData.nodes[n7].z * factor;
-
-				point8[X] = kData.nodes[n8].x * factor;
-				point8[Y] = kData.nodes[n8].y * factor;
-				point8[Z] = kData.nodes[n8].z * factor;
-
 				std::string arbNumber = std::to_string(*itr);
 
-				geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
-
+				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 6) {
-				point_t point1;
-				point_t point2;
-				point_t point3;
-				point_t point4;
-				point_t point5;
-				point_t point6;
-				point_t point7;
-				point_t point8;
-
 				int     n1 = kData.elements[*itr].nodes[0];
 				int     n2 = kData.elements[*itr].nodes[1];
 				int     n3 = kData.elements[*itr].nodes[2];
@@ -256,53 +212,12 @@ int main
 				int     n7 = kData.elements[*itr].nodes[5];
 				int     n8 = kData.elements[*itr].nodes[5];
 
-				point1[X] = kData.nodes[n1].x * factor;
-				point1[Y] = kData.nodes[n1].y * factor;
-				point1[Z] = kData.nodes[n1].z * factor;
-
-				point2[X] = kData.nodes[n2].x * factor;
-				point2[Y] = kData.nodes[n2].y * factor;
-				point2[Z] = kData.nodes[n2].z * factor;
-
-				point3[X] = kData.nodes[n3].x * factor;
-				point3[Y] = kData.nodes[n3].y * factor;
-				point3[Z] = kData.nodes[n3].z * factor;
-
-				point4[X] = kData.nodes[n4].x * factor;
-				point4[Y] = kData.nodes[n4].y * factor;
-				point4[Z] = kData.nodes[n4].z * factor;
-
-				point5[X] = kData.nodes[n5].x * factor;
-				point5[Y] = kData.nodes[n5].y * factor;
-				point5[Z] = kData.nodes[n5].z * factor;
-
-				point6[X] = kData.nodes[n6].x * factor;
-				point6[Y] = kData.nodes[n6].y * factor;
-				point6[Z] = kData.nodes[n6].z * factor;
-
-				point7[X] = kData.nodes[n7].x * factor;
-				point7[Y] = kData.nodes[n7].y * factor;
-				point7[Z] = kData.nodes[n7].z * factor;
-
-				point8[X] = kData.nodes[n8].x * factor;
-				point8[Y] = kData.nodes[n8].y * factor;
-				point8[Z] = kData.nodes[n8].z * factor;
-
 				std::string arbNumber = std::to_string(*itr);
 
-				geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
+				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
 
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 5) {
-				point_t point1;
-				point_t point2;
-				point_t point3;
-				point_t point4;
-				point_t point5;
-				point_t point6;
-				point_t point7;
-				point_t point8;
-
 				int     n1 = kData.elements[*itr].nodes[0];
 				int     n2 = kData.elements[*itr].nodes[1];
 				int     n3 = kData.elements[*itr].nodes[2];
@@ -312,96 +227,9 @@ int main
 				int     n7 = kData.elements[*itr].nodes[4];
 				int     n8 = kData.elements[*itr].nodes[4];
 
-				point1[X] = kData.nodes[n1].x * factor;
-				point1[Y] = kData.nodes[n1].y * factor;
-				point1[Z] = kData.nodes[n1].z * factor;
-
-				point2[X] = kData.nodes[n2].x * factor;
-				point2[Y] = kData.nodes[n2].y * factor;
-				point2[Z] = kData.nodes[n2].z * factor;
-
-				point3[X] = kData.nodes[n3].x * factor;
-				point3[Y] = kData.nodes[n3].y * factor;
-				point3[Z] = kData.nodes[n3].z * factor;
-
-				point4[X] = kData.nodes[n4].x * factor;
-				point4[Y] = kData.nodes[n4].y * factor;
-				point4[Z] = kData.nodes[n4].z * factor;
-
-				point5[X] = kData.nodes[n5].x * factor;
-				point5[Y] = kData.nodes[n5].y * factor;
-				point5[Z] = kData.nodes[n5].z * factor;
-
-				point6[X] = kData.nodes[n6].x * factor;
-				point6[Y] = kData.nodes[n6].y * factor;
-				point6[Z] = kData.nodes[n6].z * factor;
-
-				point7[X] = kData.nodes[n7].x * factor;
-				point7[Y] = kData.nodes[n7].y * factor;
-				point7[Z] = kData.nodes[n7].z * factor;
-
-				point8[X] = kData.nodes[n8].x * factor;
-				point8[Y] = kData.nodes[n8].y * factor;
-				point8[Z] = kData.nodes[n8].z * factor;
-
 				std::string arbNumber = std::to_string(*itr);
 
-				geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
-			    }
-			    else if (kData.elements[*itr].nodes.size() == 4) {
-				point_t point1;
-				point_t point2;
-				point_t point3;
-				point_t point4;
-				point_t point5;
-				point_t point6;
-				point_t point7;
-				point_t point8;
-
-				int     n1 = kData.elements[*itr].nodes[0];
-				int     n2 = kData.elements[*itr].nodes[1];
-				int     n3 = kData.elements[*itr].nodes[2];
-				int     n4 = kData.elements[*itr].nodes[0];
-				int     n5 = kData.elements[*itr].nodes[3];
-				int     n6 = kData.elements[*itr].nodes[3];
-				int     n7 = kData.elements[*itr].nodes[3];
-				int     n8 = kData.elements[*itr].nodes[3];
-
-				point1[X] = kData.nodes[n1].x * factor;
-				point1[Y] = kData.nodes[n1].y * factor;
-				point1[Z] = kData.nodes[n1].z * factor;
-
-				point2[X] = kData.nodes[n2].x * factor;
-				point2[Y] = kData.nodes[n2].y * factor;
-				point2[Z] = kData.nodes[n2].z * factor;
-
-				point3[X] = kData.nodes[n3].x * factor;
-				point3[Y] = kData.nodes[n3].y * factor;
-				point3[Z] = kData.nodes[n3].z * factor;
-
-				point4[X] = kData.nodes[n4].x * factor;
-				point4[Y] = kData.nodes[n4].y * factor;
-				point4[Z] = kData.nodes[n4].z * factor;
-
-				point5[X] = kData.nodes[n5].x * factor;
-				point5[Y] = kData.nodes[n5].y * factor;
-				point5[Z] = kData.nodes[n5].z * factor;
-
-				point6[X] = kData.nodes[n6].x * factor;
-				point6[Y] = kData.nodes[n6].y * factor;
-				point6[Z] = kData.nodes[n6].z * factor;
-
-				point7[X] = kData.nodes[n7].x * factor;
-				point7[Y] = kData.nodes[n7].y * factor;
-				point7[Z] = kData.nodes[n7].z * factor;
-
-				point8[X] = kData.nodes[n8].x * factor;
-				point8[Y] = kData.nodes[n8].y * factor;
-				point8[Z] = kData.nodes[n8].z * factor;
-
-				std::string arbNumber = std::to_string(*itr);
-
-				geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
+				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
 			    }
 			    else
 				std::cout << "Un supported element in k-file " << argv[1] << "\n";
