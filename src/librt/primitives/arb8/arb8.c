@@ -2720,15 +2720,9 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
 	if (arb_faces[type][i*4] == -1)
 	    continue;
 	fastf_t fx, fy;
-	// To get the point we want here, apparently we need to flip
-	// the sign of W(!?)  Need to look into what's going on...
-	// Eliminating the -1 from the bg functions breaks a unit
-	// test and some drawing routines...
-	planes[i][W] = planes[i][W]*-1;
-	bg_plane_closest_pt(&fx, &fy, planes[i], arb_center);
+	bg_plane_closest_pt(&fx, &fy, &planes[i], &arb_center);
 	point_t cp;
-	bg_plane_pt_at(&cp, planes[i], fx, fy);
-	planes[i][W] = planes[i][W]*-1;
+	bg_plane_pt_at(&cp, &planes[i], fx, fy);
 	// Out of the box, rt_arb_calc_planes apparently aren't necessarily
 	// suitable for use in an ARBN primitive. Make sure normal points out
 	// from center.

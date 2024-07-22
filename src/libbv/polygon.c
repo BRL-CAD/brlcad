@@ -200,8 +200,9 @@ bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
 }
 
 struct bv_scene_obj *
-bv_create_polygon(struct bview *v, int flags, int type, point_t fp)
+bv_create_polygon(struct bview *v, int flags, int type, point_t *fp)
 {
+    bu_log("fp: %f %f %f\n", V3ARGS(*fp));
 
     struct bv_polygon *p;
     BU_GET(p, struct bv_polygon);
@@ -218,12 +219,13 @@ bv_create_polygon(struct bview *v, int flags, int type, point_t fp)
 
     // Construct closest point to fp on plane
     fastf_t fx, fy;
-    bg_plane_closest_pt(&fx, &fy, p->vp, fp);
+    bg_plane_closest_pt(&fx, &fy, &p->vp, fp);
     point_t m_pt;
-    bg_plane_pt_at(&m_pt, p->vp, fx, fy);
+    bg_plane_pt_at(&m_pt, &p->vp, fx, fy);
 
     // This is now the origin point
     VMOVE(p->origin_point, m_pt);
+    bu_log("origin_pt: %f %f %f\n", V3ARGS(m_pt));
 
     int pcnt = 1;
     if (type == BV_POLYGON_CIRCLE)
@@ -279,7 +281,7 @@ bv_polygon_cpy(struct bv_polygon *dest, struct bv_polygon *src)
 }
 
 int
-bv_append_polygon_pt(struct bv_scene_obj *s, point_t np)
+bv_append_polygon_pt(struct bv_scene_obj *s, point_t *np)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
@@ -290,9 +292,9 @@ bv_append_polygon_pt(struct bv_scene_obj *s, point_t np)
 
     // Construct closest point to np on plane
     fastf_t fx, fy;
-    bg_plane_closest_pt(&fx, &fy, p->vp, np);
+    bg_plane_closest_pt(&fx, &fy, &p->vp, np);
     point_t m_pt;
-    bg_plane_pt_at(&m_pt, p->vp, fx, fy);
+    bg_plane_pt_at(&m_pt, &p->vp, fx, fy);
 
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     c->num_points++;
@@ -312,7 +314,7 @@ bv_append_polygon_pt(struct bv_scene_obj *s, point_t np)
 // the moment...  Would be better for repeated sampling of relatively static
 // scenes to build an RTree first...
 struct bv_scene_obj *
-bv_select_polygon(struct bu_ptbl *objs, point_t cp)
+bv_select_polygon(struct bu_ptbl *objs, point_t *cp)
 {
     if (!objs)
 	return NULL;
@@ -333,9 +335,9 @@ bv_select_polygon(struct bu_ptbl *objs, point_t cp)
 	    HMOVE(zpln, p->vp);
 	    zpln[3] += p->vZ;
 	    fastf_t fx, fy;
-	    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+	    bg_plane_closest_pt(&fx, &fy, &zpln, cp);
 	    point_t m_pt;
-	    bg_plane_pt_at(&m_pt, zpln, fx, fy);
+	    bg_plane_pt_at(&m_pt, &zpln, fx, fy);
 
 	    for (size_t j = 0; j < p->polygon.num_contours; j++) {
 		struct bg_poly_contour *c = &p->polygon.contour[j];
@@ -359,7 +361,7 @@ bv_select_polygon(struct bu_ptbl *objs, point_t cp)
 }
 
 int
-bv_select_polygon_pt(struct bv_scene_obj *s, point_t cp)
+bv_select_polygon_pt(struct bv_scene_obj *s, point_t *cp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
@@ -369,9 +371,9 @@ bv_select_polygon_pt(struct bv_scene_obj *s, point_t cp)
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
     fastf_t fx, fy;
-    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+    bg_plane_closest_pt(&fx, &fy, &zpln, cp);
     point_t m_pt;
-    bg_plane_pt_at(&m_pt, zpln, fx, fy);
+    bg_plane_pt_at(&m_pt, &zpln, fx, fy);
 
     // If a contour is selected, restrict our closest point candidates to
     // that contour's points
@@ -433,7 +435,7 @@ bv_select_clear_polygon_pt(struct bv_scene_obj *s)
 
 
 int
-bv_move_polygon(struct bv_scene_obj *s, point_t cp, point_t prev_point)
+bv_move_polygon(struct bv_scene_obj *s, point_t *cp, point_t *prev_point)
 {
     fastf_t pfx, pfy, fx, fy;
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
@@ -441,11 +443,11 @@ bv_move_polygon(struct bv_scene_obj *s, point_t cp, point_t prev_point)
     plane_t zpln;
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
-    bg_plane_closest_pt(&pfx, &pfy, zpln, prev_point);
-    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+    bg_plane_closest_pt(&pfx, &pfy, &zpln, prev_point);
+    bg_plane_closest_pt(&fx, &fy, &zpln, cp);
     point_t pm_pt, m_pt;
-    bg_plane_pt_at(&pm_pt, p->vp, pfx, pfy);
-    bg_plane_pt_at(&m_pt, p->vp, fx, fy);
+    bg_plane_pt_at(&pm_pt, &p->vp, pfx, pfy);
+    bg_plane_pt_at(&m_pt, &p->vp, fx, fy);
     vect_t v_mv;
     VSUB2(v_mv, m_pt, pm_pt);
 
@@ -469,7 +471,7 @@ bv_move_polygon(struct bv_scene_obj *s, point_t cp, point_t prev_point)
 }
 
 int
-bv_move_polygon_pt(struct bv_scene_obj *s, point_t mp)
+bv_move_polygon_pt(struct bv_scene_obj *s, point_t *mp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
@@ -483,9 +485,9 @@ bv_move_polygon_pt(struct bv_scene_obj *s, point_t mp)
     plane_t zpln;
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
-    bg_plane_closest_pt(&fx, &fy, zpln, mp);
+    bg_plane_closest_pt(&fx, &fy, &zpln, mp);
     point_t m_pt;
-    bg_plane_pt_at(&m_pt, zpln, fx, fy);
+    bg_plane_pt_at(&m_pt, &zpln, fx, fy);
 
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     VMOVE(c->point[p->curr_point_i], m_pt);
@@ -500,15 +502,28 @@ bv_move_polygon_pt(struct bv_scene_obj *s, point_t mp)
 }
 
 int
-bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
+bv_update_polygon_circle(struct bv_scene_obj *s, point_t *cp, fastf_t pixel_size)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    bu_log("origin_pt: %f %f %f\n", V3ARGS(p->origin_point));
+    bu_log("cp: %f %f %f\n", V3ARGS(*cp));
 
     fastf_t curr_fx, curr_fy;
     fastf_t r, arc;
     int nsegs, n;
 
-    r = DIST_PNT_PNT(cp, p->origin_point);
+    fastf_t pfx, pfy, fx, fy;
+    plane_t zpln;
+    HMOVE(zpln, p->vp);
+    zpln[3] += p->vZ;
+    bg_plane_closest_pt(&fx, &fy, &zpln, cp);
+    bg_plane_closest_pt(&pfx, &pfy, &zpln, &p->origin_point);
+
+    point_t pcp;
+    bg_plane_pt_at(&pcp, &zpln, fx, fy);
+
+    r = DIST_PNT_PNT(pcp, p->origin_point);
+    bu_log("r: %f\n", r);
 
     /* use a variable number of segments based on the size of the
      * circle being created so small circles have few segments and
@@ -527,13 +542,6 @@ bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
     gpp->contour[0].open = 0;
     gpp->contour[0].point = (point_t *)bu_calloc(nsegs, sizeof(point_t), "point");
 
-    fastf_t pfx, pfy, fx, fy;
-    plane_t zpln;
-    HMOVE(zpln, p->vp);
-    zpln[3] += p->vZ;
-    bg_plane_closest_pt(&fx, &fy, zpln, cp);
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->origin_point);
-
     arc = 360.0 / nsegs;
     for (n = 0; n < nsegs; ++n) {
 	fastf_t ang = n * arc;
@@ -541,7 +549,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
 	curr_fx = cos(ang*DEG2RAD) * r + pfx;
 	curr_fy = sin(ang*DEG2RAD) * r + pfy;
 	point_t v_pt;
-	bg_plane_pt_at(&v_pt, p->vp, curr_fx, curr_fy);
+	bg_plane_pt_at(&v_pt, &p->vp, curr_fx, curr_fy);
 	VMOVE(gpp->contour[0].point[n], v_pt);
     }
 
@@ -562,7 +570,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
 }
 
 int
-bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
+bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t *cp, fastf_t pixel_size)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
@@ -575,7 +583,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size
      *
      */
 
-    fastf_t r = DIST_PNT_PNT(cp, p->origin_point);
+    fastf_t r = DIST_PNT_PNT(*cp, p->origin_point);
 
     /* use a variable number of segments based on the size of the
      * circle being created so small circles have few segments and
@@ -589,8 +597,8 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size
     plane_t zpln;
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
-    bg_plane_closest_pt(&fx, &fy, zpln, cp);
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->origin_point);
+    bg_plane_closest_pt(&fx, &fy, &zpln, cp);
+    bg_plane_closest_pt(&pfx, &pfy, &zpln, &p->origin_point);
 
     fastf_t a, b, arc;
     point_t pv_pt;
@@ -629,7 +637,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size
 	VJOIN2(ellout, pv_pt, cosa, A, sina, B);
 
 	// Use the polygon's plane for actually adding the points
-	bg_plane_pt_at(&gpp->contour[0].point[n], zpln, ellout[0], ellout[1]);
+	bg_plane_pt_at(&gpp->contour[0].point[n], &zpln, ellout[0], ellout[1]);
     }
 
     bg_polygon_free(&p->polygon);
@@ -649,7 +657,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size
 }
 
 int
-bv_update_polygon_rectangle(struct bv_scene_obj *s, point_t cp)
+bv_update_polygon_rectangle(struct bv_scene_obj *s, point_t *cp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
@@ -657,14 +665,14 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s, point_t cp)
     plane_t zpln;
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->origin_point);
-    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+    bg_plane_closest_pt(&pfx, &pfy, &zpln, &p->origin_point);
+    bg_plane_closest_pt(&fx, &fy, &zpln, cp);
 
     // Use the polygon's plane for actually adjusting the points
-    bg_plane_pt_at(&p->polygon.contour[0].point[0], zpln, pfx, pfy);
-    bg_plane_pt_at(&p->polygon.contour[0].point[1], zpln, pfx, fy);
-    bg_plane_pt_at(&p->polygon.contour[0].point[2], zpln, fx, fy);
-    bg_plane_pt_at(&p->polygon.contour[0].point[3], zpln, fx, pfy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[0], &zpln, pfx, pfy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[1], &zpln, pfx, fy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[2], &zpln, fx, fy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[3], &zpln, fx, pfy);
 
     p->polygon.contour[0].open = 0;
 
@@ -678,7 +686,7 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s, point_t cp)
 }
 
 int
-bv_update_polygon_square(struct bv_scene_obj *s, point_t cp)
+bv_update_polygon_square(struct bv_scene_obj *s, point_t *cp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
@@ -686,8 +694,8 @@ bv_update_polygon_square(struct bv_scene_obj *s, point_t cp)
     plane_t zpln;
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->origin_point);
-    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+    bg_plane_closest_pt(&pfx, &pfy, &zpln, &p->origin_point);
+    bg_plane_closest_pt(&fx, &fy, &zpln, cp);
 
     fastf_t dx = fx - pfx;
     fastf_t dy = fy - pfy;
@@ -706,10 +714,10 @@ bv_update_polygon_square(struct bv_scene_obj *s, point_t cp)
 
 
     // Use the polygon's plane for actually adjusting the points
-    bg_plane_pt_at(&p->polygon.contour[0].point[0], zpln, pfx, pfy);
-    bg_plane_pt_at(&p->polygon.contour[0].point[1], zpln, pfx, fy);
-    bg_plane_pt_at(&p->polygon.contour[0].point[2], zpln, fx, fy);
-    bg_plane_pt_at(&p->polygon.contour[0].point[3], zpln, fx, pfy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[0], &zpln, pfx, pfy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[1], &zpln, pfx, fy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[2], &zpln, fx, fy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[3], &zpln, fx, pfy);
 
     /* Polygon updated, now update view object vlist */
     bv_polygon_vlist(s);
@@ -721,7 +729,7 @@ bv_update_polygon_square(struct bv_scene_obj *s, point_t cp)
 }
 
 int
-bv_update_general_polygon(struct bv_scene_obj *s, int utype, point_t cp)
+bv_update_general_polygon(struct bv_scene_obj *s, int utype, point_t *cp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
@@ -803,18 +811,18 @@ bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype)
 	fastf_t d = DIST_PNT_PNT(p1, p2);
 
 	if (p->type == BV_POLYGON_CIRCLE)
-	    return bv_update_polygon_circle(s, v->gv_point, d);
+	    return bv_update_polygon_circle(s, &v->gv_point, d);
 	if (p->type == BV_POLYGON_ELLIPSE)
-	    return bv_update_polygon_ellipse(s, v->gv_point, d);
+	    return bv_update_polygon_ellipse(s, &v->gv_point, d);
     }
 
     if (p->type == BV_POLYGON_RECTANGLE)
-	return bv_update_polygon_rectangle(s, v->gv_point);
+	return bv_update_polygon_rectangle(s, &v->gv_point);
     if (p->type == BV_POLYGON_SQUARE)
-	return bv_update_polygon_square(s, v->gv_point);
+	return bv_update_polygon_square(s, &v->gv_point);
     if (p->type != BV_POLYGON_GENERAL)
 	return 0;
-    return bv_update_general_polygon(s, utype, v->gv_point);
+    return bv_update_general_polygon(s, utype, &v->gv_point);
 }
 
 struct bv_scene_obj *

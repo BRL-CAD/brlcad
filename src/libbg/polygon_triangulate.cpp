@@ -848,7 +848,7 @@ bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_
 	}
 	for (size_t j = 0; j < p->contour[i].num_points; ++j) {
 	    vect2d_t p2d;
-	    bg_plane_closest_pt(&p2d[0], &p2d[1], pl, p->contour[i].point[j]);
+	    bg_plane_closest_pt(&p2d[0], &p2d[1], &pl, &p->contour[i].point[j]);
 	    V2MOVE(pnts_2d[curr_pnt], p2d);
 	    cpnts[j] = curr_pnt;
 	    curr_pnt++;
@@ -859,13 +859,13 @@ bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_
     int tri_num_faces = 0;
     point2d_t *tri_out_pts = NULL;
     int tri_num_outpts = 0;
-    int ret = bg_nested_poly_triangulate(&tri_faces, &tri_num_faces, &tri_out_pts, &tri_num_outpts, ocontour, ocontour_cnt, (const int **)holes_array, (const size_t *)holes_npts, p->num_contours - 1, NULL, 0, pnts_2d, pnt_cnt, type); 
+    int ret = bg_nested_poly_triangulate(&tri_faces, &tri_num_faces, &tri_out_pts, &tri_num_outpts, ocontour, ocontour_cnt, (const int **)holes_array, (const size_t *)holes_npts, p->num_contours - 1, NULL, 0, pnts_2d, pnt_cnt, type);
 
 
     // Translate 2D plane points into 3D points
     point_t *pnts_3d = (point_t *)bu_calloc(pnt_cnt, sizeof(point_t), "3D points");
     for (int i = 0; i < pnt_cnt; i++) {
-	bg_plane_pt_at(&pnts_3d[i], pl, pnts_2d[i][0], pnts_2d[i][1]);
+	bg_plane_pt_at(&pnts_3d[i], &pl, pnts_2d[i][0], pnts_2d[i][1]);
     }
 
     // Assign outputs
