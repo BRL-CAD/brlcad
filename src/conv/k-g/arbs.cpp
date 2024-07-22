@@ -51,14 +51,14 @@ void Arbs::addArb(
     rt_arb_internal temp;
     temp.magic = RT_ARB_INTERNAL_MAGIC;
 
-    VSET(temp.pt[0], point1[0], point1[1], point1[2]);
-    VSET(temp.pt[1], point2[0], point2[1], point2[2]);
-    VSET(temp.pt[2], point3[0], point3[1], point3[2]);
-    VSET(temp.pt[3], point4[0], point4[1], point4[2]);
-    VSET(temp.pt[4], point5[0], point5[1], point5[2]);
-    VSET(temp.pt[5], point6[0], point6[1], point6[2]);
-    VSET(temp.pt[6], point7[0], point7[1], point7[2]);
-    VSET(temp.pt[7], point8[0], point8[1], point8[2]);
+    VMOVE(temp.pt[0], point1);
+    VMOVE(temp.pt[1], point2);
+    VMOVE(temp.pt[2], point3);
+    VMOVE(temp.pt[3], point4);
+    VMOVE(temp.pt[4], point5);
+    VMOVE(temp.pt[5], point6);
+    VMOVE(temp.pt[6], point7);
+    VMOVE(temp.pt[7], point8);
 
     arbs[arbName] = temp;
 }
