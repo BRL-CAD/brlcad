@@ -38,7 +38,7 @@
   </para>
 <itemizedlist mark="bullet">
 <listitem>
-<para>abs -- This <emphasis>absolute</emphasis> tolerance is specified in model units and represents
+<para>abs -- This <emphasis>absolute</emphasis> tolerance is specified in mm and represents
 	the maximum allowable error in the distance from the actual shape surface
 	to the tessellated surface.  An <emphasis>absolute</emphasis> tolerance of 0 means that the
 	<emphasis>absolute</emphasis> tolerance should be ignored.
