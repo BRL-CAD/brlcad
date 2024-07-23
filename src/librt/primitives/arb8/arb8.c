@@ -1980,20 +1980,23 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 		   plane_t planes[6],
 		   const struct bn_tol *tol)
 {
-    register int i, p1, p2, p3;
-    int type = cgtype - ARB4; /* ARB4 at location 0, ARB5 at 1, etc. */
     const int arb_faces[5][24] = rt_arb_faces;
+
+    /* ARB4 at location 0, ARB5 at 1, etc. */
+    int type = cgtype - ARB4;
+    if (type < 0 || type > 4)
+	return -1;
 
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
 
-    for (i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
 	if (arb_faces[type][i*4] == -1)
 	    break;	/* faces are done */
 
-	p1 = arb_faces[type][i*4];
-	p2 = arb_faces[type][i*4+1];
-	p3 = arb_faces[type][i*4+2];
+	int p1 = arb_faces[type][i*4];
+	int p2 = arb_faces[type][i*4+1];
+	int p3 = arb_faces[type][i*4+2];
 
 	if (bg_make_plane_3pnts(planes[i],
 			     arb->pt[p1],

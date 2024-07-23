@@ -202,8 +202,6 @@ bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
 struct bv_scene_obj *
 bv_create_polygon(struct bview *v, int flags, int type, point_t *fp)
 {
-    bu_log("fp: %f %f %f\n", V3ARGS(*fp));
-
     struct bv_polygon *p;
     BU_GET(p, struct bv_polygon);
     p->type = type;
@@ -225,7 +223,6 @@ bv_create_polygon(struct bview *v, int flags, int type, point_t *fp)
 
     // This is now the origin point
     VMOVE(p->origin_point, m_pt);
-    bu_log("origin_pt: %f %f %f\n", V3ARGS(m_pt));
 
     int pcnt = 1;
     if (type == BV_POLYGON_CIRCLE)
@@ -505,8 +502,6 @@ int
 bv_update_polygon_circle(struct bv_scene_obj *s, point_t *cp, fastf_t pixel_size)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    bu_log("origin_pt: %f %f %f\n", V3ARGS(p->origin_point));
-    bu_log("cp: %f %f %f\n", V3ARGS(*cp));
 
     fastf_t curr_fx, curr_fy;
     fastf_t r, arc;
@@ -523,7 +518,6 @@ bv_update_polygon_circle(struct bv_scene_obj *s, point_t *cp, fastf_t pixel_size
     bg_plane_pt_at(&pcp, &zpln, fx, fy);
 
     r = DIST_PNT_PNT(pcp, p->origin_point);
-    bu_log("r: %f\n", r);
 
     /* use a variable number of segments based on the size of the
      * circle being created so small circles have few segments and

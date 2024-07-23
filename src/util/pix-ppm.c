@@ -102,10 +102,17 @@ get_args(int argc, char *argv[], long *width, long *height)
 	fileinput++;
     }
 
+    if (!infp)
+	bu_exit(0, "ERROR: infp is null\n");
+
     if (isatty(fileno(infp))) {
 	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
 	return 0; /* usage */
     }
+
+    if (!outfp)
+	bu_exit(0, "ERROR: outfp is null\n");
+
     if (isatty(fileno(outfp))) {
 	bu_exit(0, "ERROR: %s will not write ppm data to a tty\n", bu_getprogname());
     }

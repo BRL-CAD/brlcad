@@ -179,8 +179,11 @@ main(int argc, char **argv)
 	*dot = '\0';
     bu_strlcat(fig_file, ".fig", size);	/* Add required Jack suffix. */
 
-    if ((fp_fig = fopen(fig_file, "wb")) == NULL)
+    if ((fp_fig = fopen(fig_file, "wb")) == NULL) {
 	perror(fig_file);
+	bu_exit(1, "ERROR: Unable to open %s\n", fig_file);
+    }
+
     fprintf(fp_fig, "figure {\n");
 
     /* Walk indicated tree(s).  Each region will be output separately */
