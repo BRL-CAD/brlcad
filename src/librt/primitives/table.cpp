@@ -881,7 +881,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* process_selection */
 	NULL, /* serialize */
 	NULL, /* label */
-	NULL  /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arbn_perturb) /* perturb */
     },
 
     {
