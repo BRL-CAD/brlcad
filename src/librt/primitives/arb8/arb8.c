@@ -2686,7 +2686,7 @@ rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 }
 
 int
-rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(grow), int UNUSED(planar_only), fastf_t val)
+rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int grow, int UNUSED(planar_only), fastf_t val)
 {
 
     if (!oip || !ip || val < SMALL_FASTF)
@@ -2735,20 +2735,18 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
 	if (VDOT(planes[i], cvec) < 0) {
 	    HREVERSE(planes[i], planes[i]);
 	}
-#if 0
 	vect_t pnorm;
 	VMOVE(pnorm, planes[i]);
+	VUNITIZE(pnorm);
 	VSCALE(pnorm, pnorm, val);
-	point_t np;
 	if (!grow)
 	    VREVERSE(pnorm, pnorm);
+	point_t np;
 	VADD2(np, cp, pnorm);
 	plane_t nplane;
-	VMOVE(pnorm, planes[i]);
-	plane_t nplane;
-	bg_plane_pt_nrml(&nplane, cp, pnorm);
+	VUNITIZE(pnorm);
+	bg_plane_pt_nrml(&nplane, np, pnorm);
 	HMOVE(planes[i], nplane);
-#endif
 	afaces++;
     }
 
