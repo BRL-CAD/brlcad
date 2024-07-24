@@ -2562,7 +2562,7 @@ bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
     (*p)[0] = unrml[0];
     (*p)[1] = unrml[1];
     (*p)[2] = unrml[2];
-    (*p)[3] = -(unrml[0]*pt[0] + unrml[1]*pt[1] + unrml[2]*pt[2]);
+    (*p)[3] = unrml[0]*pt[0] + unrml[1]*pt[1] + unrml[2]*pt[2];
     return 0;
 }
 
