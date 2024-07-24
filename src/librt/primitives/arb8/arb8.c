@@ -2695,7 +2695,9 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     struct rt_arb_internal *oarb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(oarb);
 
-    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
+    struct bn_tol arb_tol = BN_TOL_INIT_TOL;
+    arb_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+    arb_tol.dist_sq = arb_tol.dist * arb_tol.dist;
     int arbType = rt_arb_std_type(ip, &arb_tol);
 
     // For arbs, we bump all the faces in or out.  Rather than trying to
@@ -2703,8 +2705,13 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     // rotating any of the faces, we just construct the planes and return
     // an ARBN.  This will take up to 6 planes.
     plane_t planes[6];
-    if (rt_arb_calc_planes(NULL, oarb, arbType, planes, &arb_tol) < 0)
+    struct bu_vls calc_plane_err = BU_VLS_INIT_ZERO;
+    if (rt_arb_calc_planes(&calc_plane_err, oarb, arbType, planes, &arb_tol) < 0) {
+	bu_log("rt_arb_perturb(arb8.c:%d): %s\n", __LINE__, bu_vls_cstr(&calc_plane_err));
+	bu_vls_free(&calc_plane_err);
 	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&calc_plane_err);
 
 
     const int arb_faces[5][24] = rt_arb_faces;
