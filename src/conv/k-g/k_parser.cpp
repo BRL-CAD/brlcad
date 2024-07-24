@@ -343,10 +343,8 @@ static std::vector<std::string> parse_command
 		    temp.clear();
 		}
 	    }
-	    else {
-		char uper = toupper(command[i]);
-		temp += uper;
-	    }
+	    else 
+		temp += toupper(command[i]);
 	}
 
 	if (temp.size() > 0)
