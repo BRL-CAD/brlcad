@@ -2686,10 +2686,12 @@ rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 }
 
 int
-rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int grow, int UNUSED(planar_only), fastf_t val)
+rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
 {
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
 
-    if (!oip || !ip || val < SMALL_FASTF)
+    if (!oip || !ip)
 	return BRLCAD_ERROR;
 
     struct rt_arb_internal *oarb = (struct rt_arb_internal *)ip->idb_ptr;
@@ -2746,8 +2748,6 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
 	VMOVE(pnorm, planes[i]);
 	VUNITIZE(pnorm);
 	VSCALE(pnorm, pnorm, val);
-	if (!grow)
-	    VREVERSE(pnorm, pnorm);
 	point_t np;
 	VADD2(np, cp, pnorm);
 	plane_t nplane;

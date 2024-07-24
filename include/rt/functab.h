@@ -276,8 +276,8 @@ struct rt_functab {
     /** perturb geometry parameters of primitive.  NOTE:  the oip primitive
      * returned is NOT guaranteed to be the same type as that of ip - for example,
      * ARB8 perturbations will return an ARBN primitive. */
-    int (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int grow, int planar_only, fastf_t factor);
-#define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, int, fastf_t))((void (*)(void))_func))
+    int (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor);
+#define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
 
 
 };

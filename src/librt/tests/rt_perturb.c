@@ -64,7 +64,7 @@ main(int UNUSED(argc), char *argv[])
 
 	struct rt_db_internal *ointern = NULL;
 	if (intern.idb_meth && intern.idb_meth->ft_perturb) {
-	    intern.idb_meth->ft_perturb(&ointern, &intern, 0, 0, 2);
+	    intern.idb_meth->ft_perturb(&ointern, &intern, 0, 2);
 	    wdp = db_diradd(dbip, "rcc_perturb.s", RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&ointern->idb_type);
 	    rt_db_put_internal(wdp, dbip, ointern, &rt_uniresource);
 	    rt_db_free_internal(ointern);
@@ -125,7 +125,7 @@ main(int UNUSED(argc), char *argv[])
 
 	struct rt_db_internal *ointern = NULL;
 	if (intern.idb_meth && intern.idb_meth->ft_perturb) {
-	    intern.idb_meth->ft_perturb(&ointern, &intern, 1, 1, 10);
+	    intern.idb_meth->ft_perturb(&ointern, &intern, 1, 10);
 	    wdp = db_diradd(dbip, "arb_perturb.s", RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&ointern->idb_type);
 	    rt_db_put_internal(wdp, dbip, ointern, &rt_uniresource);
 	    rt_db_free_internal(ointern);

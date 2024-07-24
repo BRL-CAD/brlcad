@@ -3462,9 +3462,12 @@ rt_tgc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 }
 
 int
-rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int grow, int planar_only, fastf_t val)
+rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
-    if (!oip || !ip || val < SMALL_FASTF)
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
 	return BRLCAD_ERROR;
 
     struct rt_tgc_internal *otgc = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -3494,18 +3497,9 @@ rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     VREVERSE(mrvec, mvec);
     VSCALE(mvec, mvec, val);
     VSCALE(mrvec, mrvec, val);
-
-    if (!grow) {
-	// Shrink
-	VADD2(tgc->v, tgc->v, mvec);
-	VSCALE(mrvec, mrvec, 2); // Offset for movement of v
-	VADD2(tgc->h, tgc->h, mrvec);
-    } else {
-	// Grow
-	VADD2(tgc->v, tgc->v, mrvec);
-	VSCALE(mvec, mvec, 2); // Offset for movement of v
-	VADD2(tgc->h, tgc->h, mvec);
-    }
+    VADD2(tgc->v, tgc->v, mrvec);
+    VSCALE(mvec, mvec, 2); // Offset for movement of v
+    VADD2(tgc->h, tgc->h, mvec);
 
     // If we're only bumping planar elements, we're done
     if (planar_only) {
@@ -3517,42 +3511,22 @@ rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     VMOVE(mvec, tgc->a);
     VUNITIZE(mvec);
     VSCALE(mvec, mvec, val);
-    if (!grow) {
-	VREVERSE(mrvec, mvec);
-	VADD2(tgc->a, tgc->a, mrvec);
-    } else {
-	VADD2(tgc->a, tgc->a, mvec);
-    }
+    VADD2(tgc->a, tgc->a, mvec);
 
     VMOVE(mvec, tgc->b);
     VUNITIZE(mvec);
     VSCALE(mvec, mvec, val);
-    if (!grow) {
-	VREVERSE(mrvec, mvec);
-	VADD2(tgc->b, tgc->b, mrvec);
-    } else {
-	VADD2(tgc->b, tgc->b, mvec);
-    }
+    VADD2(tgc->b, tgc->b, mvec);
 
     VMOVE(mvec, tgc->c);
     VUNITIZE(mvec);
     VSCALE(mvec, mvec, val);
-    if (!grow) {
-	VREVERSE(mrvec, mvec);
-	VADD2(tgc->c, tgc->c, mrvec);
-    } else {
-	VADD2(tgc->c, tgc->c, mvec);
-    }
+    VADD2(tgc->c, tgc->c, mvec);
 
     VMOVE(mvec, tgc->d);
     VUNITIZE(mvec);
     VSCALE(mvec, mvec, val);
-    if (!grow) {
-	VREVERSE(mrvec, mvec);
-	VADD2(tgc->d, tgc->d, mrvec);
-    } else {
-	VADD2(tgc->d, tgc->d, mvec);
-    }
+    VADD2(tgc->d, tgc->d, mvec);
 
     *oip = nip;
 
