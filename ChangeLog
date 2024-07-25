@@ -1,3 +1,18 @@
+commit 59aee1100e9d79f2f4ed24d65cc85c35732c25a4
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Jul 25 16:01:31 2024 -0400
+
+    cherry pick fb84643cbd: need to launch subprocess with env vars
+    
+    in funky build environments, where we had to build with specific env
+    variables set, we need to make sure to propagate said variables
+
+commit 77f5306b46821ab01e99a840b584b5f2a2d656df
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 17 06:39:59 2024 -0400
+
+    Update log with commits since 2024-03-18
+
 commit 2a56cc62e6178ccd78651e108a90d27cf1aae5fe
 Merge: 91ae60c3c1 85c1163f18
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
@@ -5042,28 +5057,3 @@ Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Tue Mar 19 17:05:52 2024 -0400
 
     Bump to next development revision after tagging the 7.38.2 release
-
-commit f69cdcf02dbced0bc6f50f9010826eeeddc41db3
-Merge: 9ebf41d81c 03adb9d321
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Mar 18 11:03:38 2024 -0400
-
-    Merge branch 'RELEASE' into STABLE
-
-commit 03adb9d3210b46ef32b675fe26fb5f84fd0e067f
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Mar 18 11:00:29 2024 -0400
-
-    Update log with commits since 2023-11-06
-
-commit f6252b8a24fac86866b5b26972895bc5785e521f
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Mar 18 10:59:36 2024 -0400
-
-    Update version numbers
-
-commit b9388f75ae6fd3d9ffaa43b8c8e42b90cf8d30e2
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Mar 18 10:54:45 2024 -0400
-
-    Bump concave arb8 TODO item down one release iteration
