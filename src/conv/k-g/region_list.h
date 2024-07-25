@@ -31,9 +31,11 @@
 #include <map>
 
 #include "bot.h"
+#include "arbs.h"
+#include "geometry.h"
 
 struct Region {
-    Bot                                bot;
+    Geometry                           geometry;
     std::map<std::string, std::string> attributes;
 };
 
@@ -41,7 +43,7 @@ class RegionList {
 public:
     RegionList(void);
 
-    Bot& addRegion(const std::string& name);
+    Geometry& addRegion(const std::string& name);
 
     Bot& getBot(const std::string& name);
 

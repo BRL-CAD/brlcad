@@ -31,6 +31,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include<vector>
 
 
 struct KNode {
@@ -41,10 +42,7 @@ struct KNode {
 
 
 struct KElement {
-    int node1;
-    int node2;
-    int node3;
-    int node4;
+    std::vector<int> nodes;
 };
 
 
