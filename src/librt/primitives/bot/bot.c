@@ -33,6 +33,7 @@
 #include "vds.h"
 
 #include "bg/trimesh.h" // needed for the call in rt_bot_bbox
+#include "bg/tri_ray.h"
 #include "vmath.h"
 
 #include "rt/primitives/bot.h"
