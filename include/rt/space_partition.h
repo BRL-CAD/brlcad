@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bn/tol.h"
 #include "rt/defines.h"
 #include "rt/application.h"
@@ -100,13 +101,6 @@ RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
 				   union cutter *cutp,
 				   struct resource *resp,
 				   fastf_t bb[6]);
-
-struct bvh_build_node; /*forward declaration */
-RT_EXPORT extern struct bvh_build_node *
-hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
-	     const fastf_t *bounds_prims, long *total_nodes,
-	     const long n_primitives, long **ordered_prims);
-
 
 /**
  * Add a solid into a given boxnode, extending the lists there.  This

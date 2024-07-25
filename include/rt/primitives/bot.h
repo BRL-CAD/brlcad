@@ -75,18 +75,20 @@ struct bot_specific {
 #endif
 };
 
-RT_EXPORT extern void rt_bot_prep_pieces(struct bot_specific    *bot,
-					 struct soltab          *stp,
-					 size_t                 ntri,
-					 const struct bn_tol    *tol);
 
-RT_EXPORT extern size_t rt_botface(struct soltab                *stp,
-				   struct bot_specific  *bot,
-				   fastf_t                      *ap,
-				   fastf_t                      *bp,
-				   fastf_t                      *cp,
-				   size_t                       face_no,
-				   const struct bn_tol  *tol);
+// this is really close to struct tri_specific in plane.h
+// TODO: see if that ever gets serialized, and if it doesn't
+// then change that to this - memory coherency win
+// sizeof(triangle_s) should be 15/16 * (4/8) bytes
+typedef struct _triangle_s {
+    point_t A;
+    vect_t AB;
+    vect_t AC;
+    vect_t face_norm;
+    fastf_t face_norm_scalar;
+    fastf_t *norms;
+    size_t face_id;
+} triangle_s;
 
 
 /* bot.c */
