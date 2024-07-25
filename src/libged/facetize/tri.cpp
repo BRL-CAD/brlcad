@@ -485,7 +485,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt,
     fastf_t seconds = 0.0;
     tess_cmd[tess_cmd_cnt] = NULL; // Make sure we're NULL terminated
     struct subprocess_s p;
-    if (subprocess_create(tess_cmd, subprocess_option_no_window|subprocess_option_enable_async, &p)) {
+    if (subprocess_create(tess_cmd, subprocess_option_no_window|subprocess_option_enable_async|subprocess_option_inherit_environment, &p)) {
 	// Unable to create subprocess??
 	facetize_log(s, 0, " FAILED.\n");
 	facetize_log(s, 0, "Unable to create subprocess\n");
