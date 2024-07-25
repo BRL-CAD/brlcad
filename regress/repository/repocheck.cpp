@@ -893,6 +893,9 @@ main(int argc, const char *argv[])
 		"/qtads/",
 		"/shapelib/",
 		"gltf/",
+		"/concurrentqueue.h",
+		"/detria.hpp",
+		"/json.hpp",
 		"/xxhash.h",
 		"misc/CMake/Find",
 		"misc/debian",
@@ -900,9 +903,9 @@ main(int argc, const char *argv[])
 		"misc/repowork",
 		"misc/tools",
 		"pkg.h",
+		"subprocess.h",
 		"src/libdm/wgl/wintk/",
 		"src/libpkg",
-		"src/other/",
 		"~",
 		NULL
 	};

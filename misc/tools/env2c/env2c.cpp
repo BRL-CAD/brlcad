@@ -70,13 +70,16 @@ process_file(env_outputs &env_t)
 
     std::regex getenv_regex(".*getenv\\(\\\".*");
     std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"([^\\)]*)\\).*");
-    std::regex o_regex(".*[\\/]other[\\/].*");
-    std::regex sp_regex(".*[\\/]other[\\/]([A-Za-z0-9_-]+).*");
     std::regex lp_regex(".*[\\/]lib([A-Za-z0-9_-]+)[\\/].*");
     std::regex inc_regex(".*[\\/]include[\\/].*");
     std::regex ep_regex(".*[\\/]src[\\/]([A-Za-z0-9_-]+)[\\/].*");
     std::regex bench_regex(".*[\\/](bench)[\\/].*");
     std::regex bullet_regex(".*[\\/](bullet)[\\/].*");
+
+    // TODO - these are obsolete.  For a similar result, we'll need to
+    // get a list from bext
+    std::regex o_regex(".*[\\/]other[\\/].*");
+    std::regex sp_regex(".*[\\/]other[\\/]([A-Za-z0-9_-]+).*");
 
     std::regex srcfile_regex(".*[.](cxx|c|cpp|h|hpp|hxx)(\\.in)*$");
     if (!std::regex_match(env.f, srcfile_regex)) {
@@ -99,6 +102,8 @@ process_file(env_outputs &env_t)
 	    continue;
 	}
 
+#if 0
+	// TODO - need to figure out how to scan the bext sources, if present...
 	if (std::regex_match(env.f, o_regex) || std::regex_match(env.f, bullet_regex)) {
 	    std::smatch sp_match;
 	    if (std::regex_search(env.f, sp_match, sp_regex)) {
@@ -120,6 +125,7 @@ process_file(env_outputs &env_t)
 	    std::cout << env.f << "[SYSTEM]: " << envvar[1] << "\n";
 	    continue;
 	}
+#endif
 
 	{
 	    std::smatch lp_match;
@@ -473,7 +479,7 @@ main(int argc, const char *argv[])
 	ofile << "\tstruct bu_opt_desc d[6];\n";
 	ofile << "\tBU_OPT(d[0], \"h\", \"help\", \"\", NULL, &print_help, \"Print help and exit\");\n";
 	ofile << "\tBU_OPT(d[1], \"A\", \"all\",  \"\", NULL, &list_all,   \"List all relevant variables, not just those currently set\");\n";
-	ofile << "\tBU_OPT(d[2], \"S\", \"system\",  \"\", NULL, &include_system,   \"Include known variables from src/other code, not just BRL-CAD's own variables\");\n";
+	ofile << "\tBU_OPT(d[2], \"S\", \"system\",  \"\", NULL, &include_system,   \"Include known variables from external codes, not just BRL-CAD's own variables\");\n";
 	ofile << "\tBU_OPT(d[3], \"C\", \"context\",  \"\", NULL, &include_context,   \"When listing variables, identify the library/executable in which they are used\");\n";
 	ofile << "\tBU_OPT(d[4], \"M\", \"memory\",  \"\", NULL, &report_mem,   \"Report current memory status\");\n";
 	ofile << "\tBU_OPT_NULL(d[5]);\n";

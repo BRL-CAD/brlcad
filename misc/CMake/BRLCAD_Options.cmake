@@ -46,51 +46,6 @@
 # configure style option syntax and CMake's variables, and append that to
 # the generated configure.new file.
 
-
-function(WRITE_CONFIG_YN opt opt_ALIASES onval offval)
-  set(ofile "${CMAKE_BINARY_DIR}/configure.new")
-  foreach(item ${opt_ALIASES})
-    string(TOLOWER ${item} alias_str)
-    string(REPLACE "_" "-" alias_str "${alias_str}")
-    string(REPLACE "enable" "disable" disable_str "${alias_str}")
-    file(APPEND "${ofile}" "     --${alias_str})                options=\"$options -D${opt}=${onval}\";\n")
-    file(APPEND "${ofile}" "                                  shift;;\n")
-    file(APPEND "${ofile}" "     --${disable_str})                options=\"$options -D${opt}=${offval}\";\n")
-    file(APPEND "${ofile}" "                                  shift;;\n")
-  endforeach(item ${opt_ALIASES})
-endfunction(WRITE_CONFIG_YN)
-
-function(WRITE_CONFIG_STR opt opt_ALIASES)
-  foreach(item ${opt_ALIASES})
-    string(TOLOWER ${item} alias_str)
-    file(APPEND "${ofile}" "     --${alias_str}=*)               inputstr=$1;\n")
-    file(APPEND "${ofile}" "                                     options=\"$options -D${opt}=\${inputstr#--${alias_str}=}\";\n")
-    file(APPEND "${ofile}" "                                  shift;;\n")
-  endforeach(item ${opt_ALIASES})
-endfunction(WRITE_CONFIG_STR)
-
-function(WRITE_CONFIG_OPTS opt opt_ALIASES style)
-
-  set(ofile "${CMAKE_BINARY_DIR}/configure.new")
-
-  if("${style}" STREQUAL "STRING")
-    # If we've got a string type, we don't need inverse logic.
-    WRITE_CONFIG_STR("${opt}" "${opt_ALIASES}")
-    return()
-  endif("${style}" STREQUAL "STRING")
-
-  # handle BUNDLE/SYSTEM options
-  if("${style}" STREQUAL "ABS")
-    WRITE_CONFIG_YN("${opt}" "${opt_ALIASES}" BUNDLED SYSTEM)
-  endif("${style}" STREQUAL "ABS")
-
-  # handle Boolean options
-  if("${style}" STREQUAL "BOOL")
-    WRITE_CONFIG_YN("${opt}" "${opt_ALIASES}" "ON" "OFF")
-  endif("${style}" STREQUAL "BOOL")
-
-endfunction(WRITE_CONFIG_OPTS)
-
 # Handle aliases for BRL-CAD options
 function(OPTION_RESOLVE_ALIASES ropt opt opt_ALIASES style)
 
@@ -130,47 +85,6 @@ function(OPTION_RESOLVE_ALIASES ropt opt opt_ALIASES style)
 
 endfunction(OPTION_RESOLVE_ALIASES)
 
-# Write documentation description for BRL-CAD options
-function(WRITE_OPTION_DESCRIPTION opt opt_ALIASES opt_DESCRIPTION)
-
-  set(ofile "${CMAKE_BINARY_DIR}/BRLCAD_OPTIONS")
-
-  file(APPEND "${ofile}" "\n--- ${opt} ---\n")
-  file(APPEND "${ofile}" "${${opt_DESCRIPTION}}")
-
-  set(ALIASES_LIST "\nAliases: ")
-  foreach(item ${opt_ALIASES})
-    set(ALIASES_LIST_TEST "${ALIASES_LIST}, ${item}")
-    string(LENGTH ${ALIASES_LIST_TEST} LL)
-
-    if(${LL} GREATER 80)
-      file(APPEND "${ofile}" "${ALIASES_LIST}\n")
-      set(ALIASES_LIST "          ${item}")
-    else(${LL} GREATER 80)
-      if(NOT ${ALIASES_LIST} MATCHES "\nAliases")
-	set(ALIASES_LIST "${ALIASES_LIST}, ${item}")
-      else(NOT ${ALIASES_LIST} MATCHES "\nAliases")
-	if(NOT ${ALIASES_LIST} STREQUAL "\nAliases: ")
-	  set(ALIASES_LIST "${ALIASES_LIST}, ${item}")
-	else(NOT ${ALIASES_LIST} STREQUAL "\nAliases: ")
-	  set(ALIASES_LIST "${ALIASES_LIST} ${item}")
-	endif(NOT ${ALIASES_LIST} STREQUAL "\nAliases: ")
-      endif(NOT ${ALIASES_LIST} MATCHES "\nAliases")
-    endif(${LL} GREATER 80)
-  endforeach(item ${opt_ALIASES})
-
-  if(ALIASES_LIST)
-    string(STRIP ALIASES_LIST ${ALIASES_LIST})
-    if(ALIASES_LIST)
-      file(APPEND "${ofile}" "${ALIASES_LIST}")
-    endif(ALIASES_LIST)
-  endif(ALIASES_LIST)
-
-  file(APPEND "${ofile}" "\n\n")
-
-endfunction(WRITE_OPTION_DESCRIPTION)
-
-
 function(VAL_NORMALIZE val optype)
   string(TOUPPER "${${val}}" uval)
   if("${uval}" STREQUAL "YES")
@@ -189,7 +103,6 @@ function(VAL_NORMALIZE val optype)
   endif("${optype}" STREQUAL "ABS")
   set(${val} "${uval}" PARENT_SCOPE)
 endfunction(VAL_NORMALIZE)
-
 
 function(OPT_NORMALIZE ropt default optype)
 
@@ -217,7 +130,7 @@ endfunction(OPT_NORMALIZE)
 # Standard option with BRL-CAD aliases and description
 function(BRLCAD_OPTION opt default)
 
-  cmake_parse_arguments(O "" "DESCRIPTION;TYPE" "ALIASES" ${ARGN})
+  cmake_parse_arguments(O "" "TYPE" "ALIASES" ${ARGN})
 
   # Initialize
   set(lopt "${${opt}}")
@@ -229,10 +142,6 @@ function(BRLCAD_OPTION opt default)
   # Process aliases and write descriptions
   if(O_ALIASES)
     OPTION_RESOLVE_ALIASES(lopt "${opt}" "${O_ALIASES}" "${otype}")
-    WRITE_CONFIG_OPTS("${opt}" "${O_ALIASES}" "${otype}")
-    if(O_DESCRIPTION)
-      WRITE_OPTION_DESCRIPTION("${opt}" "${O_ALIASES}" "${O_DESCRIPTION}")
-    endif(O_DESCRIPTION)
   endif(O_ALIASES)
 
   # Finalize the actual value to be used
@@ -254,7 +163,6 @@ function(BRLCAD_OPTION opt default)
   set(${opt} "${lopt}" PARENT_SCOPE)
 
 endfunction(BRLCAD_OPTION)
-
 
 
 # Local Variables:

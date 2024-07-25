@@ -1,306 +1,492 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="facetize">
 
-  <refmeta>
-    <refentrytitle>FACETIZE</refentrytitle>
-    <manvolnum>nged</manvolnum>
-    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
-  </refmeta>
+	<refmeta>
+		<refentrytitle>FACETIZE</refentrytitle>
+		<manvolnum>nged</manvolnum>
+		<refmiscinfo class="source">BRL-CAD</refmiscinfo>
+		<refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+	</refmeta>
 
-  <refnamediv xml:id="name">
-    <refname>facetize</refname>
-    <refpurpose>
-      Creates <emphasis>new_object</emphasis> using <emphasis>old_object</emphasis> as a
-      guide, creating an evaluated NMG or BoT planar approximation of the original shape.
-    </refpurpose>
-  </refnamediv>
+	<refnamediv xml:id="name">
+		<refname>facetize</refname>
+		<refpurpose>
+			Creates <emphasis>new_object</emphasis> using <emphasis>old_object</emphasis> as a
+			guide, creating an evaluated NMG or BoT planar approximation of the original shape.
+		</refpurpose>
+	</refnamediv>
 
-  <!-- body begins here -->
-  <refsynopsisdiv xml:id="synopsis">
-    <cmdsynopsis sepchar=" ">
-      <command>facetize</command>
-      <arg choice="opt" rep="norepeat">-h</arg>
-      <arg choice="opt" rep="norepeat">-v</arg>
-      <arg choice="opt" rep="norepeat">-q</arg>
-      <arg choice="opt" rep="norepeat">-r</arg>
-      <arg choice="opt" rep="norepeat">-n</arg>
-      <arg choice="opt" rep="norepeat">-T</arg>
-      <arg choice="opt" rep="norepeat">--MANIFOLD</arg>
-      <arg choice="opt" rep="norepeat">--NMG</arg>
-      <arg choice="opt" rep="norepeat">--CM</arg>
-      <arg choice="opt" rep="norepeat">--SPSR</arg>
-      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
-    </cmdsynopsis>
-    <cmdsynopsis sepchar=" ">
-      <command>facetize --CM</command>
-      <arg choice="opt" rep="norepeat">--feature-scale</arg>
-      <arg choice="opt" rep="norepeat">--feature-size</arg>
-      <arg choice="opt" rep="norepeat">--decimation-feature-size</arg>
-      <arg choice="opt" rep="norepeat">--max-time</arg>
-      <arg choice="opt" rep="norepeat">--max-pnts</arg>
-      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
-    </cmdsynopsis>
-    <cmdsynopsis sepchar=" ">
-      <command>facetize --SPSR</command>
-      <arg choice="opt" rep="norepeat">-d</arg>
-      <arg choice="opt" rep="norepeat">-w</arg>
-      <arg choice="opt" rep="norepeat">--samples-per-node</arg>
-      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
-    </cmdsynopsis>
-    <cmdsynopsis sepchar=" ">
-      <command>facetize -r</command>
-      <arg choice="opt" rep="norepeat">standard_options</arg>
-      <arg choice="opt" rep="norepeat">--resume</arg>
-      <arg choice="opt" rep="norepeat">--retry</arg>
-      <arg choice="opt" rep="norepeat">--in-place</arg>
-      <arg choice="req" rep="norepeat"><replaceable>output_hierarchy_obj</replaceable></arg>
-    </cmdsynopsis>
-  </refsynopsisdiv>
+	<!-- body begins here -->
+	<refsynopsisdiv xml:id="synopsis">
+		<cmdsynopsis sepchar=" ">
+			<command>facetize</command>
+			<arg choice="opt" rep="norepeat">-h</arg>
+			<arg choice="opt" rep="norepeat">-v</arg>
+			<arg choice="opt" rep="norepeat">-q</arg>
+			<arg choice="opt" rep="norepeat">-n</arg>
+			<arg choice="opt" rep="norepeat">-r</arg>
+			<arg choice="opt" rep="norepeat">-s suffix</arg>
+			<arg choice="opt" rep="norepeat">-p prefix</arg>
+			<arg choice="opt" rep="norepeat">--in-place</arg>
+			<arg choice="opt" rep="norepeat">--max-time #</arg>
+			<arg choice="opt" rep="norepeat">--max-pnts #</arg>
+			<arg choice="opt" rep="norepeat">--resume</arg>
+			<arg choice="opt" rep="norepeat">--methods m1,m2,...</arg>
+			<arg choice="opt" rep="norepeat">--method-opts METHOD opt1=val opt2=val...</arg>
+			<arg choice="opt" rep="norepeat">--no-empty</arg>
+			<arg choice="opt" rep="norepeat">--log-file filename</arg>
+			<arg choice="opt" rep="norepeat">--disable-fixup</arg>
+			<arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
+		</cmdsynopsis>
+	</refsynopsisdiv>
 
-  <refsection xml:id="description">
-    <title>DESCRIPTION</title>
-    <para>
-      Creates <emphasis>new_object</emphasis> as planar primitive shape (either an NMG or a BOT)
-      approximating the 3D volume bound by <emphasis>old_object</emphasis>.  The <emphasis>-r</emphasis>
-      option will operate per-region rather than on an entire object and produces a new hierarchy.
-    </para>
-    <para>
-      There are a number of different verbosity levels available for the facetize command.  One or mulitple specifications
-      of the <emphasis>-v</emphasis> flag will increase reporting detail about what the facetize command is doing in various
-      steps. To silence all output
-      specify the <emphasis>-q</emphasis> flag - this is generally not recommended as the messages produced by the
-      facetize command often contain important information about conversion failures in addition to reporting incremental
-      progress on large conversion tasks.
-    </para>
-  </refsection>
+	<refsection xml:id="description">
+		<title>DESCRIPTION</title>
+		<para>
+			The <emphasis>facetize</emphasis> operation in BRL-CAD is, broadly speaking,
+			the processing of creating an explicit planar approximation of a CSG volume
+			by evaluating the boolean expressions used to combine a set of explicit and
+			implicit solid primitives.  It is the core operation necessary for creating triangle
+			based meshes from BRL-CAD geometry.
+		</para>
+		<para>
+			The <command>facetize</command> command can attempt to produce either triangle-only
+			BoT objects, or N-Manifold Geometry (NMG) objects, but generally speaking BoT
+			generation will have a higher success rate than NMG.  BoTs are also more useful when
+			exporting to formats such as STL and OBJ - by default BoT output is what
+			<command>facetize</command> will produce.
+		</para>
+		<para>
+			In general Boolean evaluation of meshes is a very difficult problem, and there
+      are also some specific considerations when it comes to preparing geometry
+			for solid shotline raytracing that require more effort than producing a
+			visualization mesh.  It is recommended to use the <command>lint</command> command, both
+			to verify input objects are well behaved before facetization and to check <command>facetize</command>
+			outputs for any potential issues.  Often times either the original CSG geometry
+			definitions will need adjustment to avoid coplanar faces, or mesh editing is required
+			to resolve problematic triangle configurations.
+		</para>
+		<para>
+			By default all specified existing objects will be combined into a single mesh, but
+			that is often undesirable when working within BRL-CAD - information stored on region
+			combs such as color will be lost when converting in this fashion.  The
+			<option>-r</option>	option will introspect into the specified objects and perform
+			facetization on a per-region basis.  (If the specified input has no regions in its
+			tree, a normal facetization to a single object is performed instead.)	The output
+			will be a new hierarchy that references the facetized regions but retains the
+			properties of parent regions.  Users looking to interact	visually with a shaded
+			display of a model will likely find the <option>-r</option>	output useful for that
+			purpose.
+		</para>
+		<para>
+			There are a number of different verbosity levels available for the facetize command.
+			One or multiple specifications of the <option>-v</option> flag will increase
+			reporting detail.  Because full output from facetize can be quite verbose, the
+			user has the option to specify a log file with the <option>--log-file</option>
+			option - this will capture <emphasis>all</emphasis> output from the command and
+			allow for more detailed scrutiny of what took place after a conversion has finished.
+		</para>
+	</refsection>
 
-  <refsection xml:id="regions">
-    <title>PER-REGION FACETIZATION AND PARTIAL CONVERSIONS</title>
-    <para>
-      Often, it is desirable to perform facetization on each region individually within a
-      geometry hierarchy, rather than trying for a single "all or nothing" shape.  This mode, available
-      with the <emphasis>-r</emphasis> flag, has the advantage of allowing for partial conversion of complex models even when
-      individual shapes within the model cannot be converted, as well as preserving all pre-existing
-      region attributes such as color and region ID.
-    </para>
-    <para>
-      Because multi-region hierarchy conversion is often a long process, the facetize command (when run in region mode) works
-      in a way that allows an incomplete conversion to resume work.  For example, if a large model is
-      to be converted it may be advantageous to attempt just the NMG conversion on the hierarchy first
-      to get a sense of the work to be done.  After the initial attempt, global facetize parameters can
-      be adjusted and a second NMG run attempted, perhaps this time with SPSR reconstruction also enabled.
-      Note that this works only for a hierarchy generated with the <command>facetize</command>.
-    </para>
-    <para>
-      By default the <command>facetize</command> command attempts to be non-destructive when operating on
-      objects - it will not rename or replace any existing geometry in normal operational modes.  However,
-      if a user needs to create a new version of an existing hierarchy which replaces geometry below regions
-      with BoT objects but leaves all upper level names intact, this may be accomplished by specifying the
-      <emphasis>--in-place</emphasis> option in combination with the <emphasis>-r</emphasis> option.
-    </para>
-  </refsection>
-
-    <refsection xml:id="examples">
-    <title>EXAMPLES</title>
-
-    <example>
-      <title>Create a facetized BOT version of an existing object.</title>
-      <para>
-	The example shows the use of the <command>facetize</command> command to create a facetized
-	BOT version of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized
-	object (<emphasis>new_object</emphasis>).  It will try first NMG conversion, and if that fails
-	attempts CM conversion.
-      </para>
-      <para>
-	<prompt>mged&gt; </prompt><userinput>facetize region1.r region1.bot</userinput>
-      </para>
-    </example>
-
-    <example>
-      <title>Facetize all regions in a hierarchy.</title>
-      <para>
-	This runs the per region conversion on all regions under the "model" assembly and creates
-	a new conversion hierarchy under model_facetized.
-      </para>
-      <para>
-	<prompt>mged&gt; </prompt><userinput>facetize -r model model.f</userinput>
-      </para>
-    </example>
-
-    <example>
-      <title>Facetize all regions in a hierarchy, attempting only NMG conversion.</title>
-      <para>
-        This runs the NMG approach per region conversion on all regions, but in
-        the case of failure will not attempt any fallback conversion methods.
-      </para>
-      <para>
-	<prompt>mged&gt; </prompt><userinput>facetize -r --NMG model model.f</userinput>
-      </para>
-    </example>
-
-    <example>
-      <title>Retry failed conversion objects in a previous facetization attempt with new methodology.</title>
-      <para>
-	This retries the per region conversion on all regions that didn't originally succeed in the initial
-	conversion attempt, attempting only methods that haven't already been tried.
-      </para>
-      <para>
-	<prompt>mged&gt; </prompt><userinput>facetize -r --resume model.f</userinput>
-      </para>
-    </example>
-
-  
-    <example>
-      <title>Increase Decimation in CM Mode</title>
-      <para>
-	<prompt>mged&gt; </prompt><userinput>facetize --CM --feature-size 0.06 --decimation-feature-size 2.0 ellipse.r ell.bot</userinput>
-	<literallayout class="normal">
-CM: completed in 16 seconds with size 0.06
-CM: completed in 23 seconds with size 0.054
-CM: timed out after 30 seconds with size 0.0486
-CM: successfully created 6960500 faces, feature size 0.054
-CM: decimation succeeded, final BoT has 104 faces
-	</literallayout>
-      </para>
-      <para>
-	The default settings on this object in CM mode will produce a little over 8000 faces in the final bot, but the addition of the <option>decimation-feature-size</option> option with a >1.5 value has dramatically reduced the count to 104.
-      </para>
-    </example>
-    
-    <example>
-      <title>Decrease Decimation in CM Mode</title>
-      <para>
-	<prompt>mged&gt; </prompt><userinput>facetize --CM --feature-size 0.06 --decimation-feature-size .01 ellipse.r ell.bot</userinput>
-	<literallayout class="normal">
-CM: completed in 16 seconds with size 0.06
-CM: completed in 23 seconds with size 0.054
-CM: timed out after 30 seconds with size 0.0486
-CM: successfully created 6960500 faces, feature size 0.054
-CM: decimation succeeded, final BoT has 247642 faces
-	</literallayout>
-      </para>
-      <para>
-	If the intent is preserve a more detailed mesh, reducing <option>decimation-feature-size</option> will keep more of the original triangles - in the above example, almost 250 thousand of the original 6.9 million faces were retained.  NOTE:  use lower values here cautiously, as extremely large meshes can be very difficult for many tools to deal with.
-      </para>
-    </example>
-        
-  </refsection>
-
-  <refsection xml:id="methodology">
-    <title>METHODOLOGY</title>
-    <para>
-      Ideally users would not need to concern themselves with the details of how <command>facetize</command>
-      works, but unfortunately there are a significant number of real world geometries which will cause problems
-      for the current implementation.  In those cases, deeper understanding of what is happening can be
-      very important to maximizing the success of a conversion.
-    </para>
-    <para>
-      By default, conversions will first attempt facetization using the Manifold library to evaluate boolean
-      operations on individual meshes.  If that fails, the libnmg boolean evaluation is tried instead.
-      When one of those two approaches succeeds, the output (based of of individual NMG conversion of primitives)
-      is generally the best quality output that can be produced by any of BRL-CAD's available facetization methods.
-      If NMG based boolean methods fail, a fall-back method based
-      on Bloomenthal's continuation method (CM) polygonalizer will be attempted by default.Note
-      that if any of the methodology flags (<emphasis>--NMG</emphasis>,<emphasis>--CM</emphasis>,
-      or <emphasis>--SPSR</emphasis>) are explicitly enabled, the other methodologies will be disabled unless they
-      too are explicitly enabled.
-    </para>
-    <para>
-      While the <command>facetize</command> command does not itself expose options to adjust the behavior of
-      NMG-based methodologies, it will respect MGED's settings for absolute (<emphasis>abs</emphasis>),
-      relative (<emphasis>rel</emphasis>), and normal (<emphasis>norm</emphasis>) tolerances which are set with
-      the MGED <command>tol</command> command.  These settings may be changed between repeated runs of the
-      facetize command to attempt different NMG evaluations.
-    </para>
-    <para>
-      Bloomenthal's continuation method tends to be slower and exhibit artifacts around sharp corners - users
-      are advised to inspect the output from this method manually to ensure it will meet their needs. (All objects
-      created with this methodology in a multi-region hierarchical conversion are also included in a top level
-      combination with CONTINUATION in the name to allow users to more easily inspect them.)  By default, the
-      BRL-CAD raytracer is used to shoot pseudo-random rays at the object and accumulate an average observed
-      thickness of the model.  This thickness is then used as the basis for an initial guess at the appropriate
-      stepping size used by the CM walker (smaller means more triangles, and longer run times, but potentially
-      better preservation of small features.)  The initial thickness is multiplied by a scale factor, which
-      defaults to 0.15 but may be overridden by the user with the <emphasis>--feature-scale</emphasis> option.
-      Alternately, if the user has some specific knowledge of what feature size they are likely to want, they
-      may use the <emphasis>--feature-size</emphasis> option to directly set this parameter independent of the
-      observed average thickness.
-    </para>
-    <para>
-      Because CM tends to generate a very large number of triangles, it is necessary to post
-      process its initial mesh with a decimation routine to remove triangles which are not necessary to actual
-      feature representation.  This process is also feature-size based, and by default is set to 1.5x the feature size.
-      However, if the user wishes to preserve more triangles than the default behavior they may manually
-      override this parameter with the <emphasis>--decimation-feature-size</emphasis> option.  Generally
-      speaking smaller values will lead to more meshes being retained in the final output mesh, but experimentation
-      will likely be needed to zero in on desired results.  See CM examples above for an illustration using
-      the moss.g ellipsoid region.
-    </para>
-    <para>
-      MANIFOLD, NMG and CM assume a geometry hierarchy containing only
-      valid solid objects.  Those methods will refuse to process any tree containing recognizably
-      non-solid objects, as these tend to cause run-time problems and generate invalid outputs.  For non-solid
-      objects, the "--SPSR" methodology may be enabled - it will apply the Kazhdan et. al. Screened Poisson Surface
-      Reconstruction (SPSR) process to a pseudo-randomly sampled point set generated from <emphasis>old_object</emphasis>.  This
-      methodology may not cope well with the type of points sets generated from CAD geometry and is off
-      by default in normal <command>facetize</command> processing, but it is also the only currently available
-      methodology in BRL-CAD which has a chance of generating a valid mesh from non-solid inputs.
-    </para>
-    <para>
-      There are three parameters available for the SPSR methodology specifically:  maximum reconstruction depth
-      (<emphasis>-d</emphasis>) will control the level of detail in the output mesh, point weight (<emphasis>-w</emphasis>)
-      which impacts how much the output will attempt to interpolate the original inputs, and samples per node
-      (see the Kazhdan et. al. paper for more information.)  For situations where the user wishes to experiment
-      with different point sampling schemes, they are referred to the <command>pnts</command> command which offers
-      more fine grained controls when it comes to generating point sets from BRL-CAD objects.
-    </para>
-  </refsection>
+	<refsection xml:id="facetize_output_modes">
+		<title>Output Characteristics and Processing Controls</title>
+		<para>
+			By default the <command>facetize</command> command attempts to be non-destructive when operating on
+			objects - it will not rename or replace any existing geometry in normal operational modes, and will
+			adjust its naming accordingly when producing new objects.  However,
+			if a user <emphasis>wants</emphasis> to replace objects with facetized replacements, this may be accomplished by specifying the
+			<option>--in-place</option> option.  Note that this is a destructive operation - the original
+			object definitions will be overwritten - so use with care!
+		</para>
+		<para>
+			Users may be a bit startled to see empty (0 face, 0 vertices) BoTs produced by a facetize
+      command, but this is in fact expected behavior when a boolean option
+			legitimately results in an empty mesh.  For example, if a sphere in a comb is subtracted from
+			itself, and no other geometry is referenced, the result is a zero (empty) volume.  The <command>lint</command>
+			command can be used to identify such BoTs - if they <emphasis>are</emphasis> produced, it is
+			often an indication the original CSG definition has some sort of problem.  These empty outputs
+			can be suppressed by specifying the <option>--no-empty</option> option, but the recommended
+			course is to determine what about the original geometry produced them and either correct any issues
+			or (if the shapes truly are not intended to be present) remove the original CSG definitions producing them.
+		</para>
+		<para>
+			It may happen that a conversion fails part way through the process.   This can
+			happen due to user intervention, resource exhaustion, or simply as a consequence of
+			a bug in the conversion logic.  If this happens, the intermediate state of the
+			conversion will be stored by BRL-CAD in its cache directory, and the interrupted
+			process may be resumed by re-running <command>facetize</command> with the
+			<option>--resume</option> option.  (If a conversion fails and the command is re-run
+			without specifying <option>--resume</option>, previous work will be cleared and the
+			process will start over from the beginning.
+		</para>
+		<para>
+			In normal operation, when converting to BoT output there are post-processing routines that try
+			to identify and automatically fix certain categories of geometric flaws that can crop up during
+			Boolean evaluation.  If a user finds that they are getting unexpected output for a particular
+			input, and the log indicates the repair step was run, one option available is to repeat the
+			conversion with these repair steps disabled via the <option>--disable-fixup</option>
+			flag.  Repair should only be disabled if there is a problem - coplanar subtractions frequently result
+			in thin triangle artifacts lingering after Boolean evaluation due to the imitations of floating
+			point math, and in at least some cases the fixup routines are able to deal with these without
+			requiring manual intervention.  (These routines will not <emphasis>always</emphasis> work, so
+			checking of outputs after a conversion with the <command>lint</command> command to identify BoTs
+			with potentially problematic features is still recommended - see the <command>lint</command>
+			man page for more details.)
+		</para>
+		<para>
+			Different tolerance settings will create finer or coarser meshes. See the <command>tol</command> man
+			page for more details.
+		</para>
+	</refsection>
 
 
+	<refsection xml:id="facetize_options"><title>Options</title>
 
-  
-  <refsection xml:id="util">
-    <title>USEFUL TRICKS</title>
-    <para>
-      These are some useful tricks for targeted manipulation of the facetization process.
-    </para>
-    <example>
-      <title>Reset CM state of a subset of objects.</title>
-      <para>
-	Use search -exec to reset just the continuation method flag (will result in resume
-	retrying CM on all missing objects, without triggering the full retry of all methods
-	entailed by the --retry option.)  More targeted searches can do this reset for more
-	narrow subsets of the .g database.
-      </para>
-      <para>
-	<prompt>mged&gt; </prompt><userinput>search -attr facetize:CM -exec attr rm "{}" facetize:CM ";"</userinput>
-      </para>
-    </example>
+		<variablelist remap="TP">
 
-    <example>
-      <title>List invalid BoT objects below a comb</title>
-      <para>
-	Use lint -M to report on invalid objects below a comb.
-      </para>
-      <para>
-	<prompt>mged&gt; </prompt><userinput> lint -M model.f</userinput>
-      </para>
-    </example>
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">-h, --help</emphasis></term>
+				<listitem>
+					<para>
+						Print help and exit.
+					</para>
+				</listitem>
+			</varlistentry>
 
-  </refsection>
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">-v[v..], --verbose</emphasis></term>
+				<listitem>
+					<para>
+						Prints extra (verbose) information in results.  May be overridden by
+						the <option>--quiet</option> flag.
+					</para>
+				</listitem>
+			</varlistentry>
 
-  <refsection xml:id="author">
-    <title>AUTHOR</title>
-    <para>BRL-CAD Team</para>
-  </refsection>
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">-q, --quiet</emphasis></term>
+				<listitem>
+					<para>
+						Suppress all output (overrides verbosity flag.)
+					</para>
+				</listitem>
+			</varlistentry>
 
-  <refsection xml:id="bug_reports">
-    <title>BUG REPORTS</title>
+			<varlistentry>
+				<term><emphasis remap="B" role="bold"></emphasis>-n, --nmg-output</term>
+				<listitem>
+					<para>
+						Instructs <command>facetize</command> to produce NMG solids rather than BoT
+						solids.
+					</para>
+				</listitem>
+			</varlistentry>
 
-    <para>
-      Reports of bugs or problems should be submitted via electronic
-      mail to <email>devs@brlcad.org</email>
-    </para>
-  </refsection>
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">-r, --regions</emphasis></term>
+				<listitem>
+					<para>
+						Rather than converting all specified inputs to one top level object, walk
+						specified trees and individually convert regions to facetized objects.  This
+						mode is useful when wanting to display models in shaded mode while preserving
+						color and region ID properties.  If no regions are present a normal conversion
+						is performed instead.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">-s, --suffix</emphasis></term>
+				<listitem>
+					<para>
+						User specified suffix to use avoiding naming conflicts (naming conflict
+						avoidance is needed needed when creating objects in <option>-r</option> mode.)
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">-p, --prefix</emphasis></term>
+				<listitem>
+					<para>
+						User specified prefix to use avoiding naming conflicts (naming conflict
+						avoidance is needed needed when creating objects in <option>-r</option> mode.)
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--in-place</emphasis></term>
+				<listitem>
+					<para>
+						Replace the specified object(s) with their facetizations. (WARNING: this
+						option is destructive and will change pre-existing geometry!)
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--max-time #</emphasis></term>
+				<listitem>
+					<para>
+						Maximum time to spend per object (in seconds).  Default is method specific.
+						Note that specifying shorter times may cut off conversions (particularly using
+						sampling methods) that could succeed with longer runtimes.  Per-method time
+						limits can also be adjusted to allow longer runtimes on slower methods.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--max-pnts #</emphasis></term>
+				<listitem>
+					<para>
+						Maximum number of pnts per object to use when applying ray sampling methods.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--resume</emphasis></term>
+				<listitem>
+					<para>
+						Resume an incomplete facetization process (will utilize cached data from a
+						previous run rather than starting from scratch.)  Re-running without this
+						option will clear any old data and start from the beginning.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--methods</emphasis></term>
+				<listitem>
+					<para>
+						Accepts a comma separated list of one or more facetization methods to use.
+						The default is to try all algorithims available as needed, but if a user
+						knows they want to try a specific methodology they can call it out using
+						this option.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--method-opts</emphasis></term>
+				<listitem>
+					<para>
+						This option can be used to pass parameter values to specific facetize
+						methods.  The argument format is "METHOD opt1=val1 opt2=val2 ...".
+						See the <option>--help</option> output for which methods and parameters
+						are supported by <command>facetize</command>.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--no-empty</emphasis></term>
+				<listitem>
+					<para>
+						Do not write out empty BoT objects when a Boolean evaluation results
+						in an empty mesh.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--log-file</emphasis></term>
+				<listitem>
+					<para>
+						Specify a log file in which to store the full verbose output of a facetization
+						process.  This is recommended for large or long running facetize runs to allow
+						users to better understand what steps were taken and what problems might have
+						arisen.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><emphasis remap="B" role="bold">--disable-fixup</emphasis></term>
+				<listitem>
+					<para>
+						By default, BoT facetization will attempt to clear certain categories of
+						undesirable triangles from outputs.  Specifying this option will skip that
+						repair attempt.
+					</para>
+				</listitem>
+			</varlistentry>
+
+		</variablelist>
+
+	</refsection>
+
+	<refsection xml:id="methods">
+		<title>Facetization Methods</title>
+		<para>
+			In broad, there are two stages to a facetization process.  The first stage is the generation of
+			mesh representations for individual geometric primitives - implicit ELL, ARB8, TOR, etc. solids
+			must be represented by mesh approximations before they can become part of an evaluated mesh.
+			Additionally, inputs that are already meshes are checked for suitability - all input meshes, whether
+			generated from implicit shapes or pre-existing as BoTs, must be properly manifold before they can
+			be used for facetization.  Once all solids have been successfully converted, the next step is to
+			evaluate the Boolean tree hierarchy by unioning, subtracting or intersecting the various meshes
+			together to produce the evaluated shapes.
+		</para>
+		<para>
+			The process of individual primitive to mesh conversion can sometimes be problematic - routines
+			may take extremely long lengths of time trying to resolve a conversion problem.  In order to
+			avoid the process hanging indefinitely with no progress, a timeout is established that limits
+			how long each individual conversion process should take.  Various methods have defaults defined
+			internally, so this isn't something the user normally needs to concern themselves with, but if
+			they wish to set a limit themselves (either allowing more time or forcing shorter cycles) they
+			can do so with the <option>--max-time</option> option.
+		</para>
+		<para>
+			It can be difficult to produce a mesh from a primitive shape. Simply waiting longer for results
+			often isn't practical or even the right answer - indeed, infinite looping has been observed in
+			some primitive conversion cases. To work around these limitations, BRL-CAD provides multiple
+			methods that can be used to attempt mesh production in case other methods fail.  We
+			deliberately do not document those methods in detail here - they are subject to change as new
+			alternatives are identified that can produce better results.  What we <emphasis>do</emphasis> document is how to
+			use the facetize command to see what methods are currently available and control them.  The <option>-h</option>
+			option will list, at the end of its output, information about all currently available methods and
+			what controls they offer.  The facetize option <option>--methods</option> can be used to restrict
+			the facetize command to a particular subset of the available methodologies, and the
+			<option>--method-opts</option> option is used to pass specific parameters to a specific
+			method.
+		</para>
+		<para>
+			Because many of the facetization methods are sampling based (the raytracer is used to sample the
+			volume) a top level control is available to specify the maximum number of points to use when
+			generating inputs for such methods.  (More points generally means a better conversion at the
+			expense of memory and runtime.)
+		</para>
+	</refsection>
+
+	<refsection xml:id="examples">
+		<title>EXAMPLES</title>
+
+		<example>
+			<title>Create a facetized BOT version of an existing object.</title>
+			<para>
+				The example shows the use of the <command>facetize</command> command to create a facetized
+				BOT version of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized
+				object (<emphasis>new_object</emphasis>).
+			</para>
+			<para>
+				<prompt>mged&gt; </prompt><userinput>facetize region1.r region1.bot</userinput>
+			</para>
+		</example>
+
+		<example>
+			<title>Facetize all regions in a hierarchy.</title>
+			<para>
+				This runs the per region conversion on all regions under the "model" assembly and creates
+				a new conversion hierarchy under model_facetized.
+			</para>
+			<para>
+				<prompt>mged&gt; </prompt><userinput>facetize -r model model.f</userinput>
+			</para>
+		</example>
+
+		<example>
+			<title>Facetize all regions in a hierarchy, attempting only NMG conversion.</title>
+			<para>
+				This runs the NMG approach per region conversion on all regions, but in
+				the case of failure will not attempt any fallback conversion methods.
+			</para>
+			<para>
+				<prompt>mged&gt; </prompt><userinput>facetize -r --methods NMG model model.f</userinput>
+			</para>
+		</example>
+
+		<example>
+			<title>Retry failed conversion objects in a previous facetization attempt with new methodology.</title>
+			<para>
+				This resumes a failed conversion of <emphasis>model</emphasis>.
+			</para>
+			<para>
+				<prompt>mged&gt; </prompt><userinput>facetize -r --resume model model.f</userinput>
+			</para>
+		</example>
+
+
+		<example>
+			<title>Increase Decimation in CM Mode</title>
+			<para>
+				<prompt>mged&gt; </prompt><userinput>facetize --methods CM --method-opts feature_size=0.06 d_feature_size=2.0 ellipse.r ell.bot</userinput>
+			</para>
+			<para>
+				The default settings on this object in CM mode will produce a little over 8000 faces in the final bot, but the addition of the <option>d_feature_size</option> option with a >1.5 value has dramatically reduced the count to 104.
+			</para>
+		</example>
+
+		<example>
+			<title>Decrease Decimation in CM Mode</title>
+			<para>
+				<prompt>mged&gt; </prompt><userinput>facetize --methods CM --method-opts feature_size=0.06 d_feature_size=0.01 ellipse.r ell.bot</userinput>
+			</para>
+			<para>
+				If the intent is preserve a more detailed mesh, reducing <option>decimation-feature-size</option> will keep more of the original triangles - in the above example, almost 250 thousand of the original 6.9 million faces were retained.  NOTE:  use lower values here cautiously, as extremely large meshes can be very difficult for many tools to deal with.
+			</para>
+		</example>
+
+	</refsection>
+
+	<refsection xml:id="util">
+		<title>USEFUL TRICKS</title>
+		<para>
+			These are some useful commands related to the facetization process.
+		</para>
+
+		<example>
+			<title>List invalid BoT objects below a comb</title>
+			<para>
+				Use lint -I to report on invalid objects below a comb.
+			</para>
+			<para>
+				<prompt>mged&gt; </prompt><userinput> lint -I model.f</userinput>
+			</para>
+		</example>
+
+		<example>
+			<title>Pre-extrude Plate Mode BoTs</title>
+			<para>
+				Use search -exec to extrude all plate mode bots before attempting a facetize operation.
+			</para>
+			<para>
+				<prompt>mged&gt; </prompt><userinput> search model.f -type bot -type plate -exec "bot extrude -i {}" ";"</userinput>
+			</para>
+		</example>
+
+	</refsection>
+
+	<refsection xml:id="implementation_notes">
+		<title>Implementation Details</title>
+		<para>
+			The current implementation of <command>facetize</command> launches primitive facetization operations
+			in a subprocess, to allow for recovery if individual primitives crash, infinite loop, or otherwise
+			trigger what would otherwise be catastrophic behavior.  This means that it is essential the operating
+			environment allow the parent program to launch those subprocesses - otherwise, conversion will fail.
+		</para>
+		<para>
+			Unlike previous versions of <command>facetize</command>, this version (in BoT mode) will only facetize
+			each primitive once - if a primitive is instanced repeatedly in multiple combs, it will use the same
+			BoT to represent all of those instances.  If for some reason this is not desired behavior, the user
+			should first prepare the geometry by making all instances unique with <command>xpush</command>.
+		</para>
+	</refsection>
+
+
+	<refsection xml:id="author">
+		<title>AUTHOR</title>
+		<para>BRL-CAD Team</para>
+	</refsection>
+
+	<refsection xml:id="bug_reports">
+		<title>BUG REPORTS</title>
+
+		<para>
+			Reports of bugs or problems should be submitted via electronic
+			mail to <email>devs@brlcad.org</email>
+		</para>
+	</refsection>
 
 </refentry>

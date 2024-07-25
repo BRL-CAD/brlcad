@@ -25,7 +25,7 @@ function(GCV_regress_util fmt INPUT_FILES)
 
   # Use a default file size check for converted .g's to make sure we have
   # a reasonable output. This doesn't ensure the data is correct.
-  # most test files are small, set default expected converted file size range 
+  # most test files are small, set default expected converted file size range
   # 150-850 bytes
   if(${fmt}_EXPECTED_FILE_SIZE)
     set(EXPECTED_FILE_SIZE ${${fmt}_EXPECTED_FILE_SIZE})
@@ -82,7 +82,8 @@ endif(NOT EXISTS \"\${GCV_EXEC}\")\n"
       set(out_suffix ".g")
     endif(${fmt}_EXPORTER)
     # keep track for distclean
-    set(expected_output_files "${expected_output_files} ${out_path}${out_suffix}")
+    set(out_distclean ${out_distclean} "${out_path}${out_suffix}")
+    set(expected_output_files "${expected_output_files} \"${out_path}${out_suffix}\"")
 
     # command string can't have empty "" - have to build it explicitly with cmd line flags if supplied
     if(${fmt}_GCV_OPTIONS)
@@ -105,7 +106,8 @@ endif(NOT EXISTS \"\${GCV_EXEC}\")\n"
         set(CMD_STR "${CMD_STR} COMMAND \"\${GCV_EXEC}\" \"${fmt_input_output}\" \"\${in_path}\" \"${out_path}-${out_fmt}${out_suffix}\"")
       endif(${fmt}_GCV_OPTIONS)
 
-      set(expected_output_files "${expected_output_files} ${out_path}-${out_fmt}${out_suffix}")
+      set(out_distclean ${out_distclean}} "${out_path}-${out_fmt}${out_suffix}")
+      set(expected_output_files "${expected_output_files} \"${out_path}-${out_fmt}${out_suffix}\"")
     endforeach(out_fmt ${${fmt}_CONVERTERS})
 
     # make command string pretty for printing to log file
@@ -116,21 +118,22 @@ endif(NOT EXISTS \"\${GCV_EXEC}\")\n"
     file(APPEND "${cmake_in_path}"
     "
 # check for input file in source and binary dir - priority of src
-if(EXISTS \${CSDIR}/${in_file})
-  set(in_path \${CSDIR}/${in_file})
-elseif(EXISTS \${CBDIR}/${in_file})
-  set(in_path \${CBDIR}/${in_file})
-elseif(${${fmt}_EXPORTER} AND EXISTS \${CSDIR}/../${in_file})
+if(EXISTS \"\${CSDIR}/${in_file}\")
+  set(in_path \"\${CSDIR}/${in_file}\")
+elseif(EXISTS \"\${CBDIR}/${in_file}\")
+  set(in_path \"\${CBDIR}/${in_file}\")
+elseif(${${fmt}_EXPORTER} AND EXISTS \"\${CSDIR}/../${in_file}\")
   # if this is an exporter, check regress/gcv for .g files used to test multiple converters
-  set(in_path \${CSDIR}/../${in_file})
+  set(in_path \"\${CSDIR}/../${in_file}\")
 else()
   message(FATAL_ERROR \"[gcv] could not find ${in_file}, searched \${CSDIR} and \${CBDIR}. aborting.\")
-endif(EXISTS \${CSDIR}/${in_file})
+endif(EXISTS \"\${CSDIR}/${in_file}\")
 
 # blow away expected output file if it exists for some reason
-foreach(of ${expected_output_files})
+set(ofiles ${expected_output_files})
+foreach(of \${ofiles})
   file(REMOVE \"\${of}\")
-endforeach(of ${expected_output_files})
+endforeach(of \${ofiles})
 
 # Run the converter for ${in_file}
 set(log_msg \"Running:${cleaned_CMD_STR}\\n\\n\")
@@ -145,14 +148,15 @@ file(APPEND \"\${LOGFILE}\" \"\${log_msg}\\n\")
 unset(log_msg)
   ")
 
-  set(OUTPUT_FILES "${OUTPUT_FILES} ${expected_output_files}")
+  set(OUTPUT_FILES ${OUTPUT_FILES} ${out_distclean})
   unset(expected_output_files)
+  unset(out_distclean)
   endforeach(in_file ${INPUT_FILES})
 
-  file(APPEND ${cmake_in_path} 
+  file(APPEND ${cmake_in_path}
   "
 # check output files exists and are a reasonable size
-foreach(out_file ${OUTPUT_FILES})
+foreach(out_file \${ofiles})
   if(NOT EXISTS \"\${out_file}\")
     file(APPEND \"\${LOGFILE}\" \"FAILURE: \${curr_result}, \${out_file} not found.\")
     message(FATAL_ERROR \"[gcv] Unable to convert \${in_path} to \${out_file} with \${GCV_EXEC}, aborting.\\nSee \${LOGFILE} for more details.\")
@@ -172,7 +176,7 @@ foreach(out_file ${OUTPUT_FILES})
 
   # cleanup file from build dir
   file(REMOVE \"\${out_file}\")
-endforeach(out_file ${OUTPUT_FILES})
+endforeach(out_file \${ofiles})
     ")
 
   # assume the fmt is the gcv dependency unless specified
@@ -185,7 +189,7 @@ endforeach(out_file ${OUTPUT_FILES})
   # create actual regression target
   BRLCAD_REGRESSION_TEST(${TARGET_DIRECTION} ${DEPS} EXEC gcv TEST_SCRIPT "${cmake_in_path}")
 
-  # BRLCAD_REGRESSION_TEST copies and evalutates the cmake.in - safe to get rid of it now
+  # BRLCAD_REGRESSION_TEST copies and evaluates the cmake.in - safe to get rid of it now
   file(REMOVE ${cmake_in_path})
 
   DISTCLEAN(

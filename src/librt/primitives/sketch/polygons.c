@@ -373,22 +373,22 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
     sketch_ip->curve.segment = (void **)bu_calloc(sketch_ip->curve.count, sizeof(void *), "sketch_ip->curve.segment");
 
 
-    bg_plane_pt_at(&sketch_ip->u_vec, p->vp, 0, 1);
-    bg_plane_pt_at(&sketch_ip->v_vec, p->vp, 1, 0);
+    bg_plane_pt_at(&sketch_ip->u_vec, &p->vp, 0, 1);
+    bg_plane_pt_at(&sketch_ip->v_vec, &p->vp, 1, 0);
 
     /* should already be unit vectors */
     VUNITIZE(sketch_ip->u_vec);
     VUNITIZE(sketch_ip->v_vec);
 
     /* Plane origin is sketch origin */
-    bg_plane_pt_at(&sketch_ip->V, p->vp, 0, 0);
+    bg_plane_pt_at(&sketch_ip->V, &p->vp, 0, 0);
 
     int n = 0;
     for (size_t j = 0; j < p->polygon.num_contours; ++j) {
 	size_t cstart = n;
 	size_t k = 0;
 	for (k = 0; k < p->polygon.contour[j].num_points; ++k) {
-	    bg_plane_closest_pt(&sketch_ip->verts[n][1], &sketch_ip->verts[n][0], p->vp, p->polygon.contour[j].point[k]);
+	    bg_plane_closest_pt(&sketch_ip->verts[n][1], &sketch_ip->verts[n][0], &p->vp, &p->polygon.contour[j].point[k]);
 
 	    if (k) {
 		BU_ALLOC(lsg, struct line_seg);

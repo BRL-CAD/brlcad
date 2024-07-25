@@ -8,13 +8,20 @@ set(nirt_format_files
   gap1.nrt
   gap2.nrt
   )
-BRLCAD_ADDDATA(nirt_format_files nirt)
+if(TARGET libged OR TARGET nirt)
+  BRLCAD_ADDDATA(nirt_format_files nirt)
+  if(TARGET libged)
+    add_dependencies(libged nirt_format_files_cp)
+  endif(TARGET libged)
+  if(TARGET nirt)
+    add_dependencies(nirt nirt_format_files_cp)
+  endif(TARGET nirt)
+endif(TARGET libged OR TARGET nirt)
 
-if(TARGET nirt)
-  add_dependencies(nirt nirt_format_files_cp)
-endif(TARGET nirt)
-
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${nirt_format_files}
+  )
 
 # Local Variables:
 # tab-width: 8

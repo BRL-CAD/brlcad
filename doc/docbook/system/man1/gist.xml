@@ -1,0 +1,281 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="tire1">
+
+	<refmeta>
+		<refentrytitle>GIST</refentrytitle>
+		<manvolnum>1</manvolnum>
+		<refmiscinfo class="source">BRL-CAD</refmiscinfo>
+		<refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+	</refmeta>
+
+	<refnamediv xml:id="gist_name">
+		<refname>gist</refname>
+		<refpurpose>
+			Generate a one page summary of the geometry present in a database.
+		</refpurpose>
+	</refnamediv>
+
+	<!-- body begins here -->
+	<refsynopsisdiv xml:id="gist_synopsis">
+		<cmdsynopsis sepchar=" ">
+			<command>gist</command>
+			<arg choice="opt" rep="repeat"><replaceable>options ...</replaceable></arg>
+			<arg choice="req" rep="norepeat"><replaceable>(-F model/dir | model.g)</replaceable></arg>
+		</cmdsynopsis>
+	</refsynopsisdiv>
+
+	<refsection xml:id="gist_description">
+		<title>DESCRIPTION</title>
+
+		<para>
+			The Geometric Information Summary Tool - <command>gist</command> - is used to create a
+			high level summary conveying visually and textually what geometry is defined with one
+			or a set of .g geometry databases.  It can output a PNG image containing renders and
+			information summarizing area, volume and other standard properties as well as the top
+			level structure of the geometry present.
+		</para>
+	</refsection>
+
+	<refsection xml:id="gist_options">
+		<title>OPTIONS</title>
+
+		<variablelist remap="TP">
+
+			<varlistentry>
+				<term><option>-i filename.g</option></term>
+				<listitem>
+					<para>
+						Specify a .g database file to use as <command>gist</command> input.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-o output.png</option></term>
+				<listitem>
+					<para>
+					 	The output PNG filename to use when generating a report image.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-F directory</option></term>
+				<listitem>
+					<para>
+					 	A directory holding .g database files to use as inputs.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-e directory</option></term>
+				<listitem>
+					<para>
+					  Specify directory to hold exported images.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-g</option></term>
+				<listitem>
+					<para>
+					  Display report in pop-up window.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-f</option></term>
+				<listitem>
+					<para>
+					  Overwrite a pre-existing report (if any is present).
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-Z</option></term>
+				<listitem>
+					<para>
+						Reuse renders if [model].working directory is present.  Can significantly
+						shorten processing time if producing multiple versions of a report.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-t object_name</option></term>
+				<listitem>
+					<para>
+					  Specify an object in the database to report on.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-m path/to/image</option></term>
+				<listitem>
+					<para>
+					  Specify a logo image to be used in the report.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-p #</option></term>
+				<listitem>
+					<para>
+					  Control density of report image (default 300ppi).
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-n "Preparer Name"</option></term>
+				<listitem>
+					<para>
+						Name of person preparing the report (used in report output).
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>-r "Owner Name"</option></term>
+				<listitem>
+					<para>
+						Name of the owner of the .g database.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-T path/to/rt</option></term>
+				<listitem>
+					<para>
+						Specify directory containing the rt and rtwizard executables
+						to use when generating images.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-c classification</option></term>
+				<listitem>
+					<para>
+						Classification displayed on top/bottom banner.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-N "extra notes"</option></term>
+				<listitem>
+					<para>
+						Add extra information to the report.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-L</option></term>
+				<listitem>
+					<para>
+						Use left handed coordinate system.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-A</option></term>
+				<listitem>
+					<para>
+						Use +Y-up geometry axis (default is +Z-up)
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-l len_units</option></term>
+				<listitem>
+					<para>
+						Specify length units.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-w wt_units</option></term>
+				<listitem>
+					<para>
+						Specify weight units.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-v</option></term>
+				<listitem>
+					<para>
+						Verbose printing.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+			<varlistentry>
+				<term><option>-h</option></term>
+				<listitem>
+					<para>
+						Print help and exit.
+					</para>
+				</listitem>
+			</varlistentry>
+
+
+		</variablelist>
+	</refsection>
+
+	<refsection xml:id="gist_examples">
+		<title>EXAMPLE</title>
+
+		<example>
+			<title>M35 Truck</title>
+			<para>
+				<userinput>gist -o m35.png m35.g -t component</userinput>
+			</para>
+		</example>
+
+		<example>
+			<title>KTANK reuse existing working directory</title>
+			<para>
+				<userinput>gist ktank.g -Z -o ktank.png</userinput>
+			</para>
+		</example>
+
+	</refsection>
+
+	<refsection xml:id="copyright"><title>COPYRIGHT</title>
+
+		<para>
+			This software is Copyright (c) 2008-2024 United States Government as
+			represented by the U.S. Army Research Laboratory.
+		</para>
+	</refsection>
+
+	<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+		<para>
+			Reports of bugs or problems should be submitted via electronic
+			mail to <email>devs@brlcad.org</email>
+		</para>
+	</refsection>
+</refentry>

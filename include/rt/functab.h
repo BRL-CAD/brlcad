@@ -273,6 +273,13 @@ struct rt_functab {
     void (*ft_labels)(struct bv_scene_obj *ps, const struct rt_db_internal *ip);
 #define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(struct bv_scene_obj *, const struct rt_db_internal *))((void (*)(void))_func))
 
+    /** perturb geometry parameters of primitive.  NOTE:  the oip primitive
+     * returned is NOT guaranteed to be the same type as that of ip - for example,
+     * ARB8 perturbations will return an ARBN primitive. */
+    int (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor);
+#define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
+
+
 };
 
 

@@ -1,8 +1,6 @@
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  if (BRLCAD_ENABLE_QT)
-    find_package_qt(REQUIRED)
-  endif (BRLCAD_ENABLE_QT)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+if (BRLCAD_ENABLE_QT)
+  find_package_qt(REQUIRED)
+endif (BRLCAD_ENABLE_QT)
 
 # TODO - need this now for code in lower level directories,
 # need to do some cleanup.
@@ -93,6 +91,10 @@ set(qged_ignore_srcs
   fonts/Inconsolata-LICENSE.txt
   fonts/Inconsolata.otf
   main.cpp
+  qged_signals.eps
+  qged_signals.dia
+  view_update_cycle.odg
+  view_update_cycle.pdf
   )
 
 CMAKEFILES(${qged_ignore_srcs})

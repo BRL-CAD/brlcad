@@ -199,7 +199,7 @@ struct bu_data_hash_state {
 };
 
 BU_EXPORT struct bu_data_hash_state *
-bu_data_hash_create();
+bu_data_hash_create(void);
 
 BU_EXPORT void
 bu_data_hash_destroy(struct bu_data_hash_state *s);

@@ -32,7 +32,7 @@
 #include "wdb.h"
 #include "bu/app.h"
 #include "bv/plot3.h"
-#include "opennurbs.h"
+#include "brep/defines.h"
 
 
 void

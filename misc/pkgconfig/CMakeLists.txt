@@ -36,6 +36,7 @@ set(pkgconfig_DATA
   libbu.pc.in
   libbn.pc.in
   libbg.pc.in
+  libbv.pc.in
   libnmg.pc.in
   libbrep.pc.in
   librt.pc.in
@@ -47,13 +48,11 @@ if("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUAL "
     libanalyze.pc.in
     libbrlcad.pc.in
     libdm.pc.in
-    libdm.pc.in
     libfft.pc.in
     libgcv.pc.in
     libged.pc.in
     libicv.pc.in
     liboptical.pc.in
-    libpc.pc.in
     libpkg.pc.in
     )
 endif("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUAL "")

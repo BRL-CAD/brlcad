@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef LIBGED_BREP_GED_PRIVATE_H
-#define LIBGED_BREP_GED_PRIVATE_H
+#ifndef LIBGED_BOT_GED_PRIVATE_H
+#define LIBGED_BOT_GED_PRIVATE_H
 
 #include "common.h"
 
@@ -90,13 +90,15 @@ extern int _bot_cmd_check(void *bs, int argc, const char **argv);
 
 extern int _bot_cmd_remesh(void *bs, int argc, const char **argv);
 
+extern int _bot_cmd_repair(void* bs, int argc, const char** argv);
+
 extern int _bot_cmd_smooth(void* bs, int argc, const char** argv);
 
 extern int _bot_cmd_subd(void* bs, int argc, const char** argv);
 
 __END_DECLS
 
-#endif /* LIBGED_BREP_GED_PRIVATE_H */
+#endif /* LIBGED_BOT_GED_PRIVATE_H */
 
 /** @} */
 /*

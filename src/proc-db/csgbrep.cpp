@@ -22,7 +22,7 @@
 #include "bu/app.h"
 #include "bu/parse.h"
 #include "bu/log.h"
-#include "opennurbs.h"
+#include "brep/defines.h"
 #include "rt/geom.h"
 #include "wdb.h"
 

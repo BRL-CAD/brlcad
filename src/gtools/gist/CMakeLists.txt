@@ -26,15 +26,13 @@ set(GIST_SRCS
   RenderHandler.cpp
 )
 
-CMAKEFILES(${gist_ignore_files} ${GIST_SRCS})
+CMAKEFILES(
+  ${gist_ignore_files}
+  ${GIST_SRCS}
+  TEST.png
+  )
 
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_opencv()
-else (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package(OpenCV COMPONENTS core features2d imgproc highgui)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-
-# FIND_PACKAGE(OpenCV)
+find_package_opencv()
 if(NOT OpenCV_FOUND)
   message("OpenCV is DISABLED")
   return()
@@ -45,9 +43,6 @@ BRLCAD_ADDEXEC(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBRARIES};")
 target_include_directories(gist BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(gist SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
 
-# FIXME: should be cxx_std_14, but uses std::filesystem.  should use libbu.
-target_compile_features(gist PRIVATE cxx_std_17)
-
 if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
   add_custom_command(TARGET gist POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:gist> $<TARGET_FILE_DIR:gist>
@@ -55,6 +50,7 @@ if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
   )
 endif (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
+BRLCAD_ADDDATA(assets/brlLogo-nobg.png images)
 
 # Local Variables:
 # tab-width: 8

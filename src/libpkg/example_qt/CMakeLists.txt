@@ -1,8 +1,6 @@
 if (BRLCAD_ENABLE_QT)
 
-  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-    find_package_qt(REQUIRED)
-  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_qt(REQUIRED)
 
   # Include directories needed by libpkg users
   set(PKG_EXAMPLE_INCLUDES

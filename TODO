@@ -18,16 +18,67 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* complete preliminary concave arb8 support
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* Validate and merge hlbvh BoT raytracing improvements
 
+* rtarea is sometimes missing regions on summary reporting, at least on
+  Windows, possibly a threading issue setting up the results container.
+
+* complete preliminary concave arb8 support
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* Add a "perturb" callback function to librt's primitive tables, that
+  will accept a primitive definition and return a version that has been
+  slightly increased or decreased in size.  For example, a "perturbed"
+  TGC would have its base and height planes bumped slightly in or out
+  and its radius slightly increased or decreased.  The intent would be
+  to see if we can automatically perturb primitives just slightly out
+  of numerical complanarity for facetize.  For union (and probably
+  intersection) we would bump out slightly, and for subtraction bump
+  in slightly.  Probably want to do this at the implicit level, rather
+  than after triangles have been produced, so it's easier to understand
+  what happens.  For things like pipes especially, getting the intended
+  effect post-triangulation might be tricky.
+
+* Newer SPSR code apparently has a header-only mode that we might be
+  able to use to replace our current embedded customized version:
+
+  https://github.com/mkazhdan/PoissonRecon
+
+  (See the HEADER-ONLY LIBRARY section of their README.md)
+
+* replace translations of various Geometric Tools algorithms in BRL-CAD
+  with calls to a bundled Geometric Tools.  With bext coming online,
+  bundling Geometric Tools would be simpler.  They have a lot of
+  algorithms that are of potential interest, not to mention being
+  actively maintained - we should really be using them as a backend
+  directly rather than porting various individual pieces to vmath.h
+  Refactored code to replace with direct calls:
+
+  src/libbg/lseg_lseg.c
+  src/libbg/lseg_pt.c
+  src/libbg/obr.c
+  src/libbg/sat.c
+  src/libbg/tri_pt.c
+
+  There are probably a number of other algorithms in our code where
+  we should check to see if the GTE implementation would be better
+  than ours (line/point distance functionality, for example).
+
+* validate imgdiff difference reporting
+
+* add a flag to prefix command to remove prefix on a group hierarchy.
+
+* restore libged commands that were only exposed via archer but lost
+  during libged ged_exec() refactoring.
+
+  see 5f8aa3204bd for a number of them, but need to check all of the
+  archer command mappings.
 
 * add rt* option to output reusable view specification similar to
   saveview scripts, but perhaps just the command portion.  this would
@@ -163,15 +214,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   if there's a non-GUI output/utility and how the CLI pairs up with
   other GUI-inducing commands like rtwizard, raytrace control panel,
   geometree, etc.
-
-* Attempt to update to use latest upstream poly2tri resulted in incorrect
-  shading when trying to view the NIST2 example - many faces didn't
-  facetize.  We've had occasional robustness problems with brep triangulation
-  for a long while - need to investigate approaches to this algorithm that
-  might help:
-
-  https://github.com/ChengCat/fast-poly2tri
-  https://github.com/raptor/clip2tri
 
 * automatic tops
 
@@ -755,11 +797,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * Translate logic from clipper polygon clipping library
   (http://www.angusj.com/delphi/clipper.php) into libbg and use it
-  as a pre-processing step for poly2tri's algorithm along the lines
+  as a pre-processing step for detria's algorithm along the lines
   of what bitfighter did:  https://github.com/raptor/clip2tri
   Some useful notes here: http://stackoverflow.com/a/16115775
-
-* Translate the poly2tri routines into libbg C code
 
 * Implement Shamos-Hoey test for checking whether a polygon is simple
   in libbg: http://geomalgorithms.com/a09-_intersect-3.html
@@ -1807,7 +1847,7 @@ NEW OBJECTS
   http://www.wikistep.org/index.php/Associative_Text_in_3D_recommended_practices
   http://www.wikistep.org/index.php/Model_viewing,_basic_drawing_structure_and_dimensions_recommended_practices
   http://www.iigdt.com/Products/Images/0f390980.jpg
-  src/other/openNURBS/opennurbs_annotation*
+  openNURBS: opennurbs_annotation*
 
   Types of annotations:
 	text:                   text.
@@ -2168,8 +2208,6 @@ STEP
 
 * implement g-step exporter (see above)
 
-* see additional TODO items in file './src/other/step/README'
-
 
 BREP/NURBS
 ----------
@@ -2240,6 +2278,15 @@ BREP/NURBS
 NMG/BoT
 -------
 
+* getting some unexpected misses when testing facetization of havoc
+  regions.  If the issue is super-thin triangles in raytrace, see if
+  we can handle by solving the plane intersection to get a 3D point,
+  then returning that if we're within tol distance of the triangle
+  edges and we don't get any hits from topological neighbors.  If
+  the triangle is thin enough, that should be a reasonable answer
+  (at least for a 3D point - the normal may be something else again
+  if the 3 points aren't distinct enough to properly calc the plane.)
+
 * bot overlaps when unoriented, when clearly not overlapping
 
 * resolve bot bin sort optimization crash, disabled during release
@@ -2257,12 +2304,6 @@ NMG/BoT
   normals.. this certainly saves memory if the triangles don't have
   normals but at a rather expensive malloc cost (which is being seen
   on large BoT models) during prep.
-
-* implement conversion of plate-mode BoT into volume-mode BoT,
-  probably as a 'bot' command subcommand.  this basically entails
-  implementing the BoT tessellation callback for plate-mode which will
-  let boolean evaluation succeed as-is.  might require adding a
-  parameter in case we want to dump the mesh as-is.
 
 * ensure robust and fast nmg->bot conversion
 
@@ -2345,10 +2386,6 @@ INFRASTRUCTURE
 
 * ensure primary cmake option parity with summary option listing
 
-  -- Um.  Not sure this is fully achieveable - we only want to
-     summarize a subset of the src/other settings in the summary
-     printout, was my (CY) understanding...
-
 * investigate ignoring .hidden directories/files from dist packing so
   that internal build directories can be used instead of external ones
 
@@ -2366,7 +2403,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * have all primitives record a matrix so they may retain a local
   coordinate system even after pushed matrices.  this also will allow
   primitives like the torus to support non-uniform scaling.
-  
+
 * change convention of using 'u', '+', and '-' for unions,
   intersections, and subtractions respectively to symbols that
   unambiguously describe the underlying CSG operation.

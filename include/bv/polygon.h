@@ -76,7 +76,7 @@ struct bv_polygon {
 BV_EXPORT extern struct bv_scene_obj *bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p);
 
 // Creates a scene object with a default polygon
-BV_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int flags, int type, point_t fp);
+BV_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int flags, int type, point_t *fp);
 
 // Various update modes have similar logic - we pass in the flags to the update
 // routine to enable/disable specific portions of the overall flow.
@@ -92,9 +92,9 @@ BV_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s, struct bview *v, 
 BV_EXPORT extern void bv_polygon_vlist(struct bv_scene_obj *s);
 
 // Find the closest polygon obj to a point
-BV_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, point_t cp);
+BV_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, point_t *cp);
 
-BV_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s, point_t cp, point_t pp);
+BV_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s, point_t *cp, point_t *pp);
 BV_EXPORT extern struct bv_scene_obj *bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
 
 // Copy a bv polygon.  Note that this also performs a
@@ -108,7 +108,7 @@ BV_EXPORT extern void bv_polygon_cpy(struct bv_polygon *dest , struct bv_polygon
 // lines to highlight interior holes.
 BV_EXPORT extern int bv_polygon_calc_fdelta(struct bv_polygon *p);
 
-BG_EXPORT extern struct bg_polygon *
+BV_EXPORT extern struct bg_polygon *
 bv_polygon_fill_segments(struct bg_polygon *poly, plane_t *vp, vect2d_t line_slope, fastf_t line_spacing);
 
 // For all polygon bv_scene_objs in the objs table, apply the specified boolean

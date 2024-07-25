@@ -1,9 +1,9 @@
-link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
-
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap214e3/AP214E3_2010.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap214e3.exp)
 add_definitions(-DAP214e3)
 
-GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap214g)
+if (DEFINED ENABLE_STEP_EXPERIMENTAL)
+  GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap214g)
+endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 set(ap214g_SOURCES
   ${express_srcs}
@@ -237,24 +237,17 @@ set(AP214_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
   )
 
-BRLCAD_ADDEXEC(ap214-g "${ap214g_SOURCES}" "${ap214g_LIBS}" NO_STRICT FOLDER Conv)
-target_include_directories(ap214-g BEFORE PRIVATE ${AP214_INCLUDE_DIRS})
-add_dependencies(ap214-g step-express-${SCHEMA_NAME}-ap214g)
+if (DEFINED ENABLE_STEP_EXPERIMENTAL)
+  BRLCAD_ADDEXEC(ap214-g "${ap214g_SOURCES}" "${ap214g_LIBS}" NO_STRICT FOLDER Conv)
+  target_include_directories(ap214-g BEFORE PRIVATE ${AP214_INCLUDE_DIRS})
+  add_dependencies(ap214-g step-express-${SCHEMA_NAME}-ap214g)
+endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-if (HIDE_INTERNAL_SYMBOLS)
-  set(ap214g_IMPORTS
-    BU_DLL_IMPORTS
-    RT_DLL_IMPORTS
-    WDB_DLL_IMPORTS
-    SC_CORE_DLL_IMPORTS
-    SC_DAI_DLL_IMPORTS
-    SC_EDITOR_DLL_IMPORTS
-    SC_UTILS_DLL_IMPORTS
-    )
-  set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${ap214g_IMPORTS}")
-endif (HIDE_INTERNAL_SYMBOLS)
-
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  ${ap214g_SOURCES}
+  CMakeLists.txt
+  ap214e3.exp
+  )
 
 # Local Variables:
 # tab-width: 8

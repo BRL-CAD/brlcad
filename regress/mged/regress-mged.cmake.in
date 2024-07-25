@@ -4,6 +4,15 @@ set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(TNAME "@TNAME@")
 set(LOGFILE "@LOG_FILE@")
 
+set(BU_DIR_CACHE ${CBDIR}/cache_${TNAME})
+set(LIBRT_CACHE ${CBDIR}/rtcache_${TNAME})
+set(ENV{BU_DIR_CACHE} ${BU_DIR_CACHE})
+set(ENV{LIBRT_CACHE} ${LIBRT_CACHE})
+file(REMOVE_RECURSE "${BU_DIR_CACHE}")
+file(REMOVE_RECURSE "${LIBRT_CACHE}")
+file(MAKE_DIRECTORY "${BU_DIR_CACHE}")
+file(MAKE_DIRECTORY "${LIBRT_CACHE}")
+
 file(WRITE "${LOGFILE}" "Starting mged test run\n")
 
 # The executable locations aren't know at CMake configure time, so it is passed
@@ -43,6 +52,8 @@ if(mged_result)
 endif(mged_result)
 
 # Clean up
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_DIR_CACHE})
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE})
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${GFILE}")
 
 # Local Variables:

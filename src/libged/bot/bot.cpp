@@ -55,6 +55,88 @@ extern "C" {
 #include "./ged_bot.h"
 #include "../ged_private.h"
 
+// TODO - I think this may be the same for brep and bot, which suggests it should be
+// a common libged utility function of some sort...
+static int
+_bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv) {
+    for (int i = 0; i < argc; i++) {
+	std::string s1(argv[i]);
+	size_t pos_dash = s1.find_first_of("-:", 0);
+	size_t pos_comma = s1.find_first_of(",/;", 0);
+	if (pos_dash != std::string::npos) {
+	    // May have a range - find out
+	    std::string s2 = s1.substr(0, pos_dash);
+	    s1.erase(0, pos_dash + 1);
+	    char *n1 = bu_strdup(s1.c_str());
+	    char *n2 = bu_strdup(s2.c_str());
+	    int val1, val2, vtmp;
+	    if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		bu_free(n1, "n1");
+		bu_free(n2, "n2");
+		return BRLCAD_ERROR;
+	    }
+	    if (bu_opt_int(NULL, 1, (const char **)&n2, &val2) < 0) {
+		bu_vls_printf(vls, "Invalid index specification: %s\n", n2);
+		bu_free(n1, "n1");
+		bu_free(n2, "n2");
+		return BRLCAD_ERROR;
+	    }
+	    bu_free(n1, "n1");
+	    bu_free(n2, "n2");
+	    if (val1 > val2) {
+		vtmp = val2;
+		val2 = val1;
+		val1 = vtmp;
+	    }
+	    for (int j = val1; j <= val2; j++) {
+		elements.insert(j);
+	    }
+	    continue;
+	}
+	if (pos_comma != std::string::npos) {
+	    // May have a set - find out
+	    while (pos_comma != std::string::npos) {
+		std::string ss = s1.substr(0, pos_comma);
+		char *n1 = bu_strdup(ss.c_str());
+		int val1;
+		if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		    bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		    bu_free(n1, "n1");
+		    return BRLCAD_ERROR;
+		} else {
+		    elements.insert(val1);
+		}
+		s1.erase(0, pos_comma + 1);
+		pos_comma = s1.find_first_of(",/;", 0);
+	    }
+	    if (s1.length()) {
+		char *n1 = bu_strdup(s1.c_str());
+		int val1;
+		if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		    bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		    bu_free(n1, "n1");
+		    return BRLCAD_ERROR;
+		}
+		elements.insert(val1);
+	    }
+	    continue;
+	}
+
+	// Nothing fancy looking - see if its a number
+	int val = 0;
+	if (bu_opt_int(NULL, 1, &argv[i], &val) >= 0) {
+	    elements.insert(val);
+	} else {
+	    bu_vls_printf(vls, "Invalid index specification: %s\n", argv[i]);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
+
 int
 _bot_obj_setup(struct _ged_bot_info *gb, const char *name)
 {
@@ -342,7 +424,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_flip(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot flip <objname>";
+    const char *usage_string = "bot flip [-t] <objname>";
     const char *purpose_string = "Flip BoT triangle normal directions (turns the BoT \"inside out\")";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -351,6 +433,15 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
     argc--; argv++;
+
+    // See if we have any high level options set
+    int test_flipped = 0;
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "t", "test",    "",      NULL,                 &test_flipped,         "Test if the specified bot is inside-out");
+    BU_OPT_NULL(d[1]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    argc = ac;
 
     if (argc != 1) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -362,6 +453,18 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+
+    if (test_flipped) {
+	int ftest = rt_bot_inside_out(bot);
+	if (ftest < 0)
+	    return BRLCAD_ERROR;
+	if (!ftest) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "OK");
+	} else {
+	    bu_vls_printf(gb->gedp->ged_result_str, "BoT is inside out");
+	}
+	return BRLCAD_OK;
+    }
 
     rt_bot_flip(bot);
 
@@ -426,7 +529,6 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-
 extern "C" int
 _bot_cmd_sync(void *bs, int argc, const char **argv)
 {
@@ -465,6 +567,71 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+static void
+_bot_vlblock_plot(struct ged *gedp, struct bv_vlblock *vbp, const char *sname)
+{
+    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+    struct bview *view = gedp->ged_gvp;
+    if (BU_STR_EQUAL(nview, "1")) {
+	struct bu_vls nroot = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&nroot, "bot::%s", sname);
+	bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));
+	bu_vls_free(&nroot);
+    } else {
+	_ged_cvt_vlblock_to_solids(gedp, vbp, sname, 0);
+    }
+}
+
+extern "C" int
+_bot_cmd_plot(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "bot plot <objname> tri_index [tri_index ...]";
+    const char *purpose_string = "Plot specified triangle face(s)";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+    struct bu_color *color = gb->color;
+    struct bv_vlblock *vbp = gb->vbp;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
+
+    argc--; argv++;
+
+    std::set<int> elements;
+    if (_bot_face_specifiers(elements, gb->gedp->ged_result_str, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
+    }
+
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+
+    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+
+    std::set<int>::iterator f_it;
+    for (f_it = elements.begin(); f_it != elements.end(); ++f_it) {
+	point_t v[3];
+	for (int i = 0; i < 3; i++)
+          VMOVE(v[i], &bot->vertices[bot->faces[*f_it*3+i]*3]);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+    }
+
+    _bot_vlblock_plot(gb->gedp, vbp, "_bot_face_plot");
+
+    return BRLCAD_OK;
+}
 
 extern "C" int
 _bot_cmd_split(void *bs, int argc, const char **argv)
@@ -574,6 +741,71 @@ bot_split_done:
 	bu_free(fset_cnts, "free cnts array");
     if (split_cnt > 1)
 	bu_vls_printf(gb->gedp->ged_result_str, "Split into %d objects", split_cnt);
+    return ret;
+}
+
+extern "C" int
+_bot_cmd_strip(void *bs, int argc, const char **argv)
+{
+    int ret = BRLCAD_OK;
+    const char *usage_string = "bot strip <objname> <outputname>";
+    const char *purpose_string = "Remove triangles forming degenerate volume from a mesh.";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+
+    argc--; argv++;
+
+    if (argc != 2) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    if (db_lookup(gb->gedp->dbip, argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+    struct rt_i *rtip = rt_new_rti(gb->gedp->dbip);
+    rt_gettree(rtip, argv[0]);
+    rt_prep(rtip);
+    struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
+    int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, gb->verbosity);
+    rt_free_rti(rtip);
+    if (have_thin_faces) {
+	struct rt_bot_internal *nbot = rt_bot_remove_faces(&tfaces, bot);
+	struct rt_db_internal intern;
+	struct directory *dp = RT_DIR_NULL;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *)nbot;
+	dp = db_diradd(gb->gedp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Cannot add %s to directory\n", argv[1]);
+	    rt_db_free_internal(&intern);
+	    ret = BRLCAD_ERROR;
+	    goto bot_strip_done;
+	}
+
+	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", argv[1]);
+	    rt_db_free_internal(&intern);
+	    ret = BRLCAD_ERROR;
+	    goto bot_strip_done;
+	}
+    }
+
+bot_strip_done:
+
     return ret;
 }
 
@@ -740,11 +972,14 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "flip",       _bot_cmd_flip},
     { "get",        _bot_cmd_get},
     { "isect",      _bot_cmd_isect},
+    { "plot",       _bot_cmd_plot},
     { "remesh",     _bot_cmd_remesh},
+    { "repair",     _bot_cmd_repair},
     { "set",        _bot_cmd_set},
     { "smooth",     _bot_cmd_smooth},
     { "split",      _bot_cmd_split},
     { "stat",       _bot_cmd_stat},
+    { "strip",      _bot_cmd_strip},
     { "subd",       _bot_cmd_subd},
     { "sync",       _bot_cmd_sync},
     { (char *)NULL,      NULL}
@@ -844,7 +1079,7 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     argc = argc - cmd_pos;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    if (gb.visualize) {
+    if (gb.visualize || BU_STR_EQUAL(argv[cmd_pos], "plot")) {
 	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 	gb.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
     }

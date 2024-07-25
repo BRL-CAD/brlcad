@@ -44,9 +44,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   string(TIMESTAMP time %H:%M:%S)
   message(STATUS "Current date and time: ${date} ${time}")
 
-  # Allowed BRL-CAD configuration types
-  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
-
   #----------------------------------------------------------------------#
   # CAUTION: Verify installation settings before running CMake           #
   #----------------------------------------------------------------------#
@@ -327,7 +324,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       libwdb
       lmdb
       openNURBS
-      poly2tri
       regex_brl
       z_brl
       )
@@ -335,9 +331,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(BRLCAD_STATIC_LIBS)
   set(brlcadlibs_notinstalled)
   foreach(blib ${BRLCAD_LIBS})
-    foreach(ctype ${CMAKE_CONFIGURATION_TYPES})
-      configure_file(${BRLCAD_BIN_DIR}/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${ctype}/${blib}.dll COPYONLY)
-    endforeach()
     configure_file(${BRLCAD_BIN_DIR}/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
     set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_LIB_DIR}/${blib}.lib")
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll" DESTINATION ${CREO_OBJ_REL})
@@ -439,12 +432,10 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   if(DEFINED CREO_EXEC_PLUGIN)
     add_executable(creo-brl-exe ${CREO2BRL_SOURCES})
     target_link_libraries(creo-brl-exe ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
-    foreach(ctype ${CMAKE_CONFIGURATION_TYPES})
-      set(DAT_STARTUP "spawn")
-      set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${ctype}/creo-brl-exe.exe")
-      set(DAT_TEXT_DIR ${CREO_MSG_DIR})
-      configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/${ctype}/creo-brl-debug.dat" @ONLY)
-    endforeach()
+    set(DAT_STARTUP "spawn")
+    set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-exe.exe")
+    set(DAT_TEXT_DIR ${CREO_MSG_DIR})
+    configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" @ONLY)
     set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
   endif()
 

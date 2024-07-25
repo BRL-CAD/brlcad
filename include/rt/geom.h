@@ -44,8 +44,8 @@
 #include "vmath.h"
 #include "rt/defines.h"
 
-#include "../nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
+#include "brep/defines.h"
 
 
 __BEGIN_DECLS
@@ -611,6 +611,7 @@ struct rt_curve {
 /**
  * used by the sketch, solid of extrusion and the annotation primitive
  */
+
 struct line_seg		/**< @brief line segment */
 {
     uint32_t magic;
@@ -632,12 +633,17 @@ struct carc_seg		/**< @brief circular arc segment */
 };
 
 
+struct seg_knot_vector {
+    int k_size;         /**< @brief knot vector size */
+    fastf_t * knots;    /**< @brief pointer to knot vector */
+};
+
 struct nurb_seg		/**< @brief NURB curve segment */
 {
     uint32_t magic;
     int order;		/**< @brief order of NURB curve (degree - 1) */
     int pt_type;	/**< @brief type of NURB curve */
-    struct knot_vector k; /**< @brief knot vector for NURB curve */
+    struct seg_knot_vector k; /**< @brief knot vector for NURB curve */
     int c_size;		/**< @brief number of control points */
     int *ctl_points;	/**< @brief array of indices for control points */
     fastf_t *weights;	/**< @brief array of weights for control points (NULL if non_rational) */

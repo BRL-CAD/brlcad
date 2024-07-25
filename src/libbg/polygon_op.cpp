@@ -56,7 +56,7 @@ bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, plane_t *vp, fastf_t 
         poly.resize(n);
         for (k = 0; k < n; k++) {
 	    fastf_t fx, fy;
-	    bg_plane_closest_pt(&fx, &fy, *vp, gpoly->contour[j].point[k]);
+	    bg_plane_closest_pt(&fx, &fy, vp, &gpoly->contour[j].point[k]);
 
             poly[k].X = (ClipperLib::long64)(fx * sf);
             poly[k].Y = (ClipperLib::long64)(fy * sf);
@@ -110,7 +110,7 @@ bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, plane_t 
 	for (size_t j = 0; j < polyA->contour[i].num_points; ++j) {
 	    point_t vpoint;
 	    fastf_t fx, fy;
-	    bg_plane_closest_pt(&fx, &fy, *vp, polyA->contour[i].point[j]);
+	    bg_plane_closest_pt(&fx, &fy, vp, &polyA->contour[i].point[j]);
 	    VSET(vpoint, fx * scale, fy * scale, 0);
 	    V2MOVE(polyA_2d.p_contour[i].pc_point[j], vpoint);
 	}
@@ -128,7 +128,7 @@ bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, plane_t 
 	for (size_t j = 0; j < polyB->contour[i].num_points; ++j) {
 	    point_t vpoint;
 	    fastf_t fx, fy;
-	    bg_plane_closest_pt(&fx, &fy, *vp, polyB->contour[i].point[j]);
+	    bg_plane_closest_pt(&fx, &fy, vp, &polyB->contour[i].point[j]);
 	    VSET(vpoint, fx * scale, fy * scale, 0);
 	    V2MOVE(polyB_2d.p_contour[i].pc_point[j], vpoint);
 	}
@@ -323,7 +323,7 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg
 	    fastf_t fx = gpoly->contour[j].point[k][0];
 	    fastf_t fy = gpoly->contour[j].point[k][1];
 	    if (vp)
-		bg_plane_closest_pt(&fx, &fy, *vp, gpoly->contour[j].point[k]);
+		bg_plane_closest_pt(&fx, &fy, vp, &gpoly->contour[j].point[k]);
 
 	    curr_poly[k].X = (ClipperLib::long64)(fx * sf);
 	    curr_poly[k].Y = (ClipperLib::long64)(fy * sf);
@@ -382,7 +382,7 @@ extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, plane_t *vp)
 
 	for (j = 0; j < outp->contour[n].num_points; ++j) {
 	    if (vp) {
-		bg_plane_pt_at(&outp->contour[n].point[j], *vp, (fastf_t)(path[j].X) * sf, (fastf_t)(path[j].Y) * sf);
+		bg_plane_pt_at(&outp->contour[n].point[j], vp, (fastf_t)(path[j].X) * sf, (fastf_t)(path[j].Y) * sf);
 	    } else {
 		VSET(outp->contour[n].point[j], (fastf_t)(path[j].X) * sf, (fastf_t)(path[j].Y) * sf, 0);
 	    }

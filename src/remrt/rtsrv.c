@@ -240,7 +240,7 @@ main(int argc, char **argv)
 	    return 0;
 
 	/* Go into our own process group */
-	n = bu_process_id();
+	n = bu_pid();
 #ifdef HAVE_SETPGID
 	if (setpgid(n, n) < 0)
 	    perror("setpgid");

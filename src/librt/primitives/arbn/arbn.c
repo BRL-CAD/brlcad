@@ -1485,6 +1485,40 @@ rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
     bu_free((char *)faces, "rt_arbn_volume: faces");
 }
 
+int
+rt_arbn_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_arbn_internal *oarb = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(oarb);
+
+    // Make the output ARBN
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_ARBN;
+    nip->idb_meth = &OBJ[ID_ARBN];
+    struct rt_arbn_internal *arbn = NULL;
+    BU_ALLOC(arbn, struct rt_arbn_internal);
+    nip->idb_ptr = arbn;
+    arbn->magic = RT_ARBN_INTERNAL_MAGIC;
+    arbn->neqn = oarb->neqn;
+    arbn->eqn = (plane_t *)bu_calloc(oarb->neqn, sizeof(plane_t), "arbn eqns");
+    for (unsigned long i = 0; i < oarb->neqn; i++) {
+	HMOVE(arbn->eqn[i], oarb->eqn[i]);
+	arbn->eqn[i][3]+=val;
+    }
+
+    *oip = nip;
+    return BRLCAD_OK;
+}
+
 
 /** @} */
 /*

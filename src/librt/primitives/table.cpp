@@ -80,7 +80,8 @@ extern "C" {
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
     extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op); \
     extern int rt_##name##_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version); \
-    extern void rt_##name##_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+    extern void rt_##name##_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip); \
+    extern int rt_##name##_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -207,6 +208,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -254,7 +256,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_tor_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tor_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -301,7 +304,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels), /* label */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb) /* perturb */
     },
 
     {
@@ -348,7 +352,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -395,7 +400,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_arb_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_arb_labels), /* label */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arb_perturb) /* perturb */
     },
 
     {
@@ -442,7 +448,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_ars_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ars_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -489,7 +496,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -536,7 +544,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -583,7 +592,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -630,7 +640,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_nurb_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_nurb_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -677,7 +688,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_sph_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_sph_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -724,7 +736,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -771,7 +784,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -818,7 +832,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -865,7 +880,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arbn_perturb) /* perturb */
     },
 
     {
@@ -912,7 +928,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -959,7 +976,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_part_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_part_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1006,7 +1024,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_rpc_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_rpc_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1053,7 +1072,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_rhc_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_rhc_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1100,7 +1120,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_epa_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_epa_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1147,7 +1168,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_ehy_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ehy_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1194,7 +1216,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_eto_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_eto_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1241,7 +1264,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1288,7 +1312,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selections */
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection),
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
 #if 0
 	0, /* ft_use_rpp */
 	NULL, /* prep */
@@ -1331,7 +1356,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
 #endif
     },
 
@@ -1379,7 +1405,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1426,7 +1453,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1473,7 +1501,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1520,7 +1549,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1567,7 +1597,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1614,7 +1645,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_cline_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_cline_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1661,7 +1693,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1681,7 +1714,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* plot */
 	NULL, /* adaptive_plot */
 	NULL, /* vshot */
-	NULL, /* tess */
+	NULL, /* tess - TODO - is there any reason we can't do the treewalk evaluation as a rt_comb_tess? */
 	NULL, /* tnurb */
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_comb_import5),
@@ -1708,7 +1741,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1757,7 +1791,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1804,7 +1839,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1853,7 +1889,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1900,7 +1937,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1947,7 +1985,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -1994,7 +2033,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_brep_process_selection),
         RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(rt_brep_prep_serialize),
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -2041,7 +2081,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_hyp_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_hyp_labels), /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -2088,7 +2129,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -2135,7 +2177,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -2182,7 +2225,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -2229,7 +2273,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -2276,7 +2321,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
 
@@ -2324,7 +2370,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
 
@@ -2372,7 +2419,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -2419,7 +2467,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     },
 
     {
@@ -2466,7 +2515,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL  /* perturb */
     }
 };
 

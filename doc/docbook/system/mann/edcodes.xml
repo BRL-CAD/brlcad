@@ -19,8 +19,9 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>edcodes</command>
-     <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
-    <arg choice="opt" rep="norepeat"/>
+     <arg choice="opt" rep="norepeat">-i</arg>
+     <arg choice="opt" rep="norepeat">-r</arg>
+     <arg choice="req" rep="norepeat"><replaceable>object(s)</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -30,7 +31,10 @@
 	with the ident, air code, material code, LOS, and name of all the regions in the
 	specified objects. The user may then modify the entries (except for the names). The
 	editor used is whatever the user has set in the environment variable <emphasis>EDITOR</emphasis>. If
-	<emphasis>EDITOR</emphasis> is not set, then <emphasis>/bin/ed</emphasis> is used.
+	<emphasis>EDITOR</emphasis> is not set, then <emphasis>/bin/ed</emphasis> is used. The file is sorted
+	  by order of appearance by default. The <emphasis>-r</emphasis> flag sorts regions into alphabetical order
+	  (using the full path). The <emphasis>-i</emphasis> flag sorts by ident.
+	
     </para>
 </refsection>
 

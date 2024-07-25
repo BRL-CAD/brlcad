@@ -36,19 +36,6 @@ __BEGIN_DECLS
 /** @{ */
 /** @file bu/process.h */
 
-/**
- * returns the process ID of the calling process
- */
-BU_EXPORT extern int bu_process_id(void);
-
-/**
- * @brief terminate a given process and any children.
- *
- * returns truthfully whether the process could be killed.
- */
-BU_EXPORT extern int bu_terminate(int process);
-
-
 /* Wrappers for using subprocess execution */
 struct bu_process;
 
@@ -57,6 +44,112 @@ typedef enum {
     BU_PROCESS_STDOUT,
     BU_PROCESS_STDERR
 } bu_process_io_t;
+
+typedef enum {
+    BU_PROCESS_DEFAULT = 0x0,	    // default creation: equiv to (bu_process_create_opts)0
+    BU_PROCESS_OUT_EQ_ERR = 0x1,    // stdout reads from stderr instead
+    BU_PROCESS_HIDE_WINDOW = 0x2,   // (Windows only)hide creation window if process would normally spawn one
+} bu_process_create_opts;
+
+#ifndef ERROR_PROCESS_ABORTED
+// have a consistent 'aborted' return code on cross-platforms
+#define ERROR_PROCESS_ABORTED 1067L
+#endif
+
+/**
+ * @brief Wrapper for executing a sub-process
+ *
+ * @deprecated use bu_process_create() instead.
+ *
+ * @note FIXME: eliminate the last two options so all callers are not
+ * exposed to parameters not relevant to them.
+ */
+DEPRECATED BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
+/**
+ * @brief Wrapper for creating a sub-process. Allocates bu_process and starts process
+ *
+ * @param[out] pinfo - bu_process struct to be created
+ * @param[in] argv - array of command line arguments to executed. Last element MUST be NULL
+ * @param[in] process_creation_opts - bit field for bu_process_create_opts
+ *
+ * @note
+ * does not guarantee child process started successfully. use bu_process_wait() to check exit status
+ */
+BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **argv, int process_creation_opts);
+
+
+/**
+ * @brief wait for a sub-process to complete, release all process
+ * allocations, and release the process itself.
+ *
+ * @deprecated use bu_process_wait_n instead.
+ *
+ * @note FIXME: 'aborted' argument may be unnecessary (could make function
+ * provide return value of the process waited for).  wtime
+ * undocumented.
+ */
+ DEPRECATED BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+/**
+ * @brief wait for a sub-process to complete, release all process
+ * allocations, and release the process itself.
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] wtime - maximum wait time (in ms) before forcibly stopping process. NOTE: 0 is treated as INFINITE
+ *
+ * @return
+ * 0 on success; ERROR_PROCESS_ABORTED for aborted process; Otherwise, platform specific exit status
+ */
+ BU_EXPORT extern int bu_process_wait_n(struct bu_process **pinfo, int wtime);
+
+
+/**
+ * @brief determine whether process is still running
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ *
+ * @return
+ * 1 if alive, else 0
+ */
+BU_EXPORT extern int bu_process_alive(struct bu_process* pinfo);
+
+
+/**
+ * @brief determine whether there is data pending on fd
+ *
+ * @param[in] fd - file descriptor of interest
+ *
+ * @return
+ * 1 if there is data on fd, else 0
+ */
+BU_EXPORT extern int bu_process_pending(int fd);
+
+
+/**
+ * Read up to n bytes into buff from a process's specified output
+ * channel (fd == 1 for output, fd == 2 for err).
+ *
+ * @deprecated use bu_process_read_n instead
+ *
+ * @note FIXME: arg ordering and input/output grouping is wrong.  partially
+ * redundant with bu_process_fd() and/or bu_process_open().
+ */
+DEPRECATED BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
+/**
+ * @brief Read from a process's specified output channel
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] d - channel (BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
+ * @param[in] n - max number of bytes to be read
+ * @param[out] buff - data read from channel
+ *
+ * @return
+ * returns the number of bytes read into buff; 0 if read is at EOF; -1 on error
+ *
+ * @note the returned number of bytes read may be less than 'n'
+ * in a successful read.
+ */
+BU_EXPORT extern int bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff);
+
 
 /**
  * Open and return a FILE pointer associated with the specified file
@@ -70,8 +163,26 @@ typedef enum {
  *
  * FIXME: misnomer, this does not open a process.  Probably doesn't
  * need to exist; just call fdopen().
+ * 
+ * @deprecated use bu_process_file_open instead.
  */
-BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, bu_process_io_t d);
+DEPRECATED BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, bu_process_io_t d);
+/**
+ * @brief Open and return a FILE pointer associated with the specified channel.
+ *
+ * Input will be opened write, output and error will be opened
+ * read.
+ *
+ * Caller should not close these FILE pointers directly.  Call
+ * bu_process_close() instead.
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] d - channel (BU_PROCESS_STDIN, BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
+ *
+ * @return
+ * FILE pointer for specified channel
+ */
+BU_EXPORT extern FILE *bu_process_file_open(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
@@ -79,25 +190,40 @@ BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, bu_process_io_t
  *
  * FIXME: misnomer, this does not close a process.  Probably doesn't
  * need to exist; just call fclose().
+ *
+ * @deprecated use bu_process_file_close instead.
  */
-BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, bu_process_io_t d);
+DEPRECATED BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, bu_process_io_t d);
+/**
+ * @brief Close any FILE pointers internally opened via bu_process_open().
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] d - channel (BU_PROCESS_STDIN, BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
+ */
+BU_EXPORT extern void bu_process_file_close(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
- * Retrieve the file descriptor to the input (BU_PROCESS_STDIN), output
- * (BU_PROCESS_STDOUT), or error (BU_PROCESS_STDERR) I/O channel associated
- * with the process.
+ * @brief Retrieve the file descriptor to the I/O channel associated with the process.
  *
- * For Windows cases where HANDLE is needed, use _get_osfhandle
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[in] d - channel (BU_PROCESS_STDIN, BU_PROCESS_STDOUT, BU_PROCESS_STDERR)
+ *
+ * @return
+ * file descriptor
+ *
+ * @note For Windows cases where HANDLE is needed, use _get_osfhandle
  */
 BU_EXPORT int bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
- * Return the pid of the subprocess.
+ * @brief Return the pid of the subprocess.
  *
- * FIXME: seemingly redundant or combinable with bu_process_id()
- * (perhaps make NULL be equivalent to the current process).
+ * @param[in] pinfo - bu_process structure of interest
+ *
+ * @return
+ * process ID
  */
 BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
 
@@ -119,61 +245,86 @@ BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
  *
  * @return
  * the corresponding argc count for pinfo's argv array.
+ *
+ * @deprecated use bu_process_args_n instead
  */
-BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo);
+DEPRECATED BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo);
+/**
+ * Reports one or both of the command string and the argv array
+ * used to execute the process.
+ *
+ * The bu_process container owns all strings for both cmd and argv -
+ * for the caller they are read-only.
+ *
+ * If either cmd or argv are NULL they will be skipped - if the
+ * caller only wants one of these outputs the other argument can
+ * be set to NULL.
+ *
+ * @param[in] pinfo - the bu_process structure of interest
+ * @param[out] cmd - pointer to the cmd string used to launch pinfo
+ * @param[out] argv - pointer to the argv array used to launch pinfo
+ *
+ * @return
+ * the corresponding argc count for pinfo's argv array.
+ */
+BU_EXPORT int bu_process_args_n(struct bu_process *pinfo, const char **cmd, const char * const **argv);
 
 
 /**
- * Read up to n bytes into buff from a process's specified output
- * channel (fd == 1 for output, fd == 2 for err).
+ * @brief Return the process ID of the calling process
  *
- * FIXME: arg ordering and input/output grouping is wrong.  partially
- * redundant with bu_process_fd() and/or bu_process_open().
+ * @return
+ * process ID
+ *
+ * @deprecated use bu_pid instead
  */
-BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
+DEPRECATED BU_EXPORT extern int bu_process_id(void);
+/**
+ * @brief Return the process ID of the calling process
+ *
+ * @return
+ * process ID
+ */
+BU_EXPORT extern int bu_pid(void);
 
 
 /**
- * @brief Wrapper for executing a sub-process
+ * @brief determine whether process is still running using its ID
  *
- * FIXME: eliminate the last two options so all callers are not
- * exposed to parameters not relevant to them.
+ * @param[in] pid - process ID of interest
+ *
+ * @return
+ * 1 if alive, else 0
  */
-BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
+BU_EXPORT extern int bu_pid_alive(int pid);
 
 
 /**
- * @brief wait for a sub-process to complete, release all process
- * allocations, and release the process itself.
+ * @brief terminate a given process and any children.
  *
- * FIXME: 'aborted' argument may be unnecessary (could make function
- * provide return value of the process waited for).  wtime
- * undocumented.
+ * returns truthfully whether the process could be killed.
+ *
+ * @deprecated use bu_pid_terminate instead
  */
- BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+DEPRECATED BU_EXPORT extern int bu_terminate(int process);
+/**
+ * @brief terminate a given process and any children.
+ *
+ * @param[in] pid - process ID of interest
+ *
+ * @return
+ * returns truthfully whether the process could be killed
+ */
+BU_EXPORT extern int bu_pid_terminate(int pid);
+
 
 /**
  * @brief detect whether or not a program is being run in interactive mode
  *
- * Returns 1 if interactive, else 0
+ * @return
+ * 1 if interactive, else 0
  */
 BU_EXPORT extern int bu_interactive(void);
-
-
-/**
- * @brief determine whether there is data pending on fd
- *
- * 1 if there is data, else 0
- */
-BU_EXPORT extern int bu_process_pending(int fd);
-
-
-/**
- * @brief determine whether there is data pending on fd
- *
- * 1 if there is data, else 0
- */
-BU_EXPORT extern int bu_process_pending(int fd);
 
 /** @} */
 

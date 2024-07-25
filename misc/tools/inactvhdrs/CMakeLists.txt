@@ -30,7 +30,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # *******************************************************************
-# ***                   env2c CMakeLists.txt                      ***
+# ***                      CMakeLists.txt                         ***
 # *******************************************************************
 
 # Minimum required version of CMake

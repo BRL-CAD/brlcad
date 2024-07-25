@@ -1,7 +1,4 @@
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  find_package_eigen(REQUIRED)
-  BRLCAD_Find_Package(POLY2TRI REQUIRED)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+find_package_eigen(REQUIRED)
 
 set(SPSR_srcs
   spsr/Allocator.h
@@ -77,32 +74,17 @@ set(LIBBG_SOURCES
 # Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BG_LIBS
   ${libbg_deps}
-  ${POLY2TRI_LIBRARIES}
   ${LMDB_LIBRARIES}
   )
 
 set(BG_INCLUDE_DIRS
-  ${POLY2TRI_INCLUDE_DIRS}
   ${SPSR_INCLUDE_DIR}
   ${LMDB_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIR}
   )
-if (EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
-  set(BG_INCLUDE_DIRS ${BG_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
-endif (EXISTS ${BRLCAD_SOURCE_DIR}/src/other)
 
 BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
-if (HIDE_INTERNAL_SYMBOLS)
-  if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
-    set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_IMPORTS")
-  endif (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
-  if (TARGET libbg-obj)
-    if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
-      set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_IMPORTS")
-    endif (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
-  endif (TARGET libbg-obj)
-endif (HIDE_INTERNAL_SYMBOLS)
 
 # altivec vectorization is broken in our bundled version of eigen.
 # looks like it was fixed in upstream long time ago, so just disable
@@ -128,6 +110,7 @@ set(bg_ignore
   bg_private.h
   clipper.hpp
   delaunator.hpp
+  detria.hpp
   earcut.hpp
   pointgen.c
   spsr/LICENSE

@@ -154,12 +154,12 @@ set mged_help_data(dump)	$helplib_data(wdb_dump)
 set mged_help_data(dup)		$helplib_data(wdb_dup)
 set mged_help_data(E)		$helplib_data(dgo_E)
 set mged_help_data(e)		$helplib_data(dgo_draw)
-set mged_help_data(e_id)	{{regionID[-regionID] ...} {Draws object(s) with the specified region ID number or within the hyphenated range(s).
+set mged_help_data(e_id)	{{regionID[-regionID] ...} {Draws object(s) with the specified ident or within the hyphenated range(s).
 
 Example: e_id 1000 2000 3000-4000}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code(s) (i.e., numbers >=0)}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
-set mged_help_data(edcodes)	{{[-n] object(s)}	{edit region ident codes.   only reports matches without renaming with the -n option.}}
+set mged_help_data(edcodes)	{{[-i -r] object(s)}	{Open a text editor to edit ident, aircode, material id, and los values.}}
 set mged_help_data(edcolor)	{{}	{edit the color table}}
 set mged_help_data(edcomb)	{{combname [regionflag regionID airID los% materialID]}	{edit combination record info}}
 set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
@@ -211,8 +211,8 @@ set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|a
 set mged_help_data(l)		$helplib_data(wdb_list)
 set mged_help_data(labelface)	{{object[s]}	{label faces of wireframes of objects}}
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
-set mged_help_data(lc)          {{[-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}} {list codes within a group or combination}}
-set mged_help_data(lc)          {{[options] object} {check/analyze/validate the given object}}
+set mged_help_data(lc)          {{[-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}} {list ident, material id, LOS, and aircode of regions within a group}}
+set mged_help_data(lint)        {{[options] object} {check/analyze/validate the given object}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
@@ -292,12 +292,13 @@ set mged_help_data(rcc-cap)     {{rccname newname [height] [b|t]}      {create a
 set mged_help_data(rcc-tgc)     {{rccname newname x y z [b|t]}     {create a tgc with the specified apex at an end of an rcc}}
 set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc}}
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
+set mged_help_data(reair)	{{comb aircode}	{assign same aircode to all regions under a given combination}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
 set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{regionID [airID [los% [materialID]]]}	{change next region default codes}}
 set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
-set mged_help_data(reid)	{{[-n num] comb regionID}	{sequentially assign IDs to all regions under a specified combination starting from regionID in increments of 'num'}}
+set mged_help_data(reid)	{{[-n num] comb regionID}	{sequentially assign idents to all regions under a specified combination starting from regionID in increments of 'num'}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
 set mged_help_data(relos)	{{comb los%}	{assign same line-of-sight thickness percentage to all regions under a given combination}}
 set mged_help_data(remat)	{{comb materialID}	{assign the same material ID number to all regions under a given combination}}

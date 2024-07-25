@@ -88,18 +88,11 @@ else(NOT DEFINED PDF_CONF_EXECUTABLE)
   endif(NOT EXISTS "${BRLCAD_SOURCE_DIR}/misc/CMake/${PDF_CONF_EXECUTABLE}.cmake.in")
 endif(NOT DEFINED PDF_CONV_EXECUTABLE)
 
-# Get our root path
-if(CMAKE_CONFIGURATION_TYPES)
-  set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
-else(CMAKE_CONFIGURATION_TYPES)
-  set(bin_root "${CMAKE_BINARY_DIR}")
-endif(CMAKE_CONFIGURATION_TYPES)
-
 # xsltproc is finicky about slashes in names - do some sanity
 # scrubbing of the full root path string in preparation for generating
 # DocBook scripts
-string(REGEX REPLACE "/+" "/" bin_root "${bin_root}")
-string(REGEX REPLACE "/$" "" bin_root "${bin_root}")
+string(REGEX REPLACE "/+" "/" ${CMAKE_BINARY_DIR} "${${CMAKE_BINARY_DIR}}")
+string(REGEX REPLACE "/$" "" ${CMAKE_BINARY_DIR} "${${CMAKE_BINARY_DIR}}")
 
 set(OUTPUT_FORMATS)
 if(BRLCAD_EXTRADOCS_HTML)
@@ -139,23 +132,11 @@ set(MAN5_DIR "${DOC_DIR}/../man/")
 set(MANN_DIR "${DOC_DIR}/../man/")
 set(PDF_DIR "${DOC_DIR}/pdf/")
 
-# The general pattern of the BRL-CAD build is to use CMAKE_CFG_INTDIR
-# when multi-configuration builds complicate the location of binaries.
-# In this case, however, we are using a generated script with a
-# different mechanism for handling this situation, and we need to
-# update the executable paths accordingly if they are configuration
-# dependent.
-#
 # TODO - is there some way generator expressions could be used to
 # improve this?  Maybe pass the build time location of these programs
 # to the scripts as -D arguments?
-if(CMAKE_CONFIGURATION_TYPES)
-  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
-  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
-else(CMAKE_CONFIGURATION_TYPES)
-  set(XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
-  set(XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
-endif(CMAKE_CONFIGURATION_TYPES)
+set(XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
+set(XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
 
 # Convenience target to launch all DocBook builds
 add_custom_target(docbook ALL)
@@ -235,16 +216,8 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
       foreach(fmt ${fmts})
 	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
 	if(NOT "${IN_LIST}" STREQUAL "-1")
-	  set(${fmt}_OUTFILE_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
-	  # Use CMAKE_CFG_INTDIR for build system output list, but
-	  # need BUILD_TYPE form of path for scripts and install
-	  # commands.
-	  if(CMAKE_CONFIGURATION_TYPES)
-	    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
-	  else(CMAKE_CONFIGURATION_TYPES)
-	    set(${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
-	  endif(CMAKE_CONFIGURATION_TYPES)
-	  set(outputs ${outputs} ${${fmt}_OUTFILE_RAW})
+	  set(${fmt}_OUTFILE "${CMAKE_BINARY_DIR}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
+	  set(outputs ${outputs} ${${fmt}_OUTFILE})
 	  install(FILES "${${fmt}_OUTFILE}" DESTINATION ${${fmt}_DIR}${outdir})
 	endif(NOT "${IN_LIST}" STREQUAL "-1")
       endforeach(fmt ${OUTPUT_FORMATS})
@@ -265,13 +238,8 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	    # Use CMAKE_CFG_INTDIR for build system output list, but
 	    # need BUILD_TYPE form of path for scripts and install
 	    # commands.
-	    set(${fmt}_EXTRA_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${extra_out}")
-	    if(CMAKE_CONFIGURATION_TYPES)
-	      string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
-	    else(CMAKE_CONFIGURATION_TYPES)
-	      set(${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
-	    endif(CMAKE_CONFIGURATION_TYPES)
-	    set(outputs ${outputs} ${${fmt}_EXTRA_RAW})
+	    set(${fmt}_EXTRA "${CMAKE_BINARY_DIR}/${${fmt}_DIR}${outdir}/${extra_out}")
+	    set(outputs ${outputs} ${${fmt}_EXTRA})
 	    install(FILES "${${fmt}_EXTRA}" DESTINATION ${${fmt}_DIR}${outdir})
 	  endforeach(extra_out ${EXTRA_OUTPUTS})
 	endif(NOT "${IN_LIST}" STREQUAL "-1")

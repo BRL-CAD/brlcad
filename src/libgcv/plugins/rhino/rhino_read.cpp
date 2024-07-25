@@ -282,8 +282,11 @@ chk_name(const ON_wString& _name, std::unordered_map <std::string, int>& used_na
 std::unordered_map <std::string, std::string>
 load_model(const char* default_name, const std::string& path, ONX_Model& model)
 {
+    if (!bu_file_exists(path.c_str(), NULL))
+	throw InvalidRhinoModelError("Specified file not found.");
+
     if (!model.Read(path.c_str()))
-	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
+	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v8 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 
     std::unordered_map <std::string, std::string> uuid_to_name;
     std::unordered_map <std::string, int> used_names;			/* used names, times used */
@@ -313,7 +316,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
     if (mk_brep(&wdb, name.c_str(), (void *)b))
 	bu_bomb("mk_brep() failed");
     /* tag solid with converter attribute */
-    if (db5_update_attribute(name.c_str(), "converter", "3dm - BRL", wdb.dbip))
+    if (db5_update_attribute(name.c_str(), "importer", "3dm-g", wdb.dbip))
 	bu_bomb("db5_update_attribute() failed");
 }
 
@@ -387,7 +390,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 		   thicknesses.empty() ? NULL :  &thicknesses.at(0), bitv.ptr))
 	    bu_bomb("mk_bot() failed");
 	/* tag solid with converter attribute */
-	if (db5_update_attribute(name.c_str(), "converter", "3dm - BRL", wdb.dbip))
+	if (db5_update_attribute(name.c_str(), "importer", "3dm-g", wdb.dbip))
 	    bu_bomb("db5_update_attribute() failed");
 	return;
     }
@@ -488,7 +491,7 @@ get_object_material(const ON_3dmObjectAttributes *attributes,
 		    bool &out_own_shader, bool &out_own_rgb)
 {
     if (attributes) {
-	const ON_Material *temp = ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
+	const ON_Material *temp = ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
 	out_shader = get_shader(temp);
 	out_own_shader = attributes->MaterialSource() != ON::material_from_parent;
 
@@ -499,7 +502,7 @@ get_object_material(const ON_3dmObjectAttributes *attributes,
 	out_own_rgb = attributes->ColorSource() != ON::color_from_parent;
 
 	if (!out_rgb[0] && !out_rgb[1] && !out_rgb[2]) {
-	    const ON_Material *material= ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
+	    const ON_Material *material= ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
 	    if (material) {
 		out_rgb[0] = static_cast<unsigned char>(material->m_diffuse.Red());
 		out_rgb[1] = static_cast<unsigned char>(material->m_diffuse.Green());
@@ -674,7 +677,8 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model, std::unordered_map<std::
 	    continue;
 
 	if (idef->IsLinkedType()) {
-	    std::cout << "Warning - instance " << idef->Name().Array() << " is defined using external file, unsupported\n";
+	    ON_String iname = ON_String(idef->Name());
+	    std::cout << "Warning - instance " << iname.Array() << " is defined using external file, unsupported\n";
 	    continue;
 	}
 
@@ -809,7 +813,7 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model,
     ON_UuidToString(l->Id(), id);
     std::string name = uuid_to_names[std::string(id.Array())];
     ON_Color wc = (l->Color() == ON_UNSET_COLOR) ? l->PlotColor() : l->Color();
-    ON_ModelComponentReference mref = model.RenderMaterialFromIndex(l->RenderMaterialIndex());
+    ON_ModelComponentReference mref = model.MaterialFromIndex(l->RenderMaterialIndex());
     const ON_Material *mp = ON_Material::Cast(mref.ModelComponent());
 
     // TODO - there's also wc.Alpha() - should translate that to shader settings if not 0
@@ -901,7 +905,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
 
     // Set region flags, add .r suffix to regions if not already present
     renamed.clear();
-    const char *reg_search = "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader";
+    const char *reg_search = "-type comb -above=1 -type shape";
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
     bu_ptbl found_instances = BU_PTBL_INIT_ZERO;

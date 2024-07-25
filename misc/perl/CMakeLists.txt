@@ -18,7 +18,6 @@ if(SWIG_FOUND AND NOT "${SWIG_USE_FILE}" STREQUAL "")
 #  include_directories(/usr/include)
 #  include_directories(/usr/include/linux)
 #  include_directories(${CMAKE_SOURCE_DIR}/include)
-#  include_directories(${CMAKE_SOURCE_DIR}/src/other/tcl/generic)
 
   set_source_files_properties(rt.i
     PROPERTIES SWIG_FLAGS "-includeall"

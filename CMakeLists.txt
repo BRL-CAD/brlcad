@@ -111,6 +111,20 @@ if (POLICY CMP0127)
   cmake_policy(SET CMP0127 NEW)
 endif (POLICY CMP0127)
 
+message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+message("CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
+
+if (NOT EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+  message(FATAL_ERROR "Invalid brlcad directory: ${CMAKE_SOURCE_DIR}")
+endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+
+if (CMAKE_ORIGINAL_SRC_DIR)
+  if (NOT "${CMAKE_ORIGINAL_SRC_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+    message(FATAL_ERROR "Got ${CMAKE_ORIGINAL_SOURCE_DIR}/CMakeLists.txt from ${CMAKE_SOURCE_DIR}")
+  endif (NOT "${CMAKE_ORIGINAL_SRC_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+endif (CMAKE_ORIGINAL_SRC_DIR)
+
+set(CMAKE_ORIGINAL_SRC_DIR "${CMAKE_SOURCE_DIR}" CACHE PATH "Source of original CMakeLists.txt file" FORCE)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
@@ -146,12 +160,20 @@ if(BRLCAD_PRINT_MSGS)
   message(STATUS "CMake version: ${CMAKE_VERSION}")
 endif(BRLCAD_PRINT_MSGS)
 
+#---------------------------------------------------------------------
+# Management of build types
+include(BRLCAD_Build_Types)
 
 #---------------------------------------------------------------------
 # Setup and checks related to system environment settings.  Some of
 # these impact search results needed to set default options, so we
 # do this early in the process.
 include(BRLCAD_Environment_Setup)
+
+# We do NOT want CMake looking in the User Package Registry - have encountered
+# at least one case where stale or incorrect information there has resulted in
+# an incorrect include directory for Eigen based on bext build info.
+set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 
 # Populate these early, even though their main use is in
 # misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
@@ -160,12 +182,6 @@ set(BRLCAD_EXT_DIR_ENV "$ENV{BRLCAD_EXT_DIR}")
 if (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
   set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR_ENV})
 endif (BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
-
-# For a full tarball of the repo and its dependencies, look in the
-# location package_source would place a bext copy
-if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/src/bext")
-  set(BRLCAD_EXT_DIR "${CMAKE_SOURCE_DIR}/src/bext")
-endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/src/bext")
 
 if (DEFINED BRLCAD_EXT_DIR)
   if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
@@ -188,14 +204,49 @@ endif (DEFINED BRLCAD_EXT_DIR)
 
 # If we're doing the non-src-other build, we've got to have bext for at least a
 # few custom components no matter how many system packages got installed.
-if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
-  if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-    message(WARNING "BRL-CAD requires a source for external components, but no BRLCAD_EXT_DIR is set.  To use a pre-compiled set of components, set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/bext).\nBecause no BRLCAD_EXT_DIR was successfully configured, BRL-CAD will attempt to download, configure and build its own bext copy locally during the configure process.")
-  endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+  message(WARNING "BRL-CAD requires a source for external components, but no BRLCAD_EXT_DIR is set.  To use a pre-compiled set of components, set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/bext).")
+  if (NOT EXISTS ${CMAKE_SOURCE_DIR}/src/bext/README.md)
+    message(WARNING "Because no BRLCAD_EXT_DIR was successfully configured, BRL-CAD will attempt to download, configure and build its own bext copy locally during the configure process.")
+  else (NOT EXISTS ${CMAKE_SOURCE_DIR}/src/bext/README.md)
+    message(WARNING "Because no BRLCAD_EXT_DIR was successfully configured, BRL-CAD will attempt to configure and build its own bext copy locally during the configure process.")
+  endif (NOT EXISTS ${CMAKE_SOURCE_DIR}/src/bext/README.md)
+endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 
-  # Tell CPack to bundle bext into the source tarball
-  set(CPACK_INCLUDE_EXT 1)
-endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
+# By default, we don't bundle bext into the source tarball for performance
+# reasons, but the support is there if the dev wants to pay the price in time
+# and disk space.
+if (NOT DEFINED CPACK_INCLUDE_EXT)
+  set(CPACK_INCLUDE_EXT OFF)
+endif (NOT DEFINED CPACK_INCLUDE_EXT)
+
+# Before we do a lot of configure work, check whether we've got a type mismatch
+# between bext and the BRL-CAD build type. If not, on Windows at least, it's a
+# fatal error.
+#
+# NOTE: This test must come AFTER the inclusion of BRLCAD_Build_Types
+if (CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+  find_program(DUMPBIN_EXEC dumpbin)
+  set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
+  if (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+    # dumpbin doesn't like CMake style paths
+    file(TO_NATIVE_PATH "${TEST_BINFILE}" TBFN)
+    # https://stackoverflow.com/a/28304716/2037687
+    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TBFN}
+      OUTPUT_VARIABLE DB_OUT
+      ERROR_VARIABLE DB_OUT)
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+      if ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" OR "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
+	message(FATAL_ERROR "Release build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Debug binaries.")
+      endif ("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" OR "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
+    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+      if (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" AND NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
+	message(FATAL_ERROR "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Release binaries.")
+      endif (NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" AND NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
+    endif ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  endif (DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+endif (CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -242,10 +293,6 @@ execute_process(COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${CONFIG_DELTA_START} -P
 include(Path_Setup)
 
 #---------------------------------------------------------------------
-# Management of build types
-include(BRLCAD_Build_Types)
-
-#---------------------------------------------------------------------
 # For cleaning files as part of the distclean command, CMake needs
 # to be aware of what various generators will (or might) write out
 # in each build directory.
@@ -282,14 +329,8 @@ include(CheckCXXSourceCompiles)
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
 #---------------------------------------------------------------------
-# Set up include paths for generated header files.  For multi-config
-# builds, make sure we get build-specific dirs.
-if(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR})
-  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad)
-else(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
-endif(CMAKE_CONFIGURATION_TYPES)
+# Set up include paths for generated header files.
+include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
 
 #---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it if it exists
@@ -329,41 +370,18 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # The following logic is what allows binaries to run successfully in the build
-# directory AND install directory.  Thanks to plplot for identifying the
-# necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.  Documentation of these
-# options is available at http://www.cmake.org/Wiki/CMake_RPATH_handling
-#
-# TODO - it looks like this doesn't work reliably with relocation - for the new
-# ext setup, let's see if we can solve the per-target usage of the
-# INSTALL_RPATH property for a more precise solution.
-if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
-  if (NOT COMMAND std_build_rpath)
-    include(RPath_Setup)
-  endif (NOT COMMAND std_build_rpath)
-
-  # Set RPATH value to use when installing.  This should be set to always
-  # prefer the version in the installed path when possible, but fall back on a
-  # location relative to the loading file's path if the installed version is
-  # not present.  How to do so is platform specific.
-  relative_rpath(RELPATH)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
-
-  std_build_rpath()
-else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
-
-  # This will need to be overridden for some targets that have a different
-  # relative position to LIB_DIR using the INSTALL_RPATH target property.
-  # However, we can cover the most common case for RPATH setting using the
-  # global default.
-  if (NOT APPLE)
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
-  else (NOT APPLE)
-    # For OSX, use the INSTALL_NAME_DIR target property
-    set(CMAKE_INSTALL_RPATH "@executable_path/../${LIB_DIR}")
-    set(CMAKE_INSTALL_NAME_DIR "@executable_path/../${LIB_DIR}")
-  endif (NOT APPLE)
-
-endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+# directory AND install directory.
+# This will need to be overridden for some targets that have a different
+# relative position to LIB_DIR using the INSTALL_RPATH target property.
+# However, we can cover the most common case for RPATH setting using the
+# global default.
+if (NOT APPLE)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
+else (NOT APPLE)
+  # For OSX, use the INSTALL_NAME_DIR target property
+  set(CMAKE_INSTALL_RPATH "@executable_path/../${LIB_DIR}")
+  set(CMAKE_INSTALL_NAME_DIR "@executable_path/../${LIB_DIR}")
+endif (NOT APPLE)
 
 #---------------------------------------------------------------------
 # For certain platforms (in particular Visual C++) we want to keep some pre-defined
@@ -435,11 +453,7 @@ string(STRIP "${CXX_STANDARD_FLAGS}" CXX_STANDARD_FLAGS)
 #
 # To avoid hitting the disk I/O any harder than necessary, we store
 # the eventual contents of brlcad_config.h.in as a CMake string until
-# it is ready to process.  A global property is needed to hold the
-# contents, because subdirectories (in particular, src/other) may
-# have content to contribute to the top level config.h.in file and
-# the default local variable scope in subdirectories means those
-# changes would not automatically propagate back up.
+# it is ready to process.
 #
 # We also allow for multiple projects with this macro, in case
 # subprojects are also managing a config.h.in a file of their own.
@@ -485,20 +499,6 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-# The BRL-CAD CMake build will also generate a configure script
-# that emulates the command option style of GNU Autotool's
-# configure.  Write the pre-defined header into the build-dir template
-# to initialize the file.
-file(REMOVE "${CMAKE_BINARY_DIR}/configure.new")
-file(READ "${BRLCAD_CMAKE_DIR}/configure_prefix.sh" CONFIG_PREFIX)
-file(WRITE "${CMAKE_BINARY_DIR}/configure.new.tmp" "${CONFIG_PREFIX}")
-file(COPY "${CMAKE_BINARY_DIR}/configure.new.tmp" DESTINATION
-  "${CMAKE_BINARY_DIR}/CMakeFiles" FILE_PERMISSIONS OWNER_READ OWNER_WRITE
-  OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-file(REMOVE "${CMAKE_BINARY_DIR}/configure.new.tmp")
-file(RENAME "${CMAKE_BINARY_DIR}/CMakeFiles/configure.new.tmp"
-  "${CMAKE_BINARY_DIR}/configure.new")
-
 include(BRLCAD_User_Options)
 
 # global msvc-specific configuration setup
@@ -529,7 +529,7 @@ if(BRLCAD_PRINT_MSGS)
 endif(BRLCAD_PRINT_MSGS)
 
 # Load various wrapper macros for checking libraries, headers and
-# functions, some in use by src/other build logic
+# functions
 include(BRLCAD_CheckFunctions)
 
 # Load Doxygen related CMake macros
@@ -565,11 +565,6 @@ endif(BRLCAD_PRINT_MSGS)
 # load our compiler testing macro definitions
 include(CompilerFlags)
 
-# Cache the original CMake sets of build flags for later use
-if(NOT CMAKE_BUILD_FLAGS_CACHED_CMAKE_DEFAULT)
-  CACHE_BUILD_FLAGS(_CMAKE_DEFAULT)
-endif(NOT CMAKE_BUILD_FLAGS_CACHED_CMAKE_DEFAULT)
-
 # Clear out most CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
 # if we have debugging flags enabled for a Release build.
@@ -577,7 +572,7 @@ endif(NOT CMAKE_BUILD_FLAGS_CACHED_CMAKE_DEFAULT)
 # in the environment.
 CLEAR_BUILD_FLAGS()
 
-# Since this isn't src/other or misc/tools, we want the standards set.
+# We need the C and C++ standards
 set(CMAKE_C_FLAGS "${C_STANDARD_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CXX_STANDARD_FLAGS}")
 
@@ -673,11 +668,7 @@ if(BRLCAD_DEBUGGING)
   CHECK_CXX_FLAG(g GROUPS DEBUG_CXX_FLAGS)
   CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
   CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(debug_config_list "${CMAKE_CONFIGURATION_TYPES}")
-  else(CMAKE_CONFIGURATION_TYPES)
-    set(debug_config_list "ALL")
-  endif(CMAKE_CONFIGURATION_TYPES)
+  set(debug_config_list "ALL")
   ADD_NEW_FLAG(C DEBUG_C_FLAGS "${debug_config_list}")
   ADD_NEW_FLAG(CXX DEBUG_CXX_FLAGS "${debug_config_list}")
   # TODO - need to figure out a way to actually test linker flags
@@ -693,7 +684,7 @@ if(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOYMEN
 endif(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOYMENT_TARGET}" STREQUAL "")
 
 
-# Most of the src/other projects have their own logic for handling
+# Most external projects have their own logic for handling
 # the C inline issue - BRL-CAD needs a fine-grained approach.
 # C and C++ sources require different treatment for the same build
 # target, since C++11 doesn't allow inline to be re-defined.
@@ -1043,19 +1034,10 @@ if(NOT MSVC)
     endif(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
   endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
-  # Add optimization flags. If we're a multiconfig build, set up based
-  # on build type.  If not, check if BRLCAD_OPTIMIZED is on.
-  if(CMAKE_CONFIGURATION_TYPES)
-    if(NOT ENABLE_ALL_CONFIG_TYPES)
-      set(opt_conf_list "Release")
-    else(NOT ENABLE_ALL_CONFIG_TYPES)
-      set(opt_conf_list "Release;RelWithDebInfo;MinSizeRel")
-    endif(NOT ENABLE_ALL_CONFIG_TYPES)
-  else(CMAKE_CONFIGURATION_TYPES)
-    if(${BRLCAD_OPTIMIZED} MATCHES "ON")
-      set(opt_conf_list "ALL")
-    endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
-  endif(CMAKE_CONFIGURATION_TYPES)
+  # Add optimization flags - check if BRLCAD_OPTIMIZED is on.
+  if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+    set(opt_conf_list "ALL")
+  endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
   if(opt_conf_list)
     ADD_NEW_FLAG(C OPTIMIZE_C_FLAGS "${opt_conf_list}")
     ADD_NEW_FLAG(CXX OPTIMIZE_CXX_FLAGS "${opt_conf_list}")
@@ -1248,20 +1230,14 @@ if(NOT MSVC)
     mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE_UPPER})
   endif(CMAKE_BUILD_TYPE)
 
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    set(CMAKE_C_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_C_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "C Compiler flags used for ${CFG_TYPE} builds" FORCE)
-    set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "C++ Compiler flags used for ${CFG_TYPE} builds" FORCE)
-    set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Linker flags used for ${CFG_TYPE} builds" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Exe linker flags used for ${CFG_TYPE} builds" FORCE)
-    mark_as_advanced(CMAKE_C_FLAGS_${CFG_TYPE_UPPER})
-    mark_as_advanced(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER})
-    mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER})
-    mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER})
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-
   # TODO - figure out if this should be integrated above
   CHECK_COMPILER_FLAG(C "-Wunused-const-variable" HAVE_C_WUNUSED_CONST_VARIABLE)
+
+else()
+
+  # Whether a debug or release build, we want our own code
+  # to be usable with a debugger
+  add_link_options(/DEBUG)
 
 endif(NOT MSVC)
 
@@ -1965,90 +1941,52 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
 endif(MSVC)
 
+
 #-----------------------------------------------------------------------------
-# Before we head into src/other and misc/tools, store all the build
-# flags that have been built up.  It's hard to be sure what will and
-# won't be set in those directories, so make sure we can restore the
-# BRL-CAD flags for the actual BRL-CAD subdirectories.
-
-# TODO - remove once bext based building goes live
-CACHE_BUILD_FLAGS(_BRLCAD)
-
-# At the start, clear the misc/tools subdirs list so repeated
-# configures will correctly add the required directories
-set(MISC_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
-mark_as_advanced(MISC_ADDED_DIRS)
-
 # Add misc/tools for tools that are used in BRL-CAD's build process or for
-# maintenance activities but are not installed in BRL-CAD (due to licensing,
-# design intent, etc.) misc/tools must be handled before src/other because
-# src/other's build logic needs tools from misc/tools.
-#
-# (Note that if we hit a case where a tool in misc/tools ALSO needs a library
-# stored in src/other due to being installed with BRL-CAD, we're going to have
-# a problem. Introducing such dependencies is something to try and avoid, and
-# if that situation arises it will require careful consideration of the
-# options.)
+# maintenance activities.
 add_subdirectory(misc/tools)
 
-if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
-  # The first order of business in src/other is the ext projects
-  add_subdirectory(src/other/ext)
-else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
-  # Now that the user options are set and we have misc/tools... if we're going to
-  # be bundling 3rd party dependencies, we need to get them staged - some of the
-  # build steps will require that dependencies work during the build process, and
-  # the most reliably way to do that is to get them in place in the build
-  # directory.  Because the feature flags may impact what we're looking to use,
-  # we wait until they are set to do the find_package calls.
-  #
-  # The way BRL-CAD handles bundled dependencies is simple - if a dependency
-  # is found in the specified BRLCAD_EXT_DIR directory by find_package, that
-  # version is used in preference to a system version.  If no bundled version
-  # is found the standard system search logic will kick in.  (System versions
-  # will NOT be bundled with BRL-CAD.)
-  #
-  # Note that while feature flags can change which elements of BRL-CAD are built,
-  # they WON'T change what's bundled with BRL-CAD for install - that's based
-  # strictly on the contents of the user's specified external dependencies
-  # directory.  If (for example) STEP support is disabled, this logic will not
-  # skip bundling the STEPCODE external dependencies - the user should set up an
-  # external dependencies repository without that component if they don't want to
-  # bundle it.
-  #
-  # This logic will also set up the necessary steps to install the bundling
-  # targets as part of BRL-CAD's install process.
-  #
-  # The exception to the above indifference to user settings is when BRL-CAD's
-  # configure logic undertakes the building of the dependencies itself, rather
-  # than using a pre-built bext repository.  In that situation, enough info is
-  # available to make intelligent decisions about what to turn on and off at
-  # configure time, and we don't have to solve the problem of figuring out which
-  # output files correspond to which project(s).  To allow us to also pass
-  # detailed info about which components are enabled to the bext build process,
-  # we need to know from the BRL-CAD build what component dependencies are.
-  # Since we can't add_subdirectory src/ until we have the dependencies set
-  # up, we have a chicken-egg problem.  To resolve it, we break the dependency
-  # info out into a separate file used both here and by src/ :
-  include(${CMAKE_SOURCE_DIR}/src/source_dirs.cmake)
 
-  # Now we have the necessary info - trigger the primary management logic
-  include(BRLCAD_ExternalDeps)
-endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+# Now that the user options are set and we have misc/tools... if we're going to
+# be bundling 3rd party dependencies, we need to get them staged - some of the
+# build steps will require that dependencies work during the build process, and
+# the most reliably way to do that is to get them in place in the build
+# directory.  Because the feature flags may impact what we're looking to use,
+# we wait until they are set to do the find_package calls.
+#
+# The way BRL-CAD handles bundled dependencies is simple - if a dependency
+# is found in the specified BRLCAD_EXT_DIR directory by find_package, that
+# version is used in preference to a system version.  If no bundled version
+# is found the standard system search logic will kick in.  (System versions
+# will NOT be bundled with BRL-CAD.)
+#
+# Note that while feature flags can change which elements of BRL-CAD are built,
+# they WON'T change what's bundled with BRL-CAD for install - that's based
+# strictly on the contents of the user's specified external dependencies
+# directory.  If (for example) STEP support is disabled, this logic will not
+# skip bundling the STEPCODE external dependencies - the user should set up an
+# external dependencies repository without that component if they don't want to
+# bundle it.
+#
+# This logic will also set up the necessary steps to install the bundling
+# targets as part of BRL-CAD's install process.
+#
+# The exception to the above indifference to user settings is when BRL-CAD's
+# configure logic undertakes the building of the dependencies itself, rather
+# than using a pre-built bext repository.  In that situation, enough info is
+# available to make intelligent decisions about what to turn on and off at
+# configure time, and we don't have to solve the problem of figuring out which
+# output files correspond to which project(s).  To allow us to also pass
+# detailed info about which components are enabled to the bext build process,
+# we need to know from the BRL-CAD build what component dependencies are.
+# Since we can't add_subdirectory src/ until we have the dependencies set
+# up, we have a chicken-egg problem.  To resolve it, we break the dependency
+# info out into a separate file used both here and by src/ :
+include(${CMAKE_SOURCE_DIR}/src/source_dirs.cmake)
 
-# Now that we've done the system tests with BRL-CAD's compile flags,
-# add src/other to pick up any tests it needs.  We must add src/other
-# before the main BRL-CAD directories to provide the necessary build
-# targets.  Remember that src/other wipes the top level flags generated
-# by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
-# tests so the CACHE reflects BRL-CAD's test results.
-if (EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  add_subdirectory(src/other)
-endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-
-# Now put back the BRL-CAD flags
-# TODO - remove once bext based building goes live
-RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
+# Now we have the necessary info - trigger the primary management logic
+include(BRLCAD_ExternalDeps)
 
 # Define some Tcl related variables for libtclcad
 if(BRLCAD_ITCL_BUILD)
@@ -2130,7 +2068,7 @@ if (BRLCAD_EXTRADOCS)
 
   # Style sheet for XSLT transformation to manual pages
   if(BRLCAD_EXTRADOCS_MAN)
-    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad/brlcad-man-stylesheet.xsl)
+    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-stylesheet.xsl)
     DISTCLEAN("${D_BRDIR}/brlcad-man-stylesheet.xsl")
   endif(BRLCAD_EXTRADOCS_MAN)
 
@@ -2154,8 +2092,7 @@ if (BRLCAD_EXTRADOCS)
 endif (BRLCAD_EXTRADOCS)
 
 
-# Enable CTest Testing support - this is done after src/other is added
-# to avoid incorporating src/other CTests into BRL-CAD's own testing.
+# Enable CTest Testing support
 include(CTest)
 mark_as_advanced(BUILD_TESTING)
 
@@ -2193,17 +2130,6 @@ if (TARGET rt)
   verbose_add_subdirectory("" bench)
 endif (TARGET rt)
 verbose_add_subdirectory("" regress)
-
-# Restore BRL-CAD configurations, if necessary
-# TODO - remove once bext based building goes live.  We'll need to look
-# at forcing multiconfig builds to single build configurations, as mixing
-# configs with bext being separate is just too error prone, particularly
-# on Windows
-if(NOT ENABLE_ALL_CONFIG_TYPES)
-  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-endif(NOT ENABLE_ALL_CONFIG_TYPES)
 
 # Make sure we have the target dir
 file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
@@ -2332,49 +2258,6 @@ foreach(ad ${ALL_DIRS})
 endforeach(ad ${ALL_DIRS})
 
 #------------------------------------------------------------------------------
-# To set correct install paths for CMake at build time, rather than CMake
-# time, some rather special logic is necessary - a build target that needs
-# to be run when the current build type changes, and introspective scripting
-# that updates the CMake files themselves to have the correct path.
-# Unfortunately, there does not appear to be a way to control this well enough
-# from the CMake level - a build-type aware path is technically possible, but
-# it does not conform to BRL-CAD's conventions for installation directory
-# naming.
-#
-# TODO - given how gnarly it is this trick has served us surprisingly well over
-# the years, but with bext if we move to forcing a single config type per
-# configure we can probably simplify or remove this altogether.
-if(CMAKE_CONFIGURATION_TYPES)
-  # if we have stale cmake_install.cmake.orig files around, clear them now.
-  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
-  if(ALL_CMAKE_INSTALL_FILES_ORIG)
-    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
-  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
-  # need a build target for this one - install directory may be dependent on configuration, but that won't
-  # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
-  configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake" @ONLY)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake")
-  configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake" @ONLY)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake")
-  if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
-    file(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
-  endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
-  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
-  add_custom_command(
-    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    )
-  # To make sure multiconfig_path runs in time for the source code builds it might impact, we will need to add the output file as a dependency
-  # to the first target to run - the timestamp printing.
-  add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
-  set_target_properties(multiconfig_path PROPERTIES FOLDER "Compilation Utilities")
-  add_dependencies(timestamp multiconfig_path)
-endif(CMAKE_CONFIGURATION_TYPES)
-
-
 # CPack is used to produce tgz files, RPMS, etc.
 #
 # TODO - CPack's package_source makes lots of copies of files, which is a problem
@@ -2387,7 +2270,9 @@ include(BRLCAD_CPack)
 set(toplevel_ignore_files
   .github/workflows/analysis.yml
   .github/workflows/check.yml
+  .github/workflows/linux_interactive.yml
   .gitignore
+  .gitmodules
   BUGS
   CMakeLists.txt
   ChangeLog
@@ -2402,11 +2287,8 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/cmakefiles.cmake")
 DISTCLEAN("${CMAKE_BINARY_DIR}/brlcadexec.cmake")
 DISTCLEAN("${CMAKE_BINARY_DIR}/cmake_install.cmake")
 DISTCLEAN("${CMAKE_BINARY_DIR}/install_manifest.txt")
-DISTCLEAN("${CMAKE_BINARY_DIR}/BRLCAD_OPTIONS")
 DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeFiles")
 DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp")
-DISTCLEAN("${CMAKE_BINARY_DIR}/configure.new")
-DISTCLEAN("${CMAKE_BINARY_DIR}/INSTALL.new")
 DISTCLEAN("${CMAKE_BINARY_DIR}/include/brlcad_config.h.in")
 DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxyfile.in")
 DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxygenDefaults.cmake")
@@ -2424,32 +2306,6 @@ endif("${CMAKE_GENERATOR}" MATCHES "Ninja*")
 # whether BRL-CAD is in a distribution ready state.  Default to the standard
 # set of tests - Debug and Release build configurations
 include(Distcheck)
-
-# Define some custom distcheck targets for distcheck-full (not run by default)
-#
-# CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
-CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(no_tcl "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TCL=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install" distcheck_no_tcl.cmake.in)
-CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(no_object "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-# The odd pathnames test cannot work with bundled autoconf builds, so disable
-# if any of them have set the flag.  This isn't perfect, since a configure
-# with BRLCAD_BUNDLED_LIBS= BUNDLED will disable this test even if a viable
-# system component is present.  However, the complexity/fragility of
-# attempting to stash the system detections when we want the variables set to
-# the bundled versions outweighs the minor benefit of trying harder to enable
-# this test (which may or may not be viable anyway depending on system
-# component availability.)
-if (NOT BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
-  CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED ${BRLCAD_DISABLE_ODD_PATHNAMES_FLAGS}" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
-endif (NOT BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
-CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
-
-# Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
-DEFINE_DISTCHECK_TARGET(STD)
 
 # ----------------------------------------------------------------------------
 # Mark various miscellaneous things as advanced that we don't want in our
@@ -2475,46 +2331,6 @@ mark_as_advanced(CMAKE_AR)
 # locations in the source tree.
 
 set(CONFIG_FATAL_ERROR 0)
-
-function(DIFF_FILE filename)
-  file(READ "${BRLCAD_SOURCE_DIR}/${filename}" SRC_STR)
-  file(READ "${BRLCAD_BINARY_DIR}/${filename}.new" BIN_STR)
-  string(REGEX REPLACE "\r?\n" "" OLD_STR "${SRC_STR}")
-  string(REGEX REPLACE "\r?\n" "" NEW_STR "${BIN_STR}")
-  if(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
-    set(CONFIG_FATAL_ERROR 1 PARENT_SCOPE)
-    message("\nERROR: \"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\" or find the source of the difference.\n")
-  endif(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
-endfunction(DIFF_FILE filename)
-
-# TODO - once we remove src/other/ext, eliminate this guard and
-# update INSTALL and configure to reflect the new approach.
-if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
-# Finalize and check INSTALL file
-file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
-string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
-file(WRITE "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_PREFIX}")
-file(READ "${BRLCAD_BINARY_DIR}/BRLCAD_OPTIONS" INSTALL_OPTS)
-file(APPEND "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_OPTS}")
-file(APPEND "${BRLCAD_BINARY_DIR}/INSTALL.new" "\n\n*** Note - Do not add or edit configuration option descriptions and alias
-   lists in this file - those entries are auto-generated from information in
-   the toplevel CMakeLists.txt file and src/other/CMakeLists.txt - any changes
-   should be made in those files.  The CMake configuration process will
-   automatically re-generate INSTALL with the new descriptions and alias
-   information.\n"
-   )
-DIFF_FILE(INSTALL)
-
-# Do the same thing for the configure shell script - finish it and check
-# for differences.
-file(READ "${BRLCAD_CMAKE_DIR}/configure_suffix.sh" CONFIG_SUFFIX)
-file(APPEND "${CMAKE_BINARY_DIR}/configure.new" "${CONFIG_SUFFIX}")
-DIFF_FILE(configure)
-
-if(CONFIG_FATAL_ERROR)
-  message(FATAL_ERROR "Configure haulted because INSTALL and/or configure script are out of date.")
-endif(CONFIG_FATAL_ERROR)
-endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 
 # Because the build-time-delta needs a configure-file but comes at the
 # end of the CMake configure, the preparation of the final distclean

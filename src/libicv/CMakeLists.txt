@@ -1,8 +1,6 @@
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  BRLCAD_Find_Package(NETPBM REQUIRED)
-  BRLCAD_Find_Package(PNG REQUIRED)
-  BRLCAD_Find_Package(UTAHRLE REQUIRED)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+BRLCAD_Find_Package(NETPBM REQUIRED)
+BRLCAD_Find_Package(PNG REQUIRED)
+BRLCAD_Find_Package(UTAHRLE REQUIRED)
 
 set(LIBICV_SOURCES
   PImgHash.cpp
@@ -39,13 +37,6 @@ set(LOCAL_ICV_INCLUDE_DIRS
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "${ICV_LIBS}" "" "${LOCAL_ICV_INCLUDE_DIRS}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
-set(stgts png netpbm)
-foreach(ST ${stgts})
-  if (TARGET ${ST}_stage)
-    add_dependencies(libicv ${ST}_stage)
-  endif (TARGET ${ST}_stage)
-endforeach(ST ${stgts})
 
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET netpbm OR HIDE_INTERNAL_SYMBOLS_EXT)

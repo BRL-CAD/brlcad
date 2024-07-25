@@ -78,7 +78,7 @@ check_command ( ) {
 	log "Output: $output"
 	return 1
     fi
-    if test "x`echo \"$output\" | grep -i invalid`" != "x" ; then
+    if test "x`echo \"$output\" | grep -i invalid\ command`" != "x" ; then
 	log "ERROR: $cmd does not exist!"
 	log "Output: $output"
 	return 1

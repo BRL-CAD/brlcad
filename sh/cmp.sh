@@ -240,8 +240,8 @@ sh $i.rt -o $i.rtxray.pix -s$SZ >$i.rtxray.log 2>&1
 chmod 666 $i.rtxray.pix
 if test -f "$i.rtxray.pix" ; then
     chmod 666 $i.rtxray.pix
-    diff="`pixdiff $base.base.rtxray.pix $i.rtxray.pix 1>/dev/null 2>&1`"
-    back="`pixcount $base.base.rtxray.pix 2>&1 | grep \"  0   0   0  \" | awk '{print $4}'`"
+    diff="`pixdiff $base.base.rtxray.pix $i.rtxray.pix 2>&1`"
+    back="`pixcount $base.base.rtxray.pix 2>&1 | grep \"  0   0   \" | awk '{print $4}'`"
     fore="`expr $SZ \* $SZ - $back`"
     obm="`echo $diff | awk '{print $9}'`"
     percent=`dc -e "3k 1 $obm 3 / $fore / - 100 * d [0] sa 0.0 >a p"`
@@ -264,8 +264,8 @@ rm -f $i.rtedge.pix $i.rtedge.log
 sh $i.rt -o $i.rtedge.pix -s$SZ >$i.rtedge.log 2>&1
 chmod 666 $i.rtedge.pix
 if test -f $i.rtedge.pix ; then
-    diff="`pixdiff $base.base.rtedge.pix $i.rtedge.pix 1>/dev/null 2>&1`"
-    back="`pixcount $base.base.rtedge.pix 2>&1 | grep \"  0   0   0  \" | awk '{print $4}'`"
+    diff="`pixdiff $base.base.rtedge.pix $i.rtedge.pix 2>&1`"
+    back="`pixcount $base.base.rtedge.pix 2>&1 | grep \"  0   0   \" | awk '{print $4}'`"
     fore="`expr $SZ \* $SZ - $back`"
     obm="`echo $diff | awk '{print $9}'`"
     percent=`dc -e "3k 1 $obm 3 / $fore / - 100 * d [0] sa 0.0 >a p"`
@@ -312,7 +312,8 @@ bvol2=`printf "%.1f" $bvol`
 bvol=`printf "%f" $bvol`
 if ! test "x$bvol2" = "x" && ! test "x$bvol2" = "x0.0" ; then
     rm -f "$i.gqa.log"
-    vol="`$GQA "$GQTOL" -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
+    $GQA "$GQTOL" -Av $dbfile $i >$i.gqa.log 2>&1
+    vol=`grep total $i.gqa.log | awk '{print $4}'`
     vol2=`printf "%.1f" $vol`
     vol=`printf "%f" $vol`
     if test "x$vol2" = "x" ; then

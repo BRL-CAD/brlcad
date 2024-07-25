@@ -1616,7 +1616,9 @@ bg_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     return FdotD;
 }
 
-
+// TODO - see if we can use Shewchuk's formula for robust triangle area in E^3
+// from https://people.eecs.berkeley.edu/~jrs/meshpapers/robnotes.pdf page 10
+// and https://github.com/wlenthe/GeometricPredicates to make this more robust
 double
 bg_area_of_triangle(const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {
@@ -2560,7 +2562,7 @@ bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
     (*p)[0] = unrml[0];
     (*p)[1] = unrml[1];
     (*p)[2] = unrml[2];
-    (*p)[3] = -(unrml[0]*pt[0] + unrml[1]*pt[1] + unrml[2]*pt[2]);
+    (*p)[3] = unrml[0]*pt[0] + unrml[1]*pt[1] + unrml[2]*pt[2];
     return 0;
 }
 
@@ -2606,18 +2608,18 @@ bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
 
 /* Translate the OpenNURBS algorithm to VMATH types */
 extern "C" int
-bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt)
+bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t *p, point_t *pt)
 {
-    if (!u || !v)
+    if (!u || !v || !p || !pt)
 	return -1;
 
     point_t origin;
     vect_t xaxis, yaxis, zaxis;
-    VSET(zaxis, p[0], p[1], p[2]);
+    VSET(zaxis, (*p)[0], (*p)[1], (*p)[2]);
     fastf_t x, y, z, d;
-    x = fabs(p[0]);
-    y = fabs(p[1]);
-    z = fabs(p[2]);
+    x = fabs((*p)[0]);
+    y = fabs((*p)[1]);
+    z = fabs((*p)[2]);
     d = 0.0;
     if ( y >= x && y >= z ) {
 	d = x;
@@ -2640,14 +2642,14 @@ bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt)
 	return -1;
 
     VMOVE(origin, zaxis);
-    VSCALE(origin, origin, -1/d*p[3]);
+    VSCALE(origin, origin, 1/d*(*p)[3]);
     VUNITIZE(zaxis);
     bn_vec_perp(xaxis, zaxis);
     VUNITIZE(xaxis);
     VCROSS(yaxis, zaxis, xaxis);
     VUNITIZE(yaxis);
     vect_t vc;
-    VSUB2(vc, pt, origin);
+    VSUB2(vc, *pt, origin);
 
     *u = VDOT(vc, xaxis);
     *v = VDOT(vc, yaxis);
@@ -2657,18 +2659,18 @@ bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt)
 
 /* Translate the OpenNURBS algorithm to VMATH types */
 extern "C" int
-bg_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v)
+bg_plane_pt_at(point_t *pt, plane_t *p, fastf_t u, fastf_t v)
 {
     if (!pt)
 	return -1;
 
     point_t origin;
     vect_t xaxis, yaxis, zaxis;
-    VSET(zaxis, p[0], p[1], p[2]);
+    VSET(zaxis, (*p)[0], (*p)[1], (*p)[2]);
     fastf_t x, y, z, d;
-    x = fabs(p[0]);
-    y = fabs(p[1]);
-    z = fabs(p[2]);
+    x = fabs((*p)[0]);
+    y = fabs((*p)[1]);
+    z = fabs((*p)[2]);
     d = 0.0;
     if ( y >= x && y >= z ) {
 	d = x;
@@ -2691,7 +2693,7 @@ bg_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v)
 	return -1;
 
     VMOVE(origin, zaxis);
-    VSCALE(origin, origin, -1/d*p[3]);
+    VSCALE(origin, origin, 1/d*(*p)[3]);
     VUNITIZE(zaxis);
     bn_vec_perp(xaxis, zaxis);
     VUNITIZE(xaxis);

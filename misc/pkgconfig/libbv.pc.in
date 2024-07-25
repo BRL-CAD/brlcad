@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: libbv
+Description: BRL-CAD View Library
+Version: @BRLCAD_VERSION@
+Requires: libbg libbn libbu
+Libs: -L${libdir} -lbg -lbn -lbu -llmdb @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}

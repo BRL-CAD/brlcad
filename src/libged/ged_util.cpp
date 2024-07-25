@@ -575,7 +575,7 @@ _ged_vopt(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(a
 /* Sort the argv array to list existing objects first and everything else at
  * the end.  Returns the number of argv entries where db_lookup failed */
 int
-_ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa)
+_ged_sort_existing_objs(struct db_i *dbip, int argc, const char *argv[], struct directory **dpa)
 {
     int i = 0;
     int exist_cnt = 0;
@@ -583,9 +583,10 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
     struct directory *dp;
     const char **exists = (const char **)bu_calloc(argc, sizeof(const char *), "obj exists array");
     const char **nonexists = (const char **)bu_calloc(argc, sizeof(const char *), "obj nonexists array");
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    if (dbip == DBI_NULL)
+	return BRLCAD_ERROR;
     for (i = 0; i < argc; i++) {
-	dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
+	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
 	    nonexists[nonexist_cnt] = argv[i];
 	    nonexist_cnt++;
@@ -1582,16 +1583,14 @@ _ged_rt_output_handler2(void *clientData, int type)
     struct ged *gedp = rrtp->gedp;
 
     /* Get data from rt */
-    if (rrtp->stderr_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+    if (rrtp->stderr_active && (count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	read_failed_stderr = 1;
     }
-    if (rrtp->stdout_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
+    if (rrtp->stdout_active && (count = bu_process_read_n(rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE, (char *)line)) <= 0) {
 	read_failed_stdout = 1;
     }
 
     if (read_failed_stderr || read_failed_stdout) {
-	int aborted;
-
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (type != -1 && gedp->ged_delete_io_handler) {
 
@@ -1616,7 +1615,8 @@ _ged_rt_output_handler2(void *clientData, int type)
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait(&aborted, rrtp->p, 120);
+	retcode = bu_process_wait_n(&rrtp->p, 120);
+	int aborted = (retcode == ERROR_PROCESS_ABORTED);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");
@@ -1659,7 +1659,7 @@ ged_rt_output_handler_helper(struct ged_subprocess* rrtp, bu_process_io_t type)
     if (type == BU_PROCESS_STDERR) active = rrtp->stderr_active;
     if (type == BU_PROCESS_STDOUT) active = rrtp->stdout_active;
 
-    if (active && bu_process_read((char *)line, &count, rrtp->p, type, RT_MAXLINE) <= 0) {
+    if (active && (count = bu_process_read_n(rrtp->p, type, RT_MAXLINE, (char *)line)) <= 0) {
 	/* Done watching for output or a bad read, undo subprocess I/O hooks. */
 	struct ged *gedp = rrtp->gedp;
 	if (gedp->ged_delete_io_handler) {
@@ -1706,13 +1706,13 @@ _ged_rt_output_handler(void *clientData, int mask)
 	if (rrtp->stderr_active || rrtp->stdout_active)
 	    return;
 
-	int aborted = 0;
 	int retcode = 0;
 	struct ged *gedp = rrtp->gedp;
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait(&aborted, rrtp->p, 120);
+	retcode = bu_process_wait_n(&rrtp->p, 120);
+	int aborted = (retcode == ERROR_PROCESS_ABORTED);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");
@@ -1814,7 +1814,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     struct ged_subprocess *run_rtp;
     struct bu_process *p = NULL;
 
-    bu_process_exec(&p, gd_rt_cmd[0], cmd_len, gd_rt_cmd, 0, 0);
+    bu_process_create(&p, gd_rt_cmd, BU_PROCESS_DEFAULT);
 
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
@@ -1829,12 +1829,12 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 	(*gedp->ged_subprocess_init_callback)(bu_process_pid(p), gedp->ged_subprocess_clbk_context);
     }
 
-    fp_in = bu_process_open(p, BU_PROCESS_STDIN);
+    fp_in = bu_process_file_open(p, BU_PROCESS_STDIN);
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model, argc, argv);
 
-    bu_process_close(p, BU_PROCESS_STDIN);
+    bu_process_file_close(p, BU_PROCESS_STDIN);
 
     BU_GET(run_rtp, struct ged_subprocess);
     run_rtp->magic = GED_CMD_MAGIC;

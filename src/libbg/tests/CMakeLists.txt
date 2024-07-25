@@ -130,7 +130,8 @@ BRLCAD_ADD_TEST(NAME bg_plane_mk_plane_3pts_succeed          COMMAND bg_test pla
 #  A,B,C,D Px,Py,Pz
 #
 #  A-D are plane equation parameters, and P is the test point.
-BRLCAD_ADD_TEST(NAME bg_plane_pt_project  COMMAND bg_test plane_pt 6 1,2,3,4 5.345220032350307,-3.124899935299395,-4.687349902949093)
+BRLCAD_ADD_TEST(NAME bg_plane_pt_project_1  COMMAND bg_test plane_pt 6  0,0,1,1 2,2,1)
+BRLCAD_ADD_TEST(NAME bg_plane_pt_project_2  COMMAND bg_test plane_pt 6  0.737397,0.461098,0.493593,236.3 77.526016919831704,185.674010580054585,189.465011325663767)
 
 # For function #7 (bg_coplanar_pts), the <args> format is as follows:
 #
@@ -353,6 +354,11 @@ BRLCAD_ADDEXEC(bg_trimesh_sync trimesh_sync.c "libbg;libbn;libbu" TEST)
 
 BRLCAD_ADD_TEST(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
 
+#  ************ triangle area tests ***********
+
+BRLCAD_ADDEXEC(bg_tri_area tri_area.c "libbg;libbn;libbu" TEST)
+
+#BRLCAD_ADD_TEST(NAME bg_tri_area  COMMAND bg_tri_area)
 
 CMAKEFILES(
   bg_test.c.in

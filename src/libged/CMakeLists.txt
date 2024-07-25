@@ -1,11 +1,9 @@
 # LIBGED is set up based on a plugin architecture, with common functionality
 # defined in a core library.
 
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  BRLCAD_Find_Package(LMDB REQUIRED)
-  BRLCAD_Find_Package(PNG REQUIRED)
-  BRLCAD_Find_Package(REGEX REQUIRED)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+BRLCAD_Find_Package(LMDB REQUIRED)
+BRLCAD_Find_Package(PNG REQUIRED)
+BRLCAD_Find_Package(REGEX REQUIRED)
 
 add_custom_command(
   OUTPUT "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
@@ -37,6 +35,43 @@ endfunction(ged_plugin_library name)
 # yet having been built.)
 add_custom_target(ged_plugins ALL DEPENDS ged_plugins_sentinel)
 set_target_properties(ged_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
+
+
+# In addition to the standard command plugins, there are plugins for the
+# ged_exec subprocess executable, which are run as independent processes
+# to allow them to be terminated by the parent command without bringing
+# down the parent application
+add_custom_command(
+  OUTPUT "${CMAKE_BINARY_DIR}/ged_subprocesses.sentinel"
+  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/ged_subprocesses.sentinel"
+  )
+add_custom_target(ged_subprocesses_sentinel
+  DEPENDS ${CMAKE_BINARY_DIR}/ged_subprocesses.sentinel
+  )
+set_target_properties(ged_subprocesses_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ged_process")
+
+function(ged_subprocess_library name)
+  add_library(${name} ${ARGN})
+  set_target_properties(${name} PROPERTIES PREFIX "")
+  set(dep_includes)
+  foreach(ll ${libslist})
+    if (TARGET ${ll})
+      get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
+      if (IDIRS)
+	list(APPEND dep_includes ${IDIRS})
+      endif (IDIRS)
+    endif (TARGET ${ll})
+  endforeach(ll ${libslist})
+  BRLCAD_INCLUDE_DIRS(${name} dep_includes PRIVATE)
+  add_dependencies(ged_subprocesses_sentinel ${name})
+endfunction(ged_subprocess_library name)
+
+# This target is supplied so applications wanting to run libged
+# commands at build time can depend on the subprocesses being built as well as
+# libged itself (otherwise LIBGED commands might fail due to their subprocesses not
+# yet having been built.)
+add_custom_target(ged_subprocesses ALL DEPENDS ged_subprocesses_sentinel)
+set_target_properties(ged_subprocesses PROPERTIES FOLDER "BRL-CAD Plugins")
 
 
 set(LIBGED_SOURCES
@@ -98,6 +133,12 @@ set(GED_LOCAL_INCLUDE_DIRS
 
 BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+# This executable is used to launch processes from LIBGED commands that may
+# need to be terminated due to excessive runtime length or infinite looping.
+# It is NOT intended be run directly by users (although it CAN be so run
+# for debugging purposes if necessary.)
+BRLCAD_ADDEXEC(ged_exec ged_exec.cpp libged NO_MAN)
 
 add_subdirectory(tests)
 add_subdirectory(simulate/tests)

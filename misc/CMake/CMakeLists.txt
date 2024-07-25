@@ -32,6 +32,7 @@ set(cmake_ignore_files
   FindBSON.cmake
   FindFontconfig.cmake
   FindGECODE.cmake
+  FindGEOGRAM.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
   FindLINENOISE.cmake
@@ -51,7 +52,6 @@ set(cmake_ignore_files
   FindPERPLEX.cmake
   FindPkgMacros.cmake
   FindPNG.cmake
-  FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
@@ -98,8 +98,6 @@ set(cmake_ignore_files
   compat/test_strcasecmp.c
   compat/test_strncasecmp.c
   compat/test_strtok_r.c
-  configure_prefix.sh
-  configure_suffix.sh
   date_delta.cpp
   distcheck_in_src_dir.cmake.in
   distcheck_no_tcl.cmake.in
@@ -107,8 +105,6 @@ set(cmake_ignore_files
   distcheck_target.cmake.in
   distclean.cmake.in
   docbook.cmake.in
-  multiconfig_path_clean.cmake.in
-  multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
   scripts/printtime.cmake

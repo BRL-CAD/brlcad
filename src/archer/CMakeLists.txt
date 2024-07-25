@@ -15,9 +15,7 @@ if (BRLCAD_ENABLE_TCL)
       set(archer_srcs ${archer_srcs} archer.rc)
     endif (HAVE_WINDOWS_H)
     BRLCAD_ADDEXEC(archer "${archer_srcs}" "${archer_libs}" GUI)
-    if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-      target_compile_definitions(archer PRIVATE HAVE_TK)
-    endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+    target_compile_definitions(archer PRIVATE HAVE_TK)
     add_dependencies(archer rtwizard)
     ADD_TARGET_DEPS(archer Tkhtml Tktable itcl_pkgIndex itk_pkgIndex TclIndexBld dm_plugins)
 
@@ -25,13 +23,8 @@ if (BRLCAD_ENABLE_TCL)
     # depend on ALL the managed files, rather than trying to list specifics
     add_dependencies(archer managed_files)
 
-    # stage targets
-    set(stgts tcl tk itcl itk iwidgets)
-    foreach(ST ${stgts})
-      if (TARGET ${ST}_stage)
-	add_dependencies(archer ${ST}_stage)
-      endif (TARGET ${ST}_stage)
-    endforeach(ST ${stgts})
+    # Archer needs the tclIndex and pkgIndex files set up correctly
+    add_dependencies(archer TclIndexBld)
 
     # Archer is one of the programs that gets a start menu entry
     set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:archer>"

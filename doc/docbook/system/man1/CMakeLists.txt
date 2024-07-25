@@ -80,6 +80,7 @@ set(man1_EN
   gencolor.xml
   gif-fb.xml
   gif2fb.xml
+  gist.xml
   glint.xml
   gqa.xml
   halftone.xml

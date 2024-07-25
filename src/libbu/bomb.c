@@ -168,7 +168,7 @@ bu_bomb(const char *str)
 	 * the file at a time (can't just use BU_SEM_SYSCALL).
 	 */
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
+	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_pid());
 	if (LIKELY(!bu_file_exists(tracefile, NULL))) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fputs("Saving stack trace to ", stderr);

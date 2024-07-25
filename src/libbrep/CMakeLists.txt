@@ -1,6 +1,4 @@
-if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-  BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
-endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 
 set(LIBBREP_SOURCES
   BBNode.cpp
@@ -37,7 +35,6 @@ set(LIBBREP_SOURCES
 
 # Include directories needed by libbrep users
 set(BREP_INCLUDE_DIRS
-  ${POLY2TRI_INCLUDE_DIRS}
   ${OPENNURBS_INCLUDE_DIRS}
   )
 
@@ -51,7 +48,6 @@ set(BREP_LOCAL_INCLUDE_DIRS
 set(BREP_LIBS
   ${libbrep_deps}
   ${OPENNURBS_LIBRARIES}
-  ${POLY2TRI_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
@@ -65,15 +61,6 @@ if(HIDE_INTERNAL_SYMBOLS)
   # Anyone who needs to import libbrep will also need to import openNURBS
   set_property(TARGET libbrep APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
 endif(HIDE_INTERNAL_SYMBOLS)
-
-# With newer GCC, optimized linking of poly2tri_CDT triggers a compiler warning about a
-# new allocation potentially exceeding maximum object size.
-if(${BRLCAD_OPTIMIZED} MATCHES "ON")
-  check_c_compiler_flag(-Wno-error=alloc-size-larger-than= HAVE_NO_ALLOC_SIZE_LARGER_THAN)
-  if (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
-    target_link_options(libbrep PRIVATE -Wno-error=alloc-size-larger-than=)
-  endif (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
-endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
 add_subdirectory(tests)
 

@@ -5,11 +5,7 @@ set(TXT_SRCS
 
 if(BRLCAD_ENABLE_TCL)
 
-  if (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
-    find_package_tcl(REQUIRED)
-  else()
-    find_package(TCL)
-  endif (BRLCAD_COMPONENTS OR NOT EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  find_package_tcl(REQUIRED)
 
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}

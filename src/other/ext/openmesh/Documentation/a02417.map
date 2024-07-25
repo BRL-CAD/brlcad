@@ -1,7 +1,0 @@
-<map id="OpenMesh::ArrayKernel" name="OpenMesh::ArrayKernel">
-<area shape="rect" id="node1" title="Mesh kernel using arrays for mesh item storage." alt="" coords="78,80,239,107"/>
-<area shape="rect" id="node4" href="$a02618.html" title="Connectivity Class for polygonal meshes." alt="" coords="63,155,255,181"/>
-<area shape="rect" id="node2" href="$a02438.html" title="This class provides low&#45;level property management like adding/removing properties and access to prope..." alt="" coords="5,5,165,32"/>
-<area shape="rect" id="node3" title=" " alt="" coords="190,5,277,32"/>
-<area shape="rect" id="node5" href="$a02794.html" title="Connectivity Class for Triangle Meshes." alt="" coords="68,229,249,256"/>
-</map>

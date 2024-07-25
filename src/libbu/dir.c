@@ -57,6 +57,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
+#include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 
@@ -221,6 +222,17 @@ dir_cache(char *buf, size_t len)
 	env = getenv("BU_DIR_CACHE");
 	if (env && env[0] != '\0' && !BU_STR_EMPTY(env) && bu_file_writable(env) && bu_file_executable(env)) {
 	    bu_strlcpy(path, env, MAXPATHLEN);
+	}
+
+	// If the user has specified a directory, use EXACTLY that directory
+	// rather than adding the app subdirectory - user may not want the
+	// subdirectory appended.  The other options here are coming from
+	// various generic system options, but we can't assume that about the
+	// environment variable.
+	if (!BU_STR_EMPTY(path)) {
+	    nibble_trailing_slash(path);
+	    bu_strlcpy(buf, path, len);
+	    return buf;
 	}
     }
 
@@ -672,12 +684,34 @@ bu_dir(char *result, size_t len, .../*, NULL */)
 void
 bu_mkdir(const char *path)
 {
+    // If there's already something there, we can't proceed.
+    if (bu_file_exists(path, NULL) || bu_file_directory(path))
+	return;
+
+    /* Make sure the target and any missing parents
+     * are created. */
+    struct bu_ptbl ndirs = BU_PTBL_INIT_ZERO;
+    struct bu_vls c = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&c, "%s", path);
+    while (!bu_file_directory(bu_vls_cstr(&c))) {
+	char *npath = bu_strdup(bu_vls_cstr(&c));
+	bu_ptbl_ins(&ndirs, (long *)npath);
+	bu_path_component(&c, npath, BU_PATH_DIRNAME);
+    }
+
+    for (int i = (int)BU_PTBL_LEN(&ndirs) - 1; i >= 0; i--) {
+	char *npath = (char *)BU_PTBL_GET(&ndirs, i);
 #ifdef HAVE_WINDOWS_H
-    CreateDirectory(path, NULL);
+	CreateDirectory(npath, NULL);
 #else
-    /* mode: 775 */
-    mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	/* mode: 775 */
+	mkdir(npath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 #endif
+	bu_free(npath, "npath");
+    }
+
+    bu_vls_free(&c);
+    bu_ptbl_free(&ndirs);
 }
 
 void

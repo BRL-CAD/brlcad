@@ -32,6 +32,7 @@
 #include "bu/cmd.h"
 #include "bu/hash.h"
 #include "bu/str.h"
+#include "bu/time.h"
 #include "bu/vls.h"
 #include "bv/lod.h"
 
@@ -52,7 +53,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     struct bview *gvp;
     int print_help = 0;
     static const char *usage = "view lod [csg|mesh] [0|1]\n"
-	"view lod cache [clear] [all_files]\n"
+	"view lod cache [clear [all_files] | exists] \n"
 	"view lod scale [factor]\n"
 	"view lod point_scale [factor]\n"
 	"view lod curve_scale [factor]\n"
@@ -176,6 +177,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "cache")) {
 	if (argc == 1) {
+	    int64_t elapsedtime = bu_gettime();
 
 	    if (!gedp || !gedp->dbip)
 		return BRLCAD_ERROR;
@@ -293,12 +295,38 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		}
 	    }
 
-	    bu_vls_printf(gedp->ged_result_str, "Caching complete");
+	    elapsedtime = bu_gettime() - elapsedtime;
+	    {
+		int seconds = elapsedtime / 1000000;
+		int minutes = seconds / 60;
+		int hours = minutes / 60;
+
+		minutes = minutes % 60;
+		seconds = seconds %60;
+		bu_vls_printf(gedp->ged_result_str, "Caching complete (Elapsed time: %02d:%02d:%02d)\n", hours, minutes, seconds);
+	    }
 	    return BRLCAD_OK;
 	}
 	if (argc == 2) {
 	    if (BU_STR_EQUAL(argv[1], "clear")) {
 		bv_mesh_lod_clear_cache(gedp->ged_lod, 0);
+		return BRLCAD_OK;
+	    } else if (BU_STR_EQUAL(argv[1], "exists")) {
+		for (int i = 0; i < RT_DBNHASH; i++) {
+		    struct directory *dp;
+		    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+			if (dp->d_addr == RT_DIR_PHONY_ADDR)
+			    continue;
+			// checking both BoTs and BREPs
+			if ((dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) ||
+			    (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
+			    unsigned long long key = bv_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+			    if (!key) {
+				return BRLCAD_ERROR;
+			    }
+			}
+		    }
+		}
 		return BRLCAD_OK;
 	    }
 	}

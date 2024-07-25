@@ -9,5 +9,5 @@ Name: libpkg
 Description: BRL-CAD Network Package Transport Library
 Version: @BRLCAD_VERSION@
 Requires: libbu
-Libs: -L${libdir} -lpkg -lbu @LIBTCL@ @LIBM@
+Libs: -L${libdir} -lpkg -lbu @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

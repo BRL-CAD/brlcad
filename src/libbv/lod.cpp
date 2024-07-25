@@ -216,8 +216,10 @@ view_obb(struct bview *v,
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&v->obb_center, p, pu, pv);
+    point_t lec;
+    VMOVE(lec, ec);
+    bg_plane_closest_pt(&pu, &pv, &p, &lec);
+    bg_plane_pt_at(&v->obb_center, &p, pu, pv);
 
     // The first extent is just the scene radius in the lookat direction
     VSCALE(dir, dir, radius);
@@ -405,8 +407,8 @@ bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&obb_c, p, pu, pv);
+    bg_plane_closest_pt(&pu, &pv, &p, &ec);
+    bg_plane_pt_at(&obb_c, &p, pu, pv);
 
 
     // The first extent is just the scene radius in the lookat direction
@@ -499,8 +501,8 @@ bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, 
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&obb_c, p, pu, pv);
+    bg_plane_closest_pt(&pu, &pv, &p, &ec);
+    bg_plane_pt_at(&obb_c, &p, pu, pv);
 
 
     // The first extent is just the scene radius in the lookat direction
@@ -722,6 +724,7 @@ bv_mesh_lod_context_create(const char *name)
 	goto lod_context_close_fail;
 
     // Success - return the context
+    bu_vls_free(&fname);
     return c;
 
     // If something went wrong, clean up and return NULL

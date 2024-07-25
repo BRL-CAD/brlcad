@@ -48,9 +48,25 @@ extern "C++" {
 #  pragma clang diagnostic push
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
-#  if GCC_PREREQ(8,0)
+#  if (__GNUC__ < 13)
+     // There seems to be a problem with multiple pragma diagnostic
+     // calls in GCC 12... try https://stackoverflow.com/a/56887760
+#    if GCC_PREREQ(8,0)
+#      pragma GCC system_header
+#    endif
+#  else
 #    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#    pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#    pragma GCC diagnostic ignored "-Wcomment"
+#    pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#    pragma GCC diagnostic ignored "-Woverloaded-virtual"
 #  endif
+#endif
+#if defined(__clang__)
+#    pragma clang diagnostic ignored "-Wunknown-pragmas"
+#    pragma clang diagnostic ignored "-Wignored-qualifiers"
+#    pragma clang diagnostic ignored "-Woverloaded-virtual"
+#    pragma clang diagnostic ignored "-Wshadow"
 #endif
 
 /* don't let opennurbs include windows.h */

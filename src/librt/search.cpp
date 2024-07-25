@@ -472,8 +472,7 @@ f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struc
     for (p = plan->p_un._p_data[1]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
-    if (!state)
-	db_node->matched_filters = 0;
+    db_node->matched_filters = (state > 0) ? 1 : 0;
     return state;
 }
 
