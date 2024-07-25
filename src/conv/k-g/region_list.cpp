@@ -119,7 +119,7 @@ void RegionList::create
 	}
 
 	mk_addmember(region_name.c_str(), &(all_head.l), NULL, WMOP_UNION);
-	
+
 	mk_freemembers(&geometry_head.l);
     }
 
