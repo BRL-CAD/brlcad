@@ -46,17 +46,17 @@
 /* logic to ensure bboxes are not degenerate in any dimension - zero thickness
  * bounding boxes will get missed by the raytracer */
 #define BBOX_NONDEGEN(min, max, dist) do {\
-    if (NEAR_EQUAL((min)[X], (max)[X], (dist))) { \
-	(min)[X] -= dist; \
-	(max)[X] += dist; \
+    if (NEAR_EQUAL(min[X], max[X], dist)) { \
+	min[X] -= dist; \
+	max[X] += dist; \
     } \
-    if (NEAR_EQUAL((min)[Y], (max)[Y], (dist))) { \
-	(min)[Y] -= dist; \
-	(max)[Y] += dist; \
+    if (NEAR_EQUAL(min[Y], max[Y], dist)) { \
+	min[Y] -= dist; \
+	max[Y] += dist; \
     } \
-    if (NEAR_EQUAL((min)[Z], (max)[Z], (dist))) { \
-	(min)[Z] -= dist; \
-	(max)[Z] += dist; \
+    if (NEAR_EQUAL(min[Z], max[Z], dist)) { \
+	min[Z] -= dist; \
+	max[Z] += dist; \
     } \
 } while (0)
 

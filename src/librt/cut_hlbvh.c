@@ -43,15 +43,18 @@
 #include "bio.h"
 
 #include "bu/parallel.h"
-#include "bu/malloc.h"
 #include "bu/sort.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bg/plane.h"
 #include "bv/plot3.h"
 
-#define HLBVH_IMPLEMENTATION
-#include "cut_hlbvh.h"
+struct bvh_build_node {
+    fastf_t bounds[6];
+    struct bvh_build_node *children[2];
+    long first_prim_offset, n_primitives;
+    uint8_t split_axis;
+};
 
 struct morton_primitive {
     long primitive_index;
@@ -93,19 +96,6 @@ init_interior(struct bvh_build_node *node, uint8_t axis, struct bvh_build_node *
     node->n_primitives = 0;
 }
 
-struct bu_pool* 
-hlbvh_init_pool(size_t n_primatives) {
-    /*
-     * This pool must have enough size to fit the whole tree or the
-     * algorithm will fail. It stores pointers to itself and a
-     * realloc would make the pointers invalid.
-     *
-     * total_nodes = treelets_size + upper_sah_size,  where:
-     *  treelets_size < 2*n_primitives
-     *  upper_sah_size < 2*2^popcnt(0x3ffc0000)   i.e. 2*4096
-     */
-    return bu_pool_create(sizeof(struct bvh_build_node)*(2*n_primatives+2*4096));
-}
 
 /* utility functions */
 static inline uint32_t left_shift3(uint32_t x)
@@ -577,260 +567,6 @@ hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centro
 }
 
 
-struct bvh_flat_node *
-flatten_bvh_tree_recursive(int *next_unused, struct bvh_flat_node *flat_nodes, long total_nodes, 
-			   const struct bvh_build_node *node, long depth)
-{
-    int my_offset = *next_unused;
-    struct bvh_flat_node *linear_node;
-
-    BU_ASSERT(my_offset < total_nodes);
-    ++*next_unused;
-    linear_node = &flat_nodes[my_offset];
-
-    VMOVE(&linear_node->bounds[0], &node->bounds[0]);
-    VMOVE(&linear_node->bounds[3], &node->bounds[3]);
-    if (node->n_primitives > 0) {
-	BU_ASSERT(!node->children[0] && !node->children[1]);
-	BU_ASSERT(node->n_primitives < 65536);
-        linear_node->data.first_prim_offset = node->first_prim_offset;
-        linear_node->n_primitives = node->n_primitives;
-    } else {
-        /* Create interior flattened BVH node */
-        // We don't copy the axis because that isn't used in the traversal.
-	// If it is used in the traversal, then bvh_flat_node.n_primitives
-	// should be resized to a ushort and the axis put in the remaining
-	// space
-        linear_node->n_primitives = 0;
-	flatten_bvh_tree_recursive(next_unused, flat_nodes, total_nodes, node->children[0], depth + 1);
-        linear_node->data.other_child =
-	    flatten_bvh_tree_recursive(next_unused, flat_nodes, total_nodes, node->children[1], depth + 1);
-    }
-    return linear_node;
-}
-
-
-struct bvh_flat_node *
-hlbvh_flatten(const struct bvh_build_node *root, long nodes_created)
-{
-    struct bvh_flat_node *new_root = (struct bvh_flat_node *) bu_malloc(nodes_created * sizeof(struct bvh_flat_node), "bvh flat nodes");
-    int next_unused = 0;
-    return flatten_bvh_tree_recursive(&next_unused, new_root, nodes_created, root, 0);
-}
-
-
-struct prim_list {
-    struct bu_list l;
-    long first_prim_offset, n_primitives;
-};
-
-void while_populate_leaf_list_raw(struct bvh_build_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
-{
-    // For maximum speed, move this code out and specialize
-    // An example can be seen in src/librt/primitives/bot/bot.c:bot_shot_hlbvh()
-    const int STACK_SIZE = 256;
-    struct bvh_build_node *stack_node[STACK_SIZE];
-    unsigned char stack_child_index[STACK_SIZE];
-    int stack_ind = 0;
-    stack_node[stack_ind] = root;
-    stack_child_index[stack_ind] = 0;
-    vect_t inverse_r_dir;
-    VINVDIR(inverse_r_dir, rp->r_dir);
-	
-    while (stack_ind >= 0) {
-	if (UNLIKELY(stack_ind >= STACK_SIZE)) {
-	    // This should only ever happen if the BVH tree that was
-	    // built had a depth greater than the defined stack size.
-	    // Even if a BVH is built degenerately and has an average
-	    // splitting factor of 1.2 (we expect this to be close to
-	    // 2), then this stack should support >10^20 triangles
-	    // There is a recursive function in cut_hlbvh that we use
-	    // to flatten the tree, it has a depth parameter, and it
-	    // does a similar traversal to the one here. (It would
-	    // probably be good for debugging) - Apr 2024
-	    bu_bomb("Stack size exceeded in hlbvh shot");
-	}
-	if (stack_child_index[stack_ind] >= 2) {
-	    stack_ind--;
-	    continue;
-	}
-	struct bvh_build_node* node = stack_node[stack_ind];
-	// check bounds if it's the first time in this node
-	if (!stack_child_index[stack_ind]) {
-	    // TODO: do we want to handle NaNs correctly?
-	    point_t lows_t, highs_t, low_ts, high_ts;
-
-	    VSUB2( lows_t, &node->bounds[0], rp->r_pt);
-	    VSUB2(highs_t, &node->bounds[3], rp->r_pt);
-	    
-	    VELMUL( lows_t,  lows_t, inverse_r_dir);
-	    VELMUL(highs_t, highs_t, inverse_r_dir);
-	
-	    VMOVE( low_ts, lows_t);
-	    VMOVE(high_ts, lows_t);
-	    VMINMAX(low_ts, high_ts, highs_t);
-	
-	    fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
-	    fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
-	    if ((high_t < -1.0) | (low_t > high_t)) {
-		stack_ind--;
-		continue;
-	    }
-	}
-	if (node->n_primitives > 0) {
-	    BU_ASSERT(node->children[0] == NULL && node->children[1] == NULL);
-	    // add the leaf values into a list
-	    struct prim_list* entry;
-	    BU_GET(entry, struct prim_list);
-	    entry->n_primitives = node->n_primitives;
-	    entry->first_prim_offset = node->first_prim_offset;
-	    BU_LIST_PUSH(&(leafs->l), &(entry->l));
-	    *prims_so_far += node->n_primitives;
-	    stack_ind--;
-	    continue;
-	}
-	// we hit the bounds and are not in a leaf
-	// so we do the next child of this node
-	stack_node[stack_ind+1] = node->children[stack_child_index[stack_ind]];
-	stack_child_index[stack_ind] += 1;
-	stack_child_index[stack_ind+1] = 0;
-	stack_ind++;
-    }
-}
-
-
-void while_populate_leaf_list_flat(struct bvh_flat_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
-{
-    // For maximum speed, move this code out and specialize
-    // An example can be seen in src/librt/primitives/bot/bot.c:bot_shot_hlbvh()
-    const int STACK_SIZE = 256;
-    struct bvh_flat_node *stack_node[STACK_SIZE];
-    unsigned char stack_child_index[STACK_SIZE];
-    int stack_ind = 0;
-    stack_node[stack_ind] = root;
-    stack_child_index[stack_ind] = 0;
-    vect_t inverse_r_dir;
-    VINVDIR(inverse_r_dir, rp->r_dir);
-	
-    while (stack_ind >= 0) {
-	if (UNLIKELY(stack_ind >= STACK_SIZE)) {
-	    // This should only ever happen if the BVH tree that was
-	    // built had a depth greater than the defined stack size.
-	    // Even if a BVH is built degenerately and has an average
-	    // splitting factor of 1.2 (we expect this to be close to
-	    // 2), then this stack should support >10^20 triangles
-	    // There is a recursive function in cut_hlbvh that we use
-	    // to flatten the tree, it has a depth parameter, and it
-	    // does a similar traversal to the one here. (It would
-	    // probably be good for debugging) - Apr 2024
-	    bu_bomb("Stack size exceeded in hlbvh shot");
-	}
-	if (stack_child_index[stack_ind] >= 2) {
-	    stack_ind--;
-	    continue;
-	}
-	struct bvh_flat_node* node = stack_node[stack_ind];
-	// check bounds if it's the first time in this node
-	if (!stack_child_index[stack_ind]) {
-	    // TODO: do we want to handle NaNs correctly?
-	    point_t lows_t, highs_t, low_ts, high_ts;
-
-	    VSUB2( lows_t, &node->bounds[0], rp->r_pt);
-	    VSUB2(highs_t, &node->bounds[3], rp->r_pt);
-	    
-	    VELMUL( lows_t,  lows_t, inverse_r_dir);
-	    VELMUL(highs_t, highs_t, inverse_r_dir);
-	
-	    VMOVE( low_ts, lows_t);
-	    VMOVE(high_ts, lows_t);
-	    VMINMAX(low_ts, high_ts, highs_t);
-	
-	    fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
-	    fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
-	    if ((high_t < -1.0) | (low_t > high_t)) {
-		stack_ind--;
-		continue;
-	    }
-	}
-	if (node->n_primitives > 0) {
-	    // add the leaf values into a list
-	    struct prim_list* entry;
-	    BU_GET(entry, struct prim_list);
-	    entry->n_primitives = node->n_primitives;
-	    entry->first_prim_offset = node->data.first_prim_offset;
-	    BU_LIST_PUSH(&(leafs->l), &(entry->l));
-	    *prims_so_far += node->n_primitives;
-	    stack_ind--;
-	    continue;
-	}
-	// we hit the bounds and are not in a leaf
-	// so we do the next child of this node
-	
-	// stack_child_index[stack_ind] either == 0 or == 1
-	// because of the guard at the top of the loop
-	stack_node[stack_ind+1] = (stack_child_index[stack_ind]) ? (node->data.other_child) : (node +1);
-	stack_child_index[stack_ind] += 1;
-	stack_child_index[stack_ind+1] = 0;
-	stack_ind++;
-    }
-}
-
-
-/**
- * This is a naive shot function that returns an allocated 
- * list of primative indexes that correspond with the indexes
- * returned from ordered_prims in hlbvh_create(). 
- * It is not fast, but we're keeping it around to facilitate
- * prototyping code for other primatives.
- */
-void
-hlbvh_shot(void* root, struct xray* rp, long** check_prims, size_t* num_check_prims, int is_flat)
-{
-    size_t prim_accum = 0;
-    struct prim_list *leafs = NULL;
-    BU_GET(leafs, struct prim_list);
-    BU_LIST_INIT(&(leafs->l));
-    leafs->first_prim_offset = -1;
-    leafs->n_primitives = -1;
-    if (is_flat) {
-	while_populate_leaf_list_flat((struct bvh_flat_node *)root, rp, leafs, &prim_accum);
-    } else {
-	while_populate_leaf_list_raw((struct bvh_build_node *)root, rp, leafs, &prim_accum);
-    }
-    *num_check_prims = prim_accum;
-    if (prim_accum == 0) {
-	BU_PUT(leafs, struct prim_list);
-	return;
-    }
-    *check_prims = (long*)bu_calloc(prim_accum, sizeof(long), "hlbvh primative list");
-    size_t index = 0;
-    struct prim_list *entry;
-    while (BU_LIST_WHILE(entry, prim_list, &(leafs->l))) {
-	for (int i = 0; i < entry->n_primitives; i++) {
-	    (*check_prims)[index] = entry->first_prim_offset + i;
-	    index++;
-	}
-	
-	BU_LIST_DEQUEUE(&(entry->l));
-	BU_PUT(entry, struct prim_list);
-    }
-    BU_PUT(leafs, struct prim_list);
-    BU_ASSERT(index == prim_accum);
-}
-
-void
-hlbvh_shot_raw(struct bvh_build_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
-{
-    hlbvh_shot(root, rp, check_prims, num_check_prims, 0 /*false*/);
-}
-
-void
-hlbvh_shot_flat(struct bvh_flat_node* root, struct xray* rp, long** check_prims, size_t* num_check_prims)
-{
-    hlbvh_shot(root, rp, check_prims, num_check_prims, 1 /*true*/);
-}
-
-
 #ifdef USE_OPENCL
 static cl_int
 flatten_bvh_tree(cl_int *offset, struct clt_linear_bvh_node *nodes, long total_nodes,
@@ -876,7 +612,16 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
 	long nodes_created = 0;
         struct bvh_build_node *root;
 
-	pool = hlbvh_init_pool(n_primatives);
+        /*
+         * This pool must have enough size to fit the whole tree or the
+         * algorithm will fail. It stores pointers to itself and a
+         * realloc would make the pointers invalid.
+         *
+         * total_nodes = treelets_size + upper_sah_size,  where:
+         *  treelets_size < 2*n_primitives
+         *  upper_sah_size < 2*2^popcnt(0x3ffc0000)   i.e. 2*4096
+         */
+	pool = bu_pool_create(sizeof(struct bvh_build_node)*(2*n_primitives+2*4096));
         root = hlbvh_create(4, pool, centroids_prims, bounds_prims, &nodes_created,
 			    n_primitives, ordered_prims);
 
