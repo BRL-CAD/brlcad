@@ -87,11 +87,11 @@ const char* Geometry::getBaseName(void) const{
 }
 
 
-Bot Geometry::getBot(void) const{
+Bot& Geometry::getBot(void) {
     return m_bot;
 }
 
-Arbs Geometry::getArbs(void) const{
+Arbs& Geometry::getArbs(void) {
     return m_arbs;
 }
 

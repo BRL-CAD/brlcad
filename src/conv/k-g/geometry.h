@@ -50,8 +50,8 @@ public:
 			const point_t& point8);
 
     const char*  getBaseName(void) const;
-    Bot          getBot(void) const;
-    Arbs         getArbs(void) const;
+    Bot&         getBot(void);
+    Arbs&        getArbs(void);
 
     std::vector<std::string>       write(rt_wdb* wdbp);
 private:
