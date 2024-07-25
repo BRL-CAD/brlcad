@@ -456,11 +456,11 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     struct bvh_flat_node *flat_root = hlbvh_flatten(build_root, nodes_created);
     bu_pool_delete(pool);
-	
-    int do_normals = (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) 
-		  && (bot_ip->bot_flags & RT_BOT_USE_NORMALS) 
+
+    int do_normals = (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS)
+		  && (bot_ip->bot_flags & RT_BOT_USE_NORMALS)
 		  && (bot_ip->num_normals > 0);
-	
+
     triangle_s *tris = (triangle_s *)bu_malloc(bot_ip->num_faces * sizeof(triangle_s), "ordered triangles");
     fastf_t *tri_norms = NULL;
     if (do_normals) {
@@ -469,16 +469,22 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     // copy triangles into order specfied by ordered_faces
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
 	size_t bot_ip_index = ordered_faces[i];
-	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+0]);
-	fastf_t* v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
-	fastf_t* v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
+	fastf_t *v0, *v1, *v2;
+	v0 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+0]);
+	if (bot_ip->orientation == RT_BOT_CW) {
+	    v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
+	    v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
+	} else {
+	    v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
+	    v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
+	}
 	VMOVE(tris[i].A, v0);
 	VSUB2(tris[i].AB, v1, v0);
 	VSUB2(tris[i].AC, v2, v0);
 	vect_t wn, work;
 	VCROSS(wn, tris[i].AB, tris[i].AC);
 	tris[i].face_norm_scalar = MAGNITUDE(wn);
-	
+
 	// some error-checking
 	fastf_t m1 = MAGSQ(tris[i].AB);
 	fastf_t m2 = MAGSQ(tris[i].AC);
@@ -497,15 +503,14 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	}
 	VUNITIZE(wn);
 	VMOVE(tris[i].face_norm, wn);
-	if (bot->bot_orientation == RT_BOT_CW) { VREVERSE(tris[i].face_norm, tris[i].face_norm); }
 	tris[i].norms = NULL;
-	
+
 	if (do_normals && bot_ip->num_face_normals > bot_ip_index) {
 	    long idx[3];
 	    VMOVE(idx, &bot_ip->face_normals[bot_ip_index*3]);
 	    if (idx[0] >= 0 && idx[0] < (long)bot_ip->num_normals &&
 		idx[1] >= 0 && idx[1] < (long)bot_ip->num_normals &&
-		idx[2] >= 0 && idx[2] < (long)bot_ip->num_normals) 
+		idx[2] >= 0 && idx[2] < (long)bot_ip->num_normals)
 	    {
 		tris[i].norms = &tri_norms[i*9];
 		VMOVE(&tris[i].norms[0*3], &bot_ip->normals[idx[0]*3]);
@@ -520,7 +525,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     bu_free(ordered_faces, "ordered faces");
-	
+
     struct spatial_partition_s *sps;
     BU_GET(sps, struct spatial_partition_s);
     sps->root = flat_root;
@@ -529,7 +534,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     sps->num_cpus = bu_avail_cpus();
     sps->hit_arrays_per_cpu = (hit_da *) bu_calloc(sps->num_cpus, sizeof(hit_da), "thread-local bot hit arrays");
     bot->tie = (void*) sps;
-	
+
     // struct bvh_build_node and struct bvh_flat_node are puns for fastf_t[6] which are the bounds
     fastf_t *min = (fastf_t *)sps->root;
     fastf_t *max = &min[3];
