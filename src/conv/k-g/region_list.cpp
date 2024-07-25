@@ -108,7 +108,7 @@ void RegionList::create
 	wmember geometry_head;
 	BU_LIST_INIT(&geometry_head.l);
 
-	for (int i = 0; i < names.size(); i++) {
+	for (size_t i = 0; i < names.size(); i++) {
 	    mk_addmember(names[i].c_str(), &(geometry_head.l), NULL, WMOP_UNION);
 	    mk_addmember(names[i].c_str(), &(all_head.l), NULL, WMOP_UNION);
 	}
