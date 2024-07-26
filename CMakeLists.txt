@@ -562,12 +562,12 @@ DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calcul
 
 # If we ONLY want to produce Doxygen output, there's no point in doing
 # the full configure and bext build process
-if (DEFINED BRLCAD_DOXYGEN_ONLY)
+if (BRLCAD_DOXYGEN_ONLY)
   file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/doc")
   add_subdirectory(misc/doxygen)
   DOXYGEN_FEATURE_SUMMARY("${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox")
   return()
-endif(DEFINED BRLCAD_DOXYGEN_ONLY)
+endif(BRLCAD_DOXYGEN_ONLY)
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
