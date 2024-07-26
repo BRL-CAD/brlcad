@@ -16,6 +16,14 @@ ALL_REPOS=$(curl -s ${ORG_URL} | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f
 # Clone all the repositories.  Specify --mirror so all upstream data
 # (tags, etc.) is also preserved
 for ORG_REPO in ${ALL_REPOS}; do
-	git clone --mirror ${ORG_REPO}.git;
+	dirname=${ORG_REPO/https:\/\/github.com\/BRL-CAD\//}
+	if [ -e ./${dirname}.git ]; then
+		echo "Updating ${dirname}.git"
+		# https://stackoverflow.com/a/6151419/2037687
+		cd ${dirname}.git && git remote update --prune && cd ..
+	else
+		echo "Mirror cloning ${ORG_REPO}.git"
+		git clone --mirror ${ORG_REPO}.git;
+	fi
 done
 
