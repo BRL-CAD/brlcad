@@ -53,6 +53,8 @@
 #define HLBVH_IMPLEMENTATION
 #include "cut_hlbvh.h"
 
+#define HLBVH_STACK_SIZE 256
+
 struct morton_primitive {
     long primitive_index;
     uint32_t morton_code;
@@ -624,13 +626,12 @@ struct prim_list {
     long first_prim_offset, n_primitives;
 };
 
-void while_populate_leaf_list_raw(struct bvh_build_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far) 
+void while_populate_leaf_list_raw(struct bvh_build_node *root, struct xray* rp, struct prim_list* leafs, size_t* prims_so_far)
 {
     // For maximum speed, move this code out and specialize
     // An example can be seen in src/librt/primitives/bot/bot.c:bot_shot_hlbvh()
-    const int STACK_SIZE = 256;
-    struct bvh_build_node *stack_node[STACK_SIZE];
-    unsigned char stack_child_index[STACK_SIZE];
+    struct bvh_build_node *stack_node[HLBVH_STACK_SIZE];
+    unsigned char stack_child_index[HLBVH_STACK_SIZE];
     int stack_ind = 0;
     stack_node[stack_ind] = root;
     stack_child_index[stack_ind] = 0;
@@ -638,7 +639,7 @@ void while_populate_leaf_list_raw(struct bvh_build_node *root, struct xray* rp, 
     VINVDIR(inverse_r_dir, rp->r_dir);
 	
     while (stack_ind >= 0) {
-	if (UNLIKELY(stack_ind >= STACK_SIZE)) {
+	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
 	    // This should only ever happen if the BVH tree that was
 	    // built had a depth greater than the defined stack size.
 	    // Even if a BVH is built degenerately and has an average
@@ -703,9 +704,8 @@ void while_populate_leaf_list_flat(struct bvh_flat_node *root, struct xray* rp, 
 {
     // For maximum speed, move this code out and specialize
     // An example can be seen in src/librt/primitives/bot/bot.c:bot_shot_hlbvh()
-    const int STACK_SIZE = 256;
-    struct bvh_flat_node *stack_node[STACK_SIZE];
-    unsigned char stack_child_index[STACK_SIZE];
+    struct bvh_flat_node *stack_node[HLBVH_STACK_SIZE];
+    unsigned char stack_child_index[HLBVH_STACK_SIZE];
     int stack_ind = 0;
     stack_node[stack_ind] = root;
     stack_child_index[stack_ind] = 0;
@@ -713,7 +713,7 @@ void while_populate_leaf_list_flat(struct bvh_flat_node *root, struct xray* rp, 
     VINVDIR(inverse_r_dir, rp->r_dir);
 	
     while (stack_ind >= 0) {
-	if (UNLIKELY(stack_ind >= STACK_SIZE)) {
+	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
 	    // This should only ever happen if the BVH tree that was
 	    // built had a depth greater than the defined stack size.
 	    // Even if a BVH is built degenerately and has an average
