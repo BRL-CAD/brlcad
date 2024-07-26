@@ -383,6 +383,12 @@ process to pull down another copy, but are still looking to have the BRL-CAD
 configure process manage producing bext build outputs.
 
 
+--- BRLCAD_EXT_PARALLEL ---
+
+This number, when specified, describes how many compilation threads to use
+when compiling bext sources.  Default is 8.
+
+
 --- BRLCAD_DEBUGGING ---
 
 Add compiler flags to aid in program debugging.  Defaults to ON.
