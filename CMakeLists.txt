@@ -532,9 +532,6 @@ endif(BRLCAD_PRINT_MSGS)
 # functions
 include(BRLCAD_CheckFunctions)
 
-# Load Doxygen related CMake macros
-include(Doxygen)
-
 # A variety of tools, such as the benchmark utilities, need
 # a Bourne shell and other commands - check for them.
 include(FindShellDeps)
@@ -553,8 +550,24 @@ mark_as_advanced(SWIG_VERSION)
 
 # Doxygen is a tool for generating formatted documentation
 # from structured source code comments.
+include(Doxygen)
 find_package(Doxygen)
 
+# Define high level features of BRL-CAD.  We define the features here,
+# to allow for the possibility that this is a Doxygen-only build (i.e.
+# we won't be processing most of the build logic and are just setting
+# up for our Doxygen run.
+DOXYGEN_FEATURE("Portability Library" DESCRIPTION "Portability layer that makes sure basic low level system functionality is present across all platforms via a uniform API.")
+DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calculations that report not just first surface hits but in/out pairs of hits to support the characterization of closed geometric volumes.")
+
+# If we ONLY want to produce Doxygen output, there's no point in doing
+# the full configure and bext build process
+if (DEFINED BRLCAD_DOXYGEN_ONLY)
+  file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/doc")
+  add_subdirectory(misc/doxygen)
+  DOXYGEN_FEATURE_SUMMARY("${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox")
+  return()
+endif(DEFINED BRLCAD_DOXYGEN_ONLY)
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
