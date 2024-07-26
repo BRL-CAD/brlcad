@@ -223,13 +223,20 @@ function(brlcad_ext_setup)
   endif (EXT_CONFIG_STATUS)
 
   set(EXT_BUILD_STATUS 0)
+
+  # define how many threads to compile with
   if (NOT DEFINED BRLCAD_EXT_PARALLEL)
     set(BRLCAD_EXT_PARALLEL 8)
   endif (NOT DEFINED BRLCAD_EXT_PARALLEL)
+
+  # we should probably check for this much earlier, but at least check build
+  # type now before trying to pass it forward.
   if (NOT DEFINED CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
   endif (NOT DEFINED CMAKE_BUILD_TYPE)
+
   message("${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel ${BRLCAD_EXT_PARALLEL} --config ${CMAKE_BUILD_TYPE}")
+
   if (CMAKE_BUILD_TYPE)
     execute_process(COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_EXT_BUILD_DIR} --parallel ${BRLCAD_EXT_PARALLEL} --config ${CMAKE_BUILD_TYPE} RESULT_VARIABLE EXT_BUILD_STATUS)
   else (CMAKE_BUILD_TYPE)
@@ -239,9 +246,9 @@ function(brlcad_ext_setup)
     message(FATAL_ERROR "Unable to successfully build bext dependency repository")
   endif (EXT_BUILD_STATUS)
 
-  # If we were successful, and set up things ourselves, clear out
-  # the src and build directories to save space.  In some environments,
-  # like the Github runners, space can be at a premium
+  # If we were successful, and set up things ourselves, clear out the src and
+  # build directories to save space.  In some environments, like the Github
+  # runners, space can be at a premium
   if (BEXT_SRC_CLEANUP)
     execute_process(COMMAND ${CMAKE_COMMAND} -E rm -rf ${BRLCAD_EXT_SOURCE_DIR})
   endif (BEXT_SRC_CLEANUP)
