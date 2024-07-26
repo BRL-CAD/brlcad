@@ -44,6 +44,7 @@
 #include "../../cut_hlbvh.h" /* for hlbvh functions */
 
 #define BOT_MIN_DN 1.0e-9
+#define HLBVH_STACK_SIZE 256
 
 #define BOT_UNORIENTED_NORM(_ap, _hitp, _norm, _out) {		    \
 	if (!(_ap)->a_bot_reverse_normal_disabled) {		    \
@@ -578,9 +579,8 @@ rt_bot_makesegs(hit_da *hits,
 void
 bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits)
 {
-    const int STACK_SIZE = 256;
-    struct bvh_flat_node *stack_node[STACK_SIZE];
-    unsigned char stack_child_index[STACK_SIZE];
+    struct bvh_flat_node *stack_node[HLBVH_STACK_SIZE];
+    unsigned char stack_child_index[HLBVH_STACK_SIZE];
     int stack_ind = 0;
     stack_node[stack_ind] = root;
     stack_child_index[stack_ind] = 0;
@@ -588,7 +588,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
     VINVDIR(inverse_r_dir, rp->r_dir);
 	
     while (stack_ind >= 0) {
-	if (UNLIKELY(stack_ind >= STACK_SIZE)) {
+	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
 	    // This should only ever happen if the BVH tree that was
 	    // built had a depth greater than the defined stack size.
 	    // Even if a BVH is built degenerately and has an average
