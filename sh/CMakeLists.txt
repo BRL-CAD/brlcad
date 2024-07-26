@@ -19,6 +19,7 @@ set(noinst_SCRIPTS
   facetize_cmp.sh
   footer.sh
   fs2org.sh
+  mirror_repos.sh
   header.sh
   indent.sh
   ios-icons.sh
