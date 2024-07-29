@@ -72,6 +72,10 @@ BRLCAD_ADDEXEC(rt_lod lod.c "librt;libbg" TEST)
 # bv_polygon <-> sketch testing
 BRLCAD_ADDEXEC(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv" TEST)
 
+# db_search testing
+BRLCAD_ADDEXEC(rt_search_test search_tests.cpp "librt;libbu;libged" TEST)
+BRLCAD_ADD_TEST(NAME rt_search_tests COMMAND rt_search_test "${CMAKE_CURRENT_SOURCE_DIR}/search_tests.g")
+
 set(distcheck_files
   CMakeLists.txt
   arb_intersect.g
@@ -83,6 +87,7 @@ set(distcheck_files
   nurbs_surfaces.g
   rt_datum.c
   rt_perturb.c
+  search_tests.g
   sketch.g
   )
 
