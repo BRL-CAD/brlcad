@@ -70,7 +70,7 @@
 <itemizedlist mark="bullet">
 <listitem>
 <para>
-	dist -- The <emphasis>distance</emphasis> tolerance is specified in model units and represents the
+	dist -- The <emphasis>distance</emphasis> tolerance is specified in mm and represents the
 	minimum distance required between two vertices to consider them distinct.
 </para>
 </listitem>
