@@ -1459,7 +1459,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	originals[hole_i] = plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]];
     }
 
-    if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
+    if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP || db_node->flags & DB_SEARCH_FLAT) {
 	if (!db_node || !db_node->path || !DB_FULL_PATH_CUR_DIR(db_node->path))
 	    return 1;
 	name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
@@ -1511,7 +1511,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	ret = 1;
     }
 
-    if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP)) {
+    if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP || db_node->flags & DB_SEARCH_FLAT)) {
 	bu_free(name, "f_exec string");
     }
 
