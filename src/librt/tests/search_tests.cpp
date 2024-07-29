@@ -85,7 +85,7 @@ bool search_count_helper(const int expected_count,
     struct bu_ptbl search_results = BU_PTBL_INIT_ZERO;
     int ret = db_search(&search_results, flags, filter, path_c, path_v, dbip, ctx);
 
-    bool count_matches = (ret >= 0 && BU_PTBL_LEN(&search_results) == expected_count);
+    bool count_matches = (ret >= 0 && BU_PTBL_LEN(&search_results) == (unsigned long)expected_count);
     db_search_free(&search_results);
 
     return count_matches;
