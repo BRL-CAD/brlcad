@@ -336,12 +336,13 @@ build_upper_sah(struct bu_pool *pool, struct bvh_build_node **treelet_roots,
 	    long count;
 	    fastf_t bounds[6];
 	};
-	struct bucket_info buckets[n_buckets];
+    #define bucket_info_init {{0, {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}}}
+	struct bucket_info buckets[n_buckets] = bucket_info_init;
 	fastf_t centroid_bounds[6] =
 		{MAX_FASTF,MAX_FASTF,MAX_FASTF, -MAX_FASTF,-MAX_FASTF,-MAX_FASTF};
 
 	fastf_t cost[n_buckets - 1];
-	fastf_t min_cost;
+	fastf_t min_cost = MAX_FASTF;
 	long min_cost_split_bucket;
 
 	struct bvh_build_node **pmid;
