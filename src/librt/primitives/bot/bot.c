@@ -37,6 +37,7 @@
 #include "vmath.h"
 
 #include "rt/primitives/bot.h"
+#include "bu/snooze.h"
 
 /* private implementation headers */
 #include "./bot_edge.h"
@@ -708,8 +709,17 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     // how many cpus there are as we spend going
     // through bvh nodes, triangle intersection, and
     // adding hits combined.
-    int thread_ind = bu_thread_id() % sps->num_cpus;
-    hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
+    /* BIG TODO:
+     * bu_thread_id does not guarantee uniquenes and frequently repeats thread ID's on Windows
+     * - colliding and causing indexing overwrites. This leads to memory access conflicts
+     * as well as incorrect hit/miss drawing on renders
+     * for a temporary workaround, lets allocate on the stack here instead.
+     * This "works", but performance testing (and other allocation cleanup) is needed
+     */
+    //int thread_ind = bu_thread_id() % sps->num_cpus;
+    //hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
+    hit_da local_da = {0, 0, NULL};
+    hit_da* hits_da = &local_da;
     hits_da->count = 0;
     
     bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, hits_da);
