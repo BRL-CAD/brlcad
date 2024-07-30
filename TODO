@@ -32,6 +32,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* bu_snooze() appears to be broken on Windows (and should probably have 
+  some functionality / unit tests)
+
+* Windows installer does not respect the "add to path" checkbox
+  and always adds BRL-CAD to the system path
+
 * Add a "perturb" callback function to librt's primitive tables, that
   will accept a primitive definition and return a version that has been
   slightly increased or decreased in size.  For example, a "perturbed"
