@@ -141,11 +141,15 @@ include/bu/process.h
 	bu_process_id: replaced by bu_pid
 	bu_terminate: replaced by bu_pid_terminate
 
+MGED commands
+	p, r and g optional arguments to summary command -
+	info can be obtained via search
+
 7.38
 ----
 MGED commands
 	E (a.k.a "big E") - replaced by "draw -m5"
-        
+
 7.32
 ----
 include/bu/app.h
