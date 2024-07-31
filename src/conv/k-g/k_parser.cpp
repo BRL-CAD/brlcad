@@ -72,10 +72,33 @@ enum class KState {
     Element_Tshell,
     Part,
     Part_Adaptive_Failure,
+    Section_Ale1d,
+    Section_Ale2d,
+    Section_Beam,
+    Section_Beam_AISC,
+    Section_Discrete,
+    Section_Fpd,
+    Section_Point_Source,
+    Section_Point_source_Mixture,
+    Section_Seatbelt,
     Section_Shell,
-    Section_Solid
+    Section_Solid,
+    Section_Solid_Peri,
+    Section_Sph,
+    Section_Tshell
 };
 
+enum class Element_Beam_Options {
+    Thickness,
+    Scalar,
+    Scalr,
+    Section,
+    Pid,
+    Offset,
+    Orientation,
+    Warpage,
+    Elbow
+};
 
 static std::string read_line
 (
@@ -214,12 +237,17 @@ bool parse_k
 	size_t                   partLinesRead    = 0;
 	std::string              partTitle;
 	size_t                   sectionLinesRead = 0;
+	size_t                   elementOptionsCounter = 0;
 	std::string              sectionTitle;
 	int                      sectionId        = -1;
 	std::string              line             = read_line(is);
 	std::vector<std::string> tokens;
 	const size_t FirstNode = 2;
 	std::vector<std::string> elementOptions;
+	std::vector<std::string> sectionOptions;
+	std::vector<Element_Beam_Options> elementBeamOptions;
+	//Elment_beam_options.push_back(Elmenent_Beam_Options::Pid);
+	//std::map<std::string, double> elementOptions;
 
 	if (line.size() > 0)
 	    tokens = parse_line(line.c_str());
@@ -258,17 +286,51 @@ bool parse_k
 				if ((command.size() > 2) && (command[2] == "PULLEY")) {
 				    state = KState::Element_Beam_Pulley;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    //elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());//ElEMENT_BEAM_PULLEY doesn't have options 
 				}
 				else if ((command.size() > 2) && (command[2] == "SOURCE")) {
 				    state = KState::Element_Beam_Source;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    //elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());//ELEMENT_BEAM_SOURCE doesn't have options 
 				}
 				else {
 				    state = KState::Element_Beam;
 
 				    elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+
+				    if (elementOptions.size() > 0) {
+					for (size_t i_o = 0; i_o < elementOptions.size(); ++i_o) {
+					    if (elementOptions[i_o] == "ThICKNESS") {
+						elementBeamOptions.push_back(Element_Beam_Options::Thickness);
+					    }
+					    else if (elementOptions[i_o] == "SCALAR") {
+						elementBeamOptions.push_back(Element_Beam_Options::Scalar);
+					    }
+					    else if (elementOptions[i_o] == "SCALR") {
+						elementBeamOptions.push_back(Element_Beam_Options::Scalr);
+					    }
+					    else if (elementOptions[i_o] == "SECTION") {
+						elementBeamOptions.push_back(Element_Beam_Options::Section);
+					    }
+					    else if (elementOptions[i_o] == "PID") {
+						elementBeamOptions.push_back(Element_Beam_Options::Pid);
+					    }
+					    else if (elementOptions[i_o] == "OFFSET") {
+						elementBeamOptions.push_back(Element_Beam_Options::Offset);
+					    }
+					    else if (elementOptions[i_o] == "ORIENTATION") {
+						elementBeamOptions.push_back(Element_Beam_Options::Orientation);
+					    }
+					    else if (elementOptions[i_o] == "WARPAGE") {
+						elementBeamOptions.push_back(Element_Beam_Options::Warpage);
+					    }
+					    else if (elementOptions[i_o] == "ELBOW") {
+						elementBeamOptions.push_back(Element_Beam_Options::Elbow);
+					    }
+					    else
+						std::cout << "Unhandeled Element_Beam option" << elementOptions[i_o] << "in k-file" << fileName << "\n";
+					}
+				    }
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "BEARING")) {
@@ -440,9 +502,9 @@ bool parse_k
 			}
 			else if (command[0] == "PART") {
 			    if ((command.size() == 1) || (command[1] == "INERTIA")) {
-				state         = KState::Part;
+				state = KState::Part;
 				partLinesRead = 0;
-				partTitle     = "";
+				partTitle = "";
 			    }
 			    else if ((command.size() == 3) && (command[1] == "ADAPTIVE") && (command[2] == "FAILURE")) {
 				state = KState::Part_Adaptive_Failure;
@@ -451,7 +513,19 @@ bool parse_k
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
 			}
 			else if (command[0] == "SECTION") {
-			    if (command[1] == "SHELL") {
+			    if (command[1] == "ALE1D"){
+				state        = KState::Section_Ale1d;
+				sectionTitle = "";
+				sectionId    = -1;
+
+				if (command.size() > 2) {
+				    if (command[2] == "TITLE")
+					sectionLinesRead = 0;
+				    else
+					sectionOptions.insert(sectionOptions.end(), command.begin() + 2, command.end());
+				}
+			    }
+			    else if (command[1] == "SHELL") {
 				state        = KState::Section_Shell;
 				sectionTitle = "";
 				sectionId    = -1;
@@ -684,6 +758,89 @@ bool parse_k
 			    std::cout << "Attributes should come in pairs in k-file" << fileName << "\n";
 			}
 			break;
+		    }
+		    case KState::Element_Beam: {
+			if (elementBeamOptions.size() == 0 || elementOptionsCounter == 0) {
+			    if (tokens.size() < 10) {
+				std::cout << "Too short ELEMENT_BEAM in k-file" << fileName << "\n";
+				break;
+			    }
+			    int eid = stoi(tokens[0]);
+
+			    if (data.elements.find(eid) != data.elements.end()) {
+				std::cout << "Duplicat Element ID" << eid << " in k-file" << fileName << "\n";
+				break;
+			    }
+
+			    KElement element;
+
+			    for (int i_n = 0; i_n < 5; ++i_n) {
+				element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
+			    }
+
+			    data.elements[eid] = element;
+
+			    int pid = stoi(tokens[1]);
+			    data.parts[pid].elements.insert(eid);
+			    break;
+			}
+			else if (elementBeamOptions.size() > 0) {
+			    Element_Beam_Options currentOption = elementBeamOptions[elementOptionsCounter];
+			    switch (currentOption)
+			    {
+			    case Element_Beam_Options::Thickness: {
+				//handle the thickness line
+				elementOptionsCounter++;
+				break;
+			    }
+			    case Element_Beam_Options::Scalar: {
+				//handle the Scalar line
+				elementOptionsCounter++;
+				break;
+			    }
+			    case Element_Beam_Options::Scalr: {
+				//handle the Scalr line
+				elementOptionsCounter++;
+				break;
+			    }
+			    case Element_Beam_Options::Section: {
+				//handle the section line
+				elementOptionsCounter++;
+				break;
+			    }
+			    case Element_Beam_Options::Pid: {
+				//handle the Pid line
+				elementOptionsCounter++;
+				break;
+			    }
+			    case Element_Beam_Options::Offset: {
+				//handle the offset line
+				elementOptionsCounter++;
+				break;
+			    }
+			    case Element_Beam_Options::Orientation: {
+				//handle the Orientation line
+				elementOptionsCounter++;
+				break;
+			    }
+			    case Element_Beam_Options::Warpage: {
+				//handle the Warpage line
+				elementOptionsCounter++;
+				break;
+			    }
+			    case Element_Beam_Options::Elbow: {
+				// handle the Elbow line
+				elementOptionsCounter++;
+				break;
+			    }
+			    default:
+				break;
+			    }
+
+			    if (elementOptionsCounter == elementBeamOptions.size() - 1) {
+				elementOptionsCounter = 0;
+			    }
+			}
 		    }
 
 		}
