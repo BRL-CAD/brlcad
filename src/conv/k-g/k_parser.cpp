@@ -784,7 +784,7 @@ bool parse_k
 			    data.parts[pid].elements.insert(eid);
 			    break;
 			}
-			else if (elementBeamOptions.size() > 0) {
+			else if ((elementBeamOptions.size()) > 0 && (elementOptionsCounter < elementBeamOptions.size())) {
 			    Element_Beam_Options currentOption = elementBeamOptions[elementOptionsCounter];
 			    switch (currentOption)
 			    {
