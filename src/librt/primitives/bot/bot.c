@@ -533,7 +533,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     sps->root = flat_root;
     sps->tris = tris;
     sps->vertex_normals = tri_norms;
-    sps->num_cpus = bu_avail_cpus();
+    sps->num_cpus = bu_avail_cpus();	// NOTE: this does NOT respect user requested cpu count (ie if -P was used)
     sps->hit_arrays_per_cpu = (hit_da *) bu_calloc(sps->num_cpus, sizeof(hit_da), "thread-local bot hit arrays");
     bot->tie = (void*) sps;
 
@@ -703,23 +703,8 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (UNLIKELY(!sps))
 	return 0;
     
-    // we cache the number of cpus because calling
-    // bu_avail_cpus() for every shot takes a long
-    // time - we sometimes spend as much time asking
-    // how many cpus there are as we spend going
-    // through bvh nodes, triangle intersection, and
-    // adding hits combined.
-    /* BIG TODO:
-     * bu_thread_id does not guarantee uniquenes and frequently repeats thread ID's on Windows
-     * - colliding and causing indexing overwrites. This leads to memory access conflicts
-     * as well as incorrect hit/miss drawing on renders
-     * for a temporary workaround, lets allocate on the stack here instead.
-     * This "works", but performance testing (and other allocation cleanup) is needed
-     */
-    //int thread_ind = bu_thread_id() % sps->num_cpus;
-    //hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
-    hit_da local_da = {0, 0, NULL};
-    hit_da* hits_da = &local_da;
+    int thread_ind = bu_parallel_id() - 1;  // 0-index
+    hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
     hits_da->count = 0;
     
     bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, hits_da);
