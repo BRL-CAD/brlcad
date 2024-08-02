@@ -68,19 +68,23 @@ __BEGIN_DECLS
 DEPRECATED BU_EXPORT extern int bu_is_parallel(void);
 
 /**
- * returns the thread ID of the calling thread
- */
-BU_EXPORT extern int bu_thread_id(void);
-
-/**
- * returns the CPU number of the current bu_parallel() invoked thread.
+ * Returns the CPU number of the current bu_parallel() invoked thread.
+ *
+ * This routine is intended for indexing into per-cpu memory buffers.
+ * Values will be any number in the range of 0 to MAX_PSW.  They are
+ * not guaranteed to be in any range except for non-parallel
+ * applications which will have ID 0 for the main process's thread.
  */
 BU_EXPORT extern int bu_parallel_id(void);
 
 /**
- * @brief
- * process management routines
+ * Returns the OS thread ID of the calling thread.
+ *
+ * This routine is intended for diagnostic and unique ID purposes, not
+ * for indexing into per-cpu memory buffers as values can be anything.
  */
+BU_EXPORT extern int bu_thread_id(void);
+
 
 /**
  * @brief
@@ -117,9 +121,13 @@ BU_EXPORT extern size_t bu_avail_cpus(void);
  * Locking and work dispatching are handled by 'func' using a
  * "self-dispatching" paradigm.  This means you must manually protect
  * shared data structures, e.g., via bu_semaphore_acquire().
- * Lock-free execution is often possible by creating data containers
- * with MAX_PSW elements as bu_parallel will never execute more than
- * that many threads of execution.
+ *
+ * Lock-free execution is typically possible by creating data
+ * containers with MAX_PSW elements as bu_parallel will never execute
+ * more than that many threads.  Calling bu_parallel_id() provides the
+ * id of the current thread, which can be used as an index into a
+ * MAX_PSW per-cpu array.  The id is also passed as the func_cpu_id
+ * parameter to the bu_parallel callback function.
  *
  * All invocations of the specified 'func' callback function are
  * passed two parameters: 1) it's assigned thread number and 2) a
