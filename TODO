@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* bu_parallel_id appears to be zero indexed (starts with 0) on Linux, and
+  1 indexed (lowest return is 1) on Windows.  Need to determine if this
+  is expected behavior - if so, document in header, if not correct.
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
