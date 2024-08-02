@@ -535,9 +535,8 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     sps->vertex_normals = tri_norms;
     sps->num_cpus = bu_avail_cpus();	// NOTE: this does NOT respect user requested cpu count (ie if -P was used)
 
-    // We need an extra array entry here, to accommodate platforms using both 0
-    // and 1 indexing for bu_parallel_id()
-    sps->hit_arrays_per_cpu = (hit_da *) bu_calloc(sps->num_cpus+1, sizeof(hit_da), "thread-local bot hit arrays");
+    /* per-cpu mem allocated MAX_PSW to ensure contention-free */
+    sps->hit_arrays_per_cpu = (hit_da *) bu_calloc(MAX_PSW, sizeof(hit_da), "thread-local bot hit arrays");
     bot->tie = (void*) sps;
 
     // struct bvh_build_node and struct bvh_flat_node are puns for fastf_t[6] which are the bounds
@@ -705,11 +704,11 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     struct spatial_partition_s *sps = (struct spatial_partition_s *)bot->tie;
     if (UNLIKELY(!sps))
 	return 0;
-    
+
     int thread_ind = bu_parallel_id();
     hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
     hits_da->count = 0;
-    
+
     bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, hits_da);
 
     if (hits_da->count == 0) {
@@ -861,17 +860,17 @@ void
 rt_bot_free(struct soltab *stp)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    
+
     if (bot && bot->tie) {
 	struct spatial_partition_s *sps = (struct spatial_partition_s*)bot->tie;
 	bu_free(sps->root, "bot bvh flat nodes");
 	bu_free(sps->tris, "bot triangles");
 	bu_free(sps->vertex_normals, "bot normals");
 	if (sps->hit_arrays_per_cpu) {
-	    // As in allocation, we have one extra entry beyond num_cpus to allow
-	    // for various platforms using either 0 or 1 bu_parallel_id indexing
-	    for (size_t i = 0; i < sps->num_cpus+1; i++) {
-		if (sps->hit_arrays_per_cpu[i].items) bu_free(sps->hit_arrays_per_cpu[i].items, "bot thread-local hit arrays");
+	    for (size_t i = 0; i < MAX_PSW; i++) {
+		if (sps->hit_arrays_per_cpu[i].items) {
+		    bu_free(sps->hit_arrays_per_cpu[i].items, "bot thread-local hit arrays");
+		}
 	    }
 	    bu_free(sps->hit_arrays_per_cpu, "bot array of dynamic thread-local hit arrays");
 	}
