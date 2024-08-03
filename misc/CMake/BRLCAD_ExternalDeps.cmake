@@ -506,12 +506,15 @@ endfunction(RPATH_BUILD_DIR_PROCESS)
 
 
 #####################################################################
-# Start of processing for BRLCAD_EXT_INSTALL_DIR contents We need to
+# Processing for BRLCAD_EXT_INSTALL_DIR contents. We need to
 # keep the build directory copies of ${BRLCAD_EXT_DIR}/install files
 # in sync with the BRLCAD_EXT_DIR originals, if they change.
 #####################################################################
 
-if (NOT BRLCAD_DISABLE_RELOCATION)
+function(BRLCAD_Process_Ext)
+  if (BRLCAD_DISABLE_RELOCATION)
+    return ()
+  endif (BRLCAD_DISABLE_RELOCATION)
 
   # Ascertain the current state of ${BRLCAD_EXT_DIR}/install
   file(GLOB_RECURSE TP_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
@@ -834,7 +837,7 @@ if (NOT BRLCAD_DISABLE_RELOCATION)
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_NOINSTALL_DIR}/${ef})
   endforeach (ef ${TP_NOINST_FILES})
 
-endif (NOT BRLCAD_DISABLE_RELOCATION)
+endfunction(BRLCAD_Process_Ext)
 
 #####################################################################
 # We want find_package calls that re-run every time configure is run,

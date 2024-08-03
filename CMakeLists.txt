@@ -1999,6 +1999,7 @@ include(${CMAKE_SOURCE_DIR}/src/source_dirs.cmake)
 
 # Now we have the necessary info - trigger the primary management logic
 include(BRLCAD_ExternalDeps)
+BRLCAD_Process_Ext()
 
 # Define some Tcl related variables for libtclcad
 if(BRLCAD_ITCL_BUILD)
