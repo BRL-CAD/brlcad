@@ -42,14 +42,15 @@ struct KNode {
 
 
 struct KElement {
-    std::vector<int> nodes;
+    std::vector<int>                           nodes;
+    std::map<std::string, std::vector<double>> options;
 };
 
 
 struct KPart {
-    std::string   title;
-    std::set<int> elements;
-    int           section;
+    std::string                        title;
+    std::set<int>                      elements;
+    int                                section;
     std::map<std::string, std::string> attributes;
 };
 

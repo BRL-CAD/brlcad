@@ -88,7 +88,7 @@ enum class KState {
     Section_Tshell
 };
 
-enum class Element_Beam_Options {
+enum class Options {
     Thickness,
     Scalar,
     Scalr,
@@ -237,7 +237,7 @@ bool parse_k
 	size_t                   partLinesRead    = 0;
 	std::string              partTitle;
 	size_t                   sectionLinesRead = 0;
-	size_t                   elementOptionsCounter = 0;
+	size_t                   optionsCounter = 0;
 	std::string              sectionTitle;
 	int                      sectionId        = -1;
 	std::string              line             = read_line(is);
@@ -245,7 +245,7 @@ bool parse_k
 	const size_t FirstNode = 2;
 	std::vector<std::string> elementOptions;
 	std::vector<std::string> sectionOptions;
-	std::vector<Element_Beam_Options> elementBeamOptions;
+	std::vector<Options> options;
 	//Elment_beam_options.push_back(Elmenent_Beam_Options::Pid);
 	//std::map<std::string, double> elementOptions;
 
@@ -300,32 +300,32 @@ bool parse_k
 
 				    if (elementOptions.size() > 0) {
 					for (size_t i_o = 0; i_o < elementOptions.size(); ++i_o) {
-					    if (elementOptions[i_o] == "ThICKNESS") {
-						elementBeamOptions.push_back(Element_Beam_Options::Thickness);
+					    if (elementOptions[i_o] == "THICKNESS") {
+						options.push_back(Options::Thickness);
 					    }
 					    else if (elementOptions[i_o] == "SCALAR") {
-						elementBeamOptions.push_back(Element_Beam_Options::Scalar);
+						options.push_back(Options::Scalar);
 					    }
 					    else if (elementOptions[i_o] == "SCALR") {
-						elementBeamOptions.push_back(Element_Beam_Options::Scalr);
+						options.push_back(Options::Scalr);
 					    }
 					    else if (elementOptions[i_o] == "SECTION") {
-						elementBeamOptions.push_back(Element_Beam_Options::Section);
+						options.push_back(Options::Section);
 					    }
 					    else if (elementOptions[i_o] == "PID") {
-						elementBeamOptions.push_back(Element_Beam_Options::Pid);
+						options.push_back(Options::Pid);
 					    }
 					    else if (elementOptions[i_o] == "OFFSET") {
-						elementBeamOptions.push_back(Element_Beam_Options::Offset);
+						options.push_back(Options::Offset);
 					    }
 					    else if (elementOptions[i_o] == "ORIENTATION") {
-						elementBeamOptions.push_back(Element_Beam_Options::Orientation);
+						options.push_back(Options::Orientation);
 					    }
 					    else if (elementOptions[i_o] == "WARPAGE") {
-						elementBeamOptions.push_back(Element_Beam_Options::Warpage);
+						options.push_back(Options::Warpage);
 					    }
 					    else if (elementOptions[i_o] == "ELBOW") {
-						elementBeamOptions.push_back(Element_Beam_Options::Elbow);
+						options.push_back(Options::Elbow);
 					    }
 					    else
 						std::cout << "Unhandeled Element_Beam option" << elementOptions[i_o] << "in k-file" << fileName << "\n";
@@ -760,19 +760,21 @@ bool parse_k
 			break;
 		    }
 		    case KState::Element_Beam: {
-			if (elementBeamOptions.size() == 0 || elementOptionsCounter == 0) {
+			KElement element;
+			int      pid;
+			int      eid;
+
+			if (options.size() == 0 || optionsCounter == 0) {
 			    if (tokens.size() < 10) {
 				std::cout << "Too short ELEMENT_BEAM in k-file" << fileName << "\n";
 				break;
 			    }
-			    int eid = stoi(tokens[0]);
+			    eid = stoi(tokens[0]);
 
 			    if (data.elements.find(eid) != data.elements.end()) {
 				std::cout << "Duplicat Element ID" << eid << " in k-file" << fileName << "\n";
 				break;
 			    }
-
-			    KElement element;
 
 			    for (int i_n = 0; i_n < 5; ++i_n) {
 				element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
@@ -780,65 +782,201 @@ bool parse_k
 
 			    data.elements[eid] = element;
 
-			    int pid = stoi(tokens[1]);
+			    pid = stoi(tokens[1]);
 			    data.parts[pid].elements.insert(eid);
 			    break;
 			}
-			else if ((elementBeamOptions.size()) > 0 && (elementOptionsCounter < elementBeamOptions.size())) {
-			    Element_Beam_Options currentOption = elementBeamOptions[elementOptionsCounter];
+			else if ((options.size() > 0)) {
+			    Options currentOption;
+
+			    if (optionsCounter < options.size()) {
+				currentOption = options[optionsCounter];
+			    }
+			    else {
+				optionsCounter = 0;
+				currentOption = options[optionsCounter];
+			    }
+
 			    switch (currentOption)
 			    {
-			    case Element_Beam_Options::Thickness: {
-				//handle the thickness line
-				elementOptionsCounter++;
+			    case Options::Thickness: {
+				if (tokens.size() < 5) {
+				    std::cout << "Too short option THICKNESS in k-file " << fileName << "\n";
+				    break;
+				}
+
+				for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
+				    double param = stod(tokens[i_p]);
+				    element.options["THICKNESS"].push_back(param);
+				}
+
+				data.elements[eid] = element;
+
+				++optionsCounter;
 				break;
 			    }
-			    case Element_Beam_Options::Scalar: {
-				//handle the Scalar line
-				elementOptionsCounter++;
+			    case Options::Scalar: {
+				//Nothing to do 
+				++optionsCounter;
 				break;
 			    }
-			    case Element_Beam_Options::Scalr: {
-				//handle the Scalr line
-				elementOptionsCounter++;
+			    case Options::Scalr: {
+				//Nothing to do
+				++optionsCounter;
 				break;
 			    }
-			    case Element_Beam_Options::Section: {
-				//handle the section line
-				elementOptionsCounter++;
+			    case Options::Section: {
+				if (tokens.size() < 7) {
+				    std::cout << "Too short option Section in k-file " << fileName << "\n";
+				    break;
+				}
+				double temp;
+
+				if (tokens[0] == "EQ.SECTION_01") {
+				    temp = 1.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_02") {
+				    temp = 2.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_03") {
+				    temp = 3.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_04") {
+				    temp = 4.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_05") {
+				    temp = 5.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_06") {
+				    temp = 6.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_07") {
+				    temp = 7.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_08") {
+				    temp = 8.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_09") {
+				    temp = 9.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_10") {
+				    temp = 10.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_11") {
+				    temp = 11.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_12") {
+				    temp = 12.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_13") {
+				    temp = 13.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_14") {
+				    temp = 14.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_15") {
+				    temp = 15.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_16") {
+				    temp = 16.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_17") {
+				    temp = 17.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_18") {
+				    temp = 18.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_19") {
+				    temp = 19.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_20") {
+				    temp = 20.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_21") {
+				    temp = 21.0;
+				}
+				else if (tokens[0] == "EQ.SECTION_22") {
+				    temp = 22.0;
+				}
+
+				element.options["SECTION"].push_back(temp);
+
+				for (size_t i_p = 1; i_p < tokens.size(); ++i_p) {
+				    temp = stod(tokens[1]);
+				    element.options["SECTION"].push_back(temp);
+				}
+				data.elements[eid] = element;
+				++optionsCounter;
 				break;
 			    }
-			    case Element_Beam_Options::Pid: {
-				//handle the Pid line
-				elementOptionsCounter++;
+			    case Options::Pid: {
+				//Nothing to do
+				++optionsCounter;
 				break;
 			    }
-			    case Element_Beam_Options::Offset: {
-				//handle the offset line
-				elementOptionsCounter++;
+			    case Options::Offset: {
+				if (tokens.size() < 6) {
+				    std::cout << "To short OFFSET option in k-file " << fileName << "\n";
+				    break;
+				}
+				
+				for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
+				    double temp = stod(tokens[i_p]);
+				    element.options["OFFSET"].push_back(temp);
+				}
+
+				data.elements[eid] = element;
+
+				++optionsCounter;
 				break;
 			    }
-			    case Element_Beam_Options::Orientation: {
-				//handle the Orientation line
-				elementOptionsCounter++;
+			    case Options::Orientation: {
+				if (tokens.size() < 3) {
+				    std::cout << "To short ORIENTATION option in k-file" << fileName << "\n";
+				    break;
+				}
+
+				for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
+				    double temp = stod(tokens[i_p]);
+				    element.options["ORIENTATION"].push_back(temp);
+				}
+
+				data.elements[eid] = element;
+
+				++optionsCounter;
 				break;
 			    }
-			    case Element_Beam_Options::Warpage: {
-				//handle the Warpage line
-				elementOptionsCounter++;
+			    case Options::Warpage: {
+				if (tokens.size() < 2) {
+				    std::cout << "To short WARPAGE option in k-file" << fileName << "\n";
+				    break;
+				}
+
+				for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
+				    double temp = stod(tokens[i_p]);
+				    element.options["WARPAGE"].push_back(temp);
+				}
+
+				data.elements[eid] = element;
+
+				++optionsCounter;
 				break;
 			    }
-			    case Element_Beam_Options::Elbow: {
-				// handle the Elbow line
-				elementOptionsCounter++;
+			    case Options::Elbow: {
+				if (tokens.size() < 1) {
+				    std::cout << "empty ELBOW option in k-file" << fileName << "\n";
+				    break;
+				}
+				double temp = stod(tokens[0]);
+				element.options["ELBOW"].push_back(temp);
+
+				data.elements[eid] = element;
+
+				++optionsCounter;
 				break;
 			    }
 			    default:
 				break;
-			    }
-
-			    if (elementOptionsCounter == elementBeamOptions.size() - 1) {
-				elementOptionsCounter = 0;
 			    }
 			}
 		    }
