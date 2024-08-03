@@ -205,12 +205,11 @@ endif (DEFINED BRLCAD_EXT_DIR)
 # If we're doing the non-src-other build, we've got to have bext for at least a
 # few custom components no matter how many system packages are installed.
 if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-  message(STATUS "\nSet BRLCAD_EXT_DIR to use prebuilt external dependencies (bext).\nSpecify directory containing 'install' and 'noinstall' folders,\n(i.e., outputs from installing https://github.com/BRL-CAD/bext).\n")
-  if (NOT EXISTS ${CMAKE_SOURCE_DIR}/src/bext/README.md)
-    message(WARNING "External dependencies will be downloaded, configured, and built automatically. Set BRLCAD_EXT_DIR to specify instead.")
-  else (NOT EXISTS ${CMAKE_SOURCE_DIR}/src/bext/README.md)
-    message(WARNING "External dependencies will be (re-)configured and built automatically.")
-  endif (NOT EXISTS ${CMAKE_SOURCE_DIR}/src/bext/README.md)
+  message(WARNING "External dependencies will be downloaded, configured, and built automatically as-needed. Set BRLCAD_EXT_DIR to specify instead.")
+  message(STATUS
+    "BRLCAD_EXT_DIR specifies prebuilt external dependencies directory\n"
+    "containing 'install' and 'noinstall' folders, outputs from installing\n"
+    "https://github.com/BRL-CAD/bext.\n")
 endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 
 # By default, we don't bundle bext into the source tarball for performance
