@@ -99,6 +99,9 @@
 #
 ###
 
+# FIXME: File has unencapsulated logic.  File runs code as a side
+# effect of inclusion.  File defines globals used outside this file.
+
 # When we need to have CMake treat includes as system paths to avoid
 # warnings, we add those patterns to the SYS_INCLUDE_PATTERNS list
 mark_as_advanced(SYS_INCLUDE_PATTERNS)
