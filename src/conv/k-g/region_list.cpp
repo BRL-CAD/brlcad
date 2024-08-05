@@ -102,17 +102,23 @@ void RegionList::create
 	Geometry&                                 geometry                 = region.geometry;
 	const std::map<std::string, std::string>& region_attributes        = region.attributes;
 
-	
 	std::vector<std::string> names = geometry.write(wdbp);
 
 	wmember geometry_head;
 	BU_LIST_INIT(&geometry_head.l);
 
+	bu_color regionColor = BU_COLOR_INIT_ZERO;
+	bu_color_rand(&regionColor, BU_COLOR_RANDOM);
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(&regionColor, rgb);
+
 	for (size_t i = 0; i < names.size(); i++) {
 	    mk_addmember(names[i].c_str(), &(geometry_head.l), NULL, WMOP_UNION);
 	    mk_addmember(names[i].c_str(), &(all_head.l), NULL, WMOP_UNION);
 	}
-	mk_lfcomb(wdbp, geometry.getBaseName(), &geometry_head, 0);
+
+	mk_comb(wdbp, geometry.getBaseName(), &geometry_head.l, 1, (char*)NULL, (char*)NULL, rgb, ID_COMBINATION, 0, 0, 0, 0, 0, 0);
 
 	if (region_attributes.size() > 0) {
 	    writeAttributes(wdbp, region_name.c_str(), region_attributes);
