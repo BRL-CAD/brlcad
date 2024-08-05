@@ -244,7 +244,7 @@ lint_worker_data::shoot(int ind, bool reverse)
     // Take the shot
     VADD2(ap.a_ray.r_pt, tcenter, backout);
     (void)rt_shootray(&ap);
-};
+}
 
 void
 lint_worker_data::plot_bad_tris(struct bv_vlblock *vbp, struct bu_list *vhead, struct bu_list *vlfree)
@@ -264,7 +264,7 @@ lint_worker_data::plot_bad_tris(struct bv_vlblock *vbp, struct bu_list *vhead, s
 	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
 	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
     }
-};
+}
 
 static int
 _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
