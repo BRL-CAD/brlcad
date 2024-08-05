@@ -246,8 +246,6 @@ bool parse_k
 	std::vector<std::string> elementOptions;
 	std::vector<std::string> sectionOptions;
 	std::vector<Options> options;
-	//Elment_beam_options.push_back(Elmenent_Beam_Options::Pid);
-	//std::map<std::string, double> elementOptions;
 
 	if (line.size() > 0)
 	    tokens = parse_line(line.c_str());
@@ -285,13 +283,9 @@ bool parse_k
 			    if ((command.size() > 1) && (command[1] == "BEAM")) {
 				if ((command.size() > 2) && (command[2] == "PULLEY")) {
 				    state = KState::Element_Beam_Pulley;
-
-				    //elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());//ElEMENT_BEAM_PULLEY doesn't have options 
 				}
 				else if ((command.size() > 2) && (command[2] == "SOURCE")) {
 				    state = KState::Element_Beam_Source;
-
-				    //elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());//ELEMENT_BEAM_SOURCE doesn't have options 
 				}
 				else {
 				    state = KState::Element_Beam;
@@ -964,7 +958,7 @@ bool parse_k
 			    }
 			    case Options::Elbow: {
 				if (tokens.size() < 1) {
-				    std::cout << "empty ELBOW option in k-file" << fileName << "\n";
+				    std::cout << "Empty ELBOW option in k-file" << fileName << "\n";
 				    break;
 				}
 				double temp = stod(tokens[0]);
@@ -979,6 +973,29 @@ bool parse_k
 				break;
 			    }
 			}
+			break;
+		    }
+		    case KState::Element_Beam_Pulley: {
+			if (tokens.size() < 8) {
+			    std::cout << "Too short ELEMENT_BEAM_PULLEY in k-file " << fileName << "\n";
+			    break;
+			}
+			KElementPulley pulley;
+			int pulleyID= stoi(tokens[0]);
+
+			pulley.truss1ID   = stoi(tokens[1]);
+			pulley.truss2ID   = stoi(tokens[2]);
+			pulley.pulleyNode = stoi(tokens[3]);
+
+			data.elementsPulley[pulleyID] = pulley;
+			break;
+		    }
+		    case KState::Element_Beam_Source: {
+			// we are ignoring this element.
+			break;
+		    }
+		    case KState::Element_Bearing: {
+
 		    }
 
 		}

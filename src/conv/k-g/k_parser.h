@@ -47,6 +47,13 @@ struct KElement {
 };
 
 
+struct KElementPulley {
+    int truss1ID;
+    int truss2ID;
+    int pulleyNode;
+};
+
+
 struct KPart {
     std::string                        title;
     std::set<int>                      elements;
@@ -65,10 +72,11 @@ struct KSection {
 
 
 struct KData {
-    std::map<int, KNode>    nodes;
-    std::map<int, KElement> elements;
-    std::map<int, KPart>    parts;
-    std::map<int, KSection> sections;
+    std::map<int, KNode>          nodes;
+    std::map<int, KElement>       elements;
+    std::map<int, KElementPulley> elementsPulley;
+    std::map<int, KPart>          parts;
+    std::map<int, KSection>       sections;
 };
 
 
