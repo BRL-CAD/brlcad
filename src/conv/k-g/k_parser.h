@@ -54,6 +54,33 @@ struct KElementPulley {
 };
 
 
+struct KElementBeamSource {
+    int   sourceNodeID;
+    int   sourceElementID;
+    int   nElements;
+    float beamElementLength;
+    float minmumLengthToPullOut;
+};
+
+
+struct KElementBearing {
+    std::string title;
+    int         bearingType;
+    int         n1;
+    int         coordinateID1;
+    int         n2;
+    int         coordinateID2;
+    int         numberOfBallsOrRollers;
+    float       diameterOfBallsOrRollers;
+    float       boreInnerDiameter;
+    float       boreOuterDiameter;
+    float       pitchDiameter;
+    float       ineerGroveRadiusToBallDiameterRatioOrRollerLength;
+    float       outerRaceGrooveRadiusToBallDiameterRatio;
+    float       totalRadianceClearenceBetweenBallAndRaces;
+};
+
+
 struct KPart {
     std::string                        title;
     std::set<int>                      elements;
@@ -72,11 +99,13 @@ struct KSection {
 
 
 struct KData {
-    std::map<int, KNode>          nodes;
-    std::map<int, KElement>       elements;
-    std::map<int, KElementPulley> elementsPulley;
-    std::map<int, KPart>          parts;
-    std::map<int, KSection>       sections;
+    std::map<int, KNode>              nodes;
+    std::map<int, KElement>           elements;
+    std::map<int, KElementPulley>     elementsPulley;
+    std::map<int, KElementBeamSource> elementsBeamSource;
+    std::map<int, KElementBearing>    elementBearing;
+    std::map<int, KPart>              parts;
+    std::map<int, KSection>           sections;
 };
 
 

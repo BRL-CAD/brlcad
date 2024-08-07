@@ -237,6 +237,7 @@ bool parse_k
 	size_t                   partLinesRead    = 0;
 	std::string              partTitle;
 	size_t                   sectionLinesRead = 0;
+	size_t                   elementLinesRead = 0;
 	size_t                   optionsCounter = 0;
 	std::string              sectionTitle;
 	int                      sectionId        = -1;
@@ -331,6 +332,10 @@ bool parse_k
 				state = KState::Element_Bearing;
 
 				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+
+				if (elementOptions.size() > 0) {
+				    elementLinesRead = 0;//element Bearing has only the Tilte option
+				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "BLANKING")) {
 				state = KState::Element_Blanking;
@@ -991,11 +996,90 @@ bool parse_k
 			break;
 		    }
 		    case KState::Element_Beam_Source: {
-			// we are ignoring this element.
+			if (tokens.size() < 7) {
+			    std::cout << "Too short ELEMENT_BEAM_SOURCE in k-file" << fileName << "\n";
+			    break;
+			}
+
+			KElementBeamSource source;
+			
+			int eid = stoi(tokens[0]);
+
+			source.sourceNodeID          = stoi(tokens[1]);
+			source.sourceElementID       = stoi(tokens[2]);
+			source.nElements             = stoi(tokens[3]);
+			source.beamElementLength     = stof(tokens[4]);
+			source.minmumLengthToPullOut = stof(tokens[6]);
+
+			data.elementsBeamSource[eid] = source;
 			break;
 		    }
 		    case KState::Element_Bearing: {
+			KElementBearing bearing;
+			int eid;
 
+			switch (elementLinesRead)
+			{
+			case 0: {
+			    bearing.title = line;
+
+			    break;
+			}
+			case 1: {
+			    if (tokens.size() < 7) {
+				std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				break;
+			    }
+
+			    eid = stoi(tokens[0]);
+			    bearing.bearingType            = stoi(tokens[1]);
+			    bearing.n1                     = stoi(tokens[2]);
+			    bearing.coordinateID1          = stoi(tokens[3]);
+			    bearing.n2                     = stoi(tokens[4]);
+			    bearing.coordinateID2          = stoi(tokens[5]);
+			    bearing.numberOfBallsOrRollers = stoi(tokens[6]);
+
+			    break;
+			}
+			case 2: {
+			    //Nothing related to Geometry here.
+			    break;
+			}
+			case 3: {
+			    if (tokens.size() < 4) {
+				std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				break;
+			    }
+
+			    bearing.diameterOfBallsOrRollers = stof(tokens[0]);
+			    bearing.boreInnerDiameter        = stof(tokens[1]);
+			    bearing.boreOuterDiameter        = stof(tokens[2]);
+			    bearing.pitchDiameter            = stof(tokens[3]);
+
+			    break;
+			}
+			case 4: {
+			    if (tokens.size() < 4) {
+				std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				break;
+			    }
+
+			    bearing.ineerGroveRadiusToBallDiameterRatioOrRollerLength = stof(tokens[1]);
+			    bearing.outerRaceGrooveRadiusToBallDiameterRatio          = stof(tokens[2]);
+			    bearing.totalRadianceClearenceBetweenBallAndRaces         = stof(tokens[3]);
+
+			    break;
+			}
+			case 5: {
+			    //nothing related to Geometry.
+			    break;
+			}
+
+			}
+
+			data.elementBearing[eid] = bearing;
+			++elementLinesRead;
+			break;
 		    }
 
 		}
