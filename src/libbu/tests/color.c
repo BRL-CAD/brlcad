@@ -52,9 +52,7 @@ test_bu_rgb_to_hsv(int argc, char *argv[])
     /* Use 0.01 as tolerance to allow the numbers in CMakeLists.txt to
      * be a reasonable length.
      */
-    return !(NEAR_EQUAL(expected_hsv_color[HUE], actual_hsv_color[HUE], 0.01)
-	     && NEAR_EQUAL(expected_hsv_color[SAT], actual_hsv_color[SAT], 0.01)
-	     && NEAR_EQUAL(expected_hsv_color[VAL], actual_hsv_color[VAL], 0.01));
+    return !(VNEAR_EQUAL(expected_hsv_color, actual_hsv_color, 0.01));
 }
 
 static int
@@ -75,9 +73,7 @@ test_bu_hsv_to_rgb(int argc, char *argv[])
 
     printf("Result: %u,%u,%u", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
-    return !(expected_rgb_color[RED] == actual_rgb_color[RED]
-	     && expected_rgb_color[GRN] == actual_rgb_color[GRN]
-	     && expected_rgb_color[BLU] == actual_rgb_color[BLU]);
+    return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
 
 static int
@@ -98,9 +94,7 @@ test_bu_str_to_rgb(int argc, char *argv[])
 
     printf("Result: %u,%u,%u", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
-    return !(expected_rgb_color[RED] == actual_rgb_color[RED]
-	     && expected_rgb_color[GRN] == actual_rgb_color[GRN]
-	     && expected_rgb_color[BLU] == actual_rgb_color[BLU]);
+    return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
 
 static int
@@ -148,15 +142,11 @@ test_bu_color_from_rgb_floats(int argc, char *argv[])
 
     bu_color_from_rgb_floats(&color, expected_rgb_color);
 
-    actual_rgb_color[RED] = color.buc_rgb[RED] * 255.0;
-    actual_rgb_color[GRN] = color.buc_rgb[GRN] * 255.0;
-    actual_rgb_color[BLU] = color.buc_rgb[BLU] * 255.0;
+    VSCALE(actual_rgb_color, color.buc_rgb, 255.0);
 
     printf("Result: %f,%f,%f", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
-    return !(EQUAL(expected_rgb_color[RED], actual_rgb_color[RED])
-	     && EQUAL(expected_rgb_color[GRN], actual_rgb_color[GRN])
-	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU]));
+    return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
 
 
@@ -174,17 +164,13 @@ test_bu_color_to_rgb_chars(int argc, char *argv[])
 
     sscanf(argv[2], "%d,%d,%d", &expected_rgb_color[RED], &expected_rgb_color[GRN], &expected_rgb_color[BLU]);
 
-    color.buc_rgb[RED] = expected_rgb_color[RED] / 255.0;
-    color.buc_rgb[GRN] = expected_rgb_color[GRN] / 255.0;
-    color.buc_rgb[BLU] = expected_rgb_color[BLU] / 255.0;
+    VSCALE(color.buc_rgb, expected_rgb_color, 1.0 / 255.0);
 
     bu_color_to_rgb_chars(&color, actual_rgb_color);
 
     printf("Result: %d,%d,%d", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
-    return !(EQUAL(expected_rgb_color[RED], actual_rgb_color[RED])
-	     && EQUAL(expected_rgb_color[GRN], actual_rgb_color[GRN])
-	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU]));
+    return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
 
 static int
@@ -200,18 +186,15 @@ test_bu_color_from_rgb_chars(int argc, char *argv[])
     }
 
     sscanf(argv[2], "%d,%d,%d", &scanned_rgb_color[RED], &scanned_rgb_color[GRN], &scanned_rgb_color[BLU]);
-    expected_rgb_color[RED] = scanned_rgb_color[RED];
-    expected_rgb_color[GRN] = scanned_rgb_color[GRN];
-    expected_rgb_color[BLU] = scanned_rgb_color[BLU];
+
+    VMOVE(expected_rgb_color, scanned_rgb_color);
 
     bu_color_from_rgb_chars(&color, expected_rgb_color);
     bu_color_to_rgb_chars(&color, actual_rgb_color);
 
     printf("Result: %d,%d,%d", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
-    return !(EQUAL(expected_rgb_color[RED], actual_rgb_color[RED])
-	     && EQUAL(expected_rgb_color[GRN], actual_rgb_color[GRN])
-	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU]));
+    return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
 
 
