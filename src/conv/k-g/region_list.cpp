@@ -118,7 +118,7 @@ void RegionList::create
 	    mk_addmember(names[i].c_str(), &(all_head.l), NULL, WMOP_UNION);
 	}
 
-	mk_comb(wdbp, geometry.getBaseName(), &geometry_head.l, 1, (char*)NULL, (char*)NULL, rgb, ID_COMBINATION, 0, 0, 0, 0, 0, 0);
+	mk_lcomb(wdbp, geometry.getBaseName(), &geometry_head, 1, NULL, NULL, rgb, 0);
 
 	if (region_attributes.size() > 0) {
 	    writeAttributes(wdbp, region_name.c_str(), region_attributes);
