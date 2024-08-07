@@ -96,6 +96,8 @@ void RegionList::create
     wmember all_head;
     BU_LIST_INIT(&all_head.l);
 
+    int region_id = 0;
+
     for (std::map<std::string, Region>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
 	const std::string&                        region_name              = it->first;
 	Region&                                   region                   = it->second;
@@ -118,7 +120,8 @@ void RegionList::create
 	    mk_addmember(names[i].c_str(), &(all_head.l), NULL, WMOP_UNION);
 	}
 
-	mk_lcomb(wdbp, geometry.getBaseName(), &geometry_head, 1, NULL, NULL, rgb, 0);
+	mk_lcomb(wdbp, geometry.getBaseName(), &geometry_head, 1, NULL, NULL, rgb, region_id);
+	++region_id;
 
 	if (region_attributes.size() > 0) {
 	    writeAttributes(wdbp, region_name.c_str(), region_attributes);
