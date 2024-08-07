@@ -47,7 +47,7 @@ test_bu_rgb_to_hsv(int argc, char *argv[])
 
     bu_rgb_to_hsv(rgb_color, actual_hsv_color);
 
-    printf("Result: %f,%f,%f", actual_hsv_color[HUE], actual_hsv_color[SAT], actual_hsv_color[VAL]);
+    VPRINT("Result:", actual_hsv_color);
 
     /* Use 0.01 as tolerance to allow the numbers in CMakeLists.txt to
      * be a reasonable length.
@@ -71,7 +71,7 @@ test_bu_hsv_to_rgb(int argc, char *argv[])
 
     bu_hsv_to_rgb(hsv_color, actual_rgb_color);
 
-    printf("Result: %u,%u,%u", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
+    bu_log("Result: %u,%u,%u", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
     return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
@@ -92,7 +92,7 @@ test_bu_str_to_rgb(int argc, char *argv[])
 
     bu_str_to_rgb(rgb_string, actual_rgb_color);
 
-    printf("Result: %u,%u,%u", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
+    bu_log("Result: %u,%u,%u", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
     return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
@@ -110,19 +110,19 @@ test_bu_color_to_rgb_floats(int argc, char *argv[])
 
     sscanf(argv[2], "%lf,%lf,%lf", &expected_rgb_color[RED], &expected_rgb_color[GRN], &expected_rgb_color[BLU]);
 
-    /* printf("Input/Expected: %lf,%lf,%lf\n", expected_rgb_color[RED], expected_rgb_color[GRN], expected_rgb_color[BLU]); */
+    /* VPRINT("Input/Expected:", expected_rgb_color); */
 
     VSCALE(color.buc_rgb, expected_rgb_color, 1.0 / 255.0);
 
-    /* printf("Normalized: %lf,%lf,%lf\n", color.buc_rgb[RED], color.buc_rgb[GRN], color.buc_rgb[BLU]); */
+    /* VPRINT("Normalized:", color.buc_rgb); */
 
     bu_color_to_rgb_floats(&color, actual_rgb_color);
 
-    /* printf("Actual (Normalized): %lf,%lf,%lf\n", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]); */
+    /* VPRINT("Actual (Normalized):", actual_rgb_color); */
 
     VSCALE(actual_rgb_color, actual_rgb_color, 255.0);
 
-    /* printf("Actual (Denormalized): %lf,%lf,%lf\n", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]); */
+    /* VPRINT("Actual (Denormalized):", actual_rgb_color); */
 
     return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
@@ -144,7 +144,7 @@ test_bu_color_from_rgb_floats(int argc, char *argv[])
 
     VSCALE(actual_rgb_color, color.buc_rgb, 255.0);
 
-    printf("Result: %f,%f,%f", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
+    VPRINT("Result:", actual_rgb_color);
 
     return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
@@ -168,7 +168,7 @@ test_bu_color_to_rgb_chars(int argc, char *argv[])
 
     bu_color_to_rgb_chars(&color, actual_rgb_color);
 
-    printf("Result: %d,%d,%d", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
+    bu_log("Result: %d,%d,%d", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
     return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
@@ -192,7 +192,7 @@ test_bu_color_from_rgb_chars(int argc, char *argv[])
     bu_color_from_rgb_chars(&color, expected_rgb_color);
     bu_color_to_rgb_chars(&color, actual_rgb_color);
 
-    printf("Result: %d,%d,%d", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
+    bu_log("Result: %d,%d,%d", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
     return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
