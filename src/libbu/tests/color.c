@@ -118,9 +118,7 @@ test_bu_color_to_rgb_floats(int argc, char *argv[])
 
     /* printf("Input/Expected: %lf,%lf,%lf\n", expected_rgb_color[RED], expected_rgb_color[GRN], expected_rgb_color[BLU]); */
 
-    color.buc_rgb[RED] = expected_rgb_color[RED] / 255.0;
-    color.buc_rgb[GRN] = expected_rgb_color[GRN] / 255.0;
-    color.buc_rgb[BLU] = expected_rgb_color[BLU] / 255.0;
+    VSCALE(color.buc_rgb, expected_rgb_color, 1.0 / 255.0);
 
     /* printf("Normalized: %lf,%lf,%lf\n", color.buc_rgb[RED], color.buc_rgb[GRN], color.buc_rgb[BLU]); */
 
@@ -132,9 +130,7 @@ test_bu_color_to_rgb_floats(int argc, char *argv[])
 
     /* printf("Actual (Denormalized): %lf,%lf,%lf\n", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]); */
 
-    return !(EQUAL(expected_rgb_color[RED], actual_rgb_color[RED])
-	     && EQUAL(expected_rgb_color[GRN], actual_rgb_color[GRN])
-	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU]));
+    return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
 
 static int
