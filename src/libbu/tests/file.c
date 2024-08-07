@@ -54,12 +54,11 @@ main(int ac, char *av[])
 #else
     ret = mkdir(tdir, S_IRWXU);
 #endif
-#if 0
-    if (ret == -1) {
-	bu_log("%s [FAIL] - could not create \"%s\" directory\n", av[0], tdir);
+
+    if (ret != 0 && !bu_file_exists(tdir, NULL)) {
+	bu_log("%s [FAIL] - could not make \"%s\" directory\n", av[0], tdir);
 	return ret;
     }
-#endif
 
     for (int i = 1; i < file_cnt+1; i++) {
 	bu_vls_sprintf(&fname, "%s/bu_file_%d", tdir,i);
