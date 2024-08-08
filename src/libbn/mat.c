@@ -1311,7 +1311,7 @@ bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t 
 /*
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix C
- * (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ * (Note:  SGI is left-handed, but the fix is done in the Display Manager).
  */
 void
 persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff)

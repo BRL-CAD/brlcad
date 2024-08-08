@@ -1785,7 +1785,7 @@ are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 	af = modf((double)a, (double *)&ai);
 	bf = modf((double)b, (double *)&bi);
     } else {
-	bu_bomb("are_equal(): unexpect size for type fastf_t");
+	bu_bomb("are_equal(): unexpected size for type fastf_t");
     }
 
     if (EQUAL(ai, bi)) {

@@ -20,7 +20,7 @@
 
  /* the program will test if the function bv_vlist_cmd_cnt() in vlist.c works fine
   * the function bv_vlist_cmd_cnt() calculates the number of commands in a vlist so
-  * we will try all possible cases like empty list and list with diffrent lengthes and
+  * we will try all possible cases like empty list and list with different lengths and
   * list which needs more than one chunk of memory so here we will send the lengthe of the
   * the list and construct it inside bv_vlist.c and compare
   * the results with expected result from bv_vlist_cmd_cnt(), the <args> format is as follows : expected_result
