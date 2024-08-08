@@ -97,7 +97,7 @@ main(int ac, char *av[])
 
     /* make sure can create files on open */
     for (int i = 1; i < file_cnt+1; i++) {
-	bu_vls_sprintf(&fname, "%s/bu_file_%d", tdir,i);
+	bu_vls_sprintf(&fname, "%s/bu_file_%d", tdir, i);
 
 	/* file does NOT exist pre-fopen() */
 	if (bu_file_exists(bu_vls_cstr(&fname), NULL)) {
@@ -146,7 +146,7 @@ main(int ac, char *av[])
 	 * not writeable, not executable after running bu_fchmod(777).
 	 */
 
-	bu_vls_sprintf(&fname, "%s/bu_file_%d", tdir,i);
+	bu_vls_sprintf(&fname, "%s/bu_file_%d", tdir, i);
 	if (!bu_file_readable(bu_vls_cstr(&fname))) {
 	    bu_exit(1, "%s [FAIL] test file %s not readable after bu_fchmod(777)\n", av[0], bu_vls_cstr(&fname));
 	}
