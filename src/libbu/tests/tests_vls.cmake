@@ -9,11 +9,13 @@ add_test(NAME bu_vls_init COMMAND bu_test vls 1)
 # For function #2 (bu_vls_vlsinit) there are no arguments
 add_test(NAME bu_vls_vlsinit COMMAND bu_test vls 2)
 
-# For function #3 (bu_vls_strcpy/bu_vls_addr) the <args> format is as follows:
+# For function #3 (bu_vls_strcpy/bu_vls_addr) the <args> format is as
+# follows:
 #
 # string_to_test
 #
-# where string_to_test is a string to be used in testing bu_vls_strcpy/bu_vls_addr.
+# where string_to_test is a string to be used in testing
+# bu_vls_strcpy/bu_vls_addr.
 
 add_test(NAME bu_vls_access_1 COMMAND bu_test vls 3 "Test 1 2 3")
 
@@ -31,7 +33,8 @@ add_test(NAME bu_vls_strncpy_2 COMMAND bu_test vls 4 "Test 1" "Test 1 2" 8 "Test
 #
 # string_to_test
 #
-# where string_to_test is a string to be used in testing bu_vls_strdup.
+# where string_to_test is a string to be used in testing
+# bu_vls_strdup.
 
 add_test(NAME bu_vls_strdup_1 COMMAND bu_test vls 5 "Test 1 2 3")
 
@@ -76,11 +79,11 @@ add_test(NAME bu_vls_strcat_1 COMMAND bu_test vls 10 "Test 1" " 2 3" "Test 1 2 3
 #
 # where string1 and string2 will be concatenated.
 
-add_test(NAME bu_vls_strncat_1 COMMAND bu_test vls 11 "Test 1" " 2 3"  4 "Test 1 2 3" )
-add_test(NAME bu_vls_strncat_2 COMMAND bu_test vls 11 "Test 1" " 2 3"  2 "Test 1 2"   )
-add_test(NAME bu_vls_strncat_3 COMMAND bu_test vls 11 "Test 1" " 2 3" -4 "Test 1 2 3" )
-add_test(NAME bu_vls_strncat_4 COMMAND bu_test vls 11 "Test 1" " 2 3"  0 "Test 1"     )
-add_test(NAME bu_vls_strncat_5 COMMAND bu_test vls 11 "Test 1" " 2 3"  5 "Test 1 2 3" )
+add_test(NAME bu_vls_strncat_1 COMMAND bu_test vls 11 "Test 1" " 2 3"  4 "Test 1 2 3")
+add_test(NAME bu_vls_strncat_2 COMMAND bu_test vls 11 "Test 1" " 2 3"  2 "Test 1 2")
+add_test(NAME bu_vls_strncat_3 COMMAND bu_test vls 11 "Test 1" " 2 3" -4 "Test 1 2 3")
+add_test(NAME bu_vls_strncat_4 COMMAND bu_test vls 11 "Test 1" " 2 3"  0 "Test 1")
+add_test(NAME bu_vls_strncat_5 COMMAND bu_test vls 11 "Test 1" " 2 3"  5 "Test 1 2 3")
 
 # For function #12 (bu_vls_vlscat) the <args> format is as follows:
 #

@@ -39,7 +39,7 @@ struct StrCmp {
 };
 
 
-int
+static int
 uniq_test(struct bu_vls *n, void *data)
 {
     std::set<const char *, StrCmp> *sset = (std::set<const char *, StrCmp> *)data;
@@ -76,6 +76,7 @@ main(int argc, char **argv)
 
     return ret;
 }
+
 
 // Local Variables:
 // tab-width: 8

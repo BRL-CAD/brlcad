@@ -1,5 +1,4 @@
-/*                     B A D M A G I C . C
- * BRL-CAD
+/*                     B A D M A G I C . C BRL-CAD
  *
  * Copyright (c) 2013-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
@@ -32,6 +31,7 @@
  * calling it due to the testing, we need to avoid assigning that
  * attribute (it causes interesting crashing behaviors if we leave
  * it in place with some compiler settings.)*/
+
 #ifdef NORETURN
 #  undef NORETURN
 #  define NORETURN
@@ -41,6 +41,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+
 
 static int
 bomb_callback(const void *data, const char *str)
@@ -53,6 +54,7 @@ bomb_callback(const void *data, const char *str)
     exit(result);
 }
 
+
 int
 main(int argc, char *argv[])
 {
@@ -64,8 +66,8 @@ main(int argc, char *argv[])
     const char *file = "bu_badmagic.c";
     int line = 42, testnum;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
@@ -112,6 +114,7 @@ main(int argc, char *argv[])
     bu_log("Invalid function number %d specified. [%s]\n", testnum, argv[0]);
     return 1;
 }
+
 
 /*
  * Local Variables:

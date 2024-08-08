@@ -44,8 +44,10 @@
 #include "bu/str.h"
 #include "bu/units.h"
 
+
 #define	MAX_STR_FLAGS_RESULT	80
 #define MAX_INT_STR_DIGITS	12
+
 
 static const int64_t halfExabyte = (int64_t)500*1000*1000*1000*1000*1000L;
 
@@ -153,10 +155,13 @@ static struct {
     { 3, "0 E", (int64_t)1536*1024*1024*1024*1024L, 0, 6, 4 },
     { 3, "2 E", (int64_t)1536*1024*1024*1024*1024*1024L, 0, 6, 4 },
 
-    /* tests 86-99 test invalid specific scale values of < 0 or >= 7 with
-       and without BU_HN_DIVISOR_1000 set */
-    /*  all should return errors with new code; with old, the latter 3
-	are instead processed as if having AUTOSCALE and/or GETSCALE set */
+    /* tests 86-99 test invalid specific scale values of < 0 or >= 7
+     * with and without BU_HN_DIVISOR_1000 set.
+     *
+     * all should return errors with new code; with old, the latter 3
+     * are instead processed as if having AUTOSCALE and/or GETSCALE
+     * set.
+     */
     { -1, "", (int64_t)1L, 0, 7, 4 },
     { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, 7, 4 },
     { -1, "", (int64_t)1L, 0, 1000, 4 },
@@ -166,9 +171,12 @@ static struct {
     { -1, "", (int64_t)0L, 0, INT_MAX, 4 },
     { -1, "", (int64_t)0L, BU_HN_DIVISOR_1000, INT_MAX, 4 },
 
-    /* Negative scale values are not handled well
-       by the existing library routine - should report as error */
-    /*  all should return errors with new code, fail assertion with old */
+    /* Negative scale values are not handled well by the existing
+     * library routine - should report as error
+     *
+     * all should return errors with new code, fail assertion with
+     * old.
+     */
 
     { -1, "", (int64_t)1L, 0, -1, 4 },
     { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, -1, 4 },
@@ -181,8 +189,10 @@ static struct {
     { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, -INT_MAX, 4 },
 
 
-    /* tests for scale == 0, without autoscale */
-    /* tests 100-114 test scale 0 with 1000 divisor - print first N digits */
+    /* tests for scale == 0, without autoscale.
+     * tests 100-114 test scale 0 with 1000 divisor.
+     * print first N digits.
+     */
     { 2, "0 ", (int64_t)0L, BU_HN_DIVISOR_1000, 0, 4 },
     { 2, "1 ", (int64_t)1L, BU_HN_DIVISOR_1000, 0, 4 },
     { 3, "10 ", (int64_t)10L, BU_HN_DIVISOR_1000, 0, 4 },
@@ -199,7 +209,9 @@ static struct {
     { 10, "500", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 0, 4 },
     { 11, "150", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 0, 4 },
 
-    /* tests 115-126 test scale 0 with 1024 divisor - print first N digits */
+    /* tests 115-126 test scale 0 with 1024 divisor - print first N
+     * digits
+     */
     { 2, "0 ", (int64_t)0L, 0, 0, 4 },
     { 2, "1 ", (int64_t)1L, 0, 0, 4 },
     { 3, "10 ", (int64_t)10L, 0, 0, 4 },
@@ -213,14 +225,18 @@ static struct {
     { 10, "500", (int64_t)500*1000*1000L, 0, 0, 4 },
     { 11, "150", (int64_t)1500*1000*1000L, 0, 0, 4 },
 
-    /* Test case for rounding of edge numbers around 999.5+, see PR224498.
-     * Require buflen >= 5 */
+    /* Test case for rounding of edge numbers around 999.5+, see
+     * PR224498.  Require buflen >= 5
+     */
     { 4, "1.0M", (int64_t)1023500, BU_HN_DECIMAL|BU_HN_B|BU_HN_NOSPACE, BU_HN_AUTOSCALE, 5 },
 
-    /* Test boundary cases for very large positive/negative number formatting */
-    /* Explicit scale, divisor 1024 */
-
-    /* Requires buflen >= 6 */
+    /* Test boundary cases for very large positive/negative number
+     * formatting.
+     *
+     * Explicit scale, divisor 1024
+     *
+     * Requires buflen >= 6
+     */
     { 3, "8 E",   INT64_MAX, 0, 6, 6 },
     { 4, "-8 E", -INT64_MAX, 0, 6, 6 },
     { 3, "0 E", (int64_t)92*1024*1024*1024*1024*1024L, 0, 6, 6 },
@@ -515,8 +531,8 @@ main(int argc, char * const argv[])
     int includeExabyteTests;
     int verbose;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 

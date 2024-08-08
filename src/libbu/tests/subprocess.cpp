@@ -36,7 +36,9 @@
 
 #include "bu.h"
 
+
 const char* lorem_25 = "sagittis id consectetur purus ut faucibus pulvinar elementum integer enim neque volutpat ac tincidunt vitae semper quis lectus nulla at volutpat diam ut venenatis tellus";
+
 
 int
 main(int argc, const char *argv[])

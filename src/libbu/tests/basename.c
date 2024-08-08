@@ -29,14 +29,16 @@
 
 #include "bu.h"
 
+
 /* These functions wrap the system and bu implementations to
  * standardize the memory behavior. The input string is unmodified,
  * the output string is dynamically allocated and must be freed by the
  * caller.
  */
 
+
 #ifdef HAVE_BASENAME
-char *
+static char *
 get_system_output(const char *input)
 {
     char *in = input ? bu_strdup(input) : NULL;
@@ -48,8 +50,9 @@ get_system_output(const char *input)
 }
 #endif
 
+
 #if !defined(HAVE_BASENAME) && defined(HAVE__SPLITPATH)
-char *
+static char *
 get_system_output(const char *input)
 {
     char fname[_MAX_FNAME];
@@ -88,7 +91,7 @@ get_system_output(const char *input)
 }
 #endif
 
-char *
+static char *
 get_bu_output(const char *input)
 {
     /* basename should return "." when given a NULL string */
@@ -102,11 +105,13 @@ get_bu_output(const char *input)
     return output;
 }
 
+
 #if defined(HAVE_BASENAME) || defined(HAVE__SPLITPATH)
-void
+
+static void
 compare_bu_to_system_basename(const char *input)
 {
-   char *sys_out = get_system_output(input);
+    char *sys_out = get_system_output(input);
     char *bu_out = get_bu_output(input);
 
     if (BU_STR_EQUAL(sys_out, bu_out)) {
@@ -119,20 +124,24 @@ compare_bu_to_system_basename(const char *input)
 	bu_free(sys_out, "system output");
 	bu_exit(EXIT_FAILURE, "compare_bu_to_system_basename failed");
     }
+}
+
 #else
-void
+
+static void
 compare_bu_to_system_basename(const char *UNUSED(input))
 {
     bu_exit(EXIT_FAILURE, "BASENAME not available on this platform\n");
-#endif
 }
+
+#endif
 
 
 int
 main(int argc, char *argv[])
 {
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 

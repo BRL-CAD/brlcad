@@ -22,9 +22,12 @@
 
 #include "bu.h"
 
+
 #define NUM_TEST_HOOKS 1
 
-static int was_called[NUM_TEST_HOOKS];
+
+static int was_called[NUM_TEST_HOOKS] = {0};
+
 
 static int
 test_bu_hook_basic_hook(void *cdata, void *UNUSED(buf))
@@ -181,8 +184,8 @@ test_bu_hook_saverestore(void)
 int
 main(int argc, char *argv[])
 {
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 

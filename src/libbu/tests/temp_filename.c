@@ -20,7 +20,8 @@
 
 #include "common.h"
 
-void
+
+static void
 temp_filename_thread(int cpu, void* ptr)
 {
     // unroll ptr into names arr
@@ -35,11 +36,12 @@ temp_filename_thread(int cpu, void* ptr)
     bu_strlcpy(names[cpu - 1], buf, len);
 }
 
+
 int
 main(int argc, char *argv[])
 {
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
@@ -49,7 +51,8 @@ main(int argc, char *argv[])
 	curr = argv[test];
 
 	if (!bu_strcmp(curr, "single")) {
-	    // test with different configurations - all thread and proc ID's should be the same
+	    // test with different configurations - all thread and
+	    // proc ID's should be the same
 
 	    // no prefix - buffer + no-buffer should match
 	    char plain[25] = {0};
@@ -70,7 +73,7 @@ main(int argc, char *argv[])
 	    // validate prefix != generic
 	    if (!bu_strncmp(plain, prefix, strlen(plain))) /* should not match */
 		bu_exit(EXIT_FAILURE, "temp_filename failure: expected non-matching names\n");
-	    
+
 	    // undersized buffer - should create 4 chars + null termination
 	    char under_size[5] = {0};
 	    bu_temp_file_name(under_size, 5);
@@ -82,11 +85,13 @@ main(int argc, char *argv[])
 	    // test parallel / threaded -
 	    uint8_t threads = bu_avail_cpus();
 
-	    /* create names array. passed to each thread to ensure each name is created uniquely */
+	    /* create names array. passed to each thread to ensure
+	     * each name is created uniquely */
 	    char** names = (char**)bu_malloc(threads * sizeof(char*), "alloc names arr");
 	    /* individual names are allocated in each thread */
-	    /*for (int i = 0; i < threads; i++)
-		names[i] = (char*)bu_malloc(25 * sizeof(char), "zero alloc name");*/
+	    /* for (int i = 0; i < threads; i++)
+	     * names[i] = (char*)bu_malloc(25 * sizeof(char), "zero alloc name");
+	     */
 
 	    bu_parallel(temp_filename_thread, threads, &names);
 
@@ -94,7 +99,9 @@ main(int argc, char *argv[])
 	    int failed = 0;
 	    for (int i = 0; i < threads; i++) {
 		for (int j = i + 1; j < threads; j++) {
-		    /* keep going even if we've failed to make sure memory is released */
+		    /* keep going even if we've failed to make sure
+		     * memory is released.
+		     */
 		    if (failed || !bu_strncmp(names[i], names[j], 25))
 			failed = 1;
 		}

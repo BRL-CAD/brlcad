@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bu_heap.c
- *
- * Brief description
- *
- */
 
 #include "common.h"
 
@@ -32,10 +27,12 @@
 
 #include "bu.h"
 
+
 /* this should match what is in heap.c */
 #define HEAP_BINS 512
 
 #define CNTCALLS
+
 
 /*
  * FIXME: this routine should compare heap with malloc and make sure
@@ -51,8 +48,8 @@ main(int ac, char *av[])
     size_t freecalls = 0;
 #endif
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 

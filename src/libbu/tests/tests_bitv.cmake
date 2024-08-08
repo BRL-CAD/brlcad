@@ -3,21 +3,21 @@
 add_test(NAME bu_bitv_master COMMAND bu_test bitv 0)
 
 # args: function number, binary string, expected bitv value in hex
-add_test(NAME bu_binary_to_bitv_01 COMMAND bu_test bitv  1 "0b0101"          0x5   )
-add_test(NAME bu_binary_to_bitv_02 COMMAND bu_test bitv  1 "0B0101"          0x5   )
-add_test(NAME bu_binary_to_bitv_03 COMMAND bu_test bitv  1 "0B010 1"         0x5   )
-add_test(NAME bu_binary_to_bitv_04 COMMAND bu_test bitv  1 "0b0"             0x0   )
-add_test(NAME bu_binary_to_bitv_05 COMMAND bu_test bitv  1 "0b100100"        0x24  )
+add_test(NAME bu_binary_to_bitv_01 COMMAND bu_test bitv  1 "0b0101"          0x5)
+add_test(NAME bu_binary_to_bitv_02 COMMAND bu_test bitv  1 "0B0101"          0x5)
+add_test(NAME bu_binary_to_bitv_03 COMMAND bu_test bitv  1 "0B010 1"         0x5)
+add_test(NAME bu_binary_to_bitv_04 COMMAND bu_test bitv  1 "0b0"             0x0)
+add_test(NAME bu_binary_to_bitv_05 COMMAND bu_test bitv  1 "0b100100"        0x24)
 add_test(NAME bu_binary_to_bitv_06 COMMAND bu_test bitv  1 "0b1011011101110" 0x16ee)
-add_test(NAME bu_binary_to_bitv_07 COMMAND bu_test bitv  1 "01"              0x0   ) # XFAIL
-add_test(NAME bu_binary_to_bitv_08 COMMAND bu_test bitv  1 "0F1"             0x0   ) # XFAIL
-add_test(NAME bu_binary_to_bitv_09 COMMAND bu_test bitv  1 "0b"              0x0   )
-add_test(NAME bu_binary_to_bitv_10 COMMAND bu_test bitv  1 "b1"              0x0   ) # XFAIL
+add_test(NAME bu_binary_to_bitv_07 COMMAND bu_test bitv  1 "01"              0x0) # XFAIL
+add_test(NAME bu_binary_to_bitv_08 COMMAND bu_test bitv  1 "0F1"             0x0) # XFAIL
+add_test(NAME bu_binary_to_bitv_09 COMMAND bu_test bitv  1 "0b"              0x0)
+add_test(NAME bu_binary_to_bitv_10 COMMAND bu_test bitv  1 "b1"              0x0) # XFAIL
 
 # args: function number, input hex number for bitv, expected binary string
-add_test(NAME bu_bitv_to_binary_01 COMMAND bu_test bitv  2 0x5    "0b00000101"        )
-add_test(NAME bu_bitv_to_binary_02 COMMAND bu_test bitv  2 0x0    "0b00000000"        )
-add_test(NAME bu_bitv_to_binary_03 COMMAND bu_test bitv  2 0x24   "0b00100100"        )
+add_test(NAME bu_bitv_to_binary_01 COMMAND bu_test bitv  2 0x5    "0b00000101")
+add_test(NAME bu_bitv_to_binary_02 COMMAND bu_test bitv  2 0x0    "0b00000000")
+add_test(NAME bu_bitv_to_binary_03 COMMAND bu_test bitv  2 0x24   "0b00100100")
 add_test(NAME bu_bitv_to_binary_04 COMMAND bu_test bitv  2 0x16ee "0b0001011011101110")
 
 # args: function number, two input binary strings (and byte lengths) for comparison
@@ -33,8 +33,8 @@ add_test(NAME bu_bitv_compare_equal2_03 COMMAND bu_test bitv   4 "0b00000100" 1 
 add_test(NAME bu_bitv_compare_equal2_04 COMMAND bu_test bitv   4 "0b00000101" 9 "0b000000101" 1)
 
 # args: function number, input binary string, num bytes desired, expected bit value in hex
-add_test(NAME bu_binary_to_bitv2_01 COMMAND bu_test bitv  5 "0b0101"          1 0x5   )
-add_test(NAME bu_binary_to_bitv2_02 COMMAND bu_test bitv  5 "0b0101"          9 0x5   )
+add_test(NAME bu_binary_to_bitv2_01 COMMAND bu_test bitv  5 "0b0101"          1 0x5)
+add_test(NAME bu_binary_to_bitv2_02 COMMAND bu_test bitv  5 "0b0101"          9 0x5)
 
 # args: function number, input hex string 1, input hex string 2, expected hex result
 add_test(NAME bu_bitv_and_test1 COMMAND bu_test bitv 6 "ffffffff" "00000000" "00000000")

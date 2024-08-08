@@ -28,7 +28,9 @@
 
 #include "vmath.h"
 
+
 #define SIGNUM(x) ((x > 0) - (x < 0))
+
 
 static int
 test_bu_strlcatm(int argc, char *argv[])
@@ -78,6 +80,7 @@ test_bu_strlcatm(int argc, char *argv[])
 	     && dst[len] == '\0');
 }
 
+
 static int
 test_bu_strlcpym(int argc, char *argv[])
 {
@@ -125,6 +128,7 @@ test_bu_strlcpym(int argc, char *argv[])
 	     && dst[len] == '\0');
 }
 
+
 static int
 test_bu_strdupm(int argc, char *argv[])
 {
@@ -140,6 +144,7 @@ test_bu_strdupm(int argc, char *argv[])
 
     return !(BU_STR_EQUAL(argv[2], dst));
 }
+
 
 static int
 test_bu_strcmp_like_functions(int argc, char *argv[], int (*fun)(const char *, const char *))
@@ -157,6 +162,7 @@ test_bu_strcmp_like_functions(int argc, char *argv[], int (*fun)(const char *, c
 
     return !(SIGNUM(expected_ret) == SIGNUM(ret));
 }
+
 
 static int
 test_bu_strncmp_like_functions(int argc, char *argv[], int (*fun)(const char *, const char *, size_t))
@@ -177,13 +183,14 @@ test_bu_strncmp_like_functions(int argc, char *argv[], int (*fun)(const char *, 
     return !(SIGNUM(expected_ret) == SIGNUM(ret));
 }
 
+
 int
 main(int argc, char *argv[])
 {
     int function_num = 0;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 

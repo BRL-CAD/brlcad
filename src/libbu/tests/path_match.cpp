@@ -1,4 +1,4 @@
-/* Based on OpenBSD's: fnm_test.c ,v1.3 2019/01/25 00:19:26
+/* Based on OpenBSD's: fnm_test.c , v1.3 2019/01/25 00:19:26
  *
  * Public domain, 2008, Todd C. Miller <millert@openbsd.org>
  */
@@ -64,7 +64,6 @@ main(int argc, char **argv)
 
     return error_cnt;
 }
-
 
 
 // Local Variables:

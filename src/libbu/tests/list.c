@@ -22,10 +22,12 @@
 
 #include "bu.h"
 
+
 struct test_list {
     struct bu_list l;
     long i;
 };
+
 
 static
 int build_list_append(struct test_list *list, long lcnt)
@@ -42,14 +44,15 @@ int build_list_append(struct test_list *list, long lcnt)
     return lcnt;
 }
 
+
 int
 main(int argc, char *argv[])
 {
     long lcnt;
     struct test_list tlist;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
@@ -77,6 +80,7 @@ main(int argc, char *argv[])
 
     return bu_list_len(&tlist.l);
 }
+
 
 /*
  * Local Variables:

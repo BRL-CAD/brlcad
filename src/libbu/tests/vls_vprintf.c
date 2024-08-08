@@ -32,7 +32,7 @@
 
 
 /* Test against sprintf */
-int
+static int
 vls_vs_sys(const char *fmt, ...)
 {
     int status        = BRLCAD_OK; /* okay */
@@ -65,9 +65,11 @@ vls_vs_sys(const char *fmt, ...)
     return status;
 }
 
-/* Test against a pre-defined string for formatting that
- * is not supported reliably across operating systems */
-int
+
+/* Test against a pre-defined string for formatting that is not
+ * supported reliably across operating systems.
+ */
+static int
 vls_vs_string(const char *correct, const char *fmt, ...)
 {
     int status        = BRLCAD_OK; /* okay */
@@ -94,7 +96,8 @@ vls_vs_string(const char *correct, const char *fmt, ...)
     return status;
 }
 
-int
+
+static int
 check_format_chars(void)
 {
     int status = BRLCAD_OK; /* assume okay */
@@ -142,8 +145,8 @@ main(int argc, char *argv[])
     int p = 0;
     const char *word = "Lawyer";
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 

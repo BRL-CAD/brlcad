@@ -170,20 +170,26 @@ go_deep(int depth, FILE *fp)
     return go_deeper(depth, fp);
 }
 
+
 #endif
 
 int
 main(int UNUSED(argc), char **UNUSED(argv))
 {
+    /* FIXME: need to ensure bu_backtrace() is returning something,
+     * however minimally, without triggering an error.
+     */
+
 #if 0
+
     char *buffer = NULL;
     const char *output = NULL;
     FILE *fp = NULL;
     int result;
     size_t size = 0;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 
@@ -256,6 +262,7 @@ main(int UNUSED(argc), char **UNUSED(argv))
 #endif
     return -1;
 }
+
 
 /*
  * Local Variables:

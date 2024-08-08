@@ -24,18 +24,20 @@
 
 #include "bu.h"
 
+
 struct rp_container {
     char dir[MAXPATHLEN];
 };
 #define RPC_INIT {{0}}
+
 
 int
 main(int ac, char *av[])
 {
     int test_num = 0;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 

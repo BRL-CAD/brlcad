@@ -32,10 +32,12 @@
 #include "bu.h"
 #include "vmath.h"
 
+
 #define TS_FLOAT_TOL .0005
 
 #define TS_STR_SIZE 128
 #define TS_STR_WIDTH "127"
+
 
 /* scanf specification summarized from Linux man page:
  *
@@ -43,32 +45,34 @@
  * scanf returns.
  *
  * Returns number of input items successfully matched and assigned, or
- * EOF if a read error occurs (errno and stream error indicator are set),
- * EOI is encountered before the first successful conversion, or a
- * matching failure occurs.
+ * EOF if a read error occurs (errno and stream error indicator are
+ * set), EOI is encountered before the first successful conversion, or
+ * a matching failure occurs.
  *
  * Can match 0 or more whitespace chars, ordinary character, or a
  * conversion specification:
  *
  * %[*][a][max_field_width][type_modifier]<conversion_specifier>
  *
- * '*' suppresses assignment. No pointer is needed, input is discarded,
- *     and conversion isn't added to the successful conversion count.
+ * '*' suppresses assignment. No pointer is needed, input is
+ *     discarded, and conversion isn't added to the successful
+ *     conversion count.
  *
- * 'a' in GNU, this represents an extension that automatically allocates
- *     a string large enough to hold a converted string and assigns the
- *     address to the supplied char*. In C99, a is synonymous with e/E/f/g.
+ * 'a' in GNU, this represents an extension that automatically
+ *     allocates a string large enough to hold a converted string and
+ *     assigns the address to the supplied char*. In C99, a is
+ *     synonymous with e/E/f/g.
  *
  * max_field_width - scan stops stops reading for a conversion at the
  *     first non-matching character or when max_field_width is reached
- *     (not including discarded leading whitespace or the '\0' appended
- *     to string conversions).
+ *     (not including discarded leading whitespace or the '\0'
+ *     appended to string conversions).
  *
  * modifiers:
  *  h - expect (signed|unsigned) short int (not int) pointer
  * hh - expect (signed|unsigned) char (not int) pointer
- *  l - expect (signed|unsigned) long int (not int) pointer, or double (not
- *      float), or wide char (not char) pointer
+ *  l - expect (signed|unsigned) long int (not int) pointer, or double
+ *      (not float), or wide char (not char) pointer
  *  L - expect long double (not double) pointer
  *
  * C99 modifiers:
@@ -82,29 +86,31 @@
  * conversion specifiers:
  *  % - NOT A CONVERSION. Literal %.
  *  d - signed/unsigned decimal integer
- *  i - Signed/unsigned base 8/10/16 integer. Base 16 chose if 0x or 0X is
- *      read first, base 8 if 0 is read first, and base 10 otherwise. Only
- *      characters valid for the base are read.
+ *  i - Signed/unsigned base 8/10/16 integer. Base 16 chose if 0x or
+ *      0X is read first, base 8 if 0 is read first, and base 10
+ *      otherwise. Only characters valid for the base are read.
  *  o - unsigned octal
  *  u - unsigned decimal
  *x/X - unsigned hexadecimal
  *a/e/E/f/g - signed/unsigned float (a is C99)
- *  s - Match a sequence of non-white-space characters. Pointer must be
- *      large enough for all characters plus the '\0' scanf appends.
- *  c - Match a sequence (1 by default) of characters. Pointer must be large
- *      enough for all characters. No '\0' is appended. Leading white space
- *      IS NOT discarded.
- *[...] - Like c, but only accept the specified character class. Leading white
- *        space IS NOT discarded. To include ']' in the set, it must appear
- *        first after '[' or '^'. To include '-' in the set, it must appear
- *        last before ']'.
+ *  s - Match a sequence of non-white-space characters. Pointer must
+ *      be large enough for all characters plus the '\0' scanf
+ *      appends.
+ *  c - Match a sequence (1 by default) of characters. Pointer must be
+ *      large enough for all characters. No '\0' is appended. Leading
+ *      white space IS NOT discarded.
+ *[...] - Like c, but only accept the specified character
+ *        class. Leading white space IS NOT discarded. To include ']'
+ *        in the set, it must appear first after '[' or '^'. To
+ *        include '-' in the set, it must appear last before ']'.
  *  p - pointer (printf format)
  *  n - NOT A CONVERSION. Stores number of characters read so far in the int
  *      pointer. PROBABLY shouldn't affect returned conversion count.
  */
 
-/* Using these constants to identify pointer type instead of adding all the
- * logic needed to parse the format string.
+
+/* Using these constants to identify pointer type instead of adding
+ * all the logic needed to parse the format string.
  */
 enum {
     SCAN_SHORTSHORT, SCAN_USHORTSHORT,
@@ -117,16 +123,18 @@ enum {
     SCAN_PTRDIFF
 };
 
+
 static void
 print_src_and_fmt(const char *src, const char *fmt)
 {
     printf("\"%s\", \"%s\"\n", src, fmt);
 }
 
-/* This test is intended to catch errors in the tests themselves. If we make a
- * typo in a test format string causing fewer assignments than expected, then
- * we could end up silently comparing error behavior rather than the behavior
- * we actually want to test.
+
+/* This test is intended to catch errors in the tests themselves. If
+ * we make a typo in a test format string causing fewer assignments
+ * than expected, then we could end up silently comparing error
+ * behavior rather than the behavior we actually want to test.
  */
 static void
 checkReturnVal(const char *funcStr, int actual, int expected)
@@ -138,6 +146,7 @@ checkReturnVal(const char *funcStr, int actual, int expected)
     }
 }
 
+
 /* Exit if returns from sscanf and bu_sscanf are not equal. */
 static void
 checkReturnsEqual(int ret, int bu_ret)
@@ -147,6 +156,7 @@ checkReturnsEqual(int ret, int bu_ret)
 		ret, bu_ret);
     }
 }
+
 
 #define CHECK_INT_VALS_EQUAL(int_type, valp, bu_valp) \
     { \
@@ -271,10 +281,12 @@ test_sscanf(int type, const char *src, const char *fmt) {
     }
 } /* test_sscanf */
 
-/* Here we define printable constants that should be safe on any platform.
+/* Here we define printable constants that should be safe on any
+ * platform.
  *
- * Note that we don't use the macros in limits.h or float.h, because they
- * aren't necessarily printable, as in:
+ * Note that we don't use the macros in limits.h or float.h, because
+ * they aren't necessarily printable, as in:
+ *
  *     #define INT_MIN (-INT_MAX - 1)
  */
 #define   SIGNED_HH_DEC 127
@@ -391,6 +403,7 @@ doNumericTests(void)
     TEST_FLOAT_VARIANT(G);
 }
 
+
 /* string test routine */
 static void
 test_sscanf_s(const char *src, const char *fmt)
@@ -417,6 +430,7 @@ test_sscanf_s(const char *src, const char *fmt)
 		dest, bu_dest);
     }
 }
+
 
 static void
 doStringTests(void)
@@ -484,6 +498,7 @@ doStringTests(void)
     test_sscanf_s(" zZ -[ ", "%" TS_STR_WIDTH "[^[-]");
 }
 
+
 static void
 doPointerTests(void)
 {
@@ -509,6 +524,7 @@ doPointerTests(void)
     test_sscanf(SCAN_PTRDIFF, CPP_XSTR(UNSIGNED_L_HEX), "%tx");
 }
 
+
 static void
 test_sscanf_noconv(const char *src, const char *fmt)
 {
@@ -530,6 +546,7 @@ test_sscanf_noconv(const char *src, const char *fmt)
     }
 }
 
+
 static void
 doNonConversionTests(void)
 {
@@ -546,6 +563,7 @@ doNonConversionTests(void)
     test_sscanf_noconv(CPP_XSTR(LARGE_FLT), "%*f%n");
     test_sscanf_noconv("42 42  4.2e1", "%*d %*u %*f%n");
 }
+
 
 #define TS_NUM_ASSIGNMENTS 3
 
@@ -586,6 +604,7 @@ test_string_width(const char *src, const char *fmt)
 	}
     }
 }
+
 
 static void
 doWidthTests(void)
@@ -646,6 +665,7 @@ doWidthTests(void)
     test_string_width("aaAA   1%1%1%", "%2[aA]%3[A ] %5[1%]");
 }
 
+
 static void
 doErrorTests(void)
 {
@@ -657,10 +677,10 @@ doErrorTests(void)
 #define FMT_READ2_ASSIGN1(fmt) \
     "%*" CPP_STR(fmt) " %*" CPP_STR(fmt) " %" CPP_STR(fmt)
 
-    /* Attempt to assign 3 values from src.
-     * If src begins with an invalid input value, should return 0 to indicate
-     * a matching failure.
-     * If src is empty, should return EOF to indicate input failure.
+    /* Attempt to assign 3 values from src.  If src begins with an
+     * invalid input value, should return 0 to indicate a matching
+     * failure.  If src is empty, should return EOF to indicate input
+     * failure.
      */
 #define TEST_FAILURE_1(type, type_fmt, type_init, src, expected_err) \
     { \
@@ -679,11 +699,10 @@ doErrorTests(void)
 	} \
     }
 
-    /* Attempt to read 2 values and assign 1 value from src.
-     * If src includes 2 valid and 1 invalid input value, should return 0 to
-     * indicate matching failure.
-     * If src includes 2 valid values and terminates, should return EOF to
-     * indicate input failure.
+    /* Attempt to read 2 values and assign 1 value from src.  If src
+     * includes 2 valid and 1 invalid input value, should return 0 to
+     * indicate matching failure.  If src includes 2 valid values and
+     * terminates, should return EOF to indicate input failure.
      */
 #define TEST_FAILURE_2(type, type_fmt, type_init, src, expected_err) \
     { \
@@ -703,19 +722,21 @@ doErrorTests(void)
 #define EXPECT_MATCH_FAILURE 0
 #define EXPECT_INPUT_FAILURE EOF
 
-TEST_FAILURE_1(int, d, 0, "xx 34 56", EXPECT_MATCH_FAILURE);
-TEST_FAILURE_2(int, d, 0, "12 34 xx", EXPECT_MATCH_FAILURE);
-TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_INPUT_FAILURE);
-TEST_FAILURE_1(int, d, 0, "", EXPECT_INPUT_FAILURE);
+    TEST_FAILURE_1(int, d, 0, "xx 34 56", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(int, d, 0, "12 34 xx", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_INPUT_FAILURE);
+    TEST_FAILURE_1(int, d, 0, "", EXPECT_INPUT_FAILURE);
 
-// TODO - what is the intent here?  The 1[123] input seems to be causing problems
+// TODO - what is the intent here?  The 1[123] input seems to be
+// causing problems
 #if 0
-TEST_FAILURE_1(char, 1[123], 'a', "x 2 3", EXPECT_MATCH_FAILURE);
-TEST_FAILURE_2(char, 1[123], 'a', "1 2 x", EXPECT_MATCH_FAILURE);
-TEST_FAILURE_2(char, 1[123], 'a', "1 2", EXPECT_INPUT_FAILURE);
-TEST_FAILURE_1(char, 1[123], 'a', "", EXPECT_INPUT_FAILURE);
+    TEST_FAILURE_1(char, 1[123], 'a', "x 2 3", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(char, 1[123], 'a', "1 2 x", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(char, 1[123], 'a', "1 2", EXPECT_INPUT_FAILURE);
+    TEST_FAILURE_1(char, 1[123], 'a', "", EXPECT_INPUT_FAILURE);
 #endif
 }
+
 
 int
 main(int argc, char *argv[])
@@ -739,6 +760,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

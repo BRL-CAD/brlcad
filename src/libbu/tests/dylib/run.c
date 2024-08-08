@@ -13,10 +13,14 @@
  */
 
 #include "common.h"
+
 #include "bu.h"
 #include "dylib.h"
 
-int main(int UNUSED(ac), const char *av[]) {
+
+int
+main(int UNUSED(ac), const char *av[])
+{
     int expected_plugins = 2;
     struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
     struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
@@ -98,6 +102,7 @@ int main(int UNUSED(ac), const char *av[]) {
     // If everything is as expected, return 0
     return (!expected_results);
 }
+
 
 /*
  * Local Variables:

@@ -25,7 +25,7 @@
 
 
 /* sort from small to big for unsigned int */
-int
+static int
 comp_1(const void *num1, const void *num2, void *UNUSED(arg))
 {
     return (*((unsigned int *)num1) - *((unsigned int *)num2));
@@ -33,7 +33,7 @@ comp_1(const void *num1, const void *num2, void *UNUSED(arg))
 
 
 /* sort from small to big for fastf_t */
-int
+static int
 comp_2(const void *num1, const void *num2, void *UNUSED(arg))
 {
     if (*(fastf_t *)num1 > *(fastf_t *)num2)
@@ -45,7 +45,7 @@ comp_2(const void *num1, const void *num2, void *UNUSED(arg))
 
 
 /* sort strings based on ASCII-table */
-int
+static int
 comp_3(const void *str1, const void *str2, void *UNUSED(arg))
 {
     return bu_strcmp((char *)str1, (char *)str2);
@@ -53,7 +53,7 @@ comp_3(const void *str1, const void *str2, void *UNUSED(arg))
 
 
 /* sort fastf_t's by their distance to cmp */
-int
+static int
 comp_4(const void *num1, const void *num2, void *cmp)
 {
     if (fabs(*(fastf_t *)num1 - *(fastf_t *)cmp) > fabs((*(fastf_t *)num2)- *(fastf_t *)cmp))
@@ -91,8 +91,8 @@ main(int argc, char *argv[])
     fastf_t exp_10[5] = {-INFINITY, 0, 5, 5.2, INFINITY};
     int i, function_num;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
