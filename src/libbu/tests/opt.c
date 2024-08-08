@@ -604,22 +604,6 @@ desc_1(const char *cgy, int test_num)
 }
 
 
-/* FIXME: verify non-usage
-static int
-isnum(const char *str)
-{
-    int i, sl;
-    if (!str)
-	return 0;
-    sl = strlen(str);
-    for (i = 0; i < sl; i++)
-	if (!isdigit(str[i]))
-	    return 0;
-    return 1;
-}
-*/
-
-
 static int
 dc_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
