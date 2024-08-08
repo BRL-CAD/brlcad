@@ -32,23 +32,53 @@
 #include "bio.h"
 
 
+static void
+cleanup(const char *dir, int file_cnt)
+{
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+
+    for (int i = 1; i < file_cnt+1; i++) {
+	bu_vls_sprintf(&fname, "%s/bu_file_%d", dir, i);
+	const char *file = bu_vls_cstr(&fname);
+
+	if (bu_file_exists(file, NULL)) {
+	    (void)bu_file_delete(file);
+	}
+
+	/* file still exists post-delete */
+	if (bu_file_exists(file, NULL)) {
+	    bu_exit(1, "[FAIL] test file %s was deleted but still exists\n", file);
+	}
+    }
+
+    if (bu_file_exists(dir, NULL)) {
+	(void)bu_file_delete(dir);
+    }
+
+    return;
+}
+
+
 int
 main(int ac, char *av[])
 {
     int ret = 0;
     FILE *fp = NULL;
-    int file_cnt = 2;
+    int file_cnt = 1024; /* arbitrarily "a lot" of files */
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     struct bu_vls fname2 = BU_VLS_INIT_ZERO;
     const char *tdir = "bu_file_test_dir";
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 
     if (ac != 1)
 	bu_exit(1, "Usage: %s \n", av[0]);
+
+    /* make sure output dir doesn't exist, previous interruption */
+    cleanup(tdir, file_cnt);
 
 #ifdef HAVE_WINDOWS_H
     ret = _mkdir(tdir);
@@ -171,23 +201,8 @@ main(int ac, char *av[])
 	bu_free(rpath, "free realpath");
     }
 
-    /* Clean up */
-
-    for (int i = 1; i < file_cnt+1; i++) {
-	bu_vls_sprintf(&fname, "%s/bu_file_%d", tdir,i);
-	if (!bu_file_delete(bu_vls_cstr(&fname))) {
-	    bu_exit(1, "%s [FAIL] could not delete file %s\n", av[0], bu_vls_cstr(&fname));
-	}
-
-    	/* file exists post-delete */
-	if (bu_file_exists(bu_vls_cstr(&fname), NULL)) {
-	    bu_exit(1, "%s [FAIL] test file %s was deleted but still exists\n", av[0], bu_vls_cstr(&fname));
-	}
-    }
-
-    if (!bu_file_delete(tdir)) {
-	bu_exit(1, "%s [FAIL] could not delete directory %s\n", av[0], tdir);
-    }
+    /* Clean up, delete all our files and dir */
+    cleanup(tdir, file_cnt);
 
     bu_vls_free(&fname);
     bu_vls_free(&fname2);
