@@ -18,10 +18,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* make check failures on mac:
-  - libtcl rpath issue
-  - bu_file_1 executable unit failure
-  - bu_color_to_rgb_floats_1 unit failure
+* make check failures, 3 of the LoD drawing unit tests
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
