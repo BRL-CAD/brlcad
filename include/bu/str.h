@@ -192,22 +192,23 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  *
  * Example:
  @code
-    char *result;
-    char buf[128];
-    result = bu_str_escape("my fair lady", " ", buf, 128);
-    :: result == buf == "my\ fair\ lady"
-    result = bu_str_escape(buf, "\", NULL, 0);
-    :: result == "my\\ fair\\ lady"
-    :: buf == "my\ fair\ lady"
-    bu_free(result, "bu_str_escape");
-    result = bu_str_escape(buf, "a-zA-Z", buf, 128);
-    :: result == buf == "\m\y\ \f\a\i\r\ \l\a\d\y"
+ char *result;
+ char buf[128];
+ result = bu_str_escape("my fair lady", " ", buf, 128);
+ :: result == buf == "my\ fair\ lady"
+ result = bu_str_escape(buf, "\", NULL, 0);
+ :: result == "my\\ fair\\ lady"
+ :: buf == "my\ fair\ lady"
+ bu_free(result, "bu_str_escape");
+ result = bu_str_escape(buf, "a-zA-Z", buf, 128);
+ :: result == buf == "\m\y\ \f\a\i\r\ \l\a\d\y"
  @endcode
  *
  * This function should be thread safe and re-entrant if the
  * input/output buffers are not shared (and strlen() is threadsafe).
  */
 BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, char *output, size_t size);
+
 
 /**
  * Removes one level of '\' escapes from an input string.  The input
@@ -226,14 +227,14 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
  *
  * Example:
  @code
-    char *result;
-    char buf[128];
-    result = bu_str_unescape("\m\y\\ \f\a\i\r\\ \l\a\d\y", buf, 128);
-    :: result == buf == "my\ fair\ lady"
-    result = bu_str_unescape(buf, NULL, 0);
-    :: result == "my fair lady"
-    :: buf == "my\ fair\ lady"
-    bu_free(result, "bu_str_unescape");
+ char *result;
+ char buf[128];
+ result = bu_str_unescape("\m\y\\ \f\a\i\r\\ \l\a\d\y", buf, 128);
+ :: result == buf == "my\ fair\ lady"
+ result = bu_str_unescape(buf, NULL, 0);
+ :: result == "my fair lady"
+ :: buf == "my\ fair\ lady"
+ bu_free(result, "bu_str_unescape");
  @endcode
  *
  * This function should be thread safe and re-entrant if the
@@ -242,8 +243,12 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
 BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t size);
 
 
-/** @brief Routines for checking ctypes. */
-
+/**
+ * Determine if given C-string consists solely of printable chars.
+ *
+ * Returns 0 if any non-printable chars are encountered (not including
+ * the terminating nul character), or non-zero otherwise.
+ */
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
 
@@ -263,6 +268,7 @@ BU_EXPORT extern int bu_str_isprint(const char *cp);
  * return as true but may be greater than 1.
  */
 BU_EXPORT extern int bu_str_true(const char *str);
+
 
 /**
  * Returns truthfully if a given input string represents a
