@@ -34,7 +34,7 @@
 #include "wdb.h"
 #include "rply.h"
 
-double scale_factor;                    // without refactor to callbacks theres no easy way to avoid this global
+double scale_factor;                    // without refactor to callbacks there's no easy way to avoid this global
 struct ply_read_options
 {
     int verbose;                        /* verbose output flag */

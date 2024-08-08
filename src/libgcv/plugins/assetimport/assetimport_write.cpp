@@ -100,7 +100,7 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     /* triangulate model */
     nmg_triangulate_model(m, &RTG.rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
 
-    /* list all verticies in result */
+    /* list all vertices in result */
     nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
 
     /* Get number of vertices */
@@ -374,7 +374,7 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     state.gcv_options = gcv_options;
     state.assetimport_write_options = (assetimport_write_options_t*)options_data;
 
-    /* check and validate the specied output file type against ai 
+    /* check and validate the specified output file type against ai 
      * checks using file extension if no --format is supplied 
      * this is likely all a 'can_write' function would need
      */

@@ -92,7 +92,7 @@ RPLY_EXPORT p_ply ply_open(const char *name, p_ply_error_cb error_cb, long idata
  *
  * ply: handle returned by ply_open
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_read_header(p_ply ply);
 
@@ -129,7 +129,7 @@ RPLY_EXPORT long ply_set_read_cb(p_ply ply, const char *element_name,
  * instance_index: receives the index of the current element instance
  *     (if non-null)
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_get_argument_element(p_ply_argument argument, 
         p_ply_element *element, long *instance_index);
@@ -142,7 +142,7 @@ RPLY_EXPORT int ply_get_argument_element(p_ply_argument argument,
  * length: receives the number of values in this property (if non-null)
  * value_index: receives the index of current property value (if non-null)
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_get_argument_property(p_ply_argument argument, 
         p_ply_property *property, long *length, long *value_index);
@@ -153,7 +153,7 @@ RPLY_EXPORT int ply_get_argument_property(p_ply_argument argument,
  * pdata: receives a copy of user custom data pointer (if non-null)
  * idata: receives a copy of user custom data integer (if non-null)
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_get_argument_user_data(p_ply_argument argument, void **pdata, 
         long *idata);
@@ -173,7 +173,7 @@ RPLY_EXPORT double ply_get_argument_value(p_ply_argument argument);
  *
  * ply: handle returned by ply_open
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_read(p_ply ply);
 
@@ -184,7 +184,7 @@ RPLY_EXPORT int ply_read(p_ply ply);
  * ply: handle returned by ply_open
  * last: handle of last element returned (NULL for first element)
  *
- * Returns element if successfull or NULL if no more elements
+ * Returns element if successful or NULL if no more elements
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT p_ply_element ply_get_next_element(p_ply ply, p_ply_element last);
 
@@ -195,7 +195,7 @@ RPLY_EXPORT p_ply_element ply_get_next_element(p_ply ply, p_ply_element last);
  * ply: handle returned by ply_open
  * last: pointer to last comment returned (NULL for first comment)
  *
- * Returns comment if successfull or NULL if no more comments
+ * Returns comment if successful or NULL if no more comments
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT const char *ply_get_next_comment(p_ply ply, const char *last);
 
@@ -206,7 +206,7 @@ RPLY_EXPORT const char *ply_get_next_comment(p_ply ply, const char *last);
  * ply: handle returned by ply_open
  * last: pointer to last obj_info returned (NULL for first obj_info)
  *
- * Returns obj_info if successfull or NULL if no more obj_infos
+ * Returns obj_info if successful or NULL if no more obj_infos
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT const char *ply_get_next_obj_info(p_ply ply, const char *last);
 
@@ -217,7 +217,7 @@ RPLY_EXPORT const char *ply_get_next_obj_info(p_ply ply, const char *last);
  * name: receives a pointer to internal copy of element name (if non-null)
  * ninstances: receives the number of instances of this element (if non-null)
  *
- * Returns 1 if successfull or 0 otherwise
+ * Returns 1 if successful or 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_get_element_info(p_ply_element element, const char** name,
         long *ninstances);
@@ -229,7 +229,7 @@ RPLY_EXPORT int ply_get_element_info(p_ply_element element, const char** name,
  * element: handle of element with the properties of interest
  * last: handle of last property returned (NULL for first property)
  *
- * Returns element if successfull or NULL if no more properties
+ * Returns element if successful or NULL if no more properties
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT p_ply_property ply_get_next_property(p_ply_element element, 
         p_ply_property last);
@@ -245,7 +245,7 @@ RPLY_EXPORT p_ply_property ply_get_next_property(p_ply_element element,
  * value_type: for list properties, receives the scalar type of the value
  *     fields  (if non-null)
  *
- * Returns 1 if successfull or 0 otherwise
+ * Returns 1 if successful or 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_get_property_info(p_ply_property property, const char** name,
         e_ply_type *type, e_ply_type *length_type, e_ply_type *value_type);
@@ -258,7 +258,7 @@ RPLY_EXPORT int ply_get_property_info(p_ply_property property, const char** name
  * error_cb: error callback function
  * idata,pdata: contextual information available to users
  *
- * Returns handle to PLY file if successfull, NULL otherwise
+ * Returns handle to PLY file if successful, NULL otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT p_ply ply_create(const char *name, e_ply_storage_mode storage_mode, 
         p_ply_error_cb error_cb, long idata, void *pdata);
@@ -270,7 +270,7 @@ RPLY_EXPORT p_ply ply_create(const char *name, e_ply_storage_mode storage_mode,
  * name: name of new element
  * ninstances: number of element of this time in file
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_add_element(p_ply ply, const char *name, long ninstances);
 
@@ -283,7 +283,7 @@ RPLY_EXPORT int ply_add_element(p_ply ply, const char *name, long ninstances);
  * length_type: scalar type of length field of a list property
  * value_type: scalar type of value fields of a list property
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_add_property(p_ply ply, const char *name, e_ply_type type,
         e_ply_type length_type, e_ply_type value_type);
@@ -296,7 +296,7 @@ RPLY_EXPORT int ply_add_property(p_ply ply, const char *name, e_ply_type type,
  * length_type: scalar type of length field of a list property
  * value_type: scalar type of value fields of a list property
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_add_list_property(p_ply ply, const char *name, 
         e_ply_type length_type, e_ply_type value_type);
@@ -308,7 +308,7 @@ RPLY_EXPORT int ply_add_list_property(p_ply ply, const char *name,
  * name: name of new property
  * type: property type
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_add_scalar_property(p_ply ply, const char *name, e_ply_type type);
 
@@ -318,7 +318,7 @@ RPLY_EXPORT int ply_add_scalar_property(p_ply ply, const char *name, e_ply_type 
  * ply: handle returned by ply_create
  * comment: pointer to string with comment text
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_add_comment(p_ply ply, const char *comment);
 
@@ -328,7 +328,7 @@ RPLY_EXPORT int ply_add_comment(p_ply ply, const char *comment);
  * ply: handle returned by ply_create
  * comment: pointer to string with obj_info data
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_add_obj_info(p_ply ply, const char *obj_info);
 
@@ -338,7 +338,7 @@ RPLY_EXPORT int ply_add_obj_info(p_ply ply, const char *obj_info);
  *
  * ply: handle returned by ply_create
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_write_header(p_ply ply);
 
@@ -351,7 +351,7 @@ RPLY_EXPORT int ply_write_header(p_ply ply);
  *
  * ply: handle returned by ply_create
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_write(p_ply ply, double value);
 
@@ -360,7 +360,7 @@ RPLY_EXPORT int ply_write(p_ply ply, double value);
  *
  * ply: handle to be closed.
  *
- * Returns 1 if successfull, 0 otherwise
+ * Returns 1 if successful, 0 otherwise
  * ---------------------------------------------------------------------- */
 RPLY_EXPORT int ply_close(p_ply ply);
 

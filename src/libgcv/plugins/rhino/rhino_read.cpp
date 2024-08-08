@@ -1136,7 +1136,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
     try {
-	/* Use the openNURBS extenstion to read the whole 3dm file into memory. */
+	/* Use the openNURBS extension to read the whole 3dm file into memory. */
 	ONX_Model model;
 	std::unordered_map <std::string, std::string> uuid_to_names;
 	uuid_to_names = load_model(gcv_options->default_name, source_path, model);

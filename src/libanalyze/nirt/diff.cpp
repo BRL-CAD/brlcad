@@ -555,7 +555,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 
 		    // With all segments defined in this fashion, they can be
 		    // indexed by their starting transition bin only - they are all
-		    // defined to end at the next transiton point and segment
+		    // defined to end at the next transition point and segment
 		    // differencing can be handled locally.  As the transitions are
 		    // walked, the segments starting at each transition can be found
 		    // using a map container similar to the transition container with
