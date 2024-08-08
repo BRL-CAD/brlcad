@@ -27,7 +27,7 @@
  * migrated to CPU 0 by default.
  *
  * Return:
- *  0 on Suceess
+ *  0 on Success
  * -1 on Failure
  *
  */

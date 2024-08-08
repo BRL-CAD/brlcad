@@ -521,7 +521,7 @@ test_async_balanced(const char* cmd)
 }
 
 
-/* tests: lots of outout; unequal stdout and stderr distribution -
+/* tests: lots of output; unequal stdout and stderr distribution -
  * ASYNC READS
  *
  *  bu_process_create() ['async' option]

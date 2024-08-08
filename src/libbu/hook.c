@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-/* inteface header */
+/* interface header */
 #include "bu/hook.h"
 
 /* systeam headers */

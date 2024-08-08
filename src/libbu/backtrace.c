@@ -362,7 +362,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 #    endif
 
 #    ifdef SIGCHLD
-	/* premptively send a SIGCHLD to parent */
+	/* preemptively send a SIGCHLD to parent */
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] backtrace() sending CHLD to parent %d\n", getppid());
 	}
