@@ -323,7 +323,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
 	bu_free(objs, "objs");
 	rt_free_rti(rtip);
 	BU_PUT(resp, struct resource);
-	BU_PUT(ap, struct appliation);
+	BU_PUT(ap, struct application);
 	return false;
     }
     size_t ncpus = bu_avail_cpus();
@@ -358,7 +358,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
     bu_free(objs, "objs");
     rt_free_rti(rtip);
     BU_PUT(resp, struct resource);
-    BU_PUT(ap, struct appliation);
+    BU_PUT(ap, struct application);
 
     // We only have reg_names from the raytrace - translate into scene objects.
     bu_ptbl_reset(&selected_set);

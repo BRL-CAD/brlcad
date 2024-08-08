@@ -207,7 +207,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "-e";
 	*vp++ = "fmt r \"MGED-PARTITION-REPORT\\n\"";
 
-	/* second ray: start, direction, and 's' command -> used for partion report */
+	/* second ray: start, direction, and 's' command -> used for partition report */
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
@@ -228,7 +228,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
 
-    /* check if user reqested objects other than what is drawn */
+    /* check if user requested objects other than what is drawn */
     if (argc > 1 && argv[argc-1][0] != '-') {	/* ignore obvious trailing flag */
 	if (db_lookup(gedp->dbip, argv[argc-1], 0) != RT_DIR_NULL)
 	    skip_drawn = 1;

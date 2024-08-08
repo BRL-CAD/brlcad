@@ -577,7 +577,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
 
     /* Extract the solid parameters for the particle we hit,
      * Compare them to the values for the node extracted.  If they
-     * don't match, then we probably have a mis-match between the
+     * don't match, then we probably have a mismatch between the
      * geometry and the treetherm output files.
      */
     if (pp->pt_inseg->seg_stp->st_id != ID_PARTICLE) {
@@ -597,7 +597,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
 	bu_log(
 	    "----------------------------- W A R N I N G -----------------------------\n\
 %s:%d distance %g between origin of particle and thermal node centroid is\n\
-too large.  Probable mis-match between geometry and thermal data\n",
+too large.  Probable mismatch between geometry and thermal data\n",
 	    __FILE__, __LINE__, dist);
 	bu_bomb("");
     }

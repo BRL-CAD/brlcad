@@ -122,7 +122,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     /*
      * Search for a previous exact use of this file and treetop,
      * so as to obtain storage efficiency from re-using it.
-     * Search dbi_client list for a re-use of an rt_i.
+     * Search dbi_client list for a reuse of an rt_i.
      * rtip's are registered there by db_clone_dbi().
      */
     for (BU_PTBL_FOR(rtipp, (struct rt_i **), &sub_dbip->dbi_clients)) {

@@ -1855,7 +1855,7 @@ private:
 				auto startBlock = this->tailBlock;
 				auto originalBlockIndexSlotsUsed = pr_blockIndexSlotsUsed;
 				if (this->tailBlock != nullptr && this->tailBlock->next->ConcurrentQueue::Block::template is_empty<explicit_context>()) {
-					// We can re-use the block ahead of us, it's empty!					
+					// We can reuse the block ahead of us, it's empty!					
 					this->tailBlock = this->tailBlock->next;
 					this->tailBlock->ConcurrentQueue::Block::template reset_empty<explicit_context>();
 					
@@ -3229,7 +3229,7 @@ private:
 #ifdef MCDBGQ_NOLOCKFREE_IMPLICITPRODHASH
 		debug::DebugLock lock(implicitProdMutex);
 #endif
-		// Try to re-use one first
+		// Try to reuse one first
 		for (auto ptr = producerListTail.load(std::memory_order_acquire); ptr != nullptr; ptr = ptr->next_prod()) {
 			if (ptr->inactive.load(std::memory_order_relaxed) && ptr->isExplicit == isExplicit) {
 				bool expected = true;

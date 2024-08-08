@@ -2208,7 +2208,7 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 
     while ((next = yanknode(&plan)) != NULL) {
 	/*
-	 * if we encounter a (expression) then look for aboves in the
+	 * if we encounter a (expression) then look for above in the
 	 * expr subplan.
 	 */
 	if (next->type == N_EXPR) {

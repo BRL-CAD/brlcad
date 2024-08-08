@@ -779,10 +779,10 @@ void while_populate_leaf_list_flat(struct bvh_flat_node *root, struct xray* rp, 
 
 /**
  * This is a naive shot function that returns an allocated 
- * list of primative indexes that correspond with the indexes
+ * list of primitive indexes that correspond with the indexes
  * returned from ordered_prims in hlbvh_create(). 
  * It is not fast, but we're keeping it around to facilitate
- * prototyping code for other primatives.
+ * prototyping code for other primitives.
  */
 void
 hlbvh_shot(void* root, struct xray* rp, long** check_prims, size_t* num_check_prims, int is_flat)
@@ -803,7 +803,7 @@ hlbvh_shot(void* root, struct xray* rp, long** check_prims, size_t* num_check_pr
 	BU_PUT(leafs, struct prim_list);
 	return;
     }
-    *check_prims = (long*)bu_calloc(prim_accum, sizeof(long), "hlbvh primative list");
+    *check_prims = (long*)bu_calloc(prim_accum, sizeof(long), "hlbvh primitive list");
     size_t index = 0;
     struct prim_list *entry;
     while (BU_LIST_WHILE(entry, prim_list, &(leafs->l))) {

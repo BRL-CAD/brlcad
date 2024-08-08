@@ -528,7 +528,7 @@ class  gdiam_bbox
 	    coef2 = low_2 + sel2 * ( high_2 - low_2 );
 	    coef3 = low_3 + sel3 * ( high_3 - low_3 );
 
-	    //printf( "coeficients: (%g, %g,  %g)\n",
+	    //printf( "coefficients: (%g, %g,  %g)\n",
 	    //        coef1, coef2, coef3 );
 
 	    gdiam_point_t  pnt;

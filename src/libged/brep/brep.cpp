@@ -438,7 +438,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&suffix, ".brep");
 
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "", "no-evaluation", "",         NULL,        &no_evaluation, "if converting a comb object, create a CSG brep tree rather than evluating booleans");
+    BU_OPT(d[0], "", "no-evaluation", "",         NULL,        &no_evaluation, "if converting a comb object, create a CSG brep tree rather than evaluating booleans");
     BU_OPT(d[1], "", "suffix",        "str",      &bu_opt_vls, &suffix,        "suffix for use in no-evalution object naming");
     BU_OPT_NULL(d[2]);
 
@@ -487,7 +487,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	bu_vls_sprintf(&bname, "%s", argv[0]);
     }
 
-    // Attempt to evalute to a single object
+    // Attempt to evaluate to a single object
     struct rt_db_internal brep_db_internal;
     ON_Brep* brep;
     if (db_lookup(gedp->dbip, bu_vls_cstr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {

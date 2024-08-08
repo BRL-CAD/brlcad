@@ -999,7 +999,7 @@ ICMiss(struct application *UNUSED(ap))
 }
 
 
-/* Convert a Polar vector into a euclidian vector:
+/* Convert a Polar vector into a euclidean vector:
  * - Requires that an orthogonal basis, so generate one using the photon normal as the first vector.
  * - The Normal passed to this function must be unitized.
  * - This took me almost 3 hours to write, and it's tight.

@@ -568,7 +568,7 @@ out:
  * Search through all the vertices in a loop.
  * If there are two distinct uses of one vertex in the loop,
  * return true.
- * This is useful for detecting "accordian pleats"
+ * This is useful for detecting "accordion pleats"
  * unexpectedly showing up in a loop.
  * Derived from nmg_split_touchingloops().
  *

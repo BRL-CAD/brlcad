@@ -71,7 +71,7 @@ EMail:               luebke@cs.virginia.edu
  * Once the vertex tree has been built with successive calls to
  * \Ref{vdsClusterNodes}(), the user calls \Ref{vdsEndVertexTree}() to
  * finalize it.  The finished vertex tree is now ready for run-time
- * maintainance and rendering. <p>
+ * maintenance and rendering. <p>
  *
  * @see		build.c
  */
@@ -752,7 +752,7 @@ vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
  * @name 	Dynamic vertex tree maintenance
  *
  * These routines form the heart of the run-time view-dependent
- * simplification processs.  They maintain the vertex tree dynamically at
+ * simplification process.  They maintain the vertex tree dynamically at
  * render time, as opposed to statically during the tree-building
  * preprocess.<p>
  *

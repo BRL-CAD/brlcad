@@ -698,7 +698,7 @@ nmg_class_pnt_s(const point_t pt, const struct shell *s, const int in_or_out_onl
 		}
 
 		if (nmg_class == NMG_CLASS_AinB) {
-		    /* Point is IN face, therefor it must be
+		    /* Point is IN face, therefore it must be
 		     * ON the shell also.
 		     */
 		    nmg_class = NMG_CLASS_AonBanti;

@@ -413,7 +413,7 @@ pnts_internal_memfree:
     rt_free_rti(rtip);
     rt_db_free_internal(&tpnts_intern);
     BU_PUT(resp, struct resource);
-    BU_PUT(ap, struct appliation);
+    BU_PUT(ap, struct application);
 
     return pntcnt;
 }
@@ -457,7 +457,7 @@ pnt_inside_vol(
     rt_clean_resource(rtip, resp);
     rt_free_rti(rtip);
     BU_PUT(resp, struct resource);
-    BU_PUT(ap, struct appliation);
+    BU_PUT(ap, struct application);
 
     return ret;
 }

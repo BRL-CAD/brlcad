@@ -34,7 +34,7 @@
  * useful to see background objects through foreground objects, as well as
  * in certain signal analyses as a filter.
  *
- * See the flat_parse_tab structure for details on the symantics of other
+ * See the flat_parse_tab structure for details on the semantics of other
  * attribute shorthands/alternatives.
  *
  */

@@ -2968,7 +2968,7 @@ nmg_classify_pnt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loo
 			}
 
 			if (NEAR_ZERO(line2_dist - vec2_mag, tol->dist)) {
-			    /* true when hit is on 2st vertex of edgeuse */
+			    /* true when hit is on 2nd vertex of edgeuse */
 			    VSUB2(x_dir, line2_pt2, line1_pt1);
 			    VCROSS(y_dir, N, x_dir);
 			    VSUB2(vec1, line2_pt1, line1_pt1);

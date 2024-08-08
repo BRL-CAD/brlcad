@@ -9912,7 +9912,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 
     if (count) {
 	/* recalculate face planes */
-	/* re-use edge table space */
+	/* reuse edge table space */
 	bu_ptbl_reset(&edge_table);
 	nmg_face_tabulate(&edge_table, &m->magic, vlfree);
 

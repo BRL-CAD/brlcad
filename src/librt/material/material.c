@@ -328,7 +328,7 @@ rt_material_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
             argc--;
         } else if (BU_STR_EQUAL(prop, "physical")) {
             if (argc < 2) {
-                bu_vls_printf(logstr, "Error: (%s) requres sub_property / value pair", prop);
+                bu_vls_printf(logstr, "Error: (%s) requires sub_property / value pair", prop);
                 return BRLCAD_ERROR;
             }
             const char* attr = *argv++;
@@ -338,7 +338,7 @@ rt_material_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
             argc -= 2;
         }  else if (BU_STR_EQUAL(prop, "mechanical")) {
             if (argc < 2) {
-                bu_vls_printf(logstr, "Error: (%s) requres sub_property / value pair", prop);
+                bu_vls_printf(logstr, "Error: (%s) requires sub_property / value pair", prop);
                 return BRLCAD_ERROR;
             }
             const char* attr = *argv++;
@@ -348,7 +348,7 @@ rt_material_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
             argc -= 2;
         } else if (BU_STR_EQUAL(prop, "optical")) {
             if (argc < 2) {
-                bu_vls_printf(logstr, "Error: (%s) requres sub_property / value pair", prop);
+                bu_vls_printf(logstr, "Error: (%s) requires sub_property / value pair", prop);
                 return BRLCAD_ERROR;
             }
             const char* attr = *argv++;
@@ -358,7 +358,7 @@ rt_material_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
             argc -= 2;
         } else if (BU_STR_EQUAL(prop, "thermal")) {
             if (argc < 2) {
-                bu_vls_printf(logstr, "Error: (%s) requres sub_property / value pair", prop);
+                bu_vls_printf(logstr, "Error: (%s) requires sub_property / value pair", prop);
                 return BRLCAD_ERROR;
             }
             const char* attr = *argv++;

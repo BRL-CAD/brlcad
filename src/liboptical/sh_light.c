@@ -1258,7 +1258,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	tryagain = 0;
 	for (k = 0; k < los->lsp->lt_pt_count; k++) {
 	    if (flags[k] & VF_SEEN) {
-		/* this one was used, we can re-use it */
+		/* this one was used, we can reuse it */
 		tryagain = 1;
 		flags[k] &= VF_BACKFACE;
 	    }

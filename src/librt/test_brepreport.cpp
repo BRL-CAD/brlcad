@@ -149,7 +149,7 @@ main(int argc, char *argv[])
     struct directory *dp;
     struct rt_wdb *wdbp;
     int brep_cnt = 0;
-    int convertable = 0;
+    int convertible = 0;
     int maybeconvertable = 0;
     int unlikelyconvertable = 0;
     int nonconvertable = 0;
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
        bu_log("brep path count: %d\n", brep_path_cnt);
     */
 
-    bu_log("%40s\t%5s\t%5s\t%5s\t%5s\t%5s\t%5s\t%s\n", "Totals", "Plane", "Sph", "Cyl", "Cone", "Torus", "NURB", "Convertable");
+    bu_log("%40s\t%5s\t%5s\t%5s\t%5s\t%5s\t%5s\t%s\n", "Totals", "Plane", "Sph", "Cyl", "Cone", "Torus", "NURB", "Convertible");
     int valid_breps = 0;
     for (i = 0; i < BU_PTBL_LEN(&unique_breps); i++) {
 	struct rt_db_internal intern;
@@ -238,16 +238,16 @@ main(int argc, char *argv[])
 		maybeconvertable++;
 		break;
 	    case 0:
-		convertable++;
+		convertible++;
 		break;
 	}
     }
 
     bu_log("%40s\t%5s\t%5s\t%5s\t%5s\t%5s\t%5s\n", "Objects", "Plane", "Sph", "Cyl", "Cone", "Torus", "NURB");
     bu_log("%40s\t%5d\t%5d\t%5d\t%5d\t%5d\t%5d\n", " ", cnts.planar, cnts.spherical, cnts.cylindrical, cnts.cone, cnts.torus, cnts.general);
-    bu_log("Convertable: %d of %d (%.1f percent)\n", convertable, valid_breps, 100*(double)convertable/(double)valid_breps);
-    bu_log("Maybe convertable: %d of %d (%.1f percent)\n", maybeconvertable, valid_breps, 100*(double)maybeconvertable/(double)valid_breps);
-    bu_log("Unlikely convertable: %d of %d (%.1f percent)\n", unlikelyconvertable, valid_breps, 100*(double)unlikelyconvertable/(double)valid_breps);
+    bu_log("Convertible: %d of %d (%.1f percent)\n", convertible, valid_breps, 100*(double)convertible/(double)valid_breps);
+    bu_log("Maybe convertible: %d of %d (%.1f percent)\n", maybeconvertable, valid_breps, 100*(double)maybeconvertable/(double)valid_breps);
+    bu_log("Unlikely convertible: %d of %d (%.1f percent)\n", unlikelyconvertable, valid_breps, 100*(double)unlikelyconvertable/(double)valid_breps);
     bu_log("Non-convertable: %d of %d (%.1f percent)\n", nonconvertable, valid_breps, 100*(double)nonconvertable/(double)valid_breps);
 #if 0
 

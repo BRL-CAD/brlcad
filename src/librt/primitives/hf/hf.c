@@ -2056,7 +2056,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     }
 
     if (bu_cv_optimize(in_cookie) == bu_cv_optimize(out_cookie)) {
-	/* Don't replicate the data, just re-use the pointer */
+	/* Don't replicate the data, just reuse the pointer */
 	mp->apbuf = mp->buf;
 	return 0;		/* OK */
     }

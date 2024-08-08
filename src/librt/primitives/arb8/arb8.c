@@ -845,7 +845,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 
     /*
      * Compute bounding sphere which contains the bounding RPP.
-     * Find min and max of the point co-ordinates to find the
+     * Find min and max of the point coordinates to find the
      * bounding RPP.  Note that this center is NOT guaranteed
      * to be contained within the solid!
      */

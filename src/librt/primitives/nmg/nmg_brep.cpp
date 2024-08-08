@@ -237,7 +237,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
-    // Both NMG and brep structures re-use components between faces.  In order to track
+    // Both NMG and brep structures reuse components between faces.  In order to track
     // when the conversion routine has already handled an NMG element, use an array.
     long *brepi = static_cast<long*>(bu_malloc(m->maxindex * sizeof(long), "rt_nmg_brep: brepi[]"));
     for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;

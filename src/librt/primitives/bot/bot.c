@@ -468,7 +468,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (do_normals) {
 	tri_norms = (fastf_t*) bu_malloc(bot_ip->num_faces * 9 * sizeof(fastf_t), "bot norms");
     }
-    // copy triangles into order specfied by ordered_faces
+    // copy triangles into order specified by ordered_faces
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
 	size_t bot_ip_index = ordered_faces[i];
 	fastf_t *v0, *v1, *v2;
@@ -633,7 +633,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 	if (node->n_primitives > 0) {
 	    size_t end = node->data.first_prim_offset + node->n_primitives;
 	    BU_ASSERT(end <= ntris);
-	    // each leaf node has multiple primatives in it
+	    // each leaf node has multiple primitives in it
 	    for (size_t i = node->data.first_prim_offset; i < end; i++) {
 		triangle_s* tri = &tris[i];
 		vect_t wn, wxb, xp;

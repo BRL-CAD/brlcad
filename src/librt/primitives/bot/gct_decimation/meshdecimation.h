@@ -118,14 +118,14 @@ void mdOperationInit(mdOperation *op);
 void mdOperationData(mdOperation *op, size_t vertexcount, void *vertex, int vertexwidth, size_t vertexstride, size_t tricount, void *indices, int indiceswidth, size_t indicesstride);
 int mdOperationAddAttrib(mdOperation *op, void *base, int width, size_t count, size_t stride, int flags);
 void mdOperationStrength(mdOperation *op, double decimationstrength);
-void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opaquepointer, const mdStatus *status), void *opaquepointer, long miliseconds);
+void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opaquepointer, const mdStatus *status), void *opaquepointer, long milliseconds);
 
 #define MD_ATTRIB_FLAGS_NORMALIZE (0x1)
 #define MD_ATTRIB_FLAGS_COMPUTE_NORMALS (0x2)
 
 
 /*
- * Decimate the mesh specifed by the mdOperation struct.
+ * Decimate the mesh specified by the mdOperation struct.
  */
 int mdMeshDecimation(mdOperation *operation, int flags);
 
