@@ -413,7 +413,7 @@ typedef ptrdiff_t ssize_t;
  * constitute a return.  Functions that (always) infinite loop can be
  * considered functions that do not return.  Functions that do not
  * return should have a void return type.  This option is a hint to
- * compilers and static analyers, to reduce false positive reporting.
+ * compilers and static analyzers, to reduce false positive reporting.
  */
 #ifdef NORETURN
 #  undef NORETURN
@@ -498,7 +498,7 @@ typedef _TCHAR TCHAR;
 
 /* warning C5105: macro expansion producing 'defined' has undefined behavior
  *
- * this appears to be an erronous issue in the latest msvc
+ * this appears to be an erroneous issue in the latest msvc
  * pre-processor that has support for the new C17 standard, which
  * triggers warnings in Windows SDK headers (e.g., winbase.h) that
  * use the defined operator in certain macros.

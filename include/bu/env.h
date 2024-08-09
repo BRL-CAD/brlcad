@@ -49,7 +49,7 @@ BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrit
  * Report system memory sizes.
  *
  * Returns -1 on error and the size of the requested memory type on
- * success.  Optionally if sz is non-NULL, the size of the reqeusted
+ * success.  Optionally if sz is non-NULL, the size of the requested
  * memory type will be set to it.
  */
 BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);

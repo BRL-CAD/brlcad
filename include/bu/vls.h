@@ -479,7 +479,7 @@ BU_EXPORT extern const char *bu_vls_decode(struct bu_vls *vp, const char *str);
  * processing or readability of strings.  This function takes a vls as an
  * input and simplifies it as follows:
  *
- * 1) Reduce characters present to alpha-numeric characters and those
+ * 1) Reduce characters present to alphanumeric characters and those
  *    characters supplied to the routine in the "keep" string.  Substitute
  *    is performed as follows:
  *

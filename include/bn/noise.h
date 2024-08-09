@@ -98,7 +98,7 @@ BN_EXPORT extern void bn_noise_vec(point_t point,
  *
  * The function call pow() is relatively expensive.  Therefore, this
  * function pre-computes and saves the spectral weights in a table for
- * re-use in successive invocations.
+ * reuse in successive invocations.
  */
 BN_EXPORT extern double bn_noise_fbm(point_t point,
 				     double h_val,
@@ -129,7 +129,7 @@ BN_EXPORT extern double bn_noise_fbm(point_t point,
  @endcode
  * The function call pow() is relatively expensive.  Therefore, this
  * function pre-computes and saves the spectral weights in a table for
- * re-use in successive invocations.
+ * reuse in successive invocations.
  */
 BN_EXPORT extern double bn_noise_turb(point_t point,
 				      double h_val,

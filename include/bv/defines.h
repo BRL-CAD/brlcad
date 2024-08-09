@@ -405,7 +405,7 @@ struct bv_mesh_lod {
 #define BV_SNAP_TCL    0x10
 
 /* We encapsulate non-camera settings into a container mainly to allow for
- * easier re-use of the same settings between different views - if a common
+ * easier reuse of the same settings between different views - if a common
  * setting set is maintained between different views, this container allows
  * us to just point to the common set from all views using it. */
 struct bview_settings {

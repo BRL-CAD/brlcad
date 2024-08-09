@@ -172,7 +172,7 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  * [:alnum:] Alphanumeric characters: a-zA-Z0-9
  * [:alpha:] Alphabetic characters: a-zA-Z
  * [:blank:] Space and TAB characters
- * [:cntrl:] Control characters: ACSII 0x00-0X7F
+ * [:cntrl:] Control characters: ASCII 0x00-0X7F
  * [:digit:] Numeric characters: 0-9
  * [:graph:] Characters that are both printable and visible: ASCII 0x21-0X7E
  * [:lower:] Lowercase alphabetic characters: a-z
