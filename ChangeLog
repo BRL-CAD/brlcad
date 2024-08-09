@@ -1496,7 +1496,7 @@ commit 72d4c2035e1481c68bf17ba995ecb5bb94044b8d
 Author: Christopher Sean Morrison <brlcad@gmail.com>
 Date:   Sun Feb 4 02:09:03 2024 -0500
 
-    same issue as rhc, fix the boundary cuve leaks.
+    same issue as rhc, fix the boundary curve leaks.
 
 commit c959f2f52b0602f552918da9cbf6c5b23393771d
 Author: Christopher Sean Morrison <brlcad@gmail.com>
@@ -1548,7 +1548,7 @@ Date:   Sun Feb 4 00:40:53 2024 -0500
 
     added/expanded torus ray tracing support to include self-intersecting tori.
     
-    this lets the torus definition extend past a horn torus to a spindle torus with self-intersection.  this allow for the full specturm of positive radius parings (major and minor).
+    this lets the torus definition extend past a horn torus to a spindle torus with self-intersection.  this allow for the full spectrum of positive radius parings (major and minor).
 
 commit fbb807aefba6653cbf519eecda594404064ef16e
 Author: Christopher Sean Morrison <brlcad@gmail.com>
@@ -1801,7 +1801,7 @@ Date:   Fri Dec 15 16:36:29 2023 -0500
     
     Break each method (nmg, bot, brep) into a function.  At this point there
     should be no changes to functionality - the idea is to set things up to
-    make it easer to be able to optionally run JUST nmg, bot or brep rather
+    make it easier to be able to optionally run JUST nmg, bot or brep rather
     than having to do all of them.
 
 commit af21ffcd48ace4f7a19862bd17d34a6e77939c4b

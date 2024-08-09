@@ -872,7 +872,7 @@ mged&gt; ae 90 0
 	command	line, there is a mouse-based trigger that can be used.  In the <application>MGED</application>
 	menu, selecting	Settings-&gt;Mouse Behavior-&gt;Query Ray will change the behavior of
 	the mouse. Selecting the view window, placing the mouse at some
-	point over the model, and preforming a click will cast a
+	point over the model, and performing a click will cast a
 	ray in the view direction, centered at the point under the mouse pointer rather
 	than the view center.
       </para>

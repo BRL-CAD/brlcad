@@ -163,7 +163,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
 
-* readd support for vrml v1 to g-vrml so that users can select whether
+* re-add support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
@@ -337,7 +337,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
-    verbose option for the more detailed hiearchical report that is
+    verbose option for the more detailed hierarchical report that is
     currently produced.
 
   * verify rtarea.  There are reports that the rtarea
@@ -355,7 +355,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
-    verbose option for the more detailed hiearchical report that is
+    verbose option for the more detailed hierarchical report that is
     currently produced.
 
   * verify rtarea.  There are reports that the rtarea
@@ -434,7 +434,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   * investigate why the new bbox() routines for ARS and BoT result in
     bounding boxes that are way too big.
 
-  * implement prep optimzation to the default fast bbox approximation
+  * implement prep optimization to the default fast bbox approximation
     specifically for arb8/rpp since we know the exact extent of their
     bounds and can chop away at a box with a box.
 
@@ -2146,7 +2146,7 @@ CONVERTERS
 * add support to x3d-g for NURBS entities
 
 * compare libIGES (lgpl, https://github.com/cbernardo/libIGES) as
-  potential replacement for our compelx IGES conversion logic.
+  potential replacement for our complex IGES conversion logic.
   appropriate time for review when IGES gets added to libGCV.
 
 * investigate the asset import library (assimp.sf.net) to see whether

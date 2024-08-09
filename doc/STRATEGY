@@ -7,7 +7,7 @@
 BRL-CAD Development Strategy
 
 This is a living document that defines and aims to help maintain a
-consistent develpment strategy for addressing BRL-CAD requirements.
+consistent development strategy for addressing BRL-CAD requirements.
 It recognizes areas of strategic importance, outlines projects to
 bolster those areas, and identifies specific actionable objectives.
 
@@ -234,7 +234,7 @@ bolster those areas, and identifies specific actionable objectives.
 **** TODO create data caching test cases (1)
 **** TODO implement libbu data caching (1)
 
-*** implment LIBRT object caching (4)
+*** implement LIBRT object caching (4)
 **** TODO serialize BoT prep data to cache (1)
 **** TODO serialize NURBS prep data to cache (1)
 **** TODO serialize tess/plot data to cache (2)

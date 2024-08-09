@@ -244,7 +244,7 @@ the stage for the aforementioned major feature developments.
 * removed 'nburst' rewrite with burst now deprecated - Cliff Yapp
 * fixed bot_merge with oriented plate mode bots - Sean Morrison
 * bot_dump infers output type from filename extension - Sean Morrison
-* readded MGED viewring, sweep, collab, & rateknob menus - Cliff Yapp
+* re-added MGED viewring, sweep, collab, & rateknob menus - Cliff Yapp
 * fixed a crash when shaded NURBS brep drawing fails - Cliff Yapp
 * added new man pages for brep, process, and ps commands - Cliff Yapp
 * added new man page for 3dm-g Rhino3D importer - Cliff Yapp
@@ -425,7 +425,7 @@ infrastructure with BRL-CAD's imminent migration to Git.
 * improved behavior of MGED overlap checker GUI - Nick Reed
 * fixed startup dimensions of overlap checker window - Nick Reed
 * fixed rtedge line drawing color when using -W flag - Cliff Yapp
-* added -F option to lint cmd to test specifc solid types - Cliff Yapp
+* added -F option to lint cmd to test specific solid types - Cliff Yapp
 * added support to MGED for zooming with mouse wheel - Cliff Yapp
 * fixed solid editing wireframe drawing in MGED - Nick Reed
 * added .r suffixes to region names in 3dm-g conversion - Cliff Yapp
@@ -762,7 +762,7 @@ performance ray tracing pipeline.
 * improved datum wireframes (yellow) and fixed arrowheads - Cliff Yapp
 * added initial manual page for 'burst' ray dispatch tool - Cliff Yapp
 * improved wireframe display list performance - Keith Bowman
-* added draw -S for simplied wireframes, no subtractions - Cliff Yapp
+* added draw -S for simplified wireframes, no subtractions - Cliff Yapp
 * added draw -L# to draw bounding boxes for large objects - Cliff Yapp
 * added 3dm-g instance reference and definition import - Jon Engbert
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
@@ -1663,7 +1663,7 @@ undo support and graphical editing, are expanded upon.
 * pipe now validates independent of parameter order - Daniel Roßberg
 * added '-r' color randomize option to 3dm-g importer - Cliff Yapp
 * enhanced '-v' verbosity option in 3dm-g importer - Cliff Yapp
-* readded -A & -o attribute options to 'draw' and 'erase' - Bob Parker
+* re-added -A & -o attribute options to 'draw' and 'erase' - Bob Parker
 * fixed bug in 'E' command to show object names - John Anderson
 * initial obj-g geometry importer - Erik Greenwald
 * Pro/E export plugin creates a 'Proe_Name' attribute - Bob Parker
