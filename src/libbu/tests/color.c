@@ -113,19 +113,16 @@ test_bu_color_to_rgb_floats(int argc, char *argv[])
 
     sscanf(argv[2], "%lf, %lf, %lf", &expected_rgb_color[RED], &expected_rgb_color[GRN], &expected_rgb_color[BLU]);
 
-    /* VPRINT("Input/Expected:", expected_rgb_color); */
-
     VSCALE(color.buc_rgb, expected_rgb_color, 1.0 / 255.0);
 
-    /* VPRINT("Normalized:", color.buc_rgb); */
+    /* this is a simple pass-through test of bu_color_to_rgb_floats()
+     * that shouldn't result in change so long as our naive
+     * normalization math behaves within typical floating point fuzz..
+     */
 
     bu_color_to_rgb_floats(&color, actual_rgb_color);
 
-    /* VPRINT("Actual (Normalized):", actual_rgb_color); */
-
     VSCALE(actual_rgb_color, actual_rgb_color, 255.0);
-
-    /* VPRINT("Actual (Denormalized):", actual_rgb_color); */
 
     return !(VEQUAL(expected_rgb_color, actual_rgb_color));
 }
