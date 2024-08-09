@@ -48,15 +48,15 @@ struct KElement {
 
 
 struct KElementPulley {
-    int truss1ID;
-    int truss2ID;
+    int truss1Id;
+    int truss2Id;
     int pulleyNode;
 };
 
 
 struct KElementBeamSource {
-    int   sourceNodeID;
-    int   sourceElementID;
+    int   sourceNodeId;
+    int   sourceElementId;
     int   nElements;
     float beamElementLength;
     float minmumLengthToPullOut;
@@ -67,15 +67,15 @@ struct KElementBearing {
     std::string title;
     int         bearingType;
     int         n1;
-    int         coordinateID1;
+    int         coordinateId1;
     int         n2;
-    int         coordinateID2;
+    int         coordinateId2;
     int         numberOfBallsOrRollers;
     float       diameterOfBallsOrRollers;
     float       boreInnerDiameter;
     float       boreOuterDiameter;
     float       pitchDiameter;
-    float       ineerGroveRadiusToBallDiameterRatioOrRollerLength;
+    float       innerGroveRadiusToBallDiameterRatioOrRollerLength;
     float       outerRaceGrooveRadiusToBallDiameterRatio;
     float       totalRadianceClearenceBetweenBallAndRaces;
 };
@@ -97,6 +97,17 @@ struct KSection {
     double        thickness4;
 };
 
+struct KSectionBeam {
+    std::string   title;
+    int                 CST;//cross section type
+    std::string         sectionType;//this is different from cross section type
+    double              TS1;
+    double              TS2;
+    double              TT1;
+    double              TT2;
+    std::vector<double> D;
+    double              CrossSectionalArea;//The definition on *ELEMENT_BEAM_THICKNESS overrides the value defined here.
+};
 
 struct KData {
     std::map<int, KNode>              nodes;
@@ -106,6 +117,7 @@ struct KData {
     std::map<int, KElementBearing>    elementBearing;
     std::map<int, KPart>              parts;
     std::map<int, KSection>           sections;
+    std::map<int, KSectionBeam>       sectionsBeam;
 };
 
 

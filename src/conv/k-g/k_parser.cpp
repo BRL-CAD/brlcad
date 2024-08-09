@@ -89,6 +89,7 @@ enum class KState {
 };
 
 enum class Options {
+    Title,
     Thickness,
     Scalar,
     Scalr,
@@ -238,14 +239,16 @@ bool parse_k
 	std::string              partTitle;
 	size_t                   sectionLinesRead = 0;
 	size_t                   elementLinesRead = 0;
+	size_t                   cardCounter = 0;// this will replace sectionLinesRead elementLinesRead, and partLinesRead
 	size_t                   optionsCounter = 0;
 	std::string              sectionTitle;
 	int                      sectionId        = -1;
+	int                      sectionElForm    = 0;
+	int                      CST              = 0;
 	std::string              line             = read_line(is);
 	std::vector<std::string> tokens;
 	const size_t FirstNode = 2;
-	std::vector<std::string> elementOptions;
-	std::vector<std::string> sectionOptions;
+	std::vector<std::string> optionsContainer;
 	std::vector<Options> options;
 
 	if (line.size() > 0)
@@ -291,39 +294,39 @@ bool parse_k
 				else {
 				    state = KState::Element_Beam;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 
-				    if (elementOptions.size() > 0) {
-					for (size_t i_o = 0; i_o < elementOptions.size(); ++i_o) {
-					    if (elementOptions[i_o] == "THICKNESS") {
+				    if (optionsContainer.size() > 0) {
+					for (size_t i_o = 0; i_o < optionsContainer.size(); ++i_o) {
+					    if (optionsContainer[i_o] == "THICKNESS") {
 						options.push_back(Options::Thickness);
 					    }
-					    else if (elementOptions[i_o] == "SCALAR") {
+					    else if (optionsContainer[i_o] == "SCALAR") {
 						options.push_back(Options::Scalar);
 					    }
-					    else if (elementOptions[i_o] == "SCALR") {
+					    else if (optionsContainer[i_o] == "SCALR") {
 						options.push_back(Options::Scalr);
 					    }
-					    else if (elementOptions[i_o] == "SECTION") {
+					    else if (optionsContainer[i_o] == "SECTION") {
 						options.push_back(Options::Section);
 					    }
-					    else if (elementOptions[i_o] == "PID") {
+					    else if (optionsContainer[i_o] == "PID") {
 						options.push_back(Options::Pid);
 					    }
-					    else if (elementOptions[i_o] == "OFFSET") {
+					    else if (optionsContainer[i_o] == "OFFSET") {
 						options.push_back(Options::Offset);
 					    }
-					    else if (elementOptions[i_o] == "ORIENTATION") {
+					    else if (optionsContainer[i_o] == "ORIENTATION") {
 						options.push_back(Options::Orientation);
 					    }
-					    else if (elementOptions[i_o] == "WARPAGE") {
+					    else if (optionsContainer[i_o] == "WARPAGE") {
 						options.push_back(Options::Warpage);
 					    }
-					    else if (elementOptions[i_o] == "ELBOW") {
+					    else if (optionsContainer[i_o] == "ELBOW") {
 						options.push_back(Options::Elbow);
 					    }
 					    else
-						std::cout << "Unhandeled Element_Beam option" << elementOptions[i_o] << "in k-file" << fileName << "\n";
+						std::cout << "Unhandeled Element_Beam option" << optionsContainer[i_o] << "in k-file" << fileName << "\n";
 					}
 				    }
 				}
@@ -331,170 +334,170 @@ bool parse_k
 			    else if ((command.size() > 1) && (command[1] == "BEARING")) {
 				state = KState::Element_Bearing;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 
-				if (elementOptions.size() > 0) {
+				if (optionsContainer.size() > 0) {
 				    elementLinesRead = 0;//element Bearing has only the Tilte option
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "BLANKING")) {
 				state = KState::Element_Blanking;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 3) && (command[1] == "DIRECT") && (command[2] == "MATRIX") && (command[3] == "INPUT")) {
 				state = KState::Element_Direct_Matrix_Input;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 4, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "DISCRETE")) {
 				if ((command.size() > 2) && (command[2] == "SPHERE")) {
 				    state = KState::Element_Discrete_Sphere;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
 				    state = KState::Element_Discrete;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 2) && (command[1] == "GENERALIZED")) {
 				if ((command[2] == "SHELL")) {
 				    state = KState::Element_Generalized_Shell;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
 				    state = KState::Element_Generalized_Solid;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "INERTIA")) {
 				state = KState::Element_Inertia;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 2) && (command[1] == "INTERPOLATION")) {
 				if (command[2] == "SHELL") {
 				    state = KState::Element_Interpolation_Shell;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
 				    state = KState::Element_Interpolation_Solid;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "LANCING")) {
 				state = KState::Element_Lancing;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "MASS")) {
 				if ((command.size() > 2) && (command[2] == "MATRIX")) {
 				    state = KState::Element_Mass_Matrix;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "PART")) {
 				    state = KState::Element_Mass_Part;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
 				    state = KState::Element_Mass;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "PLOTEL")) {
 				state = KState::Element_Plotel;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SEATBELT")) {
 				if ((command.size() > 2) && (command[2] == "ACCELEROMETER")) {
 				    state = KState::Element_Seatbealt_Accelerometer;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "PRETENSIONER")) {
 				    state = KState::Element_Seatbealt_Pretensioner;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "RETRACTOR")) {
 				    state = KState::Element_Seatbealt_Retractor;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "SENSOR")) {
 				    state = KState::Element_Seatbealt_Sensor;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "SLIPRING")) {
 				    state = KState::Element_Seatbealt_Slipring;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
 				    state = KState::Element_Seatbealt;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SHELL")) {
 				if ((command.size() > 2) && (command[2] == "NURBS")) {
 				    state = KState::Element_Shell_Nurbs_Patch;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 4, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "SOURCE")) {
 				    state = KState::Element_Shell_Source_Sink;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 4, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else {
 				    state = KState::Element_Shell;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SOLID")) {
 				if ((command.size() > 2) && (command[2] == "NURBS")) {
 				    state = KState::Element_Solid_Nurbs_Patch;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 4, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "PERI")) {
 				    state = KState::Element_Solid_Peri;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 3, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
 				    state = KState::Element_Solid;
 
-				    elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SPH")) {
 				state = KState::Element_Sph;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "TRIM")) {
 				state = KState::Element_Trim;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "TSHELL")) {
 				state = KState::Element_Tshell;
 
-				elementOptions.insert(elementOptions.end(), command.begin() + 2, command.end());
+				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
@@ -521,8 +524,38 @@ bool parse_k
 				    if (command[2] == "TITLE")
 					sectionLinesRead = 0;
 				    else
-					sectionOptions.insert(sectionOptions.end(), command.begin() + 2, command.end());
+					optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
+				else
+				    sectionLinesRead = 1;
+			    }
+			    else if (command[1] == "ALE2D") {
+				state = KState::Section_Ale2d;
+				sectionTitle = "";
+				sectionId = -1;
+
+				if (command.size() > 2) {
+				    if (command[2] == "TITLE")
+					sectionLinesRead = 0;
+				    else
+					optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
+				}
+				else
+				    sectionLinesRead = 1;
+			    }
+			    else if (command[1] == "BEAM") {
+				state = KState::Section_Beam;
+				sectionTitle = "";
+				sectionId = -1;
+
+				if (command.size() > 2) {
+				    if (command[2] == "TITLE")
+					sectionLinesRead = 0;
+				    else
+					optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
+				}
+				else
+				    sectionLinesRead = 1;
 			    }
 			    else if (command[1] == "SHELL") {
 				state        = KState::Section_Shell;
@@ -673,7 +706,161 @@ bool parse_k
 		    case KState::Ignore:
 			break;
 		    }
+		    case KState::Section_Ale1d: {
+			switch (sectionLinesRead)
+			{
+			case 0: {
+			    sectionTitle = line;
+			    break;
+			}
+			case 1: {
+			    if (tokens.size() < 4) {
+				std::cout << "Too short SECTION_ALE1D in k-file " << fileName << "\n";
+				break;
+			    }
+			    sectionId = stoi(tokens[0]);
+			    data.sections[sectionId].title = sectionTitle;
+			    break;
+			}
+			case 2: {
+			    if (sectionId < 0) {
+				std::cout << "Bad SECTION in k-file " << fileName << "\n";
+				break;
+			    }
 
+			    if (tokens.size() < 2) {
+				std::cout << "Too short SECTION_ALE1D in k-file " << fileName << "\n";
+				break;
+			    }
+
+			    data.sections[sectionId].thickness1 = stod(tokens[0]);
+			    data.sections[sectionId].thickness2 = stod(tokens[1]);
+			}
+			}
+			++sectionLinesRead;
+			break;
+		    }
+		    case KState::Section_Ale2d: {
+			switch (sectionLinesRead)
+			{
+			case 0: {
+			    sectionTitle = line;
+			    break;
+			}
+			case 1: {
+			    if (tokens.size() < 4) {
+				std::cout << "Too short SECTION_ALE2D in k-file " << fileName << "\n";
+				break;
+			    }
+			    sectionId = stoi(tokens[0]);
+			    data.sections[sectionId].title = sectionTitle;
+			    break;
+			}
+			}
+
+			++sectionLinesRead;
+			break;
+		    }
+		    case KState::Section_Beam: {
+			KSectionBeam sectionBeam;
+			switch (sectionLinesRead)
+			{
+			case 0: {
+			    sectionTitle = line;
+			    break;
+			}
+			case 1: {
+			    if (tokens.size() < 8) {
+				std::cout << "Too short SECTION_BEAM in k-file " << fileName << "\n";
+				break;
+			    }
+			    sectionId     = stoi(tokens[0]);
+			    sectionElForm = stoi(tokens[1]);
+			    
+			    sectionBeam.title = sectionTitle;
+			    sectionBeam.CST   = stoi(tokens[4]);
+
+			    break;
+			}
+			case 2: {
+			    if ((sectionElForm == 1) || (sectionElForm == 11)) {
+				if (tokens.size() < 6) {
+				    std::cout << "Too short SECTION_BEAM card 2a in k-file " << fileName << "\n";
+				    break;
+				}
+
+				sectionBeam.TS1 = stod(tokens[0]);
+				sectionBeam.TS2 = stod(tokens[1]);
+				sectionBeam.TT1 = stod(tokens[2]);
+				sectionBeam.TT2 = stod(tokens[3]);
+			    }
+			    else if ((sectionElForm == 2) || (sectionElForm == 3) || (sectionElForm == 12)||(sectionElForm == 13)) {
+				std::string first7characters;
+
+				if (tokens[0].size() > 7) {
+				    first7characters = tokens[0].substr(0, 7);
+				}
+
+				if ((first7characters == "SECTION")) {
+				    sectionBeam.sectionType = tokens[0];
+
+				    for (size_t i_d = 1; i_d < 7; ++i_d) {
+					sectionBeam.D[i_d - 1] = stod(tokens[i_d]);
+				    }
+				}
+				else {
+				    sectionBeam.CrossSectionalArea = stod(tokens[0]);
+				}
+			    }
+			    else if ((sectionElForm == 4) || (sectionElForm == 5)) {
+				if (tokens.size() < 4) {
+				    std::cout << "Too short SECTION_BEAM card 2e in k-file " << fileName << "\n";
+				    break;
+				}
+
+				sectionBeam.TS1 = stod(tokens[0]);
+				sectionBeam.TS2 = stod(tokens[1]);
+				sectionBeam.TT1 = stod(tokens[2]);
+				sectionBeam.TT2 = stod(tokens[3]);
+			    }
+			    else if (sectionElForm == 6) {
+				//nothing to do.
+				break;
+			    }
+			    else if ((sectionElForm == 7) || (sectionElForm == 8)) {
+				if (tokens.size() < 2) {
+				    std::cout << "Too short SECTION_BEAM card 2h in k-file " << fileName << "\n";
+				    break;
+				}
+
+				sectionBeam.TS1 = stod(tokens[0]);
+				sectionBeam.TS2 = stod(tokens[1]);
+			    }
+			    else if (sectionElForm == 9) {
+				if (tokens.size() < 4) {
+				    std::cout << "Too short SECTION_BEAM card 2i in k-file " << fileName << "\n";
+				    break;
+				}
+			    }
+			    else if (sectionElForm == 14) {
+				//nothing to do 
+				break;
+			    }
+			    break;
+			}
+			case 3: {
+			    if (sectionElForm == 12) {
+				//No information related to geometry.
+				break;
+			    }
+
+			    break;
+			}
+			}
+
+			++sectionLinesRead;
+			break;
+		    }
 		    case KState::Section_Shell: {
 			switch (sectionLinesRead) {
 			case 0:
@@ -717,6 +904,7 @@ bool parse_k
 			++sectionLinesRead;
 			break;
 		    }
+
 		    case KState::Section_Solid: {
 			switch (sectionLinesRead) {
 			case 0:
@@ -742,6 +930,7 @@ bool parse_k
 			++sectionLinesRead;
 			break;
 		    }
+
 		    case KState::Part_Adaptive_Failure: {
 			if (tokens.size() < 2) {
 			    std::cout << "Too short PART_ADAPTIVE_FAILURE in k-file " << fileName << "\n";
@@ -758,6 +947,7 @@ bool parse_k
 			}
 			break;
 		    }
+
 		    case KState::Element_Beam: {
 			KElement element;
 			int      pid;
@@ -980,19 +1170,20 @@ bool parse_k
 			}
 			break;
 		    }
+
 		    case KState::Element_Beam_Pulley: {
 			if (tokens.size() < 8) {
 			    std::cout << "Too short ELEMENT_BEAM_PULLEY in k-file " << fileName << "\n";
 			    break;
 			}
 			KElementPulley pulley;
-			int pulleyID= stoi(tokens[0]);
+			int pulleyId= stoi(tokens[0]);
 
-			pulley.truss1ID   = stoi(tokens[1]);
-			pulley.truss2ID   = stoi(tokens[2]);
+			pulley.truss1Id   = stoi(tokens[1]);
+			pulley.truss2Id   = stoi(tokens[2]);
 			pulley.pulleyNode = stoi(tokens[3]);
 
-			data.elementsPulley[pulleyID] = pulley;
+			data.elementsPulley[pulleyId] = pulley;
 			break;
 		    }
 		    case KState::Element_Beam_Source: {
@@ -1005,8 +1196,8 @@ bool parse_k
 			
 			int eid = stoi(tokens[0]);
 
-			source.sourceNodeID          = stoi(tokens[1]);
-			source.sourceElementID       = stoi(tokens[2]);
+			source.sourceNodeId          = stoi(tokens[1]);
+			source.sourceElementId       = stoi(tokens[2]);
 			source.nElements             = stoi(tokens[3]);
 			source.beamElementLength     = stof(tokens[4]);
 			source.minmumLengthToPullOut = stof(tokens[6]);
@@ -1014,6 +1205,7 @@ bool parse_k
 			data.elementsBeamSource[eid] = source;
 			break;
 		    }
+
 		    case KState::Element_Bearing: {
 			KElementBearing bearing;
 			int eid;
@@ -1034,9 +1226,9 @@ bool parse_k
 			    eid = stoi(tokens[0]);
 			    bearing.bearingType            = stoi(tokens[1]);
 			    bearing.n1                     = stoi(tokens[2]);
-			    bearing.coordinateID1          = stoi(tokens[3]);
+			    bearing.coordinateId1          = stoi(tokens[3]);
 			    bearing.n2                     = stoi(tokens[4]);
-			    bearing.coordinateID2          = stoi(tokens[5]);
+			    bearing.coordinateId2          = stoi(tokens[5]);
 			    bearing.numberOfBallsOrRollers = stoi(tokens[6]);
 
 			    break;
@@ -1064,7 +1256,7 @@ bool parse_k
 				break;
 			    }
 
-			    bearing.ineerGroveRadiusToBallDiameterRatioOrRollerLength = stof(tokens[1]);
+			    bearing.innerGroveRadiusToBallDiameterRatioOrRollerLength = stof(tokens[1]);
 			    bearing.outerRaceGrooveRadiusToBallDiameterRatio          = stof(tokens[2]);
 			    bearing.totalRadianceClearenceBetweenBallAndRaces         = stof(tokens[3]);
 
