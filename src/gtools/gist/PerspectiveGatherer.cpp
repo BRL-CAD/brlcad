@@ -69,7 +69,7 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
 static std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL)) {
-        bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
+        bu_exit(BRLCAD_ERROR, "Couldn't find %s, aborting.\n", cmd);
     }
 
     return std::string(buf);

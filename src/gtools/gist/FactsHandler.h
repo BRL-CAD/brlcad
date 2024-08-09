@@ -27,7 +27,7 @@
  * multiple textual sections of information about the graphics file.
  *
  * The code will automatically layout the information in its designated section after
- * retreiving said information from the InformationGatherer helper file.
+ * retrieving said information from the InformationGatherer helper file.
  */
 
 class InformationGatherer;

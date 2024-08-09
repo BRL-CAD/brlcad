@@ -341,7 +341,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   if(brlcadlibs_notinstalled)
     message("-- #----------------------------------------------------------------------#")
-    message("-- # WARNING: The following OBJECT librarie(s) are not installed:         #")
+    message("-- # WARNING: The following OBJECT libraries(s) are not installed:         #")
     message("-- #----------------------------------------------------------------------#")
     message("-- #"                                                                       )
     message("-- # Location  = ${CREO_OBJ_DIR}"                                           )

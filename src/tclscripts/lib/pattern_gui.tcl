@@ -881,7 +881,7 @@ body pattern_control::constructor {} {
     bind $itk_component(cb_list_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on lists of azimuth and elevation angles}"
     bind $itk_component(l_listaz_s) <Enter> " set [list [scope helpvar]] {Enter a list of azimuth angles in degrees (0-360)}"
     bind $itk_component(l_listel_s) <Enter> " set [list [scope helpvar]] {Enter a list of elevation angles in degrees (-90 - 90)}"
-    bind $itk_component(rb_radius_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on numer of radii and radius delta}"
+    bind $itk_component(rb_radius_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number of radii and radius delta}"
     bind $itk_component(l_radius_s) <Enter> " set [list [scope helpvar]] {Enter the number of radii to be used}"
     bind $itk_component(l_delta_s) <Enter> " set [list [scope helpvar]] {Enter the radius delta to be used}"
     bind $itk_component(rb_radlist_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of radii}"

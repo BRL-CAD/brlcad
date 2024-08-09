@@ -63,7 +63,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     vect_t new_pix, accum, T, ref, bax, bay;
     adrt_mesh_t *new_mesh;
     TFLOAT sin_theta, cos_theta, sin_phi, cos_phi;
-    int i, n, propogate;
+    int i, n, propagate;
     render_path_t *rd;
 
     VSETALL(new_pix, 0);
@@ -76,10 +76,10 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     for (i = 0; i < rd->samples; i++) {
 	/* Prime variables */
 	new_ray = *ray;
-	propogate = 1;
+	propagate = 1;
 
 	/* Terminate if depth is too great. */
-	while (propogate) {
+	while (propagate) {
 	    if ((new_mesh = (adrt_mesh_t *)TIE_WORK(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
 		if (!EQUAL(new_mesh->attributes->ior, 1.0)) {
 		    /* Refractive Caustic */
@@ -88,7 +88,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		    /* Emitting Light Source */
 		    VMOVE(T, new_mesh->attributes->color.v);
 		    VSCALE(T, T, new_mesh->attributes->emission);
-		    propogate = 0;
+		    propagate = 0;
 		} else {
 		    /* Diffuse */
 		    if (new_mesh->texture) {
@@ -147,7 +147,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		new_pix[0] = 0;
 		new_pix[1] = 0;
 		new_pix[2] = 0;
-		propogate = 0;
+		propagate = 0;
 	    }
 	}
 

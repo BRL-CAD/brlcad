@@ -29,7 +29,7 @@
 /* component_filter      Component item filter for the feature visit routine        */
 /* creo_log              Report conversion status and log file messages             */
 /* creo_model_units      Extracts Creo model units and conversion factor            */
-/* creo_param_name       Returns first valid alpha-numeric parameter name string    */
+/* creo_param_name       Returns first valid alphanumeric parameter name string    */
 /* creo_param_val        Extract parameter value from specified Creo model          */
 /* find_matl             Determine if specified material is on the material list    */
 /* get_brlcad_name       Returns a unique BRL-CAD object name                       */
@@ -177,7 +177,7 @@ struct pparam_data {
 };
 
 
-/* Returns first valid alpha-numeric parameter name string */
+/* Returns first valid alphanumeric parameter name string */
 extern "C" char *
 creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flag)
 {

@@ -585,7 +585,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	}
 	    break;
 	case 100: {
-	    /* circular arc (must be full cirle here) */
+	    /* circular arc (must be full circle here) */
 	    struct edge_g_cnurb *crv;
 	    struct edge_g_cnurb *crv1, *crv2;
 	    point_t center, start, end;

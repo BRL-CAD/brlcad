@@ -273,7 +273,7 @@ mmenu_display(int y_top)
  * Called with Y coordinate of pen in menu area.
  *
  * Returns:
- * 1 if menu claims these pen co-ordinates,
+ * 1 if menu claims these pen coordinates,
  * 0 if pen is BELOW menu
  * -1 if pen is ABOVE menu (error)
  */

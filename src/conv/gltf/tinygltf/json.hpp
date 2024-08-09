@@ -5709,7 +5709,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
     }
 };
 
-// Wraps another input apdater to convert wide character types into individual bytes.
+// Wraps another input adapter to convert wide character types into individual bytes.
 template<typename BaseInputAdapter, typename WideCharType>
 class wide_string_input_adapter
 {
@@ -5875,7 +5875,7 @@ auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) /
 }
 
 // This class only handles inputs of input_buffer_adapter type.
-// It's required so that expressions like {ptr, len} can be implicitely casted
+// It's required so that expressions like {ptr, len} can be implicitly casted
 // to the correct adapter.
 class span_input_adapter
 {
@@ -10729,7 +10729,7 @@ class binary_reader
 
     @return whether conversion completed
 
-    @note This function needs to respect the system's endianess, because
+    @note This function needs to respect the system's endianness, because
           bytes in CBOR, MessagePack, and UBJSON are stored in network order
           (big endian) and therefore need reordering on little endian systems.
     */
@@ -10902,7 +10902,7 @@ class binary_reader
     /// the number of characters read
     std::size_t chars_read = 0;
 
-    /// whether we can assume little endianess
+    /// whether we can assume little endianness
     const bool is_little_endian = little_endianess();
 
     /// the SAX parser
@@ -15202,7 +15202,7 @@ class binary_writer
     @tparam OutputIsLittleEndian Set to true if output data is
                                  required to be little endian
 
-    @note This function needs to respect the system's endianess, because bytes
+    @note This function needs to respect the system's endianness, because bytes
           in CBOR, MessagePack, and UBJSON are stored in network order (big
           endian) and therefore need reordering on little endian systems.
     */
@@ -15292,7 +15292,7 @@ class binary_writer
     }
 
   private:
-    /// whether we can assume little endianess
+    /// whether we can assume little endianness
     const bool is_little_endian = little_endianess();
 
     /// the output
@@ -18409,7 +18409,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
        - If a subtype is given and the binary array contains exactly 1, 2, 4, 8,
          or 16 elements, the fixext family (fixext1, fixext2, fixext4, fixext8)
          is used. For other sizes, the ext family (ext8, ext16, ext32) is used.
-         The subtype is then added as singed 8-bit integer.
+         The subtype is then added as signed 8-bit integer.
        - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
     - BSON
        - If a subtype is given, it is used and added as unsigned 8-bit integer.
@@ -22552,7 +22552,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
           `key()` returns an empty string.
 
     @warning Using `items()` on temporary objects is dangerous. Make sure the
-             object's lifetime exeeds the iteration. See
+             object's lifetime exceeds the iteration. See
              <https://github.com/nlohmann/json/issues/2040> for more
              information.
 

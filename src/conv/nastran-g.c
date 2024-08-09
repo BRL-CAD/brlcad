@@ -610,7 +610,7 @@ convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 }
 
 
-/* routine to convert a grid point ot BRL-CAD (default cartesian)
+/* routine to convert a grid point to BRL-CAD (default cartesian)
  *
  * returns:
  * 0 on success

@@ -1188,7 +1188,7 @@ namespace eval shotvis {
 	return $o
     }
 
-    # make a tranformation matrix that rotates deg around the axis defined by the given pt and dir
+    # make a transformation matrix that rotates deg around the axis defined by the given pt and dir
     proc mat_arb_rot {axis_pt axis_dir deg} {
 	global DEG2RAD
 

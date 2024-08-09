@@ -93,7 +93,7 @@ proc expand_comb {args} {
     set comb [lindex $args 1]
 
     if {[catch {db get_type $comb} dbtype]} {
-	puts " cant get type for $comb"
+	puts " can't get type for $comb"
 	return
     }
     if {$dbtype != "comb"} {

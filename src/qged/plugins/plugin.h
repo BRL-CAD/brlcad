@@ -29,7 +29,7 @@
  * 4.  Full-fledged dialogs that are their own windows and launched
  *     from the menu.  Candidates might include complex procedural geometry
  *     generation tools, tabular report generators, or other large
- *     grpahical layout scenarios that won't fit well as a widget in
+ *     graphical layout scenarios that won't fit well as a widget in
  *     the main GUI.
  */
 

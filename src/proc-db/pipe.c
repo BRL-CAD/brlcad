@@ -58,8 +58,8 @@
 struct points
 {
     point_t p;		/* data point */
-    point_t p1;		/* adjusted point torward previous point */
-    point_t p2;		/* adjusted point torward next point */
+    point_t p1;		/* adjusted point toward previous point */
+    point_t p2;		/* adjusted point toward next point */
     point_t center;	/* center point for tori elbows */
     vect_t nprev;	/* unit vector towards previous point */
     vect_t nnext;	/* unit vector towards next point */

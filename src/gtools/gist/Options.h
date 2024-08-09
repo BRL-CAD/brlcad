@@ -110,7 +110,7 @@ private:
     int length;
     // Whether path is a folder with multiple files or not
     bool isFolder;
-    // Whether user specifices to open GUI as well
+    // Whether user specifies to open GUI as well
     int openGUI;
     //Whether user decides to export to a png
     bool exportToFile;

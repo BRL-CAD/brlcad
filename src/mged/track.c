@@ -685,15 +685,15 @@ tancir(fastf_t *cir1, fastf_t *cir2)
 void
 slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t)
 {
-    int i, j, switchs;
+    int i, j, switches;
     fastf_t temp;
     fastf_t mag;
     fastf_t z, r, b;
     vect_t del, work;
 
-    switchs = 0;
+    switches = 0;
     if (wh1[2] < wh2[2]) {
-	switchs++;
+	switches++;
 	for (i=0; i<3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];
@@ -701,7 +701,7 @@ slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t)
 	}
     }
     tancir(wh1, wh2);
-    if (switchs) {
+    if (switches) {
 	for (i=0; i<3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];

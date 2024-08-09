@@ -200,7 +200,7 @@ IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgP
     try {
 	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
     } catch (...) {
-	bu_log("WARNING: Tyring to create roi out of image boundaries\n");
+	bu_log("WARNING: Trying to create roi out of image boundaries\n");
 	return;
     }
     resized_image.copyTo(destRoi);
@@ -284,7 +284,7 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     return countCharDisplayedText;
 }
 
-//Helper funciton to support getting the width of a text
+//Helper function to support getting the width of a text
 int
 IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 {
@@ -423,7 +423,7 @@ IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string
 
 
 /* This function will evenly space out all of the texts in the header
- * and footer. The algorithm is to get the total lenght of all of the
+ * and footer. The algorithm is to get the total length of all of the
  * words combined and then the spacing is the total length divided by
  * how many words there are
  */
@@ -504,7 +504,7 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
 
 // This is a text wrapping function. If a text goes beyond the set x
 // or y, it will wrap around to the next line. It also has ellipsis
-// fucntion.
+// function.
 void
 IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
 {

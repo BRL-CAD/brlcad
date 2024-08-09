@@ -7,7 +7,7 @@
 
 ## Generate
 
-Run `gen.py` by specifing the path to glTF schema directory(from https://github.com/KhronosGroup/glTF.git)
+Run `gen.py` by specifying the path to glTF schema directory(from https://github.com/KhronosGroup/glTF.git)
 
 ```
 $ python gen.py /path/to/glTF/specification/2.0/schema

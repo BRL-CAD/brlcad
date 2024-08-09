@@ -408,7 +408,7 @@ X_doEvent(ClientData UNUSED(clientData), XEvent *eventPtr)
 
 
 /*
- * Handle X display manger specific commands.
+ * Handle X display manager specific commands.
  */
 static int
 X_dm(int argc, char *argv[])

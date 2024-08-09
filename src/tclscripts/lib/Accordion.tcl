@@ -19,16 +19,16 @@
 #
 ###
 #
-# Description - This is an Itcl/Itk implementation of an Accordian widget. The
+# Description - This is an Itcl/Itk implementation of an Accordion widget. The
 #   behavior is similar to tabs in that it displays/hides data depending on
 #   which button/tab is pressed. However this widget is better suited to applications
 #   where there is limited horizontal real estate (i.e. vertical situations).
 #   This widget has two modes: single selection and multiple selection, which is
 #   different from tabs which operate only in a single selection mode.
 
-package provide cadwidgets::Accordian 1.0
+package provide cadwidgets::Accordion 1.0
 
-::itcl::class cadwidgets::Accordian {
+::itcl::class cadwidgets::Accordion {
     inherit ::itk::Widget
 
     itk_option define -padding padding Padding 0
@@ -67,26 +67,26 @@ package provide cadwidgets::Accordian 1.0
     }
 }
 
-::itcl::body cadwidgets::Accordian::constructor {args} {
+::itcl::body cadwidgets::Accordion::constructor {args} {
     grid columnconfigure $itk_interior 0 -weight 1
 
     eval itk_initialize $args
 }
 
-::itcl::body cadwidgets::Accordian::destructor {} {
+::itcl::body cadwidgets::Accordion::destructor {} {
 }
 
 
 ############################### Configuration Options ###############################
 
-::itcl::configbody cadwidgets::Accordian::padding {
+::itcl::configbody cadwidgets::Accordion::padding {
     foreach item $mItemList {
 	set name "$ACC_PREFIX[regsub -all { } $item "_"]"
 	catch {$itk_component($name\B) configure -padding $itk_option(-padding)}
     }
 }
 
-::itcl::configbody cadwidgets::Accordian::singleselect {
+::itcl::configbody cadwidgets::Accordion::singleselect {
     if {$itk_option(-singleselect) != "true" &&
 	$itk_option(-singleselect) != "false" &&
 	$itk_option(-singleselect) != 1 &&
@@ -103,7 +103,7 @@ package provide cadwidgets::Accordian 1.0
 ################################# Public Methods ################################
 
 
-::itcl::body cadwidgets::Accordian::addTogglePanelCallback {_callback} {
+::itcl::body cadwidgets::Accordion::addTogglePanelCallback {_callback} {
     set i [lsearch $mTogglePanelCallbacks $_callback]
 
     # Add if not already in list
@@ -113,12 +113,12 @@ package provide cadwidgets::Accordian 1.0
 }
 
 
-::itcl::body cadwidgets::Accordian::clearTogglePanelCallbackList {} {
+::itcl::body cadwidgets::Accordion::clearTogglePanelCallbackList {} {
     set mTogglePanelCallbacks {}
 }
 
 
-::itcl::body cadwidgets::Accordian::deleteTogglePanelCallback {_callback} {
+::itcl::body cadwidgets::Accordion::deleteTogglePanelCallback {_callback} {
     set i [lsearch $mTogglePanelCallbacks $_callback]
     if {$i != -1} {
 	set mTogglePanelCallbacks [lreplace $mTogglePanelCallbacks $i $i]
@@ -126,12 +126,12 @@ package provide cadwidgets::Accordian 1.0
 }
 
 
-::itcl::body cadwidgets::Accordian::clear {} {
+::itcl::body cadwidgets::Accordion::clear {} {
     delete [lindex $mItemList 0] [lindex $mItemList end]
 }
 
 
-::itcl::body cadwidgets::Accordian::delete {_first {_last ""}} {
+::itcl::body cadwidgets::Accordion::delete {_first {_last ""}} {
     set i [getIndex $_first]
 
     if {$i == -1} {
@@ -208,7 +208,7 @@ package provide cadwidgets::Accordian 1.0
 }
 
 
-::itcl::body cadwidgets::Accordian::insert {_index args} {
+::itcl::body cadwidgets::Accordion::insert {_index args} {
     set i [getIndex $_index]
     if {$i == -1} {
 	error "Bad index - $_index"
@@ -239,7 +239,7 @@ package provide cadwidgets::Accordian 1.0
 	set name "$ACC_PREFIX[regsub -all { } $item "_"]"
 
 	if {[lsearch $mItemList $item] != -1} {
-	    puts "Accordian::insert: $item has already been added."
+	    puts "Accordion::insert: $item has already been added."
 	    continue
 	}
 
@@ -274,7 +274,7 @@ package provide cadwidgets::Accordian 1.0
 }
 
 
-::itcl::body cadwidgets::Accordian::itemChildsite {_index} {
+::itcl::body cadwidgets::Accordion::itemChildsite {_index} {
     set i [getIndex $_index]
     if {$i == -1} {
 	error "Bad index - $_index"
@@ -286,7 +286,7 @@ package provide cadwidgets::Accordian 1.0
 }
 
 
-::itcl::body cadwidgets::Accordian::rename {_item1 _item2} {
+::itcl::body cadwidgets::Accordion::rename {_item1 _item2} {
     if {$_item1 == $_item2} {
 	return
     }
@@ -313,7 +313,7 @@ package provide cadwidgets::Accordian 1.0
 }
 
 
-::itcl::body cadwidgets::Accordian::togglePanel {_index} {
+::itcl::body cadwidgets::Accordion::togglePanel {_index} {
     set i [getIndex $_index]
 
     if {$i == -1} {
@@ -333,7 +333,7 @@ package provide cadwidgets::Accordian 1.0
 ################################# Protected Methods ################################
 
 
-::itcl::body cadwidgets::Accordian::getIndex {_index} {
+::itcl::body cadwidgets::Accordion::getIndex {_index} {
     set len [llength $mItemList]
 
     if {$_index == "end"} {
@@ -363,7 +363,7 @@ package provide cadwidgets::Accordian 1.0
 }
 
 
-::itcl::body cadwidgets::Accordian::resetSingleSelect {} {
+::itcl::body cadwidgets::Accordion::resetSingleSelect {} {
     # Deselect all
     set i 0
     foreach item $mItemList {
@@ -388,7 +388,7 @@ package provide cadwidgets::Accordian 1.0
 }
 
 
-::itcl::body cadwidgets::Accordian::toggleDisplay {_item} {
+::itcl::body cadwidgets::Accordion::toggleDisplay {_item} {
     set i [lsearch $mItemList $_item]
     if {$i == -1} {
 	# This shouldn't happen

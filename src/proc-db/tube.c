@@ -426,15 +426,15 @@ read_frame(FILE *fp)
 		    (unsigned long)nmass, (unsigned long)nsamples);
 	    return -1;
 	}
-#define EXAGERATION (4 * oradius)
+#define EXAGGERATION (4 * oradius)
 	/* scale = EXAGERATIONmm / MAX_DEVIATIONmm */
 	/* Deviations used here manually derived */
-	dx = kx * inches2mm * EXAGERATION / (0.95 * inches2mm);
+	dx = kx * inches2mm * EXAGGERATION / (0.95 * inches2mm);
 	sample[nsamples][X] = dx + dxtab[nsamples];
 	sample[nsamples][Y] = kz * inches2mm *
-	    EXAGERATION / (0.00002 * inches2mm) /5;
+	    EXAGGERATION / (0.00002 * inches2mm) /5;
 	sample[nsamples][Z] = -ky * inches2mm *
-	    EXAGERATION / (0.02 * inches2mm);
+	    EXAGGERATION / (0.02 * inches2mm);
     }
 /* Extrapolate data for the right side -- end of muzzle */
     if (nsamples < 2) {

@@ -38,7 +38,7 @@ set mged_help_data(3ptarb)	{{}	{makes arb given 3 pts, 2 coord of 4th pt, and th
 set mged_help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> [value(s)]]}	{control the angle/distance cursor}}
 set mged_help_data(adjust)	$helplib_data(wdb_adjust)
 set mged_help_data(ae)		$helplib_data(vo_aet)
-set mged_help_data(ae2dir)	{{[-i] az el}	{return direction vector using inputed azimuth and elevation}}	
+set mged_help_data(ae2dir)	{{[-i] az el}	{return direction vector using inputted azimuth and elevation}}	
 set mged_help_data(analyze)	{{[arbname]}	{analyze faces of ARB}}
 set mged_help_data(apropos)	{{keyword}	{finds commands whose descriptions contain the given keyword}}
 set mged_help_data(aproposdevel)	{{keyword}	{finds commands used for development whose descriptions
@@ -146,7 +146,7 @@ set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for li
 set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NMG}}
 set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connectedshells}} 
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
-set mged_help_data(dir2ae)	{{[-i] dx dy dz}	{return azimuth and elevation using inputed direction vector}}	
+set mged_help_data(dir2ae)	{{[-i] dx dy dz}	{return azimuth and elevation using inputted direction vector}}	
 set mged_help_data(dm)		{{[type|valid|set] [dmtype|var [val]]}	{print/check the display-manager type or list/set specific variables}}
 set mged_help_data(draw)	$helplib_data(dgo_draw)
 set mged_help_data(dsp)         {{obj [command]} {work with DSP primitives}}
@@ -252,7 +252,7 @@ set mged_help_data(nirt)	$helplib_data(dgo_nirt)
 set mged_help_data(nmg_collapse)	$helplib_data(wdb_nmg_collapse)
 set mged_help_data(nmg_fix_normals)	{{NMG object} {Attempt to fix the normals of an NMG object.}}
 set mged_help_data(nmg_simplify)	$helplib_data(wdb_nmg_simplify)
-set mged_help_data(npush)	{{[-h][-?][-v][-f][-x][-r][-s][-d #] object}	{push/move matrices in the tree heirarchy}}
+set mged_help_data(npush)	{{[-h][-?][-v][-f][-x][-r][-s][-d #] object}	{push/move matrices in the tree hierarchy}}
 set mged_help_data(oed)		{{path_lhs path_rhs}	{go from view to object_edit of path_lhs/path_rhs}}
 set mged_help_data(opendb)	{{[-f] [database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.  A -f option specifies that binary-incompatible v4 files should have their endianness flipped.}}
 set mged_help_data(orientation)	$helplib_data(vo_orient)

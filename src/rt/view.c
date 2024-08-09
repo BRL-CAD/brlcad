@@ -1389,7 +1389,7 @@ reproject_splat(int ix, int iy, struct floatpixel *ip, const fastf_t *new_view_p
 	    count = 0;	/* Already reproj, don't double-count */
     }
 
-    /* re-use old pixel as new pixel */
+    /* reuse old pixel as new pixel */
     *op = *ip;	/* struct copy */
 
     return count;

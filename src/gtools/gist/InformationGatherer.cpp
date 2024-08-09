@@ -26,7 +26,7 @@
 static std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
-        bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
+        bu_exit(BRLCAD_ERROR, "Couldn't find %s, aborting.\n", cmd);
 
     return std::string(buf);
 }
@@ -272,7 +272,7 @@ InformationGatherer::getMainComp()
         ged_exec(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
         if (res != "1") {
-            bu_exit(BRLCAD_ERROR, "Coult not find component (%s), aborting.\n", topname);
+            bu_exit(BRLCAD_ERROR, "Could not find component (%s), aborting.\n", topname);
         }
 
         int entities = getNumEntities(opt->getTopComp());
@@ -481,7 +481,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     unitsMap["bbVolume"] = u3;
 
     //Gather entity counts
-    // init infoMap incase searches fail
+    // init infoMap in case searches fail
     infoMap["assemblies"] = "ERROR";
     infoMap["primitives"] = "ERROR";
     infoMap["regions"] = "ERROR";

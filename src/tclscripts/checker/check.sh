@@ -221,7 +221,7 @@ while read line ; do
 	rightprev=$right
     fi
 
-    # only record when current line is different from prevoius
+    # only record when current line is different from previous
     if test "x$leftprev" != "x$left" || test "x$rightprev" != "x$right" ; then
 	LINES="$LINES
 $leftprev $rightprev $totalprev"

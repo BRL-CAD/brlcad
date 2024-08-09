@@ -392,7 +392,7 @@ compute_surface_area(int intersections, int lines, double radius)
     /* apply Cauchy-Crofton formula.
      *
      * each line intersection represents an entry and exit hit point,
-     * so we devide by 2 so it becomes a ratio of shots that hit to
+     * so we divide by 2 so it becomes a ratio of shots that hit to
      * shots that miss.
      */
     double area = PROPORTIONALITY_CONSTANT * (double)intersections / ((double)lines * 2.0);

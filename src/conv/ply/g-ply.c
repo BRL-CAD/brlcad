@@ -98,7 +98,7 @@ main(int argc, char **argv)
     /* handle options unique to ply conversion - these are passed into
      * the writer gcv_execute as argc and argv 
      * NOTE: we need two options for "-t type" and potentially
-     * another for separate if user specifed
+     * another for separate if user specified
      */
     int unique_options_ac = 2 + separate;
     const char* unique_options_av[4] = {NULL, NULL, NULL, NULL};
@@ -108,7 +108,7 @@ main(int argc, char **argv)
     if (separate)
         unique_options_av[2] = "-s";
 
-    /* per usage, we should have atleast two argv left:
+    /* per usage, we should have at least two argv left:
      * input_file.g object(s)
      * and -o should have been supplied
      */

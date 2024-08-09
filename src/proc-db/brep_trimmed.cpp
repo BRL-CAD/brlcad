@@ -426,7 +426,7 @@ static int MakeInnerTrimmingLoop(
 	}
 
 	/* Create new trim topology that references edge, direction
-	 * reletive to edge, loop and trim curve geometry
+	 * relative to edge, loop and trim curve geometry
 	 */
 	ON_BrepTrim& trim = brep.NewTrim(brep.m_E[ei], bRev3d, loop, c2i);
 	trim.m_iso = iso;

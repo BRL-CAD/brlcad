@@ -222,7 +222,7 @@ __BEGIN_DECLS
 /**
  * the max wire segments should not be changed as it is merely a max
  * upper bound on the maximum number of segments that may be generated
- * for any wire pair.  it is provided as a saveguard against having an
+ * for any wire pair.  it is provided as a safeguard against having an
  * "out-of-control" program if invalid wire values are entered.
  */
 #define DEFAULT_MAXWIRESEGMENTS 1234567890L

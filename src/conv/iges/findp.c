@@ -20,7 +20,7 @@
 /** @file iges/findp.c
  *
  * This routine reads the last record in the IGES file.  That record
- * contains the nunber of records in each section.  These numbers are
+ * contains the number of records in each section.  These numbers are
  * used to calculate the starting record number for the parameter
  * section and the directory section.  space is then reserved for the
  * directory.  This routine depends on "fseek" and "ftell" operating

@@ -108,7 +108,7 @@ bool Options::readParameters(int argc, const char **argv) {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
 
-    if (ret_ac) {   // asssume a leftover option is a .g file
+    if (ret_ac) {   // assume a leftover option is a .g file
 	setInFile(argv[0]);
 	ret_ac--;
     }
@@ -207,7 +207,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	// found dir, should we have?
 	if (getReuseImages() == false) {
 	    bu_log("ERROR: Working directory (%s) found.\n", getWorkingDir().c_str());
-	    bu_log("       Re-run with (-Z) to re-use work. Or remove working directory \"%s\".\n", getWorkingDir().c_str());
+	    bu_log("       Re-run with (-Z) to reuse work. Or remove working directory \"%s\".\n", getWorkingDir().c_str());
 	    return false;
 	}
 	if (verbosePrinting())
