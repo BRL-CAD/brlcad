@@ -136,7 +136,12 @@ int main
 			    std::cout << "Missing section to part" << partName.c_str() << '\n';
 
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
-			    if (kData.elements[*itr].nodes.size() == 4) {
+			    if ((kData.elements[*itr].nodes.size() == 3)) {
+				int x = 1;
+				KSectionBeam beamSection = kData.sectionsBeam[section];
+				//check the first element Beam
+			    }
+			    else if (kData.elements[*itr].nodes.size() == 4) {
 
 				point_t point1;
 				point_t point2;

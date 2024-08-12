@@ -779,7 +779,7 @@ bool parse_k
 			    
 			    sectionBeam.title = sectionTitle;
 			    sectionBeam.CST   = stoi(tokens[4]);
-
+			    data.sections[sectionId].title = sectionTitle;
 			    break;
 			}
 			case 2: {
@@ -841,11 +841,18 @@ bool parse_k
 				    std::cout << "Too short SECTION_BEAM card 2i in k-file " << fileName << "\n";
 				    break;
 				}
+
+				sectionBeam.TS1 = stod(tokens[0]);
+				sectionBeam.TS2 = stod(tokens[1]);
+				sectionBeam.TT1 = stod(tokens[2]);
+				sectionBeam.TT2 = stod(tokens[3]);
 			    }
 			    else if (sectionElForm == 14) {
 				//nothing to do 
 				break;
 			    }
+
+			    data.sectionsBeam[sectionId] = sectionBeam;
 			    break;
 			}
 			case 3: {
@@ -857,7 +864,7 @@ bool parse_k
 			    break;
 			}
 			}
-
+			data.sectionsBeam[sectionId] = sectionBeam;
 			++sectionLinesRead;
 			break;
 		    }
@@ -965,7 +972,7 @@ bool parse_k
 				break;
 			    }
 
-			    for (int i_n = 0; i_n < 5; ++i_n) {
+			    for (int i_n = 0; i_n < 3; ++i_n) {
 				element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
 			    }
 
