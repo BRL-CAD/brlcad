@@ -48,7 +48,7 @@ struct summary_specifics {
     unsigned long bot_triangles;
 };
 
-static void comb_counter(struct db_i* dbip, struct directory* dp, void* cdata)
+static void comb_counter(struct db_i* UNUSED(dbip), struct directory* dp, void* cdata)
 {
 
     struct summary_specifics* ssp = (struct summary_specifics*)cdata;
@@ -64,7 +64,6 @@ static void solid_counter(struct db_i* dbip, struct directory* dp, void* cdata)
 {
     struct summary_specifics* ssp = (struct summary_specifics*)cdata;
 
-    int id = -1;
     struct rt_db_internal intern;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t*)NULL, NULL) < 0)
 	return;
