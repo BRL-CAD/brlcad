@@ -5,6 +5,7 @@ set(k-g_SRCF
   region_list.cpp
   arbs.cpp
   geometry.cpp
+  beam.cpp
   )
 BRLCAD_ADDEXEC(k-g "${k-g_SRCF}" "libwdb;librt;libbu" FOLDER Conv)
 
@@ -15,6 +16,7 @@ set(k-g_ignore_files
   region_list.h
   arbs.h
   geometry.h
+  beam.h
   )
 CMAKEFILES(${k-g_ignore_files})
 

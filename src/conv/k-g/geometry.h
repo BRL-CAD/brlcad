@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file region_list.cpp
+ /** @file geometry.h
   *
   * LS Dyna keyword file to BRL-CAD converter:
   * intermediate geometry structure implementation
