@@ -229,7 +229,7 @@ jobs:
       - name: Build
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cd build_osx && ninja -j1 && ninja -j1 package
+          cd build_osx && ninja -j1 && ninja -j1 check && ninja -j1 package
 
         # For the moment the space demands are too extreme to enable this
         # output for every compile test, but leave the enabling logic present
