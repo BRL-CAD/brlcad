@@ -293,7 +293,7 @@ main(int ac, char *av[]) {
     /* Generate mesh geometry */
     s_av[0] = "tol";
     s_av[1] = "rel";
-    s_av[2] = "0.0001";
+    s_av[2] = "0.0002";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
