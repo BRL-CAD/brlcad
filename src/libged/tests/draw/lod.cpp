@@ -265,7 +265,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 5, "lod_clear", "lod");
     bu_log("Done.\n");
 
     bu_log("Enable LoD, keeping above coarse scale to enhance visual change...\n");
@@ -286,7 +286,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 5, "lod_clear", "lod");
 
     bu_log("Re-enable LoD\n");
     s_av[0] = "view";

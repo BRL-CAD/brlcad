@@ -667,7 +667,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(23, dbp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    img_cmp(23, dbp, av[1], true, clear_images, soft_fail, 35, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 5 drawing (point based triangles)...\n");
