@@ -145,6 +145,9 @@ MGED commands
 	p, r and g optional arguments to summary command -
 	info can be obtained via search
 
+	dbip, get_dbip - exposure of low-level pointer information
+        Shouldn't be using this at a user/scripting level
+
 7.38
 ----
 MGED commands
