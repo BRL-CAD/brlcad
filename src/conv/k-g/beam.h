@@ -17,56 +17,47 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file geometry.h
+ /** @file beam.h
   *
   * LS Dyna keyword file to BRL-CAD converter:
-  * intermediate geometry structure implementation
+  * intermediate beam implementation
   */
-#ifndef GEOMETRY_INCLUDED
-#define GEOMETRY_INCLUDED
+#ifndef BEAM_INCLUDED
+#define BEAM_INCLUDED
 
 #include "common.h"
+#include "wdb.h"
 
-#include "bot.h"
-#include "arbs.h"
-#include "beam.h"
+struct beamPoint {
+    point_t   coords;
+    double    innerDiameter;
+    double    outerDiameter;
+};
 
-
-class Geometry {
+class Beam {
 public:
+    Beam(void);
 
-    void         setBaseName(const char* value);
-    void         setThickness(double value);
-    void         addTriangle(const point_t& point1,
-			     const point_t& point2,
-			     const point_t& point3);
-    void         addArb(const char* arbName,
-			const point_t& point1,
-			const point_t& point2,
-			const point_t& point3,
-			const point_t& point4,
-			const point_t& point5,
-			const point_t& point6,
-			const point_t& point7,
-			const point_t& point8);
-    void         addBeam(const char* beamName,
-			 const beamPoint point1,
-			 const beamPoint point2);
+    void                            setName(const char* value);
 
-    const char*  getBaseName(void) const;
-    Bot&         getBot(void);
-    Arbs&        getArbs(void);
+    void                            addBeam(const char* beamName,
+					    const beamPoint& point1,
+					    const beamPoint& point2);
+
+    void                            addBeam(const char* beamName,
+					    const beamPoint& point1,
+					    const beamPoint& point2,
+					    const beamPoint& point3);
 
     std::vector<std::string>       write(rt_wdb* wdbp);
 private:
-    std::string name;
-    Bot         m_bot;
-    Arbs        m_arbs;
-    Beam        m_beams;
+    std::string                             name;
+    std::map<std::string, bu_list>          m_list;
+    //rt_pipe_internal m_pipe;
 };
 
 
-#endif // !GEOMETRY_INCLUDED
+#endif // !BEAM_INCLUDED
 
 
 // Local Variables:

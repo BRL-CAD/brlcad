@@ -40,6 +40,7 @@ void Geometry::setBaseName
 
     m_bot.setName(name.c_str());
     m_arbs.setName(name.c_str());
+    m_beams.setName(name.c_str());
 }
 
 void Geometry::setThickness
@@ -74,6 +75,14 @@ void Geometry::addArb
     m_arbs.addArb(arbName, point1, point2, point3, point4, point5, point6, point7, point8);
 }
 
+void Geometry::addBeam
+(const char* beamName,
+    const beamPoint point1,
+    const beamPoint point2)
+{
+    m_beams.addBeam(beamName, point1, point2);
+}
+
 
 const char* Geometry::getBaseName(void) const{
     return name.c_str();
@@ -93,11 +102,12 @@ std::vector<std::string> Geometry::write
 (
     rt_wdb* wdbp
 ) {
-    std::vector<std::string> ret      = m_bot.write(wdbp);
-    std::vector<std::string> arbNames = m_arbs.write(wdbp);
+    std::vector<std::string> ret       = m_bot.write(wdbp);
+    std::vector<std::string> arbNames  = m_arbs.write(wdbp);
+    std::vector<std::string> beamNames = m_beams.write(wdbp);
 
     ret.insert(ret.end(), arbNames.begin(), arbNames.end());
-
+    ret.insert(ret.end(), beamNames.begin(), beamNames.end());
     return ret;
 }
 
