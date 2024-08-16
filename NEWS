@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2024-07-XX  Release 7.40.0                                     ---
+--- 2024-08-16  Release 7.40.0                                     ---
 ----------------------------------------------------------------------
 
 This major release of BRL-CAD improves the robustness of the facetize
