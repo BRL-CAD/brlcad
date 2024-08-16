@@ -75,12 +75,10 @@ void Geometry::addArb
     m_arbs.addArb(arbName, point1, point2, point3, point4, point5, point6, point7, point8);
 }
 
-void Geometry::addBeam
-(const char* beamName,
-    const beamPoint point1,
-    const beamPoint point2)
+
+void Geometry::addPipePnt(const char* partName, pipePoint point)
 {
-    m_beams.addBeam(beamName, point1, point2);
+    m_beams.addPipePnt(partName, point);
 }
 
 

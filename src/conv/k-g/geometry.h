@@ -29,7 +29,7 @@
 
 #include "bot.h"
 #include "arbs.h"
-#include "beam.h"
+#include "pipe.h"
 
 
 class Geometry {
@@ -49,9 +49,7 @@ public:
 			const point_t& point6,
 			const point_t& point7,
 			const point_t& point8);
-    void         addBeam(const char* beamName,
-			 const beamPoint point1,
-			 const beamPoint point2);
+    void         addPipePnt(const char* partName, pipePoint point);
 
     const char*  getBaseName(void) const;
     Bot&         getBot(void);
@@ -62,7 +60,7 @@ private:
     std::string name;
     Bot         m_bot;
     Arbs        m_arbs;
-    Beam        m_beams;
+    Pipe        m_beams;
 };
 
 

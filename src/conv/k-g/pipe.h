@@ -1,4 +1,4 @@
-/*                 G E O M E T R Y . H
+/*                 P I P E . H
  * BRL-CAD
  *
  * Copyright (c) 2024 United States Government as represented by
@@ -17,47 +17,39 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file beam.h
+ /** @file pipe.h
   *
   * LS Dyna keyword file to BRL-CAD converter:
-  * intermediate beam implementation
+  * intermediate pipe implementation
   */
-#ifndef BEAM_INCLUDED
-#define BEAM_INCLUDED
+#ifndef PIPE_INCLUDED
+#define PIPE_INCLUDED
 
 #include "common.h"
 #include "wdb.h"
 
-struct beamPoint {
+struct pipePoint {
     point_t   coords;
     double    innerDiameter;
     double    outerDiameter;
 };
 
-class Beam {
+class Pipe {
 public:
-    Beam(void);
+    Pipe(void);
 
     void                            setName(const char* value);
 
-    void                            addBeam(const char* beamName,
-					    const beamPoint& point1,
-					    const beamPoint& point2);
-
-    void                            addBeam(const char* beamName,
-					    const beamPoint& point1,
-					    const beamPoint& point2,
-					    const beamPoint& point3);
+    void                            addPipePnt(const char* pipeName, const pipePoint& point);
 
     std::vector<std::string>       write(rt_wdb* wdbp);
 private:
     std::string                             name;
-    std::map<std::string, bu_list>          m_list;
-    //rt_pipe_internal m_pipe;
+    rt_pipe_internal* m_pipe;
 };
 
 
-#endif // !BEAM_INCLUDED
+#endif // !PIPE_INCLUDED
 
 
 // Local Variables:
