@@ -1,3 +1,21 @@
+commit 340a4b200d7662bb445bd2e76f089efca7997686
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Aug 16 08:43:38 2024 -0400
+
+    Update bext submodule to cef79c30221 for Tcl OSX build fix
+
+commit b9d72b66ad957ce59b6bc4687ee5c0696c3be299
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Aug 16 08:35:10 2024 -0400
+
+    Finalize 7.40.0 release date (Fri Aug 16 12:34:59 PM UTC 2024)
+
+commit 35c6709b4a436947f2535394f49f51f47f29cf33
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Aug 15 21:36:10 2024 -0400
+
+    Update log with commits since 2024-03-18
+
 commit 1d32d03cb83ac1d97151b9884f2b815919bfce95
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Thu Aug 15 21:35:48 2024 -0400
@@ -5139,3 +5157,28 @@ Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Tue Mar 19 17:05:52 2024 -0400
 
     Bump to next development revision after tagging the 7.38.2 release
+
+commit f69cdcf02dbced0bc6f50f9010826eeeddc41db3
+Merge: 9ebf41d81c 03adb9d321
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 18 11:03:38 2024 -0400
+
+    Merge branch 'RELEASE' into STABLE
+
+commit 03adb9d3210b46ef32b675fe26fb5f84fd0e067f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 18 11:00:29 2024 -0400
+
+    Update log with commits since 2023-11-06
+
+commit f6252b8a24fac86866b5b26972895bc5785e521f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 18 10:59:36 2024 -0400
+
+    Update version numbers
+
+commit b9388f75ae6fd3d9ffaa43b8c8e42b90cf8d30e2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 18 10:54:45 2024 -0400
+
+    Bump concave arb8 TODO item down one release iteration
