@@ -1,3 +1,85 @@
+commit 1d32d03cb83ac1d97151b9884f2b815919bfce95
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Aug 15 21:35:48 2024 -0400
+
+    Add local cache vars to mged.sh
+    
+    Had the local cache set up for the cmake controlled MGED tests, but not
+    the sh tests - just like with the other tests, that can led to
+    occasional cache setup/access collision issues when tests running in
+    parallel all try to manipulate the global cache simultaneously.
+
+commit 0273969c037b1b013a2b75111e0c5aaff14bcd40
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Aug 14 12:27:47 2024 -0400
+
+    Adjust approx comparison tols for drawing tests
+    
+    Couple of these were a little too tight, failing on OSX.
+
+commit 8a4a20a47a3a9bb127d860fdfeb1658d61d4f887
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Aug 14 12:08:45 2024 -0400
+
+    Adjust rel tol for libged select drawing test
+    
+    Mac select test is failing because of trying to tessellate tor at tol
+    0.0001:
+    
+    Attempting to triangulate tor...
+    cut_unimonotone(): infinite loop 0x60000231aac0
+    
+    cut_unimonotone(): infinite loop
+    
+    LoD test avoids a similar failure by using 0.0002, so use that.  A
+    tol rel 0.0001 setting should work (and does on other platforms) so
+    that's an issue, but for the moment adjust to something that gives us
+    geometry so we can do the drawing test.
+    
+    Fallback methods failing is yet another concern - specifically, the way
+    SPSR decimate fails with bu_mtx_trylock and bu_mtx_lock failures.
+
+commit 8bf9522bfd3111af2a2ac4b8ae409079db26c2e8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Aug 13 13:46:01 2024 -0400
+
+    Try enabling check for OSX on the Github runner
+
+commit 8ad4f1e8f53c933d24a8d04bbd59c02bc99d3c6c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Aug 14 20:01:08 2024 -0400
+
+    Add color and file libbu unit test fixes from main
+
+commit b6d536d93cf23d46c28cf6a725625219aebd72df
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Aug 14 15:20:35 2024 -0400
+
+    Explicitly list dbip and get_dbip for deprecation
+    
+    Tempted to just eliminate them - really shouldn't be used - but they are
+    exposed as commands so just in case...  MGED uses get_dbip in one place.
+
+commit df90b7600990dde032f212b3134f8bbbc1394007
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Aug 5 16:17:50 2024 -0400
+
+    Werror=pedantic
+    
+    (cherry picked from commit 805c6303e1fa18e0045016b848546cf972c73ed8)
+
+commit 1de1cbe0a8901f5a145582e20092200d18701498
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 31 09:51:25 2024 -0400
+
+    Mark summary p, r and g options for deprecation
+
+commit 31a6e9152680473d019dda44f01fe894ab5ffdab
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 25 16:58:58 2024 -0400
+
+    Update log with commits since 2024-03-18
+
 commit 59aee1100e9d79f2f4ed24d65cc85c35732c25a4
 Author: f4alt <christopherjmacgregor@gmail.com>
 Date:   Thu Jul 25 16:01:31 2024 -0400
