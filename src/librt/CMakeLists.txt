@@ -11,6 +11,12 @@ if(ASSETIMPORT_LIBRARIES)
   add_definitions(-DUSE_ASSETIMPORT)
 endif(ASSETIMPORT_LIBRARIES)
 
+if (NOT BRLCAD_ENABLE_GCT)
+  BRLCAD_Find_Package(MMESH REQUIRED)
+  if(MMESH_LIBRARY)
+    add_definitions(-DBRLCAD_MMESH)
+  endif(MMESH_LIBRARY)
+endif (NOT BRLCAD_ENABLE_GCT)
 
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
@@ -231,22 +237,21 @@ set(LIBRT_SOURCES
 
 set_source_files_properties(gdiam/gdiam.cpp PROPERTIES COMPILE_FLAGS -w)
 
-
-if(BRLCAD_ENABLE_GCT)
-  set(LIBRT_SOURCES
-    ${LIBRT_SOURCES}
-    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-    primitives/bot/gct_decimation/auxiliary/mm.c
-    primitives/bot/gct_decimation/auxiliary/mmhash.c
-    primitives/bot/gct_decimation/meshoptimization.c
-    primitives/bot/gct_decimation/meshoptimizer.c
-    primitives/bot/gct_decimation/meshdecimation.c
-    primitives/bot/gct_decimation/meshdecimationSSE2.c
-    primitives/bot/gct_decimation/meshdecimationSSE3.c
-    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
-    )
-endif(BRLCAD_ENABLE_GCT)
+set(GCT_SRCS
+  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+  primitives/bot/gct_decimation/auxiliary/mm.c
+  primitives/bot/gct_decimation/auxiliary/mmhash.c
+  primitives/bot/gct_decimation/meshoptimization.c
+  primitives/bot/gct_decimation/meshoptimizer.c
+  primitives/bot/gct_decimation/meshdecimation.c
+  primitives/bot/gct_decimation/meshdecimationSSE2.c
+  primitives/bot/gct_decimation/meshdecimationSSE3.c
+  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+  )
+if (BRLCAD_ENABLE_GCT AND NOT MMESH_FOUND)
+  set(LIBRT_SOURCES ${LIBRT_SOURCES} ${GCT_SRCS})
+endif (BRLCAD_ENABLE_GCT AND NOT MMESH_FOUND)
 
 set(librt_ignored_files
   cache.h
@@ -257,6 +262,7 @@ set(librt_ignored_files
   prcomb.c
   primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp
+  ${GCT_SRCS}
   primitives/bot/gct_decimation/auxiliary/cc.h
   primitives/bot/gct_decimation/auxiliary/mm.h
   primitives/bot/gct_decimation/auxiliary/mmatomic.h
@@ -313,21 +319,6 @@ set(librt_ignored_files
   test_root3-subd.cpp
   uvpoints.cpp
   )
-if(NOT BRLCAD_ENABLE_GCT)
-  set(librt_ignored_files
-    ${librt_ignored_files}
-    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-    primitives/bot/gct_decimation/auxiliary/mm.c
-    primitives/bot/gct_decimation/auxiliary/mmhash.c
-    primitives/bot/gct_decimation/meshoptimization.c
-    primitives/bot/gct_decimation/meshoptimizer.c
-    primitives/bot/gct_decimation/meshdecimation.c
-    primitives/bot/gct_decimation/meshdecimationSSE2.c
-    primitives/bot/gct_decimation/meshdecimationSSE3.c
-    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
-    )
-endif(NOT BRLCAD_ENABLE_GCT)
 CMAKEFILES(${librt_ignored_files})
 
 set(CL_FILES
@@ -376,6 +367,7 @@ set(LIBRT_LIBS
   ${MANIFOLD_LIBRARIES}
   ${ASSETIMPORT_LIBRARIES}
   ${GEOGRAM_LIBRARY}
+  ${MMESH_LIBRARY}
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
@@ -396,6 +388,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIRS}
   ${GEOGRAM_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
+  ${MMESH_INCLUDE_DIR}
   ${ASSETIMPORT_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
   ${ASSETIMPORT_INCLUDE_DIR}

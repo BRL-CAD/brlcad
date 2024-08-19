@@ -39,6 +39,7 @@ set(cmake_ignore_files
   FindLMDB.cmake
   FindLibUV.cmake
   FindMANIFOLD.cmake
+  FindMMESH.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOpenMesh.cmake
