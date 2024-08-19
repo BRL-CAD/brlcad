@@ -40,7 +40,7 @@ void Geometry::setBaseName
 
     m_bot.setName(name.c_str());
     m_arbs.setName(name.c_str());
-    m_beams.setName(name.c_str());
+    m_pipe.setName(name.c_str());
 }
 
 void Geometry::setThickness
@@ -76,9 +76,9 @@ void Geometry::addArb
 }
 
 
-void Geometry::addPipePnt(const char* partName, pipePoint point)
+void Geometry::addPipePnt(pipePoint point)
 {
-    m_beams.addPipePnt(partName, point);
+    m_pipe.addPipePnt(point);
 }
 
 
@@ -95,6 +95,11 @@ Arbs& Geometry::getArbs(void) {
     return m_arbs;
 }
 
+Pipe& Geometry::getPipe(void)
+{
+    return m_pipe;
+}
+
 
 std::vector<std::string> Geometry::write
 (
@@ -102,10 +107,10 @@ std::vector<std::string> Geometry::write
 ) {
     std::vector<std::string> ret       = m_bot.write(wdbp);
     std::vector<std::string> arbNames  = m_arbs.write(wdbp);
-    std::vector<std::string> beamNames = m_beams.write(wdbp);
+    std::vector<std::string> pipeName = m_pipe.write(wdbp);
 
     ret.insert(ret.end(), arbNames.begin(), arbNames.end());
-    ret.insert(ret.end(), beamNames.begin(), beamNames.end());
+    ret.insert(ret.end(), pipeName.begin(), pipeName.end());
     return ret;
 }
 

@@ -40,11 +40,14 @@ public:
 
     void                            setName(const char* value);
 
-    void                            addPipePnt(const char* pipeName, const pipePoint& point);
+    void                            addPipePnt(const pipePoint& point);
 
-    std::vector<std::string>       write(rt_wdb* wdbp);
+    const char*                     getName(void) const;
+    rt_pipe_internal*               getPipe(void) const;
+
+    std::vector<std::string>        write(rt_wdb* wdbp);
 private:
-    std::string                             name;
+    std::string       name;
     rt_pipe_internal* m_pipe;
 };
 

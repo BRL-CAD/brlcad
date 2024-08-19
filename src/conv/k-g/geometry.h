@@ -49,18 +49,19 @@ public:
 			const point_t& point6,
 			const point_t& point7,
 			const point_t& point8);
-    void         addPipePnt(const char* partName, pipePoint point);
+    void         addPipePnt(pipePoint point);
 
     const char*  getBaseName(void) const;
     Bot&         getBot(void);
     Arbs&        getArbs(void);
+    Pipe&        getPipe(void);
 
     std::vector<std::string>       write(rt_wdb* wdbp);
 private:
     std::string name;
     Bot         m_bot;
     Arbs        m_arbs;
-    Pipe        m_beams;
+    Pipe        m_pipe;
 };
 
 

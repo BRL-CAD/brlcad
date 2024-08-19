@@ -138,36 +138,35 @@ int main
 
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
 			    if ((kData.elements[*itr].nodes.size() == 3)) {
-				int x = 1;
 				if (section > 0) {
 				    KSectionBeam beamSection = kData.sectionsBeam[section];
 
+				    if (beamSection.CST == 1) {
+					pipePoint point1;
+					pipePoint point2;
 
-				    pipePoint point1;
-				    pipePoint point2;
 
+					int n1 = kData.elements[*itr].nodes[0];
+					int n2 = kData.elements[*itr].nodes[1];
+					int n3 = kData.elements[*itr].nodes[2];
+					point1.coords[X] = kData.nodes[n1].x * factor;
+					point1.coords[Y] = kData.nodes[n1].y * factor;
+					point1.coords[Z] = kData.nodes[n1].z * factor;
+					point1.outerDiameter = beamSection.TS1;
+					point1.innerDiameter = beamSection.TT1;
 
-				    int n1 = kData.elements[*itr].nodes[0];
-				    int n2 = kData.elements[*itr].nodes[1];
-				    int n3 = kData.elements[*itr].nodes[2];
-				    point1.coords[X] = kData.nodes[n1].x * factor;
-				    point1.coords[Y] = kData.nodes[n1].y * factor;
-				    point1.coords[Z] = kData.nodes[n1].z * factor;
-				    point1.outerDiameter = beamSection.TS1;
-				    point1.innerDiameter = beamSection.TT1;
+					point2.coords[X] = kData.nodes[n2].x * factor;
+					point2.coords[Y] = kData.nodes[n2].y * factor;
+					point2.coords[Z] = kData.nodes[n2].z * factor;
+					point2.outerDiameter = beamSection.TS2;
+					point2.innerDiameter = beamSection.TT2;
 
-				    point2.coords[X] = kData.nodes[n2].x * factor;
-				    point2.coords[Y] = kData.nodes[n2].y * factor;
-				    point2.coords[Z] = kData.nodes[n2].z * factor;
-				    point2.outerDiameter = beamSection.TS2;
-				    point2.innerDiameter = beamSection.TT2;
+					std::string beamNumber = std::to_string(*itr);
 
-				    std::string beamNumber = std::to_string(*itr);
-
-				    geometry.addPipePnt(partName.c_str(), point1);
-				    geometry.addPipePnt(partName.c_str(), point2);
+					geometry.addPipePnt(point1);
+					geometry.addPipePnt(point2);
+				    }
 				}
-				
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 4) {
 

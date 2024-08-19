@@ -33,14 +33,21 @@ Pipe::Pipe(void) {
 }
 
 
-void Pipe::setName(const char* value)
-{
-    name = value;
+void Pipe::setName
+(
+    const char* value
+) {
+    if (value != nullptr)
+	name = value;
+    else
+	name = "";
 }
 
 
-void Pipe::addPipePnt(const char* PipeName, const pipePoint& point)
-{
+void Pipe::addPipePnt
+(
+    const pipePoint& point
+) {
     struct wdb_pipe_pnt* ctlPoint;
     BU_ALLOC(ctlPoint, struct wdb_pipe_pnt);
     ctlPoint->l.magic = WDB_PIPESEG_MAGIC;
@@ -56,6 +63,16 @@ void Pipe::addPipePnt(const char* PipeName, const pipePoint& point)
     m_pipe->pipe_count += 1;
 }
 
+const char* Pipe::getName(void) const
+{
+    return name.c_str();
+}
+
+rt_pipe_internal* Pipe::getPipe(void) const
+{
+    return m_pipe;
+}
+
 std::vector<std::string> Pipe::write
 (
     rt_wdb* wdbp
@@ -66,7 +83,13 @@ std::vector<std::string> Pipe::write
     pipeName += ".pipe";
     ret.push_back(pipeName);
 
-    wdb_export(wdbp, pipeName.c_str(), m_pipe, ID_PIPE, 1);
+    rt_pipe_internal* pipe_wdb;
+    BU_GET(pipe_wdb, rt_pipe_internal);
+    pipe_wdb->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+    BU_LIST_INIT(&pipe_wdb->pipe_segs_head);
+    BU_LIST_APPEND_LIST(&pipe_wdb->pipe_segs_head, &m_pipe->pipe_segs_head);
+
+    wdb_export(wdbp, pipeName.c_str(), pipe_wdb, ID_PIPE, 1);
 
     return ret;
 }
