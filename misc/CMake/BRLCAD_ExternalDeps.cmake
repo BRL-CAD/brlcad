@@ -915,6 +915,27 @@ macro(find_package_eigen)
 
 endmacro(find_package_eigen)
 
+# SPSR - PoissonRecon surface reconstruction library
+macro(find_package_spsr)
+
+  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
+
+  find_package_reset(SPSR RESET_TP)
+  set(SPSR_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
+  if (F_REQUIRED)
+    find_package(SPSR REQUIRED)
+  else ()
+    find_package(SPSR)
+  endif ()
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} SPSR)
+  list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} SPSR CACHE STRING "Bundled system include dirs" FORCE)
+
+  # Let the cache know for BRLCAD_Summary.cmake
+  set(SPSR_INCLUDE_DIR "${SPSR_INCLUDE_DIR}" CACHE PATH "SPSR include directory" FORCE)
+
+endmacro(find_package_spsr)
+
 # OpenCV - Open Source Computer Vision Library
 # http://opencv.org
 macro(find_package_opencv)
