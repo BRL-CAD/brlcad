@@ -1,5 +1,44 @@
 find_package_eigen(REQUIRED)
-find_package_spsr(REQUIRED)
+
+set(SPSR_srcs
+  spsr/Allocator.h
+  spsr/Array.h
+  spsr/Array.inl
+  spsr/BinaryNode.h
+  spsr/BSplineData.h
+  spsr/BSplineData.inl
+  spsr/cvertex.h
+  spsr/Factor.cpp
+  spsr/Factor.h
+  spsr/FunctionData.h
+  spsr/FunctionData.inl
+  spsr/Geometry.cpp
+  spsr/Geometry.h
+  spsr/Geometry.inl
+  spsr/MarchingCubes.cpp
+  spsr/MarchingCubes.h
+  spsr/MAT.h
+  spsr/MAT.inl
+  spsr/MultiGridOctreeData.h
+  spsr/MultiGridOctreeData.inl
+  spsr/MultiGridOctreeData.IsoSurface.inl
+  spsr/MultiGridOctreeData.SortedTreeNodes.inl
+  spsr/Octree.h
+  spsr/Octree.inl
+  spsr/PlyVertexMini.h
+  spsr/PointStream.h
+  spsr/PointStream.inl
+  spsr/Polynomial.h
+  spsr/Polynomial.inl
+  spsr/PPolynomial.h
+  spsr/PPolynomial.inl
+  spsr/SparseMatrix.h
+  spsr/SparseMatrix.inl
+  spsr/SPSR.cpp
+  spsr/SPSR.h
+  spsr/Vector.h
+  spsr/Vector.inl
+  )
 
 set(LIBBG_SOURCES
   aabb_ray.c
@@ -18,7 +57,8 @@ set(LIBBG_SOURCES
   polygon_triangulate.cpp
   polygon_point_in.c
   sat.c
-  spsr.cpp
+  spsr.c
+  ${SPSR_srcs}
   tri_pt.c
   tri_ray.c
   tri_tri.c
@@ -38,9 +78,9 @@ set(BG_LIBS
   )
 
 set(BG_INCLUDE_DIRS
+  ${SPSR_INCLUDE_DIR}
   ${LMDB_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIR}
-  ${SPSR_INCLUDE_DIR}
   )
 
 BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
@@ -73,6 +113,7 @@ set(bg_ignore
   detria.hpp
   earcut.hpp
   pointgen.c
+  spsr/LICENSE
   )
 
 CMAKEFILES(${bg_ignore})
