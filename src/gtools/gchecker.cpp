@@ -361,6 +361,7 @@ main(int argc, const char **argv)
     }
 
     // Remove the copy of the .g file
+    ged_close(gedp);
     std::remove(bu_vls_cstr(&gbasename));
 
     // Clean up
