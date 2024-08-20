@@ -1623,7 +1623,11 @@ struct node_data {
 static void
 plot_node(const vdsNode *node, void *udata)
 {
+    if (!node)
+	return;
     vdsTri *t = node->vistris;
+    if (!t)
+	return;
     struct node_data *nd = (struct node_data *)udata;
     struct bu_list *vhead = nd->vhead;
     struct bu_list *vlfree = nd->vlfree;
