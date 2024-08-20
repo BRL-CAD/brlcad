@@ -205,9 +205,16 @@ body OverlapFileTool::runTools { } {
     file delete -force -- $ol_dir
 
     # run overlaps check for all the specified objects
-    if { [catch {exec [file join [bu_dir bin] gchecker] $db_path $_objs}] } {
-	set gcmd "[file join [bu_dir bin] gchecker] $db_path $_objs"
-	puts "gchecker run failed: $gcmd"
+    set gcheck_status [catch {exec [file join [bu_dir bin] gchecker] $db_path $_objs} result]
+    if { $gcheck_status != 0 && ![string equal $::errorCode NONE] } {
+	#set gcmd "[file join [bu_dir bin] gchecker] $db_path $_objs"
+	tk_messageBox -type ok -title "Run Error" -message $result
+	$itk_component(buttonGo) configure -state normal
+	$itk_component(objectsEntry) configure -state normal
+	$this configure -cursor ""
+	set _progressValue 0
+	set _statusText "Ready"
+	return
     }
 
     # gchecker does not create a file when no overlaps are found - check before attempting to read
