@@ -669,7 +669,7 @@ vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
     vdsNode *thisnode;
     vdsNode *children[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     int nchildren = 0;
-    vdsNode **childnodes[8];
+    vdsNode **childnodes[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     int nchildnodes[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     int i, j;
     vdsVec3 min, max, center, average = {0, 0, 0};
@@ -721,8 +721,8 @@ vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
     }
     /* Resize childnodes arrays to use only as much space as necessary */
     for (i = 0; i < 8; i++) {
-	childnodes[i] = (vdsNode **)
-	    realloc(childnodes[i], sizeof(vdsNode *) * nchildnodes[i]);
+	if (nchildnodes[i])
+	    childnodes[i] = (vdsNode **)realloc(childnodes[i], sizeof(vdsNode *) * nchildnodes[i]);
     }
     /* Recurse or store non-empty children */
     for (i = 0; i < 8; i++) {
