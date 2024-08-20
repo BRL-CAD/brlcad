@@ -198,10 +198,10 @@ body OverlapFileTool::runTools { } {
 
     # delete any previous overlaps files in the db directory
     set db_path [eval opendb]
-    set dir [file dirname $db_path]
+    set curr_path [eval pwd]
     set name [file tail $db_path]
-    set ol_dir [file join $dir "${name}.ck"]
-    set filename [file join $dir "${name}.ck" "ck.${name}.overlaps"]
+    set ol_dir [file join $curr_path "${name}.ck"]
+    set filename [file join $ol_dir "ck.${name}.overlaps"]
     file delete -force -- $ol_dir
 
     # run overlaps check for all the specified objects
