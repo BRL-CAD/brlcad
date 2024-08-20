@@ -223,6 +223,7 @@ body OverlapFileTool::runTools { } {
         # check for the count of overlaps detected
         set fp [open $filename r]
         set ldata [read $fp]
+	close $fp
         set ov_count [llength [split $ldata "\n"]]
         incr ov_count -1
     }

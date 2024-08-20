@@ -525,6 +525,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 		}
 	    }
 	}
+	close $mfile
     }
 
     $this sortBy {*}$_lastSort
