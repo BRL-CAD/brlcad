@@ -73,12 +73,14 @@ main(int argc, const char **argv)
     int print_help = 0;
     int dry_run = 0;
     int verbose = 0;
+    int force = 0;
     const char *usage = "Usage: gchecker [options] file.g  [objects ...]\n\n";
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",    "",  NULL, &print_help, "Print help and exit");
-    BU_OPT(d[1], "d", "dry-run", "",  NULL, &dry_run,    "Step through the checker stages, but don't raytrace");
-    BU_OPT(d[2], "v", "verbose", "",  NULL, &verbose,    "Print verbose information about result processing");
-    BU_OPT_NULL(d[3]);
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "d", "dry-run", "",  NULL, &dry_run,     "Step through the checker stages, but don't raytrace");
+    BU_OPT(d[1], "v", "verbose", "",  NULL, &verbose,     "Print verbose information about result processing");
+    BU_OPT(d[2], "f", "force",   "",  NULL, &force,       "Overwrite existing .ck directory");
+    BU_OPT(d[3], "h", "help",    "",  NULL, &print_help,  "Print help and exit");
+    BU_OPT_NULL(d[4]);
 
     std::set<std::pair<std::string, std::string>> unique_pairs;
     std::multimap<std::pair<std::string, std::string>, double> pair_sizes;
@@ -132,9 +134,13 @@ main(int argc, const char **argv)
     struct bu_vls wdir = BU_VLS_INIT_ZERO;
     bu_vls_printf(&wdir, "%s.ck", bu_vls_cstr(&gbasename));
     if (bu_file_exists(bu_vls_cstr(&wdir), NULL)) {
-	bu_vls_free(&gfile);
-	bu_vls_free(&gbasename);
-	bu_exit(1, "Working directory\"%s\" already exists - remove to continue", bu_vls_cstr(&wdir));
+	if (force) {
+	    bu_dirclear(bu_vls_cstr(&wdir));
+	} else {
+	    bu_vls_free(&gfile);
+	    bu_vls_free(&gbasename);
+	    bu_exit(1, "Working directory\"%s\" already exists - remove to continue", bu_vls_cstr(&wdir));
+	}
     }
 
 
