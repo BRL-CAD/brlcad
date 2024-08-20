@@ -191,6 +191,11 @@ body OverlapFileTool::runTools { } {
 	return
     }
 
+    # add some user userfeedback
+    set _statusText "Running checks... (this could take a while)"
+    set _progressValue 5
+    update
+
     # disable the go button and entry before proceeding to prevent any re-runs
     $itk_component(buttonGo) configure -state disabled
     $itk_component(objectsEntry) configure -state disabled
@@ -216,6 +221,9 @@ body OverlapFileTool::runTools { } {
 	set _statusText "Ready"
 	return
     }
+
+    set _statusText "Checks Completed"
+    set _progressValue 80
 
     # gchecker does not create a file when no overlaps are found - check before attempting to read
     set overlap_exists [file exists $filename]
