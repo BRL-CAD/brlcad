@@ -34,7 +34,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* bu_snooze() appears to be broken on Windows (and should probably have 
+* Look into CMinx CMake documentation system to see if it might be
+  useful for documenting the build system.
+  https://github.com/CMakePP/CMinx
+
+* bu_snooze() appears to be broken on Windows (and should probably have
   some functionality / unit tests)
 
 * Windows installer does not respect the "add to path" checkbox
@@ -46,7 +50,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   TGC would have its base and height planes bumped slightly in or out
   and its radius slightly increased or decreased.  The intent would be
   to see if we can automatically perturb primitives just slightly out
-  of numerical complanarity for facetize.  For union (and probably
+  of numerical co-planarity for facetize.  For union (and probably
   intersection) we would bump out slightly, and for subtraction bump
   in slightly.  Probably want to do this at the implicit level, rather
   than after triangles have been produced, so it's easier to understand
