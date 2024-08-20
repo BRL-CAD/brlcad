@@ -179,7 +179,8 @@ package require Itk
 
     grid configure $itk_component(lodFrame).pointsScale -sticky ew
     grid configure $itk_component(lodFrame).curvesScale -sticky ew
-    grid columnconfigure $itk_component(lodFrame) 0 -weight 1
+    grid columnconfigure $itk_component(lodFrame) 0 -weight 1 -pad 120
+    grid rowconfigure $itk_component(lodFrame) 4 -weight 1
     grid rowconfigure $itk_component(lodFrame) 7 -weight 1
 }
 
