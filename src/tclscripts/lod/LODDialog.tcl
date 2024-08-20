@@ -39,7 +39,6 @@ package require Itk
 
     public {
 	variable lodon 0
-	variable redrawOnZoom 0
 	variable liveUpdate 0
 	variable pointsScale 1.0
 	variable curvesScale 1
@@ -47,7 +46,6 @@ package require Itk
 	method disableLODWidgets {}
 	method updatePointsValue {newVal}
 	method updateCurvesValue {newVal}
-	method redrawOnZoom {}
 	method redraw {}
     }
 
@@ -138,13 +136,6 @@ package require Itk
 	    -variable [::itcl::scope liveUpdate]
     } {}
 
-    itk_component add zoomUpdateCheckbutton {
-	ttk::checkbutton $itk_component(lodFrame).zoomUpdateCheckbutton \
-	    -text "Redraw Wireframes After Every Zoom" \
-	    -variable [::itcl::scope redrawOnZoom] \
-	    -command "$this redrawOnZoom"
-    } {}
-
 # INITIALIZE OPTIONS AND STATE
     eval itk_initialize $args
 
@@ -159,10 +150,6 @@ package require Itk
 
     set pointsScale 1.0
     set curvesScale 1
-
-    if {[lodcmd redraw] == "onzoom"} {
-	set redrawOnZoom 1
-    }
 
     disableLODWidgets
 
@@ -189,8 +176,6 @@ package require Itk
 	-stick nesw
     grid $itk_component(lodFrame).liveUpdateCheckbutton \
 	-sticky w -padx 3 -pady 3
-    grid $itk_component(lodFrame).zoomUpdateCheckbutton \
-	-sticky w -padx 3 -pady 3
 
     grid configure $itk_component(lodFrame).pointsScale -sticky ew
     grid configure $itk_component(lodFrame).curvesScale -sticky ew
@@ -211,7 +196,6 @@ package require Itk
 	$itk_component(lodFrame).curvesScale state !disabled
 	$itk_component(lodFrame).curvesLabel state !disabled
 	$itk_component(lodFrame).liveUpdateCheckbutton state !disabled
-	$itk_component(lodFrame).zoomUpdateCheckbutton state !disabled
 	lodcmd on
     } else {
 	$itk_component(lodFrame).pointsLabel state disabled
@@ -221,7 +205,6 @@ package require Itk
 	$itk_component(lodFrame).curvesScale state disabled
 	$itk_component(lodFrame).curvesLabel state disabled
 	$itk_component(lodFrame).liveUpdateCheckbutton state disabled
-	$itk_component(lodFrame).zoomUpdateCheckbutton state disabled
 	lodcmd off
     }
 }
@@ -241,14 +224,6 @@ package require Itk
 
     if {$liveUpdate} {
 	redraw
-    }
-}
-
-::itcl::body LODDialog::redrawOnZoom {} {
-    if {$redrawOnZoom} {
-	lodcmd redraw onzoom
-    } else {
-	lodcmd redraw off
     }
 }
 
