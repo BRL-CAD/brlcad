@@ -86,6 +86,8 @@ EMail:               luebke@cs.virginia.edu
 #include "vmath.h"
 #include "vds.h"
 
+#include "bu/log.h"
+
 #define MAJOR 1
 #define MINOR 1
 
@@ -392,10 +394,10 @@ static void verifyRootedTree(struct vdsState *s, vdsNode *root)
 
     for (i = 0; i < s->vdsNumnodes; i++) {
 	node = &s->nodearray[i];
-	if (node->depth == 0 && node != root) {
-	    fprintf(stderr, "\tError: leaf node #%d is not part of the same\n"
+	if (node && node->depth == 0 && node != root) {
+	    bu_log("\tError: leaf node #%d is not part of the same\n"
 		    "\trooted tree as previous nodes\n", i);
-	    exit(1);
+	    return;
 	}
     }
 }
@@ -820,7 +822,14 @@ vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
  */
 static void removeTri(vdsTri *tri)
 {
+    if (!tri)
+	return;
+
     vdsNode *node = tri->node;
+
+    if (!node)
+	return;
+
 
     if (node->vistris == tri) {
 	node->vistris = tri->next;	/* Note that tri->next may be NULL */
@@ -844,7 +853,13 @@ static void removeTri(vdsTri *tri)
  */
 static void addTri(vdsTri *tri)
 {
+    if (!tri)
+	return;
+
     vdsNode *node = tri->node;
+
+    if (!node)
+	return;
 
     if (node->vistris == NULL) {
 	node->vistris = tri;
@@ -921,6 +936,9 @@ void vdsFoldNode(vdsNode *node)
  */
 void vdsUnfoldNode(vdsNode *node)
 {
+    if (!node)
+	return;
+
     vdsNode *child = node->children;
     vdsNode *prev, *next;
     vdsTri *t;
@@ -964,6 +982,9 @@ void vdsUnfoldNode(vdsNode *node)
  */
 void vdsFoldSubtree(vdsNode *node)
 {
+    if (!node)
+	return;
+
     vdsNode *child = node->children;
 
     while (child != NULL) {
@@ -989,6 +1010,9 @@ void vdsFoldSubtree(vdsNode *node)
  */
 void vdsUnfoldAncestors(vdsNode *node)
 {
+    if (!node)
+	return;
+
     vdsNode *parent = node->parent;
 
     if (parent != NULL) {
@@ -1014,6 +1038,9 @@ void vdsUnfoldAncestors(vdsNode *node)
  */
 void vdsAdjustTreeTopDown(vdsNode *node, vdsFoldCriterion foldtest, void *udata)
 {
+    if (!node)
+	return;
+
     vdsNode *child = node->children;
 
     if (node->status == Active) {
@@ -1159,6 +1186,9 @@ void vdsUpdateTriProxies(vdsTri *t)
 void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
 	vdsVisibilityFunction visible, void *udata)
 {
+    if (!node)
+	return;
+
     vdsNode *child;
 
     if (visible != NULL) {
@@ -1363,6 +1393,9 @@ void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris)
  */
 void vdsFreeTree(vdsNode *node)
 {
+    if (!node)
+	return;
+
     vdsNode *child = node->children;
 
     while (child != NULL) {
