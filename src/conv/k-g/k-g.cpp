@@ -138,6 +138,7 @@ int main
 
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
 			    if ((kData.elements[*itr].nodes.size() == 3)) {
+				//int n3 = kData.elements[*itr].nodes[2];
 				if (section > 0) {
 				    KSectionBeam beamSection = kData.sectionsBeam[section];
 
