@@ -149,7 +149,7 @@ int main
 
 					int n1 = kData.elements[*itr].nodes[0];
 					int n2 = kData.elements[*itr].nodes[1];
-					int n3 = kData.elements[*itr].nodes[2];
+					//int n3 = kData.elements[*itr].nodes[2];
 					point1.coords[X] = kData.nodes[n1].x * factor;
 					point1.coords[Y] = kData.nodes[n1].y * factor;
 					point1.coords[Z] = kData.nodes[n1].z * factor;
