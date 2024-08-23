@@ -915,6 +915,28 @@ macro(find_package_eigen)
 
 endmacro(find_package_eigen)
 
+# GeometricTools - geometry library
+macro(find_package_gte)
+
+  cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
+
+  find_package_reset(GTE RESET_TP)
+  set(GTE_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
+  if (F_REQUIRED)
+    find_package(GTE REQUIRED)
+  else ()
+    find_package(GTE)
+  endif ()
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} GTE)
+  list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} GTE CACHE STRING "Bundled system include dirs" FORCE)
+
+  # Let the cache know for BRLCAD_Summary.cmake
+  set(GTE_INCLUDE_DIR "${GTE_INCLUDE_DIR}" CACHE PATH "GeometricTools include directory" FORCE)
+
+endmacro(find_package_gte)
+
+
 # OpenCV - Open Source Computer Vision Library
 # http://opencv.org
 macro(find_package_opencv)

@@ -1,4 +1,5 @@
 find_package_eigen(REQUIRED)
+find_package_gte(REQUIRED)
 
 set(SPSR_srcs
   spsr/Allocator.h
@@ -48,7 +49,7 @@ set(LIBBG_SOURCES
   chull3d.cpp
   clip.c
   clipper.cpp
-  lseg_lseg.c
+  lseg_lseg.cpp
   lseg_pt.c
   obr.c
   plane.cpp
@@ -74,13 +75,12 @@ set(LIBBG_SOURCES
 # Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BG_LIBS
   ${libbg_deps}
-  ${LMDB_LIBRARIES}
   )
 
 set(BG_INCLUDE_DIRS
   ${SPSR_INCLUDE_DIR}
-  ${LMDB_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIR}
+  ${GTE_INCLUDE_DIR}
   )
 
 BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
