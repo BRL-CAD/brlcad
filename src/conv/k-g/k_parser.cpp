@@ -41,51 +41,51 @@ enum class KState {
     Element_Beam_Pulley,
     Element_Beam_Source,
     Element_Bearing,
-    Element_Blanking,
-    Element_Direct_Matrix_Input,
-    Element_Discrete,
-    Element_Discrete_Sphere,
-    Element_Generalized_Shell,
-    Element_Generalized_Solid,
-    Element_Inertia,
-    Element_Interpolation_Shell,
-    Element_Interpolation_Solid,
-    Element_Lancing,
-    Element_Mass,
-    Element_Mass_Matrix,
-    Element_Mass_Part,
-    Element_Plotel,
-    Element_Seatbealt,
-    Element_Seatbealt_Accelerometer,
-    Element_Seatbealt_Pretensioner,
-    Element_Seatbealt_Retractor,
-    Element_Seatbealt_Sensor,
-    Element_Seatbealt_Slipring,
+    //Element_Blanking,
+    //Element_Direct_Matrix_Input,
+    //Element_Discrete,
+    //Element_Discrete_Sphere,
+    //Element_Generalized_Shell,
+    //Element_Generalized_Solid,
+    //Element_Inertia,
+    //Element_Interpolation_Shell,
+    //Element_Interpolation_Solid,
+    //Element_Lancing,
+    //Element_Mass,
+    //Element_Mass_Matrix,
+    //Element_Mass_Part,
+    //Element_Plotel,
+    //Element_Seatbealt,
+    //Element_Seatbealt_Accelerometer,
+    //Element_Seatbealt_Pretensioner,
+    //Element_Seatbealt_Retractor,
+    //Element_Seatbealt_Sensor,
+    //Element_Seatbealt_Slipring,
     Element_Shell,
-    Element_Shell_Nurbs_Patch,
-    Element_Shell_Source_Sink,
+    //Element_Shell_Nurbs_Patch,
+    //Element_Shell_Source_Sink,
     Element_Solid,
-    Element_Solid_Nurbs_Patch,
-    Element_Solid_Peri,
-    Element_Sph,
-    Element_Trim,
-    Element_Tshell,
+    //Element_Solid_Nurbs_Patch,
+    //Element_Solid_Peri,
+    //Element_Sph,
+    //Element_Trim,
+    //Element_Tshell,
     Part,
     Part_Adaptive_Failure,
     Section_Ale1d,
     Section_Ale2d,
     Section_Beam,
-    Section_Beam_AISC,
-    Section_Discrete,
-    Section_Fpd,
-    Section_Point_Source,
-    Section_Point_source_Mixture,
-    Section_Seatbelt,
+    //Section_Beam_AISC,
+    //Section_Discrete,
+    //Section_Fpd,
+    //Section_Point_Source,
+    //Section_Point_source_Mixture,
+    //Section_Seatbelt,
     Section_Shell,
     Section_Solid,
-    Section_Solid_Peri,
-    Section_Sph,
-    Section_Tshell
+    //Section_Solid_Peri,
+    //Section_Sph,
+    //Section_Tshell
 };
 
 enum class Options {
@@ -239,12 +239,12 @@ bool parse_k
 	std::string              partTitle;
 	size_t                   sectionLinesRead = 0;
 	size_t                   elementLinesRead = 0;
-	size_t                   cardCounter = 0;// this will replace sectionLinesRead elementLinesRead, and partLinesRead
+	//size_t                   cardCounter = 0;// this will replace sectionLinesRead elementLinesRead, and partLinesRead
 	size_t                   optionsCounter = 0;
 	std::string              sectionTitle;
 	int                      sectionId        = -1;
 	int                      sectionElForm    = 0;
-	int                      CST              = 0;
+	//int                      CST              = 0;
 	std::string              line             = read_line(is);
 	std::vector<std::string> tokens;
 	const size_t FirstNode = 2;
@@ -341,140 +341,140 @@ bool parse_k
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "BLANKING")) {
-				state = KState::Element_Blanking;
+				//state = KState::Element_Blanking;
 
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 3) && (command[1] == "DIRECT") && (command[2] == "MATRIX") && (command[3] == "INPUT")) {
-				state = KState::Element_Direct_Matrix_Input;
+				//state = KState::Element_Direct_Matrix_Input;
 
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "DISCRETE")) {
 				if ((command.size() > 2) && (command[2] == "SPHERE")) {
-				    state = KState::Element_Discrete_Sphere;
+				    //state = KState::Element_Discrete_Sphere;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
-				    state = KState::Element_Discrete;
+				    //state = KState::Element_Discrete;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 2) && (command[1] == "GENERALIZED")) {
 				if ((command[2] == "SHELL")) {
-				    state = KState::Element_Generalized_Shell;
+				    //state = KState::Element_Generalized_Shell;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
-				    state = KState::Element_Generalized_Solid;
+				    //state = KState::Element_Generalized_Solid;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "INERTIA")) {
-				state = KState::Element_Inertia;
+				//state = KState::Element_Inertia;
 
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 2) && (command[1] == "INTERPOLATION")) {
 				if (command[2] == "SHELL") {
-				    state = KState::Element_Interpolation_Shell;
+				    //state = KState::Element_Interpolation_Shell;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
-				    state = KState::Element_Interpolation_Solid;
+				    //state = KState::Element_Interpolation_Solid;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "LANCING")) {
-				state = KState::Element_Lancing;
+				//state = KState::Element_Lancing;
 
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "MASS")) {
 				if ((command.size() > 2) && (command[2] == "MATRIX")) {
-				    state = KState::Element_Mass_Matrix;
+				    //state = KState::Element_Mass_Matrix;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "PART")) {
-				    state = KState::Element_Mass_Part;
+				    //state = KState::Element_Mass_Part;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
-				    state = KState::Element_Mass;
+				    //state = KState::Element_Mass;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "PLOTEL")) {
-				state = KState::Element_Plotel;
+				//state = KState::Element_Plotel;
 
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SEATBELT")) {
 				if ((command.size() > 2) && (command[2] == "ACCELEROMETER")) {
-				    state = KState::Element_Seatbealt_Accelerometer;
+				    //state = KState::Element_Seatbealt_Accelerometer;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "PRETENSIONER")) {
-				    state = KState::Element_Seatbealt_Pretensioner;
+				    //state = KState::Element_Seatbealt_Pretensioner;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "RETRACTOR")) {
-				    state = KState::Element_Seatbealt_Retractor;
+				    //state = KState::Element_Seatbealt_Retractor;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "SENSOR")) {
-				    state = KState::Element_Seatbealt_Sensor;
+				    //state = KState::Element_Seatbealt_Sensor;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "SLIPRING")) {
-				    state = KState::Element_Seatbealt_Slipring;
+				    //state = KState::Element_Seatbealt_Slipring;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
-				    state = KState::Element_Seatbealt;
+				    //state = KState::Element_Seatbealt;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SHELL")) {
 				if ((command.size() > 2) && (command[2] == "NURBS")) {
-				    state = KState::Element_Shell_Nurbs_Patch;
+				    //state = KState::Element_Shell_Nurbs_Patch;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "SOURCE")) {
-				    state = KState::Element_Shell_Source_Sink;
+				    //state = KState::Element_Shell_Source_Sink;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else {
-				    state = KState::Element_Shell;
+				    //state = KState::Element_Shell;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SOLID")) {
 				if ((command.size() > 2) && (command[2] == "NURBS")) {
-				    state = KState::Element_Solid_Nurbs_Patch;
+				    //state = KState::Element_Solid_Nurbs_Patch;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "PERI")) {
-				    state = KState::Element_Solid_Peri;
+				    //state = KState::Element_Solid_Peri;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
@@ -485,17 +485,17 @@ bool parse_k
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SPH")) {
-				state = KState::Element_Sph;
+				//state = KState::Element_Sph;
 
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "TRIM")) {
-				state = KState::Element_Trim;
+				//state = KState::Element_Trim;
 
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else if ((command.size() > 1) && (command[1] == "TSHELL")) {
-				state = KState::Element_Tshell;
+				//state = KState::Element_Tshell;
 
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
@@ -804,8 +804,8 @@ bool parse_k
 				if ((first7characters == "SECTION")) {
 				    sectionBeam.sectionType = tokens[0];
 
-				    for (size_t i_d = 1; i_d < 7; ++i_d) {
-					sectionBeam.D[i_d - 1] = stod(tokens[i_d]);
+				    for (size_t i_d = 1; i_d < 5; ++i_d) {
+					sectionBeam.D.push_back(stod(tokens[i_d]));
 				    }
 				}
 				else {
