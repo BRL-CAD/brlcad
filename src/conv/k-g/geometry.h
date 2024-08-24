@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file region_list.cpp
+ /** @file geometry.h
   *
   * LS Dyna keyword file to BRL-CAD converter:
   * intermediate geometry structure implementation
@@ -29,6 +29,7 @@
 
 #include "bot.h"
 #include "arbs.h"
+#include "pipe.h"
 
 
 class Geometry {
@@ -48,16 +49,19 @@ public:
 			const point_t& point6,
 			const point_t& point7,
 			const point_t& point8);
+    void         addPipePnt(pipePoint point);
 
     const char*  getBaseName(void) const;
     Bot&         getBot(void);
     Arbs&        getArbs(void);
+    Pipe&        getPipe(void);
 
     std::vector<std::string>       write(rt_wdb* wdbp);
 private:
     std::string name;
     Bot         m_bot;
     Arbs        m_arbs;
+    Pipe        m_pipe;
 };
 
 

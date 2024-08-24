@@ -42,14 +42,49 @@ struct KNode {
 
 
 struct KElement {
-    std::vector<int> nodes;
+    std::vector<int>                           nodes;
+    std::map<std::string, std::vector<double>> options;
+};
+
+
+struct KElementPulley {
+    int truss1Id;
+    int truss2Id;
+    int pulleyNode;
+};
+
+
+struct KElementBeamSource {
+    int   sourceNodeId;
+    int   sourceElementId;
+    int   nElements;
+    float beamElementLength;
+    float minmumLengthToPullOut;
+};
+
+
+struct KElementBearing {
+    std::string title;
+    int         bearingType;
+    int         n1;
+    int         coordinateId1;
+    int         n2;
+    int         coordinateId2;
+    int         numberOfBallsOrRollers;
+    float       diameterOfBallsOrRollers;
+    float       boreInnerDiameter;
+    float       boreOuterDiameter;
+    float       pitchDiameter;
+    float       innerGroveRadiusToBallDiameterRatioOrRollerLength;
+    float       outerRaceGrooveRadiusToBallDiameterRatio;
+    float       totalRadianceClearenceBetweenBallAndRaces;
 };
 
 
 struct KPart {
-    std::string   title;
-    std::set<int> elements;
-    int           section;
+    std::string                        title;
+    std::set<int>                      elements;
+    int                                section;
     std::map<std::string, std::string> attributes;
 };
 
@@ -62,12 +97,27 @@ struct KSection {
     double        thickness4;
 };
 
+struct KSectionBeam {
+    std::string   title;
+    int                 CST;//cross section type
+    std::string         sectionType;//this is different from cross section type
+    double              TS1;
+    double              TS2;
+    double              TT1;
+    double              TT2;
+    std::vector<double> D;
+    double              CrossSectionalArea;//The definition on *ELEMENT_BEAM_THICKNESS overrides the value defined here.
+};
 
 struct KData {
-    std::map<int, KNode>    nodes;
-    std::map<int, KElement> elements;
-    std::map<int, KPart>    parts;
-    std::map<int, KSection> sections;
+    std::map<int, KNode>              nodes;
+    std::map<int, KElement>           elements;
+    std::map<int, KElementPulley>     elementsPulley;
+    std::map<int, KElementBeamSource> elementsBeamSource;
+    std::map<int, KElementBearing>    elementBearing;
+    std::map<int, KPart>              parts;
+    std::map<int, KSection>           sections;
+    std::map<int, KSectionBeam>       sectionsBeam;
 };
 
 

@@ -26,14 +26,7 @@
 #include "geometry.h"
 
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+
 
 
 void Geometry::setBaseName
@@ -47,6 +40,7 @@ void Geometry::setBaseName
 
     m_bot.setName(name.c_str());
     m_arbs.setName(name.c_str());
+    m_pipe.setName(name.c_str());
 }
 
 void Geometry::setThickness
@@ -82,6 +76,12 @@ void Geometry::addArb
 }
 
 
+void Geometry::addPipePnt(pipePoint point)
+{
+    m_pipe.addPipePnt(point);
+}
+
+
 const char* Geometry::getBaseName(void) const{
     return name.c_str();
 }
@@ -95,15 +95,31 @@ Arbs& Geometry::getArbs(void) {
     return m_arbs;
 }
 
+Pipe& Geometry::getPipe(void)
+{
+    return m_pipe;
+}
+
 
 std::vector<std::string> Geometry::write
 (
     rt_wdb* wdbp
 ) {
-    std::vector<std::string> ret      = m_bot.write(wdbp);
-    std::vector<std::string> arbNames = m_arbs.write(wdbp);
+    std::vector<std::string> ret       = m_bot.write(wdbp);
+    std::vector<std::string> arbNames  = m_arbs.write(wdbp);
+    std::vector<std::string> pipeName = m_pipe.write(wdbp);
 
     ret.insert(ret.end(), arbNames.begin(), arbNames.end());
-
+    ret.insert(ret.end(), pipeName.begin(), pipeName.end());
     return ret;
 }
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
