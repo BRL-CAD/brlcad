@@ -81,6 +81,11 @@ void Geometry::addPipePnt(pipePoint point)
     m_pipe.addPipePnt(point);
 }
 
+void Geometry::addSketch(std::string name, std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D)
+{
+    
+}
+
 
 const char* Geometry::getBaseName(void) const{
     return name.c_str();

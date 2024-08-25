@@ -50,7 +50,7 @@ public:
 			const point_t& point7,
 			const point_t& point8);
     void         addPipePnt(pipePoint point);
-
+    void         addSketch(std::string name, std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D);
     const char*  getBaseName(void) const;
     Bot&         getBot(void);
     Arbs&        getArbs(void);

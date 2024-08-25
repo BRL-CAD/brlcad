@@ -34,6 +34,7 @@
 #include "k_parser.h"
 #include "region_list.h"
 #include "pipe.h"
+#include "sketch.h"
 
 
 static void AddArb(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8,KData& kData, std::string arbNumber, Geometry& geometry) {
@@ -138,18 +139,20 @@ int main
 
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
 			    if ((kData.elements[*itr].nodes.size() == 3)) {
-				//int n3 = kData.elements[*itr].nodes[2];
+				int n1 = kData.elements[*itr].nodes[0];
+				int n2 = kData.elements[*itr].nodes[1];
+				int n3 = kData.elements[*itr].nodes[2];
+
 				if (section > 0) {
 				    KSectionBeam beamSection = kData.sectionsBeam[section];
 
-				    if (beamSection.CST == 1) {
+				    if (beamSection.CST == 0) {
+
+				    }
+				    else if (beamSection.CST == 1 && beamSection.sectionType != "SECTION_01") {
 					pipePoint point1;
 					pipePoint point2;
 
-
-					int n1 = kData.elements[*itr].nodes[0];
-					int n2 = kData.elements[*itr].nodes[1];
-					//int n3 = kData.elements[*itr].nodes[2];
 					point1.coords[X] = kData.nodes[n1].x * factor;
 					point1.coords[Y] = kData.nodes[n1].y * factor;
 					point1.coords[Z] = kData.nodes[n1].z * factor;
@@ -166,6 +169,39 @@ int main
 
 					geometry.addPipePnt(point1);
 					geometry.addPipePnt(point2);
+				    }
+				    else if (beamSection.CST == 2) {
+
+				    }
+				    else if (beamSection.sectionType == "SECTION_01") {
+					point_t point1;
+					point_t point2;
+					point_t point3;
+
+					point1[X] = kData.nodes[n1].x * factor;
+					point1[Y] = kData.nodes[n1].y * factor;
+					point1[Z] = kData.nodes[n1].z * factor;
+
+					point2[X] = kData.nodes[n2].x * factor;
+					point2[Y] = kData.nodes[n2].y * factor;
+					point2[Z] = kData.nodes[n2].z * factor;
+
+					point3[X] = kData.nodes[n3].x * factor;
+					point3[Y] = kData.nodes[n3].y * factor;
+					point3[Z] = kData.nodes[n3].z * factor;
+
+					int D1 = beamSection.D[0];
+					int D2 = beamSection.D[1];
+					int D3 = beamSection.D[2];
+					int D4 = beamSection.D[3];
+
+					std::string sketchName= std::to_string(*itr);
+					Sketch skt;
+					sketchName += ".sketch";
+
+					skt.setName(sketchName.c_str());
+					skt.creatSketch(sketchName.c_str(), beamSection.sectionType, point1, point2, point3, beamSection.D);
+					skt.write(wdbp);
 				    }
 				}
 			    }
