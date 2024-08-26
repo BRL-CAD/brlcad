@@ -57,16 +57,23 @@ void Extrude::extrudeSection(std::string sectionName,const point_t& V, vect_t h,
     VMOVE(m_extrude->u_vec, u_vec);
     VMOVE(m_extrude->v_vec, v_vec);
     m_extrude->sketch_name = bu_strdup(sectionName.c_str());
-    m_extrude->skt = skt;
+    m_extrude->skt = (struct rt_sketch_internal*)NULL;;
 }
 
 
-std::vector<std::string> Extrude::write(rt_wdb* wdbp)
+std::string Extrude::write(rt_wdb* wdbp)
 {
-    std::vector<std::string> ret;
-    ret.push_back(name);
+    std::string ret;
 
-    wdb_export(wdbp, name.c_str(), m_extrude, ID_EXTRUDE, 1);
+    rt_extrude_internal* extrude_wdb;
+    BU_GET(extrude_wdb, rt_extrude_internal);
+    extrude_wdb->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+    extrude_wdb = m_extrude;
+
+    if (extrude_wdb->sketch_name != "") {
+	wdb_export(wdbp, name.c_str(), extrude_wdb, ID_EXTRUDE, 1);
+	ret = name;
+    }
 
     return ret;
 }

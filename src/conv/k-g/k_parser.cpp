@@ -957,8 +957,8 @@ bool parse_k
 
 		    case KState::Element_Beam: {
 			KElement element;
-			int      pid;
-			int      eid;
+			int      pid = 1;
+			int      eid = 1;
 
 			if (options.size() == 0 || optionsCounter == 0) {
 			    if (tokens.size() < 10) {
@@ -1215,7 +1215,7 @@ bool parse_k
 
 		    case KState::Element_Bearing: {
 			KElementBearing bearing;
-			int eid;
+			int eid = 1;
 
 			switch (elementLinesRead)
 			{

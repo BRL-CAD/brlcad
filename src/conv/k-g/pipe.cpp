@@ -81,7 +81,7 @@ std::vector<std::string> Pipe::write
 
     std::string pipeName = name;
     pipeName += ".pipe";
-    ret.push_back(pipeName);
+
 
     rt_pipe_internal* pipe_wdb;
     BU_GET(pipe_wdb, rt_pipe_internal);
@@ -91,6 +91,7 @@ std::vector<std::string> Pipe::write
 
     if (pipe_wdb->pipe_count > 0) {
 	wdb_export(wdbp, pipeName.c_str(), pipe_wdb, ID_PIPE, 1);
+	ret.push_back(pipeName);
     }
 
     return ret;

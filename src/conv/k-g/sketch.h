@@ -41,7 +41,7 @@ public:
     const char*                     getName(void) const;
     rt_sketch_internal*             getSketch(void) const;
 
-    std::vector<std::string>        write(rt_wdb* wdbp);
+    std::string                     write(rt_wdb* wdbp);
 private:
     std::string       name;
     rt_sketch_internal* m_sketch;

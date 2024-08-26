@@ -43,6 +43,7 @@ public:
 
     void         setBaseName(const char* value);
     void         setThickness(double value);
+
     void         addTriangle(const point_t& point1,
 			     const point_t& point2,
 			     const point_t& point3);
@@ -55,9 +56,14 @@ public:
 			const point_t& point6,
 			const point_t& point7,
 			const point_t& point8);
-    void         addPipePnt(pipePoint point);
-    void         addSketch(std::string name, std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D);
-    void         addBeamResultant(std::string sectionName,std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D);
+    void           addPipePnt(pipePoint point);
+    void           addBeamResultant(const std::string beamName,
+				    const std::string sectionType,
+				    const point_t& node1,
+				    const point_t& node2,
+				    const point_t& node3,
+				    const std::vector<double> D);
+
     const char*  getBaseName(void) const;
     Bot&         getBot(void);
     Arbs&        getArbs(void);

@@ -40,7 +40,7 @@ public:
 
     void                            extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec, rt_sketch_internal* skt);
 
-    std::vector<std::string>        write(rt_wdb* wdbp);
+    std::string                     write(rt_wdb* wdbp);
 private:
     std::string          name;
     rt_extrude_internal* m_extrude;

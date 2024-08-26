@@ -162,13 +162,9 @@ rt_sketch_internal* Sketch::getSketch(void) const
     return nullptr;
 }
 
-std::vector<std::string> Sketch::write(rt_wdb* wdbp)
+std::string Sketch::write(rt_wdb* wdbp)
 {
-    std::vector<std::string> ret;
-
-    std::string sketchName = name;
-    sketchName += ".sketch";
-    ret.push_back(sketchName);
+    std::string ret;
 
     rt_sketch_internal* sketch_wdb;
     BU_GET(sketch_wdb, rt_sketch_internal);
@@ -176,7 +172,8 @@ std::vector<std::string> Sketch::write(rt_wdb* wdbp)
     sketch_wdb = m_sketch;
 
     if (sketch_wdb->vert_count > 0) {
-	wdb_export(wdbp, sketchName.c_str(), sketch_wdb, ID_SKETCH, 1);
+	wdb_export(wdbp, name.c_str(), sketch_wdb, ID_SKETCH, 1);
+	ret = name;
     }
 
     return ret;
