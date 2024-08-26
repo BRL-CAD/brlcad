@@ -195,13 +195,9 @@ int main
 					int D3 = beamSection.D[2];
 					int D4 = beamSection.D[3];
 
-					std::string sketchName= std::to_string(*itr);
-					Sketch skt;
-					sketchName += ".sketch";
+					std::string beamNumber= std::to_string(*itr);
 
-					skt.setName(sketchName.c_str());
-					skt.creatSketch(sketchName.c_str(), beamSection.sectionType, point1, point2, point3, beamSection.D);
-					skt.write(wdbp);
+					geometry.addBeamResultant(beamNumber, beamSection.sectionType, point1, point2, point3, beamSection.D);
 				    }
 				}
 			    }

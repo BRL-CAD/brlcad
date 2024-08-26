@@ -89,7 +89,9 @@ std::vector<std::string> Pipe::write
     BU_LIST_INIT(&pipe_wdb->pipe_segs_head);
     BU_LIST_APPEND_LIST(&pipe_wdb->pipe_segs_head, &m_pipe->pipe_segs_head);
 
-    wdb_export(wdbp, pipeName.c_str(), pipe_wdb, ID_PIPE, 1);
+    if (pipe_wdb->pipe_count > 0) {
+	wdb_export(wdbp, pipeName.c_str(), pipe_wdb, ID_PIPE, 1);
+    }
 
     return ret;
 }

@@ -33,7 +33,10 @@ Arbs::Arbs(void):name() {}
 
 void Arbs::setName(const char* value)
 {
-    name = value;
+    if (value != nullptr)
+	name = value;
+    else
+	name = "";
 }
 
 

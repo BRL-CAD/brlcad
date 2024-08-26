@@ -1,4 +1,4 @@
-/*                 S K E T C H . H
+/*                 E X T R U D E . H
  * BRL-CAD
  *
  * Copyright (c) 2024 United States Government as represented by
@@ -17,38 +17,37 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file sketch.h
+ /** @file extrude.h
   *
   * LS Dyna keyword file to BRL-CAD converter:
-  * intermediate sketch implementation
+  * intermediate extrude implementation
   */
-#ifndef SKETCH_INCLUDED
-#define SKETCH_INCLUDED
+#ifndef EXTRUDE_INCLUDED
+#define EXTRUDE_INCLUDED
 
 #include "common.h"
 #include "wdb.h"
 
 
 
-class Sketch {
+class Extrude {
 public:
-    Sketch(void);
+    Extrude(void);
 
     void                            setName(const char* value);
 
-    rt_sketch_internal*             creatSketch(std::string sketchName,std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D);
-
     const char*                     getName(void) const;
-    rt_sketch_internal*             getSketch(void) const;
+
+    void                            extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec, rt_sketch_internal* skt);
 
     std::vector<std::string>        write(rt_wdb* wdbp);
 private:
-    std::string       name;
-    rt_sketch_internal* m_sketch;
+    std::string          name;
+    rt_extrude_internal* m_extrude;
 };
 
 
-#endif // !SKETCH_INCLUDED
+#endif // !EXTRUDE_INCLUDED
 
 
 // Local Variables:

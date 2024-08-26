@@ -30,7 +30,13 @@
 #include "bot.h"
 #include "arbs.h"
 #include "pipe.h"
+#include "sketch.h"
+#include "extrude.h"
 
+struct BeamResultant {
+    Sketch  skt;
+    Extrude ext;
+};
 
 class Geometry {
 public:
@@ -51,6 +57,7 @@ public:
 			const point_t& point8);
     void         addPipePnt(pipePoint point);
     void         addSketch(std::string name, std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D);
+    void         addBeamResultant(std::string sectionName,std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D);
     const char*  getBaseName(void) const;
     Bot&         getBot(void);
     Arbs&        getArbs(void);
@@ -58,10 +65,11 @@ public:
 
     std::vector<std::string>       write(rt_wdb* wdbp);
 private:
-    std::string name;
-    Bot         m_bot;
-    Arbs        m_arbs;
-    Pipe        m_pipe;
+    std::string                name;
+    Bot                        m_bot;
+    Arbs                       m_arbs;
+    Pipe                       m_pipe;
+    std::vector<BeamResultant> m_BeamsResultant;
 };
 
 

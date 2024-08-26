@@ -27,16 +27,6 @@
 
 
 
-
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
-
 Sketch::Sketch(void)
 {
     BU_GET(m_sketch, rt_sketch_internal);
@@ -50,8 +40,15 @@ void Sketch::setName(const char* value)
     name = value;
 }
 
-void Sketch::creatSketch(std::string sketchName, std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D)
-{
+rt_sketch_internal* Sketch::creatSketch
+(
+    std::string sketchName,
+    std::string sectionType,
+    const point_t& node1,
+    const point_t& node2,
+    const point_t& node3,
+    std::vector<double> D
+) {
     if (sectionType == "SECTION_01") {
 	unsigned long vert_count = 12;
 	unsigned long seg_count  = 12;
@@ -150,6 +147,8 @@ void Sketch::creatSketch(std::string sketchName, std::string sectionType, const 
 	lsg->start = 11;
 	lsg->end = 0;
 	crv->segment[11] = lsg;
+	
+	return m_sketch;
     }
 }
 
@@ -166,9 +165,29 @@ rt_sketch_internal* Sketch::getSketch(void) const
 std::vector<std::string> Sketch::write(rt_wdb* wdbp)
 {
     std::vector<std::string> ret;
-    ret.push_back(name);
 
-    wdb_export(wdbp, name.c_str(), m_sketch, ID_SKETCH, 1);
+    std::string sketchName = name;
+    sketchName += ".sketch";
+    ret.push_back(sketchName);
+
+    rt_sketch_internal* sketch_wdb;
+    BU_GET(sketch_wdb, rt_sketch_internal);
+    sketch_wdb->magic = RT_SKETCH_INTERNAL_MAGIC;
+    sketch_wdb = m_sketch;
+
+    if (sketch_wdb->vert_count > 0) {
+	wdb_export(wdbp, sketchName.c_str(), sketch_wdb, ID_SKETCH, 1);
+    }
 
     return ret;
 }
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

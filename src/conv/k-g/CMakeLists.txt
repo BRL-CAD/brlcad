@@ -7,6 +7,7 @@ set(k-g_SRCF
   geometry.cpp
   pipe.cpp
   sketch.cpp
+  extrude.cpp
   )
 BRLCAD_ADDEXEC(k-g "${k-g_SRCF}" "libwdb;librt;libbu" FOLDER Conv)
 
@@ -19,6 +20,7 @@ set(k-g_ignore_files
   geometry.h
   pipe.h
   sketch.h
+  extrude.h
   )
 CMAKEFILES(${k-g_ignore_files})
 

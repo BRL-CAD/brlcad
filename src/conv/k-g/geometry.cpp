@@ -83,7 +83,27 @@ void Geometry::addPipePnt(pipePoint point)
 
 void Geometry::addSketch(std::string name, std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D)
 {
-    
+    BeamResultant temp;
+    rt_sketch_internal* tempSkt;
+    BU_GET(tempSkt, rt_sketch_internal);
+    tempSkt->magic = RT_SKETCH_INTERNAL_MAGIC;
+    std::string sectionName = name;
+    sectionName += ".sketch";
+    std::string extrudeName = name;
+    extrudeName += ".ext";
+    vect_t h;
+    h[X] = node2[X] - node1[X];
+    h[Y] = node2[Y] - node1[Y];
+    h[Z] = node2[Z] - node1[Z];
+    tempSkt = temp.skt.creatSketch(sectionName.c_str(), sectionType, node1, node2, node3, D);
+    temp.ext.setName(extrudeName.c_str());
+    temp.ext.extrudeSection(sectionName.c_str(), node1, h, tempSkt->u_vec, tempSkt->v_vec, tempSkt);
+    m_BeamsResultant.push_back(temp);
+}
+
+void Geometry::addBeamResultant(std::string sectionName, std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D)
+{
+    addSketch(sectionName, sectionType, node1, node2, node3, D);
 }
 
 
@@ -113,6 +133,11 @@ std::vector<std::string> Geometry::write
     std::vector<std::string> ret       = m_bot.write(wdbp);
     std::vector<std::string> arbNames  = m_arbs.write(wdbp);
     std::vector<std::string> pipeName = m_pipe.write(wdbp);
+
+    for (size_t i = 0; i < m_BeamsResultant.size(); ++i) {
+	m_BeamsResultant[i].skt.write(wdbp);
+	m_BeamsResultant[i].ext.write(wdbp);
+    }
 
     ret.insert(ret.end(), arbNames.begin(), arbNames.end());
     ret.insert(ret.end(), pipeName.begin(), pipeName.end());
