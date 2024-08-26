@@ -57,7 +57,8 @@ void Extrude::extrudeSection(std::string sectionName,const point_t& V, vect_t h,
     VMOVE(m_extrude->u_vec, u_vec);
     VMOVE(m_extrude->v_vec, v_vec);
     m_extrude->sketch_name = bu_strdup(sectionName.c_str());
-    m_extrude->skt = (struct rt_sketch_internal*)NULL;;
+    //m_extrude->skt = skt;
+    m_extrude->skt = (struct rt_sketch_internal*)NULL;
 }
 
 
