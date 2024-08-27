@@ -77,7 +77,7 @@ static std::string getCmdPath(std::string exeDir, const char* cmd) {
 
 
 std::string
-renderPerspective(RenderingFace face, Options& opt, std::string component, std::string UNUSED(ghost))
+renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
 {
     std::string pathToInput = opt.getInFile();
     std::string outputname = createOutputBase(opt.getInFile(), opt.getWorkingDir(), component);
@@ -197,7 +197,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[5] = "-e";  av[6] = "25";
             av[7] = "-i";  av[8] = pathToInput.c_str();
             av[9] = "-c";  av[10] = component.c_str();
-            av[11] = "-g"; av[12] = "ghost";
+            av[11] = "-g"; av[12] = ghost.c_str();
             av[13] = "-G"; av[14] = "10";
             av[15] = "-o"; av[16] = outputname.c_str();
             av[17] = NULL;
