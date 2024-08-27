@@ -30,7 +30,6 @@
 #include <sstream>
 #include <thread>
 #include "json.hpp"
-#include "concurrentqueue.h"
 
 #include "vmath.h"
 #include "rt/application.h"
@@ -40,6 +39,14 @@
 
 #include "./ged_lint.h"
 
+struct lint_worker_vars {
+    struct rt_i *rtip;
+    struct resource *resp;
+    int tri_start;
+    int tri_end;
+    bool reverse;
+    void *ptr;
+};
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
@@ -442,21 +449,32 @@ _uh_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     return 0;
 }
 
+extern "C" void
+bot_lint_worker(int cpu, void *ptr)
+{
+    struct lint_worker_vars *state = &(((struct lint_worker_vars *)ptr)[cpu]);
+    lint_worker_data *d = (lint_worker_data *)state->ptr;
+
+    for (int i = state->tri_start; i < state->tri_end; i++) {
+	d->shoot(i, state->reverse);
+    }
+}
+
 static int
-bot_check(std::vector<lint_worker_data *> &wdata, const char *test_type, fhit_t hf, fmiss_t mf, int onehit, bool reverse)
+bot_check(struct lint_worker_vars *state, const char *test_type, fhit_t hf, fmiss_t mf, int onehit, bool reverse, size_t ncpus)
 {
     // Make a std::string of the test type for easier processing
     std::string ttype(test_type);
 
     // We always need at least one worker data container to do any work at all.
-    if (!wdata.size())
+    if (!ncpus)
 	return 0;
 
     // Pull the values we need for preliminary checks from the first container
     // - the above check guarantees we have at least that one, and if properly
     // prepared all wdata worker data containers will have the same values for
     // any check we will do at this stage.
-    lint_worker_data *w0 = wdata[0];
+    lint_worker_data *w0 = (lint_worker_data *)state[0].ptr;
     if (!w0->bot || !w0->bot->num_faces)
 	return 0;
 
@@ -479,70 +497,26 @@ bot_check(std::vector<lint_worker_data *> &wdata, const char *test_type, fhit_t 
     // Much of the information needed for different tests is common and thus can be
     // reused, but some aspects are specific to each test - let all the worker data
     // containers know what the specifics are for this test.
-    for (size_t i = 0; i < wdata.size(); i++) {
-	wdata[i]->ap.a_hit = hf;
-	wdata[i]->ap.a_miss = mf;
-	wdata[i]->ap.a_onehit = onehit;
+    for (size_t i = 0; i < ncpus; i++) {
+	lint_worker_data *d = (lint_worker_data *)state[i].ptr;
+	d->ap.a_hit = hf;
+	d->ap.a_miss = mf;
+	d->ap.a_onehit = onehit;
+	state[i].reverse = reverse;
     }
 
-    // The concurrent queue is how we will use multiple threads to do
-    // raytracing more quickly.  The advantage over bu_parallel here is it
-    // should be simple to keep each thread busy - all of them will be pulling
-    // their "next" work triangle from the same common source.
-    moodycamel::ConcurrentQueue<size_t> q;
-
-    // We only need one "source" of triangles to process, since the list is
-    // known in advance and fixed.  Use a ProducerToken, since our use case
-    // supports it.
-    moodycamel::ProducerToken ptok(q);
-    for (size_t i = 0; i < w0->bot->num_faces; i++)
-	q.enqueue(ptok, i);
-
-    // Do the work in multiple threads.
-    std::vector<std::thread> threads;
-    // https://stackoverflow.com/a/39266640
-    threads.reserve(wdata.size());
-    for (size_t i = 0; i < wdata.size(); i++) {
-	// https://stackoverflow.com/a/25536984
-	threads.emplace_back(
-		std::thread(
-		    // Using a lambda function to execute the work
-		    [&](int ind)  // lambda scoped variable holding the passed-in wdata index
-		    {
-		       size_t tri_ind;
-		       // As long as there's still work in q to do, have the thread keep getting
-		       // more triangles to process
-		       while (q.try_dequeue_from_producer(ptok, tri_ind)) {
-		          // Perform an individual triangle test
-		          wdata[ind]->shoot(tri_ind, reverse);
-		       }
-		    }
-		    , i  // Value being passed into ind to id this thread's wdata container
-		    )
-		);
-    }
-
-    // Wait for all threads
-    for (size_t i = 0; i < wdata.size(); i++) {
-	threads[i].join();
-    }
-
-    // Clean up anything left (TODO - shouldn't be anything, since our producer
-    // isn't making new work - this may be unnecessary.)
-    size_t tri_ind;
-    while (q.try_dequeue_from_producer(ptok, tri_ind)) {
-	wdata[0]->shoot(tri_ind, false);
-    }
+    bu_parallel(bot_lint_worker, ncpus, (void *)state);
 
     // Gather the thread results and reset the individual json containers
     bool found = false;
-    for (size_t i = 0; i < wdata.size(); i++) {
-	nlohmann::json &sdata = wdata[i]->tresults;
+    for (size_t i = 0; i < ncpus; i++) {
+	lint_worker_data *d = (lint_worker_data *)state[i].ptr;
+	nlohmann::json &sdata = d->tresults;
 	for(nlohmann::json::const_iterator it = sdata.begin(); it != sdata.end(); ++it) {
 	    found = true;
 	    terr["errors"].push_back(*it);
 	}
-	wdata[i]->tresults.clear();
+	d->tresults.clear();
     }
 
     if (found)
@@ -613,47 +587,63 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
     // most common case (multi-test) it should help.
     std::unordered_set<int> bad_faces;
 
-    // Grr.  Would prefer to have this managed as a per-worker resource, but
-    // the initialization isn't having it.
+
     size_t ncpus = bu_avail_cpus();
+    struct lint_worker_vars *state = (struct lint_worker_vars *)bu_calloc(ncpus+1, sizeof(struct lint_worker_vars ), "state");
     struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
 
-    std::vector<lint_worker_data *> wdata;
-    for (size_t i = 0; i < ncpus - 1; i++) {
-	rt_init_resource(&resp[i], (int)i, rtip);
-	lint_worker_data *d = new lint_worker_data(rtip, &resp[i]);
+    // We need to divy up the faces.  Since all triangle intersections will
+    // (hopefully) take about the same length of time to run, we don't do anything
+    // fancy about chunking up the work.
+    int tri_step = bot->num_faces / ncpus;
+
+    for (size_t i = 0; i < ncpus; i++) {
+	state[i].rtip = rtip;
+	state[i].resp = &resp[i];
+	rt_init_resource(state[i].resp, (int)i, state[i].rtip);
+	state[i].tri_start = i * tri_step;
+	state[i].tri_end = state[i].tri_start + tri_step;
+	//bu_log("%d: tri_state: %d, tri_end %d\n", (int)i, state[i].tri_start, state[i].tri_end);
+	state[i].reverse = false;
+
+	lint_worker_data *d = new lint_worker_data(rtip, state[i].resp);
 	d->ldata = bdata;
 	d->pname = std::string(dp->d_namep);
 	d->bot = bot;
 	d->bad_faces = &bad_faces;
 	d->ttol = bdata->ftol;
 	d->min_tri_area = bdata->min_tri_area;
-	wdata.push_back(d);
+	state[i].ptr = (void *)d;
     }
+
+    // Make sure the last thread ends on the last face
+    state[ncpus-1].tri_end = bot->num_faces - 1;
+    //bu_log("%d: tri_end %d\n", (int)ncpus-1, state[ncpus-1].tri_end);
 
     /* Note that we are deliberately using onehit=1 for the miss test to check
      * the intersection behavior of the individual triangles */
-    bot_check(wdata, "unexpected_miss", _hit_noop, _mc_miss, 1, false);
+    bot_check(state, "unexpected_miss", _hit_noop, _mc_miss, 1, false, ncpus);
 
     // Missed faces get flagged to avoid repeated testing, since they are known
     // not to raytrace appropriately after the above check.
-    for (size_t i = 0; i < wdata.size(); i++) {
+    for (size_t i = 0; i < ncpus; i++) {
+	lint_worker_data *d = (lint_worker_data *)state[i].ptr;
 	std::unordered_set<int>::iterator f_it;
-	for (f_it = wdata[i]->flagged_tris.begin(); f_it != wdata[i]->flagged_tris.end(); f_it++)
+	for (f_it = d->flagged_tris.begin(); f_it != d->flagged_tris.end(); f_it++)
 	    bad_faces.insert(*f_it);
     }
 
     /* Thin face pairings are a common artifact of coplanar faces in boolean
      * evaluations */
-    bot_check(wdata, "thin_volume", _tc_hit, _tc_miss, 0, false);
+    bot_check(state, "thin_volume", _tc_hit, _tc_miss, 0, false, ncpus);
 
     /* When testing for faces that are too close to a given face, we need to
      * reverse the ray direction */
-    bot_check(wdata, "close_face", _ck_up_hit, _miss_noop, 0, true);
+    bot_check(state, "close_face", _ck_up_hit, _miss_noop, 0, true, ncpus);
 
     /* Checking for the case where we end up with a hit from a triangle other
      * than the one we derive the ray from. */
-    bot_check(wdata, "unexpected_hit", _uh_hit, _miss_noop, 0, false);
+    bot_check(state, "unexpected_hit", _uh_hit, _miss_noop, 0, false, ncpus);
 
     if (bdata->do_plot) {
 	struct bu_color *color = bdata->color;
@@ -665,8 +655,15 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
 	struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	// Triangle plotting order doesn't matter particularly, just
 	// iterate over all the workers
-	for (size_t i = 0; i < wdata.size(); i++)
-	    wdata[i]->plot_bad_tris(vbp, vhead, vlfree);
+	for (size_t i = 0; i < ncpus; i++) {
+	    lint_worker_data *d = (lint_worker_data *)state[i].ptr;
+	    d->plot_bad_tris(vbp, vhead, vlfree);
+	}
+    }
+
+    for (size_t i = 0; i < ncpus; i++) {
+	lint_worker_data *d = (lint_worker_data *)state[i].ptr;
+	delete d;
     }
 
     rt_free_rti(rtip);
