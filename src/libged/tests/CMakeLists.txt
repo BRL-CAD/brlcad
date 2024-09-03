@@ -25,6 +25,12 @@ BRLCAD_ADDEXEC(ged_test_search test_search.c libged TEST)
 add_dependencies(ged_test_search ged_plugins)
 BRLCAD_ADD_TEST(NAME ged_test_search COMMAND ged_test_search "${CMAKE_CURRENT_SOURCE_DIR}/search_tests.g")
 
+# db_search testing
+# TODO - tests the C api, but uses libged - either need to limit our dependencies
+# to librt, or rename test.
+BRLCAD_ADDEXEC(rt_search_test search_tests.cpp "librt;libbu;libged" TEST)
+BRLCAD_ADD_TEST(NAME rt_search_tests COMMAND rt_search_test "${CMAKE_CURRENT_SOURCE_DIR}/rt_search_tests.g")
+
 add_subdirectory(bot)
 add_subdirectory(draw)
 
@@ -33,6 +39,7 @@ add_subdirectory(draw)
 # breaking commands.
 CMAKEFILES(
   lint_tests.g
+  rt_search_tests.g
   search_tests.g
   obb_tests.g
   ged_tests.g
