@@ -3,7 +3,6 @@ to its functionality that are not installed with the distribution. Generally
 these are used either in various stages of the compilation process or as
 maintenance tools.
 
-The ext subdirectory holds tools where we can (or at least in principle would
-like to) use system installed versions.  Tools at this level are written
-by the project specifically for BRL-CAD.
+TODO - add CMake 3.30.2 and set up a bootstrap of it if a CMake older than
+our desired minimum is found.
 
