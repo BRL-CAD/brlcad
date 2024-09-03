@@ -37,15 +37,10 @@ bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
     // it...
     gte::DCPSegment3Segment3<fastf_t> LLQ;
 
-    std::array<fastf_t, 3> AP0, AP1, AQ0, AQ1;
-    memcpy(AP0.data(), P0, sizeof(point_t));
-    memcpy(AP1.data(), P1, sizeof(point_t));
-    memcpy(AQ0.data(), Q0, sizeof(point_t));
-    memcpy(AQ1.data(), Q1, sizeof(point_t));
-    gte::Vector<3,fastf_t> GTE_P0(AP0);
-    gte::Vector<3,fastf_t> GTE_P1(AP1);
-    gte::Vector<3,fastf_t> GTE_Q0(AQ0);
-    gte::Vector<3,fastf_t> GTE_Q1(AQ1);
+    gte::Vector<3,fastf_t> GTE_P0{P0[0], P0[1], P0[2]};
+    gte::Vector<3,fastf_t> GTE_P1{P1[0], P1[1], P1[2]};
+    gte::Vector<3,fastf_t> GTE_Q0{Q0[0], Q0[1], Q0[2]};
+    gte::Vector<3,fastf_t> GTE_Q1{Q1[0], Q1[1], Q1[2]};
 
     auto result = LLQ.ComputeRobust(GTE_P0, GTE_P1, GTE_Q0, GTE_Q1);
 
