@@ -391,6 +391,7 @@ endif()
 include(Source/CMakeVersion.cmake)
 
 include(CTest)
+set(BUILD_TESTING OFF)
 
 # Set up test-time configuration.
 set_directory_properties(PROPERTIES
@@ -470,16 +471,16 @@ if(NOT CMake_TEST_EXTERNAL_CMAKE)
   endif()
 
   # add the uninstall support
-  configure_file(cmake_uninstall.cmake.in cmake_uninstall.cmake @ONLY)
-  add_custom_target(uninstall
-    "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+  #configure_file(cmake_uninstall.cmake.in cmake_uninstall.cmake @ONLY)
+  #add_custom_target(uninstall
+  #  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
-  include(CMakeCPack.cmake)
+  #include(CMakeCPack.cmake)
 
 endif()
 
 # setup some Testing support (a macro defined in this file)
-CMAKE_SETUP_TESTING()
+#CMAKE_SETUP_TESTING()
 
 if(NOT CMake_TEST_EXTERNAL_CMAKE)
   if(NOT CMake_VERSION_IS_RELEASE)
@@ -516,7 +517,7 @@ if(NOT CMake_TEST_EXTERNAL_CMAKE)
   add_subdirectory(Utilities)
 endif()
 
-add_subdirectory(Tests)
+#add_subdirectory(Tests)
 
 if(NOT CMake_TEST_EXTERNAL_CMAKE)
   if(BUILD_TESTING)
@@ -556,7 +557,7 @@ if(NOT CMake_TEST_EXTERNAL_CMAKE)
     )
 
   # Install auxiliary files integrating with other tools.
-  add_subdirectory(Auxiliary)
+  #add_subdirectory(Auxiliary)
 
   # Optionally sign installed binaries.
   if(CMake_INSTALL_SIGNTOOL)
