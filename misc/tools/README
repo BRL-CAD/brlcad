@@ -6,3 +6,11 @@ maintenance tools.
 TODO - add CMake 3.30.2 and set up a bootstrap of it if a CMake older than
 our desired minimum is found.
 
+Ideally we should be able to bootstrap and continue configuring - that will (I
+think) require our bootstrapping code to do its thing, and then clear all of
+the build directory except for the compiled cmake and re-execute the original
+CMake configure line with the same arguments as those used to launch the
+original CMake.  Need to see if we have the arguments available to re-launch.
+Alternately, we could simply exit and instruct the user to re-configure with
+the new CMake.
+
