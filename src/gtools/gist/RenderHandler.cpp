@@ -633,7 +633,7 @@ selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, doubl
     }
 
     if (bestLayout == NULL) {
-	bu_log("ISSUE: no layouts found.  This is a major problem!  In selectLayout() in RenderHandler.cpp\n");
+	bu_exit(BRLCAD_ERROR, "ERROR: no suitable layouts found! Please select a different component to generate report\n");
 	return LayoutChoice("", true);
     }
 
