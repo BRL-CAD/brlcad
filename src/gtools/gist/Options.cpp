@@ -132,7 +132,8 @@ bool Options::readParameters(int argc, const char **argv) {
     }
 
     /* use internal setters for options that require extra attention */
-    if (param_oFile.empty()) {	// no output file supplied, default to gui pop-up
+    if (param_oFile.empty() && this->inFolderName.empty()) {
+	// no output file supplied, and not working with folder: default to gui pop-up
 	bu_log("WARNING: no output file given, use (-o) to save report\n");
 	setOpenGUI();
     } else if (!setOutFile(param_oFile))    // out file was supplied, make sure .png
@@ -147,8 +148,10 @@ bool Options::readParameters(int argc, const char **argv) {
 	setUnitLength(param_Ulength);
     if (!param_Umass.empty())
 	setUnitMass(param_Umass);
-    if (!this->inFolderName.empty())
+    if (!this->inFolderName.empty()) {
 	setIsFolder();
+	setExportToFile();  // dont want to flood screen with gui popups if we're using a folder
+    }
     if (!this->exeDir.empty())
 	setExeDir(this->exeDir);
 
@@ -163,6 +166,11 @@ bool Options::readParameters(int argc, const char **argv) {
         return false;
     }
 
+    /* handle default folder output dir */
+    if (getIsFolder() && getOutFolder().empty()) {
+	setOutFolder(getInFolder() + BU_DIR_SEPARATOR + "GIST_REPORTS");
+    }
+
     /* make sure we're not unintentionally overwriting an existing report */
     if (bu_file_exists(this->outFile.c_str(), NULL)) {
 	if (!param_overwrite) {
@@ -170,6 +178,13 @@ bool Options::readParameters(int argc, const char **argv) {
 	    return false;
 	} else {
 	    bu_file_delete(this->outFile.c_str());
+	}
+    } else if (bu_file_directory(this->outFolderName.c_str())) {
+	if (!param_overwrite) {
+	    bu_log("ERROR: output folder \"%s\" already exists. Re-run with force flag (-f) or remove directory.", this->outFolderName.c_str());
+	    return false;
+	} else {
+	    bu_dirclear(this->outFolderName.c_str());
 	}
     }
 
@@ -195,29 +210,35 @@ bool Options::readParameters(int argc, const char **argv) {
 
     /* build working directory path if not supplied */
     if (getWorkingDir().empty()) {
-	std::string working = getInFile();
-	// if input file ends in .g - strip the g and replace with .working
-	if (working.size() > 2 && working[working.size() - 2] == '.' && working[working.size() - 1] == 'g')
+	// is this file or folder run
+	// if we're working with a folder, add a nested GIST_REPORTS dir for working dir
+	std::string working = getIsFolder() ? getInFolder() + BU_DIR_SEPARATOR + "GIST_REPORTS" : getInFile();
+
+	// if input file ends in .g - strip the extension
+	if (working.size() > 2 && working[working.size() - 2] == '.' && working[working.size() - 1] == 'g') {
 	    working.pop_back();
-	working += "working";
+	    working.pop_back();
+	}
+
+	working += ".working";
 	this->workingDir = working;
     }
     /* handle working directory existence */
-    if (bu_file_directory(getWorkingDir().c_str())) {
-	// found dir, should we have?
-	if (getReuseImages() == false) {
-	    bu_log("ERROR: Working directory (%s) found.\n", getWorkingDir().c_str());
-	    bu_log("       Re-run with (-Z) to reuse work. Or remove working directory \"%s\".\n", getWorkingDir().c_str());
-	    return false;
-	}
-	if (verbosePrinting())
-	    bu_log("Using working directory: %s\n\n", getWorkingDir().c_str());
+    if (bu_file_directory(getWorkingDir().c_str()) && getReuseImages() == false) {
+	// found dir, but re-use wasn't requested
+	bu_log("ERROR: Working directory \"%s\" found.\n", getWorkingDir().c_str());
+	bu_log("       Re-run with (-Z) to reuse work. Or remove working directory.\n");
+	return false;
     } else {
 	// create
 	bu_mkdir(getWorkingDir().c_str());
-	if (verbosePrinting())
-	    bu_log("Intermediate files writing to: %s\n\n", getWorkingDir().c_str());
     }
+    if (verbosePrinting())
+	bu_log("Writing intermediate files to working directory: %s\n\n", getWorkingDir().c_str());
+
+    /* initialize empty output folder if needed */
+    if (getIsFolder() && !bu_file_directory(this->outFolderName.c_str()))
+	bu_mkdir(this->outFolderName.c_str());
 
     return true;
 }
