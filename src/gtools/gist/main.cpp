@@ -43,7 +43,7 @@ generateReport(Options opt)
     InformationGatherer info(&opt);
 
     // read in all information from model file
-    statusPrint("*Gathering file information", opt.verbosePrinting());
+    statusPrint("*Gathering file information: " + opt.getInFile(), opt.verbosePrinting());
     if (!info.gatherInformation(opt.getPreparer())) {
         bu_log("ERROR: Information gathering failed.\n");
         return;
@@ -99,7 +99,7 @@ generateReport(Options opt)
         img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);
     }
     statusPrint("    ...Finished logos", opt.verbosePrinting());
-    statusPrint("...Finished report", opt.verbosePrinting());
+    statusPrint(opt.getOpenGUI() ? "...Finished report" : std::string("...Finished report: " + opt.getOutFile()), opt.verbosePrinting());
 
     // paint renderings
 
@@ -118,16 +118,21 @@ static void
 handleFolder(Options& options)
 {
     for (const auto & entry : std::filesystem::directory_iterator(options.getInFolder())) {
-        options.setInFile(entry.path().string());
-        options.setExportToFile();
-        std::string filename = options.getInFile();
-        filename = filename.substr(filename.find_last_of("/\\") + 1);
-        filename = filename.substr(0, filename.find_last_of("."));
-        statusPrint("Processing: " + filename, options.verbosePrinting());
-        std::string exportPath = options.getOutFolder() + "/" + filename + "_report.png";
+        std::string filename = entry.path().string();
+        // ensure entry is a .g
+        if (db_filetype(filename.c_str()) < 4)
+            continue;
+
+        options.setInFile(filename);
+
+        // build reasonable output filepath
+        struct bu_vls isolate_filename = BU_VLS_INIT_ZERO;
+        (void)bu_path_component(&isolate_filename, filename.c_str(), BU_PATH_BASENAME_EXTLESS);
+        std::string exportPath = options.getOutFolder() + BU_DIR_SEPARATOR + bu_vls_cstr(&isolate_filename) + "_report.png";
         options.setOutFile(exportPath);
+
         generateReport(options);
-        statusPrint("...Finished (" + filename + ")", options.verbosePrinting());
+        statusPrint("", options.verbosePrinting()); // empty print to separate logging
     }
 }
 

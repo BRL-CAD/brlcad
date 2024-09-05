@@ -66,6 +66,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/units.h"
+#include "bu/path.h"
 #include "ged.h"
 
 // Visualization project header files
