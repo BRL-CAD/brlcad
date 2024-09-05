@@ -154,7 +154,7 @@ bool Options::readParameters(int argc, const char **argv) {
 
     /* make sure valid input .g or folder is supplied */
     if ((getIsFolder() && !bu_file_directory(this->inFolderName.c_str())) ||
-        !bu_file_exists(this->inFile.c_str(), NULL)) {
+        (!getIsFolder() && !bu_file_exists(this->inFile.c_str(), NULL))) {
 	// which input was given
 	std::string given_input = getIsFolder() ? this->inFolderName : this->inFile;
 
