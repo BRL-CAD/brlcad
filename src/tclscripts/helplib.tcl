@@ -147,7 +147,7 @@ set helplib_data(vo_eye_pos)		{{"x y z"} {set the eye position}}
 set helplib_data(vo_invSize)		{{} {get the inverse view size}}
 set helplib_data(vo_keypoint)		{{[point]} {set/get the keypoint}}
 set helplib_data(vo_local2base)		{{} {get local2base conversion factor}}
-set helplib_data(vo_lookat)		{{"x y z"} {set the look-at point}}
+set helplib_data(vo_lookat)		{{"x y z"} {adjust the view center without changing the eyepoint}}
 set helplib_data(vo_model2view)		{{} {get the model2view matrix}}
 set helplib_data(vo_mrot)		{{x y z} {rotate view using model x,y,z}}
 set helplib_data(vo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
