@@ -102,7 +102,7 @@ void Geometry::addBeamResultant(std::string beamName, std::string sectionType, c
     h[Y] = node2[Y] - node1[Y];
     h[Z] = node2[Z] - node1[Z];
 
-    tempSkt = temp.skt.creatSketch(sectionName.c_str(), sectionType, node1, node2, node3, D);
+    tempSkt = temp.skt.creatSketch(sectionType, node1, node2, node3, D);
 
     temp.ext.extrudeSection(sectionName.c_str(), node1, h, tempSkt->u_vec, tempSkt->v_vec, tempSkt);
 

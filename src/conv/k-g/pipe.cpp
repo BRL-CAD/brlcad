@@ -88,6 +88,7 @@ std::vector<std::string> Pipe::write
     pipe_wdb->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipe_wdb->pipe_segs_head);
     BU_LIST_APPEND_LIST(&pipe_wdb->pipe_segs_head, &m_pipe->pipe_segs_head);
+    pipe_wdb->pipe_count = m_pipe->pipe_count;
 
     if (pipe_wdb->pipe_count > 0) {
 	wdb_export(wdbp, pipeName.c_str(), pipe_wdb, ID_PIPE, 1);

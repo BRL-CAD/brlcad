@@ -804,7 +804,7 @@ bool parse_k
 				if ((first7characters == "SECTION")) {
 				    sectionBeam.sectionType = tokens[0];
 
-				    for (size_t i_d = 1; i_d < 5; ++i_d) {
+				    for (size_t i_d = 1; i_d < tokens.size(); ++i_d) {
 					sectionBeam.D.push_back(stod(tokens[i_d]));
 				    }
 				}

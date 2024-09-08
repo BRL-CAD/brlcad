@@ -149,7 +149,7 @@ int main
 				    if (beamSection.CST == 0) {
 
 				    }
-				    else if (beamSection.CST == 1 && beamSection.sectionType != "SECTION_01") {
+				    else if (beamSection.CST == 1 && beamSection.sectionType == "") {
 					pipePoint point1;
 					pipePoint point2;
 
@@ -165,15 +165,13 @@ int main
 					point2.outerDiameter = beamSection.TS2;
 					point2.innerDiameter = beamSection.TT2;
 
-					std::string beamNumber = std::to_string(*itr);
-
 					geometry.addPipePnt(point1);
 					geometry.addPipePnt(point2);
 				    }
 				    else if (beamSection.CST == 2) {
 
 				    }
-				    else if (beamSection.sectionType == "SECTION_01") {
+				    else if (beamSection.sectionType != "SECTION_09") {
 					point_t point1;
 					point_t point2;
 					point_t point3;
@@ -198,6 +196,44 @@ int main
 					std::string beamNumber= std::to_string(*itr);
 
 					geometry.addBeamResultant(beamNumber, beamSection.sectionType, point1, point2, point3, beamSection.D);
+				    }
+				    else if (beamSection.sectionType == "SECTION_08") {
+					pipePoint point1;
+					pipePoint point2;
+
+					point1.coords[X] = kData.nodes[n1].x * factor;
+					point1.coords[Y] = kData.nodes[n1].y * factor;
+					point1.coords[Z] = kData.nodes[n1].z * factor;
+					point1.outerDiameter = beamSection.D[0];
+					point1.innerDiameter = 0.0;
+
+					point2.coords[X] = kData.nodes[n2].x * factor;
+					point2.coords[Y] = kData.nodes[n2].y * factor;
+					point2.coords[Z] = kData.nodes[n2].z * factor;
+					point2.outerDiameter = beamSection.D[0];
+					point2.innerDiameter = 0.0;
+
+					geometry.addPipePnt(point1);
+					geometry.addPipePnt(point2);
+				    }
+				    else if (beamSection.sectionType == "SECTION_09") {
+					pipePoint point1;
+					pipePoint point2;
+
+					point1.coords[X] = kData.nodes[n1].x * factor;
+					point1.coords[Y] = kData.nodes[n1].y * factor;
+					point1.coords[Z] = kData.nodes[n1].z * factor;
+					point1.outerDiameter = beamSection.D[0];
+					point1.innerDiameter = beamSection.D[1];
+
+					point2.coords[X] = kData.nodes[n2].x * factor;
+					point2.coords[Y] = kData.nodes[n2].y * factor;
+					point2.coords[Z] = kData.nodes[n2].z * factor;
+					point2.outerDiameter = beamSection.D[0];
+					point2.innerDiameter = beamSection.D[1];
+
+					geometry.addPipePnt(point1);
+					geometry.addPipePnt(point2);
 				    }
 				}
 			    }

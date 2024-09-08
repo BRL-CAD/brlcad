@@ -42,54 +42,39 @@ void Sketch::setName(const char* value)
 
 rt_sketch_internal* Sketch::creatSketch
 (
-    std::string sketchName,
     std::string sectionType,
     const point_t& node1,
     const point_t& node2,
     const point_t& node3,
-    std::vector<double> D
+    const std::vector<double>& D
 ) {
+    line_seg* lsg;
+
+    point_t V;
+    VMOVE(V, node1);
+
+    vect_t r, t, s;
+    vect_t n2n3;
+
+    VSUB2(r, node2, node1);
+    VSUB2(n2n3, node3, node2);
+
+    VCROSS(t, r, n2n3);
+    VCROSS(s, r, t);
+
+    VUNITIZE(t);
+    VUNITIZE(s);
+
     if (sectionType == "SECTION_01") {
-	unsigned long vert_count = 12;
-	unsigned long seg_count  = 12;
-	line_seg* lsg;
-
-	point_t V;
-	VMOVE(V, node1);
-	vect_t r, t, s;
-	vect_t n2n3;
-	r[X] = node2[X] - node1[X];
-	r[Y] = node2[Y] - node1[Y];
-	r[Z] = node2[Z] - node1[Z];
-	
-	n2n3[X] = node3[X] - node2[X];
-	n2n3[Y] = node3[Y] - node2[Y];
-	n2n3[Z] = node3[Z] - node2[Z];
-
-	t[X] = r[Y] * n2n3[Z] - r[Z] * n2n3[Y];
-	t[Y] = r[Z] * n2n3[X] - r[X] * n2n3[Z];
-	t[Z] = r[X] * n2n3[Y] - r[Y] * n2n3[X];
-
-	s[X] = r[Y] * t[Z] - r[Z] * t[Y];
-	s[Y] = r[Z] * t[X] - r[X] * t[Z];
-	s[Z] = r[X] * t[Y] - r[Y] * t[X];
-
-	double normt = sqrt(t[X] * t[X] + t[Y] * t[Y] + t[Z] * t[Z]);
-	double norms = sqrt(s[X] * s[X] + s[Y] * s[Y] + s[Z] * s[Z]);
-
-	t[X] = t[X] / normt;
-	t[Y] = t[Y] / normt;
-	t[Z] = t[Z] / normt;
-
-	s[X] = s[X] / norms;
-	s[Y] = s[Y] / norms;
-	s[Z] = s[Z] / norms;
+	const size_t vert_count = 12;
+	const size_t seg_count  = 12;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
 	VMOVE(m_sketch->v_vec, s);
 
 	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
 	verts[0][0] = D[0] * 0.5;
 	verts[0][1] = -D[2] * 0.5;
 
@@ -144,12 +129,952 @@ rt_sketch_internal* Sketch::creatSketch
 
 	BU_ALLOC(lsg, struct line_seg);
 	lsg->magic = CURVE_LSEG_MAGIC;
-	lsg->start = 11;
+	lsg->start = vert_count - 1;
 	lsg->end = 0;
-	crv->segment[11] = lsg;
-	
-	return m_sketch;
+	crv->segment[seg_count - 1] = lsg;
     }
+    else if (sectionType == "SECTION_02") {
+	const size_t vert_count = 8;
+	const size_t seg_count  = 8;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = D[0] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = D[0] * 0.5;
+	verts[2][1] = -D[2] * 0.5 + D[1];
+
+	verts[3][0] = -D[0] / 2 + D[3];
+	verts[3][1] = -D[2] * 0.5 + D[1];
+
+	verts[4][0] = -D[0] * 0.5 + D[3];
+	verts[4][1] = D[2] * 0.5 - D[1];
+
+	verts[5][0] = D[0] * 0.5;
+	verts[5][1] = D[2] * 0.5 - D[1];
+
+	verts[6][0] = D[0] * 0.5;
+	verts[6][1] = D[2] * 0.5;
+
+	verts[7][0] = -D[0] * 0.5;
+	verts[7][1] = D[2] * 0.5;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = vert_count - 1;
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_03") {
+	const size_t vert_count = 6;
+	const size_t seg_count  = 6;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = D[0] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = D[0] * 0.5;
+	verts[2][1] = -D[2] * 0.5 + D[1];
+
+	verts[3][0] = -D[0] / 2 + D[3];
+	verts[3][1] = -D[2] * 0.5 + D[1];
+
+	verts[4][0] = -D[0] * 0.5 + D[3];
+	verts[4][1] = D[2] * 0.5;
+
+	verts[5][0] = -D[0] * 0.5;
+	verts[5][1] = D[2] * 0.5;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = vert_count - 1;
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+
+    }
+    else if (sectionType == "SECTION_04") {
+	const size_t vert_count = 8;
+	const size_t seg_count = 8;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[3] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = D[3] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = D[3] * 0.5;
+	verts[2][1] = D[2] * 0.5 - D[1];
+
+	verts[3][0] = D[0] * 0.5;
+	verts[3][1] = D[2] * 0.5 - D[1];
+
+	verts[4][0] = D[0] * 0.5;
+	verts[4][1] = D[2] * 0.5;
+
+	verts[5][0] = -D[0] * 0.5;
+	verts[5][1] = D[2] * 0.5;
+
+	verts[6][0] = -D[0] * 0.5;
+	verts[6][1] = D[2] * 0.5 - D[1];
+
+	verts[7][0] = -D[3] * 0.5;
+	verts[7][1] = D[2] * 0.5 - D[1];
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 0;
+	crv->segment[seg_count-1] = lsg;
+    }
+    else if (sectionType == "SECTION_05") {
+	const size_t vert_count = 8;
+	const size_t seg_count = 8;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = D[0] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = D[0] * 0.5;
+	verts[2][1] = D[2] * 0.5;
+
+	verts[3][0] = -D[0] * 0.5;
+	verts[3][1] = D[2] * 0.5;
+
+	verts[4][0] = -D[0] * 0.5 + D[3];
+	verts[4][1] = -D[2] * 0.5 + D[1];
+
+	verts[5][0] = D[0] * 0.5 - D[3];
+	verts[5][1] = -D[2] * 0.5 + D[1];
+
+	verts[6][0] = D[0] * 0.5 - D[3];
+	verts[6][1] = D[2] * 0.5 - D[1];
+
+	verts[7][0] = -D[0] * 0.5 + D[3];
+	verts[7][1] = D[2] * 0.5 - D[1];
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < 4; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = 3;
+	lsg->end = 0;
+	crv->segment[3] = lsg;
+
+	for (size_t i_c2 = 4; i_c2 < 8; ++i_c2) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c2;
+	    lsg->end = i_c2 + 1;
+	    crv->segment[i_c2] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 4;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_06") {
+	const size_t vert_count = 8;
+	const size_t seg_count = 8;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[3] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = D[0] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = D[0] * 0.5;
+	verts[2][1] = -D[2] * 0.5 + D[1];
+
+	verts[3][0] = D[3] * 0.5;
+	verts[3][1] = -D[2] * 0.5 + D[1];
+
+	verts[4][0] = D[3] * 0.5;
+	verts[4][1] = D[2] * 0.5;
+
+	verts[5][0] = -D[0] * 0.5;
+	verts[5][1] = D[2] * 0.5;
+
+	verts[6][0] = -D[0] * 0.5;
+	verts[6][1] = D[2] * 0.5 - D[1];
+
+	verts[7][0] = -D[3] * 0.5;
+	verts[7][1] = D[2] * 0.5 - D[1];
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_07") {
+	const size_t vert_count = 4;
+	const size_t seg_count  = 4;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = D[0] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = D[0] * 0.5 - D[1] * 0.5;
+	verts[2][1] = D[2] * 0.5;
+
+	verts[3][0] = -D[0] * 0.5 + D[1] * 0.5;
+	verts[3][1] = D[2] * 0.5;
+
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_08") {
+
+    }
+    else if (sectionType == "SECTION_09") {
+
+    }
+    else if (sectionType == "SECTION_10") {
+	const size_t vert_count = 12;
+	const size_t seg_count = 12;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[1] * 0.5;
+	verts[0][1] = -D[0] * 0.5;
+
+	verts[1][0] = D[1] * 0.5;
+	verts[1][1] = -D[0] * 0.5;
+
+	verts[2][0] = D[1] * 0.5;
+	verts[2][1] = -D[0] * 0.5 + D[4];
+
+	verts[3][0] = D[3] * 0.5;
+	verts[3][1] = -D[0] * 0.5 + D[4];
+
+	verts[4][0] = D[3] * 0.5;
+	verts[4][1] = D[0] * 0.5 - D[5];
+
+	verts[5][0] = D[2] * 0.5;
+	verts[5][1] = D[0] * 0.5 - D[5];
+
+	verts[6][0] = D[2] * 0.5;
+	verts[6][1] = D[0] * 0.5;
+
+	verts[7][0] = -D[2] * 0.5;
+	verts[7][1] = D[0] * 0.5;
+
+	verts[8][0] = -D[2] * 0.5;
+	verts[8][1] = D[0] * 0.5 - D[5];
+
+	verts[9][0] = -D[3] * 0.5;
+	verts[9][1] = D[0] * 0.5 - D[5];
+
+	verts[10][0] = -D[3] * 0.5;
+	verts[10][1] = -D[0] * 0.5 + D[4];
+
+	verts[11][0] = -D[1] * 0.5;
+	verts[11][1] = -D[0] * 0.5 + D[4];
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = vert_count - 1;
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_11") {
+	const size_t vert_count = 4;
+	const size_t seg_count = 4;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5;
+	verts[0][1] = -D[1] * 0.5;
+
+	verts[1][0] = D[0] * 0.5;
+	verts[1][1] = -D[1] * 0.5;
+
+	verts[2][0] = D[0] * 0.5;
+	verts[2][1] = D[1] * 0.5;
+
+	verts[3][0] = -D[0] * 0.5;
+	verts[3][1] = D[1] * 0.5;
+
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_12") {
+	const size_t vert_count = 12;
+	const size_t seg_count = 12;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[1] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = +D[1] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = +D[1] * 0.5;
+	verts[2][1] = +D[2] * 0.25 - D[3] * 0.5;
+
+	verts[3][0] = +D[1] * 0.5 + D[0] * 0.5;
+	verts[3][1] = +D[2] * 0.25 - D[3] * 0.5;
+
+	verts[4][0] = +D[1] * 0.5 + D[0] * 0.5;
+	verts[4][1] = +D[2] * 0.25 - D[3] * 0.5 + D[3];
+
+	verts[5][0] = +D[1] * 0.5;
+	verts[5][1] = +D[2] * 0.25 - D[3] * 0.5 + D[3];
+
+	verts[6][0] = +D[1] * 0.5;
+	verts[6][1] = +D[2] * 0.5;
+
+	verts[7][0] = -D[1] * 0.5;
+	verts[7][1] = +D[2] * 0.5;
+
+	verts[8][0] = -D[1] * 0.5;
+	verts[8][1] = +D[2] * 0.25 - D[3] * 0.5 + D[3];
+
+	verts[9][0] = -D[1] * 0.5 - D[0] * 0.5;
+	verts[9][1] = +D[2] * 0.25 - D[3] * 0.5 + D[3];
+
+	verts[10][0] = -D[1] * 0.5 - D[0] * 0.5;
+	verts[10][1] = +D[2] * 0.25 - D[3] * 0.5;
+
+	verts[11][0] = -D[1] * 0.5;
+	verts[11][1] = +D[2] * 0.25 - D[3] * 0.5;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = vert_count - 1;
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_13") {
+	const size_t vert_count = 12;
+	const size_t seg_count = 12;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5 - D[1] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = -D[0] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = -D[0] * 0.5;
+	verts[2][1] = -D[3] * 0.5;
+
+	verts[3][0] = D[0] * 0.5;
+	verts[3][1] = -D[3] * 0.5;
+
+	verts[4][0] = D[0] * 0.5;
+	verts[4][1] = -D[2] * 0.5;
+
+	verts[5][0] = D[0] * 0.5 + D[1] * 0.5;
+	verts[5][1] = -D[2] * 0.5;
+
+	verts[6][0] = D[0] * 0.5 + D[1] / 2;
+	verts[6][1] = D[2] * 0.5;
+
+	verts[7][0] = D[0] * 0.5;
+	verts[7][1] = D[2] * 0.5;
+
+	verts[8][0] = D[0] * 0.5;
+	verts[8][1] = D[3] * 0.5;
+
+	verts[9][0] = -D[0] * 0.5;
+	verts[9][1] = D[3] * 0.5;
+
+	verts[10][0] = -D[0] * 0.5;
+	verts[10][1] = D[2] * 0.5;
+
+	verts[11][0] = -D[0] * 0.5 - D[1] * 0.5;
+	verts[11][1] = D[2] * 0.5;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = vert_count - 1;
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_14") {
+	const size_t vert_count = 8;
+	const size_t seg_count = 8;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[1] * 0.5 + D[2] * 0.5;
+	verts[0][1] = -D[3] * 0.5;
+
+	verts[1][0] = +D[1] * 0.5 + D[2] * 0.5 - D[2];
+	verts[1][1] = -D[3] * 0.5;
+
+	verts[2][0] = +D[1] * 0.5 + D[2] * 0.5 - D[2];
+	verts[2][1] = -D[0] * 0.5;
+
+	verts[3][0] = +D[1] * 0.5 + D[2] * 0.5;
+	verts[3][1] = -D[0] * 0.5;
+
+	verts[4][0] = +D[1] * 0.5 + D[2] * 0.5;
+	verts[4][1] = +D[0] * 0.5;
+
+	verts[5][0] = +D[1] * 0.5 + D[2] * 0.5 - D[2];
+	verts[5][1] = +D[0] * 0.5;
+
+	verts[6][0] = +D[1] * 0.5 + D[2] * 0.5 - D[2];
+	verts[6][1] = +D[3] * 0.5;
+
+	verts[7][0] = -D[1] * 0.5 + D[2] * 0.5;
+	verts[7][1] = +D[3] * 0.5;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_15") {
+	const size_t vert_count = 12;
+	const size_t seg_count = 12;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[1] * 0.5 - D[0] * 0.5;
+	verts[0][1] = -D[3] * 0.5;
+
+	verts[1][0] = +D[1] * 0.5 + D[0] * 0.5;
+	verts[1][1] = -D[3] * 0.5;
+
+	verts[2][0] = +D[1] * 0.5 + D[0] * 0.5;
+	verts[2][1] = -D[2] * 0.5;
+
+	verts[3][0] = +D[1] * 0.5;
+	verts[3][1] = -D[2] * 0.5;
+
+	verts[4][0] = +D[1] * 0.5;
+	verts[4][1] = +D[2] * 0.5;
+
+	verts[5][0] = +D[1] * 0.5 + D[0] * 0.5;
+	verts[5][1] = +D[2] * 0.5;
+
+	verts[6][0] = +D[1] * 0.5 + D[0] * 0.5;
+	verts[6][1] = +D[3] * 0.5;
+
+	verts[7][0] = -D[1] * 0.5 - D[0] * 0.5;
+	verts[7][1] = +D[3] * 0.5;
+
+	verts[8][0] = -D[1] * 0.5 - D[0] * 0.5;
+	verts[8][1] = +D[2] * 0.5;
+
+	verts[9][0] = -D[1] * 0.5;
+	verts[9][1] = +D[2] * 0.5;
+
+	verts[10][0] = -D[1] * 0.5;
+	verts[10][1] = -D[2] * 0.5;
+
+	verts[11][0] = -D[1] * 0.5 - D[0] * 0.5;
+	verts[11][1] = -D[2] * 0.5;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = vert_count - 1;
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_16") {
+	const size_t vert_count = 8;
+	const size_t seg_count = 8;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[1] * 0.5;
+	verts[0][1] = -D[3] * 0.5;
+
+	verts[1][0] = +D[1] * 0.5 + D[0];
+	verts[1][1] = -D[3] * 0.5;
+
+	verts[2][0] = +D[1] * 0.5 + D[0];
+	verts[2][1] = -D[2] * 0.5;
+
+	verts[3][0] = +D[1] * 0.5;
+	verts[3][1] = -D[2] * 0.5;
+
+	verts[4][0] = +D[1] * 0.5;
+	verts[4][1] = +D[2] * 0.5;
+
+	verts[5][0] = +D[1] * 0.5 + D[0];
+	verts[5][1] = +D[0] * 0.5;
+
+	verts[6][0] = +D[1] * 0.5 + D[0];
+	verts[6][1] = +D[3] * 0.5;
+
+	verts[7][0] = -D[1] * 0.5;
+	verts[7][1] = +D[3] * 0.5;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_17") {
+	const size_t vert_count = 8;
+	const size_t seg_count = 8;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[3] * 0.5;
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = +D[3] * 0.5;
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = +D[3] * 0.5;
+	verts[2][1] = +D[2] * 0.5;
+
+	verts[3][0] = +D[3] * 0.5 - D[0];
+	verts[3][1] = +D[2] * 0.5;
+
+	verts[4][0] = +D[3] * 0.5 - D[0];
+	verts[4][1] = -D[2] * 0.5 + D[1];
+
+	verts[5][0] = -D[3] * 0.5 + D[0];
+	verts[5][1] = -D[2] * 0.5 + D[1];
+
+	verts[6][0] = -D[3] * 0.5 + D[0];
+	verts[6][1] = +D[2] * 0.5;
+
+	verts[7][0] = -D[3] * 0.5;
+	verts[7][1] = +D[2] * 0.5;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_18") {
+	const size_t vert_count = 8;
+	const size_t seg_count = 8;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5;
+	verts[0][1] = -D[1] * 0.5;
+
+	verts[1][0] = +D[0] * 0.5;
+	verts[1][1] = -D[1] * 0.5;
+
+	verts[2][0] = +D[0] * 0.5;
+	verts[2][1] = -D[1] * 0.5 + D[2];
+
+	verts[3][0] = +D[3] * 0.5;
+	verts[3][1] = -D[1] * 0.5 + D[2];
+
+	verts[4][0] = +D[3] * 0.5;
+	verts[4][1] = +D[1] * 0.5;
+
+	verts[5][0] = -D[3] * 0.5;
+	verts[5][1] = +D[1] * 0.5;
+
+	verts[6][0] = -D[3] * 0.5;
+	verts[6][1] = -D[1] * 0.5 + D[2];
+
+	verts[7][0] = -D[0] * 0.5;
+	verts[7][1] = -D[1] * 0.5 + D[2];
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
+    }
+    else if (sectionType == "SECTION_19") {
+
+    }
+    else if (sectionType == "SECTION_20") {
+	const size_t vert_count = 6;
+	const size_t seg_count = 6;
+
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[1] * 0.5 + D[0];
+	verts[0][1] = -D[2] * 0.5;
+
+	verts[1][0] = D[1] * 0.5 - D[0];
+	verts[1][1] = -D[2] * 0.5;
+
+	verts[2][0] = D[1] * 0.5;
+	verts[2][1] = 0.0;
+
+	verts[3][0] = D[1] * 0.5 - D[0];
+	verts[3][1] = D[2] * 0.5;
+
+	verts[4][0] = -D[1] * 0.5 + D[0];
+	verts[4][1] = D[2] * 0.5;
+
+	verts[5][0] = -D[1] * 0.5;
+	verts[5][1] = 0.0;
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = 5;
+	lsg->end = 0;
+	crv->segment[5] = lsg;
+    }
+    else if (sectionType == "SECTION_21") {
+
+    }
+    else if (sectionType == "SECTION_22") {
+
+    }
+
+    return m_sketch;
 }
 
 const char* Sketch::getName(void) const

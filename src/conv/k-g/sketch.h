@@ -36,7 +36,11 @@ public:
 
     void                            setName(const char* value);
 
-    rt_sketch_internal*             creatSketch(std::string sketchName,std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D);
+    rt_sketch_internal*             creatSketch(std::string sectionType,
+						const point_t& node1,
+						const point_t& node2,
+						const point_t& node3,
+						const std::vector<double>& D);
 
     const char*                     getName(void) const;
     rt_sketch_internal*             getSketch(void) const;
