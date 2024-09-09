@@ -11,21 +11,25 @@ set(BARK_SOURCES
 )
 BRLCAD_ADDEXEC(bark "${BARK_SOURCES}" libbu NO_STRICT NO_INSTALL TEST_USESDATA)
 
-configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/benchmark" COPYONLY)
-install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/benchmark" DESTINATION ${BIN_DIR})
+if (BUILD_TESTING)
+  configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/benchmark" COPYONLY)
+  install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/benchmark" DESTINATION ${BIN_DIR})
+endif (BUILD_TESTING)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/benchmark")
 
-# TODO - with CMake 3.20, add_custom_command supports generator expressions in
-# OUTPUT, so once we can require that version we should look at retiring this
-# use of CMAKE_CFG_INTDIR
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
-  COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/run.sh $<TARGET_FILE_DIR:bark>/benchmark
-  COMMAND "${CMAKE_COMMAND}" -E touch  ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
-  )
-add_custom_target(benchmark_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done)
-set_target_properties(benchmark_cp PROPERTIES FOLDER "Benchmark")
+if (BUILD_TESTING)
+  # TODO - with CMake 3.20, add_custom_command supports generator expressions in
+  # OUTPUT, so once we can require that version we should look at retiring this
+  # use of CMAKE_CFG_INTDIR
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/run.sh $<TARGET_FILE_DIR:bark>/benchmark
+    COMMAND "${CMAKE_COMMAND}" -E touch  ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
+    )
+  add_custom_target(benchmark_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done)
+  set_target_properties(benchmark_cp PROPERTIES FOLDER "Benchmark")
+endif (BUILD_TESTING)
 DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/benchmark)
 
 file(WRITE  "${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake" "message(\"---\")\n")
@@ -40,7 +44,7 @@ CMAKEFILES(
   viewdiff.sh
   )
 
-if(SH_EXEC AND TARGET m35.g)
+if(SH_EXEC AND TARGET m35.g AND BUILD_TESTING)
   # CTest enabled short run of the benchmark suite
   BRLCAD_ADD_TEST(NAME benchmark COMMAND ${SH_EXEC} "$<TARGET_FILE_DIR:bark>/benchmark" run TIMEFRAME=1)
   set_tests_properties(benchmark PROPERTIES LABELS "Benchmark")
@@ -72,7 +76,7 @@ if(SH_EXEC AND TARGET m35.g)
     ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clobber
     )
   set_target_properties(benchmark-clobber PROPERTIES FOLDER "Benchmark")
-endif(SH_EXEC AND TARGET m35.g)
+endif(SH_EXEC AND TARGET m35.g AND BUILD_TESTING)
 
 # Local Variables:
 # tab-width: 8

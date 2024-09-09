@@ -21,13 +21,17 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
 # inactvhdrs - utility that tries to find local headers unused by other
 # source code in a file hierarchy
-add_subdirectory(inactvhdrs)
-SetTargetFolder(debug2c "Maintenance Utilities")
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/inactvhdrs/Makefile)
+if (BUILD_TESTING)
+  add_subdirectory(inactvhdrs)
+  SetTargetFolder(debug2c "Maintenance Utilities")
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/inactvhdrs/Makefile)
+endif (BUILD_TESTING)
 
 CMAKEFILES(
   CMakeLists.txt
   README
+  inactvhdrs/CMakeLists.txt
+  inactvhdrs/inactvhdrs.cpp
   )
 
 # Locac Variables:

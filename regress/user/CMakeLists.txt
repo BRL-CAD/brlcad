@@ -1,4 +1,4 @@
-if (TARGET libged)
+if (TARGET libged AND BUILD_TESTING)
   # This program is intended to test the usability of BRL-CAD's libraries without
   # the internal compile-time APIs - i.e., to simulate what a BRL-CAD client code
   # might experience when trying to use the BRL-CAD libraries.
@@ -39,7 +39,7 @@ if (TARGET libged)
     BRLCAD_REGRESSION_TEST(regress-user "cad_user;moss.g" EXEC cad_user)
     DISTCLEAN(${LOG_FILE})
   endif (TARGET moss.g)
-endif (TARGET libged)
+endif (TARGET libged AND BUILD_TESTING)
 
 CMAKEFILES(
   CMakeLists.txt

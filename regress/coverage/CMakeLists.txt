@@ -25,12 +25,14 @@ endforeach(rf ${REGRESS_FILES_CMAKE})
 
 # Build a scanner to introspect the tests
 BRLCAD_ADDEXEC(covgcheck covgcheck.cpp "libbu;Threads::Threads" TEST)
-if (O3_COMPILER_FLAG)
-  # This check benefits greatly from optimization. If we have the O3 flag, use
-  # it - whether or not the standard build settings would add it.
-  target_compile_options(covgcheck PRIVATE "-O3")
-endif (O3_COMPILER_FLAG)
-set_target_properties(covgcheck PROPERTIES FOLDER "BRL-CAD Regression Tests/coverage")
+if (TARGET covgcheck)
+  if (O3_COMPILER_FLAG)
+    # This check benefits greatly from optimization. If we have the O3 flag, use
+    # it - whether or not the standard build settings would add it.
+    target_compile_options(covgcheck PRIVATE "-O3")
+  endif (O3_COMPILER_FLAG)
+  set_target_properties(covgcheck PROPERTIES FOLDER "BRL-CAD Regression Tests/coverage")
+endif (TARGET covgcheck)
 
 #BRLCAD_REGRESSION_TEST(regress-coverage "covgcheck" EXEC covgcheck)
 DISTCLEAN(${LOG_FILE})

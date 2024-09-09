@@ -240,6 +240,16 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 
   cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
 
+  # Let CMAKEFILES know what's going on
+  CMAKEFILES(${srcslist})
+
+  # See if we have a testing executable.  If testing is off, skip
+  if (NOT BUILD_TESTING)
+    if (E_TEST OR E_TEST_USESDATA)
+      return()
+    endif (E_TEST OR E_TEST_USESDATA)
+  endif (NOT BUILD_TESTING)
+
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist}")
 
@@ -254,9 +264,6 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Set the standard build definitions for all BRL-CAD targets
   target_compile_definitions(${execname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
-
-  # Let CMAKEFILES know what's going on
-  CMAKEFILES(${srcslist})
 
   # If this is an installed program, note that
   if (NOT E_NO_INSTALL AND NOT E_TEST)
@@ -282,7 +289,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 	endif (IDIRS)
       endif (TARGET ${ll})
     endforeach(ll ${libslist})
-    BRLCAD_INCLUDE_DIRS(${execname} dep_includes PRIVATE) 
+    BRLCAD_INCLUDE_DIRS(${execname} dep_includes PRIVATE)
   endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
   # In some situations (usually test executables) we want to be able
@@ -342,13 +349,13 @@ function(BRLCAD_ADDLIB libname srcslist libslist include_dirs local_include_dirs
 
   cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
+  # Let CMAKEFILES know what's going on
+  CMAKEFILES(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
+
   # The naming convention used for variables is the upper case of the
   # library name, without the lib prefix.
   string(REPLACE "lib" "" LOWERCORE "${libname}")
   string(TOUPPER ${LOWERCORE} UPPER_CORE)
-
-  # Let CMAKEFILES know what's going on
-  CMAKEFILES(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
 
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}")
@@ -834,6 +841,10 @@ endfunction(ADD_MAN_PAGES)
 function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC;VEXEC" "" ${ARGN})
+
+  if (NOT BUILD_TESTING)
+    return()
+  endif (NOT BUILD_TESTING)
 
   if (depends_list)
     foreach(dep ${depends_list})

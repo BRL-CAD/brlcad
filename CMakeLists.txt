@@ -2111,7 +2111,8 @@ if (BRLCAD_EXTRADOCS)
 endif (BRLCAD_EXTRADOCS)
 
 
-# Enable CTest Testing support
+# CTest Testing support (ON by default, may be controlled with BUILD_TESTING
+# variable.)
 include(CTest)
 mark_as_advanced(BUILD_TESTING)
 
