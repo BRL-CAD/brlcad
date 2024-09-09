@@ -302,7 +302,7 @@ set mged_help_data(reid)	{{[-n num] comb regionID}	{sequentially assign idents t
 set mged_help_data(release)	{{[name]}	{release display processor}}
 set mged_help_data(relos)	{{comb los%}	{assign same line-of-sight thickness percentage to all regions under a given combination}}
 set mged_help_data(remat)	{{comb materialID}	{assign the same material ID number to all regions under a given combination}}
-set mged_help_data(reset)	{{}	{Reset view such that all solids can be seen}}
+set mged_help_data(reset)	{{}	{Reset view to top (270, 90) and reset view size such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
 set mged_help_data(rm)		$helplib_data(wdb_remove)
 set mged_help_data(rmater)	{{filename}	{read combination materials from filename}}
@@ -362,9 +362,9 @@ set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
 set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{draw custom data into the wireframe view}}
-set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
+set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (center, view size, eyepoint, yaw/pitch/roll, quaternion, azimuth/elevation/twist) in local units}}
 set mged_help_data(viewdir)	{{[-i]}	{return direction vector based on current view}}
-set mged_help_data(viewsize)	{{[view_size]}	{sets the size of the current viewing cube}}
+set mged_help_data(viewsize)	{{[view_size]}	{sets the size of the current viewing cube (view size)}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(voxelize)	{{[-s "dx dy dz"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]} {convert object to its constituent voxels, i.e.the RPPs which approximate it.
 
