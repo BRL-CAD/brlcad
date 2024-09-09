@@ -33,7 +33,7 @@ subcommands:
 <para><emphasis remap="B" role="bold">size</emphasis> [<emphasis>val</emphasis>]
 </para>
 <para><emphasis remap="B" role="bold">eye</emphasis> [<emphasis>x y z</emphasis>]
-
+</para>
 <para><emphasis remap="B" role="bold">ypr</emphasis> [<emphasis>y p r</emphasis>]
 </para>
 <para><emphasis remap="B" role="bold">quat</emphasis> [<emphasis>v1 v2 v3 v4</emphasis>]
