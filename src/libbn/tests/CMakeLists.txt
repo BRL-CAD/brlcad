@@ -42,7 +42,9 @@ BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
 # Testing with Eigen
 find_package_eigen(REQUIRED)
 BRLCAD_ADDEXEC(bn_eigen eigen.cpp "libbu;libbn" TEST)
-target_include_directories(bn_eigen SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+if (TARGET bn_eigen)
+  target_include_directories(bn_eigen SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+endif (TARGET bn_eigen)
 
 #
 #  *********** poly.c tests *************

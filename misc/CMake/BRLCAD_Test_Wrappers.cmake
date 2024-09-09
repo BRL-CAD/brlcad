@@ -88,6 +88,11 @@ endif (NOT TARGET unit)
 # dependencies for the 'unit' and 'check' test targets.
 function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
+  # If the test_prog isn't a target, test is completely disabled
+  if (NOT TARGET ${test_prog})
+    return()
+  endif ()
+
   # CMake 3.18, cmake_language based wrapper for add_test, replaces the
   # previous workaround for default ARGN behavior that doesn't pass through
   # empty strings.  See https://gitlab.kitware.com/cmake/cmake/-/issues/21414
@@ -99,9 +104,7 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
  # There are a variety of criteria that disqualify test_prog as a
   # dependency - check and return if we hit any of them.
-  if (NOT TARGET ${test_prog})
-    return()
-  endif ()
+
   if ("${test_name}" MATCHES ^regress-)
     return()
   endif ()

@@ -43,7 +43,9 @@ set(basic_view_test_ctrls
   v026_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_draw "draw.cpp;util.cpp" "libged;libdm" TEST)
-add_dependencies(ged_test_draw ${test_deps})
+if (TARGET ged_test_draw)
+  add_dependencies(ged_test_draw ${test_deps})
+endif (TARGET ged_test_draw)
 BRLCAD_ADD_TEST(NAME ged_test_drawing_basic COMMAND ged_test_draw "${CMAKE_CURRENT_SOURCE_DIR}")
 
 
@@ -59,7 +61,9 @@ set(faceplate_test_ctrls
   fp009_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_faceplate "faceplate.cpp;util.cpp" "libged;libdm" TEST)
-add_dependencies(ged_test_faceplate ${test_deps})
+if (TARGET ged_test_faceplate)
+  add_dependencies(ged_test_faceplate ${test_deps})
+endif (TARGET ged_test_faceplate)
 BRLCAD_ADD_TEST(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate "${CMAKE_CURRENT_SOURCE_DIR}")
 
 
@@ -72,7 +76,9 @@ set(lod_test_ctrls
   lod006_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_lod "lod.cpp;util.cpp" "libged;libdm" TEST)
-add_dependencies(ged_test_lod ${test_deps})
+if (TARGET ged_test_lod)
+  add_dependencies(ged_test_lod ${test_deps})
+endif (TARGET ged_test_lod)
 BRLCAD_ADD_TEST(NAME ged_test_drawing_lod COMMAND ged_test_lod "${CMAKE_CURRENT_SOURCE_DIR}")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_lod_tmp.g)
 
@@ -122,7 +128,9 @@ set(select_test_ctrls
   select024_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_select_draw "select.cpp;util.cpp" "libged;libdm" TEST)
-add_dependencies(ged_test_select_draw ${test_deps})
+if (TARGET ged_test_select_draw)
+  add_dependencies(ged_test_select_draw ${test_deps})
+endif (TARGET ged_test_select_draw)
 BRLCAD_ADD_TEST(NAME ged_test_drawing_select COMMAND ged_test_select_draw "${CMAKE_CURRENT_SOURCE_DIR}")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_select_tmp.g)
 
@@ -161,7 +169,9 @@ set(quad_test_ctrls
   quad_03_008_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_quad quad.cpp "libged;libdm" TEST)
-add_dependencies(ged_test_quad ${test_deps})
+if (TARGET ged_test_quad)
+  add_dependencies(ged_test_quad ${test_deps})
+endif (TARGET ged_test_quad)
 BRLCAD_ADD_TEST(NAME ged_test_drawing_quad COMMAND ged_test_quad "${CMAKE_CURRENT_SOURCE_DIR}")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_quad_tmp.g)
 
@@ -177,7 +187,9 @@ set(aet_test_ctrls
   aet_03_002_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_aet "aet.cpp;util.cpp" "libged;libdm" TEST)
-add_dependencies(ged_test_aet ${test_deps})
+if (TARGET ged_test_aet)
+  add_dependencies(ged_test_aet ${test_deps})
+endif (TARGET ged_test_aet)
 
 CMAKEFILES(
   README

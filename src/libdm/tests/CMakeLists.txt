@@ -16,8 +16,10 @@ if (BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_X11)
     ${X11_INCLUDE_DIR}
     )
 
-  BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
-  BRLCAD_ADDEXEC(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
+  if (BUILD_TESTING)
+    BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
+    BRLCAD_ADDEXEC(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
+  endif (BUILD_TESTING)
 endif ()
 
 CMAKEFILES(CMakeLists.txt)
