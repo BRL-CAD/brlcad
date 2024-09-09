@@ -142,12 +142,12 @@ set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis s
 set helplib_data(vo_base2local)		{{} {get base2local conversion factor}}
 set helplib_data(vo_center)		{{["x y z"]} {set/get the view center}}
 set helplib_data(vo_coord)		{{[m|v]} {set/get the coordinate system}}
-set helplib_data(vo_eye)		{{"x y z"} {set the eyepoint}}
+set helplib_data(vo_eye)		{{"x y z"} {set the eye point}}
 set helplib_data(vo_eye_pos)		{{"x y z"} {set the eye position}}
 set helplib_data(vo_invSize)		{{} {get the inverse view size}}
 set helplib_data(vo_keypoint)		{{[point]} {set/get the keypoint}}
 set helplib_data(vo_local2base)		{{} {get local2base conversion factor}}
-set helplib_data(vo_lookat)		{{"x y z"} {adjust the view center without changing the eyepoint}}
+set helplib_data(vo_lookat)		{{"x y z"} {adjust the view center without changing the eye point}}
 set helplib_data(vo_model2view)		{{} {get the model2view matrix}}
 set helplib_data(vo_mrot)		{{x y z} {rotate view using model x,y,z}}
 set helplib_data(vo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
