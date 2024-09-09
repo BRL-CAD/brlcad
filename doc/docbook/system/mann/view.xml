@@ -23,31 +23,80 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Gets/sets view parameters (local units). The <command>view</command> command accepts the following
+  <para>Gets/sets view parameters in local units. The <command>view</command> command accepts the following
 subcommands:
    </para>
 
-<para><emphasis remap="B" role="bold">center</emphasis> [<emphasis>x y z</emphasis>]--get/set the view center of the current view.
+<para><emphasis remap="B" role="bold">center</emphasis> [<emphasis>x y z</emphasis>]
 </para>
 
-<para><emphasis remap="B" role="bold">size</emphasis> [<emphasis>val</emphasis>]--get/set the view size of the current view.
+<para><emphasis remap="B" role="bold">size</emphasis> [<emphasis>val</emphasis>]
 </para>
-<para><emphasis remap="B" role="bold">eye</emphasis> [<emphasis>x y z</emphasis>]--get/set the eye point of the current view.</para>
+<para><emphasis remap="B" role="bold">eye</emphasis> [<emphasis>x y z</emphasis>]
 
-<para><emphasis remap="B" role="bold">ypr</emphasis> [<emphasis>y p r</emphasis>]--get/set the yaw, pitch, and roll of the current view.
+<para><emphasis remap="B" role="bold">ypr</emphasis> [<emphasis>y p r</emphasis>]
 </para>
-<para><emphasis remap="B" role="bold">quat</emphasis>[<emphasis>v1 v2 v3 v4</emphasis>]--get/set the view in the form of a quaternion.
+<para><emphasis remap="B" role="bold">quat</emphasis> [<emphasis>v1 v2 v3 v4</emphasis>]
 </para>
-<para><emphasis remap="B" role="bold">aet</emphasis>[<emphasis>a e t</emphasis>]--get/set the azimuth, elevation, and twist of the current view.</para>
-
+<para><emphasis remap="B" role="bold">aet</emphasis> [<emphasis>a e t</emphasis>]
+</para>
 
 </refsection>
 
+<refsection xml:id="subcommands"><title>SUBCOMMANDS</title>
+<variablelist remap="TP">
+  <varlistentry>
+	  <term><emphasis remap="B" role="bold">center</emphasis></term>
+	  <listitem>
+	    <para>
+	     Get/set the view center.
+	    </para>
+	  </listitem>
+  </varlistentry>
+  <varlistentry>
+	  <term><emphasis remap="B" role="bold">size</emphasis></term>
+  	<listitem>
+	    <para>
+	      Get/set the view size.
+	    </para>
+	  </listitem>
+  </varlistentry>
+  <varlistentry>
+	  <term><emphasis remap="B" role="bold">eye</emphasis></term>
+	  <listitem>
+	    <para>
+	     Get/set the eye point.
+	    </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+	  <term><emphasis remap="B" role="bold">ypr</emphasis></term>
+    <listitem>
+      <para>
+	     Get/set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0)
+	    </para>
+	  </listitem>
+  </varlistentry>
+  <varlistentry>
+	  <term><emphasis remap="B" role="bold">quat</emphasis></term>
+    <listitem>
+      <para>
+	      Get/set the view in the form of a quaternion.
+	    </para>
+	  </listitem>
+  </varlistentry>
+  <varlistentry>
+	  <term><emphasis remap="B" role="bold">aet</emphasis></term>
+    <listitem>
+      <para>
+	       Get/set the current azimuth, elevation, twist
+	    </para>
+	  </listitem>
+  </varlistentry>   
+  </variablelist>
+  </refsection>
+  
 <refsection xml:id="examples"><title>EXAMPLES</title>
-
-  <para>The two examples show the use of the <command>view</command> command with the subcommand <emphasis>center</emphasis>.
-
-  </para>
 
   <example><title>Get the view center.</title>
 
@@ -65,6 +114,22 @@ subcommands:
     <para>Sets the view center at the origin of model space.
     </para>
   </example>
+
+   <example><title>Get the current yaw, pitch, and roll</title>
+    <para>
+      <prompt>mged&gt; </prompt><userinput>view ypr</userinput>
+    </para>
+    <para>Returns the yaw, pitch, and roll of the current view.
+    </para>
+  </example> 
+  
+     <example><title>Set the current yaw, pitch, and roll</title>
+    <para>
+      <prompt>mged&gt; </prompt><userinput>view ypr 90 0 0</userinput>
+    </para>
+    <para>Sets the view using yaw, pitch, and roll so that the ae is 270, 0 (right).
+    </para>
+  </example> 
 
 </refsection>
 
