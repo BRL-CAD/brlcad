@@ -362,7 +362,7 @@ set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
 set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{draw custom data into the wireframe view}}
-set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (center, view size, eyepoint, yaw/pitch/roll, quaternion, azimuth/elevation/twist) in local units}}
+set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (center, view size, eye point, yaw/pitch/roll, quaternion, azimuth/elevation/twist) in local units}}
 set mged_help_data(viewdir)	{{[-i]}	{return direction vector based on current view}}
 set mged_help_data(viewsize)	{{[view_size]}	{sets the size of the current viewing cube (view size)}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
