@@ -75,32 +75,32 @@ rt_sketch_internal* Sketch::creatSketch
 
 	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
 
-	verts[0][0] = D[0] * 0.5;
+	verts[0][0] = +D[0] * 0.5;
 	verts[0][1] = -D[2] * 0.5;
 
-	verts[1][0] = D[0] * 0.5;
+	verts[1][0] = +D[0] * 0.5;
 	verts[1][1] = -D[2] * 0.5 + D[1];
 
-	verts[2][0] = D[3] * 0.5;
+	verts[2][0] = +D[3] * 0.5;
 	verts[2][1] = -D[2] * 0.5 + D[1];
 
-	verts[3][0] = D[3] * 0.5;
-	verts[3][1] = D[2] * 0.5 - D[1];
+	verts[3][0] = +D[3] * 0.5;
+	verts[3][1] = +D[2] * 0.5 - D[1];
 
-	verts[4][0] = D[0] * 0.5;
-	verts[4][1] = D[2] * 0.5 - D[1];
+	verts[4][0] = +D[0] * 0.5;
+	verts[4][1] = +D[2] * 0.5 - D[1];
 
-	verts[5][0] = D[0] * 0.5;
-	verts[5][1] = D[2] * 0.5;
+	verts[5][0] = +D[0] * 0.5;
+	verts[5][1] = +D[2] * 0.5;
 
 	verts[6][0] = -D[0] * 0.5;
-	verts[6][1] = D[2] * 0.5;
+	verts[6][1] = +D[2] * 0.5;
 
 	verts[7][0] = -D[0] * 0.5;
-	verts[7][1] = D[2] * 0.5 - D[1];
+	verts[7][1] = +D[2] * 0.5 - D[1];
 
 	verts[8][0] = -D[3] * 0.5;
-	verts[8][1] = D[2] * 0.5 - D[1];
+	verts[8][1] = +D[2] * 0.5 - D[1];
 
 	verts[9][0] = -D[3] * 0.5;
 	verts[9][1] = -D[2] * 0.5 + D[1];
@@ -146,26 +146,26 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[0][0] = -D[0] * 0.5;
 	verts[0][1] = -D[2] * 0.5;
 
-	verts[1][0] = D[0] * 0.5;
+	verts[1][0] = +D[0] * 0.5;
 	verts[1][1] = -D[2] * 0.5;
 
-	verts[2][0] = D[0] * 0.5;
+	verts[2][0] = +D[0] * 0.5;
 	verts[2][1] = -D[2] * 0.5 + D[1];
 
 	verts[3][0] = -D[0] / 2 + D[3];
 	verts[3][1] = -D[2] * 0.5 + D[1];
 
 	verts[4][0] = -D[0] * 0.5 + D[3];
-	verts[4][1] = D[2] * 0.5 - D[1];
+	verts[4][1] = +D[2] * 0.5 - D[1];
 
-	verts[5][0] = D[0] * 0.5;
-	verts[5][1] = D[2] * 0.5 - D[1];
+	verts[5][0] = +D[0] * 0.5;
+	verts[5][1] = +D[2] * 0.5 - D[1];
 
-	verts[6][0] = D[0] * 0.5;
-	verts[6][1] = D[2] * 0.5;
+	verts[6][0] = +D[0] * 0.5;
+	verts[6][1] = +D[2] * 0.5;
 
 	verts[7][0] = -D[0] * 0.5;
-	verts[7][1] = D[2] * 0.5;
+	verts[7][1] = +D[2] * 0.5;
 
 	m_sketch->vert_count = vert_count;
 	m_sketch->verts = verts;
@@ -202,7 +202,7 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[0][0] = -D[0] * 0.5;
 	verts[0][1] = -D[2] * 0.5;
 
-	verts[1][0] = D[0] * 0.5;
+	verts[1][0] = +D[0] * 0.5;
 	verts[1][1] = -D[2] * 0.5;
 
 	verts[2][0] = D[0] * 0.5;
@@ -212,10 +212,10 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[3][1] = -D[2] * 0.5 + D[1];
 
 	verts[4][0] = -D[0] * 0.5 + D[3];
-	verts[4][1] = D[2] * 0.5;
+	verts[4][1] = +D[2] * 0.5;
 
 	verts[5][0] = -D[0] * 0.5;
-	verts[5][1] = D[2] * 0.5;
+	verts[5][1] = +D[2] * 0.5;
 
 	m_sketch->vert_count = vert_count;
 	m_sketch->verts = verts;
@@ -253,26 +253,26 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[0][0] = -D[3] * 0.5;
 	verts[0][1] = -D[2] * 0.5;
 
-	verts[1][0] = D[3] * 0.5;
+	verts[1][0] = +D[3] * 0.5;
 	verts[1][1] = -D[2] * 0.5;
 
-	verts[2][0] = D[3] * 0.5;
-	verts[2][1] = D[2] * 0.5 - D[1];
+	verts[2][0] = +D[3] * 0.5;
+	verts[2][1] = +D[2] * 0.5 - D[1];
 
-	verts[3][0] = D[0] * 0.5;
-	verts[3][1] = D[2] * 0.5 - D[1];
+	verts[3][0] = +D[0] * 0.5;
+	verts[3][1] = +D[2] * 0.5 - D[1];
 
-	verts[4][0] = D[0] * 0.5;
-	verts[4][1] = D[2] * 0.5;
+	verts[4][0] = +D[0] * 0.5;
+	verts[4][1] = +D[2] * 0.5;
 
 	verts[5][0] = -D[0] * 0.5;
-	verts[5][1] = D[2] * 0.5;
+	verts[5][1] = +D[2] * 0.5;
 
 	verts[6][0] = -D[0] * 0.5;
-	verts[6][1] = D[2] * 0.5 - D[1];
+	verts[6][1] = +D[2] * 0.5 - D[1];
 
 	verts[7][0] = -D[3] * 0.5;
-	verts[7][1] = D[2] * 0.5 - D[1];
+	verts[7][1] = +D[2] * 0.5 - D[1];
 
 	m_sketch->vert_count = vert_count;
 	m_sketch->verts = verts;
@@ -309,26 +309,26 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[0][0] = -D[0] * 0.5;
 	verts[0][1] = -D[2] * 0.5;
 
-	verts[1][0] = D[0] * 0.5;
+	verts[1][0] = +D[0] * 0.5;
 	verts[1][1] = -D[2] * 0.5;
 
-	verts[2][0] = D[0] * 0.5;
-	verts[2][1] = D[2] * 0.5;
+	verts[2][0] = +D[0] * 0.5;
+	verts[2][1] = +D[2] * 0.5;
 
 	verts[3][0] = -D[0] * 0.5;
-	verts[3][1] = D[2] * 0.5;
+	verts[3][1] = +D[2] * 0.5;
 
 	verts[4][0] = -D[0] * 0.5 + D[3];
 	verts[4][1] = -D[2] * 0.5 + D[1];
 
-	verts[5][0] = D[0] * 0.5 - D[3];
+	verts[5][0] = +D[0] * 0.5 - D[3];
 	verts[5][1] = -D[2] * 0.5 + D[1];
 
-	verts[6][0] = D[0] * 0.5 - D[3];
-	verts[6][1] = D[2] * 0.5 - D[1];
+	verts[6][0] = +D[0] * 0.5 - D[3];
+	verts[6][1] = +D[2] * 0.5 - D[1];
 
 	verts[7][0] = -D[0] * 0.5 + D[3];
-	verts[7][1] = D[2] * 0.5 - D[1];
+	verts[7][1] = +D[2] * 0.5 - D[1];
 
 	m_sketch->vert_count = vert_count;
 	m_sketch->verts = verts;
@@ -379,26 +379,26 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[0][0] = -D[3] * 0.5;
 	verts[0][1] = -D[2] * 0.5;
 
-	verts[1][0] = D[0] * 0.5;
+	verts[1][0] = +D[0] * 0.5;
 	verts[1][1] = -D[2] * 0.5;
 
-	verts[2][0] = D[0] * 0.5;
+	verts[2][0] = +D[0] * 0.5;
 	verts[2][1] = -D[2] * 0.5 + D[1];
 
-	verts[3][0] = D[3] * 0.5;
+	verts[3][0] = +D[3] * 0.5;
 	verts[3][1] = -D[2] * 0.5 + D[1];
 
-	verts[4][0] = D[3] * 0.5;
-	verts[4][1] = D[2] * 0.5;
+	verts[4][0] = +D[3] * 0.5;
+	verts[4][1] = +D[2] * 0.5;
 
 	verts[5][0] = -D[0] * 0.5;
-	verts[5][1] = D[2] * 0.5;
+	verts[5][1] = +D[2] * 0.5;
 
 	verts[6][0] = -D[0] * 0.5;
-	verts[6][1] = D[2] * 0.5 - D[1];
+	verts[6][1] = +D[2] * 0.5 - D[1];
 
 	verts[7][0] = -D[3] * 0.5;
-	verts[7][1] = D[2] * 0.5 - D[1];
+	verts[7][1] = +D[2] * 0.5 - D[1];
 
 	m_sketch->vert_count = vert_count;
 	m_sketch->verts = verts;
@@ -438,11 +438,11 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[1][0] = D[0] * 0.5;
 	verts[1][1] = -D[2] * 0.5;
 
-	verts[2][0] = D[0] * 0.5 - D[1] * 0.5;
-	verts[2][1] = D[2] * 0.5;
+	verts[2][0] = +D[0] * 0.5 - D[1] * 0.5;
+	verts[2][1] = +D[2] * 0.5;
 
 	verts[3][0] = -D[0] * 0.5 + D[1] * 0.5;
-	verts[3][1] = D[2] * 0.5;
+	verts[3][1] = +D[2] * 0.5;
 
 
 	m_sketch->vert_count = vert_count;
@@ -486,32 +486,32 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[0][0] = -D[1] * 0.5;
 	verts[0][1] = -D[0] * 0.5;
 
-	verts[1][0] = D[1] * 0.5;
+	verts[1][0] = +D[1] * 0.5;
 	verts[1][1] = -D[0] * 0.5;
 
-	verts[2][0] = D[1] * 0.5;
+	verts[2][0] = +D[1] * 0.5;
 	verts[2][1] = -D[0] * 0.5 + D[4];
 
-	verts[3][0] = D[3] * 0.5;
+	verts[3][0] = +D[3] * 0.5;
 	verts[3][1] = -D[0] * 0.5 + D[4];
 
-	verts[4][0] = D[3] * 0.5;
-	verts[4][1] = D[0] * 0.5 - D[5];
+	verts[4][0] = +D[3] * 0.5;
+	verts[4][1] = +D[0] * 0.5 - D[5];
 
-	verts[5][0] = D[2] * 0.5;
-	verts[5][1] = D[0] * 0.5 - D[5];
+	verts[5][0] = +D[2] * 0.5;
+	verts[5][1] = +D[0] * 0.5 - D[5];
 
-	verts[6][0] = D[2] * 0.5;
-	verts[6][1] = D[0] * 0.5;
+	verts[6][0] = +D[2] * 0.5;
+	verts[6][1] = +D[0] * 0.5;
 
 	verts[7][0] = -D[2] * 0.5;
-	verts[7][1] = D[0] * 0.5;
+	verts[7][1] = +D[0] * 0.5;
 
 	verts[8][0] = -D[2] * 0.5;
-	verts[8][1] = D[0] * 0.5 - D[5];
+	verts[8][1] = +D[0] * 0.5 - D[5];
 
 	verts[9][0] = -D[3] * 0.5;
-	verts[9][1] = D[0] * 0.5 - D[5];
+	verts[9][1] = +D[0] * 0.5 - D[5];
 
 	verts[10][0] = -D[3] * 0.5;
 	verts[10][1] = -D[0] * 0.5 + D[4];
@@ -554,14 +554,14 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[0][0] = -D[0] * 0.5;
 	verts[0][1] = -D[1] * 0.5;
 
-	verts[1][0] = D[0] * 0.5;
+	verts[1][0] = +D[0] * 0.5;
 	verts[1][1] = -D[1] * 0.5;
 
-	verts[2][0] = D[0] * 0.5;
-	verts[2][1] = D[1] * 0.5;
+	verts[2][0] = +D[0] * 0.5;
+	verts[2][1] = +D[1] * 0.5;
 
 	verts[3][0] = -D[0] * 0.5;
-	verts[3][1] = D[1] * 0.5;
+	verts[3][1] = +D[1] * 0.5;
 
 
 	m_sketch->vert_count = vert_count;
@@ -673,29 +673,29 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[2][0] = -D[0] * 0.5;
 	verts[2][1] = -D[3] * 0.5;
 
-	verts[3][0] = D[0] * 0.5;
+	verts[3][0] = +D[0] * 0.5;
 	verts[3][1] = -D[3] * 0.5;
 
-	verts[4][0] = D[0] * 0.5;
+	verts[4][0] = +D[0] * 0.5;
 	verts[4][1] = -D[2] * 0.5;
 
-	verts[5][0] = D[0] * 0.5 + D[1] * 0.5;
+	verts[5][0] = +D[0] * 0.5 + D[1] * 0.5;
 	verts[5][1] = -D[2] * 0.5;
 
-	verts[6][0] = D[0] * 0.5 + D[1] / 2;
-	verts[6][1] = D[2] * 0.5;
+	verts[6][0] = +D[0] * 0.5 + D[1] / 2;
+	verts[6][1] = +D[2] * 0.5;
 
-	verts[7][0] = D[0] * 0.5;
-	verts[7][1] = D[2] * 0.5;
+	verts[7][0] = +D[0] * 0.5;
+	verts[7][1] = +D[2] * 0.5;
 
-	verts[8][0] = D[0] * 0.5;
-	verts[8][1] = D[3] * 0.5;
+	verts[8][0] = +D[0] * 0.5;
+	verts[8][1] = +D[3] * 0.5;
 
 	verts[9][0] = -D[0] * 0.5;
-	verts[9][1] = D[3] * 0.5;
+	verts[9][1] = +D[3] * 0.5;
 
 	verts[10][0] = -D[0] * 0.5;
-	verts[10][1] = D[2] * 0.5;
+	verts[10][1] = +D[2] * 0.5;
 
 	verts[11][0] = -D[0] * 0.5 - D[1] * 0.5;
 	verts[11][1] = D[2] * 0.5;
@@ -1015,7 +1015,74 @@ rt_sketch_internal* Sketch::creatSketch
 	crv->segment[seg_count - 1] = lsg;
     }
     else if (sectionType == "SECTION_19") {
+	const size_t vert_count = 8;
+	const size_t seg_count = 8;
 
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5;
+	verts[0][1] = -D[1] * 0.5;
+
+	verts[1][0] = +D[0] * 0.5;
+	verts[1][1] = -D[1] * 0.5;
+
+	verts[2][0] = +D[0] * 0.5;
+	verts[2][1] = +D[1] * 0.5;
+
+	verts[3][0] = -D[0] * 0.5;
+	verts[3][1] = +D[1] * 0.5;
+
+	verts[4][0] = -D[0] * 0.5 + D[5];
+	verts[4][1] = -D[1] * 0.5 + D[3];
+
+	verts[5][0] = +D[0] * 0.5 - D[4];
+	verts[5][1] = -D[1] * 0.5 + D[3];
+
+	verts[6][0] = +D[0] * 0.5 - D[4];
+	verts[6][1] = +D[1] * 0.5 - D[2];
+
+	verts[7][0] = -D[0] * 0.5 + D[5];
+	verts[7][1] = +D[1] * 0.5 - D[2];
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < 4; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = 3;
+	lsg->end = 0;
+	crv->segment[3] = lsg;
+
+	for (size_t i_c2 = 4; i_c2 < 8; ++i_c2) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c2;
+	    lsg->end = i_c2 + 1;
+	    crv->segment[i_c2] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = (vert_count - 1);
+	lsg->end = 4;
+	crv->segment[seg_count - 1] = lsg;
     }
     else if (sectionType == "SECTION_20") {
 	const size_t vert_count = 6;
@@ -1030,17 +1097,17 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[0][0] = -D[1] * 0.5 + D[0];
 	verts[0][1] = -D[2] * 0.5;
 
-	verts[1][0] = D[1] * 0.5 - D[0];
+	verts[1][0] = +D[1] * 0.5 - D[0];
 	verts[1][1] = -D[2] * 0.5;
 
-	verts[2][0] = D[1] * 0.5;
-	verts[2][1] = 0.0;
+	verts[2][0] = +D[1] * 0.5;
+	verts[2][1] = +0.0;
 
-	verts[3][0] = D[1] * 0.5 - D[0];
-	verts[3][1] = D[2] * 0.5;
+	verts[3][0] = +D[1] * 0.5 - D[0];
+	verts[3][1] = +D[2] * 0.5;
 
 	verts[4][0] = -D[1] * 0.5 + D[0];
-	verts[4][1] = D[2] * 0.5;
+	verts[4][1] = +D[2] * 0.5;
 
 	verts[5][0] = -D[1] * 0.5;
 	verts[5][1] = 0.0;
@@ -1068,10 +1135,166 @@ rt_sketch_internal* Sketch::creatSketch
 	crv->segment[5] = lsg;
     }
     else if (sectionType == "SECTION_21") {
+	const size_t vert_count = 12;
+	const size_t seg_count = 12;
 
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[2] * 0.5 - D[3];
+	verts[0][1] = -D[0] * 0.5;
+
+	verts[1][0] = -D[2] * 0.5 + D[1];
+	verts[1][1] = -D[0] * 0.5;
+
+	verts[2][0] = -D[2] * 0.5 + D[1];
+	verts[2][1] = +D[0] * 0.5 - D[1];
+
+	verts[3][0] = +D[2] * 0.5 - D[1];
+	verts[3][1] = +D[0] * 0.5 - D[1];
+
+	verts[4][0] = +D[2] * 0.5 - D[1];
+	verts[4][1] = -D[0] * 0.5;
+
+	verts[5][0] = +D[2] * 0.5 + D[3];
+	verts[5][1] = -D[0] * 0.5;
+
+	verts[6][0] = +D[2] * 0.5 + D[3];
+	verts[6][1] = -D[0] * 0.5 + D[1];
+
+	verts[7][0] = +D[2] * 0.5;
+	verts[7][1] = -D[0] * 0.5 + D[1];
+
+	verts[8][0] = +D[2] * 0.5;
+	verts[8][1] = +D[0] * 0.5;
+
+	verts[9][0] = -D[2] * 0.5;
+	verts[9][1] = +D[0] * 0.5;
+
+	verts[10][0] = -D[2] * 0.5;
+	verts[10][1] = -D[0] * 0.5 + D[1];
+
+	verts[11][0] = -D[2] * 0.5 - D[3];
+	verts[11][1] = -D[0] * 0.5 + D[1];
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < seg_count; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = vert_count - 1;
+	lsg->end = 0;
+	crv->segment[seg_count - 1] = lsg;
     }
     else if (sectionType == "SECTION_22") {
+	const size_t vert_count = 16;
+	const size_t seg_count = 16;
 
+	VMOVE(m_sketch->V, V);
+	VMOVE(m_sketch->u_vec, t);
+	VMOVE(m_sketch->v_vec, s);
+
+	point2d_t* verts = (point2d_t*)bu_calloc(vert_count, sizeof(point2d_t), "verts");
+
+	verts[0][0] = -D[0] * 0.5;
+	verts[0][1] = -D[1] * 0.5;
+
+	verts[1][0] = +D[0] * 0.5;
+	verts[1][1] = -D[1] * 0.5;
+
+	verts[2][0] = +D[0] * 0.5;
+	verts[2][1] = -D[1] * 0.5 + D[4];
+
+	verts[3][0] = -D[0] * 0.5;
+	verts[3][1] = -D[1] * 0.5 + D[4];
+
+	verts[4][0] = -D[2] * 0.5 - D[5];
+	verts[4][1] = -D[1] * 0.5 + D[4]; 
+
+	verts[5][0] = -D[2] * 0.5 + D[3];
+	verts[5][1] = -D[1] * 0.5 + D[4];
+
+	verts[6][0] = -D[2] * 0.5 + D[3];
+	verts[6][1] = +D[1] * 0.5 - D[3];
+
+	verts[7][0] = +D[2] * 0.5 - D[3];
+	verts[7][1] = +D[1] * 0.5 - D[3];
+
+	verts[8][0] = +D[2] * 0.5 - D[3];
+	verts[8][1] = -D[1] * 0.5 + D[4];
+
+	verts[9][0] = +D[2] * 0.5 + D[5];
+	verts[9][1] = -D[1] * 0.5 + D[4];
+
+	verts[10][0] = +D[2] * 0.5 + D[5];
+	verts[10][1] = -D[1] * 0.5 + D[4] + D[3];
+
+	verts[11][0] = +D[2] * 0.5;
+	verts[11][1] = -D[1] * 0.5 + D[4] + D[3];
+
+	verts[12][0] = +D[2] * 0.5;
+	verts[12][1] = +D[1] * 0.5;
+
+	verts[13][0] = -D[2] * 0.5;
+	verts[13][1] = +D[1] * 0.5;
+
+	verts[14][0] = -D[2] * 0.5;
+	verts[14][1] = -D[1] * 0.5 + D[4] + D[3];
+
+	verts[15][0] = -D[2] * 0.5 - D[5];
+	verts[15][1] = -D[1] * 0.5 + D[4] + D[3];
+
+	m_sketch->vert_count = vert_count;
+	m_sketch->verts = verts;
+
+	rt_curve* crv = &m_sketch->curve;
+	crv->count = seg_count;
+	crv->segment = (void**)bu_calloc(crv->count, sizeof(void*), "segments");
+	crv->reverse = (int*)bu_calloc(crv->count, sizeof(int), "reverse");
+
+	for (size_t i_c = 0; i_c < 4; ++i_c) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c;
+	    lsg->end = i_c + 1;
+	    crv->segment[i_c] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = 3;
+	lsg->end = 0;
+	crv->segment[3] = lsg;
+
+	for (size_t i_c1 = 4; i_c1 < seg_count; ++i_c1) {
+	    BU_ALLOC(lsg, struct line_seg);
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = i_c1;
+	    lsg->end = i_c1 + 1;
+	    crv->segment[i_c1] = lsg;
+	}
+
+	BU_ALLOC(lsg, struct line_seg);
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = vert_count - 1;
+	lsg->end = 4;
+	crv->segment[seg_count - 1] = lsg;
     }
 
     return m_sketch;
