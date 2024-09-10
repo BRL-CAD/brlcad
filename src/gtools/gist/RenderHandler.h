@@ -115,6 +115,8 @@ public:
     char getMapChar(int index);
 
     double getTotalCoverage(double ambientWidth, double ambientHeight);
+
+    bool validLayout();
 };
 
 
