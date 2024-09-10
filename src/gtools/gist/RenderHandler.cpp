@@ -581,7 +581,14 @@ LayoutChoice::getMapChar(int index)
     return map[index];
 }
 
+bool
+LayoutChoice::validLayout()
+{
+    if (map.empty() || coordinates.empty())
+	return false;
 
+    return true;
+}
 
 
 std::vector<LayoutChoice>
@@ -633,7 +640,7 @@ selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, doubl
     }
 
     if (bestLayout == NULL) {
-	bu_exit(BRLCAD_ERROR, "ERROR: no suitable layouts found! Please select a different component to generate report\n");
+	bu_log("ERROR: no suitable layouts found! Please select a different component to generate report\n");
 	return LayoutChoice("", true);
     }
 
@@ -690,6 +697,8 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 
     // select the layout
     LayoutChoice bestLayout = genLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
+    if (!bestLayout.validLayout())
+	return;
     bestLayout.initCoordinates(width, height, modelLength, modelDepth, modelHeight);
 
     // SCALE: shrinking factor on images placed onto the IFPainter
