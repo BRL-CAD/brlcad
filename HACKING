@@ -915,9 +915,9 @@ PATCH SUBMISSION GUIDELINES
 ---------------------------
 
 To contribute to BRL-CAD, begin by submitting pull requests to the
-Github project at https://github.com/BRL-CAD/brlcad.
+GitHub project at https://github.com/BRL-CAD/brlcad.
 
-For an introduction to the standard Github workflow for forking and
+For an introduction to the standard GitHub workflow for forking and
 submitting pull requests, see:
 
 https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project
@@ -930,8 +930,8 @@ particularly important when working with BRL-CAD.  Patches need to be
 based on the latest sources and avoid reverting improvements that have
 been added to the upstream sources since your fork was created.
 
-Although the Github pull request based workflow is recommended and
-preferred, if for any reason you cannot use Github you may also
+Although the GitHub pull request based workflow is recommended and
+preferred, if for any reason you cannot use GitHub you may also
 submit "git format-patch" patches through other channels.  See:
 
 https://git-scm.com/docs/git-format-patch
@@ -952,7 +952,7 @@ BUGS & UNEXPECTED BEHAVIOR
 
 When a bug or unexpected behavior is encountered that cannot be
 quickly fixed, it needs to be documented in our BUGS file or more
-formally reported to the Github issues tracker at:
+formally reported to the GitHub issues tracker at:
 
 https://github.com/BRL-CAD/brlcad/issues
 
@@ -984,7 +984,7 @@ access to be granted:
 
 3) Join the brlcad-devel developer mailing list, introduce yourself.
 
-4) Create a Github account, submit at least pull requests that
+4) Create a GitHub account, submit at least pull requests that
 demonstrate competency with our coding style, apply flawlessly, and
 provide some significant improvement.
 
@@ -1032,10 +1032,10 @@ developers to address issues as they are encountered regardless of who
 introduces the problem.
 
 To assist developers in these efforts,  BRL-CAD utilizes Continuous
-Integration (CI) testing via the Github Actions infrastructure to
+Integration (CI) testing via the GitHub Actions infrastructure to
 monitor code health:  https://github.com/BRL-CAD/brlcad/actions
 Under normal conditions, all developers should strive to keep all
-Github Actions tests passing.
+GitHub Actions tests passing.
 
 3) Contributors making commits to the repository are required to
 uphold the legal conventions and requirements summarized in the
@@ -1500,7 +1500,7 @@ Release steps are as follows:
 # 18: Upload the source distributions and release notes.  Use source
 # tarballs to create binaries.
 
-------------- TODO - need new procedures for Github... ------------
+------------- TODO - need new procedures for GitHub... ------------
 
 
 #####################################################################
