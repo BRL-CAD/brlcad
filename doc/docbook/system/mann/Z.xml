@@ -9,7 +9,7 @@
 
   <refnamediv xml:id="name">
     <refname>Z</refname>
-    <refpurpose>Clear the <emphasis>mged</emphasis> display.
+    <refpurpose>Clears the <emphasis>mged</emphasis> display.
     </refpurpose>
   </refnamediv>
 
