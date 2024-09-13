@@ -23,22 +23,25 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Gets/sets view parameters in local units. The <command>view</command> command accepts the following
+<para>Gets/sets view parameters in local units. The <command>view</command> command accepts the following
 subcommands:
-   </para>
-
-<para><emphasis remap="B" role="bold">center</emphasis> [<emphasis>x y z</emphasis>]
 </para>
-
-<para><emphasis remap="B" role="bold">size</emphasis> [<emphasis>val</emphasis>]
+<para><emphasis remap="B" role="bold">center</emphasis> <arg choice="opt" rep="norepeat"><replaceable>x y z</replaceable></arg>
 </para>
-<para><emphasis remap="B" role="bold">eye</emphasis> [<emphasis>x y z</emphasis>]
+<para><emphasis remap="B" role="bold">size</emphasis> <arg choice="opt" rep="norepeat"><replaceable>view_size</replaceable></arg>
 </para>
-<para><emphasis remap="B" role="bold">ypr</emphasis> [<emphasis>y p r</emphasis>]
+<para><emphasis remap="B" role="bold">eye</emphasis> <arg choice="opt" rep="norepeat"><replaceable>x y z</replaceable></arg>
 </para>
-<para><emphasis remap="B" role="bold">quat</emphasis> [<emphasis>v1 v2 v3 v4</emphasis>]
+<para><emphasis remap="B" role="bold">ypr</emphasis> <arg choice="opt" rep="norepeat"><replaceable>yaw pitch roll</replaceable></arg>
 </para>
-<para><emphasis remap="B" role="bold">aet</emphasis> [<emphasis>a e t</emphasis>]
+<para><emphasis remap="B" role="bold">quat</emphasis> <arg choice="opt" rep="norepeat"><replaceable>v1 v2 v3 v4</replaceable></arg>
+</para>
+<para><emphasis remap="B" role="bold">aet</emphasis>
+	      <arg choice="opt" rep="norepeat">
+  	    <arg choice="opt" rep="norepeat">-i</arg>
+ 	    <replaceable>azimuth elevation</replaceable>
+ 	    <arg choice="opt" rep="norepeat"><replaceable>twist</replaceable></arg>
+      </arg>
 </para>
 
 </refsection>
@@ -49,7 +52,7 @@ subcommands:
 	  <term><emphasis remap="B" role="bold">center</emphasis></term>
 	  <listitem>
 	    <para>
-	     Get/set the view center.
+	     Get (without arguments) or set the view center.
 	    </para>
 	  </listitem>
   </varlistentry>
@@ -57,7 +60,7 @@ subcommands:
 	  <term><emphasis remap="B" role="bold">size</emphasis></term>
   	<listitem>
 	    <para>
-	      Get/set the view size.
+	      Get (without arguments) or set the view size.
 	    </para>
 	  </listitem>
   </varlistentry>
@@ -65,7 +68,7 @@ subcommands:
 	  <term><emphasis remap="B" role="bold">eye</emphasis></term>
 	  <listitem>
 	    <para>
-	     Get/set the eye point.
+	     Get (without arguments) or set the eye point.
 	    </para>
     </listitem>
   </varlistentry>
@@ -73,7 +76,7 @@ subcommands:
 	  <term><emphasis remap="B" role="bold">ypr</emphasis></term>
     <listitem>
       <para>
-	     Get/set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0)
+	     Get (witout arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0)
 	    </para>
 	  </listitem>
   </varlistentry>
@@ -81,7 +84,7 @@ subcommands:
 	  <term><emphasis remap="B" role="bold">quat</emphasis></term>
     <listitem>
       <para>
-	      Get/set the view in the form of a quaternion.
+	    Get (witout arguments) or set the view in the form of a quarternion.
 	    </para>
 	  </listitem>
   </varlistentry>
@@ -89,7 +92,9 @@ subcommands:
 	  <term><emphasis remap="B" role="bold">aet</emphasis></term>
     <listitem>
       <para>
-	       Get/set the current azimuth, elevation, twist
+	      Get (without arguments) or set the azimuth, elevation, and (optional) twist.
+	      If only 2 arguments are supplied, a twist of 0 is assumed. The <emphasis>-i</emphasis>
+	      flag can be use to set the AET incrementally.
 	    </para>
 	  </listitem>
   </varlistentry>   
@@ -128,6 +133,14 @@ subcommands:
       <prompt>mged&gt; </prompt><userinput>view ypr 90 0 0</userinput>
     </para>
     <para>Sets the view using yaw, pitch, and roll so that the ae is 270, 0 (right).
+    </para>
+  </example> 
+
+	     <example><title>Increase the azimuth by 10 degrees</title>
+    <para>
+      <prompt>mged&gt; </prompt><userinput>view aet -i 10 0</userinput>
+    </para>
+    <para>Sets the view by increasing the current azimuth by 10 degrees
     </para>
   </example> 
 
