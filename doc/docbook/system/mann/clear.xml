@@ -9,7 +9,7 @@
 
   <refnamediv xml:id="name">
     <refname>clear</refname>
-    <refpurpose>Clear the <emphasis>mged</emphasis> command window.
+    <refpurpose>Clears the <emphasis>mged</emphasis> command window.
     </refpurpose>
   </refnamediv>
 
