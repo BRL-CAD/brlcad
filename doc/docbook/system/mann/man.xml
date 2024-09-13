@@ -9,7 +9,7 @@
 
   <refnamediv xml:id="name">
     <refname>man</refname>
-    <refpurpose>View manual pages.</refpurpose>
+    <refpurpose>Opens the graphical man page viewer.</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv xml:id="synopsis">
