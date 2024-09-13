@@ -9,7 +9,7 @@
 
   <refnamediv xml:id="name">
     <refname>comb_color</refname>
-    <refpurpose>
+    <refpurpose>Changes the color of a combination.
     </refpurpose>
   </refnamediv>
 
@@ -23,8 +23,9 @@
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
-    <para>Assigns the color <emphasis>rgb</emphasis>(0-255) to the existing
-    combination named <emphasis>combination_name</emphasis>.
+    <para>Assigns the color using the provided <emphasis>rgb</emphasis> values to the existing
+    combination named <emphasis>combination_name</emphasis>. Valid values for each variable 
+    are between 0 and 255. See also the <command>mater</command> command.
     </para>
   </refsection>
 
@@ -36,10 +37,10 @@
     <example><title>Assign a color to a specific region.</title>
 
       <para>
-	<prompt>mged&gt; </prompt><userinput>comb_color region1 0 255 0</userinput>
+	<prompt>mged&gt; </prompt><userinput>comb_color region.r 0 255 0</userinput>
       </para>
       <para>
-	Assigns the color green to <emphasis>region1</emphasis>.
+	Assigns the color green to <emphasis>region.r</emphasis>.
       </para>
     </example>
   </refsection>
