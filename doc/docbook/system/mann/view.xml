@@ -26,77 +26,72 @@
 <para>Gets/sets view parameters in local units. The <command>view</command> command accepts the following
 subcommands:
 </para>
-<para><emphasis remap="B" role="bold">center</emphasis> <arg choice="opt" rep="norepeat"><replaceable>x y z</replaceable></arg>
-</para>
-<para><emphasis remap="B" role="bold">size</emphasis> <arg choice="opt" rep="norepeat"><replaceable>view_size</replaceable></arg>
-</para>
-<para><emphasis remap="B" role="bold">eye</emphasis> <arg choice="opt" rep="norepeat"><replaceable>x y z</replaceable></arg>
-</para>
-<para><emphasis remap="B" role="bold">ypr</emphasis> <arg choice="opt" rep="norepeat"><replaceable>yaw pitch roll</replaceable></arg>
-</para>
-<para><emphasis remap="B" role="bold">quat</emphasis> <arg choice="opt" rep="norepeat"><replaceable>v1 v2 v3 v4</replaceable></arg>
-</para>
-<para><emphasis remap="B" role="bold">aet</emphasis>
-	      <arg choice="opt" rep="norepeat">
-  	    <arg choice="opt" rep="norepeat">-i</arg>
- 	    <replaceable>azimuth elevation</replaceable>
- 	    <arg choice="opt" rep="norepeat"><replaceable>twist</replaceable></arg>
-      </arg>
-</para>
 
 </refsection>
 
 <refsection xml:id="subcommands"><title>SUBCOMMANDS</title>
 <variablelist remap="TP">
   <varlistentry>
-	  <term><emphasis remap="B" role="bold">center</emphasis></term>
-	  <listitem>
-	    <para>
-	     Get (without arguments) or set the view center.
-	    </para>
-	  </listitem>
-  </varlistentry>
-  <varlistentry>
-	  <term><emphasis remap="B" role="bold">size</emphasis></term>
-  	<listitem>
-	    <para>
-	      Get (without arguments) or set the view size.
-	    </para>
-	  </listitem>
-  </varlistentry>
-  <varlistentry>
-	  <term><emphasis remap="B" role="bold">eye</emphasis></term>
-	  <listitem>
-	    <para>
-	     Get (without arguments) or set the eye point.
-	    </para>
+    <term><emphasis remap="B" role="bold">center</emphasis>
+      [<emphasis>x y z</emphasis>]
+    </term>
+    <listitem>
+      <para>
+	Get (without arguments) or set the view center.
+      </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-	  <term><emphasis remap="B" role="bold">ypr</emphasis></term>
+    <term><emphasis remap="B" role="bold">size</emphasis>
+      [<emphasis>view_size</emphasis>]
+    </term>
     <listitem>
       <para>
-	     Get (witout arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0)
-	    </para>
-	  </listitem>
+	Get (without arguments) or set the view size.
+      </para>
+    </listitem>
   </varlistentry>
   <varlistentry>
-	  <term><emphasis remap="B" role="bold">quat</emphasis></term>
+    <term><emphasis remap="B" role="bold">eye</emphasis>
+      [<emphasis>x y z</emphasis>]
+    </term>
     <listitem>
       <para>
-	    Get (witout arguments) or set the view in the form of a quarternion.
-	    </para>
-	  </listitem>
+	Get (without arguments) or set the eye point.
+      </para>
+    </listitem>
   </varlistentry>
   <varlistentry>
-	  <term><emphasis remap="B" role="bold">aet</emphasis></term>
+    <term><emphasis remap="B" role="bold">ypr</emphasis>
+    [<emphasis>yaw pitch roll</emphasis>]
+    </term>
     <listitem>
       <para>
-	      Get (without arguments) or set the azimuth, elevation, and (optional) twist.
-	      If only 2 arguments are supplied, a twist of 0 is assumed. The <emphasis>-i</emphasis>
-	      flag can be use to set the AET incrementally.
-	    </para>
-	  </listitem>
+	Get (witout arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0)
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">quat</emphasis>
+    [<emphasis>v1 v2 v3 v4</emphasis>]
+    </term>
+    <listitem>
+      <para>
+	Get (witout arguments) or set the view in the form of a quarternion.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">aet</emphasis>
+    [[<emphasis>-i</emphasis>]<emphasis> azimuth elevation </emphasis>[<emphasis>twist</emphasis>]]
+    </term>
+    <listitem>
+      <para>
+	Get (without arguments) or set the azimuth, elevation, and (optional) twist.
+	If only 2 arguments are supplied, a twist of 0 is assumed. The <emphasis>-i</emphasis>
+	flag can be use to set the AET incrementally.
+      </para>
+    </listitem>
   </varlistentry>   
   </variablelist>
   </refsection>
