@@ -10,7 +10,7 @@
   <refnamediv xml:id="name">
     <refname>center</refname>
     <refpurpose>Positions the center of the <emphasis>mged</emphasis> viewing
-    cube at the specified model coordinates.
+    cube at the specified model coordinates. Without arguments, returns the current center.
     </refpurpose>
   </refnamediv>
 
