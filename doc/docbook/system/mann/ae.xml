@@ -10,7 +10,8 @@
   <refnamediv xml:id="name">
     <refname>ae</refname>
     <refpurpose>Sets the view orientation for the <emphasis>mged</emphasis> display
-    by rotating the eye position about the center of the viewing cube.
+    by rotating the eye point about the center of the viewing cube. Without arguments, 
+	returns the current azimuth, elevation, and twist.
     </refpurpose>
   </refnamediv>
 
@@ -18,10 +19,10 @@
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>ae</command>
+      <arg choice="opt" rep="norepeat">
       <arg choice="opt" rep="norepeat">-i</arg>
-      <arg choice="req" rep="norepeat"><replaceable>azimuth</replaceable></arg>
-      <arg choice="req" rep="norepeat"><replaceable>elevation</replaceable></arg>
-      <arg choice="opt" rep="norepeat"><replaceable>twist</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>azimuth elevation</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>twist</replaceable></arg></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
