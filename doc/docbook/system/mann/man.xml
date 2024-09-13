@@ -15,7 +15,7 @@
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>man</command>
-      <arg choice="req" rep="norepeat"><replaceable>cmdname</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>cmdname</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -23,7 +23,9 @@
 
   <para>
     Launches the <command>brlman</command> graphical man page viewer with
-    the man page documenting the specified MGED command name.
+    the man page documenting the specified MGED command name. If no command name is provided, 
+    The graphical man page viewer will open the entry for the first command (or the last command looked at if the manual
+    was previously opened in the current MGED session).
   </para>
   </refsection>
 
