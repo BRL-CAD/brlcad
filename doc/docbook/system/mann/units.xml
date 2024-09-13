@@ -9,7 +9,8 @@
 
 <refnamediv xml:id="name">
   <refname>units</refname>
-  <refpurpose>Sets the units being used in MGED. Without arguments, returns the current units being used in MGED.
+  <refpurpose>Sets the units being used in <emphasis>mged</emphasis>. Without arguments, returns the current units being used
+	in <emphasis>mged</emphasis>.
    </refpurpose>
 </refnamediv>
 
@@ -26,7 +27,8 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Without arguments, returns the current type of units that
-MGED is using. If a <emphasis>units_type</emphasis> is specified, MGED switches to editing in the
+<emphasis>mged</emphasis> is using. If a <emphasis>units_type</emphasis> is specified, <emphasis>mged</emphasis>
+switches to editing in the
 indicated units. The actual database is always stored in millimeters, and the display is
 adjusted to the user's choice of units. If the <emphasis>units_type</emphasis> specified on the command line
 is one of the types allowed, it will be written to the database file as the preferred units
