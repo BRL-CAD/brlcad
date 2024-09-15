@@ -42,7 +42,6 @@ public:
 						const point_t& node3,
 						const std::vector<double>& D);
 
-    const char*                     getName(void) const;
     rt_sketch_internal*             getSketch(void) const;
 
     std::string                     write(rt_wdb* wdbp);

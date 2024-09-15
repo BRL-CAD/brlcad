@@ -50,7 +50,6 @@ public:
 						    const point_t& point7,
 						    const point_t& point8);
 
-    const char*                              getName(void) const;
     std::map<std::string, rt_arb_internal>   getArbs(void) const;
 
     std::vector<std::string>                 write(rt_wdb* wdbp);

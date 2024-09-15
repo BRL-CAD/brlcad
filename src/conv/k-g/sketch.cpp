@@ -35,10 +35,15 @@ Sketch::Sketch(void)
     m_sketch->vert_count = 0;
 }
 
+
 void Sketch::setName(const char* value)
 {
-    name = value;
+    if (value != nullptr)
+	name = value;
+    else
+	name = "";
 }
+
 
 rt_sketch_internal* Sketch::creatSketch
 (
@@ -466,12 +471,6 @@ rt_sketch_internal* Sketch::creatSketch
 	lsg->start = (vert_count - 1);
 	lsg->end = 0;
 	crv->segment[seg_count - 1] = lsg;
-    }
-    else if (sectionType == "SECTION_08") {
-
-    }
-    else if (sectionType == "SECTION_09") {
-
     }
     else if (sectionType == "SECTION_10") {
 	const size_t vert_count = 12;
@@ -1300,15 +1299,12 @@ rt_sketch_internal* Sketch::creatSketch
     return m_sketch;
 }
 
-const char* Sketch::getName(void) const
-{
-    return nullptr;
-}
 
 rt_sketch_internal* Sketch::getSketch(void) const
 {
-    return nullptr;
+    return m_sketch;
 }
+
 
 std::string Sketch::write(rt_wdb* wdbp)
 {

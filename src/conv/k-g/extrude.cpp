@@ -34,6 +34,7 @@ Extrude::Extrude(void)
     m_extrude->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 }
 
+
 void Extrude::setName
 (
     const char* value
@@ -44,10 +45,6 @@ void Extrude::setName
 	name = "";
 }
 
-const char* Extrude::getName(void) const
-{
-    return nullptr;
-}
 
 void Extrude::extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec, rt_sketch_internal* skt)
 {

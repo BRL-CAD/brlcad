@@ -171,7 +171,7 @@ int main
 				    else if (beamSection.CST == 2) {
 
 				    }
-				    else if (beamSection.sectionType != "SECTION_09") {
+				    else if ((beamSection.sectionType != "") && (beamSection.sectionType != "SECTION_08") && (beamSection.sectionType != "SECTION_09")) {
 					point_t point1;
 					point_t point2;
 					point_t point3;

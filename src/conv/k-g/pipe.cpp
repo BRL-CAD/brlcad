@@ -63,15 +63,12 @@ void Pipe::addPipePnt
     m_pipe->pipe_count += 1;
 }
 
-const char* Pipe::getName(void) const
-{
-    return name.c_str();
-}
 
 rt_pipe_internal* Pipe::getPipe(void) const
 {
     return m_pipe;
 }
+
 
 std::vector<std::string> Pipe::write
 (

@@ -67,12 +67,6 @@ void Arbs::addArb(
 }
 
 
-const char* Arbs::getName(void) const
-{
-    return name.c_str();
-}
-
-
 std::map<std::string, rt_arb_internal> Arbs::getArbs(void) const
 {
     return arbs;

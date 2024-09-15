@@ -170,11 +170,6 @@ void Bot::addTriangle
 }
 
 
-const char* Bot::getName(void) const {
-    return name.c_str();
-}
-
-
 std::vector<std::string> Bot::write
 (
     rt_wdb* wdbp

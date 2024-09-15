@@ -42,7 +42,6 @@ public:
 
     void                            addPipePnt(const pipePoint& point);
 
-    const char*                     getName(void) const;
     rt_pipe_internal*               getPipe(void) const;
 
     std::vector<std::string>        write(rt_wdb* wdbp);
