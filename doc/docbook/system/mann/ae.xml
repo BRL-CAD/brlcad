@@ -43,7 +43,8 @@
       is included, the view will be rotated about the viewing direction by the
       specified <emphasis>twist</emphasis> angle. The <emphasis>-i</emphasis> option
       results in the angles supplied being interpreted as increments. If no arguments are
-      supplied, the command will return the current azimuth, elevation, and twist.
+      supplied, the command will return the current azimuth, elevation, and twist. See also the
+      <command>view</command> command.
     </para>
   </refsection>
 
