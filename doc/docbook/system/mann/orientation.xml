@@ -25,7 +25,8 @@ specified on the command line.
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Sets the view direction for MGED from the quaternion
-specified on the command line.
+specified on the command line. See also the
+      <command>view</command> command.
   </para>
 </refsection>
 
