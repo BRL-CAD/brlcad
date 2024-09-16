@@ -26,7 +26,8 @@
 
   <para>Sets the size of the current viewing cube to the specified
 	view_size (in local units). This size is the length of any side of the square MGED
-	display. If no arguments are supplied, returns the current view size.
+	display. If no arguments are supplied, returns the current view size. See also the
+      <command>view</command> command.
   </para>
 </refsection>
 
