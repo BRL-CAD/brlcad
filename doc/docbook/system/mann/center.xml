@@ -32,7 +32,8 @@
       The coordinates are expected in the current editing units. In case the coordinates
       are the result of evaluating a formula, they are echoed back. If no coordinates are
       provided, the current center coordinates (in current editing units, not mm) are
-      printed and can be used in subsequent calculations.
+      printed and can be used in subsequent calculations. See also the
+      <command>view</command> command.
     </para>
     <para>
       It is often convenient to use the center of the view when visually selecting key
