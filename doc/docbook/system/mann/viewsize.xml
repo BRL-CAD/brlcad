@@ -26,7 +26,8 @@ view_size (in local units).</refpurpose>
 
   <para>Sets the size of the current viewing cube to the specified
 view_size (in local units). This size is the length of any side of the square mged
-display. This command is a synonym for the <command>size</command> command.
+display. This command is a synonym for the <command>size</command> command. See also the
+      <command>view</command> command.
   </para>
 </refsection>
 
