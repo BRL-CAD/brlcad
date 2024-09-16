@@ -37,7 +37,8 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (without arguments) or set the view center.
+	Get (without arguments) or set the view center. Setting the center also changes the eye point while keeping
+	the azimuth, elevation, and view size static.
       </para>
     </listitem>
   </varlistentry>
@@ -47,7 +48,8 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (without arguments) or set the view size.
+	Get (without arguments) or set the view size. Setting the view size also changes the eye point while keeping
+	the azimuth, elevation, and center static.
       </para>
     </listitem>
   </varlistentry>
@@ -57,7 +59,8 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (without arguments) or set the eye point.
+	Get (without arguments) or set the eye point. Setting the eye point also changes center while keeping the
+	azimuth, elevation, and view size static.
       </para>
     </listitem>
   </varlistentry>
@@ -67,7 +70,8 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (witout arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0)
+	Get (witout arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0).
+	Setting the ypr also changes the azimuth, elevation, and eye point while keeping the center and view size static.
       </para>
     </listitem>
   </varlistentry>
@@ -77,7 +81,8 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (witout arguments) or set the view in the form of a quarternion.
+	Get (witout arguments) or set the view in the form of a quarternion. Setting the quarternion also changes the azimuth,
+	elevation, and eye point while keeping the center and view size static.
       </para>
     </listitem>
   </varlistentry>
@@ -89,7 +94,8 @@ subcommands:
       <para>
 	Get (without arguments) or set the azimuth, elevation, and (optional) twist.
 	If only 2 arguments are supplied, a twist of 0 is assumed. The <emphasis>-i</emphasis>
-	flag can be use to set the AET incrementally.
+	flag can be use to set the AET incrementally. Setting the azimuth and elevation also changes the eye point
+	while keeping the center and view size static.
       </para>
     </listitem>
   </varlistentry>   
