@@ -14,6 +14,9 @@ changes made.  See document footer for additional details.
 --- 2024-08-30 Release 7.40.2                                      ---
 ----------------------------------------------------------------------
 
+* various manpage and help text updates - Josh Baker
+* improved gist -F default behavior - Chris McGregor
+* fixed gist crashing with halfspaces in component - Chris McGregor
 * fixed lint BoT check testing - Cliff Yapp
 * improved overlap checker dialog behavior - Chris McGregor
 * fixed rtwizard tree visuals in gist - Chris McGregor
