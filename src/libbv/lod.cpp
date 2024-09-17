@@ -607,6 +607,10 @@ struct bv_mesh_lod_context_internal {
 struct bv_mesh_lod_context *
 bv_mesh_lod_context_create(const char *name)
 {
+    FILE *fp = NULL;
+    std::ifstream format_file;
+    long disk_format_version = -1;
+    char dir[MAXPATHLEN];
     size_t mreaders = 0;
     int ncpus = 0;
     if (!name)
@@ -647,60 +651,46 @@ bv_mesh_lod_context_create(const char *name)
     if (mdb_env_create(&i->lod_env))
 	goto lod_context_fail;
     if (mdb_env_create(&i->name_env))
-	goto lod_context_close_lod_fail;
+	goto lod_context_fail;
 
     if (mdb_env_set_maxreaders(i->lod_env, mreaders))
-	goto lod_context_close_fail;
+	goto lod_context_fail;
     if (mdb_env_set_maxreaders(i->name_env, mreaders))
-	goto lod_context_close_fail;
+	goto lod_context_fail;
 
     // TODO - the "failure" mode if this limit is ever hit is to back down
     // the maximum stored LoD on larger objects, but that will take some
     // doing to implement...
     if (mdb_env_set_mapsize(i->lod_env, CACHE_MAX_DB_SIZE))
-	goto lod_context_close_fail;
+	goto lod_context_fail;
 
     if (mdb_env_set_mapsize(i->name_env, CACHE_MAX_DB_SIZE))
-	goto lod_context_close_fail;
-
+	goto lod_context_fail;
 
     // Ensure the necessary top level dirs are present
-    char dir[MAXPATHLEN];
-    // TODO - need to support a LIBBV_LOD_CACHE environment variable,
-    // similar to LIBRT_CACHE, so we can run parallel tests without
-    // LoD generating routines colliding
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
     if (!bu_file_exists(dir, NULL))
 	bu_mkdir(dir);
+
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    if (!bu_file_exists(dir, NULL)) {
+    if (!bu_file_exists(dir, NULL))
 	bu_mkdir(dir);
-    }
+
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, "format", NULL);
-    if (!bu_file_exists(dir, NULL)) {
-	// Note a format, so we can detect if what's there isn't compatible
-	// with what this logic expects (in anticipation of future changes
-	// to the on-disk format).
-	FILE *fp = fopen(dir, "w");
-	if (!fp)
-	    goto lod_context_close_fail;
-	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
-	fclose(fp);
-    } else {
-	std::ifstream format_file(dir);
-	size_t disk_format_version = 0;
+    format_file.open(dir);
+    if (format_file.is_open()) {
 	format_file >> disk_format_version;
 	format_file.close();
-	if (disk_format_version	!= CACHE_CURRENT_FORMAT) {
-	    bu_log("Old mesh lod cache (%zd) found - clearing\n", disk_format_version);
-	    bv_mesh_lod_clear_cache(NULL, 0);
-	}
-	FILE *fp = fopen(dir, "w");
-	if (!fp)
-	    goto lod_context_close_fail;
-	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
-	fclose(fp);
     }
+    if (disk_format_version > 0 && disk_format_version != CACHE_CURRENT_FORMAT) {
+	bu_log("Old mesh lod cache version (%zd) found at %s - clearing\n", disk_format_version, dir);
+	bv_mesh_lod_clear_cache(NULL, 0);
+    }
+    fp = fopen(dir, "w");
+    if (!fp)
+	goto lod_context_close_lod_fail;
+    fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
+    fclose(fp);
 
     // Create the specific LoD LMDB cache dir, if not already present
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
@@ -709,7 +699,7 @@ bv_mesh_lod_context_create(const char *name)
 
     // Need to call mdb_env_sync() at appropriate points.
     if (mdb_env_open(i->lod_env, dir, MDB_NOSYNC, 0664))
-	goto lod_context_close_fail;
+	goto lod_context_close_lod_fail;
 
     // Create the specific name/key LMDB mapping dir, if not already present
     bu_vls_printf(&fname, "_namekey");
@@ -719,14 +709,14 @@ bv_mesh_lod_context_create(const char *name)
 
     // Need to call mdb_env_sync() at appropriate points.
     if (mdb_env_open(i->name_env, dir, MDB_NOSYNC, 0664))
-	goto lod_context_close_fail;
+	goto lod_context_close_name_fail;
 
     // Success - return the context
     bu_vls_free(&fname);
     return c;
 
     // If something went wrong, clean up and return NULL
-lod_context_close_fail:
+lod_context_close_name_fail:
     mdb_env_close(i->name_env);
 lod_context_close_lod_fail:
     mdb_env_close(i->lod_env);
