@@ -115,6 +115,10 @@ main(int ac, char *av[])
 	    bu_exit(1, "%s [FAIL] test file %s does not exist\n", av[0], bu_vls_cstr(&fname));
 	}
 
+	/* write something to it (some impl. of bu_fchmod() may require non-zero file) */
+	fprintf(fp, "%d", i);
+	fflush(fp);
+
 	/* make file permissive.
 	 *
 	 * NOTE: some filesystems like exfat are fixed 777, so we
@@ -128,7 +132,7 @@ main(int ac, char *av[])
 	    bu_exit(1, "%s [FAIL] test file %s threw an fchmod() error\n", av[0], bu_vls_cstr(&fname));
 	}
 
-	/* write something to it */
+	/* write something else to it */
 	fprintf(fp, "%d", i);
 	fclose(fp);
 
