@@ -1,3 +1,27 @@
+commit cc9ab31ab9e860594c0284a009d91fde8ca40392
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Sep 18 10:22:01 2024 -0400
+
+    Validate a couple more input parameters in the libbv LoD functions.
+
+commit 89c185c347833e5f98d477294159697b81579ee8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Sep 17 18:23:13 2024 -0400
+
+    Update to get new utahrle submodule version
+
+commit ce84ec05f1e856a88779ec65755e0a71339651e5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Sep 17 18:15:26 2024 -0400
+
+    Work on improving LoD cache setup.
+
+commit f679f2aa329bf68d8be0b8eee261e83f39be88c2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Sep 17 10:29:45 2024 -0400
+
+    Update log with commits since 2024-08-16
+
 commit 9ab81fa5c8b465208249dd04c25449a8c348f9c1
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Tue Sep 17 10:27:45 2024 -0400
