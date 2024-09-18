@@ -743,6 +743,9 @@ bv_mesh_lod_context_destroy(struct bv_mesh_lod_context *c)
 unsigned long long
 bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
 {
+    if (!c || !name)
+	return 0;
+
     MDB_val mdb_key, mdb_data;
 
     // Database object names may be of arbitrary length - hash
@@ -778,6 +781,9 @@ bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
 int
 bv_mesh_lod_key_put(struct bv_mesh_lod_context *c, const char *name, unsigned long long key)
 {
+    if (!c || !name || !key)
+	return -1;
+
     // Database object names may be of arbitrary length - hash
     // to get something appropriate for a lookup key
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
@@ -1892,7 +1898,7 @@ bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, 
 {
     unsigned long long key = 0;
 
-    if (!v || !vcnt || !faces || !fcnt)
+    if (!c || !v || !vcnt || !faces || !fcnt)
 	return 0;
 
     POPState p(c, v, vcnt, vn, faces, fcnt, user_key, fratio);
@@ -1907,7 +1913,7 @@ bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, 
 extern "C" struct bv_mesh_lod *
 bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key)
 {
-    if (!key)
+    if (!c || !key)
 	return NULL;
 
     POPState *p = new POPState(c, key);
@@ -1968,6 +1974,8 @@ bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	return -1;
 
     struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
+    if (!l)
+	return -1;
     struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
     POPState *sp = i->s;
     if (level < 0)
