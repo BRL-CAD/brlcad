@@ -1,5 +1,5 @@
 if (TARGET libpkg)
-  BRLCAD_ADDEXEC(regress_pkg regress_pkg.cpp "libpkg;libbu;Threads::Threads" NO_INSTALL)
+  BRLCAD_ADDEXEC(regress_pkg regress_pkg.cpp "libpkg;libbu;Threads::Threads" TEST)
   set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/pkg")
 
   BRLCAD_REGRESSION_TEST(regress-pkg "regress_pkg" EXEC regress_pkg STAND_ALONE)
