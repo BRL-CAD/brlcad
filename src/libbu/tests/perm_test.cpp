@@ -28,7 +28,6 @@ void pout(std::filesystem::perms p)
     pprint('r', p, std::filesystem::perms::others_read);
     pprint('w', p, std::filesystem::perms::others_write);
     pprint('x', p, std::filesystem::perms::others_exec);
-    std::cout << '\n';
 }
 
 int
@@ -39,6 +38,7 @@ main(int argc, const char **argv)
     if (argc > 1)
 	perms = std::stoi(std::string(argv[1]), 0, 8);
     std::filesystem::perms perms_mask = std::filesystem::perms::none;
+    std::filesystem::perms out_perms;
     perms_mask = perms_mask | std::filesystem::perms::owner_all | std::filesystem::perms::group_all;
     if (perms)
 	perms_mask = static_cast<std::filesystem::perms>(perms);
@@ -49,14 +49,38 @@ main(int argc, const char **argv)
     std::filesystem::perms initial_perms = std::filesystem::status(f).permissions();
     std::cout << "Initial(" << std::oct << static_cast<int>(initial_perms) << "): ";
     pout(initial_perms);
+    std::cout << "\n";
 
+    std::cout << "\tAdding ";
+    pout(perms_mask);
+    std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
     std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::add);
 
-    std::filesystem::perms out_perms = std::filesystem::status(f).permissions();
-    std::cout << " Adding(" << std::oct << static_cast<int>(perms_mask) << "): ";
-    pout(perms_mask);
-    std::cout << "  Final(" << std::oct << static_cast<int>(out_perms) << "): ";
+    out_perms = std::filesystem::status(f).permissions();
+    std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
     pout(out_perms);
+    std::cout << "\n";
+
+    std::cout << "\tRemoving ";
+    pout(perms_mask);
+    std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
+    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::remove);
+
+    out_perms = std::filesystem::status(f).permissions();
+    std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
+    pout(out_perms);
+    std::cout << "\n";
+
+    perms_mask = std::filesystem::perms::all;
+    std::cout << "\tAll ";
+    pout(perms_mask);
+    std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
+    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::add);
+
+    out_perms = std::filesystem::status(f).permissions();
+    std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
+    pout(out_perms);
+    std::cout << "\n";
 
     std::filesystem::remove(f);
     return 0;
