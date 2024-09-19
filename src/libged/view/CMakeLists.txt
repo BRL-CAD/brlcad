@@ -19,6 +19,7 @@ set(VIEW_SRCS
   labels.c
   lines.c
   lod.cpp
+  lookat.c
   objs.cpp
   polygons.c
   quat.c
