@@ -168,9 +168,8 @@ bu_fchmod(int fd,
     {
 	char filepath[MAXPATHLEN+1];
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
-	GetFileNameFromHandle(h, filepath);
-	if (!bu_file_exists(filepath, NULL))
-	    bu_log("Warning:  fd %d mapped by GetFileNameFromHandle to %s, but does not exist\n", fd, filepath);
+	if (!GetFileNameFromHandle(h, filepath))
+	    bu_log("Warning:  GetFileNameFromHandle unable to map fd %d to filename\n", fd);
 
 	/* quell flawfinder because this is a necessary evil unless/until
 	 * someone rewrites this to use SetNamedSecurityInfo() based on
