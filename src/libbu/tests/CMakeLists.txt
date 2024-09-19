@@ -765,6 +765,8 @@ if (TARGET bu_mappedfile_parallel_16384)
   set_tests_properties(bu_mappedfile_parallel_16384 PROPERTIES TIMEOUT 3000)
 endif ()
 
+add_executable(perm_test perm_test.cpp)
+
 #
 #  *********** realpath.c tests ************
 #
@@ -789,6 +791,7 @@ CMAKEFILES(
   path_match.in
   tests_bitv.cmake
   tests_vls.cmake
+  perm_test.cpp
   )
 
 # Local Variables:
