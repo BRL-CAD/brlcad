@@ -726,7 +726,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_view_core(gedp, argc, argv);
 
 
-    static const char *usage = "quat|ypr|aet|center|eye|size|lookat [args]";
+    static const char *usage = "quat|ypr|aet|center|eye|size|lookat|autoview [args]";
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -785,6 +785,10 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_lookat_core(gedp, argc-1, argv+1);
     }
 
+    if (BU_STR_EQUAL(argv[1], "autoview")) {
+	return ged_autoview_core(gedp, argc-1, argv+1);
+    }
+
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return BRLCAD_ERROR;
 }
@@ -815,6 +819,9 @@ const struct ged_cmd aet_cmd = { &aet_cmd_impl };
 struct ged_cmd_impl ae_cmd_impl = {"ae", ged_aet_core, GED_CMD_DEFAULT};
 const struct ged_cmd ae_cmd = { &ae_cmd_impl };
 
+struct ged_cmd_impl autoview_cmd_impl = { "autoview", ged_autoview_core, GED_CMD_DEFAULT };
+const struct ged_cmd autoview_cmd = { &autoview_cmd_impl };
+
 struct ged_cmd_impl center_cmd_impl = {"center", ged_center_core, GED_CMD_DEFAULT};
 const struct ged_cmd center_cmd = { &center_cmd_impl };
 
@@ -844,6 +851,7 @@ const struct ged_cmd *view_cmds[] = {
     &ypr_cmd,
     &aet_cmd,
     &ae_cmd,
+    &autoview_cmd,
     &center_cmd,
     &eye_cmd,
     &eye_pt_cmd,
@@ -854,7 +862,7 @@ const struct ged_cmd *view_cmds[] = {
     NULL
 };
 
-static const struct ged_plugin pinfo = { GED_API,  view_cmds, 14 };
+static const struct ged_plugin pinfo = { GED_API,  view_cmds, 15 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

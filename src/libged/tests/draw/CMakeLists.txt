@@ -1,6 +1,5 @@
 set(test_deps
   dm-swrast
-  ged-autoview
   ged-close
   ged-draw
   ged-dm
