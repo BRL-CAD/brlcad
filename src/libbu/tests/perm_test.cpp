@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <string>
 
 void pprint(char lbl, std::filesystem::perms filep, std::filesystem::perms p)
 {
