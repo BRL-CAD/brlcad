@@ -297,7 +297,12 @@ file_access(const char *path, int access_level)
 	mask = S_IWUSR | S_IWGRP | S_IWOTH;
     }
     if (access_level & X_OK) {
+#ifndef HAVE_WINDOWS_H
+	// Windows _chmod doesn't have a concept of executable, so there isn't
+	// anything to check for this case.  See:
+	// https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/chmod-wchmod
 	mask = S_IXUSR | S_IXGRP | S_IXOTH;
+#endif
     }
 
 #ifdef HAVE_GETEUID
@@ -306,6 +311,10 @@ file_access(const char *path, int access_level)
 #ifdef HAVE_GETEGID
     gid = getegid();
 #endif
+
+    // If we're not checking for anything, pass
+    if (!mask)
+	return 1;
 
     if ((uid_t)sb.st_uid == uid) {
 	/* we own it */
