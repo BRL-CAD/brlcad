@@ -726,7 +726,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_view_core(gedp, argc, argv);
 
 
-    static const char *usage = "quat|ypr|aet|center|eye|size|lookat|autoview [args]";
+    static const char *usage = "quat|ypr|aet|center|eye|size|lookat|autoview|saveview [args]";
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -789,6 +789,10 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_autoview_core(gedp, argc-1, argv+1);
     }
 
+    if (BU_STR_EQUAL(argv[1], "saveview")) {
+	return ged_saveview_core(gedp, argc-1, argv+1);
+    }
+
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return BRLCAD_ERROR;
 }
@@ -834,6 +838,9 @@ const struct ged_cmd eye_pt_cmd = { &eye_pt_cmd_impl };
 struct ged_cmd_impl lookat_cmd_impl = {"lookat", ged_lookat_core, GED_CMD_DEFAULT};
 const struct ged_cmd lookat_cmd = { &lookat_cmd_impl };
 
+struct ged_cmd_impl saveview_cmd_impl = {"saveview", ged_saveview_core, GED_CMD_DEFAULT};
+const struct ged_cmd saveview_cmd = { &saveview_cmd_impl };
+
 struct ged_cmd_impl size_cmd_impl = {"size", ged_size_core, GED_CMD_DEFAULT};
 const struct ged_cmd size_cmd = { &size_cmd_impl };
 
@@ -856,13 +863,14 @@ const struct ged_cmd *view_cmds[] = {
     &eye_cmd,
     &eye_pt_cmd,
     &lookat_cmd,
+    &saveview_cmd,
     &size_cmd,
     &data_lines_cmd,
     &sdata_lines_cmd,
     NULL
 };
 
-static const struct ged_plugin pinfo = { GED_API,  view_cmds, 15 };
+static const struct ged_plugin pinfo = { GED_API,  view_cmds, 16 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

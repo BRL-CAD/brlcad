@@ -25,6 +25,7 @@ set(VIEW_SRCS
   objs.cpp
   polygons.c
   quat.c
+  saveview.c
   size.c
   snap.c
   view.c

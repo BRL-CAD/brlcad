@@ -58,6 +58,7 @@ extern int ged_eye_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_faceplate_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_lookat_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_quat_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_saveview_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_size_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_ypr_core(struct ged *gedp, int argc, const char **argv);
