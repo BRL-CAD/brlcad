@@ -73,7 +73,8 @@ if (TARGET libged)
 
   if (TARGET fuzz_shootray_test AND HAVE_FSANITIZE_FUZZER)
     target_link_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
-  endif (HAVE_FSANITIZE_FUZZER)
+  endif (TARGET fuzz_shootray_test AND HAVE_FSANITIZE_FUZZER)
+
 endif (TARGET libged)
 
 CMAKEFILES(
