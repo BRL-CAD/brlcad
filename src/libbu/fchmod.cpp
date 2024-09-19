@@ -1,4 +1,4 @@
-/*                        F C H M O D . C
+/*                      F C H M O D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2007-2024 United States Government as represented by
@@ -88,13 +88,12 @@ bu_fchmod(int fd,
 #endif
 }
 
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
