@@ -58,7 +58,7 @@ set(LIBBU_SOURCES
   escape.c
   fchmod.cpp
   fgets.c
-  file.c
+  file.cpp
   fort.c
   fnmatch.c
   getcwd.c

@@ -1,4 +1,4 @@
-/*                         F I L E . C
+/*                      F I L E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2024 United States Government as represented by
@@ -19,6 +19,9 @@
  */
 
 #include "common.h"
+
+#include <filesystem>
+#include <system_error>
 
 #include <string.h>
 #include <ctype.h>
@@ -260,7 +263,6 @@ bu_file_same(const char *fn1, const char *fn2)
     return ret;
 }
 
-
 /**
  * common guts to the file access functions that returns truthfully if
  * the current user has the ability permission-wise to access the
@@ -270,17 +272,12 @@ static int
 file_access(const char *path, int access_level)
 {
     struct stat sb;
-    int mask = 0;
 
     /* 0 is root or Windows user */
     uid_t uid = 0;
 
     /* 0 is wheel or Windows group */
     gid_t gid = 0;
-
-    int usr_mask = S_IRUSR | S_IWUSR | S_IXUSR;
-    int grp_mask = S_IRGRP | S_IWGRP | S_IXGRP;
-    int oth_mask = S_IROTH | S_IWOTH | S_IXOTH;
 
     if (UNLIKELY(!path || (path[0] == '\0'))) {
 	return 0;
@@ -290,20 +287,19 @@ file_access(const char *path, int access_level)
 	return 0;
     }
 
-    if (access_level & R_OK) {
-	mask = S_IRUSR | S_IRGRP | S_IROTH;
+    std::filesystem::perms p = std::filesystem::perms::none;
+    try
+    {
+	p = std::filesystem::status(path).permissions();
     }
-    if (access_level & W_OK) {
-	mask = S_IWUSR | S_IWGRP | S_IWOTH;
+    catch (std::filesystem::filesystem_error const &)
+    {
+	bu_log("Error: unable to get permissions for %s\n", path);
+	return 0;
     }
-    if (access_level & X_OK) {
-#ifndef HAVE_WINDOWS_H
-	// Windows _chmod doesn't have a concept of executable, so there isn't
-	// anything to check for this case.  See:
-	// https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/chmod-wchmod
-	mask = S_IXUSR | S_IXGRP | S_IXOTH;
-#endif
-    }
+    if (p == std::filesystem::perms::unknown)
+	return 0;
+
 
 #ifdef HAVE_GETEUID
     uid = geteuid();
@@ -312,21 +308,31 @@ file_access(const char *path, int access_level)
     gid = getegid();
 #endif
 
-    // If we're not checking for anything, pass
-    if (!mask)
-	return 1;
-
-    if ((uid_t)sb.st_uid == uid) {
-	/* we own it */
-	return sb.st_mode & (mask & usr_mask);
-    } else if ((gid_t)sb.st_gid == gid) {
-	/* our primary group */
-	return sb.st_mode & (mask & grp_mask);
+    bool we_own = ((uid_t)sb.st_uid == uid);
+    if (we_own) {
+	switch (access_level) {
+	    case R_OK:
+		if (std::filesystem::perms::none != (p & std::filesystem::perms::owner_read))
+		    return 1;
+		break;
+	    case W_OK:
+		if (std::filesystem::perms::none != (p & std::filesystem::perms::owner_write))
+		    return 1;
+		break;
+	    case X_OK:
+		if (std::filesystem::perms::none != (p & std::filesystem::perms::owner_exec))
+		    return 1;
+		break;
+	    default:
+		bu_log("Error - unknown access level\n");
+		return 0;
+	};
     }
 
+    bool in_grp = ((gid_t)sb.st_gid == gid);
     /* search group database to see if we're in the file's group */
 #if defined(HAVE_PWD_H) && defined (HAVE_GRP_H)
-    {
+    if (!in_grp) {
 	struct passwd *pwdb = getpwuid(uid);
 	if (pwdb && pwdb->pw_name) {
 	    int i;
@@ -334,15 +340,54 @@ file_access(const char *path, int access_level)
 	    for (i = 0; grdb && grdb->gr_mem[i]; i++) {
 		if (BU_STR_EQUAL(grdb->gr_mem[i], pwdb->pw_name)) {
 		    /* one of our other groups */
-		    return sb.st_mode & (mask & grp_mask);
+		    in_grp = true;
 		}
 	    }
 	}
     }
 #endif
 
+    if (in_grp) {
+	switch (access_level) {
+	    case R_OK:
+		if (std::filesystem::perms::none != (p & std::filesystem::perms::group_read))
+		    return 1;
+		break;
+	    case W_OK:
+		if (std::filesystem::perms::none != (p & std::filesystem::perms::group_write))
+		    return 1;
+		break;
+	    case X_OK:
+		if (std::filesystem::perms::none != (p & std::filesystem::perms::group_exec))
+		    return 1;
+		break;
+	    default:
+		bu_log("Error - unknown access level\n");
+		return 0;
+	};
+    }
+
     /* check other */
-    return sb.st_mode & (mask & oth_mask);
+    switch (access_level) {
+	case R_OK:
+	    if (std::filesystem::perms::none != (p & std::filesystem::perms::others_read))
+		return 1;
+	    break;
+	case W_OK:
+	    if (std::filesystem::perms::none != (p & std::filesystem::perms::others_write))
+		return 1;
+	    break;
+	case X_OK:
+	    if (std::filesystem::perms::none != (p & std::filesystem::perms::others_exec))
+		return 1;
+	    break;
+	default:
+	    bu_log("Error - unknown access level\n");
+	    return 0;
+    };
+
+    // Shouldn't get here
+    return 0;
 }
 
 
@@ -561,12 +606,12 @@ bu_ftell(FILE *stream)
     return ret;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+
