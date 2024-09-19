@@ -51,101 +51,6 @@
 # ifndef HAVE_DECL_FCHMOD
 extern int fchmod(int, mode_t);
 # endif
-
-#else
-
-/* Presumably Windows, pulled from MSDN sample code */
-int
-GetFileNameFromHandle(HANDLE hFile, char filepath[])
-{
-    /* Get the file size. */
-    DWORD dwFileSizeHi = 0;
-    DWORD dwFileSizeLo = GetFileSize(hFile, &dwFileSizeHi);
-
-    if (dwFileSizeLo == 0 && dwFileSizeHi == 0) {
-	_tprintf(TEXT("Cannot map a file with a length of zero.\n"));
-	return FALSE;
-    }
-
-    /* Create a file mapping object. */
-    HANDLE hFileMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 1, NULL);
-
-    if (!hFileMap) {
-	_tprintf(TEXT("CreateFileMapping failed, unable to retrieve filename\n"));
-	return FALSE;
-    }
-
-    /* Create a file mapping to get the file name. */
-    void* pMem = MapViewOfFile(hFileMap, FILE_MAP_READ, 0, 0, 1);
-
-    if (!pMem) {
-	_tprintf(TEXT("MapViewOfFile failed, unable to retrieve filename\n"));
-	CloseHandle(hFileMap);
-	return FALSE;
-    }
-
-    TCHAR pszFilename[MAXPATHLEN+1];
-    if (!GetMappedFileName (GetCurrentProcess(), pMem, pszFilename, MAXPATHLEN)) {
-	_tprintf(TEXT("GetMappedFileName failed, unable to retrieve filename\n"));
-	UnmapViewOfFile(pMem);
-	CloseHandle(hFileMap);
-	return FALSE;
-    }
-
-    /* Translate path with device name to drive letters. */
-    TCHAR szTemp[MAXPATHLEN+1];
-    szTemp[0] = '\0';
-
-    if (!GetLogicalDriveStrings(MAXPATHLEN, szTemp)) {
-	_tprintf(TEXT("GetLogicalDriveStrings failed, unable to retrieve filename\n"));
-	UnmapViewOfFile(pMem);
-	CloseHandle(hFileMap);
-	return FALSE;
-    }
-
-    TCHAR szName[MAXPATHLEN];
-    TCHAR szDrive[3] = TEXT(" :");
-    int bFound = 0;
-    const TCHAR* p = szTemp;
-
-    do {
-	/* Copy the drive letter to the template string */
-	*szDrive = *p;
-
-	/* Look up each device name */
-	if (QueryDosDevice(szDrive, szName, MAXPATHLEN)) {
-	    size_t uNameLen = _tcslen(szName);
-
-	    if (uNameLen < MAXPATHLEN) {
-		bFound = _tcsnicmp(pszFilename, szName, uNameLen) == 0;
-
-		if (bFound && *(pszFilename + uNameLen) == _T('\\')) {
-		    /* Reconstruct pszFilename using szTempFile */
-		    /* Replace device path with DOS path */
-		    TCHAR szTempFile[MAXPATHLEN];
-		    StringCchPrintf(szTempFile, MAXPATHLEN, TEXT("%s%s"), szDrive, pszFilename+uNameLen);
-		    StringCchCopyN(pszFilename, MAXPATHLEN+1, szTempFile, _tcslen(szTempFile));
-		}
-	    }
-	}
-
-	/* Go to the next NULL character. */
-	while (*p++);
-    } while (!bFound && *p)
-    ; /* end of string */
-
-    UnmapViewOfFile(pMem);
-    CloseHandle(hFileMap);
-
-    if (sizeof(TCHAR) == sizeof(wchar_t)) {
-	char filename[MAXPATHLEN+1];
-	wcstombs(filename, (const wchar_t *)pszFilename, MAXPATHLEN);
-	bu_strlcpy(filepath, filename, MAXPATHLEN);
-    } else {
-	bu_strlcpy(filepath, pszFilename, MAXPATHLEN);
-    }
-    return TRUE;
-}
 #endif
 
 
@@ -158,18 +63,19 @@ bu_fchmod(int fd,
 #else
     /* Presumably Windows, so get dirty.  We can call chmod() instead
      * of fchmod(), but that means we need to know the file name.
-     * This isn't portably knowable, but Windows provides a roundabout
-     * way to figure it out.
      *
-     * If we were willing to limit ourselves to Windows 2000 or 7+, we
-     * could call GetModuleFileNameEx() but there are reports that
-     * it's rather unreliable.
+     * https://stackoverflow.com/q/31439011
      */
     {
-	char filepath[MAXPATHLEN+1];
+	TCHAR rawfilepath[MAXPATHLEN+1];
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
-	if (!GetFileNameFromHandle(h, filepath))
-	    bu_log("Warning:  GetFileNameFromHandle unable to map fd %d to filename\n", fd);
+	DWORD pret = GetFinalPathNameByHandle(h, rawfilepath, MAXPATHLEN, VOLUME_NAME_NONE);
+	if (!(pret < MAXPATHLEN))
+	    bu_log("Warning:  GetFinalPathNameByHandle unable to retrieve full path: %s\n", rawfilepath);
+
+	TCHAR filepath[MAXPATHLEN+1];
+	GetFullPathNameA(rawfilepath, MAXPATHLEN, filepath, NULL);
+	//bu_log("GetFinalPathNameByHandle + GetFullPathNameA: %s\n", filepath);
 
 	/* quell flawfinder because this is a necessary evil unless/until
 	 * someone rewrites this to use SetNamedSecurityInfo() based on
