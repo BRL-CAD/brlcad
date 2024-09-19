@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <filesystem>
+#include <string>
 #include <system_error>
 
 #ifdef HAVE_SYS_TYPES_H
@@ -43,6 +44,7 @@
 
 #include "bu/app.h"
 #include "bu/file.h"
+#include "bu/log.h"
 #include "bu/str.h"
 
 #ifdef HAVE_FCHMOD
@@ -87,7 +89,9 @@ bu_fchmod(int fd,
     std::error_condition ok;
     std::filesystem::permissions(filepath, perms_mode, std::filesystem::perm_options::replace, ec);
     if (ec != ok) {
-	bu_log("Error setting permissions.  %s  %s\n", ec.category().name().c_str(), ec.message().c_str());
+	std::string ec_name = ec.category().name();
+	std::string ec_msg = ec.message();
+	bu_log("Error setting permissions.  %s  %s\n", ec_name.c_str(), ec_msg.c_str());
 	return -1;
     }
     return 0;
