@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <system_error>
 
 void pprint(char lbl, std::filesystem::perms filep, std::filesystem::perms p)
 {
@@ -33,6 +34,8 @@ void pout(std::filesystem::perms p)
 int
 main(int argc, const char **argv)
 {
+    std::error_code ec;
+    std::error_condition ok;
     const char *f = "p.txt";
     int perms = 0;
     if (argc > 1)
@@ -54,7 +57,12 @@ main(int argc, const char **argv)
     std::cout << "\tAdding ";
     pout(perms_mask);
     std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
-    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::add);
+
+    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::add, ec);
+    if (ec != ok) {
+	std::cout << "Error setting permissions.  " <<  ec.category().name() << ", " << ec.message() << "\n";
+	return -1;
+    }
 
     out_perms = std::filesystem::status(f).permissions();
     std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
@@ -64,18 +72,28 @@ main(int argc, const char **argv)
     std::cout << "\tRemoving ";
     pout(perms_mask);
     std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
-    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::remove);
+
+    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::remove, ec);
+    if (ec != ok) {
+	std::cout << "Error setting permissions.  " <<  ec.category().name() << ", " << ec.message() << "\n";
+	return -1;
+    }
 
     out_perms = std::filesystem::status(f).permissions();
     std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
     pout(out_perms);
     std::cout << "\n";
 
-    perms_mask = std::filesystem::perms::all;
     std::cout << "\tAll ";
+    perms_mask = std::filesystem::perms::all;
     pout(perms_mask);
     std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
-    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::add);
+
+    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::add, ec);
+    if (ec != ok) {
+	std::cout << "Error setting permissions.  " <<  ec.category().name() << ", " << ec.message() << "\n";
+	return -1;
+    }
 
     out_perms = std::filesystem::status(f).permissions();
     std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
