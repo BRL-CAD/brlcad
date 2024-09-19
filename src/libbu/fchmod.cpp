@@ -20,6 +20,9 @@
 
 #include "common.h"
 
+#include <filesystem>
+#include <system_error>
+
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -61,30 +64,33 @@ bu_fchmod(int fd,
 #ifdef HAVE_FCHMOD
     return fchmod(fd, (mode_t)pmode);
 #else
-    /* Presumably Windows, so get dirty.  We can call chmod() instead
-     * of fchmod(), but that means we need to know the file name.
-     *
-     * https://stackoverflow.com/q/31439011
-     */
-    {
-	TCHAR rawfilepath[MAXPATHLEN+1];
-	HANDLE h = (HANDLE)_get_osfhandle(fd);
-	DWORD pret = GetFinalPathNameByHandle(h, rawfilepath, MAXPATHLEN, VOLUME_NAME_NONE);
-	if (!(pret < MAXPATHLEN))
-	    bu_log("Warning:  GetFinalPathNameByHandle unable to retrieve full path: %s\n", rawfilepath);
-
-	TCHAR filepath[MAXPATHLEN+1];
-	GetFullPathNameA(rawfilepath, MAXPATHLEN, filepath, NULL);
-	//bu_log("GetFinalPathNameByHandle + GetFullPathNameA: %s\n", filepath);
-
-	/* quell flawfinder because this is a necessary evil unless/until
-	 * someone rewrites this to use SetNamedSecurityInfo() based on
-	 * unix-style permissions/mode settings.
-	 */
-#  define CHMOD ch ## mod
-
-	return CHMOD(filepath, pmode);
+    /* Presumably Windows - we need to know the file name.
+     * https://stackoverflow.com/q/31439011 */
+    TCHAR rawfilepath[MAXPATHLEN+1];
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
+    DWORD pret = GetFinalPathNameByHandle(h, rawfilepath, MAXPATHLEN, VOLUME_NAME_NONE);
+    if (!(pret < MAXPATHLEN)) {
+	bu_log("Error:  GetFinalPathNameByHandle unable to retrieve full path: %s\n", rawfilepath);
+	return -1;
     }
+
+    TCHAR filepath[MAXPATHLEN+1];
+    GetFullPathNameA(rawfilepath, MAXPATHLEN, filepath, NULL);
+    if (!bu_file_exists(filepath, NULL)) {
+	bu_log("Error: GetFinalPathNameByHandle + GetFullPathNameA returned path \"%s\" but it does not exist\n", filepath);
+	return -1;
+    }
+
+    // Use the C++ filesystem API for this
+    std::filesystem::perms perms_mode = static_cast<std::filesystem::perms>(pmode);
+    std::error_code ec;
+    std::error_condition ok;
+    std::filesystem::permissions(filepath, perms_mode, std::filesystem::perm_options::replace, ec);
+    if (ec != ok) {
+	bu_log("Error setting permissions.  %s  %s\n", ec.category().name().c_str(), ec.message().c_str());
+	return -1;
+    }
+    return 0;
 #endif
 }
 
