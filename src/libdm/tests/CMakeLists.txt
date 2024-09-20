@@ -7,19 +7,24 @@ BRLCAD_ADDEXEC(dm_test dm_test.c "libdm;libbu" TEST)
 # and provide an appropriate include first...
 if (BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_X11)
 
-  find_package_tcl(REQUIRED)
+  set(TCL_ENABLE_TK ON)
+  find_package_tcl()
 
-  include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${TCL_INCLUDE_PATH}
-    ${TK_INCLUDE_PATH}
-    ${X11_INCLUDE_DIR}
+  if (TCL_FOUND AND TK_FOUND)
+
+    include_directories(
+      ${CMAKE_CURRENT_SOURCE_DIR}
+      ${TCL_INCLUDE_PATH}
+      ${TK_INCLUDE_PATH}
+      ${X11_INCLUDE_DIR}
     )
 
-  if (BUILD_TESTING)
-    BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
-    BRLCAD_ADDEXEC(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
-  endif (BUILD_TESTING)
+    if (BUILD_TESTING)
+      BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
+      BRLCAD_ADDEXEC(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
+    endif (BUILD_TESTING)
+
+  endif (TCL_FOUND AND TK_FOUND)
 endif ()
 
 CMAKEFILES(CMakeLists.txt)
