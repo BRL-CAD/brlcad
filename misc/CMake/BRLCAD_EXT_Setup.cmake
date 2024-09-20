@@ -33,6 +33,64 @@ include(CMakeParseArguments)
 
 # Build a local copy of bext if we were unable to locate one
 
+
+# This utility function requires that the definitions defined in
+# src/source_dirs.cmake are populated.  Its role is to create a fully expanded
+# and sorted list of both direct and implicit dependencies based on those
+# definitions.
+#
+# This lets us provide a complete list to the bext build of all BRL-CAD
+# components that are active based on current build settings.  bext, in turn,
+# encodes knowledge of which components are being supported by individual
+# packages.  In combination, these two pieces of information allow the build to
+# automatically enable and disable bext components based on the needs of the
+# specified BRL-CAD configure, when the BRL-CAD configure process is taking
+# responsibility for compiling bext itself.
+#
+# This is not STRICTLY necessary - a full bext build would provide the needed
+# support for a minimal BRLCAD_COMPONENTS list of enabled libraries - but it
+# will increase the size of the resultant bin and lib output directories since
+# the bext bundling functionality does not know which outputs can be ignored.
+# Disabling at build time using this mechanism avoids creating unnecessary bext
+# outputs to begin with, saving both space and compile time.
+function(deps_expand seed_dir out_var)
+  set(curr_deps ${${out_var}})
+  set(working_deps ${${seed_dir}_deps})
+  set(seed_deps)
+  while (working_deps)
+    list(POP_FRONT working_deps wdep)
+    if (NOT BRLCAD_ENABLE_TCL AND "${wdep}" STREQUAL "libtclcad")
+      continue()
+    endif ()
+    if (NOT BRLCAD_ENABLE_QT AND "${wdep}" STREQUAL "libqtcad")
+      continue()
+    endif ()
+    list(FIND curr_deps ${wdep} fresult)
+    if (${fresult} EQUAL -1)
+      list(APPEND curr_deps ${wdep})
+      set(seed_deps ${seed_deps} ${${wdep}_deps})
+    endif (${fresult} EQUAL -1)
+    if (NOT working_deps)
+      set(working_deps ${seed_deps})
+      set(seed_deps)
+    endif (NOT working_deps)
+  endwhile (working_deps)
+
+  # Have the active dirs, sort them into
+  # reverse dependency order
+  set(odirs ${ordered_dirs})
+  list(REVERSE odirs)
+  set(fdeps)
+  foreach(cod ${odirs})
+    list(FIND curr_deps ${cod} fresult)
+    if (NOT ${fresult} EQUAL -1)
+      list(APPEND fdeps ${cod})
+    endif (NOT ${fresult} EQUAL -1)
+  endforeach(cod ${odirs})
+  set(${out_var} ${fdeps} PARENT_SCOPE)
+endfunction(deps_expand)
+
+
 function(brlcad_ext_setup)
 
   if (BRLCAD_DISABLE_RELOCATION)
@@ -183,14 +241,13 @@ function(brlcad_ext_setup)
   endif (NOT EXISTS "${BRLCAD_EXT_SOURCE_DIR}/dependencies.dot")
 
   set(EXT_CONFIG_STATUS 0)
-  message("${CMAKE_COMMAND} -S ${BRLCAD_EXT_SOURCE_DIR} -B ${BRLCAD_EXT_BUILD_DIR} --DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}")
   if (BRLCAD_COMPONENTS)
-    message("${CMAKE_COMMAND} -S ${BRLCAD_EXT_SOURCE_DIR} -B ${BRLCAD_EXT_BUILD_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR} -DBRLCAD_COMPONENTS=${active_dirs}")
     set(active_dirs ${BRLCAD_COMPONENTS})
     foreach(wc ${BRLCAD_COMPONENTS})
       deps_expand(${wc} active_dirs)
     endforeach(wc ${BRLCAD_COMPONENTS})
     string(REPLACE ";" "\\;" active_dirs "${active_dirs}")
+    message("${CMAKE_COMMAND} -S ${BRLCAD_EXT_SOURCE_DIR} -B ${BRLCAD_EXT_BUILD_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR} -DBRLCAD_COMPONENTS=${active_dirs}")
     execute_process(COMMAND ${CMAKE_COMMAND} -S ${BRLCAD_EXT_SOURCE_DIR} -B ${BRLCAD_EXT_BUILD_DIR} 
       -DGIT_SHALLOW_CLONE=ON
       -DENABLE_ALL=${BEXT_ENABLE_ALL}
@@ -205,6 +262,7 @@ function(brlcad_ext_setup)
       RESULT_VARIABLE EXT_CONFIG_STATUS
       )
   else (BRLCAD_COMPONENTS)
+    message("${CMAKE_COMMAND} -S ${BRLCAD_EXT_SOURCE_DIR} -B ${BRLCAD_EXT_BUILD_DIR} --DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}")
     execute_process(COMMAND ${CMAKE_COMMAND} -S ${BRLCAD_EXT_SOURCE_DIR} -B ${BRLCAD_EXT_BUILD_DIR} 
       -DGIT_SHALLOW_CLONE=ON
       -DENABLE_ALL=${BEXT_ENABLE_ALL}
