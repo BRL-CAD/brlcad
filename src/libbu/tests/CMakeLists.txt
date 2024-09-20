@@ -765,7 +765,9 @@ if (TARGET bu_mappedfile_parallel_16384)
   set_tests_properties(bu_mappedfile_parallel_16384 PROPERTIES TIMEOUT 3000)
 endif ()
 
-add_executable(perm_test perm_test.cpp)
+if (BUILD_TESTING)
+  add_executable(perm_test perm_test.cpp)
+endif (BUILD_TESTING)
 
 #
 #  *********** realpath.c tests ************
