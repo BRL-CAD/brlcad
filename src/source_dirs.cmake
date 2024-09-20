@@ -21,11 +21,11 @@
 # For libraries these lists are also used in the subdirectories when targets
 # are defined, so they represent the canonical dependency definitions used to
 # create the actual build targets.  Application directories, on the other hand,
-# list the "highest level" directories that any of the programs contained in
-# them need since many of them contain large numbers of executables with
-# different requirements.
+# list the "highest level" libraries that any of the programs contained in
+# them need since many of the directories contain large numbers of executables
+# with individually different requirements.
 
-if (NOT COMMAND)
+if (NOT COMMAND deps_expand)
   function(deps_expand seed_dir out_var)
     set(curr_deps ${${out_var}})
     set(working_deps ${${seed_dir}_deps})
@@ -62,13 +62,16 @@ if (NOT COMMAND)
     endforeach(cod ${odirs})
     set(${out_var} ${fdeps} PARENT_SCOPE)
   endfunction(deps_expand)
-endif (NOT COMMAND)
+endif (NOT COMMAND deps_expand)
 
 set(ordered_dirs)
 macro(set_deps dirname deps_list)
   list(APPEND ordered_dirs ${dirname})
   set(${dirname}_deps ${deps_list})
 endmacro(set_deps)
+
+
+# Libraries
 
 set_deps(libbu      "")
 set_deps(libbn      "libbu")
@@ -90,6 +93,8 @@ set_deps(libpc      "")
 set_deps(libqtcad   "libged;libdm")
 set_deps(libtclcad  "libged;libdm")
 
+
+# Applications
 
 # Note - brlman can be compiled with Tcl, Qt, or no graphical support, so we
 # list libbu explicitly
