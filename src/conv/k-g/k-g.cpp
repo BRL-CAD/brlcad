@@ -188,11 +188,6 @@ int main
 					point3[Y] = kData.nodes[n3].y * factor;
 					point3[Z] = kData.nodes[n3].z * factor;
 
-					int D1 = beamSection.D[0];
-					int D2 = beamSection.D[1];
-					int D3 = beamSection.D[2];
-					int D4 = beamSection.D[3];
-
 					std::string beamNumber= std::to_string(*itr);
 
 					geometry.addBeamResultant(beamNumber, beamSection.sectionType, point1, point2, point3, beamSection.D);
