@@ -1,3 +1,223 @@
+commit d52211e86e1b2e1a9abeb52ae89860fd481a10cb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 23 14:40:19 2024 -0400
+
+    Update release date
+
+commit a8e2ab67b8caa464a2721bc7aabcacf83a0cc516
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 23 12:23:27 2024 -0400
+
+    Restore removal of tar files
+
+commit 3d4480b34ba1ea44350f2616c9182196d1978d6d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 23 10:11:11 2024 -0400
+
+    Update git submodule to ba294f7468
+
+commit dd58e4d54b61a184d060303f0954a64fe459c7df
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 20 14:37:56 2024 -0400
+
+    Fix tarball creation and unpacking, Tcl component logic
+    
+    Making the tarballs with full path, the unpacking was not succeeding - instead,
+    files were being copied over individually as deltas.  Also, liboptical does
+    (can) use Tcl for one of its shaders, so based on BRLCAD_ENABLE_TCL we may need
+    it as a dependency.  Same for libdm plugins.
+    
+    With the new bext setup, should probably simplify/replace all uses of
+    BRLCAD_ENABLE_TCL except the top level one with enable/disable based on the
+    find_package_tcl results.  As long as find_package_tcl returns empty if that
+    variable is set, the rest should follow.
+
+commit 0a28fa001e9b3bb133168067f33e3986bf293ea7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 20 11:36:51 2024 -0400
+
+    Locate function where it is used, fix message
+
+commit 34208011e39609a1c14836402ac74edc511dddcb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 20 11:13:54 2024 -0400
+
+    Fix if test, adjust comments.
+
+commit 36213589fcdcd3677af0d613d29b21f181abeea0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 20 10:59:59 2024 -0400
+
+    Guard a couple more test executables
+
+commit d21c95e0c13a55ad16b522968b6e93dc45fa0d8e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 19:53:41 2024 -0400
+
+    Whoops, missed a line
+    
+    (cherry picked from commit 4add8d8968cc08f959979ea38227e886c60a962e)
+
+commit 782ce01ca9bb26939e4b83543497744cd3079229
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 19:52:24 2024 -0400
+
+    Verify target
+    
+    (cherry picked from commit 74db75505d705aee86adb4c0f4efcf7a0fb7f30f)
+
+commit 2d5a5d9968994b12cf538d3ec2704f3398d5ef1c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 19:50:34 2024 -0400
+
+    Mark a few more executables as TEST so they're disabled in a BUILD_TESTING=OFF build
+    
+    (cherry picked from commit ab3bbb8a3b1829b002aca344b473282b29d76dba)
+
+commit fdc2770b0dcddfd4586c42f3b1e8ac89d1b6c91c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 19:35:33 2024 -0400
+
+    Match if/endif
+    
+    (cherry picked from commit f3fe3942163de1544245fca6617af6c737f19ada)
+
+commit 2314c77842df6761f0b3b7156bcbc8cbddd380e1
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 19:33:37 2024 -0400
+
+    Validate fuzz targets before setting options
+    
+    (cherry picked from commit adfde18ec11946b5fcc3a34378f005ccf43696d5)
+
+commit fe17b76bda91659f14be2beb1c97d4bdbb4b0aca
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 15:57:24 2024 -0400
+
+    Test whether using C++ permissions lookup helps on Windows
+
+commit c1b1a0e75119b8deec42bcba1d8d78f3fef3055e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 14:52:07 2024 -0400
+
+    Fix Windows compile
+
+commit cc7bc1e5f040a611dd1351ebc3f61c5d194a5c7f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 14:46:02 2024 -0400
+
+    See if we can use std::filesystem::permissions for Windows case
+
+commit a5f9df9c6de2f1523609db7baf3135a4e17d2aa6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 14:42:15 2024 -0400
+
+    Try out the error conditions parameter
+
+commit 5e9a4f328149ed1733ece5a6fe5f329de43c7867
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 14:17:36 2024 -0400
+
+    Make fchmod a C++ file
+
+commit 4bc6ff927128e519e5103f3caf989481b69579d3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 14:12:48 2024 -0400
+
+    Try adding and removing permissions
+
+commit 5b1e77ef378e6d26900869157c9969322b2aab25
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 13:56:22 2024 -0400
+
+    Add string header
+
+commit fa032dd889299e4090c1b26ecef73e24743c80c3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 13:51:09 2024 -0400
+
+    Add simple program to test C++17 permissions API
+
+commit e1f024fce48f7b91da9527e1d12efbc312ceac78
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 12:07:44 2024 -0400
+
+    Revert "write something to the file before chmod."
+    
+    Looks like when we use the newer API for filename unpacking we don't
+    need to pre-populate the file contents.
+    
+    This reverts commit 1eb1ab65017f89f673641f263a48fdd74601ac93.
+
+commit 981accbb238d1cd7a890028b449fcca730d88b68
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 11:51:31 2024 -0400
+
+    Try breaking out the various Windows steps into separate stages
+
+commit abc361e2cd7980515ca5764cef8d6582c926e4e7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 11:41:38 2024 -0400
+
+    Don't apply the executable mask on Windows
+    
+    Per Microsoft's _chmod documentation, their version doesn't have a
+    concept of executable, so "setting" it with bu_fchmod is a no-op.  We're
+    getting a path on Windows now, but the is-executable test was still
+    failing because the files sb.st_mode didn't match the mask we were
+    testing.
+    
+    This may point to a problem with our config_win.h defines for this case,
+    and if we're willing to dive much deeper into the ACL permissions setup
+    there might be analogs we could map this to, but for now go the simple
+    route and just don't check for something we can't set with _chmod.
+
+commit 10705d5464357730e293df3d03a5592b69a152d3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 11:21:57 2024 -0400
+
+    Get farther - this returns the path name, but the file libbu test is still failing the executable check.
+
+commit 489cce35ba207e4393a860e23b816e47365601df
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 10:55:27 2024 -0400
+
+    Check return code from GetFileNameFromHandle
+
+commit b904337def310c004557be05396d3bcb8e8f2ca3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 19 10:50:47 2024 -0400
+
+    Fail earlier and with error messages in GetFileNameFromHandle
+    
+    The reason we were getting a nonsense string rather than an empty string
+    from GetFileNameFromHandle appears to be the string copy still taking
+    place even if the CreateFileMapping operation failed.
+    
+    Rework logic to bail immediately if one of the steps fails.
+
+commit 746372b3b1bea8c944a061d53a27dfcaa4b54fa7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Sep 18 21:09:21 2024 -0400
+
+    Try to validate filepath and warn if we can't
+
+commit 1eb1ab65017f89f673641f263a48fdd74601ac93
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Sep 18 12:59:02 2024 -0400
+
+    write something to the file before chmod.
+    
+    seeing a peculiar error from bu_fchmod() on secured Windows machines where GetFileNameFromHandle throws an error about being unable to map zero-length files.  this may be a security policy, or implementation limitation, but can be accommodated by simply writing something to the file beforehand.
+    
+    (cherry picked from commit 02ba341f2ea0c58c896a9224ec8c6ed7b434f6db)
+
+commit 6aa51bae18f5c280239fe60eb1128fc99f3f3b24
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Sep 18 11:04:14 2024 -0400
+
+    Update ChangeLog and release date
+
 commit cc9ab31ab9e860594c0284a009d91fde8ca40392
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Wed Sep 18 10:22:01 2024 -0400
