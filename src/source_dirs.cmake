@@ -59,7 +59,6 @@ set_deps(libtclcad  "libged;libdm")
 # list libbu explicitly
 set_deps(brlman     "libqtcad;libtclcad;libbu")
 set_deps(bwish      "libtclcad")
-set_deps(conv       "libged;libgcv")
 set_deps(fb         "libdm")
 set_deps(fbserv     "libdm")
 set_deps(gtools     "libged")
@@ -78,6 +77,7 @@ set_deps(remrt      "libdm;liboptical")
 # tclscripts directories are configured, and those lists are needed as
 # dependencies for the targets in these directories
 set_deps(tclscripts "libtclcad")
+set_deps(conv       "libtclcad;libged;libgcv") # asc2g/g2asc use Tcl.  List ged and gcv for when Tcl is disabled
 set_deps(adrt       "libtclcad")
 set_deps(isst       "libtclcad;libqtcad")
 set_deps(rtwizard   "libtclcad")

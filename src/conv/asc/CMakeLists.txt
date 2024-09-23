@@ -16,6 +16,10 @@ BRLCAD_ADDEXEC(pix2asc pix2asc.c libbu FOLDER Conv)
 if (TARGET libtclcad)
   BRLCAD_ADDEXEC(asc2g asc2g.c "libtclcad;libged;libwdb;librt;libnmg;libbu;${WINSOCK_LIB};${M_LIBRARY}" FOLDER Conv)
   BRLCAD_ADDEXEC(g2asc g2asc.c "libtclcad;librt;libnmg;libbu;${WINSOCK_LIB}" FOLDER Conv)
+  if (TARGET TclIndexBld)
+    add_dependencies(asc2g TclIndexBld)
+    add_dependencies(g2asc TclIndexBld)
+  endif (TARGET TclIndexBld)
 endif (TARGET libtclcad)
 
 CMAKEFILES(
