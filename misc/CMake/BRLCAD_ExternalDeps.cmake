@@ -360,7 +360,7 @@ function(INITIALIZE_TP_FILES)
     endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
     message("Expanding ${sd}.tar in build directory... done.")
     # Copying complete - remove the archive file
-    #execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${sd}.tar)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${sd}.tar)
   endforeach(sd ${SDIRS})
 
   # The above copy is indiscriminate, so we follow behind it and strip out the
