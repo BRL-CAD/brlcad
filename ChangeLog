@@ -1,3 +1,21 @@
+commit 77cf9a764d64cb433d3ad0d7878a8f0905a4bb1f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 23 16:54:40 2024 -0400
+
+    Don't if guard this - if the target name is wrong, we want to know.
+
+commit 75faf227843e36c44401ec46e1193794f82f9971
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 23 16:43:53 2024 -0400
+
+    asc2g needs TclIndexBld as a dependency.
+
+commit 19b13a64fde7e5d118cdf6d6f88801166ccbd441
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 23 14:41:24 2024 -0400
+
+    Update log with commits since 2024-08-16
+
 commit d52211e86e1b2e1a9abeb52ae89860fd481a10cb
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Mon Sep 23 14:40:19 2024 -0400
