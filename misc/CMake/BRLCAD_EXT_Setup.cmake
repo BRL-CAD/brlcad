@@ -128,6 +128,12 @@ function(brlcad_ext_setup)
 
       # If not, next up is a bext dir in the build directory.  If
       # one doesn't already exist, try to clone it
+
+      # TODO - need to use the ls-remote trick from above to first check for a branch
+      # in bext that corresponds to the current release - if we have one, we should
+      # be using that.  As it stands, old releases will pull the very latest release's
+      # dependencies with this clone, which may not work.  We want this only if there
+      # isn't a matching versioned release branch.
       set(BRLCAD_EXT_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext)
       if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
 	find_program(GIT_EXEC git REQUIRED)
