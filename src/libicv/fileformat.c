@@ -122,30 +122,40 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 
     ICV_IMAGE_VAL_INT(bif);
 
+    FILE *fp = (ofname==NULL) ? stdout : fopen(ofname, "wb");
+    if (UNLIKELY(fp==NULL)) {
+	perror("fopen");
+	bu_log("ERROR: icv_write failed to get a FILE pointer for %s\n", filename);
+	return 0;
+    }
+
     switch (format) {
 	/* case BU_MIME_IMAGE_BMP:
 	   return bmp_write(bif, ofname); */
 	case BU_MIME_IMAGE_PPM:
-	    ret = ppm_write(bif, ofname);
+	    ret = ppm_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_PNG:
-	    ret = png_write(bif, ofname);
+	    ret = png_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_PIX:
-	    ret = pix_write(bif, ofname);
+	    ret = pix_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_BW:
-	    ret = bw_write(bif, ofname);
+	    ret = bw_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_DPIX :
-	    ret = dpix_write(bif, ofname);
+	    ret = dpix_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_RLE :
-	    ret = rle_write(bif, ofname);
+	    ret = rle_write(bif, fp);
 	    break;
 	default:
-	    ret = pix_write(bif, ofname);
+	    ret = pix_write(bif, fp);
     }
+
+    fflush(fp);
+    fclose(fp);
 
     bu_vls_free(&ofilename);
     return ret;

@@ -28,42 +28,32 @@
 #include "icv_private.h"
 
 int
-bw_write(icv_image_t *bif, const char *filename)
+bw_write(icv_image_t *bif, FILE *fp)
 {
 
-    unsigned char *data;
-    FILE *fp;
-    size_t ret, size;
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!fp))
+	return BRLCAD_ERROR;
 
     if (bif->color_space == ICV_COLOR_SPACE_RGB) {
 	icv_rgb2gray(bif, ICV_COLOR_RGB, 0, 0, 0);
     } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
 	bu_log("bw_write : Color Space conflict");
-	return -1;
-    }
-    data = icv_data2uchar(bif);
-    size = bif->height*bif->width;
-
-    if (filename == NULL) {
-	fp = stdout;
-    } else {
-	fp = fopen(filename, "wb");
-	if (fp == NULL) {
-	    bu_log("bw_write: Cannot open file for saving\n");
-	    return -1;
-	}
+	return BRLCAD_ERROR;
     }
 
-    ret = fwrite(data, 1, size, fp);
-    fclose(fp);
+    unsigned char *data = icv_data2uchar(bif);
+    size_t size = bif->height*bif->width;
+    size_t ret = fwrite(data, 1, size, fp);
     bu_free(data, "bw_write : Unsigned Char data");
 
     if (ret != size) {
 	bu_log("bw_write : Short Write\n");
-	return -1;
+	return BRLCAD_ERROR;
     }
 
-    return 0;
+    return BRLCAD_OK;
 }
 
 icv_image_t *

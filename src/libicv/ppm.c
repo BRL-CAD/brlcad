@@ -33,33 +33,29 @@
 #include "icv_private.h"
 
 int
-ppm_write(icv_image_t *bif, const char *filename)
+ppm_write(icv_image_t *bif, FILE *fp)
 {
-    FILE *fp;
-    pixel *pixelrow;
-    int p, q = 0;
-    int rows = (int)bif->height;
-    int cols = (int)bif->width;
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!fp))
+	return BRLCAD_ERROR;
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
 	bu_log("ppm_write : Color Space conflict");
-	return -1;
+	return BRLCAD_ERROR;
     }
 
-    if (filename==NULL) {
-	fp = stdout;
-    } else if ((fp = fopen(filename, "wb")) == NULL) {
-	bu_log("ERROR : Cannot open file for saving\n");
-	return -1;
-    }
+    int rows = (int)bif->height;
+    int cols = (int)bif->width;
 
     ppm_writeppminit(fp, cols, rows, (pixval)255, 0 );
 
-    pixelrow = ppm_allocrow((int)bif->width);
-    for (p = 0; p < rows; p++) {
-	for (q = 0; q < cols; q++) {
+    pixel *pixelrow = ppm_allocrow(cols);
+
+    for (int p = 0; p < rows; p++) {
+	for (int q = 0; q < cols; q++) {
 	    int offset = ((rows - 1) * cols * 3) - (p * cols * 3);
 	    pixelrow[q].r = lrint(bif->data[offset + q*3+0]*255.0);
 	    pixelrow[q].g = lrint(bif->data[offset + q*3+1]*255.0);
@@ -69,8 +65,6 @@ ppm_write(icv_image_t *bif, const char *filename)
     }
 
     ppm_freerow((void *)pixelrow);
-
-    pm_close(fp);
 
     return 0;
 }

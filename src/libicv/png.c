@@ -33,14 +33,14 @@
 #include "icv_private.h"
 
 int
-png_write(icv_image_t *bif, const char *filename)
+png_write(icv_image_t *bif, FILE *fp)
 {
-    png_structp png_ptr = NULL;
-    png_infop info_ptr = NULL;
-    size_t i = 0;
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!fp))
+	return BRLCAD_ERROR;
+
     static int png_color_type;
-    unsigned char *data;
-    FILE *fh;
 
     switch (bif->color_space) {
 	case ICV_COLOR_SPACE_GRAY:
@@ -50,43 +50,33 @@ png_write(icv_image_t *bif, const char *filename)
 	    png_color_type = PNG_COLOR_TYPE_RGB;
     }
 
-    fh = fopen(filename, "wb");
-    if (UNLIKELY(fh==NULL)) {
-	perror("fopen");
-	bu_log("ERROR: png_write failed to get a FILE pointer\n");
-	return 0;
-    }
+    unsigned char *data = icv_data2uchar(bif);
 
-    data = icv_data2uchar(bif);
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (UNLIKELY(png_ptr == NULL))
+	return BRLCAD_ERROR;
 
-    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (UNLIKELY(png_ptr == NULL)) {
-	fclose(fh);
-	return 0;
-    }
-
-    info_ptr = png_create_info_struct(png_ptr);
+    png_infop info_ptr = png_create_info_struct(png_ptr);
     if (info_ptr == NULL || setjmp(png_jmpbuf(png_ptr))) {
 	png_destroy_read_struct(&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
 	bu_log("ERROR: Unable to create png header\n");
-	fclose(fh);
-	return 0;
+	return BRLCAD_ERROR;
     }
 
-    png_init_io(png_ptr, fh);
+    png_init_io(png_ptr, fp);
     png_set_IHDR(png_ptr, info_ptr, (unsigned)bif->width, (unsigned)bif->height, 8, png_color_type,
 		 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
 		 PNG_FILTER_TYPE_DEFAULT);
     png_write_info(png_ptr, info_ptr);
-    for (i = bif->height-1; i > 0; --i) {
+    for (size_t i = bif->height-1; i > 0; --i) {
 	png_write_row(png_ptr, (png_bytep) (data + bif->width*bif->channels*i));
     }
     png_write_row(png_ptr, (png_bytep) (data + 0));
     png_write_end(png_ptr, info_ptr);
 
     png_destroy_write_struct(&png_ptr, &info_ptr);
-    fclose(fh);
-    return 1;
+
+    return BRLCAD_OK;
 }
 
 icv_image_t *

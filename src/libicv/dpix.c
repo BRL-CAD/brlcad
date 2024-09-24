@@ -131,38 +131,32 @@ dpix_read(const char *filename, size_t width, size_t height)
 
 
 int
-dpix_write(icv_image_t *bif, const char *filename)
+dpix_write(icv_image_t *bif, FILE *fp)
 {
-    int fd;
-    size_t size;
-    ssize_t ret;
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!fp))
+	return BRLCAD_ERROR;
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-	bu_log("pix_write : Color Space conflict");
-	return -1;
+	bu_log("dpix_write : Color Space conflict");
+	return BRLCAD_ERROR;
     }
 
-    if (filename==NULL)
-	fd = fileno(stdout);
-    else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
-	bu_log("dpix_write: Cannot open file for saving\n");
-	return -1;
-    }
+    size_t size = bif->width*bif->height*3*sizeof(bif->data[0]);
 
-    /* size in bytes */
-    size = bif->width*bif->height*3*sizeof(bif->data[0]);
+    // TODO - why does dpix use write instead of fwrite?
+    int fd = fileno(fp);
+    size_t ret = write(fd, bif->data, size);
 
-    /* write dpix data */
-    ret = write(fd, bif->data, size);
-    close(fd);
-
-    if (ret != (ssize_t)size) {
+    if (ret != size) {
 	bu_log("dpix_write : Short Write");
-	return -1;
+	return BRLCAD_ERROR;
     }
-    return 0;
+
+    return BRLCAD_OK;
 }
 
 
