@@ -110,16 +110,10 @@ rle_write(icv_image_t *bif, FILE *fp)
 }
 
 icv_image_t*
-rle_read(const char *filename)
+rle_read(FILE *fp)
 {
-    FILE *fp = NULL;
-    if (filename == NULL) {
-	fp = stdin;
-	setmode(fileno(fp), O_BINARY);
-    } else if ((fp = fopen(filename, "r")) == NULL) {
-	bu_log("ERROR: Cannot open file for reading\n");
+    if (UNLIKELY(!fp))
 	return NULL;
-    }
 
     // Older BRL-CAD code used the default header from libutahrle.
     // Globals are usually bad news, so we'll start out with a local

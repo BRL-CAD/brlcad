@@ -57,27 +57,21 @@ bw_write(icv_image_t *bif, FILE *fp)
 }
 
 icv_image_t *
-bw_read(const char *filename, size_t width, size_t height)
+bw_read(FILE *fp, size_t width, size_t height)
 {
-    FILE *fp;
-    unsigned char *data = NULL;
-    icv_image_t *bif;
-    size_t size, ret;
-    size_t buffsize = 1024;
-
-    if (filename==NULL) {
-	fp = stdin;
-	setmode(fileno(fp), O_BINARY);
-    } else if ((fp = fopen(filename, "rb")) == NULL) {
-	bu_log("bw_read: Cannot open %s for reading\n", filename);
+    if (UNLIKELY(!fp))
 	return NULL;
-    }
 
+    unsigned char *data = NULL;
+    size_t size;
+
+    icv_image_t *bif;
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
 
     /* buffer pixel wise */
     if (width == 0 || height == 0) {
+	size_t buffsize = 1024;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "bw_read : unsigned char data");
 
@@ -102,12 +96,11 @@ bw_read(const char *filename, size_t width, size_t height)
 	size = height*width;
 	data = (unsigned char *)bu_malloc(size, "bw_read : unsigned char data");
 
-	ret = fread(data, 1, size, fp);
+	size_t ret = fread(data, 1, size, fp);
 	if (ret!=0 && ferror(fp)) {
 	    bu_log("bw_read: Error Occurred while Reading\n");
 	    bu_free(data, "icv_image data");
 	    bu_free(bif, "icv_structure");
-	    fclose(fp);
 	    return NULL;
 	}
 
@@ -121,7 +114,6 @@ bw_read(const char *filename, size_t width, size_t height)
 	/* zero sized image */
 	bu_free(bif, "icv container");
 	bu_free(data, "unsigned char data");
-	fclose(fp);
 	return NULL;
     }
 
@@ -131,8 +123,6 @@ bw_read(const char *filename, size_t width, size_t height)
     bif->channels = 1;
     bif->color_space = ICV_COLOR_SPACE_GRAY;
     bif->gamma_corr = 0.0;
-
-    fclose(fp);
 
     return bif;
 }

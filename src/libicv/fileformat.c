@@ -86,23 +86,43 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
     if (format == BU_MIME_IMAGE_AUTO)
 	format = icv_guess_file_format(filename, NULL);
 
+    FILE *fp = (!filename) ? stdin : fopen(filename, "rb");
+    if (!fp) {
+	bu_log("ERROR: Cannot open file %s for reading\n", filename);
+	return NULL;
+    }
+    if (!filename)
+	setmode(fileno(fp), O_BINARY);
+
+    icv_image_t *oimg = NULL;
     switch (format) {
 	case BU_MIME_IMAGE_PNG:
-	    return png_read(filename);
+	    oimg = png_read(fp);
+	    break;
 	case BU_MIME_IMAGE_PIX:
-	    return pix_read(filename, width, height);
+	    oimg = pix_read(fp, width, height);
+	    break;
 	case BU_MIME_IMAGE_BW :
-	    return bw_read(filename, width, height);
+	    oimg = bw_read(fp, width, height);
+	    break;
 	case BU_MIME_IMAGE_DPIX :
-	    return dpix_read(filename, width, height);
+	    oimg = dpix_read(fp, width, height);
+	    break;
 	case BU_MIME_IMAGE_PPM :
-	    return ppm_read(filename);
+	    oimg = ppm_read(fp);
+	    break;
 	case BU_MIME_IMAGE_RLE :
-	    return rle_read(filename);
+	    oimg = rle_read(fp);
+	    break;
 	default:
 	    bu_log("icv_read not implemented for this format\n");
+	    fclose(fp);
 	    return NULL;
     }
+
+    fflush(fp);
+    fclose(fp);
+    return oimg;
 }
 
 

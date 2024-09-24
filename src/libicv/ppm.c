@@ -70,51 +70,35 @@ ppm_write(icv_image_t *bif, FILE *fp)
 }
 
 icv_image_t*
-ppm_read(const char *filename)
+ppm_read(FILE *fp)
 {
-    FILE *fp;
-    icv_image_t *bif;
-    int rows, cols, format;
-    int row;
-    pixval maxval;
-    pixel **pixels;
-    int p,q;
-
-    double *data;
-
-    if (filename == NULL) {
-	fp = stdin;
-	setmode(fileno(fp), O_BINARY);
-    } else if ((fp = pm_openr(filename)) == NULL) {
-	bu_log("ERROR: Cannot open file for reading\n");
+    if (UNLIKELY(!fp))
 	return NULL;
-    }
 
+    int rows, cols, format;
+    pixval maxval;
     ppm_readppminit(fp, &cols, &rows, &maxval, &format);
 
     /* For now, only handle PPM - should handle all variations */
-    if (PPM_FORMAT_TYPE(format) != PPM_TYPE) return NULL;
+    if (PPM_FORMAT_TYPE(format) != PPM_TYPE)
+       	return NULL;
 
-    pixels = ppm_allocarray(cols, rows);
+    pixel **pixels = ppm_allocarray(cols, rows);
 
-    for (row = 0; row < rows; row++) {
+    for (int row = 0; row < rows; row++)
 	ppm_readppmrow(fp, pixels[row], cols, maxval, format);
-    }
 
-    pm_close(fp);
-
-
-
+    icv_image_t *bif;
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
 
     bif->width = (size_t)cols;
     bif->height = (size_t)rows;
 
-    data = (double *)bu_malloc(bif->width * bif->height * 3 * sizeof(double), "image data");
-    for (p = 0; p < rows ; p++) {
+    double *data = (double *)bu_malloc(bif->width * bif->height * 3 * sizeof(double), "image data");
+    for (int p = 0; p < rows ; p++) {
 	pixel *r = pixels[p];
-	for (q = 0; q < cols; q++) {
+	for (int q = 0; q < cols; q++) {
 	    int offset = ((rows - 1) * cols * 3) - (p * cols * 3);
 	    data[offset + q*3+0] = (double)r[q].r/(double)255.0;
 	    data[offset + q*3+1] = (double)r[q].g/(double)255.0;
