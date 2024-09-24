@@ -2286,13 +2286,22 @@ endforeach(ad ${ALL_DIRS})
 # job more efficiently
 include(BRLCAD_CPack)
 
-# Some files to ignore for distcheck.
-set(toplevel_ignore_files
+# Some files to ignore for distcheck.  The files and directories prefixed with
+# a "." character are "hidden" and may not be present, so check for them first.
+set(hidden_files
   .github/workflows/analysis.yml
   .github/workflows/check.yml
   .github/workflows/linux_interactive.yml
   .gitignore
   .gitmodules
+  )
+foreach(hf ${hidden_files})
+  if (EXISTS ${CMAKE_SOURCE_DIR}/${hf})
+    CMAKEFILES(${hf})
+  endif (EXISTS ${CMAKE_SOURCE_DIR}/${hf})
+endforeach(hf ${hidden_files})
+
+set(toplevel_ignore_files
   BUGS
   CMakeLists.txt
   ChangeLog

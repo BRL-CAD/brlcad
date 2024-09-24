@@ -1,3 +1,7 @@
+if(BRLCAD_ENABLE_TK)
+  set(TCL_ENABLE_TK ON)
+endif(BRLCAD_ENABLE_TK)
+
 find_package_tcl()
 
 set(MGED_SOURCES

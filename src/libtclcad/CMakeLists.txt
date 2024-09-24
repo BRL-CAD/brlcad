@@ -1,3 +1,6 @@
+if (BRLCAD_ENABLE_TK)
+  set(TCL_ENABLE_TK ON)
+endif (BRLCAD_ENABLE_TK)
 find_package_tcl(REQUIRED)
 if (EXISTS ${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl3.4)
   set(ITCL_VERSION "3.4")

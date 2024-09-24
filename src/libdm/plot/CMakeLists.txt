@@ -5,6 +5,7 @@ set(PLOT_SRCS
 
 if(BRLCAD_ENABLE_TCL)
 
+  set(TCL_ENABLE_TK OFF)
   find_package_tcl(REQUIRED)
 
   include_directories(

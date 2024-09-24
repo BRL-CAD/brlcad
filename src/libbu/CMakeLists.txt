@@ -56,9 +56,9 @@ set(LIBBU_SOURCES
   endian.c
   env.c
   escape.c
-  fchmod.c
+  fchmod.cpp
   fgets.c
-  file.c
+  file.cpp
   fort.c
   fnmatch.c
   getcwd.c

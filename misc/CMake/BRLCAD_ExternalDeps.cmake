@@ -338,10 +338,10 @@ function(INITIALIZE_TP_FILES)
   message("Staging third party files from ${EXT_DIR_STR} in build directory...")
   file(GLOB SDIRS LIST_DIRECTORIES true RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
   foreach(sd ${SDIRS})
-    # Bundled up the sub-directory's contents so that the archive will
-    # expand with paths relative to the ${BRLCAD_EXT_DIR}/install root
+    # Bundle up the sub-directory's contents so that the archive will expand with
+    # paths relative to the ${BRLCAD_EXT_DIR}/install root
     message("Packing ${sd} subdirectory...")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar cf ${CMAKE_BINARY_DIR}/${sd}.tar "${BRLCAD_EXT_INSTALL_DIR}/${sd}" WORKING_DIRECTORY "${BRLCAD_EXT_INSTALL_DIR}")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar cf ${CMAKE_BINARY_DIR}/${sd}.tar "${sd}" WORKING_DIRECTORY "${BRLCAD_EXT_INSTALL_DIR}")
     message("Packing ${sd} subdirectory... done.")
 
     # Make sure build directory has the target directory to write to
@@ -360,7 +360,6 @@ function(INITIALIZE_TP_FILES)
       execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar --touch WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
     endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
     message("Expanding ${sd}.tar in build directory... done.")
-
     # Copying complete - remove the archive file
     execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${sd}.tar)
   endforeach(sd ${SDIRS})
@@ -977,12 +976,6 @@ endmacro(find_package_opencv)
 macro(find_package_tcl)
 
   cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
-
-  if (BRLCAD_ENABLE_TK)
-    # For FindTCL.cmake
-    set(TCL_ENABLE_TK ON CACHE BOOL "enable tk")
-  endif (BRLCAD_ENABLE_TK)
-  mark_as_advanced(TCL_ENABLE_TK)
 
   find_package_reset(TCL RESET_TP)
   find_package_reset(TK RESET_TP)

@@ -76,12 +76,22 @@ jobs:
           # We do the Write-VolumeCache calls in order to help ensure files are
           # "flushed" to disk before compilation is attempted
           # https://superuser.com/a/1553374/1286142
-          cd build_winninja; cmake .. -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_winninja/bext_output -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON; Write-VolumeCache C; Write-VolumeCache D
+          cd build_winninja; cmake .. -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_winninja/bext_output -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON; Write-VolumeCache C; Write-VolumeCache D; cd ..
 
       - name: Build
         shell: powershell
         run: |
-          cd build_winninja; ninja -j1 -v; ninja check -v; ninja package
+          cd build_winninja; ninja -j1 -v; cd ..
+
+      - name: Check
+        shell: powershell
+        run: |
+          cd build_winninja; ninja check -v; cd ..
+
+      - name: Package
+        shell: powershell
+        run: |
+          cd build_winninja; ninja package; cd ..
 
 
   windows_std_tools:
@@ -115,6 +125,18 @@ jobs:
         run: |
           call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           cmake --build build_winstd --config Release --target mged
+
+      - name: Check
+        shell: cmd
+        run: |
+          call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          cmake --build build_winstd --config Release --target check
+
+      - name: Package
+        shell: cmd
+        run: |
+          call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          cmake --build build_winstd --config Release --target package
 
 
   linux:

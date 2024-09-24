@@ -241,6 +241,7 @@ regex_init(repo_info_t &r) {
 	    "cursor[.]c$",
 	    "misc/CMake/compat/.*",
 	    "ttcp[.]c$",
+	    "file[.]cpp$",
 	    NULL
 	};
 	cnt = 0;
