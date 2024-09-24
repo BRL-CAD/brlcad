@@ -46,6 +46,16 @@ function(brlcad_ext_setup)
   set(BEXT_SRC_CLEANUP FALSE)
   if (NOT DEFINED BRLCAD_EXT_SOURCE_DIR)
 
+    # In most cases we'll need to know the current version
+    file(READ ${CMAKE_SOURCE_DIR}/include/conf/MAJOR VMAJOR)
+    file(READ ${CMAKE_SOURCE_DIR}/include/conf/MINOR VMINOR)
+    file(READ ${CMAKE_SOURCE_DIR}/include/conf/PATCH VPATCH)
+    string(STRIP "${VMAJOR}" VMAJOR)
+    string(STRIP "${VMINOR}" VMINOR)
+    string(STRIP "${VPATCH}" VPATCH)
+    set(BRLCAD_REL "rel-${VMAJOR}-${VMINOR}-${VPATCH}")
+
+
     # If we have a bext copy in src/bext, use that.
     if (EXISTS "${CMAKE_SOURCE_DIR}/src/bext/README.md")
 
@@ -96,15 +106,8 @@ function(brlcad_ext_setup)
 	    # Development branches should be keeping up with bext RELEASE, but a
 	    # tagged release should point to its equivalent rel-X-Y-Z in bext.
 	    # In case this is a release, also check for that SHA1
-	    file(READ ${CMAKE_SOURCE_DIR}/include/conf/MAJOR VMAJOR)
-	    file(READ ${CMAKE_SOURCE_DIR}/include/conf/MINOR VMINOR)
-	    file(READ ${CMAKE_SOURCE_DIR}/include/conf/PATCH VPATCH)
-	    string(STRIP "${VMAJOR}" VMAJOR)
-	    string(STRIP "${VMINOR}" VMINOR)
-	    string(STRIP "${VPATCH}" VPATCH)
-	    set(REL "rel-${VMAJOR}-${VMINOR}-${VPATCH}")
 	    execute_process(
-	      COMMAND ${GIT_EXEC} ls-remote https://github.com/BRL-CAD/bext.git ${REL}
+	      COMMAND ${GIT_EXEC} ls-remote https://github.com/BRL-CAD/bext.git ${BRLCAD_REL}
 	      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	      RESULT_VARIABLE LS_REL_STATUS
 	      OUTPUT_VARIABLE LS_REL_STR
@@ -130,9 +133,25 @@ function(brlcad_ext_setup)
       # one doesn't already exist, try to clone it
       set(BRLCAD_EXT_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext)
       if (NOT EXISTS ${BRLCAD_EXT_SOURCE_DIR})
+	# Development branches should be keeping up with bext RELEASE, but a
+	# tagged release should clone its equivalent rel-X-Y-Z in bext.
+	# Check for a matching branch in bext
+	execute_process(
+	  COMMAND ${GIT_EXEC} ls-remote https://github.com/BRL-CAD/bext.git ${BRLCAD_REL}
+	  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+	  RESULT_VARIABLE LS_REL_STATUS
+	  OUTPUT_VARIABLE LS_REL_STR
+	  ERROR_VARIABLE LS_REL_STR
+	  )
+	if (NOT LS_REL_STATUS AND LS_REL_STR)
+	  set(CBRANCH "${BRLCAD_REL}")
+	else (NOT LS_REL_STATUS AND LS_REL_STR)
+	  set(CBRANCH "RELEASE")
+	endif (NOT LS_REL_STATUS AND LS_REL_STR)
+
 	find_program(GIT_EXEC git REQUIRED)
 	execute_process(
-	  COMMAND ${GIT_EXEC} clone -b RELEASE https://github.com/BRL-CAD/bext.git
+	  COMMAND ${GIT_EXEC} clone -b ${CBRANCH} https://github.com/BRL-CAD/bext.git
 	  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	  )
 	set(BEXT_SRC_CLEANUP TRUE)
