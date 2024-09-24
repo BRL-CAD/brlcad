@@ -83,9 +83,8 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 icv_image_t *
 icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height)
 {
-    if (format == BU_MIME_IMAGE_AUTO) {
+    if (format == BU_MIME_IMAGE_AUTO)
 	format = icv_guess_file_format(filename, NULL);
-    }
 
     switch (format) {
 	case BU_MIME_IMAGE_PNG:
@@ -126,7 +125,7 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
     if (UNLIKELY(fp==NULL)) {
 	perror("fopen");
 	bu_log("ERROR: icv_write failed to get a FILE pointer for %s\n", filename);
-	return 0;
+	return BRLCAD_ERROR;
     }
 
     switch (format) {
