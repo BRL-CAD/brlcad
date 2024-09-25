@@ -75,6 +75,10 @@ macro(BRLCAD_Find_Package pkg_name)
   # https://discourse.cmake.org/t/cmake-properties-for-options/250/2
   get_property(cv_ctrl DIRECTORY PROPERTY CACHE_VARIABLES)
 
+  # Generally speaking we're not looking to use frameworks in BRL-CAD - try
+  # them only at the end, if we don't have standard libraries/headers.
+  set(CMAKE_FIND_FRAMEWORK LAST)
+
   # Execute the actual find_package call
   if (F_REQUIRED)
     find_package(${pkg_name} REQUIRED)
