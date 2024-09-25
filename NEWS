@@ -11,6 +11,16 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
+--- 2024-XX-XX  Release X.XX.X                                     ---
+----------------------------------------------------------------------
+
+* added new 'align' subcommand to 'view' - Chris McGregor
+* added (autoview, lookat, qvrot, saveview) to 'view' - Chris McGregor
+* fixed mged 'process' command on read-only databases - Sean Morrison
+* fixed -exec behavior with 'flat' search in mged - Chris McGregor
+
+
+----------------------------------------------------------------------
 --- 2024-09-24 Release 7.40.2                                      ---
 ----------------------------------------------------------------------
 
@@ -20,16 +30,6 @@ changes made.  See document footer for additional details.
 * fixed lint BoT check testing - Cliff Yapp
 * improved overlap checker dialog behavior - Chris McGregor
 * fixed rtwizard tree visuals in gist - Chris McGregor
-
-
-----------------------------------------------------------------------
---- 2024-XX-XX  Release X.XX.X                                     ---
-----------------------------------------------------------------------
-
-* added new 'align' subcommand to 'view' - Chris McGregor
-* added (autoview, lookat, qvrot, saveview) to 'view' - Chris McGregor
-* fixed mged 'process' command on read-only databases - Sean Morrison
-* fixed -exec behavior with 'flat' search in mged - Chris McGregor
 
 
 ----------------------------------------------------------------------
