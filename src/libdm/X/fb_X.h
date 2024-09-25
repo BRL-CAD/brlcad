@@ -31,7 +31,15 @@
 
 #ifdef FB_USE_INTERNAL_API
 #include "common.h"
+
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <X11/X.h>
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 struct X24_fb_info {
     Display *dpy;

@@ -26,9 +26,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 #include "vmath.h"
 
 #include "bu/malloc.h"
