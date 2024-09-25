@@ -60,7 +60,7 @@ jobs:
         run: |
           cmake -E make_directory build_winninja
           cd build_winninja
-          git clone https://github.com/BRL-CAD/bext.git
+          git clone -b RELEASE https://github.com/BRL-CAD/bext.git
           cmake -E make_directory bext_build
           cd bext_build
           cmake ../bext -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/build_winninja
@@ -229,7 +229,7 @@ jobs:
       - name: Setup - bext
         run: |
           cd build_osx
-          git clone https://github.com/BRL-CAD/bext.git
+          git clone -b RELEASE https://github.com/BRL-CAD/bext.git
           cmake -E make_directory bext_build
           cd bext_build
           export CC=clang
