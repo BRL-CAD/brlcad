@@ -753,7 +753,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_ypr_core(gedp, argc-1, argv+1);
     }
 
-    if (BU_STR_EQUAL(argv[1], "aet")) {
+    if (BU_STR_EQUAL(argv[1], "aet") || BU_STR_EQUAL(argv[1], "ae")) {
 	return ged_aet_core(gedp, argc-1, argv+1);
     }
 
