@@ -8,6 +8,7 @@ include_directories(
 
 set(VIEW_SRCS
   aet.c
+  align.c
   autoview.c
   autoview2.cpp
   axes.c

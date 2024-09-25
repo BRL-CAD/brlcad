@@ -52,6 +52,7 @@ extern int _view_cmd_objs(void *bs, int argc, const char **argv);
 extern int _view_cmd_gobjs(void *bs, int argc, const char **argv);
 
 extern int ged_aet_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_align_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_autoview_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_center_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_eye_core(struct ged *gedp, int argc, const char **argv);
