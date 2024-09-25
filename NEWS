@@ -26,6 +26,8 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* added new 'align' subcommand to 'view' - Chris McGregor
+* added (autoview, lookat, qvrot, saveview) to 'view' - Chris McGregor
 * fixed mged 'process' command on read-only databases - Sean Morrison
 * fixed -exec behavior with 'flat' search in mged - Chris McGregor
 
