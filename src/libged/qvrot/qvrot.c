@@ -60,7 +60,7 @@ ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
     double az;
     double el;
     double theta;
-    static const char *usage = "x y z angle";
+    static const char *usage = "x y z [angle]";
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -74,7 +74,7 @@ ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 5) {
+    if (argc != 4 && argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
@@ -94,9 +94,11 @@ ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &theta) != 1) {
+    if (argc == 5 && sscanf(argv[4], "%lf", &theta) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[1]);
 	return BRLCAD_ERROR;
+    } else if (argc == 4) {
+	theta = 0;
     }
 
     if (NEAR_ZERO(dy, 0.00001) && NEAR_ZERO(dx, 0.00001)) {
