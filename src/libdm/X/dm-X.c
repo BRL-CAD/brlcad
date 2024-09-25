@@ -31,6 +31,11 @@
 #include <string.h>
 #include <math.h>
 
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -43,6 +48,10 @@
 #ifdef HAVE_X11_EXTENSIONS_XINPUT_H
 #  include <X11/extensions/XInput.h>
 #endif /* HAVE_X11_XINPUT_H */
+
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 #if defined(linux)
 #  undef X_NOT_STDC_ENV

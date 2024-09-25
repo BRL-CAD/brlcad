@@ -52,6 +52,10 @@
 #  endif
 #endif
 
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
@@ -65,6 +69,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 #include <ctype.h>
 
