@@ -104,7 +104,7 @@ void Geometry::addBeamResultant(std::string beamName, std::string sectionType, c
 
     tempSkt = temp.skt.creatSketch(sectionType, node1, node2, node3, D);
 
-    temp.ext.extrudeSection(sectionName.c_str(), node1, h, tempSkt->u_vec, tempSkt->v_vec, tempSkt);
+    temp.ext.extrudeSection(sectionName.c_str(), node1, h, tempSkt->u_vec, tempSkt->v_vec);
 
     m_BeamsResultant.push_back(temp);
 }

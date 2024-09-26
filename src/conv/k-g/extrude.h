@@ -36,7 +36,7 @@ public:
 
     void                            setName(const char* value);
 
-    void                            extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec, rt_sketch_internal* skt);
+    void                            extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec);
 
     std::string                     write(rt_wdb* wdbp);
 private:

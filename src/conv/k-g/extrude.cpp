@@ -46,7 +46,7 @@ void Extrude::setName
 }
 
 
-void Extrude::extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec, rt_sketch_internal* skt)
+void Extrude::extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec)
 {
     m_extrude->magic = RT_EXTRUDE_INTERNAL_MAGIC;
     VMOVE(m_extrude->V, V);
@@ -54,7 +54,6 @@ void Extrude::extrudeSection(std::string sectionName,const point_t& V, vect_t h,
     VMOVE(m_extrude->u_vec, u_vec);
     VMOVE(m_extrude->v_vec, v_vec);
     m_extrude->sketch_name = bu_strdup(sectionName.c_str());
-    //m_extrude->skt = skt;
     m_extrude->skt = (struct rt_sketch_internal*)NULL;
 }
 
@@ -68,7 +67,7 @@ std::string Extrude::write(rt_wdb* wdbp)
     extrude_wdb->magic = RT_EXTRUDE_INTERNAL_MAGIC;
     extrude_wdb = m_extrude;
 
-    if (extrude_wdb->sketch_name != "") {
+    if ((extrude_wdb->sketch_name != nullptr) && (strlen(extrude_wdb->sketch_name) > 0 )) {
 	wdb_export(wdbp, name.c_str(), extrude_wdb, ID_EXTRUDE, 1);
 	ret = name;
     }
