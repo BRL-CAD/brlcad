@@ -1,4 +1,4 @@
-/*                 P I P E . H
+/*                 E X T R U D E . H
  * BRL-CAD
  *
  * Copyright (c) 2024 United States Government as represented by
@@ -17,41 +17,35 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file pipe.h
+ /** @file extrude.h
   *
   * LS Dyna keyword file to BRL-CAD converter:
-  * intermediate pipe implementation
+  * intermediate extrude implementation
   */
-#ifndef PIPE_INCLUDED
-#define PIPE_INCLUDED
+#ifndef EXTRUDE_INCLUDED
+#define EXTRUDE_INCLUDED
 
 #include "common.h"
 #include "wdb.h"
 
-struct pipePoint {
-    point_t   coords;
-    double    innerDiameter;
-    double    outerDiameter;
-};
 
-class Pipe {
+
+class Extrude {
 public:
-    Pipe(void);
+    Extrude(void);
 
     void                            setName(const char* value);
 
-    void                            addPipePnt(const pipePoint& point);
+    void                            extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec);
 
-    rt_pipe_internal*               getPipe(void) const;
-
-    std::vector<std::string>        write(rt_wdb* wdbp);
+    std::string                     write(rt_wdb* wdbp);
 private:
-    std::string       name;
-    rt_pipe_internal* m_pipe;
+    std::string          name;
+    rt_extrude_internal* m_extrude;
 };
 
 
-#endif // !PIPE_INCLUDED
+#endif // !EXTRUDE_INCLUDED
 
 
 // Local Variables:

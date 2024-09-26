@@ -804,7 +804,7 @@ bool parse_k
 				if ((first7characters == "SECTION")) {
 				    sectionBeam.sectionType = tokens[0];
 
-				    for (size_t i_d = 1; i_d < 5; ++i_d) {
+				    for (size_t i_d = 1; i_d < tokens.size(); ++i_d) {
 					sectionBeam.D.push_back(stod(tokens[i_d]));
 				    }
 				}
@@ -957,8 +957,8 @@ bool parse_k
 
 		    case KState::Element_Beam: {
 			KElement element;
-			int      pid;
-			int      eid;
+			int      pid = 1;
+			int      eid = 1;
 
 			if (options.size() == 0 || optionsCounter == 0) {
 			    if (tokens.size() < 10) {
@@ -1028,70 +1028,70 @@ bool parse_k
 				}
 				double temp;
 
-				if (tokens[0] == "EQ.SECTION_01") {
+				if (tokens[0] == "SECTION_01") {
 				    temp = 1.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_02") {
+				else if (tokens[0] == "SECTION_02") {
 				    temp = 2.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_03") {
+				else if (tokens[0] == "SECTION_03") {
 				    temp = 3.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_04") {
+				else if (tokens[0] == "SECTION_04") {
 				    temp = 4.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_05") {
+				else if (tokens[0] == "SECTION_05") {
 				    temp = 5.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_06") {
+				else if (tokens[0] == "SECTION_06") {
 				    temp = 6.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_07") {
+				else if (tokens[0] == "SECTION_07") {
 				    temp = 7.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_08") {
+				else if (tokens[0] == "SECTION_08") {
 				    temp = 8.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_09") {
+				else if (tokens[0] == "SECTION_09") {
 				    temp = 9.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_10") {
+				else if (tokens[0] == "SECTION_10") {
 				    temp = 10.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_11") {
+				else if (tokens[0] == "SECTION_11") {
 				    temp = 11.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_12") {
+				else if (tokens[0] == "SECTION_12") {
 				    temp = 12.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_13") {
+				else if (tokens[0] == "SECTION_13") {
 				    temp = 13.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_14") {
+				else if (tokens[0] == "SECTION_14") {
 				    temp = 14.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_15") {
+				else if (tokens[0] == "SECTION_15") {
 				    temp = 15.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_16") {
+				else if (tokens[0] == "SECTION_16") {
 				    temp = 16.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_17") {
+				else if (tokens[0] == "SECTION_17") {
 				    temp = 17.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_18") {
+				else if (tokens[0] == "SECTION_18") {
 				    temp = 18.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_19") {
+				else if (tokens[0] == "SECTION_19") {
 				    temp = 19.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_20") {
+				else if (tokens[0] == "SECTION_20") {
 				    temp = 20.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_21") {
+				else if (tokens[0] == "SECTION_21") {
 				    temp = 21.0;
 				}
-				else if (tokens[0] == "EQ.SECTION_22") {
+				else if (tokens[0] == "SECTION_22") {
 				    temp = 22.0;
 				}
 
@@ -1215,7 +1215,7 @@ bool parse_k
 
 		    case KState::Element_Bearing: {
 			KElementBearing bearing;
-			int eid;
+			int eid = 1;
 
 			switch (elementLinesRead)
 			{

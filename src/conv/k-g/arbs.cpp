@@ -33,7 +33,10 @@ Arbs::Arbs(void):name() {}
 
 void Arbs::setName(const char* value)
 {
-    name = value;
+    if (value != nullptr)
+	name = value;
+    else
+	name = "";
 }
 
 
@@ -61,12 +64,6 @@ void Arbs::addArb(
     VMOVE(temp.pt[7], point8);
 
     arbs[arbName] = temp;
-}
-
-
-const char* Arbs::getName(void) const
-{
-    return name.c_str();
 }
 
 

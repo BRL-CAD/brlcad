@@ -1,4 +1,4 @@
-/*                 P I P E . H
+/*                 S K E T C H . H
  * BRL-CAD
  *
  * Copyright (c) 2024 United States Government as represented by
@@ -17,41 +17,41 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file pipe.h
+ /** @file sketch.h
   *
   * LS Dyna keyword file to BRL-CAD converter:
-  * intermediate pipe implementation
+  * intermediate sketch implementation
   */
-#ifndef PIPE_INCLUDED
-#define PIPE_INCLUDED
+#ifndef SKETCH_INCLUDED
+#define SKETCH_INCLUDED
 
 #include "common.h"
 #include "wdb.h"
 
-struct pipePoint {
-    point_t   coords;
-    double    innerDiameter;
-    double    outerDiameter;
-};
 
-class Pipe {
+
+class Sketch {
 public:
-    Pipe(void);
+    Sketch(void);
 
     void                            setName(const char* value);
 
-    void                            addPipePnt(const pipePoint& point);
+    rt_sketch_internal*             creatSketch(std::string sectionType,
+						const point_t& node1,
+						const point_t& node2,
+						const point_t& node3,
+						const std::vector<double>& D);
 
-    rt_pipe_internal*               getPipe(void) const;
+    rt_sketch_internal*             getSketch(void) const;
 
-    std::vector<std::string>        write(rt_wdb* wdbp);
+    std::string                     write(rt_wdb* wdbp);
 private:
     std::string       name;
-    rt_pipe_internal* m_pipe;
+    rt_sketch_internal* m_sketch;
 };
 
 
-#endif // !PIPE_INCLUDED
+#endif // !SKETCH_INCLUDED
 
 
 // Local Variables:

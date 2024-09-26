@@ -63,15 +63,12 @@ void Pipe::addPipePnt
     m_pipe->pipe_count += 1;
 }
 
-const char* Pipe::getName(void) const
-{
-    return name.c_str();
-}
 
 rt_pipe_internal* Pipe::getPipe(void) const
 {
     return m_pipe;
 }
+
 
 std::vector<std::string> Pipe::write
 (
@@ -81,15 +78,19 @@ std::vector<std::string> Pipe::write
 
     std::string pipeName = name;
     pipeName += ".pipe";
-    ret.push_back(pipeName);
+
 
     rt_pipe_internal* pipe_wdb;
     BU_GET(pipe_wdb, rt_pipe_internal);
     pipe_wdb->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipe_wdb->pipe_segs_head);
     BU_LIST_APPEND_LIST(&pipe_wdb->pipe_segs_head, &m_pipe->pipe_segs_head);
+    pipe_wdb->pipe_count = m_pipe->pipe_count;
 
-    wdb_export(wdbp, pipeName.c_str(), pipe_wdb, ID_PIPE, 1);
+    if (pipe_wdb->pipe_count > 0) {
+	wdb_export(wdbp, pipeName.c_str(), pipe_wdb, ID_PIPE, 1);
+	ret.push_back(pipeName);
+    }
 
     return ret;
 }
