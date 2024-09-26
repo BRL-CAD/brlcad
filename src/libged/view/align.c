@@ -39,7 +39,6 @@ ged_align_core(struct ged *gedp, int argc, const char *argv[])
     point_t align;
     point_t eye;
     point_t center;
-    point_t new_center;
     vect_t dir;
     fastf_t new_az, new_el;
     int inverse = 0;
