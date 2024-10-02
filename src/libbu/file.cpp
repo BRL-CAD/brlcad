@@ -425,7 +425,8 @@ bu_file_directory(const char *path)
 	return 0;
     }
 
-    return (S_ISDIR(sb.st_mode));
+    bool is_symlink = std::filesystem::is_directory(std::filesystem::status(path));
+    return (is_symlink) ? 1 : 0;
 }
 
 
