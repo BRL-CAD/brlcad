@@ -216,15 +216,6 @@ typedef int mode_t;
 #ifndef S_IFMT
 #  define S_IFMT _S_IFMT
 #endif
-#ifndef S_IFDIR
-#  define S_IFDIR _S_IFDIR
-#endif
-#ifndef S_IFCHR
-#  define S_IFCHR _S_IFCHR
-#endif
-#ifndef S_IFREG
-#  define S_IFREG _S_IFREG
-#endif
 
 #ifndef S_IREAD
 #  define S_IREAD _S_IREAD
@@ -272,16 +263,6 @@ typedef int mode_t;
 #endif
 #ifndef S_IRWXO
 #  define S_IRWXO      (((S_IRUSR)|(S_IWUSR)|(S_IXUSR))>>6)
-#endif
-
-#ifndef S_ISDIR
-#  define S_ISDIR(x)   ((x) & S_IFDIR)
-#endif
-#ifndef S_ISREG
-#  define S_ISREG(x)   ((x) & S_IFREG)
-#endif
-#ifndef S_ISLNK
-#  define S_ISLNK(x)   (0)
 #endif
 
 /*
