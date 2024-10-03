@@ -1,4 +1,7 @@
-set(STL_SRCS stl_read.c stl_write.c)
+set(STL_SRCS
+  stl_read.c
+  stl_write.cpp
+  )
 
 gcv_plugin_library(gcv-stl SHARED ${STL_SRCS})
 target_link_libraries(gcv-stl libgcv libwdb librt)

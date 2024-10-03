@@ -1,4 +1,4 @@
-/*                     S T L _ W R I T E . C
+/*                  S T L _ W R I T E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2003-2024 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file stl_write.c
+/** @file stl_write.cpp
  *
  * Convert a BRL-CAD model (in a .g file) to an STL file by
  * calling on the NMG booleans.  Based on g-acad.c.
@@ -38,6 +38,7 @@
 #include "bio.h"
 
 /* interface headers */
+extern "C" {
 #include "bu/getopt.h"
 #include "bu/cv.h"
 #include "bu/units.h"
@@ -46,16 +47,16 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "gcv.h"
-
+}
 
 #define V3ARGS_SCALE(v, factor)       (v)[X] * (factor), (v)[Y] * (factor), (v)[Z] * (factor)
 
 #define VSET_SCALE(a, b, factor) \
-do { \
-    (a)[X] = (b)[X] * (factor); \
-    (a)[Y] = (b)[Y] * (factor); \
-    (a)[Z] = (b)[Z] * (factor); \
-} while (0)
+    do { \
+	(a)[X] = (b)[X] * (factor); \
+	(a)[Y] = (b)[Y] * (factor); \
+	(a)[Z] = (b)[Z] * (factor); \
+    } while (0)
 
 
 struct stl_write_options
@@ -220,7 +221,14 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 		continue;
 
 	    /* Grab the face normal and save it for all the vertex loops */
-	    NMG_GET_FU_NORMAL(facet_normal, fu);
+	    NMG_CK_FACEUSE(fu);
+	    NMG_CK_FACE(fu->f_p);
+	    NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
+	    if ((fu->orientation != OT_SAME) != (fu->f_p->flip != 0)) {
+		VREVERSE(facet_normal, fu->f_p->g.plane_p->N);
+	    } else {
+		VMOVE(facet_normal, fu->f_p->g.plane_p->N);
+	    }
 
 	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
 	    {
@@ -411,25 +419,25 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(state.dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
-			1,
-			&tree_state,
-			0,			/* take all regions */
-			(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:gcv_region_end,
-			(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:rt_booltree_leaf_tess,
-			(void *)&gcvwriter);
+	    1,
+	    &tree_state,
+	    0,			/* take all regions */
+	    (gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:gcv_region_end,
+	    (gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:rt_booltree_leaf_tess,
+	    (void *)&gcvwriter);
 
     if (state.regions_tried>0) {
 	percent = ((double)state.regions_converted * 100) / state.regions_tried;
 	if (state.gcv_options->verbosity_level)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		   state.regions_tried, state.regions_converted, percent);
+		    state.regions_tried, state.regions_converted, percent);
     }
 
     if (state.regions_tried > 0) {
 	percent = ((double)state.regions_written * 100) / state.regions_tried;
 	if (state.gcv_options->verbosity_level)
 	    bu_log("                  %d triangulated successfully. %g%%\n",
-		   state.regions_written, percent);
+		    state.regions_written, percent);
     }
 
     bu_log("%zu triangles written\n", state.tot_polygons);
@@ -466,12 +474,12 @@ const struct gcv_filter gcv_conv_stl_write = {
 };
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+
