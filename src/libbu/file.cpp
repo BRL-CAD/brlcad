@@ -415,35 +415,47 @@ bu_file_executable(const char *path)
 int
 bu_file_directory(const char *path)
 {
-    struct stat sb;
+    std::filesystem::file_status fs;
 
     if (UNLIKELY(!path || (path[0] == '\0'))) {
 	return 0;
     }
 
-    if (stat(path, &sb) == -1) {
+    try
+    {
+	fs = std::filesystem::status(path);
+    }
+    catch (std::filesystem::filesystem_error const &)
+    {
+	bu_log("Error: unable to get permissions for %s\n", path);
 	return 0;
     }
 
-    bool is_symlink = std::filesystem::is_directory(std::filesystem::status(path));
-    return (is_symlink) ? 1 : 0;
+    bool is_directory = std::filesystem::is_directory(fs);
+    return (is_directory) ? 1 : 0;
 }
 
 
 int
 bu_file_symbolic(const char *path)
 {
-    struct stat sb;
+    std::filesystem::file_status fs;
 
     if (UNLIKELY(!path || (path[0] == '\0'))) {
 	return 0;
     }
 
-    if (stat(path, &sb) == -1) {
+    try
+    {
+	fs = std::filesystem::status(path);
+    }
+    catch (std::filesystem::filesystem_error const &)
+    {
+	bu_log("Error: unable to get permissions for %s\n", path);
 	return 0;
     }
 
-    bool is_symlink = std::filesystem::is_symlink(std::filesystem::status(path));
+    bool is_symlink = std::filesystem::is_symlink(fs);
     return (is_symlink) ? 1 : 0;
 }
 
