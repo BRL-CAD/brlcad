@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* mged primitive and matrix edit modes are broken (running "x -1")
+
 * lint BoT raytracing validation fails in main on a facetize -r
   havoc model - crash appears to be in the hlbvh code:
 
