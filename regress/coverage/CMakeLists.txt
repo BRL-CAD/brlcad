@@ -1,7 +1,4 @@
-include_directories(
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  )
+include_directories(${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 
 # Define the actual regression test
 set(BRLCAD_EXEC_LIST "${CMAKE_CURRENT_BINARY_DIR}/brlcadexec.cmake")
@@ -24,26 +21,26 @@ foreach(rf ${REGRESS_FILES_CMAKE})
 endforeach(rf ${REGRESS_FILES_CMAKE})
 
 # Build a scanner to introspect the tests
-BRLCAD_ADDEXEC(covgcheck covgcheck.cpp "libbu;Threads::Threads" TEST)
-if (TARGET covgcheck)
-  if (O3_COMPILER_FLAG)
+brlcad_addexec(covgcheck covgcheck.cpp "libbu;Threads::Threads" TEST)
+if(TARGET covgcheck)
+  if(O3_COMPILER_FLAG)
     # This check benefits greatly from optimization. If we have the O3 flag, use
     # it - whether or not the standard build settings would add it.
     target_compile_options(covgcheck PRIVATE "-O3")
-  endif (O3_COMPILER_FLAG)
+  endif(O3_COMPILER_FLAG)
   set_target_properties(covgcheck PROPERTIES FOLDER "BRL-CAD Regression Tests/coverage")
-endif (TARGET covgcheck)
+endif(TARGET covgcheck)
 
 #BRLCAD_REGRESSION_TEST(regress-coverage "covgcheck" EXEC covgcheck)
-DISTCLEAN(${LOG_FILE})
-DISTCLEAN(${BRLCAD_EXEC_LIST})
-DISTCLEAN(${BRLCAD_REGRESS_LIST})
+distclean(${LOG_FILE})
+distclean(${BRLCAD_EXEC_LIST})
+distclean(${BRLCAD_REGRESS_LIST})
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   covgcheck.cpp
   regress-coverage.cmake.in
-  )
+)
 
 # Local Variables:
 # tab-width: 8

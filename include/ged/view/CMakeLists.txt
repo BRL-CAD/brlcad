@@ -1,11 +1,7 @@
-set(ged_view_headers
-  matrix.h
-  select.h
-  state.h
-  )
-BRLCAD_MANAGE_FILES(ged_view_headers ${INCLUDE_DIR}/brlcad/ged/view REQUIRED libged)
+set(ged_view_headers matrix.h select.h state.h)
+brlcad_manage_files(ged_view_headers ${INCLUDE_DIR}/brlcad/ged/view REQUIRED libged)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

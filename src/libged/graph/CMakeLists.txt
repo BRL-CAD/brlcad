@@ -2,8 +2,8 @@ find_package(ADAPTAGRAMS)
 if(ADAPTAGRAMS_FOUND)
   add_definitions(-DHAVE_ADAPTAGRAMS=1)
 else(ADAPTAGRAMS_FOUND)
-  set (AVOID_INCLUDE_DIR "")
-  set (ADAPTAGRAMS_LIBRARIES "")
+  set(AVOID_INCLUDE_DIR "")
+  set(ADAPTAGRAMS_LIBRARIES "")
 endif(ADAPTAGRAMS_FOUND)
 
 include_directories(
@@ -13,19 +13,19 @@ include_directories(
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
   ${AVOID_INCLUDE_DIR}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-graph SHARED graph.cpp)
 target_link_libraries(ged-graph libged libbu ${ADAPTAGRAMS_LIBRARIES})
 set_property(TARGET ged-graph APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-graph graph.cpp)
-PLUGIN_SETUP(ged-graph ged)
+validate_style(ged-graph graph.cpp)
+plugin_setup(ged-graph ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   graph.cpp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

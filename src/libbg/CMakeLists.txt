@@ -1,7 +1,8 @@
 find_package_eigen(REQUIRED)
 find_package_gte(REQUIRED)
 
-set(SPSR_srcs
+set(
+  SPSR_srcs
   spsr/Allocator.h
   spsr/Array.h
   spsr/Array.inl
@@ -39,9 +40,10 @@ set(SPSR_srcs
   spsr/SPSR.h
   spsr/Vector.h
   spsr/Vector.inl
-  )
+)
 
-set(LIBBG_SOURCES
+set(
+  LIBBG_SOURCES
   aabb_ray.c
   chull.c
   chull2.cpp
@@ -70,42 +72,37 @@ set(LIBBG_SOURCES
   trimesh_split.cpp
   vert_tree.c
   util.c
-  )
+)
 
 # Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(BG_LIBS
-  ${libbg_deps}
-  )
+set(BG_LIBS ${libbg_deps})
 
-set(BG_INCLUDE_DIRS
-  ${SPSR_INCLUDE_DIR}
-  ${EIGEN3_INCLUDE_DIR}
-  ${GTE_INCLUDE_DIR}
-  )
+set(BG_INCLUDE_DIRS ${SPSR_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR} ${GTE_INCLUDE_DIR})
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
+brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 # altivec vectorization is broken in our bundled version of eigen.
 # looks like it was fixed in upstream long time ago, so just disable
 # for now.  TODO: remove this / retest after next Eigen upgrade.
 set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
-if (TARGET libbg-obj)
+if(TARGET libbg-obj)
   set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
-endif (TARGET libbg-obj)
+endif(TARGET libbg-obj)
 
 # With newer GCC, optimized linking of SPSR triggers a compiler warning about a
 # new allocation potentially exceeding maximum object size.
 if(${BRLCAD_OPTIMIZED} MATCHES "ON")
   check_c_compiler_flag(-Wno-error=alloc-size-larger-than= HAVE_NO_ALLOC_SIZE_LARGER_THAN)
-  if (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+  if(HAVE_NO_ALLOC_SIZE_LARGER_THAN)
     target_link_options(libbg PRIVATE -Wno-error=alloc-size-larger-than=)
-  endif (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+  endif(HAVE_NO_ALLOC_SIZE_LARGER_THAN)
 endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
 add_subdirectory(tests)
 
-set(bg_ignore
+set(
+  bg_ignore
   QuickHull.hpp
   bg_private.h
   clipper.hpp
@@ -114,10 +111,10 @@ set(bg_ignore
   earcut.hpp
   pointgen.c
   spsr/LICENSE
-  )
+)
 
-CMAKEFILES(${bg_ignore})
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(${bg_ignore})
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8
@@ -125,4 +122,3 @@ CMAKEFILES(CMakeLists.txt)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

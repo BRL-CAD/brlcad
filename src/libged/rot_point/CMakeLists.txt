@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-rot_point SHARED rot_point.c)
 target_link_libraries(ged-rot_point libged libbu)
 set_property(TARGET ged-rot_point APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-rot_point rot_point.c)
-PLUGIN_SETUP(ged-rot_point ged)
+validate_style(ged-rot_point rot_point.c)
+plugin_setup(ged-rot_point ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   rot_point.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

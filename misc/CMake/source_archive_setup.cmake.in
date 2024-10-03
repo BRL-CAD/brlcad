@@ -43,8 +43,8 @@ function(FIND_ALL_DIRS seed_dir)
       get_property(ALL_DIRS_LIST GLOBAL PROPERTY ALL_DIRS_LIST)
       list(FIND ALL_DIRS_LIST "${content_file}" IN_LIST)
       if("${IN_LIST}" STREQUAL "-1")
-	set_property(GLOBAL APPEND PROPERTY ALL_DIRS_LIST "${content_file}")
-	FIND_ALL_DIRS(${content_file})
+        set_property(GLOBAL APPEND PROPERTY ALL_DIRS_LIST "${content_file}")
+        find_all_dirs(${content_file})
       endif("${IN_LIST}" STREQUAL "-1")
     endif(IS_DIRECTORY "${content_file}")
   endforeach(content_file ${dir_contents})
@@ -74,14 +74,18 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
     string(REPLACE "@CMAKE_SOURCE_DIR@/" "@CMAKE_BINARY_DIR@/source_archive_contents/" outfile "${source_file}")
     if(EXISTS ${outfile})
       if("${source_file}" IS_NEWER_THAN ${outfile})
-	execute_process(COMMAND "@CMAKE_COMMAND@" -E copy ${source_file} ${outfile})
+        execute_process(
+          COMMAND "@CMAKE_COMMAND@" -E copy ${source_file} ${outfile}
+        )
       endif("${source_file}" IS_NEWER_THAN ${outfile})
     else(EXISTS ${outfile})
-      execute_process(COMMAND "@CMAKE_COMMAND@" -E copy ${source_file} ${outfile})
+      execute_process(
+        COMMAND "@CMAKE_COMMAND@" -E copy ${source_file} ${outfile}
+      )
     endif(EXISTS ${outfile})
     list(APPEND processed_files "${outfile}")
     math(EXPR processed "${processed} + 1")
-    math(EXPR skip_msg  "${processed} % 1000")
+    math(EXPR skip_msg "${processed} % 1000")
     if(${skip_msg} EQUAL 0)
       message("${processed} of ${file_count} files copied.")
     endif(${skip_msg} EQUAL 0)
@@ -92,7 +96,9 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
   message("Removing any leftover files from previous runs...")
   list(REMOVE_ITEM pre_existing_files ${processed_files})
   foreach(extra_file ${pre_existing_files})
-    execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${extra_file})
+    execute_process(
+      COMMAND "@CMAKE_COMMAND@" -E remove -f ${extra_file}
+    )
   endforeach(extra_file ${pre_existing_files})
   message("Removing any leftover files from previous runs... done.")
 
@@ -105,7 +111,7 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
     endif(IS_DIRECTORY "${candidate}")
     get_property(ALL_DIRS_LIST_TOP GLOBAL PROPERTY ALL_DIRS_LIST)
     foreach(dir ${ALL_DIRS_LIST_TOP})
-      FIND_ALL_DIRS(${dir})
+      find_all_dirs(${dir})
     endforeach(dir ${ALL_DIRS_LIST_TOP})
   endforeach(candidate ${remaining_files})
   set(HAVE_EMPTY_DIRS 1)
@@ -116,10 +122,10 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
       set(dir_contents)
       file(GLOB dir_contents "${candidate}/*")
       if(NOT dir_contents)
-	list(REMOVE_ITEM ALL_DIRS_LIST "${candidate}")
-	set_property(GLOBAL PROPERTY ALL_DIRS_LIST "${ALL_DIRS_LIST}")
-	file(REMOVE_RECURSE "${candidate}")
-	set(HAVE_EMPTY_DIRS 1)
+        list(REMOVE_ITEM ALL_DIRS_LIST "${candidate}")
+        set_property(GLOBAL PROPERTY ALL_DIRS_LIST "${ALL_DIRS_LIST}")
+        file(REMOVE_RECURSE "${candidate}")
+        set(HAVE_EMPTY_DIRS 1)
       endif(NOT dir_contents)
     endforeach(candidate ${dir_list})
   endwhile(HAVE_EMPTY_DIRS)
@@ -128,31 +134,36 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
   # If we're instructed to, populate the ext directory to make a self contained
   # tarball
   set(CPACK_INCLUDE_EXT @CPACK_INCLUDE_EXT@)
-  if (CPACK_INCLUDE_EXT)
-    if (NOT EXISTS "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext")
+  if(CPACK_INCLUDE_EXT)
+    if(NOT EXISTS "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext")
       message("Populating src/bext...")
       find_program(GIT_EXEC git REQUIRED)
       execute_process(
-	COMMAND ${GIT_EXEC} clone -b RELEASE https://github.com/BRL-CAD/bext.git
-	WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src"
-	)
+        COMMAND ${GIT_EXEC} clone -b RELEASE https://github.com/BRL-CAD/bext.git
+        WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src"
+      )
       execute_process(
-	COMMAND ${CMAKE_COMMAND} -E make_directory "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build"
-	)
+        COMMAND ${CMAKE_COMMAND} -E make_directory "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build"
+      )
       execute_process(
-	COMMAND ${CMAKE_COMMAND} .. -DENABLE_ALL=ON -DUSE_APPLESEED=ON -DUSE_OSPRAY=ON
-	WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build"
-	)
-      execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build")
-      execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/.git")
+        COMMAND ${CMAKE_COMMAND} .. -DENABLE_ALL=ON -DUSE_APPLESEED=ON -DUSE_OSPRAY=ON
+        WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build"
+      )
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/build"
+      )
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/.git"
+      )
       file(GLOB_RECURSE gcontents RELATIVE "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext" ".git*")
       foreach(SF ${gcontents})
-	execute_process(COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/${SF}")
+        execute_process(
+          COMMAND ${CMAKE_COMMAND} -E rm -r "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext/${SF}"
+        )
       endforeach(SF ${gcontents})
       message("Populating src/bext... done.")
-    endif (NOT EXISTS "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext")
-  endif (CPACK_INCLUDE_EXT)
-
+    endif(NOT EXISTS "@CMAKE_BINARY_DIR@/source_archive_contents/src/bext")
+  endif(CPACK_INCLUDE_EXT)
 endif(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
 
 # Local Variables:
@@ -161,4 +172,3 @@ endif(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.don
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

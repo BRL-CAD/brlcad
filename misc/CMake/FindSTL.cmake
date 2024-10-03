@@ -46,7 +46,9 @@
 
 include(CheckCSourceRuns)
 
-set(stl_test_src "
+set(
+  stl_test_src
+  "
 int
 main(int ac, char *av[])
 {
@@ -55,7 +57,8 @@ main(int ac, char *av[])
   else
     return ac-ac;
 }
-")
+"
+)
 
 # Only do this if we haven't done it already
 if(NOT DEFINED STL_LIB_TEST)
@@ -87,7 +90,7 @@ if(NOT DEFINED STL_LIB_TEST)
 
     # handle the QUIETLY and REQUIRED arguments
     include(FindPackageHandleStandardArgs)
-    FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LIBRARIES)
+    find_package_handle_standard_args(STL DEFAULT_MSG STDCXX_LIBRARIES)
   endif("${STL_LIB_TEST}" EQUAL 1)
 endif(NOT DEFINED STL_LIB_TEST)
 mark_as_advanced(STDCXX_LIBRARIES)

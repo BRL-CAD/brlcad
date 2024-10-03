@@ -1,22 +1,22 @@
-if (NOT WIN32)
-  BRLCAD_ADDEXEC(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libdm")
+if(NOT WIN32)
+  brlcad_addexec(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libdm")
   target_include_directories(remrt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-  ADD_TARGET_DEPS(remrt dm_plugins)
+  add_target_deps(remrt dm_plugins)
 
-  BRLCAD_ADDEXEC(rtsrv "../rt/usage.cpp;../rt/view.c;../rt/do.c;../rt/grid.c;../rt/heatgraph.c;../rt/opt.c;../rt/scanline.c;../rt/worker.c;rtsrv.c" "libdm;liboptical;libpkg;libicv")
+  brlcad_addexec(rtsrv "../rt/usage.cpp;../rt/view.c;../rt/do.c;../rt/grid.c;../rt/heatgraph.c;../rt/opt.c;../rt/scanline.c;../rt/worker.c;rtsrv.c" "libdm;liboptical;libpkg;libicv")
   target_include_directories(rtsrv BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   set_property(TARGET rtsrv APPEND PROPERTY COMPILE_DEFINITIONS "RTSRV")
-  ADD_TARGET_DEPS(rtsrv dm_plugins)
-endif (NOT WIN32)
+  add_target_deps(rtsrv dm_plugins)
+endif(NOT WIN32)
 
-CMAKEFILES(
+cmakefiles(
   ihost.c
   ihost.h
   protocol.h
   remrt.c
   rtsrv.c
-  )
-CMAKEFILES(CMakeLists.txt)
+)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

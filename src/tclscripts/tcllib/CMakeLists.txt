@@ -1,18 +1,15 @@
-set(tcllib_TCLSCRIPTS
-  cmdline.tcl
-  fileutil.tcl
-  )
-if (BRLCAD_ENABLE_TCL)
-  BRLCAD_ADDDATA(tcllib_TCLSCRIPTS tclscripts/tcllib)
-  pkgIndex_BUILD(tclscripts/tcllib)
-  tclIndex_BUILD(tclscripts/tcllib)
-endif (BRLCAD_ENABLE_TCL)
+set(tcllib_TCLSCRIPTS cmdline.tcl fileutil.tcl)
+if(BRLCAD_ENABLE_TCL)
+  brlcad_adddata(tcllib_TCLSCRIPTS tclscripts/tcllib)
+  pkgindex_build(tclscripts/tcllib)
+  tclindex_build(tclscripts/tcllib)
+endif(BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   license.terms
   ${tcllib_TCLSCRIPTS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

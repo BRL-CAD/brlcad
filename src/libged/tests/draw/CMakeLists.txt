@@ -1,4 +1,5 @@
-set(test_deps
+set(
+  test_deps
   dm-swrast
   ged-close
   ged-draw
@@ -10,10 +11,10 @@ set(test_deps
   ged-tol
   ged-view
   ged-zap
-  )
+)
 
-
-set(basic_view_test_ctrls
+set(
+  basic_view_test_ctrls
   v001_ctrl.png
   v002_ctrl.png
   v003_ctrl.png
@@ -40,15 +41,15 @@ set(basic_view_test_ctrls
   v024_ctrl.png
   v025_ctrl.png
   v026_ctrl.png
-  )
-BRLCAD_ADDEXEC(ged_test_draw "draw.cpp;util.cpp" "libged;libdm" TEST)
-if (TARGET ged_test_draw)
+)
+brlcad_addexec(ged_test_draw "draw.cpp;util.cpp" "libged;libdm" TEST)
+if(TARGET ged_test_draw)
   add_dependencies(ged_test_draw ${test_deps})
-endif (TARGET ged_test_draw)
-BRLCAD_ADD_TEST(NAME ged_test_drawing_basic COMMAND ged_test_draw "${CMAKE_CURRENT_SOURCE_DIR}")
+endif(TARGET ged_test_draw)
+brlcad_add_test(NAME ged_test_drawing_basic COMMAND ged_test_draw "${CMAKE_CURRENT_SOURCE_DIR}")
 
-
-set(faceplate_test_ctrls
+set(
+  faceplate_test_ctrls
   fp001_ctrl.png
   fp002_ctrl.png
   fp003_ctrl.png
@@ -58,30 +59,31 @@ set(faceplate_test_ctrls
   fp007_ctrl.png
   fp008_ctrl.png
   fp009_ctrl.png
-  )
-BRLCAD_ADDEXEC(ged_test_faceplate "faceplate.cpp;util.cpp" "libged;libdm" TEST)
-if (TARGET ged_test_faceplate)
+)
+brlcad_addexec(ged_test_faceplate "faceplate.cpp;util.cpp" "libged;libdm" TEST)
+if(TARGET ged_test_faceplate)
   add_dependencies(ged_test_faceplate ${test_deps})
-endif (TARGET ged_test_faceplate)
-BRLCAD_ADD_TEST(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate "${CMAKE_CURRENT_SOURCE_DIR}")
+endif(TARGET ged_test_faceplate)
+brlcad_add_test(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate "${CMAKE_CURRENT_SOURCE_DIR}")
 
-
-set(lod_test_ctrls
+set(
+  lod_test_ctrls
   lod001_ctrl.png
   lod002_ctrl.png
   lod003_ctrl.png
   lod004_ctrl.png
   lod005_ctrl.png
   lod006_ctrl.png
-  )
-BRLCAD_ADDEXEC(ged_test_lod "lod.cpp;util.cpp" "libged;libdm" TEST)
-if (TARGET ged_test_lod)
+)
+brlcad_addexec(ged_test_lod "lod.cpp;util.cpp" "libged;libdm" TEST)
+if(TARGET ged_test_lod)
   add_dependencies(ged_test_lod ${test_deps})
-endif (TARGET ged_test_lod)
-BRLCAD_ADD_TEST(NAME ged_test_drawing_lod COMMAND ged_test_lod "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_lod_tmp.g)
+endif(TARGET ged_test_lod)
+brlcad_add_test(NAME ged_test_drawing_lod COMMAND ged_test_lod "${CMAKE_CURRENT_SOURCE_DIR}")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_lod_tmp.g)
 
-set(select_test_ctrls
+set(
+  select_test_ctrls
   select001_ctrl.png
   select002_ctrl.png
   select003_ctrl.png
@@ -125,15 +127,16 @@ set(select_test_ctrls
   select022_ctrl.png
   select023_ctrl.png
   select024_ctrl.png
-  )
-BRLCAD_ADDEXEC(ged_test_select_draw "select.cpp;util.cpp" "libged;libdm" TEST)
-if (TARGET ged_test_select_draw)
+)
+brlcad_addexec(ged_test_select_draw "select.cpp;util.cpp" "libged;libdm" TEST)
+if(TARGET ged_test_select_draw)
   add_dependencies(ged_test_select_draw ${test_deps})
-endif (TARGET ged_test_select_draw)
-BRLCAD_ADD_TEST(NAME ged_test_drawing_select COMMAND ged_test_select_draw "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_select_tmp.g)
+endif(TARGET ged_test_select_draw)
+brlcad_add_test(NAME ged_test_drawing_select COMMAND ged_test_select_draw "${CMAKE_CURRENT_SOURCE_DIR}")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_select_tmp.g)
 
-set(quad_test_ctrls
+set(
+  quad_test_ctrls
   quad_00_001_ctrl.png
   quad_00_002_ctrl.png
   quad_00_003_ctrl.png
@@ -166,16 +169,17 @@ set(quad_test_ctrls
   quad_03_006_ctrl.png
   quad_03_007_ctrl.png
   quad_03_008_ctrl.png
-  )
-BRLCAD_ADDEXEC(ged_test_quad quad.cpp "libged;libdm" TEST)
-if (TARGET ged_test_quad)
+)
+brlcad_addexec(ged_test_quad quad.cpp "libged;libdm" TEST)
+if(TARGET ged_test_quad)
   add_dependencies(ged_test_quad ${test_deps})
-endif (TARGET ged_test_quad)
-BRLCAD_ADD_TEST(NAME ged_test_drawing_quad COMMAND ged_test_quad "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_quad_tmp.g)
+endif(TARGET ged_test_quad)
+brlcad_add_test(NAME ged_test_drawing_quad COMMAND ged_test_quad "${CMAKE_CURRENT_SOURCE_DIR}")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_quad_tmp.g)
 
 # The idea here is to test view stability across resize events
-set(aet_test_ctrls
+set(
+  aet_test_ctrls
   aet_00_001_ctrl.png
   aet_00_002_ctrl.png
   aet_01_001_ctrl.png
@@ -184,13 +188,13 @@ set(aet_test_ctrls
   aet_02_002_ctrl.png
   aet_03_001_ctrl.png
   aet_03_002_ctrl.png
-  )
-BRLCAD_ADDEXEC(ged_test_aet "aet.cpp;util.cpp" "libged;libdm" TEST)
-if (TARGET ged_test_aet)
+)
+brlcad_addexec(ged_test_aet "aet.cpp;util.cpp" "libged;libdm" TEST)
+if(TARGET ged_test_aet)
   add_dependencies(ged_test_aet ${test_deps})
-endif (TARGET ged_test_aet)
+endif(TARGET ged_test_aet)
 
-CMAKEFILES(
+cmakefiles(
   README
   empty.png
   moss.g
@@ -203,9 +207,9 @@ CMAKEFILES(
   ${select_test_ctrls}
   ${quad_test_ctrls}
   ${aet_test_ctrls}
-  )
+)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8
@@ -213,4 +217,3 @@ CMAKEFILES(CMakeLists.txt)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

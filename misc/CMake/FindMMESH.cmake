@@ -43,7 +43,7 @@ set(MMESH_NAMES mmesh OSMesa)
 
 # Try each search configuration.
 foreach(search ${_MMESH_SEARCHES})
-	find_path(MMESH_INCLUDE_DIR NAMES meshdecimation.h ${${search}} PATH_SUFFIXES include/mmesh mmesh)
+  find_path(MMESH_INCLUDE_DIR NAMES meshdecimation.h ${${search}} PATH_SUFFIXES include/mmesh mmesh)
 endforeach()
 
 # Allow MMESH_LIBRARY to be set manually, as the location of the openNURBS library
@@ -63,34 +63,28 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(MMESH REQUIRED_VARS MMESH_LIBRARY MMESH_INCLUDE_DIR)
 
 if(MMESH_FOUND)
-    set(MMESH_INCLUDE_DIRS ${MMESH_INCLUDE_DIR})
+  set(MMESH_INCLUDE_DIRS ${MMESH_INCLUDE_DIR})
 
-    if(NOT MMESH_LIBRARIES)
-      set(MMESH_LIBRARIES ${MMESH_LIBRARY})
+  if(NOT MMESH_LIBRARIES)
+    set(MMESH_LIBRARIES ${MMESH_LIBRARY})
+  endif()
+
+  if(NOT TARGET MMESH::MMESH)
+    add_library(MMESH::MMESH UNKNOWN IMPORTED)
+    set_target_properties(MMESH::MMESH PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${MMESH_INCLUDE_DIRS}")
+
+    if(MMESH_LIBRARY_RELEASE)
+      set_property(TARGET MMESH::MMESH APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+      set_target_properties(MMESH::MMESH PROPERTIES IMPORTED_LOCATION_RELEASE "${MMESH_LIBRARY_RELEASE}")
     endif()
 
-    if(NOT TARGET MMESH::MMESH)
-      add_library(MMESH::MMESH UNKNOWN IMPORTED)
-      set_target_properties(MMESH::MMESH PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${MMESH_INCLUDE_DIRS}")
-
-      if(MMESH_LIBRARY_RELEASE)
-        set_property(TARGET MMESH::MMESH APPEND PROPERTY
-          IMPORTED_CONFIGURATIONS RELEASE)
-        set_target_properties(MMESH::MMESH PROPERTIES
-          IMPORTED_LOCATION_RELEASE "${MMESH_LIBRARY_RELEASE}")
-      endif()
-
-      if(MMESH_LIBRARY_DEBUG)
-        set_property(TARGET MMESH::MMESH APPEND PROPERTY
-          IMPORTED_CONFIGURATIONS DEBUG)
-        set_target_properties(MMESH::MMESH PROPERTIES
-          IMPORTED_LOCATION_DEBUG "${MMESH_LIBRARY_DEBUG}")
-      endif()
-
-      if(NOT MMESH_LIBRARY_RELEASE AND NOT MMESH_LIBRARY_DEBUG)
-        set_property(TARGET MMESH::MMESH APPEND PROPERTY
-          IMPORTED_LOCATION "${MMESH_LIBRARY}")
-      endif()
+    if(MMESH_LIBRARY_DEBUG)
+      set_property(TARGET MMESH::MMESH APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+      set_target_properties(MMESH::MMESH PROPERTIES IMPORTED_LOCATION_DEBUG "${MMESH_LIBRARY_DEBUG}")
     endif()
+
+    if(NOT MMESH_LIBRARY_RELEASE AND NOT MMESH_LIBRARY_DEBUG)
+      set_property(TARGET MMESH::MMESH APPEND PROPERTY IMPORTED_LOCATION "${MMESH_LIBRARY}")
+    endif()
+  endif()
 endif()

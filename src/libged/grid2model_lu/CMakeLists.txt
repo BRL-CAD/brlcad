@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-grid2model_lu SHARED grid2model_lu.c)
 target_link_libraries(ged-grid2model_lu libged libbu)
 set_property(TARGET ged-grid2model_lu APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-grid2model_lu grid2model_lu.c)
-PLUGIN_SETUP(ged-grid2model_lu ged)
+validate_style(ged-grid2model_lu grid2model_lu.c)
+plugin_setup(ged-grid2model_lu ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   grid2model_lu.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

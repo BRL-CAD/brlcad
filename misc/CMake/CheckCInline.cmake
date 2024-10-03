@@ -59,21 +59,19 @@
 include(CheckCSourceCompiles)
 
 macro(CHECK_C_INLINE RESULT)
-
   if(NOT DEFINED HAVE_INLINE)
-
     # initialize to empty
     set(${RESULT} "")
 
     # test candidates to find one that works
     foreach(INLINE "inline" "__inline__" "__inline")
-
       string(TOUPPER "HAVE_${INLINE}_KEYWORD" HAVE_C_INLINE_KEYWORD)
 
       set(PRE_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
       set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Dinline=${INLINE}")
 
-      check_c_source_compiles("typedef int foo_t;
+      check_c_source_compiles(
+        "typedef int foo_t;
 			       static inline foo_t
 			       static_foo(void) {
 			         return 0;
@@ -85,17 +83,17 @@ macro(CHECK_C_INLINE RESULT)
 			       int
 			       main(int argc, char *argv[]) {
 			         return (argc > 0 || argv)?0:1;
-			       }" ${HAVE_C_INLINE_KEYWORD})
+			       }"
+        ${HAVE_C_INLINE_KEYWORD}
+      )
 
       set(CMAKE_REQUIRED_FLAGS "${PRE_CMAKE_REQUIRED_FLAGS}")
 
       if(${HAVE_C_INLINE_KEYWORD})
         set(HAVE_INLINE "${INLINE}" CACHE INTERNAL "C compiler provides inlining support")
-	break()
+        break()
       endif(${HAVE_C_INLINE_KEYWORD})
-
     endforeach(INLINE)
-
   endif(NOT DEFINED HAVE_INLINE)
 
   # still not defined?
@@ -105,7 +103,6 @@ macro(CHECK_C_INLINE RESULT)
 
   # return the final verdict
   set(${RESULT} ${HAVE_INLINE})
-
 endmacro(CHECK_C_INLINE)
 
 # Local Variables:

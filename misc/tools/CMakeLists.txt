@@ -10,29 +10,29 @@ endfunction(SetTargetFolder)
 # env2c - Scanner to generate a list of environment variables used by
 # source code
 add_subdirectory(env2c)
-SetTargetFolder(env2c "Compilation Utilities")
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
+settargetfolder(env2c "Compilation Utilities")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
 
 # debug2c - Scanner to generate a list of debug variables used by
 # source code
 add_subdirectory(debug2c)
-SetTargetFolder(debug2c "Compilation Utilities")
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
+settargetfolder(debug2c "Compilation Utilities")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
 # inactvhdrs - utility that tries to find local headers unused by other
 # source code in a file hierarchy
-if (BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(inactvhdrs)
-  SetTargetFolder(debug2c "Maintenance Utilities")
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/inactvhdrs/Makefile)
-endif (BUILD_TESTING)
+  settargetfolder(debug2c "Maintenance Utilities")
+  distclean(${CMAKE_CURRENT_BINARY_DIR}/inactvhdrs/Makefile)
+endif(BUILD_TESTING)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   README
   inactvhdrs/CMakeLists.txt
   inactvhdrs/inactvhdrs.cpp
-  )
+)
 
 # Locac Variables:
 # tab-width: 8

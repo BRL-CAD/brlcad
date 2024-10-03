@@ -11,18 +11,19 @@ string(REPLACE " " "%20" DOCBOOK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
 
 # Common xsl for all outputs
 configure_file(brlcad-common.xsl.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-common.xsl)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad-common.xsl")
+distclean("${CMAKE_CURRENT_BINARY_DIR}/brlcad-common.xsl")
 
 # Fonts definition
 configure_file(brlcad-fonts.xsl.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-fonts.xsl)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad-fonts.xsl")
+distclean("${CMAKE_CURRENT_BINARY_DIR}/brlcad-fonts.xsl")
 
 # Wordpress
 configure_file(wordpress.xsl.in ${CMAKE_CURRENT_BINARY_DIR}/wordpress.xsl)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/wordpress.xsl")
+distclean("${CMAKE_CURRENT_BINARY_DIR}/wordpress.xsl")
 
 # Make sure distcheck knows about all files in directory
-set(ignore_files
+set(
+  ignore_files
   CMakeLists.txt
   brlcad-article-fo-stylesheet.xsl.in
   brlcad-article-xhtml-stylesheet.xsl.in
@@ -58,9 +59,9 @@ set(ignore_files
   tutorial-cover-template.xsl.in
   tutorial-template.xsl.in
   wordpress.xsl.in
-  )
+)
 
-CMAKEFILES(${ignore_files})
+cmakefiles(${ignore_files})
 
 # Local Variables:
 # tab-width: 8
@@ -68,4 +69,3 @@ CMAKEFILES(${ignore_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

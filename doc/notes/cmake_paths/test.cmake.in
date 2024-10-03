@@ -6,7 +6,7 @@ message(EXEC_DIR: ${EXEC_DIR})
 # configure_file will set BIN_DIR from the parent build, so the script
 # knows what the relative binary path is.
 set(BIN_DIR "@BIN_DIR@")
-message(BIN_DIR:  ${BIN_DIR})
+message(BIN_DIR: ${BIN_DIR})
 
 # Using the above two pieces of information, construct the "root" path
 # below which the standard BRL-CAD file hierarchy (binary, library, data,

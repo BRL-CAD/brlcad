@@ -65,12 +65,16 @@ function(record_cmdline_args)
     if("${VAR_HELPSTRING}" MATCHES "specified on the command line")
       get_property(VAR_TYPE CACHE ${VAR} PROPERTY TYPE)
       if(NOT VAR_TYPE STREQUAL "UNINITIALIZED")
-	set(VAR "${VAR}:${VAR_TYPE}")
+        set(VAR "${VAR}:${VAR_TYPE}")
       endif(NOT VAR_TYPE STREQUAL "UNINITIALIZED")
       set(CMAKE_ARGS "${CMAKE_ARGS} -D${VAR}=${${VAR}}")
     endif("${VAR_HELPSTRING}" MATCHES "specified on the command line")
   endforeach(VAR ${VARS})
-  file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${CMAKE_COMMAND} \"${CMAKE_SOURCE_DIR}\" ${CMAKE_ARGS}\n")
+  file(
+    APPEND
+    "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log"
+    "${CMAKE_COMMAND} \"${CMAKE_SOURCE_DIR}\" ${CMAKE_ARGS}\n"
+  )
 endfunction(record_cmdline_args)
 
 #---------------------------------------------------------------------
@@ -80,23 +84,30 @@ endfunction(record_cmdline_args)
 # unexpected things to the messages returned by that command
 
 function(message)
-
   # bleh, don't know a clean+safe way to avoid string comparing the
   # optional arg, so we extract it and test.
   list(GET ARGV 0 MessageType)
 
-  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS OR MessageType STREQUAL CHECK_START OR MessageType STREQUAL CHECK_PASS OR MessageType STREQUAL CHECK_FAIL )
+  if(
+    MessageType STREQUAL FATAL_ERROR
+    OR MessageType STREQUAL SEND_ERROR
+    OR MessageType STREQUAL WARNING
+    OR MessageType STREQUAL AUTHOR_WARNING
+    OR MessageType STREQUAL STATUS
+    OR MessageType STREQUAL CHECK_START
+    OR MessageType STREQUAL CHECK_PASS
+    OR MessageType STREQUAL CHECK_FAIL
+  )
     list(REMOVE_AT ARGV 0)
     _message(${MessageType} "${ARGV}")
     file(APPEND "${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${MessageType}: ${ARGV}\n")
-  else ()
+  else()
     _message("${ARGV}")
     file(APPEND "${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${ARGV}\n")
-  endif ()
+  endif()
 
   # ~10% slower alternative that avoids adding '--' to STATUS messages
   # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
-
 endfunction(message)
 
 #-----------------------------------------------------------------------------
@@ -119,34 +130,42 @@ endfunction()
 # to put them in the correct relative location
 function(PLUGIN_SETUP plugin_targets subdir)
   set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
-  foreach (target_name ${plugin_targets})
+  foreach(target_name ${plugin_targets})
     foreach(dt ${DIR_TYPES})
       set_property(TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/${subdir}")
     endforeach(dt ${DIR_TYPES})
     set(CFG_TYPES ${CMAKE_CONFIGURATION_TYPES} ${CMAKE_BUILD_TYPE})
-    if (CFG_TYPES)
+    if(CFG_TYPES)
       list(REMOVE_DUPLICATES CFG_TYPES)
       foreach(CFG_TYPE ${CFG_TYPES})
-	string(TOUPPER "${CFG_TYPE}" CTU)
-	foreach(dt ${DIR_TYPES})
-	  set_property(TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY_${CTU} "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/${subdir}")
-	endforeach(dt ${DIR_TYPES})
+        string(TOUPPER "${CFG_TYPE}" CTU)
+        foreach(dt ${DIR_TYPES})
+          set_property(
+            TARGET ${target_name}
+            PROPERTY ${dt}_OUTPUT_DIRECTORY_${CTU} "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/${subdir}"
+          )
+        endforeach(dt ${DIR_TYPES})
       endforeach(CFG_TYPE ${CFG_TYPES})
-    endif (CFG_TYPES)
+    endif(CFG_TYPES)
     set_target_properties(${target_name} PROPERTIES FOLDER "BRL-CAD Plugins/${subdir}")
-    install(TARGETS ${target_name}
+    install(
+      TARGETS ${target_name}
       RUNTIME DESTINATION ${LIBEXEC_DIR}/${subdir}
       LIBRARY DESTINATION ${LIBEXEC_DIR}/${subdir}
-      ARCHIVE DESTINATION ${LIBEXEC_DIR}/${subdir})
+      ARCHIVE DESTINATION ${LIBEXEC_DIR}/${subdir}
+    )
     # Set the RPATH target property
-    if (NOT APPLE)
-      set_property(TARGET ${target_name} PROPERTY INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../../${LIB_DIR}")
-    else (NOT APPLE)
+    if(NOT APPLE)
+      set_property(
+        TARGET ${target_name}
+        PROPERTY INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../../${LIB_DIR}"
+      )
+    else(NOT APPLE)
       # For OSX, set the INSTALL_NAME_DIR target property
       set_property(TARGET ${target_name} PROPERTY INSTALL_RPATH "@executable_path/../../${LIB_DIR}")
       set_property(TARGET ${target_name} PROPERTY INSTALL_NAME_DIR "@executable_path/../../${LIB_DIR}")
-    endif (NOT APPLE)
-  endforeach (target_name${plugins})
+    endif(NOT APPLE)
+  endforeach(target_name${plugins})
 endfunction(PLUGIN_SETUP)
 
 #-----------------------------------------------------------------------------
@@ -156,9 +175,8 @@ function(BUILD_CFG_HDR chdr targetdir)
   get_filename_component(ohdr "${chdr}" NAME_WE)
   configure_file("${chdr}" "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
   install(FILES "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h" DESTINATION ${targetdir})
-  DISTCLEAN("${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
+  distclean("${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
 endfunction(BUILD_CFG_HDR chdr targetdir)
-
 
 #-----------------------------------------------------------------------------
 # It is sometimes convenient to be able to supply both a filename and a
@@ -170,7 +188,6 @@ endfunction(BUILD_CFG_HDR chdr targetdir)
 # inlist contained the actual list contents or a variable.
 
 function(NORMALIZE_FILE_LIST inlist)
-
   cmake_parse_arguments(N "" "RLIST;FPLIST;TARGET" "" ${ARGN})
 
   # First, figure out whether we have list contents or a list name
@@ -184,7 +201,6 @@ function(NORMALIZE_FILE_LIST inlist)
   # Put the list contents in the targetvar variable and
   # generate a target name.
   if(NOT havevarname)
-
     set(rlist "${inlist}")
     if(N_RLIST)
       set(${N_RLIST} "${inlist}" PARENT_SCOPE)
@@ -193,7 +209,6 @@ function(NORMALIZE_FILE_LIST inlist)
     # If we want a target name and all we've got is a list of files,
     # we need to get a bit creative.
     if(N_TARGET)
-
       # Initial clean-up
       string(REGEX REPLACE " " "_" targetstr "${inlist}")
       string(REGEX REPLACE "/" "_" targetstr "${targetstr}")
@@ -206,19 +221,16 @@ function(NORMALIZE_FILE_LIST inlist)
       # It's cryptic but the odds are very good the result will be a unique
       # target name and the string will be short enough, which is what we need.
       string(LENGTH "${targetstr}" STRLEN)
-      if ("${STRLEN}" GREATER 30)
-	string(MD5 targetname "${targetstr}")
-      else ("${STRLEN}" GREATER 30)
-	set(targetname "${targetstr}")
-      endif ("${STRLEN}" GREATER 30)
+      if("${STRLEN}" GREATER 30)
+        string(MD5 targetname "${targetstr}")
+      else("${STRLEN}" GREATER 30)
+        set(targetname "${targetstr}")
+      endif("${STRLEN}" GREATER 30)
 
       # Send back the final result
       set(${N_TARGET} "${targetname}" PARENT_SCOPE)
-
     endif(N_TARGET)
-
   else(NOT havevarname)
-
     set(rlist "${${inlist}}")
     if(N_RLIST)
       set(${N_RLIST} "${${inlist}}" PARENT_SCOPE)
@@ -227,7 +239,6 @@ function(NORMALIZE_FILE_LIST inlist)
     if(N_TARGET)
       set(${N_TARGET} "${inlist}" PARENT_SCOPE)
     endif(N_TARGET)
-
   endif(NOT havevarname)
 
   # For some uses, we need the contents of the input list
@@ -241,7 +252,6 @@ function(NORMALIZE_FILE_LIST inlist)
     endforeach(filename ${rlist})
     set(${N_FPLIST} "${fullpaths}" PARENT_SCOPE)
   endif(N_FPLIST)
-
 endfunction(NORMALIZE_FILE_LIST)
 
 #-----------------------------------------------------------------------------
@@ -260,7 +270,12 @@ function(BRLCAD_ADD_DIR_LIST_ENTRY list_name dir_in list_entry)
   string(TOUPPER "${currdir_str}" currdir_str)
   get_property(${list_name}_${currdir_str} GLOBAL PROPERTY DATA_TARGETS_${currdir_str})
   if(NOT ${list_name}_${currdir_str})
-    define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "${list_name}" FULL_DOCS "${list_name} for directory ${dir_in}")
+    define_property(
+      GLOBAL
+      PROPERTY CMAKE_LIBRARY_TARGET_LIST
+      BRIEF_DOCS "${list_name}"
+      FULL_DOCS "${list_name} for directory ${dir_in}"
+    )
   endif(NOT ${list_name}_${currdir_str})
   set_property(GLOBAL APPEND PROPERTY ${list_name}_${currdir_str} ${list_entry})
 endfunction(BRLCAD_ADD_DIR_LIST_ENTRY)
@@ -271,7 +286,6 @@ function(BRLCAD_GET_DIR_LIST_CONTENTS list_name dir_in outvar)
   get_property(${list_name}_${currdir_str} GLOBAL PROPERTY ${list_name}_${currdir_str})
   set(${outvar} "${DATA_TARGETS_${currdir_str}}" PARENT_SCOPE)
 endfunction(BRLCAD_GET_DIR_LIST_CONTENTS)
-
 
 #-----------------------------------------------------------------------------
 # Determine whether a list of source files contains all C, all C++, or
@@ -314,12 +328,11 @@ function(ADD_TARGET_DEPS tname)
   if(TARGET ${tname})
     foreach(target ${ARGN})
       if(TARGET ${target})
-	add_dependencies(${tname} ${target})
+        add_dependencies(${tname} ${target})
       endif(TARGET ${target})
     endforeach(target ${ARGN})
   endif(TARGET ${tname})
 endfunction(ADD_TARGET_DEPS tname)
-
 
 #---------------------------------------------------------------------------
 # Code for timing configuration and building of BRL-CAD.  These executables
@@ -327,7 +340,6 @@ endfunction(ADD_TARGET_DEPS tname)
 # set_config_time.
 
 function(generate_dreport)
-
   #########################################################################
   # To report at the end what the actual deltas are, we need to read in the
   # time stamps from the previous program and do some math.
@@ -354,7 +366,9 @@ function(generate_dreport)
     set(BENCHMARK_LINE "Build the ALL_BUILD target.  To create an NSIS installer, build the PACKAGE target")
   endif(MSVC)
 
-  set(dreport_src "
+  set(
+    dreport_src
+    "
 #define _CRT_SECURE_NO_WARNINGS 1
 
 #include <time.h>
@@ -392,14 +406,18 @@ int main(int argc, const char **argv) {
   printf(\"\\n\");
   return 0;
 }
-")
+"
+  )
 
   # Build the code so we can run it
   file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport.c" "${dreport_src}")
-  try_compile(dreport_build "${CMAKE_BINARY_DIR}/CMakeTmp"
+  try_compile(
+    dreport_build
+    "${CMAKE_BINARY_DIR}/CMakeTmp"
     SOURCES "${CMAKE_BINARY_DIR}/CMakeTmp/dreport.c"
     OUTPUT_VARIABLE FREPORT_BUILD_INFO
-    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT}")
+    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT}"
+  )
   if(NOT dreport_build)
     message(FATAL_ERROR "Could not build time delta reporting utility: ${FREPORT_BUILD_INFO}")
   endif(NOT dreport_build)
@@ -407,9 +425,7 @@ int main(int argc, const char **argv) {
   if(COMMAND distclean)
     distclean("${CMAKE_BINARY_DIR}/CMakeTmp/dreport")
   endif(COMMAND distclean)
-
 endfunction(generate_dreport)
-
 
 # This utility function requires that the definitions defined in
 # src/source_dirs.cmake are populated.  Its role is to create a fully expanded
@@ -434,24 +450,24 @@ function(deps_expand seed_dir out_var)
   set(curr_deps ${${out_var}})
   set(working_deps ${${seed_dir}_deps})
   set(seed_deps)
-  while (working_deps)
+  while(working_deps)
     list(POP_FRONT working_deps wdep)
-    if (NOT BRLCAD_ENABLE_TCL AND "${wdep}" STREQUAL "libtclcad")
+    if(NOT BRLCAD_ENABLE_TCL AND "${wdep}" STREQUAL "libtclcad")
       continue()
-    endif ()
-    if (NOT BRLCAD_ENABLE_QT AND "${wdep}" STREQUAL "libqtcad")
+    endif()
+    if(NOT BRLCAD_ENABLE_QT AND "${wdep}" STREQUAL "libqtcad")
       continue()
-    endif ()
+    endif()
     list(FIND curr_deps ${wdep} fresult)
-    if (${fresult} EQUAL -1)
+    if(${fresult} EQUAL -1)
       list(APPEND curr_deps ${wdep})
       set(seed_deps ${seed_deps} ${${wdep}_deps})
-    endif (${fresult} EQUAL -1)
-    if (NOT working_deps)
+    endif(${fresult} EQUAL -1)
+    if(NOT working_deps)
       set(working_deps ${seed_deps})
       set(seed_deps)
-    endif (NOT working_deps)
-  endwhile (working_deps)
+    endif(NOT working_deps)
+  endwhile(working_deps)
 
   # Have the active dirs, sort them into
   # reverse dependency order
@@ -460,13 +476,12 @@ function(deps_expand seed_dir out_var)
   set(fdeps)
   foreach(cod ${odirs})
     list(FIND curr_deps ${cod} fresult)
-    if (NOT ${fresult} EQUAL -1)
+    if(NOT ${fresult} EQUAL -1)
       list(APPEND fdeps ${cod})
-    endif (NOT ${fresult} EQUAL -1)
+    endif(NOT ${fresult} EQUAL -1)
   endforeach(cod ${odirs})
   set(${out_var} ${fdeps} PARENT_SCOPE)
 endfunction(deps_expand)
-
 
 # Local Variables:
 # tab-width: 8

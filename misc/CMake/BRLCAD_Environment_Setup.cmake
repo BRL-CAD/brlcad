@@ -38,17 +38,17 @@
 #---------------------------------------------------------------------
 # Save the current LC_ALL, LC_MESSAGES, and LANG environment variables
 # and set them to "C" so things like date output are as expected.
-set(_orig_lc_all      $ENV{LC_ALL})
+set(_orig_lc_all $ENV{LC_ALL})
 set(_orig_lc_messages $ENV{LC_MESSAGES})
-set(_orig_lang        $ENV{LANG})
+set(_orig_lang $ENV{LANG})
 if(_orig_lc_all)
-  set(ENV{LC_ALL}      C)
+  set(ENV{LC_ALL} C)
 endif(_orig_lc_all)
 if(_orig_lc_messages)
   set(ENV{LC_MESSAGES} C)
 endif(_orig_lc_messages)
 if(_orig_lang)
-  set(ENV{LANG}        C)
+  set(ENV{LANG} C)
 endif(_orig_lang)
 
 #---------------------------------------------------------------------
@@ -90,7 +90,10 @@ if(UMASK_EXEC)
   check_umask("${umask_curr}" UMASK_OK)
   if(NOT UMASK_OK)
     message(" ")
-    message(WARNING "umask is set to ${umask_curr} - this setting is not recommended if one of the goals of this build is to generate packages. Use 'umask 022' for improved package behavior.")
+    message(
+      WARNING
+      "umask is set to ${umask_curr} - this setting is not recommended if one of the goals of this build is to generate packages. Use 'umask 022' for improved package behavior."
+    )
     if(SLEEP_EXEC)
       execute_process(COMMAND ${SLEEP_EXEC} 1)
     endif(SLEEP_EXEC)
@@ -104,7 +107,10 @@ endif(UMASK_EXEC)
 find_program(SLEEP_EXEC sleep)
 mark_as_advanced(SLEEP_EXEC)
 if(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
-  message(WARNING "\nBRLCAD_ROOT is presently set to \"$ENV{BRLCAD_ROOT}\"\nBRLCAD_ROOT should typically be used only when needed as a runtime override, not during compilation.  Building with BRLCAD_ROOT set may produce unexpected behavior during both compilation and subsequent program execution.  It is *highly* recommended that BRLCAD_ROOT be unset and not used.\n")
+  message(
+    WARNING
+    "\nBRLCAD_ROOT is presently set to \"$ENV{BRLCAD_ROOT}\"\nBRLCAD_ROOT should typically be used only when needed as a runtime override, not during compilation.  Building with BRLCAD_ROOT set may produce unexpected behavior during both compilation and subsequent program execution.  It is *highly* recommended that BRLCAD_ROOT be unset and not used.\n"
+  )
   if(SLEEP_EXEC)
     execute_process(COMMAND ${SLEEP_EXEC} 2)
   endif(SLEEP_EXEC)
@@ -121,11 +127,19 @@ endif(NOT BRLCAD_WORD_SIZE)
 set_property(CACHE BRLCAD_WORD_SIZE PROPERTY STRINGS AUTO 32BIT 64BIT)
 string(TOUPPER "${BRLCAD_WORD_SIZE}" BRLCAD_WORD_SIZE_UPPER)
 set(BRLCAD_WORD_SIZE "${BRLCAD_WORD_SIZE_UPPER}" CACHE STRING WORD_SIZE_LABEL FORCE)
-if(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT")
+if(
+  NOT BRLCAD_WORD_SIZE MATCHES "AUTO"
+  AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT"
+  AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT"
+)
   message(WARNING "Unknown value ${BRLCAD_WORD_SIZE} supplied for BRLCAD_WORD_SIZE - defaulting to AUTO")
   message(WARNING "Valid options are AUTO, 32BIT and 64BIT")
   set(BRLCAD_WORD_SIZE "AUTO" CACHE STRING WORD_SIZE_LABEL FORCE)
-endif(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT")
+endif(
+  NOT BRLCAD_WORD_SIZE MATCHES "AUTO"
+  AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT"
+  AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT"
+)
 mark_as_advanced(BRLCAD_WORD_SIZE)
 
 # calculate the size of a pointer if we haven't already
@@ -148,11 +162,11 @@ if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
       set(BRLCAD_WORD_SIZE "32BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
     else(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
       if(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-	set(CMAKE_WORD_SIZE "16BIT")
-	set(BRLCAD_WORD_SIZE "16BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
+        set(CMAKE_WORD_SIZE "16BIT")
+        set(BRLCAD_WORD_SIZE "16BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
       else(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-	set(CMAKE_WORD_SIZE "8BIT")
-	set(BRLCAD_WORD_SIZE "8BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
+        set(CMAKE_WORD_SIZE "8BIT")
+        set(BRLCAD_WORD_SIZE "8BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
     endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
   endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
@@ -168,8 +182,11 @@ if(MSVC)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
       set(CMAKE_WORD_SIZE "64BIT")
       if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-	message(WARNING "Selected MSVC compiler is 64BIT - setting word size to 64BIT.  To perform a 32BIT MSVC build, select the 32BIT MSVC CMake generator.")
-	set(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
+        message(
+          WARNING
+          "Selected MSVC compiler is 64BIT - setting word size to 64BIT.  To perform a 32BIT MSVC build, select the 32BIT MSVC CMake generator."
+        )
+        set(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
     add_definitions("-D_WIN64")
@@ -178,17 +195,20 @@ if(MSVC)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
       set(CMAKE_WORD_SIZE "32BIT")
       if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-	message(WARNING "Selected MSVC compiler is 32BIT - setting word size to 32BIT.  To perform a 64BIT MSVC build, select the 64BIT MSVC CMake generator.")
-	set(BRLCAD_WORD_SIZE "32BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
+        message(
+          WARNING
+          "Selected MSVC compiler is 32BIT - setting word size to 32BIT.  To perform a 64BIT MSVC build, select the 64BIT MSVC CMake generator."
+        )
+        set(BRLCAD_WORD_SIZE "32BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
   endif(CMAKE_CL_64)
 endif(MSVC)
 
 # If a platform specific variable needs to be set for 32 bit, do it here
-if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
+if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
   set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
-endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
+endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
 
 # Based on what we are doing, we may need to constrain our search paths
 #
@@ -208,13 +228,12 @@ endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
 if(PREVIOUS_CONFIGURE_TYPE)
   if(NOT ${PREVIOUS_CONFIGURE_TYPE} MATCHES ${CMAKE_WORD_SIZE})
     include(ResetCache)
-    RESET_CACHE_file()
+    reset_cache_file()
   endif(NOT ${PREVIOUS_CONFIGURE_TYPE} MATCHES ${CMAKE_WORD_SIZE})
 endif(PREVIOUS_CONFIGURE_TYPE)
 
 set(PREVIOUS_CONFIGURE_TYPE ${CMAKE_WORD_SIZE} CACHE STRING "Previous configuration word size" FORCE)
 mark_as_advanced(PREVIOUS_CONFIGURE_TYPE)
-
 
 # Local Variables:
 # tab-width: 8

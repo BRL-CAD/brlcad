@@ -1,21 +1,19 @@
-
-if (SH_EXEC AND TARGET mged)
-
-  if (NOT WIN32)
-    BRLCAD_ADD_TEST(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/red.sh" ${CMAKE_SOURCE_DIR})
-    BRLCAD_REGRESSION_TEST(regress-red mged TEST_DEFINED)
-  else (NOT WIN32)
+if(SH_EXEC AND TARGET mged)
+  if(NOT WIN32)
+    brlcad_add_test(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/red.sh" ${CMAKE_SOURCE_DIR})
+    brlcad_regression_test(regress-red mged TEST_DEFINED)
+  else(NOT WIN32)
     message(WARNING "regress-red does not currently pass on Windows, disabling")
-  endif (NOT WIN32)
+  endif(NOT WIN32)
+endif(SH_EXEC AND TARGET mged)
 
-endif (SH_EXEC AND TARGET mged)
-
-CMAKEFILES(
+cmakefiles(
   red.sh
-  )
+)
 
 # list of temporary files
-set(red_outfiles
+set(
+  red_outfiles
   red.air.empty.out
   red.air.empty.out.new
   red.air.safe.out
@@ -107,12 +105,12 @@ set(red_outfiles
   red.tree.unsafe.out.new
   red.virgin.out
   red.virgin.out.new
-  )
+)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${red_outfiles}")
-DISTCLEAN(${red_outfiles})
+distclean(${red_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

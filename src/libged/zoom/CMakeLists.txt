@@ -4,21 +4,21 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 
 ged_plugin_library(ged-zoom SHARED zoom.c)
 target_link_libraries(ged-zoom libged libbu)
 set_property(TARGET ged-zoom APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-zoom zoom.c)
+validate_style(ged-zoom zoom.c)
 
-PLUGIN_SETUP(ged-zoom ged)
+plugin_setup(ged-zoom ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   zoom.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -36,7 +36,6 @@
 # TCL_PKGINDEX
 #============================================================
 function(TCL_PKGINDEX target pkgname pkgversion)
-
   set(INST_DIR "${LIB_DIR}")
   if(MSVC)
     set(INST_DIR "${BIN_DIR}")
@@ -45,16 +44,19 @@ function(TCL_PKGINDEX target pkgname pkgversion)
   set(WORKING_PKGFILE ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${LIB_DIR}/${pkgname}${pkgversion}/pkgIndex.tcl)
   set(INSTALL_PKGFILE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
 
-  add_custom_command(OUTPUT ${WORKING_PKGFILE} ${INSTALL_PKGFILE}
-    COMMAND ${CMAKE_COMMAND} -DWORKING_PKGFILE="${WORKING_PKGFILE}" -DINSTALL_PKGFILE="${INSTALL_PKGFILE}" -DTF_NAME="$<TARGET_FILE_NAME:${target}>" -DTF_DIR="$<TARGET_FILE_DIR:${target}>" -Dpkgname="${pkgname}" -Dpkgversion="${pkgversion}" -DINST_DIR="${INST_DIR}" -P ${BRLCAD_CMAKE_DIR}/scripts/tcl_mkindex.cmake
-    )
+  add_custom_command(
+    OUTPUT ${WORKING_PKGFILE} ${INSTALL_PKGFILE}
+    COMMAND
+      ${CMAKE_COMMAND} -DWORKING_PKGFILE="${WORKING_PKGFILE}" -DINSTALL_PKGFILE="${INSTALL_PKGFILE}"
+      -DTF_NAME="$<TARGET_FILE_NAME:${target}>" -DTF_DIR="$<TARGET_FILE_DIR:${target}>" -Dpkgname="${pkgname}"
+      -Dpkgversion="${pkgversion}" -DINST_DIR="${INST_DIR}" -P ${BRLCAD_CMAKE_DIR}/scripts/tcl_mkindex.cmake
+  )
   add_custom_target(${pkgname}_pkgIndex ALL DEPENDS ${WORKING_PKGFILE} ${INSTALL_PKGFILE})
 
   install(FILES ${INSTALL_PKGFILE} DESTINATION ${LIB_DIR}/${pkgname}${pkgversion})
 
-  DISTCLEAN("${WORKING_PKGFILE}")
-  DISTCLEAN("${INSTALL_PKGFILE}")
-
+  distclean("${WORKING_PKGFILE}")
+  distclean("${INSTALL_PKGFILE}")
 endfunction(TCL_PKGINDEX)
 
 # Local Variables:

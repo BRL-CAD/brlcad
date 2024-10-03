@@ -1,9 +1,9 @@
-GCV_regress_util("vrml" "vrml_example.wrl")
+gcv_regress_util("vrml" "vrml_example.wrl")
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   vrml_example.wrl
-  )
+)
 
 # Local Variables:
 # tab-width: 8

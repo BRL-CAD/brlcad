@@ -4,9 +4,10 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-set(VIEW_SRCS
+set(
+  VIEW_SRCS
   aet.c
   align.c
   autoview.c
@@ -32,21 +33,21 @@ set(VIEW_SRCS
   snap.c
   view.c
   ypr.c
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-view SHARED ${VIEW_SRCS})
 target_link_libraries(ged-view libged libbu)
 set_property(TARGET ged-view APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-view ${VIEW_SRCS})
-PLUGIN_SETUP(ged-view ged)
+validate_style(ged-view ${VIEW_SRCS})
+plugin_setup(ged-view ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${VIEW_SRCS}
   ged_view.h
   faceplate/faceplate.h
-  )
+)
 
 # Local Variables:
 # tab-width: 8
@@ -54,4 +55,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

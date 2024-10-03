@@ -1,4 +1,5 @@
-set(NIST_SAMPLE_MODELS
+set(
+  NIST_SAMPLE_MODELS
   NIST_MBE_PMI_1.stp
   NIST_MBE_PMI_2.stp
   NIST_MBE_PMI_3.stp
@@ -10,10 +11,10 @@ set(NIST_SAMPLE_MODELS
 )
 
 foreach(im ${NIST_SAMPLE_MODELS})
-  G_TARGET(${im} "BRL-CAD Geometry Models/Sample")
+  g_target(${im} "BRL-CAD Geometry Models/Sample")
 endforeach(im ${NIST_SAMPLE_MODELS})
 
-CMAKEFILES(
+cmakefiles(
   ${NIST_SAMPLE_MODELS}
   CMakeLists.txt
   README
@@ -29,7 +30,7 @@ CMAKEFILES(
   pdf/9.pdf
   pdf/10.pdf
   pdf/11.pdf
-  )
+)
 
 # Local Variables:
 # tab-width: 8

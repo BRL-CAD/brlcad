@@ -29,7 +29,6 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 #---------------------------------------------------------------------
 # Define relative install locations.  Don't set these if they have already
 # been set by some other means (like a higher level CMakeLists.txt file
@@ -55,15 +54,15 @@ endif(NOT BIN_DIR)
 # useful when working with generator expressions
 unset(RBIN_DIR CACHE)
 set(LBIN_DIR "${BIN_DIR}")
-while (NOT "${LBIN_DIR}" STREQUAL "")
+while(NOT "${LBIN_DIR}" STREQUAL "")
   get_filename_component(LBDIR "${LBIN_DIR}" DIRECTORY)
   set(LBIN_DIR "${LBDIR}")
-  if ("${RBIN_DIR}" STREQUAL "")
+  if("${RBIN_DIR}" STREQUAL "")
     set(RBIN_DIR "..")
-  else ("${RBIN_DIR}" STREQUAL "")
+  else("${RBIN_DIR}" STREQUAL "")
     set(RBIN_DIR "../${RBIN_DIR}")
-  endif ("${RBIN_DIR}" STREQUAL "")
-endwhile (NOT "${LBIN_DIR}" STREQUAL "")
+  endif("${RBIN_DIR}" STREQUAL "")
+endwhile(NOT "${LBIN_DIR}" STREQUAL "")
 
 # The location in which to install BRL-CAD libraries.
 if(NOT LIB_DIR)
@@ -94,11 +93,23 @@ if(NOT MAN_DIR)
 endif(NOT MAN_DIR)
 
 # Make sure no absolute paths have been supplied to these variables
-set(INSTALL_DIRS BIN INCLUDE LIB LIBEXEC DATA MAN DOC)
+set(
+  INSTALL_DIRS
+  BIN
+  INCLUDE
+  LIB
+  LIBEXEC
+  DATA
+  MAN
+  DOC
+)
 foreach(instdir ${INSTALL_DIRS})
   get_filename_component(instdir_full ${${instdir}_DIR} ABSOLUTE)
   if("${${instdir}_DIR}" STREQUAL "${instdir_full}")
-    message(FATAL_ERROR "Error - absolute path supplied for ${instdir}_DIR.  This path must be relative - e.g. \"bin\" instead of \"/usr/bin\"")
+    message(
+      FATAL_ERROR
+      "Error - absolute path supplied for ${instdir}_DIR.  This path must be relative - e.g. \"bin\" instead of \"/usr/bin\""
+    )
     set(HAVE_INSTALL_DIR_FULL_PATH 1)
   endif("${${instdir}_DIR}" STREQUAL "${instdir_full}")
 endforeach(instdir ${INSTALL_DIRS})
@@ -112,26 +123,61 @@ endforeach(instdir ${INSTALL_DIRS})
 
 # Set the three main variables to the correct values.
 if(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all libraries.")
+  set(
+    CMAKE_LIBRARY_OUTPUT_DIRECTORY
+    ${${PROJECT_NAME}_BINARY_DIR}/${LIB_DIR}
+    CACHE INTERNAL
+    "Single output directory for building all libraries."
+  )
 endif(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 if(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all archives.")
+  set(
+    CMAKE_ARCHIVE_OUTPUT_DIRECTORY
+    ${${PROJECT_NAME}_BINARY_DIR}/${LIB_DIR}
+    CACHE INTERNAL
+    "Single output directory for building all archives."
+  )
 endif(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
 if(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${${PROJECT_NAME}_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building all executables.")
+  set(
+    CMAKE_RUNTIME_OUTPUT_DIRECTORY
+    ${${PROJECT_NAME}_BINARY_DIR}/${BIN_DIR}
+    CACHE INTERNAL
+    "Single output directory for building all executables."
+  )
 endif(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
-if (CMAKE_CONFIGURATION_TYPES)
+if(CMAKE_CONFIGURATION_TYPES)
   # If the generator thinks it's doing multiconfig, we need to override its
   # output variables to avoid the use of subdirectories
   set(CFG_ROOT ${${PROJECT_NAME}_BINARY_DIR})
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} CACHE INTERNAL "Single output directory for building all libraries.")
-    set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} CACHE INTERNAL "Single output directory for building all archives.")
-    set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} CACHE INTERNAL "Single output directory for building all executables.")
+    set(
+      "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}"
+      ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+      CACHE INTERNAL
+      "Single output directory for building all libraries."
+    )
+    set(
+      "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}"
+      ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
+      CACHE INTERNAL
+      "Single output directory for building all archives."
+    )
+    set(
+      "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}"
+      ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+      CACHE INTERNAL
+      "Single output directory for building all executables."
+    )
     set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${CMAKE_BINARY_DIR} CACHE INTERNAL "Toplevel binary dir for all building.")
-    set("${PROJECT_NAME}_BINARY_DIR_${CFG_TYPE_UPPER}" ${CMAKE_BINARY_DIR} CACHE INTERNAL "Toplevel binary dir for all building.")
+    set(
+      "${PROJECT_NAME}_BINARY_DIR_${CFG_TYPE_UPPER}"
+      ${CMAKE_BINARY_DIR}
+      CACHE INTERNAL
+      "Toplevel binary dir for all building."
+    )
   endforeach()
 endif(CMAKE_CONFIGURATION_TYPES)
 

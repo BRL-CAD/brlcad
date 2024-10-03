@@ -13,9 +13,7 @@ endif()
 
 # Normal search.
 set(_RE2C_x86 "(x86)")
-set(_RE2C_SEARCH_NORMAL
-    PATHS  "$ENV{ProgramFiles}/re2c"
-          "$ENV{ProgramFiles${_RE2C_x86}}/re2c")
+set(_RE2C_SEARCH_NORMAL PATHS "$ENV{ProgramFiles}/re2c" "$ENV{ProgramFiles${_RE2C_x86}}/re2c")
 unset(_RE2C_x86)
 list(APPEND _RE2C_SEARCHES _RE2C_SEARCH_NORMAL)
 
@@ -29,7 +27,7 @@ endforeach()
 mark_as_advanced(RE2C_EXECUTABLE)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(RE2C DEFAULT_MSG RE2C_EXECUTABLE)
+find_package_handle_standard_args(RE2C DEFAULT_MSG RE2C_EXECUTABLE)
 
 # Provide a macro to generate custom build rules:
 
@@ -109,23 +107,25 @@ if(NOT COMMAND RE2C_TARGET)
     set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
     if(${ARGC} GREATER 3)
       if(${ARGC} EQUAL 5)
-	if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
-	  set(RE2C_EXECUTABLE_opts  "${ARGV4}")
-	  SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
-	else()
-	  message(SEND_ERROR ${RE2C_TARGET_usage})
-	endif()
+        if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
+          set(RE2C_EXECUTABLE_opts "${ARGV4}")
+          separate_arguments(RE2C_EXECUTABLE_opts)
+        else()
+          message(SEND_ERROR ${RE2C_TARGET_usage})
+        endif()
       else()
-	message(SEND_ERROR ${RE2C_TARGET_usage})
+        message(SEND_ERROR ${RE2C_TARGET_usage})
       endif()
     endif()
 
-    add_custom_command(OUTPUT ${Output}
+    add_custom_command(
+      OUTPUT ${Output}
       COMMAND ${RE2C_EXECUTABLE}
       ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
       DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
       COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
 
     set(RE2C_${Name}_DEFINED TRUE)
     set(RE2C_${Name}_OUTPUTS ${Output})
@@ -142,7 +142,6 @@ endif(NOT COMMAND RE2C_TARGET)
 #
 if(NOT COMMAND ADD_RE2C_LEMON_DEPENDENCY)
   macro(ADD_RE2C_LEMON_DEPENDENCY RE2CTarget LemonTarget)
-
     if(NOT RE2C_${RE2CTarget}_OUTPUTS)
       message(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
     endif()
@@ -151,8 +150,7 @@ if(NOT COMMAND ADD_RE2C_LEMON_DEPENDENCY)
       message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
     endif()
 
-    set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS}
-      PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_HDR})
+    set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS} PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_HDR})
   endmacro(ADD_RE2C_LEMON_DEPENDENCY)
 endif(NOT COMMAND ADD_RE2C_LEMON_DEPENDENCY)
 #============================================================

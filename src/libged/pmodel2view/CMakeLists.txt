@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-pmodel2view SHARED pmodel2view.c)
 target_link_libraries(ged-pmodel2view libged libbu)
 set_property(TARGET ged-pmodel2view APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-pmodel2view pmodel2view.c)
-PLUGIN_SETUP(ged-pmodel2view ged)
+validate_style(ged-pmodel2view pmodel2view.c)
+plugin_setup(ged-pmodel2view ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   pmodel2view.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

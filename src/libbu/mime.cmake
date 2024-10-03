@@ -189,10 +189,16 @@ foreach(c ${ACTIVE_TYPES})
   set(enum_str "static const char *\nmime_str_${c}(int type)\n{")
   string(TOUPPER "${c}" c_u)
   set(enum_str "${enum_str}\n    const char *ret = NULL;")
-  set(enum_str "${enum_str}\n    if (type < 0 || type >= BU_MIME_${c_u}_UNKNOWN) {\n\tret = bu_strdup(\"BU_MIME_${c_u}_UNKNOWN\");\n\tgoto found_type;\n    }\n")
+  set(
+    enum_str
+    "${enum_str}\n    if (type < 0 || type >= BU_MIME_${c_u}_UNKNOWN) {\n\tret = bu_strdup(\"BU_MIME_${c_u}_UNKNOWN\");\n\tgoto found_type;\n    }\n"
+  )
   list(SORT ${c}_types)
   foreach(type ${${c}_types})
-    set(enum_str "${enum_str}\n    if (type == (int)BU_MIME_${type}) {\n\tret = bu_strdup(\"BU_MIME_${type}\");\n\tgoto found_type;\n    }\n")
+    set(
+      enum_str
+      "${enum_str}\n    if (type == (int)BU_MIME_${type}) {\n\tret = bu_strdup(\"BU_MIME_${type}\");\n\tgoto found_type;\n    }\n"
+    )
   endforeach(type ${${c}_types})
   set(enum_str "${enum_str}\n    found_type:\n")
   set(enum_str "${enum_str}\n    return ret;\n}\n")
@@ -216,7 +222,6 @@ set(mcstr "${mcstr}    return NULL;\n")
 set(mcstr "${mcstr}}\n")
 set(c_contents "${c_contents}\n${mcstr}")
 
-
 # Public C mapping function - string to type
 set(enum_str "int\nbu_file_mime_int(const char *str)\n{")
 foreach(c ${ACTIVE_TYPES})
@@ -238,7 +243,10 @@ foreach(c ${ACTIVE_TYPES})
   foreach(type ${${c}_types})
     set(ext_str "${${type}_extensions}")
     string(REPLACE ";" "," ext_str "${ext_str}")
-    set(enum_str "${enum_str}\n    if (type == (int)BU_MIME_${type}) {\n\tret = bu_strdup(\"${ext_str}\");\n\tgoto found_type;\n    }\n")
+    set(
+      enum_str
+      "${enum_str}\n    if (type == (int)BU_MIME_${type}) {\n\tret = bu_strdup(\"${ext_str}\");\n\tgoto found_type;\n    }\n"
+    )
   endforeach(type ${${c}_types})
   set(enum_str "${enum_str}\n    found_type:\n")
   set(enum_str "${enum_str}\n    return ret;\n}\n")
@@ -265,13 +273,17 @@ set(c_contents "${c_contents}\n${mcstr}")
 file(WRITE ${mime_types_h_file_tmp} "${h_contents}")
 file(WRITE ${mime_c_file_tmp} "${c_contents}")
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_types_h_file_tmp} ${BU_MIME_TYPES_H_FILE})
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_c_file_tmp} ${BU_MIME_C_FILE})
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_types_h_file_tmp} ${BU_MIME_TYPES_H_FILE}
+)
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_c_file_tmp} ${BU_MIME_C_FILE}
+)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_types_h_file_tmp})
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_c_file_tmp})
 
-DISTCLEAN(${BU_MIME_C_FILE} ${BU_MIME_TYPES_H_FILE})
+distclean(${BU_MIME_C_FILE} ${BU_MIME_TYPES_H_FILE})
 
 # Local Variables:
 # tab-width: 8

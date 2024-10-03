@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-rtabort SHARED rtabort.c)
 target_link_libraries(ged-rtabort libged libbu)
 set_property(TARGET ged-rtabort APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-rtabort rtabort.c)
-PLUGIN_SETUP(ged-rtabort ged)
+validate_style(ged-rtabort rtabort.c)
+plugin_setup(ged-rtabort ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   rtabort.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

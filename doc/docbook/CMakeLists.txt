@@ -6,7 +6,8 @@ add_subdirectory(presentations)
 add_subdirectory(specifications)
 add_subdirectory(system)
 
-set(ignore_files
+set(
+  ignore_files
   CMakeLists.txt
   README
   README.DB_authors_notes
@@ -14,8 +15,8 @@ set(ignore_files
   db_dir_info.c
   fop.xconf.in
   log4j.properties
-  )
-CMAKEFILES(${ignore_files})
+)
+cmakefiles(${ignore_files})
 
 # Local Variables:
 # tab-width: 8

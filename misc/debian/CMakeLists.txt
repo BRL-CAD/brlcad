@@ -1,4 +1,5 @@
-set(debian_ignore_files
+set(
+  debian_ignore_files
   archer.desktop
   brlcad-db.desktop
   brlcad-doc-mged.desktop
@@ -94,9 +95,9 @@ set(debian_ignore_files
   rules
   source/format
   source/include-binaries
-  )
-CMAKEFILES(${debian_ignore_files})
-CMAKEFILES(CMakeLists.txt)
+)
+cmakefiles(${debian_ignore_files})
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

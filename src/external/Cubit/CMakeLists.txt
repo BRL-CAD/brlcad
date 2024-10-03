@@ -4,26 +4,35 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # Set CMake project name
   project(G2SAT)
-
 else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
-
-  set(SAT_DIRS
+  set(
+    SAT_DIRS
     "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
     "${OPENNURBS_INCLUDE_DIRS}"
     ${ZLIB_INCLUDE_DIRS}
     ${REGEX_INCLUDE_DIRS}
-    )
+  )
 
   # The build shims aren't so great at mocking the initialization
   # behavior of the real code.
-  CHECK_CXX_FLAG("Wno-maybe-uninitialized")
+  check_cxx_flag("Wno-maybe-uninitialized")
 
   set(g_sat_srcs g-sat.cpp)
   add_definitions(-DTEST_BUILD)
   add_library(g-sat ${g_sat_srcs})
   target_include_directories(g-sat BEFORE PRIVATE ${SAT_DIRS})
-  target_link_libraries(g-sat librt libwdb libbrep libbg libnmg libbv libbn libbu)
+  target_link_libraries(
+    g-sat
+    librt
+    libwdb
+    libbrep
+    libbg
+    libnmg
+    libbv
+    libbn
+    libbu
+  )
   set_property(TARGET g-sat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   set_target_properties(g-sat PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
   if(HIDE_INTERNAL_SYMBOLS)
@@ -41,9 +50,8 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET g-sat APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
   endif(HIDE_INTERNAL_SYMBOLS)
 
-  CMAKEFILES(${g_sat_srcs} shim.h)
-  CMAKEFILES(CMakeLists.txt)
-
+  cmakefiles(${g_sat_srcs} shim.h)
+  cmakefiles(CMakeLists.txt)
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 # Local Variables:

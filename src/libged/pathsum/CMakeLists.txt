@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-pathsum SHARED pathsum.c)
 target_link_libraries(ged-pathsum libged libbu)
 set_property(TARGET ged-pathsum APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-pathsum pathsum.c)
-PLUGIN_SETUP(ged-pathsum ged)
+validate_style(ged-pathsum pathsum.c)
+plugin_setup(ged-pathsum ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   pathsum.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -1,11 +1,12 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203e2.exp)
 add_definitions(-DAP203e2)
 
-if (DEFINED ENABLE_STEP_EXPERIMENTAL)
-  GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gap203e2)
-endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
+if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+  generate_schema_inputs(${STEP_SCHEMA_FILE} gap203e2)
+endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-set(gap203e2_SOURCES
+set(
+  gap203e2_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   ../g-step/AP203.cpp
@@ -21,9 +22,10 @@ set(gap203e2_SOURCES
   ../g-step/Shape_Representation_Relationship.cpp
   ../g-step/Trees.cpp
   g-ap203e2.cpp
-  )
+)
 
-set(gap203e2_LIBS
+set(
+  gap203e2_LIBS
   libwdb
   librt
   libbrep
@@ -34,30 +36,26 @@ set(gap203e2_LIBS
   ${STEPCODE_DAI_LIBRARY}
   ${STEPCODE_CORE_LIBRARY}
   ${OPENNURBS_LIBRARIES}
-  )
+)
 
-set(AP203_INCLUDE_DIRS
+set(
+  AP203_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
   ${STEPCODE_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
-  )
+)
 
-if (DEFINED ENABLE_STEP_EXPERIMENTAL)
-  BRLCAD_ADDEXEC(g-ap203e2 "${gap203e2_SOURCES}" "${gap203e2_LIBS}" NO_STRICT FOLDER Conv)
+if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+  brlcad_addexec(g-ap203e2 "${gap203e2_SOURCES}" "${gap203e2_LIBS}" NO_STRICT FOLDER Conv)
   target_include_directories(g-ap203e2 BEFORE PRIVATE ${AP203_INCLUDE_DIRS})
   add_dependencies(g-ap203e2 step-express-${SCHEMA_NAME}-gap203e2)
-endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
+endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-set(IGNORE_FILES
-  ${gap203e2_SOURCES}
-  CMakeLists.txt
-  AP203e2.h
-  ap203e2.exp
-  )
-CMAKEFILES(${IGNORE_FILES})
+set(IGNORE_FILES ${gap203e2_SOURCES} CMakeLists.txt AP203e2.h ap203e2.exp)
+cmakefiles(${IGNORE_FILES})
 
 # Local Variables:
 # tab-width: 8

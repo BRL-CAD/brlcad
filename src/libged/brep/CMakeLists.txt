@@ -1,21 +1,23 @@
 set(DPLOT_READER dplot)
 
-BRLCAD_Find_Package(PERPLEX REQUIRED NOINSTALL)
-BRLCAD_Find_Package(LEMON REQUIRED NOINSTALL)
-BRLCAD_Find_Package(RE2C REQUIRED NOINSTALL)
+brlcad_find_package(PERPLEX REQUIRED NOINSTALL)
+brlcad_find_package(LEMON REQUIRED NOINSTALL)
+brlcad_find_package(RE2C REQUIRED NOINSTALL)
 
-PERPLEX_TARGET(
+perplex_target(
   ${DPLOT_READER}_scanner
   ${DPLOT_READER}_scanner.perplex
   OUT_SRC_FILE ${DPLOT_READER}_scanner.c
-  OUT_HDR_FILE ${DPLOT_READER}_scanner.h)
-LEMON_TARGET(
+  OUT_HDR_FILE ${DPLOT_READER}_scanner.h
+)
+lemon_target(
   ${DPLOT_READER}_parser
   ${DPLOT_READER}_parser.lemon
   OUT_SRC_FILE ${DPLOT_READER}_parser.c
-  OUT_HDR_FILE ${DPLOT_READER}_parser.h)
-ADD_PERPLEX_LEMON_DEPENDENCY(${DPLOT_READER}_scanner ${DPLOT_READER}_parser)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${DPLOT_READER}_parser_${DPLOT_READER}_parser/${DPLOT_READER}_parser.lemon)
+  OUT_HDR_FILE ${DPLOT_READER}_parser.h
+)
+add_perplex_lemon_dependency(${DPLOT_READER}_scanner ${DPLOT_READER}_parser)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/${DPLOT_READER}_parser_${DPLOT_READER}_parser/${DPLOT_READER}_parser.lemon)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -26,9 +28,10 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   ${PERPLEX_${DPLOT_READER}_scanner_INCLUDE_DIR}
   ${LEMON_${DPLOT_READER}_parser_INCLUDE_DIR}
-  )
+)
 
-set(BREP_SRCS
+set(
+  BREP_SRCS
   ${PERPLEX_${DPLOT_READER}_scanner_SRC}
   ${LEMON_${DPLOT_READER}_parser_SRC}
   brep.cpp
@@ -44,23 +47,23 @@ set(BREP_SRCS
   tikz.cpp
   topology.cpp
   valid.cpp
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-brep SHARED ${BREP_SRCS})
 target_link_libraries(ged-brep libged libbu)
 set_property(TARGET ged-brep APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-brep ${BREP_SRCS})
-PLUGIN_SETUP(ged-brep ged)
+validate_style(ged-brep ${BREP_SRCS})
+plugin_setup(ged-brep ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${BREP_SRCS}
   dplot_parser.lemon
   dplot_reader.c
   dplot_reader.h
   dplot_scanner.perplex
-  )
+)
 
 # Local Variables:
 # tab-width: 8
@@ -68,4 +71,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

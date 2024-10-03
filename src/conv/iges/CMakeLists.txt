@@ -7,7 +7,8 @@
 #target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARIES} ${WIN32LIBS} ${M_LIBRARY} ${WINSOCK_LIB} ${RPCRT_LIB})
 #install(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-set(iges-g_SRCS
+set(
+  iges-g_SRCS
   add_face.c
   add_inner_shell.c
   add_loop.c
@@ -75,12 +76,13 @@ set(iges-g_SRCS
   trimsurf.c
   usage.c
   wedge.c
-  )
-BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
+)
+brlcad_addexec(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 
-BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
-set(iges_ignore_files
+set(
+  iges_ignore_files
   BrepHandler.cpp
   CMakeLists.txt
   PullbackCurve.cpp
@@ -103,8 +105,8 @@ set(iges_ignore_files
   n_main.cpp
   wing128.igs
   woodie.igs
-  )
-CMAKEFILES(${iges_ignore_files})
+)
+cmakefiles(${iges_ignore_files})
 
 # Local Variables:
 # tab-width: 8

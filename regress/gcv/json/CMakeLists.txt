@@ -1,10 +1,10 @@
-if (TARGET gcv-assetimport)
-  GCV_regress_util("json" "tetra.g" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--output-format=assetimport" EXPECTED_FILE_SIZE "2744" EXPORTER)
-endif (TARGET gcv-assetimport)
+if(TARGET gcv-assetimport)
+  gcv_regress_util("json" "tetra.g" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--output-format=assetimport" EXPECTED_FILE_SIZE "2744" EXPORTER)
+endif(TARGET gcv-assetimport)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
-  )
+)
 
 # Local Variables:
 # tab-width: 8

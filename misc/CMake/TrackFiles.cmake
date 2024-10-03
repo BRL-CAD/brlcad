@@ -75,9 +75,8 @@
 # The routine below does the check without using regex matching, in order to
 # handle path names that contain characters that would be interpreted as active
 # in a regex string.
-if (NOT COMMAND is_subpath)
+if(NOT COMMAND is_subpath)
   function(is_subpath candidate_subpath full_path result_var)
-
     # Just assume it isn't until we prove it is
     set(${result_var} 0 PARENT_SCOPE)
 
@@ -101,9 +100,8 @@ if (NOT COMMAND is_subpath)
 
     # If we get here, it's a subpath
     set(${result_var} 1 PARENT_SCOPE)
-
   endfunction(is_subpath)
-endif (NOT COMMAND is_subpath)
+endif(NOT COMMAND is_subpath)
 
 #-----------------------------------------------------------------------------
 # Distcheck needs to know what files are "supposed" to be present in order to
@@ -121,15 +119,24 @@ endif (NOT COMMAND is_subpath)
 # specified files, but if the build directory and the source directory are one
 # and the same this will not be possible.
 
-if (NOT COMMAND check_source_dir_fullpath)
-  define_property(GLOBAL PROPERTY CMAKE_IGNORE_FILES BRIEF_DOCS "distcheck ignore files" FULL_DOCS "List of files known to CMake")
-  define_property(GLOBAL PROPERTY CMAKE_IGNORE_DIRS BRIEF_DOCS "distcheck ignore dirs" FULL_DOCS "List of directories marked as fully known to CMake")
+if(NOT COMMAND check_source_dir_fullpath)
+  define_property(
+    GLOBAL
+    PROPERTY CMAKE_IGNORE_FILES
+    BRIEF_DOCS "distcheck ignore files"
+    FULL_DOCS "List of files known to CMake"
+  )
+  define_property(
+    GLOBAL
+    PROPERTY CMAKE_IGNORE_DIRS
+    BRIEF_DOCS "distcheck ignore dirs"
+    FULL_DOCS "List of directories marked as fully known to CMake"
+  )
 
   # If the build directory is not the same as the source directory, we can
   # enforce the convention that only generated files be specified with their full
   # name.
   function(check_source_dir_fullpath ITEM_PATH)
-
     # We can only do this if BINARY_DIR != SOURCE_DIR
     if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
       return()
@@ -144,26 +151,27 @@ if (NOT COMMAND check_source_dir_fullpath)
     # If it's a full path in the source dir, it's fatal
     is_subpath("${CMAKE_SOURCE_DIR}" "${ITEM_PATH}" SUBPATH_TEST)
     if("${SUBPATH_TEST}" STREQUAL "1")
-      message(FATAL_ERROR "${ITEM} is listed in \"${CMAKE_CURRENT_SOURCE_DIR}\" using its absolute path.  Please specify the location of this file using a relative path.")
+      message(
+        FATAL_ERROR
+        "${ITEM} is listed in \"${CMAKE_CURRENT_SOURCE_DIR}\" using its absolute path.  Please specify the location of this file using a relative path."
+      )
     endif("${SUBPATH_TEST}" STREQUAL "1")
-
   endfunction(check_source_dir_fullpath ITEM_PATH)
-endif (NOT COMMAND check_source_dir_fullpath)
+endif(NOT COMMAND check_source_dir_fullpath)
 
-if (NOT COMMAND cmfile)
+if(NOT COMMAND cmfile)
   function(cmfile ITEM)
-
     get_filename_component(ITEM_PATH "${ITEM}" PATH)
     if(NOT "${ITEM_PATH}" STREQUAL "")
       # The hard case - path specified, need some validation.
-      CHECK_SOURCE_DIR_FULLPATH("${ITEM_PATH}")
+      check_source_dir_fullpath("${ITEM_PATH}")
 
       # Ignore files specified using full paths, since they
       # should be generated files and are not part of the
       # source code repository.
       get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
       if("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
-	return()
+        return()
       endif("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
     endif(NOT "${ITEM_PATH}" STREQUAL "")
 
@@ -172,36 +180,48 @@ if (NOT COMMAND cmfile)
       message(FATAL_ERROR "Trying to ignore directory: ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
     endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
     if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-      message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\"")
+      message(
+        FATAL_ERROR
+        "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\""
+      )
     endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 
     # We're good - log it
     get_filename_component(item_absolute "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" ABSOLUTE)
     set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
-
   endfunction(cmfile ITEM)
-endif (NOT COMMAND cmfile)
+endif(NOT COMMAND cmfile)
 
 # This is the function most commonly used in calling code to specify files
 # as part of the expected source tree.
-if (NOT COMMAND cmakefiles)
+if(NOT COMMAND cmakefiles)
   function(CMAKEFILES)
-
     # CMake flags to add_library/add_executable aren't going to be valid filenames - just
     # yank them up front.
     set(ITEMS ${ARGN})
-    if (NOT ITEMS)
+    if(NOT ITEMS)
       return()
-    endif (NOT ITEMS)
-    list(REMOVE_ITEM ITEMS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE INTERFACE EXCLUDE_FROM_ALL)
+    endif(NOT ITEMS)
+    list(
+      REMOVE_ITEM
+      ITEMS
+      SHARED
+      STATIC
+      OBJECT
+      WIN32
+      UNKNOWN
+      IMPORTED
+      MODULE
+      INTERFACE
+      EXCLUDE_FROM_ALL
+    )
     list(FILTER ITEMS EXCLUDE REGEX "TARGET_OBJECTS")
 
     foreach(ITEM ${ITEMS})
       cmfile("${ITEM}")
     endforeach(ITEM ${ITEMS})
-
   endfunction(CMAKEFILES FILESLIST)
-endif (NOT COMMAND cmakefiles)
+endif(NOT COMMAND cmakefiles)
 
 #-----------------------------------------------------------------------------
 # The "distclean" build target will clear all CMake-generated files from a
@@ -211,20 +231,25 @@ endif (NOT COMMAND cmakefiles)
 # directory since ninja itself requires that a .ninja_log file be present in
 # the build directory while running... calling code shouldn't specify or fail
 # on the presence of that file, as build targets won't be able to clear it.)
-if (NOT COMMAND distclean)
-  define_property(GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST BRIEF_DOCS "Build output files to be cleared" FULL_DOCS "Additional files to remove if clearing ALL configure+build outputs")
+if(NOT COMMAND distclean)
+  define_property(
+    GLOBAL
+    PROPERTY CMAKE_DISTCLEAN_TARGET_LIST
+    BRIEF_DOCS "Build output files to be cleared"
+    FULL_DOCS "Additional files to remove if clearing ALL configure+build outputs"
+  )
   function(distclean)
     foreach(item ${ARGN})
       get_filename_component(item_dir ${item} DIRECTORY)
-      if ("${item_dir}" STREQUAL "")
-	set(item_path "${CMAKE_CURRENT_BINARY_DIR}/${item}")
-      else ("${item_dir}" STREQUAL "")
-	set(item_path "${item}")
-      endif ("${item_dir}" STREQUAL "")
+      if("${item_dir}" STREQUAL "")
+        set(item_path "${CMAKE_CURRENT_BINARY_DIR}/${item}")
+      else("${item_dir}" STREQUAL "")
+        set(item_path "${item}")
+      endif("${item_dir}" STREQUAL "")
       set_property(GLOBAL APPEND PROPERTY CMAKE_DISTCLEAN_TARGET_LIST "${item_path}")
     endforeach(item ${ARGN})
   endfunction(distclean)
-endif (NOT COMMAND distclean)
+endif(NOT COMMAND distclean)
 
 # Local Variables:
 # tab-width: 8

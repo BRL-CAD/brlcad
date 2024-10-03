@@ -1,4 +1,5 @@
-set(archer_images
+set(
+  archer_images
   aboutArcher.png
   air.png
   air_intersect.png
@@ -307,17 +308,17 @@ set(archer_images
   l_i1_v1_s7.gif
   l_i1_v1_s8.gif
   l_i1_v1_s9.gif
-  )
+)
 
-if (BRLCAD_ENABLE_TCL)
-  BRLCAD_ADDDATA(archer_images tclscripts/archer/images)
-endif (BRLCAD_ENABLE_TCL)
+if(BRLCAD_ENABLE_TCL)
+  brlcad_adddata(archer_images tclscripts/archer/images)
+endif(BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   License.txt
   ${archer_images}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

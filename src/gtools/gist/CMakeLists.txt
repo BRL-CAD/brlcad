@@ -1,4 +1,5 @@
-set(gist_ignore_files
+set(
+  gist_ignore_files
   CMakeLists.txt
   CONTRIBUTING.md
   FactsHandler.h
@@ -15,7 +16,8 @@ set(gist_ignore_files
   picohash.h
 )
 
-set(GIST_SRCS
+set(
+  GIST_SRCS
   FactsHandler.cpp
   IFPainter.cpp
   InformationGatherer.cpp
@@ -26,11 +28,11 @@ set(GIST_SRCS
   RenderHandler.cpp
 )
 
-CMAKEFILES(
+cmakefiles(
   ${gist_ignore_files}
   ${GIST_SRCS}
   TEST.png
-  )
+)
 
 find_package_opencv()
 if(NOT OpenCV_FOUND)
@@ -39,18 +41,20 @@ if(NOT OpenCV_FOUND)
 endif(NOT OpenCV_FOUND)
 message("Found OpenCV: ${OpenCV_LIBRARIES}")
 
-BRLCAD_ADDEXEC(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBRARIES};")
+brlcad_addexec(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBRARIES};")
 target_include_directories(gist BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(gist SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
 
-if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
-  add_custom_command(TARGET gist POST_BUILD
+if(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
+  add_custom_command(
+    TARGET gist
+    POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:gist> $<TARGET_FILE_DIR:gist>
     COMMAND_EXPAND_LISTS
   )
-endif (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
+endif(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
-BRLCAD_ADDDATA(assets/brlLogo-nobg.png images)
+brlcad_adddata(assets/brlLogo-nobg.png images)
 
 # Local Variables:
 # tab-width: 8

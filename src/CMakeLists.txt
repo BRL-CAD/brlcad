@@ -1,9 +1,7 @@
 # Minimal directories required for any BRL-CAD functionality
 
-
 # globally consider anything in an 'ext' path a warning-free system header
 set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} ext CACHE STRING "Bundled system include dirs" FORCE)
-
 
 # The source directories and their dependencies are used both
 # for the primary build logic here and by the parent build
@@ -12,11 +10,9 @@ set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} ext CACHE STRING "Bundled syste
 # to be reusable at multiple levels of the logic
 include(${CMAKE_CURRENT_SOURCE_DIR}/source_dirs.cmake)
 
-
 # Either we're only building some of the directories based on
 # user provided lists, or we're building everything.
-if (BRLCAD_COMPONENTS)
-
+if(BRLCAD_COMPONENTS)
   # Use all provided components to build a build-ordered
   # list of directories to add
   set(active_dirs ${BRLCAD_COMPONENTS})
@@ -29,15 +25,12 @@ if (BRLCAD_COMPONENTS)
   foreach(ad ${active_dirs})
     verbose_add_subdirectory(src ${ad})
   endforeach(ad ${active_dirs})
-
-else (BRLCAD_COMPONENTS)
-
+else(BRLCAD_COMPONENTS)
   # Add all directories
   foreach(od ${ordered_dirs})
     verbose_add_subdirectory(src ${od})
   endforeach(od ${ordered_dirs})
-
-endif (BRLCAD_COMPONENTS)
+endif(BRLCAD_COMPONENTS)
 
 # This corresponds roughly to the libbrlcad originally defined in BRL-CAD
 # autotools build.
@@ -51,12 +44,12 @@ if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
   add_library(libbrlcad-static STATIC ${libbrlcad_objs})
 endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   README
   source_dirs.cmake
   libtermio/libtermio.h
-  )
+)
 
 # Local Variables:
 # tab-width: 8

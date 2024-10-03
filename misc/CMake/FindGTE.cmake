@@ -62,15 +62,14 @@ mark_as_advanced(GTE_INCLUDE_DIR)
 # handle the QUIETLY and REQUIRED arguments and set ZLIB_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(GTE REQUIRED_VARS GTE_INCLUDE_DIR)
+find_package_handle_standard_args(GTE REQUIRED_VARS GTE_INCLUDE_DIR)
 
 if(GTE_FOUND)
   set(GTE_INCLUDE_DIRS ${GTE_INCLUDE_DIR})
 
   if(NOT TARGET GTE::GTE)
     add_library(GTE::GTE UNKNOWN IMPORTED)
-    set_target_properties(GTE::GTE PROPERTIES
-      INTERFACE_INCLUDE_DIRECTORIES "${GTE_INCLUDE_DIRS}")
+    set_target_properties(GTE::GTE PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${GTE_INCLUDE_DIRS}")
   endif()
 endif()
 

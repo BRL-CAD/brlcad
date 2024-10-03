@@ -1,4 +1,3 @@
-
 #
 # This source file is part of appleseed.
 # Visit https://appleseedhq.net/ for additional information and resources.
@@ -26,7 +25,6 @@
 # THE SOFTWARE.
 #
 
-
 #
 # Find appleseed headers and libraries.
 #
@@ -42,40 +40,22 @@
 #   APPLESEED_LIBRARIES     List of appleseed libraries to link against
 #
 
-include (FindPackageHandleStandardArgs)
+include(FindPackageHandleStandardArgs)
 
-find_path (Appleseed_INCLUDE_DIR renderer/api/project.h
-	HINTS
-	${Appleseed_ROOT}
-	PATH_SUFFIXES
-   include
-	)
+find_path(Appleseed_INCLUDE_DIR renderer/api/project.h HINTS ${Appleseed_ROOT} PATH_SUFFIXES include)
 
-find_library (Appleseed_LIBRARY
-	NAMES Appleseed appleseed
-	HINTS
-	${Appleseed_ROOT}
-	PATH_SUFFIXES
-  	lib
-		lib64
-	)
+find_library(Appleseed_LIBRARY NAMES Appleseed appleseed HINTS ${Appleseed_ROOT} PATH_SUFFIXES lib lib64)
 
 # Handle the QUIETLY and REQUIRED arguments and set Appleseed_FOUND.
-find_package_handle_standard_args (Appleseed DEFAULT_MSG
-    Appleseed_INCLUDE_DIR
-    Appleseed_LIBRARY
-)
+find_package_handle_standard_args(Appleseed DEFAULT_MSG Appleseed_INCLUDE_DIR Appleseed_LIBRARY)
 
 # Set the output variables.
-if (Appleseed_FOUND)
-    set (Appleseed_INCLUDE_DIRS ${Appleseed_INCLUDE_DIR})
-    set (Appleseed_LIBRARIES ${Appleseed_LIBRARY})
-else ()
-    set (Appleseed_INCLUDE_DIRS)
-    set (Appleseed_LIBRARIES)
-endif ()
+if(Appleseed_FOUND)
+  set(Appleseed_INCLUDE_DIRS ${Appleseed_INCLUDE_DIR})
+  set(Appleseed_LIBRARIES ${Appleseed_LIBRARY})
+else()
+  set(Appleseed_INCLUDE_DIRS)
+  set(Appleseed_LIBRARIES)
+endif()
 
-mark_as_advanced (
-    Appleseed_INCLUDE_DIR
-    Appleseed_LIBRARY
-)
+mark_as_advanced(Appleseed_INCLUDE_DIR Appleseed_LIBRARY)

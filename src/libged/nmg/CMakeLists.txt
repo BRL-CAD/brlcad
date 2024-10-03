@@ -4,9 +4,10 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-set(NMG_SRCS
+set(
+  NMG_SRCS
   nmg.c
   nmg_cmface.c
   nmg_collapse.c
@@ -17,19 +18,19 @@ set(NMG_SRCS
   nmg_mm.c
   nmg_move_v.c
   nmg_simplify.c
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-nmg SHARED ${NMG_SRCS})
 target_link_libraries(ged-nmg libged libbu)
 set_property(TARGET ged-nmg APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-nmg ${NMG_SRCS})
-PLUGIN_SETUP(ged-nmg ged)
+validate_style(ged-nmg ${NMG_SRCS})
+plugin_setup(ged-nmg ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${NMG_SRCS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8
@@ -37,4 +38,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

@@ -1,6 +1,7 @@
-BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
+brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 
-set(LIBBREP_SOURCES
+set(
+  LIBBREP_SOURCES
   BBNode.cpp
   BRNode.cpp
   PullbackCurve.cpp
@@ -31,29 +32,25 @@ set(LIBBREP_SOURCES
   shape_recognition/util.cpp
   ssx_event.cpp
   tools/util.cpp
-  )
+)
 
 # Include directories needed by libbrep users
-set(BREP_INCLUDE_DIRS
-  ${OPENNURBS_INCLUDE_DIRS}
-  )
+set(BREP_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS})
 
 # locally used but not needed by users of the library
-set(BREP_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${REGEX_INCLUDE_DIRS}
-  )
+set(BREP_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${REGEX_INCLUDE_DIRS})
 
 # Note - libbrep_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(BREP_LIBS
+set(
+  BREP_LIBS
   ${libbrep_deps}
   ${OPENNURBS_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
-  )
+)
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "${BREP_LIBS}" "${BREP_INCLUDE_DIRS}" "${BREP_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libbrep "${LIBBREP_SOURCES}" "${BREP_LIBS}" "${BREP_INCLUDE_DIRS}" "${BREP_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(HIDE_INTERNAL_SYMBOLS)
@@ -64,7 +61,7 @@ endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   PullbackCurve.h
   brep_defines.h
@@ -75,7 +72,7 @@ CMAKEFILES(
   shape_recognition/shape_recognition.h
   shape_recognition/torus.cpp
   tools/tools.h
-  )
+)
 
 # Local Variables:
 # tab-width: 8

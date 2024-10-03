@@ -62,26 +62,21 @@ endfunction(PRINT_BUILD_FLAGS)
 # NOTE - we don't currently manage MSVC build flags directly,
 # so in that case we leave the CMake defaults.
 macro(CLEAR_BUILD_FLAGS)
-  set(BUILD_FLAGS_TO_CLEAR
-    CMAKE_C_FLAGS
-    CMAKE_CXX_FLAGS
-    CMAKE_SHARED_LINKER_FLAGS
-    CMAKE_EXE_LINKER_FLAGS
-    )
-  if (NOT MSVC)
+  set(BUILD_FLAGS_TO_CLEAR CMAKE_C_FLAGS CMAKE_CXX_FLAGS CMAKE_SHARED_LINKER_FLAGS CMAKE_EXE_LINKER_FLAGS)
+  if(NOT MSVC)
     foreach(bflag ${BUILD_FLAGS_TO_CLEAR})
       set(${bflag} "")
       unset(${bflag} CACHE)
       foreach(BTYPE ${CMAKE_BUILD_TYPES})
-	set(${bflag}_${BTYPE} "")
-	unset(${bflag}_${BTYPE} CACHE)
+        set(${bflag}_${BTYPE} "")
+        unset(${bflag}_${BTYPE} CACHE)
       endforeach(BTYPE ${CMAKE_BUILD_TYPES})
     endforeach(bflag ${BUILD_FLAGS_TO_CLEAR})
 
     set(CMAKE_C_FLAGS "$ENV{CFLAGS}")
     set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS}")
     set(CMAKE_SHARED_LINKER_FLAGS "$ENV{LDFLAGS}")
-  endif (NOT MSVC)
+  endif(NOT MSVC)
 endmacro(CLEAR_BUILD_FLAGS)
 
 # To reduce verbosity in this file, determine up front which
@@ -96,37 +91,35 @@ macro(ADD_NEW_FLAG FLAG_TYPE NEW_FLAG CONFIG_LIST)
       set(CMAKE_${FLAG_TYPE}_FLAGS "${CMAKE_${FLAG_TYPE}_FLAGS} ${${NEW_FLAG}}")
     else("${CONFIG_LIST}" STREQUAL "ALL")
       foreach(CFG_TYPE ${CONFIG_LIST})
-	set(VALID_CONFIG 1)
-	if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "${CFG_TYPE}")
-	  set(VALID_CONFIG "-1")
-	endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "${CFG_TYPE}")
-	if(NOT "${VALID_CONFIG}" STREQUAL "-1")
-	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE)
-	  if(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE})
-	    set(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE} "${CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE}} ${${NEW_FLAG}}")
-	  else(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE})
-	    set(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE} "${${NEW_FLAG}}")
-	  endif(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE})
-	endif(NOT "${VALID_CONFIG}" STREQUAL "-1")
+        set(VALID_CONFIG 1)
+        if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "${CFG_TYPE}")
+          set(VALID_CONFIG "-1")
+        endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "${CFG_TYPE}")
+        if(NOT "${VALID_CONFIG}" STREQUAL "-1")
+          string(TOUPPER "${CFG_TYPE}" CFG_TYPE)
+          if(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE})
+            set(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE} "${CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE}} ${${NEW_FLAG}}")
+          else(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE})
+            set(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE} "${${NEW_FLAG}}")
+          endif(CMAKE_${FLAG_TYPE}_FLAGS_${CFG_TYPE})
+        endif(NOT "${VALID_CONFIG}" STREQUAL "-1")
       endforeach(CFG_TYPE ${CONFIG_LIST})
     endif("${CONFIG_LIST}" STREQUAL "ALL")
   endif(${NEW_FLAG})
 endmacro(ADD_NEW_FLAG)
-
 
 # This macro tests for a specified C or C++ compiler flag, setting the
 # result in the specified variable.
 if(NOT COMMAND CHECK_COMPILER_FLAG)
   macro(CHECK_COMPILER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
     if("${FLAG_LANG}" STREQUAL "C")
-      CHECK_C_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
+      check_c_compiler_flag(${NEW_FLAG} ${RESULTVAR})
     endif("${FLAG_LANG}" STREQUAL "C")
     if("${FLAG_LANG}" STREQUAL "CXX")
-      CHECK_CXX_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
+      check_cxx_compiler_flag(${NEW_FLAG} ${RESULTVAR})
     endif("${FLAG_LANG}" STREQUAL "CXX")
   endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 endif(NOT COMMAND CHECK_COMPILER_FLAG)
-
 
 # Synopsis:  CHECK_FLAG(LANG flag [BUILD_TYPES type1 type2 ...] [GROUPS group1 group2 ...] [VARS var1 var2 ...] )
 #
@@ -171,23 +164,20 @@ macro(CHECK_FLAG)
 
   # Start processing arguments
   if(${ARGC} LESS 3)
-
     # Handle default (global) case
-    CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+    check_compiler_flag(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
     if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
-      ADD_NEW_FLAG(${FLAG_LANG} NEW_FLAG ALL)
+      add_new_flag(${FLAG_LANG} NEW_FLAG ALL)
     endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
-
   else(${ARGC} LESS 3)
-
     # Parse extra arguments
-    CMAKE_PARSE_ARGUMENTS(FLAG "" "" "BUILD_TYPES;GROUPS;VARS" ${ARGN})
+    cmake_parse_arguments(FLAG "" "" "BUILD_TYPES;GROUPS;VARS" ${ARGN})
 
     # Iterate over listed Build types and append the flag to them if successfully tested.
     foreach(build_type ${FLAG_BUILD_TYPES})
-      CHECK_COMPILER_FLAG(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+      check_compiler_flag(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
       if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
-	ADD_NEW_FLAG(${FLAG_LANG} NEW_FLAG "${build_type}")
+        add_new_flag(${FLAG_LANG} NEW_FLAG "${build_type}")
       endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
     endforeach(build_type ${FLAG_BUILD_TYPES})
 
@@ -195,13 +185,13 @@ macro(CHECK_FLAG)
     # a string build, not a CMake list build.  Do this for all supplied
     # group variables.
     foreach(flag_group ${FLAG_GROUPS})
-      CHECK_COMPILER_FLAG(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+      check_compiler_flag(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
       if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
-	if(${flag_group})
-	  set(${flag_group} "${${flag_group}} ${NEW_FLAG}")
-	else(${flag_group})
-	  set(${flag_group} "${NEW_FLAG}")
-	endif(${flag_group})
+        if(${flag_group})
+          set(${flag_group} "${${flag_group}} ${NEW_FLAG}")
+        else(${flag_group})
+          set(${flag_group} "${NEW_FLAG}")
+        endif(${flag_group})
       endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
     endforeach(flag_group ${FLAG_GROUPS})
 
@@ -209,85 +199,78 @@ macro(CHECK_FLAG)
     # the flag as the variable's value.  Do this for all supplied variables.
     foreach(flag_var ${FLAG_VARS})
       if(NOT ${flag_var})
-	CHECK_COMPILER_FLAG(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
-	if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND AND NOT "${${flag_var}}")
-	  set(${flag_var} "${NEW_FLAG}")
-	endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND AND NOT "${${flag_var}}")
+        check_compiler_flag(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+        if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND AND NOT "${${flag_var}}")
+          set(${flag_var} "${NEW_FLAG}")
+        endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND AND NOT "${${flag_var}}")
       endif(NOT ${flag_var})
     endforeach(flag_var ${FLAG_VARS})
   endif(${ARGC} LESS 3)
-
 endmacro(CHECK_FLAG)
-
 
 # This macro checks whether a specified C flag is available.  See
 # CHECK_FLAG() for arguments.
 macro(CHECK_C_FLAG)
-  CHECK_FLAG(C ${ARGN})
+  check_flag(C ${ARGN})
 endmacro(CHECK_C_FLAG)
-
 
 # This macro checks whether a specified C++ flag is available.  See
 # CHECK_FLAG() for arguments.
 macro(CHECK_CXX_FLAG)
-  CHECK_FLAG(CXX ${ARGN})
+  check_flag(CXX ${ARGN})
 endmacro(CHECK_CXX_FLAG)
-
 
 # Disable any compilation warning flags currently set
 macro(DISABLE_WARNINGS)
-
   # borland-style
-  if (NOT NOWARN_CFLAG)
-    CHECK_C_FLAG("w-" VARS NOWARN_CFLAG)
-  endif (NOT NOWARN_CFLAG)
-  if (NOT NOWARN_CXXFLAG)
-    CHECK_CXX_FLAG("w-" VARS NOWARN_CXXFLAG)
-  endif (NOT NOWARN_CXXFLAG)
+  if(NOT NOWARN_CFLAG)
+    check_c_flag("w-" VARS NOWARN_CFLAG)
+  endif(NOT NOWARN_CFLAG)
+  if(NOT NOWARN_CXXFLAG)
+    check_cxx_flag("w-" VARS NOWARN_CXXFLAG)
+  endif(NOT NOWARN_CXXFLAG)
 
   # msvc-style (must test before gcc's -w test)
-  if (NOT NOWARN_CFLAG)
-    CHECK_C_FLAG("W0" VARS NOWARN_CFLAG)
+  if(NOT NOWARN_CFLAG)
+    check_c_flag("W0" VARS NOWARN_CFLAG)
 
-    if (NOWARN_CFLAG)
+    if(NOWARN_CFLAG)
       # replace msvc-style warning level C flags, disable with W0
       string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
       foreach(BTYPE ${CMAKE_BUILD_TYPES})
-	string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
+        string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
       endforeach(BTYPE ${CMAKE_BUILD_TYPES})
-    endif (NOWARN_CFLAG)
-  endif (NOT NOWARN_CFLAG)
+    endif(NOWARN_CFLAG)
+  endif(NOT NOWARN_CFLAG)
 
-  if (NOT NOWARN_CXXFLAG)
-    CHECK_CXX_FLAG("W0" VARS NOWARN_CXXFLAG)
+  if(NOT NOWARN_CXXFLAG)
+    check_cxx_flag("W0" VARS NOWARN_CXXFLAG)
 
-    if (NOWARN_CXXFLAG)
+    if(NOWARN_CXXFLAG)
       # replace msvc-style warning level C++ flags, disable with W0
       string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
       foreach(BTYPE ${CMAKE_BUILD_TYPES})
-	string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
+        string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
       endforeach(BTYPE ${CMAKE_BUILD_TYPES})
-    endif (NOWARN_CXXFLAG)
-  endif (NOT NOWARN_CXXFLAG)
+    endif(NOWARN_CXXFLAG)
+  endif(NOT NOWARN_CXXFLAG)
 
   # gcc/llvm-style
-  if (NOT NOWARN_CFLAG)
-    CHECK_C_FLAG("w" VARS NOWARN_CFLAG)
-  endif (NOT NOWARN_CFLAG)
-  if (NOT NOWARN_CXXFLAG)
-    CHECK_CXX_FLAG("w" VARS NOWARN_CXXFLAG)
-  endif (NOT NOWARN_CXXFLAG)
+  if(NOT NOWARN_CFLAG)
+    check_c_flag("w" VARS NOWARN_CFLAG)
+  endif(NOT NOWARN_CFLAG)
+  if(NOT NOWARN_CXXFLAG)
+    check_cxx_flag("w" VARS NOWARN_CXXFLAG)
+  endif(NOT NOWARN_CXXFLAG)
 
   # turn off warnings in the current scope
-  if (NOWARN_CFLAG)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NOWARN_CFLAG}")
-  endif (NOWARN_CFLAG)
-  if (NOWARN_CXXFLAG)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NOWARN_CXXFLAG}")
-  endif (NOWARN_CXXFLAG)
-
+  if(NOWARN_CFLAG)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NOWARN_CFLAG}")
+  endif(NOWARN_CFLAG)
+  if(NOWARN_CXXFLAG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NOWARN_CXXFLAG}")
+  endif(NOWARN_CXXFLAG)
 endmacro(DISABLE_WARNINGS)
-
 
 # Local Variables:
 # tab-width: 8

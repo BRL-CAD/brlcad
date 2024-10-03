@@ -1,12 +1,10 @@
-set(COMGEOM_V5_MODELS
-  ADA073408.comgeom
-)
+set(COMGEOM_V5_MODELS ADA073408.comgeom)
 
 foreach(comgeom_input ${COMGEOM_V5_MODELS})
-  G_TARGET(${comgeom_input} "BRL-CAD Geometry Models/Sample")
+  g_target(${comgeom_input} "BRL-CAD Geometry Models/Sample")
 endforeach(comgeom_input ${COMGEOM_V5_MODELS})
 
-CMAKEFILES(
+cmakefiles(
   ${COMGEOM_V5_MODELS}
   CMakeLists.txt
   README_ADA073408

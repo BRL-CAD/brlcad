@@ -5,15 +5,15 @@ cmake_minimum_required(VERSION 3.18)
 set(BIN_DIR deep/dir/bin)
 
 set(LBIN_DIR "${BIN_DIR}")
-while (NOT "${LBIN_DIR}" STREQUAL "")
+while(NOT "${LBIN_DIR}" STREQUAL "")
   get_filename_component(LBDIR "${LBIN_DIR}" DIRECTORY)
   set(LBIN_DIR "${LBDIR}")
-  if ("${RBIN_DIR}" STREQUAL "")
+  if("${RBIN_DIR}" STREQUAL "")
     set(RBIN_DIR "..")
-  else ("${RBIN_DIR}" STREQUAL "")
+  else("${RBIN_DIR}" STREQUAL "")
     set(RBIN_DIR "../${RBIN_DIR}")
-  endif ("${RBIN_DIR}" STREQUAL "")
-endwhile (NOT "${LBIN_DIR}" STREQUAL "")
+  endif("${RBIN_DIR}" STREQUAL "")
+endwhile(NOT "${LBIN_DIR}" STREQUAL "")
 
 # Use the custom binary output directory to set the standard
 # CMake variables controlling binary output locations
@@ -42,7 +42,7 @@ add_custom_command(
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test-${CMAKE_CFG_INTDIR}-stamp"
   COMMAND ${CMAKE_COMMAND} -DEXEC_DIR=$<TARGET_FILE_DIR:dir_info> -P test.cmake
   COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/test-${CMAKE_CFG_INTDIR}-stamp"
-  )
+)
 add_custom_target(dinfo DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/test-${CMAKE_CFG_INTDIR}-stamp")
 
 # Testing thus far indicates that an install rule may point to a file generated

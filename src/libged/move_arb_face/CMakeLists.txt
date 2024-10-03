@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-move_arb_face SHARED move_arb_face.c)
 target_link_libraries(ged-move_arb_face libged libbu)
 set_property(TARGET ged-move_arb_face APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-move_arb_face move_arb_face.c)
-PLUGIN_SETUP(ged-move_arb_face ged)
+validate_style(ged-move_arb_face move_arb_face.c)
+plugin_setup(ged-move_arb_face ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   move_arb_face.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

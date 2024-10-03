@@ -37,7 +37,6 @@
 include(CheckCXXSourceRuns)
 include(CMakePushCheckState)
 
-
 ###
 # make sure a given API standards-compliance flag seems to work.
 #
@@ -47,7 +46,9 @@ include(CMakePushCheckState)
 # Example: BRLCAD_API_FLAG("-D_POSIX_SOURCES" API_FLAGS)
 ###
 function(BRLCAD_API_FLAG AFLAG AFLAGS)
-  set(CHECK_API_FLAG_SRC "
+  set(
+    CHECK_API_FLAG_SRC
+    "
 #include <iostream>
 int main(int ac, char *av[])
 {
@@ -55,19 +56,19 @@ int main(int ac, char *av[])
     std::cout << \"hello\";
   return 0;
 }
-")
-    string(TOUPPER "${AFLAG}" UAFLAG)
-    string(REPLACE "-" "_" AFLAGVAR "${UAFLAG}")
-    string(REPLACE "=" "_" AFLAGVAR "${AFLAGVAR}")
-    cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS} ${AFLAG}")
-    check_cxx_source_runs("${CHECK_API_FLAG_SRC}" WORKING_${AFLAGVAR})
-    cmake_pop_check_state()
-    if(WORKING_${AFLAGVAR})
-      set(${AFLAGS} "${${AFLAGS}} ${AFLAG}" PARENT_SCOPE)
-    endif(WORKING_${AFLAGVAR})
+"
+  )
+  string(TOUPPER "${AFLAG}" UAFLAG)
+  string(REPLACE "-" "_" AFLAGVAR "${UAFLAG}")
+  string(REPLACE "=" "_" AFLAGVAR "${AFLAGVAR}")
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS} ${AFLAG}")
+  check_cxx_source_runs("${CHECK_API_FLAG_SRC}" WORKING_${AFLAGVAR})
+  cmake_pop_check_state()
+  if(WORKING_${AFLAGVAR})
+    set(${AFLAGS} "${${AFLAGS}} ${AFLAG}" PARENT_SCOPE)
+  endif(WORKING_${AFLAGVAR})
 endfunction(BRLCAD_API_FLAG)
-
 
 # Local Variables:
 # tab-width: 8
@@ -75,4 +76,3 @@ endfunction(BRLCAD_API_FLAG)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

@@ -1,11 +1,9 @@
-include_directories(
-  ${DM_INCLUDE_DIRS}
-  )
+include_directories(${DM_INCLUDE_DIRS})
 
-BRLCAD_ADDEXEC(fbserv "fbserv.c;server.c" libdm)
-ADD_TARGET_DEPS(fbserv dm_plugins)
+brlcad_addexec(fbserv "fbserv.c;server.c" libdm)
+add_target_deps(fbserv dm_plugins)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

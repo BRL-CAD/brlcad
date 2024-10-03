@@ -4,20 +4,20 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-erase SHARED erase.c erase2.cpp)
 target_link_libraries(ged-erase libged libbu)
 set_property(TARGET ged-erase APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-erase erase.c erase2.cpp)
-PLUGIN_SETUP(ged-erase ged)
+validate_style(ged-erase erase.c erase2.cpp)
+plugin_setup(ged-erase ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   erase.c
   erase2.cpp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

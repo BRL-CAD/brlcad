@@ -1,9 +1,7 @@
-set(misc_TCLSCRIPTS
-  rename_regions_to_ids.tcl
-)
-if (BRLCAD_ENABLE_TCL)
-  BRLCAD_ADDDATA(misc_TCLSCRIPTS tclscripts/misc)
-endif (BRLCAD_ENABLE_TCL)
+set(misc_TCLSCRIPTS rename_regions_to_ids.tcl)
+if(BRLCAD_ENABLE_TCL)
+  brlcad_adddata(misc_TCLSCRIPTS tclscripts/misc)
+endif(BRLCAD_ENABLE_TCL)
 
 # We intentionally install but DO NOT INDEX these scripts!  General
 # purpose scripts belong elsewhere (e.g., util).
@@ -11,10 +9,10 @@ endif (BRLCAD_ENABLE_TCL)
 #   pkgIndex_BUILD(tclscripts/misc)
 #   tclIndex_BUILD(tclscripts/misc)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${misc_TCLSCRIPTS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

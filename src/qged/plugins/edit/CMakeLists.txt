@@ -16,7 +16,7 @@ add_subdirectory(ell)
 # https://github.com/peizhan/psketcher
 # https://github.com/cmerrill/sketchsolve
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
-BRLCAD_ADDEXEC(vdeck "cgarbs.c;match.c;parsarg.c;vdeck.c" "librt;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(vdeck "cgarbs.c;match.c;parsarg.c;vdeck.c" "librt;${M_LIBRARY}" FOLDER Conv)
 target_include_directories(vdeck BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-CMAKEFILES(std.h vextern.h)
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(std.h vextern.h)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

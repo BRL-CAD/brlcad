@@ -1,11 +1,7 @@
-set(gcv_headers
-  defines.h
-  api.h
-  util.h
-  )
-BRLCAD_MANAGE_FILES(gcv_headers ${INCLUDE_DIR}/brlcad/gcv REQUIRED libgcv)
+set(gcv_headers defines.h api.h util.h)
+brlcad_manage_files(gcv_headers ${INCLUDE_DIR}/brlcad/gcv REQUIRED libgcv)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,5 +1,6 @@
 # Main libdm library
-set(LIBDM_SRCS
+set(
+  LIBDM_SRCS
   null/dm-Null.c
   null/if_null.c
   txt/if_debug.c
@@ -29,58 +30,51 @@ set(LIBDM_SRCS
   scale.c
   view.c
   vers.c
-  )
+)
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
+set_property(
+  SOURCE dm_init.cpp
+  APPEND
+  PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
+)
 
 if(BRLCAD_ENABLE_OPENGL)
   set(DM_INCLUDE_DIRS ${DM_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
 endif(BRLCAD_ENABLE_OPENGL)
 
 # local includes
-set(DM_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${PNG_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/libbg
-  )
+set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${PNG_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/libbg)
 
 # Note - libdm_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "${libdm_deps};${PNG_LIBRARIES}" "${DM_INCLUDE_DIRS}" "${DM_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libdm "${LIBDM_SRCS}" "${libdm_deps};${PNG_LIBRARIES}" "${DM_INCLUDE_DIRS}" "${DM_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
-if (TARGET profont_ProFont_ttf_cp)
+if(TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
-endif (TARGET profont_ProFont_ttf_cp)
-
+endif(TARGET profont_ProFont_ttf_cp)
 
 # Many of the backends use the same OpenGL drawing logic for much of their
 # functionality.  If OpenGL support is available, We encapsulate the common
 # elements of this logic in a libdmgl library used by those plugins.
-set(LIBDMGL_SRCS
-  dm-gl.c
-  dm-gl_lod.cpp
-  )
-if (BRLCAD_ENABLE_OPENGL)
+set(LIBDMGL_SRCS dm-gl.c dm-gl_lod.cpp)
+if(BRLCAD_ENABLE_OPENGL)
   find_package(OpenGL)
 
-  if (OPENGL_opengl_LIBRARY)
+  if(OPENGL_opengl_LIBRARY)
     set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-  endif (OPENGL_opengl_LIBRARY)
-  if (OPENGL_gl_LIBRARY)
+  endif(OPENGL_opengl_LIBRARY)
+  if(OPENGL_gl_LIBRARY)
     set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-  endif (OPENGL_gl_LIBRARY)
+  endif(OPENGL_gl_LIBRARY)
 
-  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_LIBS}" "${DM_INCLUDE_DIRS}" "")
+  brlcad_addlib(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_LIBS}" "${DM_INCLUDE_DIRS}" "")
   set_target_properties(libdmgl PROPERTIES VERSION 20.0.1 SOVERSION 20)
-endif (BRLCAD_ENABLE_OPENGL)
-
+endif(BRLCAD_ENABLE_OPENGL)
 
 add_custom_command(
   OUTPUT "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
   COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
-  )
-add_custom_target(dm_plugins_sentinel
-  DEPENDS ${CMAKE_BINARY_DIR}/dm_plugins.sentinel
-  )
+)
+add_custom_target(dm_plugins_sentinel DEPENDS ${CMAKE_BINARY_DIR}/dm_plugins.sentinel)
 set_target_properties(dm_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/dm")
 
 function(dm_plugin_library name)
@@ -107,7 +101,8 @@ add_subdirectory(wgl)
 
 add_subdirectory(tests)
 
-set(libdm_ignore_files
+set(
+  libdm_ignore_files
   CMakeLists.txt
   README
   TODO
@@ -122,8 +117,8 @@ set(libdm_ignore_files
   fontstash/fontstash.h
   fontstash/glfontstash.h
   fontstash/stb_truetype.h
-  )
-CMAKEFILES(${libdm_ignore_files})
+)
+cmakefiles(${libdm_ignore_files})
 
 # Local Variables:
 # tab-width: 8

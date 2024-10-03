@@ -1,5 +1,4 @@
 if(BRLCAD_ENABLE_QT)
-
   include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -9,55 +8,62 @@ if(BRLCAD_ENABLE_QT)
     ${GED_INCLUDE_DIRS}
     ${RT_INCLUDE_DIRS}
     ${BU_INCLUDE_DIRS}
-    )
-
+  )
 endif(BRLCAD_ENABLE_QT)
 
-set(measure_srcs
-  measure.cpp
-  CADViewMeasure.cpp
-  )
+set(measure_srcs measure.cpp CADViewMeasure.cpp)
 
-set(measure_moc_hdrs
-  CADViewMeasure.h
-  )
+set(measure_moc_hdrs CADViewMeasure.h)
 
 if(BRLCAD_ENABLE_QT)
-
   if(Qt6Widgets_FOUND)
-    QT6_WRAP_CPP(measure_moc_srcs ${measure_moc_hdrs})
-    QT6_ADD_RESOURCES(icon_qrc icon.qrc)
+    qt6_wrap_cpp(measure_moc_srcs ${measure_moc_hdrs})
+    qt6_add_resources(icon_qrc icon.qrc)
   else()
-    QT5_WRAP_CPP(measure_moc_srcs ${measure_moc_hdrs})
-    QT5_ADD_RESOURCES(icon_qrc icon.qrc)
+    qt5_wrap_cpp(measure_moc_srcs ${measure_moc_hdrs})
+    qt5_add_resources(icon_qrc icon.qrc)
   endif(Qt6Widgets_FOUND)
   qged_plugin(qged_measure SHARED ${measure_srcs} ${measure_moc_srcs} ${icon_qrc})
   if(Qt6Widgets_FOUND)
-    target_link_libraries(qged_measure libqtcad libged librt libbu Qt6::Widgets)
+    target_link_libraries(
+      qged_measure
+      libqtcad
+      libged
+      librt
+      libbu
+      Qt6::Widgets
+    )
   else()
-    target_link_libraries(qged_measure libqtcad libged librt libbu Qt5::Widgets)
+    target_link_libraries(
+      qged_measure
+      libqtcad
+      libged
+      librt
+      libbu
+      Qt5::Widgets
+    )
   endif(Qt6Widgets_FOUND)
   set_property(TARGET qged_measure APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  VALIDATE_STYLE(qged_measure measure.cpp)
-  PLUGIN_SETUP(qged_measure qged)
+  validate_style(qged_measure measure.cpp)
+  plugin_setup(qged_measure qged)
 
-  DISTCLEAN(
+  distclean(
     icon.qrc.depends
     moc_CADViewMeasure.cpp_parameters
-    )
-
+  )
 endif(BRLCAD_ENABLE_QT)
 
-set(ignore_srcs
+set(
+  ignore_srcs
   CMakeLists.txt
   ${measure_srcs}
   ${measure_moc_hdrs}
   icon.qrc
   measure.svg
   README
-  )
+)
 
-CMAKEFILES(${ignore_srcs})
+cmakefiles(${ignore_srcs})
 
 # Local Variables:
 # tab-width: 8
@@ -65,4 +71,3 @@ CMAKEFILES(${ignore_srcs})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

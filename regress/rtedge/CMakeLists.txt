@@ -1,12 +1,9 @@
+if(SH_EXEC AND TARGET mged AND TARGET asc2g)
+  brlcad_add_test(NAME regress-rtedge COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/rtedge.sh" ${CMAKE_SOURCE_DIR})
+  brlcad_regression_test(regress-rtedge "rt;rtedge;pixdiff;asc2g" TEST_DEFINED)
+endif(SH_EXEC AND TARGET mged AND TARGET asc2g)
 
-if (SH_EXEC AND TARGET mged AND TARGET asc2g)
-
-  BRLCAD_ADD_TEST(NAME regress-rtedge COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/rtedge.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-rtedge "rt;rtedge;pixdiff;asc2g" TEST_DEFINED)
-
-endif (SH_EXEC AND TARGET mged AND TARGET asc2g)
-
-CMAKEFILES(
+cmakefiles(
   havoc.g.gz
   rtedge.ref.pix.gz
   rtedge.ref2.pix.gz
@@ -14,10 +11,11 @@ CMAKEFILES(
   rtedge.ref4.pix.gz
   rtedge.ref5.pix.gz
   rtedge.sh
-  )
+)
 
 # list of temporary files
-set(rtedge_outfiles
+set(
+  rtedge_outfiles
   rtedge.2.pix
   rtedge.3.pix
   rtedge.4.pix
@@ -35,12 +33,12 @@ set(rtedge_outfiles
   rtedge.ref3.pix
   rtedge.ref4.pix
   rtedge.ref5.pix
-  )
+)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${rtedge_outfiles}")
-DISTCLEAN(${rtedge_outfiles})
+distclean(${rtedge_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-ae2dir SHARED ae2dir.c)
 target_link_libraries(ged-ae2dir libged libbu)
 set_property(TARGET ged-ae2dir APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-ae2dir ae2dir.c)
-PLUGIN_SETUP(ged-ae2dir ged)
+validate_style(ged-ae2dir ae2dir.c)
+plugin_setup(ged-ae2dir ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ae2dir.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -2,7 +2,7 @@ add_subdirectory(tree)
 add_subdirectory(primitives)
 add_subdirectory(view)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

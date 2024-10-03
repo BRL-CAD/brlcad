@@ -47,8 +47,8 @@ function(print_compiler_flags flag_type flags FLAGS_MAXLINE)
     string(LENGTH "${LINE_STR}" LINE_LENGTH)
     if(${LINE_LENGTH} STREQUAL "0")
       while(${LINE_LENGTH} LESS ${LABEL_LENGTH})
-	set(LINE_STR "${LINE_STR} ")
-	string(LENGTH "${LINE_STR}" LINE_LENGTH)
+        set(LINE_STR "${LINE_STR} ")
+        string(LENGTH "${LINE_STR}" LINE_LENGTH)
       endwhile(${LINE_LENGTH} LESS ${LABEL_LENGTH})
       set(LINE_STR "${LINE_STR}   ")
     endif(${LINE_LENGTH} STREQUAL "0")
@@ -57,12 +57,12 @@ function(print_compiler_flags flag_type flags FLAGS_MAXLINE)
       string(LENGTH ${NEXT_FLAG} FLAG_LENGTH)
       math(EXPR NEW_LINE_LENGTH "${LINE_LENGTH} + ${FLAG_LENGTH} + 1")
       if(${LINE_LENGTH} EQUAL ${LABEL_LENGTH} OR ${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
-	set(LINE_STR "${LINE_STR} ${NEXT_FLAG}")
-	list(REMOVE_AT ${flag_type}_LIST 0)
-	list(LENGTH ${flag_type}_LIST FLAG_CNT)
+        set(LINE_STR "${LINE_STR} ${NEXT_FLAG}")
+        list(REMOVE_AT ${flag_type}_LIST 0)
+        list(LENGTH ${flag_type}_LIST FLAG_CNT)
       else(${LINE_LENGTH} EQUAL ${LABEL_LENGTH} OR ${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
-	message("${LINE_STR}")
-	set(LINE_STR "")
+        message("${LINE_STR}")
+        set(LINE_STR "")
       endif(${LINE_LENGTH} EQUAL ${LABEL_LENGTH} OR ${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
     else(NOT "${NEXT_FLAG}" STREQUAL "")
       list(REMOVE_AT ${flag_type}_LIST 0)
@@ -115,7 +115,14 @@ function(BRLCAD_Summary)
   set(LIB_DIR_LABEL "Libraries")
   set(MAN_DIR_LABEL "Manual pages")
   set(DATA_DIR_LABEL "Data resources")
-  set(PATH_LABELS CMAKE_INSTALL_PREFIX BIN_DIR LIB_DIR MAN_DIR DATA_DIR)
+  set(
+    PATH_LABELS
+    CMAKE_INSTALL_PREFIX
+    BIN_DIR
+    LIB_DIR
+    MAN_DIR
+    DATA_DIR
+  )
 
   # Initialize length var
   set(PATH_LABEL_LENGTH 0)
@@ -123,9 +130,9 @@ function(BRLCAD_Summary)
   # Find longest label string for installation directories
   foreach(path_label ${PATH_LABELS})
     string(LENGTH "${${path_label}_LABEL}" CURRENT_LENGTH)
-    if (${CURRENT_LENGTH} GREATER ${PATH_LABEL_LENGTH})
+    if(${CURRENT_LENGTH} GREATER ${PATH_LABEL_LENGTH})
       set(PATH_LABEL_LENGTH ${CURRENT_LENGTH})
-    endif (${CURRENT_LENGTH} GREATER ${PATH_LABEL_LENGTH})
+    endif(${CURRENT_LENGTH} GREATER ${PATH_LABEL_LENGTH})
   endforeach(path_label ${PATH_LABELS})
 
   # Print each installation directory, adding white space
@@ -145,7 +152,6 @@ function(BRLCAD_Summary)
   endforeach()
   message(" ")
 
-
   ###################################################
   #                                                 #
   #                Compiler Flags                   #
@@ -160,7 +166,14 @@ function(BRLCAD_Summary)
   set(SHARED_LINKER_LABEL "LDFLAGS")
   set(C_COMPILER_LABEL "CC")
   set(CXX_COMPILER_LABEL "CXX")
-  set(ALL_FLAG_LABELS C_LABEL CXX_LABEL SHARED_LINKER_LABEL C_COMPILER_LABEL CXX_COMPILER_LABEL)
+  set(
+    ALL_FLAG_LABELS
+    C_LABEL
+    CXX_LABEL
+    SHARED_LINKER_LABEL
+    C_COMPILER_LABEL
+    CXX_COMPILER_LABEL
+  )
 
   # Initialize length var
   set(MAX_LABEL_LENGTH 0)
@@ -211,7 +224,6 @@ function(BRLCAD_Summary)
   # Spacer between flags and compilation status lists
   message(" ")
 
-
   ###################################################
   #                                                 #
   #            Bundled External Libraries           #
@@ -231,42 +243,42 @@ function(BRLCAD_Summary)
     cmake_parse_arguments(ER "" "REQUIRED_VARS" "" ${ARGN})
     set(BUNDLED_LABELS ${BUNDLED_LABELS} ${blabel} PARENT_SCOPE)
     set(BUNDLED_VARS ${BUNDLED_VARS} ${bvar} PARENT_SCOPE)
-    if (ER_REQUIRED_VARS)
+    if(ER_REQUIRED_VARS)
       set(BUNDLED_REQUIRED ${BUNDLED_REQUIRED} ${ER_REQUIRED_VARS} PARENT_SCOPE)
-    else (ER_REQUIRED_VARS)
+    else(ER_REQUIRED_VARS)
       set(BUNDLED_REQUIRED ${BUNDLED_REQUIRED} "VARS_NONE" PARENT_SCOPE)
-    endif (ER_REQUIRED_VARS)
+    endif(ER_REQUIRED_VARS)
   endfunction(EXT_REPORT blabel bvar)
 
-  EXT_REPORT("Asset Import Library" ASSETIMPORT_STATUS REQUIRED_VARS "BRLCAD_ENABLE_ASSETIMPORT")
-  EXT_REPORT("Eigen" EIGEN3_INCLUDE_DIR)
-  EXT_REPORT("Geogram" GEOGRAM_STATUS)
-  EXT_REPORT("Geospatial Data Abstraction Library" GDAL_STATUS REQUIRED_VARS "BRLCAD_ENABLE_GDAL")
-  EXT_REPORT("Lightning Memory-Mapped Database" LMDB_STATUS)
-  EXT_REPORT("Netpbm" NETPBM_STATUS)
-  EXT_REPORT("OpenCV" OPENCV_STATUS)
-  EXT_REPORT("OpenMesh" OPENMESH_STATUS REQUIRED_VARS "BRLCAD_ENABLE_OPENMESH")
-  EXT_REPORT("OpenNURBS" OPENNURBS_STATUS)
-  EXT_REPORT("OSMesa" OSMESA_STATUS)
-  EXT_REPORT("Portable Network Graphics" PNG_STATUS)
+  ext_report("Asset Import Library" ASSETIMPORT_STATUS REQUIRED_VARS "BRLCAD_ENABLE_ASSETIMPORT")
+  ext_report("Eigen" EIGEN3_INCLUDE_DIR)
+  ext_report("Geogram" GEOGRAM_STATUS)
+  ext_report("Geospatial Data Abstraction Library" GDAL_STATUS REQUIRED_VARS "BRLCAD_ENABLE_GDAL")
+  ext_report("Lightning Memory-Mapped Database" LMDB_STATUS)
+  ext_report("Netpbm" NETPBM_STATUS)
+  ext_report("OpenCV" OPENCV_STATUS)
+  ext_report("OpenMesh" OPENMESH_STATUS REQUIRED_VARS "BRLCAD_ENABLE_OPENMESH")
+  ext_report("OpenNURBS" OPENNURBS_STATUS)
+  ext_report("OSMesa" OSMESA_STATUS)
+  ext_report("Portable Network Graphics" PNG_STATUS)
 
   # Because we may have a Qt5 from the system as well as a Qt6, we need to
   # flatten the two variables for reporting
   set(QtCore_Dir)
-  if (Qt6Core_DIR)
+  if(Qt6Core_DIR)
     set(QtCore_DIR ${Qt6Core_DIR})
-  endif (Qt6Core_DIR)
-  if (Qt5Core_DIR)
+  endif(Qt6Core_DIR)
+  if(Qt5Core_DIR)
     set(QtCore_DIR ${Qt5Core_DIR})
-  endif (Qt5Core_DIR)
+  endif(Qt5Core_DIR)
 
-  EXT_REPORT("Qt" QtCore_DIR REQUIRED_VARS "BRLCAD_ENABLE_QT")
-  EXT_REPORT("Regex Library" REGEX_STATUS)
-  EXT_REPORT("STEPcode" STEPCODE_STATUS REQUIRED_VARS "BRLCAD_ENABLE_STEP")
-  EXT_REPORT("Tcl" TCL_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_TCL")
-  EXT_REPORT("Tk" TK_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_TCL")
-  EXT_REPORT("UtahRLE" UTAHRLE_STATUS)
-  EXT_REPORT("Zlib" ZLIB_LIBRARY)
+  ext_report("Qt" QtCore_DIR REQUIRED_VARS "BRLCAD_ENABLE_QT")
+  ext_report("Regex Library" REGEX_STATUS)
+  ext_report("STEPcode" STEPCODE_STATUS REQUIRED_VARS "BRLCAD_ENABLE_STEP")
+  ext_report("Tcl" TCL_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_TCL")
+  ext_report("Tk" TK_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_TCL")
+  ext_report("UtahRLE" UTAHRLE_STATUS)
+  ext_report("Zlib" ZLIB_LIBRARY)
 
   # Find the maximum label length
   set(LABEL_LENGTH 0)
@@ -299,45 +311,45 @@ function(BRLCAD_Summary)
     list(GET BUNDLED_VARS ${bindex} LVAR)
     list(GET BUNDLED_REQUIRED ${bindex} RVARS)
     set(DO_REPORT TRUE)
-    if (NOT "${RVARS}" STREQUAL "VARS_NONE")
+    if(NOT "${RVARS}" STREQUAL "VARS_NONE")
       # If we've got some enable variables to check, make sure they're active
       # before reporting on this dependency
-      foreach (rvar ${RVARS})
-	if (NOT ${rvar})
-	  set(DO_REPORT FALSE)
-	endif (NOT ${rvar})
-      endforeach (rvar ${RVARS})
-    endif (NOT "${RVARS}" STREQUAL "VARS_NONE")
-    if (DO_REPORT)
-      if (NOT ${LVAR} OR "${${LVAR}}" STREQUAL "NotFound")
-	message("${blabel} NotFound")
-	math(EXPR bindex "${bindex} + 1")
-	continue()
-      endif (NOT ${LVAR} OR "${${LVAR}}" STREQUAL "NotFound")
-      if ("${${LVAR}}" STREQUAL "Bundled")
-	message("${blabel} Bundled")
-	math(EXPR bindex "${bindex} + 1")
-	continue()
-      endif ("${${LVAR}}" STREQUAL "Bundled")
-      if ("${${LVAR}}" STREQUAL "System")
-	message("${blabel} System")
-	math(EXPR bindex "${bindex} + 1")
-	continue()
-      endif ("${${LVAR}}" STREQUAL "System")
-      IS_SUBPATH("${CMAKE_BINARY_DIR}" "${${LVAR}}" LOCAL_TEST)
-      if (LOCAL_TEST)
-	message("${blabel} Bundled")
-      else (LOCAL_TEST)
-	# For header-only dependencies, we don't copy them into the build tree
-	# - check for the NOINSTALL directory
-	IS_SUBPATH("${BRLCAD_EXT_NOINSTALL_DIR}" "${${LVAR}}" EXT_TEST)
-	if (EXT_TEST)
-	  message("${blabel} Bundled")
-	else (EXT_TEST)
-	  message("${blabel} System")
-	endif (EXT_TEST)
-      endif (LOCAL_TEST)
-    endif (DO_REPORT)
+      foreach(rvar ${RVARS})
+        if(NOT ${rvar})
+          set(DO_REPORT FALSE)
+        endif(NOT ${rvar})
+      endforeach(rvar ${RVARS})
+    endif(NOT "${RVARS}" STREQUAL "VARS_NONE")
+    if(DO_REPORT)
+      if(NOT ${LVAR} OR "${${LVAR}}" STREQUAL "NotFound")
+        message("${blabel} NotFound")
+        math(EXPR bindex "${bindex} + 1")
+        continue()
+      endif(NOT ${LVAR} OR "${${LVAR}}" STREQUAL "NotFound")
+      if("${${LVAR}}" STREQUAL "Bundled")
+        message("${blabel} Bundled")
+        math(EXPR bindex "${bindex} + 1")
+        continue()
+      endif("${${LVAR}}" STREQUAL "Bundled")
+      if("${${LVAR}}" STREQUAL "System")
+        message("${blabel} System")
+        math(EXPR bindex "${bindex} + 1")
+        continue()
+      endif("${${LVAR}}" STREQUAL "System")
+      is_subpath("${CMAKE_BINARY_DIR}" "${${LVAR}}" LOCAL_TEST)
+      if(LOCAL_TEST)
+        message("${blabel} Bundled")
+      else(LOCAL_TEST)
+        # For header-only dependencies, we don't copy them into the build tree
+        # - check for the NOINSTALL directory
+        is_subpath("${BRLCAD_EXT_NOINSTALL_DIR}" "${${LVAR}}" EXT_TEST)
+        if(EXT_TEST)
+          message("${blabel} Bundled")
+        else(EXT_TEST)
+          message("${blabel} System")
+        endif(EXT_TEST)
+      endif(LOCAL_TEST)
+    endif(DO_REPORT)
     math(EXPR bindex "${bindex} + 1")
   endforeach(blabel ${BUNDLED_LABELS})
 
@@ -370,29 +382,31 @@ function(BRLCAD_Summary)
   # Make sets to use for iteration over all report items
   set(BUILD_REPORT_ITEMS)
 
-  set(FEATURE_REPORT_ITEMS
-    BRLCAD_ENABLE_OPENGL
-    BRLCAD_ENABLE_X11
-    BRLCAD_ENABLE_QT
-    BRLCAD_ENABLE_RUNTIME_DEBUG
-    )
+  set(FEATURE_REPORT_ITEMS BRLCAD_ENABLE_OPENGL BRLCAD_ENABLE_X11 BRLCAD_ENABLE_QT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
-  set(OTHER_REPORT_ITEMS
-    BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED
-    BUILD_STATIC_LIBS BUILD_SHARED_LIBS
-    BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD
-    )
+  set(
+    OTHER_REPORT_ITEMS
+    BRLCAD_ARCH_BITSETTING
+    BRLCAD_OPTIMIZED
+    BUILD_STATIC_LIBS
+    BUILD_SHARED_LIBS
+    BRLCAD_INSTALL_EXAMPLE_GEOMETRY
+    BRLCAD_DOCBOOK_BUILD
+  )
 
   if(BRLCAD_SUMMARIZE_DEV_SETTINGS)
-    set(OTHER_REPORT_ITEMS ${OTHER_REPORT_ITEMS}
+    set(
+      OTHER_REPORT_ITEMS
+      ${OTHER_REPORT_ITEMS}
       BRLCAD_DEBUGGING
       BRLCAD_SMP
       BRLCAD_PROFILING
       BRLCAD_WARNINGS
       BRLCAD_VERBOSE
       ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE
-      ENABLE_POSIX_COMPLIANCE ENABLE_ALL_CXX_COMPILE
-      )
+      ENABLE_POSIX_COMPLIANCE
+      ENABLE_ALL_CXX_COMPILE
+    )
   endif(BRLCAD_SUMMARIZE_DEV_SETTINGS)
 
   # Construct list of all items
@@ -468,7 +482,7 @@ function(BRLCAD_Summary)
     if(BRLCAD_EXTRADOCS_MAN)
       set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} man)
     endif(BRLCAD_EXTRADOCS_MAN)
-    if (BRLCAD_EXTRADOCS_PDF)
+    if(BRLCAD_EXTRADOCS_PDF)
       set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} pdf)
     endif(BRLCAD_EXTRADOCS_PDF)
     if(DOCBOOK_FORMATS)
@@ -478,9 +492,9 @@ function(BRLCAD_Summary)
     else(DOCBOOK_FORMATS)
       set(BRLCAD_DOCBOOK_BUILD "ON (All formats disabled)")
     endif(DOCBOOK_FORMATS)
-  else (BRLCAD_EXTRADOCS)
+  else(BRLCAD_EXTRADOCS)
     set(BRLCAD_DOCBOOK_BUILD "OFF")
-  endif (BRLCAD_EXTRADOCS)
+  endif(BRLCAD_EXTRADOCS)
 
   foreach(item ${OTHER_REPORT_ITEMS})
     message("${${item}_LABEL} ${${item}}")

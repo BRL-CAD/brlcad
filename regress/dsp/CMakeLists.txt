@@ -1,16 +1,13 @@
-
-if (SH_EXEC AND TARGET mged)
-
-  if (NOT WIN32)
-    BRLCAD_ADD_TEST(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/dsp.sh" ${CMAKE_SOURCE_DIR})
-    BRLCAD_REGRESSION_TEST(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
-  else (NOT WIN32)
+if(SH_EXEC AND TARGET mged)
+  if(NOT WIN32)
+    brlcad_add_test(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/dsp.sh" ${CMAKE_SOURCE_DIR})
+    brlcad_regression_test(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
+  else(NOT WIN32)
     message(WARNING "regress-dsp fails on some Windows platforms (pix-bw appears to hang on github runners) - skipping")
-  endif (NOT WIN32)
+  endif(NOT WIN32)
+endif(SH_EXEC AND TARGET mged)
 
-endif (SH_EXEC AND TARGET mged)
-
-CMAKEFILES(
+cmakefiles(
   dsp.sh
   asc2dsp-new.asc
   asc2dsp-old.asc
@@ -34,10 +31,11 @@ CMAKEFILES(
   run-dsp-case-set-1.sh
   run-dsp-case-set-2.sh
   run-dsp-case-set-3.sh
-  )
+)
 
 # list of temporary files
-set(dsp_outfiles
+set(
+  dsp_outfiles
   dsp-2-1.bw
   dsp-2-1.dsp
   dsp-2-1.g
@@ -117,12 +115,12 @@ set(dsp_outfiles
   dsp-3-8.pix
   dsp-3-8.rt.pix
   dsp.log
-  )
+)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${dsp_outfiles}")
-DISTCLEAN(${dsp_outfiles})
+distclean(${dsp_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

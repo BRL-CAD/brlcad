@@ -1,17 +1,15 @@
-set(articles_HY
-  about_hy.xml
-  )
+set(articles_HY about_hy.xml)
 
-if (TARGET mged OR TARGET qged OR TARGET archer)
+if(TARGET mged OR TARGET qged OR TARGET archer)
   if(BRLCAD_EXTRADOCS)
-    ADD_DOCBOOK("HTML;PHP;PDF" articles_HY articles/hy articles_EN_IMAGES_cp)
+    add_docbook("HTML;PHP;PDF" articles_HY articles/hy articles_EN_IMAGES_cp)
   endif(BRLCAD_EXTRADOCS)
-endif (TARGET mged OR TARGET qged OR TARGET archer)
+endif(TARGET mged OR TARGET qged OR TARGET archer)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${articles_HY}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

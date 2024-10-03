@@ -5,19 +5,19 @@ include_directories(
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-npush SHARED npush.cpp)
 target_link_libraries(ged-npush libged librt libbu)
 set_property(TARGET ged-npush APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-npush npush.cpp)
-PLUGIN_SETUP(ged-npush ged)
+validate_style(ged-npush npush.cpp)
+plugin_setup(ged-npush ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   npush.cpp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

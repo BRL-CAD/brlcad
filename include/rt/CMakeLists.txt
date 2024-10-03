@@ -1,6 +1,7 @@
 add_subdirectory(primitives)
 
-set(rt_headers
+set(
+  rt_headers
   anim.h
   application.h
   arb_edit.h
@@ -58,10 +59,10 @@ set(rt_headers
   vlist.h
   wdb.h
   xray.h
-  )
-BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt REQUIRED librt)
+)
+brlcad_manage_files(rt_headers ${INCLUDE_DIR}/brlcad/rt REQUIRED librt)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

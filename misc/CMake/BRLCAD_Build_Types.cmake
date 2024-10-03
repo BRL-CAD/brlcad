@@ -32,7 +32,6 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 # Multiconfig on Windows with bext is a major problem.  Using Debug and Release
 # DLLs together is hard:
 # https://stackoverflow.com/questions/74857726/using-a-release-configured-dll-in-another-project-that-is-configured-for-debuggi
@@ -93,23 +92,23 @@
 # Normalize the build type capitalization
 if(CMAKE_BUILD_TYPE)
   string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
-  if ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+  if("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
-  endif ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-  if ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
+  endif("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+  if("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
-  endif ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
+  endif("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
 endif(CMAKE_BUILD_TYPE)
 
 # CMake configuration types need to be overridden.  If a CMAKE_BUILD_TYPE
 # has been specified, use that - otherwise default to Debug.
 if(CMAKE_CONFIGURATION_TYPES)
-  if (CMAKE_BUILD_TYPE)
+  if(CMAKE_BUILD_TYPE)
     set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" CACHE STRING "Force a single build type" FORCE)
-  else (CMAKE_BUILD_TYPE)
+  else(CMAKE_BUILD_TYPE)
     set(CMAKE_CONFIGURATION_TYPES "Debug" CACHE STRING "Force a single build type" FORCE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
-  endif (CMAKE_BUILD_TYPE)
+  endif(CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 mark_as_advanced(CMAKE_BUILD_TYPE)

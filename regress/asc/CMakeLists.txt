@@ -1,27 +1,24 @@
 if(SH_EXEC)
-
-  if (TARGET asc2g)
-
-    BRLCAD_ADD_TEST(NAME regress-asc COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc.sh" ${CMAKE_SOURCE_DIR})
+  if(TARGET asc2g)
+    brlcad_add_test(NAME regress-asc COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc.sh" ${CMAKE_SOURCE_DIR})
 
     # 20220909CSM - temp disable during delayed testing fix
     # BRLCAD_REGRESSION_TEST(regress-asc "asc2g;g2asc;gdiff;dbupgrade" TEST_DEFINED)
+  endif(TARGET asc2g)
 
-  endif (TARGET asc2g)
-
-  BRLCAD_ADD_TEST(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-asc2dsp "cv;asc2pix;pix-bw;asc2dsp" TEST_DEFINED)
-
+  brlcad_add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
+  brlcad_regression_test(regress-asc2dsp "cv;asc2pix;pix-bw;asc2dsp" TEST_DEFINED)
 endif(SH_EXEC)
 
-CMAKEFILES(
+cmakefiles(
   asc.sh
   v4.g
   asc2dsp.sh
-  )
+)
 
 # list of temporary files
-set(asc_outfiles
+set(
+  asc_outfiles
   asc.log
   asc2dsp.log
   asc2dsp-new.dsp
@@ -37,15 +34,15 @@ set(asc_outfiles
   moss_v5.g
   moss_v5_basic.g
   v4.asc
-  )
+)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${asc_outfiles}")
-DISTCLEAN(${asc_outfiles})
+distclean(${asc_outfiles})
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   asc2dsp.sh
-  )
+)
 
 # Local Variables:
 # tab-width: 8

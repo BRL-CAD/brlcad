@@ -1,19 +1,17 @@
+if(SH_EXEC AND TARGET mged AND TARGET gencolor)
+  brlcad_add_test(NAME regress-shaders COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/shaders.sh" ${CMAKE_SOURCE_DIR})
+  brlcad_regression_test(regress-shaders "rt;mged;pixdiff;gencolor" TEST_DEFINED)
+endif(SH_EXEC AND TARGET mged AND TARGET gencolor)
 
-if (SH_EXEC AND TARGET mged AND TARGET gencolor)
-
-  BRLCAD_ADD_TEST(NAME regress-shaders COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/shaders.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-shaders "rt;mged;pixdiff;gencolor" TEST_DEFINED)
-
-endif (SH_EXEC AND TARGET mged AND TARGET gencolor)
-
-CMAKEFILES(
+cmakefiles(
   shaders.eagleCAD-512x438.pix
   shaders.ref.pix
   shaders.sh
-  )
+)
 
 # list of temporary files
-set(shaders_outfiles
+set(
+  shaders_outfiles
   shaders.ebm.bw
   shaders.ell_2.prj
   shaders.g
@@ -24,12 +22,12 @@ set(shaders_outfiles
   shaders.rt.diff.pix
   shaders.rt.log
   shaders.rt.pix
-  )
+)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${shaders_outfiles}")
-DISTCLEAN(${shaders_outfiles})
+distclean(${shaders_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

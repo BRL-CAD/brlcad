@@ -4,20 +4,20 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-zap SHARED zap.c zap2.cpp)
 target_link_libraries(ged-zap libged libbu)
 set_property(TARGET ged-zap APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-zap zap.c zap2.cpp)
-PLUGIN_SETUP(ged-zap ged)
+validate_style(ged-zap zap.c zap2.cpp)
+plugin_setup(ged-zap ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   zap.c
   zap2.cpp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

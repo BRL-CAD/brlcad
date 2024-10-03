@@ -32,7 +32,6 @@ This will define the following variables in your project:
 
 #]=======================================================================]
 
-
 # use pkg-config to get the directories and then use these values
 # in the FIND_PATH() and FIND_LIBRARY() calls
 find_package(PkgConfig QUIET)
@@ -40,22 +39,11 @@ pkg_check_modules(PKG_FONTCONFIG QUIET fontconfig)
 set(Fontconfig_COMPILE_OPTIONS ${PKG_FONTCONFIG_CFLAGS_OTHER})
 set(Fontconfig_VERSION ${PKG_FONTCONFIG_VERSION})
 
-find_path( Fontconfig_INCLUDE_DIR
-  NAMES
-    fontconfig/fontconfig.h
-  HINTS
-    ${PKG_FONTCONFIG_INCLUDE_DIRS}
-    /usr/X11/include
-)
+find_path(Fontconfig_INCLUDE_DIR NAMES fontconfig/fontconfig.h HINTS ${PKG_FONTCONFIG_INCLUDE_DIRS} /usr/X11/include)
 
-find_library( Fontconfig_LIBRARY
-  NAMES
-    fontconfig
-  PATHS
-    ${PKG_FONTCONFIG_LIBRARY_DIRS}
-)
+find_library(Fontconfig_LIBRARY NAMES fontconfig PATHS ${PKG_FONTCONFIG_LIBRARY_DIRS})
 
-if (Fontconfig_INCLUDE_DIR AND NOT Fontconfig_VERSION)
+if(Fontconfig_INCLUDE_DIR AND NOT Fontconfig_VERSION)
   file(STRINGS ${Fontconfig_INCLUDE_DIR}/fontconfig/fontconfig.h _contents REGEX "^#define[ \t]+FC_[A-Z]+[ \t]+[0-9]+$")
   unset(Fontconfig_VERSION)
   foreach(VPART MAJOR MINOR REVISION)
@@ -70,26 +58,24 @@ if (Fontconfig_INCLUDE_DIR AND NOT Fontconfig_VERSION)
       endif()
     endforeach()
   endforeach()
-endif ()
+endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Fontconfig
-  FOUND_VAR
-    Fontconfig_FOUND
-  REQUIRED_VARS
-    Fontconfig_LIBRARY
-    Fontconfig_INCLUDE_DIR
-  VERSION_VAR
-    Fontconfig_VERSION
+find_package_handle_standard_args(
+  Fontconfig
+  FOUND_VAR Fontconfig_FOUND
+  REQUIRED_VARS Fontconfig_LIBRARY Fontconfig_INCLUDE_DIR
+  VERSION_VAR Fontconfig_VERSION
 )
-
 
 if(Fontconfig_FOUND AND NOT TARGET Fontconfig::Fontconfig)
   add_library(Fontconfig::Fontconfig UNKNOWN IMPORTED)
-  set_target_properties(Fontconfig::Fontconfig PROPERTIES
-    IMPORTED_LOCATION "${Fontconfig_LIBRARY}"
-    INTERFACE_COMPILE_OPTIONS "${Fontconfig_COMPILE_OPTIONS}"
-    INTERFACE_INCLUDE_DIRECTORIES "${Fontconfig_INCLUDE_DIR}"
+  set_target_properties(
+    Fontconfig::Fontconfig
+    PROPERTIES
+      IMPORTED_LOCATION "${Fontconfig_LIBRARY}"
+      INTERFACE_COMPILE_OPTIONS "${Fontconfig_COMPILE_OPTIONS}"
+      INTERFACE_INCLUDE_DIRECTORIES "${Fontconfig_INCLUDE_DIR}"
   )
 endif()
 

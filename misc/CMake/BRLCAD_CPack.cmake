@@ -33,8 +33,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-configure_file("${BRLCAD_CMAKE_DIR}/source_archive_setup.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake" @ONLY)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake")
+configure_file(
+  "${BRLCAD_CMAKE_DIR}/source_archive_setup.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake"
+  @ONLY
+)
+distclean("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake")
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
 set(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
@@ -58,7 +62,6 @@ endif(NOT WIN32)
 find_program(RPMBUILD_EXEC rpmbuild)
 mark_as_advanced(RPMBUILD_EXEC)
 if(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
-
   # Build an RPM by default if we have the tool.  Out of the box, just
   # build a "vanilla" RPM.  For situations where we want more detail
   # and versioning of the RPM, set the variable CMAKE_RPM_VERSION
@@ -67,13 +70,16 @@ if(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
   # Since RPM packages present a particular problem with bad umask
   # settings and RPM package building is enabled, raise the issue again
   # with a longer wait time.
-  if (NOT UMASK_OK)
+  if(NOT UMASK_OK)
     message(" ")
-    message(WARNING "umask is set to ${umask_curr} and RPM package building is enabled - this is not a 'standard' umask setting for BRL-CAD RPM packages.  Double check that these umask permissions will have the desired results when installed - RPM packages can impact permissions on system directories such as /usr\nIf the umask settings need to be changed, it is recommended that the build directory be cleared and cmake re-run after the umask setting has been changed.")
+    message(
+      WARNING
+      "umask is set to ${umask_curr} and RPM package building is enabled - this is not a 'standard' umask setting for BRL-CAD RPM packages.  Double check that these umask permissions will have the desired results when installed - RPM packages can impact permissions on system directories such as /usr\nIf the umask settings need to be changed, it is recommended that the build directory be cleared and cmake re-run after the umask setting has been changed."
+    )
     if(SLEEP_EXEC)
       execute_process(COMMAND ${SLEEP_EXEC} 5)
     endif(SLEEP_EXEC)
-  endif (NOT UMASK_OK)
+  endif(NOT UMASK_OK)
 
   set(CPACK_GENERATOR ${CPACK_GENERATOR} RPM)
   set(CPACK_RPM_PACKAGE_LICENSE "LGPL 2.1")
@@ -87,7 +93,10 @@ if(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
 
   if(CPACK_RPM_VERSION)
     if(DEFINED BRLCAD_VERSION_AMEND)
-      set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}_${BRLCAD_VERSION_AMEND}")
+      set(
+        CPACK_RPM_PACKAGE_NAME
+        "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}_${BRLCAD_VERSION_AMEND}"
+      )
     else(DEFINED BRLCAD_VERSION_AMEND)
       set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
     endif(DEFINED BRLCAD_VERSION_AMEND)
@@ -99,15 +108,14 @@ if(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
       string(REGEX MATCH "[0-9]+" REDHAT_VERSION ${REDHAT_RELEASE})
       string(REGEX MATCH "Enterprise Linux" LINUX_DIST_TYPE ${REDHAT_RELEASE})
       if(LINUX_DIST_TYPE)
-	set(LINUX_DIST_TYPE "el")
+        set(LINUX_DIST_TYPE "el")
       else(LINUX_DIST_TYPE)
-	set(LINUX_DIST_TYPE "rh")
+        set(LINUX_DIST_TYPE "rh")
       endif(LINUX_DIST_TYPE)
       set(CPACK_RPM_PACKAGE_RELEASE ${CPACK_RPM_VERSION}.${LINUX_DIST_TYPE}${REDHAT_VERSION})
     else(EXISTS /etc/redhat-release)
       set(CPACK_RPM_PACKAGE_RELEASE ${CPACK_RPM_VERSION})
     endif(EXISTS /etc/redhat-release)
-
   endif(CPACK_RPM_VERSION)
 endif(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
 
@@ -122,7 +130,7 @@ endif(CPACK_RPM_PACKAGE_RELEASE)
 
 if(WIN32)
   find_package(NSIS)
-  if (NSIS_FOUND)
+  if(NSIS_FOUND)
     set(CPACK_GENERATOR ${CPACK_GENERATOR} NSIS)
     set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD")
     set(CPACK_NSIS_INSTALL_DIRECTORY "BRL-CAD ${BRLCAD_VERSION}")
@@ -136,9 +144,9 @@ if(WIN32)
     set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
     set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
     set(CPACK_NSIS_MODIFY_PATH ON)
-  endif (NSIS_FOUND)
+  endif(NSIS_FOUND)
   find_package(Wix)
-  if (Wix_FOUND)
+  if(Wix_FOUND)
     # User report that this version of the installer also supports
     # non-graphical installation with the /passive option.
     #
@@ -155,11 +163,11 @@ if(WIN32)
     set(CPACK_WIX_PROGRAM_MENU_FOLDER "BRL-CAD ${BRLCAD_VERSION}")
     set(CPACK_WIX_UI_BANNER "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_banner.bmp")
     set(CPACK_WIX_UI_DIALOG "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_dialog.bmp")
-  endif (Wix_FOUND)
-  if (NOT CPACK_GENERATOR)
+  endif(Wix_FOUND)
+  if(NOT CPACK_GENERATOR)
     # If nothing else, make a zip file
     set(CPACK_GENERATOR ZIP)
-  endif (NOT CPACK_GENERATOR)
+  endif(NOT CPACK_GENERATOR)
   if(CMAKE_CL_64)
     set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win64")
     set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "BRL-CAD ${BRLCAD_VERSION} win64")
@@ -178,15 +186,14 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME "brlcad-${BRLCAD_VERSION}")
 set(CPACK_SOURCE_IGNORE_FILES "\\\\.git/")
 
 configure_file("${BRLCAD_CMAKE_DIR}/BRLCAD_CPackOptions.cmake.in" "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake" @ONLY)
-DISTCLEAN("${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
+distclean("${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 
 include(CPack)
 
-DISTCLEAN("${CMAKE_BINARY_DIR}/CPackConfig.cmake")
-DISTCLEAN("${CMAKE_BINARY_DIR}/CPackSourceConfig.cmake")
-DISTCLEAN("${CMAKE_BINARY_DIR}/DartConfiguration.tcl")
-
+distclean("${CMAKE_BINARY_DIR}/CPackConfig.cmake")
+distclean("${CMAKE_BINARY_DIR}/CPackSourceConfig.cmake")
+distclean("${CMAKE_BINARY_DIR}/DartConfiguration.tcl")
 
 # Local Variables:
 # tab-width: 8

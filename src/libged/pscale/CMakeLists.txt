@@ -4,9 +4,10 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-set(PSCALE_SRCS
+set(
+  PSCALE_SRCS
   pscale.c
   scale_ehy.c
   scale_ell.c
@@ -20,19 +21,19 @@ set(PSCALE_SRCS
   scale_superell.c
   scale_tgc.c
   scale_tor.c
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-pscale SHARED ${PSCALE_SRCS})
 target_link_libraries(ged-pscale libged libbu)
 set_property(TARGET ged-pscale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-pscale ${PSCALE_SRCS})
-PLUGIN_SETUP(ged-pscale ged)
+validate_style(ged-pscale ${PSCALE_SRCS})
+plugin_setup(ged-pscale ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${PSCALE_SRCS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8
@@ -40,4 +41,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

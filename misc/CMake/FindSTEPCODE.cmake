@@ -41,7 +41,6 @@
 #  STEPCODE_LIBRARIES      - List of libraries when using stepcode.
 #  STEPCODE_FOUND          - True if stepcode found.
 
-
 # A user may set ``STEPCODE_ROOT`` to a stepcode installation root to tell this
 # module where to look.
 # =============================================================================
@@ -50,7 +49,8 @@
 # as well as the toplevel defined headers. (TODO - are the
 # latter needed beyond the stepcode build itself?  Trim this
 # to the minimum actually needed...)
-set(STEPCODE_HDRS
+set(
+  STEPCODE_HDRS
   cldai/sdaiObject.h
   cleditor/STEPfile.h
   clstepcore/sdai.h
@@ -58,21 +58,19 @@ set(STEPCODE_HDRS
   exppp/exppp.h
   express/express.h
   config.h
-  )
+)
 
-set(STEPCODE_LIBS
+set(
+  STEPCODE_LIBS
   express
   exppp
   stepcore
   stepeditor
   stepdai
   steputils
-  )
+)
 
-set(STEPCODE_EXEC
-  exp2cxx
-  exppp
-  )
+set(STEPCODE_EXEC exp2cxx exppp)
 
 # Search STEPCODE_ROOT first if it is set.
 set(_STEPCODE_SEARCHES)
@@ -96,11 +94,11 @@ endforeach()
 # Allow STEPCODE_LIBRARY to be set manually, as the location of the netpbm library
 foreach(search ${_STEPCODE_SEARCHES})
   find_library(STEPCODE_EXPRESS_LIBRARY NAMES express NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
-  if (HAVE_WINDOWS_H)
+  if(HAVE_WINDOWS_H)
     find_library(STEPCODE_EXPPP_LIBRARY NAMES libexppp NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
-  else (HAVE_WINDOWS_H)
+  else(HAVE_WINDOWS_H)
     find_library(STEPCODE_EXPPP_LIBRARY NAMES exppp NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
-  endif (HAVE_WINDOWS_H)
+  endif(HAVE_WINDOWS_H)
   find_library(STEPCODE_CORE_LIBRARY NAMES stepcore NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_EDITOR_LIBRARY NAMES stepeditor NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_DAI_LIBRARY NAMES stepdai NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
@@ -116,7 +114,9 @@ foreach(search ${_STEPCODE_SEARCHES})
 endforeach()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(STEPCODE DEFAULT_MSG
+find_package_handle_standard_args(
+  STEPCODE
+  DEFAULT_MSG
   STEPCODE_DAI_DIR
   STEPCODE_EDITOR_DIR
   STEPCODE_STEPCORE_DIR
@@ -132,24 +132,26 @@ find_package_handle_standard_args(STEPCODE DEFAULT_MSG
   STEPCODE_UTILS_LIBRARY
   EXP2CXX_EXECUTABLE
   EXPPP_EXECUTABLE
-  )
+)
 
-if (STEPCODE_FOUND)
-  set(STEPCODE_INCLUDE_DIRS
+if(STEPCODE_FOUND)
+  set(
+    STEPCODE_INCLUDE_DIRS
     ${STEPCODE_INCLUDE_DIR}
     ${STEPCODE_STEPCORE_DIR}
     ${STEPCODE_EDITOR_DIR}
     ${STEPCODE_UTILS_DIR}
     ${STEPCODE_DAI_DIR}
-    )
-  set(STEPCODE_LIBRARIES
+  )
+  set(
+    STEPCODE_LIBRARIES
     ${STEPCODE_EXPRESS_LIBRARY}
     ${STEPCODE_EXPPP_LIBRARY}
     ${STEPCODE_CORE_LIBRARY}
     ${STEPCODE_EDITOR_LIBRARY}
     ${STEPCODE_DAI_LIBRARY}
     ${STEPCODE_UTILS_LIBRARY}
-    )
+  )
 endif()
 
 # Local Variables:

@@ -52,41 +52,58 @@ mark_as_advanced(CPACK_EXEC)
 # for distcheck regardless of the build configurations used.
 
 # Set up the script that will be used to verify the source archives
-configure_file("${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake" @ONLY)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake")
+configure_file(
+  "${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake"
+  @ONLY
+)
+distclean("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake")
 
 # Define the repository verification build target
-add_custom_target(distcheck-repo_verify
+add_custom_target(
+  distcheck-repo_verify
   COMMAND ${CMAKE_COMMAND} -E echo "*** Check files in Source Repository against files specified in Build Logic ***"
-  COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake")
+  COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake"
+)
 set_target_properties(distcheck-repo_verify PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 
 # When doing a raw package_source build, we have no choice but to copy the sources over
 # right before we make the archive, since the CPack command has no awareness of the status
 # of the source files.  When we're doing distcheck, on the other hand, we CAN be intelligent
 # about triggering the copy rule - let's only do it once, since it's a rather slow operation.
-add_custom_target(distcheck-source_archive_dir
+add_custom_target(
+  distcheck-source_archive_dir
   COMMAND ${CMAKE_COMMAND} -E echo "*** Prepare directory with archive contents in build directory ***"
   COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
   COMMAND ${CMAKE_COMMAND} -P "${CMAKE_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake"
   COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
-  DEPENDS distcheck-repo_verify)
+  DEPENDS distcheck-repo_verify
+)
 set_target_properties(distcheck-source_archive_dir PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 
 # Define the source archive creation target - should only happen once repository is verified and
 # source archive is set up.  Once archives are done, remove flag from distcheck-source_archive_dir
 # to make sure a repeated distcheck works correctly.
-add_custom_target(distcheck-source_archives
+add_custom_target(
+  distcheck-source_archives
   COMMAND ${CMAKE_COMMAND} -E echo "*** Create source tgz, tbz2 and zip archives from toplevel archive ***"
   COMMAND ${CPACK_EXEC} --config "${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake"
   COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/source_archive_contents"
   COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/_CPack_Packages"
   COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
-  DEPENDS distcheck-source_archive_dir)
+  DEPENDS distcheck-source_archive_dir
+)
 set_target_properties(distcheck-source_archives PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 
 # Utility function for defining individual distcheck targets
-macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS_IN source_dir build_dir install_dir)
+macro(
+  CREATE_DISTCHECK
+  TARGET_SUFFIX
+  CMAKE_OPTS_IN
+  source_dir
+  build_dir
+  install_dir
+)
   # Check if a custom template was specified (optional)
   if(NOT "${ARGV5}" STREQUAL "")
     set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/${ARGV5}")
@@ -97,8 +114,8 @@ macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS_IN source_dir build_dir install_
   # If we've already got a particular distcheck target, don't try to create it again.
   if(NOT TARGET distcheck-${TARGET_SUFFIX})
     # Need to set these locally so configure_file will pick them up...
-    SET(TARGET_SUFFIX ${TARGET_SUFFIX})
-    SET(CMAKE_OPTS ${CMAKE_OPTS_IN})
+    set(TARGET_SUFFIX ${TARGET_SUFFIX})
+    set(CMAKE_OPTS ${CMAKE_OPTS_IN})
 
     # For configure_file, need to set these as variables not just input parameters
     set(source_dir "${source_dir}")
@@ -108,8 +125,8 @@ macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS_IN source_dir build_dir install_
     # Determine how to trigger the build in the distcheck target
     if("${CMAKE_GENERATOR}" MATCHES "Make")
       if(NOT CMAKE_VERBOSE_DISTCHECK)
-	set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log 2>&1")
-	DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log")
+        set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log 2>&1")
+        distclean("${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log")
       endif(NOT CMAKE_VERBOSE_DISTCHECK)
       set(DISTCHECK_BUILD_CMD "$(MAKE)")
       set(DISTCHECK_INSTALL_CMD "$(MAKE) install")
@@ -118,8 +135,8 @@ macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS_IN source_dir build_dir install_
     elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
       set(CMAKE_OPTS "-G Ninja ${CMAKE_OPTS}")
       if(NOT CMAKE_VERBOSE_DISTCHECK)
-	set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log 2>&1")
-	DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log")
+        set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log 2>&1")
+        distclean("${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log")
       endif(NOT CMAKE_VERBOSE_DISTCHECK)
       set(DISTCHECK_BUILD_CMD "ninja")
       set(DISTCHECK_INSTALL_CMD "ninja install")
@@ -134,8 +151,12 @@ macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS_IN source_dir build_dir install_
     endif("${CMAKE_GENERATOR}" MATCHES "Make")
 
     # Based on the build command, generate a distcheck target definition from the template
-    configure_file(${distcheck_template_file} "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake" @ONLY)
-    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake")
+    configure_file(
+      ${distcheck_template_file}
+      "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake"
+      @ONLY
+    )
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake")
     include("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake")
 
     # Keep track of the distcheck targets
@@ -144,8 +165,6 @@ macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS_IN source_dir build_dir install_
     message(WARNING "Distcheck target distcheck-${TARGET_SUFFIX} already defined, skipping...")
   endif(NOT TARGET distcheck-${TARGET_SUFFIX})
 endmacro(CREATE_DISTCHECK)
-
-
 
 # Most distcheck targets deliberately specify a build type.  Since we are
 # reusing the bext outputs produced by the parent configure (and we *want* to
@@ -158,31 +177,33 @@ endmacro(CREATE_DISTCHECK)
 # have an option to force the individual configurations to each build their own
 # copies of bext when we can't mix Debug and Release libs...
 
-CREATE_DISTCHECK(default_build_type "" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+create_distcheck(default_build_type "" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
 
-if (NOT HAVE_WINDOWS_H)
+if(NOT HAVE_WINDOWS_H)
   # Most of the tests will use the bext supplied to the original parent BRL-CAD configure, but we also
   # want to verify that the "configure driven" bext build works as well.
-  CREATE_DISTCHECK(debug   "-DCMAKE_BUILD_TYPE=Debug" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(release "-DCMAKE_BUILD_TYPE=Release" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DENABLE_ALL=ON" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(enableall_release "-DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(prepared_debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(prepared_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(no_tcl "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_TCL=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install" distcheck_no_tcl.cmake.in)
-  CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(no_object "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
-  CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
-endif (NOT HAVE_WINDOWS_H)
+  create_distcheck(debug   "-DCMAKE_BUILD_TYPE=Debug" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(release "-DCMAKE_BUILD_TYPE=Release" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DENABLE_ALL=ON" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(enableall_release "-DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(prepared_debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(prepared_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(no_tcl "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_TCL=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install" distcheck_no_tcl.cmake.in)
+  create_distcheck(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(no_object "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
+  create_distcheck(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
+endif(NOT HAVE_WINDOWS_H)
 
 # Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
-add_custom_target(distcheck-full
+add_custom_target(
+  distcheck-full
   # The source repository verification script is responsible for generating these files
   COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid"
   COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message"
-  DEPENDS ${distcheck_targets})
+  DEPENDS ${distcheck_targets}
+)
 set_target_properties(distcheck-full PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 set_target_properties(distcheck-full PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
