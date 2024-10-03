@@ -49,7 +49,7 @@ ged_solid_report_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc > 2 || (argc == 2 && argv[1][0] == '-')) {
+    if (argc > 2) {
 	/* assume user needs help */
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
