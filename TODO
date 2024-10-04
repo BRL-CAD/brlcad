@@ -18,9 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
-
 * Validate and merge hlbvh BoT raytracing improvements
 
 * rtarea is sometimes missing regions on summary reporting, at least on
@@ -28,8 +25,24 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * complete preliminary concave arb8 support
 
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* Update find_package uses to take advantage of EXPORT targets when
+  upstream packages have them available.  This should let us reduce
+  the number of Find*.cmake files we need to include.  Ultimately,
+  we may want to look at using the new *Config.cmake mechanism for
+  all bundled dependencies, except when we still need Find*.cmake
+  to locate system installs that don't provide them.
+
+* Investigate viability of providing EXPORT installs and *Config.cmake
+  files for BRL-CAD targets - that's the "modern" way to support
+  CMake's find_package mechanism.
 
 * Look into CMinx CMake documentation system to see if it might be
   useful for documenting the build system.
