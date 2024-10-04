@@ -28,7 +28,6 @@ set(
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
   FindAppleseed.cmake
-  FindASSETIMPORT.cmake
   FindBlosc.cmake
   FindBSON.cmake
   FindFontconfig.cmake
