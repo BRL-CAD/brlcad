@@ -12,11 +12,12 @@ set(
 
 brlcad_find_package(MANIFOLD REQUIRED)
 
+brlcad_find_package(pugixml)
 brlcad_find_package(assimp)
-if(TARGET assimp::assimp)
+if(TARGET assimp::assimp AND TARGET pugixml::pugixml)
   add_definitions(-DUSE_ASSETIMPORT)
-  set(ASSETIMPORT_LIBRARIES assimp::assimp)
-endif(ASSETIMPORT_LIBRARIES)
+  set(ASSETIMPORT_LIBRARIES assimp::assimp pugixml::pugixml)
+endif(TARGET assimp::assimp AND TARGET pugixml::pugixml)
 
 brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
 add_definitions(-DUSE_GEOGRAM)

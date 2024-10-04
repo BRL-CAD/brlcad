@@ -1,9 +1,10 @@
 set(ASSETIMPORT_SRCS assetimport_read.cpp assetimport_write.cpp)
 
+brlcad_find_package(pugixml)
 brlcad_find_package(assimp)
 
 if(BRLCAD_ENABLE_ASSETIMPORT)
-  if(TARGET assimp::assimp)
+  if(TARGET assimp::assimp AND TARGET pugixml::pugixml)
     gcv_plugin_library(gcv-assetimport SHARED ${ASSETIMPORT_SRCS})
     target_link_libraries(
       gcv-assetimport
@@ -12,6 +13,7 @@ if(BRLCAD_ENABLE_ASSETIMPORT)
       librt
       libbu
       assimp::assimp
+      pugixml::pugixml
     )
     set_property(TARGET gcv-assetimport APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
     validate_style(gcv-assetimport "${ASSETIMPORT_SRCS}")

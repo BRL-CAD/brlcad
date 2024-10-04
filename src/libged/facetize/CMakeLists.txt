@@ -1,7 +1,6 @@
 brlcad_find_package(MANIFOLD REQUIRED)
-message("starting")
+brlcad_find_package(pugixml)
 brlcad_find_package(assimp)
-message("done")
 
 set(FACETIZE_LOCAL_INCLUDE_DIRS)
 
@@ -9,10 +8,10 @@ if(MANIFOLD_LIBRARIES)
   list(APPEND FACETIZE_LOCAL_INCLUDE_DIRS ${MANIFOLD_INCLUDE_DIRS})
   add_definitions(-DUSE_MANIFOLD)
 
-  if(TARGET assimp::assimp)
-    set(ASSETIMPORT_LIBRARIES assimp::assimp)
+  if(TARGET assimp::assimp AND TARGET pugixml::pugixml)
+    set(ASSETIMPORT_LIBRARIES assimp::assimp pugixml::pugixml)
     add_definitions(-DUSE_ASSETIMPORT)
-  endif(ASSETIMPORT_LIBRARY)
+  endif(TARGET assimp::assimp AND TARGET pugixml::pugixml)
 endif(MANIFOLD_LIBRARIES)
 
 set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES} ${ASSETIMPORT_LIBRARIES})
