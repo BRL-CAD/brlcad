@@ -468,7 +468,7 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     return 1;
 }
 
-const struct gcv_filter gcv_conv_stl_write = {
+extern "C" const struct gcv_filter gcv_conv_stl_write = {
     "STL Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_STL, NULL,
     stl_write_create_opts, stl_write_free_opts, stl_write
 };
