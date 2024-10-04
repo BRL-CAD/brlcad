@@ -1,7 +1,5 @@
 brlcad_find_package(MANIFOLD REQUIRED)
-message("starting")
-brlcad_find_package(assimp)
-message("done")
+brlcad_find_package(ASSETIMPORT)
 
 set(FACETIZE_LOCAL_INCLUDE_DIRS)
 
@@ -9,8 +7,8 @@ if(MANIFOLD_LIBRARIES)
   list(APPEND FACETIZE_LOCAL_INCLUDE_DIRS ${MANIFOLD_INCLUDE_DIRS})
   add_definitions(-DUSE_MANIFOLD)
 
-  if(TARGET assimp::assimp)
-    set(ASSETIMPORT_LIBRARIES assimp::assimp)
+  if(ASSETIMPORT_LIBRARY)
+    list(APPEND FACETIZE_LOCAL_INCLUDE_DIRS ${ASSETIMPORT_INCLUDE_DIR})
     add_definitions(-DUSE_ASSETIMPORT)
   endif(ASSETIMPORT_LIBRARY)
 endif(MANIFOLD_LIBRARIES)

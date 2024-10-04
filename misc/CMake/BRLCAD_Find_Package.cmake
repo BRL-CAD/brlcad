@@ -88,41 +88,14 @@ macro(BRLCAD_Find_Package pkg_name)
   get_property(cv_new DIRECTORY PROPERTY CACHE_VARIABLES)
 
   # Using the list of variables that were already set before the find_package
-  # call, trim the new list down to just the newly set variables.  This is
-  # one possible source of paths, but we also need this to clear the cache
-  # versions of the results.  We want find_package to re-run on each configure
-  # as a clean test of the current state of the system, and to do that we only
-  # allow the values from a find_package to persist in the current working
-  # CMake state.  To prevent their being cached (the default CMake behavior)
-  # we need to manually intervene and clear them.
+  # call, trim the new list down to just the newly set variables.
   list(REMOVE_ITEM cv_new ${cv_ctrl})
-
-  # If find_package is using an imported target, get the location from
-  # the target.
-  set(brlcad_find_package_tloc)
-  if (TARGET ${pkg_name}::${pkg_name})
-    # TODO - we may need to check CONFIG versions of this property as well.
-    get_target_property(brlcad_find_package_tloc ${pkg_name}::${pkg_name} LOCATION)
-    list(APPEND cv_new brlcad_find_package_tloc)
-  endif (TARGET ${pkg_name}::${pkg_name})
-
-  if (BRLCAD_FIND_DEBUG_MODE)
-    message("new cache items: ${cv_new}")
-  endif (BRLCAD_FIND_DEBUG_MODE)
-
   set(is_bundled FALSE)
   foreach(nc ${cv_new})
-    if (BRLCAD_FIND_DEBUG_MODE)
-      message("Checking ${nc}: ${${nc}}")
-    endif (BRLCAD_FIND_DEBUG_MODE)
-
     # We don't know what vars were set, but check each one that was set
     # for a local path.  If we find one, we have a bundled package
     is_subpath("${CMAKE_BINARY_DIR}" "${${nc}}" LOCAL_TEST)
     if(LOCAL_TEST)
-      if (BRLCAD_FIND_DEBUG_MODE)
-	message("  - Local path found")
-      endif (BRLCAD_FIND_DEBUG_MODE)
       set(is_bundled TRUE)
     endif(LOCAL_TEST)
 
@@ -152,15 +125,12 @@ macro(BRLCAD_Find_Package pkg_name)
   if(is_bundled)
     set(${pkg_upper}_STATUS "Bundled" CACHE STRING "${pkg_name} bundled status")
   else(is_bundled)
-    if(${pkg_name}_FOUND OR ${pkg_upper}_FOUND)
+    if(${pkg_name}_FOUND)
       set(${pkg_upper}_STATUS "System" CACHE STRING "${pkg_name} bundled status")
-    else()
+    else(${pkg_name}_FOUND)
       set(${pkg_upper}_STATUS "NotFound" CACHE STRING "${pkg_name} bundled status")
-    endif()
+    endif(${pkg_name}_FOUND)
   endif(is_bundled)
-  if (BRLCAD_FIND_DEBUG_MODE)
-    message("${pkg_upper}_STATUS: ${${pkg_upper}_STATUS}")
-  endif (BRLCAD_FIND_DEBUG_MODE)
 endmacro()
 
 # Local Variables:
