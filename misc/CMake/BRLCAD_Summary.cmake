@@ -250,7 +250,7 @@ function(BRLCAD_Summary)
     endif(ER_REQUIRED_VARS)
   endfunction(EXT_REPORT blabel bvar)
 
-  ext_report("Asset Import Library" ASSIMP_STATUS REQUIRED_VARS "BRLCAD_ENABLE_ASSETIMPORT")
+  ext_report("Asset Import Library" ASSETIMPORT_STATUS REQUIRED_VARS "BRLCAD_ENABLE_ASSETIMPORT")
   ext_report("Eigen" EIGEN3_INCLUDE_DIR)
   ext_report("Geogram" GEOGRAM_STATUS)
   ext_report("Geospatial Data Abstraction Library" GDAL_STATUS REQUIRED_VARS "BRLCAD_ENABLE_GDAL")
