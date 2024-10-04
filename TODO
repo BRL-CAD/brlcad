@@ -18,12 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* lint BoT raytracing validation fails in main on a facetize -r
-  havoc model - crash appears to be in the hlbvh code:
-
-  facetize -r havoc havoc.bot
-  lint -V havoc.bot
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
