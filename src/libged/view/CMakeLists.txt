@@ -32,6 +32,7 @@ set(
   size.c
   snap.c
   view.c
+  viewdir.c
   ypr.c
 )
 

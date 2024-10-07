@@ -63,6 +63,7 @@ extern int ged_qvrot_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_saveview_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_size_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_viewdir_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_ypr_core(struct ged *gedp, int argc, const char **argv);
 
 __END_DECLS

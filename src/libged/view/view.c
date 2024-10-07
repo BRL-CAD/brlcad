@@ -858,6 +858,9 @@ const struct ged_cmd sdata_lines_cmd = { &sdata_lines_cmd_impl };
 struct ged_cmd_impl size_cmd_impl = {"size", ged_size_core, GED_CMD_DEFAULT};
 const struct ged_cmd size_cmd = { &size_cmd_impl };
 
+struct ged_cmd_impl viewdir_cmd_impl = {"viewdir", ged_viewdir_core, GED_CMD_DEFAULT};
+const struct ged_cmd viewdir_cmd = { &viewdir_cmd_impl };
+
 struct ged_cmd_impl ypr_cmd_impl = {"ypr", ged_ypr_core, GED_CMD_DEFAULT};
 const struct ged_cmd ypr_cmd = { &ypr_cmd_impl };
 
@@ -878,11 +881,12 @@ const struct ged_cmd *view_cmds[] = {
     &saveview_cmd,
     &sdata_lines_cmd,
     &size_cmd,
+    &viewdir_cmd,
     &ypr_cmd,
     NULL
 };
 
-static const struct ged_plugin pinfo = { GED_API,  view_cmds, 17 };
+static const struct ged_plugin pinfo = { GED_API,  view_cmds, 18 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
