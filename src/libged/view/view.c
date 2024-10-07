@@ -781,7 +781,9 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_quat_core(gedp, argc-1, argv+1);
     }
 
-    if (BU_STR_EQUAL(argv[1], "qvrot")) {
+    if (BU_STR_EQUAL(argv[1], "dir")) {
+	if (argc < 4)
+	    return ged_viewdir_core(gedp, argc-1, argv+1);
 	return ged_qvrot_core(gedp, argc-1, argv+1);
     }
 
