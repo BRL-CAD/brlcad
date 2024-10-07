@@ -60,7 +60,8 @@ ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
     double az;
     double el;
     double theta;
-    static const char *usage = "x y z [angle]";
+    int iflag = 0;
+    static const char *usage = "[-i] x y z [angle]";
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -72,6 +73,12 @@ ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
+    }
+
+    /* check for -i */
+    if (argv[1][0] == '-' && argv[1][1] == 'i' && argv[1][2] == '\0') {
+	iflag = 1;
+	argv++; argc--;
     }
 
     if (argc != 4 && argc != 5) {
@@ -99,6 +106,11 @@ ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     } else if (argc == 4) {
 	theta = 0;
+    }
+
+    if (iflag) {
+	dx *= -1; dy *= -1; dz *= -1;
+	theta *= -1;
     }
 
     if (NEAR_ZERO(dy, 0.00001) && NEAR_ZERO(dx, 0.00001)) {
