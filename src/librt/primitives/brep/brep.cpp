@@ -2342,7 +2342,7 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     ON_3dmObjectAttributes* attributes = new ON_3dmObjectAttributes();
     attributes->m_uuid = ON_opennurbs4_id;
     attributes->m_name = "brep";
-    ON_ModelGeometryComponent *gc = ON_ModelGeometryComponent::CreateForExperts(true, ON_Geometry::Cast(bi->brep), true, attributes, NULL);
+    ON_ModelGeometryComponent *gc = ON_ModelGeometryComponent::CreateForExperts(false, ON_Geometry::Cast(bi->brep), true, attributes, NULL);
     ON_ModelGeometryComponent ngc(*gc);
     delete gc;
     model.AddModelComponent(ngc);
@@ -2398,7 +2398,8 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
 	ON_ModelComponentReference cr = it.FirstComponentReference();
 	const ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
-	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->Geometry(nullptr)));
+	const ON_Brep *rb = ON_Brep::Cast(mo->Geometry(nullptr));
+	bi->brep = ON_Brep::New(*rb);
     }
     return BRLCAD_OK;
 }
