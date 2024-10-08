@@ -2398,8 +2398,7 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
 	ON_ModelComponentReference cr = it.FirstComponentReference();
 	const ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
-	const ON_Brep *rb = ON_Brep::Cast(mo->Geometry(nullptr));
-	bi->brep = ON_Brep::New(*rb);
+	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->ExclusiveGeometry()));
     }
     return BRLCAD_OK;
 }
