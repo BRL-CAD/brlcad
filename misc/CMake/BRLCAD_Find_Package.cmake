@@ -54,6 +54,9 @@
 macro(BRLCAD_Find_Package pkg_name)
   cmake_parse_arguments(F "REQUIRED;NOINSTALL" "SYSPATTERN" "" ${ARGN})
 
+  # Prefer the Config.cmake file, if it can be found.
+  set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+
   # If we have a bundled copy of this package, always use that.  Packages we
   # are not going to install are not copied to CMAKE_BINARY_DIR, so set the
   # *_ROOT variable accordingly

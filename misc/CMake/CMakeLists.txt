@@ -52,7 +52,6 @@ set(
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
-  FindPNG.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
@@ -67,7 +66,6 @@ set(
   FindWix.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
-  FindZLIB.cmake
   NSIS.template.in
   NSIS_silent.template.in
   OpenVDBUtils.cmake
