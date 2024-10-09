@@ -74,7 +74,6 @@ set(
   Path_Setup.cmake
   RPath_Setup.cmake
   ResetCache.cmake
-  TCL_PKGINDEX.cmake
   TrackFiles.cmake
   compat/README
   compat/README.compat
