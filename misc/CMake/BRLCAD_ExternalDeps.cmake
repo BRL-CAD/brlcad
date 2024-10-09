@@ -1066,6 +1066,9 @@ endfunction(brlcad_bext_process)
 # it's more complicated.
 #####################################################################
 
+# Prefer the Config.cmake file, if it can be found
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+
 # Not all packages will define all of these, but it shouldn't matter -
 # an unset of an unused variable shouldn't be harmful
 function(find_package_reset pname trigger_var)
@@ -1103,17 +1106,27 @@ macro(find_package_zlib)
   else()
     find_package(ZLIB)
   endif()
-  if(ZLIB_FOUND AND ZLIB_LIBRARIES)
-    list(GET ZLIB_LIBRARIES 0 ZLIB_FILE)
+  if (TARGET ZLIB::ZLIB)
+    get_target_property(ZLIB_FILE ZLIB::ZLIB LOCATION)
+    if (NOT ZLIB_FILE)
+      get_target_property(llibs ZLIB::ZLIB INTERFACE_LINK_LIBRARIES)
+      foreach(ll ${llibs})
+	if("${ll}" MATCHES "zlib::.*")
+	  if (NOT ZLIB_FILE)
+	    get_target_property(ZLIB_FILE ${ll} LOCATION)
+	  endif()
+	endif()
+      endforeach(ll ${llibs})
+    endif()
     is_subpath("${CMAKE_BINARY_DIR}" "${ZLIB_FILE}" ZLIB_LOCAL_TEST)
     if(ZLIB_LOCAL_TEST)
       set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
-      set(ZLIB_STATUS "Bundled" CACHE STRING "Zlib bundled status" FORCE)
-    else()
-      set(ZLIB_STATUS "System" CACHE STRING "Zlib bundled status" FORCE)
+      set(ZLIB_STATUS "Bundled" CACHE STRING "zlib is bundled" FORCE)
+    else(ZLIB_LOCAL_TEST)
+      set(ZLIB_STATUS "System" CACHE STRING "zlib is system" FORCE)
     endif(ZLIB_LOCAL_TEST)
   else()
-    set(ZLIB_STATUS "NotFound" CACHE STRING "Zlib bundled status" FORCE)
+    set(ZLIB_STATUS "NotFound" CACHE STRING "zlib is not found" FORCE)
   endif()
 endmacro(find_package_zlib)
 
