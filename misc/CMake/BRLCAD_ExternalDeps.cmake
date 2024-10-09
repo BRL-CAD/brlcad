@@ -167,7 +167,7 @@ set(
 # In multiconfig we need to scrub excluded files out of multiple
 # ${BRLCAD_EXT_DIR}/install copies, so wrap logic to do so into a
 # function.
-function(STRIP_EXCLUDED RDIR EXPATTERNS)
+function(strip_excluded RDIR EXPATTERNS)
   foreach(ep ${${EXPATTERNS}})
     file(GLOB_RECURSE MATCHING_FILES LIST_DIRECTORIES false RELATIVE "${RDIR}" "${RDIR}/${ep}")
     foreach(rf ${MATCHING_FILES})
@@ -177,11 +177,11 @@ function(STRIP_EXCLUDED RDIR EXPATTERNS)
       endif(EXISTS ${RDIR}/${rf})
     endforeach(rf ${MATCHING_FILES})
   endforeach(ep ${${EXPATTERNS}})
-endfunction(STRIP_EXCLUDED)
+endfunction(strip_excluded)
 
 # See if a file matches a pattern to skip its processing.
 # Sets the variable held in SVAR in the parent scope.
-function(SKIP_PROCESSING tf SVAR)
+function(skip_processing tf SVAR)
   if(IS_SYMLINK ${tf})
     set(${SVAR} 1 PARENT_SCOPE)
     return()
@@ -193,11 +193,32 @@ function(SKIP_PROCESSING tf SVAR)
     endif("${tf}" MATCHES "${skp}")
   endforeach(skp ${NOPROCESS_PATTERNS})
   set(${SVAR} 0 PARENT_SCOPE)
-endfunction(SKIP_PROCESSING)
+endfunction(skip_processing)
+
+
+# Look for CMake files used in find_package. pkgconfig (*.pc) files can be used
+# by CMake, so they are treated as CMake inputs for the purposes of this test.
+set(CMAKE_PATTERNS
+  ".*Deps.cmake$"
+  ".*Modules.cmake$"
+  ".*Version.cmake$"
+  ".*argets.cmake$"
+  ".*onfig.cmake$"
+  ".*.pc$"
+  )
+function(is_cmake_file tf CVAR)
+  foreach(cmk ${CMAKE_PATTERNS})
+    if("${tf}" MATCHES "${cmk}")
+      set(${CVAR} 1 PARENT_SCOPE)
+      return()
+    endif("${tf}" MATCHES "${cmk}")
+  endforeach(cmk ${CMAKE_PATTERNS})
+  set(${CVAR} 0 PARENT_SCOPE)
+endfunction(is_cmake_file)
 
 # Since the checking process can be long, we want some sort of
 # feedback indicating we're progressing.
-function(BFILE_TYPE_MSG ALL_CNT ALL_PROCESSED BINARY_LIST)
+function(bfile_type_msg ALL_CNT ALL_PROCESSED BINARY_LIST)
   list(LENGTH ${BINARY_LIST} BCNT)
   if(BCNT)
     math(EXPR skip_msg "${BCNT} % 100")
@@ -206,9 +227,9 @@ function(BFILE_TYPE_MSG ALL_CNT ALL_PROCESSED BINARY_LIST)
       return()
     endif(${skip_msg} EQUAL 0)
   endif(BCNT)
-endfunction(BFILE_TYPE_MSG)
+endfunction(bfile_type_msg)
 
-function(NFILE_TYPE_MSG ALL_CNT ALL_PROCESSED NOEXEC_LIST)
+function(nfile_type_msg ALL_CNT ALL_PROCESSED NOEXEC_LIST)
   list(LENGTH ${NOEXEC_LIST} NCNT)
   if(NCNT)
     math(EXPR skip_msg "${NCNT} % 100")
@@ -217,9 +238,9 @@ function(NFILE_TYPE_MSG ALL_CNT ALL_PROCESSED NOEXEC_LIST)
       return()
     endif(${skip_msg} EQUAL 0)
   endif(NCNT)
-endfunction(NFILE_TYPE_MSG)
+endfunction(nfile_type_msg)
 
-function(TFILE_TYPE_MSG ALL_CNT ALL_PROCESSED TEXT_LIST)
+function(tfile_type_msg ALL_CNT ALL_PROCESSED TEXT_LIST)
   list(LENGTH ${TEXT_LIST} TCNT)
   if(TCNT)
     math(EXPR skip_msg "${TCNT} % 500")
@@ -228,7 +249,7 @@ function(TFILE_TYPE_MSG ALL_CNT ALL_PROCESSED TEXT_LIST)
       return()
     endif(${skip_msg} EQUAL 0)
   endif(TCNT)
-endfunction(TFILE_TYPE_MSG)
+endfunction(tfile_type_msg)
 
 # For processing purposes, there are three categories of
 # ${BRLCAD_EXT_DIR}/install file:
@@ -242,7 +263,7 @@ endfunction(TFILE_TYPE_MSG)
 # expect to find in ${BRLCAD_EXT_DIR}/install, we need a way to detect
 # "on the fly" what we are dealing with.
 function(
-  FILE_TYPE
+  file_type
   fname
   ALL_CNT
   BINARY_LIST
@@ -318,11 +339,11 @@ function(
   # If we haven't figured it out, treat as noexec binary
   set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
   nfile_type_msg(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
-endfunction(FILE_TYPE)
+endfunction(file_type)
 
 # Copy everything in ${BRLCAD_EXT_DIR}/install into the build
 # directory
-function(INITIALIZE_TP_FILES)
+function(initialize_tp_files)
   # Rather than complicate matters trying to pick and choose what to
   # move, just stage everything.  Depending on what the dependencies
   # write into their install directories we may have to be more
@@ -407,7 +428,7 @@ function(INITIALIZE_TP_FILES)
   # path links will resolve, but will fail when installed on another
   # machine.  A quick tests suggests we don't have any like that right
   # now, but it's not clear we can count on that...
-endfunction(INITIALIZE_TP_FILES)
+endfunction(initialize_tp_files)
 
 # If we have a pre-existing list of files, we need to determine the
 # status of the current directories vs the list.  Sets three lists at
@@ -422,7 +443,7 @@ endfunction(INITIALIZE_TP_FILES)
 # appropriate processing steps that there are files to work on, since
 # we don't want to do the copying step with configure_file when the
 # initialize routines have already done the work.
-function(TP_COMPARE_STATE TP_NEW_LIST TP_PREV_LIST)
+function(tp_compare_state TP_NEW_LIST TP_PREV_LIST)
   # See if any new files have appeared compared to the previous state
   set(LTP_NEW "${${TP_NEW_LIST}}")
   set(LTP_PREVIOUS "${${TP_PREV_LIST}}")
@@ -454,7 +475,7 @@ function(TP_COMPARE_STATE TP_NEW_LIST TP_PREV_LIST)
   set(TP_NEW "${LTP_NEW}" PARENT_SCOPE)
   set(TP_STALE "${LTP_STALE}" PARENT_SCOPE)
   set(TP_CHANGED "${LTP_CHANGED}" PARENT_SCOPE)
-endfunction(TP_COMPARE_STATE)
+endfunction(tp_compare_state)
 
 # The relative RPATH is specific to the location and platform
 function(find_relative_rpath fp rp)
@@ -486,7 +507,7 @@ endfunction(find_relative_rpath)
 # here is not to produce relocatable files, but just have things work
 # in place in the build locations.  Parameterized to allow processing
 # of both single and multiconfig builds.
-function(RPATH_BUILD_DIR_PROCESS ROOT_DIR lf)
+function(rpath_build_dir_process ROOT_DIR lf)
   if(P_RPATH_EXECUTABLE)
     execute_process(
       COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${ROOT_DIR}/${LIB_DIR}" ${lf}
@@ -524,7 +545,7 @@ function(RPATH_BUILD_DIR_PROCESS ROOT_DIR lf)
       WORKING_DIRECTORY ${ROOT_DIR}
     )
   endif(APPLE)
-endfunction(RPATH_BUILD_DIR_PROCESS)
+endfunction(rpath_build_dir_process)
 
 #####################################################################
 # Processing for BRLCAD_EXT_INSTALL_DIR contents. We need to
@@ -532,7 +553,7 @@ endfunction(RPATH_BUILD_DIR_PROCESS)
 # in sync with the BRLCAD_EXT_DIR originals, if they change.
 #####################################################################
 
-function(BRLCAD_Process_Ext)
+function(brlcad_process_ext)
   if(BRLCAD_DISABLE_RELOCATION)
     return()
   endif(BRLCAD_DISABLE_RELOCATION)
@@ -544,15 +565,16 @@ function(BRLCAD_Process_Ext)
     list(FILTER TP_FILES EXCLUDE REGEX ${ep})
   endforeach(ep ${EXCLUDED_PATTERNS})
 
-  # For the very first pass w bulk copy the contents of the
-  # BRLCAD_EXT_INSTALL_DIR tree into our own directory.  For some of
-  # the external dependencies (like Tcl) library elements must be in
-  # sane relative locations to binaries being executed, and leaving
-  # them in BRLCAD_EXT_INSTALL_DIR won't work.  On Windows, the dlls
-  # for all the dependencies will need to be located correctly
-  # relative to the bin build directory.
+  # For the very first pass we bulk copy the contents of the
+  # BRLCAD_EXT_INSTALL_DIR tree into our own directory.  For some of the
+  # external dependencies (like Tcl) library elements must be in sane relative
+  # locations to binaries being executed, and leaving them in
+  # BRLCAD_EXT_INSTALL_DIR won't work.  On Windows, the dlls for all the
+  # dependencies will need to be located correctly relative to the bin build
+  # directory.
   set(TP_INIT)
   if(NOT EXISTS "${TP_INVENTORY}")
+
     initialize_tp_files()
 
     # Special variable for when we need to know about first time
@@ -561,11 +583,14 @@ function(BRLCAD_Process_Ext)
 
     # With a clean copy, there aren't any previous files to check
     set(TP_PREVIOUS)
+
   else(NOT EXISTS "${TP_INVENTORY}")
+
     # If we are repeating a configure process, we need to see what (if
     # anything) has changed.  Read in the previous list.
     file(READ "${TP_INVENTORY}" TP_P)
     string(REPLACE "\n" ";" TP_PREVIOUS "${TP_P}")
+
   endif(NOT EXISTS "${TP_INVENTORY}")
 
   # Write the current third party file list
@@ -747,10 +772,30 @@ function(BRLCAD_Process_Ext)
         continue()
       endif(SKIP_FILE)
 
-      execute_process(
-        COMMAND
-          ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}"
-      )
+      # Test if this is a CMake file used for find_package.  If it is, we need
+      # the paths in these files to reflect the build directory hierarchy
+      # during build, and the final install location after installed.
+      # (Otherwise, find_package will fail when trying to use the modern
+      # Config.cmake approach to package setup.)  Accordingly, they need both
+      # processing for their build dir copy and an install rule to finalize
+      # their paths once installed.
+      #
+      # As normally structured, it appears the standard Config.cmake files will
+      # avoid using absolute paths.  However, it is possible for projects to
+      # customize these files, so we can't guarantee they WON'T use them... and
+      # the pkgconfig .pc files do typically use full paths.
+      is_cmake_file(${tf} CMAKE_FILE)
+      if(CMAKE_FILE)
+	execute_process(
+	  COMMAND
+	  ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_BINARY_DIR}"
+	  )
+      else(CMAKE_FILE)
+	execute_process(
+	  COMMAND
+	  ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}"
+	  )
+      endif(CMAKE_FILE)
     endforeach(tf ${NTEXT_FILES})
     message("Replacing paths in new 3rd party text files... done.")
   endif(NTEXT_FILES)
@@ -784,6 +829,14 @@ function(BRLCAD_Process_Ext)
       install(PROGRAMS "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
     else(${dir} MATCHES "${BIN_DIR}$")
       install(FILES "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
+      is_cmake_file(${tf} CMAKE_FILE)
+      if(CMAKE_FILE)
+	message("Adding install rule for CMake find_package file ${CMAKE_INSTALL_PREFIX}/${tf}")
+	install(
+	  CODE
+	  "execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -r \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${CMAKE_BINARY_DIR}\" \"${CMAKE_INSTALL_PREFIX}\")"
+	  )
+      endif(CMAKE_FILE)
     endif(${dir} MATCHES "${BIN_DIR}$")
   endforeach(tf ${TP_FILES})
 
@@ -868,12 +921,12 @@ function(BRLCAD_Process_Ext)
   foreach(ef ${TP_NOINST_FILES})
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_NOINSTALL_DIR}/${ef})
   endforeach(ef ${TP_NOINST_FILES})
-endfunction(BRLCAD_Process_Ext)
+endfunction(brlcad_process_ext)
 
 #####################################################################
 # We want find_package calls that re-run every time configure is run,
 # which means we need to unset cache variables.  Most of the packages
-# use the BRLCAD_Find_Package wrapper for this, but in a few cases
+# use the brlcad_find_package wrapper for this, but in a few cases
 # it's more complicated.
 #####################################################################
 
