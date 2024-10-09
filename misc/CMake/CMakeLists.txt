@@ -30,7 +30,6 @@ set(
   FindAppleseed.cmake
   FindBlosc.cmake
   FindBSON.cmake
-  FindFontconfig.cmake
   FindGECODE.cmake
   FindGEOGRAM.cmake
   FindGTE.cmake
