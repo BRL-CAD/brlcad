@@ -1,24 +1,27 @@
 set(ASSETIMPORT_SRCS assetimport_read.cpp assetimport_write.cpp)
 
-brlcad_find_package(ASSETIMPORT)
+brlcad_find_package(pugixml)
+brlcad_find_package(assimp)
 
-if(BRLCAD_ENABLE_ASSETIMPORT AND ASSETIMPORT_LIBRARY AND ASSETIMPORT_INCLUDE_DIR)
-  message("assetimport plugin FOUND and ENABLED")
-  include_directories(SYSTEM ${ASSETIMPORT_INCLUDE_DIR})
-
-  gcv_plugin_library(gcv-assetimport SHARED ${ASSETIMPORT_SRCS})
-  target_link_libraries(
-    gcv-assetimport
-    libgcv
-    libwdb
-    librt
-    libbu
-    ${ASSETIMPORT_LIBRARY}
-  )
-  set_property(TARGET gcv-assetimport APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  validate_style(gcv-assetimport "${ASSETIMPORT_SRCS}")
-  plugin_setup(gcv-assetimport gcv)
-endif(BRLCAD_ENABLE_ASSETIMPORT AND ASSETIMPORT_LIBRARY AND ASSETIMPORT_INCLUDE_DIR)
+if(BRLCAD_ENABLE_ASSETIMPORT)
+  if(TARGET assimp::assimp AND TARGET pugixml::pugixml)
+    gcv_plugin_library(gcv-assetimport SHARED ${ASSETIMPORT_SRCS})
+    target_link_libraries(
+      gcv-assetimport
+      libgcv
+      libwdb
+      librt
+      libbu
+      assimp::assimp
+      pugixml::pugixml
+    )
+    set_property(TARGET gcv-assetimport APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+    validate_style(gcv-assetimport "${ASSETIMPORT_SRCS}")
+    plugin_setup(gcv-assetimport gcv)
+  else()
+    message("Warning - Asset Import support enabled, but Asset Import Library not found - disabling GCV plugin\n")
+  endif()
+endif(BRLCAD_ENABLE_ASSETIMPORT)
 
 cmakefiles(
   ${ASSETIMPORT_SRCS}

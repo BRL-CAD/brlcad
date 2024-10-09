@@ -12,15 +12,17 @@ set(
 
 brlcad_find_package(MANIFOLD REQUIRED)
 
-brlcad_find_package(ASSETIMPORT)
-if(ASSETIMPORT_LIBRARIES)
+brlcad_find_package(pugixml)
+brlcad_find_package(assimp)
+if(TARGET assimp::assimp AND TARGET pugixml::pugixml)
   add_definitions(-DUSE_ASSETIMPORT)
-endif(ASSETIMPORT_LIBRARIES)
+  set(ASSETIMPORT_LIBRARIES assimp::assimp pugixml::pugixml)
+endif(TARGET assimp::assimp AND TARGET pugixml::pugixml)
 
 brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
 add_definitions(-DUSE_GEOGRAM)
 
-set(INCLUDE_DIRS ${GEOGRAM_INCLUDE_DIR} ${MANIFOLD_INCLUDE_DIRS} ${ASSETIMPORT_INCLUDE_DIR})
+set(INCLUDE_DIRS ${GEOGRAM_INCLUDE_DIR} ${MANIFOLD_INCLUDE_DIRS})
 
 ged_subprocess_library(facetize_process SHARED ${GED_TESS_SRCS})
 target_include_directories(facetize_process SYSTEM PRIVATE ${INCLUDE_DIRS})

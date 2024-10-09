@@ -2,14 +2,20 @@ brlcad_find_package(MANIFOLD REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 if(BRLCAD_ENABLE_ASSETIMPORT)
-  brlcad_find_package(ASSETIMPORT)
+  # TODO - see if we can use tinygltf to write out the glb file ourselves -
+  # Manifold's assimp integration is convenient for producing glb files, which
+  # are needed if we're going to submit problem cases upstream, but using it
+  # introduces an additional large dependency just for a debugging output...
+  brlcad_find_package(pugixml)
+  brlcad_find_package(assimp)
 endif(BRLCAD_ENABLE_ASSETIMPORT)
 brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
 add_definitions(-DUSE_GEOGRAM)
 
-if(ASSETIMPORT_LIBRARIES)
+if(TARGET assimp::assimp AND TARGET pugixml::pugixml)
   add_definitions(-DUSE_ASSETIMPORT)
-endif(ASSETIMPORT_LIBRARIES)
+  set(ASSETIMPORT_LIBRARIES assimp::assimp pugixml::pugixml)
+endif(TARGET assimp::assimp AND TARGET pugixml::pugixml)
 
 if(NOT BRLCAD_ENABLE_GCT)
   brlcad_find_package(MMESH REQUIRED)
@@ -388,9 +394,6 @@ set(
   ${GEOGRAM_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
   ${MMESH_INCLUDE_DIR}
-  ${ASSETIMPORT_INCLUDE_DIR}
-  ${MANIFOLD_INCLUDE_DIRS}
-  ${ASSETIMPORT_INCLUDE_DIR}
 )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
