@@ -773,7 +773,7 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 	if (startPos != std::string::npos) {
 	    continuation = continuation.substr(startPos);
 
-	    if (opt.getNotes() == "None") {
+	    if (opt.getNotes() == "N/A") {
 		opt.setNotes("... " + continuation);
 	    } else {
 		opt.setNotes("... " + continuation + "\n" + opt.getNotes());
