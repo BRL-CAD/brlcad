@@ -29,6 +29,7 @@ set(
   FindASTYLE.cmake
   FindAppleseed.cmake
   FindBlosc.cmake
+  FindBRLCAD.cmake
   FindBSON.cmake
   FindGECODE.cmake
   FindGEOGRAM.cmake
