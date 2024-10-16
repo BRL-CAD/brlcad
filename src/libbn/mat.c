@@ -944,6 +944,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 }
 
 
+// TODO - look into https://math.stackexchange.com/a/4112622
 void
 bn_vec_ortho(vect_t out, const vect_t in)
 {
