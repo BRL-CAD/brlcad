@@ -33,6 +33,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* Investigate whether we can use the newer version of the gct
+  decimator (mmesh) to replace the version currently bundled
+  in librt.
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
