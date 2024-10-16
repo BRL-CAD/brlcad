@@ -39,7 +39,6 @@ set(
   FindLINENOISE.cmake
   FindLMDB.cmake
   FindLibUV.cmake
-  FindMANIFOLD.cmake
   FindMMESH.cmake
   FindNETPBM.cmake
   FindNSIS.cmake

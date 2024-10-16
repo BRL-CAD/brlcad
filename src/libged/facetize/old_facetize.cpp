@@ -1570,16 +1570,16 @@ bool_meshes(
     if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
 	return -1;
 
-    manifold::Mesh a_mesh;
-    for (int i = 0; i < a_ccnt; i++)
-	a_mesh.vertPos.push_back(glm::vec3(a_coords[3*i], a_coords[3*i+1], a_coords[3*i+2]));
-    for (int i = 0; i < a_tricnt; i++)
-	a_mesh.triVerts.push_back(glm::ivec3(a_tris[3*i], a_tris[3*i+1], a_tris[3*i+2]));
-    manifold::Mesh b_mesh;
-    for (int i = 0; i < b_ccnt; i++)
-	b_mesh.vertPos.push_back(glm::vec3(b_coords[3*i], b_coords[3*i+1], b_coords[3*i+2]));
-    for (int i = 0; i < b_tricnt; i++)
-	b_mesh.triVerts.push_back(glm::ivec3(b_tris[3*i], b_tris[3*i+1], b_tris[3*i+2]));
+    manifold::MeshGL64 a_mesh;
+    for (int i = 0; i < a_ccnt*3; i++)
+	a_mesh.vertProperties.insert(a_mesh.vertProperties.end(), a_coords[i]);
+    for (int i = 0; i < a_tricnt*3; i++)
+	a_mesh.triVerts.insert(a_mesh.triVerts.end(), a_tris[i]);
+    manifold::MeshGL64 b_mesh;
+    for (int i = 0; i < b_ccnt*3; i++)
+	b_mesh.vertProperties.insert(b_mesh.vertProperties.end(), b_coords[i]);
+    for (int i = 0; i < b_tricnt*3; i++)
+	b_mesh.triVerts.insert(b_mesh.triVerts.end(), b_tris[i]);
 
     manifold::Manifold a_manifold(a_mesh);
     if (a_manifold.Status() != manifold::Manifold::Error::NoError) {
@@ -1597,8 +1597,8 @@ bool_meshes(
     std::cerr << lname << " " << (int)b_op << " " << rname << "\n";
     std::remove("left.glb");
     std::remove("right.glb");
-    manifold::ExportMesh(std::string("left.glb"), a_manifold.GetMesh(), {});
-    manifold::ExportMesh(std::string("right.glb"), b_manifold.GetMesh(), {});
+    manifold::ExportMesh(std::string("left.glb"), a_manifold.GetMeshGL(), {});
+    manifold::ExportMesh(std::string("right.glb"), b_manifold.GetMeshGL(), {});
 #endif
 #endif
 
@@ -1616,29 +1616,23 @@ bool_meshes(
 	// write out the failing inputs to files to aid in debugging
 	if (evar && strlen(evar)) {
 	    std::cerr << "Manifold op: " << (int)b_op << "\n";
-	    manifold::ExportMesh(std::string(lname)+std::string(".glb"), a_manifold.GetMesh(), {});
-	    manifold::ExportMesh(std::string(rname)+std::string(".glb"), b_manifold.GetMesh(), {});
+	    manifold::ExportMesh(std::string(lname)+std::string(".glb"), a_manifold.GetMeshGL(), {});
+	    manifold::ExportMesh(std::string(rname)+std::string(".glb"), b_manifold.GetMeshGL(), {});
 	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.\n");
 	}
 #endif
 	return -1;
     }
-    manifold::Mesh rmesh = result.GetMesh();
+    manifold::MeshGL64 rmesh = result.GetMeshGL64();
 
-    (*o_coords) = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));
-    (*o_tris) = (unsigned int *)calloc(rmesh.triVerts.size()*3, sizeof(unsigned int));
-    for (size_t i = 0; i < rmesh.vertPos.size(); i++) {
-	(*o_coords)[3*i] = rmesh.vertPos[i].x;
-	(*o_coords)[3*i+1] = rmesh.vertPos[i].y;
-	(*o_coords)[3*i+2] = rmesh.vertPos[i].z;
-    }
-    for (size_t i = 0; i < rmesh.triVerts.size(); i++) {
-	(*o_tris)[3*i] = rmesh.triVerts[i].x;
-	(*o_tris)[3*i+1] = rmesh.triVerts[i].y;
-	(*o_tris)[3*i+2] = rmesh.triVerts[i].z;
-    }
-    *o_ccnt = (int)rmesh.vertPos.size();
-    *o_tricnt = (int)rmesh.triVerts.size();
+    (*o_coords) = (double *)calloc(rmesh.vertProperties.size(), sizeof(double));
+    (*o_tris) = (unsigned int *)calloc(rmesh.triVerts.size(), sizeof(unsigned int));
+    for (size_t i = 0; i < rmesh.vertProperties.size(); i++)
+	(*o_coords)[i] = rmesh.vertProperties[i];
+    for (size_t i = 0; i < rmesh.triVerts.size(); i++)
+	(*o_tris)[i] = rmesh.triVerts[i];
+    *o_ccnt = (int)rmesh.vertProperties.size()/3;
+    *o_tricnt = (int)rmesh.triVerts.size()/3;
 
 
     int not_solid = bg_trimesh_solid2(*o_ccnt, *o_tricnt, (fastf_t *)*o_coords, (int *)*o_tris, NULL);

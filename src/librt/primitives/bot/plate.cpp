@@ -327,11 +327,18 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	nmg_km(m);
 
-	manifold::Mesh sph_m;
-	for (size_t j = 0; j < sbot->num_vertices ; j++)
-	    sph_m.vertPos.push_back(glm::vec3(sbot->vertices[3*j], sbot->vertices[3*j+1], sbot->vertices[3*j+2]));
-	for (size_t j = 0; j < sbot->num_faces; j++)
-	    sph_m.triVerts.push_back(glm::ivec3(sbot->faces[3*j], sbot->faces[3*j+1], sbot->faces[3*j+2]));
+	manifold::MeshGL64 sph_m;
+	for (size_t j = 0; j < sbot->num_vertices ; j++) {
+	    sph_m.vertProperties.insert(sph_m.vertProperties.end(), sbot->vertices[3*j]);
+	    sph_m.vertProperties.insert(sph_m.vertProperties.end(), sbot->vertices[3*j+1]);
+	    sph_m.vertProperties.insert(sph_m.vertProperties.end(), sbot->vertices[3*j+2]);
+	}
+
+	for (size_t j = 0; j < sbot->num_faces; j++) {
+	    sph_m.triVerts.insert(sph_m.triVerts.end(), sbot->faces[3*j]);
+	    sph_m.triVerts.insert(sph_m.triVerts.end(), sbot->faces[3*j+1]);
+	    sph_m.triVerts.insert(sph_m.triVerts.end(), sbot->faces[3*j+2]);
+	}
 
 	if (sbot->vertices)
 	    bu_free(sbot->vertices, "verts");
@@ -345,7 +352,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	try {
 	    c = left.Boolean(right, manifold::OpType::Add);
 #if defined(CHECK_INTERMEDIATES)
-	    c.GetMesh();
+	    c.GetMeshGL64();
 #endif
 	} catch (const std::exception &e) {
 	    if (!quiet_mode) {
@@ -353,8 +360,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 		std::cerr << e.what() << "\n";
 	    }
 #if defined(CHECK_INTERMEDIATES)
-	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
-	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
+	    manifold::ExportMesh(std::string("left.glb"), left.GetMeshGL(), {});
+	    manifold::ExportMesh(std::string("right.glb"), right.GetMeshGL(), {});
 	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
 #endif
 	    return -1;
@@ -388,11 +395,17 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	if (edge_cyl(&vertices, &faces, &vert_cnt, &face_cnt, base, v, r))
 	    continue;
 
-	manifold::Mesh rcc_m;
-	for (int j = 0; j < vert_cnt; j++)
-	    rcc_m.vertPos.push_back(glm::vec3(vertices[j][X], vertices[j][Y], vertices[j][Z]));
-	for (int j = 0; j < face_cnt; j++)
-	    rcc_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
+	manifold::MeshGL64 rcc_m;
+	for (int j = 0; j < vert_cnt; j++) {
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][X]);
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][Y]);
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][Z]);
+	}
+	for (int j = 0; j < face_cnt; j++) {
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j]);
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j+1]);
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j+2]);
+	}
 
 	if (vertices)
 	    bu_free(vertices, "verts");
@@ -404,7 +417,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	try {
 	    c = left.Boolean(right, manifold::OpType::Add);
 #if defined(CHECK_INTERMEDIATES)
-	    c.GetMesh();
+	    c.GetMeshGL64();
 #endif
 	} catch (const std::exception &e) {
 	    if (!quiet_mode) {
@@ -412,8 +425,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 		std::cerr << e.what() << "\n";
 	    }
 #if defined(CHECK_INTERMEDIATES)
-	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
-	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
+	    manifold::ExportMesh(std::string("left.glb"), left.GetMeshGL(), {});
+	    manifold::ExportMesh(std::string("right.glb"), right.GetMeshGL(), {});
 	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
 #endif
 	    return -1;
@@ -500,11 +513,17 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	bu_exit(EXIT_FAILURE, "test");
 #endif
 
-	manifold::Mesh arb_m;
-	for (size_t j = 0; j < 6; j++)
-	    arb_m.vertPos.push_back(glm::vec3(pts[3*j], pts[3*j+1], pts[3*j+2]));
-	for (size_t j = 0; j < 8; j++)
-	    arb_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
+	manifold::MeshGL64 arb_m;
+	for (size_t j = 0; j < 6; j++) {
+	    arb_m.vertProperties.insert(arb_m.vertProperties.end(), pts[3*j+0]);
+	    arb_m.vertProperties.insert(arb_m.vertProperties.end(), pts[3*j+1]);
+	    arb_m.vertProperties.insert(arb_m.vertProperties.end(), pts[3*j+2]);
+	}
+	for (size_t j = 0; j < 8; j++) {
+	    arb_m.triVerts.insert(arb_m.triVerts.end(), faces[3*j+0]);
+	    arb_m.triVerts.insert(arb_m.triVerts.end(), faces[3*j+1]);
+	    arb_m.triVerts.insert(arb_m.triVerts.end(), faces[3*j+2]);
+	}
 
 	manifold::Manifold left = c;
 	manifold::Manifold right(arb_m);
@@ -512,7 +531,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	try {
 	    c = left.Boolean(right, manifold::OpType::Add);
 #if defined(CHECK_INTERMEDIATES)
-	    c.GetMesh();
+	    c.GetMeshGL64();
 #endif
 	} catch (const std::exception &e) {
 	    if (!quiet_mode) {
@@ -520,8 +539,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 		std::cerr << e.what() << "\n";
 	    }
 #if defined(CHECK_INTERMEDIATES)
-	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
-	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
+	    manifold::ExportMesh(std::string("left.glb"), left.GetMeshGL(), {});
+	    manifold::ExportMesh(std::string("right.glb"), right.GetMeshGL(), {});
 	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
 #endif
 	    return -1;
@@ -540,7 +559,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     if (!quiet_mode)
 	bu_log("Processing %zd faces... done.\n" , bot->num_faces);
 
-    manifold::Mesh rmesh = c.GetMesh();
+    manifold::MeshGL64 rmesh = c.GetMeshGL64();
     struct rt_bot_internal *rbot;
     BU_GET(rbot, struct rt_bot_internal);
     rbot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -549,20 +568,14 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     rbot->thickness = NULL;
     rbot->face_mode = (struct bu_bitv *)NULL;
     rbot->bot_flags = 0;
-    rbot->num_vertices = (int)rmesh.vertPos.size();
-    rbot->num_faces = (int)rmesh.triVerts.size();
-    rbot->vertices = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));;
-    rbot->faces = (int *)calloc(rmesh.triVerts.size()*3, sizeof(int));
-    for (size_t j = 0; j < rmesh.vertPos.size(); j++) {
-	rbot->vertices[3*j] = rmesh.vertPos[j].x;
-	rbot->vertices[3*j+1] = rmesh.vertPos[j].y;
-	rbot->vertices[3*j+2] = rmesh.vertPos[j].z;
-    }
-    for (size_t j = 0; j < rmesh.triVerts.size(); j++) {
-	rbot->faces[3*j] = rmesh.triVerts[j].x;
-	rbot->faces[3*j+1] = rmesh.triVerts[j].y;
-	rbot->faces[3*j+2] = rmesh.triVerts[j].z;
-    }
+    rbot->num_vertices = (int)rmesh.vertProperties.size()/3;
+    rbot->num_faces = (int)rmesh.triVerts.size()/3;
+    rbot->vertices = (double *)calloc(rmesh.vertProperties.size(), sizeof(double));;
+    rbot->faces = (int *)calloc(rmesh.triVerts.size(), sizeof(int));
+    for (size_t j = 0; j < rmesh.vertProperties.size(); j++)
+	rbot->vertices[j] = rmesh.vertProperties[j];
+    for (size_t j = 0; j < rmesh.triVerts.size(); j++)
+	rbot->faces[j] = rmesh.triVerts[j];
     *obot = rbot;
     return 0;
 }
