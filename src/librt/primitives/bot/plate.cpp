@@ -72,6 +72,137 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
     return true;
 }
 
+#define MAX_CYL_STEPS 100
+static int
+edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1, point_t p2, fastf_t r)
+{
+    if (!verts || !faces || !vert_cnt || !face_cnt || NEAR_ZERO(r, SMALL_FASTF))
+	return -1;
+
+    int nsegs = 8;
+    vect_t h;
+    VSUB2(h, p2, p1);
+    if (MAGNITUDE(h) < VUNITIZE_TOL)
+	return -1;
+
+    // Find axis to use for point generation on circles
+    vect_t cross1, cross2, xaxis, yaxis;
+    bn_vec_ortho(cross1, h);
+    VUNITIZE(cross1);
+    VCROSS(cross2, cross1, h);
+    VUNITIZE(cross2);
+    VSCALE(xaxis, cross1, r);
+    VSCALE(yaxis, cross2, r);
+
+    // Figure out the step we take for each ring in the cylinder
+    double seg_len = M_PI * r * r / (double)nsegs;
+    fastf_t e_len = MAGNITUDE(h);
+    int steps = 1;
+    fastf_t h_len = (e_len < 2*seg_len) ? e_len : -1.0;
+    if (h_len < 0) {
+	steps = (int)(e_len / seg_len);
+	// Ideally we want the height of the triangles up the cylinder to be on
+	// the same order as the segment size, but that's likely to make for a
+	// huge number of triangles if we have a long edge.
+	if (steps > MAX_CYL_STEPS)
+	    steps = MAX_CYL_STEPS;
+	h_len = e_len / (double)steps;
+    }
+    vect_t h_step;
+    VMOVE(h_step, h);
+    VUNITIZE(h_step);
+    VSCALE(h_step, h_step, h_len);
+
+    // Generated the vertices
+    (*verts) = (point_t *)bu_calloc((steps+1) * nsegs + 2, sizeof(point_t), "verts");
+    for (int i = 0; i <= steps; i++) {
+	for (int j = 0; j < nsegs; j++) {
+	    double alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
+	    double sin_alpha = sin(alpha);
+	    double cos_alpha = cos(alpha);
+	    /* vertex geometry */
+	    VJOIN3((*verts)[i*nsegs+j], p1, (double)i, h_step, cos_alpha, xaxis, sin_alpha, yaxis);
+	}
+    }
+
+    // The two center points of the end caps are the last two points
+    VMOVE((*verts)[(steps+1) * nsegs], p1);
+    VMOVE((*verts)[(steps+1) * nsegs + 1], p2);
+
+    // Next, we define the faces.  The two end caps each have one triangle for each segment.
+    // Each step defines 2*nseg triangles.
+    (*faces) = (int *)bu_calloc(steps * 2*nsegs + 2*nsegs, 3*sizeof(int), "triangles");
+
+    // For the steps, we process in quads - each segment gets two triangles
+    for (int i = 0; i < steps; i++) {
+	for (int j = 0; j < nsegs; j++) {
+	    int pnts[4];
+	    pnts[0] = nsegs * i + j;
+	    pnts[1] = (j < nsegs - 1) ? nsegs * i + j + 1 : nsegs * i;
+	    pnts[2] = nsegs * (i + 1) + j;
+	    pnts[3] = (j < nsegs - 1) ? nsegs * (i + 1) + j + 1 : nsegs * (i + 1);
+	    int offset = 3 * (i * nsegs * 2 + j * 2);
+	    (*faces)[offset + 0] = pnts[0];
+	    (*faces)[offset + 1] = pnts[2];
+	    (*faces)[offset + 2] = pnts[1];
+	    (*faces)[offset + 3] = pnts[2];
+	    (*faces)[offset + 4] = pnts[3];
+	    (*faces)[offset + 5] = pnts[1];
+	}
+    }
+
+    // Define the end caps.  The first set of triangles uses the base
+    // point (stored at verts[steps*nsegs] and the points of the first
+    // circle (stored at the beginning of verts)
+    int offset = 3 * (steps * nsegs * 2);
+    for (int j = 0; j < nsegs; j++){
+	int pnts[3];
+	pnts[0] = (steps+1) * nsegs;
+	pnts[1] = j;
+	pnts[2] = (j < nsegs - 1) ? j + 1 : 0;
+	(*faces)[offset + 3*j + 0] = pnts[0];
+	(*faces)[offset + 3*j + 1] = pnts[1];
+	(*faces)[offset + 3*j + 2] = pnts[2];
+    }
+    // The second set of cap triangles uses the second edge point
+    // point (stored at verts[steps*nsegs+1] and the points of the last
+    // circle (stored at the end of verts = (steps-1) * nsegs)
+    offset = 3 * ((steps * nsegs * 2) + nsegs);
+    for (int j = 0; j < nsegs; j++){
+	int pnts[3];
+	pnts[0] = (steps+1) * nsegs + 1;
+	pnts[1] = steps * nsegs + j;
+	pnts[2] = (j < nsegs - 1) ? steps * nsegs + j + 1 : steps * nsegs;
+	(*faces)[offset + 3*j + 0] = pnts[0];
+	(*faces)[offset + 3*j + 1] = pnts[2];
+	(*faces)[offset + 3*j + 2] = pnts[1];
+    }
+
+    (*vert_cnt) = (steps+1) * nsegs + 2;
+    (*face_cnt) = steps * 2*nsegs + 2*nsegs;
+
+#if 0
+    bu_log("title {edge}\n");
+    bu_log("units mm\n");
+    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vstr, "put {edge.bot} bot mode volume orient rh flags {} V { ");
+    for (int i = 0; i < vert_cnt; i++) {
+	bu_vls_printf(&vstr, " { %g %g %g } ", V3ARGS((*verts)[i]));
+    }
+    bu_vls_printf(&vstr, "} F { ");
+    for (int i = 0; i < face_cnt; i++) {
+	bu_vls_printf(&vstr, " { %d %d %d } ", faces[i*3], faces[i*3+1], faces[i*3+2]);
+    }
+    bu_vls_printf(&vstr, "}\n");
+    bu_log("%s\n", bu_vls_cstr(&vstr));
+    bu_vls_free(&vstr);
+
+    bu_exit(EXIT_FAILURE, "test");
+#endif
+
+    return 0;
+}
+
 int
 rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode)
 {
@@ -208,25 +339,31 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 		continue;
 	}
 
-	manifold::Manifold left = c;
-
-	// Make an rcc along the edge with a radius based on the thickness
+	// Make an rcc along the edge a radius based on the thickness
 	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
 	point_t base, v;
 	VMOVE(base, &bot->vertices[3*(*e_it).first]);
 	VMOVE(v, &bot->vertices[3*(*e_it).second]);
 
-	vect_t edge;
-	VSUB2(edge, v, base);
+	point_t *vertices = NULL;
+	int *faces = NULL;
+	int vert_cnt, face_cnt;
+	if (edge_cyl(&vertices, &faces, &vert_cnt, &face_cnt, base, v, r))
+	    continue;
 
-	// Create a cylinder at the origin in the +z direction
-	manifold::Manifold origin_cyl = manifold::Manifold::Cylinder(MAGNITUDE(edge), r, r, 8);
+	manifold::Mesh rcc_m;
+	for (int j = 0; j < vert_cnt; j++)
+	    rcc_m.vertPos.push_back(glm::vec3(vertices[j][X], vertices[j][Y], vertices[j][Z]));
+	for (int j = 0; j < face_cnt; j++)
+	    rcc_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
 
-	// Move it into position
-	glm::vec3 evec(-1*edge[0], -1*edge[1], edge[2]);
-	manifold::Manifold rotated_cyl = origin_cyl.Transform(manifold::RotateUp(evec));
-	manifold::Manifold right = rotated_cyl.Translate(glm::vec3(base[0], base[1], base[2]));
+	if (vertices)
+	    bu_free(vertices, "verts");
+	if (faces)
+	    bu_free(faces, "faces");
 
+	manifold::Manifold left = c;
+	manifold::Manifold right(rcc_m);
 	try {
 	    c = left.Boolean(right, manifold::OpType::Add);
 #if defined(CHECK_INTERMEDIATES)
