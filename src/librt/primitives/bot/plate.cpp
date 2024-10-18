@@ -295,52 +295,15 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 		continue;
 	}
 
+	manifold::Manifold left = c;
+
 	point_t v;
 	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
 	// Make a sph at the vertex point with a radius based on the thickness
 	VMOVE(v, &bot->vertices[3**v_it]);
 
-	struct rt_ell_internal ell;
-	ell.magic = RT_ELL_INTERNAL_MAGIC;
-	VMOVE(ell.v, v);
-	VSET(ell.a, r, 0, 0);
-	VSET(ell.b, 0, r, 0);
-	VSET(ell.c, 0, 0, r);
-
-	struct rt_db_internal intern;
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_ELL;
-	intern.idb_ptr = &ell;
-	intern.idb_meth = &OBJ[ID_ELL];
-
-	struct nmgregion *r1 = NULL;
-	struct model *m = nmg_mm();
-	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL; // TODO - may need to adjust this based on plate mode thickness setting.
-	const struct bn_tol tol = BN_TOL_INIT_TOL;
-	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, &ttol, &tol))
-	    continue;
-
-	struct rt_bot_internal *sbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, &tol);
-	if (!sbot)
-	    continue;
-
-	nmg_km(m);
-
-	manifold::Mesh sph_m;
-	for (size_t j = 0; j < sbot->num_vertices ; j++)
-	    sph_m.vertPos.push_back(glm::vec3(sbot->vertices[3*j], sbot->vertices[3*j+1], sbot->vertices[3*j+2]));
-	for (size_t j = 0; j < sbot->num_faces; j++)
-	    sph_m.triVerts.push_back(glm::ivec3(sbot->faces[3*j], sbot->faces[3*j+1], sbot->faces[3*j+2]));
-
-	if (sbot->vertices)
-	    bu_free(sbot->vertices, "verts");
-	if (sbot->faces)
-	    bu_free(sbot->faces, "faces");
-	BU_FREE(sbot, struct rt_bot_internal);
-
-	manifold::Manifold left = c;
-	manifold::Manifold right(sph_m);
+	manifold::Manifold sph = manifold::Manifold::Sphere(r, 8);
+	manifold::Manifold right = sph.Translate(glm::vec3(v[0], v[1], v[2]));
 
 	try {
 	    c = left.Boolean(right, manifold::OpType::Add);
