@@ -77,6 +77,8 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	int sindex = (*b)->m_S.Count();
 	(*b)->NewFace(sindex - 1);
 	int findex = (*b)->m_F.Count();
+	if (findex < 1)
+	    continue;
 	(*b)->NewOuterLoop(findex - 1);
     }
 
