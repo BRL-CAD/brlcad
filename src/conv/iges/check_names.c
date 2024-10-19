@@ -25,6 +25,7 @@
 char *
 Add_brl_name(char *name)
 {
+    /* NOTE: this is obviously not thread-safe */
     static size_t nocnt = 0;
 #define NOBUF_SZ 32
     char nobuf[NOBUF_SZ] = {0};

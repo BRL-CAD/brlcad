@@ -414,6 +414,9 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 
 	    /* Split last edge in loop */
 	    eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
+	    if (!eu) {
+		break;
+	    }
 	    new_eu = nmg_eusplit((struct vertex *)NULL, eu, 0);
 	    vp = eu->vu_p->v_p;
 
