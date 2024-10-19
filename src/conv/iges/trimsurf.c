@@ -533,6 +533,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
     struct loopuse *lu;
     struct edgeuse *eu;
     struct edgeuse *new_eu;
+    struct vertexuse *vu;
     struct vertex *vp;
     int entity_type = 0;
     int ncoords = 0;
@@ -567,6 +568,9 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    curve_list = (int *)bu_calloc(curve_count, sizeof(int),
 					  "Make_trim_loop: curve_list");
 
+	    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
+	    eu = nmg_meonvu(vu);
+
 	    for (i = 0; i < curve_count; i++)
 		Readint(&curve_list[i], "");
 
@@ -577,13 +581,16 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 
 	    /* if last EU is zero length, kill it */
 	    eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
-	    if (bg_dist_pnt3_pnt3(eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord) < tol.dist)
+	    if (eu &&
+		eu->vu_p &&
+		eu->vu_p->v_p &&
+		eu->vu_p->v_p->vg_p &&
+		eu->eumate_p &&
+		eu->eumate_p->vu_p &&
+		eu->eumate_p->vu_p->v_p &&
+		eu->eumate_p->vu_p->v_p->vg_p &&
+		bg_dist_pnt3_pnt3(eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord) < tol.dist) {
 		nmg_keu(eu);
-	    else {
-		bu_log("ERROR: composite trimming curve is not closed!\n");
-		bu_log("\ttrim curve is entity #%d, parameters at line #%d\n",
-		       entity_no, dir[entity_no]->param);
-		bu_log("\tThis is likely to result in failure to convert (core dump)\n");
 	    }
 	}
 	    break;
@@ -711,6 +718,19 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    bu_log("Curves of type %d are not yet handled for trimmed surfaces\n", entity_type);
 	    break;
     }
+
+    /* make sure they form a loop geometrically and topologically */
+    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+    new_eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
+
+    /* FIXME: total hack to associate last with first if we somehow
+     * end up without geometry on the last edge use.
+     */
+    if (new_eu && !new_eu->g.magic_p) {
+	new_eu->g = eu->g; /* struct copy */
+	bu_log("Fixing entity %d\n", entity_no);
+    }
+
     return lu;
 }
 
@@ -1074,7 +1094,7 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 	srf = BU_LIST_FIRST(face_g_snurb,  &bezier_l);
 	BU_LIST_DEQUEUE(&srf->l);
 
-	hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL);
+	hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL, 0);
 	/* process each hit point */
 	while (hp != (struct nmg_nurb_uv_hit *)NULL) {
 	    struct nmg_nurb_uv_hit *next;
@@ -1252,7 +1272,7 @@ Find_uv_in_fu(fastf_t *u_in, fastf_t *v_in, struct faceuse *fu)
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	    struct edge_g_cnurb *eg;
 
-	    if (*eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC)
+	    if (!eu || !eu->g.magic_p || *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC)
 		continue;
 
 	    eg = eu->g.cnurb_p;

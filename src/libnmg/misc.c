@@ -60,7 +60,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	bu_bomb("nmg_snurb_calc_lu_uv_orient: LU has no edges\n");
 
-    if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
+    if (!lu || !lu->up.magic_p || *lu->up.magic_p != NMG_FACEUSE_MAGIC)
 	bu_bomb("nmg_snurb_calc_lu_uv_orient: LU is not part of a faceuse\n");
 
     NMG_CK_FACEUSE(lu->up.fu_p);
@@ -75,7 +75,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 
 	NMG_CK_EDGEUSE(eu);
 
-	if (*eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC)
+	if (!eu || !eu->g.magic_p || *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC)
 	    bu_bomb("nmg_snurb_calc_lu_uv_orient: EU on NURB face does not have edge_g_cnurb geometry\n");
 
 	eg = eu->g.cnurb_p;

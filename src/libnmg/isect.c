@@ -1910,7 +1910,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 		nmg_nurb_free_snurb(srf);
 		continue;
 	    }
-	    hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL);
+	    hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL, 0);
 	}
 
 	/* process each hit point */
