@@ -1838,7 +1838,7 @@ densities_prep(struct rt_i *rtip)
 					    // we just want the name so we remove the path before the name
 					    const char *reg_name = strrchr(regp->reg_name, '/') + 1;
 
-					    // if its the region we're looking for, set teh reg_mater field
+					    // if its the region we're looking for, set the reg_mater field
 					    if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
 						regp->reg_gmater = wids[0];
 					    }

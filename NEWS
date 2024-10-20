@@ -9,13 +9,97 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
+
 ----------------------------------------------------------------------
---- 202X-XX-XX  Release 7.XX.X                                     ---
+--- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed primitive & matrix edit GUIs in MGED ("x -1") - Sean Morrison
+* added new 'align' and 'dir' subcommands to 'view' - Chris McGregor
+* added (autoview, lookat, saveview) to 'view' - Chris McGregor
+* fixed mged 'process' command on read-only databases - Sean Morrison
+* fixed -exec behavior with 'flat' search in mged - Chris McGregor
+
+
+----------------------------------------------------------------------
+--- 2024-09-24 Release 7.40.2                                      ---
+----------------------------------------------------------------------
+
+* various manpage and help text updates - Josh Baker
+* improved gist -F default behavior - Chris McGregor
+* fixed gist crashing with halfspaces in component - Chris McGregor
+* fixed lint BoT check testing - Cliff Yapp
+* improved overlap checker dialog behavior - Chris McGregor
+* fixed rtwizard tree visuals in gist - Chris McGregor
+
+
+----------------------------------------------------------------------
+--- 2024-08-16  Release 7.40.0                                     ---
+----------------------------------------------------------------------
+
+This major release of BRL-CAD improves the robustness of the facetize
+command.  Building on work begun in 7.38.0, for the first time BRL-CAD
+is able to successfully facetize all of BRL-CAD's example geometries.
+This involves a major change to the processing pipeline of the
+facetize command, allowing handling of individual primitives to be
+fault tolerant and automatically attempting fallback methods.
+Historically BRL-CAD facetize has attempted to produce output meshes
+even when individual operations fail by silently skipping over failing
+inputs, but now this behavior is changed to a stricter policy of
+halting when individual elements of the process do not succeed.
+
+This release also incorporates the tool 'gist' for generating a one
+page graphical overview and summary of the contents of a .g database.
+This tool is the culmination of work by multiple student teams from
+Texas A&M University and incorporates automatic layout features to
+produce geometry-appropriate visual arrangements.
+
+Also new in this release are capabilities for testing and repairing
+triangle meshes.   The lint command will now validate solid BoT
+behavior with the raytracer, and the 'bot repair' command is able to
+perform hole filling operations on some categories of non-manifold
+BoTs.  Another related new feature allows users to generate explicit
+volumetric BoTs using plate mode BoTs as inputs via the 'bot extrude'
+command.
+
+This release introduces a major change in the management of 3rd party
+dependencies.  The src/other directory has been replaced by an
+external repository specifically tasked with the job of managing 3rd
+party libraries.  By default BRL-CAD will download and build necessary
+dependencies as part of its build automatically.  However, note that
+an internet connection is required by default to access this
+repository.  See the INSTALL file for more details and options for
+preparing to build without internet availability.
+
+Developers requiring only a subset of BRL-CAD (for example, if a
+project only needs librt and its dependencies) can now define subsets
+of BRL-CAD to build with the BRLCAD_COMPONENTS variable.  See INSTALL
+for more information.
+
+* improved obj-g import naming - Chris McGregor
+* added importer attr to stl-g and obj-g BoT objects - Cliff Yapp
+* improved object name generation for stl-g importer - Cliff Yapp
+* updated 3dm-g input attribute: converter -> importer - Cliff Yapp
+* fixed mged 'search -or' filter behavior - Cliff Yapp, Chris McGregor
+* major improvements to 'gist' features and usability
+	- Rohan Dhawan, Leo Feng, Sam Hollenbeck, Timothy Pham,
+	- Yida Zou, Chris McGregor
+* updated pinewood.g test model - Josh Baker
+* updated edcodes man page and help text - Josh Baker
+* update mvall man page - Josh Baker
+* updated OpenCV library to version 4.10.0 - Cliff Yapp
+* updated GDAL library to version 3.9.0 - Cliff Yapp
+* improved 3dm-g error message when file does not exist - Cliff Yapp
+* added new BoT raytracing validity checks to lint cmd - Cliff Yapp
+* removed upper limit on MGED pnts cmd point count - Cliff Yapp
 * added a -t option to bot flip to check BoT orientation - Cliff Yapp
 * fixed shaded drawing of CW BoT solids - Cliff Yapp
-* updated OpenNURBS library to version 8.3.23346.03050 - Cliff Yapp
+* added reair man page - Josh Baker
+* added 'help reair' mged command help text - Josh Baker
+* added experimental 'imgdiff' command-line tool - Cliff Yapp
+* updated OpenNURBS library to version 8.8.24166.15000 - Cliff Yapp
+* improved 'help lc' mged command help text - Josh Baker
+* added 'help lint' mged command help text - Josh Baker
 * added man pages for 'bot check' and 'bot extrude' cmds - Cliff Yapp
 * enhanced bot extrude command to output a BoT mesh - Cliff Yapp
 * added bot check manifold cmd for bot validity testing - Cliff Yapp
@@ -177,7 +261,7 @@ the stage for the aforementioned major feature developments.
 * removed 'nburst' rewrite with burst now deprecated - Cliff Yapp
 * fixed bot_merge with oriented plate mode bots - Sean Morrison
 * bot_dump infers output type from filename extension - Sean Morrison
-* readded MGED viewring, sweep, collab, & rateknob menus - Cliff Yapp
+* re-added MGED viewring, sweep, collab, & rateknob menus - Cliff Yapp
 * fixed a crash when shaded NURBS brep drawing fails - Cliff Yapp
 * added new man pages for brep, process, and ps commands - Cliff Yapp
 * added new man page for 3dm-g Rhino3D importer - Cliff Yapp
@@ -358,7 +442,7 @@ infrastructure with BRL-CAD's imminent migration to Git.
 * improved behavior of MGED overlap checker GUI - Nick Reed
 * fixed startup dimensions of overlap checker window - Nick Reed
 * fixed rtedge line drawing color when using -W flag - Cliff Yapp
-* added -F option to lint cmd to test specifc solid types - Cliff Yapp
+* added -F option to lint cmd to test specific solid types - Cliff Yapp
 * added support to MGED for zooming with mouse wheel - Cliff Yapp
 * fixed solid editing wireframe drawing in MGED - Nick Reed
 * added .r suffixes to region names in 3dm-g conversion - Cliff Yapp
@@ -695,7 +779,7 @@ performance ray tracing pipeline.
 * improved datum wireframes (yellow) and fixed arrowheads - Cliff Yapp
 * added initial manual page for 'burst' ray dispatch tool - Cliff Yapp
 * improved wireframe display list performance - Keith Bowman
-* added draw -S for simplied wireframes, no subtractions - Cliff Yapp
+* added draw -S for simplified wireframes, no subtractions - Cliff Yapp
 * added draw -L# to draw bounding boxes for large objects - Cliff Yapp
 * added 3dm-g instance reference and definition import - Jon Engbert
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
@@ -1596,7 +1680,7 @@ undo support and graphical editing, are expanded upon.
 * pipe now validates independent of parameter order - Daniel Roßberg
 * added '-r' color randomize option to 3dm-g importer - Cliff Yapp
 * enhanced '-v' verbosity option in 3dm-g importer - Cliff Yapp
-* readded -A & -o attribute options to 'draw' and 'erase' - Bob Parker
+* re-added -A & -o attribute options to 'draw' and 'erase' - Bob Parker
 * fixed bug in 'E' command to show object names - John Anderson
 * initial obj-g geometry importer - Erik Greenwald
 * Pro/E export plugin creates a 'Proe_Name' attribute - Bob Parker

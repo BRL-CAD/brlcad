@@ -337,7 +337,7 @@ struct nirt_state_impl {
     nirt_hook_t h_out;     // output
     nirt_hook_t h_msg;     // messages (not errors) not part of command output
     nirt_hook_t h_err;     // err changes
-    nirt_hook_t h_segs;    // segement list is changed
+    nirt_hook_t h_segs;    // segment list is changed
     nirt_hook_t h_objs;    // active list of objects in scene changes
     nirt_hook_t h_frmts;   // output formatting is changed
     nirt_hook_t h_view;    // the camera view is changed
@@ -357,7 +357,7 @@ struct nirt_state_impl {
 
     /* state alteration flags */
     bool b_state;   // updated for any state change
-    bool b_segs;    // updated when segement list is changed
+    bool b_segs;    // updated when segment list is changed
     bool b_objs;    // updated when active list of objects in scene changes
     bool b_frmts;   // updated when output formatting is changed
     bool b_view;    // updated when the camera view is changed

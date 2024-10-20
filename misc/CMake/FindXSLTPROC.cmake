@@ -43,7 +43,7 @@ find_program(XSLTPROC_EXECUTABLE xsltproc DOC "path to the xsltproc executable")
 mark_as_advanced(XSLTPROC_EXECUTABLE)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(XSLTPROC DEFAULT_MSG XSLTPROC_EXECUTABLE)
+find_package_handle_standard_args(XSLTPROC DEFAULT_MSG XSLTPROC_EXECUTABLE)
 
 # FindXSLTPROC.cmake ends here
 

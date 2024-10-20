@@ -5,19 +5,19 @@ include_directories(
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
   ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-stat SHARED stat.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../../libbu/fort.c)
 target_link_libraries(ged-stat libged libbu)
 set_property(TARGET ged-stat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-stat stat.cpp)
-PLUGIN_SETUP(ged-stat ged)
+validate_style(ged-stat stat.cpp)
+plugin_setup(ged-stat ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   stat.cpp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

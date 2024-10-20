@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-sphgroup SHARED sphgroup.c)
 target_link_libraries(ged-sphgroup libged libbu)
 set_property(TARGET ged-sphgroup APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-sphgroup sphgroup.c)
-PLUGIN_SETUP(ged-sphgroup ged)
+validate_style(ged-sphgroup sphgroup.c)
+plugin_setup(ged-sphgroup ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   sphgroup.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

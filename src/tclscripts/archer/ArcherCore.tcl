@@ -1751,7 +1751,7 @@ namespace eval ArcherCore {
     set mPNode2CList() ""
 
     itk_component add treeAccordian {
-	::cadwidgets::Accordian $parent.treeAccordian
+	::cadwidgets::Accordion $parent.treeAccordian
     } {}
 
     $itk_component(treeAccordian) addTogglePanelCallback [::itcl::code $this accordianCallback]
@@ -7424,7 +7424,7 @@ namespace eval ArcherCore {
     set draw_objects ""
     set how 0
 
-    if {!$_state && !$mToolViewChange} {    # The same accordian button was pressed and there's NO tool view change
+    if {!$_state && !$mToolViewChange} {    # The same accordion button was pressed and there's NO tool view change
 	if {[regexp Tree $_item all]} {
 	    set mEnableListView 1
 	    set item [regsub Tree $_item List]
@@ -7461,7 +7461,7 @@ namespace eval ArcherCore {
 
 	$itk_component(treeAccordian) rename $_item $item
 
-    } else {    # A different accordian button was pressed OR there's a tool view change
+    } else {    # A different accordion button was pressed OR there's a tool view change
 	if {[catch {gedCmd who} whoList]} {
 	    set whoList ""
 	}

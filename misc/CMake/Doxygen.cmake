@@ -35,7 +35,6 @@
 ###
 # CMake macros pertaining to Doxygen related functionality.
 
-
 include(CMakeParseArguments)
 
 define_property(GLOBAL PROPERTY DOXYGEN_FEATURES BRIEF_DOCS "Doxygen features" FULL_DOCS "All Doxygen features")
@@ -45,7 +44,7 @@ define_property(GLOBAL PROPERTY DOXYGEN_FEATURES BRIEF_DOCS "Doxygen features" F
 macro(DOXYGEN_FEATURE label)
   if(${ARGC} GREATER 2)
     # Parse extra arguments
-    CMAKE_PARSE_ARGUMENTS(FEATURE "" "" "DESCRIPTION;DIR" ${ARGN})
+    cmake_parse_arguments(FEATURE "" "" "DESCRIPTION;DIR" ${ARGN})
   endif(${ARGC} GREATER 2)
   if(FEATURE_DESCRIPTION)
     set(FEATURE_STRING "@par ${label}\n${FEATURE_DESCRIPTION}\n\n")

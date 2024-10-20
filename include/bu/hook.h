@@ -127,7 +127,7 @@ BU_EXPORT extern void bu_hook_delete_all(struct bu_hook_list *hlp);
 /**
  * replace all hooks in a list with the hooks from another list
  *
- * all hooks from ther 'destination' hook list will be deleted and all
+ * all hooks from the 'destination' hook list will be deleted and all
  * hooks in the 'source' list will be copied into the 'destination'
  * list.
  */

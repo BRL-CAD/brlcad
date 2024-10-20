@@ -151,7 +151,7 @@ gui_output(void *clientData, void *str)
 #if 0
 // Version of the above callback that just accumulates output in a buffer
 // rather than writing it immediately to the interp - should be a starting
-// point when we work on mulithreading ged_exec calls
+// point when we work on multithreading ged_exec calls
 int
 gui_output(void *UNUSED(clientData), void *str)
 {

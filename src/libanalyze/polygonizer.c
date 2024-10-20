@@ -928,7 +928,7 @@ analyze_polygonizer_memfree:
     rt_clean_resource(rtip, resp);
     rt_free_rti(rtip);
     BU_PUT(resp, struct resource);
-    BU_PUT(ap, struct appliation);
+    BU_PUT(ap, struct application);
     BU_PUT(rtpnt, struct pnt_normal);
 
     return ret;

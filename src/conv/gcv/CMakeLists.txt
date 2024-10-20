@@ -1,8 +1,8 @@
-BRLCAD_ADDEXEC(gcv gcv.c "libgcv;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(gcv gcv.c "libgcv;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 add_dependencies(gcv gcv_plugins)
 
-CMAKEFILES(gcv.sh)
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(gcv.sh)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

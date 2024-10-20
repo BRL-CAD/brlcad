@@ -26,8 +26,9 @@
 
 #include "bu.h"
 
+
 /* If expected_str is NULL, check that return code is zero */
-void
+static void
 pc_compare(const char *input, const char *expected_str, bu_path_component_t type)
 {
     struct bu_vls component = BU_VLS_INIT_ZERO;
@@ -68,8 +69,8 @@ main(int argc, char *argv[])
     const char *control = NULL;
     int intarg = 0;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 

@@ -3772,7 +3772,7 @@ rt_pipe_tess(
     *r = (struct nmgregion *)NULL;
 
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) {
-	return 0;    /* nothing to tesselate */
+	return 0;    /* nothing to tessellate */
     }
 
     pp1 = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
@@ -3790,7 +3790,7 @@ rt_pipe_tess(
     }
 
     if (max_diam <= tol->dist) {
-	return 0;    /* nothing to tesselate */
+	return 0;    /* nothing to tessellate */
     }
 
     /* calculate pipe size for relative tolerance */

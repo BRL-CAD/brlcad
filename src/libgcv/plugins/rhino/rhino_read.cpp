@@ -282,8 +282,11 @@ chk_name(const ON_wString& _name, std::unordered_map <std::string, int>& used_na
 std::unordered_map <std::string, std::string>
 load_model(const char* default_name, const std::string& path, ONX_Model& model)
 {
+    if (!bu_file_exists(path.c_str(), NULL))
+	throw InvalidRhinoModelError("Specified file not found.");
+
     if (!model.Read(path.c_str()))
-	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
+	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v8 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 
     std::unordered_map <std::string, std::string> uuid_to_name;
     std::unordered_map <std::string, int> used_names;			/* used names, times used */
@@ -313,7 +316,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
     if (mk_brep(&wdb, name.c_str(), (void *)b))
 	bu_bomb("mk_brep() failed");
     /* tag solid with converter attribute */
-    if (db5_update_attribute(name.c_str(), "converter", "3dm - BRL", wdb.dbip))
+    if (db5_update_attribute(name.c_str(), "importer", "3dm-g", wdb.dbip))
 	bu_bomb("db5_update_attribute() failed");
 }
 
@@ -387,7 +390,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 		   thicknesses.empty() ? NULL :  &thicknesses.at(0), bitv.ptr))
 	    bu_bomb("mk_bot() failed");
 	/* tag solid with converter attribute */
-	if (db5_update_attribute(name.c_str(), "converter", "3dm - BRL", wdb.dbip))
+	if (db5_update_attribute(name.c_str(), "importer", "3dm-g", wdb.dbip))
 	    bu_bomb("db5_update_attribute() failed");
 	return;
     }
@@ -902,7 +905,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
 
     // Set region flags, add .r suffix to regions if not already present
     renamed.clear();
-    const char *reg_search = "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader";
+    const char *reg_search = "-type comb -above=1 -type shape";
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
     bu_ptbl found_instances = BU_PTBL_INIT_ZERO;
@@ -1133,7 +1136,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
     try {
-	/* Use the openNURBS extenstion to read the whole 3dm file into memory. */
+	/* Use the openNURBS extension to read the whole 3dm file into memory. */
 	ONX_Model model;
 	std::unordered_map <std::string, std::string> uuid_to_names;
 	uuid_to_names = load_model(gcv_options->default_name, source_path, model);

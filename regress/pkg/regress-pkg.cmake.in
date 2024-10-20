@@ -9,17 +9,19 @@ file(WRITE "${LOGFILE}" "Starting pkg test run\n")
 # is passed in via the EXEC variable at runtime.  De-quote it and assign it to
 # the appropriate variable.
 string(REPLACE "\\" "" RPKG "${EXEC}")
-if (NOT EXISTS "${RPKG}")
+if(NOT EXISTS "${RPKG}")
   file(WRITE "${LOGFILE}" "regress_pkg not found at location \"${RPKG}\" - aborting\n")
   file(READ "${LOGFILE}" LOG)
   message(FATAL_ERROR "Unable to find regress_pkg, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
-endif (NOT EXISTS "${RPKG}")
+endif(NOT EXISTS "${RPKG}")
 
 execute_process(
   COMMAND "${RPKG}"
-  RESULT_VARIABLE pkg_result OUTPUT_VARIABLE pkg_log ERROR_VARIABLE pkg_log
+  RESULT_VARIABLE pkg_result
+  OUTPUT_VARIABLE pkg_log
+  ERROR_VARIABLE pkg_log
   WORKING_DIRECTORY ${CBDIR}
-  )
+)
 
 if(pkg_result)
   message(FATAL_ERROR "[pkg] Failure, unexpected result running ${RPKG}\n ${pkg_log}\n")
@@ -31,4 +33,3 @@ endif(pkg_result)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

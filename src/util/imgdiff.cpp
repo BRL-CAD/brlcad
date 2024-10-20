@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 
 #include "bu.h"
 #include "icv.h"
@@ -78,6 +79,8 @@ main(int ac, const char **av)
     size_t height1 = 0;
     size_t width2 = 0;
     size_t height2 = 0;
+    int approx_diff = 0;
+    uint32_t pret = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     static bu_mime_image_t in_type_1 = BU_MIME_IMAGE_UNKNOWN;
@@ -98,16 +101,17 @@ main(int ac, const char **av)
 
     const char *diff_usage = "imgdiff [options] img1 img2";
     struct bu_opt_desc icv_opt_desc[] = {
-	{"h", "help",             "",           NULL,         &need_help,             "Print help and exit."               },
-	{"?", "",                 "",           NULL,         &need_help,             "",                                  },
-	{"o", "output",           "file",       &file_null,   (void *)&out_path,      "Output file.",                      },
-	{"",  "width-img1",       "#",          &bu_opt_int,  (void *)&width1,        "Image width of first image.",       },
-	{"",  "height-img1",      "#",          &bu_opt_int,  (void *)&height1,       "Image height of first iamge.",      },
-	{"",  "width-img2",       "#",          &bu_opt_int,  (void *)&width2,        "Image width of second image.",      },
-	{"",  "height-img2",      "#",          &bu_opt_int,  (void *)&height2,       "Image height of second iamge.",     },
-	{"",  "format-img1",      "format",     &image_mime,  (void *)&in_type_1,     "File format of first input file.",  },
-	{"",  "format-img2",      "format",     &image_mime,  (void *)&in_type_2,     "File format of second input file.", },
-	{"",  "output-format",    "format",     &image_mime,  (void *)&out_type,      "File format of output file."        },
+	{"h", "help",             "",           NULL,         &need_help,             "Print help and exit."                      },
+	{"?", "",                 "",           NULL,         &need_help,             "",                                         },
+	{"o", "output",           "file",       &file_null,   (void *)&out_path,      "Output file.",                             },
+	{"",  "width-img1",       "#",          &bu_opt_int,  (void *)&width1,        "Image width of first image.",              },
+	{"",  "height-img1",      "#",          &bu_opt_int,  (void *)&height1,       "Image height of first image.",             },
+	{"",  "width-img2",       "#",          &bu_opt_int,  (void *)&width2,        "Image width of second image.",             },
+	{"",  "height-img2",      "#",          &bu_opt_int,  (void *)&height2,       "Image height of second image.",            },
+	{"",  "format-img1",      "format",     &image_mime,  (void *)&in_type_1,     "File format of first input file.",         },
+	{"",  "format-img2",      "format",     &image_mime,  (void *)&in_type_2,     "File format of second input file.",        },
+	{"",  "output-format",    "format",     &image_mime,  (void *)&out_type,      "File format of output file."               },
+	{"A", "approximate",      "",           NULL,         (void *)&approx_diff ,  "Calculate approximate difference metric."  },
 	BU_OPT_DESC_NULL
     };
 
@@ -207,13 +211,20 @@ main(int ac, const char **av)
     img1 = icv_read(img_path_1, in_type_1, width1, height1);
     img2 = icv_read(img_path_2, in_type_2, width2, height2);
 
-    ret = icv_diff(&matching, &off_by_1, &off_by_many, img1, img2);
+    if (approx_diff) {
+	pret = icv_pdiff(img1, img2);
+	bu_log("Hamming distance: %" PRIu32 "\n", pret);
+	ret = 0;
+	goto cleanup;
+    } else {
+	ret = icv_diff(&matching, &off_by_1, &off_by_many, img1, img2);
 
-    bu_log("%d matching, %d off by 1, %d off by many\n", matching, off_by_1, off_by_many);
+	bu_log("%d matching, %d off by 1, %d off by many\n", matching, off_by_1, off_by_many);
 
-    if (out_path && (off_by_1 || off_by_many)) {
-	oimg = icv_diffimg(img1, img2);
-	icv_write(oimg, out_path, out_type);
+	if (out_path && (off_by_1 || off_by_many)) {
+	    oimg = icv_diffimg(img1, img2);
+	    icv_write(oimg, out_path, out_type);
+	}
     }
 
     /* Clean up */

@@ -60,7 +60,7 @@ Compilation
 Testing
 -------
 28. Are any new inputs checked, sanitized?
-29. For changes fixing a recurrant bug, is there an accompanying test?
+29. For changes fixing a recurrent bug, is there an accompanying test?
 30. Does performance testing pass and NOT decrease?  No slow downs.
 31. Do all regression tests pass?  No new failures.
 

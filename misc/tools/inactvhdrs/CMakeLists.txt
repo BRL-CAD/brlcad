@@ -39,12 +39,7 @@ cmake_minimum_required(VERSION 3.18)
 # set CMake project name
 project(INACTVHDRS)
 
-
-
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 # We use the std::filesystem from C++17 in this utility, so only try to build
 # it if we know we have a compiler that supports it - BRL-CAD as a whole does
@@ -56,17 +51,17 @@ if(COMPILER_SUPPORTS_CXX17)
   add_executable(inactvhdrs inactvhdrs.cpp)
   target_compile_features(inactvhdrs PRIVATE cxx_std_17)
   check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
-  if (O3_COMPILER_FLAG)
+  if(O3_COMPILER_FLAG)
     # If we have the O3 flag, use it
     target_compile_options(inactvhdrs PRIVATE "-O3")
-  endif (O3_COMPILER_FLAG)
+  endif(O3_COMPILER_FLAG)
 endif(COMPILER_SUPPORTS_CXX17)
 
 if(COMMAND CMAKEFILES)
-  CMAKEFILES(
+  cmakefiles(
     CMakeLists.txt
     inactvhdrs.cpp
-    )
+  )
 endif()
 
 # Local Variables:
@@ -75,4 +70,3 @@ endif()
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

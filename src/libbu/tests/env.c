@@ -28,8 +28,8 @@
 int
 main(int UNUSED(ac), char *av[])
 {
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 
@@ -47,6 +47,7 @@ main(int UNUSED(ac), char *av[])
     size_t all_mem2 = 0;
     size_t avail_mem2 = 0;
     size_t page_mem2 = 0;
+
     (void)bu_mem(BU_MEM_ALL, &all_mem2);
     if (all_mem2 != (size_t)all_mem)
 	return -4;
@@ -60,14 +61,15 @@ main(int UNUSED(ac), char *av[])
     char all_buf[6] = {'\0'};
     char avail_buf[6] = {'\0'};
     char p_buf[6] = {'\0'};
+
     bu_humanize_number(all_buf, 5, all_mem, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
     bu_humanize_number(avail_buf, 5, avail_mem, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
     bu_humanize_number(p_buf, 5, page_mem, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
 
     bu_log("MEM report: all: %s(%zd) avail: %s(%zd) page_size: %s(%zd)\n",
-	    all_buf, all_mem,
-	    avail_buf, avail_mem,
-	    p_buf, page_mem);
+	   all_buf, all_mem,
+	   avail_buf, avail_mem,
+	   p_buf, page_mem);
 
     return 0;
 }

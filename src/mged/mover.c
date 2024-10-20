@@ -73,7 +73,7 @@ moveHobj(struct directory *dp, matp_t xlate)
 /*
  * This routine is used when an instance of an object is to be
  * moved relative to a combination, as opposed to modifying the
- * co-ordinates of member solids.  Input is a pointer to a COMB,
+ * coordinates of member solids.  Input is a pointer to a COMB,
  * a pointer to an object within the COMB, and modifications.
  */
 void

@@ -231,6 +231,12 @@ static int antialias = 0;
 static int both_sides = 0;
 
 
+/*
+ * whether to draw aligned axes at the model's origin
+*/
+static int draw_axes = 0;
+
+
 struct bu_vls occlusion_objects = BU_VLS_INIT_ZERO;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
@@ -266,6 +272,8 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "aa", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "both_sides", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "bs", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "draw_axes", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "da", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -858,16 +866,141 @@ void view_setup(struct rt_i *UNUSED(rtip))
 /**
  * end of a frame, called after rt_clean()
  */
-void view_cleanup(struct rt_i *UNUSED(rtip))
+void
+view_cleanup(struct rt_i *UNUSED(rtip))
 {
 }
 
+/**
+ * draws a pixel depending on whether we're writing to a file or a window
+ */
+void draw_pixel(const double x, const double y, const RGBpixel pixel)
+{
+    if (fbp != FB_NULL) {
+        (void)fb_write(fbp, x, y, pixel, 1);
+    }
+    else if (bif) {
+	RGBpixel ptmp;
+	for (int i = 0; i < 3; i++)
+	    ptmp[i] = pixel[i];
+	double *pdata = icv_uchar2double(ptmp, 3);
+        (void)icv_writepixel(bif, x, y, pdata);
+	bu_free(pdata, "pdata");
+    }
+}
 
 /**
- * end of each frame
+ * draws a 'X' with bottom left pixel location denoted by (X, Y).
  */
-void view_end(struct application *UNUSED(ap))
+void draw_x_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
 {
+    if (!draw_axes) {
+        return;
+    }
+    for (unsigned int i = 0; i <= lineLength; i++) {
+        draw_pixel(x + i, y + i, pixel);
+        draw_pixel(x + lineLength - i, y + i, pixel);
+    }
+}
+
+/**
+ * draws a 'Y' with bottom left pixel location denoted by (X, Y).
+ */
+void draw_y_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
+{
+    if (!draw_axes) {
+        return;
+    }
+    for (unsigned int i = 0; i <= lineLength; i++) {
+        draw_pixel(x, y + i, pixel);
+        draw_pixel(x - i, y + lineLength + i, pixel);
+        draw_pixel(x + i, y + lineLength + i, pixel);
+    }
+}
+
+/**
+ * Draws a 'Z' with bottom left pixel location denoted by(X, Y).
+ */
+void draw_z_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
+{
+    if (!draw_axes) {
+        return;
+    }
+    for (unsigned int i = 0; i <= lineLength; i++) {
+        draw_pixel(x + i, y, pixel);
+        draw_pixel(x + i, y + i, pixel);
+        draw_pixel(x + i, y + lineLength, pixel);
+    }
+}
+
+/**
+ * end of each frame, draws axis aligned axes and origin if "draw_axes" is enabled
+ */
+void
+view_end(struct application* UNUSED(ap))
+{
+    if (!draw_axes || (fbp == NULL && bif == NULL)) {
+        return;
+    }
+
+    const RGBpixel pixel = { 31, 73, 133 };
+
+    // model center in pixel coordinates
+    const double modelCenter[2] = { (width + 0.5) / 2.0 + (model2view[MDX] / cell_width), (height + 0.5) / 2.0 + (model2view[MDY] / cell_height) };
+
+    if (modelCenter[0] < 0 || modelCenter[0] >= width || modelCenter[1] < 0 || modelCenter[1] >= height) {
+        return;
+    }
+
+    const double EPSILON = 1e-9;
+    const unsigned int HALF_AXES_LENGTH = 10;
+    const unsigned int POSITIVE_AXES_EXTRA_LENGTH = 5;
+    const unsigned int AXES_END = 15;
+    // offset to draw text labels after the axes
+    const unsigned int OFFSET = 5;
+
+    // front view
+    if (fabs(azimuth) <= EPSILON && fabs(elevation) <= EPSILON)
+    {
+        // drawing positive axis labels (+X, +Y, +Z).
+        // The added magic numbers are used to offset the space taken up by the label.
+        draw_z_label(modelCenter[0] - 5, modelCenter[1] + AXES_END + OFFSET, 10, pixel);
+        draw_y_label(modelCenter[0] + AXES_END + OFFSET + 3, modelCenter[1] - 5, 6, pixel);
+        for (unsigned int i = 1; i <= POSITIVE_AXES_EXTRA_LENGTH; i++) {
+            // making positive axes longer
+            draw_pixel(modelCenter[0], modelCenter[1] + HALF_AXES_LENGTH + i, pixel);
+            draw_pixel(modelCenter[0] + HALF_AXES_LENGTH + i, modelCenter[1], pixel);
+        }
+    }
+    // top view
+    else if (fabs(azimuth) <= EPSILON && fabs(elevation - 90.0) <= EPSILON)
+    {
+        draw_x_label(modelCenter[0] - AXES_END - OFFSET - 7, modelCenter[1] - 5, 10, pixel);
+        draw_y_label(modelCenter[0], modelCenter[1] - AXES_END - OFFSET - 10, 6, pixel);
+        for (unsigned int i = 1; i <= POSITIVE_AXES_EXTRA_LENGTH; i++) {
+            draw_pixel(modelCenter[0], modelCenter[1] - HALF_AXES_LENGTH - i, pixel);
+            draw_pixel(modelCenter[0] - HALF_AXES_LENGTH - i, modelCenter[1], pixel);
+        }
+    }
+    // left view
+    else if (fabs(azimuth - 270.0) <= EPSILON && fabs(elevation) <= EPSILON) {
+        draw_z_label(modelCenter[0] - 5, modelCenter[1] + AXES_END + OFFSET, 10, pixel);
+        draw_x_label(modelCenter[0] - AXES_END - OFFSET - 7, modelCenter[1] - 5, 10, pixel);
+        for (unsigned int i = 1; i <= POSITIVE_AXES_EXTRA_LENGTH; i++) {
+            draw_pixel(modelCenter[0], modelCenter[1] + HALF_AXES_LENGTH + i, pixel);
+            draw_pixel(modelCenter[0] - HALF_AXES_LENGTH - i, modelCenter[1], pixel);
+        }
+    }
+    else {
+        return;
+    }
+
+    for (unsigned int i = 0; i < HALF_AXES_LENGTH; i++) {
+        draw_pixel(modelCenter[0] + i, modelCenter[1]    , pixel);
+        draw_pixel(modelCenter[0]    , modelCenter[1] + i, pixel);
+        draw_pixel(modelCenter[0] - i, modelCenter[1]    , pixel);
+        draw_pixel(modelCenter[0]    , modelCenter[1] - i, pixel);
+    }
 }
 
 
@@ -1442,6 +1575,8 @@ void application_init(void) {
     view_parse[25].sp_offset = bu_byteoffset(antialias);
     view_parse[26].sp_offset = bu_byteoffset(both_sides);
     view_parse[27].sp_offset = bu_byteoffset(both_sides);
+    view_parse[28].sp_offset = bu_byteoffset(draw_axes);
+    view_parse[29].sp_offset = bu_byteoffset(draw_axes);
 
     option("", "-c \"command\"", "Customize behavior (see rtedge manual)", 1);
     option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);

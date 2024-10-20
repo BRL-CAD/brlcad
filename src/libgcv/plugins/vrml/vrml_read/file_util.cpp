@@ -72,7 +72,7 @@ FileUtil::getFileType()
 
     int fileType = FILEUTIL_TYPE_UNKNOWN;
 
-    //compares file formate with known formats to check for vrml version 1 or 2
+    //compares file format with known formats to check for vrml version 1 or 2
     if (bu_strncmp((char *)format, "#VRML V2.0", 10) == 0) {
 	    fileType = FILEUTIL_TYPE_VRML;  //vrml version 2
     }

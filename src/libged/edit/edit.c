@@ -1697,7 +1697,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 					 BRLCAD_ERROR) == BRLCAD_ERROR)
 		    return BRLCAD_ERROR;
 		num_args_set += num_target_objs;
-		break; /* batch opertor should be last arg */
+		break; /* batch operator should be last arg */
 	    }
 	    if (cur_arg->object) {
 		if (edit_arg_to_coord(gedp, cur_arg, (vect_t *)NULL) ==
@@ -2267,7 +2267,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		conv_flags = GED_QUIET;
 		allow_subopts = 0;
 		break;
-	    case 'x': /* singular coord specif. sub-opts */
+	    case 'x': /* singular coord specific. sub-opts */
 	    case 'y':
 	    case 'z':
 		idx_cur_opt = 0;

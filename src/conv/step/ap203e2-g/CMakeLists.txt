@@ -1,11 +1,12 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203e2.exp)
 add_definitions(-DAP203e2)
 
-if (DEFINED ENABLE_STEP_EXPERIMENTAL)
-  GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap203e2g)
-endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
+if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+  generate_schema_inputs(${STEP_SCHEMA_FILE} ap203e2g)
+endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-set(ap203e2g_SOURCES
+set(
+  ap203e2g_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   ../STEPWrapper.cpp
@@ -214,9 +215,10 @@ set(ap203e2g_SOURCES
   ../step-g/VolumeSiUnit.cpp
   ../step-g/VolumeUnit.cpp
   ../step-g/step-g.cpp
-  )
+)
 
-set(ap203e2g_LIBS
+set(
+  ap203e2g_LIBS
   libwdb
   librt
   libbu
@@ -226,28 +228,29 @@ set(ap203e2g_LIBS
   ${STEPCODE_DAI_LIBRARY}
   ${STEPCODE_CORE_LIBRARY}
   ${OPENNURBS_LIBRARIES}
-  )
+)
 
-set(AP203_INCLUDE_DIRS
+set(
+  AP203_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
   ${STEPCODE_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
-  )
+)
 
-if (DEFINED ENABLE_STEP_EXPERIMENTAL)
-  BRLCAD_ADDEXEC(ap203e2-g "${ap203e2g_SOURCES}" "${ap203e2g_LIBS}" NO_STRICT FOLDER Conv)
+if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+  brlcad_addexec(ap203e2-g "${ap203e2g_SOURCES}" "${ap203e2g_LIBS}" NO_STRICT FOLDER Conv)
   target_include_directories(ap203e2-g BEFORE PRIVATE ${AP203_INCLUDE_DIRS})
   add_dependencies(ap203e2-g step-express-${SCHEMA_NAME}-ap203e2g)
-endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
+endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-CMAKEFILES(
+cmakefiles(
   ${ap203e2g_SOURCES}
   CMakeLists.txt
   ap203e2.exp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

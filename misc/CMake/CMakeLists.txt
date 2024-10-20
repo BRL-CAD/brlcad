@@ -1,4 +1,5 @@
-set(cmake_ignore_files
+set(
+  cmake_ignore_files
   BRLCAD_API_Flag.cmake
   BRLCAD_Build_Types.cmake
   BRLCAD_CPack.cmake
@@ -27,18 +28,19 @@ set(cmake_ignore_files
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
   FindAppleseed.cmake
-  FindASSETIMPORT.cmake
   FindBlosc.cmake
+  FindBRLCAD.cmake
   FindBSON.cmake
-  FindFontconfig.cmake
   FindGECODE.cmake
-  FindGeogram.cmake
+  FindGEOGRAM.cmake
+  FindGTE.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
   FindLINENOISE.cmake
   FindLMDB.cmake
   FindLibUV.cmake
   FindMANIFOLD.cmake
+  FindMMESH.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOpenMesh.cmake
@@ -73,7 +75,6 @@ set(cmake_ignore_files
   Path_Setup.cmake
   RPath_Setup.cmake
   ResetCache.cmake
-  TCL_PKGINDEX.cmake
   TrackFiles.cmake
   compat/README
   compat/README.compat
@@ -110,10 +111,10 @@ set(cmake_ignore_files
   scripts/printtime.cmake
   scripts/tcl_mkindex.cmake
   scripts/timestamp.cmake
-  )
-CMAKEFILES(${cmake_ignore_files})
+)
+cmakefiles(${cmake_ignore_files})
 
-CMAKEFILES(NOTES)
+cmakefiles(NOTES)
 
 # Local Variables:
 # tab-width: 8

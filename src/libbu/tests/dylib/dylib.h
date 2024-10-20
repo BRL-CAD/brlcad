@@ -14,6 +14,7 @@
 #include "common.h"
 #include "bu/ptbl.h"
 
+
 #ifndef BU_DYLIB_EXPORT
 #  if defined(BU_DYLIB_DLL_EXPORTS) && defined(BU_DYLIB_DLL_IMPORTS)
 #    error "Only BU_DYLIB_DLL_EXPORTS or BU_DYLIB_DLL_IMPORTS can be defined, not both."
@@ -26,6 +27,7 @@
 #  endif
 #endif
 
+
 struct dylib_contents {
     const char *const name;
     double version;
@@ -33,15 +35,19 @@ struct dylib_contents {
     int (*calc)(char **result, int rmaxlen, int input);
 };
 
+
 struct dylib_plugin {
     const struct dylib_contents * const i;
 };
 
-// Load all plugins present in the LIBEXEC_PLUGINS/dylib directory.  Optionally return
-// handles in a second table to allow the calling of dylib_close_plugins.
+
+// Load all plugins present in the LIBEXEC_PLUGINS/dylib directory.
+// Optionally return handles in a second table to allow the calling of
+// dylib_close_plugins.
 BU_DYLIB_EXPORT extern int dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *handles);
 
-// If we stored handles when calling dylib_load_plugins, we can close them with this call.
+// If we stored handles when calling dylib_load_plugins, we can close
+// them with this call.
 BU_DYLIB_EXPORT extern int dylib_close_plugins(struct bu_ptbl *handles);
 
 /*

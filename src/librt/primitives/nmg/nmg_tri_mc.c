@@ -62,7 +62,7 @@
  *   [ ] ???
  *   [ ] profit! (Mid Apr10)
  *   [ ] explore optimizations if time left?
- *   [ ] compare old nmg tesselator for accuracy/performance/robustness?
+ *   [ ] compare old nmg tessellator for accuracy/performance/robustness?
  */
 
 #include "common.h"

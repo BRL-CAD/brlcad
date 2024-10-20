@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Archer was observed to mangle the structure of a comb tree when assigning
+  a color from the dialog panel.  MGED is able to assign the color fine,
+  so there appears to be something specific to Archer's comb tree handling
+  that is flawed.  Not all combs are handled incorrectly. Issue appears to
+  be long standing - observed as far back as at least version 7.28.
+
 * rtcheck_handler_cleanup() throws 'invalid handle specified' on Windows
   in closing of STDOUT (see FIXME comment). Does not affect normal running,
   but a debug build complains.

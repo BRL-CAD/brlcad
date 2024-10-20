@@ -191,6 +191,11 @@ body OverlapFileTool::runTools { } {
 	return
     }
 
+    # add some user userfeedback
+    set _statusText "Running checks... (this could take a while)"
+    set _progressValue 5
+    update
+
     # disable the go button and entry before proceeding to prevent any re-runs
     $itk_component(buttonGo) configure -state disabled
     $itk_component(objectsEntry) configure -state disabled
@@ -198,17 +203,27 @@ body OverlapFileTool::runTools { } {
 
     # delete any previous overlaps files in the db directory
     set db_path [eval opendb]
-    set dir [file dirname $db_path]
+    set curr_path [eval pwd]
     set name [file tail $db_path]
-    set ol_dir [file join $dir "${name}.ck"]
-    set filename [file join $dir "${name}.ck" "ck.${name}.overlaps"]
+    set ol_dir [file join $curr_path "${name}.ck"]
+    set filename [file join $ol_dir "ck.${name}.overlaps"]
     file delete -force -- $ol_dir
 
     # run overlaps check for all the specified objects
-    if { [catch {exec [file join [bu_dir bin] gchecker] $db_path $_objs}] } {
-	set gcmd "[file join [bu_dir bin] gchecker] $db_path $_objs"
-	puts "gchecker run failed: $gcmd"
+    set gcheck_status [catch {exec [file join [bu_dir bin] gchecker] "-f" $db_path $_objs} result]
+    if { $gcheck_status != 0 && ![string equal $::errorCode NONE] } {
+	#set gcmd "[file join [bu_dir bin] gchecker] $db_path $_objs"
+	tk_messageBox -type ok -title "Run Error" -message $result
+	$itk_component(buttonGo) configure -state normal
+	$itk_component(objectsEntry) configure -state normal
+	$this configure -cursor ""
+	set _progressValue 0
+	set _statusText "Ready"
+	return
     }
+
+    set _statusText "Checks Completed"
+    set _progressValue 80
 
     # gchecker does not create a file when no overlaps are found - check before attempting to read
     set overlap_exists [file exists $filename]
@@ -216,6 +231,7 @@ body OverlapFileTool::runTools { } {
         # check for the count of overlaps detected
         set fp [open $filename r]
         set ldata [read $fp]
+	close $fp
         set ov_count [llength [split $ldata "\n"]]
         incr ov_count -1
     }

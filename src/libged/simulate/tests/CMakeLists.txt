@@ -21,24 +21,20 @@ if(BRLCAD_ENABLE_BULLET)
   find_package(Bullet REQUIRED)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ${CFLS_TMP})
 
-  set(SIM_INCLUDE_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate
-    ${BULLET_INCLUDE_DIR}
-    )
+  set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
 
   # If bullet was built with USE_DOUBLE_PRECISION, we need this (see
   # https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=9670 for more discussion.)
   # Hopefully we can find a way to detect this correctly at some point...
   add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
 
-  BRLCAD_ADDEXEC(simulate_test "simulate_test.cpp" "libged;${BULLET_LIBRARIES}" TEST)
+  brlcad_addexec(simulate_test "simulate_test.cpp" "libged;${BULLET_LIBRARIES}" TEST)
   target_include_directories(simulate_test BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
-  BRLCAD_ADD_TEST(NAME simulate_test COMMAND simulate_test)
+  brlcad_add_test(NAME simulate_test COMMAND simulate_test)
 endif(BRLCAD_ENABLE_BULLET)
 
-CMAKEFILES(simulate_test.cpp)
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(simulate_test.cpp)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8
@@ -46,4 +42,3 @@ CMAKEFILES(CMakeLists.txt)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

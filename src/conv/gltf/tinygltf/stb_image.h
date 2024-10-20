@@ -4516,13 +4516,13 @@ static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 r
 
    // we make a separate pass to expand bits to pixels; for performance,
    // this could run two scanlines behind the above code, so it won't
-   // intefere with filtering but will still be in the cache.
+   // interfere with filtering but will still be in the cache.
    if (depth < 8) {
       for (j=0; j < y; ++j) {
          stbi_uc *cur = a->out + stride*j;
          stbi_uc *in  = a->out + stride*j + x*out_n - img_width_bytes;
          // unpack 1/2/4-bit into a 8-bit buffer. allows us to keep the common 8-bit path optimal at minimal cost for 1/2/4-bit
-         // png guarante byte alignment, if width is not multiple of 8/4/2 we'll decode dummy trailing data that will be skipped in the later loop
+         // png guarantee byte alignment, if width is not multiple of 8/4/2 we'll decode dummy trailing data that will be skipped in the later loop
          stbi_uc scale = (color == 0) ? stbi__depth_scale_table[depth] : 1; // scale grayscale values to 0..255 range
 
          // note that the final byte might overshoot and write more data than desired.
@@ -4704,7 +4704,7 @@ static int stbi__expand_png_palette(stbi__png *a, stbi_uc *palette, int len, int
    p = (stbi_uc *) stbi__malloc_mad2(pixel_count, pal_img_n, 0);
    if (p == NULL) return stbi__err("outofmem", "Out of memory");
 
-   // between here and free(out) below, exitting would leak
+   // between here and free(out) below, exiting would leak
    temp_out = p;
 
    if (pal_img_n == 3) {
@@ -4794,11 +4794,13 @@ static void stbi__de_iphone(stbi__png *z)
 static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
 {
    stbi_uc palette[1024], pal_img_n=0;
-   stbi_uc has_trans=0, tc[3]={0};
+   stbi_uc has_trans=0;
    stbi__uint16 tc16[3];
    stbi__uint32 ioff=0, idata_limit=0, i, pal_len=0;
    int first=1,k,interlace=0, color=0, is_iphone=0;
    stbi__context *s = z->s;
+
+   stbi_uc *tc = (stbi_uc *) stbi__malloc(s->img_n);
 
    z->expanded = NULL;
    z->idata = NULL;
@@ -4923,6 +4925,7 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
                } else {
                   if (!stbi__compute_transparency(z, tc, s->img_out_n)) return 0;
                }
+	       STBI_FREE(tc);
             }
             if (is_iphone && stbi__de_iphone_flag && s->img_out_n > 2)
                stbi__de_iphone(z);
@@ -4961,6 +4964,8 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
       // end of PNG chunk, read and skip CRC
       stbi__get32be(s);
    }
+
+   STBI_FREE(tc);
 }
 
 static void *stbi__do_png(stbi__png *p, int *x, int *y, int *n, int req_comp, stbi__result_info *ri)
@@ -5545,7 +5550,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
    int read_next_pixel = 1;
    STBI_NOTUSED(ri);
 
-   //   do a tiny bit of precessing
+   //   do a tiny bit of processing
    if ( tga_image_type >= 8 )
    {
       tga_image_type -= 8;
@@ -6454,7 +6459,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
          // 0:  not specified.
       }
 
-      // background is what out is after the undoing of the previou frame; 
+      // background is what out is after the undoing of the previous frame; 
       memcpy( g->background, g->out, 4 * g->w * g->h ); 
    }
 
@@ -7407,7 +7412,7 @@ STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user
       1.31  (2011-06-20)
               a few more leak fixes, bug in PNG handling (SpartanJ)
       1.30  (2011-06-11)
-              added ability to load files via callbacks to accomidate custom input streams (Ben Wenger)
+              added ability to load files via callbacks to accommodate custom input streams (Ben Wenger)
               removed deprecated format-specific test/load functions
               removed support for installable file formats (stbi_loader) -- would have been broken for IO callbacks anyway
               error cases in bmp and tga give messages and don't leak (Raymond Barbiero, grisha)

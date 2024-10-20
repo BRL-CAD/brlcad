@@ -360,7 +360,7 @@ ON_NurbsCurve_ClosestPointToLineSegment(
     if (nc->IsLinear(TOL2)) {
 	// If the curve is linear, this reduces to an lseg/lseg test and
 	// (optionally depending on what the user has requested) a get closest
-	// point operation to figure out the corresponding t paramater.
+	// point operation to figure out the corresponding t parameter.
 	ON_3dPoint onl1 = l.PointAt(0);
 	ON_3dPoint onl2 = l.PointAt(1);
 	ON_3dPoint onc1 = nc->PointAt(domain.ParameterAt(0));

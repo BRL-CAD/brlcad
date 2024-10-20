@@ -21,7 +21,7 @@
  *
  * Compute the autocorrelation function of doubles.  Given L elements
  * at a time, data[0..L-1], we estimate the autocorrelation at lag 0,
- * trough lag L-1, r[0..L-1].  The first value is based on L samples,
+ * through lag L-1, r[0..L-1].  The first value is based on L samples,
  * the last on only one.  Zeros are assumed outside of the range of an
  * input record.
  *

@@ -1,10 +1,8 @@
-set(toplevel_HTML
-  bookmarks.html
-  toc.html
-  )
-ADD_DOC(toplevel_HTML html REQUIRED "mged")
+set(toplevel_HTML bookmarks.html toc.html)
+add_doc(toplevel_HTML html REQUIRED "mged")
 
-set(cadwidgets_HTML
+set(
+  cadwidgets_HTML
   manuals/cadwidgets/Command.html
   manuals/cadwidgets/Database.html
   manuals/cadwidgets/Db.html
@@ -18,36 +16,35 @@ set(cadwidgets_HTML
   manuals/cadwidgets/contents.html
   manuals/cadwidgets/index.html
   manuals/cadwidgets/skeleton.html
-  )
-ADD_DOC(cadwidgets_HTML html/manuals/cadwidgets REQUIRED "mged")
+)
+add_doc(cadwidgets_HTML html/manuals/cadwidgets REQUIRED "mged")
 
-set(libbu_HTML
-  manuals/libbu/cmdhist_obj.html
-  manuals/libbu/contents.html
-  manuals/libbu/index.html
-  )
-ADD_DOC(libbu_HTML html/manuals/libbu REQUIRED "libbu")
+set(libbu_HTML manuals/libbu/cmdhist_obj.html manuals/libbu/contents.html manuals/libbu/index.html)
+add_doc(libbu_HTML html/manuals/libbu REQUIRED "libbu")
 
-set(libdm_HTML
+set(
+  libdm_HTML
   manuals/libdm/api.html
   manuals/libdm/contents.html
   manuals/libdm/dm_obj.html
   manuals/libdm/index.html
   manuals/libdm/preface.html
   manuals/libdm/tcl.html
-  )
-ADD_DOC(libdm_HTML html/manuals/libdm REQUIRED "libdm")
+)
+add_doc(libdm_HTML html/manuals/libdm REQUIRED "libdm")
 
-set(librt_HTML
+set(
+  librt_HTML
   manuals/librt/contents.html
   manuals/librt/dg_obj.html
   manuals/librt/index.html
   manuals/librt/view_obj.html
   manuals/librt/wdb_obj.html
-  )
-ADD_DOC(librt_HTML html/manuals/librt REQUIRED "librt")
+)
+add_doc(librt_HTML html/manuals/librt REQUIRED "librt")
 
-set(manuals_HTML
+set(
+  manuals_HTML
   manuals/BRL-CAD_gear_logo.ico
   manuals/Install.html
   manuals/Obtain.html
@@ -56,10 +53,11 @@ set(manuals_HTML
   manuals/eagleCAD.bmp
   manuals/index.html
   manuals/small-eagleCAD.gif
-  )
-ADD_DOC(manuals_HTML html/manuals REQUIRED "mged")
+)
+add_doc(manuals_HTML html/manuals REQUIRED "mged")
 
-set(manuals_mged_HTML
+set(
+  manuals_mged_HTML
   manuals/mged/az_el.gif
   manuals/mged/az_el.jpg
   manuals/mged/az_el_sm.gif
@@ -116,12 +114,13 @@ set(manuals_mged_HTML
   manuals/mged/rim.jpg
   manuals/mged/shaders.html
   manuals/mged/tex-html.tcl
-  )
-ADD_DOC(manuals_mged_HTML html/manuals/mged REQUIRED "mged")
+)
+add_doc(manuals_mged_HTML html/manuals/mged REQUIRED "mged")
 
-ADD_DOC(manuals/shaders/camo.html html/manuals/shaders REQUIRED "liboptical")
+add_doc(manuals/shaders/camo.html html/manuals/shaders REQUIRED "liboptical")
 
-set(relnotes_HTML
+set(
+  relnotes_HTML
   ReleaseNotes/email2.0.html
   ReleaseNotes/email3.0.html
   ReleaseNotes/email3.1.html
@@ -129,18 +128,20 @@ set(relnotes_HTML
   ReleaseNotes/email4.4.html
   ReleaseNotes/email5.0.html
   ReleaseNotes/index.html
-  )
-ADD_DOC(relnotes_HTML html/ReleaseNotes REQUIRED "librt")
+)
+add_doc(relnotes_HTML html/ReleaseNotes REQUIRED "librt")
 
-set(relnotes_5_HTML
+set(
+  relnotes_5_HTML
   ReleaseNotes/Rel5.0/deprecated.html
   ReleaseNotes/Rel5.0/index.html
   ReleaseNotes/Rel5.0/new_cmds.html
   ReleaseNotes/Rel5.0/new_libs.html
-  )
-ADD_DOC(relnotes_5_HTML html/ReleaseNotes/Rel5.0 REQUIRED "librt")
+)
+add_doc(relnotes_5_HTML html/ReleaseNotes/Rel5.0 REQUIRED "librt")
 
-set(relnotes_5_summary_HTML
+set(
+  relnotes_5_summary_HTML
   ReleaseNotes/Rel5.0/Summary/activem.gif
   ReleaseNotes/Rel5.0/Summary/activep.gif
   ReleaseNotes/Rel5.0/Summary/collapse.gif
@@ -213,18 +214,19 @@ set(relnotes_5_summary_HTML
   ReleaseNotes/Rel5.0/Summary/tsld017.htm
   ReleaseNotes/Rel5.0/Summary/tsld018.htm
   ReleaseNotes/Rel5.0/Summary/tsld019.htm
-  )
-ADD_DOC(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary REQUIRED "mged")
+)
+add_doc(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary REQUIRED "mged")
 
-ADD_DOC(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0 REQUIRED "mged")
+add_doc(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0 REQUIRED "mged")
 
-set(html_ignore_files
+set(
+  html_ignore_files
   CMakeLists.txt
   ReleaseNotes/Rel6.0/index.html
   manuals/shaders/camo.html
   manuals/small-eagleCAD.ico
-  )
-CMAKEFILES(${html_ignore_files})
+)
+cmakefiles(${html_ignore_files})
 
 # Local Variables:
 # tab-width: 8

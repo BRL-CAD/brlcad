@@ -20,7 +20,6 @@
 
 #include "Options.h"
 
-
 Options::Options()
 {
     inFile = "";
@@ -42,12 +41,11 @@ Options::Options()
     axis_orientation = POS_Z_UP;
     notes = "N/A";
     uLength = "m";
-    defaultLength = true;
+    originalUnitsLength = true;
     uMass = "g";
-    defaultMass = true;
+    originalUnitsMass = true;
     verbosePrint = 0;
 }
-
 
 Options::~Options()
 {
@@ -76,28 +74,30 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_Umass = "";	// user requested mass units
     std::string param_oFile = "";	// user supplied output file
 
-    struct bu_opt_desc d[21];
-    BU_OPT(d[0],  "i", "",     "filename",          &_param_set_std_str,     &this->inFile,         "input .g");
-    BU_OPT(d[1],  "o", "",     "filename",          &_param_set_std_str,     &param_oFile,          "output file name");
+    struct bu_opt_desc d[23];
+    BU_OPT(d[0],  "i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g");
+    BU_OPT(d[1],  "o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name");
     BU_OPT(d[2],  "F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate");
     BU_OPT(d[3],  "e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name");
     BU_OPT(d[4],  "g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window");
     BU_OPT(d[5],  "f", "",     "",                  NULL,                    &param_overwrite,      "overwrite existing report if it exists");
     BU_OPT(d[6],  "Z", "",     "",                  NULL,                    &this->reuseImages,    "reuse renders if .working directory is found");
     BU_OPT(d[7],  "t", "",     "component",         &_param_set_std_str,     &this->topComp,        "specify primary component of the report");
-    BU_OPT(d[8],  "p", "",     "#",		    &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)");
-    BU_OPT(d[9],  "n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report");
-    BU_OPT(d[10], "T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables");
-    BU_OPT(d[11], "c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner");
-    BU_OPT(d[12], "N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report");
-    BU_OPT(d[13], "L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system");
-    BU_OPT(d[14], "A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
-    BU_OPT(d[15], "l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units");
-    BU_OPT(d[16], "w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units");
-    BU_OPT(d[17], "v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing");
-    BU_OPT(d[18], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
-    BU_OPT(d[19], "?", "",     "",                  NULL,                    &print_help,           "");
-    BU_OPT_NULL(d[20]);
+    BU_OPT(d[8],  "m", "",     "path/to/image",     &_param_set_std_str,     &this->logopath,       "path to logo image to be used in report");
+    BU_OPT(d[9],  "p", "",     "#",		    &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)");
+    BU_OPT(d[10], "n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report");
+    BU_OPT(d[11], "r", "",     "\"owner name\"",    &_param_set_std_str,     &this->owner,          "name of model's owner, to be used in report");
+    BU_OPT(d[12], "T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables");
+    BU_OPT(d[13], "c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner");
+    BU_OPT(d[14], "N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report");
+    BU_OPT(d[15], "L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system");
+    BU_OPT(d[16], "A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
+    BU_OPT(d[17], "l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units");
+    BU_OPT(d[18], "w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units");
+    BU_OPT(d[19], "v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing");
+    BU_OPT(d[20], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
+    BU_OPT(d[21], "?", "",     "",                  NULL,                    &print_help,           "");
+    BU_OPT_NULL(d[22]);
 
     /* set progname and move on */
     const char* cmd_progname = argv[0];
@@ -108,7 +108,7 @@ bool Options::readParameters(int argc, const char **argv) {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
 
-    if (ret_ac) {   // asssume a leftover option is a .g file
+    if (ret_ac) {   // assume a leftover option is a .g file
 	setInFile(argv[0]);
 	ret_ac--;
     }
@@ -132,7 +132,8 @@ bool Options::readParameters(int argc, const char **argv) {
     }
 
     /* use internal setters for options that require extra attention */
-    if (param_oFile.empty()) {	// no output file supplied, default to gui pop-up
+    if (param_oFile.empty() && this->inFolderName.empty()) {
+	// no output file supplied, and not working with folder: default to gui pop-up
 	bu_log("WARNING: no output file given, use (-o) to save report\n");
 	setOpenGUI();
     } else if (!setOutFile(param_oFile))    // out file was supplied, make sure .png
@@ -147,22 +148,27 @@ bool Options::readParameters(int argc, const char **argv) {
 	setUnitLength(param_Ulength);
     if (!param_Umass.empty())
 	setUnitMass(param_Umass);
-    if (!this->inFolderName.empty())
+    if (!this->inFolderName.empty()) {
 	setIsFolder();
+	setExportToFile();  // dont want to flood screen with gui popups if we're using a folder
+    }
     if (!this->exeDir.empty())
 	setExeDir(this->exeDir);
 
-    /* make sure we have a .g file or folder specified */
-    if (!getIsFolder() && !bu_file_exists(this->inFile.c_str(), NULL)) {
-	bu_log("\nUsage:  %s %s\n", cmd_progname, usage);
-        bu_log("\nPlease specify the path to the file for report generation, use flag (-?) to see all options\n");
+    /* make sure valid input .g or folder is supplied */
+    if ((getIsFolder() && !bu_file_directory(this->inFolderName.c_str())) ||
+        (!getIsFolder() && !bu_file_exists(this->inFile.c_str(), NULL))) {
+	// which input was given
+	std::string given_input = getIsFolder() ? this->inFolderName : this->inFile;
+
+	bu_log("Usage: %s %s\n\n", cmd_progname, usage);
+	bu_log("ERROR: given input \"%s\" does not exist. Please ensure the path is correct\n", given_input.c_str());
         return false;
     }
 
-    /* make sure input .g exists */
-    if (!bu_file_exists(this->inFile.c_str(), NULL)) {
-	bu_log("ERROR: %s does not exist\n", this->inFile.c_str());
-	return false;
+    /* handle default folder output dir */
+    if (getIsFolder() && getOutFolder().empty()) {
+	setOutFolder(getInFolder() + BU_DIR_SEPARATOR + "GIST_REPORTS");
     }
 
     /* make sure we're not unintentionally overwriting an existing report */
@@ -172,6 +178,13 @@ bool Options::readParameters(int argc, const char **argv) {
 	    return false;
 	} else {
 	    bu_file_delete(this->outFile.c_str());
+	}
+    } else if (bu_file_directory(this->outFolderName.c_str())) {
+	if (!param_overwrite) {
+	    bu_log("ERROR: output folder \"%s\" already exists. Re-run with force flag (-f) or remove directory.", this->outFolderName.c_str());
+	    return false;
+	} else {
+	    bu_dirclear(this->outFolderName.c_str());
 	}
     }
 
@@ -197,27 +210,35 @@ bool Options::readParameters(int argc, const char **argv) {
 
     /* build working directory path if not supplied */
     if (getWorkingDir().empty()) {
-	std::string working = getInFile();
-	// if input file ends in .g - strip the g and replace with .working
-	if (working.size() > 2 && working[working.size() - 2] == '.' && working[working.size() - 1] == 'g')
+	// is this file or folder run
+	// if we're working with a folder, add a nested GIST_REPORTS dir for working dir
+	std::string working = getIsFolder() ? getInFolder() + BU_DIR_SEPARATOR + "GIST_REPORTS" : getInFile();
+
+	// if input file ends in .g - strip the extension
+	if (working.size() > 2 && working[working.size() - 2] == '.' && working[working.size() - 1] == 'g') {
 	    working.pop_back();
-	working += "working";
+	    working.pop_back();
+	}
+
+	working += ".working";
 	this->workingDir = working;
     }
     /* handle working directory existence */
-    if (bu_file_directory(getWorkingDir().c_str())) {
-	// found dir, should we have?
-	if (getReuseImages() == false) {
-	    bu_log("ERROR: Working directory (%s) found.\n", getWorkingDir().c_str());
-	    bu_log("       Re-run with (-Z) to re-use work. Or remove working directory \"%s\".\n", getWorkingDir().c_str());
-	    return false;
-	}
+    if (bu_file_directory(getWorkingDir().c_str()) && getReuseImages() == false) {
+	// found dir, but re-use wasn't requested
+	bu_log("ERROR: Working directory \"%s\" found.\n", getWorkingDir().c_str());
+	bu_log("       Re-run with (-Z) to reuse work. Or remove working directory.\n");
+	return false;
     } else {
 	// create
 	bu_mkdir(getWorkingDir().c_str());
-	if (verbosePrinting())
-	    bu_log("Intermediate files writing to: %s\n", getWorkingDir().c_str());
     }
+    if (verbosePrinting())
+	bu_log("Writing intermediate files to working directory: %s\n\n", getWorkingDir().c_str());
+
+    /* initialize empty output folder if needed */
+    if (getIsFolder() && !bu_file_directory(this->outFolderName.c_str()))
+	bu_mkdir(this->outFolderName.c_str());
 
     return true;
 }
@@ -234,6 +255,11 @@ void Options::setExeDir(std::string f) {
     exeDir = f;
 }
 
+void
+Options::setLogopath(std::string f)
+{
+	logopath = f;
+}
 
 void Options::setPPI(int p) {
     ppi = p;
@@ -299,6 +325,10 @@ void Options::setPreparer(std::string n) {
     preparer = n;
 }
 
+void Options::setOwner(std::string n)
+{
+    owner = n;
+}
 
 void Options::setClassification(std::string c) {
     classification = c;
@@ -325,13 +355,13 @@ void Options::setTopComp(std::string t) {
 }
 void Options::setUnitLength(std::string l) {
     uLength = l;
-    defaultLength = false;
+    originalUnitsLength = false;
 }
 
 
 void Options::setUnitMass(std::string m) {
     uMass = m;
-    defaultMass = false;
+    originalUnitsMass = false;
 }
 
 
@@ -341,6 +371,10 @@ std::string Options::getInFile() {
 
 std::string Options::getWorkingDir() {
     return workingDir;
+}
+std::string Options::getLogopath()
+{
+	return logopath;
 }
 
 std::string Options::getInFolder() {
@@ -397,8 +431,13 @@ std::string Options::getPreparer() {
     return preparer;
 }
 
+std::string Options::getOwner()
+{
+    return owner;
+}
 
-std::string Options::getClassification() {
+std::string Options::getClassification()
+{
     return classification;
 }
 
@@ -455,13 +494,13 @@ std::string Options::getUnitMass() {
 }
 
 
-bool Options::isDefaultLength() {
-    return defaultLength;
+bool Options::isOriginalUnitsLength() {
+    return originalUnitsLength;
 }
 
 
-bool Options::isDefaultMass() {
-    return defaultMass;
+bool Options::isOriginalUnitsMass() {
+    return originalUnitsMass;
 }
 
 bool Options::verbosePrinting() {

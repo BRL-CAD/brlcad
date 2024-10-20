@@ -25,24 +25,20 @@ LayoutChoice::LayoutChoice(std::string l_map, bool l_lockRows)
     : map(l_map), lockRows(l_lockRows), coordinates(), dimDetails()
 {
     // make a vector to store coordinates of each item on the map AND ALSO the ambient occlusion view
-    for (size_t i = 0; i < map.size() + 1; ++i)
-    {
+    for (size_t i = 0; i < map.size() + 1; ++i) {
 	coordinates.emplace_back();
     }
-    for (size_t i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
 	dimDetails.emplace_back(-1, -1);
     }
 }
-
 
 void
 LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight)
 {
     std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
-    // create workingWidth and workingHeight: the area in which we
-    // will place orthographic views
+    // create workingWidth and workingHeight: the area in which we will place orthographic views
     double workingWidth = secWidth;
     double workingHeight = secHeight;
 
@@ -52,15 +48,14 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 
     for (size_t i = 1; i < map.size(); ++i) {
 	// Each row starts after a "\n"
-	if (map[i - 1] == '\n')
+	if (map[i - 1] == '\n') {
 	    rowStartingIndex.push_back(i);
+	}
     }
 
-    // number of rows is simply equal to the number of starting row
-    // indices.
+    // number of rows is simply equal to the number of starting row indices.
     int numRows = rowStartingIndex.size();
-    // number of columns is equal to the distance between two starting
-    // indexes of rows, omitting the '\n'
+    // number of columns is equal to the distance between two starting indexes of rows, omitting the '\n'
     int numCols = rowStartingIndex[1] - rowStartingIndex[0] - 1;
     int rowLen = numCols + 1; // length of a row is the number of columns plus the newline character.
 
@@ -75,8 +70,9 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 		break;
 	    }
 	}
-	if (ambientR != -1)
+	if (ambientR != -1) {
 	    break;
+	}
     }
 
     // allocate some space for the dimensions
@@ -86,8 +82,9 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
     for (int r = 0; r < numRows; ++r) {
 	for (int c = 0; c < numCols; ++c) {
 	    int i = r * rowLen + c;
-	    if (faceDetails.find(map[i]) == faceDetails.end())
+	    if (faceDetails.find(map[i]) == faceDetails.end()) {
 		continue;
+	    }
 	    FaceDetails fdet = faceDetails[map[i]];
 
 	    if (dimDetails[fdet.heightContributor].first == -1) {
@@ -98,7 +95,6 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 		dimDetails[fdet.widthContributor] = std::pair(i, 1);
 		workingHeight -= DIM_ROW_SPACE;
 	    }
-
 	}
     }
 
@@ -118,22 +114,25 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 	    default:
 		FaceDetails fdet;
 
-		if (map[i] == ' ')
+		if (map[i] == ' ') {
 		    fdet = faceDetails[map[i + rowLen]]; // check the second row to snatch the width
-		else
+		} else {
 		    fdet = faceDetails[map[i]]; // or use myself
+		}
 
 		ModelDimension dim = fdet.widthContributor;
 
-		if (dim == LENGTH)
+		if (dim == LENGTH) {
 		    colWidth = modelLength;
-		else if (dim == DEPTH)
+		} else if (dim == DEPTH) {
 		    colWidth = modelDepth;
-		else if (dim == HEIGHT)
+		} else if (dim == HEIGHT) {
 		    colWidth = modelHeight;
+		}
 	}
-	if (!lockRows)
+	if (!lockRows) {
 	    columnWidths.push_back(colWidth);
+	}
 	orthoWidth += colWidth;
     }
 
@@ -141,28 +140,31 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
     for (int j = 0; j < numRows; ++j) {
 	int i = rowLen * j;
 	double rowHeight = 0;
-	switch (map[i]) {
+	switch (map[i])	{
 	    case '\n': case '-': case '|': case '.': case 'A':// items with no area
 		break;
 	    default:
 		FaceDetails fdet;
 
-		if (map[i] == ' ')
-		    fdet = faceDetails[map[i + 1]]; // check the second column to snatch the height
-		else
-		    fdet = faceDetails[map[i]];
+	    if (map[i] == ' ') {
+		fdet = faceDetails[map[i + 1]]; // check the second column to snatch the height
+	    } else {
+		fdet = faceDetails[map[i]];
+	    }
 
-		ModelDimension dim = fdet.heightContributor;
+	    ModelDimension dim = fdet.heightContributor;
 
-		if (dim == LENGTH)
-		    rowHeight = modelLength;
-		else if (dim == DEPTH)
-		    rowHeight = modelDepth;
-		else if (dim == HEIGHT)
-		    rowHeight = modelHeight;
+	    if (dim == LENGTH) {
+		rowHeight = modelLength;
+	    } else if (dim == DEPTH) {
+		rowHeight = modelDepth;
+	    } else if (dim == HEIGHT) {
+		rowHeight = modelHeight;
+	    }
 	}
-	if (lockRows)
+	if (lockRows) {
 	    rowHeights.push_back(rowHeight);
+	}
 	orthoHeight += rowHeight;
     }
 
@@ -179,56 +181,57 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 	// ambient occlusion is in middle; search row/col to get top-left dimensions of ambient view
 	// this check is done to ensure that at least half of the section is for ambient occlusion
 	if (lockRows) {
-	    for (int i = 0; i < ambientR; ++i)
+	    for (int i = 0; i < ambientR; ++i) {
 		ambientYOffset += rowHeights[i];
-
+	    }
 	    for (int i = 0; i < ambientC; ++i) {
 		switch (map[ambientR * rowLen + i]) {
 		    case '-': case '|': case '.':
 			continue;
 		    case '\n': case ' ': case 'A':
-			bu_log("WARNING: Found unexpected character!\n");
-			/* fallthrough */
+		        std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+			/* fall through */
 		    default:
 			ModelDimension dim = faceDetails[map[ambientR * rowLen + i]].widthContributor;
 
-			if (dim == LENGTH)
+			if (dim == LENGTH) {
 			    ambientXOffset += modelLength;
-			else if (dim == DEPTH)
+			} else if (dim == DEPTH) {
 			    ambientXOffset += modelDepth;
-			else if (dim == HEIGHT)
+			} else if (dim == HEIGHT) {
 			    ambientXOffset += modelHeight;
+			}
 		}
 	    }
 	} else {
 	    for (int i = 0; i < ambientC; ++i)
 		ambientXOffset += columnWidths[i];
-
 	    for (int i = 0; i < ambientR; ++i) {
 		switch (map[i * rowLen + ambientC]) {
 		    case '-': case '|': case '.':
 			continue;
 		    case '\n': case ' ': case 'A':
-			bu_log("WARNING: Found unexpected character!\n");
-			/* fallthrough */
+			std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+			/* fall through */
 		    default:
 			ModelDimension dim = faceDetails[map[i * rowLen + ambientC]].heightContributor;
 
-			if (dim == LENGTH)
+			if (dim == LENGTH) {
 			    ambientYOffset += modelLength;
-			else if (dim == DEPTH)
+			} else if (dim == DEPTH) {
 			    ambientYOffset += modelDepth;
-			else if (dim == HEIGHT)
+			} else if (dim == HEIGHT) {
 			    ambientYOffset += modelHeight;
+			}
 		}
 	    }
 	}
-
 	// if half of page is not used for ambient occlusion view, then adjust properly
-	if (ambientYOffset > orthoHeight / 2)
+	if (ambientYOffset > orthoHeight / 2) {
 	    workingHeight *= orthoHeight / 2 / ambientYOffset;
-	else if (ambientXOffset > orthoWidth / 2)
+	} else if (ambientXOffset > orthoWidth / 2) {
 	    workingWidth *= orthoWidth / 2 / ambientXOffset;
+	}
     }
 
     // get aspect ratios
@@ -298,12 +301,13 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 
 			ModelDimension dim = fdet.widthContributor;
 
-			if (dim == LENGTH)
+			if (dim == LENGTH) {
 			    curWidth = (widthConversionFactor * modelLength);
-			else if (dim == DEPTH)
+			} else if (dim == DEPTH) {
 			    curWidth = (widthConversionFactor * modelDepth);
-			else if (dim == HEIGHT)
+			} else if (dim == HEIGHT) {
 			    curWidth = (widthConversionFactor * modelHeight);
+			}
 		}
 
 		coordinates[i].push_back(curX);
@@ -370,12 +374,13 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 
 			ModelDimension dim = fdet.heightContributor;
 
-			if (dim == LENGTH)
+			if (dim == LENGTH) {
 			    curHeight = (heightConversionFactor * modelLength);
-			else if (dim == DEPTH)
+			} else if (dim == DEPTH) {
 			    curHeight = (heightConversionFactor * modelDepth);
-			else if (dim == HEIGHT)
+			} else if (dim == HEIGHT) {
 			    curHeight = (heightConversionFactor * modelHeight);
+			}
 		}
 
 		coordinates[i].push_back(curX);
@@ -415,9 +420,9 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 	    }
 	}
 
-	if (!works || numCols <= 1)
+	if (!works || numCols <= 1) {
 	    continue;
-
+	}
 	double rowWidth = coordinates[r * rowLen + numCols - 1][2];
 	double extraSpace = (secWidth - rowWidth) / (numCols - 1);
 
@@ -431,8 +436,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 	    }
 	} else {
 	    // otherwise, space out just this row
-	    for (int c = 1; c < numCols; ++c)
-	    {
+	    for (int c = 1; c < numCols; ++c) {
 		coordinates[r * rowLen + c][0] += extraSpace * c;
 		coordinates[r * rowLen + c][2] += extraSpace * c;
 	    }
@@ -449,11 +453,12 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 	    }
 	}
 
-	if (!works || numRows <= 1)
+	if (!works || numRows <= 1) {
 	    continue;
-
+	}
 	double colHeight = coordinates[(numRows - 1) * rowLen + c][3];
 	double extraSpace = (secHeight - colHeight) / (numRows - 1);
+
 
 	// if rows are locked, then space out the rest of the columns as well to ensure alignment
 	if (lockRows) {
@@ -510,23 +515,23 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
     coordinates[coordinates.size() - 1].push_back(secHeight);
 }
 
-
 std::vector<int>
 LayoutChoice::getCoordinates(int mapIndex)
 {
     std::vector<int> output;
     if (mapIndex == -1) {
 	// want the coordinates for the ambient occlusion
-	for (double coord : coordinates[map.size()])
+	for (double coord : coordinates[map.size()]) {
 	    output.push_back((int)std::ceil(coord));
+	}
     } else {
 	// want coordinates of an index in map
-	for (double coord : coordinates[mapIndex])
+	for (double coord : coordinates[mapIndex]) {
 	    output.push_back((int)std::ceil(coord));
+	}
     }
     return output;
 }
-
 
 double
 LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
@@ -537,7 +542,8 @@ LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 	    case ' ': case '\n': case '-': case '|': case '.': // items with no area
 		break;
 	    default:
-		if (coordinates[i].empty()) {
+		if (coordinates[i].empty()){
+		    bu_log("ISSUE: coordinates for an important map section not initialized!\n");
 		    break;
 		}
 		sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
@@ -563,18 +569,25 @@ LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
     return sum;
 }
 
-
 int
 LayoutChoice::getMapSize()
 {
     return map.size();
 }
 
-
 char
 LayoutChoice::getMapChar(int index)
 {
     return map[index];
+}
+
+bool
+LayoutChoice::validLayout()
+{
+    if (map.empty() || coordinates.empty())
+	return false;
+
+    return true;
 }
 
 
@@ -606,7 +619,6 @@ initLayouts()
     return layouts;
 }
 
-
 LayoutChoice
 selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
 {
@@ -628,12 +640,12 @@ selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, doubl
     }
 
     if (bestLayout == NULL) {
+	bu_log("ERROR: no suitable layouts found! Please select a different component to generate report\n");
 	return LayoutChoice("", true);
     }
 
     return *bestLayout;
 }
-
 
 LayoutChoice
 genLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
@@ -669,7 +681,6 @@ genLayout(int secWidth, int secHeight, double modelLength, double modelDepth, do
     return selectLayoutFromHeuristic(secWidth, secHeight, modelLength, modelDepth, modelHeight, ambientDims);
 }
 
-
 void
 makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
@@ -686,6 +697,8 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 
     // select the layout
     LayoutChoice bestLayout = genLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
+    if (!bestLayout.validLayout())
+	return;
     bestLayout.initCoordinates(width, height, modelLength, modelDepth, modelHeight);
 
     // SCALE: shrinking factor on images placed onto the IFPainter
@@ -733,40 +746,41 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 	double offset = 30;
 	double textHeight = 40;
 
-	std::stringstream me;
-	if (i == 0) me << std::setprecision(5) << modelLength;
-	if (i == 1) me << std::setprecision(5) << modelDepth;
-	if (i == 2) me << std::setprecision(5) << modelHeight;
+	std::string me;
+	if (i == 0) me = info.getFormattedInfo("dimY");
+	if (i == 1) me = info.getFormattedInfo("dimX");
+	if (i == 2) me = info.getFormattedInfo("dimZ");
 
-	//Determine units
-	std::string unit;
-	if (opt.isDefaultLength()) {
-	    unit = info.getInfo("units");
-	} else {
-	    unit = opt.getUnitLength();
-	}
-
-	me << " " << unit;
-
-	if (det.second == 0) {
-	    // draw to the right
+	if (det.second == 0) {	// draw to the right
 	    img.drawLine(newX + newW + offset, newY, newX + newW + offset, newY + newH, 5, cv::Scalar(160, 0, 0));
-	    img.drawText(newX + newW + 3 * offset / 2, newY + newH / 2 - textHeight / 2, textHeight, 220, me.str(), TO_BLUE);
-	} else {
-	    // draw below
+	    img.drawText(newX + newW + 3 * offset / 2, newY + newH / 2 - textHeight / 2, textHeight, 220, me, TO_BLUE);
+	} else {		// draw below
 	    img.drawLine(newX, newY + newH + offset, newX + newW, newY + newH + offset, 5, cv::Scalar(160, 0, 0));
-	    img.drawTextCentered(newX + newW / 2, newY + newH + 3 * offset / 2, textHeight, 220, me.str(), TO_BLUE);
+	    img.drawTextCentered(newX + newW / 2, newY + newH + 3 * offset / 2, textHeight, 220, me, TO_BLUE);
 	}
     }
 
-    // render ambient occlusion view
     std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
-    std::string title = info.getInfo("title");
-    if (title.size() > 29)
-	title = title.substr(0, 27) + "...";
-    img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
-}
 
+    std::string title = info.getInfo("title");
+    size_t countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
+
+    if (countCharDisplayedTitle < title.length()) {
+	std::string continuation = title.substr(countCharDisplayedTitle);
+
+	// Remove trailing spaces from the beginning
+	size_t startPos = continuation.find_first_not_of(' ');
+	if (startPos != std::string::npos) {
+	    continuation = continuation.substr(startPos);
+
+	    if (opt.getNotes() == "N/A") {
+		opt.setNotes("... " + continuation);
+	    } else {
+		opt.setNotes("... " + continuation + "\n" + opt.getNotes());
+	    }
+	}
+    }
+}
 
 // Local Variables:
 // tab-width: 8

@@ -27,514 +27,223 @@
 #include <set>
 #include <map>
 #include <string>
+#include <sstream>
+#include <fstream>
+#include "json.hpp"
 
 extern "C" {
 #include "bu/opt.h"
-#include "bg/trimesh.h"
-#include "raytrace.h"
+#include "wdb.h"
 }
-#include "../ged_private.h"
+#include "./ged_lint.h"
 
-struct _ged_lint_opts {
-    int verbosity;
-    int cyclic_check;
-    int missing_check;
-    int invalid_shape_check;
-    struct bu_vls filter;
-};
-
-struct _ged_lint_opts *
-_ged_lint_opts_create()
+lint_data::lint_data()
 {
-    struct _ged_lint_opts *o = NULL;
-    BU_GET(o, struct _ged_lint_opts);
-    o->verbosity = 0;
-    o->cyclic_check = 0;
-    o->missing_check = 0;
-    o->invalid_shape_check = 0;
-    o->filter = BU_VLS_INIT_ZERO;
-    return o;
+    color = NULL;
+    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    vlfree = &RTG.rtg_vlfree;
 }
 
-void
-_ged_lint_opts_destroy(struct _ged_lint_opts *o)
+lint_data::~lint_data()
 {
-    if (!o) return;
-    BU_PUT(o, struct _ged_lint_opts);
+    bv_vlblock_free(vbp);
+    vbp = NULL;
+    vlfree = NULL;
 }
 
-/* After option processing, turn on all checks
- * unless some specific subset have already
- * been enabled */
-void
-_ged_lint_opts_verify(struct _ged_lint_opts *o)
+std::string
+lint_data::summary()
 {
-    int checks_set = 0;
-    if (!o) return;
-    if (o->cyclic_check) checks_set = 1;
-    if (o->missing_check) checks_set = 1;
-    if (o->invalid_shape_check) checks_set = 1;
-    if (!checks_set) {
-	o->cyclic_check = 1;
-	o->missing_check = 1;
-	o->invalid_shape_check = 1;
-    }
-}
+    if (verbosity < 0)
+	return std::string("");
 
-struct _ged_cyclic_data {
-    struct ged *gedp;
-    struct bu_ptbl *paths;
-};
+    std::map<std::string, std::set<std::string>> categories;
+    std::map<std::string, std::set<std::string>> obj_problems;
 
-
-struct _ged_missing_data {
-    struct ged *gedp;
-    std::set<std::string> missing;
-};
-
-struct invalid_obj {
-    std::string name;
-    std::string type;
-    std::string error;
-};
-
-struct _ged_invalid_data {
-    struct ged *gedp;
-    struct _ged_lint_opts *o;
-    std::set<struct directory *> invalid_dps;
-    std::map<struct directory *, struct invalid_obj> invalid_msgs;
-};
-
-/* Because lint is intended to be a deep inspection of the .g looking for problems,
- * we need to do this check using the low level tree walk rather than operating on
- * a search result set (which has checks to filter out cyclic paths.) */
-static void
-_ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
-			   void (*traverse_func) (struct db_full_path *path, void *), void *client_data)
-{
-    struct directory *dp;
-    struct _ged_cyclic_data *cdata = (struct _ged_cyclic_data *)client_data;
-    struct ged *gedp = cdata->gedp;
-    int bool_val = curr_bool;
-
-    if (!tp) {
-	return;
-    }
-
-    RT_CK_FULL_PATH(path);
-    RT_CK_TREE(tp);
-
-    switch (tp->tr_op) {
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    if (tp->tr_op == OP_UNION) bool_val = 2;
-	    if (tp->tr_op == OP_INTERSECT) bool_val = 3;
-	    if (tp->tr_op == OP_SUBTRACT) bool_val = 4;
-	    _ged_cyclic_search_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, client_data);
-	    /* fall through */
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    _ged_cyclic_search_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, client_data);
-	    break;
-	case OP_DB_LEAF:
-	    dp = db_lookup(gedp->dbip, tp->tr_l.tl_name, LOOKUP_QUIET);
-	    if (dp == RT_DIR_NULL) {
-		return;
-	    } else {
-		/* See if we've got a cyclic path */
-		db_add_node_to_full_path(path, dp);
-		DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
-		if (!db_full_path_cyclic(path, NULL, 0)) {
-		    /* Not cyclic - keep going */
-		    traverse_func(path, client_data);
-		} else {
-		    /* Cyclic - report it */
-		    char *path_string = db_path_to_string(path);
-		    bu_ptbl_ins(cdata->paths, (long *)path_string);
-		}
-		DB_FULL_PATH_POP(path);
-		break;
-	    }
-
-	default:
-	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("db_functree_subtree: unrecognized operator\n");
-    }
-}
-
-void
-_ged_cyclic_search(struct db_full_path *fp, void *client_data)
-{
-    struct _ged_cyclic_data *cdata = (struct _ged_cyclic_data *)client_data;
-    struct ged *gedp = cdata->gedp;
-    struct directory *dp;
-
-    RT_CK_FULL_PATH(fp);
-
-    dp = DB_FULL_PATH_CUR_DIR(fp);
-
-    if (!dp) return;
-
-    /* If we're not looking at a comb object we can't have
-     * cyclic paths - else, walk the comb */
-    if (dp->d_flags & RT_DIR_COMB) {
-	struct rt_db_internal in;
-	struct rt_comb_internal *comb;
-
-	if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) return;
-
-	comb = (struct rt_comb_internal *)in.idb_ptr;
-	_ged_cyclic_search_subtree(fp, OP_UNION, comb->tree, _ged_cyclic_search, client_data);
-	rt_db_free_internal(&in);
-    }
-}
-
-int
-_ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, struct directory **dpa)
-{
-    int i;
-    struct db_full_path *start_path = NULL;
-    int ret = BRLCAD_OK;
-    if (!gedp) return BRLCAD_ERROR;
-    if (argc) {
-	if (!dpa) return BRLCAD_ERROR;
-	BU_GET(start_path, struct db_full_path);
-	db_full_path_init(start_path);
-	for (i = 0; i < argc; i++) {
-	    db_add_node_to_full_path(start_path, dpa[i]);
-	    _ged_cyclic_search(start_path, (void *)cdata);
-	    DB_FULL_PATH_POP(start_path);
+    for(nlohmann::json::const_iterator it = j.begin(); it != j.end(); ++it) {
+	const nlohmann::json &pdata = *it;
+	if (!pdata.contains("problem_type")) {
+	    bu_log("Unexpected JSON entry\n");
+	    continue;
 	}
-    } else {
-	struct directory *dp;
-	BU_GET(start_path, struct db_full_path);
-	db_full_path_init(start_path);
-	/* We can't do db_ls to get a set of tops objects here, because a cyclic
-	 * path can produce a situation where there are no tops objects and/or
-	 * hide the paths we need to report. */
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		db_add_node_to_full_path(start_path, dp);
-		_ged_cyclic_search(start_path, (void *)cdata);
-		DB_FULL_PATH_POP(start_path);
+	std::string ptype(pdata["problem_type"]);
+
+	if (ptype == std::string("cyclic_path")) {
+	    if (!pdata.contains("path")) {
+		bu_log("Error - malformed cyclic_path JSON data\n");
+		continue;
 	    }
+	    std::string cpath(pdata["path"]);
+	    categories[ptype].insert(cpath);
+	    continue;
+	}
+	if (!ptype.compare(0, 7, std::string("missing"))) {
+	    if (!pdata.contains("path")) {
+		bu_log("Error - malformed missing reference JSON data\n");
+		continue;
+	    }
+	    std::string mpath(pdata["path"]);
+	    categories[std::string("missing")].insert(mpath);
+	    continue;
+	}
+
+	// If it's not one of the above types, we're looking for an
+	// object name and type
+	if (!pdata.contains("object_name")) {
+	    bu_log("JSON entry missing object name\n");
+	    continue;
+	}
+	std::string oname(pdata["object_name"]);
+
+	if (!pdata.contains("object_type")) {
+	    bu_log("JSON entry missing object type\n");
+	    continue;
+	}
+	std::string otype(pdata["object_type"]);
+
+	categories[std::string("invalid")].insert(oname);
+	std::string prob_type = otype + std::string(":") + ptype;
+	obj_problems[oname].insert(prob_type);
+    }
+
+    std::string ostr;
+    std::set<std::string>::iterator s_it, o_it;
+    std::map<std::string, std::set<std::string>>::iterator c_it;
+    c_it = categories.find(std::string("cyclic_path"));
+    if (c_it != categories.end()) {
+	const std::set<std::string> &cpaths = c_it->second;
+	ostr.append(std::string("Found cyclic paths:\n"));
+	for (s_it = cpaths.begin(); s_it != cpaths.end(); s_it++)
+	    ostr.append(std::string("\t") + *s_it + std::string("\n"));
+    }
+    c_it = categories.find(std::string("missing"));
+    if (c_it != categories.end()) {
+	const std::set<std::string> &mpaths = c_it->second;
+	ostr.append(std::string("Found references to missing objects or files:\n"));
+	for (s_it = mpaths.begin(); s_it != mpaths.end(); s_it++)
+	    ostr.append(std::string("\t") + *s_it + std::string("\n"));
+    }
+
+    c_it = categories.find(std::string("invalid"));
+    if (c_it != categories.end()) {
+	const std::set<std::string> &invobjs = c_it->second;
+	ostr.append(std::string("Found invalid objects:\n"));
+	for (s_it = invobjs.begin(); s_it != invobjs.end(); s_it++) {
+	    ostr.append(std::string("\t") + *s_it);
+	    ostr.append(std::string(" ["));
+	    for (o_it = obj_problems[*s_it].begin(); o_it != obj_problems[*s_it].end(); o_it++) {
+		ostr.append(*o_it + std::string(","));
+	    }
+	    ostr.pop_back();
+	    ostr.append(std::string("]"));
+	    ostr.append(std::string("\n"));
 	}
     }
-    db_free_full_path(start_path);
-    BU_PUT(start_path, struct db_full_path);
-    return ret;
+
+    return ostr;
 }
 
-static void
-_ged_lint_comb_find_missing(struct _ged_missing_data *mdata, const char *parent, struct db_i *dbip, union tree *tp)
-{
-    if (!tp) return;
-
-    RT_CHECK_DBI(dbip);
-    RT_CK_TREE(tp);
-
-    switch (tp->tr_op) {
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    _ged_lint_comb_find_missing(mdata, parent, dbip, tp->tr_b.tb_right);
-	    /* fall through */
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    _ged_lint_comb_find_missing(mdata, parent, dbip, tp->tr_b.tb_left);
-	    break;
-	case OP_DB_LEAF:
-	    if (db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL) {
-		std::string inst = std::string(parent) + std::string("/") + std::string(tp->tr_l.tl_name);
-		mdata->missing.insert(inst);
-	    }
-	    break;
-	default:
-	    bu_log("_ged_lint_comb_find_invalid: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("_ged_lint_comb_find_invalid\n");
-    }
-}
-
-static void
-_ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip, struct directory *dp)
-{
-    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
-    struct db5_raw_internal raw;
-    unsigned char *cp;
-    char datasrc;
-    char *sketch_name;
-    struct bu_vls dsp_name = BU_VLS_INIT_ZERO;
-
-    if (!mdata || !dbip || !dp) return;
-
-    switch (dp->d_minor_type) {
-	case DB5_MINORTYPE_BRLCAD_DSP:
-	    /* For DSP we can't do a full import up front, since the potential invalidity we're looking to detect will cause
-	     * the import to fail.  Partially crack it, enough to where we can get what we need */
-	    if (db_get_external(&ext, dp, dbip) < 0) return;
-	    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
-		bu_free_external(&ext);
-		return;
-	    }
-	    cp = (unsigned char *)raw.body.ext_buf;
-	    cp += 2*SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT + SIZEOF_NETWORK_SHORT;
-	    datasrc = *cp;
-	    cp++; cp++;
-	    bu_vls_strncpy(&dsp_name, (char *)cp, raw.body.ext_nbytes - (cp - (unsigned char *)raw.body.ext_buf));
-	    if (datasrc == RT_DSP_SRC_OBJ) {
-		if (db_lookup(dbip, bu_vls_addr(&dsp_name), LOOKUP_QUIET) == RT_DIR_NULL) {
-		    std::string inst = std::string(dp->d_namep) + std::string("/") + std::string(bu_vls_addr(&dsp_name));
-		    mdata->missing.insert(inst);
-		}
-	    }
-	    if (datasrc == RT_DSP_SRC_FILE) {
-		if (!bu_file_exists(bu_vls_addr(&dsp_name), NULL)) {
-		    std::string inst = std::string(dp->d_namep) + std::string("/") + std::string(bu_vls_addr(&dsp_name));
-		    mdata->missing.insert(inst);
-		}
-	    }
-	    bu_vls_free(&dsp_name);
-	    bu_free_external(&ext);
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	    /* For EXTRUDE we can't do a full import up front, since the potential invalidity we're looking to detect will cause
-	     * the import to fail.  Partially crack it, enough to where we can get what we need */
-	    if (db_get_external(&ext, dp, dbip) < 0) return;
-	    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
-		bu_free_external(&ext);
-		return;
-	    }
-	    cp = (unsigned char *)raw.body.ext_buf;
-	    sketch_name = (char *)cp + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
-	    if (db_lookup(dbip, sketch_name, LOOKUP_QUIET) == RT_DIR_NULL) {
-		std::string inst = std::string(dp->d_namep) + std::string("/") + std::string(sketch_name);
-		mdata->missing.insert(inst);
-	    }
-	    bu_free_external(&ext);
-	    break;
-	default:
-	    break;
-    }
-}
-
-int
-_ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, struct directory **dpa)
-{
-    struct directory *dp;
-    int ret = BRLCAD_OK;
-    if (!gedp) return BRLCAD_ERROR;
-    if (argc) {
-	unsigned int i;
-	struct bu_ptbl *pc = NULL;
-	const char *osearch = "-type comb";
-	if (!dpa) return BRLCAD_ERROR;
-	BU_ALLOC(pc, struct bu_ptbl);
-	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->dbip, NULL) < 0) {
-	    ret = BRLCAD_ERROR;
-	    bu_ptbl_free(pc);
-	    bu_free(pc, "pc table");
-	} else {
-	    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-		dp = (struct directory *)BU_PTBL_GET(pc, i);
-		if (dp->d_flags & RT_DIR_COMB) {
-		    struct rt_db_internal in;
-		    struct rt_comb_internal *comb;
-		    if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) continue;
-		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->dbip, comb->tree);
-		} else {
-		    _ged_lint_shape_find_missing(mdata, gedp->dbip, dp);
-		}
-	    }
-	    bu_ptbl_free(pc);
-	    bu_free(pc, "pc table");
-	}
-    } else {
-	int i;
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp->d_flags & RT_DIR_COMB) {
-		    struct rt_db_internal in;
-		    struct rt_comb_internal *comb;
-		    if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) continue;
-		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->dbip, comb->tree);
-		} else {
-		    _ged_lint_shape_find_missing(mdata, gedp->dbip, dp);
-		}
-	    }
-	}
-    }
-    return ret;
-}
+struct invalid_shape_methods {
+    int do_invalid = 0;
+    std::map<std::string, std::set<std::string>> *im_techniques;
+};
 
 static int
-do_coplanar_check(struct ged *gedp, struct directory *dp, struct rt_bot_internal *bot, int verbosity)
+techniques_parse(std::map<std::string, std::set<std::string>> *im_techniques, const char *instr)
 {
-    int ret = 0;
-    if (!gedp || !bot)
-	return ret;
+    if (!im_techniques || !instr)
+	return -1;
 
-    struct rt_i *rtip = rt_new_rti(gedp->dbip);
-    rt_gettree(rtip, dp->d_namep);
-    rt_prep(rtip);
-    ret = rt_bot_coplanar_check(NULL, bot, rtip, VUNITIZE_TOL, verbosity);
-    rt_free_rti(rtip);
-    return ret;
-}
-
-/* Someday, when we have parametric constraint evaluation for parameters for primitives, we can hook
- * that into this logic as well... for now, run various special-case routines that are available to
- * spot various categories of problematic primitives. */
-void
-_ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struct directory *dp, int verbosity)
-{
-    struct invalid_obj obj;
-    struct rt_db_internal intern;
-    struct rt_bot_internal *bot;
-    struct bu_vls vlog = BU_VLS_INIT_ZERO;
-    int not_valid = 0;
-    if (!idata || !gedp || !dp) return;
-
-    if (dp->d_flags & RT_DIR_HIDDEN) return;
-    if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
-
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	rt_db_free_internal(&intern);
-	return;
-    }
-
-    switch (dp->d_minor_type) {
-	case DB5_MINORTYPE_BRLCAD_BOT:
-	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    RT_BOT_CK_MAGIC(bot);
-	    if (bot->mode == RT_BOT_SOLID) {
-
-		if (!bot->num_faces) {
-		    not_valid = 1;
-		    obj.name = std::string(dp->d_namep);
-		    obj.type= std::string("bot");
-		    obj.error = std::string("empty BoT");
-		    rt_db_free_internal(&intern);
-		    break;
-		}
-
-		not_valid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
-		if (not_valid) {
-		    obj.name = std::string(dp->d_namep);
-		    obj.type= std::string("bot");
-		    obj.error = std::string("failed solidity test, but BoT type is RT_BOT_SOLID");
-		    rt_db_free_internal(&intern);
-		    break;
-		}
-
-		// TODO - check for flipped bot
-
-		// check for bot with super-thin areas
-		not_valid = do_coplanar_check(gedp, dp, bot, verbosity);
-		if (not_valid) {
-		    obj.name = std::string(dp->d_namep);
-		    obj.type= std::string("bot");
-		    obj.error = std::string("failed thinness check, BoT type is RT_BOT_SOLID");
-		    rt_db_free_internal(&intern);
-		    break;
-		}
-	    }
-	    rt_db_free_internal(&intern);
-	    break;
-	case DB5_MINORTYPE_BRLCAD_BREP:
-	    not_valid = !rt_brep_valid(&vlog, &intern, 0);
-	    if (not_valid) {
-		obj.name = std::string(dp->d_namep);
-		obj.type= std::string("brep");
-		if (idata->o->verbosity) {
-		    obj.error = std::string(bu_vls_addr(&vlog));
-		} else {
-		    obj.error = std::string("failed OpenNURBS validity test");
-		}
-	    }
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ARB8:
-	    // TODO - check for twisted arbs.
-	    break;
-	case DB5_MINORTYPE_BRLCAD_DSP:
-	    // TODO - check for empty data object and zero length dimension vectors.
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	    // TODO - check for empty sketch and zero length dimension vectors.
-	    break;
-	default:
-	    break;
-    }
-
-    if (not_valid) {
-	idata->invalid_dps.insert(dp);
-	idata->invalid_msgs.insert(std::pair<struct directory *, struct invalid_obj>(dp, obj));
-    }
-
-    bu_vls_free(&vlog);
-}
-
-int
-_ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int argc, struct directory **dpa, int verbosity)
-{
-    int ret = BRLCAD_OK;
-    struct directory *dp;
-    struct _ged_lint_opts *opts = (struct _ged_lint_opts *)idata->o;
-    unsigned int i;
-    struct bu_ptbl *pc = NULL;
-    struct bu_vls sopts = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sopts, "! -type comb %s", bu_vls_cstr(&opts->filter));
-    BU_ALLOC(pc, struct bu_ptbl);
-    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, gedp->dbip, NULL) < 0) {
-	ret = BRLCAD_ERROR;
-	bu_free(pc, "pc table");
-    } else {
-	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-	    dp = (struct directory *)BU_PTBL_GET(pc, i);
-	    _ged_invalid_prim_check(idata, gedp, dp, verbosity);
+    // Split out individual specifiers
+    std::string av0 = std::string(instr);
+    std::stringstream astream(av0);
+    std::string s;
+    std::vector<std::string> methods;
+    if (av0.find(' ') != std::string::npos) {
+	while (std::getline(astream, s, ' ')) {
+	    if (s.length())
+		methods.push_back(s);
 	}
-	bu_ptbl_free(pc);
-	bu_free(pc, "pc table");
+    } else {
+	methods.push_back(av0);
     }
-    bu_vls_free(&sopts);
-    return ret;
+
+    // For each specifier, we should have a primitive type and technique name
+    for (size_t i = 0; i < methods.size(); i++) {
+	std::string wopt = methods[i];
+	if (wopt.find(':') == std::string::npos)
+	    continue;
+	std::stringstream ostream(wopt);
+	std::string optstr;
+	std::vector<std::string> key_val;
+	while (std::getline(ostream, optstr, ':')) {
+	    key_val.push_back(optstr);
+	}
+	if (key_val.size() != 2)
+	    continue;
+	(*im_techniques)[key_val[0]].insert(key_val[1]);
+    }
+
+    return (im_techniques->size() > 0) ? 1 : 0;
 }
+
+static
+int invalid_opt_read(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+{
+    struct invalid_shape_methods *m = (struct invalid_shape_methods *)set_var;
+    m->do_invalid = 1;
+
+    if (argc) {
+	if (!strchr(argv[0], ':'))
+	    return 0;
+
+	return techniques_parse(m->im_techniques, argv[0]);
+    }
+
+    return 0;
+}
+
 
 extern "C" int
 ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 {
-    size_t pc;
     int ret = BRLCAD_OK;
-    static const char *usage = "Usage: lint [ -CMS ] [obj1] [obj2] [...]\n";
+    static const char *usage = "Usage: lint [-h] [-v[v...]] [ -CMS ] [-F <filter>] [obj1] [obj2] [...]\n";
     int print_help = 0;
-    struct _ged_lint_opts *opts;
+    int verbosity = 0;
+    int cyclic_check = 0;
+    int missing_check = 0;
+    int visualize = 0;
+    fastf_t ftol = VUNITIZE_TOL;
+    fastf_t min_tri_area = 0.0;
     struct directory **dpa = NULL;
-    int nonexist_obj_cnt = 0;
+    struct bu_vls filter = BU_VLS_INIT_ZERO;
+    struct bu_vls ofile = BU_VLS_INIT_ZERO;
+    struct bu_vls gname = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    struct _ged_cyclic_data *cdata = NULL;
-    struct _ged_missing_data *mdata = new struct _ged_missing_data;
-    struct _ged_invalid_data *idata = new struct _ged_invalid_data;
+    // Primary data container to hold results
+    lint_data ldata;
+    ldata.gedp = gedp;
 
-    opts = _ged_lint_opts_create();
+    struct invalid_shape_methods imethods;
+    imethods.im_techniques = &ldata.im_techniques;
 
-    struct bu_opt_desc d[7];
-    BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
-    BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[2],  "C", "cyclic",        "",  NULL,  &(opts->cyclic_check),     "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
-    BU_OPT(d[3],  "M", "missing",       "",  NULL,  &(opts->missing_check),    "Check for objects reference by combs that are not in the database");
-    BU_OPT(d[4],  "I", "invalid-shape", "",  NULL,  &(opts->invalid_shape_check),  "Check for objects that are intended to be valid shapes but do not satisfy that criteria (examples include non-solid BoTs and twisted arbs)");
-    BU_OPT(d[5],  "F", "filter",        "",  &bu_opt_vls,  &(opts->filter),  "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. In particular these filters do NOT impact cyclic and missing geometry checks.");
-    BU_OPT_NULL(d[6]);
+    struct bu_opt_desc d[12];
+    BU_OPT(d[ 0],  "h", "help",                              "",  NULL,              &print_help,           "Print help and exit");
+    BU_OPT(d[ 1],  "v", "verbose",                           "",  &_ged_vopt,        &verbosity,            "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[ 2],  "C", "cyclic",                            "",  NULL,              &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
+    BU_OPT(d[ 3],  "M", "missing",                           "",  NULL,              &missing_check,        "Check for objects referenced by other objects that are not in the database");
+    BU_OPT(d[ 4],  "I", "invalid-shape",  "[check [check ...]]",  &invalid_opt_read, &imethods,             "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
+    BU_OPT(d[ 5],  "F", "filter",                     "pattern",  &bu_opt_vls,       &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
+    BU_OPT(d[ 6],  "j", "json-file",                    "fname",  &bu_opt_vls,       &ofile,                "Write out the full lint data to a json file");
+    BU_OPT(d[ 7],  "V", "visualize",                         "",  NULL,              &visualize,            "When problems can be visually represented, do so");
+    BU_OPT(d[ 8],  "t", "tol",                              "#",  &bu_opt_fastf_t,   &ftol,                 "Numerical value to use when testing involves tolerances (defaults to VUNITIZE_TOL)");
+    BU_OPT(d[ 9],  "g", "group",                         "name",  &bu_opt_vls,       &gname,                "Name of comb object in which to group all shape objects that report issues (will not contain cyclic paths or missing references).");
+    BU_OPT(d[10],   "", "min-tri-area",                     "#",  &bu_opt_fastf_t,   &min_tri_area,         "Units are mm^2.  If specified, lint will not report any sampling problems where the seed triangle has < min-tri-area surface area (default is to report all problems).  Note that a miss of a problematically small triangle elsewhere in the shotline may still result in a shotlining error report - this filters only based on the first hit triangles.");
+    BU_OPT_NULL(d[11]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -545,102 +254,152 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
 
-    if (print_help) {
+    if (print_help || argc < 0) {
 	_ged_cmd_help(gedp, usage, d);
-	ret = BRLCAD_OK;
-	goto ged_lint_memfree;
+	// TODO - autogenerate this list rather than hard coding...
+	bu_vls_printf(gedp->ged_result_str, "\nInvalidity checks:\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:close_face\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:empty\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:non_solid\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:thin_volume\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:unexpected_hit\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbot:unexpected_miss\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbrep:opennurbs\n");
+	bu_vls_free(&filter);
+	bu_vls_free(&ofile);
+	bu_vls_free(&gname);
+	return BRLCAD_OK;
     }
+
+    if (bu_vls_strlen(&gname)) {
+	if (gedp->dbip->dbi_read_only) {
+	    bu_vls_printf(gedp->ged_result_str, "Database is read only, cannot write output comb %s\n", bu_vls_cstr(&gname));
+	    bu_vls_free(&filter);
+	    bu_vls_free(&ofile);
+	    bu_vls_free(&gname);
+	    return BRLCAD_ERROR;
+	}
+	if (db_lookup(gedp->dbip, bu_vls_cstr(&gname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Output comb %s already exists in the database\n", bu_vls_cstr(&gname));
+	    bu_vls_free(&filter);
+	    bu_vls_free(&ofile);
+	    bu_vls_free(&gname);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    if (bu_vls_strlen(&filter))
+	ldata.filter = std::string(bu_vls_cstr(&filter));
+    bu_vls_free(&filter);
+
+    ldata.do_plot = (visualize) ? true : false;
 
     if (argc) {
 	dpa = (struct directory **)bu_calloc(argc+1, sizeof(struct directory *), "dp array");
-	nonexist_obj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+	int nonexist_obj_cnt = _ged_sort_existing_objs(gedp->dbip, argc, argv, dpa);
 	if (nonexist_obj_cnt) {
 	    int i;
 	    bu_vls_printf(gedp->ged_result_str, "Object argument(s) supplied to lint that do not exist in the database:\n");
 	    for (i = argc - nonexist_obj_cnt - 1; i < argc; i++) {
 		bu_vls_printf(gedp->ged_result_str, " %s\n", argv[i]);
 	    }
-	    ret = BRLCAD_ERROR;
-	    goto ged_lint_memfree;
+	    bu_free(dpa, "dpa");
+	    bu_vls_free(&gname);
+	    bu_vls_free(&ofile);
+	    return BRLCAD_ERROR;
 	}
     }
 
-    _ged_lint_opts_verify(opts);
+    ldata.argc = argc;
+    ldata.dpa = dpa;
+    ldata.verbosity = verbosity;
+    ldata.ftol = ftol;
+    ldata.min_tri_area = min_tri_area;
 
+    int have_specific_test = cyclic_check+missing_check+imethods.do_invalid;
 
-    if (opts->cyclic_check) {
+    if (!have_specific_test || cyclic_check) {
 	bu_log("Checking for cyclic paths...\n");
-	BU_GET(cdata, struct _ged_cyclic_data);
-	cdata->gedp = gedp;
-	BU_GET(cdata->paths, struct bu_ptbl);
-	bu_ptbl_init(cdata->paths, 0, "path table");
-	ret = _ged_cyclic_check(cdata, gedp, argc, dpa);
-	if (ret != BRLCAD_OK) {
-	    goto ged_lint_memfree;
-	}
-	if (BU_PTBL_LEN(cdata->paths)) {
-	    bu_vls_printf(gedp->ged_result_str, "Found cyclic paths:\n");
-	    for (pc = 0; pc < BU_PTBL_LEN(cdata->paths); pc++) {
-		char *path = (char *)BU_PTBL_GET(cdata->paths, pc);
-		bu_vls_printf(gedp->ged_result_str, "  %s\n", path);
-	    }
-	}
+	if (_ged_cyclic_check(&ldata) != BRLCAD_OK)
+	    ret = BRLCAD_ERROR;
     }
 
-    if (opts->missing_check) {
+    if (!have_specific_test || missing_check) {
 	bu_log("Checking for references to non-extant objects...\n");
-	mdata->gedp = gedp;
-	ret = _ged_missing_check(mdata, gedp, argc, dpa);
-	if (ret != BRLCAD_OK) {
-	    goto ged_lint_memfree;
-	}
-	if (mdata->missing.size()) {
-	    std::set<std::string>::iterator s_it;
-	    bu_vls_printf(gedp->ged_result_str, "Found references to missing objects:\n");
-	    for (s_it = mdata->missing.begin(); s_it != mdata->missing.end(); s_it++) {
-		std::string mstr = *s_it;
-		bu_vls_printf(gedp->ged_result_str, "  %s\n", mstr.c_str());
-	    }
-	}
+	if (_ged_missing_check(&ldata) != BRLCAD_OK)
+	    ret = BRLCAD_ERROR;
     }
 
-    if (opts->invalid_shape_check) {
+    if (!have_specific_test || imethods.do_invalid) {
 	bu_log("Checking for invalid objects...\n");
-	idata->o = opts;
-	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa, opts->verbosity);
-	if (ret != BRLCAD_OK) {
-	    goto ged_lint_memfree;
-	}
-	if (idata->invalid_dps.size()) {
-	    std::set<struct directory *>::iterator d_it;
-	    bu_vls_printf(gedp->ged_result_str, "Found invalid objects:\n");
-	    for (d_it = idata->invalid_dps.begin(); d_it != idata->invalid_dps.end(); d_it++) {
-		struct directory *dp = *d_it;
-		struct invalid_obj msgdata = idata->invalid_msgs.find(dp)->second;
-		std::string msg = msgdata.name + std::string("[") + msgdata.type + std::string("] ") + msgdata.error;
-		bu_vls_printf(gedp->ged_result_str, "  %s\n", msg.c_str());
-	    }
-	}
 
+	// bu_log wipes out MGED when doing this - stash hooks
+	struct bu_hook_list ohooks;
+	bu_hook_list_init(&ohooks);
+	bu_log_hook_save_all(&ohooks);
+	bu_log_hook_delete_all();
+
+	if (_ged_invalid_shape_check(&ldata) != BRLCAD_OK)
+	    ret = BRLCAD_ERROR;
+
+	// Restore hooks
+	bu_log_hook_restore_all(&ohooks);
     }
 
-ged_lint_memfree:
-    _ged_lint_opts_destroy(opts);
-    if (cdata) {
-	for (pc = 0; pc < BU_PTBL_LEN(cdata->paths); pc++) {
-	    char *path = (char *)BU_PTBL_GET(cdata->paths, pc);
-	    bu_free(path, "free cyclic path");
+    if (visualize) {
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	struct bview *view = gedp->ged_gvp;
+	if (BU_STR_EQUAL(nview, "1")) {
+	    bv_vlblock_obj(ldata.vbp, view, "lint_visual");
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, ldata.vbp, "lint_visual", 0);
 	}
-	bu_ptbl_free(cdata->paths);
-	BU_PUT(cdata->paths, struct bu_ptbl);
-	BU_PUT(cdata, struct _ged_cyclic_data);
     }
 
-    delete mdata;
-    delete idata;
+    if (dpa)
+	bu_free(dpa, "dp array");
 
-    if (dpa) bu_free(dpa, "dp array");
+    std::string report = ldata.summary();
+    bu_vls_printf(gedp->ged_result_str, "%s", report.c_str());
 
+    if (bu_vls_strlen(&ofile)) {
+	std::ofstream jfile(bu_vls_cstr(&ofile));
+	jfile << std::setw(2) << ldata.j << "\n";
+	jfile.close();
+    }
+
+    if (bu_vls_strlen(&gname)) {
+	std::set<std::string> onames;
+	for(nlohmann::json::const_iterator it = ldata.j.begin(); it != ldata.j.end(); ++it) {
+	    const nlohmann::json &pdata = *it;
+	    if (!pdata.contains("problem_type"))
+		continue;
+	    std::string ptype(pdata["problem_type"]);
+	    if (ptype == std::string("cyclic_path"))
+		continue;
+	    if (!ptype.compare(0, 7, std::string("missing")))
+		continue;
+	    if (!pdata.contains("object_name"))
+		continue;
+
+	    std::string oname(pdata["object_name"]);
+	    onames.insert(oname);
+	}
+
+	// Make a comb to hold the problematic primitives
+	if (onames.size()) {
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    struct wmember wcomb;
+	    BU_LIST_INIT(&wcomb.l);
+	    std::set<std::string>::iterator o_it;
+	    for (o_it = onames.begin(); o_it != onames.end(); o_it++)
+		(void)mk_addmember(o_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
+	    mk_lcomb(wdbp, bu_vls_cstr(&gname), &wcomb, 1, NULL, NULL, NULL, 0);
+	}
+    }
+
+    bu_vls_free(&gname);
+    bu_vls_free(&ofile);
     return ret;
 }
 
@@ -648,16 +407,16 @@ ged_lint_memfree:
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint_core, GED_CMD_DEFAULT };
-const struct ged_cmd lint_cmd = { &lint_cmd_impl };
-const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
+    struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint_core, GED_CMD_DEFAULT };
+    const struct ged_cmd lint_cmd = { &lint_cmd_impl };
+    const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  lint_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  lint_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
+    {
+	return &pinfo;
+    }
 }
 #endif
 

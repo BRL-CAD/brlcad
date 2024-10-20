@@ -3461,6 +3461,77 @@ rt_tgc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
     VADD3(l[4]->p, tgc->v, tgc->h, tgc->d);
 }
 
+int
+rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_tgc_internal *otgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(otgc);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_TGC;
+    nip->idb_meth = &OBJ[ID_TGC];
+    struct rt_tgc_internal *tgc = NULL;
+    BU_ALLOC(tgc, struct rt_tgc_internal);
+    nip->idb_ptr = tgc;
+    tgc->magic = RT_TGC_INTERNAL_MAGIC;
+    VMOVE(tgc->v, otgc->v);
+    VMOVE(tgc->h, otgc->h);
+    VMOVE(tgc->a, otgc->a);
+    VMOVE(tgc->b, otgc->b);
+    VMOVE(tgc->c, otgc->c);
+    VMOVE(tgc->d, otgc->d);
+
+    // Height vector is used for the V and H bumps
+    vect_t mvec, mrvec;
+    VMOVE(mvec, tgc->h);
+    VUNITIZE(mvec);
+    VREVERSE(mrvec, mvec);
+    VSCALE(mvec, mvec, val);
+    VSCALE(mrvec, mrvec, val);
+    VADD2(tgc->v, tgc->v, mrvec);
+    VSCALE(mvec, mvec, 2); // Offset for movement of v
+    VADD2(tgc->h, tgc->h, mvec);
+
+    // If we're only bumping planar elements, we're done
+    if (planar_only) {
+	*oip = nip;
+	return BRLCAD_OK;
+    }
+
+    // Bumping everything - scale the axis vecs
+    VMOVE(mvec, tgc->a);
+    VUNITIZE(mvec);
+    VSCALE(mvec, mvec, val);
+    VADD2(tgc->a, tgc->a, mvec);
+
+    VMOVE(mvec, tgc->b);
+    VUNITIZE(mvec);
+    VSCALE(mvec, mvec, val);
+    VADD2(tgc->b, tgc->b, mvec);
+
+    VMOVE(mvec, tgc->c);
+    VUNITIZE(mvec);
+    VSCALE(mvec, mvec, val);
+    VADD2(tgc->c, tgc->c, mvec);
+
+    VMOVE(mvec, tgc->d);
+    VUNITIZE(mvec);
+    VSCALE(mvec, mvec, val);
+    VADD2(tgc->d, tgc->d, mvec);
+
+    *oip = nip;
+
+    return BRLCAD_OK;
+}
 
 /*
  * Local Variables:

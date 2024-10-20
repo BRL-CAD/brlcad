@@ -782,7 +782,7 @@ rt_pg_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return -1;
     if (dbip) RT_CK_DBI(dbip);
 
-    bu_log("As of release 6.0 the polysolid is superceded by the BOT primitive.\n");
+    bu_log("As of release 6.0 the polysolid is superseded by the BOT primitive.\n");
     bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
     /* The rt_pg_to_bot() routine can also be used. */
     return -1;

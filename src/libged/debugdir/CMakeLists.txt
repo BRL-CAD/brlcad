@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-debugdir SHARED debugdir.c)
 target_link_libraries(ged-debugdir libged libbu)
 set_property(TARGET ged-debugdir APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-debugdir debugdir.c)
-PLUGIN_SETUP(ged-debugdir ged)
+validate_style(ged-debugdir debugdir.c)
+plugin_setup(ged-debugdir ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   debugdir.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

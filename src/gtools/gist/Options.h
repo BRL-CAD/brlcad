@@ -43,6 +43,7 @@ public:
     //Setter functions
     void setInFile(std::string f);
     void setExeDir(std::string f);
+    void setLogopath(std::string f);
     void setPPI(int p);
     void setIsFolder();
     void setOpenGUI();
@@ -52,13 +53,12 @@ public:
     bool setOutFile(std::string n);
     void setInFolder(std::string n);
     void setPreparer(std::string n);
+    void setOwner(std::string n);
     void setClassification(std::string c);
     void setCoordSystem(coord_system sys);
     void setUpAxis(up_axis axis);
     void setNotes(std::string n);
-
     void setTopComp(std::string t);
-
     void setUnitLength(std::string l);
     void setUnitMass(std::string m);
 
@@ -67,6 +67,7 @@ public:
     std::string getInFile();
     std::string getExeDir();
     std::string getWorkingDir();
+    std::string getLogopath();
     int getWidth();
     int getLength();
     bool getIsFolder();
@@ -77,19 +78,19 @@ public:
     std::string getInFolder();
     std::string getOutFolder();
     std::string getPreparer();
+    std::string getOwner();
     std::string getClassification();
     coord_system getCoordSystem();
     std::string getCoordSystem_asString();
     up_axis getUpAxis();
     std::string getUpAxis_asString();
     std::string getNotes();
-
     std::string getTopComp();
-
     std::string getUnitLength();
     std::string getUnitMass();
-    bool isDefaultLength();
-    bool isDefaultMass();
+
+    bool isOriginalUnitsLength();
+    bool isOriginalUnitsMass();
 
     bool verbosePrinting();
 
@@ -100,6 +101,8 @@ private:
     std::string exeDir;
     // Path to working directory where output is stored. Default pattern is "inFile".working
     std::string workingDir;
+    // Path to option logo image file
+    std::string logopath;
     // Pixels per inch
     int ppi;
     // Dimensions of the output, in pixels
@@ -107,7 +110,7 @@ private:
     int length;
     // Whether path is a folder with multiple files or not
     bool isFolder;
-    // Whether user specifices to open GUI as well
+    // Whether user specifies to open GUI as well
     int openGUI;
     //Whether user decides to export to a png
     bool exportToFile;
@@ -121,6 +124,8 @@ private:
     std::string outFolderName;
     // Name of preparer
     std::string preparer;
+    // Name of owner (override)
+    std::string owner;
     // Classification word
     std::string classification;
     // Orientation
@@ -134,15 +139,14 @@ private:
 
     // Unit length
     std::string uLength;
-    bool defaultLength;
+    bool originalUnitsLength;
     // Unit mass
     std::string uMass;
-    bool defaultMass;
+    bool originalUnitsMass;
 
     // print verbose status messages
     int verbosePrint;
 };
-
 
 /*
  * Local Variables:

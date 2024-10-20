@@ -319,22 +319,29 @@ nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1
 }
 
 
-struct nmg_nurb_uv_hit *
-nmg_nurb_intersect(const struct face_g_snurb *srf, plane_t plane1, plane_t plane2, double uv_tol, struct bu_list *plist)
-{
-    struct nmg_nurb_uv_hit * h;
-    struct face_g_snurb * psrf,
-	* osrf;
-    int dir,
-	sub;
+#define MAX_RECURSION_DEPTH 50
 
-    point_t vmin,
-	vmax;
-    fastf_t u[2],
-	v[2];
+struct nmg_nurb_uv_hit *
+nmg_nurb_intersect(const struct face_g_snurb *srf, plane_t plane1, plane_t plane2, double uv_tol, struct bu_list *plist, size_t recursion_depth)
+{
+    struct nmg_nurb_uv_hit *h;
+    struct face_g_snurb *psrf;
+    struct face_g_snurb *osrf;
+    int dir;
+    int sub;
+
+    point_t vmin;
+    point_t vmax;
+    fastf_t u[2];
+    fastf_t v[2];
     struct bu_list rni_plist;
 
     NMG_CK_SNURB(srf);
+
+    if (recursion_depth  > MAX_RECURSION_DEPTH) {
+	bu_log("Maximum recursion depth reached, aborting\n");
+	return NULL;
+    }
 
     h = (struct nmg_nurb_uv_hit *) 0;
     if (plist == NULL) {
@@ -396,7 +403,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, plane_t plane1, plane_t plane
 		nmg_nurb_s_split(plist, psrf, dir);
 		nmg_nurb_free_snurb(psrf);
 
-		hp = nmg_nurb_intersect(srf, plane1, plane2, uv_tol, plist);
+		hp = nmg_nurb_intersect(srf, plane1, plane2, uv_tol, plist, recursion_depth+1);
 		return hp;
 	    }
 	    if (smin > 1.0 || smax < 0.0) {

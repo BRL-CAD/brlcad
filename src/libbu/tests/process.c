@@ -32,12 +32,15 @@
 
 #include "bu.h"
 
-// Tests requiring non-blocking reading behavior - THEY WILL INF LOOP IN CURRENT FORM
+
+// Tests requiring non-blocking reading behavior - THEY WILL INF LOOP
+// IN CURRENT FORM
 #define BU_PROCESS_ASYNC 0
 
 #define PROCESS_ERROR 100
 #define PROCESS_FAIL  1
 #define PROCESS_PASS  0
+
 
 /* tests:   single stdout and stderr reads - BLOCKING READS
  *  bu_process_read() [stdout and stderr]
@@ -45,7 +48,9 @@
  *  bu_process_create()
  *  bu_process_wait()
  */
-int _test_read(const char* cmd) {
+static int
+test_read(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "output", NULL};
     char line[100] = {0};
@@ -69,13 +74,16 @@ int _test_read(const char* cmd) {
     return PROCESS_PASS;
 }
 
+
 /* tests:   reads with lots of output; equal distribution - BLOCKING READS
  *  bu_process_read() [stdout and stderr]
  * also relies on:
  *  bu_process_create()
  *  bu_process_wait()
  */
-int _test_read_flood(const char* cmd) {
+static int
+test_read_flood(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "flood", NULL};
     char line[100] = {0};
@@ -99,11 +107,14 @@ int _test_read_flood(const char* cmd) {
     return PROCESS_PASS;
 }
 
+
 /* tests:   basic process execution and wait
  *  bu_process_create()
  *  bu_process_wait()
  */
-int _test_exec_wait(const char* cmd) {
+static int
+test_exec_wait(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "basic", NULL};
 
@@ -117,13 +128,16 @@ int _test_exec_wait(const char* cmd) {
     return PROCESS_PASS;
 }
 
+
 /* tests:   process creation with options
  *  bu_process_create() [bu_process_create_opts]
  * also relies on
  *  bu_process_read()
  *  bu_process_wait()
  */
-int _test_create_opts(const char* cmd) {
+static int
+test_create_opts(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "output", NULL};
     char line[100] = {0};
@@ -154,12 +168,15 @@ int _test_create_opts(const char* cmd) {
     return PROCESS_PASS;
 }
 
+
 /* tests:   process creation with timeout
  *  bu_process_create()
  * also relies on
  *  bu_process_wait()
  */
-int _test_create_timeout(const char* cmd) {
+static int
+test_create_timeout(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "timeout", NULL};
 
@@ -189,7 +206,9 @@ int _test_create_timeout(const char* cmd) {
  *  bu_process_create()
  *  bu_process_wait()
  */
-int _test_ids(const char* cmd) {
+static int
+test_ids(const char* cmd)
+{
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "basic", NULL};
 
@@ -219,7 +238,10 @@ int _test_ids(const char* cmd) {
     return PROCESS_PASS;
 }
 
-/* tests:   open/close stdin, stdout, stderr; test pending information on stream using fileno
+
+/* tests: open/close stdin, stdout, stderr; test pending information
+ * on stream using fileno
+ *
  *  bu_process_open(),
  *  bu_process_close(),
  *  bu_process_fileno(),
@@ -228,7 +250,9 @@ int _test_ids(const char* cmd) {
  *  bu_process_create(),
  *  bu_process_wait()
  */
-int _test_streams(const char* cmd) {
+static int
+test_streams(const char* cmd)
+{
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "echo", NULL};
 
@@ -239,7 +263,8 @@ int _test_streams(const char* cmd) {
     // send a test line through stdin
     char line[10] = "echo_test";
     fputs(line, f_in);
-    // subprocess is using cin.get() -> need to send newline and flush so it'll move on
+    // subprocess is using cin.get() -> need to send newline and flush
+    // so it'll move on
     fputs("\n", f_in);	fflush(f_in);
 
     // subprocess should echo on stdout and stderr
@@ -294,7 +319,9 @@ int _test_streams(const char* cmd) {
  *  bu_process_pid()
  *  bu_process_wait()
  */
-int _test_abort(const char* cmd) {
+static int
+test_abort(const char* cmd)
+{
     const int64_t MAX_TIMEOUT = BU_SEC2USEC(15);
     int terminate_successful = 0;
     struct bu_process* p = NULL;
@@ -307,7 +334,7 @@ int _test_abort(const char* cmd) {
     while (!(terminate_successful = bu_pid_terminate(bu_process_pid(p))) && (bu_gettime() - start_time < MAX_TIMEOUT))
 	;
 
-    if (!terminate_successful){
+    if (!terminate_successful) {
 	fprintf(stderr, "bu_process_test[\"abort\"] - subprocess could not be terminated\n");
 	return PROCESS_FAIL;
     }
@@ -328,7 +355,9 @@ int _test_abort(const char* cmd) {
  *  bu_process_create()
  *  bu_process_wait()
  */
-int _test_args(const char* cmd) {
+static int
+test_all_args(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "basic", NULL};
     int ck_argc;
@@ -364,6 +393,7 @@ int _test_args(const char* cmd) {
     return PROCESS_PASS;
 }
 
+
 /* tests:   process reports alive
  *  bu_process_alive()
  *  bu_pid_alive()
@@ -372,7 +402,9 @@ int _test_args(const char* cmd) {
  *  bu_process_create()
  *  bu_process_wait()
  */
-int _test_alive(const char* cmd) {
+static int
+test_alive(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "alive", NULL};
     int pid = -1;
@@ -441,6 +473,7 @@ int _test_alive(const char* cmd) {
     return PROCESS_PASS;
 }
 
+
 #if BU_PROCESS_ASYNC
 /* tests:   reads with lots of output; equal stdout and stderr distribution - ASYNC READS
  *  bu_process_create() ['async' option]
@@ -451,7 +484,9 @@ int _test_alive(const char* cmd) {
  *  bu_process_pid()
  *  bu_process_wait()
  */
-int _test_async_balanced(const char* cmd) {
+static int
+test_async_balanced(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "flood", NULL};
     int count = 0;
@@ -485,7 +520,10 @@ int _test_async_balanced(const char* cmd) {
     return PROCESS_PASS;
 }
 
-/* tests:   lots of outout; unequal stdout and stderr distribution - ASYNC READS
+
+/* tests: lots of output; unequal stdout and stderr distribution -
+ * ASYNC READS
+ *
  *  bu_process_create() ['async' option]
  *  bu_process_read() [stdout and stderr]
  * also relies on:
@@ -494,7 +532,9 @@ int _test_async_balanced(const char* cmd) {
  *  bu_process_pid()
  *  bu_process_wait()
  */
-int _test_async_unbalanced(const char* cmd) {
+static int
+test_async_unbalanced(const char* cmd)
+{
     struct bu_process* p;
     const char* run_av[3] = {cmd, "flood_unbal", NULL};	    // NOTE: writes to stdout 10x stderr
     int count = 0;
@@ -527,7 +567,10 @@ int _test_async_unbalanced(const char* cmd) {
 
     return PROCESS_PASS;
 }
+
+
 #endif
+
 
 typedef struct {
     const char* name;
@@ -535,23 +578,26 @@ typedef struct {
 } ProcessTest;
 
 ProcessTest tests[] = {
-    {"exec_wait", _test_exec_wait},
-    {"create_opts", _test_create_opts},
-    {"create_timeout", _test_create_timeout},
-    {"read", _test_read},
-    {"read_flood", _test_read_flood},
-    {"ids", _test_ids},
-    {"streams", _test_streams},
-    {"abort", _test_abort},
-    {"args", _test_args},
-    {"alive", _test_alive},
+    {"exec_wait", test_exec_wait},
+    {"create_opts", test_create_opts},
+    {"create_timeout", test_create_timeout},
+    {"read", test_read},
+    {"read_flood", test_read_flood},
+    {"ids", test_ids},
+    {"streams", test_streams},
+    {"abort", test_abort},
+    {"args", test_all_args},
+    {"alive", test_alive},
 #if BU_PROCESS_ASYNC
-    {"async_bal", _test_async_balanced},
-    {"async_unbal", _test_async_unbalanced},
+    {"async_bal", test_async_balanced},
+    {"async_unbal", test_async_unbalanced},
 #endif
 };
 
-int run_test(char* av[]) {
+
+static int
+run_test(char* av[])
+{
     int failed = 0;
     int run = 0;
 
@@ -578,11 +624,12 @@ int run_test(char* av[]) {
     return failed;
 }
 
+
 int
 main(int ac, char *av[])
 {
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 

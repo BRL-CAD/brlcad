@@ -21,54 +21,17 @@
 # For libraries these lists are also used in the subdirectories when targets
 # are defined, so they represent the canonical dependency definitions used to
 # create the actual build targets.  Application directories, on the other hand,
-# list the "highest level" directories that any of the programs contained in
-# them need since many of them contain large numbers of executables with
-# different requriements.
-
-if (NOT COMMAND)
-  function(deps_expand seed_dir out_var)
-    set(curr_deps ${${out_var}})
-    set(working_deps ${${seed_dir}_deps})
-    set(seed_deps)
-    while (working_deps)
-      list(POP_FRONT working_deps wdep)
-      if (NOT BRLCAD_ENABLE_TCL AND "${wdep}" STREQUAL "libtclcad")
-	continue()
-      endif ()
-      if (NOT BRLCAD_ENABLE_QT AND "${wdep}" STREQUAL "libqtcad")
-	continue()
-      endif ()
-      list(FIND curr_deps ${wdep} fresult)
-      if (${fresult} EQUAL -1)
-	list(APPEND curr_deps ${wdep})
-	set(seed_deps ${seed_deps} ${${wdep}_deps})
-      endif (${fresult} EQUAL -1)
-      if (NOT working_deps)
-	set(working_deps ${seed_deps})
-	set(seed_deps)
-      endif (NOT working_deps)
-    endwhile (working_deps)
-
-    # Have the active dirs, sort them into
-    # reverse dependency order
-    set(odirs ${ordered_dirs})
-    list(REVERSE odirs)
-    set(fdeps)
-    foreach(cod ${odirs})
-      list(FIND curr_deps ${cod} fresult)
-      if (NOT ${fresult} EQUAL -1)
-	list(APPEND fdeps ${cod})
-      endif (NOT ${fresult} EQUAL -1)
-    endforeach(cod ${odirs})
-    set(${out_var} ${fdeps} PARENT_SCOPE)
-  endfunction(deps_expand)
-endif (NOT COMMAND)
+# list the "highest level" libraries that any of the programs contained in
+# them need since many of the directories contain large numbers of executables
+# with individually different requirements.
 
 set(ordered_dirs)
 macro(set_deps dirname deps_list)
   list(APPEND ordered_dirs ${dirname})
   set(${dirname}_deps ${deps_list})
 endmacro(set_deps)
+
+# Libraries
 
 set_deps(libbu      "")
 set_deps(libbn      "libbu")
@@ -90,12 +53,12 @@ set_deps(libpc      "")
 set_deps(libqtcad   "libged;libdm")
 set_deps(libtclcad  "libged;libdm")
 
+# Applications
 
-# Note - brlman can be compliled with Tcl, Qt,
-# or no graphical support, so we list libbu explicitly
+# Note - brlman can be compiled with Tcl, Qt, or no graphical support, so we
+# list libbu explicitly
 set_deps(brlman     "libqtcad;libtclcad;libbu")
 set_deps(bwish      "libtclcad")
-set_deps(conv       "libged;libgcv")
 set_deps(fb         "libdm")
 set_deps(fbserv     "libdm")
 set_deps(gtools     "libged")
@@ -109,12 +72,12 @@ set_deps(util       "libdm;libicv;libwdb")
 set_deps(qged       "libqtcad")
 set_deps(external   "libwdb")
 set_deps(remrt      "libdm;liboptical")
-# tclscripts must come before applications like
-# mged and archer that need the scripts in place to
-# run. The script target lists are defined when the tclscripts
-# directories are configured, and those lists are needed
-# as dependencies for the targets in these directories
+# tclscripts must come before applications like mged and archer that need the
+# scripts in place to run. The script target lists are defined when the
+# tclscripts directories are configured, and those lists are needed as
+# dependencies for the targets in these directories
 set_deps(tclscripts "libtclcad")
+set_deps(conv       "libtclcad;libged;libgcv") # asc2g/g2asc use Tcl.  List ged and gcv for when Tcl is disabled
 set_deps(adrt       "libtclcad")
 set_deps(isst       "libtclcad;libqtcad")
 set_deps(rtwizard   "libtclcad")

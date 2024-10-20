@@ -48,7 +48,6 @@
 
 # Handle aliases for BRL-CAD options
 function(OPTION_RESOLVE_ALIASES ropt opt opt_ALIASES style)
-
   set(lopt ${${ropt}})
 
   foreach(item ${opt_ALIASES})
@@ -82,7 +81,6 @@ function(OPTION_RESOLVE_ALIASES ropt opt opt_ALIASES style)
 
   # Let the parent scope know the result
   set(${ropt} ${lopt} PARENT_SCOPE)
-
 endfunction(OPTION_RESOLVE_ALIASES)
 
 function(VAL_NORMALIZE val optype)
@@ -105,7 +103,6 @@ function(VAL_NORMALIZE val optype)
 endfunction(VAL_NORMALIZE)
 
 function(OPT_NORMALIZE ropt default optype)
-
   # We need something for a default
   if("${default}" STREQUAL "")
     message(FATAL_ERROR "Error - empty default value supplied for ${opt}")
@@ -119,17 +116,14 @@ function(OPT_NORMALIZE ropt default optype)
   endif("${${ropt}}" STREQUAL "")
 
   # We should be done with logic that will change the setting - normalize
-  VAL_NORMALIZE(local_opt ${optype})
+  val_normalize(local_opt ${optype})
 
   # Let the parent know what the normalized result is
   set(${ropt} ${local_opt} PARENT_SCOPE)
-
 endfunction(OPT_NORMALIZE)
-
 
 # Standard option with BRL-CAD aliases and description
 function(BRLCAD_OPTION opt default)
-
   cmake_parse_arguments(O "" "TYPE" "ALIASES" ${ARGN})
 
   # Initialize
@@ -141,11 +135,11 @@ function(BRLCAD_OPTION opt default)
 
   # Process aliases and write descriptions
   if(O_ALIASES)
-    OPTION_RESOLVE_ALIASES(lopt "${opt}" "${O_ALIASES}" "${otype}")
+    option_resolve_aliases(lopt "${opt}" "${O_ALIASES}" "${otype}")
   endif(O_ALIASES)
 
   # Finalize the actual value to be used
-  OPT_NORMALIZE(lopt "${default}" ${otype})
+  opt_normalize(lopt "${default}" ${otype})
 
   # Set in the cache
   if("${otype}" STREQUAL "BOOL")
@@ -161,9 +155,7 @@ function(BRLCAD_OPTION opt default)
 
   # Let the parent know
   set(${opt} "${lopt}" PARENT_SCOPE)
-
 endfunction(BRLCAD_OPTION)
-
 
 # Local Variables:
 # tab-width: 8

@@ -165,7 +165,7 @@ struct current_state {
     fastf_t *m_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
     fastf_t *m_poi;       /* one vector per view for collecting the partial products of inertia calculation */
 
-    /* single gird variables */
+    /* single grid variables */
     mat_t Viewrotscale;
     fastf_t viewsize;
     mat_t model2view;

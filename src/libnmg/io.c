@@ -53,7 +53,7 @@ union nmg_record {
 
 #define NMG_CK_DISKMAGIC(_cp, _magic)	\
     if (ntohl(*(uint32_t*)_cp) != _magic) { \
-	bu_log("NMG_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
+	bu_log("NMG_CK_DISKMAGIC: magic mismatch, got x%x, s/b x%x, file %s, line %d\n", \
 	       ntohl(*(uint32_t*)_cp), _magic, __FILE__, __LINE__); \
 	bu_bomb("bad magic\n"); \
     }
@@ -1216,7 +1216,7 @@ nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long i
 
     cp = base + ecnt[subscript].byte_offset;
     if (ntohl(*(uint32_t*)cp) != DISK_DOUBLE_ARRAY_MAGIC) {
-	bu_log("magic mis-match, got x%x, s/b x%x, file %s, line %d\n",
+	bu_log("magic mismatch, got x%x, s/b x%x, file %s, line %d\n",
 	       ntohl(*(uint32_t*)cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
 	bu_log("subscript=%ld, byte_offset=%ld\n",
 	       subscript, ecnt[subscript].byte_offset);

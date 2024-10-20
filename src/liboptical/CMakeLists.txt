@@ -1,4 +1,5 @@
-set(LIBOPTICAL_SOURCES
+set(
+  LIBOPTICAL_SOURCES
   init.c
   material.c
   photonmap.c
@@ -35,16 +36,16 @@ set(LIBOPTICAL_SOURCES
   turb.c
   vers.c
   wray.c
-  )
+)
 
 if(BRLCAD_ENABLE_TCL)
+  set(TCL_ENABLE_TK OFF)
   find_package_tcl(REQUIRED)
   set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_tcl.c)
   set(LOCAL_OPTICAL_INCLUDE_DIRS ${LOCAL_OPTICAL_INCLUDE_DIRS} ${TCL_INCLUDE_PATH})
 endif(BRLCAD_ENABLE_TCL)
 
 if(BRLCAD_ENABLE_OSL)
-
   ##########################################
   # Build OSL-renderer Library
   ##########################################
@@ -60,16 +61,15 @@ if(BRLCAD_ENABLE_OSL)
   message("Oslcomp: ${OSLCOMP_LIBRARY}")
   message("Oslquery: ${OSLQUERY_LIBRARY}")
 
-  set (OSLRT_SOURCES liboslrend.cpp render_svc.cpp)
+  set(OSLRT_SOURCES liboslrend.cpp render_svc.cpp)
 
   #set (OSLRT_LIBS ${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES})
   message("OSLRT_SOURCES: ${OSLRT_SOURCES}")
   #find_package(Boost)
 
   # Try to find BOOST
-  set (Boost_COMPONENTS filesystem regex system thread)
-  find_package (Boost 1.46 REQUIRED
-    COMPONENTS ${Boost_COMPONENTS})
+  set(Boost_COMPONENTS filesystem regex system thread)
+  find_package(Boost 1.46 REQUIRED COMPONENTS ${Boost_COMPONENTS})
   # If it was not found, check if BOOST_ROOT was set
   if(NOT Boost_FILESYSTEM_LIBRARY)
     message("Checking if BOOST ROOT was FOUND")
@@ -80,18 +80,30 @@ if(BRLCAD_ENABLE_OSL)
   message("Boost system: ${Boost_SYSTEM_LIBRARY}")
   message("Boost thread: ${Boost_THREAD_LIBRARY}")
 
-  set(OSLRT_LIBS ${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
+  set(
+    OSLRT_LIBS
+    ${OSLEXEC_LIBRARY}
+    ${OSLCOMP_LIBRARY}
+    ${OSLQUERY_LIBRARY}
+    ${OPENIMAGEIO_LIBRARY}
+    ${Boost_LIBRARIES}
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_REGEX_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
+    ${Boost_THREAD_LIBRARY}
+  )
 
-  set(OSL_LOCAL_INCLUDE_DIRS
+  set(
+    OSL_LOCAL_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${OSL_INCLUDES}
     ${OPENIMAGEIO_INCLUDES}
     # This is required for brep.h to find opennurbs.h
     # (TODO: better way to include this dir?)
     ../other/openNURBS/
-    )
+  )
 
-  BRLCAD_ADDLIB(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS}" "" "${OSL_LOCAL_INCLUDE_DIRS}")
+  brlcad_addlib(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS}" "" "${OSL_LOCAL_INCLUDE_DIRS}")
 
   ##########################################
   # Build OSL Shader
@@ -99,22 +111,20 @@ if(BRLCAD_ENABLE_OSL)
 
   # Add the osl shader to the list of shaders
   set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
-
 endif(BRLCAD_ENABLE_OSL)
 
 # Note - liboptical_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(olibs "${liboptical_deps}")
-if (TARGET liboslrend)
+if(TARGET liboslrend)
   set(olibs "${olibs};liboslrend")
-endif (TARGET liboslrend)
-if (BRLCAD_ENABLE_TCL)
+endif(TARGET liboslrend)
+if(BRLCAD_ENABLE_TCL)
   set(olibs "${olibs};${TCL_LIBRARY}")
-endif (BRLCAD_ENABLE_TCL)
+endif(BRLCAD_ENABLE_TCL)
 
-BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "${olibs}" "" "${LOCAL_OPTICAL_INCLUDE_DIRS}")
+brlcad_addlib(liboptical "${LIBOPTICAL_SOURCES}" "${olibs}" "" "${LOCAL_OPTICAL_INCLUDE_DIRS}")
 
-
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   liboslrend.cpp
   oslexec_pvt.h
@@ -124,10 +134,9 @@ CMAKEFILES(
   liboslrend.h
   constantpool.h
   render_svc.cpp
-  )
+)
 
-SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
+set_target_properties(liboptical PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 # Local Variables:
 # tab-width: 8

@@ -1,6 +1,9 @@
 # The auto_mkindex and pkg_mkIndex commands are called from within Tcl,
 # which means we need script files.
-file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/auto_mkindex.tcl" "
+file(
+  WRITE
+  "${CMAKE_BINARY_DIR}/CMakeTmp/auto_mkindex.tcl"
+  "
 foreach arg $argv {
 puts \"Generating tclIndex in $arg\"
 catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh} errout
@@ -8,8 +11,12 @@ if {![file exists \"$arg/tclIndex\"]} {
 puts \"$errout\"
 return -code 1
 }
-}")
-file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/pkg_mkIndex.tcl" "
+}"
+)
+file(
+  WRITE
+  "${CMAKE_BINARY_DIR}/CMakeTmp/pkg_mkIndex.tcl"
+  "
 foreach arg $argv {
 puts \"Generating pkgIndex.tcl in $arg\"
 catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh} errout
@@ -17,7 +24,8 @@ if {![file exists \"$arg/pkgIndex.tcl\"]} {
 puts \"$errout\"
 return -code 1
 }
-}")
+}"
+)
 
 # Trying to generate Tcl index files in parallel has proven impractical, and
 # even the current efforts to do it in series don't seem to always succeed.
@@ -35,7 +43,7 @@ define_property(GLOBAL PROPERTY index_install_files BRIEF_DOCS "index install fi
 
 macro(general_tcl_index_BUILD cmd outfile targetdir)
   # get file copy target(s) so we can make tclindex.tcl depend on them
-  BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
+  brlcad_get_dir_list_contents(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
   set_property(GLOBAL APPEND PROPERTY index_cpy_targets ${data_target_list})
 
   # We want to be out of date if any of the tcl files in the current directory
@@ -51,20 +59,23 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   # make each new target depend on all previous targets, so they are forced
   # execute one at a time.
   set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
-  file(APPEND "${index_cmds_file}" "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\" RESULT_VARIABLE BRES)\nif(BRES)\n  message(FATAL_ERROR \"Failed to process ${tclindex_outdir}\")\nendif()\n")
+  file(
+    APPEND
+    "${index_cmds_file}"
+    "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\" RESULT_VARIABLE BRES)\nif(BRES)\n  message(FATAL_ERROR \"Failed to process ${tclindex_outdir}\")\nendif()\n"
+  )
 
   set_property(GLOBAL APPEND PROPERTY index_install_files ${targetdir}/${outfile})
 
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile}")
-
+  distclean("${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile}")
 endmacro(general_tcl_index_BUILD name targetdir)
 
 # Type specific generalizations of the general_tcl_index_BUILD macro
 macro(pkgIndex_BUILD targetdir)
-  general_tcl_index_BUILD(pkg_mkIndex pkgIndex.tcl "${targetdir}")
+  general_tcl_index_build(pkg_mkIndex pkgIndex.tcl "${targetdir}")
 endmacro()
 macro(tclIndex_BUILD targetdir)
-  general_tcl_index_BUILD(auto_mkindex tclIndex "${targetdir}")
+  general_tcl_index_build(auto_mkindex tclIndex "${targetdir}")
 endmacro()
 
 # Now that the macros are defined, we can add tclscript subdirs
@@ -85,7 +96,8 @@ add_subdirectory(tcllib)
 add_subdirectory(util)
 add_subdirectory(misc)
 
-set(tclscripts_TCLSCRIPTS
+set(
+  tclscripts_TCLSCRIPTS
   cad_clrpick.tcl
   cad_dialog.tcl
   chkexterns.tcl
@@ -100,19 +112,18 @@ set(tclscripts_TCLSCRIPTS
   mouse.tcl
   tkcon.tcl
   vmath.tcl
-  )
-if (BRLCAD_ENABLE_TCL)
-  BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)
-  pkgIndex_BUILD(tclscripts)
-  tclIndex_BUILD(tclscripts)
-endif (BRLCAD_ENABLE_TCL)
+)
+if(BRLCAD_ENABLE_TCL)
+  brlcad_adddata(tclscripts_TCLSCRIPTS tclscripts)
+  pkgindex_build(tclscripts)
+  tclindex_build(tclscripts)
+endif(BRLCAD_ENABLE_TCL)
 
 # Put rtwizard last so we can define a build target
 # that relies on the other tclscripts being set up.
 add_subdirectory(rtwizard)
 
-if (TARGET btclsh)
-
+if(TARGET btclsh)
   # Unpack the full lists
   get_property(index_cpy_targets GLOBAL PROPERTY index_cpy_targets)
   get_property(index_depends_files GLOBAL PROPERTY index_depends_files)
@@ -125,11 +136,9 @@ if (TARGET btclsh)
     COMMAND ${CMAKE_COMMAND} -DCONFIG=$<CONFIG> -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
     DEPENDS ${index_depends_files} ${index_cpy_targets}
-    )
-  add_custom_target(TclIndexBld ALL
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-    )
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
+  )
+  add_custom_target(TclIndexBld ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
+  distclean(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
 
   foreach(ifile ${index_install_files})
     # Install logic for index file.
@@ -137,14 +146,13 @@ if (TARGET btclsh)
     get_filename_component(outfile "${ifile}" NAME)
     install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
   endforeach(ifile ${index_install_files})
+endif(TARGET btclsh)
 
-endif (TARGET btclsh)
-
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${tclscripts_TCLSCRIPTS}
   README
-  )
+)
 
 # Local Variables:
 # tab-width: 8

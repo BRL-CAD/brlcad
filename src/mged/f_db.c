@@ -235,11 +235,10 @@ mged_post_opendb_clbk(struct ged *gedp, void *ctx)
 	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
 	// Stash the result string state prior to doing the following Tcl commands.
-	// get_dbip in particular uses it...
 	struct bu_vls tmp_gedr = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&tmp_gedr, "%s", bu_vls_cstr(gedp->ged_result_str));
 
-	bu_vls_printf(&cmd, "wdb_open %s inmem [get_dbip]", MGED_INMEM_NAME);
+	bu_vls_printf(&cmd, "wdb_open %s inmem %p", MGED_INMEM_NAME, (void *)DBIP);
 	if (Tcl_Eval(mctx->interpreter, bu_vls_addr(&cmd)) != TCL_OK) {
 	    bu_vls_sprintf(gedp->ged_result_str, "%s\n%s\n", Tcl_GetStringResult(mctx->interpreter), Tcl_GetVar(mctx->interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	    Tcl_AppendResult(mctx->interpreter, bu_vls_addr(gedp->ged_result_str), (char *)NULL);

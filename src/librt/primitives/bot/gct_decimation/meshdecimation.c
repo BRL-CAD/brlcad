@@ -474,7 +474,7 @@ static int mdBarrierSync(mdBarrier *barrier)
 }
 
 #if 0
-static int mdBarrierSyncTimeout(mdBarrier *barrier, long miliseconds)
+static int mdBarrierSyncTimeout(mdBarrier *barrier, long milliseconds)
 {
     int vindex, ret;
 
@@ -494,7 +494,7 @@ static int mdBarrierSyncTimeout(mdBarrier *barrier, long miliseconds)
 	barrier->index = vindex;
 	barrier->count[vindex] = barrier->resetcount;
     } else {
-	mtSignalWaitTimeout(&barrier->signal, &barrier->mutex, miliseconds);
+	mtSignalWaitTimeout(&barrier->signal, &barrier->mutex, milliseconds);
 
 	if (!(barrier->count[vindex]))
 	    ret = 1;
@@ -1460,7 +1460,7 @@ static mdi mdEdgeCollapseDeleteTriangle(mdMesh *mesh, mdThreadData *tdata, mdi v
     }
 
     /* Determine outer vertex */
-    /* TODO: Replace branches with bitwise arithmetics */
+    /* TODO: Replace branches with bitwise arithmetic */
     if (tri->v[0] == v0) {
 	outer = tri->v[2];
 	delflags = 0x0;
@@ -3699,9 +3699,9 @@ void mdOperationStrength(mdOperation *op, double decimationstrength)
     op->decimationstrength = decimationstrength * decimationstrength;
 }
 
-void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opaquepointer, const mdStatus *status), void *opaquepointer, long miliseconds)
+void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opaquepointer, const mdStatus *status), void *opaquepointer, long milliseconds)
 {
-    op->statusmiliseconds = miliseconds;
+    op->statusmiliseconds = milliseconds;
     op->statusopaquepointer = opaquepointer;
     op->statuscallback = statuscallback;
 }
@@ -3953,7 +3953,8 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 
     if (mesh.updatestatusflag) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_STORE, &status);
-	operation->statuscallback(operation->statusopaquepointer, &status);
+	if (operation->statuscallback)
+	   operation->statuscallback(operation->statusopaquepointer, &status);
     }
 
     /* Write out the final mesh */
@@ -3969,7 +3970,8 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 
     if (mesh.updatestatusflag) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_DONE, &status);
-	operation->statuscallback(operation->statusopaquepointer, &status);
+	if (operation->statuscallback)
+	   operation->statuscallback(operation->statusopaquepointer, &status);
     }
 
     /* Free all global data */

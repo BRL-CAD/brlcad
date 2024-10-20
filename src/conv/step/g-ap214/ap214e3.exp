@@ -2386,7 +2386,7 @@ WHERE
     'MEASURE_REPRESENTATION_ITEM', 'AUTOMOTIVE_DESIGN.' + 
     'LENGTH_MEASURE_WITH_UNIT'] * TYPEOF(i)) = 2))) > 1))) = 0;
   wr8 : SIZEOF(QUERY(sa <* get_shape_aspects(SELF) | (sa.description = 
-    'boss hight occurrence') AND (SIZEOF(QUERY(sar <* USEDIN(sa, 
+    'boss height occurrence') AND (SIZEOF(QUERY(sar <* USEDIN(sa, 
     'AUTOMOTIVE_DESIGN.SHAPE_ASPECT_RELATIONSHIP.RELATED_SHAPE_ASPECT') | (
     'AUTOMOTIVE_DESIGN.' + 'SHAPE_DEFINING_RELATIONSHIP' IN TYPEOF(sar)) AND
      (sar.name = 'boss hight') AND (sar.description = 

@@ -21,8 +21,6 @@
 #pragma once
 
 #include "pch.h"
-
-
 /**
  * The PerspectiveGatherer files contain utility methods for the
  * RenderHandler class.
@@ -46,14 +44,12 @@ enum RenderingFace
     GHOST
 };
 
-
 enum ModelDimension
 {
     LENGTH,
     DEPTH,
     HEIGHT
 };
-
 
 struct FaceDetails
 {
@@ -64,8 +60,7 @@ struct FaceDetails
     ModelDimension heightContributor;
 };
 
-
-std::map<char, FaceDetails> getFaceDetails();
+std::map<char,FaceDetails> getFaceDetails();
 
 // TODO: add correct parameters and return type
 std::string renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost="");

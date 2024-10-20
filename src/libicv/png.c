@@ -33,14 +33,14 @@
 #include "icv_private.h"
 
 int
-png_write(icv_image_t *bif, const char *filename)
+png_write(icv_image_t *bif, FILE *fp)
 {
-    png_structp png_ptr = NULL;
-    png_infop info_ptr = NULL;
-    size_t i = 0;
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!fp))
+	return BRLCAD_ERROR;
+
     static int png_color_type;
-    unsigned char *data;
-    FILE *fh;
 
     switch (bif->color_space) {
 	case ICV_COLOR_SPACE_GRAY:
@@ -50,119 +50,91 @@ png_write(icv_image_t *bif, const char *filename)
 	    png_color_type = PNG_COLOR_TYPE_RGB;
     }
 
-    fh = fopen(filename, "wb");
-    if (UNLIKELY(fh==NULL)) {
-	perror("fopen");
-	bu_log("ERROR: png_write failed to get a FILE pointer\n");
-	return 0;
-    }
+    unsigned char *data = icv_data2uchar(bif);
 
-    data = icv_data2uchar(bif);
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (UNLIKELY(png_ptr == NULL))
+	return BRLCAD_ERROR;
 
-    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (UNLIKELY(png_ptr == NULL)) {
-	fclose(fh);
-	return 0;
-    }
-
-    info_ptr = png_create_info_struct(png_ptr);
+    png_infop info_ptr = png_create_info_struct(png_ptr);
     if (info_ptr == NULL || setjmp(png_jmpbuf(png_ptr))) {
 	png_destroy_read_struct(&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
 	bu_log("ERROR: Unable to create png header\n");
-	fclose(fh);
-	return 0;
+	return BRLCAD_ERROR;
     }
 
-    png_init_io(png_ptr, fh);
+    png_init_io(png_ptr, fp);
     png_set_IHDR(png_ptr, info_ptr, (unsigned)bif->width, (unsigned)bif->height, 8, png_color_type,
 		 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
 		 PNG_FILTER_TYPE_DEFAULT);
     png_write_info(png_ptr, info_ptr);
-    for (i = bif->height-1; i > 0; --i) {
+    for (size_t i = bif->height-1; i > 0; --i) {
 	png_write_row(png_ptr, (png_bytep) (data + bif->width*bif->channels*i));
     }
     png_write_row(png_ptr, (png_bytep) (data + 0));
     png_write_end(png_ptr, info_ptr);
 
     png_destroy_write_struct(&png_ptr, &info_ptr);
-    fclose(fh);
-    return 1;
+
+    return BRLCAD_OK;
 }
 
 icv_image_t *
-png_read(const char* filename)
+png_read(FILE *fp)
 {
-    size_t i;
-    FILE *fp = NULL;
-    png_structp png_p;
-    png_infop info_p;
-    char header[8];
-    int bit_depth;
-    int color_type;
-    png_color_16p input_backgrd;
-    double gammaval;
-    unsigned char *image;
-    unsigned char **rows;
-    png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
-    icv_image_t *bif;
-
-    if (filename == NULL) {
-	fp = stdin;
-	setmode(fileno(fp), O_BINARY);
-    } else if ((fp = fopen(filename, "rb")) == NULL) {
-	bu_log("ERROR: Cannot open file for reading\n");
+    if (UNLIKELY(!fp))
 	return NULL;
-    }
 
+    char header[8];
     if (fread(header, 8, 1, fp) != 1) {
 	bu_log("png-pix: ERROR: Failed while reading file header!!!\n");
-	fclose(fp);
 	return NULL;
     }
 
     if (png_sig_cmp((png_bytep)header, 0, 8)) {
 	bu_log("png-pix: This is not a PNG file!!!\n");
-	fclose(fp);
 	return NULL;
     }
 
-    png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_structp png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
 	bu_log("png-pix: png_create_read_struct() failed!!\n");
-	fclose(fp);
 	return NULL;
     }
 
-    info_p = png_create_info_struct(png_p);
+    png_infop info_p = png_create_info_struct(png_p);
     if (!info_p) {
 	bu_log("png-pix: png_create_info_struct() failed!!\n");
-	fclose(fp);
 	return NULL;
     }
 
+    icv_image_t *bif;
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
 
     png_init_io(png_p, fp);
     png_set_sig_bytes(png_p, 8);
     png_read_info(png_p, info_p);
-    color_type = png_get_color_type(png_p, info_p);
+    int color_type = png_get_color_type(png_p, info_p);
     if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
 	png_set_gray_to_rgb(png_p);
     }
     png_set_expand(png_p);
-    bit_depth = png_get_bit_depth(png_p, info_p);
+    int bit_depth = png_get_bit_depth(png_p, info_p);
     if (bit_depth == 16) png_set_strip_16(png_p);
 
     bif->width = png_get_image_width(png_p, info_p);
     bif->height = png_get_image_height(png_p, info_p);
 
+    png_color_16p input_backgrd;
     if (png_get_bKGD(png_p, info_p, &input_backgrd)) {
 	png_set_background(png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0);
     } else {
+	png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
     }
 
+    double gammaval;
     if (png_get_gAMA(png_p, info_p, &gammaval)) {
 	png_set_gAMA(png_p, info_p, gammaval);
     }
@@ -171,11 +143,11 @@ png_read(const char* filename)
 
 
     /* allocate memory for image */
-    image = (unsigned char *)bu_calloc(1, bif->width*bif->height*3, "image");
+    unsigned char *image = (unsigned char *)bu_calloc(1, bif->width*bif->height*3, "image");
 
     /* create rows array */
-    rows = (unsigned char **)bu_calloc(bif->height, sizeof(unsigned char *), "rows");
-    for (i = 0; i < bif->height; i++)
+    unsigned char **rows = (unsigned char **)bu_calloc(bif->height, sizeof(unsigned char *), "rows");
+    for (size_t i = 0; i < bif->height; i++)
 	rows[bif->height - 1 - i] = image+(i * bif->width * 3);
 
     png_read_image(png_p, rows);
@@ -186,8 +158,6 @@ png_read(const char* filename)
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 3;
     bif->color_space = ICV_COLOR_SPACE_RGB;
-
-    fclose(fp);
 
     return bif;
 }

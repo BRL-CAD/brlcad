@@ -116,7 +116,7 @@ ged_qray_core(struct ged *gedp,
     }
 
     /* catch bug introduced pre 7.26.0 where .mgedrc ends up with qray
-     * lines containting "A database is not open!".  we detect to
+     * lines containing "A database is not open!".  we detect to
      * report a more meaningful error message.
      */
     if ((argc >= 4

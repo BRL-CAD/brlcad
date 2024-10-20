@@ -3,9 +3,10 @@ link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../step-g/ap203.exp)
 add_definitions(-DAP203)
 
-GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
+generate_schema_inputs(${STEP_SCHEMA_FILE} gstep)
 
-set(gstep_SOURCES
+set(
+  gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   AP203.cpp
@@ -21,11 +22,12 @@ set(gstep_SOURCES
   Shape_Representation_Relationship.cpp
   Trees.cpp
   g-step.cpp
-  )
-CMAKEFILES(${gstep_SOURCES})
+)
+cmakefiles(${gstep_SOURCES})
 
-if (BRLCAD_ENABLE_STEP)
-  set(gstep_LIBS
+if(BRLCAD_ENABLE_STEP)
+  set(
+    gstep_LIBS
     libwdb
     librt
     libbrep
@@ -36,24 +38,26 @@ if (BRLCAD_ENABLE_STEP)
     ${STEPCODE_DAI_LIBRARY}
     ${STEPCODE_CORE_LIBRARY}
     ${OPENNURBS_LIBRARIES}
-    )
+  )
 
-  set(gstep_INCLUDE_DIRS
+  set(
+    gstep_INCLUDE_DIRS
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${STEPCODE_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
-    )
+  )
 
-  BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT FOLDER Conv)
+  brlcad_addexec(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT FOLDER Conv)
   target_include_directories(g-step BEFORE PRIVATE ${gstep_INCLUDE_DIRS})
   add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
   set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
   target_compile_definitions(g-step PRIVATE SC_SCHEMA_DLL_EXPORTS)
 
-  if (HIDE_INTERNAL_SYMBOLS)
-    set(gstep_IMPORTS
+  if(HIDE_INTERNAL_SYMBOLS)
+    set(
+      gstep_IMPORTS
       BU_DLL_IMPORTS
       BN_DLL_IMPORTS
       RT_DLL_IMPORTS
@@ -62,12 +66,13 @@ if (BRLCAD_ENABLE_STEP)
       SC_DAI_DLL_IMPORTS
       SC_EDITOR_DLL_IMPORTS
       SC_UTILS_DLL_IMPORTS
-      )
+    )
     set_property(TARGET g-step APPEND PROPERTY COMPILE_DEFINITIONS "${gstep_IMPORTS}")
-  endif (HIDE_INTERNAL_SYMBOLS)
-endif (BRLCAD_ENABLE_STEP)
+  endif(HIDE_INTERNAL_SYMBOLS)
+endif(BRLCAD_ENABLE_STEP)
 
-set(IGNORE_FILES
+set(
+  IGNORE_FILES
   CMakeLists.txt
   AP203.h
   Assembly_Product.h
@@ -79,8 +84,8 @@ set(IGNORE_FILES
   Shape_Representation.h
   Shape_Representation_Relationship.h
   Trees.h
-  )
-CMAKEFILES(${IGNORE_FILES})
+)
+cmakefiles(${IGNORE_FILES})
 
 # Local Variables:
 # tab-width: 8

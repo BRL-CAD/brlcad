@@ -472,8 +472,7 @@ f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struc
     for (p = plan->p_un._p_data[1]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
-    if (!state)
-	db_node->matched_filters = 0;
+    db_node->matched_filters = (state > 0) ? 1 : 0;
     return state;
 }
 
@@ -1460,7 +1459,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	originals[hole_i] = plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]];
     }
 
-    if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
+    if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP || db_node->flags & DB_SEARCH_FLAT) {
 	if (!db_node || !db_node->path || !DB_FULL_PATH_CUR_DIR(db_node->path))
 	    return 1;
 	name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
@@ -1512,7 +1511,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	ret = 1;
     }
 
-    if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP)) {
+    if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP || db_node->flags & DB_SEARCH_FLAT)) {
 	bu_free(name, "f_exec string");
     }
 
@@ -2209,7 +2208,7 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 
     while ((next = yanknode(&plan)) != NULL) {
 	/*
-	 * if we encounter a (expression) then look for aboves in the
+	 * if we encounter a (expression) then look for above in the
 	 * expr subplan.
 	 */
 	if (next->type == N_EXPR) {

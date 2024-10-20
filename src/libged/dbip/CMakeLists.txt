@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-dbip SHARED dbip.c)
 target_link_libraries(ged-dbip libged libbu)
 set_property(TARGET ged-dbip APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-dbip dbip.c)
-PLUGIN_SETUP(ged-dbip ged)
+validate_style(ged-dbip dbip.c)
+plugin_setup(ged-dbip ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   dbip.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

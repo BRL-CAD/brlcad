@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-shaded_mode SHARED shaded_mode.c)
 target_link_libraries(ged-shaded_mode libged libbu)
 set_property(TARGET ged-shaded_mode APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-shaded_mode shaded_mode.c)
-PLUGIN_SETUP(ged-shaded_mode ged)
+validate_style(ged-shaded_mode shaded_mode.c)
+plugin_setup(ged-shaded_mode ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   shaded_mode.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

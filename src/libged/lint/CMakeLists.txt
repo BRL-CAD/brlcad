@@ -4,19 +4,30 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
+
+set(
+  LINT_SRCS
+  bot.cpp
+  cyclic.cpp
+  invalid_shape.cpp
+  lint.cpp
+  missing.cpp
+)
 
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-lint SHARED lint.cpp)
+ged_plugin_library(ged-lint SHARED ${LINT_SRCS})
 target_link_libraries(ged-lint libged libbu)
 set_property(TARGET ged-lint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-lint lint.cpp)
-PLUGIN_SETUP(ged-lint ged)
+validate_style(ged-lint ${LINT_SRCS})
+plugin_setup(ged-lint ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
-  lint.cpp
-  )
+  ${LINT_SRCS}
+  ged_lint.h
+  json.hpp
+)
 
 # Local Variables:
 # tab-width: 8

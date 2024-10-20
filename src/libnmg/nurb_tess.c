@@ -40,7 +40,7 @@
  * Algorithm -
  *
  * See paper in Computer Aided Design (CAD) Volume 27, Number 1,
- * January 1995 TESSELATING TRIMMED NURBS SURFACES, Leslie A Piegl
+ * January 1995 TESSELLATING TRIMMED NURBS SURFACES, Leslie A Piegl
  * and Arnaud Richard.
  *
  * There is a slight deviation from the paper; since libnurb

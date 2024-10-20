@@ -51,7 +51,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
-#include "opennurbs.h"
+#include "brep/defines.h"
 #include "opennurbs_fit.h"
 #include <Eigen/SVD>
 #include "brep.h"

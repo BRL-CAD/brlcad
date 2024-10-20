@@ -72,7 +72,7 @@ ged_cmd_valid(const char *cmd, const char *func)
     int cmd_invalid = 1;
 
     // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the iniital libged
+    // bu_setprogname to find the BRL-CAD root directory the initial libged
     // initialization would have failed.  If we have no ged_cmds at all this is
     // probably what happened, so call libged_init again here.  By the time we
     // are calling ged_cmd_valid bu_setprogname should be set and we should be
@@ -121,7 +121,7 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
     size_t min_dist = LONG_MAX;
 
     // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the iniital libged
+    // bu_setprogname to find the BRL-CAD root directory the initial libged
     // initialization would have failed.  If we have no ged_cmds at all this is
     // probably what happened, so call libged_init again here.  By the time we
     // are calling ged_cmd_valid bu_setprogname should be set and we should be

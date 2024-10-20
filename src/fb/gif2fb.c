@@ -427,7 +427,7 @@ int getByte(FILE *inp)
     static int clear_code, end_code;
     static int max_code, next_ent;
 #define PREFIX 0
-#define SUFIX 1
+#define SUFFIX 1
     static int table[2][1<<12];
     static int stack[1<<13], *sp;
 
@@ -443,7 +443,7 @@ int getByte(FILE *inp)
 
 	for (i=0;i<clear_code;i++) {
 	    table[PREFIX][i] = 0;
-	    table[SUFIX][i]  = i;
+	    table[SUFFIX][i]  = i;
 	}
 
 	sp = stack;
@@ -460,7 +460,7 @@ int getByte(FILE *inp)
 	if (code == clear_code) {
 	    for (i=0;i<clear_code;i++) {
 		table[PREFIX][i] = 0;
-		table[SUFIX][i]  = i;
+		table[SUFFIX][i]  = i;
 	    }
 	    Bits = MinBits;
 	    max_code = clear_code<<1;
@@ -480,15 +480,15 @@ int getByte(FILE *inp)
 	}
 
 	while (code >= clear_code) {
-	    *sp++ = table[SUFIX][code];
+	    *sp++ = table[SUFFIX][code];
 	    code = table[PREFIX][code];
 	}
 
-	*sp++ = firstcode = table[SUFIX][code];
+	*sp++ = firstcode = table[SUFFIX][code];
 
 	if ((code=next_ent) < (1<<12)) {
 	    table[PREFIX][code] = oldcode;
-	    table[SUFIX][code]  = firstcode;
+	    table[SUFFIX][code]  = firstcode;
 	    next_ent++;
 	    if ((next_ent >= max_code) &&
 		(max_code < (1<<12))) {

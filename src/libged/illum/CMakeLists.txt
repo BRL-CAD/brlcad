@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-illum SHARED illum.c)
 target_link_libraries(ged-illum libged libbu)
 set_property(TARGET ged-illum APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-illum illum.c)
-PLUGIN_SETUP(ged-illum ged)
+validate_style(ged-illum illum.c)
+plugin_setup(ged-illum ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   illum.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

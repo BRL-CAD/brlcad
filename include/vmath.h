@@ -83,7 +83,7 @@
  * Most of these macros require that the result be in separate
  * storage, distinct from the input parameters, except where noted.
  *
- * IMPLEMENTOR NOTES
+ * IMPLEMENTER NOTES
  *
  * When writing macros like this, it is very important that any
  * variables declared within a macro code blocks start with an

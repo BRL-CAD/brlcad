@@ -502,7 +502,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 
 	if (!eu->g.magic_p) {
 	    bu_log("nmg_uv_in_lu: eu (%p) has no geometry!!!\n", (void *)eu);
-	    bu_bomb("nmg_uv_in_lu: eu has no geometry!!!\n");
+	    continue;
 	}
 
 	if (*eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC) {

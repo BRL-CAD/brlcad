@@ -1,4 +1,4 @@
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   version1/clhost.cpp
   version1/clhost.hpp
@@ -11,7 +11,7 @@ CMAKEFILES(
   version2/raytracer.hpp
   version2/rt.cl
   version2/utility.hpp
-  )
+)
 
 # Local Variables:
 # tab-width: 8
@@ -19,4 +19,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

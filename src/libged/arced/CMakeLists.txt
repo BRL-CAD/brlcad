@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-arced SHARED arced.c)
 target_link_libraries(ged-arced libged libbu)
 set_property(TARGET ged-arced APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-arced arced.c)
-PLUGIN_SETUP(ged-arced ged)
+validate_style(ged-arced arced.c)
+plugin_setup(ged-arced ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   arced.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

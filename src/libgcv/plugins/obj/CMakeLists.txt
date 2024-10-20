@@ -1,30 +1,23 @@
 add_subdirectory(wfobj)
 if(TARGET libwfobj)
-  SetTargetFolder(libwfobj "Third Party Libraries")
+  settargetfolder(libwfobj "Third Party Libraries")
 endif(TARGET libwfobj)
 if(TARGET libwfobj-static)
-  SetTargetFolder(libwfobj-static "Third Party Libraries")
+  settargetfolder(libwfobj-static "Third Party Libraries")
 endif(TARGET libwfobj-static)
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/wfobj
-  ${CMAKE_CURRENT_BINARY_DIR}/wfobj
-  )
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/wfobj ${CMAKE_CURRENT_BINARY_DIR}/wfobj)
 
-set(OBJ_SRCS
-  obj_read.c
-  obj_write.c
-  tri_face.c
-  )
+set(OBJ_SRCS obj_read.c obj_write.c tri_face.c)
 
 gcv_plugin_library(gcv-obj SHARED ${OBJ_SRCS})
 target_link_libraries(gcv-obj libwdb librt libwfobj)
 set_property(TARGET gcv-obj APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(gcv-obj "${OBJ_SRCS}")
-PLUGIN_SETUP(gcv-obj gcv)
+validate_style(gcv-obj "${OBJ_SRCS}")
+plugin_setup(gcv-obj gcv)
 
-set(obj_ignore_files
+set(
+  obj_ignore_files
   CMakeLists.txt
   ${OBJ_SRCS}
   tri_face.h
@@ -43,15 +36,15 @@ set(obj_ignore_files
   wfobj/obj_token_type.h
   wfobj/obj_util.cpp
   wfobj/obj_util.h
-  )
+)
 
-CMAKEFILES(${obj_ignore_files})
+cmakefiles(${obj_ignore_files})
 
-DISTCLEAN(
+distclean(
   ${CMAKE_CURRENT_BINARY_DIR}/wfobj/WFOBJ_PARSER_obj_grammar/obj_grammar.yy
   ${CMAKE_CURRENT_BINARY_DIR}/wfobj/WFOBJ_PARSER_SO_obj_grammar/obj_grammar.yy
   ${CMAKE_CURRENT_BINARY_DIR}/wfobj/WFOBJ_PARSER_STATIC_obj_grammar/obj_grammar.yy
-  )
+)
 
 # Local Variables:
 # tab-width: 8
@@ -59,4 +52,3 @@ DISTCLEAN(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

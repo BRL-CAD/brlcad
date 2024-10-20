@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-tire SHARED tire.c)
 target_link_libraries(ged-tire libged libbu)
 set_property(TARGET ged-tire APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-tire tire.c)
-PLUGIN_SETUP(ged-tire ged)
+validate_style(ged-tire tire.c)
+plugin_setup(ged-tire ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   tire.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

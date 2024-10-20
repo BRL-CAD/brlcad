@@ -171,7 +171,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	 * resulting in the point not falling within the RPP of the
 	 * indicated cell, or
 	 *
-	 * 2) The poing might lie just a little bit on the wrong side
+	 * 2) The point might lie just a little bit on the wrong side
 	 * of the cell wall, resulting in the ray getting "stuck", and
 	 * needing rescuing all the time by the error recovery code
 	 * below.

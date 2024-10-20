@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-scale SHARED scale.c)
 target_link_libraries(ged-scale libged libbu)
 set_property(TARGET ged-scale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-scale scale.c)
-PLUGIN_SETUP(ged-scale ged)
+validate_style(ged-scale scale.c)
+plugin_setup(ged-scale ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   scale.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

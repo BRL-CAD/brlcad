@@ -27,7 +27,7 @@
 #include "common.h"
 
 #ifdef __cplusplus
-#  include "opennurbs.h"
+#  include "brep/defines.h"
 #endif
 
 #include "vmath.h"

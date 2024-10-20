@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-search SHARED search.c)
 target_link_libraries(ged-search libged libbu)
 set_property(TARGET ged-search APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-search search.c)
-PLUGIN_SETUP(ged-search ged)
+validate_style(ged-search search.c)
+plugin_setup(ged-search ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   search.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

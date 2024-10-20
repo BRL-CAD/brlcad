@@ -48,48 +48,38 @@ else()
   set(UUID_LIBRARY_VAR uuid)
 endif()
 
-find_library(UUID_LIBRARY
-  NAMES ${UUID_LIBRARY_VAR}
-  PATHS /lib /usr/lib /usr/local/lib
-  )
+find_library(UUID_LIBRARY NAMES ${UUID_LIBRARY_VAR} PATHS /lib /usr/lib /usr/local/lib)
 
 # Must be *after* the lib itself
 set(CMAKE_FIND_FRAMEWORK_SAVE ${CMAKE_FIND_FRAMEWORK})
 set(CMAKE_FIND_FRAMEWORK NEVER)
 
-find_path(UUID_INCLUDE_DIR uuid/uuid.h
-  /usr/local/include
-  /usr/include
-  )
+find_path(UUID_INCLUDE_DIR uuid/uuid.h /usr/local/include /usr/include)
 
-if (UUID_LIBRARY AND UUID_INCLUDE_DIR)
+if(UUID_LIBRARY AND UUID_INCLUDE_DIR)
   set(UUID_LIBRARIES ${UUID_LIBRARY})
   set(UUID_FOUND "YES")
-else ()
+else()
   set(UUID_FOUND "NO")
-endif ()
+endif()
 
-
-if (UUID_FOUND)
-  if (NOT UUID_FIND_QUIETLY)
+if(UUID_FOUND)
+  if(NOT UUID_FIND_QUIETLY)
     message(STATUS "Found UUID: ${UUID_LIBRARIES}")
-  endif ()
-else ()
-  if (UUID_FIND_REQUIRED)
-    message( "library: ${UUID_LIBRARY}" )
-    message( "include: ${UUID_INCLUDE_DIR}" )
+  endif()
+else()
+  if(UUID_FIND_REQUIRED)
+    message("library: ${UUID_LIBRARY}")
+    message("include: ${UUID_INCLUDE_DIR}")
     message(FATAL_ERROR "Could not find UUID library")
-  endif ()
-endif ()
+  endif()
+endif()
 
 # Deprecated declarations.
 #set (NATIVE_UUID_INCLUDE_PATH ${UUID_INCLUDE_DIR} )
 #get_filename_component (NATIVE_UUID_LIB_PATH ${UUID_LIBRARY} PATH)
 
-mark_as_advanced(
-  UUID_LIBRARY
-  UUID_INCLUDE_DIR
-  )
+mark_as_advanced(UUID_LIBRARY UUID_INCLUDE_DIR)
 set(CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_SAVE})
 
 # We've done the work - be quiet if called again
@@ -101,4 +91,3 @@ set(UUID_FIND_QUIETLY ON CACHE INTERNAL "Quitet FindUUID messages")
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

@@ -154,24 +154,25 @@ struct thread_data {
     struct parallel_info *parent;
 };
 
+
 int
 bu_thread_id(void)
 {
-    #if defined(_WIN32)
-	return GetCurrentThreadId();
-    #elif defined(__FreeBSD__)
-	long tid;
-	thr_self(&tid);
-	return (int)tid;
-    #elif defined(__NetBSD__)
-	return _lwp_self();
-    #elif defined(__OpenBSD__)
-	return getthrid();
-    #elif defined(HAVE_SYSCALL)
-	return syscall(SYS_gettid);
-    #else
-	return -1;
-    #endif
+#if defined(_WIN32)
+    return GetCurrentThreadId();
+#elif defined(__FreeBSD__)
+    long tid;
+    thr_self(&tid);
+    return (int)tid;
+#elif defined(__NetBSD__)
+    return _lwp_self();
+#elif defined(__OpenBSD__)
+    return getthrid();
+#elif defined(HAVE_SYSCALL)
+    return syscall(SYS_gettid);
+#else
+    return -1;
+#endif
 }
 
 
@@ -375,7 +376,7 @@ static struct parallel_info *
 parallel_mapping(parallel_action_t action, int id, size_t max)
 {
     /* container for keeping track of recursive invocation data, limits, current values */
-    static struct parallel_info mapping[MAX_PSW*MAX_PSW] = {{0,0,0,0,0}};
+    static struct parallel_info mapping[MAX_PSW*MAX_PSW] = {{0, 0, 0, 0, 0}};
     int got_cpu;
 
     switch (action) {
@@ -478,10 +479,8 @@ parallel_interface_arg(void *utd)
 
 #if defined(_WIN32)
 /**
- * A separate stub to call parallel_interface_arg that avoids a
- *  potential crash* on 64-bit windows and calls ExitThread to
- *  cleanly stop the thread.
- *  *See ThreadProc MSDN documentation.
+ * Separate stub to call parallel_interface_arg that avoids potential
+ * crash on 64-bit Windows. Calls ExitThread to cleanly stop thread.
  */
 static DWORD
 parallel_interface_arg_stub(struct thread_data *user_thread_data)

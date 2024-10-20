@@ -2388,7 +2388,7 @@ rt_shader_mat(
 
 	/* XXX This should really be handled by a special set of tree
 	 * walker routines which just build up the RPP of the region.
-	 * For now we just re-use rt_rpp_region() with a scratch rtip.
+	 * For now we just reuse rt_rpp_region() with a scratch rtip.
 	 */
 	my_rtip = rt_new_rti(rtip->rti_dbip);
 	my_rtip->useair = rtip->useair;

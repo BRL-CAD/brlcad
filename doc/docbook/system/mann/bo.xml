@@ -9,7 +9,7 @@
 
   <refnamediv xml:id="name">
     <refname>bo</refname>
-    <refpurpose>Used to create or retrieve binary opaque objects.</refpurpose>
+    <refpurpose>Creates or retrieves binary opaque objects.</refpurpose>
   </refnamediv>
 
   <!-- body begins here -->

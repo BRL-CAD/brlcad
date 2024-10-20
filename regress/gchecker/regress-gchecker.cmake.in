@@ -19,28 +19,35 @@ file(WRITE "${LOGFILE}" "Starting gchecker test run\n")
 # is passed in via the EXEC variable at runtime.  De-quote it and assign it to
 # the appropriate variable.
 string(REPLACE "\\" "" GCHECKER "${EXEC}")
-if (NOT EXISTS "${GCHECKER}")
+if(NOT EXISTS "${GCHECKER}")
   file(WRITE "${LOGFILE}" "regress_gchecker not found at location \"${GCHECKER}\" - aborting\n")
   message(FATAL_ERROR "Unable to find regress_gchecker, aborting.\nSee ${LOGFILE} for more details.")
-endif (NOT EXISTS "${GCHECKER}")
+endif(NOT EXISTS "${GCHECKER}")
 
 # Clean up in case we've run before
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${GCHECKER_CF}")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E remove -f "${GCHECKER_CF}"
+)
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove_directory "${CBDIR}/gchecker_test.g.ck")
 
 file(APPEND "${LOGFILE}" "Running gchecker:\n${GCHECKER} ${CSDIR}/gchecker_test.g\n")
 
 execute_process(
   COMMAND "${GCHECKER}" "${CSDIR}/gchecker_test.g"
-  RESULT_VARIABLE gchecker_result OUTPUT_VARIABLE gchecker_log ERROR_VARIABLE gchecker_log
+  RESULT_VARIABLE gchecker_result
+  OUTPUT_VARIABLE gchecker_log
+  ERROR_VARIABLE gchecker_log
   WORKING_DIRECTORY ${CBDIR}
-  )
+)
 file(APPEND "${LOGFILE}" "${gchecker_log}")
 set(gchecker_log)
 if(NOT EXISTS "${CBDIR}/gchecker_test.g.ck/ck.gchecker_test.g.overlaps")
   file(APPEND "${LOGFILE}" "\n\nError: return code ${gchecker_result}")
   file(READ "${LOGFILE}" LOG)
-  message(FATAL_ERROR "${GCHECKER} failed to process gchecker_test.g, aborting.\nSee ${CBDIR}/gchecker.log for more details.\n${LOG}")
+  message(
+    FATAL_ERROR
+    "${GCHECKER} failed to process gchecker_test.g, aborting.\nSee ${CBDIR}/gchecker.log for more details.\n${LOG}"
+  )
 endif(NOT EXISTS "${CBDIR}/gchecker_test.g.ck/ck.gchecker_test.g.overlaps")
 
 if(gchecker_result)
@@ -50,8 +57,12 @@ if(gchecker_result)
 endif(gchecker_result)
 
 # Cleanup
-execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_DIR_CACHE})
-execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE})
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_DIR_CACHE}
+)
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE}
+)
 
 # Local Variables:
 # tab-width: 8
@@ -59,4 +70,3 @@ execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

@@ -1,21 +1,19 @@
-
-if (SH_EXEC AND TARGET mged)
-
-  BRLCAD_ADD_TEST(NAME regress-weight COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/weight.sh" ${CMAKE_SOURCE_DIR})
+if(SH_EXEC AND TARGET mged)
+  brlcad_add_test(NAME regress-weight COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/weight.sh" ${CMAKE_SOURCE_DIR})
 
   # 20220909CSM - temp disable during delayed testing fix
   # BRLCAD_REGRESSION_TEST(regress-weight "rtweight;mged" TEST_DEFINED)
+endif(SH_EXEC AND TARGET mged)
 
-endif (SH_EXEC AND TARGET mged)
-
-CMAKEFILES(
+cmakefiles(
   weight.sh
   weight.ref
   weight.test2.ref
-  )
+)
 
 # list of temporary files
-set(weight_outfiles
+set(
+  weight_outfiles
   .density
   .density.weight1
   weight.g
@@ -29,12 +27,12 @@ set(weight_outfiles
   weight.test2.out
   weight.test2.out_ns
   weight.test2.ref_ns
-  )
+)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${weight_outfiles}")
-DISTCLEAN(${weight_outfiles})
+distclean(${weight_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

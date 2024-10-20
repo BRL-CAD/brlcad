@@ -2780,9 +2780,9 @@ nmg_radial_mark_flips(struct bu_list *hd, const struct shell *s, const struct bn
 	    expected_ot = !expected_ot;
 	    continue;
 	}
-	/* Mis-match detected */
+	/* Mismatch detected */
 	if (nmg_debug & NMG_DEBUG_MESH_EU) {
-	    bu_log("nmg_radial_mark_flips() Mis-match detected, setting flip flag eu=%p\n", (void *)rad->eu);
+	    bu_log("nmg_radial_mark_flips() Mismatch detected, setting flip flag eu=%p\n", (void *)rad->eu);
 	}
 	rad->needs_flip = !rad->needs_flip;
 	nflip++;
@@ -2845,7 +2845,7 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
 		expected_ot = !expected_ot;
 		continue;
 	    }
-	    /* Mis-match detected */
+	    /* Mismatch detected */
 	    bu_log("nmg_radial_check_parity() bad parity eu=%p, s=%p\n",
 		   (void *)rad->eu, (void *)*sp);
 	    count++;

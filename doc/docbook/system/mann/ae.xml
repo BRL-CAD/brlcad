@@ -10,7 +10,8 @@
   <refnamediv xml:id="name">
     <refname>ae</refname>
     <refpurpose>Sets the view orientation for the <emphasis>mged</emphasis> display
-    by rotating the eye position about the center of the viewing cube.
+    by rotating the eye point about the center of the viewing cube. Without arguments, 
+    returns the current azimuth, elevation, and twist.
     </refpurpose>
   </refnamediv>
 
@@ -18,10 +19,11 @@
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>ae</command>
-      <arg choice="opt" rep="norepeat">-i</arg>
-      <arg choice="req" rep="norepeat"><replaceable>azimuth</replaceable></arg>
-      <arg choice="req" rep="norepeat"><replaceable>elevation</replaceable></arg>
-      <arg choice="opt" rep="norepeat"><replaceable>twist</replaceable></arg>
+      <arg choice="opt" rep="norepeat">
+  	    <arg choice="opt" rep="norepeat">-i</arg>
+ 	    <replaceable>azimuth elevation</replaceable>
+ 	    <arg choice="opt" rep="norepeat"><replaceable>twist</replaceable></arg>
+      </arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -29,7 +31,7 @@
 
     <para>
       Set the view orientation for the <emphasis>mged</emphasis> display by rotating
-      the eye position about the center of the viewing cube. The eye position is
+      the eye point about the center of the viewing cube. The eye point is
       determined by the supplied azimuth and elevation angles (degrees). The
       <emphasis>azimuth</emphasis> angle is measured in the <emphasis>xy</emphasis>
       plane with the positive <emphasis>x</emphasis> direction corresponding to an
@@ -40,7 +42,9 @@
       <emphasis>z</emphasis> direction. If an optional <emphasis>twist</emphasis> angle
       is included, the view will be rotated about the viewing direction by the
       specified <emphasis>twist</emphasis> angle. The <emphasis>-i</emphasis> option
-      results in the angles supplied being interpreted as increments.
+      results in the angles supplied being interpreted as increments. If no arguments are
+      supplied, the command will return the current azimuth, elevation, and twist. See also the
+      <command>view</command> command.
     </para>
   </refsection>
 

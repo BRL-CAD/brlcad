@@ -59,7 +59,6 @@ The following functions are provided:
 
 cmake_minimum_required(VERSION 3.18)
 
-
 function(OPENVDB_GET_VERSION_DEFINE HEADER KEY VALUE)
   if(NOT EXISTS ${HEADER})
     return()
@@ -82,10 +81,8 @@ function(OPENVDB_GET_VERSION_DEFINE HEADER KEY VALUE)
   endif()
 endfunction()
 
-
 ########################################################################
 ########################################################################
-
 
 function(OPENVDB_VERSION_FROM_HEADER OPENVDB_VERSION_FILE)
   cmake_parse_arguments(_VDB "" "VERSION;MAJOR;MINOR;PATCH;ABI" "" ${ARGN})
@@ -94,16 +91,13 @@ function(OPENVDB_VERSION_FROM_HEADER OPENVDB_VERSION_FILE)
     return()
   endif()
 
-  OPENVDB_GET_VERSION_DEFINE(${OPENVDB_VERSION_FILE} "OPENVDB_LIBRARY_MAJOR_VERSION_NUMBER" _OpenVDB_MAJOR_VERSION)
-  OPENVDB_GET_VERSION_DEFINE(${OPENVDB_VERSION_FILE} "OPENVDB_LIBRARY_MINOR_VERSION_NUMBER" _OpenVDB_MINOR_VERSION)
-  OPENVDB_GET_VERSION_DEFINE(${OPENVDB_VERSION_FILE} "OPENVDB_LIBRARY_PATCH_VERSION_NUMBER" _OpenVDB_PATCH_VERSION)
-  OPENVDB_GET_VERSION_DEFINE(${OPENVDB_VERSION_FILE} "OPENVDB_ABI_VERSION_NUMBER" _OpenVDB_ABI_VERSION)
+  openvdb_get_version_define(${OPENVDB_VERSION_FILE} "OPENVDB_LIBRARY_MAJOR_VERSION_NUMBER" _OpenVDB_MAJOR_VERSION)
+  openvdb_get_version_define(${OPENVDB_VERSION_FILE} "OPENVDB_LIBRARY_MINOR_VERSION_NUMBER" _OpenVDB_MINOR_VERSION)
+  openvdb_get_version_define(${OPENVDB_VERSION_FILE} "OPENVDB_LIBRARY_PATCH_VERSION_NUMBER" _OpenVDB_PATCH_VERSION)
+  openvdb_get_version_define(${OPENVDB_VERSION_FILE} "OPENVDB_ABI_VERSION_NUMBER" _OpenVDB_ABI_VERSION)
 
   if(_VDB_VERSION)
-    set(${_VDB_VERSION}
-      ${_OpenVDB_MAJOR_VERSION}.${_OpenVDB_MINOR_VERSION}.${_OpenVDB_PATCH_VERSION}
-      PARENT_SCOPE
-    )
+    set(${_VDB_VERSION} ${_OpenVDB_MAJOR_VERSION}.${_OpenVDB_MINOR_VERSION}.${_OpenVDB_PATCH_VERSION} PARENT_SCOPE)
   endif()
   if(_VDB_MAJOR)
     set(${_VDB_MAJOR} ${_OpenVDB_MAJOR_VERSION} PARENT_SCOPE)
@@ -119,10 +113,8 @@ function(OPENVDB_VERSION_FROM_HEADER OPENVDB_VERSION_FILE)
   endif()
 endfunction()
 
-
 ########################################################################
 ########################################################################
-
 
 function(OPENVDB_ABI_VERSION_FROM_PRINT OPENVDB_PRINT)
   cmake_parse_arguments(_VDB "QUIET" "ABI" "" ${ARGN})
@@ -135,14 +127,16 @@ function(OPENVDB_ABI_VERSION_FROM_PRINT OPENVDB_PRINT)
   set(_VDB_PRINT_RETURN_STATUS "")
 
   if(${_VDB_QUIET})
-    execute_process(COMMAND ${OPENVDB_PRINT} "--version"
+    execute_process(
+      COMMAND ${OPENVDB_PRINT} "--version"
       RESULT_VARIABLE _VDB_PRINT_RETURN_STATUS
       OUTPUT_VARIABLE _VDB_PRINT_VERSION_STRING
       ERROR_QUIET
       OUTPUT_STRIP_TRAILING_WHITESPACE
     )
   else()
-    execute_process(COMMAND ${OPENVDB_PRINT} "--version"
+    execute_process(
+      COMMAND ${OPENVDB_PRINT} "--version"
       RESULT_VARIABLE _VDB_PRINT_RETURN_STATUS
       OUTPUT_VARIABLE _VDB_PRINT_VERSION_STRING
       OUTPUT_STRIP_TRAILING_WHITESPACE

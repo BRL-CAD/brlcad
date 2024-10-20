@@ -1005,7 +1005,7 @@ compute_loop_class(struct fpi *fpi,
  *					*---------*
  *	else (odd # of uses of edge in this loop)
  *		"ignore" consecutive uses of the same edge to avoid the
- *		    "accordian pleat" problem:	*-------*
+ *		    "accordion pleat" problem:	*-------*
  *						|  .	|
  *						*----*	|
  *						*----*	|
@@ -1343,7 +1343,7 @@ nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct
 	/* XXX How can this difference be > 1 ? */
 	fu_class = NMG_CLASS_AinB;
     } else {
-	/* Panic time!  How did I get a parity mis-match? */
+	/* Panic time!  How did I get a parity mismatch? */
 	bu_log("loops in/onS/onA/out ot_same=%d/%d/%d/%d ot_opp=%d/%d/%d/%d\n",
 	       ot_same[0], ot_same[1], ot_same[2], ot_same[3],
 	       ot_opposite[0], ot_opposite[1], ot_opposite[2], ot_opposite[3]);

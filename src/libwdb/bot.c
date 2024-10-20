@@ -78,7 +78,7 @@ mk_bot_w_normals_and_uvs(
 	       "      surface normals or uv texture coordinates for BOT primitives.\n\n");
 	if (num_normals && num_uvs) {
 	    bu_log("You are attempting to create a BOT named \"%s\" with normals and uv texture coordinates.\n", name);
-	    bu_log("WARNING: The surface normals and uv texture coordindates will NOT be saved.\n");
+	    bu_log("WARNING: The surface normals and uv texture coordinates will NOT be saved.\n");
 	} else if (num_normals) {
 	    bu_log("You are attempting to create a BOT named \"%s\" with normals.\n", name);
 	    bu_log("WARNING: The surface normals will NOT be saved.\n");

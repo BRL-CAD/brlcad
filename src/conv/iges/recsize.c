@@ -42,7 +42,7 @@
 #include "./iges_extern.h"
 
 #define NRECS 20  /* Maximum number of records to sample */
-#define NCHAR 256 /* Maximuim number of characters to read in case
+#define NCHAR 256 /* Maximum number of characters to read in case
 		   * there are no LF's
 		   */
 

@@ -79,6 +79,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
     return BU_PTBL_LEN(plugins);
 }
 
+
 int
 dylib_close_plugins(struct bu_ptbl *plugins)
 {
@@ -91,6 +92,7 @@ dylib_close_plugins(struct bu_ptbl *plugins)
 
     return ret;
 }
+
 
 /*
  * Local Variables:

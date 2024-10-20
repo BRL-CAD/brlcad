@@ -45,7 +45,7 @@
  */
 /** @file art/art.cpp
  *
- * COMPILAITON NOTES
+ * COMPILATION NOTES
  * -----------------
  * Once you have Appleseed and a corresponding Boost installed, run
  * BRL-CAD's CMake with Appleseed enabled:
@@ -227,7 +227,7 @@ color_hook(const struct bu_structparse *sp, const char *name, void *UNUSED(base)
 }
 
 
-// holds application specific paramaters
+// holds application specific parameters
 extern "C" {
     struct bu_structparse view_parse[] = {
 	{"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -446,7 +446,7 @@ register_region(struct db_tree_state* tsp,
     //     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
     //     shader = "as_glass";
     //   }
-    //   // check for override paramaters
+    //   // check for override parameters
     //   if (((ptr=strstr(bu_vls_addr(&combp->shader), "{")) != NULL)) {
     //     if (((ptr=strstr(bu_vls_addr(&combp->shader), "tr")) != NULL)) {
     //       int i = 3;

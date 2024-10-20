@@ -1645,7 +1645,7 @@ namespace ClipperLib {
     void Clipper::SetWindingCount(TEdge &edge)
     {
 	TEdge *e = edge.PrevInAEL;
-	//find the edge of the same polytype that immediately preceeds 'edge' in AEL
+	//find the edge of the same polytype that immediately precedes 'edge' in AEL
 	while (e  && ((e->PolyTyp != edge.PolyTyp) || (e->WindDelta == 0))) e = e->PrevInAEL;
 	if (!e)
 	{
@@ -2700,7 +2700,7 @@ namespace ClipperLib {
 	    {
 
 		//this code block inserts extra coords into horizontal edges (in output
-		//polygons) whereever maxima touch these horizontal edges. This helps
+		//polygons) wherever maxima touch these horizontal edges. This helps
 		//'simplifying' polygons (ie if the Simplify property is set).
 		if (m_Maxima.size() > 0)
 		{

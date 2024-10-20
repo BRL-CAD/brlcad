@@ -365,7 +365,7 @@ QgModel::item_rebuild(QgItem *item)
 
     // If we have no cached children, update only the child count - fetchMore
     // will populate it if and when it is expanded, and there will be no
-    // QgItems we need to re-use.  However, an edit operation may have
+    // QgItems we need to reuse.  However, an edit operation may have
     // invalidated the original c_count stored when the item was created.
     if (!item->children.size()) {
 	item->c_count = gedp->dbi_state->p_v[chash].size();

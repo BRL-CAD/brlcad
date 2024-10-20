@@ -1,11 +1,12 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap214e3.exp)
 add_definitions(-DAP214e3)
 
-if (DEFINED ENABLE_STEP_EXPERIMENTAL)
-  GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap214g)
-endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
+if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+  generate_schema_inputs(${STEP_SCHEMA_FILE} ap214g)
+endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-set(ap214g_SOURCES
+set(
+  ap214g_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   ../STEPWrapper.cpp
@@ -214,9 +215,10 @@ set(ap214g_SOURCES
   ../step-g/VolumeSiUnit.cpp
   ../step-g/VolumeUnit.cpp
   ../step-g/step-g.cpp
-  )
+)
 
-set(ap214g_LIBS
+set(
+  ap214g_LIBS
   libwdb
   librt
   libbu
@@ -226,28 +228,29 @@ set(ap214g_LIBS
   ${STEPCODE_DAI_LIBRARY}
   ${STEPCODE_CORE_LIBRARY}
   ${OPENNURBS_LIBRARIES}
-  )
+)
 
-set(AP214_INCLUDE_DIRS
+set(
+  AP214_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
   ${STEPCODE_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
-  )
+)
 
-if (DEFINED ENABLE_STEP_EXPERIMENTAL)
-  BRLCAD_ADDEXEC(ap214-g "${ap214g_SOURCES}" "${ap214g_LIBS}" NO_STRICT FOLDER Conv)
+if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+  brlcad_addexec(ap214-g "${ap214g_SOURCES}" "${ap214g_LIBS}" NO_STRICT FOLDER Conv)
   target_include_directories(ap214-g BEFORE PRIVATE ${AP214_INCLUDE_DIRS})
   add_dependencies(ap214-g step-express-${SCHEMA_NAME}-ap214g)
-endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
+endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-CMAKEFILES(
+cmakefiles(
   ${ap214g_SOURCES}
   CMakeLists.txt
   ap214e3.exp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

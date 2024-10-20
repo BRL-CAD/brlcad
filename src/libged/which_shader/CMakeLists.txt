@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-which_shader SHARED which_shader.c)
 target_link_libraries(ged-which_shader libged libbu)
 set_property(TARGET ged-which_shader APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-which_shader which_shader.c)
-PLUGIN_SETUP(ged-which_shader ged)
+validate_style(ged-which_shader which_shader.c)
+plugin_setup(ged-which_shader ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   which_shader.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

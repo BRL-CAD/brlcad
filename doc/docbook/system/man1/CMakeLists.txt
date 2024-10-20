@@ -1,4 +1,5 @@
-set(man1_EN
+set(
+  man1_EN
   3dm-g.xml
   alias-pix.xml
   ap-pix.xml
@@ -80,6 +81,7 @@ set(man1_EN
   gencolor.xml
   gif-fb.xml
   gif2fb.xml
+  gist.xml
   glint.xml
   gqa.xml
   halftone.xml
@@ -174,14 +176,13 @@ set(man1_EN
   window.xml
   window_frame.xml
   wire.xml
-  )
+)
 
-if (BRLCAD_EXTRADOCS)
-
-  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" benchmark.xml man1 "" REQUIRED "rt")
-  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad-config.xml man1 "" REQUIRED "rt")
-  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" brlcad.xml man1 "" REQUIRED "mged")
-  ADD_DOCBOOK("HTML;PHP;MAN1;PDF" dbclean.xml man1 "" REQUIRED "asc2g")
+if(BRLCAD_EXTRADOCS)
+  add_docbook("HTML;PHP;MAN1;PDF" benchmark.xml man1 "" REQUIRED "rt")
+  add_docbook("HTML;PHP;MAN1;PDF" brlcad-config.xml man1 "" REQUIRED "rt")
+  add_docbook("HTML;PHP;MAN1;PDF" brlcad.xml man1 "" REQUIRED "mged")
+  add_docbook("HTML;PHP;MAN1;PDF" dbclean.xml man1 "" REQUIRED "asc2g")
 
   # BRLCAD_ADDEXEC takes care of the ADD_DOCBOOK call - we just need to warn if
   # we've got a man page in the list indicating we should have an associated
@@ -189,25 +190,24 @@ if (BRLCAD_EXTRADOCS)
   # not ported to the current platform.  Only do this if we're doing a full build
   # rather than a subset, since the latter case will likely report many man pages
   # without associated targets and isn't useful.
-  if (NOT BRLCAD_COMPONENTS)
+  if(NOT BRLCAD_COMPONENTS)
     foreach(mp ${man1_EN})
       get_filename_component(tname ${mp} NAME_WE)
-        if (NOT TARGET ${tname})
-	message("Warning: man1 man page ${tname} has no associated build target")
-      endif (NOT TARGET ${tname})
+      if(NOT TARGET ${tname})
+        message("Warning: man1 man page ${tname} has no associated build target")
+      endif(NOT TARGET ${tname})
     endforeach(mp ${man3_EN})
-  endif (NOT BRLCAD_COMPONENTS)
+  endif(NOT BRLCAD_COMPONENTS)
+endif(BRLCAD_EXTRADOCS)
 
-endif (BRLCAD_EXTRADOCS)
-
-CMAKEFILES(
+cmakefiles(
   ${man1_EN}
   benchmark.xml
   brlcad-config.xml
   brlcad.xml
   dbclean.xml
   CMakeLists.txt
-  )
+)
 
 # Local Variables:
 # tab-width: 8

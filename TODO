@@ -18,24 +18,90 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* Validate and merge hlbvh BoT raytracing improvements
+
 * rtarea is sometimes missing regions on summary reporting, at least on
-  Windwos, possibly a threading issue setting up the results container.
+  Windows, possibly a threading issue setting up the results container.
 
 * complete preliminary concave arb8 support
 
-* Rework ged_tessellate exec into a generic ged_exec along
-  the lines of what Sean proposed:
+* Create EXPORT targets for BRL-CAD libraries to support newer
+  CMake find_package style.  If possible, try to also support
+  older style variables in FindBRLCAD.cmake
 
-  mged[main()] -> ged_exec() -> subprocess-exec("ged_exec search . -type region") ;
-  ged_exec[main()] -> dlload("ged_search") -> ged_search()
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* Validate and merge hlbvh BoT raytracing improvements
+* Investigate whether we can use the newer version of the gct
+  decimator (mmesh) to replace the version currently bundled
+  in librt.
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* Update find_package uses to take advantage of EXPORT targets when
+  upstream packages have them available.  This should let us reduce
+  the number of Find*.cmake files we need to include.  Ultimately,
+  we may want to look at using the new *Config.cmake mechanism for
+  all bundled dependencies, except when we still need Find*.cmake
+  to locate system installs that don't provide them.
+
+* Investigate viability of providing EXPORT installs and *Config.cmake
+  files for BRL-CAD targets - that's the "modern" way to support
+  CMake's find_package mechanism.
+
+* Look into CMinx CMake documentation system to see if it might be
+  useful for documenting the build system.
+  https://github.com/CMakePP/CMinx
+
+* bu_snooze() appears to be broken on Windows (and should probably have
+  some functionality / unit tests)
+
+* Windows installer does not respect the "add to path" checkbox
+  and always adds BRL-CAD to the system path
+
+* Add a "perturb" callback function to librt's primitive tables, that
+  will accept a primitive definition and return a version that has been
+  slightly increased or decreased in size.  For example, a "perturbed"
+  TGC would have its base and height planes bumped slightly in or out
+  and its radius slightly increased or decreased.  The intent would be
+  to see if we can automatically perturb primitives just slightly out
+  of numerical co-planarity for facetize.  For union (and probably
+  intersection) we would bump out slightly, and for subtraction bump
+  in slightly.  Probably want to do this at the implicit level, rather
+  than after triangles have been produced, so it's easier to understand
+  what happens.  For things like pipes especially, getting the intended
+  effect post-triangulation might be tricky.
+
+* Newer SPSR code apparently has a header-only mode that we might be
+  able to use to replace our current embedded customized version:
+
+  https://github.com/mkazhdan/PoissonRecon
+
+  (See the HEADER-ONLY LIBRARY section of their README.md)
+
+* replace translations of various Geometric Tools algorithms in BRL-CAD
+  with calls to a bundled Geometric Tools.  With bext coming online,
+  bundling Geometric Tools would be simpler.  They have a lot of
+  algorithms that are of potential interest, not to mention being
+  actively maintained - we should really be using them as a backend
+  directly rather than porting various individual pieces to vmath.h
+  Refactored code to replace with direct calls:
+
+  src/libbg/lseg_lseg.c
+  src/libbg/lseg_pt.c
+  src/libbg/obr.c
+  src/libbg/sat.c
+  src/libbg/tri_pt.c
+
+  There are probably a number of other algorithms in our code where
+  we should check to see if the GTE implementation would be better
+  than ours (line/point distance functionality, for example).
+
+* validate imgdiff difference reporting
+
+* add a flag to prefix command to remove prefix on a group hierarchy.
 
 * restore libged commands that were only exposed via archer but lost
   during libged ged_exec() refactoring.
@@ -118,7 +184,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
 
-* readd support for vrml v1 to g-vrml so that users can select whether
+* re-add support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
@@ -292,7 +358,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
-    verbose option for the more detailed hiearchical report that is
+    verbose option for the more detailed hierarchical report that is
     currently produced.
 
   * verify rtarea.  There are reports that the rtarea
@@ -310,7 +376,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
-    verbose option for the more detailed hiearchical report that is
+    verbose option for the more detailed hierarchical report that is
     currently produced.
 
   * verify rtarea.  There are reports that the rtarea
@@ -389,7 +455,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   * investigate why the new bbox() routines for ARS and BoT result in
     bounding boxes that are way too big.
 
-  * implement prep optimzation to the default fast bbox approximation
+  * implement prep optimization to the default fast bbox approximation
     specifically for arb8/rpp since we know the exact extent of their
     bounds and can chop away at a box with a box.
 
@@ -2101,7 +2167,7 @@ CONVERTERS
 * add support to x3d-g for NURBS entities
 
 * compare libIGES (lgpl, https://github.com/cbernardo/libIGES) as
-  potential replacement for our compelx IGES conversion logic.
+  potential replacement for our complex IGES conversion logic.
   appropriate time for review when IGES gets added to libGCV.
 
 * investigate the asset import library (assimp.sf.net) to see whether
@@ -2241,6 +2307,15 @@ BREP/NURBS
 NMG/BoT
 -------
 
+* getting some unexpected misses when testing facetization of havoc
+  regions.  If the issue is super-thin triangles in raytrace, see if
+  we can handle by solving the plane intersection to get a 3D point,
+  then returning that if we're within tol distance of the triangle
+  edges and we don't get any hits from topological neighbors.  If
+  the triangle is thin enough, that should be a reasonable answer
+  (at least for a 3D point - the normal may be something else again
+  if the 3 points aren't distinct enough to properly calc the plane.)
+
 * bot overlaps when unoriented, when clearly not overlapping
 
 * resolve bot bin sort optimization crash, disabled during release
@@ -2258,12 +2333,6 @@ NMG/BoT
   normals.. this certainly saves memory if the triangles don't have
   normals but at a rather expensive malloc cost (which is being seen
   on large BoT models) during prep.
-
-* implement conversion of plate-mode BoT into volume-mode BoT,
-  probably as a 'bot' command subcommand.  this basically entails
-  implementing the BoT tessellation callback for plate-mode which will
-  let boolean evaluation succeed as-is.  might require adding a
-  parameter in case we want to dump the mesh as-is.
 
 * ensure robust and fast nmg->bot conversion
 

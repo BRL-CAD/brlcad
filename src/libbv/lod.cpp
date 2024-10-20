@@ -216,8 +216,10 @@ view_obb(struct bview *v,
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&v->obb_center, p, pu, pv);
+    point_t lec;
+    VMOVE(lec, ec);
+    bg_plane_closest_pt(&pu, &pv, &p, &lec);
+    bg_plane_pt_at(&v->obb_center, &p, pu, pv);
 
     // The first extent is just the scene radius in the lookat direction
     VSCALE(dir, dir, radius);
@@ -405,8 +407,8 @@ bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&obb_c, p, pu, pv);
+    bg_plane_closest_pt(&pu, &pv, &p, &ec);
+    bg_plane_pt_at(&obb_c, &p, pu, pv);
 
 
     // The first extent is just the scene radius in the lookat direction
@@ -499,8 +501,8 @@ bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, 
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&obb_c, p, pu, pv);
+    bg_plane_closest_pt(&pu, &pv, &p, &ec);
+    bg_plane_pt_at(&obb_c, &p, pu, pv);
 
 
     // The first extent is just the scene radius in the lookat direction
@@ -607,6 +609,10 @@ struct bv_mesh_lod_context_internal {
 struct bv_mesh_lod_context *
 bv_mesh_lod_context_create(const char *name)
 {
+    FILE *fp = NULL;
+    std::ifstream format_file;
+    long disk_format_version = -1;
+    char dir[MAXPATHLEN];
     size_t mreaders = 0;
     int ncpus = 0;
     if (!name)
@@ -647,60 +653,46 @@ bv_mesh_lod_context_create(const char *name)
     if (mdb_env_create(&i->lod_env))
 	goto lod_context_fail;
     if (mdb_env_create(&i->name_env))
-	goto lod_context_close_lod_fail;
+	goto lod_context_fail;
 
     if (mdb_env_set_maxreaders(i->lod_env, mreaders))
-	goto lod_context_close_fail;
+	goto lod_context_fail;
     if (mdb_env_set_maxreaders(i->name_env, mreaders))
-	goto lod_context_close_fail;
+	goto lod_context_fail;
 
     // TODO - the "failure" mode if this limit is ever hit is to back down
     // the maximum stored LoD on larger objects, but that will take some
     // doing to implement...
     if (mdb_env_set_mapsize(i->lod_env, CACHE_MAX_DB_SIZE))
-	goto lod_context_close_fail;
+	goto lod_context_fail;
 
     if (mdb_env_set_mapsize(i->name_env, CACHE_MAX_DB_SIZE))
-	goto lod_context_close_fail;
-
+	goto lod_context_fail;
 
     // Ensure the necessary top level dirs are present
-    char dir[MAXPATHLEN];
-    // TODO - need to support a LIBBV_LOD_CACHE environment variable,
-    // similar to LIBRT_CACHE, so we can run parallel tests without
-    // LoD generating routines colliding
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
     if (!bu_file_exists(dir, NULL))
 	bu_mkdir(dir);
+
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    if (!bu_file_exists(dir, NULL)) {
+    if (!bu_file_exists(dir, NULL))
 	bu_mkdir(dir);
-    }
+
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, "format", NULL);
-    if (!bu_file_exists(dir, NULL)) {
-	// Note a format, so we can detect if what's there isn't compatible
-	// with what this logic expects (in anticipation of future changes
-	// to the on-disk format).
-	FILE *fp = fopen(dir, "w");
-	if (!fp)
-	    goto lod_context_close_fail;
-	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
-	fclose(fp);
-    } else {
-	std::ifstream format_file(dir);
-	size_t disk_format_version = 0;
+    format_file.open(dir);
+    if (format_file.is_open()) {
 	format_file >> disk_format_version;
 	format_file.close();
-	if (disk_format_version	!= CACHE_CURRENT_FORMAT) {
-	    bu_log("Old mesh lod cache (%zd) found - clearing\n", disk_format_version);
-	    bv_mesh_lod_clear_cache(NULL, 0);
-	}
-	FILE *fp = fopen(dir, "w");
-	if (!fp)
-	    goto lod_context_close_fail;
-	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
-	fclose(fp);
     }
+    if (disk_format_version > 0 && disk_format_version != CACHE_CURRENT_FORMAT) {
+	bu_log("Old mesh lod cache version (%zd) found at %s - clearing\n", disk_format_version, dir);
+	bv_mesh_lod_clear_cache(NULL, 0);
+    }
+    fp = fopen(dir, "w");
+    if (!fp)
+	goto lod_context_close_lod_fail;
+    fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
+    fclose(fp);
 
     // Create the specific LoD LMDB cache dir, if not already present
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
@@ -709,7 +701,7 @@ bv_mesh_lod_context_create(const char *name)
 
     // Need to call mdb_env_sync() at appropriate points.
     if (mdb_env_open(i->lod_env, dir, MDB_NOSYNC, 0664))
-	goto lod_context_close_fail;
+	goto lod_context_close_lod_fail;
 
     // Create the specific name/key LMDB mapping dir, if not already present
     bu_vls_printf(&fname, "_namekey");
@@ -719,14 +711,14 @@ bv_mesh_lod_context_create(const char *name)
 
     // Need to call mdb_env_sync() at appropriate points.
     if (mdb_env_open(i->name_env, dir, MDB_NOSYNC, 0664))
-	goto lod_context_close_fail;
+	goto lod_context_close_name_fail;
 
     // Success - return the context
     bu_vls_free(&fname);
     return c;
 
     // If something went wrong, clean up and return NULL
-lod_context_close_fail:
+lod_context_close_name_fail:
     mdb_env_close(i->name_env);
 lod_context_close_lod_fail:
     mdb_env_close(i->lod_env);
@@ -753,6 +745,9 @@ bv_mesh_lod_context_destroy(struct bv_mesh_lod_context *c)
 unsigned long long
 bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
 {
+    if (!c || !name)
+	return 0;
+
     MDB_val mdb_key, mdb_data;
 
     // Database object names may be of arbitrary length - hash
@@ -788,6 +783,9 @@ bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
 int
 bv_mesh_lod_key_put(struct bv_mesh_lod_context *c, const char *name, unsigned long long key)
 {
+    if (!c || !name || !key)
+	return -1;
+
     // Database object names may be of arbitrary length - hash
     // to get something appropriate for a lookup key
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
@@ -1902,7 +1900,7 @@ bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, 
 {
     unsigned long long key = 0;
 
-    if (!v || !vcnt || !faces || !fcnt)
+    if (!c || !v || !vcnt || !faces || !fcnt)
 	return 0;
 
     POPState p(c, v, vcnt, vn, faces, fcnt, user_key, fratio);
@@ -1917,7 +1915,7 @@ bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, 
 extern "C" struct bv_mesh_lod *
 bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key)
 {
-    if (!key)
+    if (!c || !key)
 	return NULL;
 
     POPState *p = new POPState(c, key);
@@ -1978,6 +1976,8 @@ bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	return -1;
 
     struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
+    if (!l)
+	return -1;
     struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
     POPState *sp = i->s;
     if (level < 0)

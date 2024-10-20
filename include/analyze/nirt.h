@@ -109,7 +109,7 @@ ANALYZE_EXPORT void nirt_hook(struct nirt_state *ns, nirt_hook_t hf, int flag);
  * flags. If other flags are provided with struct nirt_state_ALL, struct
  * nirt_state_ALL will skip the clearing step(s) specified by the other
  * flag(s).  So, for example, if a caller wishes to reset the struct nirt_state
- * state but retain the existing scripts for re-use they could call with
+ * state but retain the existing scripts for reuse they could call with
  * nirt_clear with struct nirt_state_ALL|struct nirt_state_SCRIPTS.  Note that
  * the struct nirt_state_FRMTS, struct nirt_state_OUT and struct nirt_state_ERR
  * flags are no-ops for nirt_clear. */

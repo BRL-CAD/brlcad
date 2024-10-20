@@ -142,7 +142,7 @@ ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
 
 
 static void
-ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* hight)
+ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* height)
 {
     point_t bmin, bmax;
     struct bu_list vhead;
@@ -155,7 +155,7 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
     bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL);
 
     *length = bmax[0] - ref_pt[0];
-    *hight = bmax[1] - ref_pt[1];
+    *height = bmax[1] - ref_pt[1];
 }
 
 
@@ -1640,7 +1640,7 @@ ant_copy(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 		}
 		break;
 	    default:
-		bu_bomb("ERROR: unrecognized segment type enountered while copying annotation\n");
+		bu_bomb("ERROR: unrecognized segment type encountered while copying annotation\n");
 	}
     }
 

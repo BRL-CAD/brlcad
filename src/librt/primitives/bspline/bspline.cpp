@@ -51,7 +51,7 @@
 #include "raytrace.h"
 
 #ifdef CONVERT_TO_BREP
-#  include "opennurbs.h"
+#  include "brep/defines.h"
 #endif /* CONVERT_TO_BREP */
 
 #include "../../librt_private.h"

@@ -1,16 +1,18 @@
-if (TARGET libpkg)
-  BRLCAD_ADDEXEC(regress_pkg regress_pkg.cpp "libpkg;libbu;Threads::Threads" NO_INSTALL)
-  set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/pkg")
+if(TARGET libpkg)
+  brlcad_addexec(regress_pkg regress_pkg.cpp "libpkg;libbu;Threads::Threads" TEST)
+  if(TARGET regress_pkg)
+    set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/pkg")
 
-  BRLCAD_REGRESSION_TEST(regress-pkg "regress_pkg" EXEC regress_pkg STAND_ALONE)
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/regress-pkg.log)
-endif (TARGET libpkg)
+    brlcad_regression_test(regress-pkg "regress_pkg" EXEC regress_pkg STAND_ALONE)
+    distclean(${CMAKE_CURRENT_BINARY_DIR}/regress-pkg.log)
+  endif(TARGET regress_pkg)
+endif(TARGET libpkg)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   regress_pkg.cpp
   regress-pkg.cmake.in
-  )
+)
 # Local Variables:
 # tab-width: 8
 # mode: cmake

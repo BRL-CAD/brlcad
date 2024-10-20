@@ -21,7 +21,7 @@
 // IN THE SOFTWARE.
 //
 // (Note - official licenses are at the bottom of the file - this copy is
-// placed here to indiciate which one BRL-CAD is using detria under and to
+// placed here to indicate which license BRL-CAD is using detria under and to
 // make it easier for our license scanner to find.)
 
 //
@@ -2615,7 +2615,7 @@ namespace detria
             std::string getErrorMessage() const
             {
                 std::stringstream ss;
-                ss << "A polyline containes two duplicate consecutive points (index " << pointIndex << ")";
+                ss << "A polyline contains two duplicate consecutive points (index " << pointIndex << ")";
                 return ss.str();
             }
 
@@ -2771,7 +2771,7 @@ namespace detria
         Triangulation operator=(const Triangulation&) = delete;
         Triangulation(Triangulation&&) = default;
 
-        // If the triangulation failed, this function returns the type of the error that occured
+        // If the triangulation failed, this function returns the type of the error that occurred
         TriangulationError getError() const
         {
             TriangulationError err{ };
@@ -4362,7 +4362,7 @@ namespace detria
                     if (std::optional<Idx> polylineIndex = edgeData.getOutlineOrHoleIndex())
                     {
                         // Check which type of edge we just crossed (if this branch is entered, then it's part of either an outline or a hole)
-                        // There are a few possibilites:
+                        // There are a few possibilities:
                         // If the triangle is inside, and the edge is part of an outline,
                         // then the outline's index must be the same as the triangle's parent polyline index
                         // Otherwise it would mean that there is an outline inside another outline, which is not allowed

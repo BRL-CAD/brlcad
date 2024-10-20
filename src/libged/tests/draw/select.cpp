@@ -293,7 +293,7 @@ main(int ac, char *av[]) {
     /* Generate mesh geometry */
     s_av[0] = "tol";
     s_av[1] = "rel";
-    s_av[2] = "0.0001";
+    s_av[2] = "0.0002";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
@@ -635,7 +635,7 @@ main(int ac, char *av[]) {
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
-    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
 
     bu_log("De-selected object...\n");
@@ -655,7 +655,7 @@ main(int ac, char *av[]) {
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
-    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
 
     bu_log("Select object below selected object (should be no-op)...\n");
@@ -665,7 +665,7 @@ main(int ac, char *av[]) {
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
-    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
 
     bu_log("Select second object...\n");

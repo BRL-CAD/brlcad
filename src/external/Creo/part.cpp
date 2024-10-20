@@ -614,8 +614,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
     /*
      * Note: The below code works, but we can't use model units - Creo
-     * "corrects" object sizes with matricies in the parent hierarchies
-     * and correcting it here results in problems with those matricies.
+     * "corrects" object sizes with matrices in the parent hierarchies
+     * and correcting it here results in problems with those matrices.
      *
      *     ProError ustatus = creo_model_units(&conv_scale, model);
      */
@@ -1067,7 +1067,7 @@ have_part:
         creo_log(cinfo, MSG_PLAIN, "  COLOR: Part \"%s\" has rgb = %u/%u/%u\n",
                                    pname, rgb[0], rgb[1], rgb[2]);
 
-        /* Adjust rgb values for minimum luminance thresold */
+        /* Adjust rgb values for minimum luminance threshold */
         if (cinfo->lmin > 0) { 
             rgb_mode = rgb4lmin(rgbflts, cinfo->lmin);
             if (rgb_mode < 0)

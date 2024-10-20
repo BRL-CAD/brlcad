@@ -9,50 +9,49 @@ set(includedir "\${prefix}/include")
 set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 
-if (NOT BRLCAD_COMPONENTS)
+if(NOT BRLCAD_COMPONENTS)
   add_subdirectory(pkgconfig)
   add_subdirectory(perl)
 
   add_subdirectory(opencl-raytracer-tests)
 
   configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
-  file(COPY ${CMAKE_BINARY_DIR}/misc/brlcad-config
+  file(
+    COPY ${CMAKE_BINARY_DIR}/misc/brlcad-config
     DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-    GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-  DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlcad-config)
+    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+  )
+  distclean(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlcad-config)
   file(REMOVE ${CMAKE_BINARY_DIR}/misc/brlcad-config)
   install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${BIN_DIR})
 
-  BRLCAD_ADDDATA(fortran_example.f sample_applications)
-endif (NOT BRLCAD_COMPONENTS)
+  brlcad_adddata(fortran_example.f sample_applications)
+endif(NOT BRLCAD_COMPONENTS)
 
-if (TARGET libanalyze)
-  set(density_DATAFILES
-    GQA_SAMPLE_DENSITIES
-    NIST_DENSITIES
-    )
-  BRLCAD_ADDDATA(density_DATAFILES data)
-endif (TARGET libanalyze)
+if(TARGET libanalyze)
+  set(density_DATAFILES GQA_SAMPLE_DENSITIES NIST_DENSITIES)
+  brlcad_adddata(density_DATAFILES data)
+endif(TARGET libanalyze)
 
 add_subdirectory(nirt)
 
-BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
+brlcad_adddata(profont/ProFont.ttf fonts)
 
-if (TARGET archer)
-  BRLCAD_ADDDATA(nsis/brlcad.ico icons)
-  BRLCAD_ADDDATA(nsis/archer.ico icons)
-endif (TARGET archer)
+if(TARGET archer)
+  brlcad_adddata(nsis/brlcad.ico icons)
+  brlcad_adddata(nsis/archer.ico icons)
+endif(TARGET archer)
 
 add_subdirectory(CMake)
 
-if (NOT BRLCAD_COMPONENTS)
+if(NOT BRLCAD_COMPONENTS)
   add_subdirectory(doxygen)
   add_subdirectory(debian)
   add_subdirectory(osl_shaders)
-endif (NOT BRLCAD_COMPONENTS)
+endif(NOT BRLCAD_COMPONENTS)
 
-set(misc_ignore_files
+set(
+  misc_ignore_files
   Bullet_Box_Chain_Demo.cpp
   CMakeLists.txt
   Description.txt
@@ -123,8 +122,8 @@ set(misc_ignore_files
   wix/brlcad_banner.bmp
   wix/brlcad_dialog.bmp
   wix/brlcad_product.ico
-  )
-CMAKEFILES(${misc_ignore_files})
+)
+cmakefiles(${misc_ignore_files})
 
 # Local Variables:
 # tab-width: 8

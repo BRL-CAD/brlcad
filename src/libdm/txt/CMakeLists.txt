@@ -1,10 +1,7 @@
-set(TXT_SRCS
-  dm-txt.c
-  if_debug.c
-  )
+set(TXT_SRCS dm-txt.c if_debug.c)
 
 if(BRLCAD_ENABLE_TCL)
-
+  set(TCL_ENABLE_TK OFF)
   find_package_tcl(REQUIRED)
 
   include_directories(
@@ -14,23 +11,22 @@ if(BRLCAD_ENABLE_TCL)
     ${BRLCAD_SOURCE_DIR}/include
     ${BU_INCLUDE_DIRS}
     ${TCL_INCLUDE_PATH}
-    )
+  )
 
   add_definitions(-DDM_PLUGIN)
 
   dm_plugin_library(dm-txt SHARED ${TXT_SRCS})
   target_link_libraries(dm-txt libdm libbu ${TCL_LIBRARY})
   set_property(TARGET dm-txt APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  VALIDATE_STYLE(dm-txt "${TXT_SRCS}")
+  validate_style(dm-txt "${TXT_SRCS}")
 
-  PLUGIN_SETUP(dm-txt dm)
-
+  plugin_setup(dm-txt dm)
 endif(BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${TXT_SRCS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

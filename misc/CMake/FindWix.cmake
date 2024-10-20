@@ -28,7 +28,7 @@ set(WIX_PREFIX_PATH ${WIX_HOME} ${ENV_WIX_HOME} ${WIX_PATHS})
 find_path(Wix_BINARY_DIR NAMES candle.exe HINTS ${WIX_PREFIX_PATH} PATH_SUFFIXES bin)
 
 if(Wix_BINARY_DIR)
-	set (Wix_FOUND TRUE)
+  set(Wix_FOUND TRUE)
 endif()
 
 mark_as_advanced(Wix_BINARY_DIR Wix_FOUND)

@@ -75,10 +75,10 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
     if (bot->orientation == RT_BOT_CW) {
 	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
+	    bot_mesh.triVerts.push_back(glm::ivec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
     } else {
 	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
+	    bot_mesh.triVerts.push_back(glm::ivec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
     }
 
     manifold::MeshGL bot_gl(bot_mesh);
@@ -265,7 +265,7 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 	    tri_verts[i] = gm.facets.vertex(f, i);
 	}
 	// TODO - CW vs CCW orientation handling?
-	gmm.triVerts.push_back(glm::vec3(tri_verts[0], tri_verts[1], tri_verts[2]));
+	gmm.triVerts.push_back(glm::ivec3(tri_verts[0], tri_verts[1], tri_verts[2]));
     }
 
 #if 1
@@ -330,10 +330,8 @@ rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_interna
     int *nfaces = (int *)bu_calloc(orig_bot->num_faces * 3, sizeof(int), "new faces array");
     size_t nfaces_ind = 0;
     for (size_t i = 0; i < orig_bot->num_faces; i++) {
-	if (rm_indices.find(i) != rm_indices.end()) {
-	    bu_log("skipping thin face %ld\n", i);
+	if (rm_indices.find(i) != rm_indices.end())
 	    continue;
-	}
 	nfaces[3*nfaces_ind + 0] = orig_bot->faces[3*i+0];
 	nfaces[3*nfaces_ind + 1] = orig_bot->faces[3*i+1];
 	nfaces[3*nfaces_ind + 2] = orig_bot->faces[3*i+2];
@@ -385,6 +383,63 @@ rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_interna
     return bot;
 }
 
+struct rt_bot_internal *
+rt_bot_dup(const struct rt_bot_internal *obot)
+{
+    if (!obot)
+	return NULL;
+
+    struct rt_bot_internal *bot = NULL;
+    BU_GET(bot, struct rt_bot_internal);
+    bot->magic = obot->magic;
+    bot->mode = obot->mode;
+    bot->orientation = obot->orientation;
+    bot->bot_flags = obot->bot_flags;
+
+    bot->num_faces = obot->num_faces;
+    bot->faces = (int *)bu_malloc(obot->num_faces * sizeof(int)*3, "bot faces");
+    memcpy(bot->faces, obot->faces, obot->num_faces * sizeof(int)*3);
+
+    bot->num_vertices = obot->num_vertices;
+    bot->vertices = (fastf_t*)bu_malloc(obot->num_vertices * sizeof(fastf_t)*3, "bot verts");
+    memcpy(bot->vertices, obot->vertices, obot->num_vertices * sizeof(fastf_t)*3);
+
+    if (obot->thickness) {
+	bot->thickness = (fastf_t*)bu_malloc(obot->num_faces * sizeof(fastf_t), "bot thicknesses");
+	memcpy(bot->thickness, obot->thickness, obot->num_faces * sizeof(fastf_t));
+    }
+
+    if (obot->face_mode) {
+	bot->face_mode = (struct bu_bitv *)bu_malloc(obot->num_faces * sizeof(struct bu_bitv), "bot face_mode");
+	memcpy(bot->face_mode, obot->face_mode, obot->num_faces * sizeof(struct bu_bitv));
+    }
+
+    if (obot->normals && obot->num_normals) {
+	bot->num_normals = obot->num_normals;
+	bot->normals = (fastf_t*)bu_malloc(obot->num_normals * sizeof(fastf_t)*3, "bot normals");
+	memcpy(bot->normals, obot->normals, obot->num_normals * sizeof(fastf_t)*3);
+    }
+
+    if (obot->face_normals && obot->num_face_normals) {
+	bot->num_face_normals = obot->num_face_normals;
+	bot->face_normals = (int*)bu_malloc(obot->num_face_normals * sizeof(int)*3, "bot face normals");
+	memcpy(bot->face_normals, obot->face_normals, obot->num_face_normals * sizeof(int)*3);
+    }
+
+    if (obot->num_uvs && obot->uvs) {
+	bot->num_uvs = obot->num_uvs;
+	bot->uvs = (fastf_t*)bu_malloc(obot->num_uvs * sizeof(fastf_t)*3, "bot uvs");
+	memcpy(bot->uvs, obot->uvs, obot->num_uvs * sizeof(fastf_t)*3);
+    }
+
+    if (obot->num_face_uvs && obot->face_uvs) {
+	bot->num_face_uvs = obot->num_face_uvs;
+	bot->face_uvs = (int*)bu_malloc(obot->num_face_uvs * sizeof(int)*3, "bot face_uvs");
+	memcpy(bot->face_uvs, obot->face_uvs, obot->num_face_uvs * sizeof(int)*3);
+    }
+
+    return bot;
+}
 
 // Local Variables:
 // tab-width: 8

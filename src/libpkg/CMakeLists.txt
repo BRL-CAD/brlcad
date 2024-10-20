@@ -1,18 +1,15 @@
-set(LIBPKG_SOURCES
-  pkg.c
-  vers.c
-  )
+set(LIBPKG_SOURCES pkg.c vers.c)
 
 # Note - libpkg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" "${libpkg_deps}" "" "")
+brlcad_addlib(libpkg "${LIBPKG_SOURCES}" "${libpkg_deps}" "" "")
 set_target_properties(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-BRLCAD_ADDDATA(tpkg.c sample_applications)
-BRLCAD_ADDEXEC(tpkg tpkg.c "libbu;libpkg" NO_INSTALL)
+brlcad_adddata(tpkg.c sample_applications)
+brlcad_addexec(tpkg tpkg.c "libbu;libpkg" TEST)
 
 add_subdirectory(example)
 add_subdirectory(example_qt)
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

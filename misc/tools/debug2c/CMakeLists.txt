@@ -39,25 +39,22 @@ cmake_minimum_required(VERSION 3.18)
 # set CMake project name
 project(DEBUG2C)
 
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
 
 add_executable(debug2c debug2c.cpp)
-if (O3_COMPILER_FLAG)
+if(O3_COMPILER_FLAG)
   # If we have the O3 flag, use it
   target_compile_options(debug2c PRIVATE "-O3")
-endif (O3_COMPILER_FLAG)
+endif(O3_COMPILER_FLAG)
 
 if(COMMAND CMAKEFILES)
-  CMAKEFILES(
+  cmakefiles(
     CMakeLists.txt
     debug2c.cpp
-    )
+  )
 endif()
 
 # Local Variables:
@@ -66,4 +63,3 @@ endif()
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

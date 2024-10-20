@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-pnts SHARED pnts.cpp)
 target_link_libraries(ged-pnts libged libbu)
 set_property(TARGET ged-pnts APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-pnts pnts.cpp)
-PLUGIN_SETUP(ged-pnts ged)
+validate_style(ged-pnts pnts.cpp)
+plugin_setup(ged-pnts ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   pnts.cpp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -21,7 +21,7 @@
 # This file contains the procedures used to override the standard
 # Tcl/Tk error code. To use it all you need to do is source it into
 # your main Tcl/Tk file. The following global variables are used in
-# this code (they could interfer with other code):
+# this code (they could interfere with other code):
 #
 #                 bgerrorMessage - holds error message displayed in error dialog
 #                 bgerrorLog    - holds stack track error

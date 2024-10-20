@@ -19,7 +19,7 @@
  */
 /** @file libged/data_lines.c
  *
- * Logic for drawing arbitary lines not associated with geometry.
+ * Logic for drawing arbitrary lines not associated with geometry.
  *
  * TODO - at the moment this will only display in Archer - MGED
  * doesn't appear to have the necessary drawing hooks to view

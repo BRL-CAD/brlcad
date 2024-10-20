@@ -134,7 +134,7 @@ NMG_EXPORT extern void nmg_jeg(struct edge_g_lseg *dest_eg,
  *
  * A new vertex will be made for any NULL vertex pointer parameters.
  * If we need to make a new vertex and the shell still has its
- * vertexuse we re-use that vertex rather than freeing and
+ * vertexuse we reuse that vertex rather than freeing and
  * re-allocating.
  *
  * If both vertices were specified, and the shell also had a vertexuse

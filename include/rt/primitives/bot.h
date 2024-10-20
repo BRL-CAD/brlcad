@@ -28,6 +28,7 @@
 #include "vmath.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
+#include "nmg.h"
 #include "rt/geom.h"
 #include "rt/defines.h"
 #include "rt/tol.h"
@@ -74,18 +75,20 @@ struct bot_specific {
 #endif
 };
 
-RT_EXPORT extern void rt_bot_prep_pieces(struct bot_specific    *bot,
-					 struct soltab          *stp,
-					 size_t                 ntri,
-					 const struct bn_tol    *tol);
 
-RT_EXPORT extern size_t rt_botface(struct soltab                *stp,
-				   struct bot_specific  *bot,
-				   fastf_t                      *ap,
-				   fastf_t                      *bp,
-				   fastf_t                      *cp,
-				   size_t                       face_no,
-				   const struct bn_tol  *tol);
+// this is really close to struct tri_specific in plane.h
+// TODO: see if that ever gets serialized, and if it doesn't
+// then change that to this - memory coherency win
+// sizeof(triangle_s) should be 15/16 * (4/8) bytes
+typedef struct _triangle_s {
+    point_t A;
+    vect_t AB;
+    vect_t AC;
+    vect_t face_norm;
+    fastf_t face_norm_scalar;
+    fastf_t *norms;
+    size_t face_id;
+} triangle_s;
 
 
 /* bot.c */
@@ -188,22 +191,24 @@ RT_EXPORT extern int rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_
  * incorrect orientation. */
 RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
 
-/* Test whether a solid BoT has faces that are <tol distance away from nearby
- * faces.  This is (at the moment) a ray interrogation based test, so it is not
- * absolutely guaranteed to find all near self-intersections - it is intended
- * to catch situations such as boolean operations on meshes producing
- * exceedingly thin volumes or aligned interior triangles. Returns 1 if a
- * problem is found, else 0.  If ofaces is non-NULL, store the indices of the
- * specific faces found to be problematic.
+/* Test whether a solid BoT has faces that are <tol distance away when shooting
+ * "into" the solid.  This is (at the moment) a ray interrogation based test,
+ * so it is not absolutely guaranteed to find all near self-intersections.
  *
- * TODO - there are multiple categories of problem here - need more nuanced
- * reporting
- */
-RT_EXPORT extern int rt_bot_coplanar_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+ * It is intended to catch situations such as boolean operations on meshes
+ * producing exceedingly thin volumes.
+ *
+ * Returns 1 if a problem is found, else 0.  If ofaces is non-NULL, store the
+ * indices of the specific faces found to be problematic. */
+RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
 
 /* Function to remove a set of faces from a BoT and produce a new BoT */
 RT_EXPORT struct rt_bot_internal *
 rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_internal *obot);
+
+/* Function to copy an rt_bot_internal structure */
+RT_EXPORT struct rt_bot_internal *
+rt_bot_dup(const struct rt_bot_internal *bot);
 
 /** @} */
 

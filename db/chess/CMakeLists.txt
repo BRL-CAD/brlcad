@@ -1,4 +1,5 @@
-set(CHESS_PARTS
+set(
+  CHESS_PARTS
   bishop.asc
   chessboard.asc
   king.asc
@@ -6,16 +7,16 @@ set(CHESS_PARTS
   pawn.asc
   queen.asc
   rook.asc
-  )
+)
 
 foreach(piece ${CHESS_PARTS})
-  G_TARGET(${piece} "BRL-CAD Geometry Models/Sample/Chess")
+  g_target(${piece} "BRL-CAD Geometry Models/Sample/Chess")
 endforeach(piece ${CHESS_PARTS})
 
-CMAKEFILES(
+cmakefiles(
   ${CHESS_PARTS}
   CMakeLists.txt
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -44,23 +44,29 @@
 // Necessary C++ header files
 #include <iostream>
 #include <cstdlib>
-#include <cstdio>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <ctime>
-#include <filesystem>
-#include <sys/stat.h>
-#include <sys/stat.h>
-
 #include "picohash.h"
+#include<cstdio>
+#include<filesystem>
+
+// Necessary C++ headers to get user account name for Windows and Unix
+#ifdef HAVE_WINDOWS_H
+#  include <Lmcons.h>
+#else
+#  include <pwd.h>
+#endif
 
 // BRL-CAD header files
+#include "bio.h"
 #include "bu/opt.h"
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/units.h"
+#include "bu/path.h"
 #include "ged.h"
 
 // Visualization project header files
@@ -82,3 +88,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

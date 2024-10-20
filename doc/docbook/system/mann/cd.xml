@@ -9,7 +9,7 @@
 
   <refnamediv xml:id="name">
     <refname>cd</refname>
-    <refpurpose>Change the directory to the given path.
+    <refpurpose>Changes the directory to the given path.
     </refpurpose>
   </refnamediv>
 

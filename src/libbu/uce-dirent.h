@@ -590,7 +590,7 @@ rewinddir (DIR *dirp)
   /* re-open previous stream */
   if (_initdir (dirp) == 0) {
     /* initialization failed but we cannot deal with error.  User will notice
-     * error later when she tries to retrieve first directory enty. */
+     * error later when she tries to retrieve first directory entry. */
     /*EMPTY*/;
   }
 }

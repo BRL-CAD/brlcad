@@ -773,7 +773,7 @@ tree_update_walk_subtree(
 	    //
 	    // A more sophisticated possibility might be to investigate
 	    // Locality Sensitive Hashing (https://github.com/trendmicro/tlsh)
-	    // to see if we could bin similar matricies using their hashes.
+	    // to see if we could bin similar matrices using their hashes.
 	    // That might even have potential to identify "similar" geometry
 	    // objects, depending on the details of their internal storage...
 	    if (dpii == s->instances.end()) {

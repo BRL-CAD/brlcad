@@ -915,9 +915,9 @@ PATCH SUBMISSION GUIDELINES
 ---------------------------
 
 To contribute to BRL-CAD, begin by submitting pull requests to the
-Github project at https://github.com/BRL-CAD/brlcad.
+GitHub project at https://github.com/BRL-CAD/brlcad.
 
-For an introduction to the standard Github workflow for forking and
+For an introduction to the standard GitHub workflow for forking and
 submitting pull requests, see:
 
 https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project
@@ -930,8 +930,8 @@ particularly important when working with BRL-CAD.  Patches need to be
 based on the latest sources and avoid reverting improvements that have
 been added to the upstream sources since your fork was created.
 
-Although the Github pull request based workflow is recommended and
-preferred, if for any reason you cannot use Github you may also
+Although the GitHub pull request based workflow is recommended and
+preferred, if for any reason you cannot use GitHub you may also
 submit "git format-patch" patches through other channels.  See:
 
 https://git-scm.com/docs/git-format-patch
@@ -952,7 +952,7 @@ BUGS & UNEXPECTED BEHAVIOR
 
 When a bug or unexpected behavior is encountered that cannot be
 quickly fixed, it needs to be documented in our BUGS file or more
-formally reported to the Github issues tracker at:
+formally reported to the GitHub issues tracker at:
 
 https://github.com/BRL-CAD/brlcad/issues
 
@@ -984,7 +984,7 @@ access to be granted:
 
 3) Join the brlcad-devel developer mailing list, introduce yourself.
 
-4) Create a Github account, submit at least pull requests that
+4) Create a GitHub account, submit at least pull requests that
 demonstrate competency with our coding style, apply flawlessly, and
 provide some significant improvement.
 
@@ -1032,10 +1032,10 @@ developers to address issues as they are encountered regardless of who
 introduces the problem.
 
 To assist developers in these efforts,  BRL-CAD utilizes Continuous
-Integration (CI) testing via the Github Actions infrastructure to
+Integration (CI) testing via the GitHub Actions infrastructure to
 monitor code health:  https://github.com/BRL-CAD/brlcad/actions
 Under normal conditions, all developers should strive to keep all
-Github Actions tests passing.
+GitHub Actions tests passing.
 
 3) Contributors making commits to the repository are required to
 uphold the legal conventions and requirements summarized in the
@@ -1255,7 +1255,7 @@ Release steps are as follows:
 #####################################################################
 # 00: Notify developer mailing list of intention to release.
 
-    echo "Release preparations are under way.  Trunk sources merged to the RELEASE branch will be reviewed for sync to STABLE and release tagging.  Please help test by compiling distcheck-full and running benchmark, mged, and archer." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
+    echo "Release preparations are under way.  Trunk sources merged to the RELEASE branch will be reviewed for sync to STABLE and release tagging.  Please help test by compiling distcheck and running benchmark, mged, and archer." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
 
 #####################################################################
 # 01: Sync main to RELEASE branch.
@@ -1314,7 +1314,7 @@ Release steps are as follows:
     # amendment build.
 
     mkdir -p .build && cd .build
-    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make
+    cmake .. -DENABLE_ALL=ON -DCMAKE_BUILD_TYPE=Release && make
 
     # NON-AUTO: Manually check rt, mged, and archer.
     bin/rt        # should report usage with correct library versions
@@ -1361,10 +1361,36 @@ Release steps are as follows:
     # NON-AUTO: misc/macosx/Resources/Welcome.rtfd/TXT.rtf
 
 #####################################################################
-# 07: Update ChangeLog.  Use the YYYY-MM-DD of previous NEWS entry.
+# 07: Create branch for release in bext repository.
 
-    TODO - if we want GNU style changelogs, more work will be needed
-    as there's not an out of the box solution...
+    MAJOR=`awk '{print $1}' include/conf/MAJOR`
+    MINOR=`awk '{print $1}' include/conf/MINOR`
+    PATCH=`awk '{print $1}' include/conf/PATCH`
+    cd ..
+    git clone git@github.com:BRL-CAD/bext.git
+    cd bext
+    git checkout RELEASE
+    git branch rel-$MAJOR-$MINOR-$PATCH
+    git checkout rel-$MAJOR-$MINOR-$PATCH
+    git push --set-upstream origin rel-$MAJOR-$MINOR-$PATCH
+    cd ../brlcad
+
+#####################################################################
+# 08: Update the bext submodule in BRL-CAD's main repository.
+
+    rm -rf src/bext && git checkout -- src/bext
+    git submodule update --init
+    git submodule update --remote
+    git add src/bext
+    cd src/bext
+    BSHA1=$(git log -1 --pretty=format:"%h")
+    cd ../..
+    git commit -m "Update bext submodule to SHA1 $BSHA1"
+    git push
+    rm -rf src/bext && git checkout -- src/bext
+
+#####################################################################
+# 09: Update ChangeLog.  Use the YYYY-MM-DD of previous NEWS entry.
 
     LAST=`grep -E "\--- [0-9]{4}-[0-9X]{2}-[0-9X]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
     echo "LAST=$LAST"
@@ -1373,12 +1399,12 @@ Release steps are as follows:
     git commit -m "Update log with commits since $LAST"
 
 #####################################################################
-# 08: Run distcheck-full on at least two platforms.
+# 10: Run distcheck on at least two platforms.
 
-    mkdir -p .build && cd .build && cmake .. && make distcheck-full
+    mkdir -p .build && cd .build && cmake .. && make distcheck
 
 #####################################################################
-# 09: Sync RELEASE to STABLE branch:
+# 11: Sync RELEASE to STABLE branch:
 
     # NON-AUTO: Update the NEWS release date for the current release to today's date
     git add NEWS
@@ -1397,15 +1423,15 @@ Release steps are as follows:
     # the resolution will be to make STABLE match the state of RELEASE
 
 #####################################################################
-# 10: If there are any differences between RELEASE and STABLE trees,
+# 12: If there are any differences between RELEASE and STABLE trees,
       test the merge.  In normal usage STABLE should match RELEASE,
       so this is only necessary in special circumstances.
 
     mkdir .merge && cd .merge
-    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck-full && cd .. && rm -rf .merge
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck && cd .. && rm -rf .merge
 
 #####################################################################
-# 11: Let upstream know about the new state of STABLE.
+# 13: Let upstream know about the new state of STABLE.
 
     # If merge conflict resolution was needed, make a merge commit:
     RSHA1=$(git log -1 RELEASE --pretty=format:"%h")a
@@ -1417,7 +1443,7 @@ Release steps are as follows:
     git push
 
 #####################################################################
-# 12: Tag the release using "rel-MAJOR-MINOR-PATCH" format:
+# 14: Tag the release using "rel-MAJOR-MINOR-PATCH" format:
 
     MAJOR=`awk '{print $1}' include/conf/MAJOR`
     MINOR=`awk '{print $1}' include/conf/MINOR`
@@ -1428,7 +1454,7 @@ Release steps are as follows:
     git push origin rel-$MAJOR-$MINOR-$PATCH
 
 #####################################################################
-# 13: Increment and commit the next BRL-CAD release numbers.
+# 15: Increment and commit the next BRL-CAD release numbers.
 
     # Update the include/conf/(MAJOR|MINOR|PATCH) version files
     # immediately to odd-numbered minor version or new patch developer
@@ -1448,7 +1474,7 @@ Release steps are as follows:
     git push
 
 #####################################################################
-# 14: Sync RELEASE changes back to main.
+# 16: Sync RELEASE changes back to main.
 
     git checkout main
     git merge RELEASE
@@ -1463,22 +1489,22 @@ Release steps are as follows:
     git push
 
 #####################################################################
-# 15: Obtain a tagged version of the sources from the repository, make
+# 17: Obtain a tagged version of the sources from the repository, make
 # final distribution tarballs:
 
     git checkout rel-$MAJOR-$MINOR-$PATCH
     mkdir .build && cd .build
-    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck-full
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck
 
 #####################################################################
-# 16: Upload the source distributions and release notes.  Use source
+# 18: Upload the source distributions and release notes.  Use source
 # tarballs to create binaries.
 
-------------- TODO - need new procedures for Github... ------------
+------------- TODO - need new procedures for GitHub... ------------
 
 
 #####################################################################
-# 17: Notify binary platform maintainers:
+# 19: Notify binary platform maintainers:
 
     T2 package maintainer
 	http://t2-project.org/packages/brlcad.html
@@ -1505,7 +1531,7 @@ Release steps are as follows:
  	https://fedoraproject.org/wiki/User:Germano#Contact
 
 #####################################################################
-# 18: Announce the new release.
+# 20: Announce the new release.
 
 The NEWS file should generally be used as a basis for making release
 announcements though the announcements almost always require
@@ -1584,7 +1610,7 @@ Multiple platform major release and announcements:
 	copyboy@cadcam-insider.com
 
 #####################################################################
-# 19: Sit back and enjoy a beverage for a job well done.
+# 21: Sit back and enjoy a beverage for a job well done.
 
 
 

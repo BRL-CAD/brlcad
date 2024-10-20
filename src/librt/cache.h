@@ -83,7 +83,7 @@ void rt_cache_close(struct rt_cache *cache);
  * that object, rt_obj_prep() is run.
  *
  * typically, this means an object will prep via rt_obj_prep() the
- * first time it is encountered, and read from cache on subsequnt
+ * first time it is encountered, and read from cache on subsequent
  * calls.
  */
 int rt_cache_prep(struct rt_cache *cache, struct soltab *stp, struct rt_db_internal *ip);

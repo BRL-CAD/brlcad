@@ -109,7 +109,7 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
-	/* Is this a re-use of a previously mapped file? */
+	/* Is this a reuse of a previously mapped file? */
 	if (mfp->apbuf) {
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);

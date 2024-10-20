@@ -241,6 +241,7 @@ regex_init(repo_info_t &r) {
 	    "cursor[.]c$",
 	    "misc/CMake/compat/.*",
 	    "ttcp[.]c$",
+	    "file[.]cpp$",
 	    NULL
 	};
 	cnt = 0;
@@ -893,7 +894,9 @@ main(int argc, const char *argv[])
 		"/qtads/",
 		"/shapelib/",
 		"gltf/",
+		"/concurrentqueue.h",
 		"/detria.hpp",
+		"/json.hpp",
 		"/xxhash.h",
 		"misc/CMake/Find",
 		"misc/debian",

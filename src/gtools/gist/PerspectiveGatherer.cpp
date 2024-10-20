@@ -20,7 +20,6 @@
 
 #include "PerspectiveGatherer.h"
 
-
 std::map<char, FaceDetails>
 getFaceDetails()
 {
@@ -49,14 +48,16 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
     // it shouldn't, but make sure workingDir string does not end in path separator
     std::string working = workingDir;
     char lastChar = working[working.size() - 1];
-    if (lastChar == '/' || lastChar == '\\')
+    if (lastChar == '/' || lastChar == '\\') {
         working.pop_back();
+    }
 
     // when doing ghost render for hierarchy '...' component is space separated list
     // in that case rename to etc to elim spaces and not have too long of a file name
     std::string comp = component;
-    if (comp.find(" ") != std::string::npos)
+    if (comp.find(" ") != std::string::npos) {
         comp = "etc";
+    }
 
     // put it all together
     std::string ret = working + BU_DIR_SEPARATOR + inFileBase + "_" + comp;
@@ -67,15 +68,16 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
 
 static std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
-    if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
-        bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
+    if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL)) {
+        bu_exit(BRLCAD_ERROR, "Couldn't find %s, aborting.\n", cmd);
+    }
 
     return std::string(buf);
 }
 
 
 std::string
-renderPerspective(RenderingFace face, Options& opt, std::string component, std::string UNUSED(ghost))
+renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
 {
     std::string pathToInput = opt.getInFile();
     std::string outputname = createOutputBase(opt.getInFile(), opt.getWorkingDir(), component);
@@ -195,7 +197,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[5] = "-e";  av[6] = "25";
             av[7] = "-i";  av[8] = pathToInput.c_str();
             av[9] = "-c";  av[10] = component.c_str();
-            av[11] = "-g"; av[12] = "ghost";
+            av[11] = "-g"; av[12] = ghost.c_str();
             av[13] = "-G"; av[14] = "10";
             av[15] = "-o"; av[16] = outputname.c_str();
             av[17] = NULL;
@@ -205,22 +207,33 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             break;
     }
 
-    if (bu_file_exists(outputname.c_str(), NULL) && opt.getReuseImages()) {
-        // reuse previous render
-        if (opt.verbosePrinting())
-            bu_log("\tFound %s, skipping\n", outputname.c_str());
-        return outputname;
-    } else {
-        // sanity delete
-        bu_file_delete(outputname.c_str());
+    if (bu_file_exists(outputname.c_str(), NULL)) {
+         if (opt.getReuseImages()) {
+            // reuse previous render
+            if (opt.verbosePrinting())
+                bu_log("\tFound %s, skipping generation\n", outputname.c_str());
+            return outputname;
+        } else {
+            // sanity delete
+            bu_file_delete(outputname.c_str());
+        }
     }
 
     struct bu_process* p;
     bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW);
 
-    // TODO: do we care about output?
+    char buff[128];
+    std::string result = "";
+    int read_cnt = 0;
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDERR, 128-1, buff)) > 0) {
+        /* NOTE: read does not ensure null-termination, thus buffersize-1 */
+        buff[read_cnt] = '\0';
+        result += buff;
+    }
 
-    (void)bu_process_wait_n(&p, 0);
+    if (bu_process_wait_n(&p, 0) != 0) {
+        bu_exit(BRLCAD_ERROR, "ERROR: render process failed\n");
+    }
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", outputname.c_str());
@@ -229,9 +242,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
         bu_log("\tGenerated %s\n", outputname.c_str());
     }
 
-    return outputname;
+	return outputname;
 }
-
 
 // Local Variables:
 // tab-width: 8

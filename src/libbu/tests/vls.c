@@ -30,8 +30,8 @@
 
 
 /* This prints out the values of the expected vls and compares it with
- * the actual vls; it uses the C-style return values of 0 for false and 1
- * for true
+ * the actual vls; it uses the C-style return values of 0 for false
+ * and 1 for true
  */
 static int
 compare_vls(struct bu_vls *actual_vls, struct bu_vls *expected_vls)
@@ -679,8 +679,8 @@ main(int argc, char *argv[])
 {
     int function_num = 0;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 

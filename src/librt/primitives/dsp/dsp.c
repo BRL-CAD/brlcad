@@ -1088,7 +1088,7 @@ plot_seg(struct isect_stuff *isect,
 	MAT4X3PNT(rpp.max, stom, bbmax);
 	plot_rpp(fp, &rpp, r/2, g/2, b/2);
 
-	/* re-use the rpp for the points for the segment */
+	/* reuse the rpp for the points for the segment */
 	MAT4X3PNT(rpp.min, stom, in_hit->hit_point);
 	MAT4X3PNT(rpp.max, stom, out_hit->hit_point);
 
@@ -3358,7 +3358,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * desired here.
  *
  * inputs:
- * dsp_ip - pointer to the rt_dsp_internal struct fro thi DSP
+ * dsp_ip - pointer to the rt_dsp_internal struct for this DSP
  * x - the DSP cell x-coord of the lower left corner of the cell
  * y - the DSP cell y-coord of the lower left corner of the cell
  * xlim - the maximum value of the DSP x coordinates

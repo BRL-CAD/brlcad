@@ -12,11 +12,11 @@ file(WRITE "${LOGFILE}" "Starting rtwizard run\n")
 # is passed in via the EXEC variable at runtime.  De-quote it and assign it to
 # the appropriate variable.
 string(REPLACE "\\" "" RTWIZ "${EXEC}")
-if (NOT EXISTS "${RTWIZ}")
+if(NOT EXISTS "${RTWIZ}")
   file(WRITE "${LOGFILE}" "rtwizard not found at location \"${RTWIZ}\" - aborting\n")
   file(READ "${LOGFILE}" LOG)
   message(FATAL_ERROR "Unable to find rtwizard, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
-endif (NOT EXISTS "${RTWIZ}")
+endif(NOT EXISTS "${RTWIZ}")
 
 # Apparently CMAKE_EXECUTABLE_SUFFIX is not reliably defined in cmake -P - get
 # it from the executable passed in to us.
@@ -27,25 +27,29 @@ get_filename_component(EXE_SUFFIX "${RTWIZ}" EXT)
 # other necessary programs.
 get_filename_component(BDIR "${RTWIZ}" DIRECTORY)
 set(PIXCMP_EXEC "${BDIR}/pixcmp${EXE_SUFFIX}")
-if (NOT EXISTS "${PIXCMP_EXEC}")
+if(NOT EXISTS "${PIXCMP_EXEC}")
   file(WRITE "${LOGFILE}" "pixcmp not found at location \"${PIXCMP_EXEC}\" - aborting\n")
   file(READ "${LOGFILE}" LOG)
   message(FATAL_ERROR "Unable to find pixcmp, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
-endif (NOT EXISTS "${PIXCMP_EXEC}")
+endif(NOT EXISTS "${PIXCMP_EXEC}")
 
 # Reconstruct the tree root from the EXEC path, and identify the input file location
 string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
 set(SRCFILE "${RDIR}/${INPUTFILE}")
 
 # Clean up in case we've run before
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${TGTIMG}")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E remove -f "${TGTIMG}"
+)
 
 # Start with the file using standard UNIX line endings
 file(APPEND "${LOGFILE}" "Generating ${TGTIMG}:\n")
 execute_process(
   COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${TGTIMG}" @OPTIONS@
-  RESULT_VARIABLE rtwiz_result OUTPUT_VARIABLE rtwiz_log ERROR_VARIABLE rtwiz_log
-  )
+  RESULT_VARIABLE rtwiz_result
+  OUTPUT_VARIABLE rtwiz_log
+  ERROR_VARIABLE rtwiz_log
+)
 file(APPEND "${LOGFILE}" "${rtwiz_log}")
 set(rtwiz_log)
 if(NOT EXISTS "${TGTIMG}")
@@ -58,17 +62,24 @@ endif(NOT EXISTS "${TGTIMG}")
 file(APPEND "${LOGFILE}" "\nComparing ${TGTIMG} to ${CTRLIMG}:\n")
 execute_process(
   COMMAND "${PIXCMP_EXEC}" "${TGTIMG}" "${CTRLIMG}"
-  RESULT_VARIABLE pixcmp_result OUTPUT_VARIABLE rtwiz_log ERROR_VARIABLE rtwiz_log
-  )
+  RESULT_VARIABLE pixcmp_result
+  OUTPUT_VARIABLE rtwiz_log
+  ERROR_VARIABLE rtwiz_log
+)
 file(APPEND "${LOGFILE}" "${rtwiz_log}")
 
 if(pixcmp_result)
   file(APPEND "${LOGFILE}" "Failure: ${pixcmp_result}")
   file(READ "${LOGFILE}" LOG)
-  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP_EXEC}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+  message(
+    FATAL_ERROR
+    "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP_EXEC}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}"
+  )
 endif(pixcmp_result)
 
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${TGTIMG})
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E remove -f ${TGTIMG}
+)
 
 # Local Variables:
 # tab-width: 8
@@ -76,4 +87,3 @@ execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${TGTIMG})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

@@ -83,27 +83,46 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 icv_image_t *
 icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height)
 {
-    if (format == BU_MIME_IMAGE_AUTO) {
+    if (format == BU_MIME_IMAGE_AUTO)
 	format = icv_guess_file_format(filename, NULL);
-    }
 
+    FILE *fp = (!filename) ? stdin : fopen(filename, "rb");
+    if (!fp) {
+	bu_log("ERROR: Cannot open file %s for reading\n", filename);
+	return NULL;
+    }
+    if (!filename)
+	setmode(fileno(fp), O_BINARY);
+
+    icv_image_t *oimg = NULL;
     switch (format) {
 	case BU_MIME_IMAGE_PNG:
-	    return png_read(filename);
+	    oimg = png_read(fp);
+	    break;
 	case BU_MIME_IMAGE_PIX:
-	    return pix_read(filename, width, height);
+	    oimg = pix_read(fp, width, height);
+	    break;
 	case BU_MIME_IMAGE_BW :
-	    return bw_read(filename, width, height);
+	    oimg = bw_read(fp, width, height);
+	    break;
 	case BU_MIME_IMAGE_DPIX :
-	    return dpix_read(filename, width, height);
+	    oimg = dpix_read(fp, width, height);
+	    break;
 	case BU_MIME_IMAGE_PPM :
-	    return ppm_read(filename);
+	    oimg = ppm_read(fp);
+	    break;
 	case BU_MIME_IMAGE_RLE :
-	    return rle_read(filename);
+	    oimg = rle_read(fp);
+	    break;
 	default:
 	    bu_log("icv_read not implemented for this format\n");
+	    fclose(fp);
 	    return NULL;
     }
+
+    fflush(fp);
+    fclose(fp);
+    return oimg;
 }
 
 
@@ -122,30 +141,40 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 
     ICV_IMAGE_VAL_INT(bif);
 
+    FILE *fp = (ofname==NULL) ? stdout : fopen(ofname, "wb");
+    if (UNLIKELY(fp==NULL)) {
+	perror("fopen");
+	bu_log("ERROR: icv_write failed to get a FILE pointer for %s\n", filename);
+	return BRLCAD_ERROR;
+    }
+
     switch (format) {
 	/* case BU_MIME_IMAGE_BMP:
 	   return bmp_write(bif, ofname); */
 	case BU_MIME_IMAGE_PPM:
-	    ret = ppm_write(bif, ofname);
+	    ret = ppm_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_PNG:
-	    ret = png_write(bif, ofname);
+	    ret = png_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_PIX:
-	    ret = pix_write(bif, ofname);
+	    ret = pix_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_BW:
-	    ret = bw_write(bif, ofname);
+	    ret = bw_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_DPIX :
-	    ret = dpix_write(bif, ofname);
+	    ret = dpix_write(bif, fp);
 	    break;
 	case BU_MIME_IMAGE_RLE :
-	    ret = rle_write(bif, ofname);
+	    ret = rle_write(bif, fp);
 	    break;
 	default:
-	    ret = pix_write(bif, ofname);
+	    ret = pix_write(bif, fp);
     }
+
+    fflush(fp);
+    fclose(fp);
 
     bu_vls_free(&ofilename);
     return ret;

@@ -1966,7 +1966,7 @@ proc ::tkcon::SocketMenu m {
     }
 }
 
-## Namepaces Cascaded Menu
+## Namespaces Cascaded Menu
 ##
 proc ::tkcon::NamespaceMenu m {
     variable PRIV
@@ -2002,7 +2002,7 @@ proc ::tkcon::NamespaceMenu m {
     }
 }
 
-## Namepaces List
+## Namespaces List
 ##
 proc ::tkcon::NamespacesList {names} {
     variable PRIV

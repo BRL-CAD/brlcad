@@ -1092,7 +1092,7 @@ struct part_vert_strip {
 
 
 /**
- * Based upon the tesselator for the ellipsoid.
+ * Based upon the tessellator for the ellipsoid.
  *
  * Break the particle into three parts:
  * Upper hemisphere	0..nsegs		H	North

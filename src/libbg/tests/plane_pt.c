@@ -188,11 +188,11 @@ test_bg_plane_closest_pt(int argc, char **argv)
 
     fastf_t u, v;
     point_t npt;
-    if (bg_plane_closest_pt(&u, &v, plane, p)) {
+    if (bg_plane_closest_pt(&u, &v, &plane, &p)) {
 	bu_log("closest pt calculation failed\n");
 	return -1;
     }
-    if (bg_plane_pt_at(&npt, plane, u, v)) {
+    if (bg_plane_pt_at(&npt, &plane, u, v)) {
 	bu_log("pt at u,v calculation failed\n");
 	return -1;
     }

@@ -739,7 +739,7 @@ nmg_assess_vu(struct nmg_ray_state *rs, int pos)
     this_eu = nmg_find_eu_with_vu_in_lu(lu, vu);
     /* Couldn't this have been this_eu = vu->up.eu_p ? */
     if (this_eu != vu->up.eu_p)
-	bu_log("nmg_assess_vu() eu mis-match? %p %p\n", (void *)this_eu, (void *)vu->up.eu_p);
+	bu_log("nmg_assess_vu() eu mismatch? %p %p\n", (void *)this_eu, (void *)vu->up.eu_p);
     prev_ass = nmg_assess_eu(this_eu, 0, rs, pos);
     next_ass = nmg_assess_eu(this_eu, 1, rs, pos);
     if (prev_ass < 0 || next_ass < 0) {

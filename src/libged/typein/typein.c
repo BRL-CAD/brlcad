@@ -1550,7 +1550,7 @@ material_in(struct ged *gedp, int argc, const char **cmd_argvs, struct rt_db_int
     bu_vls_init(&material_ip->source);
     bu_vls_strcpy(&material_ip->source, cmd_argvs[5]);
 
-    // Intialize AVS stores
+    // Initialize AVS stores
     bu_avs_init_empty(&material_ip->physicalProperties);
     bu_avs_init_empty(&material_ip->mechanicalProperties);
     bu_avs_init_empty(&material_ip->opticalProperties);
@@ -3274,7 +3274,7 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 /*
  * reads annot parameters from the keyboard
  *
- * returns 0 if successul read
+ * returns 0 if successful read
  * 1 if unsuccessful read
  */
 static int

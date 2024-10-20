@@ -229,7 +229,7 @@
   solid in B from anything more than the first solid in A is needless
   complexity from their perspective.
 
-** -F Option Warning Message Visability
+** -F Option Warning Message Visibility
    The -F warning message is printed to the terminal and quickly
    scrolls out of the mged command window due to other error messages
    and the '.' progress output.
@@ -287,7 +287,7 @@
 
   Two bot-specific issues:
   1. Overlap detection sometimes dependent on face orientation.
-  1. Tight triangles leas to ray sneak-through.
+  1. Tight triangles leads to ray sneak-through.
 
 ** Use montecarlo convergence
 

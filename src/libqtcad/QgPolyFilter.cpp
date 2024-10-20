@@ -113,7 +113,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 
 	    bv_screen_pt(&v->gv_point, v->gv_mouse_x, v->gv_mouse_y, v);
 
-	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_point);
+	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, &v->gv_point);
 	    wp->s_v = v;
 
 	    struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
@@ -339,7 +339,7 @@ QPolySelectFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	if (view_objs) {
-	    wp = bv_select_polygon(view_objs, v->gv_point);
+	    wp = bv_select_polygon(view_objs, &v->gv_point);
 	    if (!wp)
 		return true;
 	    struct bv_polygon *vp = (struct bv_polygon *)wp->s_i_data;
@@ -431,10 +431,10 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 	    if (BU_PTBL_LEN(&move_objs)) {
 		for (size_t i = 0; i < BU_PTBL_LEN(&move_objs); i++) {
 		    struct bv_scene_obj *mpoly = (struct bv_scene_obj *)BU_PTBL_GET(&move_objs, i);
-		    bv_move_polygon(mpoly, v->gv_point, v->gv_prev_point);
+		    bv_move_polygon(mpoly, &v->gv_point, &v->gv_prev_point);
 		}
 	    } else {
-		bv_move_polygon(wp, v->gv_point, v->gv_prev_point);
+		bv_move_polygon(wp, &v->gv_point, &v->gv_prev_point);
 	    }
 	    emit view_updated(QG_VIEW_REFRESH);
 	}

@@ -114,7 +114,7 @@ BG_EXPORT extern size_t bg_vert_tree_add_w_norm(struct bg_vert_tree *tree,
 /**
  *@brief
  *	Routine to free the binary search tree and reset the current number of vertices.
- *	The vertex array is left untouched, for re-use later.
+ *	The vertex array is left untouched, for reuse later.
  */
 BG_EXPORT extern void bg_vert_tree_clean(struct bg_vert_tree *tree);
 

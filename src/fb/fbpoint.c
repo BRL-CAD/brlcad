@@ -55,7 +55,7 @@ int Run = 1;		/* Tells when to stop the main loop */
 void SimpleInput(void);
 
 char usage[] = "\
-Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initialy]\n";
+Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initially]\n";
 
 static char *help = "\
 Char:   Command:                                                \r\n\

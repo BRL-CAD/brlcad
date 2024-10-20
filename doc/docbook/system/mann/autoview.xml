@@ -8,7 +8,7 @@
 
   <refnamediv xml:id="name">
     <refname>autoview</refname>
-    <refpurpose> Display all objects within the view.
+    <refpurpose> Displays all objects within the view.
     </refpurpose>
   </refnamediv>
 

@@ -4,31 +4,40 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # Set CMake project name
   project(UG2G)
-
 else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
-
   set(ug_g_srcs ug-g.c ug_misc.c shim.cpp)
 
-  if (BRLCAD_ENABLE_TCL)
-
-    set(UG_DIRS
+  if(BRLCAD_ENABLE_TCL)
+    set(
+      UG_DIRS
       "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
       "${OPENNURBS_INCLUDE_DIRS}"
       ${ZLIB_INCLUDE_DIRS}
       ${REGEX_INCLUDE_DIRS}
       ${TCL_INCLUDE_PATH}
-      )
+    )
 
     # The build shims aren't so great at mocking the initialization
     # behavior of the real code.
-    CHECK_CXX_FLAG("Wno-uninitialized")
-    CHECK_CXX_FLAG("Wno-maybe-uninitialized")
+    check_cxx_flag("Wno-uninitialized")
+    check_cxx_flag("Wno-maybe-uninitialized")
 
     add_definitions(-DTEST_BUILD)
     add_library(ug-g ${ug_g_srcs})
     target_include_directories(ug-g BEFORE PRIVATE ${UG_DIRS})
-    target_link_libraries(ug-g librt libwdb libbrep libbg libnmg libbv libbn libbu ${TCL_LIBRARY})
+    target_link_libraries(
+      ug-g
+      librt
+      libwdb
+      libbrep
+      libbg
+      libnmg
+      libbv
+      libbn
+      libbu
+      ${TCL_LIBRARY}
+    )
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
     set_target_properties(ug-g PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
     if(HIDE_INTERNAL_SYMBOLS)
@@ -45,13 +54,11 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
-
-  endif (BRLCAD_ENABLE_TCL)
+  endif(BRLCAD_ENABLE_TCL)
 
   # Distcheck file list
-  CMAKEFILES(${ug_g_srcs} conv.h log.h shim.h ug-g.1 ug_misc.h)
-  CMAKEFILES(CMakeLists.txt)
-
+  cmakefiles(${ug_g_srcs} conv.h log.h shim.h ug-g.1 ug_misc.h)
+  cmakefiles(CMakeLists.txt)
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 # Local Variables:

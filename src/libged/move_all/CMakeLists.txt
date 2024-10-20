@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-move_all SHARED move_all.c)
 target_link_libraries(ged-move_all libged libbu)
 set_property(TARGET ged-move_all APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-move_all move_all.c)
-PLUGIN_SETUP(ged-move_all ged)
+validate_style(ged-move_all move_all.c)
+plugin_setup(ged-move_all ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   move_all.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

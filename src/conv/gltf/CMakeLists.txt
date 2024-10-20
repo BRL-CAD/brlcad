@@ -1,15 +1,15 @@
-BRLCAD_ADDEXEC(gltf-g gltf-g.cpp "libwdb;librt;libnmg;libbu" FOLDER Conv NO_ERROR)
+brlcad_addexec(gltf-g gltf-g.cpp "libwdb;librt;libnmg;libbu" FOLDER Conv NO_ERROR)
 target_include_directories(gltf-g BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-FILE(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/tinygltf.dist" tinygltf_files REGEX "^.*$")
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/tinygltf.dist" tinygltf_files REGEX "^.*$")
 
-CMAKEFILES(
+cmakefiles(
   ${tinygltf_files}
   CMakeLists.txt
   baseColor.png
   blob.glb
   tinygltf.dist
-  )
+)
 
 # Local Variables:
 # tab-width: 8

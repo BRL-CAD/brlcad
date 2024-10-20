@@ -36,6 +36,15 @@
 #endif
 #include "bio.h"
 
+// TODO - replace with std::filesystem::is_fifo
+#ifndef S_ISFIFO
+#  ifdef S_IFIFO
+#    define S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFIFO)
+#  else
+#    define S_ISFIFO(mode) (0)
+#  endif
+#endif
+
 #include <errno.h>
 #include "bu/app.h"
 #include "bu/getopt.h"

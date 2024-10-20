@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-killtree SHARED killtree.c)
 target_link_libraries(ged-killtree libged libbu)
 set_property(TARGET ged-killtree APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-killtree killtree.c)
-PLUGIN_SETUP(ged-killtree ged)
+validate_style(ged-killtree killtree.c)
+plugin_setup(ged-killtree ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   killtree.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -1,4 +1,5 @@
-set(mann_EN
+set(
+  mann_EN
   3ptarb.xml
   B.xml
   bigE.xml
@@ -262,7 +263,7 @@ set(mann_EN
   x.xml
   xpush.xml
   zoom.xml
-  )
+)
 
 # Some DocBook man pages generate multiple output files, if they
 # describe more than one command.  Those files need special
@@ -270,24 +271,21 @@ set(mann_EN
 # extra outputs without being told.
 set_source_files_properties(gr.xml PROPERTIES EXTRA_MANN_OUTPUTS "dg.nged")
 
-if (BRLCAD_EXTRADOCS)
-  ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann "" REQUIRED "libged")
-endif (BRLCAD_EXTRADOCS)
+if(BRLCAD_EXTRADOCS)
+  add_docbook("HTML;PHP;MANN;PDF" mann_EN mann "" REQUIRED "libged")
+endif(BRLCAD_EXTRADOCS)
 
-set(mann_INTRO
-  Introduction.xml
-  )
-if (TARGET libged AND BRLCAD_EXTRADOCS)
-  ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
-endif (TARGET libged AND BRLCAD_EXTRADOCS)
+set(mann_INTRO Introduction.xml)
+if(TARGET libged AND BRLCAD_EXTRADOCS)
+  add_docbook("HTML;PHP" mann_INTRO mann "")
+endif(TARGET libged AND BRLCAD_EXTRADOCS)
 
-
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${mann_EN}
   ${mann_INTRO}
   mged_cmd_template.xml
-  )
+)
 
 # Local Variables:
 # tab-width: 8

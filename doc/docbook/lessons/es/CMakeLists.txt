@@ -1,4 +1,5 @@
-set(lessons_ES
+set(
+  lessons_ES
   mged01_crear_figuras_primitivas.xml
   mged02_opciones_vistas.xml
   mged03_utilizar_comando_in.xml
@@ -15,9 +16,10 @@ set(lessons_ES
   mged14_ubicar_figuras_en_3d_2.xml
   mged15_crear_camion_de_juguete.xml
   mged16_mod_tech_struct.xml
-  )
+)
 
-set(lessons_ES_IMAGES
+set(
+  lessons_ES_IMAGES
   images/mged01_commandwindow.png
   images/mged01_graphicswindow.png
   images/mged01_terminal.png
@@ -125,19 +127,19 @@ set(lessons_ES_IMAGES
   images/mged16_radio_transparent.png
   images/mged16_radio_wireframe_circ_board.png
   images/mged16_radio_with_mater_props.png
-  )
-if (TARGET mged OR TARGET qged OR TARGET archer)
-  if (BRLCAD_EXTRADOCS)
-    ADD_DOC(lessons_ES_IMAGES html/lessons/es/images)
-    ADD_DOCBOOK("HTML;PHP;PDF" lessons_ES lessons/es lessons_ES_IMAGES_cp)
-  endif (BRLCAD_EXTRADOCS)
-endif (TARGET mged OR TARGET qged OR TARGET archer)
+)
+if(TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    add_doc(lessons_ES_IMAGES html/lessons/es/images)
+    add_docbook("HTML;PHP;PDF" lessons_ES lessons/es lessons_ES_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif(TARGET mged OR TARGET qged OR TARGET archer)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${lessons_ES}
   ${lessons_ES_IMAGES}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

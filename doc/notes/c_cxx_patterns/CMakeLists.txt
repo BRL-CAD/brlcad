@@ -34,4 +34,3 @@ add_test(05_PImpl_CXX 05_PImpl_CXX/ntest05)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

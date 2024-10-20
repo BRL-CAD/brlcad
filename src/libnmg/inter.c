@@ -242,7 +242,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	if (fuv != is->fu1) {
 	    bu_log("fuv=%p, fu1=%p, fu2=%p\n", (void *)fuv, (void *)is->fu1, (void *)is->fu2);
 	    bu_log("\tvu=%p (%p)\n", (void *)vu, (void *)vu->v_p);
-	    bu_bomb("nmg_enlist_vu() vu/fu1 mis-match\n");
+	    bu_bomb("nmg_enlist_vu() vu/fu1 mismatch\n");
 	}
     } else if (sv == is->s2) {
 	bu_ptbl_ins_unique(is->l2, (long *)&vu->l.magic);
@@ -268,7 +268,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	if (fuv != is->fu2) {
 	    bu_log("fuv=%p, fu1=%p, fu2=%p\n", (void *)fuv, (void *)is->fu1, (void *)is->fu2);
 	    bu_log("\tvu=%p (%p)\n", (void *)vu, (void *)vu->v_p);
-	    bu_bomb("nmg_enlist_vu() vu/fu2 mis-match\n");
+	    bu_bomb("nmg_enlist_vu() vu/fu2 mismatch\n");
 	}
     } else {
 	bu_log("nmg_enlist_vu(vu=%p, dv=%p) sv=%p, s1=%p, s2=%p\n",
@@ -282,7 +282,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	    bu_log("nmg_enlist_vu(vu=%p, dv=%p) sv=%p, s1=%p, s2=%p, sdual=%p\n",
 		   (void *)vu, (void *)dualvu,
 		   (void *)sv, (void *)is->s1, (void *)is->s2, (void *)nmg_find_s_of_vu(dualvu));
-	    bu_bomb("nmg_enlist_vu() dual vu shell mis-match\n");
+	    bu_bomb("nmg_enlist_vu() dual vu shell mismatch\n");
 	}
 	if (dualfu && nmg_find_fu_of_vu(dualvu) != dualfu) bu_bomb("nmg_enlist_vu() dual vu has wrong fu\n");
     }
@@ -426,7 +426,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	} else {
 	    bu_log("nmg_get_2d_vertex - this is NULL\n");
 	}
-	bu_bomb("nmg_get_2d_vertex:  2d association mis-match\n");
+	bu_bomb("nmg_get_2d_vertex:  2d association mismatch\n");
     }
 
     if (!v->vg_p) {
@@ -868,7 +868,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 
     /* if we can't find the appropriate vertex in the
      * other face by a geometry search, build a new vertex.
-     * Otherwise, re-use the existing one.
+     * Otherwise, reuse the existing one.
      * Can't just search other face, might miss relevant vert.
      */
     v2 = nmg_find_pnt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
@@ -1904,7 +1904,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 out:
     /* If vu's were added to list, run some quick checks here */
     if (vu1_final && vu2_final) {
-	if (vu1_final->v_p != vu2_final->v_p) bu_bomb("nmg_isect_wireedge3p_face3p() vertex mis-match\n");
+	if (vu1_final->v_p != vu2_final->v_p) bu_bomb("nmg_isect_wireedge3p_face3p() vertex mismatch\n");
 
 	dist = bg_dist_line3_pnt3(is->pt, is->dir,
 				 vu1_final->v_p->vg_p->coord);
@@ -2924,7 +2924,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
  * Intersect the line with eu1, from fu1.
  * The resulting vu's are added to "list", not is->l1 or is->l2.
  * fu2 is the "other" face on this intersect line, and is used only
- * when searching for existing vertex structs suitable for re-use.
+ * when searching for existing vertex structs suitable for reuse.
  *
  * Returns -
  * Number of times edge is broken (0 or 1).
@@ -3058,7 +3058,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
 
 	/* if we can't find the appropriate vertex
 	 * by a geometry search, build a new vertex.
-	 * Otherwise, re-use the existing one.
+	 * Otherwise, reuse the existing one.
 	 * Can't just search other face, might miss relevant vert.
 	 */
 	new_v = nmg_find_pnt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
@@ -4411,7 +4411,7 @@ re_tabulate:
 	    }
 	} else if (code < 0) {
 	    /* geometry says lines are parallel, but we have an intersection */
-	    bu_log("NOTICE: geom/topo mis-match, enlisting topo vu, hit_v=%p\n", (void *)hit_v);
+	    bu_log("NOTICE: geom/topo mismatch, enlisting topo vu, hit_v=%p\n", (void *)hit_v);
 	    if (hit_v && hit_v->vg_p)
 		VPRINT("hit_v", hit_v->vg_p->coord);
 	    nmg_pr_eg(&(*eg1)->l.magic, 0);

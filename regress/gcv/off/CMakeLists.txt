@@ -1,11 +1,11 @@
-if (TARGET gcv-assetimport)
-  GCV_regress_util("off" "tetra.off" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport")
-endif (TARGET gcv-assetimport)
+if(TARGET gcv-assetimport)
+  gcv_regress_util("off" "tetra.off" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport")
+endif(TARGET gcv-assetimport)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   tetra.off
-  )
+)
 
 # Local Variables:
 # tab-width: 8

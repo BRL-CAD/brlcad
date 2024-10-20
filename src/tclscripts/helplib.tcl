@@ -131,9 +131,9 @@ set helplib_data(wdb_tree)		{{[-c] [-o outfile] [-i indentSize] [-d displayDepth
 set helplib_data(wdb_unhide)            {{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
 set helplib_data(wdb_units)		{{[mm|cm|m|in|ft|...]}	{get/set current working units for distance measurements}}
 set helplib_data(wdb_version)		{{} {returns the database version}}
-set helplib_data(wdb_whatid)		{{region} {return the specified region's id}}
+set helplib_data(wdb_whatid)		{{region} {return the specified region's ident}}
 set helplib_data(wdb_whichair)		{{code(s)} {find regions with the specified air code(s)}}
-set helplib_data(wdb_whichid)		{{[-s] id(s)} {find regions with the specified id(s)}}
+set helplib_data(wdb_whichid)		{{[-s] ident(s)} {find regions with the specified ident(s)}}
 set helplib_data(wdb_xpush)		{{object} {push matrices onto primitives, creating copies as needed}}
 
 set helplib_data(vo_aet)		{{[-i] ["az el tw"]} {set/get the azimuth, elevation and twist}}
@@ -142,12 +142,12 @@ set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis s
 set helplib_data(vo_base2local)		{{} {get base2local conversion factor}}
 set helplib_data(vo_center)		{{["x y z"]} {set/get the view center}}
 set helplib_data(vo_coord)		{{[m|v]} {set/get the coordinate system}}
-set helplib_data(vo_eye)		{{"x y z"} {set the eyepoint}}
+set helplib_data(vo_eye)		{{"x y z"} {set the eye point}}
 set helplib_data(vo_eye_pos)		{{"x y z"} {set the eye position}}
 set helplib_data(vo_invSize)		{{} {get the inverse view size}}
 set helplib_data(vo_keypoint)		{{[point]} {set/get the keypoint}}
 set helplib_data(vo_local2base)		{{} {get local2base conversion factor}}
-set helplib_data(vo_lookat)		{{"x y z"} {set the look-at point}}
+set helplib_data(vo_lookat)		{{"x y z"} {adjust the view center without changing the eye point}}
 set helplib_data(vo_model2view)		{{} {get the model2view matrix}}
 set helplib_data(vo_mrot)		{{x y z} {rotate view using model x,y,z}}
 set helplib_data(vo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}

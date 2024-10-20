@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-/* inteface header */
+/* interface header */
 #include "bu/exit.h"
 
 /* system headers */

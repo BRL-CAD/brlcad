@@ -1,4 +1,5 @@
-set(bn_headers
+set(
+  bn_headers
   anim.h
   complex.h
   defines.h
@@ -18,11 +19,11 @@ set(bn_headers
   tol.h
   version.h
   wavelet.h
-  )
-BRLCAD_MANAGE_FILES(bn_headers ${INCLUDE_DIR}/brlcad/bn REQUIRED libbn)
+)
+brlcad_manage_files(bn_headers ${INCLUDE_DIR}/brlcad/bn REQUIRED libbn)
 
-CMAKEFILES(numgen.h)
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(numgen.h)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

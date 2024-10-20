@@ -109,7 +109,8 @@
 # backend (and ONLY for this backend - if we have native apps not using
 # X11, feeding them X11 OpenGL won't work.)
 
-set(XOPENGL_INC_SEARCH_PATH
+set(
+  XOPENGL_INC_SEARCH_PATH
   /usr/share/doc/NVIDIA_GLX-1.0/include
   /usr/X11/include
   /usr/X11R7/include
@@ -123,15 +124,13 @@ set(XOPENGL_INC_SEARCH_PATH
   /usr/pkg/xorg/include
   /opt/X11/include
   /opt/graphics/OpenGL/include
-  )
+)
 # Handle HP-UX cases where we only want to find OpenGL in either hpux64
 # or hpux32 depending on if we're doing a 64 bit build.
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   set(HPUX_IA_XOPENGL_LIB_PATH /opt/graphics/OpenGL/lib/hpux32/)
 else(CMAKE_SIZEOF_VOID_P EQUAL 4)
-  set(HPUX_IA_XOPENGL_LIB_PATH
-    /opt/graphics/OpenGL/lib/hpux64/
-    /opt/graphics/OpenGL/lib/pa20_64)
+  set(HPUX_IA_XOPENGL_LIB_PATH /opt/graphics/OpenGL/lib/hpux64/ /opt/graphics/OpenGL/lib/pa20_64)
 endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
 
 get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
@@ -141,7 +140,8 @@ else(SEARCH_64BIT)
   set(32BIT_DIRS "/usr/lib/X11;/usr/lib;/usr/lib/i386-linux-gnu;/usr/lib/arm-linux-gnueabihf")
 endif(SEARCH_64BIT)
 
-set(XOPENGL_LIB_SEARCH_PATH
+set(
+  XOPENGL_LIB_SEARCH_PATH
   ${64BIT_DIRS}
   ${32BIT_DIRS}
   /usr/X11/lib
@@ -153,14 +153,14 @@ set(XOPENGL_LIB_SEARCH_PATH
   /opt/graphics/OpenGL/lib
   /usr/pkg/xorg/lib
   ${HPUX_IA_XOPENGL_LIB_PATH}
-  )
+)
 
 # If we're on Apple and not using Aqua, we don't want frameworks
 set(CMAKE_FIND_FRAMEWORK_CACHED "${CMAKE_FIND_FRAMEWORK}")
 set(CMAKE_FIND_FRAMEWORK "NEVER")
 
-find_path(XOPENGL_INCLUDE_DIR_GL GL/gl.h        ${XOPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-find_path(XOPENGL_INCLUDE_DIR_GLX GL/glx.h      ${XOPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+find_path(XOPENGL_INCLUDE_DIR_GL GL/gl.h ${XOPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+find_path(XOPENGL_INCLUDE_DIR_GLX GL/glx.h ${XOPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
 find_library(XOPENGL_gl_LIBRARY NAMES GL MesaGL PATHS ${XOPENGL_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
 find_library(XOPENGL_gldispatch_LIBRARY NAMES GLdispatch PATHS ${XOPENGL_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
 
@@ -183,15 +183,10 @@ find_library(XOPENGL_glu_LIBRARY NAMES GLU MesaGLU PATHS ${XOPENGL_LIB_SEARCH_PA
 set(CMAKE_FIND_FRAMEWORK "${CMAKE_FIND_FRAMEWORK_CACHED}")
 
 if(XOPENGL_INCLUDE_DIR_GLX AND XOPENGL_INCLUDE_DIR_GL AND XOPENGL_gl_LIBRARY)
-  set(XOPENGL_FOUND "YES" )
+  set(XOPENGL_FOUND "YES")
 endif(XOPENGL_INCLUDE_DIR_GLX AND XOPENGL_INCLUDE_DIR_GL AND XOPENGL_gl_LIBRARY)
 
-mark_as_advanced(
-  XOPENGL_INCLUDE_DIR_GL
-  XOPENGL_INCLUDE_DIR_GLX
-  XOPENGL_glu_LIBRARY
-  XOPENGL_gl_LIBRARY
-  )
+mark_as_advanced(XOPENGL_INCLUDE_DIR_GL XOPENGL_INCLUDE_DIR_GLX XOPENGL_glu_LIBRARY XOPENGL_gl_LIBRARY)
 
 # Local Variables:
 # tab-width: 8

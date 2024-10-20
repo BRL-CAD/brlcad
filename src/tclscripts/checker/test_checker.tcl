@@ -263,7 +263,7 @@ if {![file exists $check_sh]} {
   exit 1
 }
 
-# operate in test directory on test databse with public version of
+# operate in test directory on test database with public version of
 # check script
 cd [set testdir [file join [pwd] [tmp_dir]]]
 

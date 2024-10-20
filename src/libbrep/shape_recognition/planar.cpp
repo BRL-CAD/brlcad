@@ -509,7 +509,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
  * 3.  Do the test as determined by #2.
  */
 
-// How close to paralle will we tolerate before moving to another corner?
+// How close to parallel will we tolerate before moving to another corner?
 #define NPOLY_DOTP_TOL 0.01
 
 int

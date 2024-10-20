@@ -233,7 +233,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    }
 
 		    if (p) {
-			/* widht and height mentioned */
+			/* width and height mentioned */
 			height = atoi(p);
 			if (height < 1 || height > MAX_WIDTH) {
 			    bu_vls_printf(_ged_current_gedp->ged_result_str,"mentioned grid size is out of range\n");

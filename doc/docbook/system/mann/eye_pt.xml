@@ -10,6 +10,7 @@
 <refnamediv xml:id="name">
   <refname>eye_pt</refname>
   <refpurpose>Positions the <emphasis>eye point</emphasis> to the given <emphasis>x, y,</emphasis> and  <emphasis>z</emphasis> coordinates.
+	  Without arguments, returns the current eye point. 
    </refpurpose>
 </refnamediv>
 
@@ -18,13 +19,15 @@
   <cmdsynopsis sepchar=" ">
     <command>eye_pt</command>
 
-    <arg choice="req" rep="norepeat"><replaceable>x y z</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>x y z</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Positions the <emphasis>eye point</emphasis> to the given <emphasis>x, y,</emphasis> and  <emphasis>z</emphasis> coordinates (specified in mm).
+  <para>Positions the <emphasis>eye point</emphasis> to the given <emphasis>x, y,</emphasis> and  <emphasis>z</emphasis> coordinates
+	  (in local units). If no options are provided, returns the current eye point. See also the
+      <command>view</command> command.
     </para>
 </refsection>
 

@@ -29,7 +29,7 @@
 #define help_str "Print help string and exit."
 
 
-int
+static int
 d1_verb(struct bu_vls *msg, size_t argc, const char **argv, void *set_v)
 {
     int val = INT_MAX;
@@ -51,7 +51,8 @@ d1_verb(struct bu_vls *msg, size_t argc, const char **argv, void *set_v)
     return 1;
 }
 
-void
+
+static void
 set_msg_str(struct bu_vls *msg, int ac, const char **av)
 {
     int i = 0;
@@ -65,6 +66,7 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
     bu_vls_printf(msg, "%s", bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
+
 
 #define EXPECT_SUCCESS_FLAG(_name, _var) { \
 	set_msg_str(&parse_msgs, ac, av); \
@@ -96,7 +98,7 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
 	    bu_vls_printf(&parse_msgs, "\nError - extra args but none found.\n"); \
 	    val_ok = 0; \
 	} else { \
-	    if ( _var != _exp) { \
+	    if (_var != _exp) { \
 		bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
 		val_ok = 0; \
 	    } else { \
@@ -194,7 +196,8 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
     }
 
 
-int desc_1(const char *cgy, int test_num)
+static int
+desc_1(const char *cgy, int test_num)
 {
     static int print_help = 0;
     static int verbosity = 0;
@@ -601,20 +604,7 @@ int desc_1(const char *cgy, int test_num)
 }
 
 
-int
-isnum(const char *str) {
-    int i, sl;
-    if (!str)
-	return 0;
-    sl = strlen(str);
-    for (i = 0; i < sl; i++)
-	if (!isdigit(str[i]))
-	    return 0;
-    return 1;
-}
-
-
-int
+static int
 dc_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
@@ -659,7 +649,7 @@ dc_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 }
 
 
-int
+static int
 desc_2(int test_num)
 {
     int ret = 0;
@@ -817,7 +807,8 @@ desc_2(int test_num)
 }
 
 
-int desc_3(int test_num)
+static int
+desc_3(int test_num)
 {
     int ret = 0;
     int val_ok = 1;
@@ -829,7 +820,7 @@ int desc_3(int test_num)
 
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",   "",      NULL,           &print_help, help_str);
-    BU_OPT(d[1], "V", "vector", "x,y,z", &bu_opt_vect_t, &v,          "Set vector");
+    BU_OPT(d[1], "V", "vector", "x, y, z", &bu_opt_vect_t, &v,          "Set vector");
     BU_OPT_NULL(d[2]);
 
     av = (const char **)bu_calloc(5, sizeof(char *), "Input array");
@@ -838,7 +829,7 @@ int desc_3(int test_num)
 	case 0:
 	    ac = 2;
 	    av[0] = "-V";
-	    av[1] = "2,10,30";
+	    av[1] = "2, 10, 30";
 	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 1:
@@ -850,7 +841,7 @@ int desc_3(int test_num)
 	case 2:
 	    ac = 2;
 	    av[0] = "-V";
-	    av[1] = "30.3,2,-10.1";
+	    av[1] = "30.3, 2, -10.1";
 	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 3:
@@ -899,8 +890,8 @@ main(int argc, char *argv[])
     const char *cgy = NULL;
     char *endptr = NULL;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
@@ -940,6 +931,7 @@ main(int argc, char *argv[])
 
     return ret;
 }
+
 
 /*
  * Local Variables:

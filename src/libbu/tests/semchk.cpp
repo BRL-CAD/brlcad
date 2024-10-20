@@ -38,10 +38,10 @@
  * numerically unique.
  */
 
-// TODO - if this is needed long term, we need to do as the env cmd builder
-// does and assemble (and figure out the definitions for everything in a
-// bu_semaphore_acquire call as well as just pattern matching the SEM
-// definitions themselves...
+// TODO - if this is needed long term, we need to do as the env cmd
+// builder does and assemble (and figure out the definitions for
+// everything in a bu_semaphore_acquire call as well as just pattern
+// matching the SEM definitions themselves...
 
 #include "common.h"
 
@@ -55,8 +55,9 @@
 #include <queue>
 #include <string>
 
-void
-_trim_whitespace(std::string &s)
+
+static void
+trim_whitespace(std::string &s)
 {
     size_t ep = s.find_last_not_of(" \t\n\v\f\r");
     size_t sp = s.find_first_not_of(" \t\n\v\f\r");
@@ -67,7 +68,8 @@ _trim_whitespace(std::string &s)
     s = s.substr(sp, ep-sp+1);
 }
 
-int
+
+static int
 process_file(std::map<std::string, std::string> *sem_defs, std::map<std::string, std::string> *sem_files, std::string f)
 {
     int ret = 0;
@@ -91,8 +93,8 @@ process_file(std::map<std::string, std::string> *sem_defs, std::map<std::string,
 		std::string val = std::string(sdef[2]);
 		std::replace(val.begin(), val.end(), '(', ' ');
 		std::replace(val.begin(), val.end(), ')', ' ');
-		_trim_whitespace(key);
-		_trim_whitespace(val);
+		trim_whitespace(key);
+		trim_whitespace(val);
 		if (sem_defs->find(key) != sem_defs->end()) {
 		    std::cerr << "Error - duplicate definition of semaphore " << key << " found in file " << f << "\n";
 		    std::cerr << "Previous definition found in file " << (*sem_files)[key] << "\n";
@@ -108,7 +110,8 @@ process_file(std::map<std::string, std::string> *sem_defs, std::map<std::string,
     return ret;
 }
 
-int
+
+static int
 validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 {
     long int max_val = -1;
@@ -157,10 +160,10 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 
 	    //std::cout << "DEFINED " << key <<": " << val << " = " << semaphore_values[val] << "\n";
 
-	    // LAST values get reused by the next library in the chain,
-	    // so their numerical definitions are duplicates.  For anything
-	    // but a LAST variable, we need uniqueness.  Use a multimap
-	    // to keep track of this.
+	    // LAST values get reused by the next library in the
+	    // chain, so their numerical definitions are duplicates.
+	    // For anything but a LAST variable, we need uniqueness.
+	    // Use a multimap to keep track of this.
 	    if (!std::regex_match(key, last_match)) {
 		semaphore_names.insert(std::pair<long int, std::string>(semaphore_values[val], key));
 		max_val = (semaphore_values[val] > max_val) ? semaphore_values[val] : max_val;
@@ -169,13 +172,14 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 
 	} else {
 
-	    // If the above didn't work, see if we have an expression we can evaluate
+	    // If the above didn't work, see if we have an expression
+	    // we can evaluate
 	    std::regex exp_split("([A-Z]+_SEM_[A-Z0-9]+)[+]([0-9]+)");
 	    std::smatch sem_exp;
 	    if (!std::regex_search(val, sem_exp, exp_split)) {
 
-		// Not an expression - must be a string key we don't know the
-		// value of yet. queue and continue
+		// Not an expression - must be a string key we don't
+		// know the value of yet. queue and continue
 		next->push(key);
 
 		if (!key.length()) {
@@ -204,10 +208,11 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 
 		    //std::cout << "EVAL " << key <<": " << ekey << " + 1" << " = " << nval << "\n";
 
-		    // LAST values get reused by the next library in the chain,
-		    // so their numerical definitions are duplicates.  For anything
-		    // but a LAST variable, we need uniqueness.  Use a multimap
-		    // to keep track of this.
+		    // LAST values get reused by the next library in
+		    // the chain, so their numerical definitions are
+		    // duplicates.  For anything but a LAST variable,
+		    // we need uniqueness.  Use a multimap to keep
+		    // track of this.
 		    if (!std::regex_match(key, last_match)) {
 			semaphore_names.insert(std::pair<long int, std::string>(nval, key));
 			max_val = (nval > max_val) ? nval : max_val;
@@ -216,8 +221,8 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 
 		} else {
 
-		    // Don't know the value of the string in the expression
-		    // yet, queue and continue
+		    // Don't know the value of the string in the
+		    // expression yet, queue and continue
 		    next->push(key);
 
 		    if (!key.length()) {
@@ -233,7 +238,8 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 	    next = working;
 	    working = qtmp;
 	    if ((int)working->size() == wcnt) {
-		// Infinite loop - we should always process at least one definition per pass
+		// Infinite loop - we should always process at least
+		// one definition per pass
 		std::cerr << "Error processing semaphore definitions.  (Perhaps the regex pattern matching didn't catch a string being used as a semaphore?):\n";
 		while (!working->empty()) {
 		    key = working->front();
@@ -269,7 +275,8 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
     }
 
 
-    // TODO - validate numerical ordering vs naming as a function of library group - e.g. BU always less than RT
+    // TODO - validate numerical ordering vs naming as a function of
+    // library group - e.g. BU always less than RT
 
     if (have_error) {
 	return 1;
@@ -322,6 +329,7 @@ main(int argc, const char *argv[])
 
     return ret;
 }
+
 
 // Local Variables:
 // tab-width: 8

@@ -54,9 +54,7 @@ endif()
 
 # Normal search.
 set(_LEMON_x86 "(x86)")
-set(_LEMON_SEARCH_NORMAL
-    PATHS  "$ENV{ProgramFiles}/lemon"
-          "$ENV{ProgramFiles${_LEMON_x86}}/lemon")
+set(_LEMON_SEARCH_NORMAL PATHS "$ENV{ProgramFiles}/lemon" "$ENV{ProgramFiles${_LEMON_x86}}/lemon")
 unset(_LEMON_x86)
 list(APPEND _LEMON_SEARCHES _LEMON_SEARCH_NORMAL)
 
@@ -73,42 +71,42 @@ foreach(search ${_LEMON_SEARCHES})
 endforeach()
 mark_as_advanced(LEMON_TEMPLATE)
 
-if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+if(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
   # look for the template in share
-  if (DATA_DIR AND EXISTS "${DATA_DIR}/lemon/lempar.c")
-    set (LEMON_TEMPLATE "${DATA_DIR}/lemon/lempar.c")
-  elseif (EXISTS "share/lemon/lempar.c")
-    set (LEMON_TEMPLATE "share/lemon/lempar.c")
-  elseif (EXISTS "/usr/share/lemon/lempar.c")
-    set (LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
-  endif (DATA_DIR AND EXISTS "${DATA_DIR}/lemon/lempar.c")
-endif (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
-
-if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
-  # look for the template in bin dir
-  get_filename_component(lemon_path ${LEMON_EXECUTABLE} DIRECTORY)
-  if (lemon_path)
-    if (EXISTS ${lemon_path}/lempar.c)
-      set (LEMON_TEMPLATE "${lemon_path}/lempar.c")
-    endif (EXISTS ${lemon_path}/lempar.c)
-    if (EXISTS /usr/share/lemon/lempar.c)
-      set (LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
-    endif (EXISTS /usr/share/lemon/lempar.c)
-  endif (lemon_path)
+  if(DATA_DIR AND EXISTS "${DATA_DIR}/lemon/lempar.c")
+    set(LEMON_TEMPLATE "${DATA_DIR}/lemon/lempar.c")
+  elseif(EXISTS "share/lemon/lempar.c")
+    set(LEMON_TEMPLATE "share/lemon/lempar.c")
+  elseif(EXISTS "/usr/share/lemon/lempar.c")
+    set(LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
+  endif(DATA_DIR AND EXISTS "${DATA_DIR}/lemon/lempar.c")
 endif(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
 
-if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+if(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+  # look for the template in bin dir
+  get_filename_component(lemon_path ${LEMON_EXECUTABLE} DIRECTORY)
+  if(lemon_path)
+    if(EXISTS ${lemon_path}/lempar.c)
+      set(LEMON_TEMPLATE "${lemon_path}/lempar.c")
+    endif(EXISTS ${lemon_path}/lempar.c)
+    if(EXISTS /usr/share/lemon/lempar.c)
+      set(LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
+    endif(EXISTS /usr/share/lemon/lempar.c)
+  endif(lemon_path)
+endif(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+
+if(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
   # fallback
-  set (LEMON_TEMPLATE "lempar.c")
-  if (NOT EXISTS ${LEMON_TEMPLATE})
+  set(LEMON_TEMPLATE "lempar.c")
+  if(NOT EXISTS ${LEMON_TEMPLATE})
     message(WARNING "Lemon's lempar.c template file could not be found automatically, set LEMON_TEMPLATE")
-  endif (NOT EXISTS ${LEMON_TEMPLATE})
-endif (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+  endif(NOT EXISTS ${LEMON_TEMPLATE})
+endif(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
 
 mark_as_advanced(LEMON_TEMPLATE)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEMON DEFAULT_MSG LEMON_EXECUTABLE LEMON_TEMPLATE)
+find_package_handle_standard_args(LEMON DEFAULT_MSG LEMON_EXECUTABLE LEMON_TEMPLATE)
 
 # Define the macro
 #  LEMON_TARGET(<Name> <LemonInput> <LemonSource> <LemonHeader>
@@ -131,12 +129,11 @@ include(CMakeParseArguments)
 
 if(NOT COMMAND LEMON_TARGET)
   macro(LEMON_TARGET Name Input)
-
     get_filename_component(IN_FILE_WE ${Input} NAME_WE)
     set(LVAR_PREFIX ${Name}_${IN_FILE_WE})
 
     if(${ARGC} GREATER 3)
-      CMAKE_PARSE_ARGUMENTS(${LVAR_PREFIX} "" "OUT_SRC_FILE;OUT_HDR_FILE;WORKING_DIR;EXTRA_ARGS" "" ${ARGN})
+      cmake_parse_arguments(${LVAR_PREFIX} "" "OUT_SRC_FILE;OUT_HDR_FILE;WORKING_DIR;EXTRA_ARGS" "" ${ARGN})
     endif(${ARGC} GREATER 3)
 
     # Need a working directory
@@ -146,26 +143,26 @@ if(NOT COMMAND LEMON_TARGET)
     file(MAKE_DIRECTORY ${${LVAR_PREFIX}_WORKING_DIR})
 
     # Output source file
-    if ("${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
+    if("${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
       set(${LVAR_PREFIX}_OUT_SRC_FILE ${${LVAR_PREFIX}_WORKING_DIR}/${IN_FILE_WE}.c)
-    else ("${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
+    else("${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
       get_filename_component(specified_out_dir ${${LVAR_PREFIX}_OUT_SRC_FILE} DIRECTORY)
       if(NOT "${specified_out_dir}" STREQUAL "")
-	message(FATAL_ERROR "\nFull path specified for OUT_SRC_FILE - should be filename only.\n")
+        message(FATAL_ERROR "\nFull path specified for OUT_SRC_FILE - should be filename only.\n")
       endif(NOT "${specified_out_dir}" STREQUAL "")
       set(${LVAR_PREFIX}_OUT_SRC_FILE ${${LVAR_PREFIX}_WORKING_DIR}/${${LVAR_PREFIX}_OUT_SRC_FILE})
-    endif ("${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
+    endif("${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "")
 
     # Output header file
-    if ("${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
+    if("${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
       set(${LVAR_PREFIX}_OUT_HDR_FILE ${${LVAR_PREFIX}_WORKING_DIR}/${IN_FILE_WE}.h)
-    else ("${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
+    else("${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
       get_filename_component(specified_out_dir ${${LVAR_PREFIX}_OUT_HDR_FILE} DIRECTORY)
       if(NOT "${specified_out_dir}" STREQUAL "")
-	message(FATAL_ERROR "\nFull path specified for OUT_HDR_FILE - should be filename only.\n")
+        message(FATAL_ERROR "\nFull path specified for OUT_HDR_FILE - should be filename only.\n")
       endif(NOT "${specified_out_dir}" STREQUAL "")
       set(${LVAR_PREFIX}_OUT_HDR_FILE ${${LVAR_PREFIX}_WORKING_DIR}/${${LVAR_PREFIX}_OUT_HDR_FILE})
-    endif ("${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
+    endif("${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "")
 
     # input file
     get_filename_component(in_full ${Input} ABSOLUTE)
@@ -174,7 +171,6 @@ if(NOT COMMAND LEMON_TARGET)
     else("${in_full}" STREQUAL "${Input}")
       set(lemon_in_file "${CMAKE_CURRENT_SOURCE_DIR}/${Input}")
     endif("${in_full}" STREQUAL "${Input}")
-
 
     # names of lemon output files will be based on the name of the input file
     set(LEMON_GEN_SOURCE ${${LVAR_PREFIX}_WORKING_DIR}/${IN_FILE_WE}.c)
@@ -188,30 +184,42 @@ if(NOT COMMAND LEMON_TARGET)
       COMMAND ${CMAKE_COMMAND} -E copy ${lemon_in_file} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}
       COMMAND ${CMAKE_COMMAND} -E touch ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}-tmp_cpy.done
       COMMAND ${CMAKE_COMMAND} -E remove ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}-tmp_cpy.done
-      COMMAND ${LEMON_EXECUTABLE} -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME} ${${LVAR_PREFIX}__EXTRA_ARGS}
+      COMMAND
+        ${LEMON_EXECUTABLE} -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}
+        ${${LVAR_PREFIX}__EXTRA_ARGS}
       DEPENDS ${Input} ${LEMON_EXECUTABLE_TARGET} ${DEPS_TARGET}
       WORKING_DIRECTORY ${${LVAR_PREFIX}_WORKING_DIR}
       COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
-      )
+    )
 
     # rename generated outputs
     if(NOT "${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "${LEMON_GEN_SOURCE}")
       add_custom_command(
-	OUTPUT ${${LVAR_PREFIX}_OUT_SRC_FILE} ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done
-	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_SOURCE} ${${LVAR_PREFIX}_OUT_SRC_FILE}
-	COMMAND ${CMAKE_COMMAND} -E touch ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done
-	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE} ${DEPS_TARGET}
-	)
-      set(LEMON_${Name}_OUTPUTS ${${LVAR_PREFIX}_OUT_SRC_FILE} ${LEMON_${Name}_OUTPUTS} ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done)
+        OUTPUT ${${LVAR_PREFIX}_OUT_SRC_FILE} ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done
+        COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_SOURCE} ${${LVAR_PREFIX}_OUT_SRC_FILE}
+        COMMAND ${CMAKE_COMMAND} -E touch ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done
+        DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE} ${DEPS_TARGET}
+      )
+      set(
+        LEMON_${Name}_OUTPUTS
+        ${${LVAR_PREFIX}_OUT_SRC_FILE}
+        ${LEMON_${Name}_OUTPUTS}
+        ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done
+      )
     endif(NOT "${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "${LEMON_GEN_SOURCE}")
     if(NOT "${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "${LEMON_GEN_HEADER}")
       add_custom_command(
-	OUTPUT ${${LVAR_PREFIX}_OUT_HDR_FILE} ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done
-	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_HEADER} ${${LVAR_PREFIX}_OUT_HDR_FILE}
-	COMMAND ${CMAKE_COMMAND} -E touch ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done
-	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER} ${DEPS_TARGET}
-	)
-      set(LEMON_${Name}_OUTPUTS ${${LVAR_PREFIX}_OUT_HDR_FILE} ${LEMON_${Name}_OUTPUTS} ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done)
+        OUTPUT ${${LVAR_PREFIX}_OUT_HDR_FILE} ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done
+        COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_HEADER} ${${LVAR_PREFIX}_OUT_HDR_FILE}
+        COMMAND ${CMAKE_COMMAND} -E touch ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done
+        DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER} ${DEPS_TARGET}
+      )
+      set(
+        LEMON_${Name}_OUTPUTS
+        ${${LVAR_PREFIX}_OUT_HDR_FILE}
+        ${LEMON_${Name}_OUTPUTS}
+        ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done
+      )
     endif(NOT "${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "${LEMON_GEN_HEADER}")
 
     set(LEMON_${Name}_OUTPUTS ${LEMON_${Name}_OUTPUTS} ${LEMON_GEN_OUT})
@@ -226,7 +234,6 @@ if(NOT COMMAND LEMON_TARGET)
     set(LEMON_${Name}_SRC ${${LVAR_PREFIX}_OUT_SRC_FILE})
     set(LEMON_${Name}_HDR ${${LVAR_PREFIX}_OUT_HDR_FILE})
     set(LEMON_${Name}_INCLUDE_DIR ${${LVAR_PREFIX}_WORKING_DIR})
-
   endmacro(LEMON_TARGET)
 endif(NOT COMMAND LEMON_TARGET)
 

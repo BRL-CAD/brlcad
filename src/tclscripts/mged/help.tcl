@@ -38,7 +38,7 @@ set mged_help_data(3ptarb)	{{}	{makes arb given 3 pts, 2 coord of 4th pt, and th
 set mged_help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> [value(s)]]}	{control the angle/distance cursor}}
 set mged_help_data(adjust)	$helplib_data(wdb_adjust)
 set mged_help_data(ae)		$helplib_data(vo_aet)
-set mged_help_data(ae2dir)	{{[-i] az el}	{return direction vector using inputed azimuth and elevation}}	
+set mged_help_data(ae2dir)	{{[-i] az el}	{return direction vector using inputted azimuth and elevation}}	
 set mged_help_data(analyze)	{{[arbname]}	{analyze faces of ARB}}
 set mged_help_data(apropos)	{{keyword}	{finds commands whose descriptions contain the given keyword}}
 set mged_help_data(aproposdevel)	{{keyword}	{finds commands used for development whose descriptions
@@ -146,7 +146,7 @@ set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for li
 set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NMG}}
 set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connectedshells}} 
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
-set mged_help_data(dir2ae)	{{[-i] dx dy dz}	{return azimuth and elevation using inputed direction vector}}	
+set mged_help_data(dir2ae)	{{[-i] dx dy dz}	{return azimuth and elevation using inputted direction vector}}	
 set mged_help_data(dm)		{{[type|valid|set] [dmtype|var [val]]}	{print/check the display-manager type or list/set specific variables}}
 set mged_help_data(draw)	$helplib_data(dgo_draw)
 set mged_help_data(dsp)         {{obj [command]} {work with DSP primitives}}
@@ -154,12 +154,12 @@ set mged_help_data(dump)	$helplib_data(wdb_dump)
 set mged_help_data(dup)		$helplib_data(wdb_dup)
 set mged_help_data(E)		$helplib_data(dgo_E)
 set mged_help_data(e)		$helplib_data(dgo_draw)
-set mged_help_data(e_id)	{{regionID[-regionID] ...} {Draws object(s) with the specified region ID number or within the hyphenated range(s).
+set mged_help_data(e_id)	{{regionID[-regionID] ...} {Draws object(s) with the specified ident or within the hyphenated range(s).
 
 Example: e_id 1000 2000 3000-4000}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code(s) (i.e., numbers >=0)}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
-set mged_help_data(edcodes)	{{[-n] object(s)}	{edit region ident codes.   only reports matches without renaming with the -n option.}}
+set mged_help_data(edcodes)	{{[-i -r] object(s)}	{Open a text editor to edit ident, aircode, material id, and los values.}}
 set mged_help_data(edcolor)	{{}	{edit the color table}}
 set mged_help_data(edcomb)	{{combname [regionflag regionID airID los% materialID]}	{edit combination record info}}
 set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
@@ -252,7 +252,7 @@ set mged_help_data(nirt)	$helplib_data(dgo_nirt)
 set mged_help_data(nmg_collapse)	$helplib_data(wdb_nmg_collapse)
 set mged_help_data(nmg_fix_normals)	{{NMG object} {Attempt to fix the normals of an NMG object.}}
 set mged_help_data(nmg_simplify)	$helplib_data(wdb_nmg_simplify)
-set mged_help_data(npush)	{{[-h][-?][-v][-f][-x][-r][-s][-d #] object}	{push/move matrices in the tree heirarchy}}
+set mged_help_data(npush)	{{[-h][-?][-v][-f][-x][-r][-s][-d #] object}	{push/move matrices in the tree hierarchy}}
 set mged_help_data(oed)		{{path_lhs path_rhs}	{go from view to object_edit of path_lhs/path_rhs}}
 set mged_help_data(opendb)	{{[-f] [database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.  A -f option specifies that binary-incompatible v4 files should have their endianness flipped.}}
 set mged_help_data(orientation)	$helplib_data(vo_orient)
@@ -298,11 +298,11 @@ set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{regionID [airID [los% [materialID]]]}	{change next region default codes}}
 set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
-set mged_help_data(reid)	{{[-n num] comb regionID}	{sequentially assign IDs to all regions under a specified combination starting from regionID in increments of 'num'}}
+set mged_help_data(reid)	{{[-n num] comb regionID}	{sequentially assign idents to all regions under a specified combination starting from regionID in increments of 'num'}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
 set mged_help_data(relos)	{{comb los%}	{assign same line-of-sight thickness percentage to all regions under a given combination}}
 set mged_help_data(remat)	{{comb materialID}	{assign the same material ID number to all regions under a given combination}}
-set mged_help_data(reset)	{{}	{Reset view such that all solids can be seen}}
+set mged_help_data(reset)	{{}	{Reset view to top (270, 90) and reset view size such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
 set mged_help_data(rm)		$helplib_data(wdb_remove)
 set mged_help_data(rmater)	{{filename}	{read combination materials from filename}}
@@ -362,9 +362,9 @@ set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
 set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{draw custom data into the wireframe view}}
-set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
+set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (center, view size, eye point, yaw/pitch/roll, quaternion, azimuth/elevation/twist) in local units}}
 set mged_help_data(viewdir)	{{[-i]}	{return direction vector based on current view}}
-set mged_help_data(viewsize)	{{[view_size]}	{sets the size of the current viewing cube}}
+set mged_help_data(viewsize)	{{[view_size]}	{sets the size of the current viewing cube (view size)}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(voxelize)	{{[-s "dx dy dz"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]} {convert object to its constituent voxels, i.e.the RPPs which approximate it.
 

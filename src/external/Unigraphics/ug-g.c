@@ -2025,7 +2025,7 @@ do_hole(struct ug_state *s, int hole_type, tag_t feat_tag, int n_exps, tag_t *ex
 	VSCALE( height, dir, CS_depth );
 	solid_name = create_unique_brlcad_solid_name(s);
 	if ( mk_trc_h( s->wdb_fd, solid_name, base, height, CS_radius, Radius ) ) {
-	    bu_log( "Failed to make TRC for conter sink feature!\n" );
+	    bu_log( "Failed to make TRC for counter sink feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
 	}
@@ -5297,7 +5297,7 @@ do_suppressions(struct ug_state *s, tag_t node )
 	if (comp_obj_tag == NULL_TAG) break;
 
 	DO_INDENT;
-	bu_log( "Checking for suppressable features in %s instance tag = %d\n", part_name, comp_obj_tag );
+	bu_log( "Checking for suppressible features in %s instance tag = %d\n", part_name, comp_obj_tag );
 
 	s->curr_level++;
 	do_suppressions_in_instance(s, comp_obj_tag );

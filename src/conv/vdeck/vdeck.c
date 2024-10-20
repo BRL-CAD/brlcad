@@ -1230,7 +1230,7 @@ delete_obj(char *args[])
 }
 
 /**
- * Re-use the librt "soltab" structures here, for our own purposes.
+ * Reuse the librt "soltab" structures here, for our own purposes.
  */
 union tree *
 gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))

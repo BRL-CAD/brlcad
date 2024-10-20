@@ -385,7 +385,7 @@ class Attr_editor {
 
     method new_attr {} {
 
-	# cannot create a new attribute if we do ot have an object
+	# cannot create a new attribute if we do to have an object
 	if { $obj_name == "" } return
 	set cur_index -1
 	set cur_attr_name ""

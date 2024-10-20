@@ -18,7 +18,7 @@
 # information.
 #
 ###
-# Routines to check for cylic references
+# Routines to check for cyclic references
 
 check_externs "db bu_get_value_by_keyword"
 

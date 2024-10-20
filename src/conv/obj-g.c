@@ -2617,25 +2617,8 @@ output_to_bot(struct ga_t *ga,
 
     create_bot_float_arrays(ga, &ti, bot_thickness, conv_factor);
 
-    /* added 1 to grouping_index so the index number used in the
-     * primitive name matches the obj file index since internal
-     * indexes from libobj start at 0 but obj file indexes start at 1.
-     */
-    switch (gfi->closure_status) {
-	case SURF_UNTESTED:
-	    bu_vls_sprintf(gfi->primitive_name, "%s.%zu.%d.b.u.s", bu_vls_addr(gfi->raw_grouping_name),
-			   gfi->grouping_index + 1, gfi->face_type);
-	    break;
-	case SURF_CLOSED:
-	    bu_vls_sprintf(gfi->primitive_name, "%s.%zu.%d.b.c.s", bu_vls_addr(gfi->raw_grouping_name),
-			   gfi->grouping_index + 1, gfi->face_type);
-	    break;
-	case SURF_OPEN:
-	    bu_vls_sprintf(gfi->primitive_name, "%s.%zu.%d.b.o.s", bu_vls_addr(gfi->raw_grouping_name),
-			   gfi->grouping_index + 1, gfi->face_type);
-	    break;
-    }
-
+    /* set primitive name */
+    bu_vls_strcpy(gfi->primitive_name, bu_vls_addr(gfi->raw_grouping_name));
     cleanup_name(gfi->primitive_name);
 
     if (create_bot_int_arrays(&ti)) {
@@ -2659,6 +2642,9 @@ output_to_bot(struct ga_t *ga,
 		     ti.bot_vertices, ti.bot_faces, ti.bot_thickness,
 		     ti.bot_face_mode);
     }
+
+    if (db5_update_attribute(bu_vls_cstr(gfi->primitive_name), "importer", "obj-g", outfp->dbip))
+	bu_bomb("db5_update_attribute() failed");
 
     if (ret) {
 	bu_log("ERROR: Make BOT failed for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
@@ -2951,14 +2937,10 @@ output_to_nmg(struct ga_t *ga,
 		}
 		if (output_mode == OUT_NMG) {
 		    /* make nmg */
-		    /* added 1 to grouping_index so the index number
-		     * used in the primitive name matches the obj file
-		     * index since internal indexes from libobj start
-		     * at 0 but obj file indexes start at 1.
-		     */
-		    bu_vls_sprintf(gfi->primitive_name, "%s.%zu.%d.n.c.s",
-				   bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1, gfi->face_type);
+		    /* set primitive name */
+		    bu_vls_strcpy(gfi->primitive_name, bu_vls_addr(gfi->raw_grouping_name));
 		    cleanup_name(gfi->primitive_name);
+
 		    if ((verbose > 1) || debug) {
 			bu_log("Running mk_nmg with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		    }
@@ -2969,6 +2951,8 @@ output_to_nmg(struct ga_t *ga,
 			if ((verbose > 1) || debug) {
 			    bu_log("Completed mk_nmg for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 			}
+			if (db5_update_attribute(bu_vls_cstr(gfi->primitive_name), "importer", "obj-g", outfp->dbip))
+			    bu_bomb("db5_update_attribute() failed");
 			ret = 0; /* set return success */
 		    }
 		} else {
@@ -2976,14 +2960,10 @@ output_to_nmg(struct ga_t *ga,
 		    if (output_mode != OUT_VBOT) {
 			bu_log("NOTE: Currently bot-via-nmg can only create volume bots, ignoring plate mode option and creating volume bot instead.\n");
 		    }
-		    /* added 1 to grouping_index so the index number
-		     * used in the primitive name matches the obj file
-		     * index since internal indexes from libobj start
-		     * at 0 but obj file indexes start at 1.
-		     */
-		    bu_vls_sprintf(gfi->primitive_name, "%s.%zu.%d.v.c.s",
-				   bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1, gfi->face_type);
+		    /* set primitive name */
+		    bu_vls_strcpy(gfi->primitive_name, bu_vls_addr(gfi->raw_grouping_name));
 		    cleanup_name(gfi->primitive_name);
+
 		    if ((verbose > 1) || debug) {
 			bu_log("Running mk_bot_from_nmg with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		    }
@@ -2993,6 +2973,8 @@ output_to_nmg(struct ga_t *ga,
 			if ((verbose > 1) || debug) {
 			    bu_log("Completed mk_bot_from_nmg for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 			}
+			if (db5_update_attribute(bu_vls_cstr(gfi->primitive_name), "importer", "obj-g", outfp->dbip))
+			    bu_bomb("db5_update_attribute() failed");
 			ret = 0; /* set return success */
 			nmg_km(m); /* required for mk_bot_from_nmg but not mk_nmg */
 		    }

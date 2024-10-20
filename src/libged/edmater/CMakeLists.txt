@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-edmater SHARED edmater.c)
 target_link_libraries(ged-edmater libged libbu)
 set_property(TARGET ged-edmater APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-edmater edmater.c)
-PLUGIN_SETUP(ged-edmater ged)
+validate_style(ged-edmater edmater.c)
+plugin_setup(ged-edmater ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   edmater.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

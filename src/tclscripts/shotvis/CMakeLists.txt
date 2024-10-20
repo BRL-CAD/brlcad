@@ -1,16 +1,14 @@
-set(shotvis_TCLSCRIPTS
-  shotvis.tcl
-  )
-if (BRLCAD_ENABLE_TCL)
-  BRLCAD_ADDDATA(shotvis_TCLSCRIPTS tclscripts/shotvis)
-  pkgIndex_BUILD(tclscripts/shotvis)
-  tclIndex_BUILD(tclscripts/shotvis)
-endif (BRLCAD_ENABLE_TCL)
+set(shotvis_TCLSCRIPTS shotvis.tcl)
+if(BRLCAD_ENABLE_TCL)
+  brlcad_adddata(shotvis_TCLSCRIPTS tclscripts/shotvis)
+  pkgindex_build(tclscripts/shotvis)
+  tclindex_build(tclscripts/shotvis)
+endif(BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${shotvis_TCLSCRIPTS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

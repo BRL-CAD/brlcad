@@ -300,7 +300,7 @@ itcl::class swidgets::tkgetdir {
 		set dir [file split [pwd]]
 		set idir [file split $itk_option(-initialdir)]
 
-		# back off ony back-directory parts
+		# back off on back-directory parts
 		foreach part $idir {
 		    switch -- $part {
 			"."  {continue}

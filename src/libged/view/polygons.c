@@ -98,7 +98,7 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     int flags = BV_VIEW_OBJS;
     if (gd->local_obj)
 	flags |= BV_LOCAL_OBJS;
-    s = bv_create_polygon(gd->cv, flags, type, sp);
+    s = bv_create_polygon(gd->cv, flags, type, &sp);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;

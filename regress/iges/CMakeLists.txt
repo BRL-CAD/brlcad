@@ -1,22 +1,20 @@
-
-if (SH_EXEC AND TARGET mged AND TARGET asc2g)
-
-  if (NOT WIN32)
-    BRLCAD_ADD_TEST(NAME regress-iges COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/iges.sh" ${CMAKE_SOURCE_DIR})
-    BRLCAD_REGRESSION_TEST(regress-iges "iges-g;g-iges;mged;asc2g" TEST_DEFINED)
-  else (NOT WIN32)
+if(SH_EXEC AND TARGET mged AND TARGET asc2g)
+  if(NOT WIN32)
+    brlcad_add_test(NAME regress-iges COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/iges.sh" ${CMAKE_SOURCE_DIR})
+    brlcad_regression_test(regress-iges "iges-g;g-iges;mged;asc2g" TEST_DEFINED)
+  else(NOT WIN32)
     message(WARNING "iges.sh doesn not currently pass on Windows - disabling")
-  endif (NOT WIN32)
+  endif(NOT WIN32)
+endif(SH_EXEC AND TARGET mged AND TARGET asc2g)
 
-endif (SH_EXEC AND TARGET mged AND TARGET asc2g)
-
-CMAKEFILES(
+cmakefiles(
   m35.asc.gz
   iges.sh
-  )
+)
 
 # list of temporary files
-set(iges_outfiles
+set(
+  iges_outfiles
   iges.export.iges
   iges.export.stdout.iges
   iges.g
@@ -30,12 +28,12 @@ set(iges_outfiles
   iges.m35.asc
   iges.m35.g
   iges.m35.r516.iges
-  )
+)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${iges_outfiles}")
-DISTCLEAN(${iges_outfiles})
+distclean(${iges_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

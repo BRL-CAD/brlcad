@@ -24,6 +24,7 @@
 
 #include "bu.h"
 
+
 static int
 esc_compare(const char *input, const char *output, const char *correct)
 {
@@ -35,6 +36,7 @@ esc_compare(const char *input, const char *output, const char *correct)
 	return 0;
     }
 }
+
 
 static int
 esc_test3(int test_num)
@@ -72,6 +74,7 @@ esc_test3(int test_num)
     }
 }
 
+
 int
 main(int ac, char *av[])
 {
@@ -79,8 +82,8 @@ main(int ac, char *av[])
     int test_num = 0;
     char buffer[32];
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 

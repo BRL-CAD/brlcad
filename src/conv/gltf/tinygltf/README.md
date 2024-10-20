@@ -7,7 +7,7 @@ If you are looking for old, C++03 version, please use `devel-picojson` branch(bu
 
 ## Status
 
-Currently TinyGLTF is stable and maintainance mode. No drastic changes and feature addition planned.
+Currently TinyGLTF is stable and maintenance mode. No drastic changes and feature addition planned.
 
  - v2.4.0 Experimental RapidJSON support. Experimental C++14 support(C++14 may give better performance)
  - v2.3.0 Modified Material representation according to glTF 2.0 schema(and introduced TextureInfo class)
@@ -58,7 +58,7 @@ Currently TinyGLTF is stable and maintainance mode. No drastic changes and featu
   * [x] Load BMP
   * [x] Load GIF
   * [x] Custom Image decoder callback(e.g. for decoding OpenEXR image)
-* Morph traget
+* Morph target
   * [x] Sparse accessor
 * Load glTF from memory
 * Custom callback handler
@@ -170,7 +170,7 @@ if (!ret) {
 * `TINYGLTF_NO_STB_IMAGE_WRITE` : Do not write images with stb_image_write. Instead use `TinyGLTF::SetImageWriter(WriteimageDataFunction WriteImageData, void *user_data)` to set a callback for writing images.
 * `TINYGLTF_NO_EXTERNAL_IMAGE` : Do not try to load external image file. This option would be helpful if you do not want to load image files during glTF parsing.
 * `TINYGLTF_ANDROID_LOAD_FROM_ASSETS`: Load all files from packaged app assets instead of the regular file system. **Note:** You must pass a valid asset manager from your android app to `tinygltf::asset_manager` beforehand.
-* `TINYGLTF_ENABLE_DRACO`: Enable Draco compression. User must provide include path and link correspnding libraries in your project file.
+* `TINYGLTF_ENABLE_DRACO`: Enable Draco compression. User must provide include path and link corresponding libraries in your project file.
 * `TINYGLTF_NO_INCLUDE_JSON `: Disable including `json.hpp` from within `tiny_gltf.h` because it has been already included before or you want to include it using custom path before including `tiny_gltf.h`.
 * `TINYGLTF_NO_INCLUDE_RAPIDJSON `: Disable including RapidJson's header files from within `tiny_gltf.h` because it has been already included before or you want to include it using custom path before including `tiny_gltf.h`.
 * `TINYGLTF_NO_INCLUDE_STB_IMAGE `: Disable including `stb_image.h` from within `tiny_gltf.h` because it has been already included before or you want to include it using custom path before including `tiny_gltf.h`.

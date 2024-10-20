@@ -35,7 +35,6 @@
 # ***                libwfobj CMakeLists.txt                      ***
 # *******************************************************************
 
-
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 3.18)
 
@@ -70,45 +69,40 @@ include(${WFOBJ_CMAKE_DIR}/Path_Setup.cmake)
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/include # some files use common.h
-  )
+)
 
 # Check if we should be using unique_ptr
 include(CheckCXXSourceCompiles)
-check_cxx_source_compiles("#include <memory>\n int main() { std::unique_ptr<int> uptr; *uptr.get() = 0; return *uptr.get(); }" HAVE_UNIQUE_PTR)
+check_cxx_source_compiles(
+  "#include <memory>\n int main() { std::unique_ptr<int> uptr; *uptr.get() = 0; return *uptr.get(); }"
+  HAVE_UNIQUE_PTR
+)
 if(HAVE_UNIQUE_PTR)
   add_definitions(-DHAVE_UNIQUE_PTR)
 endif(HAVE_UNIQUE_PTR)
 
 # Find tools for generating source files
-BRLCAD_Find_Package(PERPLEX REQUIRED NOINSTALL)
-BRLCAD_Find_Package(LEMON REQUIRED NOINSTALL)
-BRLCAD_Find_Package(RE2C REQUIRED NOINSTALL)
+brlcad_find_package(PERPLEX REQUIRED NOINSTALL)
+brlcad_find_package(LEMON REQUIRED NOINSTALL)
+brlcad_find_package(RE2C REQUIRED NOINSTALL)
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_SO")
 set(WFOBJ_SCANNER_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_SO")
 set(obj_grammar_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_SO")
-PERPLEX_TARGET(
+perplex_target(
   WFOBJ_SCANNER_SO obj_rules.l
   OUT_SRC_FILE obj_rules.cpp
   OUT_HDR_FILE obj_scanner.h
-  )
-LEMON_TARGET(
+)
+lemon_target(
   WFOBJ_PARSER_SO obj_grammar.yy
   OUT_SRC_FILE obj_grammar.cpp
   OUT_HDR_FILE obj_grammar.hpp
-  )
-ADD_PERPLEX_LEMON_DEPENDENCY(WFOBJ_SCANNER_SO WFOBJ_PARSER_SO)
+)
+add_perplex_lemon_dependency(WFOBJ_SCANNER_SO WFOBJ_PARSER_SO)
 
-set(GENERATED_INCLUDES
-  ${PERPLEX_WFOBJ_SCANNER_SO_INCLUDE_DIR}
-  ${LEMON_WFOBJ_PARSER_SO_INCLUDE_DIR}
-  )
-set(WFOBJ_SRCS
-  ${LEMON_WFOBJ_PARSER_SO_SRC}
-  ${PERPLEX_WFOBJ_SCANNER_SO_SRC}
-  obj_util.cpp
-  obj_parser.cpp
-  )
+set(GENERATED_INCLUDES ${PERPLEX_WFOBJ_SCANNER_SO_INCLUDE_DIR} ${LEMON_WFOBJ_PARSER_SO_INCLUDE_DIR})
+set(WFOBJ_SRCS ${LEMON_WFOBJ_PARSER_SO_SRC} ${PERPLEX_WFOBJ_SCANNER_SO_SRC} obj_util.cpp obj_parser.cpp)
 add_library(libwfobj SHARED ${WFOBJ_SRCS})
 set_target_properties(libwfobj PROPERTIES PREFIX "")
 set_target_properties(libwfobj PROPERTIES VERSION 20.0.1 SOVERSION 20)
@@ -117,38 +111,26 @@ if(HIDE_INTERNAL_SYMBOLS)
 endif(HIDE_INTERNAL_SYMBOLS)
 set_property(TARGET libwfobj APPEND PROPERTY INCLUDE_DIRECTORIES "${GENERATED_INCLUDES}")
 
-install(TARGETS libwfobj 
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+install(TARGETS libwfobj RUNTIME DESTINATION ${BIN_DIR} LIBRARY DESTINATION ${LIB_DIR} ARCHIVE DESTINATION ${LIB_DIR})
 if(BUILD_STATIC_LIBS)
-
   file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_STATIC")
   set(WFOBJ_SCANNER_STATIC_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_STATIC")
   set(obj_grammar_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/WFBOBJ_SCANNER_STATIC")
-  PERPLEX_TARGET(
+  perplex_target(
     WFOBJ_SCANNER_STATIC obj_rules.l
     OUT_SRC_FILE obj_rules.cpp
     OUT_HDR_FILE obj_scanner.h
-    )
-  LEMON_TARGET(
+  )
+  lemon_target(
     WFOBJ_PARSER_STATIC obj_grammar.yy
     OUT_SRC_FILE obj_grammar.cpp
     OUT_HDR_FILE obj_grammar.hpp
-    )
-  ADD_PERPLEX_LEMON_DEPENDENCY(WFOBJ_SCANNER_STATIC WFOBJ_PARSER_STATIC)
+  )
+  add_perplex_lemon_dependency(WFOBJ_SCANNER_STATIC WFOBJ_PARSER_STATIC)
 
-  set(GENERATED_INCLUDES
-    ${PERPLEX_WFOBJ_SCANNER_STATIC_INCLUDE_DIR}
-    ${LEMON_WFOBJ_PARSER_STATIC_INCLUDE_DIR}
-    )
+  set(GENERATED_INCLUDES ${PERPLEX_WFOBJ_SCANNER_STATIC_INCLUDE_DIR} ${LEMON_WFOBJ_PARSER_STATIC_INCLUDE_DIR})
 
-  set(WFOBJ_SRCS
-    ${LEMON_WFOBJ_PARSER_STATIC_SRC}
-    ${PERPLEX_WFOBJ_SCANNER_STATIC_SRC}
-    obj_util.cpp
-    obj_parser.cpp
-    )
+  set(WFOBJ_SRCS ${LEMON_WFOBJ_PARSER_STATIC_SRC} ${PERPLEX_WFOBJ_SCANNER_STATIC_SRC} obj_util.cpp obj_parser.cpp)
 
   add_library(libwfobj-static STATIC ${WFOBJ_SRCS})
   set_target_properties(libwfobj-static PROPERTIES PREFIX "")
@@ -156,10 +138,12 @@ if(BUILD_STATIC_LIBS)
     set_target_properties(libwfobj-static PROPERTIES OUTPUT_NAME "libwfobj")
   endif(NOT MSVC)
   set_property(TARGET libwfobj-static APPEND PROPERTY INCLUDE_DIRECTORIES "${GENERATED_INCLUDES}")
-  install(TARGETS libwfobj-static
+  install(
+    TARGETS libwfobj-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
+    ARCHIVE DESTINATION ${LIB_DIR}
+  )
 endif(BUILD_STATIC_LIBS)
 
 # Local Variables:

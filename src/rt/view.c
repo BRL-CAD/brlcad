@@ -31,7 +31,7 @@
  * 0 Full lighting model (default)
  * 1 1-light, from the eye.
  * 2 Spencer's surface-normals-as-colors display
- * 3 (removed)
+ * 3 3-lights
  * 4 curvature debugging display (inv radius of curvature)
  * 5 curvature debugging (principal direction)
  * 6 UV Coord
@@ -1389,7 +1389,7 @@ reproject_splat(int ix, int iy, struct floatpixel *ip, const fastf_t *new_view_p
 	    count = 0;	/* Already reproj, don't double-count */
     }
 
-    /* re-use old pixel as new pixel */
+    /* reuse old pixel as new pixel */
     *op = *ip;	/* struct copy */
 
     return count;
@@ -1676,6 +1676,18 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		|| !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHOWERR)bu_log("No explicit light\n");
 		light_maker(1, view2model);
+	    }
+	    break;
+        case 3:
+	    ap->a_hit = colorview;
+
+	    /* If user did not specify any light sources then create
+	     * default light sources
+	     */
+	    if (BU_LIST_IS_EMPTY(&(LightHead.l))
+		|| !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHOWERR)bu_log("No explicit light\n");
+		light_maker(3, view2model);
 	    }
 	    break;
 	case 2:

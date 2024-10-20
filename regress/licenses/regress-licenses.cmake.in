@@ -4,11 +4,17 @@ set(LICENSE_FILE_SET "@LICENSE_LIST@")
 set(B_SOURCE_DIR "@BRLCAD_SOURCE_DIR@")
 set(LOGFILE "@LOG_FILE@")
 
-file(WRITE ${LOGFILE} "Running license check:\n${LICENSE_CHECK_EXEC} ${LICENSE_FILE_SET} ${FILES_LIST} ${B_SOURCE_DIR}\n")
+file(
+  WRITE
+  ${LOGFILE}
+  "Running license check:\n${LICENSE_CHECK_EXEC} ${LICENSE_FILE_SET} ${FILES_LIST} ${B_SOURCE_DIR}\n"
+)
 execute_process(
   COMMAND "${LICENSE_CHECK_EXEC}" "${LICENSE_FILE_SET}" "${FILES_LIST}" "${B_SOURCE_DIR}"
-  RESULT_VARIABLE license_result OUTPUT_VARIABLE license_log ERROR_VARIABLE license_log
-  )
+  RESULT_VARIABLE license_result
+  OUTPUT_VARIABLE license_log
+  ERROR_VARIABLE license_log
+)
 
 if(license_result)
   file(APPEND ${LOGFILE} "${license_log}\n")

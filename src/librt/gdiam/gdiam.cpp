@@ -1707,7 +1707,7 @@ public:
             ang += 2.0 * PI;
         angles[ u ] = ang;
 
-        // floating point nonsence. A huck to solve this...
+        // floating point nonsense. A huck to solve this...
         if  ( ( u > 0 )
               &&  ( angles[ u ] < angles[ u - 1 ] )
               &&   eq_real( angles[ u ], angles[ u - 1 ] ) )
@@ -2278,7 +2278,7 @@ static void   register_point( gdiam_point  pnt,
 
 //   We are given a point set, and (hopefully) a tight fitting
 // bounding box. We compute a sample of the given size that represents
-// the point-set. The only guarenteed is that if we use ample of size m,
+// the point-set. The only guaranteed is that if we use ample of size m,
 // we get an approximation of quality about 1/\sqrt{m}. Note that we pad
 // the sample if necessary to get the desired size.
 gdiam_point  * gdiam_convex_sample( gdiam_point  * start, int  size,

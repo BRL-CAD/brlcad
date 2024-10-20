@@ -2342,7 +2342,7 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     ON_3dmObjectAttributes* attributes = new ON_3dmObjectAttributes();
     attributes->m_uuid = ON_opennurbs4_id;
     attributes->m_name = "brep";
-    ON_ModelGeometryComponent *gc = ON_ModelGeometryComponent::CreateForExperts(true, ON_Geometry::Cast(bi->brep), true, attributes, NULL);
+    ON_ModelGeometryComponent *gc = ON_ModelGeometryComponent::CreateForExperts(false, ON_Geometry::Cast(bi->brep), true, attributes, NULL);
     ON_ModelGeometryComponent ngc(*gc);
     delete gc;
     model.AddModelComponent(ngc);
@@ -2398,7 +2398,7 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
 	ON_ModelComponentReference cr = it.FirstComponentReference();
 	const ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
-	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->Geometry(nullptr)));
+	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->ExclusiveGeometry()));
     }
     return BRLCAD_OK;
 }
@@ -2714,7 +2714,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 	    continue;
 	}
 
-	// TODO: should only consider vertices in untrimmed regions
+	// TODO: should only consider vertexes in untrimmed regions
 	int num_rows = nurbs_surface->m_cv_count[0];
 	int num_cols = nurbs_surface->m_cv_count[1];
 	for (int i = 0; i < num_rows; ++i) {
@@ -2738,7 +2738,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 	}
     }
 
-    // narrow down the list to just the control vertexes closest to
+    // narrow down the list to just the control vertices closest to
     // the query line, and sort them by proximity to the query start
     std::list<brep_selectable_cv *>::iterator s, tmp_s;
     for (s = selectable.begin(); s != selectable.end();) {

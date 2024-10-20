@@ -183,9 +183,9 @@ Do_subfigs(void)
 		    BU_ALLOC(list_ptr, struct file_list);
 
 		    list_ptr->file_name = file_name;
-		    if (no_of_members == 1)
+		    if (no_of_members == 1) {
 			bu_strlcpy(list_ptr->obj_name, dir[subfigdef_index]->name, NAMESIZE+1);
-		    else {
+		    } else {
 			bu_strlcpy(list_ptr->obj_name, "subfig", NAMESIZE+1);
 			(void) Make_unique_brl_name(list_ptr->obj_name);
 		    }
@@ -194,15 +194,19 @@ Do_subfigs(void)
 		    BU_LIST_APPEND(&curr_file->l, &list_ptr->l);
 
 		    name = list_ptr->obj_name;
-		} else
+		} else {
 		    bu_free((char *)file_name, "Do_subfigs: file_name");
+		}
 
-	    } else
+	    } else {
 		name = dir[idx]->name;
+	    }
 
-	    if (no_of_members > 1) {
+	    if (no_of_members > 1 && name) {
 		wmem = mk_addmember(name, &head2.l, NULL, WMOP_UNION);
-		memcpy(wmem->wm_mat, dir[idx]->rot, sizeof(mat_t));
+		if (wmem) {
+		    memcpy(wmem->wm_mat, dir[idx]->rot, sizeof(mat_t));
+		}
 	    }
 	}
 

@@ -37,9 +37,12 @@
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
 
-#if !defined(BRLCAD_DISABLE_GCT)
+#if !defined(BRLCAD_MMESH)
 #  include "./gct_decimation/meshdecimation.h"
 #  include "./gct_decimation/meshoptimization.h"
+#else
+#  include "meshdecimation.h"
+#  include "meshoptimizer.h"
 #endif
 
 #include "./bot_edge.h"
@@ -478,11 +481,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
  * returns the number of edges removed.
  */
 size_t
-#if defined(BRLCAD_DISABLE_GCT)
-rt_bot_decimate_gct(struct rt_bot_internal *UNUSED(bot), fastf_t UNUSED(feature_size)) {
-    bu_log("GCT decimation currently disabled - can not decimate.");
-    return 0;
-#else
+#if !defined(BRLCAD_MMESH)
 rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     const int opt_level = 3; /* maximum */
     mdOperation mdop;
@@ -507,8 +506,36 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces, sizeof(bot->faces[0]), opt_level);
 
     return mdop.decimationcount;
-#endif
 }
+#else
+rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
+    RT_BOT_CK_MAGIC(bot);
+
+    if (feature_size < 0.0)
+	bu_bomb("invalid feature_size");
+
+    mdOperation mdop;
+    mdOperationInit(&mdop);
+    mdOperationData(&mdop, bot->num_vertices, bot->vertices,
+		    MD_FORMAT_DOUBLE, 3, bot->num_faces,
+		    bot->faces, MD_FORMAT_INT, 3);
+    mdOperationStrength(&mdop, feature_size);
+    mdOperationComputeNormals(&mdop, bot->face_normals, MD_FORMAT_DOUBLE, 3);
+    mdMeshDecimation(&mdop, (int)bu_avail_cpus(), MD_FLAGS_NORMAL_VERTEX_SPLITTING | MD_FLAGS_TRIANGLE_WINDING_CCW);
+
+    bot->num_vertices = mdop.vertexcount;
+    bot->num_faces = mdop.tricount;
+
+    moOptimizeMesh(
+	    bot->num_vertices, bot->num_faces, bot->faces,
+	    MD_FORMAT_INT, 3,
+	    NULL, NULL,
+	    0, (int)bu_avail_cpus(), 0
+	    );
+
+    return mdop.decimationcount;
+}
+#endif
 
 /**
  * routine to reduce the number of triangles in a BOT by edges

@@ -395,13 +395,17 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     }
 
     if {$filename == ""} {
-        # overlap file not specified, search current directory
+        # overlap file not specified, search current directory and directory containing the db
 	set dir [file dirname $db_path]
+	set curr_dir [eval pwd]
 	set name [file tail $db_path]
-	set ol_path [file join $dir "${name}.ck" "ck.${name}.overlaps"]
+	set ol_path_db [file join $dir "${name}.ck" "ck.${name}.overlaps"]
+	set ol_path_curr [file join $curr_dir "${name}.ck" "ck.${name}.overlaps"]
 
-	if {[file exists $ol_path]} {
-	    set filename $ol_path
+	if {[file exists $ol_path_db]} {
+	    set filename $ol_path_db
+	} elseif { [file exists $ol_path_curr] } {
+	    set filename $ol_path_curr
 	}
     }
 
@@ -525,6 +529,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 		}
 	    }
 	}
+	close $mfile
     }
 
     $this sortBy {*}$_lastSort

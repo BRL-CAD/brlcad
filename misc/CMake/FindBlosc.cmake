@@ -91,10 +91,7 @@ may be provided to tell this module where to look.
 cmake_minimum_required(VERSION 3.18)
 include(GNUInstallDirs)
 
-mark_as_advanced(
-  Blosc_INCLUDE_DIR
-  Blosc_LIBRARY
-)
+mark_as_advanced(Blosc_INCLUDE_DIR Blosc_LIBRARY)
 
 set(_FIND_BLOSC_ADDITIONAL_OPTIONS "")
 if(DISABLE_CMAKE_SEARCH_PATHS)
@@ -130,7 +127,9 @@ endif()
 # ------------------------------------------------------------------------
 
 set(_BLOSC_INCLUDE_SEARCH_DIRS "")
-list(APPEND _BLOSC_INCLUDE_SEARCH_DIRS
+list(
+  APPEND
+  _BLOSC_INCLUDE_SEARCH_DIRS
   ${BLOSC_INCLUDEDIR}
   ${_BLOSC_ROOT}
   ${PC_Blosc_INCLUDE_DIRS}
@@ -138,34 +137,47 @@ list(APPEND _BLOSC_INCLUDE_SEARCH_DIRS
 )
 
 # Look for a standard blosc header file.
-find_path(Blosc_INCLUDE_DIR blosc.h
+find_path(
+  Blosc_INCLUDE_DIR
+  blosc.h
   ${_FIND_BLOSC_ADDITIONAL_OPTIONS}
   PATHS ${_BLOSC_INCLUDE_SEARCH_DIRS}
   PATH_SUFFIXES ${CMAKE_INSTALL_INCLUDEDIR} include
 )
 
 if(EXISTS "${Blosc_INCLUDE_DIR}/blosc.h")
-  file(STRINGS "${Blosc_INCLUDE_DIR}/blosc.h"
-    _blosc_version_major_string REGEX "#define BLOSC_VERSION_MAJOR +[0-9]+ "
-  )
-  string(REGEX REPLACE "#define BLOSC_VERSION_MAJOR +([0-9]+).*$" "\\1"
-    _blosc_version_major_string "${_blosc_version_major_string}"
+  file(STRINGS "${Blosc_INCLUDE_DIR}/blosc.h" _blosc_version_major_string REGEX "#define BLOSC_VERSION_MAJOR +[0-9]+ ")
+  string(
+    REGEX REPLACE
+    "#define BLOSC_VERSION_MAJOR +([0-9]+).*$"
+    "\\1"
+    _blosc_version_major_string
+    "${_blosc_version_major_string}"
   )
   string(STRIP "${_blosc_version_major_string}" Blosc_VERSION_MAJOR)
 
-  file(STRINGS "${Blosc_INCLUDE_DIR}/blosc.h"
-     _blosc_version_minor_string REGEX "#define BLOSC_VERSION_MINOR +[0-9]+ "
-  )
-  string(REGEX REPLACE "#define BLOSC_VERSION_MINOR +([0-9]+).*$" "\\1"
-    _blosc_version_minor_string "${_blosc_version_minor_string}"
+  file(STRINGS "${Blosc_INCLUDE_DIR}/blosc.h" _blosc_version_minor_string REGEX "#define BLOSC_VERSION_MINOR +[0-9]+ ")
+  string(
+    REGEX REPLACE
+    "#define BLOSC_VERSION_MINOR +([0-9]+).*$"
+    "\\1"
+    _blosc_version_minor_string
+    "${_blosc_version_minor_string}"
   )
   string(STRIP "${_blosc_version_minor_string}" Blosc_VERSION_MINOR)
 
-  file(STRINGS "${Blosc_INCLUDE_DIR}/blosc.h"
-     _blosc_version_release_string REGEX "#define BLOSC_VERSION_RELEASE +[0-9]+ "
+  file(
+    STRINGS
+    "${Blosc_INCLUDE_DIR}/blosc.h"
+    _blosc_version_release_string
+    REGEX "#define BLOSC_VERSION_RELEASE +[0-9]+ "
   )
-  string(REGEX REPLACE "#define BLOSC_VERSION_RELEASE +([0-9]+).*$" "\\1"
-    _blosc_version_release_string "${_blosc_version_release_string}"
+  string(
+    REGEX REPLACE
+    "#define BLOSC_VERSION_RELEASE +([0-9]+).*$"
+    "\\1"
+    _blosc_version_release_string
+    "${_blosc_version_release_string}"
   )
   string(STRIP "${_blosc_version_release_string}" Blosc_VERSION_RELEASE)
 
@@ -181,7 +193,9 @@ endif()
 # ------------------------------------------------------------------------
 
 set(_BLOSC_LIBRARYDIR_SEARCH_DIRS "")
-list(APPEND _BLOSC_LIBRARYDIR_SEARCH_DIRS
+list(
+  APPEND
+  _BLOSC_LIBRARYDIR_SEARCH_DIRS
   ${BLOSC_LIBRARYDIR}
   ${_BLOSC_ROOT}
   ${PC_Blosc_LIBRARY_DIRS}
@@ -234,7 +248,9 @@ foreach(BUILD_TYPE ${BLOSC_BUILD_TYPES})
     set(_BLOSC_LIB_NAME "${_BLOSC_LIB_NAME}${BLOSC_DEBUG_SUFFIX}")
   endif()
 
-  find_library(Blosc_LIBRARY_${BUILD_TYPE} ${_BLOSC_LIB_NAME}
+  find_library(
+    Blosc_LIBRARY_${BUILD_TYPE}
+    ${_BLOSC_LIB_NAME}
     ${_FIND_BLOSC_ADDITIONAL_OPTIONS}
     PATHS ${_BLOSC_LIBRARYDIR_SEARCH_DIRS}
     PATH_SUFFIXES ${CMAKE_INSTALL_LIBDIR} lib64 lib
@@ -267,21 +283,21 @@ endif()
 # if only the release version was found, set the debug variable also to the release version
 if(Blosc_LIBRARY_RELEASE AND NOT Blosc_LIBRARY_DEBUG)
   set(Blosc_LIBRARY_DEBUG ${Blosc_LIBRARY_RELEASE})
-  set(Blosc_LIBRARY       ${Blosc_LIBRARY_RELEASE})
-  set(Blosc_LIBRARIES     ${Blosc_LIBRARY_RELEASE})
+  set(Blosc_LIBRARY ${Blosc_LIBRARY_RELEASE})
+  set(Blosc_LIBRARIES ${Blosc_LIBRARY_RELEASE})
 endif()
 
 # if only the debug version was found, set the release variable also to the debug version
 if(Blosc_LIBRARY_DEBUG AND NOT Blosc_LIBRARY_RELEASE)
   set(Blosc_LIBRARY_RELEASE ${Blosc_LIBRARY_DEBUG})
-  set(Blosc_LIBRARY         ${Blosc_LIBRARY_DEBUG})
-  set(Blosc_LIBRARIES       ${Blosc_LIBRARY_DEBUG})
+  set(Blosc_LIBRARY ${Blosc_LIBRARY_DEBUG})
+  set(Blosc_LIBRARIES ${Blosc_LIBRARY_DEBUG})
 endif()
 
 # If the debug & release library ends up being the same, omit the keywords
 if("${Blosc_LIBRARY_RELEASE}" STREQUAL "${Blosc_LIBRARY_DEBUG}")
-  set(Blosc_LIBRARY   ${Blosc_LIBRARY_RELEASE} )
-  set(Blosc_LIBRARIES ${Blosc_LIBRARY_RELEASE} )
+  set(Blosc_LIBRARY ${Blosc_LIBRARY_RELEASE})
+  set(Blosc_LIBRARIES ${Blosc_LIBRARY_RELEASE})
 endif()
 
 if(Blosc_LIBRARY)
@@ -295,11 +311,10 @@ endif()
 # ------------------------------------------------------------------------
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Blosc
+find_package_handle_standard_args(
+  Blosc
   FOUND_VAR Blosc_FOUND
-  REQUIRED_VARS
-    Blosc_LIBRARY
-    Blosc_INCLUDE_DIR
+  REQUIRED_VARS Blosc_LIBRARY Blosc_INCLUDE_DIR
   VERSION_VAR Blosc_VERSION
 )
 
@@ -331,8 +346,7 @@ elseif(UNIX)
   get_filename_component(_BLOSC_EXT ${Blosc_LIBRARY_RELEASE} EXT)
   if(_BLOSC_EXT STREQUAL ".a")
     set(BLOSC_LIB_TYPE STATIC)
-  elseif(_BLOSC_EXT STREQUAL ".so" OR
-         _BLOSC_EXT STREQUAL ".dylib")
+  elseif(_BLOSC_EXT STREQUAL ".so" OR _BLOSC_EXT STREQUAL ".dylib")
     set(BLOSC_LIB_TYPE SHARED)
   endif()
 endif()
@@ -341,31 +355,35 @@ get_filename_component(Blosc_LIBRARY_DIRS ${Blosc_LIBRARY_RELEASE} DIRECTORY)
 
 if(NOT TARGET Blosc::blosc)
   add_library(Blosc::blosc ${BLOSC_LIB_TYPE} IMPORTED)
-  set_target_properties(Blosc::blosc PROPERTIES
-    INTERFACE_COMPILE_OPTIONS "${PC_Blosc_CFLAGS_OTHER}"
-    INTERFACE_INCLUDE_DIRECTORIES "${Blosc_INCLUDE_DIRS}")
+  set_target_properties(
+    Blosc::blosc
+    PROPERTIES
+      INTERFACE_COMPILE_OPTIONS "${PC_Blosc_CFLAGS_OTHER}"
+      INTERFACE_INCLUDE_DIRECTORIES "${Blosc_INCLUDE_DIRS}"
+  )
 
   # Standard location
-  set_target_properties(Blosc::blosc PROPERTIES
-    IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
-    IMPORTED_LOCATION "${Blosc_LIBRARY}")
+  set_target_properties(
+    Blosc::blosc
+    PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "CXX" IMPORTED_LOCATION "${Blosc_LIBRARY}"
+  )
 
   # Release location
   if(EXISTS "${Blosc_LIBRARY_RELEASE}")
-    set_property(TARGET Blosc::blosc APPEND PROPERTY
-      IMPORTED_CONFIGURATIONS RELEASE)
-    set_target_properties(Blosc::blosc PROPERTIES
-      IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-      IMPORTED_LOCATION_RELEASE "${Blosc_LIBRARY_RELEASE}")
+    set_property(TARGET Blosc::blosc APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+    set_target_properties(
+      Blosc::blosc
+      PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX" IMPORTED_LOCATION_RELEASE "${Blosc_LIBRARY_RELEASE}"
+    )
   endif()
 
   # Debug location
   if(EXISTS "${Blosc_LIBRARY_DEBUG}")
-    set_property(TARGET Blosc::blosc APPEND PROPERTY
-      IMPORTED_CONFIGURATIONS DEBUG)
-    set_target_properties(Blosc::blosc PROPERTIES
-      IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "CXX"
-      IMPORTED_LOCATION_DEBUG "${Blosc_LIBRARY_DEBUG}")
+    set_property(TARGET Blosc::blosc APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+    set_target_properties(
+      Blosc::blosc
+      PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "CXX" IMPORTED_LOCATION_DEBUG "${Blosc_LIBRARY_DEBUG}"
+    )
   endif()
 
   # Blosc may optionally be compiled with external sources for
@@ -373,12 +391,15 @@ if(NOT TARGET Blosc::blosc)
   # (there doesn't seem to be a way to figure this out automatically).
   # We assume they live along side blosc
   if(BLOSC_USE_EXTERNAL_SOURCES)
-    set_target_properties(Blosc::blosc PROPERTIES
-      INTERFACE_LINK_DIRECTORIES
-         "\$<\$<CONFIG:Release>:${Blosc_RELEASE_LIBRARY_DIRS}>;\$<\$<CONFIG:Debug>:${Blosc_DEBUG_LIBRARY_DIRS}>")
-    target_link_libraries(Blosc::blosc INTERFACE
-      $<$<CONFIG:Release>:lz4;snappy;zlib;zstd>
-      $<$<CONFIG:Debug>:lz4d;snappyd;zlibd;zstd>)
+    set_target_properties(
+      Blosc::blosc
+      PROPERTIES
+        INTERFACE_LINK_DIRECTORIES
+          "\$<\$<CONFIG:Release>:${Blosc_RELEASE_LIBRARY_DIRS}>;\$<\$<CONFIG:Debug>:${Blosc_DEBUG_LIBRARY_DIRS}>"
+    )
+    target_link_libraries(
+      Blosc::blosc
+      INTERFACE $<$<CONFIG:Release>:lz4;snappy;zlib;zstd> $<$<CONFIG:Debug>:lz4d;snappyd;zlibd;zstd>
+    )
   endif()
 endif()
-

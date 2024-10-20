@@ -22,7 +22,9 @@
 
 #include "bu.h"
 
+
 static int DEFAULT_HOW_MANY = 32;
+
 
 static size_t
 test_bu_ptbl_init(size_t blen)
@@ -44,6 +46,7 @@ test_bu_ptbl_init(size_t blen)
     bu_ptbl_free(&b);
     return result;
 }
+
 
 static size_t
 test_bu_ptbl_reset(void)
@@ -73,6 +76,7 @@ test_bu_ptbl_reset(void)
     return result;
 }
 
+
 static intmax_t
 test_bu_ptbl_ins(int uniq)
 {
@@ -98,6 +102,7 @@ test_bu_ptbl_ins(int uniq)
     printf(result == BRLCAD_OK ? "PASSED" : "FAILED");
     return result;
 }
+
 
 /**
  * Test that `bu_ptbl_rm` deletes as many elements as we insert.
@@ -135,6 +140,7 @@ test_bu_ptbl_rm(const char *type)
     printf(result == BRLCAD_OK ? "PASSED" : "FAILED");
     return result;
 }
+
 
 /**
  * Test that appending works by merging two lists and
@@ -178,6 +184,7 @@ test_bu_ptbl_cat(int uniq)
     return result;
 }
 
+
 static size_t
 test_bu_ptbl_trunc(void)
 {
@@ -202,6 +209,7 @@ test_bu_ptbl_trunc(void)
     printf(result == BRLCAD_OK ? "PASSED" : "FAILED");
     return result;
 }
+
 
 int
 main(int argc, char *argv[])
@@ -243,6 +251,7 @@ main(int argc, char *argv[])
 
     return ret;
 }
+
 
 /*
  * Local Variables:

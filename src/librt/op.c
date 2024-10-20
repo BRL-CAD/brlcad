@@ -77,12 +77,12 @@ db_str2op(const char *str)
 	ret = DB_OP_UNION;
     } else if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x80 && (unsigned char)str[2] > 0x89 && (unsigned char)str[2] < 0x96)
 	       /* first check matches unicode symbol variants starting
-		* with hyphen, non-breaking hypen, figure dash, en dash,
+		* with hyphen, non-breaking hyphen, figure dash, en dash,
 		* em dash, and horizontal bar.
 		*/
 	       || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0x92) /* minus sign */
 	       || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xB9 && (unsigned char)str[2] == 0x98) /* small em dash */
-	       || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xB9 && (unsigned char)str[2] == 0xA3) /* small hypen minus */
+	       || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xB9 && (unsigned char)str[2] == 0xA3) /* small hyphen minus */
 	       || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xBC && (unsigned char)str[2] == 0x8D) /* fullwidth hyphen-minus */
 	       || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0x96) /* set minus */
 	       || ((unsigned char)str[0] == 0xCB && (unsigned char)str[1] == 0x97) /* utf-16, modifier minus sign */

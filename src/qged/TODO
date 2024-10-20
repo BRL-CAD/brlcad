@@ -151,7 +151,7 @@ X 0.  Smarter, view aware wireframes for BoTs (RTree may be useful?  Can we do
 
 2.  Might be fun to see if we could combine https://github.com/ioppermann/ezMPEG and
     https://github.com/phoboslab/pl_mpeg to get a minimal video recording and playback going for
-    the display mangers...
+    the display managers...
 
     For straight up capture this might be even simpler:  https://github.com/charlietangora/gif-h
 

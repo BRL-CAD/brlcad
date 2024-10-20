@@ -2,7 +2,8 @@ verbose_add_subdirectory(doc docbook)
 verbose_add_subdirectory(doc html)
 verbose_add_subdirectory(doc legal)
 
-set(documentation_DATA
+set(
+  documentation_DATA
   BRL-CAD.bib
   GITHUB
   IDEAS
@@ -29,10 +30,11 @@ set(documentation_DATA
   notes/mater.txt
   notes/matrix.txt
   pre_BRL-CAD.bib
-  )
-ADD_DOC(documentation_DATA ".")
+)
+add_doc(documentation_DATA ".")
 
-set(documentation_mged_old_DATA
+set(
+  documentation_mged_old_DATA
   mged/a.tex
   mged/adc.ps
   mged/all.tex
@@ -202,16 +204,16 @@ set(documentation_mged_old_DATA
   notes/rounding.txt
   notes/tool_categories.txt
   old-mged.tr
-  )
-ADD_DOC(documentation_mged_old_DATA mged_old REQUIRED "mged")
+)
+add_doc(documentation_mged_old_DATA mged_old REQUIRED "mged")
 
-if (TARGET mged)
+if(TARGET mged)
   configure_file(pad_file.xml.in "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" @ONLY)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml")
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml")
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
-endif (TARGET mged)
+endif(TARGET mged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   STARTERS
   STRATEGY
@@ -238,10 +240,10 @@ CMAKEFILES(
   notes/implicit_constraints.txt
   notes/lcov.txt
   pad_file.xml.in
-  )
+)
 
 # Generic C/C++ examples
-CMAKEFILES(
+cmakefiles(
   notes/c_cxx_patterns/01_basic_C/CMakeLists.txt
   notes/c_cxx_patterns/01_basic_C/main.c
   notes/c_cxx_patterns/01_basic_C/nlib.c
@@ -264,10 +266,10 @@ CMAKEFILES(
   notes/c_cxx_patterns/05_PImpl_CXX/nlib.h
   notes/c_cxx_patterns/CMakeLists.txt
   notes/c_cxx_patterns/README
-  )
+)
 
 # Notes about parser generators
-CMAKEFILES(
+cmakefiles(
   notes/parsers/bison_to_lemon.txt
   notes/parsers/flex_to_re2c.txt
   notes/parsers/templates/CMakeLists.txt
@@ -276,7 +278,7 @@ CMAKEFILES(
   notes/parsers/templates/parser.lemon
   notes/parsers/templates/scanner.perplex
   notes/parsers/writing_perplex_lemon_parsers.txt
-  )
+)
 
 # Local Variables:
 # tab-width: 8

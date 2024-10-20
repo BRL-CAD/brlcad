@@ -1,22 +1,28 @@
 # Style sheet for XSLT transformation to article HTML pages
 if(BRLCAD_EXTRADOCS_HTML)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_HTML)
 
 if(BRLCAD_EXTRADOCS_PHP)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PHP)
 
 # Files for PDF products
 if(BRLCAD_EXTRADOCS_PDF)
   # Style sheet for XSLT transformation to PDF
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML and FO (FO is an intermediate file used in the
@@ -26,7 +32,8 @@ set(XSL_PHP_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/wordpres
 set(XSL_HTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl")
 
-set(articles_EN
+set(
+  articles_EN
   TEMPLATE.xml
   about.xml
   build_pattern.xml
@@ -44,9 +51,10 @@ set(articles_EN
   mged.xml
   main_menu.xml
   overlap_tool.xml
-  )
+)
 
-set(articles_EN_IMAGES
+set(
+  articles_EN_IMAGES
   images/Lee_tux.gif
   images/build_pattern_fig01.png
   images/build_pattern_fig02.png
@@ -166,21 +174,21 @@ set(articles_EN_IMAGES
   images/prims.gif
   images/rim.gif
   images/rim.jpg
-  )
-if (TARGET mged OR TARGET qged OR TARGET archer)
+)
+if(TARGET mged OR TARGET qged OR TARGET archer)
   if(BRLCAD_EXTRADOCS)
-    ADD_DOC(articles_EN_IMAGES html/articles/images)
-    ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles articles_EN_IMAGES_cp)
+    add_doc(articles_EN_IMAGES html/articles/images)
+    add_docbook("HTML;PHP;PDF" articles_EN articles articles_EN_IMAGES_cp)
   endif(BRLCAD_EXTRADOCS)
-endif (TARGET mged OR TARGET qged OR TARGET archer)
+endif(TARGET mged OR TARGET qged OR TARGET archer)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${articles_EN}
   ${articles_EN_IMAGES}
   images/tire_fig12.svg
   images/tire_fig13.svg
-  )
+)
 
 add_subdirectory(hy)
 add_subdirectory(it)

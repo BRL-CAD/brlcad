@@ -22,7 +22,6 @@
 
 #include "pch.h"
 
-
 /**
  * The RenderHandler code autonomously modifies a section of the
  * report page to include multiple visuals of the graphics file from a
@@ -74,7 +73,7 @@ class Options;
  * |   |   |  Amb  |
  *  ---------------
  *
- * The diagram above shows the grid layout for the preceeding
+ * The diagram above shows the grid layout for the preceding
  * "LayoutChoice" specification.  Since "lockRows" is false, a
  * column-major ordering is used.  The top, bottom, front, and right
  * views will be placed first at the top of the page.  Then, the back
@@ -116,6 +115,8 @@ public:
     char getMapChar(int index);
 
     double getTotalCoverage(double ambientWidth, double ambientHeight);
+
+    bool validLayout();
 };
 
 

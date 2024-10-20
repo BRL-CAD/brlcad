@@ -250,7 +250,7 @@ NMG_EXPORT extern void nmg_nurb_clip_srf(const struct face_g_snurb *srf,
 NMG_EXPORT extern struct face_g_snurb *nmg_nurb_region_from_srf(const struct face_g_snurb *srf,
                                                                 int dir, fastf_t param1, fastf_t param2);
 NMG_EXPORT extern struct nmg_nurb_uv_hit *nmg_nurb_intersect(const struct face_g_snurb * srf,
-                                                             plane_t plane1, plane_t plane2, double uv_tol, struct bu_list *plist);
+                                                             plane_t plane1, plane_t plane2, double uv_tol, struct bu_list *plist, size_t recursion_depth);
 
 /* nurb_refine.c */
 NMG_EXPORT extern struct face_g_snurb *nmg_nurb_s_refine(const struct face_g_snurb *srf,

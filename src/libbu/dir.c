@@ -223,6 +223,17 @@ dir_cache(char *buf, size_t len)
 	if (env && env[0] != '\0' && !BU_STR_EMPTY(env) && bu_file_writable(env) && bu_file_executable(env)) {
 	    bu_strlcpy(path, env, MAXPATHLEN);
 	}
+
+	// If the user has specified a directory, use EXACTLY that directory
+	// rather than adding the app subdirectory - user may not want the
+	// subdirectory appended.  The other options here are coming from
+	// various generic system options, but we can't assume that about the
+	// environment variable.
+	if (!BU_STR_EMPTY(path)) {
+	    nibble_trailing_slash(path);
+	    bu_strlcpy(buf, path, len);
+	    return buf;
+	}
     }
 
     /* method #2a: platform standard (linux) */

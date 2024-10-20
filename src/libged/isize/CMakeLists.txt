@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-isize SHARED isize.c)
 target_link_libraries(ged-isize libged libbu)
 set_property(TARGET ged-isize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-isize isize.c)
-PLUGIN_SETUP(ged-isize ged)
+validate_style(ged-isize isize.c)
+plugin_setup(ged-isize ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   isize.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -108,7 +108,7 @@ tp_3symbol(FILE *fp, char *string, point_t origin, mat_t rot, double scale)
 	    } else
 		draw = 1;
 
-	    /* stroke co-ordinates in string coord system */
+	    /* stroke coordinates in string coord system */
 	    VSET( temp, (stroke/11) * 0.1 * scale + offset,
 		  (ysign * (stroke%11)) * 0.1 * scale, 0 );
 	    MAT4X3PNT( loc, mat, temp );

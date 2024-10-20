@@ -4,19 +4,19 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-remove SHARED remove.c)
 target_link_libraries(ged-remove libged libbu)
 set_property(TARGET ged-remove APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-remove remove.c)
-PLUGIN_SETUP(ged-remove ged)
+validate_style(ged-remove remove.c)
+plugin_setup(ged-remove ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   remove.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8
