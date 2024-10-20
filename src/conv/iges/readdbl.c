@@ -33,11 +33,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+#define MAX_NUM 4096
+
+
 void
 Readdbl(double *inum, char *id)
 {
-    int i = (-1), done = 0, lencard;
-    char num[80];
+    int i = 0, done = 0, lencard;
+    char num[MAX_NUM] = {0};
 
     if (card[counter] == eofd) {
 	/* This is an empty field */
@@ -54,22 +57,31 @@ Readdbl(double *inum, char *id)
     if (counter >= lencard)
 	Readrec(++currec);
 
-    while (!done) {
-	while ((num[++i] = card[counter++]) != eofd && num[i] != eord
-	       && counter <= lencard)
-	    if (num[i] == 'D')
+    while (!done && i < MAX_NUM-1) {
+	while (i < MAX_NUM-1 &&
+	       (num[i] = card[counter++]) != eofd &&
+	       num[i] != eord &&
+	       counter <= lencard)
+	{
+	    if (num[i] == 'D') {
 		num[i] = 'e';
+	    }
+	    if (i >= MAX_NUM-1) {
+		done = 1;
+	    }
+	    i++;
+	}
 
-	if (counter > lencard && num[i] != eord && num[i] != eofd)
+	if (counter > lencard && num[i] != eord && num[i] != eofd) {
 	    Readrec(++currec);
-	else
+	} else {
 	    done = 1;
+	}
     }
 
     if (num[i] == eord)
 	counter--;
 
-    num[++i] = '\0';
     *inum = atof(num);
     if (*id != '\0')
 	bu_log("%s%g\n", id, *inum);

@@ -33,18 +33,23 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+#define MAX_NUM 4096
+
+
 void
 Readint(int *inum, char *id)
 {
-    int i = (-1), done = 0, lencard;
-    char num[80];
+    int i = 0, done = 0, lencard;
+    char num[MAX_NUM] = {0};
 
     if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eord) /* Up against the end of record */
+    } else if (card[counter] == eord) {
+	/* Up against the end of record */
 	return;
+    }
 
     if (card[72] == 'P')
 	lencard = PARAMLEN;
@@ -54,19 +59,26 @@ Readint(int *inum, char *id)
     if (counter >= lencard)
 	Readrec(++currec);
 
-    while (!done) {
-	while ((num[++i] = card[counter++]) != eofd && num[i] != eord &&
-	       counter <= lencard);
-	if (counter > lencard && num[i] != eord && num[i] != eofd)
+    while (!done && i < MAX_NUM-1) {
+	while (i < MAX_NUM-1 &&
+	       (num[i] = card[counter++]) != eofd &&
+	       num[i] != eord && counter <= lencard)
+	{
+	    if (i >= MAX_NUM-1) {
+		done = 1;
+	    }
+	    i++;
+	}
+	if (counter > lencard && num[i] != eord && num[i] != eofd) {
 	    Readrec(++currec);
-	else
+	} else {
 	    done = 1;
+	}
     }
 
     if (num[i] == eord)
 	counter--;
 
-    num[++i] = '\0';
     *inum = atoi(num);
     if (*id != '\0')
 	bu_log("%s%d\n", id, *inum);

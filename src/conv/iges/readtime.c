@@ -40,19 +40,24 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+#define MAX_NUM 4096
+
+
 void
 Readtime(char *id)
 {
-    int i = (-1), length = 0, lencard, done = 0, year;
-    char num[80];
+    int i = 0, length = 0, lencard, done = 0, year;
+    char num[MAX_NUM] = {0};
     char year_str[5];
 
     if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eord) /* Up against the end of record */
+    } else if (card[counter] == eord) {
+	/* Up against the end of record */
 	return;
+    }
 
     if (*id != '\0')
 	bu_log("%s", id);
@@ -65,16 +70,22 @@ Readtime(char *id)
     if (counter > lencard)
 	Readrec(++currec);
 
-    while (!done) {
-	while ((counter <= lencard) &&
-	       ((num[++i] = card[counter++]) != 'H'));
+    while (!done && i < MAX_NUM-1) {
+	while (i < MAX_NUM-1 &&
+	       (counter <= lencard) &&
+	       ((num[i] = card[counter++]) != 'H'))
+	{
+	    if (i >= MAX_NUM-1) {
+		done = 1;
+	    }
+	    i++;
+	}
 	if (counter > lencard)
 	    Readrec(++currec);
 	else
 	    done = 1;
     }
 
-    num[++i] = '\0';
     length = atoi(num);
     if (length != 13 && length != 15) {
 	bu_log("\tError in time stamp\n");

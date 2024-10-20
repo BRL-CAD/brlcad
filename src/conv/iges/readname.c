@@ -33,12 +33,15 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+#define MAX_NUM 4096
+
+
 void
 Readname(char **ptr, char *id)
 {
-    int i = (-1), length = 0, done = 0, lencard;
-    char num[80], *ch;
-
+    int i = 0, length = 0, done = 0, lencard;
+    char num[MAX_NUM] = {0};
+    char *ch;
 
     if (card[counter] == eofd) {
 	/* This is an empty field */
@@ -62,16 +65,25 @@ Readname(char **ptr, char *id)
     if (*id != '\0')
 	bu_log("%s", id);
 
-    while (!done) {
-	while ((num[++i] = card[counter++]) != 'H' &&
-	       counter <= lencard);
-	if (counter > lencard)
+    while (!done && i < MAX_NUM-1) {
+	while (i < MAX_NUM-1 &&
+	       (num[i] = card[counter++]) != 'H' &&
+	       counter <= lencard)
+	{
+	    if (i >= MAX_NUM-1) {
+		done = 1;
+	    }
+	    i++;
+	}
+	if (counter > lencard) {
 	    Readrec(++currec);
-	else
+	} else {
 	    done = 1;
+	}
     }
-    num[++i] = '\0';
+
     length = atoi(num);
+
     /* we may tack on a letter to the name */
     *ptr = (char *)bu_malloc((length + 2)*sizeof(char), "Readname: name");
     ch = *ptr;
@@ -88,8 +100,8 @@ Readname(char **ptr, char *id)
 
     done = 0;
     while (!done) {
-	while (card[counter++] != eofd && card[counter] != eord &&
-	       counter <= lencard);
+	while (card[counter++] != eofd && card[counter] != eord && counter <= lencard)
+	    ;
 	if (counter > lencard && card[counter] != eord && card[counter] != eofd)
 	    Readrec(++currec);
 	else
