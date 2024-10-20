@@ -39,22 +39,22 @@ public:
     Bot(void);
     ~Bot(void);
 
-    void        setName(const char* value);
-    void        setThickness(double value);
-    void        addTriangle(const point_t& point1,
-			    const point_t& point2,
-			    const point_t& point3);
+    void                      setName(const char* value);
+    void                      setThickness(double value);
+    void                      addTriangle(const point_t& point1,
+					  const point_t& point2,
+					  const point_t& point3);
 
-    std::vector <std::string>         write(rt_wdb* wdbp);
+    std::vector <std::string> write(rt_wdb* wdbp);
 
 private:
-    std::string     name;
-    rt_bot_internal bot_internal;
-    double          thickness;
+    std::string     m_name;
+    rt_bot_internal m_botInternal;
+    double          m_thickness;
 };
 
 
-#endif //BOT_INCLUDED
+#endif // !BOT_INCLUDED
 
 
 // Local Variables:

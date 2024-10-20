@@ -22,6 +22,7 @@
   * LS Dyna keyword file to BRL-CAD converter:
   * intermediate sketch implementation
   */
+
 #ifndef SKETCH_INCLUDED
 #define SKETCH_INCLUDED
 
@@ -29,24 +30,21 @@
 #include "wdb.h"
 
 
-
 class Sketch {
 public:
     Sketch(void);
 
-    void                            setName(const char* value);
+    void                setName(const char* value);
+    rt_sketch_internal* creatSketch(std::string sectionType,
+				    const point_t& node1,
+				    const point_t& node2,
+				    const point_t& node3,
+				    const std::vector<double>& D);
+    rt_sketch_internal* getSketch(void) const;
 
-    rt_sketch_internal*             creatSketch(std::string sectionType,
-						const point_t& node1,
-						const point_t& node2,
-						const point_t& node3,
-						const std::vector<double>& D);
-
-    rt_sketch_internal*             getSketch(void) const;
-
-    std::string                     write(rt_wdb* wdbp);
+    std::string         write(rt_wdb* wdbp);
 private:
-    std::string       name;
+    std::string         m_name;
     rt_sketch_internal* m_sketch;
 };
 

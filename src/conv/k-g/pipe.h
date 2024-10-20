@@ -22,31 +22,32 @@
   * LS Dyna keyword file to BRL-CAD converter:
   * intermediate pipe implementation
   */
+
 #ifndef PIPE_INCLUDED
 #define PIPE_INCLUDED
 
 #include "common.h"
 #include "wdb.h"
 
+
 struct pipePoint {
-    point_t   coords;
-    double    innerDiameter;
-    double    outerDiameter;
+    point_t coords;
+    double  innerDiameter;
+    double  outerDiameter;
 };
+
 
 class Pipe {
 public:
     Pipe(void);
 
-    void                            setName(const char* value);
+    void                     setName(const char* value);
+    void                     addPoint(const pipePoint& point);
+    rt_pipe_internal*        getPipe(void) const;
 
-    void                            addPipePnt(const pipePoint& point);
-
-    rt_pipe_internal*               getPipe(void) const;
-
-    std::vector<std::string>        write(rt_wdb* wdbp);
+    std::vector<std::string> write(rt_wdb* wdbp);
 private:
-    std::string       name;
+    std::string       m_name;
     rt_pipe_internal* m_pipe;
 };
 

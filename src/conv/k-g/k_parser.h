@@ -31,7 +31,7 @@
 #include <map>
 #include <set>
 #include <string>
-#include<vector>
+#include <vector>
 
 
 struct KNode {
@@ -90,15 +90,16 @@ struct KPart {
 
 
 struct KSection {
-    std::string   title;
-    double        thickness1;
-    double        thickness2;
-    double        thickness3;
-    double        thickness4;
+    std::string title;
+    double      thickness1;
+    double      thickness2;
+    double      thickness3;
+    double      thickness4;
 };
 
+
 struct KSectionBeam {
-    std::string   title;
+    std::string         title;
     int                 CST;//cross section type
     std::string         sectionType;//this is different from cross section type
     double              TS1;
@@ -108,6 +109,7 @@ struct KSectionBeam {
     std::vector<double> D;
     double              CrossSectionalArea;//The definition on *ELEMENT_BEAM_THICKNESS overrides the value defined here.
 };
+
 
 struct KData {
     std::map<int, KNode>              nodes;
@@ -128,7 +130,7 @@ bool parse_k
 );
 
 
-#endif // KPARSER_INCLUDED
+#endif // !KPARSER_INCLUDED
 
 
 // Local Variables:

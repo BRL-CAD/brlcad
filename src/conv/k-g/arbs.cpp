@@ -28,20 +28,21 @@
 #include "arbs.h"
 
 
-Arbs::Arbs(void):name() {}
+Arbs::Arbs(void) : m_name() {}
 
 
 void Arbs::setName(const char* value)
 {
     if (value != nullptr)
-	name = value;
+	m_name = value;
     else
-	name = "";
+	m_name = "";
 }
 
 
-void Arbs::addArb(
-    const char* arbName,
+void Arbs::addArb
+(
+    const char*    arbName,
     const point_t& point1,
     const point_t& point2,
     const point_t& point3,
@@ -63,24 +64,24 @@ void Arbs::addArb(
     VMOVE(temp.pt[6], point7);
     VMOVE(temp.pt[7], point8);
 
-    arbs[arbName] = temp;
+    m_arbs[arbName] = temp;
 }
 
 
-std::map<std::string, rt_arb_internal> Arbs::getArbs(void) const
+const std::map<std::string, rt_arb_internal>& Arbs::getArbs(void) const
 {
-    return arbs;
+    return m_arbs;
 }
 
 
 std::vector<std::string> Arbs::write
 (
     rt_wdb* wdbp
-){
+) {
     std::vector<std::string> ret;
 
-    for (std::map<std::string, rt_arb_internal>::iterator it = arbs.begin(); it != arbs.end(); it++) {
-	std::string arbName = name;
+    for (std::map<std::string, rt_arb_internal>::iterator it = m_arbs.begin(); it != m_arbs.end(); it++) {
+	std::string arbName = m_name;
 	arbName += ".";
 	arbName += it->first;
 	arbName += ".arb";

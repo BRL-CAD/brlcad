@@ -22,6 +22,7 @@
   * LS Dyna keyword file to BRL-CAD converter:
   * intermediate geometry structure implementation
   */
+
 #ifndef GEOMETRY_INCLUDED
 #define GEOMETRY_INCLUDED
 
@@ -33,45 +34,47 @@
 #include "sketch.h"
 #include "extrude.h"
 
+
 struct BeamResultant {
     Sketch  skt;
     Extrude ext;
 };
 
+
 class Geometry {
 public:
 
-    void         setBaseName(const char* value);
-    void         setThickness(double value);
+    void                     setBaseName(const char* value);
+    void                     setThickness(double value);
 
-    void         addTriangle(const point_t& point1,
-			     const point_t& point2,
-			     const point_t& point3);
-    void         addArb(const char* arbName,
-			const point_t& point1,
-			const point_t& point2,
-			const point_t& point3,
-			const point_t& point4,
-			const point_t& point5,
-			const point_t& point6,
-			const point_t& point7,
-			const point_t& point8);
-    void           addPipePnt(pipePoint point);
-    void           addBeamResultant(const std::string beamName,
-				    const std::string sectionType,
-				    const point_t& node1,
-				    const point_t& node2,
-				    const point_t& node3,
-				    const std::vector<double> D);
+    void                     addTriangle(const point_t& point1,
+					 const point_t& point2,
+					 const point_t& point3);
+    void                     addArb(const char* arbName,
+				    const point_t& point1,
+				    const point_t& point2,
+				    const point_t& point3,
+				    const point_t& point4,
+				    const point_t& point5,
+				    const point_t& point6,
+				    const point_t& point7,
+				    const point_t& point8);
+    void                     addPipePnt(pipePoint point);
+    void                     addBeamResultant(const std::string beamName,
+					      const std::string sectionType,
+					      const point_t& node1,
+					      const point_t& node2,
+					      const point_t& node3,
+					      const std::vector<double> D);
 
-    const char*  getBaseName(void) const;
-    Bot&         getBot(void);
-    Arbs&        getArbs(void);
-    Pipe&        getPipe(void);
+    const char*              getBaseName(void) const;
+    Bot&                     getBot(void);
+    Arbs&                    getArbs(void);
+    Pipe&                    getPipe(void);
 
-    std::vector<std::string>       write(rt_wdb* wdbp);
+    std::vector<std::string> write(rt_wdb* wdbp);
 private:
-    std::string                name;
+    std::string                m_name;
     Bot                        m_bot;
     Arbs                       m_arbs;
     Pipe                       m_pipe;

@@ -55,17 +55,16 @@ void RegionList::setAttributes
     m_list[name].attributes = attributes;
 }
 
-static void  writeAttributes
+
+static void  write_attributes
 (
-    rt_wdb* wdbp,
-    const char* name,
+    rt_wdb*                                   wdbp,
+    const char*                               name,
     const std::map<std::string, std::string>& attributes
 ) {
-
-    struct rt_db_internal     region_internal;
-
-    struct db_i*      dbip = wdbp->dbip;
-    struct directory* dp = db_lookup(dbip, name, 0);
+    struct rt_db_internal region_internal;
+    struct db_i*          dbip = wdbp->dbip;
+    struct directory*     dp   = db_lookup(dbip, name, 0);
 
     if (dp == RT_DIR_NULL) {
 	bu_log("writeAttributes() Cannot find %s\n", name);
@@ -75,15 +74,13 @@ static void  writeAttributes
     if (rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource) >= 0) {
 	bu_attribute_value_set* avs = &region_internal.idb_avs;
 
-	for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++) {
+	for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++)
 	    bu_avs_add(avs, it->first.c_str(), it->second.c_str());
-	}
 
 	db5_update_attributes(dp, avs, dbip);
     }
-    else {
+    else
 	bu_log("writeAttributes() rt_db_get_internal(%s) FAIL, Can't write attributes\n", dp->d_namep);
-    }
 
     rt_db_free_internal(&region_internal);
 }
@@ -103,16 +100,14 @@ void RegionList::create
 	Region&                                   region                   = it->second;
 	Geometry&                                 geometry                 = region.geometry;
 	const std::map<std::string, std::string>& region_attributes        = region.attributes;
-
-	std::vector<std::string> names = geometry.write(wdbp);
-
-	wmember geometry_head;
+	std::vector<std::string>                  names              = geometry.write(wdbp);
+	wmember                                   geometry_head;
 	BU_LIST_INIT(&geometry_head.l);
 
-	bu_color regionColor = BU_COLOR_INIT_ZERO;
+	bu_color                                  regionColor = BU_COLOR_INIT_ZERO;
 	bu_color_rand(&regionColor, BU_COLOR_RANDOM);
 
-	unsigned char rgb[3];
+	unsigned char                             rgb[3];
 	bu_color_to_rgb_chars(&regionColor, rgb);
 
 	for (size_t i = 0; i < names.size(); i++) {
@@ -122,9 +117,8 @@ void RegionList::create
 
 	mk_lcomb(wdbp, geometry.getBaseName(), &geometry_head, 1, NULL, NULL, rgb, ++region_id);
 
-	if (region_attributes.size() > 0) {
-	    writeAttributes(wdbp, region_name.c_str(), region_attributes);
-	}
+	if (region_attributes.size() > 0)
+	    write_attributes(wdbp, region_name.c_str(), region_attributes);
 
 	mk_addmember(region_name.c_str(), &(all_head.l), NULL, WMOP_UNION);
 
@@ -136,13 +130,15 @@ void RegionList::create
 }
 
 
-void RegionList::printNames(void) const {
+void RegionList::printNames(void) const
+{
     for (std::map<std::string, Region>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
 	std::cout << it->first << "\n";
 }
 
 
-void RegionList::printStat(void) const {
+void RegionList::printStat(void) const
+{
     std::cout << "Over all size: " << m_list.size() << "\n";
 }
 

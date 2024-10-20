@@ -37,7 +37,20 @@
 #include "sketch.h"
 
 
-static void AddArb(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8,KData& kData, std::string arbNumber, Geometry& geometry) {
+static void AddArb
+(
+    int         n1,
+    int         n2,
+    int         n3,
+    int         n4,
+    int         n5,
+    int         n6,
+    int         n7,
+    int         n8,
+    KData&      kData,
+    std::string arbNumber,
+    Geometry&   geometry
+) {
     point_t point1;
     point_t point2;
     point_t point3;
@@ -147,7 +160,6 @@ int main
 				    KSectionBeam beamSection = kData.sectionsBeam[section];
 
 				    if (beamSection.CST == 0) {
-
 				    }
 				    else if (beamSection.CST == 1 && beamSection.sectionType == "") {
 					pipePoint point1;
@@ -169,7 +181,6 @@ int main
 					geometry.addPipePnt(point2);
 				    }
 				    else if (beamSection.CST == 2) {
-
 				    }
 				    else if ((beamSection.sectionType != "") && (beamSection.sectionType != "SECTION_08") && (beamSection.sectionType != "SECTION_09")) {
 					point_t point1;
@@ -233,7 +244,6 @@ int main
 				}
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 4) {
-
 				point_t point1;
 				point_t point2;
 				point_t point3;
@@ -260,53 +270,50 @@ int main
 				point4[Y] = kData.nodes[n4].y * factor;
 				point4[Z] = kData.nodes[n4].z * factor;
 
-				if (n3 == n4) {
+				if (n3 == n4)
 				    geometry.addTriangle(point1, point2, point3);
-				}
 				else {
 				    geometry.addTriangle(point1, point2, point3);
 				    geometry.addTriangle(point1, point3, point4);
 				}
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 8) {
-				int     n1 = kData.elements[*itr].nodes[0];
-				int     n2 = kData.elements[*itr].nodes[1];
-				int     n3 = kData.elements[*itr].nodes[2];
-				int     n4 = kData.elements[*itr].nodes[3];
-				int     n5 = kData.elements[*itr].nodes[4];
-				int     n6 = kData.elements[*itr].nodes[5];
-				int     n7 = kData.elements[*itr].nodes[6];
-				int     n8 = kData.elements[*itr].nodes[7];
+				int         n1        = kData.elements[*itr].nodes[0];
+				int         n2        = kData.elements[*itr].nodes[1];
+				int         n3        = kData.elements[*itr].nodes[2];
+				int         n4        = kData.elements[*itr].nodes[3];
+				int         n5        = kData.elements[*itr].nodes[4];
+				int         n6        = kData.elements[*itr].nodes[5];
+				int         n7        = kData.elements[*itr].nodes[6];
+				int         n8        = kData.elements[*itr].nodes[7];
 
 				std::string arbNumber = std::to_string(*itr);
 
 				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
-
-
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 7) {
-				int     n1 = kData.elements[*itr].nodes[0];
-				int     n2 = kData.elements[*itr].nodes[1];
-				int     n3 = kData.elements[*itr].nodes[2];
-				int     n4 = kData.elements[*itr].nodes[3];
-				int     n5 = kData.elements[*itr].nodes[4];
-				int     n6 = kData.elements[*itr].nodes[5];
-				int     n7 = kData.elements[*itr].nodes[6];
-				int     n8 = kData.elements[*itr].nodes[4];
+				int         n1        = kData.elements[*itr].nodes[0];
+				int         n2        = kData.elements[*itr].nodes[1];
+				int         n3        = kData.elements[*itr].nodes[2];
+				int         n4        = kData.elements[*itr].nodes[3];
+				int         n5        = kData.elements[*itr].nodes[4];
+				int         n6        = kData.elements[*itr].nodes[5];
+				int         n7        = kData.elements[*itr].nodes[6];
+				int         n8        = kData.elements[*itr].nodes[4];
 
 				std::string arbNumber = std::to_string(*itr);
 
 				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 6) {
-				int     n1 = kData.elements[*itr].nodes[0];
-				int     n2 = kData.elements[*itr].nodes[1];
-				int     n3 = kData.elements[*itr].nodes[2];
-				int     n4 = kData.elements[*itr].nodes[3];
-				int     n5 = kData.elements[*itr].nodes[4];
-				int     n6 = kData.elements[*itr].nodes[4];
-				int     n7 = kData.elements[*itr].nodes[5];
-				int     n8 = kData.elements[*itr].nodes[5];
+				int         n1        = kData.elements[*itr].nodes[0];
+				int         n2        = kData.elements[*itr].nodes[1];
+				int         n3        = kData.elements[*itr].nodes[2];
+				int         n4        = kData.elements[*itr].nodes[3];
+				int         n5        = kData.elements[*itr].nodes[4];
+				int         n6        = kData.elements[*itr].nodes[4];
+				int         n7        = kData.elements[*itr].nodes[5];
+				int         n8        = kData.elements[*itr].nodes[5];
 
 				std::string arbNumber = std::to_string(*itr);
 
@@ -314,14 +321,14 @@ int main
 
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 5) {
-				int     n1 = kData.elements[*itr].nodes[0];
-				int     n2 = kData.elements[*itr].nodes[1];
-				int     n3 = kData.elements[*itr].nodes[2];
-				int     n4 = kData.elements[*itr].nodes[3];
-				int     n5 = kData.elements[*itr].nodes[4];
-				int     n6 = kData.elements[*itr].nodes[4];
-				int     n7 = kData.elements[*itr].nodes[4];
-				int     n8 = kData.elements[*itr].nodes[4];
+				int         n1        = kData.elements[*itr].nodes[0];
+				int         n2        = kData.elements[*itr].nodes[1];
+				int         n3        = kData.elements[*itr].nodes[2];
+				int         n4        = kData.elements[*itr].nodes[3];
+				int         n5        = kData.elements[*itr].nodes[4];
+				int         n6        = kData.elements[*itr].nodes[4];
+				int         n7        = kData.elements[*itr].nodes[4];
+				int         n8        = kData.elements[*itr].nodes[4];
 
 				std::string arbNumber = std::to_string(*itr);
 

@@ -1,4 +1,4 @@
-set(k-g_SRCF
+set(k-g_soure_files
   bot.cpp
   k-g.cpp
   k_parser.cpp
@@ -9,7 +9,8 @@ set(k-g_SRCF
   sketch.cpp
   extrude.cpp
   )
-BRLCAD_ADDEXEC(k-g "${k-g_SRCF}" "libwdb;librt;libbu" FOLDER Conv)
+
+BRLCAD_ADDEXEC(k-g "${k-g_soure_files}" "libwdb;librt;libbu" FOLDER Conv)
 
 set(k-g_ignore_files
   bot.h
@@ -22,6 +23,7 @@ set(k-g_ignore_files
   sketch.h
   extrude.h
   )
+
 CMAKEFILES(${k-g_ignore_files})
 
 # Local Variables:

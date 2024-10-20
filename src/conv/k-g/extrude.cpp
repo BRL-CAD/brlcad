@@ -26,8 +26,6 @@
 #include "extrude.h"
 
 
-
-
 Extrude::Extrude(void)
 {
     BU_GET(m_extrude, rt_extrude_internal);
@@ -40,14 +38,20 @@ void Extrude::setName
     const char* value
 ) {
     if (value != nullptr)
-	name = value;
+	m_name = value;
     else
-	name = "";
+	m_name = "";
 }
 
 
-void Extrude::extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec)
-{
+void Extrude::extrudeSection
+(
+    std::string    sectionName,
+    const point_t& V,
+    vect_t         h,
+    vect_t         u_vec,
+    vect_t         v_vec
+) {
     m_extrude->magic = RT_EXTRUDE_INTERNAL_MAGIC;
     VMOVE(m_extrude->V, V);
     VMOVE(m_extrude->h, h);
@@ -58,8 +62,10 @@ void Extrude::extrudeSection(std::string sectionName,const point_t& V, vect_t h,
 }
 
 
-std::string Extrude::write(rt_wdb* wdbp)
-{
+std::string Extrude::write
+(
+    rt_wdb* wdbp
+) {
     std::string ret;
 
     rt_extrude_internal* extrude_wdb;
@@ -68,8 +74,8 @@ std::string Extrude::write(rt_wdb* wdbp)
     extrude_wdb = m_extrude;
 
     if ((extrude_wdb->sketch_name != nullptr) && (strlen(extrude_wdb->sketch_name) > 0 )) {
-	wdb_export(wdbp, name.c_str(), extrude_wdb, ID_EXTRUDE, 1);
-	ret = name;
+	wdb_export(wdbp, m_name.c_str(), extrude_wdb, ID_EXTRUDE, 1);
+	ret = m_name;
     }
 
     return ret;

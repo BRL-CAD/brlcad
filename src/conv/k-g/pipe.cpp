@@ -26,7 +26,8 @@
 #include "pipe.h"
 
 
-Pipe::Pipe(void) {
+Pipe::Pipe(void)
+{
     BU_GET(m_pipe, rt_pipe_internal);
     m_pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&(m_pipe->pipe_segs_head));
@@ -38,13 +39,13 @@ void Pipe::setName
     const char* value
 ) {
     if (value != nullptr)
-	name = value;
+	m_name = value;
     else
-	name = "";
+	m_name = "";
 }
 
 
-void Pipe::addPipePnt
+void Pipe::addPoint
 (
     const pipePoint& point
 ) {
@@ -76,7 +77,7 @@ std::vector<std::string> Pipe::write
 ) {
     std::vector<std::string> ret;
 
-    std::string pipeName = name;
+    std::string pipeName = m_name;
     pipeName += ".pipe";
 
 

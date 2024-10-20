@@ -88,6 +88,7 @@ enum class KState {
     //Section_Tshell
 };
 
+
 enum class Options {
     Title,
     Thickness,
@@ -100,6 +101,7 @@ enum class Options {
     Warpage,
     Elbow
 };
+
 
 static std::string read_line
 (
@@ -122,6 +124,7 @@ static std::string read_line
 
     return ret;
 }
+
 
 // The standard node line format is I8,3E16.0,2F8.0 (8 digit integer, 3x 16 digit doubles, 2x 8 digit floats).
 static std::vector<std::string> read_line_node_standard
@@ -208,7 +211,7 @@ static std::vector<std::string> parse_command
 		    temp.clear();
 		}
 	    }
-	    else 
+	    else
 		temp += toupper(command[i]);
 	}
 
@@ -285,12 +288,10 @@ bool parse_k
 			}
 			else if (command[0] == "ELEMENT") {
 			    if ((command.size() > 1) && (command[1] == "BEAM")) {
-				if ((command.size() > 2) && (command[2] == "PULLEY")) {
+				if ((command.size() > 2) && (command[2] == "PULLEY"))
 				    state = KState::Element_Beam_Pulley;
-				}
-				else if ((command.size() > 2) && (command[2] == "SOURCE")) {
+				else if ((command.size() > 2) && (command[2] == "SOURCE"))
 				    state = KState::Element_Beam_Source;
-				}
 				else {
 				    state = KState::Element_Beam;
 
@@ -298,33 +299,24 @@ bool parse_k
 
 				    if (optionsContainer.size() > 0) {
 					for (size_t i_o = 0; i_o < optionsContainer.size(); ++i_o) {
-					    if (optionsContainer[i_o] == "THICKNESS") {
+					    if (optionsContainer[i_o] == "THICKNESS")
 						options.push_back(Options::Thickness);
-					    }
-					    else if (optionsContainer[i_o] == "SCALAR") {
+					    else if (optionsContainer[i_o] == "SCALAR")
 						options.push_back(Options::Scalar);
-					    }
-					    else if (optionsContainer[i_o] == "SCALR") {
+					    else if (optionsContainer[i_o] == "SCALR")
 						options.push_back(Options::Scalr);
-					    }
-					    else if (optionsContainer[i_o] == "SECTION") {
+					    else if (optionsContainer[i_o] == "SECTION")
 						options.push_back(Options::Section);
-					    }
-					    else if (optionsContainer[i_o] == "PID") {
+					    else if (optionsContainer[i_o] == "PID")
 						options.push_back(Options::Pid);
-					    }
-					    else if (optionsContainer[i_o] == "OFFSET") {
+					    else if (optionsContainer[i_o] == "OFFSET")
 						options.push_back(Options::Offset);
-					    }
-					    else if (optionsContainer[i_o] == "ORIENTATION") {
+					    else if (optionsContainer[i_o] == "ORIENTATION")
 						options.push_back(Options::Orientation);
-					    }
-					    else if (optionsContainer[i_o] == "WARPAGE") {
+					    else if (optionsContainer[i_o] == "WARPAGE")
 						options.push_back(Options::Warpage);
-					    }
-					    else if (optionsContainer[i_o] == "ELBOW") {
+					    else if (optionsContainer[i_o] == "ELBOW")
 						options.push_back(Options::Elbow);
-					    }
 					    else
 						std::cout << "Unhandeled Element_Beam option" << optionsContainer[i_o] << "in k-file" << fileName << "\n";
 					}
@@ -666,7 +658,7 @@ bool parse_k
 			for (int i_n = 0; i_n < 8; ++i_n) {
 			    element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
 			}
-			
+
 			data.elements[eid] = element;
 
 			int pid = stoi(tokens[1]);
@@ -702,210 +694,211 @@ bool parse_k
 
 			++partLinesRead;
 			break;
+		    }
 
 		    case KState::Ignore:
 			break;
-		    }
+
 		    case KState::Section_Ale1d: {
-			switch (sectionLinesRead)
-			{
-			case 0: {
-			    sectionTitle = line;
-			    break;
-			}
-			case 1: {
-			    if (tokens.size() < 4) {
-				std::cout << "Too short SECTION_ALE1D in k-file " << fileName << "\n";
-				break;
-			    }
-			    sectionId = stoi(tokens[0]);
-			    data.sections[sectionId].title = sectionTitle;
-			    break;
-			}
-			case 2: {
-			    if (sectionId < 0) {
-				std::cout << "Bad SECTION in k-file " << fileName << "\n";
+			switch (sectionLinesRead) {
+			    case 0: {
+				sectionTitle = line;
 				break;
 			    }
 
-			    if (tokens.size() < 2) {
-				std::cout << "Too short SECTION_ALE1D in k-file " << fileName << "\n";
+			    case 1: {
+				if (tokens.size() < 4) {
+				    std::cout << "Too short SECTION_ALE1D in k-file " << fileName << "\n";
+				    break;
+				}
+				sectionId = stoi(tokens[0]);
+				data.sections[sectionId].title = sectionTitle;
 				break;
 			    }
 
-			    data.sections[sectionId].thickness1 = stod(tokens[0]);
-			    data.sections[sectionId].thickness2 = stod(tokens[1]);
+			    case 2: {
+				if (sectionId < 0) {
+				    std::cout << "Bad SECTION in k-file " << fileName << "\n";
+				    break;
+				}
+
+				if (tokens.size() < 2) {
+				    std::cout << "Too short SECTION_ALE1D in k-file " << fileName << "\n";
+				    break;
+				}
+
+				data.sections[sectionId].thickness1 = stod(tokens[0]);
+				data.sections[sectionId].thickness2 = stod(tokens[1]);
+			    }
 			}
-			}
+
 			++sectionLinesRead;
 			break;
 		    }
+
 		    case KState::Section_Ale2d: {
-			switch (sectionLinesRead)
-			{
-			case 0: {
-			    sectionTitle = line;
-			    break;
-			}
-			case 1: {
-			    if (tokens.size() < 4) {
-				std::cout << "Too short SECTION_ALE2D in k-file " << fileName << "\n";
+			switch (sectionLinesRead) {
+			    case 0: {
+				sectionTitle = line;
 				break;
 			    }
-			    sectionId = stoi(tokens[0]);
-			    data.sections[sectionId].title = sectionTitle;
-			    break;
-			}
+
+			    case 1: {
+				if (tokens.size() < 4) {
+				    std::cout << "Too short SECTION_ALE2D in k-file " << fileName << "\n";
+				    break;
+				}
+				sectionId = stoi(tokens[0]);
+				data.sections[sectionId].title = sectionTitle;
+				break;
+			    }
 			}
 
 			++sectionLinesRead;
 			break;
 		    }
+
 		    case KState::Section_Beam: {
 			KSectionBeam sectionBeam;
-			switch (sectionLinesRead)
-			{
-			case 0: {
-			    sectionTitle = line;
-			    break;
-			}
-			case 1: {
-			    if (tokens.size() < 8) {
-				std::cout << "Too short SECTION_BEAM in k-file " << fileName << "\n";
+
+			switch (sectionLinesRead) {
+			    case 0: {
+				sectionTitle = line;
 				break;
 			    }
-			    sectionId     = stoi(tokens[0]);
-			    sectionElForm = stoi(tokens[1]);
-			    
-			    sectionBeam.title = sectionTitle;
-			    sectionBeam.CST   = stoi(tokens[4]);
-			    data.sections[sectionId].title = sectionTitle;
-			    break;
-			}
-			case 2: {
-			    if ((sectionElForm == 1) || (sectionElForm == 11)) {
-				if (tokens.size() < 6) {
-				    std::cout << "Too short SECTION_BEAM card 2a in k-file " << fileName << "\n";
+
+			    case 1: {
+				if (tokens.size() < 8) {
+				    std::cout << "Too short SECTION_BEAM in k-file " << fileName << "\n";
 				    break;
 				}
 
-				sectionBeam.TS1 = stod(tokens[0]);
-				sectionBeam.TS2 = stod(tokens[1]);
-				sectionBeam.TT1 = stod(tokens[2]);
-				sectionBeam.TT2 = stod(tokens[3]);
+				sectionId     = stoi(tokens[0]);
+				sectionElForm = stoi(tokens[1]);
+
+				sectionBeam.title = sectionTitle;
+				sectionBeam.CST   = stoi(tokens[4]);
+				data.sections[sectionId].title = sectionTitle;
+				break;
 			    }
-			    else if ((sectionElForm == 2) || (sectionElForm == 3) || (sectionElForm == 12)||(sectionElForm == 13)) {
-				std::string first7characters;
 
-				if (tokens[0].size() > 7) {
-				    first7characters = tokens[0].substr(0, 7);
-				}
-
-				if ((first7characters == "SECTION")) {
-				    sectionBeam.sectionType = tokens[0];
-
-				    for (size_t i_d = 1; i_d < tokens.size(); ++i_d) {
-					sectionBeam.D.push_back(stod(tokens[i_d]));
+			    case 2: {
+				if ((sectionElForm == 1) || (sectionElForm == 11)) {
+				    if (tokens.size() < 6) {
+					std::cout << "Too short SECTION_BEAM card 2a in k-file " << fileName << "\n";
+					break;
 				    }
-				}
-				else {
-				    sectionBeam.CrossSectionalArea = stod(tokens[0]);
-				}
-			    }
-			    else if ((sectionElForm == 4) || (sectionElForm == 5)) {
-				if (tokens.size() < 4) {
-				    std::cout << "Too short SECTION_BEAM card 2e in k-file " << fileName << "\n";
-				    break;
-				}
 
-				sectionBeam.TS1 = stod(tokens[0]);
-				sectionBeam.TS2 = stod(tokens[1]);
-				sectionBeam.TT1 = stod(tokens[2]);
-				sectionBeam.TT2 = stod(tokens[3]);
-			    }
-			    else if (sectionElForm == 6) {
-				//nothing to do.
+				    sectionBeam.TS1 = stod(tokens[0]);
+				    sectionBeam.TS2 = stod(tokens[1]);
+				    sectionBeam.TT1 = stod(tokens[2]);
+				    sectionBeam.TT2 = stod(tokens[3]);
+				}
+				else if ((sectionElForm == 2) || (sectionElForm == 3) || (sectionElForm == 12)||(sectionElForm == 13)) {
+				    std::string first7characters;
+
+				    if (tokens[0].size() > 7)
+					first7characters = tokens[0].substr(0, 7);
+
+				    if ((first7characters == "SECTION")) {
+					sectionBeam.sectionType = tokens[0];
+
+					for (size_t i_d = 1; i_d < tokens.size(); ++i_d)
+					    sectionBeam.D.push_back(stod(tokens[i_d]));
+				    }
+				    else
+					sectionBeam.CrossSectionalArea = stod(tokens[0]);
+				}
+				else if ((sectionElForm == 4) || (sectionElForm == 5)) {
+				    if (tokens.size() < 4) {
+					std::cout << "Too short SECTION_BEAM card 2e in k-file " << fileName << "\n";
+					break;
+				    }
+
+				    sectionBeam.TS1 = stod(tokens[0]);
+				    sectionBeam.TS2 = stod(tokens[1]);
+				    sectionBeam.TT1 = stod(tokens[2]);
+				    sectionBeam.TT2 = stod(tokens[3]);
+				}
+				else if (sectionElForm == 6)
+				    //nothing to do.
+				    break;
+				else if ((sectionElForm == 7) || (sectionElForm == 8)) {
+				    if (tokens.size() < 2) {
+					std::cout << "Too short SECTION_BEAM card 2h in k-file " << fileName << "\n";
+					break;
+				    }
+
+				    sectionBeam.TS1 = stod(tokens[0]);
+				    sectionBeam.TS2 = stod(tokens[1]);
+				}
+				else if (sectionElForm == 9) {
+				    if (tokens.size() < 4) {
+					std::cout << "Too short SECTION_BEAM card 2i in k-file " << fileName << "\n";
+					break;
+				    }
+
+				    sectionBeam.TS1 = stod(tokens[0]);
+				    sectionBeam.TS2 = stod(tokens[1]);
+				    sectionBeam.TT1 = stod(tokens[2]);
+				    sectionBeam.TT2 = stod(tokens[3]);
+				}
+				else if (sectionElForm == 14)
+				    //nothing to do
+				    break;
+
+				data.sectionsBeam[sectionId] = sectionBeam;
 				break;
 			    }
-			    else if ((sectionElForm == 7) || (sectionElForm == 8)) {
-				if (tokens.size() < 2) {
-				    std::cout << "Too short SECTION_BEAM card 2h in k-file " << fileName << "\n";
-				    break;
-				}
 
-				sectionBeam.TS1 = stod(tokens[0]);
-				sectionBeam.TS2 = stod(tokens[1]);
-			    }
-			    else if (sectionElForm == 9) {
-				if (tokens.size() < 4) {
-				    std::cout << "Too short SECTION_BEAM card 2i in k-file " << fileName << "\n";
-				    break;
-				}
-
-				sectionBeam.TS1 = stod(tokens[0]);
-				sectionBeam.TS2 = stod(tokens[1]);
-				sectionBeam.TT1 = stod(tokens[2]);
-				sectionBeam.TT2 = stod(tokens[3]);
-			    }
-			    else if (sectionElForm == 14) {
-				//nothing to do 
+			    case 3:
+				// if (sectionElForm == 12) No information related to geometry.
 				break;
-			    }
+			}
 
-			    data.sectionsBeam[sectionId] = sectionBeam;
-			    break;
-			}
-			case 3: {
-			    if (sectionElForm == 12) {
-				//No information related to geometry.
-				break;
-			    }
-
-			    break;
-			}
-			}
 			data.sectionsBeam[sectionId] = sectionBeam;
 			++sectionLinesRead;
 			break;
 		    }
+
 		    case KState::Section_Shell: {
 			switch (sectionLinesRead) {
-			case 0:
-			    sectionTitle = line;
-			    break;
+			    case 0:
+				sectionTitle = line;
+				break;
 
-			case 1: {
-			    if (tokens.size() == 0) {
-				std::cout << "Too short SECTION in k-file " << fileName << "\n";
+			    case 1: {
+				if (tokens.size() == 0) {
+				    std::cout << "Too short SECTION in k-file " << fileName << "\n";
+				    break;
+				}
+
+				sectionId                      = stoi(tokens[0]);
+				data.sections[sectionId].title = sectionTitle;
 				break;
 			    }
 
-			    sectionId                      = stoi(tokens[0]);
-			    data.sections[sectionId].title = sectionTitle;
-			    break;
-			}
+			    case 2: {
+				if (sectionId < 0) {
+				    std::cout << "Bad SECTION in k-file " << fileName << "\n";
+				    break;
+				}
 
-			case 2: {
-			    if (sectionId < 0) {
-				std::cout << "Bad SECTION in k-file " << fileName << "\n";
+				if (tokens.size() < 4) {
+				    std::cout << "Too short SECTION in k-file " << fileName << "\n";
+				    break;
+				}
+
+				data.sections[sectionId].thickness1 = stod(tokens[0]);
+				data.sections[sectionId].thickness2 = stod(tokens[1]);
+				data.sections[sectionId].thickness3 = stod(tokens[2]);
+				data.sections[sectionId].thickness4 = stod(tokens[3]);
+
 				break;
 			    }
 
-			    if (tokens.size() < 4) {
-				std::cout << "Too short SECTION in k-file " << fileName << "\n";
-				break;
-			    }
-
-			    data.sections[sectionId].thickness1 = stod(tokens[0]);
-			    data.sections[sectionId].thickness2 = stod(tokens[1]);
-			    data.sections[sectionId].thickness3 = stod(tokens[2]);
-			    data.sections[sectionId].thickness4 = stod(tokens[3]);
-
-			    break;
-			}
-
-			default:
-			    std::cout << "Unexpected SECTION length in k-file " << fileName << "\n";
+			    default:
+				std::cout << "Unexpected SECTION length in k-file " << fileName << "\n";
 			}
 
 			++sectionLinesRead;
@@ -914,24 +907,23 @@ bool parse_k
 
 		    case KState::Section_Solid: {
 			switch (sectionLinesRead) {
-			case 0:
-			    sectionTitle = line;
-			    break;
+			    case 0:
+				sectionTitle = line;
+				break;
 
-			case 1: {
-			    if (tokens.size() == 0) {
-				std::cout << "Too short SECTION in k-file " << fileName << "\n";
+			    case 1: {
+				if (tokens.size() == 0) {
+				    std::cout << "Too short SECTION in k-file " << fileName << "\n";
+				    break;
+				}
+
+				sectionId = stoi(tokens[0]);
+				data.sections[sectionId].title = sectionTitle;
 				break;
 			    }
 
-			    sectionId = stoi(tokens[0]);
-			    data.sections[sectionId].title = sectionTitle;
-			    break;
-			}
-
-			default:
-			    std::cout << "Unexpected SECTION length in k-file " << fileName << "\n";
-
+			    default:
+				std::cout << "Unexpected SECTION length in k-file " << fileName << "\n";
 			}
 
 			++sectionLinesRead;
@@ -946,12 +938,11 @@ bool parse_k
 
 			int pid = stoi(tokens[0]);
 
-			if (tokens.size() == 2) {
+			if (tokens.size() == 2)
 			    data.parts[pid].attributes["PART_ADAPTIVE_FAILURE_STARTING_TIME"]=tokens[1];
-			}
-			else {
+			else
 			    std::cout << "Attributes should come in pairs in k-file" << fileName << "\n";
-			}
+
 			break;
 		    }
 
@@ -972,9 +963,8 @@ bool parse_k
 				break;
 			    }
 
-			    for (int i_n = 0; i_n < 3; ++i_n) {
+			    for (int i_n = 0; i_n < 3; ++i_n)
 				element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
-			    }
 
 			    data.elements[eid] = element;
 
@@ -985,196 +975,183 @@ bool parse_k
 			else if ((options.size() > 0)) {
 			    Options currentOption;
 
-			    if (optionsCounter < options.size()) {
+			    if (optionsCounter < options.size())
 				currentOption = options[optionsCounter];
-			    }
 			    else {
 				optionsCounter = 0;
 				currentOption = options[optionsCounter];
 			    }
 
-			    switch (currentOption)
-			    {
-			    case Options::Thickness: {
-				if (tokens.size() < 5) {
-				    std::cout << "Too short option THICKNESS in k-file " << fileName << "\n";
+			    switch (currentOption) {
+				case Options::Thickness: {
+				    if (tokens.size() < 5) {
+					std::cout << "Too short option THICKNESS in k-file " << fileName << "\n";
+					break;
+				    }
+
+				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
+					double param = stod(tokens[i_p]);
+					element.options["THICKNESS"].push_back(param);
+				    }
+
+				    data.elements[eid] = element;
+
+				    ++optionsCounter;
 				    break;
 				}
 
-				for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
-				    double param = stod(tokens[i_p]);
-				    element.options["THICKNESS"].push_back(param);
-				}
-
-				data.elements[eid] = element;
-
-				++optionsCounter;
-				break;
-			    }
-			    case Options::Scalar: {
-				//Nothing to do 
-				++optionsCounter;
-				break;
-			    }
-			    case Options::Scalr: {
-				//Nothing to do
-				++optionsCounter;
-				break;
-			    }
-			    case Options::Section: {
-				if (tokens.size() < 7) {
-				    std::cout << "Too short option Section in k-file " << fileName << "\n";
+				case Options::Scalar: {
+				    //Nothing to do
+				    ++optionsCounter;
 				    break;
 				}
-				double temp;
 
-				if (tokens[0] == "SECTION_01") {
-				    temp = 1.0;
-				}
-				else if (tokens[0] == "SECTION_02") {
-				    temp = 2.0;
-				}
-				else if (tokens[0] == "SECTION_03") {
-				    temp = 3.0;
-				}
-				else if (tokens[0] == "SECTION_04") {
-				    temp = 4.0;
-				}
-				else if (tokens[0] == "SECTION_05") {
-				    temp = 5.0;
-				}
-				else if (tokens[0] == "SECTION_06") {
-				    temp = 6.0;
-				}
-				else if (tokens[0] == "SECTION_07") {
-				    temp = 7.0;
-				}
-				else if (tokens[0] == "SECTION_08") {
-				    temp = 8.0;
-				}
-				else if (tokens[0] == "SECTION_09") {
-				    temp = 9.0;
-				}
-				else if (tokens[0] == "SECTION_10") {
-				    temp = 10.0;
-				}
-				else if (tokens[0] == "SECTION_11") {
-				    temp = 11.0;
-				}
-				else if (tokens[0] == "SECTION_12") {
-				    temp = 12.0;
-				}
-				else if (tokens[0] == "SECTION_13") {
-				    temp = 13.0;
-				}
-				else if (tokens[0] == "SECTION_14") {
-				    temp = 14.0;
-				}
-				else if (tokens[0] == "SECTION_15") {
-				    temp = 15.0;
-				}
-				else if (tokens[0] == "SECTION_16") {
-				    temp = 16.0;
-				}
-				else if (tokens[0] == "SECTION_17") {
-				    temp = 17.0;
-				}
-				else if (tokens[0] == "SECTION_18") {
-				    temp = 18.0;
-				}
-				else if (tokens[0] == "SECTION_19") {
-				    temp = 19.0;
-				}
-				else if (tokens[0] == "SECTION_20") {
-				    temp = 20.0;
-				}
-				else if (tokens[0] == "SECTION_21") {
-				    temp = 21.0;
-				}
-				else if (tokens[0] == "SECTION_22") {
-				    temp = 22.0;
+				case Options::Scalr: {
+				    //Nothing to do
+				    ++optionsCounter;
+				    break;
 				}
 
-				element.options["SECTION"].push_back(temp);
+				case Options::Section: {
+				    if (tokens.size() < 7) {
+					std::cout << "Too short option Section in k-file " << fileName << "\n";
+					break;
+				    }
+				    double temp;
 
-				for (size_t i_p = 1; i_p < tokens.size(); ++i_p) {
-				    temp = stod(tokens[1]);
+				    if (tokens[0] == "SECTION_01")
+					temp = 1.0;
+				    else if (tokens[0] == "SECTION_02")
+					temp = 2.0;
+				    else if (tokens[0] == "SECTION_03")
+					temp = 3.0;
+				    else if (tokens[0] == "SECTION_04")
+					temp = 4.0;
+				    else if (tokens[0] == "SECTION_05")
+					temp = 5.0;
+				    else if (tokens[0] == "SECTION_06")
+					temp = 6.0;
+				    else if (tokens[0] == "SECTION_07")
+					temp = 7.0;
+				    else if (tokens[0] == "SECTION_08")
+					temp = 8.0;
+				    else if (tokens[0] == "SECTION_09")
+					temp = 9.0;
+				    else if (tokens[0] == "SECTION_10")
+					temp = 10.0;
+				    else if (tokens[0] == "SECTION_11")
+					temp = 11.0;
+				    else if (tokens[0] == "SECTION_12")
+					temp = 12.0;
+				    else if (tokens[0] == "SECTION_13")
+					temp = 13.0;
+				    else if (tokens[0] == "SECTION_14")
+					temp = 14.0;
+				    else if (tokens[0] == "SECTION_15")
+					temp = 15.0;
+				    else if (tokens[0] == "SECTION_16")
+					temp = 16.0;
+				    else if (tokens[0] == "SECTION_17")
+					temp = 17.0;
+				    else if (tokens[0] == "SECTION_18")
+					temp = 18.0;
+				    else if (tokens[0] == "SECTION_19")
+					temp = 19.0;
+				    else if (tokens[0] == "SECTION_20")
+					temp = 20.0;
+				    else if (tokens[0] == "SECTION_21")
+					temp = 21.0;
+				    else if (tokens[0] == "SECTION_22")
+					temp = 22.0;
+
 				    element.options["SECTION"].push_back(temp);
-				}
-				data.elements[eid] = element;
-				++optionsCounter;
-				break;
-			    }
-			    case Options::Pid: {
-				//Nothing to do
-				++optionsCounter;
-				break;
-			    }
-			    case Options::Offset: {
-				if (tokens.size() < 6) {
-				    std::cout << "To short OFFSET option in k-file " << fileName << "\n";
-				    break;
-				}
-				
-				for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
-				    double temp = stod(tokens[i_p]);
-				    element.options["OFFSET"].push_back(temp);
-				}
 
-				data.elements[eid] = element;
+				    for (size_t i_p = 1; i_p < tokens.size(); ++i_p) {
+					temp = stod(tokens[1]);
+					element.options["SECTION"].push_back(temp);
+				    }
 
-				++optionsCounter;
-				break;
-			    }
-			    case Options::Orientation: {
-				if (tokens.size() < 3) {
-				    std::cout << "To short ORIENTATION option in k-file" << fileName << "\n";
+				    data.elements[eid] = element;
+				    ++optionsCounter;
 				    break;
 				}
 
-				for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
-				    double temp = stod(tokens[i_p]);
-				    element.options["ORIENTATION"].push_back(temp);
-				}
-
-				data.elements[eid] = element;
-
-				++optionsCounter;
-				break;
-			    }
-			    case Options::Warpage: {
-				if (tokens.size() < 2) {
-				    std::cout << "To short WARPAGE option in k-file" << fileName << "\n";
+				case Options::Pid: {
+				    //Nothing to do
+				    ++optionsCounter;
 				    break;
 				}
 
-				for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
-				    double temp = stod(tokens[i_p]);
-				    element.options["WARPAGE"].push_back(temp);
-				}
+				case Options::Offset: {
+				    if (tokens.size() < 6) {
+					std::cout << "To short OFFSET option in k-file " << fileName << "\n";
+					break;
+				    }
 
-				data.elements[eid] = element;
+				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
+					double temp = stod(tokens[i_p]);
+					element.options["OFFSET"].push_back(temp);
+				    }
 
-				++optionsCounter;
-				break;
-			    }
-			    case Options::Elbow: {
-				if (tokens.size() < 1) {
-				    std::cout << "Empty ELBOW option in k-file" << fileName << "\n";
+				    data.elements[eid] = element;
+
+				    ++optionsCounter;
 				    break;
 				}
-				double temp = stod(tokens[0]);
-				element.options["ELBOW"].push_back(temp);
 
-				data.elements[eid] = element;
+				case Options::Orientation: {
+				    if (tokens.size() < 3) {
+					std::cout << "To short ORIENTATION option in k-file" << fileName << "\n";
+					break;
+				    }
 
-				++optionsCounter;
-				break;
-			    }
-			    default:
-				break;
+				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
+					double temp = stod(tokens[i_p]);
+					element.options["ORIENTATION"].push_back(temp);
+				    }
+
+				    data.elements[eid] = element;
+
+				    ++optionsCounter;
+				    break;
+				}
+
+				case Options::Warpage: {
+				    if (tokens.size() < 2) {
+					std::cout << "To short WARPAGE option in k-file" << fileName << "\n";
+					break;
+				    }
+
+				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
+					double temp = stod(tokens[i_p]);
+					element.options["WARPAGE"].push_back(temp);
+				    }
+
+				    data.elements[eid] = element;
+
+				    ++optionsCounter;
+				    break;
+				}
+
+				case Options::Elbow: {
+				    if (tokens.size() < 1) {
+					std::cout << "Empty ELBOW option in k-file" << fileName << "\n";
+					break;
+				    }
+				    double temp = stod(tokens[0]);
+				    element.options["ELBOW"].push_back(temp);
+
+				    data.elements[eid] = element;
+
+				    ++optionsCounter;
+				    break;
+				}
+
+				default:
+				    break;
 			    }
 			}
+
 			break;
 		    }
 
@@ -1183,6 +1160,7 @@ bool parse_k
 			    std::cout << "Too short ELEMENT_BEAM_PULLEY in k-file " << fileName << "\n";
 			    break;
 			}
+
 			KElementPulley pulley;
 			int pulleyId= stoi(tokens[0]);
 
@@ -1193,6 +1171,7 @@ bool parse_k
 			data.elementsPulley[pulleyId] = pulley;
 			break;
 		    }
+
 		    case KState::Element_Beam_Source: {
 			if (tokens.size() < 7) {
 			    std::cout << "Too short ELEMENT_BEAM_SOURCE in k-file" << fileName << "\n";
@@ -1200,7 +1179,7 @@ bool parse_k
 			}
 
 			KElementBeamSource source;
-			
+
 			int eid = stoi(tokens[0]);
 
 			source.sourceNodeId          = stoi(tokens[1]);
@@ -1217,70 +1196,72 @@ bool parse_k
 			KElementBearing bearing;
 			int eid = 1;
 
-			switch (elementLinesRead)
-			{
-			case 0: {
-			    bearing.title = line;
+			switch (elementLinesRead) {
+			    case 0: {
+				bearing.title = line;
 
-			    break;
-			}
-			case 1: {
-			    if (tokens.size() < 7) {
-				std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
 				break;
 			    }
 
-			    eid = stoi(tokens[0]);
-			    bearing.bearingType            = stoi(tokens[1]);
-			    bearing.n1                     = stoi(tokens[2]);
-			    bearing.coordinateId1          = stoi(tokens[3]);
-			    bearing.n2                     = stoi(tokens[4]);
-			    bearing.coordinateId2          = stoi(tokens[5]);
-			    bearing.numberOfBallsOrRollers = stoi(tokens[6]);
+			    case 1: {
+				if (tokens.size() < 7) {
+				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				    break;
+				}
 
-			    break;
-			}
-			case 2: {
-			    //Nothing related to Geometry here.
-			    break;
-			}
-			case 3: {
-			    if (tokens.size() < 4) {
-				std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				eid = stoi(tokens[0]);
+				bearing.bearingType            = stoi(tokens[1]);
+				bearing.n1                     = stoi(tokens[2]);
+				bearing.coordinateId1          = stoi(tokens[3]);
+				bearing.n2                     = stoi(tokens[4]);
+				bearing.coordinateId2          = stoi(tokens[5]);
+				bearing.numberOfBallsOrRollers = stoi(tokens[6]);
+
 				break;
 			    }
 
-			    bearing.diameterOfBallsOrRollers = stof(tokens[0]);
-			    bearing.boreInnerDiameter        = stof(tokens[1]);
-			    bearing.boreOuterDiameter        = stof(tokens[2]);
-			    bearing.pitchDiameter            = stof(tokens[3]);
-
-			    break;
-			}
-			case 4: {
-			    if (tokens.size() < 4) {
-				std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+			    case 2: {
+				//Nothing related to Geometry here.
 				break;
 			    }
 
-			    bearing.innerGroveRadiusToBallDiameterRatioOrRollerLength = stof(tokens[1]);
-			    bearing.outerRaceGrooveRadiusToBallDiameterRatio          = stof(tokens[2]);
-			    bearing.totalRadianceClearenceBetweenBallAndRaces         = stof(tokens[3]);
+			    case 3: {
+				if (tokens.size() < 4) {
+				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				    break;
+				}
 
-			    break;
-			}
-			case 5: {
-			    //nothing related to Geometry.
-			    break;
-			}
+				bearing.diameterOfBallsOrRollers = stof(tokens[0]);
+				bearing.boreInnerDiameter        = stof(tokens[1]);
+				bearing.boreOuterDiameter        = stof(tokens[2]);
+				bearing.pitchDiameter            = stof(tokens[3]);
 
+				break;
+			    }
+
+			    case 4: {
+				if (tokens.size() < 4) {
+				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				    break;
+				}
+
+				bearing.innerGroveRadiusToBallDiameterRatioOrRollerLength = stof(tokens[1]);
+				bearing.outerRaceGrooveRadiusToBallDiameterRatio          = stof(tokens[2]);
+				bearing.totalRadianceClearenceBetweenBallAndRaces         = stof(tokens[3]);
+
+				break;
+			    }
+
+			    case 5: {
+				//nothing related to Geometry.
+				break;
+			    }
 			}
 
 			data.elementBearing[eid] = bearing;
 			++elementLinesRead;
 			break;
 		    }
-
 		}
 	    }
 

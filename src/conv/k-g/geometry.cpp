@@ -26,22 +26,20 @@
 #include "geometry.h"
 
 
-
-
-
 void Geometry::setBaseName
 (
     const char* value
 ) {
     if (value != nullptr)
-	name = value;
+	m_name = value;
     else
-	name = "";
+	m_name = "";
 
-    m_bot.setName(name.c_str());
-    m_arbs.setName(name.c_str());
-    m_pipe.setName(name.c_str());
+    m_bot.setName(m_name.c_str());
+    m_arbs.setName(m_name.c_str());
+    m_pipe.setName(m_name.c_str());
 }
+
 
 void Geometry::setThickness
 (
@@ -60,9 +58,10 @@ void Geometry::addTriangle
     m_bot.addTriangle(point1, point2, point3);
 }
 
+
 void Geometry::addArb
 (
-    const char* arbName,
+    const char*    arbName,
     const point_t& point1,
     const point_t& point2,
     const point_t& point3,
@@ -76,14 +75,23 @@ void Geometry::addArb
 }
 
 
-void Geometry::addPipePnt(pipePoint point)
-{
-    m_pipe.addPipePnt(point);
+void Geometry::addPipePnt
+(
+    pipePoint point
+) {
+    m_pipe.addPoint(point);
 }
 
 
-void Geometry::addBeamResultant(std::string beamName, std::string sectionType, const point_t& node1, const point_t& node2, const point_t& node3, std::vector<double> D)
-{
+void Geometry::addBeamResultant
+(
+    std::string         beamName,
+    std::string         sectionType,
+    const point_t&      node1,
+    const point_t&      node2,
+    const point_t&      node3,
+    std::vector<double> D
+) {
     BeamResultant temp;
     rt_sketch_internal* tempSkt;
 
@@ -110,18 +118,23 @@ void Geometry::addBeamResultant(std::string beamName, std::string sectionType, c
 }
 
 
-const char* Geometry::getBaseName(void) const{
-    return name.c_str();
+const char* Geometry::getBaseName(void) const
+{
+    return m_name.c_str();
 }
 
 
-Bot& Geometry::getBot(void) {
+Bot& Geometry::getBot(void)
+{
     return m_bot;
 }
 
-Arbs& Geometry::getArbs(void) {
+
+Arbs& Geometry::getArbs(void)
+{
     return m_arbs;
 }
+
 
 Pipe& Geometry::getPipe(void)
 {

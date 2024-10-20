@@ -34,35 +34,34 @@
 #include "arbs.h"
 #include "geometry.h"
 
+
 struct Region {
     Geometry                           geometry;
     std::map<std::string, std::string> attributes;
 };
+
 
 class RegionList {
 public:
     RegionList(void);
 
     Geometry& addRegion(const std::string& name);
+    Bot&      getBot(const std::string& name);
+    void      deleteRegion(const std::string& name);
+    void      setAttributes(const std::string& name,
+			    const std::map<std::string, std::string>& attributes);
 
-    Bot& getBot(const std::string& name);
+    void      create(rt_wdb* wdbp);
 
-    void deleteRegion(const std::string& name);
-
-    void setAttributes(const std::string& name,
-		       const std::map<std::string, std::string>& attributes);
-
-    void create(rt_wdb* wdbp);
-
-    void printNames(void) const;
-    void printStat(void) const;
+    void      printNames(void) const;
+    void      printStat(void) const;
 
 private:
     std::map<std::string, Region> m_list;
 };
 
 
-#endif // REGIONLIST_INCLUDED
+#endif // !REGIONLIST_INCLUDED
 
 
 // Local Variables:

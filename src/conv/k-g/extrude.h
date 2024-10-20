@@ -29,18 +29,16 @@
 #include "wdb.h"
 
 
-
 class Extrude {
 public:
     Extrude(void);
 
-    void                            setName(const char* value);
+    void        setName(const char* value);
+    void        extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec);
 
-    void                            extrudeSection(std::string sectionName,const point_t& V, vect_t h, vect_t u_vec, vect_t v_vec);
-
-    std::string                     write(rt_wdb* wdbp);
+    std::string write(rt_wdb* wdbp);
 private:
-    std::string          name;
+    std::string          m_name;
     rt_extrude_internal* m_extrude;
 };
 

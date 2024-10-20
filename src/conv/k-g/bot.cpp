@@ -87,27 +87,29 @@ static int add_normal
 }
 
 
-Bot::Bot(void) : name(), thickness(0.) {
-    memset(&bot_internal, 0, sizeof(bot_internal));
+Bot::Bot(void) : m_name(), m_thickness(0.)
+{
+    memset(&m_botInternal, 0, sizeof(m_botInternal));
 
-    bot_internal.magic       = RT_BOT_INTERNAL_MAGIC;
-    bot_internal.mode        = RT_BOT_SOLID;
-    bot_internal.orientation = RT_BOT_UNORIENTED;
+    m_botInternal.magic       = RT_BOT_INTERNAL_MAGIC;
+    m_botInternal.mode        = RT_BOT_SOLID;
+    m_botInternal.orientation = RT_BOT_UNORIENTED;
 }
 
 
-Bot::~Bot(void) {
-    if (bot_internal.vertices != nullptr)
-	bu_free(bot_internal.vertices, "Bot::~Bot: vertices");
+Bot::~Bot(void)
+{
+    if (m_botInternal.vertices != nullptr)
+	bu_free(m_botInternal.vertices, "Bot::~Bot: vertices");
 
-    if (bot_internal.faces != nullptr)
-	bu_free(bot_internal.faces, "Bot::~Bot: faces");
+    if (m_botInternal.faces != nullptr)
+	bu_free(m_botInternal.faces, "Bot::~Bot: faces");
 
-    if (bot_internal.normals != nullptr)
-	bu_free(bot_internal.normals, "Bot::~Bot: normals");
+    if (m_botInternal.normals != nullptr)
+	bu_free(m_botInternal.normals, "Bot::~Bot: normals");
 
-    if (bot_internal.face_normals != nullptr)
-	bu_free(bot_internal.face_normals, "Bot::~Bot: face_normals");
+    if (m_botInternal.face_normals != nullptr)
+	bu_free(m_botInternal.face_normals, "Bot::~Bot: face_normals");
 }
 
 
@@ -116,9 +118,9 @@ void Bot::setName
     const char* value
 ) {
     if (value != nullptr)
-	name = value;
+	m_name = value;
     else
-	name = "";
+	m_name = "";
 }
 
 
@@ -127,12 +129,12 @@ void Bot::setThickness
     double value
 ) {
     if (value > SMALL_FASTF) {
-	thickness         = value;
-	bot_internal.mode = RT_BOT_PLATE;
+	m_thickness        = value;
+	m_botInternal.mode = RT_BOT_PLATE;
     }
     else {
-	thickness         = 0.;
-	bot_internal.mode = RT_BOT_SOLID;
+	m_thickness        = 0.;
+	m_botInternal.mode = RT_BOT_SOLID;
     }
 }
 
@@ -143,30 +145,30 @@ void Bot::addTriangle
     const point_t& point2,
     const point_t& point3
 ) {
-    bot_internal.faces = static_cast<int*>(bu_realloc(bot_internal.faces, (bot_internal.num_faces + 1) * 3 * sizeof(int), "Bot:addTriangle: faces"));
+    m_botInternal.faces = static_cast<int*>(bu_realloc(m_botInternal.faces, (m_botInternal.num_faces + 1) * 3 * sizeof(int), "Bot:addTriangle: faces"));
 
-    bot_internal.faces[bot_internal.num_faces * 3]     = add_vertex(point1, bot_internal);
-    bot_internal.faces[bot_internal.num_faces * 3 + 1] = add_vertex(point2, bot_internal);
-    bot_internal.faces[bot_internal.num_faces * 3 + 2] = add_vertex(point3, bot_internal);
+    m_botInternal.faces[m_botInternal.num_faces * 3]     = add_vertex(point1, m_botInternal);
+    m_botInternal.faces[m_botInternal.num_faces * 3 + 1] = add_vertex(point2, m_botInternal);
+    m_botInternal.faces[m_botInternal.num_faces * 3 + 2] = add_vertex(point3, m_botInternal);
 
-    ++bot_internal.num_faces;
+    ++m_botInternal.num_faces;
 
-    if (bot_internal.face_normals == 0)
-	bot_internal.face_normals = static_cast<int*>(bu_calloc(3 * bot_internal.num_faces, sizeof(int), "Bot:addTriangle: face_normals"));
-    else if (bot_internal.num_faces > bot_internal.num_face_normals) {
-	bot_internal.face_normals = static_cast<int*>(bu_realloc(bot_internal.face_normals, 3 * bot_internal.num_faces * sizeof(int), "Bot:addTriangle: face_normals"));
+    if (m_botInternal.face_normals == 0)
+	m_botInternal.face_normals = static_cast<int*>(bu_calloc(3 * m_botInternal.num_faces, sizeof(int), "Bot:addTriangle: face_normals"));
+    else if (m_botInternal.num_faces > m_botInternal.num_face_normals) {
+	m_botInternal.face_normals = static_cast<int*>(bu_realloc(m_botInternal.face_normals, 3 * m_botInternal.num_faces * sizeof(int), "Bot:addTriangle: face_normals"));
 
-	for (size_t i = bot_internal.num_face_normals; i < bot_internal.num_faces; ++i) {
+	for (size_t i = m_botInternal.num_face_normals; i < m_botInternal.num_faces; ++i) {
 	    fastf_t defaultNormal[3] = {0};
-	    int     newIndex         = add_normal(defaultNormal, bot_internal);
+	    int     newIndex         = add_normal(defaultNormal, m_botInternal);
 
-	    bot_internal.face_normals[3 * i]     = newIndex;
-	    bot_internal.face_normals[3 * i + 1] = newIndex;
-	    bot_internal.face_normals[3 * i + 2] = newIndex;
+	    m_botInternal.face_normals[3 * i]     = newIndex;
+	    m_botInternal.face_normals[3 * i + 1] = newIndex;
+	    m_botInternal.face_normals[3 * i + 2] = newIndex;
 	}
     }
 
-    bot_internal.num_face_normals = bot_internal.num_faces;
+    m_botInternal.num_face_normals = m_botInternal.num_faces;
 }
 
 
@@ -175,53 +177,53 @@ std::vector<std::string> Bot::write
     rt_wdb* wdbp
 ) {
     std::vector<std::string> ret;
-    std::string botName = name;
+    std::string              botName = m_name;
     botName += ".bot";
 
-    rt_bot_internal* bot_wdb;
+    rt_bot_internal*         bot_wdb;
 
     BU_GET(bot_wdb, rt_bot_internal);
     bot_wdb->magic = RT_BOT_INTERNAL_MAGIC;
 
-    *bot_wdb = bot_internal;
+    *bot_wdb = m_botInternal;
 
-    if (bot_internal.faces != 0) {
-	bot_wdb->faces =  static_cast<int*>(bu_malloc(3 * bot_internal.num_faces * sizeof(int), "Bot:write: faces"));
+    if (m_botInternal.faces != 0) {
+	bot_wdb->faces =  static_cast<int*>(bu_malloc(3 * m_botInternal.num_faces * sizeof(int), "Bot:write: faces"));
 
-	memcpy(bot_wdb->faces, bot_internal.faces, 3 * bot_internal.num_faces * sizeof(int));
+	memcpy(bot_wdb->faces, m_botInternal.faces, 3 * m_botInternal.num_faces * sizeof(int));
     }
 
-    if (bot_internal.vertices != 0) {
-	bot_wdb->vertices = static_cast<fastf_t*>(bu_malloc(3 * bot_internal.num_vertices * sizeof(fastf_t), "Bot:write: vertices"));
+    if (m_botInternal.vertices != 0) {
+	bot_wdb->vertices = static_cast<fastf_t*>(bu_malloc(3 * m_botInternal.num_vertices * sizeof(fastf_t), "Bot:write: vertices"));
 
-	memcpy(bot_wdb->vertices, bot_internal.vertices, 3 * bot_internal.num_vertices * sizeof(fastf_t));
+	memcpy(bot_wdb->vertices, m_botInternal.vertices, 3 * m_botInternal.num_vertices * sizeof(fastf_t));
     }
 
-    if (bot_internal.face_mode != 0)
-	bot_wdb->face_mode = bu_bitv_dup(bot_internal.face_mode);
+    if (m_botInternal.face_mode != 0)
+	bot_wdb->face_mode = bu_bitv_dup(m_botInternal.face_mode);
 
-    if (bot_internal.normals != 0) {
-	bot_wdb->normals = static_cast<fastf_t*>(bu_malloc(3 * bot_internal.num_normals * sizeof(fastf_t), "Bot:write: normals"));
+    if (m_botInternal.normals != 0) {
+	bot_wdb->normals = static_cast<fastf_t*>(bu_malloc(3 * m_botInternal.num_normals * sizeof(fastf_t), "Bot:write: normals"));
 
-	memcpy(bot_wdb->normals, bot_internal.normals, 3 * bot_internal.num_normals * sizeof(fastf_t));
+	memcpy(bot_wdb->normals, m_botInternal.normals, 3 * m_botInternal.num_normals * sizeof(fastf_t));
     }
 
-    if (bot_internal.face_normals != 0) {
-	bot_wdb->face_normals = static_cast<int*>(bu_malloc(3 * bot_internal.num_face_normals * sizeof(int), "Bot:write: face_normals"));
+    if (m_botInternal.face_normals != 0) {
+	bot_wdb->face_normals = static_cast<int*>(bu_malloc(3 * m_botInternal.num_face_normals * sizeof(int), "Bot:write: face_normals"));
 
-	memcpy(bot_wdb->face_normals, bot_internal.face_normals, 3 * bot_internal.num_face_normals * sizeof(int));
+	memcpy(bot_wdb->face_normals, m_botInternal.face_normals, 3 * m_botInternal.num_face_normals * sizeof(int));
     }
 
     bot_wdb->face_mode = bu_bitv_new(bot_wdb->num_faces);
 
-    if (thickness > SMALL_FASTF) {
+    if (m_thickness > SMALL_FASTF) {
 	bot_wdb->thickness = static_cast<fastf_t*>(bu_calloc(bot_wdb->num_faces, sizeof(fastf_t), "Bot:write: thickness"));
 
 	for (size_t i = 0; i < bot_wdb->num_faces; ++i)
-	    bot_wdb->thickness[i] = thickness;
+	    bot_wdb->thickness[i] = m_thickness;
     }
 
-    if (bot_internal.face_mode != 0 || bot_internal.normals != 0 || bot_internal.face_normals || 0) {
+    if (m_botInternal.face_mode != 0 || m_botInternal.normals != 0 || m_botInternal.face_normals || 0) {
 	ret.push_back(botName);
 
 	wdb_export(wdbp, botName.c_str(), bot_wdb, ID_BOT, 1.);

@@ -38,30 +38,28 @@ class Arbs {
 public:
     Arbs(void);
 
-    void                                     setName(const char* value);
+    void                                          setName(const char* value);
+    void                                          addArb(const char*    arbName,
+							 const point_t& point1,
+							 const point_t& point2,
+							 const point_t& point3,
+							 const point_t& point4,
+							 const point_t& point5,
+							 const point_t& point6,
+							 const point_t& point7,
+							 const point_t& point8);
+    const std::map<std::string, rt_arb_internal>& getArbs(void) const;
 
-    void                                     addArb(const char*    arbName,
-						    const point_t& point1,
-						    const point_t& point2,
-						    const point_t& point3,
-						    const point_t& point4,
-						    const point_t& point5,
-						    const point_t& point6,
-						    const point_t& point7,
-						    const point_t& point8);
-
-    std::map<std::string, rt_arb_internal>   getArbs(void) const;
-
-    std::vector<std::string>                 write(rt_wdb* wdbp);
+    std::vector<std::string>                      write(rt_wdb* wdbp);
 
 private:
-    std::string     name;
-    std::map<std::string, rt_arb_internal> arbs;
+    std::string                            m_name;
+    std::map<std::string, rt_arb_internal> m_arbs;
 
 };
 
 
-#endif //ARBS_INCLUDED
+#endif // !ARBS_INCLUDED
 
 
 // Local Variables:

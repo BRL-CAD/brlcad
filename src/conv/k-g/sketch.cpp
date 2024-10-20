@@ -26,7 +26,6 @@
 #include "sketch.h"
 
 
-
 Sketch::Sketch(void)
 {
     BU_GET(m_sketch, rt_sketch_internal);
@@ -36,21 +35,23 @@ Sketch::Sketch(void)
 }
 
 
-void Sketch::setName(const char* value)
-{
+void Sketch::setName
+(
+    const char* value
+) {
     if (value != nullptr)
-	name = value;
+	m_name = value;
     else
-	name = "";
+	m_name = "";
 }
 
 
 rt_sketch_internal* Sketch::creatSketch
 (
-    std::string sectionType,
-    const point_t& node1,
-    const point_t& node2,
-    const point_t& node3,
+    std::string                sectionType,
+    const point_t&             node1,
+    const point_t&             node2,
+    const point_t&             node3,
     const std::vector<double>& D
 ) {
     line_seg* lsg;
@@ -243,11 +244,10 @@ rt_sketch_internal* Sketch::creatSketch
 	lsg->start = vert_count - 1;
 	lsg->end = 0;
 	crv->segment[seg_count - 1] = lsg;
-
     }
     else if (sectionType == "SECTION_04") {
 	const size_t vert_count = 8;
-	const size_t seg_count = 8;
+	const size_t seg_count  = 8;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -303,7 +303,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_05") {
 	const size_t vert_count = 8;
-	const size_t seg_count = 8;
+	const size_t seg_count  = 8;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -373,7 +373,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_06") {
 	const size_t vert_count = 8;
-	const size_t seg_count = 8;
+	const size_t seg_count  = 8;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -474,7 +474,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_10") {
 	const size_t vert_count = 12;
-	const size_t seg_count = 12;
+	const size_t seg_count  = 12;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -542,7 +542,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_11") {
 	const size_t vert_count = 4;
-	const size_t seg_count = 4;
+	const size_t seg_count  = 4;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -587,7 +587,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_12") {
 	const size_t vert_count = 12;
-	const size_t seg_count = 12;
+	const size_t seg_count  = 12;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -655,7 +655,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_13") {
 	const size_t vert_count = 12;
-	const size_t seg_count = 12;
+	const size_t seg_count  = 12;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -723,7 +723,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_14") {
 	const size_t vert_count = 8;
-	const size_t seg_count = 8;
+	const size_t seg_count  = 8;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -779,7 +779,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_15") {
 	const size_t vert_count = 12;
-	const size_t seg_count = 12;
+	const size_t seg_count  = 12;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -847,7 +847,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_16") {
 	const size_t vert_count = 8;
-	const size_t seg_count = 8;
+	const size_t seg_count  = 8;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -903,7 +903,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_17") {
 	const size_t vert_count = 8;
-	const size_t seg_count = 8;
+	const size_t seg_count  = 8;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -959,7 +959,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_18") {
 	const size_t vert_count = 8;
-	const size_t seg_count = 8;
+	const size_t seg_count  = 8;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -1015,7 +1015,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_19") {
 	const size_t vert_count = 8;
-	const size_t seg_count = 8;
+	const size_t seg_count  = 8;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -1085,7 +1085,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_20") {
 	const size_t vert_count = 6;
-	const size_t seg_count = 6;
+	const size_t seg_count  = 6;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -1135,7 +1135,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_21") {
 	const size_t vert_count = 12;
-	const size_t seg_count = 12;
+	const size_t seg_count  = 12;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -1203,7 +1203,7 @@ rt_sketch_internal* Sketch::creatSketch
     }
     else if (sectionType == "SECTION_22") {
 	const size_t vert_count = 16;
-	const size_t seg_count = 16;
+	const size_t seg_count  = 16;
 
 	VMOVE(m_sketch->V, V);
 	VMOVE(m_sketch->u_vec, t);
@@ -1224,7 +1224,7 @@ rt_sketch_internal* Sketch::creatSketch
 	verts[3][1] = -D[1] * 0.5 + D[4];
 
 	verts[4][0] = -D[2] * 0.5 - D[5];
-	verts[4][1] = -D[1] * 0.5 + D[4]; 
+	verts[4][1] = -D[1] * 0.5 + D[4];
 
 	verts[5][0] = -D[2] * 0.5 + D[3];
 	verts[5][1] = -D[1] * 0.5 + D[4];
@@ -1306,8 +1306,10 @@ rt_sketch_internal* Sketch::getSketch(void) const
 }
 
 
-std::string Sketch::write(rt_wdb* wdbp)
-{
+std::string Sketch::write
+(
+    rt_wdb* wdbp
+) {
     std::string ret;
 
     rt_sketch_internal* sketch_wdb;
@@ -1316,8 +1318,8 @@ std::string Sketch::write(rt_wdb* wdbp)
     sketch_wdb = m_sketch;
 
     if (sketch_wdb->vert_count > 0) {
-	wdb_export(wdbp, name.c_str(), sketch_wdb, ID_SKETCH, 1);
-	ret = name;
+	wdb_export(wdbp, m_name.c_str(), sketch_wdb, ID_SKETCH, 1);
+	ret = m_name;
     }
 
     return ret;
