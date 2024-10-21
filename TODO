@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* verify arb6 editing in cheese wedge tutorial
+
 * Validate and merge hlbvh BoT raytracing improvements
 
 * rtarea is sometimes missing regions on summary reporting, at least on
