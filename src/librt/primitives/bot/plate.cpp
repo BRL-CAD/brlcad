@@ -206,6 +206,7 @@ edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1,
 int
 rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode)
 {
+    double mtol = std::numeric_limits<float>::min();
     if (!obot || !bot)
 	return 1;
 
@@ -230,6 +231,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     // OK, we have volume.  Now we need to build up the manifold definition
     // using unioned CSG elements
     manifold::Manifold c;
+    c.SetTolerance(mtol);
 
     // Collect the active vertices and edges
     std::set<int> verts;
@@ -328,6 +330,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	nmg_km(m);
 
 	manifold::MeshGL64 sph_m;
+	sph_m.tolerance = mtol;
 	for (size_t j = 0; j < sbot->num_vertices ; j++) {
 	    sph_m.vertProperties.insert(sph_m.vertProperties.end(), sbot->vertices[3*j]);
 	    sph_m.vertProperties.insert(sph_m.vertProperties.end(), sbot->vertices[3*j+1]);
@@ -396,6 +399,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    continue;
 
 	manifold::MeshGL64 rcc_m;
+	rcc_m.tolerance = mtol;
 	for (int j = 0; j < vert_cnt; j++) {
 	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][X]);
 	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][Y]);
@@ -514,6 +518,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 #endif
 
 	manifold::MeshGL64 arb_m;
+	arb_m.tolerance = mtol;
 	for (size_t j = 0; j < 6; j++) {
 	    arb_m.vertProperties.insert(arb_m.vertProperties.end(), pts[3*j+0]);
 	    arb_m.vertProperties.insert(arb_m.vertProperties.end(), pts[3*j+1]);
@@ -559,7 +564,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     if (!quiet_mode)
 	bu_log("Processing %zd faces... done.\n" , bot->num_faces);
 
-    manifold::MeshGL64 rmesh = c.GetMeshGL64();
+    manifold::MeshGL64 rmesh;
+    rmesh.tolerance = mtol;
+    rmesh = c.GetMeshGL64();
     struct rt_bot_internal *rbot;
     BU_GET(rbot, struct rt_bot_internal);
     rbot->magic = RT_BOT_INTERNAL_MAGIC;
