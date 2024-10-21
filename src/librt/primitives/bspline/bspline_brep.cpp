@@ -75,11 +75,16 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 
 	(*b)->m_S.Append(nurb);
 	int sindex = (*b)->m_S.Count();
+	int findex_before = (*b)->m_F.Count();
 	(*b)->NewFace(sindex - 1);
-	int findex = (*b)->m_F.Count();
-	if (findex < 1)
+	int findex_after = (*b)->m_F.Count();
+	if (findex_before < 1 || findex_before == findex_after) {
+	    bu_log("Failed to create face for surface %d, skipping\n", i);
 	    continue;
-	(*b)->NewOuterLoop(findex - 1);
+	}
+	if (findex_after < 1)
+	    continue;
+	(*b)->NewOuterLoop(findex_after - 1);
     }
 
     bu_log("BREP object %s a single surface\n", (*b)->IsSurface() ? "is" : "is not");
