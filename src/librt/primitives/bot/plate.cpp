@@ -231,16 +231,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     std::map<int, int> verts_fcnt;
     std::map<std::pair<int, int>, double> edges_thickness;
     std::map<std::pair<int, int>, int> edges_fcnt;
-    std::map<std::pair<int, int>, int> edges_fmode;
     std::set<std::pair<int, int>> edges;
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t eind;
-	// face_mode is a view dependent reporting option, where the full thickness is appended to the
-	// hit point reported from the BoT.  Because a volumetric BoT cannot exhibit view dependent
-	// behavior, we instead use the full thickness to encompass the maximal volume that might be
-	// claimed by the plate mode raytracing depending on the direction of the ray.  This will change
-	// the shotline thickness reported for any given ray, but provides a volume representative of
-	// the space the plate mode may claim as part of its solidity.
 	double fthickness = 0.5*bot->thickness[i];
 	if (NEAR_ZERO(fthickness, SMALL_FASTF))
 	    continue;
