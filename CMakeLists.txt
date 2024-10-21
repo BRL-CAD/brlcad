@@ -189,6 +189,10 @@ if(BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
 endif(BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
 
 if(DEFINED BRLCAD_EXT_DIR)
+  # Make sure we cache the BRLCAD_EXT_DIR setting - if we don't, then a re-configure
+  # with CMake is going to ignore a previously specified directory
+  set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR}" CACHE PATH "BRL-CAD external dependency sources")
+
   if(NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
     set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
   endif(NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
