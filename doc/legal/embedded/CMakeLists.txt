@@ -64,7 +64,6 @@ brlcad_manage_files(sh_wood.txt                ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(sobolseq.txt               ${DOC_DIR}/legal/embedded TRIGGER libbn)
 brlcad_manage_files(SPSR.txt                   ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(sscanf.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbu)
-brlcad_manage_files(stb_image.txt              ${DOC_DIR}/legal/embedded TRIGGER libgcv)
 brlcad_manage_files(stb_truetype.txt           ${DOC_DIR}/legal/embedded TRIGGER libdm)
 brlcad_manage_files(STIX_Font_License_2010.txt ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(strnstr.txt                ${DOC_DIR}/legal/embedded TRIGGER libbu)
