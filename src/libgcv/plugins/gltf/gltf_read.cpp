@@ -23,15 +23,11 @@
 
 #include <stdlib.h>
 
-#define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-/*#define STBI_MSC_SECURE_CRT */
-
-#include "tinygltf_headers/tiny_gltf.h"
+#include "tiny_gltf.h"
 
 #include "bu/cv.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/units.h"
 #include "gcv/api.h"
 #include "vmath.h"
@@ -39,8 +35,6 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-
-using namespace tinygltf;
 
 struct gltf_read_options
 {
@@ -226,7 +220,10 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 	std::string err;
 	std::string warn;
 	std::string input_filename(source_path);
-	std::string ext = GetFilePathExtension(input_filename);
+	struct bu_vls vext = BU_VLS_INIT_ZERO;
+	bu_path_component(&vext, source_path, BU_PATH_EXT);
+	std::string ext(bu_vls_cstr(&vext));
+	bu_vls_free(&vext);
 
 	bool ret = false;
 
