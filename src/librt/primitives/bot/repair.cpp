@@ -41,9 +41,6 @@
 #include <vector>
 
 #include "manifold/manifold.h"
-#ifdef USE_ASSETIMPORT
-#include "manifold/meshIO.h"
-#endif
 
 #ifdef USE_GEOGRAM
 #include "geogram/basic/process.h"

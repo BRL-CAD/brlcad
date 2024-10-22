@@ -1,21 +1,8 @@
 brlcad_find_package(MANIFOLD REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
-if(BRLCAD_ENABLE_ASSETIMPORT)
-  # TODO - see if we can use tinygltf to write out the glb file ourselves -
-  # Manifold's assimp integration is convenient for producing glb files, which
-  # are needed if we're going to submit problem cases upstream, but using it
-  # introduces an additional large dependency just for a debugging output...
-  brlcad_find_package(pugixml)
-  brlcad_find_package(assimp)
-endif(BRLCAD_ENABLE_ASSETIMPORT)
 brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
 add_definitions(-DUSE_GEOGRAM)
-
-if(TARGET assimp::assimp AND TARGET pugixml::pugixml)
-  add_definitions(-DUSE_ASSETIMPORT)
-  set(ASSETIMPORT_LIBRARIES assimp::assimp pugixml::pugixml)
-endif(TARGET assimp::assimp AND TARGET pugixml::pugixml)
 
 if(NOT BRLCAD_ENABLE_GCT)
   brlcad_find_package(MMESH REQUIRED)
@@ -372,7 +359,6 @@ set(
   ${librt_deps}
   ${OPENNURBS_LIBRARIES}
   ${MANIFOLD_LIBRARIES}
-  ${ASSETIMPORT_LIBRARIES}
   ${GEOGRAM_LIBRARY}
   ${MMESH_LIBRARY}
   ${REGEX_LIBRARIES}
