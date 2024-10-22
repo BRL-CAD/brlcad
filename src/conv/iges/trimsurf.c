@@ -569,7 +569,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 					  "Make_trim_loop: curve_list");
 
 	    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-	    eu = nmg_meonvu(vu);
+	    (void)nmg_meonvu(vu);
 
 	    for (i = 0; i < curve_count; i++)
 		Readint(&curve_list[i], "");
