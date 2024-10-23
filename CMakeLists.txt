@@ -2431,6 +2431,7 @@ set(
   .github/workflows/analysis.yml
   .github/workflows/check.yml
   .github/workflows/linux_interactive.yml
+  .gitattributes
   .gitignore
   .gitmodules
 )
