@@ -143,11 +143,15 @@ list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
 # We definitely do not want a .gitattributes files present, as it is
 # a potential source of subtle problems.  Bail with an explanation if
 # it is found to be present.
+#
+# TODO - need a more nuanced auditing of .gitattributes - GitHub is apparently
+# using it to specify language types on files - what we don't want (per
+# doc/git/mime_types.txt) is for someone to ID files as text or binary.
 if(EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
-  message(
-    FATAL_ERROR
-    "\nBRL-CAD does not use a .gitattributes file in its repository.  This is intended to prevent subtle errors from creeping in due to inadvertent pattern matches.  See ${BRLCAD_SOURCE_DIR}/doc/git/mime_types.txt for an in-depth discussion of the recommended alternatives to use for the problems .gitattributes is intended to address.\n"
-  )
+# message(
+#   FATAL_ERROR
+#   "\nBRL-CAD does not use a .gitattributes file in its repository.  This is intended to prevent subtle errors from creeping in due to inadvertent pattern matches.  See ${BRLCAD_SOURCE_DIR}/doc/git/mime_types.txt for an in-depth discussion of the recommended alternatives to use for the problems .gitattributes is intended to address.\n"
+# )
 endif(EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
 
 #---------------------------------------------------------------------
