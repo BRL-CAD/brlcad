@@ -1,0 +1,2 @@
+# Try to tell GitHub how to handle .asc files
+*.asc linguist-language=Tcl
