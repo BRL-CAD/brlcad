@@ -217,6 +217,7 @@ cmakefiles(
   CMakeLists.txt
   STARTERS
   STRATEGY
+  git/TODO.txt
   git/bisect.txt
   git/check.yml
   git/diffing.txt
