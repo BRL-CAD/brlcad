@@ -140,18 +140,28 @@ set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
 list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
 
 #---------------------------------------------------------------------
-# We definitely do not want a .gitattributes files present, as it is
-# a potential source of subtle problems.  Bail with an explanation if
-# it is found to be present.
+# GitHub is using .gitattributes to specify language types on files,
+# so we need it if we want to correct language identifications. On the
+# other hand, we DON'T want someone to use it to mark file patterns as
+# text or binary - that is much too easy to get wrong, and the
+# consequences can sometimes be very subtly incorrect/hard to debug.
 #
-# TODO - need a more nuanced auditing of .gitattributes - GitHub is apparently
-# using it to specify language types on files - what we don't want (per
-# doc/git/mime_types.txt) is for someone to ID files as text or binary.
+# Introspect the .gitattributes file looking for problematic keywords
 if(EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
-# message(
-#   FATAL_ERROR
-#   "\nBRL-CAD does not use a .gitattributes file in its repository.  This is intended to prevent subtle errors from creeping in due to inadvertent pattern matches.  See ${BRLCAD_SOURCE_DIR}/doc/git/mime_types.txt for an in-depth discussion of the recommended alternatives to use for the problems .gitattributes is intended to address.\n"
-# )
+  file(STRINGS "${BRLCAD_SOURCE_DIR}/.gitattributes" ALINES)
+  set(dangerous_keywords "text;crlf;diff;eol")
+  foreach(aline ${ALINES})
+    if (NOT "${aline}" MATCHES "^#.*")
+      foreach(kwrd ${dangerous_keywords})
+	if ("${aline}" MATCHES ".*${kwrd}.*")
+	  message(
+	    FATAL_ERROR
+	    "\nBRL-CAD does not use its .gitattributes file for identifying whether files are text or binary.  This limitation prevents subtle errors from creeping in due to inadvertent pattern matches.  See ${BRLCAD_SOURCE_DIR}/doc/git/mime_types.txt for an in-depth discussion of how to address cases where specific line endings are needed in text files.\n"
+	    )
+	endif()
+      endforeach()
+    endif()
+  endforeach()
 endif(EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
 
 #---------------------------------------------------------------------
