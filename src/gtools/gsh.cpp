@@ -343,10 +343,12 @@ main(int argc, const char **argv)
     /* Options */
     int print_help = 0;
     int constrained_mode = 0;
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0],  "h", "help", "",  NULL, &print_help,        "print help and exit");
-    BU_OPT(d[1],  "c", "",     "",  NULL, &constrained_mode,  "constrained mode - uses only built-in libged commands");
-    BU_OPT_NULL(d[2]);
+    int new_cmd_forms = 0;
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0],  "h",     "help",  "",  NULL, &print_help,        "print help and exit");
+    BU_OPT(d[1],  "c",         "",  "",  NULL, &constrained_mode,  "constrained mode - uses only built-in libged commands");
+    BU_OPT(d[2],  "",  "new-cmds",  "",  NULL, &new_cmd_forms,     "use new (qged style) commands");
+    BU_OPT_NULL(d[3]);
 
     /* Let libbu know where we are */
     bu_setprogname(argv[0]);
@@ -382,6 +384,8 @@ main(int argc, const char **argv)
 
     /* Tell the app which libged command execution mode to use */
     s.constrained_mode = constrained_mode;
+    if (new_cmd_forms)
+	bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
     /* If anything went wrong during LIBGED initialization, let the user know */
     const char *ged_init_str = ged_init_msgs();
