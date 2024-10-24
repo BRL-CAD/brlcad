@@ -37,6 +37,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "./uri.hh"
+
 #include "bu/cmd.h"
 #include "bu/opt.h"
 
@@ -287,7 +289,6 @@ extern "C" int
 ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
-    int optend_pos = -1;
     std::vector<std::string> geom_objs;
     struct edit_info einfo;
     einfo.verbosity = 0;
@@ -305,7 +306,9 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // We know we're the edit command
     argc--;argv++;
 
-    // Set up our command map
+    // Set up our command map.  Most command editing operations
+    // will be primitive specific, but there are some that are
+    // common to most object types
     std::map<std::string, ged_subcmd *> edit_cmds;
     edit_cmds[std::string("rot")]       = &edit_rotate_cmd;
     edit_cmds[std::string("rotate")]    = &edit_rotate_cmd;
@@ -330,48 +333,146 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
+    // If we're sure we don't have high level options, we can be more
+    // confident about reporting when the user specifies an invalid
+    // geometry specifier.  If we do have options in play, we can't
+    // reliably distinguish between an option argument and an invalid
+    // geometry specifier - the string may be intended as either.
+    bool maybe_opts =(argv[0][0] == '-') ? true : false;
+
     // High level options are only defined prior to the geometry specifier
+    // and/or subcommand.
+    int geom_pos = INT_MAX;
     std::vector<unsigned long long> gs;
     for (int i = 0; i < argc; i++) {
 	// TODO - de-quote so we can support obj names matching options...
-	gs = gedp->dbi_state->digest_path(argv[i]);
-	if (gs.size()) {
-	    optend_pos = i;
+	// TODO - Allow URI specifications to call out primitive params
+	try
+	{
+	    uri obj_uri(std::string("g:") + std::string(argv[i]));
+	    std::string obj_path = obj_uri.get_path();
+	    if (!obj_path.length()) {
+		obj_path = std::string(argv[i]);
+	    } else {
+		// TODO - store query and fragment info - for example, fragment
+		// could be use to specify an edge or vertex to move on an arb
+
+		// obj.s#V1
+		if (obj_uri.get_fragment().length() > 0)
+		    bu_log("have fragment: %s\n", obj_uri.get_fragment().c_str());
+		// obj.s?V*
+		if (obj_uri.get_query().length() > 0)
+		    bu_log("have query: %s\n", obj_uri.get_query().c_str());
+	    }
+	    gs = gedp->dbi_state->digest_path(obj_path.c_str());
+	}
+	catch (std::invalid_argument &uri_e)
+	{
+	    std::string uri_error = uri_e.what();
+	    bu_log("invalid uri: %s\n", uri_error.c_str());
+	    gs = gedp->dbi_state->digest_path(argv[i]);
+	}
+	if (gs.size() > 1 || gedp->dbi_state->get_hdp(gs[0]) != RT_DIR_NULL) {
+	    geom_pos = i;
+
 	    break;
 	}
     }
+    // Record geometry specifier
+    const char *geom_str = (geom_pos < INT_MAX) ? argv[geom_pos] : NULL;
 
-    int acnt = (optend_pos >= 0) ? optend_pos : argc;
+    // We can't recognize primitive specific subcommands without a primitive
+    // to key on, but we can recognize the general commands.
+    int cmd_pos = INT_MAX;
+    std::map<std::string, ged_subcmd *>::iterator e_it;
+    for (e_it = edit_cmds.begin(); e_it != edit_cmds.end(); ++e_it) {
+	for (int i = 0; i < argc; i++) {
+	    std::string astr(argv[i]);
+	    if (e_it->first == astr) {
+		cmd_pos = i;
+		break;
+	    }
+	}
+    }
+    // Record command string
+    const char *cmd_str = (cmd_pos < INT_MAX) ? argv[cmd_pos] : NULL;
 
-    int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
+    // If we have no geometry specifier and no command, or a generic command
+    // precedes the geometry specifier, we're just going to print generic help
+    if (geom_pos == INT_MAX && cmd_pos == INT_MAX) {
+	if (!maybe_opts && geom_pos == INT_MAX) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid geometry specifier: %s\n", argv[0]);
+	} else {
+	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
+	}
+	return BRLCAD_ERROR;
+    }
+    if (geom_pos < INT_MAX && cmd_pos < INT_MAX && geom_pos > cmd_pos) {
+	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
+	return BRLCAD_ERROR;
+    }
 
-    if (help || opt_ret < 0) {
-	if (optend_pos >= 0) {
-	    argc = argc - optend_pos;
-	    argv = &argv[optend_pos];
-	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, argc, argv);
+    int acnt = (geom_pos < cmd_pos) ? geom_pos : cmd_pos;
+
+    // Check whether we might have high level options
+    struct bu_vls opterrs = BU_VLS_INIT_ZERO;
+    int opt_ret = bu_opt_parse(&opterrs, acnt, argv, d);
+    // If we had any high level option errors, print help
+    if (opt_ret < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&opterrs));
+	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
+	bu_vls_free(&opterrs);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&opterrs);
+
+    // If we had something the options didn't process, it's either an option
+    // error or invalid geometry processor.
+    if (opt_ret) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid geometry specifier: %s", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    // Because we limited the subset of argv bu_opt was processing, we need to
+    // manually shift anything still remaining to the beginning of the argv
+    // array for subsequent processing.
+    if (argc > acnt) {
+	int remaining = argc - acnt;
+	for (int i = 0; i < remaining; i++) {
+	    argv[i] = argv[acnt+i];
+	}
+    }
+    argc -= acnt;
+
+    // Clear geometry specifier, if present
+    if (geom_str) {
+	argc--; argv++;
+    }
+
+    if (help) {
+	if (cmd_str) {
+	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, cmd_str, bargs_help, argc, argv);
 	} else {
 	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	}
 	return BRLCAD_OK;
     }
 
-    // Must have a specifier
-    if (optend_pos == -1) {
+    // Must have a specifier to continue further - we can print command
+    // specific help without a specifier, but we can't do any actual processing
+    // without one.
+    if (!geom_str) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid geometry specifier found, nothing to edit\n");
 	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_ERROR;
     }
-
-    // TODO - this may not be correct, just a hack assuming simple command structure...
-    argc--; argv++;
 
     // There are some generic commands (rot, tra, etc.) that apply universally
     // to all geometry, but the majority of editing operations are specific to
     // each individual geometric primitive type.  We first decode the specifier,
     // to determine what operations we're able to support.
     einfo.dp = gedp->dbi_state->get_hdp(gs[0]);
-    if (!einfo.dp) {
+    if (gs.size() == 1 && !einfo.dp) {
 	bu_vls_printf(gedp->ged_result_str, ": geometry specifier lookup failed for %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -450,12 +551,13 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     }
 #endif
 
-    // Jump the processing past any options specified
-    argc = argc - optend_pos;
-    argv = &argv[optend_pos];
-
     // Execute the subcommand
-    return edit_cmds[std::string(argv[0])]->exec(gedp, &einfo, argc, argv);
+    if (!cmd_str) {
+	bu_log("No subcommand specified\n");
+	return BRLCAD_ERROR;
+    }
+
+    return edit_cmds[std::string(cmd_str)]->exec(gedp, &einfo, argc, argv);
 }
 
 

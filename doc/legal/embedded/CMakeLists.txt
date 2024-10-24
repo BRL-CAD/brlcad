@@ -75,6 +75,7 @@ brlcad_manage_files(tinythread.txt             ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(tkcon.txt                  ${DOC_DIR}/legal/embedded TRIGGER libtclcad)
 brlcad_manage_files(tri_pt.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(uce_dirent.txt             ${DOC_DIR}/legal/embedded TRIGGER libbu)
+brlcad_manage_files(uri.txt                    ${DOC_DIR}/legal/embedded TRIGGER libged)
 brlcad_manage_files(vds.txt                    ${DOC_DIR}/legal/embedded TRIGGER librt)
 brlcad_manage_files(whereami.txt               ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(winmmap.txt                ${DOC_DIR}/legal/embedded TRIGGER libbu)
