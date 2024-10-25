@@ -18,6 +18,7 @@ cmakefiles(
   edit.c
   edit2.cpp
   ged_edit2.h
+  uri.hh
 )
 
 # Local Variables:
