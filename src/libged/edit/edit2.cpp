@@ -407,7 +407,7 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	return BRLCAD_ERROR;
     }
-    if (geom_pos < INT_MAX && cmd_pos < INT_MAX && geom_pos > cmd_pos) {
+    if (geom_pos < INT_MAX && cmd_pos < INT_MAX && (geom_pos > cmd_pos || cmd_pos != geom_pos + 1)) {
 	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_ERROR;
     }
