@@ -69,11 +69,8 @@ extern "C" {
 #define DEFAULT_GSH_PROMPT "g> "
 
 struct gsh_state {
-    /* libged */
-    void *libged;
     struct ged *gedp;
     struct bu_vls gfile;
-    int constrained_mode;
 
     /* linenoise */
     const char *pmpt;
@@ -188,15 +185,9 @@ view_update(struct gsh_state *s)
 }
 #endif
 
-int
+void
 gsh_state_init(struct gsh_state *s)
 {
-    s->libged = bu_dlopen(NULL, BU_RTLD_LAZY);
-
-    /* Without a libged library, we're done */
-    if (!s->libged)
-	return BRLCAD_ERROR;
-
     BU_GET(s->gedp, struct ged);
     ged_init(s->gedp);
     /* We will need a view to support commands like draw */
@@ -216,8 +207,6 @@ gsh_state_init(struct gsh_state *s)
     s->pmpt = NULL;
     s->line = NULL;
     bu_vls_init(&s->iline);
-
-    return BRLCAD_OK;
 }
 
 void
@@ -236,7 +225,6 @@ gsh_state_free(struct gsh_state *s)
     }
 
     ged_close(s->gedp);
-    bu_dlclose(s->libged);
     bu_vls_free(&s->gfile);
     bu_vls_free(&s->iline);
 }
@@ -250,45 +238,16 @@ geval(struct gsh_state *s, int argc, const char **argv)
     if (!s || !s->gedp)
 	return BRLCAD_ERROR;
 
-    if (s->constrained_mode) {
-
-	/* Note - doing the command execution this way limits us to the "hardwired"
-	 * functions built into the libged API.  That may or may not be what we
-	 * want, depending on the application - this in effect restricts us to a
-	 * "safe" command set, but also hides any user-provided plugins.  */
-
-	int (*func)(struct ged *, int, char *[]);
-	char gedfunc[MAXPATHLEN] = {0};
-
-	bu_strlcat(gedfunc, "ged_", MAXPATHLEN);
-	bu_strlcat(gedfunc, argv[0], MAXPATHLEN - strlen(gedfunc));
-	if (strlen(gedfunc) < 1 || gedfunc[0] != 'g') {
-	    bu_log("Couldn't get GED command name from [%s]\n", argv[0]);
-	    return BRLCAD_ERROR;
+    if (ged_cmd_valid(argv[0], NULL)) {
+	const char *ccmd = NULL;
+	int edist = ged_cmd_lookup(&ccmd, argv[0]);
+	if (edist) {
+	    printf("Command %s not found, did you mean %s (edit distance %d)?\n", argv[0], ccmd, edist);
 	}
-
-	*(void **)(&func) = bu_dlsym(s->libged, gedfunc);
-	if (!func) {
-	    bu_log("Unrecognized command [%s]\n", argv[0]);
-	    return BRLCAD_ERROR;
-	}
-
-	/* TODO - is it ever unsafe to do this cast?  Does ged mess with argv somehow? */
-	ret = func(s->gedp, argc, (char **)argv);
-
-    } else {
-
-	if (ged_cmd_valid(argv[0], NULL)) {
-	    const char *ccmd = NULL;
-	    int edist = ged_cmd_lookup(&ccmd, argv[0]);
-	    if (edist) {
-		printf("Command %s not found, did you mean %s (edit distance %d)?\n", argv[0], ccmd, edist);
-	    }
-	    return BRLCAD_ERROR;
-	}
-
-	ret = ged_exec(s->gedp, argc, argv);
+	return BRLCAD_ERROR;
     }
+
+    ret = ged_exec(s->gedp, argc, argv);
 
     if (!(ret & GED_MORE)) {
 	printf("%s", bu_vls_cstr(s->gedp->ged_result_str));
@@ -342,13 +301,11 @@ main(int argc, const char **argv)
 
     /* Options */
     int print_help = 0;
-    int constrained_mode = 0;
     int new_cmd_forms = 0;
-    struct bu_opt_desc d[4];
+    struct bu_opt_desc d[3];
     BU_OPT(d[0],  "h",     "help",  "",  NULL, &print_help,        "print help and exit");
-    BU_OPT(d[1],  "c",         "",  "",  NULL, &constrained_mode,  "constrained mode - uses only built-in libged commands");
-    BU_OPT(d[2],  "",  "new-cmds",  "",  NULL, &new_cmd_forms,     "use new (qged style) commands");
-    BU_OPT_NULL(d[3]);
+    BU_OPT(d[1],  "",  "new-cmds",  "",  NULL, &new_cmd_forms,     "use new (qged style) commands");
+    BU_OPT_NULL(d[2]);
 
     /* Let libbu know where we are */
     bu_setprogname(argv[0]);
@@ -376,14 +333,10 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    /* If we can't load libged there's no point in continuing */
-    if (gsh_state_init(&s) != BRLCAD_OK) {
-	bu_vls_free(&msg);
-	bu_exit(EXIT_FAILURE, "ERROR, could not load libged: %s\n", bu_dlerror());
-    }
+    /* Initialize */
+    gsh_state_init(&s);
 
     /* Tell the app which libged command execution mode to use */
-    s.constrained_mode = constrained_mode;
     if (new_cmd_forms)
 	bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
