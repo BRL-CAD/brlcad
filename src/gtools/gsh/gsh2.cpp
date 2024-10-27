@@ -68,8 +68,136 @@ class GshState {
 #endif
 
 	struct ged *gedp;
+	std::string gfile;  // Mostly used to test the post_opendb callback
 	bool new_cmd_forms = false;
 };
+
+/* For gsh these are mostly no-op, but define placeholder
+ * functions in case we need to pre or post actions for
+ * database opening in the future. */
+extern "C" void
+gsh_pre_opendb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+{
+}
+
+extern "C" void
+gsh_post_opendb_clbk(struct ged *UNUSED(gedp), void *ctx)
+{
+    GshState *s = (GshState *)ctx;
+    if (!s->gedp->dbip)
+	return;
+    s->gfile = std::string(s->gedp->dbip->dbi_filename);
+}
+
+extern "C" void
+gsh_pre_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+{
+}
+
+extern "C" void
+gsh_post_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+{
+}
+
+
+/* Cross platform I/O subprocess listening is tricky.  Tcl and Qt both have
+ * specific logic necessary for their environments.  Even the minimalist
+ * command line environment has some basic requirements that must be met.
+ *
+ * Most likely the best way to handle this will be a libuv loop running in
+ * another thread to monitor for and handle I/O events - we don't want to get
+ * into the thorny business of wrapping the low level platform specific APIs
+ * necessary for this if we can help it.  Tcl and Qt both provide wrappers as
+ * part of their toolkits that we use for this, so their callbacks aren't
+ * directly usable in this minimalist context.
+ * https://github.com/libuv/libuv
+ *
+ * May also end up finding a use for nod signals/slots if libuv doesn't do
+ * it for us by itself:  https://github.com/fr00b0/nod
+ */
+extern "C" void
+gsh_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t UNUSED(callback), void *UNUSED(data))
+{
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
+	return;
+
+    int fd = bu_process_fileno(p->p, t);
+    if (fd < 0)
+	return;
+
+    //GshState *gs = (GshState *)p->gedp->ged_io_data;
+
+    //QgConsole *c = ca->w->console;
+    //c->listen(fd, p, t, callback, data);
+
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 1;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 1;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 1;
+	    break;
+    }
+}
+
+extern "C" void
+gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
+{
+    if (!p) return;
+
+    //GshState *gs = (GshState *)p->gedp->ged_io_data;
+
+    // Since these callbacks are invoked from the listener, we can't call
+    // the listener destructors directly.  We instead call a routine that
+    // emits a single that will notify the console widget it's time to
+    // detach the listener.
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    bu_log("stdin\n");
+#if 0
+	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+	    }
+#endif
+	    p->stdin_active = 0;
+	    break;
+	case BU_PROCESS_STDOUT:
+#if 0
+	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stdout: %d\n", p->stdout_active);
+	    }
+#endif
+	    p->stdout_active = 0;
+	    break;
+	case BU_PROCESS_STDERR:
+#if 0
+	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stderr: %d\n", p->stderr_active);
+	    }
+#endif
+	    p->stderr_active = 0;
+	    break;
+    }
+
+    // All communication has ceased between the app and the subprocess,
+    // time to call the end callback (if any)
+    if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
+	if (p->end_clbk)
+	    p->end_clbk(0, p->end_clbk_data);
+    }
+
+    //emit ca->view_update(QG_VIEW_REFRESH);
+}
+
+
 
 GshState::GshState()
 {
@@ -85,9 +213,22 @@ GshState::GshState()
     bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
     bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
     bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
+
 #ifdef USE_DM
     view_checkpoint();
 #endif
+
+    // Assign gsh specific open/close db handlers to the gedp
+    gedp->ged_pre_opendb_callback = &gsh_pre_opendb_clbk;
+    gedp->ged_post_opendb_callback = &gsh_post_opendb_clbk;
+    gedp->ged_pre_closedb_callback = &gsh_pre_closedb_clbk;
+    gedp->ged_post_closedb_callback = &gsh_post_closedb_clbk;
+    gedp->ged_db_callback_udata = (void *)this;
+
+    // Assign gsh specific I/O handlers to the gedp
+    gedp->ged_create_io_handler = &gsh_create_io_handler;
+    gedp->ged_delete_io_handler = &gsh_delete_io_handler;
+    gedp->ged_io_data = (void *)this;
 }
 
 GshState::~GshState()
