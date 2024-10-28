@@ -129,7 +129,6 @@ class GshState {
 	// Active listeners
 	std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *> listeners;
 
-#ifdef USE_DM
 	// Display management
 	void view_checkpoint();
 	void view_update();
@@ -137,7 +136,6 @@ class GshState {
 	unsigned long long prev_vhash = 0;
 	unsigned long long prev_lhash = 0;
 	unsigned long long prev_ghash = 0;
-#endif
 
 	struct ged *gedp;
 	std::string gfile;  // Mostly used to test the post_opendb callback
@@ -245,7 +243,11 @@ gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     //emit ca->view_update(QG_VIEW_REFRESH);
 }
 
-
+void
+Gsh_ClearScreen(struct ged *, void *)
+{
+    linenoise::linenoiseClearScreen();
+}
 
 GshState::GshState()
 {
@@ -262,9 +264,7 @@ GshState::GshState()
     bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
     bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
 
-#ifdef USE_DM
     view_checkpoint();
-#endif
 
     // Assign gsh specific open/close db handlers to the gedp
     gedp->ged_pre_opendb_callback = &gsh_pre_opendb_clbk;
@@ -277,6 +277,10 @@ GshState::GshState()
     gedp->ged_create_io_handler = &gsh_create_io_handler;
     gedp->ged_delete_io_handler = &gsh_delete_io_handler;
     gedp->ged_io_data = (void *)this;
+
+    // Tell libged how to clear the screen
+    gedp->ged_screen_clear_callback = &Gsh_ClearScreen;
+    gedp->ged_screen_clear_callback_udata = NULL;
 }
 
 GshState::~GshState()
@@ -298,21 +302,6 @@ GshState::~GshState()
 int
 GshState::eval(int argc, const char **argv)
 {
-    // First, check for special case application-only commands.  These should
-    // be rare and pertain exclusively to application level state - most
-    // commands should be expressible in a GED context.
-
-    // Clear the terminal screen's textual output
-    if (UNLIKELY(BU_STR_EQUAL(argv[0], "clear"))) {
-	linenoise::linenoiseClearScreen();
-	return BRLCAD_OK;
-    }
-    // Exit the application
-    if (UNLIKELY(BU_STR_EQUAL(argv[0], "quit") || BU_STR_EQUAL(argv[0], "q") || BU_STR_EQUAL(argv[0], "exit")))
-	return GED_EXIT;
-
-
-    // Not one of the application level cases - time to ask LIBGED
     if (ged_cmd_valid(argv[0], NULL)) {
 	const char *ccmd = NULL;
 	int edist = ged_cmd_lookup(&ccmd, argv[0]);
@@ -324,17 +313,12 @@ GshState::eval(int argc, const char **argv)
 
     // We've got a valid GED command Before any BRL-CAD logic is executed,
     // stash the state of the view info so we can recognized changes. */
-#ifdef USE_DM
     view_checkpoint();
-#endif
 
     int gret = ged_exec(gedp, argc, argv);
 
-#ifdef USE_DM
-    if (!(gret & BRLCAD_ERROR)) {
+    if (!(gret & BRLCAD_ERROR))
 	view_update();
-    }
-#endif
 
     return gret;
 }
@@ -346,10 +330,10 @@ GshState::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_fun
     listeners[std::make_pair(p,t)] = nh;
 }
 
-#ifdef USE_DM
 void
 GshState::view_checkpoint()
 {
+#ifdef USE_DM
     if (!gedp->ged_gvp->dmp)
 	return;
     struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
@@ -357,11 +341,13 @@ GshState::view_checkpoint()
     prev_vhash = bv_hash(gedp->ged_gvp);
     prev_lhash = (new_cmd_forms) ? 0 : dl_name_hash(gedp);
     prev_ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+#endif
 }
 
 void
 GshState::view_update()
 {
+#ifdef USE_DM
     struct bview *v = gedp->ged_gvp;
     if (!v)
 	return;
@@ -428,9 +414,8 @@ GshState::view_update()
 	    dm_draw_end(dmp);
 	}
     }
-}
 #endif
-
+}
 
 // The primary interaction thread managing the command line
 // input from the user.  Must not be the main thread of the
