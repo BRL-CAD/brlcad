@@ -1886,11 +1886,8 @@ failed:
 	/* Erase to right */
 	snprintf(seq,64,"\x1b[0K");
 	ab += seq;
-	// TODO - this is a hack for linenoiseWipeLine... probably should be
-	// addressing this elsewhere...
-	int opos = (l->prompt.length()) ? (int)(unicodeColumnPos(buf, pos)+pcolwid) : (int)(unicodeColumnPos(buf, pos)+pcolwid) - 1;
 	/* Move cursor to original position. */
-	snprintf(seq,64,"\r\x1b[%dC", opos);
+	snprintf(seq,64,"\r\x1b[%dC", (int)(unicodeColumnPos(buf, pos)+pcolwid));
 	ab += seq;
 	if (write(fd,ab.c_str(), static_cast<int>(ab.length())) == -1) {} /* Can't recover from write error. */
     }
