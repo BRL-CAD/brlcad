@@ -169,6 +169,7 @@ class GshState {
 	void disconnect(struct ged_subprocess *p, bu_process_io_t t);
 	// Print subprocesses outputs (if any)
 	void subprocess_output();
+	size_t listeners_cnt();
 
 	// Display management
 	void view_checkpoint();
@@ -451,6 +452,12 @@ GshState::subprocess_output()
 	refreshLine(l.get());
 	print_mutex.unlock();
     }
+}
+
+size_t
+GshState::listeners_cnt()
+{
+    return listeners.size();
 }
 
 void
@@ -736,8 +743,16 @@ main(int argc, const char **argv)
      * minimize the possibility of any unforeseen complications. */
     if (argc) {
 	int ret = gs.get()->eval(argc, argv);
-	// TODO - need to loop over subprocess listeners and print their
+	std::string cmd_out(bu_vls_cstr(gs.get()->gedp->ged_result_str));
+	std::cout << cmd_out;
+	if (cmd_out[cmd_out.length()-1] != '\n')
+	    std::cout << "\n";
+	// Need to loop over subprocess listeners and print their
 	// output until they finish.
+	while (gs.get()->listeners_cnt()) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	    gs.get()->subprocess_output();
+	}
 	return (ret == BRLCAD_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 
@@ -764,31 +779,13 @@ main(int argc, const char **argv)
     // when we enter the main loop if the prompt is already set.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    // To simulate getting I/O from other sources and printing it while using
-    // refreshLine to avoid messing up the user's input experience, we print to
-    // stdout at periodic intervals.  Once we have proper listening callbacks
-    // for rt and friends, their output should be handled like the output
-    // below.
-    int delay_cnt = 0;
+    // From this point on the linenoise thread will drive user interaction.
+    // The main thread's role is to periodically collect and output subprocess
+    // outputs until the linenoise thread lets us know it's time to quit.
     while (true) {
-	delay_cnt++;
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
 	gs.get()->subprocess_output();
-
-#if 0
-	if (delay_cnt % 10 == 0) {
-	    gs.get()->print_mutex.lock();
-	    linenoiseWipeLine(gs.get()->l.get());
-	    std::cout << "main loop: " << delay_cnt << "\n";
-	    gs.get()->print_mutex.unlock();
-	    refreshLine(gs.get()->l.get());
-	}
-#endif
 	if (gs.get()->linenoise_done) {
-	    gs.get()->print_mutex.lock();
-	    std::cout << "\nall done\n";
-	    gs.get()->print_mutex.unlock();
 	    g_cmdline_thread.join();
 	    break;
 	}
