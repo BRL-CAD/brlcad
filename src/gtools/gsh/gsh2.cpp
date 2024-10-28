@@ -146,6 +146,76 @@ ProcessIOHandler::read()
     return lcpy;
 }
 
+class DisplayHash {
+    public:
+	bool hash(struct ged *, bool, bool);
+	void dirty(struct ged *, const DisplayHash &);
+	unsigned long long d = 0;
+	unsigned long long v = 0;
+	unsigned long long l = 0;
+	unsigned long long g = 0;
+};
+
+bool
+DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
+{
+    d = 0; v = 0; l = 0; g = 0;
+    struct bview *bv = gedp->ged_gvp;
+    if (!bv)
+	return false;
+
+    struct dm *dmp = (struct dm *)bv->dmp;
+    if (!dmp)
+	return false;
+
+    d = dm_hash(dmp);
+    v = bv_hash(bv);
+
+    if (new_cmd_forms && gedp->dbi_state) {
+	if (dbi_state_check) {
+	    unsigned long long updated = gedp->dbi_state->update();
+	    l = (updated) ? l + 1 : 0;
+	    if (bv->gv_s->gv_cleared) {
+		l = 1;
+		bv->gv_s->gv_cleared = 0;
+	    }
+	} else {
+	    l = 0;
+	}
+    } else {
+	l = dl_name_hash(gedp);
+    }
+
+    g = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+
+    return true;
+}
+
+void
+DisplayHash::dirty(struct ged *gedp, const DisplayHash &o)
+{
+    struct bview *bv = gedp->ged_gvp;
+    if (!bv)
+	return;
+
+    struct dm *dmp = (struct dm *)bv->dmp;
+    if (!dmp)
+	return;
+
+    if (d != o.d) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (v != o.v) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (l != o.l) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (g != o.g) {
+	dm_set_dirty(dmp, 1);
+    }
+}
+
 /* The overall state of the gsh application is encapsulated by a state class
  * called GshState.  It defines the method for executing libged commands and
  * manages the linenoise interactive thread, as well as the necessary state
@@ -174,10 +244,7 @@ class GshState {
 	// Display management
 	void view_checkpoint();
 	void view_update();
-	unsigned long long prev_dhash = 0;
-	unsigned long long prev_vhash = 0;
-	unsigned long long prev_lhash = 0;
-	unsigned long long prev_ghash = 0;
+	DisplayHash prev_hash;
 
 	struct ged *gedp;
 	std::string gfile;  // Mostly used to test the post_opendb callback
@@ -391,13 +458,7 @@ void
 GshState::view_checkpoint()
 {
 #ifdef USE_DM
-    if (!gedp->ged_gvp->dmp)
-	return;
-    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
-    prev_dhash = dm_hash(dmp);
-    prev_vhash = bv_hash(gedp->ged_gvp);
-    prev_lhash = (new_cmd_forms) ? 0 : dl_name_hash(gedp);
-    prev_ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+    prev_hash.hash(gedp, false, new_cmd_forms);
 #endif
 }
 
@@ -464,42 +525,14 @@ void
 GshState::view_update()
 {
 #ifdef USE_DM
+    DisplayHash hashes;
+    if (!hashes.hash(gedp, true, new_cmd_forms))
+	return;
+
+    hashes.dirty(gedp, prev_hash);
+
     struct bview *v = gedp->ged_gvp;
-    if (!v)
-	return;
-
     struct dm *dmp = (struct dm *)v->dmp;
-    if (!dmp)
-	return;
-
-    unsigned long long dhash = dm_hash(dmp);
-    unsigned long long vhash = bv_hash(v);
-    unsigned long long lhash = 0;
-    if (new_cmd_forms && gedp->dbi_state) {
-	unsigned long long updated = gedp->dbi_state->update();
-	lhash = (updated) ? prev_lhash + 1 : 0;
-	if (v->gv_s->gv_cleared) {
-	    lhash = 1;
-	    v->gv_s->gv_cleared = 0;
-	}
-    } else {
-	lhash = dl_name_hash(gedp);
-    }
-
-    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-    unsigned long long lhash_edit = lhash;
-    if (dhash != prev_dhash) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (vhash != prev_vhash) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (lhash_edit != prev_lhash) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (ghash != prev_ghash) {
-	dm_set_dirty(dmp, 1);
-    }
     if (dm_get_dirty(dmp)) {
 	if (new_cmd_forms) {
 	    unsigned char *dm_bg1;
