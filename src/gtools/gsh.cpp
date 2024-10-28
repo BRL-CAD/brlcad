@@ -186,6 +186,14 @@ view_update(struct gsh_state *s)
 #endif
 
 void
+gsh_clearscreen(struct ged *, void *vs)
+{
+    struct gsh_state *s = (struct gsh_state *)vs;
+    linenoiseClearScreen();
+    bu_vls_trunc(&s->iline, 0);
+}
+
+void
 gsh_state_init(struct gsh_state *s)
 {
     BU_GET(s->gedp, struct ged);
@@ -207,6 +215,10 @@ gsh_state_init(struct gsh_state *s)
     s->pmpt = NULL;
     s->line = NULL;
     bu_vls_init(&s->iline);
+
+    s->gedp->ged_screen_clear_callback = &gsh_clearscreen;
+    s->gedp->ged_screen_clear_callback_udata = (void *)s;
+
 }
 
 void
@@ -254,33 +266,6 @@ geval(struct gsh_state *s, int argc, const char **argv)
     }
     return ret;
 }
-
-
-int
-gsh_clear(void *vs, int UNUSED(argc), const char **UNUSED(argv))
-{
-    struct gsh_state *s = (struct gsh_state *)vs;
-    if (BU_STR_EQUAL(bu_vls_cstr(&s->iline), "clear")) {
-	linenoiseClearScreen();
-	bu_vls_trunc(&s->iline, 0);
-    }
-    return BRLCAD_OK;
-}
-
-int
-gsh_exit(void *UNUSED(vs), int UNUSED(argc), const char **UNUSED(argv))
-{
-    return GED_EXIT;
-}
-
-// TODO - an equivalent to the MGED opendb command would go here.
-static struct bu_cmdtab gsh_cmds[] = {
-    {"clear", gsh_clear},
-    {"exit",  gsh_exit},
-    {"q",     gsh_exit},
-    {"quit",  gsh_exit},
-    {NULL,    BU_CMD_NULL}
-};
 
 int
 main(int argc, const char **argv)
@@ -412,7 +397,6 @@ main(int argc, const char **argv)
 	char *input = bu_strdup(bu_vls_cstr(&s.iline));
 	char **av = (char **)bu_calloc(strlen(input) + tmp_av.size() + 1, sizeof(char *), "argv array");
 	int ac = bu_argv_from_string(av, strlen(input), input);
-	int is_gsh_cmd = 0;
 	int gret = BRLCAD_OK;
 
 	/* If we are in the midst of a MORE command, the handling is different */
@@ -426,39 +410,22 @@ main(int argc, const char **argv)
 		av[i] = tmp_av[i];
 	    }
 	    ac = (int)tmp_av.size();
-	} else {
-	    /* There are a few commands which must be aware of application-specific
-	     * information and state unknown to GED.  We check first to see if the
-	     * specified input matches one of those commands. */
-	    if (bu_cmd_valid(gsh_cmds, av[0]) == BRLCAD_OK) {
-		int cbret;
-		int cret = bu_cmd(gsh_cmds, ac, (const char **)av, 0, (void *)&s, &cbret);
-
-		// Regardless of what happened, this is not a raw GED cmd
-		is_gsh_cmd = 1;
-
-		if (cret != BRLCAD_OK)
-		    printf("Error executing command %s\n", av[0]);
-
-		// If we are supposed to quit now, go to the cleanup section
-		if (cbret & GED_EXIT) {
-		    /* Free the temporary argv structures */
-		    bu_free(input, "input copy");
-		    bu_free(av, "input argv");
-		    goto done;
-		}
-	    }
 	}
 
-	/* If we didn't match a gsh cmd, try a standard libged call */
-	if (!is_gsh_cmd) {
-	    gret = geval(&s, ac, (const char **)av);
-	    // The command ran, see if the display needs updating
+	/* Execute the standard libged eval */
+	gret = geval(&s, ac, (const char **)av);
+	// The command ran, see if the display needs updating
 #ifdef USE_DM
-	    if (!(gret & BRLCAD_ERROR)) {
-		view_update(&s);
-	    }
+	if (!(gret & BRLCAD_ERROR)) {
+	    view_update(&s);
+	}
 #endif
+	// If we are supposed to quit now, go to the cleanup section
+	if (gret & GED_EXIT) {
+	    /* Free the temporary argv structures */
+	    bu_free(input, "input copy");
+	    bu_free(av, "input argv");
+	    goto done;
 	}
 
 	// If we closed the dbip, clear out the gfile name

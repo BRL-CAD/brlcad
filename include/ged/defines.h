@@ -289,14 +289,24 @@ struct ged {
     void (*ged_post_closedb_callback)(struct ged *, void *);
     void *ged_db_callback_udata;
 
+    /* Function for clearing the GED text window (typically a text or terminal
+     * screen).  Most high level user applications have some sort of console
+     * input, so we want a consistent command (and we DON'T want to have to
+     * special case the handling of "clear" specifically in various app command
+     * evaluation logic.)  However, since libged doesn't know anything about
+     * what clear means in specific app environments the app needs to tell it
+     * via callback.*/
+    void (*ged_screen_clear_callback)(struct ged *, void *);
+    void *ged_screen_clear_callback_udata;
+
     /* Functions assigned to ged_subprocess init_clbk and end_clbk
      * slots when the ged_subprocess is created.  TODO - eventually
      * this should be command-specific callback registrations, but
      * first we'll get the basic mechanism working, then introduce
      * that extra complication... */
-    void			(*ged_subprocess_init_callback)(int, void *);	/**< @brief  function called when process starts */
-    void			(*ged_subprocess_end_callback)(int, void *);	/**< @brief  function called when process completes */
-    void			*ged_subprocess_clbk_context;
+    void (*ged_subprocess_init_callback)(int, void *);	/**< @brief  function called when process starts */
+    void (*ged_subprocess_end_callback)(int, void *);	/**< @brief  function called when process completes */
+    void *ged_subprocess_clbk_context;
 
     /* Handler functions for I/O communication with asynchronous subprocess commands.  There
      * are two opaque data structures at play here, with different scopes.  One is the "data"
@@ -325,6 +335,17 @@ struct ged {
     void (*fbs_close_server_handler)(struct fbserv_obj *);   /**< @brief platform/toolkit method to close handler listener */
     void (*fbs_open_client_handler)(struct fbserv_obj *, int, void *);   /**< @brief platform/toolkit specific client handler setup (called by fbs_new_client) */
     void (*fbs_close_client_handler)(struct fbserv_obj *, int);   /**< @brief platform/toolkit method to close handler for client at index client_id */
+
+    /* LIBGED doesn't encompass the complete concept of quitting - that process
+     * must ultimately be handled at the app level, which is the only context
+     * that has all the necessary info.  However, since exit and quit are
+     * common command line commands for exiting complex applications, they are
+     * a case similar to clear GED text window in that it makes sense to
+     * support evaluating them in libged to avoid special cases in command
+     * evaluation.
+     */
+    void (*ged_exit_callback)(struct ged *, void *);
+    void *ged_exit_callback_udata;
 
     // Other callbacks...
     // Tcl command strings - these are libtclcad level callbacks that execute user supplied Tcl commands if set:

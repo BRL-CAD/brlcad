@@ -202,6 +202,9 @@ ged_init(struct ged *gedp)
     gedp->ged_post_closedb_callback = NULL;
     gedp->ged_db_callback_udata = NULL;
 
+    gedp->ged_screen_clear_callback = NULL;
+    gedp->ged_screen_clear_callback_udata = NULL;
+
     gedp->ged_subprocess_init_callback = NULL;
     gedp->ged_subprocess_end_callback = NULL;
 
@@ -210,6 +213,9 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
     BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
     BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
+
+    gedp->ged_exit_callback = NULL;
+    gedp->ged_exit_callback_udata = NULL;
 
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
