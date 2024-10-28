@@ -74,15 +74,15 @@ class ProcessIOHandler {
 	ProcessIOHandler(int f, ged_io_func_t c, void *d);
 
 	std::string read();
+	std::atomic<bool> thread_done = false;
 
     private:
-	int fd;
-	ged_io_func_t callback;
+	int fd = -1;
+	ged_io_func_t callback = NULL;
 	std::shared_ptr<void> data;
 
 	std::shared_ptr<std::string> curr_buf;
 	std::mutex buf_mutex;
-	std::atomic<bool> thread_done = false;
 	std::thread watch_thread;
 };
 
@@ -90,6 +90,7 @@ ProcessIOHandler::ProcessIOHandler(int f, ged_io_func_t c, void *d)
     : fd(f), callback(c)
 {
     data = std::make_shared<void *>(d);
+    curr_buf = std::make_shared<std::string>();
     watch_thread = std::thread(p_watch, curr_buf, std::ref(thread_done), fd, std::ref(buf_mutex));
 }
 
@@ -442,6 +443,17 @@ g_cmdline(
 
     while (true) {
 	std::string line;
+	// Before we start up the prompt, wait until we can get the
+	// printing lock mutex.  We won't hold the lock, but we want
+	// to wait until the main loop (at least temporarily) isn't
+	// writing command output before reestablishing the prompt.
+	//
+	// TODO - this would be better handled if the process
+	// watchers only read out complete lines, rather than partial
+	// buffers, so linenoise always has an end of line to start
+	// with.
+	print_mutex.lock();
+	print_mutex.unlock();
 	// Blocking linenoise I/O
 	auto quit = linenoise::Readline(l.get(), line);
 	if (quit)
@@ -593,14 +605,50 @@ main(int argc, const char **argv)
 	bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     }
 
+    /* If anything went wrong during LIBGED initialization, let the user know */
+    const char *ged_init_str = ged_init_msgs();
+    if (strlen(ged_init_str)) {
+	fprintf(stderr, "%s", ged_init_str);
+    }
+
+    /* FIXME: To draw, we need to init this LIBRT global */
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
     // Use a C++ class to manage info we will need
     std::shared_ptr<GshState> gs = std::make_shared<GshState>();
 
-    // TODO - if we're non-interactive, just evaluate and exit
-    // without getting into linenoise and threading.
+    // If we're non-interactive, just evaluate and exit without getting into
+    // linenoise and threading.  First, see if we've got a viable .g file.
+    if (argc && bu_file_exists(argv[0], NULL)) {
+          int ac = 2;
+          const char *av[3];
+	  av[0] = "open";
+	  av[1] = argv[0];
+	  av[2] = NULL;
+	  int ret = gs.get()->eval(ac, (const char **)av);
+	  if (ret != BRLCAD_OK)
+	      return EXIT_FAILURE;
 
+	  /* If we reach this part of the code, argv[0] is a .g file and
+	   * has been handled - skip ahead to the commands. */
+	  argv++; argc--;
+      }
 
-    // Enable the multi-line mode
+    /* If we have been given more than a .g filename execute the provided argv
+     * commands and exit. Deliberately making this case a very simple execution
+     * path rather than having the linenoise interactive block deal with it, to
+     * minimize the possibility of any unforeseen complications. */
+    if (argc) {
+	int ret = gs.get()->eval(argc, argv);
+	// TODO - need to loop over subprocess listeners and print their
+	// output until they finish.
+	return (ret == BRLCAD_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+
+    // If we've gotten this far, we're in interactive mode and it is time to
+    // start up linenoise to get user input.
+
+    // TODO - should we enable multi-line mode?
     //linenoise::SetMultiLine(true);
 
     gs.get()->l = std::make_shared<linenoise::linenoiseState>();
@@ -628,6 +676,35 @@ main(int argc, const char **argv)
     while (true) {
 	delay_cnt++;
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+	std::set<std::pair<struct ged_subprocess *, bu_process_io_t>> stale;
+	std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *>::iterator l_it;
+	bool subprocess_output = false;
+	for (l_it = gs.get()->listeners.begin(); l_it != gs.get()->listeners.end(); ++l_it) {
+	    std::string oline = l_it->second->read();
+	    if (oline.length()) {
+		gs.get()->print_mutex.lock();
+		linenoiseWipeLine(gs.get()->l.get());
+		std::cout << oline;
+		gs.get()->print_mutex.unlock();
+		subprocess_output = true;
+	    } else {
+		if (l_it->second->thread_done)
+		    stale.insert(l_it->first);
+	    }
+	}
+	if (subprocess_output) {
+	    gs.get()->print_mutex.lock();
+	    refreshLine(gs.get()->l.get());
+	    gs.get()->print_mutex.unlock();
+	}
+
+	// Clean up any finished watchers
+	std::set<std::pair<struct ged_subprocess *, bu_process_io_t>>::iterator s_it;
+	for (s_it = stale.begin(); s_it != stale.end(); ++s_it)
+	    gs.get()->listeners.erase(*s_it);
+
+#if 0
 	if (delay_cnt % 10 == 0) {
 	    gs.get()->print_mutex.lock();
 	    linenoiseWipeLine(gs.get()->l.get());
@@ -635,6 +712,7 @@ main(int argc, const char **argv)
 	    gs.get()->print_mutex.unlock();
 	    refreshLine(gs.get()->l.get());
 	}
+#endif
 	if (gs.get()->linenoise_done) {
 	    gs.get()->print_mutex.lock();
 	    std::cout << "\nall done\n";
