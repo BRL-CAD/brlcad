@@ -59,9 +59,14 @@ p_watch(
 {
     char buffer[GSH_READ_SIZE];
     ssize_t bcnt;
+    std::string line;
     while ((bcnt = read(fd, buffer, GSH_READ_SIZE)) > 0) {
 	buf_mutex.lock();
-	obuf.get()->append(buffer, bcnt);
+	line.append(buffer, bcnt);
+	if (line[line.length() - 1] == '\n') {
+	    obuf.get()->append(line);
+	    line.clear();
+	}
 	buf_mutex.unlock();
     }
     thread_done = true;
@@ -116,6 +121,7 @@ class GshState {
 	// Command line interactive prompt
 	std::shared_ptr<linenoise::linenoiseState> l;
 	std::atomic<bool> linenoise_done = false;
+	std::atomic<bool> io_working = false;
 	std::mutex print_mutex;
 
 	// Create a listener for a subprocess
@@ -434,6 +440,7 @@ g_cmdline(
 	std::shared_ptr<GshState> gs,
 	std::shared_ptr<linenoise::linenoiseState> l,
 	std::atomic<bool> &thread_done,
+	std::atomic<bool> &io_working,
 	std::mutex &print_mutex
 	)
 {
@@ -443,21 +450,15 @@ g_cmdline(
 
     while (true) {
 	std::string line;
-	// Before we start up the prompt, wait until we can get the
-	// printing lock mutex.  We won't hold the lock, but we want
-	// to wait until the main loop (at least temporarily) isn't
-	// writing command output before reestablishing the prompt.
-	//
-	// TODO - this would be better handled if the process
-	// watchers only read out complete lines, rather than partial
-	// buffers, so linenoise always has an end of line to start
-	// with.
-	print_mutex.lock();
-	print_mutex.unlock();
 	// Blocking linenoise I/O
+	io_working = true;
 	auto quit = linenoise::Readline(l.get(), line);
 	if (quit)
 	    break;
+	// While we're processing, we don't have an active
+	// command prompt, so the main loop shouldn't be
+	// restoring the prompt for us.
+	io_working = false;
 
 	// Take what linenoise gives us and prepare it for LIBGED processing
 	bu_vls_sprintf(&iline, "%s", line.c_str());
@@ -660,6 +661,7 @@ main(int argc, const char **argv)
     std::thread g_cmdline_thread(
 	    g_cmdline, gs, gs.get()->l,
 	    std::ref(gs.get()->linenoise_done),
+	    std::ref(gs.get()->io_working),
 	    std::ref(gs.get()->print_mutex)
 	    );
 
@@ -693,7 +695,7 @@ main(int argc, const char **argv)
 		    stale.insert(l_it->first);
 	    }
 	}
-	if (subprocess_output) {
+	if (subprocess_output && gs.get()->io_working) {
 	    gs.get()->print_mutex.lock();
 	    refreshLine(gs.get()->l.get());
 	    gs.get()->print_mutex.unlock();
