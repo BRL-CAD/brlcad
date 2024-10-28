@@ -27,6 +27,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -47,18 +48,82 @@
 
 #define DEFAULT_GSH_PROMPT "g> "
 
+#define GSH_READ_SIZE 1024
+void
+p_watch(
+	std::shared_ptr<std::string> obuf,
+	std::atomic<bool> &thread_done,
+	int fd,
+	std::mutex &buf_mutex
+       )
+{
+    char buffer[GSH_READ_SIZE];
+    ssize_t bcnt;
+    while ((bcnt = read(fd, buffer, GSH_READ_SIZE)) > 0) {
+	buf_mutex.lock();
+	obuf.get()->append(buffer, bcnt);
+	buf_mutex.unlock();
+    }
+    thread_done = true;
+}
+
+// conceptually, first thing to try is probably just setting up a thread to
+// loop with a timer that tries to read from the specified channel.
+class ProcessIOHandler {
+    public:
+	ProcessIOHandler(int f, ged_io_func_t c, void *d);
+
+	std::string read();
+
+    private:
+	int fd;
+	ged_io_func_t callback;
+	std::shared_ptr<void> data;
+
+	std::shared_ptr<std::string> curr_buf;
+	std::mutex buf_mutex;
+	std::atomic<bool> thread_done = false;
+	std::thread watch_thread;
+};
+
+ProcessIOHandler::ProcessIOHandler(int f, ged_io_func_t c, void *d)
+    : fd(f), callback(c)
+{
+    data = std::make_shared<void *>(d);
+    watch_thread = std::thread(p_watch, curr_buf, std::ref(thread_done), fd, std::ref(buf_mutex));
+}
+
+std::string
+ProcessIOHandler::read()
+{
+    std::string lcpy;
+    buf_mutex.lock();
+    lcpy = *curr_buf.get();
+    curr_buf.get()->clear();
+    buf_mutex.unlock();
+    return lcpy;
+}
+
 class GshState {
     public:
 	GshState();
 	~GshState();
 
+	// Run GED commands
 	int eval(int argc, const char **argv);
 
+	// Command line interactive prompt
 	std::shared_ptr<linenoise::linenoiseState> l;
 	std::atomic<bool> linenoise_done = false;
 	std::mutex print_mutex;
 
+	// Create a listener for a subprocess
+	void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
+	// Active listeners
+	std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *> listeners;
+
 #ifdef USE_DM
+	// Display management
 	void view_checkpoint();
 	void view_update();
 	unsigned long long prev_dhash = 0;
@@ -69,7 +134,7 @@ class GshState {
 
 	struct ged *gedp;
 	std::string gfile;  // Mostly used to test the post_opendb callback
-	bool new_cmd_forms = false;
+	bool new_cmd_forms = false;  // Set if we're testing QGED style commands
 };
 
 /* For gsh these are mostly no-op, but define placeholder
@@ -100,23 +165,16 @@ gsh_post_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
 }
 
 
+
 /* Cross platform I/O subprocess listening is tricky.  Tcl and Qt both have
  * specific logic necessary for their environments.  Even the minimalist
  * command line environment has some basic requirements that must be met.
- *
- * Most likely the best way to handle this will be a libuv loop running in
- * another thread to monitor for and handle I/O events - we don't want to get
- * into the thorny business of wrapping the low level platform specific APIs
- * necessary for this if we can help it.  Tcl and Qt both provide wrappers as
- * part of their toolkits that we use for this, so their callbacks aren't
- * directly usable in this minimalist context.
- * https://github.com/libuv/libuv
  *
  * May also end up finding a use for nod signals/slots if libuv doesn't do
  * it for us by itself:  https://github.com/fr00b0/nod
  */
 extern "C" void
-gsh_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t UNUSED(callback), void *UNUSED(data))
+gsh_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
@@ -125,10 +183,8 @@ gsh_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t
     if (fd < 0)
 	return;
 
-    //GshState *gs = (GshState *)p->gedp->ged_io_data;
-
-    //QgConsole *c = ca->w->console;
-    //c->listen(fd, p, t, callback, data);
+    GshState *gs = (GshState *)p->gedp->ged_io_data;
+    gs->listen(fd, p, t, callback, data);
 
     switch (t) {
 	case BU_PROCESS_STDIN:
@@ -148,41 +204,26 @@ gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 {
     if (!p) return;
 
-    //GshState *gs = (GshState *)p->gedp->ged_io_data;
+    GshState *gs = (GshState *)p->gedp->ged_io_data;
 
-    // Since these callbacks are invoked from the listener, we can't call
-    // the listener destructors directly.  We instead call a routine that
-    // emits a single that will notify the console widget it's time to
-    // detach the listener.
     switch (t) {
 	case BU_PROCESS_STDIN:
 	    bu_log("stdin\n");
-#if 0
-	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
+	    if (p->stdin_active && gs->listeners.find(std::make_pair(p, t)) != gs->listeners.end()) {
+		gs->listeners.erase(std::make_pair(p, t));
 	    }
-#endif
 	    p->stdin_active = 0;
 	    break;
 	case BU_PROCESS_STDOUT:
-#if 0
-	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-		bu_log("stdout: %d\n", p->stdout_active);
+	    if (p->stdout_active && gs->listeners.find(std::make_pair(p, t)) != gs->listeners.end()) {
+		gs->listeners.erase(std::make_pair(p, t));
 	    }
-#endif
 	    p->stdout_active = 0;
 	    break;
 	case BU_PROCESS_STDERR:
-#if 0
-	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-		bu_log("stderr: %d\n", p->stderr_active);
+	    if (p->stderr_active && gs->listeners.find(std::make_pair(p, t)) != gs->listeners.end()) {
+		gs->listeners.erase(std::make_pair(p, t));
 	    }
-#endif
 	    p->stderr_active = 0;
 	    break;
     }
@@ -291,6 +332,13 @@ GshState::eval(int argc, const char **argv)
     return gret;
 }
 
+void
+GshState::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
+{
+    ProcessIOHandler *nh = new ProcessIOHandler(fd, c, d);
+    listeners[std::make_pair(p,t)] = nh;
+}
+
 #ifdef USE_DM
 void
 GshState::view_checkpoint()
@@ -384,8 +432,8 @@ void
 g_cmdline(
 	std::shared_ptr<GshState> gs,
 	std::shared_ptr<linenoise::linenoiseState> l,
-       	std::atomic<bool> &thread_done,
-       	std::mutex &print_mutex
+	std::atomic<bool> &thread_done,
+	std::mutex &print_mutex
 	)
 {
     // Reusable working containers for linenoise input processing
@@ -393,11 +441,11 @@ g_cmdline(
     std::vector<char *> tmp_av;
 
     while (true) {
-        std::string line;
+	std::string line;
 	// Blocking linenoise I/O
 	auto quit = linenoise::Readline(l.get(), line);
-        if (quit)
-            break;
+	if (quit)
+	    break;
 
 	// Take what linenoise gives us and prepare it for LIBGED processing
 	bu_vls_sprintf(&iline, "%s", line.c_str());
@@ -440,14 +488,14 @@ g_cmdline(
 	 * we have a '\n' character at the end.  We don't reliably get that
 	 * from all commands, so check and add one if we need to in order to
 	 * finish showing the command output.
-         *
+	 *
 	 * We don't do this inside eval in case a command execution is
 	 * intentionally not appending that last character for some scripting
 	 * purpose. It will more typically be a mistake, but would have to do
 	 * some research to confirm there aren't any valid cases where this
 	 * would be a bad idea. */
 	std::string rstr(bu_vls_cstr(gs.get()->gedp->ged_result_str));
-	
+
 	/* Have copy - reset GED results string */
 	bu_vls_trunc(gs.get()->gedp->ged_result_str, 0);
 
@@ -484,9 +532,9 @@ g_cmdline(
 	    l.get()->prompt = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
 	}
 
-        print_mutex.lock();
-        std::cout << rstr;
-        print_mutex.unlock();
+	print_mutex.lock();
+	std::cout << rstr;
+	print_mutex.unlock();
 
 	/* Free the temporary argv structures */
 	bu_free(input, "input copy");
