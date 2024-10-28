@@ -48,6 +48,19 @@
 
 #define DEFAULT_GSH_PROMPT "g> "
 
+
+/* BRL-CAD's libged will launch commands that potentially need to be terminated
+ * as subprocesses - that is the ONLY robust way we can stop an infinite
+ * looping algorithm when the out-of-control code is not designed to respond to
+ * application level instructions to stop.  However, that means we also need to
+ * capture the output from those commands via IPC.
+ *
+ * We use the simplest method - reading from the child process stdout and
+ * stderr to collect data - but because that process is blocking and of
+ * unbounded duration we need to do the reading in separate threads.  Once it
+ * is collected, we can make it available to the still running parent thread
+ * for output.
+ */
 #define GSH_READ_SIZE 1024
 void
 p_watch(
@@ -57,48 +70,71 @@ p_watch(
 	std::mutex &buf_mutex
        )
 {
+    // If we don't have a sane file descriptor, don't proceed
+    if (fd < 0) {
+	thread_done = true;
+	return;
+    }
+
+    // Have an fd - read from it until we're done
     char buffer[GSH_READ_SIZE];
     ssize_t bcnt;
     std::string line;
     while ((bcnt = read(fd, buffer, GSH_READ_SIZE)) > 0) {
-	buf_mutex.lock();
 	line.append(buffer, bcnt);
 	if (line[line.length() - 1] == '\n') {
+	    buf_mutex.lock();
 	    obuf.get()->append(line);
+	    buf_mutex.unlock();
 	    line.clear();
 	}
+    }
+    if (line.length()) {
+	buf_mutex.lock();
+	obuf.get()->append(line);
 	buf_mutex.unlock();
     }
+
+    // Let the parent context know this thread has finished its work
     thread_done = true;
 }
 
-// conceptually, first thing to try is probably just setting up a thread to
-// loop with a timer that tries to read from the specified channel.
 class ProcessIOHandler {
     public:
-	ProcessIOHandler(int f, ged_io_func_t c, void *d);
+	ProcessIOHandler(int, ged_io_func_t, void *);
+	~ProcessIOHandler();
 
 	std::string read();
 	std::atomic<bool> thread_done = false;
 
     private:
 	int fd = -1;
-	ged_io_func_t callback = NULL;
-	std::shared_ptr<void> data;
 
 	std::shared_ptr<std::string> curr_buf;
 	std::mutex buf_mutex;
 	std::thread watch_thread;
 };
 
-ProcessIOHandler::ProcessIOHandler(int f, ged_io_func_t c, void *d)
-    : fd(f), callback(c)
+ProcessIOHandler::ProcessIOHandler(int f, ged_io_func_t, void *)
+    : fd(f)
 {
-    data = std::make_shared<void *>(d);
+    // Make the buffer the thread will use to communicate output
+    // back to us.
     curr_buf = std::make_shared<std::string>();
+
+    // Set up the actual watching thread itself - this will be where the read
+    // happens.
     watch_thread = std::thread(p_watch, curr_buf, std::ref(thread_done), fd, std::ref(buf_mutex));
 }
 
+ProcessIOHandler::~ProcessIOHandler()
+{
+    // We should only be trying to delete the process handler after the process
+    // itself is either completed or terminated.
+    watch_thread.join();
+}
+
+// Safely get the incremental output from the process watcher
 std::string
 ProcessIOHandler::read()
 {
@@ -110,6 +146,10 @@ ProcessIOHandler::read()
     return lcpy;
 }
 
+/* The overall state of the gsh application is encapsulated by a state class
+ * called GshState.  It defines the method for executing libged commands and
+ * manages the linenoise interactive thread, as well as the necessary state
+ * tracking for triggering view updating. */
 class GshState {
     public:
 	GshState();
@@ -126,8 +166,9 @@ class GshState {
 
 	// Create a listener for a subprocess
 	void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
-	// Active listeners
-	std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *> listeners;
+	void disconnect(struct ged_subprocess *p, bu_process_io_t t);
+	// Print subprocesses outputs (if any)
+	void subprocess_output();
 
 	// Display management
 	void view_checkpoint();
@@ -140,6 +181,11 @@ class GshState {
 	struct ged *gedp;
 	std::string gfile;  // Mostly used to test the post_opendb callback
 	bool new_cmd_forms = false;  // Set if we're testing QGED style commands
+    private:
+	// Active listeners
+	std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *> listeners;
+	std::mutex listeners_lock;
+
 };
 
 /* For gsh these are mostly no-op, but define placeholder
@@ -169,8 +215,6 @@ gsh_post_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
 {
 }
 
-
-
 /* Cross platform I/O subprocess listening is tricky.  Tcl and Qt both have
  * specific logic necessary for their environments.  Even the minimalist
  * command line environment has some basic requirements that must be met.
@@ -190,18 +234,6 @@ gsh_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t
 
     GshState *gs = (GshState *)p->gedp->ged_io_data;
     gs->listen(fd, p, t, callback, data);
-
-    switch (t) {
-	case BU_PROCESS_STDIN:
-	    p->stdin_active = 1;
-	    break;
-	case BU_PROCESS_STDOUT:
-	    p->stdout_active = 1;
-	    break;
-	case BU_PROCESS_STDERR:
-	    p->stderr_active = 1;
-	    break;
-    }
 }
 
 extern "C" void
@@ -211,34 +243,7 @@ gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 
     GshState *gs = (GshState *)p->gedp->ged_io_data;
 
-    switch (t) {
-	case BU_PROCESS_STDIN:
-	    bu_log("stdin\n");
-	    if (p->stdin_active && gs->listeners.find(std::make_pair(p, t)) != gs->listeners.end()) {
-		gs->listeners.erase(std::make_pair(p, t));
-	    }
-	    p->stdin_active = 0;
-	    break;
-	case BU_PROCESS_STDOUT:
-	    if (p->stdout_active && gs->listeners.find(std::make_pair(p, t)) != gs->listeners.end()) {
-		gs->listeners.erase(std::make_pair(p, t));
-	    }
-	    p->stdout_active = 0;
-	    break;
-	case BU_PROCESS_STDERR:
-	    if (p->stderr_active && gs->listeners.find(std::make_pair(p, t)) != gs->listeners.end()) {
-		gs->listeners.erase(std::make_pair(p, t));
-	    }
-	    p->stderr_active = 0;
-	    break;
-    }
-
-    // All communication has ceased between the app and the subprocess,
-    // time to call the end callback (if any)
-    if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
-	if (p->end_clbk)
-	    p->end_clbk(0, p->end_clbk_data);
-    }
+    gs->disconnect(p, t);
 
     //emit ca->view_update(QG_VIEW_REFRESH);
 }
@@ -311,8 +316,8 @@ GshState::eval(int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // We've got a valid GED command Before any BRL-CAD logic is executed,
-    // stash the state of the view info so we can recognized changes. */
+    // We've got a valid GED command Before any BRL-CAD logic is executed;
+    // stash the state of the view info so we can recognize changes. */
     view_checkpoint();
 
     int gret = ged_exec(gedp, argc, argv);
@@ -326,8 +331,59 @@ GshState::eval(int argc, const char **argv)
 void
 GshState::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
 {
+    listeners_lock.lock();
     ProcessIOHandler *nh = new ProcessIOHandler(fd, c, d);
     listeners[std::make_pair(p,t)] = nh;
+    listeners_lock.unlock();
+
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 1;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 1;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 1;
+	    break;
+    }
+}
+
+void
+GshState::disconnect(struct ged_subprocess *p, bu_process_io_t t)
+{
+    if (!p)
+	return;
+
+    listeners_lock.lock();
+    std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *>::iterator l_it;
+    l_it = listeners.find(std::make_pair(p, t));
+    if (l_it != listeners.end()) {
+	ProcessIOHandler *eh = l_it->second;
+	delete eh;
+	listeners.erase(std::make_pair(p, t));
+	switch (t) {
+	    case BU_PROCESS_STDIN:
+		p->stdin_active = 0;
+		break;
+	    case BU_PROCESS_STDOUT:
+		p->stdout_active = 0;
+		break;
+	    case BU_PROCESS_STDERR:
+		p->stderr_active = 0;
+		break;
+	}
+    }
+    listeners_lock.unlock();
+
+    // If anything is still going on, we're not done yet.
+    if (p->stdin_active || p->stdout_active || p->stderr_active)
+	return;
+
+    // All communication has ceased between the app and the subprocess,
+    // time to call the end callback (if any)
+    if (p->end_clbk)
+	p->end_clbk(0, p->end_clbk_data);
 }
 
 void
@@ -342,6 +398,59 @@ GshState::view_checkpoint()
     prev_lhash = (new_cmd_forms) ? 0 : dl_name_hash(gedp);
     prev_ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 #endif
+}
+
+void
+GshState::subprocess_output()
+{
+    // We collect output from our handlers for reporting here, as well
+    // as cleaning up any instances that are done.
+    std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *>::iterator l_it;
+
+    // We won't want to refresh the command prompt line unless we actually have
+    // some output to print
+    bool prompt_cleared = false;
+
+    // Check every active command.  Ordering is not guaranteed - the user
+    // should avoid multiple long running commands in one gsh session if that
+    // is a concern.
+    listeners_lock.lock();
+    std::set<std::pair<struct ged_subprocess *, bu_process_io_t>> stale;
+    for (l_it = listeners.begin(); l_it != listeners.end(); ++l_it) {
+	// Once we do the read, the thread buffer is cleared - we now
+	// have the only copy, so it's on us to print it or lose it.
+	std::string oline = l_it->second->read();
+	if (oline.length()) {
+	    // If we DO have something to print, we need to clear the
+	    // existing command line string before we proceed.
+	    print_mutex.lock();
+	    if (!prompt_cleared) {
+		linenoiseWipeLine(l.get());
+		prompt_cleared = true;
+	    }
+	    std::cout << oline;
+	    print_mutex.unlock();
+	}
+	if (l_it->second->thread_done)
+	    stale.insert(l_it->first);
+    }
+    listeners_lock.unlock();
+
+    // Clear any finished handlers - they are no longer needed
+    std::set<std::pair<struct ged_subprocess *, bu_process_io_t>>::iterator s_it;
+    for (s_it = stale.begin(); s_it != stale.end(); ++s_it)
+	disconnect(s_it->first, s_it->second);
+
+    // If we did clear the prompt, we MAY need to restore it.  If the linenoise
+    // thread indicates it is doing its own processing (i.e. it is not
+    // currently handling user input with a prmopt) we don't want to inject a
+    // spurious prompt ourselves and mess up its output.  The linenoise thread
+    // will take care of restoration when it resets after its own work is done.
+    if (prompt_cleared && io_working) {
+	print_mutex.lock();
+	refreshLine(l.get());
+	print_mutex.unlock();
+    }
 }
 
 void
@@ -479,7 +588,8 @@ g_cmdline(
 	    /* Free the temporary argv structures */
 	    bu_free(input, "input copy");
 	    bu_free(av, "input argv");
-	    break;
+	    thread_done = true;
+	    return;
 	}
 
 	/* When we're interactive, the last line won't show in linenoise unless
@@ -664,32 +774,7 @@ main(int argc, const char **argv)
 	delay_cnt++;
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-	std::set<std::pair<struct ged_subprocess *, bu_process_io_t>> stale;
-	std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *>::iterator l_it;
-	bool subprocess_output = false;
-	for (l_it = gs.get()->listeners.begin(); l_it != gs.get()->listeners.end(); ++l_it) {
-	    std::string oline = l_it->second->read();
-	    if (oline.length()) {
-		gs.get()->print_mutex.lock();
-		linenoiseWipeLine(gs.get()->l.get());
-		std::cout << oline;
-		gs.get()->print_mutex.unlock();
-		subprocess_output = true;
-	    } else {
-		if (l_it->second->thread_done)
-		    stale.insert(l_it->first);
-	    }
-	}
-	if (subprocess_output && gs.get()->io_working) {
-	    gs.get()->print_mutex.lock();
-	    refreshLine(gs.get()->l.get());
-	    gs.get()->print_mutex.unlock();
-	}
-
-	// Clean up any finished watchers
-	std::set<std::pair<struct ged_subprocess *, bu_process_io_t>>::iterator s_it;
-	for (s_it = stale.begin(); s_it != stale.end(); ++s_it)
-	    gs.get()->listeners.erase(*s_it);
+	gs.get()->subprocess_output();
 
 #if 0
 	if (delay_cnt % 10 == 0) {
