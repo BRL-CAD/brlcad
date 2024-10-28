@@ -426,7 +426,7 @@ GshState::subprocess_output()
 	    // existing command line string before we proceed.
 	    print_mutex.lock();
 	    if (!prompt_cleared) {
-		linenoiseWipeLine(l.get());
+		linenoise::linenoiseWipeLine();
 		prompt_cleared = true;
 	    }
 	    std::cout << oline;
@@ -449,7 +449,7 @@ GshState::subprocess_output()
     // will take care of restoration when it resets after its own work is done.
     if (prompt_cleared && io_working) {
 	print_mutex.lock();
-	refreshLine(l.get());
+	linenoise::refreshLine(l.get());
 	print_mutex.unlock();
     }
 }

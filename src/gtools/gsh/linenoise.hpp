@@ -1760,24 +1760,9 @@ failed:
      * without resetting its state.  Used for
      * temporarily clearing prompt and input while
      * printing other content. */
-    inline void linenoiseWipeLine(linenoiseState *ls) {
-	// Stash current key state info.
-	std::string old_prompt = ls->prompt;
-	int old_len = ls->len;
-	int old_pos = ls->pos;
-	char wbuf0 = ls->wbuf[0];
-	// Temporarily reset contents so we can clear the line
-	ls->wbuf[0] = '\0';
-	ls->pos = ls->len = 0;
-	ls->prompt = std::string("");
-	refreshLine(ls);
-	// Restore cached data.  Caller will need to call refreshLine again
-	// after they are done doing their own printing to restore the prompt
-	// and current state of the user input.
-	ls->wbuf[0] = wbuf0;
-	ls->pos = old_pos;
-	ls->len = old_len;
-	ls->prompt = old_prompt;
+    inline void linenoiseWipeLine() {
+	(void)write(STDOUT_FILENO,"\33[2K",4); // Clear line
+	(void)write(STDOUT_FILENO,"\r",1);     // Move cursor to the left
     }
 
 
