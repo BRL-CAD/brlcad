@@ -510,7 +510,7 @@ GshState::subprocess_output()
     // will take care of restoration when it resets after its own work is done.
     if (prompt_cleared && io_working) {
 	print_mutex.lock();
-	linenoise::refreshLine(l.get());
+	l.get()->refreshLine();
 	print_mutex.unlock();
     }
 }
@@ -586,7 +586,7 @@ g_cmdline(
 	std::string line;
 	// Blocking linenoise I/O
 	io_working = true;
-	auto quit = linenoise::Readline(l.get(), line);
+	auto quit = l.get()->Readline(line);
 	if (quit)
 	    break;
 	// While we're processing, we don't have an active
@@ -600,7 +600,7 @@ g_cmdline(
 	// If the line is empty or all whitespace, there's nothing to do.
 	if (!bu_vls_strlen(&iline))
 	    continue;
-	linenoise::AddHistory(bu_vls_cstr(&iline));
+	l.get()->AddHistory(bu_vls_cstr(&iline));
 
 	/* Make an argv array from the input line */
 	char *input = bu_strdup(bu_vls_cstr(&iline));
@@ -792,11 +792,14 @@ main(int argc, const char **argv)
     // If we've gotten this far, we're in interactive mode and it is time to
     // start up linenoise to get user input.
 
+    // Generally speaking we'll want to remember a lot of commands.
+
     // TODO - should we enable multi-line mode?
     //linenoise::SetMultiLine(true);
 
     gs.get()->l = std::make_shared<linenoise::linenoiseState>();
     gs.get()->l->Initialize(STDIN_FILENO, STDOUT_FILENO, LINENOISE_MAX_LINE, DEFAULT_GSH_PROMPT);
+    gs.get()->l->SetHistoryMaxLen(INT_MAX);
 
     // Launch blocking linenoise input gathering in a separate thread, to allow
     // us to integrate input from async commands into terminal output while
