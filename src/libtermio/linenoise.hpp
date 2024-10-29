@@ -1151,11 +1151,12 @@ inline int win32_write(int fd, const void *buffer, unsigned int count) {
 static const char *unsupported_term[] = {"dumb", "cons25", "emacs", NULL};
 
 #ifndef _WIN32
-struct termios orig_termios; /* In order to restore at exit.*/
+static struct termios orig_termios; /* In order to restore at exit.*/
 #endif
-bool rawmode = false; /* For atexit() function to check if restore is needed*/
-bool mlmode = false;  /* Multi line mode. Default is single line. */
-bool atexit_registered = false; /* Register atexit just 1 time. */
+static bool rawmode =
+false; /* For atexit() function to check if restore is needed*/
+static bool mlmode = false; /* Multi line mode. Default is single line. */
+static bool atexit_registered = false; /* Register atexit just 1 time. */
 
 enum KEY_ACTION {
     KEY_NULL = 0,   /* NULL */
