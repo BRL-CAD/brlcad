@@ -420,7 +420,7 @@ done
 
 comment_block="${comment_block}${prefixspace}${commentchar} End:
 "
-comment_block="${comment_block}${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"
+comment_block="${comment_block}${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width cino=N-s"
 
 if [ "x$wrap" = "x1" ] ; then
     comment_block="${comment_block}
