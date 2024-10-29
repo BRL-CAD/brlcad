@@ -1099,8 +1099,6 @@ namespace linenoise {
 
 	private:
 	    bool linenoiseRaw(std::string& line);
-	   
-
 	    int linenoiseEditInsert(const char* cbuf, int clen);
 	    void linenoiseEditDelete();
 	    void linenoiseEditBackspace();
@@ -1113,7 +1111,6 @@ namespace linenoise {
 	    void linenoiseEditMoveEnd();
 	    void refreshSingleLine();
 	    void refreshMultiLine();
-
 	    int completeLine(char *cbuf, int *c);
 
 	    CompletionCallback completionCallback;
@@ -1127,13 +1124,12 @@ namespace linenoise {
 	    int len = 0;            /* Current edited line length. */
 	    int cols = 0;           /* Number of columns in terminal. */
 	    int maxrows = 0;        /* Maximum num of rows used so far (multiline mode) */
-	    int history_index = 0;  /* The history index we are currently editing. */
-	    char wbuf[LINENOISE_MAX_LINE];
+	    int history_index = -1;  /* The history index we are currently editing. */
+	    char wbuf[LINENOISE_MAX_LINE] = {'\0'};
+	    std::string history_tmpbuf;
 
 	    size_t history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 	    std::vector<std::string> history;
-
-
     };
 
     enum KEY_ACTION {
@@ -2080,24 +2076,33 @@ failed:
 #define LINENOISE_HISTORY_NEXT 0
 #define LINENOISE_HISTORY_PREV 1
     void linenoiseState::linenoiseEditHistoryNext(int dir) {
-	if (history.size() > 1) {
-	    /* Update the current history entry before to
-	     * overwrite it with the next one. */
-	    history[history.size() - 1 - history_index] = buf;
-	    /* Show the new entry */
-	    history_index += (dir == LINENOISE_HISTORY_PREV) ? 1 : -1;
-	    if (history_index < 0) {
-		history_index = 0;
-		return;
-	    } else if (history_index >= (int)history.size()) {
-		history_index = static_cast<int>(history.size())-1;
-		return;
-	    }
-	    memset(buf, 0, buflen);
-	    strcpy(buf,history[history.size() - 1 - history_index].c_str());
-	    len = pos = static_cast<int>(strlen(buf));
-	    refreshLine();
+	int history_size = static_cast<int>(history.size());
+	if (!history_size)
+	    return;
+	/* Show the new entry */
+	if (history_index == -1) {
+	    history_tmpbuf = std::string(buf);
+	    history_index = history.size() - 1;
+	} else {
+	    if (history_index == history_size)
+		history_tmpbuf = std::string(buf);
+	    history_index += (dir == LINENOISE_HISTORY_PREV) ? -1 : 1;
 	}
+	if (history_index < 0)
+	    history_index = history_size;
+	if (history_index == history_size) {
+	    memset(buf, 0, buflen);
+	    strcpy(buf,history_tmpbuf.c_str());
+	    len = pos = static_cast<int>(history_tmpbuf.size());
+	    refreshLine();
+	    return;
+	}
+	if (history_index > history_size)
+	    history_index = 0;
+	memset(buf, 0, buflen);
+	strcpy(buf,history[history_index].c_str());
+	len = pos = static_cast<int>(strlen(buf));
+	refreshLine();
     }
 
     /* Delete the character at the right of the cursor without altering the cursor
@@ -2181,6 +2186,7 @@ failed:
 
 	    switch(c) {
 		case ENTER:    /* enter */
+		    history_index = -1;
 		    if (history.size() == history_max_len) history.pop_back();
 		    if (mlmode) linenoiseEditMoveEnd();
 		    return (int)len;
@@ -2355,10 +2361,6 @@ failed:
 	/* Buffer starts empty. */
 	buf[0] = '\0';
 	buflen--; /* Make sure there is always space for the nulterm */
-
-	/* The latest history entry is always our current buffer, that
-	 * initially is just an empty string. */
-	AddHistory("");
     }
 
     /* The high level function that is the main API of the linenoise library.
@@ -2405,6 +2407,8 @@ failed:
      * Using a circular buffer is smarter, but a bit more complex to handle. */
     bool linenoiseState::AddHistory(const char* line) {
 	if (history_max_len == 0) return false;
+	if (!line || !strlen(line))
+	    return false;
 
 	/* Don't add duplicated lines. */
 	if (!history.empty() && history.back() == line) return false;
