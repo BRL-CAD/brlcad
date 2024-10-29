@@ -795,8 +795,7 @@ main(int argc, const char **argv)
 
     // Generally speaking we'll want to remember a lot of commands.
 
-    gs.get()->l = std::make_shared<linenoise::linenoiseState>();
-    gs.get()->l->prompt = std::string(DEFAULT_GSH_PROMPT);
+    gs.get()->l = std::make_shared<linenoise::linenoiseState>(DEFAULT_GSH_PROMPT);
     gs.get()->l->SetHistoryMaxLen(INT_MAX);
 
     // TODO - should we enable multi-line mode?
