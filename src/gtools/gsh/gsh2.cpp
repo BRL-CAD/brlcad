@@ -317,9 +317,10 @@ gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 }
 
 void
-Gsh_ClearScreen(struct ged *, void *)
+Gsh_ClearScreen(struct ged *, void *d)
 {
-    linenoise::linenoiseClearScreen();
+    GshState *gs = (GshState *)d;
+    gs->l.get()->ClearScreen();
 }
 
 GshState::GshState()
@@ -353,7 +354,7 @@ GshState::GshState()
 
     // Tell libged how to clear the screen
     gedp->ged_screen_clear_callback = &Gsh_ClearScreen;
-    gedp->ged_screen_clear_callback_udata = NULL;
+    gedp->ged_screen_clear_callback_udata = (void *)this;
 }
 
 GshState::~GshState()
@@ -487,7 +488,7 @@ GshState::subprocess_output()
 	    // existing command line string before we proceed.
 	    print_mutex.lock();
 	    if (!prompt_cleared) {
-		linenoise::linenoiseWipeLine();
+		l.get()->WipeLine();
 		prompt_cleared = true;
 	    }
 	    std::cout << oline;
@@ -510,7 +511,7 @@ GshState::subprocess_output()
     // will take care of restoration when it resets after its own work is done.
     if (prompt_cleared && io_working) {
 	print_mutex.lock();
-	l.get()->refreshLine();
+	l.get()->RefreshLine();
 	print_mutex.unlock();
     }
 }

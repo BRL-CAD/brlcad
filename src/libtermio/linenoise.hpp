@@ -1071,13 +1071,14 @@ bool rawmode = false; /* For atexit() function to check if restore is needed*/
 bool mlmode = false;  /* Multi line mode. Default is single line. */
 bool atexit_registered = false; /* Register atexit just 1 time. */
 
-/* The linenoiseState structure represents the state during line editing.
- * We pass this state to functions implementing specific editing
- * functionalities. */
+/* The linenoiseState structure represents the state during line editing, and
+ * provides methods by which user programs can act on that state. */
 class linenoiseState {
     public:
 
 	void Initialize(int stdin_fd, int stdout_fd, int buflen, const char *prompt);
+
+	void EnableMultiLine(bool);
 
 	bool AddHistory(const char* line);
 	bool LoadHistory(const char* path);
@@ -1085,11 +1086,10 @@ class linenoiseState {
 	const std::vector<std::string>& GetHistory() { return history; };
 	bool SetHistoryMaxLen(size_t len);
 
-	bool Readline(std::string& line);
-	std::string Readline(bool& quit);
-	std::string Readline();
-	void refreshLine();
-
+	bool Readline(std::string& line);  // Primary linenoise entry point
+	void RefreshLine(); // Restore current line (used after WipeLine)
+	void WipeLine(); // Temporarily removes line from screen - RefreshLine will restore
+	void ClearScreen(); // Clear terminal window
 
 	/* Register a callback function to be called for tab-completion. */
 	void SetCompletionCallback(CompletionCallback fn) {completionCallback = fn;};
@@ -1098,6 +1098,9 @@ class linenoiseState {
 	std::mutex r_mutex;
 
     private:
+	std::string Readline(bool& quit);
+	std::string Readline();
+
 	bool linenoiseRaw(std::string& line);
 	int linenoiseEditInsert(const char* cbuf, int clen);
 	void linenoiseEditDelete();
@@ -1831,12 +1834,12 @@ int linenoiseState::completeLine(char *cbuf, int *c) {
 		char *old_buf = buf;
 		len = pos = static_cast<int>(lc[i].size());
 		buf = &lc[i][0];
-		refreshLine();
+		RefreshLine();
 		len = old_len;
 		pos = old_pos;
 		buf = old_buf;
 	    } else {
-		refreshLine();
+		RefreshLine();
 	    }
 
 	    //nread = read(ls->ifd,&c,1);
@@ -1860,7 +1863,7 @@ int linenoiseState::completeLine(char *cbuf, int *c) {
 		    break;
 		case 27: /* escape */
 		    /* Re-show original buffer */
-		    if (i < static_cast<int>(lc.size())) refreshLine();
+		    if (i < static_cast<int>(lc.size())) RefreshLine();
 		    stop = 1;
 		    break;
 		default:
@@ -2001,13 +2004,23 @@ void linenoiseState::refreshMultiLine() {
  * console output from another thread, (i.e. independent of a
  * Readline call) so we use a mutex for basic thread safety.
  * */
-void linenoiseState::refreshLine() {
+void linenoiseState::RefreshLine() {
     r_mutex.lock();
     if (mlmode)
 	refreshMultiLine();
     else
 	refreshSingleLine();
     r_mutex.unlock();
+}
+
+void linenoiseState::WipeLine()
+{
+    linenoiseWipeLine();
+}
+
+void linenoiseState::ClearScreen()
+{
+    linenoiseClearScreen();
 }
 
 /* Insert the character 'c' at cursor current position.
@@ -2025,7 +2038,7 @@ int linenoiseState::linenoiseEditInsert(const char* cbuf, int clen) {
 		 * trivial case. */
 		if (write(ofd,cbuf,clen) == -1) return -1;
 	    } else {
-		refreshLine();
+		RefreshLine();
 	    }
 	} else {
 	    memmove(buf+pos+clen,buf+pos,len-pos);
@@ -2033,7 +2046,7 @@ int linenoiseState::linenoiseEditInsert(const char* cbuf, int clen) {
 	    pos+=clen;
 	    len+=clen;
 	    buf[len] = '\0';
-	    refreshLine();
+	    RefreshLine();
 	}
     }
     return 0;
@@ -2043,7 +2056,7 @@ int linenoiseState::linenoiseEditInsert(const char* cbuf, int clen) {
 void linenoiseState::linenoiseEditMoveLeft() {
     if (pos > 0) {
 	pos -= unicodePrevGraphemeLen(buf, pos);
-	refreshLine();
+	RefreshLine();
     }
 }
 
@@ -2051,7 +2064,7 @@ void linenoiseState::linenoiseEditMoveLeft() {
 void linenoiseState::linenoiseEditMoveRight() {
     if (pos != len) {
 	pos += unicodeGraphemeLen(buf, len, pos);
-	refreshLine();
+	RefreshLine();
     }
 }
 
@@ -2059,7 +2072,7 @@ void linenoiseState::linenoiseEditMoveRight() {
 void linenoiseState::linenoiseEditMoveHome() {
     if (pos != 0) {
 	pos = 0;
-	refreshLine();
+	RefreshLine();
     }
 }
 
@@ -2067,7 +2080,7 @@ void linenoiseState::linenoiseEditMoveHome() {
 void linenoiseState::linenoiseEditMoveEnd() {
     if (pos != len) {
 	pos = len;
-	refreshLine();
+	RefreshLine();
     }
 }
 
@@ -2094,7 +2107,7 @@ void linenoiseState::linenoiseEditHistoryNext(int dir) {
 	memset(buf, 0, buflen);
 	strcpy(buf,history_tmpbuf.c_str());
 	len = pos = static_cast<int>(history_tmpbuf.size());
-	refreshLine();
+	RefreshLine();
 	return;
     }
     if (history_index > history_size)
@@ -2102,7 +2115,7 @@ void linenoiseState::linenoiseEditHistoryNext(int dir) {
     memset(buf, 0, buflen);
     strcpy(buf,history[history_index].c_str());
     len = pos = static_cast<int>(strlen(buf));
-    refreshLine();
+    RefreshLine();
 }
 
 /* Delete the character at the right of the cursor without altering the cursor
@@ -2113,7 +2126,7 @@ void linenoiseState::linenoiseEditDelete() {
 	memmove(buf+pos,buf+pos+glen,len-pos-glen);
 	len-=glen;
 	buf[len] = '\0';
-	refreshLine();
+	RefreshLine();
     }
 }
 
@@ -2125,7 +2138,7 @@ void linenoiseState::linenoiseEditBackspace() {
 	pos-=glen;
 	len-=glen;
 	buf[len] = '\0';
-	refreshLine();
+	RefreshLine();
     }
 }
 
@@ -2142,7 +2155,7 @@ void linenoiseState::linenoiseEditDeletePrevWord() {
     diff = old_pos - pos;
     memmove(buf+pos,buf+old_pos,len-old_pos+1);
     len -= diff;
-    refreshLine();
+    RefreshLine();
 }
 
 /* This function is the core of the line editing capability of linenoise.
@@ -2212,7 +2225,7 @@ int linenoiseState::linenoiseEdit()
 		    wbuf[pos-1] = wbuf[pos];
 		    wbuf[pos] = aux;
 		    if (pos != len-1) pos++;
-		    refreshLine();
+		    RefreshLine();
 		}
 		break;
 	    case CTRL_B:     /* ctrl-b */
@@ -2288,12 +2301,12 @@ int linenoiseState::linenoiseEdit()
 	    case CTRL_U: /* Ctrl+u, delete the whole line. */
 		wbuf[0] = '\0';
 		pos = len = 0;
-		refreshLine();
+		RefreshLine();
 		break;
 	    case CTRL_K: /* Ctrl+k, delete from current to end of line. */
 		wbuf[pos] = '\0';
 		len = pos;
-		refreshLine();
+		RefreshLine();
 		break;
 	    case CTRL_A: /* Ctrl+a, go to the start of the line */
 		linenoiseEditMoveHome();
@@ -2303,7 +2316,7 @@ int linenoiseState::linenoiseEdit()
 		break;
 	    case CTRL_L: /* ctrl+l, clear screen */
 		linenoiseClearScreen();
-		refreshLine();
+		RefreshLine();
 		break;
 	    case CTRL_W: /* ctrl+w, delete previous word */
 		linenoiseEditDeletePrevWord();
@@ -2361,6 +2374,11 @@ void linenoiseState::Initialize(int stdin_fd, int stdout_fd, int i_buflen, const
     /* Buffer starts empty. */
     buf[0] = '\0';
     buflen--; /* Make sure there is always space for the nulterm */
+}
+
+void linenoiseState::EnableMultiLine(bool ml)
+{
+    SetMultiLine(ml);
 }
 
 /* The high level function that is the main API of the linenoise library.
