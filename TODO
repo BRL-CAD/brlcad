@@ -31,6 +31,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   CMake find_package style.  If possible, try to also support
   older style variables in FindBRLCAD.cmake
 
+* Teach CMake's configure driven bext to cache SHA1 and check
+  against upstream to detect when the configure-cloned copy
+  has become obsolete.  Refactor src/bext validation logic to
+  be reusable for both cases.
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
