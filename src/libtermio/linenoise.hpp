@@ -1085,33 +1085,16 @@ namespace linenoise {
 	    const std::vector<std::string>& GetHistory() { return history; };
 	    bool SetHistoryMaxLen(size_t len);
 
-
 	    bool Readline(std::string& line);
 	    std::string Readline(bool& quit);
 	    std::string Readline();
 	    void refreshLine();
 
 
-	    int ifd = STDIN_FILENO;            /* Terminal stdin file descriptor. */
-	    int ofd = STDOUT_FILENO;            /* Terminal stdout file descriptor. */
-	    char *buf = wbuf;          /* Edited line buffer. */
-	    int buflen = LINENOISE_MAX_LINE;         /* Edited line buffer size. */
-	    std::string prompt = std::string("> "); /* Prompt to display. */
-	    int pos = 0;            /* Current cursor position. */
-	    int oldcolpos = 0;      /* Previous refresh cursor column position. */
-	    int len = 0;            /* Current edited line length. */
-	    int cols = 0;           /* Number of columns in terminal. */
-	    int maxrows = 0;        /* Maximum num of rows used so far (multiline mode) */
-	    int history_index = 0;  /* The history index we are currently editing. */
-	    char wbuf[LINENOISE_MAX_LINE];
-
-	    size_t history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
-	    std::vector<std::string> history;
-
-
 	    /* Register a callback function to be called for tab-completion. */
 	    void SetCompletionCallback(CompletionCallback fn) {completionCallback = fn;};
 
+	    std::string prompt = std::string("> "); /* Prompt to display. */
 	    std::mutex r_mutex;
 
 	private:
@@ -1134,6 +1117,22 @@ namespace linenoise {
 	    int completeLine(char *cbuf, int *c);
 
 	    CompletionCallback completionCallback;
+
+	    int ifd = STDIN_FILENO;            /* Terminal stdin file descriptor. */
+	    int ofd = STDOUT_FILENO;            /* Terminal stdout file descriptor. */
+	    char *buf = wbuf;          /* Edited line buffer. */
+	    int buflen = LINENOISE_MAX_LINE;         /* Edited line buffer size. */
+	    int pos = 0;            /* Current cursor position. */
+	    int oldcolpos = 0;      /* Previous refresh cursor column position. */
+	    int len = 0;            /* Current edited line length. */
+	    int cols = 0;           /* Number of columns in terminal. */
+	    int maxrows = 0;        /* Maximum num of rows used so far (multiline mode) */
+	    int history_index = 0;  /* The history index we are currently editing. */
+	    char wbuf[LINENOISE_MAX_LINE];
+
+	    size_t history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
+	    std::vector<std::string> history;
+
 
     };
 
