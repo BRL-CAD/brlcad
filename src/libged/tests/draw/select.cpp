@@ -34,8 +34,6 @@
 #include <ged.h>
 
 extern "C" void ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
-extern "C" void dm_refresh(struct ged *gedp);
-extern "C" void scene_clear(struct ged *gedp);
 extern "C" void img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root);
 
 int
