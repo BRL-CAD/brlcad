@@ -158,9 +158,77 @@
 #include <vector>
 #include <iostream>
 
+#define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
+#define LINENOISE_MAX_LINE 4096
+
 namespace linenoise {
 
 typedef std::function<void (const char*, std::vector<std::string>&)> CompletionCallback;
+
+/* The linenoiseState structure represents the state during line editing, and
+ * provides methods by which user programs can act on that state. */
+class linenoiseState {
+    public:
+
+	void Initialize(int stdin_fd, int stdout_fd, int buflen, const char *prompt);
+
+	void EnableMultiLine(bool);
+
+	bool AddHistory(const char* line);
+	bool LoadHistory(const char* path);
+	bool SaveHistory(const char* path);
+	const std::vector<std::string>& GetHistory() { return history; };
+	bool SetHistoryMaxLen(size_t len);
+
+	bool Readline(std::string& line);  // Primary linenoise entry point
+	void RefreshLine(); // Restore current line (used after WipeLine)
+	void WipeLine(); // Temporarily removes line from screen - RefreshLine will restore
+	void ClearScreen(); // Clear terminal window
+
+	/* Register a callback function to be called for tab-completion. */
+	void SetCompletionCallback(CompletionCallback fn) {completionCallback = fn;};
+
+	std::string prompt = std::string("> "); /* Prompt to display. */
+	std::mutex r_mutex;
+
+    private:
+	std::string Readline(bool& quit);
+	std::string Readline();
+
+	bool linenoiseRaw(std::string& line);
+	int linenoiseEditInsert(const char* cbuf, int clen);
+	void linenoiseEditDelete();
+	void linenoiseEditBackspace();
+	void linenoiseEditDeletePrevWord();
+	int linenoiseEdit();
+	void linenoiseEditHistoryNext(int dir);
+	void linenoiseEditMoveLeft();
+	void linenoiseEditMoveRight();
+	void linenoiseEditMoveHome();
+	void linenoiseEditMoveEnd();
+	void refreshSingleLine();
+	void refreshMultiLine();
+	int completeLine(char *cbuf, int *c);
+
+	CompletionCallback completionCallback;
+
+	int ifd = STDIN_FILENO;            /* Terminal stdin file descriptor. */
+	int ofd = STDOUT_FILENO;            /* Terminal stdout file descriptor. */
+	char *buf = wbuf;          /* Edited line buffer. */
+	int buflen = LINENOISE_MAX_LINE;         /* Edited line buffer size. */
+	int pos = 0;            /* Current cursor position. */
+	int oldcolpos = 0;      /* Previous refresh cursor column position. */
+	int len = 0;            /* Current edited line length. */
+	int cols = 0;           /* Number of columns in terminal. */
+	int maxrows = 0;        /* Maximum num of rows used so far (multiline mode) */
+	int history_index = -1;  /* The history index we are currently editing. */
+	char wbuf[LINENOISE_MAX_LINE] = {'\0'};
+	std::string history_tmpbuf;
+
+	size_t history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
+	std::vector<std::string> history;
+};
+
 
 #ifdef _WIN32
 
@@ -1060,8 +1128,6 @@ inline int win32_write(int fd, const void *buffer, unsigned int count) {
 }
 #endif // _WIN32
 
-#define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
-#define LINENOISE_MAX_LINE 4096
 static const char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
 
 #ifndef _WIN32
@@ -1070,70 +1136,6 @@ struct termios orig_termios; /* In order to restore at exit.*/
 bool rawmode = false; /* For atexit() function to check if restore is needed*/
 bool mlmode = false;  /* Multi line mode. Default is single line. */
 bool atexit_registered = false; /* Register atexit just 1 time. */
-
-/* The linenoiseState structure represents the state during line editing, and
- * provides methods by which user programs can act on that state. */
-class linenoiseState {
-    public:
-
-	void Initialize(int stdin_fd, int stdout_fd, int buflen, const char *prompt);
-
-	void EnableMultiLine(bool);
-
-	bool AddHistory(const char* line);
-	bool LoadHistory(const char* path);
-	bool SaveHistory(const char* path);
-	const std::vector<std::string>& GetHistory() { return history; };
-	bool SetHistoryMaxLen(size_t len);
-
-	bool Readline(std::string& line);  // Primary linenoise entry point
-	void RefreshLine(); // Restore current line (used after WipeLine)
-	void WipeLine(); // Temporarily removes line from screen - RefreshLine will restore
-	void ClearScreen(); // Clear terminal window
-
-	/* Register a callback function to be called for tab-completion. */
-	void SetCompletionCallback(CompletionCallback fn) {completionCallback = fn;};
-
-	std::string prompt = std::string("> "); /* Prompt to display. */
-	std::mutex r_mutex;
-
-    private:
-	std::string Readline(bool& quit);
-	std::string Readline();
-
-	bool linenoiseRaw(std::string& line);
-	int linenoiseEditInsert(const char* cbuf, int clen);
-	void linenoiseEditDelete();
-	void linenoiseEditBackspace();
-	void linenoiseEditDeletePrevWord();
-	int linenoiseEdit();
-	void linenoiseEditHistoryNext(int dir);
-	void linenoiseEditMoveLeft();
-	void linenoiseEditMoveRight();
-	void linenoiseEditMoveHome();
-	void linenoiseEditMoveEnd();
-	void refreshSingleLine();
-	void refreshMultiLine();
-	int completeLine(char *cbuf, int *c);
-
-	CompletionCallback completionCallback;
-
-	int ifd = STDIN_FILENO;            /* Terminal stdin file descriptor. */
-	int ofd = STDOUT_FILENO;            /* Terminal stdout file descriptor. */
-	char *buf = wbuf;          /* Edited line buffer. */
-	int buflen = LINENOISE_MAX_LINE;         /* Edited line buffer size. */
-	int pos = 0;            /* Current cursor position. */
-	int oldcolpos = 0;      /* Previous refresh cursor column position. */
-	int len = 0;            /* Current edited line length. */
-	int cols = 0;           /* Number of columns in terminal. */
-	int maxrows = 0;        /* Maximum num of rows used so far (multiline mode) */
-	int history_index = -1;  /* The history index we are currently editing. */
-	char wbuf[LINENOISE_MAX_LINE] = {'\0'};
-	std::string history_tmpbuf;
-
-	size_t history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
-	std::vector<std::string> history;
-};
 
 enum KEY_ACTION {
     KEY_NULL = 0,       /* NULL */
