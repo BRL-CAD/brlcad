@@ -795,12 +795,12 @@ main(int argc, const char **argv)
 
     // Generally speaking we'll want to remember a lot of commands.
 
-    // TODO - should we enable multi-line mode?
-    //linenoise::SetMultiLine(true);
-
     gs.get()->l = std::make_shared<linenoise::linenoiseState>();
-    gs.get()->l->Initialize(STDIN_FILENO, STDOUT_FILENO, LINENOISE_MAX_LINE, DEFAULT_GSH_PROMPT);
+    gs.get()->l->prompt = std::string(DEFAULT_GSH_PROMPT);
     gs.get()->l->SetHistoryMaxLen(INT_MAX);
+
+    // TODO - should we enable multi-line mode?
+    gs.get()->l->EnableMultiLine(true);
 
     // Launch blocking linenoise input gathering in a separate thread, to allow
     // us to integrate input from async commands into terminal output while
