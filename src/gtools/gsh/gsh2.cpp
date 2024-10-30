@@ -313,7 +313,9 @@ gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 
     gs->disconnect(p, t);
 
-    //emit ca->view_update(QG_VIEW_REFRESH);
+    // If we want some kind of signal here, look into
+    // https://github.com/fr00b0/nod
+    //gs->view_update_signal.emit(QG_VIEW_REFRESH);
 }
 
 void
@@ -648,7 +650,7 @@ g_cmdline(
 	/* Have copy - reset GED results string */
 	bu_vls_trunc(gs.get()->gedp->ged_result_str, 0);
 
-	// Check for GED_MORE mode 
+	// Check for GED_MORE mode
 	if (gret & GED_MORE) {
 	    // If we're being asked for more input, the return string holds
 	    // the prompt for the next input
@@ -795,11 +797,14 @@ main(int argc, const char **argv)
 
     // Generally speaking we'll want to remember a lot of commands.
 
-    gs.get()->l = std::make_shared<linenoise::linenoiseState>(DEFAULT_GSH_PROMPT);
+    gs.get()->l = std::make_shared<linenoise::linenoiseState>();
     gs.get()->l->SetHistoryMaxLen(INT_MAX);
 
     // TODO - should we enable multi-line mode?
     gs.get()->l->EnableMultiLine(true);
+
+    // If we're handling commands from stdin, we want an empty prompt
+    gs.get()->l->prompt = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
 
     // Launch blocking linenoise input gathering in a separate thread, to allow
     // us to integrate input from async commands into terminal output while
