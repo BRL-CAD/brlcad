@@ -12,11 +12,6 @@ brlcad_addexec(gex "gex.cpp" "libbu;librt")
 brlcad_addexec(glint glint.cpp "librt;${M_LIBRARY}")
 brlcad_addexec(gqa gqa.c "libged;librt")
 
-brlcad_addexec(gsh gsh.cpp  "libged;libdm;libbu;${LINENOISE_LIBRARIES}")
-target_include_directories(gsh BEFORE PRIVATE ${LINENOISE_INCLUDE_DIRS})
-set_property(TARGET gsh APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
-add_dependencies(gsh dm_plugins)
-
 brlcad_addexec(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
 
 add_subdirectory(beset)

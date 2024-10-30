@@ -31,6 +31,7 @@ brlcad_manage_files(hv3_snit.txt               ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(Inconsolata.txt            ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(image-hash.txt             ${DOC_DIR}/legal/embedded TRIGGER libicv)
 brlcad_manage_files(json.txt                   ${DOC_DIR}/legal/embedded TRIGGER libgcv libged)
+brlcad_manage_files(linenoise.txt              ${DOC_DIR}/legal/embedded TRIGGER ganalyze gsh nirt)
 brlcad_manage_files(lod.txt                    ${DOC_DIR}/legal/embedded TRIGGER libbv)
 brlcad_manage_files(lseg_lseg.txt              ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(lseg_pt.txt                ${DOC_DIR}/legal/embedded TRIGGER libbg)
