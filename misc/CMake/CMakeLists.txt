@@ -36,7 +36,6 @@ set(
   FindGTE.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
-  FindLINENOISE.cmake
   FindLMDB.cmake
   FindLibUV.cmake
   FindMANIFOLD.cmake

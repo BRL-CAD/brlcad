@@ -1,7 +1,5 @@
-brlcad_find_package(LINENOISE REQUIRED)
-
 brlcad_addexec(nirt main.cpp "libanalyze;librt;libbu;${LINENOISE_LIBRARIES};${M_LIBRARY}")
-target_include_directories(nirt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${LINENOISE_INCLUDE_DIRS})
+target_include_directories(nirt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 set_property(TARGET nirt APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
 
 brlcad_addexec(showshot showshot.c libbn)

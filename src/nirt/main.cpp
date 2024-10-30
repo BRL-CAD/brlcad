@@ -49,9 +49,7 @@ extern "C" b_off_t ftello(FILE *);
 #include "bu/units.h"
 #include "analyze.h"
 
-extern "C" {
-#include "linenoise.h"
-}
+#include "linenoise.hpp"
 
 
 #if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN)
@@ -559,7 +557,8 @@ main(int argc, const char **argv)
     std::vector<std::string> init_scripts;
     struct bu_vls last_script_file = BU_VLS_INIT_ZERO;
     struct script_file_data sfd = {&init_scripts, &last_script_file, 0};
-    char *line;
+    std::string line;
+    linenoise::linenoiseState l(NIRT_PROMPT);
     int ac = 0;
     size_t i = 0;
     struct bu_vls state_file = BU_VLS_INIT_ZERO;
@@ -973,20 +972,26 @@ main(int argc, const char **argv)
 
     /* Start the interactive loop */
     np = (silent_mode == SILENT_YES) ? "": NIRT_PROMPT;
-    while ((line = linenoise(np)) != NULL) {
-	bu_vls_sprintf(&iline, "%s", line);
-	free(line);
+    l.prompt = std::string(np);
+    line.clear();
+    while (true) {
+	auto quit = l.Readline(line);
+	if (quit)
+	    break;
+
+	bu_vls_sprintf(&iline, "%s", line.c_str());
+	line.clear();
 	bu_vls_trimspace(&iline);
 
 	if (!bu_vls_strlen(&iline))
 	    continue;
 
-	linenoiseHistoryAdd(bu_vls_addr(&iline));
+	l.AddHistory(bu_vls_addr(&iline));
 
 	/* The "clear" command only makes sense in interactive
 	 * mode */
 	if (BU_STR_EQUAL(bu_vls_addr(&iline), "clear")) {
-	    linenoiseClearScreen();
+	    l.ClearScreen();
 	    bu_vls_trunc(&iline, 0);
 	    continue;
 	}
@@ -998,7 +1003,6 @@ main(int argc, const char **argv)
     }
 
 done:
-    linenoiseHistoryFree();
     bu_vls_free(&launch_cmd);
     bu_vls_free(&msg);
     bu_vls_free(&ncmd);

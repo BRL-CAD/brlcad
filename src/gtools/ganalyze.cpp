@@ -39,9 +39,7 @@
 #include "raytrace.h"
 #include "analyze.h"
 
-extern "C" {
-#include "linenoise.h"
-}
+#include "linenoise.hpp"
 
 #define ANALYZE_DO_QUIT -999
 #define ANALYZE_FATAL_ERROR -1
@@ -166,18 +164,21 @@ int main(int UNUSED(argc), const char **argv)
      * interactive mode is disabled by explicit option, but at this stage we
      * just expose the two command driven modes.) */
     if (isatty(fileno(stdin))) {
-	char *line = NULL;
+	linenoise::linenoiseState l("ganalyze: ");
+	while (true) {
+	    std::string line;
+	    auto quit = l.Readline(line);
+	    if (quit)
+		break;
 
-	while ((line = linenoise("ganalyze: ")) != NULL) {
-	    bu_vls_sprintf(&iline, "%s", line);
-	    free(line);
+	    bu_vls_sprintf(&iline, "%s", line.c_str());
 	    bu_vls_trimspace(&iline);
 	    if (!bu_vls_strlen(&iline)) continue;
-	    linenoiseHistoryAdd(bu_vls_addr(&iline));
+	    l.AddHistory(bu_vls_addr(&iline));
 
 	    /* The "clear screen" subcommand only makes sense in interactive mode */
 	    if (BU_STR_EQUAL(bu_vls_addr(&iline), "clear screen")) {
-		linenoiseClearScreen();
+		l.ClearScreen();
 		bu_vls_trunc(&iline, 0);
 		continue;
 	    }
@@ -194,7 +195,6 @@ int main(int UNUSED(argc), const char **argv)
 		ret = ANALYZE_FATAL_ERROR;
 		goto analyze_cleanup;
 	    }
-
 	}
     } else {
 	char *buf;

@@ -1,10 +1,7 @@
-brlcad_find_package(LINENOISE REQUIRED)
-
 brlcad_adddata(gtransfer.c sample_applications)
 
 brlcad_addexec(ganalyze ganalyze.cpp "libanalyze;librt;libbu;libpkg;${LINENOISE_LIBRARIES}" NO_INSTALL)
-target_include_directories(ganalyze BEFORE PRIVATE ${LINENOISE_INCLUDE_DIRS})
-set_property(TARGET ganalyze APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
+target_include_directories(ganalyze BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 
 brlcad_addexec(gchecker gchecker.cpp "libged;librt;libbu")
 add_dependencies(gchecker ged-check)
