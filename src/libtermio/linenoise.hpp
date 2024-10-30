@@ -969,8 +969,9 @@ inline BOOL ParseAndPrintANSIString(HANDLE hDev, LPCVOID lpBuffer,
     CONSOLE_CURSOR_INFO oldConsoleCursorInfo;
     GetConsoleCursorInfo(hConOut, &oldConsoleCursorInfo);
 
-    CONSOLE_CURSOR_INFO invisibleCursor{.dwSize = oldConsoleCursorInfo.dwSize,
-	.bVisible = 0};
+    CONSOLE_CURSOR_INFO invisibleCursor;
+    invisibleCursor.dwSize = oldConsoleCursorInfo.dwSize;
+    invisibleCursor.bVisible = 0;
     SetConsoleCursorInfo(hConOut, &invisibleCursor);
 
     for (i = nNumberOfBytesToWrite, s = (LPCSTR)lpBuffer; i > 0; i--, s++) {
