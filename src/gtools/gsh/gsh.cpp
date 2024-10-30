@@ -801,7 +801,7 @@ main(int argc, const char **argv)
     gs.get()->l->SetHistoryMaxLen(INT_MAX);
 
     // TODO - should we enable multi-line mode?
-    gs.get()->l->EnableMultiLine(true);
+    //gs.get()->l->EnableMultiLine();
 
     // If we're handling commands from stdin, we want an empty prompt
     gs.get()->l->prompt = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
