@@ -1,4 +1,4 @@
-Copyright (C) 2019 Robert Jacobson. Released under the MIT license.
+Copyright (C) 2023 Robert Jacobson. Released under the MIT license.
 
 Based on "Iosifovich", Copyright (C) 2019 Frederik Hertzum, which is
 licensed under the MIT license: https://bitbucket.org/clearer/iosifovich.
