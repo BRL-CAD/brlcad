@@ -35,6 +35,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 #include <string>
 #include <numeric>
@@ -48,14 +49,8 @@ size_t
 bu_editdist(const char *s1, const char *s2)
 {
     // If we don't have both strings, trivial equality
-    if (!s1 || !s2) {
+    if (!s1 && !s2)
 	return 0;
-    }
-
-    // If we have equal strings, trivial equality
-    if (BU_STR_EQUAL(s1, s2)) {
-	return 0;
-    }
 
     // If one of either of the strings doesn't exist, the length of the other
     // string is our edit distance
@@ -66,120 +61,102 @@ bu_editdist(const char *s1, const char *s2)
 	    return strlen(s1);
     }
 
-    // We need std::mismatch to handle any length string in either argument -
-    // prior to C++14, it did not. That case fails hard on some platforms
-    // (Windows) at runtime.
-#if defined(CXX_STANDARD) && CXX_STANDARD >= 14
+    // If we have equal strings, trivial equality
+    if (BU_STR_EQUAL(s1, s2))
+	return 0;
+
+    int s1len = strlen(s1);
+    int s2len = strlen(s2);
+
+    int max_string_length = int(std::max(s1len, s2len));
+    auto max = std::min(s2len, DAMLEVLIM_MAX_EDIT_DIST);
+
 
     // Set up buffer
-    char *ptr = (char *)new(std::nothrow) std::vector<size_t>(DAMLEVLIM_MAX_EDIT_DIST);
-    if (!ptr)
-	return DAMLEVLIM_MAX_EDIT_DIST;
-    std::vector<size_t> &buffer = *(std::vector<size_t> *)ptr;
+    std::vector<size_t> buffer(DAMLEVLIM_MAX_EDIT_DIST);
 
     // Let's make some string views so we can use the STL.
-    std::string subject(s1);
-    std::string query(s2);
+    std::string_view subject(s1);
+    std::string_view query(s2);
 
     // Skip any common prefix.
-    auto mb = std::mismatch(subject.begin(), subject.end(), query.begin());
-    auto start_offset = (size_t)std::distance(subject.begin(), mb.first);
+    auto prefix_mismatch = std::mismatch(subject.begin(), subject.end(), query.begin(), query.end());
+    auto start_offset = std::distance(subject.begin(), prefix_mismatch.first);
 
     // If one of the strings is a prefix of the other, done.
-    if (subject.length() == start_offset) {
-	delete ptr;
-	return (size_t)(query.length() - start_offset);
-    } else if (query.length() == start_offset) {
-	delete ptr;
-	return (size_t)(subject.length() - start_offset);
+    if (static_cast<int>(subject.length()) == start_offset) {
+	return  static_cast<int>(query.length()) - start_offset;
+    } else if (static_cast<int>(query.length()) == start_offset) {
+	return  static_cast<int>(subject.length()) - start_offset;
     }
 
     // Skip any common suffix.
-    auto me = std::mismatch(
-		  subject.rbegin(), static_cast<decltype(subject.rend())>(mb.first - 1),
-		  query.rbegin());
-    auto end_offset = std::min((size_t)std::distance(subject.rbegin(), me.first),
-			       (size_t)(subject.size() - start_offset));
+    auto suffix_mismatch = std::mismatch(subject.rbegin(), std::next(subject.rend(), -start_offset),
+	    query.rbegin(), std::next(query.rend(), -start_offset));
+    auto end_offset = std::distance(subject.rbegin(), suffix_mismatch.first);
 
-    // Take the different part.
-    subject = subject.substr(start_offset, subject.size() - end_offset - start_offset + 1);
-    query = query.substr(start_offset, query.size() - end_offset - start_offset + 1);
+    // Extract the different part if significant.
+    if (start_offset + end_offset <  static_cast<int>(subject.length())) {
+	subject = subject.substr(start_offset, subject.length() - start_offset - end_offset);
+	query = query.substr(start_offset, query.length() - start_offset - end_offset);
+    }
 
-    // Make "subject" the smaller one.
+    // Ensure 'subject' is the smaller string for efficiency
     if (query.length() < subject.length()) {
 	std::swap(subject, query);
     }
-    // If one of the strings is a suffix of the other.
-    if (subject.length() == 0) {
-	delete ptr;
-	return query.length();
+
+    int n = static_cast<int>(subject.size()); // Length of the smaller string,Cast size_type to int
+    int m = static_cast<int>(query.size()); // Length of the larger string, Cast size_type to int
+
+    // Calculate trimmed_max based on the lengths of the trimmed strings
+    auto trimmed_max = std::max(n, m);
+
+    // Determine the effective maximum edit distance
+    // Casting max to int (ensure that max is within the range of int)
+    int effective_max = std::min(static_cast<int>(max), static_cast<int>(trimmed_max));
+
+    // Resize the buffer to simulate a 2D matrix with dimensions (n+1) x (m+1)
+    buffer.resize((n + 1) * (m + 1));
+
+    // Lambda function for 2D matrix indexing in the 1D buffer
+    auto idx = [m](int i, int j) { return i * (m + 1) + j; };
+
+
+    // Initialize the first row and column of the matrix
+    for (int i = 0; i <= n; ++i) {
+	buffer[idx(i, 0)] = i;
+    }
+    for (int j = 0; j <= m; ++j) {
+	buffer[idx(0, j)] = j;
     }
 
-    // Init buffer.
-    std::iota(buffer.begin(), buffer.begin() + query.length() + 1, 0);
+    // Main loop to calculate the Damerau-Levenshtein distance
+    for (int i = 1; i <= n; ++i) {
+	size_t column_min = std::numeric_limits<size_t>::max();
 
-    size_t end_j = 0;
-    for (size_t i = 1; i < subject.length() + 1; ++i) {
-	// temp = i - 1;
-	size_t temp = buffer[0]++;
-	size_t prior_temp = 0;
+	for (int j = 1; j <= m; ++j) {
+	    int cost = (subject[i - 1] == query[j - 1]) ? 0 : 1;
 
-	// Setup for max distance, which only needs to look in the window
-	// between i-max <= j <= i+max.
-	// The result of the max is positive, but we need the second argument
-	// to be allowed to be negative.
-	const size_t start_j = static_cast<size_t>(std::max(1ll, static_cast<long long>(i) -
-			       DAMLEVLIM_MAX_EDIT_DIST/2));
-	end_j = std::min(static_cast<size_t>(query.length() + 1),
-			 static_cast<size_t >(i + DAMLEVLIM_MAX_EDIT_DIST/2));
-	size_t column_min = DAMLEVLIM_MAX_EDIT_DIST;     // Sentinels
-	for (size_t j = start_j; j < end_j; ++j) {
-	    const size_t p = temp; // p = buffer[j - 1];
-	    const size_t r = buffer[j];
-	    /*
-	       auto min = r;
-	       if (p < min) min = p;
-	       if (prior_temp < min) min = prior_temp;
-	       min++;
-	       temp = temp + (subject[i - 1] == query[j - 1] ? 0 : 1);
-	       if (min < temp) temp = min;
-	       */
-	    temp = std::min(std::min(r,  // Insertion.
-				     p   // Deletion.
-				    ) + 1,
+	    buffer[idx(i, j)] = std::min({buffer[idx(i - 1, j)] + 1,
+		    buffer[idx(i, j - 1)] + 1,
+		    buffer[idx(i - 1, j - 1)] + cost});
 
-			    std::min(
-				// Transposition.
-				prior_temp + 1,
-				// Substitution.
-				temp + (subject[i - 1] == query[j - 1] ? 0 : 1)
-			    )
-			   );
-	    // Keep track of column minimum.
-	    if (temp < column_min) {
-		column_min = temp;
+	    // Check for transpositions
+	    if (i > 1 && j > 1 && subject[i - 1] == query[j - 2] && subject[i - 2] == query[j - 1]) {
+		buffer[idx(i, j)] = std::min(buffer[idx(i, j)], buffer[idx(i - 2, j - 2)] + cost);
 	    }
-	    // Record matrix value mat[i-2][j-2].
-	    prior_temp = temp;
-	    std::swap(buffer[j], temp);
+
+	    column_min = std::min(column_min, buffer[idx(i, j)]);
 	}
-	if (column_min >= DAMLEVLIM_MAX_EDIT_DIST) {
-	    // There is no way to get an edit distance > column_min.
-	    // We can bail out early.
-	    delete ptr;
-	    return DAMLEVLIM_MAX_EDIT_DIST;
+
+	// Early exit if the minimum edit distance exceeds the effective maximum
+	if (column_min > static_cast<size_t>(effective_max)) {
+	    return max_string_length;
 	}
     }
-
-    size_t ret = buffer[end_j-1];
-    delete ptr;
-    return ret;
-
-#else
-
-    return DAMLEVLIM_MAX_EDIT_DIST;
-
-#endif
+    buffer.resize(DAMLEVLIM_MAX_EDIT_DIST);
+    return (static_cast<int>(buffer[idx(n, m)]));
 }
 
 // Local Variables:
