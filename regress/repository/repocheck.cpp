@@ -172,8 +172,6 @@ regex_init(repo_info_t &r) {
 	    "bio.h",
 	    "bnetwork.h",
 	    "config_win.h",
-	    "csg_parser.c",
-	    "csg_scanner.h",
 	    "obj_grammar.c",
 	    "obj_grammar.cpp",
 	    "obj_libgcv_grammar.cpp",
@@ -239,6 +237,7 @@ regex_init(repo_info_t &r) {
 	    "bu/path[.]h$",
 	    "bu/str[.]h$",
 	    "cursor[.]c$",
+	    "linenoise[.]hpp$",
 	    "misc/CMake/compat/.*",
 	    "ttcp[.]c$",
 	    "file[.]cpp$",
@@ -384,6 +383,7 @@ regex_init(repo_info_t &r) {
 	}
 
 	const char *platform_exemption_strs[] {
+	    ".*/linenoise[.]hpp$",
 	    ".*/pstdint[.]h$",
 	    ".*/pinttypes[.]h$",
 	    ".*/uce-dirent[.]h$",
