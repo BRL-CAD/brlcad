@@ -2039,8 +2039,14 @@ inline void linenoiseClearScreen(void) {
  * temporarily clearing prompt and input while
  * printing other content. */
 inline void linenoiseWipeLine() {
-    (void)write(STDOUT_FILENO, "\33[2K", 4); // Clear line
-    (void)write(STDOUT_FILENO, "\r", 1);     // Move cursor to the left
+    // Clear line
+    if (write(STDOUT_FILENO, "\33[2K", 4) < 0) {
+	/* nothing to do, just to avoid warning. */
+    }
+    // Move cursor to the left
+    if (write(STDOUT_FILENO, "\r", 1) < 0) {
+	/* nothing to do, just to avoid warning. */
+    }
 }
 
 /* Beep, used for completion when there is nothing to complete or when all
