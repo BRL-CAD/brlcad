@@ -148,7 +148,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4996)
 #endif
-#include <ctype.h>
+#include <algorithm>
+#include <cctype>
 #include <errno.h>
 #include <fstream>
 #include <functional>
@@ -1855,9 +1856,16 @@ inline bool isUnsupportedTerm(void) {
 
     if (term == NULL)
 	return false;
-    for (j = 0; unsupported_term[j]; j++)
-	if (!strcasecmp(term, unsupported_term[j]))
+    std::string sterm(term);
+    // https://stackoverflow.com/a/313990
+    std::transform(sterm.begin(), sterm.end(), sterm.begin(), [](unsigned char c){ return std::tolower(c); });
+    for (j = 0; unsupported_term[j]; j++) {
+	std::string uterm(unsupported_term[j]);
+	// https://stackoverflow.com/a/313990
+	std::transform(uterm.begin(), uterm.end(), uterm.begin(), [](unsigned char c){ return std::tolower(c); });
+	if (uterm == uterm)
 	    return true;
+    }
 #endif
     return false;
 }
