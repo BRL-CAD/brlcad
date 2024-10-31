@@ -559,7 +559,7 @@ main(int argc, const char **argv)
     struct bu_vls last_script_file = BU_VLS_INIT_ZERO;
     struct script_file_data sfd = {&init_scripts, &last_script_file, 0};
     std::string line;
-    linenoise::linenoiseState l(NIRT_PROMPT);
+    linenoise::linenoiseState *l = NULL;
     int ac = 0;
     size_t i = 0;
     struct bu_vls state_file = BU_VLS_INIT_ZERO;
@@ -973,10 +973,11 @@ main(int argc, const char **argv)
 
     /* Start the interactive loop */
     np = (silent_mode == SILENT_YES) ? "": NIRT_PROMPT;
-    l.prompt = std::string(np);
+    l = new linenoise::linenoiseState();
+    l->prompt = std::string(np);
     line.clear();
     while (true) {
-	auto quit = l.Readline(line);
+	auto quit = l->Readline(line);
 	if (quit)
 	    break;
 
@@ -987,12 +988,12 @@ main(int argc, const char **argv)
 	if (!bu_vls_strlen(&iline))
 	    continue;
 
-	l.AddHistory(bu_vls_addr(&iline));
+	l->AddHistory(bu_vls_addr(&iline));
 
 	/* The "clear" command only makes sense in interactive
 	 * mode */
 	if (BU_STR_EQUAL(bu_vls_addr(&iline), "clear")) {
-	    l.ClearScreen();
+	    l->ClearScreen();
 	    bu_vls_trunc(&iline, 0);
 	    continue;
 	}
@@ -1004,6 +1005,7 @@ main(int argc, const char **argv)
     }
 
 done:
+    delete l;
     bu_vls_free(&launch_cmd);
     bu_vls_free(&msg);
     bu_vls_free(&ncmd);
