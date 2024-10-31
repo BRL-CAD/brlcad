@@ -46,6 +46,7 @@ extern "C" b_off_t ftello(FILE *);
 #include "bu/env.h"
 #include "bu/opt.h"
 #include "bu/path.h"
+#include "bu/process.h"
 #include "bu/units.h"
 #include "analyze.h"
 
@@ -704,7 +705,7 @@ main(int argc, const char **argv)
 
     /* Check if we're on a terminal or not - it has implications for the modes */
     if (silent_mode == SILENT_UNSET) {
-	silent_mode = (isatty(0)) ? SILENT_NO : SILENT_YES;
+	silent_mode = (bu_interactive()) ? SILENT_NO : SILENT_YES;
     }
 
     if (silent_mode != SILENT_YES && header_mode) {
