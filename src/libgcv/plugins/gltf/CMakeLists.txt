@@ -7,6 +7,7 @@ validate_style(gcv-gltf gltf_read.cpp)
 plugin_setup(gcv-gltf gcv)
 
 cmakefiles(
+  gltf_read.cpp
   CMakeLists.txt
 )
 
