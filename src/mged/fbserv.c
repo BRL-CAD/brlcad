@@ -110,6 +110,12 @@ fbserv_drop_client(int sub)
     }
 }
 
+/* Container for holding data used in fb callbacks.
+ * Not much here right now, but this is intended to
+ * support elimination of globals down the road. */
+struct c_data {
+    int fd;
+};
 
 /*
  * Process arrivals from existing clients.
@@ -119,8 +125,8 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
     int i;
 
-    /* NOTE: assumes fd's will be small */
-    int fd = (uint16_t)((long)(uintptr_t)clientData & 0xFFFF);
+    struct c_data *d = (struct c_data *)clientData;
+    int fd = d->fd;
 
     int npp;			/* number of processed packages */
     struct mged_dm *dlp = MGED_DM_NULL;
@@ -160,6 +166,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 	if (pkg_suckin(clients[i].c_pkg) <= 0) {
 	    /* Probably EOF */
 	    fbserv_drop_client(i);
+	    BU_PUT(d, struct c_data);
 
 	    continue;
 	}
@@ -358,7 +365,6 @@ fbserv_makeconn(int fd,
 
 #else /* defined(_WIN32) && !defined(__CYGWIN__) */
 
-
 static void
 fbserv_new_client(struct pkg_conn *pcp)
 {
@@ -376,8 +382,11 @@ fbserv_new_client(struct pkg_conn *pcp)
 	clients[i].c_fd = pcp->pkc_fd;
 	fbserv_setup_socket(pcp->pkc_fd);
 
+	struct c_data *ed;
+	BU_GET(ed, struct c_data);
+	ed->fd = clients[i].c_fd;
 	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
-			      fbserv_existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
+			      fbserv_existing_client_handler, (ClientData)ed);
 
 	return;
     }
@@ -393,8 +402,8 @@ fbserv_new_client(struct pkg_conn *pcp)
 static void
 fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 {
-    uintptr_t datafd = (uintptr_t)clientData;
-    int fd = (int)((int32_t)datafd & 0xFFFF);	/* fd's will be small */
+    struct c_data *d = (struct c_data *)clientData;
+    int fd = d->fd;
     struct mged_dm *dlp;
     struct mged_dm *scdlp;  /* save current dm_list pointer */
 
@@ -414,6 +423,9 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 
     set_curr_dm(dlp);
     fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));
+
+    // Data handed off to fbserv_existing_client_handler, we should be done with this now.
+    BU_PUT(d, struct c_data);
 
     /* restore */
     set_curr_dm(scdlp);
@@ -473,9 +485,16 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	mged_variables->mv_listen = 0;
 	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
 	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
-    } else
+    } else {
+	// Need to pass a few things to fbserv_new_client_handler. ncdata's
+	// lifetime is governed by the needs of the Tcl file handlers, so it
+	// has to be freed once fbserv_new_client_handler is done.
+	struct c_data *ncdata;
+	BU_GET(ncdata, struct c_data);
+	ncdata->fd = netfd;
 	Tcl_CreateFileHandler(netfd, TCL_READABLE,
-			      fbserv_new_client_handler, (ClientData)(size_t)netfd);
+			      fbserv_new_client_handler, (ClientData)ncdata);
+    }
 }
 #endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
