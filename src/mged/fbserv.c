@@ -166,7 +166,10 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 	if (pkg_suckin(clients[i].c_pkg) <= 0) {
 	    /* Probably EOF */
 	    fbserv_drop_client(i);
-	    BU_PUT(d, struct c_data);
+	    if (d) {
+		BU_PUT(d, struct c_data);
+		d = NULL;
+	    }
 
 	    continue;
 	}
