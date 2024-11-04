@@ -47,6 +47,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     int print_header = 1;
     int print_rpp = 0;
     int print_dim = 0;
+    int print_midpt = 0;
     int print_vol = 0;
     int make_bb = 0;
     int oriented_bb = 0;
@@ -75,7 +76,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "c:dequvo")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "c:dmequvo")) != -1) {
 	switch (c) {
 	    case 'c':
 		make_bb = 1;
@@ -84,6 +85,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'd':
 		print_dim = 1;
+		break;
+	    case 'm':
+		print_midpt = 1;
 		break;
 	    case 'e':
 		print_rpp = 1;
@@ -107,7 +111,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Don't want to print NO info, so default to dim and vol printout if nothing specified. */
-    if (print_rpp == 0 && print_vol == 0 && print_dim == 0) {
+    if (print_rpp == 0 && print_vol == 0 && print_dim == 0 && print_midpt == 0) {
 	print_dim = 1;
 	print_vol = 1;
     }
@@ -157,6 +161,13 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    ylen = fabs(rpp_max[Y] - rpp_min[Y])*gedp->dbip->dbi_base2local;
 	    zlen = fabs(rpp_max[Z] - rpp_min[Z])*gedp->dbip->dbi_base2local;
 	    bu_vls_printf(gedp->ged_result_str, "X Length: %g %s\nY Length: %g %s\nZ Length: %g %s\n", xlen, str, ylen, str, zlen, str);
+	}
+
+	/* print midpoint */
+	if (print_midpt == 1) {
+	    point_t midpt;
+	    VADD2SCALE(midpt, rpp_min, rpp_max, 0.5);
+	    bu_vls_printf(gedp->ged_result_str, "Mid Point: (%f %f %f)\n", midpt[X], midpt[Y], midpt[Z]);
 	}
 
 	if (print_vol == 1) {
