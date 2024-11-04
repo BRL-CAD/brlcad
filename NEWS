@@ -15,7 +15,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed primitive & matrix edit GUIs in MGED ("x -1") - Sean Morrison
-* added new 'align' and 'dir' subcommands to 'view' - Chris McGregor
+* added (align, dir and print) subcommands to 'view' - Chris McGregor
 * added (autoview, lookat, saveview) to 'view' - Chris McGregor
 * fixed mged 'process' command on read-only databases - Sean Morrison
 * fixed -exec behavior with 'flat' search in mged - Chris McGregor
