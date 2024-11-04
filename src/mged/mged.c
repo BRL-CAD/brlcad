@@ -130,6 +130,14 @@ Tcl_Interp *ged_interp = (Tcl_Interp *)NULL;
  */
 static int stdfd[2] = {1, 2};
 
+
+/* Container for passing I/O data through Tcl callbacks */
+struct stdio_data {
+    long fd;
+    Tcl_Channel chan;
+};
+
+
 /* FIXME: these are problematic globals */
 struct ged *GEDP = GED_NULL;
 struct db_i *DBIP = DBI_NULL;	/* database instance pointer */
@@ -1042,7 +1050,6 @@ main(int argc, char *argv[])
     int use_pipe = 0;
     int run_in_foreground=1;
 
-    Tcl_Channel chan;
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
     int result;
@@ -1561,15 +1568,16 @@ main(int argc, char *argv[])
     }
 
     if (classic_mged || !interactive) {
+	struct stdio_data *sd;
+	BU_GET(sd, struct stdio_data);
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
-	ClientData stdin_file = STDIN_FILENO;
-	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
-	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, stdin_file);
+	sd->fd = STDIN_FILENO;
+	sd->chan = Tcl_MakeFileChannel(STDIN_FILENO, TCL_READABLE);
+	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
 #else
-	ClientData stdin_file = GetStdHandle(STD_INPUT_HANDLE);
-	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
-	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, chan);
+	sd->chan = Tcl_MakeFileChannel(GetStdHandle(STD_INPUT_HANDLE), TCL_READABLE);
+	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
 #endif
 
 #ifdef SIGINT
@@ -1624,6 +1632,8 @@ main(int argc, char *argv[])
 	    if (result == -1)
 		perror("dup");
 	    (void)close(pipe_err[1]); /* only a write pipe */
+
+	    Tcl_Channel chan;
 
 	    outpipe = (ClientData)(size_t)pipe_out[0];
 	    chan = Tcl_MakeFileChannel(outpipe, TCL_READABLE);
@@ -1724,12 +1734,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
     int count;
     char ch;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    Tcl_Channel chan = (Tcl_Channel)clientData;
-    Tcl_DString ds;
-#else
-    long fd = (long)clientData;
-#endif
+    struct stdio_data *sd = (struct stdio_data *)clientData;
 
     /* When not in cbreak mode, just process an entire line of input,
      * and don't do any command-line manipulation.
@@ -1738,18 +1743,23 @@ stdin_input(ClientData clientData, int UNUSED(mask))
     if (!cbreak_mode) {
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+	Tcl_DString ds;
 	Tcl_DStringInit(&ds);
-	count = Tcl_Gets(chan, &ds);
+	count = Tcl_Gets(s->chan, &ds);
 
-	if (count < 0)
-	    quit();
+	if (count < 0) {
+	    BU_PUT(sd, struct stdio_data);
+	    quit(); /* does not return */
+	}
 
 	bu_vls_strcat(&input_str, Tcl_DStringValue(&ds));
 	Tcl_DStringFree(&ds);
 #else
 	/* Get line from stdin */
-	if (bu_vls_gets(&temp, stdin) < 0)
+	if (bu_vls_gets(&temp, stdin) < 0) {
+	    BU_PUT(sd, struct stdio_data);
 	    quit();				/* does not return */
+	}
 	bu_vls_vlscat(&input_str, &temp);
 #endif
 
@@ -1811,12 +1821,12 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 #  ifdef _WIN32
 	count = Tcl_Read(chan, buf, BU_PAGE_SIZE);
 #  else
-	count = read((int)fd, (void *)buf, BU_PAGE_SIZE);
+	count = read((int)sd->fd, (void *)buf, BU_PAGE_SIZE);
 #  endif
 
 #else
 	/* Grab single character from stdin */
-	count = read((int)fd, (void *)&ch, 1);
+	count = read((int)sd->fd, (void *)&ch, 1);
 #endif
 
 	if (count < 0) {
