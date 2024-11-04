@@ -827,7 +827,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (BU_STR_EQUAL(argv[1], "print")) {
-	return _view_cmd_print(gedp, argc-1, argv+1);
+	return _view_cmd_print((void*)gedp, argc-1, argv+1);
     }
 
     if (BU_STR_EQUAL(argv[1], "saveview") || BU_STR_EQUAL(argv[1], "save")) {
