@@ -225,6 +225,7 @@ set(
   simulate.xml
   size.xml
   solids.xml
+  solid_report.xml
   source.xml
   sph-part.xml
   stat.xml
@@ -260,7 +261,6 @@ set(
   whichid.xml
   who.xml
   wmater.xml
-  x.xml
   xpush.xml
   zoom.xml
 )
