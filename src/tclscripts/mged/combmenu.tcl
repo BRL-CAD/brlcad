@@ -38,7 +38,7 @@ if ![info exists mged_gui(mged,screen)] {
 
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
-check_externs "_mged_x _mged_press"
+check_externs "_mged_solid_report _mged_press"
 
 proc build_comb_menu_all_displayed {} {
     global mged_players
@@ -58,7 +58,7 @@ proc build_comb_menu_all_displayed {} {
 	destroy $mged_gui($id,edit_menu)
     }
 
-    set paths [_mged_x -1]
+    set paths [_mged_solid_report -1]
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 	    "No combinations are being displayed!"\
@@ -235,7 +235,7 @@ proc build_comb_list { paths } {
 }
 
 proc comb_get_solid_path { comb } {
-    set paths [_mged_x -1]
+    set paths [_mged_solid_report -1]
 
     if {[llength $paths] == 0} {
 	return ""

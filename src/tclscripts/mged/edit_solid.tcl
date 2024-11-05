@@ -471,7 +471,7 @@ proc esol_apply { id w sform } {
 }
 
 proc esol_isdrawn { sol } {
-    set sol_list [_mged_x -2]
+    set sol_list [_mged_solid_report -2]
 
     if {-1 < [lsearch -exact $sol_list $sol]} {
 	return 1

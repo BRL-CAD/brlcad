@@ -28,11 +28,11 @@
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
 #
-check_externs "_mged_x _mged_press _mged_aip _mged_M"
+check_externs "_mged_solid_report _mged_press _mged_aip _mged_M"
 
 proc eobjmenu {} {
 
-    if {![llength [_mged_x -1]]} {
+    if {![llength [_mged_solid_report -1]]} {
 	puts "No objects are currently being displayed"
 	return
     }
@@ -67,7 +67,7 @@ proc eobjmenu {} {
     frame .om.meat
     listbox .om.meat.objects -yscrollcommand {.om.meat.slider set}
     set i 0
-    foreach word [_mged_x -1] {
+    foreach word [_mged_solid_report -1] {
 	.om.meat.objects insert end $word
 	incr i
     }

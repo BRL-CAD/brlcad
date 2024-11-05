@@ -37,7 +37,7 @@ if ![info exists mged_gui(mged,screen)] {
 
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
-check_externs "_mged_x _mged_press _mged_who _mged_ill"
+check_externs "_mged_solid_report _mged_press _mged_who _mged_ill"
 
 proc build_edit_menu_all { type } {
     global mged_players
@@ -63,7 +63,7 @@ proc build_edit_menu_all { type } {
 	destroy $mged_gui($id,edit_menu)
     }
 
-    set paths [_mged_x -1]
+    set paths [_mged_solid_report -1]
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 	    "No primitives are being displayed!"\
