@@ -38,7 +38,7 @@
 #include "ged.h"
 #include "./ged_private.h"
 
-#define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
+#define LAST_SOLID(_sp) DB_FULL_PATH_CUR_DIR(&(_sp)->s_fullpath)
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
 #define FREE_BV_SCENE_OBJ(p, fp) { \
         BU_LIST_APPEND(fp, &((p)->l)); \
@@ -51,7 +51,7 @@ extern void createDListSolid(struct bv_scene_obj *sp);
 
 struct display_list *
 dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
-                 const char *name)
+		const char *name)
 {
     struct directory *dp = NULL;
     struct display_list *gdlp = NULL;
@@ -79,7 +79,7 @@ dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
         if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->dl_path)))
             goto end;
 
-                if (found_namepath) {
+	if (found_namepath) {
             struct db_full_path gdlpath;
 
             if (db_string_to_path(&gdlpath, dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
@@ -135,7 +135,6 @@ headsolid_split(struct bu_list *hdlp, struct db_i *dbip, struct bv_scene_obj *sp
 }
 
 
-
 int
 headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path)
 {
@@ -157,8 +156,8 @@ headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list 
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	    if (db_full_path_match_top(path, &bdata->s_fullpath)) {
-		    headsolid_split(hdlp, dbip, sp, newlen);
-		}
+		headsolid_split(hdlp, dbip, sp, newlen);
+	    }
 	    sp = nsp;
 	}
 
@@ -193,11 +192,11 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag)
 		continue;
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    /* Skip pseudo-solids unless pflag is set */
-		if (!pflag &&
-		    bdata->s_fullpath.fp_names != (struct directory **)0 &&
-		    bdata->s_fullpath.fp_names[0] != (struct directory *)0 &&
-		    bdata->s_fullpath.fp_names[0]->d_addr == RT_DIR_PHONY_ADDR)
-		    continue;
+	    if (!pflag &&
+		bdata->s_fullpath.fp_names != (struct directory **)0 &&
+		bdata->s_fullpath.fp_names[0] != (struct directory *)0 &&
+		bdata->s_fullpath.fp_names[0]->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
 
 	    minus[X] = sp->s_center[X] - sp->s_size;
 	    minus[Y] = sp->s_center[Y] - sp->s_size;
@@ -216,6 +215,7 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag)
 
     return is_empty;
 }
+
 
 /*
  * Erase/remove the display list item from headDisplay if path matches the list item's path.
@@ -289,12 +289,12 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 		nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 
 		if (db_full_path_match_top(&subpath, &bdata->s_fullpath)) {
-			ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
+		    ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 
-			BU_LIST_DEQUEUE(&sp->l);
-			FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
-			need_split = 1;
-		    }
+		    BU_LIST_DEQUEUE(&sp->l);
+		    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+		    need_split = 1;
+		}
 
 		sp = nsp;
 	    }
@@ -343,10 +343,10 @@ eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	if (db_full_path_subset(&bdata->s_fullpath, subpath, skip_first)) {
-		ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
-		BU_LIST_DEQUEUE(&sp->l);
-		FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
-	    }
+	    ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	}
 	sp = nsp;
     }
 }
@@ -416,9 +416,9 @@ _dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip
 
 int
 _dl_eraseFirstSubpath(struct ged *gedp,
-		       struct display_list *gdlp,
-		       struct db_full_path *subpath,
-		       const int skip_first)
+		      struct display_list *gdlp,
+		      struct db_full_path *subpath,
+		      const int skip_first)
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
@@ -545,15 +545,15 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 		continue;
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    dp = FIRST_SOLID(bdata);
-		RT_CK_DIR(dp);
-		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-		    (void)db_dirdelete(dbip, dp);
-		}
-
-		BU_LIST_DEQUEUE(&sp->l);
-		FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	    RT_CK_DIR(dp);
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+		(void)db_dirdelete(dbip, dp);
 	    }
+
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 	}
+    }
 
     /* Free up the display list */
     BU_LIST_DEQUEUE(&gdlp->l);
@@ -580,7 +580,7 @@ color_soltab(struct bv_scene_obj *sp)
 
     for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
 	if (sp->s_old.s_regionid <= mp->mt_high &&
-		sp->s_old.s_regionid >= mp->mt_low) {
+	    sp->s_old.s_regionid >= mp->mt_low) {
 	    sp->s_color[0] = mp->mt_r;
 	    sp->s_color[1] = mp->mt_g;
 	    sp->s_color[2] = mp->mt_b;
@@ -638,9 +638,9 @@ dl_color_soltab(struct bu_list *hdlp)
  *    */
 static void
 solid_set_color_info(
-	struct bv_scene_obj *sp,
-	unsigned char *wireframe_color_override,
-	struct db_tree_state *tsp)
+    struct bv_scene_obj *sp,
+    unsigned char *wireframe_color_override,
+    struct db_tree_state *tsp)
 {
     unsigned char bcolor[3] = {255, 0, 0}; /* default */
 
@@ -669,6 +669,7 @@ solid_set_color_info(
     color_soltab(sp);
 }
 
+
 static void
 solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 {
@@ -679,6 +680,7 @@ solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
     sp->s_vlen += bv_vlist_cmd_cnt(vlist);
     BU_LIST_APPEND_LIST(&(sp->s_vlist), &(vlist->l));
 }
+
 
 void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
@@ -731,9 +733,10 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
 }
 
+
 static fastf_t
 draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *dbip,
-       	const struct bn_tol *tol, const struct bg_tess_tol *ttol)
+		     const struct bn_tol *tol, const struct bg_tess_tol *ttol)
 {
     int ret;
     struct bu_list vhead;
@@ -746,7 +749,7 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
     struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath),
-	    dbip, sp->s_mat, &rt_uniresource);
+			     dbip, sp->s_mat, &rt_uniresource);
 
     if (ret < 0) {
 	return -1;
@@ -806,12 +809,13 @@ dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
     return ret;
 }
 
+
 union tree *
 append_solid_to_display_list(
-        struct db_tree_state *tsp,
-        const struct db_full_path *pathp,
-        struct rt_db_internal *ip,
-        void *client_data)
+    struct db_tree_state *tsp,
+    const struct db_full_path *pathp,
+    struct rt_db_internal *ip,
+    void *client_data)
 {
     point_t min, max;
     union tree *curtree;
@@ -883,7 +887,7 @@ append_solid_to_display_list(
         BU_LIST_INIT(&vhead);
 
         plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-                tsp->ts_tol, NULL);
+					    tsp->ts_tol, NULL);
 
         if (plot_status < 0) {
 	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
@@ -992,6 +996,7 @@ append_solid_to_display_list(
     return curtree;
 }
 
+
 static void
 solid_copy_vlist(struct db_i *UNUSED(dbip), struct bv_scene_obj *sp, struct bv_vlist *vlist)
 {
@@ -1000,8 +1005,9 @@ solid_copy_vlist(struct db_i *UNUSED(dbip), struct bv_scene_obj *sp, struct bv_v
     sp->s_vlen = bv_vlist_cmd_cnt((struct bv_vlist *)(&(sp->s_vlist)));
 }
 
+
 int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy,
-       	fastf_t transparency, int dmode, int csoltab)
+		 fastf_t transparency, int dmode, int csoltab)
 {
     if (!gedp || !gedp->ged_gvp)
 	return 0;
@@ -1087,6 +1093,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 
 }
 
+
 int
 dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
 {
@@ -1101,17 +1108,18 @@ dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
 
 	for (i = 0; i < bdata->s_fullpath.fp_len; ++i) {
 	    if (*obj == *DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep &&
-		    BU_STR_EQUAL(obj, DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep)) {
-		    found = 1;
-		    if (illum)
-			sp->s_iflag = UP;
-		    else
-			sp->s_iflag = DOWN;
-		}
+		BU_STR_EQUAL(obj, DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep)) {
+		found = 1;
+		if (illum)
+		    sp->s_iflag = UP;
+		else
+		    sp->s_iflag = DOWN;
 	    }
 	}
+    }
     return found;
 }
+
 
 void
 dl_set_iflag(struct bu_list *hdlp, int iflag)
@@ -1132,6 +1140,7 @@ dl_set_iflag(struct bu_list *hdlp, int iflag)
     }
 }
 
+
 void
 dl_set_flag(struct bu_list *hdlp, int flag)
 {
@@ -1150,6 +1159,7 @@ dl_set_flag(struct bu_list *hdlp, int flag)
 	gdlp = next_gdlp;
     }
 }
+
 
 void
 dl_set_wflag(struct bu_list *hdlp, int wflag)
@@ -1170,6 +1180,7 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
     }
 }
 
+
 void
 dl_zap(struct ged *gedp)
 {
@@ -1186,24 +1197,24 @@ dl_zap(struct ged *gedp)
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj))
 	    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist,
-		    BU_LIST_LAST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist -
-		    BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist + 1);
+				 BU_LIST_LAST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist -
+				 BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist + 1);
 
 	while (BU_LIST_WHILE(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    dp = FIRST_SOLID(bdata);
-		RT_CK_DIR(dp);
-		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-		    if (db_dirdelete(dbip, dp) < 0) {
-			bu_log("ged_zap: db_dirdelete failed\n");
-		    }
+	    RT_CK_DIR(dp);
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+		if (db_dirdelete(dbip, dp) < 0) {
+		    bu_log("ged_zap: db_dirdelete failed\n");
 		}
-
-		BU_LIST_DEQUEUE(&sp->l);
-		FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 	    }
+
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	}
 
 	BU_LIST_DEQUEUE(&gdlp->l);
 	/* queue up for free */
@@ -1219,6 +1230,7 @@ dl_zap(struct ged *gedp)
     }
     bu_ptbl_free(&dls);
 }
+
 
 int
 dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both)
@@ -1239,8 +1251,8 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    for (i = 0, tmp_dpp = dpp;
-		    i < bdata->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
-		    ++i, ++tmp_dpp) {
+		 i < bdata->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
+		 ++i, ++tmp_dpp) {
 		if (bdata->s_fullpath.fp_names[i] != *tmp_dpp)
 		    break;
 	    }
@@ -1300,7 +1312,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
         while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
             next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-            for (BU_LIST_FOR(sp, bv_scene_obj,&gdlp->dl_head_scene_obj)) {
+            for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
                 /* Could check for differences from last color */
                 pl_color(fp,
                          sp->s_color[0],
@@ -1351,7 +1363,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-        for (BU_LIST_FOR(sp, bv_scene_obj,&gdlp->dl_head_scene_obj)) {
+        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
             if (Dashing != sp->s_soldash) {
                 if (sp->s_soldash)
                     pl_linmod(fp, "dotdashed");
@@ -1425,6 +1437,7 @@ struct coord {
     short y;
 };
 
+
 struct stroke {
     struct coord pixel; /* starting scan, nib */
     short xsign;        /* 0 or +1 */
@@ -1435,6 +1448,7 @@ struct stroke {
     short e;            /* DDA error accumulator */
     short de;           /* increment for `e' */
 };
+
 
 /*
  * Method:
@@ -1474,6 +1488,7 @@ raster(unsigned char **image, struct stroke *vp, unsigned char *color, size_t si
         }
     }
 }
+
 
 static void
 draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord2, unsigned char *color, size_t size)
@@ -1594,30 +1609,30 @@ draw_png_solid(fastf_t perspective, unsigned char **image, struct bv_scene_obj *
                                 continue;
                             } else {
                                 if (pt_prev) {
-                                fastf_t alpha;
-                                vect_t diff;
-                                point_t tmp_pt;
+				    fastf_t alpha;
+				    vect_t diff;
+				    point_t tmp_pt;
 
-                                /* clip this end */
-                                VSUB2(diff, *pt, *pt_prev);
-                                alpha = (dist_prev - delta) / (dist_prev - dist);
-                                VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-                                MAT4X3PNT(fin, psmat, tmp_pt);
+				    /* clip this end */
+				    VSUB2(diff, *pt, *pt_prev);
+				    alpha = (dist_prev - delta) / (dist_prev - dist);
+				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				    MAT4X3PNT(fin, psmat, tmp_pt);
                                 }
                             }
                         } else {
                             if (dist_prev <= 0.0) {
                                 if (pt_prev) {
-                                fastf_t alpha;
-                                vect_t diff;
-                                point_t tmp_pt;
+				    fastf_t alpha;
+				    vect_t diff;
+				    point_t tmp_pt;
 
-                                /* clip other end */
-                                VSUB2(diff, *pt, *pt_prev);
-                                alpha = (-dist_prev + delta) / (dist - dist_prev);
-                                VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-                                MAT4X3PNT(last, psmat, tmp_pt);
-                                MAT4X3PNT(fin, psmat, *pt);
+				    /* clip other end */
+				    VSUB2(diff, *pt, *pt_prev);
+				    alpha = (-dist_prev + delta) / (dist - dist_prev);
+				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				    MAT4X3PNT(last, psmat, tmp_pt);
+				    MAT4X3PNT(fin, psmat, *pt);
                                 }
                             } else {
                                 MAT4X3PNT(fin, psmat, *pt);
@@ -1664,7 +1679,7 @@ dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_p
         if (ZERO(eye_pos[Z] - 1.0)) {
             /* This way works, with reasonable Z-clipping */
             persp_mat(perspective_mat, perspective,
-                          (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
+		      (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
         } else {
             /* This way does not have reasonable Z-clipping,
              * but includes shear, for GDurf's testing.
@@ -1737,6 +1752,7 @@ NEWPG\n\
             xoffset, yoffset, scale, scale);
 }
 
+
 static void
 ps_draw_solid(fastf_t perspective, FILE *fp, struct bv_scene_obj *sp, matp_t psmat)
 {
@@ -1803,7 +1819,7 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct bv_scene_obj *sp, matp_t psm
                 case BV_VLIST_POLY_END:
                 case BV_VLIST_LINE_DRAW:
                 case BV_VLIST_TRI_DRAW:
-               case BV_VLIST_TRI_END:
+		case BV_VLIST_TRI_END:
                     /* draw */
                     if (perspective > 0) {
                         /* cannot apply perspective transformation to
@@ -1818,30 +1834,30 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct bv_scene_obj *sp, matp_t psm
                                 continue;
                             } else {
                                 if (pt_prev) {
-                                fastf_t alpha;
-                                vect_t diff;
-                                point_t tmp_pt;
+				    fastf_t alpha;
+				    vect_t diff;
+				    point_t tmp_pt;
 
-                                /* clip this end */
-                                VSUB2(diff, *pt, *pt_prev);
-                                alpha = (dist_prev - delta) / (dist_prev - dist);
-                                VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-                                MAT4X3PNT(fin, psmat, tmp_pt);
+				    /* clip this end */
+				    VSUB2(diff, *pt, *pt_prev);
+				    alpha = (dist_prev - delta) / (dist_prev - dist);
+				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				    MAT4X3PNT(fin, psmat, tmp_pt);
                                 }
                             }
                         } else {
                             if (dist_prev <= 0.0) {
                                 if (pt_prev) {
-                                fastf_t alpha;
-                                vect_t diff;
-                                point_t tmp_pt;
+				    fastf_t alpha;
+				    vect_t diff;
+				    point_t tmp_pt;
 
-                                /* clip other end */
-                                VSUB2(diff, *pt, *pt_prev);
-                                alpha = (-dist_prev + delta) / (dist - dist_prev);
-                                VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-                                MAT4X3PNT(last, psmat, tmp_pt);
-                                MAT4X3PNT(fin, psmat, *pt);
+				    /* clip other end */
+				    VSUB2(diff, *pt, *pt_prev);
+				    alpha = (-dist_prev + delta) / (dist - dist_prev);
+				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				    MAT4X3PNT(last, psmat, tmp_pt);
+				    MAT4X3PNT(fin, psmat, *pt);
                                 }
                             } else {
                                 MAT4X3PNT(fin, psmat, *pt);
@@ -1867,6 +1883,7 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct bv_scene_obj *sp, matp_t psm
     }
 }
 
+
 static void
 ps_draw_body(struct bu_list *hdlp, FILE *fp, mat_t model2view, fastf_t perspective, vect_t eye_pos)
 {
@@ -1888,7 +1905,7 @@ ps_draw_body(struct bu_list *hdlp, FILE *fp, mat_t model2view, fastf_t perspecti
         if (ZERO(eye_pos[Z] - 1.0)) {
             /* This way works, with reasonable Z-clipping */
             persp_mat(perspective_mat, perspective,
-                          (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
+		      (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
         } else {
             /* This way does not have reasonable Z-clipping,
              * but includes shear, for GDurf's testing.
@@ -1930,6 +1947,7 @@ ps_draw_footer(FILE *fp)
     fputs("% showpage   % uncomment to use raw file\n", fp);
     fputs("%end(plot)\n", fp);
 }
+
 
 void
 dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue)
@@ -1980,61 +1998,61 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 		db_path_to_vls(vls, &bdata->s_fullpath);
 
-		    if ((lvl != -1) && (sp->s_iflag == UP))
-			bu_vls_printf(vls, " ILLUM");
+		if ((lvl != -1) && (sp->s_iflag == UP))
+		    bu_vls_printf(vls, " ILLUM");
 
-		    bu_vls_printf(vls, "\n");
+		bu_vls_printf(vls, "\n");
 
-		    if (lvl <= 0)
+		if (lvl <= 0)
+		    continue;
+
+		/* convert to the local unit for printing */
+		bu_vls_printf(vls, "  cent=(%.3f, %.3f, %.3f) sz=%g ",
+			      sp->s_center[X]*dbip->dbi_base2local,
+			      sp->s_center[Y]*dbip->dbi_base2local,
+			      sp->s_center[Z]*dbip->dbi_base2local,
+			      sp->s_size*dbip->dbi_base2local);
+		bu_vls_printf(vls, "reg=%d\n", sp->s_old.s_regionid);
+		bu_vls_printf(vls, "  basecolor=(%d, %d, %d) color=(%d, %d, %d)%s%s%s\n",
+			      sp->s_old.s_basecolor[0],
+			      sp->s_old.s_basecolor[1],
+			      sp->s_old.s_basecolor[2],
+			      sp->s_color[0],
+			      sp->s_color[1],
+			      sp->s_color[2],
+			      sp->s_old.s_uflag?" U":"",
+			      sp->s_old.s_dflag?" D":"",
+			      sp->s_old.s_cflag?" C":"");
+
+		if (lvl <= 1)
+		    continue;
+
+		/* Print the actual vector list */
+		nvlist = 0;
+		npts = 0;
+		for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
+		    size_t i;
+		    size_t nused = vp->nused;
+		    int *cmd = vp->cmd;
+		    point_t *pt = vp->pt;
+
+		    BV_CK_VLIST(vp);
+		    nvlist++;
+		    npts += nused;
+
+		    if (lvl <= 2)
 			continue;
 
-		    /* convert to the local unit for printing */
-		    bu_vls_printf(vls, "  cent=(%.3f, %.3f, %.3f) sz=%g ",
-			    sp->s_center[X]*dbip->dbi_base2local,
-			    sp->s_center[Y]*dbip->dbi_base2local,
-			    sp->s_center[Z]*dbip->dbi_base2local,
-			    sp->s_size*dbip->dbi_base2local);
-		    bu_vls_printf(vls, "reg=%d\n", sp->s_old.s_regionid);
-		    bu_vls_printf(vls, "  basecolor=(%d, %d, %d) color=(%d, %d, %d)%s%s%s\n",
-			    sp->s_old.s_basecolor[0],
-			    sp->s_old.s_basecolor[1],
-			    sp->s_old.s_basecolor[2],
-			    sp->s_color[0],
-			    sp->s_color[1],
-			    sp->s_color[2],
-			    sp->s_old.s_uflag?" U":"",
-			    sp->s_old.s_dflag?" D":"",
-			    sp->s_old.s_cflag?" C":"");
-
-		    if (lvl <= 1)
-			continue;
-
-		    /* Print the actual vector list */
-		    nvlist = 0;
-		    npts = 0;
-		    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-			size_t i;
-			size_t nused = vp->nused;
-			int *cmd = vp->cmd;
-			point_t *pt = vp->pt;
-
-			BV_CK_VLIST(vp);
-			nvlist++;
-			npts += nused;
-
-			if (lvl <= 2)
-			    continue;
-
-			for (i = 0; i < nused; i++, cmd++, pt++) {
-			    bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-				    bv_vlist_get_cmd_description(*cmd),
-				    V3ARGS(*pt));
-			}
+		    for (i = 0; i < nused; i++, cmd++, pt++) {
+			bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
+				      bv_vlist_get_cmd_description(*cmd),
+				      V3ARGS(*pt));
 		    }
-
-		    bu_vls_printf(vls, "  %zu vlist structures, %zu pts\n", nvlist, npts);
-		    bu_vls_printf(vls, "  %zu pts (via bv_ck_vlist)\n", bv_ck_vlist(&(sp->s_vlist)));
 		}
+
+		bu_vls_printf(vls, "  %zu vlist structures, %zu pts\n", nvlist, npts);
+		bu_vls_printf(vls, "  %zu pts (via bv_ck_vlist)\n", bv_ck_vlist(&(sp->s_vlist)));
+	    }
 
 	    gdlp = next_gdlp;
 	}
@@ -2054,9 +2072,9 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		bu_vls_printf(vls, "-1 %d %d %d\n",
-			sp->s_color[0],
-			sp->s_color[1],
-			sp->s_color[2]);
+			      sp->s_color[0],
+			      sp->s_color[1],
+			      sp->s_color[2]);
 
 		/* Print the actual vector list */
 		for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
@@ -2077,6 +2095,7 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
     }
 }
+
 
 void
 dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag_val)
@@ -2104,6 +2123,7 @@ dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag_val)
     }
 }
 
+
 void
 dl_write_animate(struct bu_list *hdlp, FILE *fp)
 {
@@ -2123,10 +2143,10 @@ dl_write_animate(struct bu_list *hdlp, FILE *fp)
 
 	    for (i = 0; i < bdata->s_fullpath.fp_len; i++) {
                 if (!(DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags & RT_DIR_USED)) {
-			struct animate *anp;
+		    struct animate *anp;
                     for (anp = DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_animate; anp; anp=anp->an_forw) {
-			    db_write_anim(fp, anp);
-			}
+			db_write_anim(fp, anp);
+		    }
                     DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags |= RT_DIR_USED;
 		}
 	    }
@@ -2137,11 +2157,10 @@ dl_write_animate(struct bu_list *hdlp, FILE *fp)
 }
 
 
-
 int
 dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag)
 {
-   struct display_list *gdlp = NULL;
+    struct display_list *gdlp = NULL;
     struct display_list *next_gdlp = NULL;
     struct bv_scene_obj *sp = NULL;
     fastf_t vr = 0.0;
@@ -2219,8 +2238,8 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
 			    V_MAX(vmax[Z], vpt[Z]);
 			    break;
 			default: {
-				     bu_vls_printf(vls, "unknown vlist op %d\n", *cmd);
-				 }
+			    bu_vls_printf(vls, "unknown vlist op %d\n", *cmd);
+			}
 		    }
 		}
 	    }
@@ -2248,7 +2267,7 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
 		bu_vls_printf(vls, "\n");
 	    } else {
 		if (vmin_x <= vmin[X] && vmax[X] <= vmax_x &&
-			vmin_y <= vmin[Y] && vmax[Y] <= vmax_y) {
+		    vmin_y <= vmin[Y] && vmax[Y] <= vmax_y) {
 		    db_path_to_vls(vls, &bdata->s_fullpath);
 		    bu_vls_printf(vls, "\n");
 		}
@@ -2260,6 +2279,7 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
 
     return BRLCAD_OK;
 }
+
 
 int
 dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag)
@@ -2347,7 +2367,7 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 				goto solid_done;
 			    } else {
 				if (vmin_x <= vpt[X] && vpt[X] <= vmax_x &&
-					vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
+				    vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
 				    db_path_to_vls(vls, &bdata->s_fullpath);
 				    bu_vls_printf(vls, "\n");
 
@@ -2357,13 +2377,13 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 
 			    break;
 			default: {
-				     bu_vls_printf(vls, "unknown vlist op %d\n", *cmd);
-				 }
+			    bu_vls_printf(vls, "unknown vlist op %d\n", *cmd);
+			}
 		    }
 		}
 	    }
 
-solid_done:
+	solid_done:
 	    ;
 	}
 
@@ -2394,8 +2414,8 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    for (i = 0, tmp_dpp = dpp;
-		    i < bdata->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
-		    ++i, ++tmp_dpp) {
+		 i < bdata->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
+		 ++i, ++tmp_dpp) {
 		if (bdata->s_fullpath.fp_names[i] != *tmp_dpp)
 		    break;
 	    }
@@ -2414,6 +2434,7 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
     }
 
 }
+
 
 unsigned long long
 dl_name_hash(struct ged *gedp)
@@ -2452,6 +2473,7 @@ dl_name_hash(struct ged *gedp)
 
     return hash_val;
 }
+
 
 /*
  * Local Variables:
