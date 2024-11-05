@@ -2642,7 +2642,7 @@ linenoiseState::linenoiseState(const char *prompt_str, int stdin_fd,
     ofd = stdout_fd;
     buf = wbuf;
     prompt = (prompt_str) ? std::string(prompt_str) : std::string("> ");
-    cols = getColumns(ifd, ofd);
+    cols = (prompt_str) ? getColumns(ifd, ofd) : 80;
 
     /* Buffer starts empty. */
     buf[0] = '\0';
