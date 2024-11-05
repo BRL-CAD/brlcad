@@ -228,7 +228,7 @@ class linenoiseState {
 	int pos = 0;                     /* Current cursor position. */
 	int oldcolpos = 0;      /* Previous refresh cursor column position. */
 	int len = 0;            /* Current edited line length. */
-	int cols = 0;           /* Number of columns in terminal. */
+	int lcols = -1;         /* Number of columns in terminal. */
 	int maxrows = 0;        /* Maximum num of rows used so far (multiline mode) */
 	int history_index = -1; /* The history index we are currently editing. */
 	char wbuf[LINENOISE_MAX_LINE] = {'\0'};
@@ -2149,14 +2149,19 @@ void linenoiseState::refreshSingleLine() {
 	unicodeColumnPos(prompt.c_str(), static_cast<int>(prompt.length()));
     int fd = ofd;
     std::string ab;
+    // TODO - right now this is just delayed initialization
+    // of lcols, but might be worth checking if we should update
+    // the column count every time.
+    if (lcols <= 0)
+	lcols = getColumns(ifd, ofd);
 
-    while ((pcolwid + unicodeColumnPos(buf, pos)) >= cols) {
+    while ((pcolwid + unicodeColumnPos(buf, pos)) >= lcols) {
 	int glen = unicodeGraphemeLen(buf, len, 0);
 	buf += glen;
 	len -= glen;
 	pos -= glen;
     }
-    while (pcolwid + unicodeColumnPos(buf, len) > cols) {
+    while (pcolwid + unicodeColumnPos(buf, len) > lcols) {
 	len -= unicodePrevGraphemeLen(buf, len);
     }
 
@@ -2181,14 +2186,17 @@ void linenoiseState::refreshSingleLine() {
  * Rewrite the currently edited line accordingly to the buffer content,
  * cursor position, and number of columns of the terminal. */
 void linenoiseState::refreshMultiLine() {
+    if (lcols <= 0)
+	lcols = getColumns(ifd, ofd);
+
     char seq[64];
     int pcolwid =
 	unicodeColumnPos(prompt.c_str(), static_cast<int>(prompt.length()));
-    int colpos = unicodeColumnPosForMultiLine(buf, len, len, cols, pcolwid);
+    int colpos = unicodeColumnPosForMultiLine(buf, len, len, lcols, pcolwid);
     int colpos2; /* cursor column position. */
     int rows =
-	(pcolwid + colpos + cols - 1) / cols; /* rows used by current buf. */
-    int rpos = (pcolwid + oldcolpos + cols) / cols; /* cursor relative row. */
+	(pcolwid + colpos + lcols - 1) / lcols; /* rows used by current buf. */
+    int rpos = (pcolwid + oldcolpos + lcols) / lcols; /* cursor relative row. */
     int rpos2;                                      /* rpos after refresh. */
     int col; /* column position, zero-based. */
     int old_rows = (int)maxrows;
@@ -2221,11 +2229,11 @@ void linenoiseState::refreshMultiLine() {
     ab.append(buf, len);
 
     /* Get text width to cursor position */
-    colpos2 = unicodeColumnPosForMultiLine(buf, len, pos, cols, pcolwid);
+    colpos2 = unicodeColumnPosForMultiLine(buf, len, pos, lcols, pcolwid);
 
     /* If we are at the very end of the screen with our prompt, we need to
      * emit a newline and move the prompt to the first column. */
-    if (pos && pos == len && (colpos2 + pcolwid) % cols == 0) {
+    if (pos && pos == len && (colpos2 + pcolwid) % lcols == 0) {
 	ab += "\n";
 	snprintf(seq, 64, "\r");
 	ab += seq;
@@ -2235,7 +2243,7 @@ void linenoiseState::refreshMultiLine() {
     }
 
     /* Move cursor to right position. */
-    rpos2 = (pcolwid + colpos2 + cols) / cols; /* current cursor relative row. */
+    rpos2 = (pcolwid + colpos2 + lcols) / lcols; /* current cursor relative row. */
 
     /* Go up till we reach the expected position. */
     if (rows - rpos2 > 0) {
@@ -2244,7 +2252,7 @@ void linenoiseState::refreshMultiLine() {
     }
 
     /* Set column. */
-    col = (pcolwid + colpos2) % cols;
+    col = (pcolwid + colpos2) % lcols;
     if (col)
 	snprintf(seq, 64, "\r\x1b[%dC", col);
     else
@@ -2281,6 +2289,8 @@ void linenoiseState::ClearScreen() { linenoiseClearScreen(); }
  *
  * On error writing to the terminal -1 is returned, otherwise 0. */
 int linenoiseState::linenoiseEditInsert(const char *cbuf, int clen) {
+    if (lcols <= 0)
+	lcols = getColumns(ifd, ofd);
     if (len < buflen) {
 	if (len == pos) {
 	    memcpy(&buf[pos], cbuf, clen);
@@ -2291,7 +2301,7 @@ int linenoiseState::linenoiseEditInsert(const char *cbuf, int clen) {
 	    if ((!mlmode &&
 			unicodeColumnPos(prompt.c_str(), static_cast<int>(prompt.length())) +
 			unicodeColumnPos(buf, len) <
-			cols) /* || mlmode */) {
+			lcols) /* || mlmode */) {
 		/* Avoid a full update of the line in the
 		 * trivial case. */
 		if (write(ofd, cbuf, clen) == -1)
@@ -2642,7 +2652,6 @@ linenoiseState::linenoiseState(const char *prompt_str, int stdin_fd,
     ofd = stdout_fd;
     buf = wbuf;
     prompt = (prompt_str) ? std::string(prompt_str) : std::string("> ");
-    cols = (prompt_str) ? getColumns(ifd, ofd) : 80;
 
     /* Buffer starts empty. */
     buf[0] = '\0';
