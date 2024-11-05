@@ -46,6 +46,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* combine solid_report with the "who" command (subcommand options)
+
 * Update find_package uses to take advantage of EXPORT targets when
   upstream packages have them available.  This should let us reduce
   the number of Find*.cmake files we need to include.  Ultimately,
