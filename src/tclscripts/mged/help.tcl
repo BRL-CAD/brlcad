@@ -62,6 +62,8 @@ Options:
 	-c bbname       Create an rpp primitive of the bbox named 'bbname'.
 	-d              Show bbox dimensions.
 	-e              Show bbox coordinates.
+	-m		Show the midpoint / center of bbox
+	-o		Calculate oriented bbox
 	-q              Do not print header.
 	-u              Use air.
 	-v              Show volume.

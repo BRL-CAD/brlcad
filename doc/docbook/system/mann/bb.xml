@@ -62,6 +62,14 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-m</option></term>
+	<listitem>
+	  <para>
+	   Report the midpoint / center (x y z) of the bounding box.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-o</option></term>
 	<listitem>
 	  <para>
