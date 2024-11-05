@@ -1652,6 +1652,8 @@ main(int argc, char *argv[])
 	    saAttr.bInheritHandle = FALSE;
 	    saAttr.lpSecurityDescriptor = NULL;
 
+	    Tcl_Channel chan;
+
 	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
 		chan = Tcl_GetStdChannel(TCL_STDOUT);
 		Tcl_UnregisterChannel(INTERP, chan);
@@ -1745,7 +1747,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	Tcl_DString ds;
 	Tcl_DStringInit(&ds);
-	count = Tcl_Gets(s->chan, &ds);
+	count = Tcl_Gets(sd->chan, &ds);
 
 	if (count < 0) {
 	    BU_PUT(sd, struct stdio_data);
@@ -1819,7 +1821,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	char buf[BU_PAGE_SIZE];
 	int idx;
 #  ifdef _WIN32
-	count = Tcl_Read(chan, buf, BU_PAGE_SIZE);
+	count = Tcl_Read(sd->chan, buf, BU_PAGE_SIZE);
 #  else
 	count = read((int)sd->fd, (void *)buf, BU_PAGE_SIZE);
 #  endif
