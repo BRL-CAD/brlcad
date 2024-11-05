@@ -587,10 +587,8 @@ _view_cmd_height(void *ds, int argc, const char **argv)
 }
 
 int
-_view_cmd_print(void *ds, int argc, const char **argv)
+_view_cmd_print(struct ged *gedp, int argc, const char **argv)
 {
-    struct ged* gedp = (struct ged*)ds;
-
     // ae
     ged_aet_core(gedp, argc, argv);
     char* ae = bu_vls_strdup(gedp->ged_result_str);
@@ -827,7 +825,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (BU_STR_EQUAL(argv[1], "print")) {
-	return _view_cmd_print((void*)gedp, argc-1, argv+1);
+	return _view_cmd_print(gedp, argc-1, argv+1);
     }
 
     if (BU_STR_EQUAL(argv[1], "saveview") || BU_STR_EQUAL(argv[1], "save")) {
