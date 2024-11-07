@@ -2612,9 +2612,14 @@ bool linenoiseState::linenoiseRaw(std::string &line) {
 
 	/* Not a tty: read from file / pipe. */
 	int c;
-	while ((c = getc(stdin)) != EOF)
-	    line += c;
+	while ((c = getc(stdin)) != EOF) {
+	    if (c == '\r')  // CRLF -> LF
+		continue;
+	    if (c == '\n' || c == '\r')	// send command
+		break;
 
+	    line += c;
+	}
 	if (!line.length())
 	    quit = true;
 
