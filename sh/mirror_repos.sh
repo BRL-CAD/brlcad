@@ -7,11 +7,14 @@
 
 # https://gist.github.com/caniszczyk/3856584?permalink_comment_id=3711733#gistcomment-3711733
 
-# Make the url to the input github organization's repository page.
-ORG_URL="https://api.github.com/orgs/BRL-CAD/repos?per_page=200";
+# Make the url to the input github organization's repository page.  Note that we can only
+# get 100 per page, so we need multiple requests.
+ORG_URL="https://api.github.com/orgs/BRL-CAD/repos?per_page=100";
+ORG_URL_PAGE2="https://api.github.com/orgs/BRL-CAD/repos?per_page=100&page=2";
 
 # List of all repositories of that organization (separated by newline-eol).
 ALL_REPOS=$(curl -s ${ORG_URL} | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
+ALL_REPOS+=$(curl -s ${ORG_URL_PAGE2} | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
 
 # Clone all the repositories.  Specify --mirror so all upstream data
 # (tags, etc.) is also preserved
