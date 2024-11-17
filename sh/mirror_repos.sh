@@ -5,19 +5,51 @@
 # all archival repositories and all dependencies, so it will be
 # a large amount of data!
 
+# This script is inspired by the following gist:
 # https://gist.github.com/caniszczyk/3856584?permalink_comment_id=3711733#gistcomment-3711733
 
 # Make the url to the input github organization's repository page.  Note that we can only
-# get 100 per page, so we need multiple requests.
-ORG_URL="https://api.github.com/orgs/BRL-CAD/repos?per_page=100";
-ORG_URL_PAGE2="https://api.github.com/orgs/BRL-CAD/repos?per_page=100&page=2";
+# get up to 100 per page, so we need multiple requests.
+CURR_PAGE=1
+ALL_REPOS=""
 
-# List of all repositories of that organization (separated by newline-eol).
-ALL_REPOS=$(curl -s ${ORG_URL} | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
-ALL_REPOS+=$(curl -s ${ORG_URL_PAGE2} | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
+# Most of the time curl should work, but if a dev hits a query limit for
+# anonymous requests (can happen, ran into working on this) they can comment
+# out the curl lines, uncomment the gh versions and authenticate. See
+# https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api
 
-# Clone all the repositories.  Specify --mirror so all upstream data
-# (tags, etc.) is also preserved
+# Initialize list with 10 entries (curl):
+ROOT_URL="https://api.github.com/orgs/BRL-CAD/repos?per_page=10&page="
+ADD_REPOS=$(curl -s ${ROOT_URL}$CURR_PAGE | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
+
+# Initialize list with 10 entries (gh):
+#API_ROOT_URL="orgs/BRL-CAD/repos?per_page=10&page="
+#ADD_REPOS=$(gh api ${API_ROOT_URL}$CURR_PAGE | jq | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
+
+# Stash the seed repo set in ALL_REPOS
+ALL_REPOS+=$ADD_REPOS
+
+# As long as we are finding content, pull down any additional pages with
+# repositories.  Keep going until we have everything
+while [ ! -z "${ADD_REPOS}" ]
+do
+	((CURR_PAGE++))
+	# Append repos (curl)
+	ADD_REPOS=$(curl -s ${ROOT_URL}$CURR_PAGE | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
+	# Append repos (gh)
+	#ADD_REPOS=$(gh api --method GET ${API_ROOT_URL}$CURR_PAGE | jq | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
+	ALL_REPOS+=$ADD_REPOS
+done
+
+# Report how many were found.
+repo_cnt=0
+for ORG_REPO in ${ALL_REPOS}; do
+	repo_cnt=$((repo_cnt + 1))
+done
+echo "Found $repo_cnt repositories"
+
+# Clone all the repositories, or update them if they've been cloned previously.
+# Specify --mirror so all upstream data (tags, etc.) is also preserved
 for ORG_REPO in ${ALL_REPOS}; do
 	dirname=${ORG_REPO/https:\/\/github.com\/BRL-CAD\//}
 	if [ -e ./${dirname}.git ]; then
