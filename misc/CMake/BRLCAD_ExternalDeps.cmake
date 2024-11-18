@@ -99,65 +99,15 @@
 #
 ###
 
-# FIXME: File has unencapsulated logic.  File defines globals used outside this file.
+# FIXME: File defines globals used outside this file.
 
 # When we need to have CMake treat includes as system paths to avoid
-# warnings, we add those patterns to the SYS_INCLUDE_PATTERNS list
+# warnings, we add those patterns to the SYS_INCLUDE_PATTERNS list.
+#
+# TODO - with the modern target-based approach to dependencies, we should
+# be able to dispense with this global variable all together...
 mark_as_advanced(SYS_INCLUDE_PATTERNS)
 
-if(NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
-  message("Attempting to prepare our own version of the bext dependencies\n")
-  include(BRLCAD_EXT_Setup)
-  brlcad_ext_setup()
-endif()
-
-# If we have a bext_output in the build directory, we need to clear it
-distclean("${CMAKE_BINARY_DIR}/bext_output")
-
-# If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to
-# expand it so we can spot the path that would have been used in
-# ${BRLCAD_EXT_DIR}/install files
-#
-# TODO - once we can require CMake 3.21 minimum, add EXPAND_TILDE to
-# the arguments list
-
-file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL)
-
-# See if we have plief available for rpath manipulation.  If it is
-# available, we will be using it to manage the RPATH settings for
-# third party exe/lib files.  If not, see if patchelf is available
-# instead.
-find_program(P_RPATH_EXECUTABLE NAMES plief HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
-if(NOT P_RPATH_EXECUTABLE)
-  find_program(P_RPATH_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
-endif(NOT P_RPATH_EXECUTABLE)
-
-# Find the tool we use to scrub EXT paths from files
-find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
-
-# For repeat configure passes, we need to check any existing files
-# copied against the ${BRLCAD_EXT_DIR}/install dir's contents, to
-# detect if the latter has changed and we need to redo the process.
-set(TP_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
-set(TP_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
-
-# These patterns are used to identify sets of files where we are
-# assuming we don't need to do post-processing to correct file paths
-# from the external install.
-set(NOPROCESS_PATTERNS ".*/encodings/.*" ".*/include/.*" ".*/man/.*" ".*/msgs/.*")
-
-# These patterns are to be excluded from ${BRLCAD_EXT_DIR}/install
-# bundling - i.e., even if present in the specified
-# ${BRLCAD_EXT_DIR}/install directory, BRL-CAD will not incorporate
-# them.  Generally speaking this is used to avoid files needed for
-# external building but counterproductive in the BRL-CAD install.
-set(
-  EXCLUDED_PATTERNS
-  ${LIB_DIR}/itcl4.2.3/itclConfig.sh
-  ${LIB_DIR}/tclConfig.sh
-  ${LIB_DIR}/tdbc1.1.5/tdbcConfig.sh
-  ${LIB_DIR}/tkConfig.sh
-)
 
 #####################################################################
 # Utility functions for use when processing ${BRLCAD_EXT_DIR}/install files
@@ -504,9 +454,9 @@ endfunction(find_relative_rpath)
 # Apply the RPATH settings to be used in the build directory.  This is
 # a bit different from what is done for the final install - the goal
 # here is not to produce relocatable files, but just have things work
-# in place in the build locations.  Parameterized to allow processing
-# of both single and multiconfig builds.
+# in place in the build locations.
 function(rpath_build_dir_process ROOT_DIR lf)
+
   if(P_RPATH_EXECUTABLE)
     execute_process(
       COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${ROOT_DIR}/${LIB_DIR}" ${lf}
@@ -525,15 +475,20 @@ function(rpath_build_dir_process ROOT_DIR lf)
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
   endif(P_RPATH_EXECUTABLE)
+
   # RPATH updates are complete - now clear out any other stale paths
   # in the file
+  #message("${STRCLEAR_EXECUTABLE} -v -b -c ${ROOT_DIR}/${lf} \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\"
+  #    \"${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/\"")
+
   execute_process(
     COMMAND
       ${STRCLEAR_EXECUTABLE} -v -b -c ${ROOT_DIR}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}"
       "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/"
   )
+
   # Modern Apple security features (particularly on ARM64) complicate
-  # our manipulation of these files in this fashion.  For more info,
+  # our post-processing of these files with strclear.  For more info,
   # see:
   # https://developer.apple.com/documentation/security/updating_mac_software
   # https://developer.apple.com/documentation/xcode/embedding-nonstandard-code-structures-in-a-bundle
@@ -546,16 +501,65 @@ function(rpath_build_dir_process ROOT_DIR lf)
   endif(APPLE)
 endfunction(rpath_build_dir_process)
 
+
+
 #####################################################################
 # Processing for BRLCAD_EXT_INSTALL_DIR contents. We need to
 # keep the build directory copies of ${BRLCAD_EXT_DIR}/install files
 # in sync with the BRLCAD_EXT_DIR originals, if they change.
 #####################################################################
-
 function(brlcad_process_ext)
+
   if(BRLCAD_DISABLE_RELOCATION)
     return()
   endif(BRLCAD_DISABLE_RELOCATION)
+
+  if(NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+    message("Attempting to prepare our own version of the bext dependencies\n")
+    include(BRLCAD_EXT_Setup)
+    brlcad_ext_setup()
+  endif()
+
+  # If we have a bext_output in the build directory, we need to clear it
+  distclean("${CMAKE_BINARY_DIR}/bext_output")
+
+  # See if we have plief available for rpath manipulation.  If it is
+  # available, we will be using it to manage the RPATH settings for
+  # third party exe/lib files.  If not, see if patchelf is available
+  # instead.
+  find_program(P_RPATH_EXECUTABLE NAMES plief HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+  if(NOT P_RPATH_EXECUTABLE)
+    find_program(P_RPATH_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+  endif(NOT P_RPATH_EXECUTABLE)
+
+  # Find the tool we use to scrub EXT paths from files
+  find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR} REQUIRED)
+
+  # If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to
+  # expand it so we can spot the path that would have been used in
+  # ${BRLCAD_EXT_DIR}/install files
+  # TODO - once we can require CMake 3.21 minimum, add EXPAND_TILDE to
+  # the arguments list
+  file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL)
+
+  # These patterns are used to identify sets of files where we are
+  # assuming we don't need to do post-processing to correct file paths
+  # from the external install.
+  set(NOPROCESS_PATTERNS ".*/encodings/.*" ".*/include/.*" ".*/man/.*" ".*/msgs/.*")
+
+  # These patterns are to be excluded from ${BRLCAD_EXT_DIR}/install
+  # bundling - i.e., even if present in the specified
+  # ${BRLCAD_EXT_DIR}/install directory, BRL-CAD will not incorporate
+  # them.  Generally speaking this is used to avoid files needed for
+  # external building but counterproductive in the BRL-CAD install.
+  set(
+    EXCLUDED_PATTERNS
+    ${LIB_DIR}/itcl4.2.3/itclConfig.sh
+    ${LIB_DIR}/tclConfig.sh
+    ${LIB_DIR}/tdbc1.1.5/tdbcConfig.sh
+    ${LIB_DIR}/tkConfig.sh
+    )
+
 
   # Ascertain the current state of ${BRLCAD_EXT_DIR}/install
   file(GLOB_RECURSE TP_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
@@ -563,6 +567,12 @@ function(brlcad_process_ext)
   foreach(ep ${EXCLUDED_PATTERNS})
     list(FILTER TP_FILES EXCLUDE REGEX ${ep})
   endforeach(ep ${EXCLUDED_PATTERNS})
+
+  # For repeat configure passes, we need to check any existing files
+  # copied against the ${BRLCAD_EXT_DIR}/install dir's contents, to
+  # detect if the latter has changed and we need to redo the process.
+  set(TP_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
+  set(TP_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
 
   # For the very first pass we bulk copy the contents of the
   # BRLCAD_EXT_INSTALL_DIR tree into our own directory.  For some of the
@@ -785,11 +795,13 @@ function(brlcad_process_ext)
       # the pkgconfig .pc files do typically use full paths.
       is_cmake_file(${tf} CMAKE_FILE)
       if(CMAKE_FILE)
+	#message("${STRCLEAR_EXECUTABLE} -v -r \"${CMAKE_BINARY_DIR}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_BINARY_DIR}\"")
 	execute_process(
 	  COMMAND
 	  ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_BINARY_DIR}"
 	  )
       else(CMAKE_FILE)
+	#message("${STRCLEAR_EXECUTABLE} -v -r \"${CMAKE_BINARY_DIR}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_INSTALL_PREFIX}\"")
 	execute_process(
 	  COMMAND
 	  ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}"
