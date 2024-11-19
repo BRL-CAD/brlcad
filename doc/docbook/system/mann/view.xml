@@ -42,7 +42,7 @@ subcommands:
       <para>
 	Get (without arguments) or set the azimuth, elevation, and (optional) twist.
 	If only 2 arguments are supplied, a twist of 0 is assumed. The <emphasis>-i</emphasis>
-	flag can be use to set the AET incrementally. Setting the azimuth and elevation also changes the eye point
+	flag can be used to set the AET incrementally. Setting the azimuth and elevation also changes the eye point
 	while keeping the center and view size static.
       </para>
     </listitem>
@@ -53,17 +53,19 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Aligns the eye point with a desired point and the current view center (eye -> pt -> center). The 
-	<emphasis>-i</emphasis> flag can be used to align from the opposite direction (eye -> center -> pt).
+	Aligns the eye point with a desired point and the current center (eye -> pt -> center). The 
+	<emphasis>-i</emphasis> flag can be used to align from the opposite direction (eye -> center -> pt). Align
+	changes the eye point, azimuth, and elevation while keeping the center and view size static.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap="B" role="bold">autoview</emphasis>
+    <term><emphasis remap="B" role="bold">auto</emphasis>
     </term>
     <listitem>
       <para>
-	Resets the view size and view center such that all displayed objects are within the view.
+	Resets the view size, center, and eye point such that all displayed objects are visible in the
+	graphics window. Azimuth and elevation remain static.
       </para>
     </listitem>
   </varlistentry>
@@ -73,7 +75,7 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (without arguments) or set the view center. Setting the center also changes the eye point while keeping
+	Get (without arguments) or set the center. Setting the center also changes the eye point while keeping
 	the azimuth, elevation, and view size static.
       </para>
     </listitem>
@@ -86,9 +88,11 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (witout arguments) or set the view in the form of a vector and optional twist. Setting the direction also changes 
+	Get (without arguments) or set the view in the form of a direction vector and optional twist. Setting the direction also changes 
 	the azimuth, elevation, and eye point while keeping the center and view size static. The <emphasis>-i</emphasis> flag
-	can be used to negate all values (for both getting and setting).
+	can be used to invert all values (for both getting and setting). The direction vector that is returned (without
+	arguments) does not include the twist; the twist can be acertained by taking the inverse of the twist returned with the
+	<command>ae</command> subcommand.
       </para>
     </listitem>
   </varlistentry>
@@ -122,7 +126,16 @@ subcommands:
     <listitem>
       <para>
 	Adjusts the current view such that the eye is looking in the direction of the given coordinates, but does not
-	move the eye point nor change the view size.
+	move the eye point nor change the view size. Center, azimuth, and elevation will change.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">print</emphasis>
+    </term>
+    <listitem>
+      <para>
+	Returns the current azimuth, elevation, and twist; direction vector; center; eye point; and view size.
       </para>
     </listitem>
   </varlistentry>
@@ -132,13 +145,13 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (witout arguments) or set the view in the form of a quarternion. Setting the quarternion also changes the azimuth,
+	Get (without arguments) or set the view in the form of a quarternion. Setting the quarternion also changes the azimuth,
 	elevation, and eye point while keeping the center and view size static.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap="B" role="bold">saveview</emphasis>
+    <term><emphasis remap="B" role="bold">save</emphasis>
       [<emphasis>options</emphasis>]
        <emphasis>file</emphasis>
       [<emphasis>args</emphasis>]
@@ -179,7 +192,7 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (witout arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0).
+	Get (without arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0).
 	Setting the ypr also changes the azimuth, elevation, and eye point while keeping the center and view size static.
       </para>
     </listitem>
@@ -189,20 +202,20 @@ subcommands:
   
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example><title>Get the view center.</title>
+  <example><title>Get the center.</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>view center</userinput>
     </para>
-    <para>Gets the view center.
+    <para>Gets the center.
     </para>
   </example>
-  <example><title>Set the view center at the origin of model space.</title>
+  <example><title>Set the center at the origin of model space.</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>view center 0 0 0</userinput>
     </para>
-    <para>Sets the view center at the origin of model space.
+    <para>Sets the center at the origin of model space.
     </para>
   </example>
 
