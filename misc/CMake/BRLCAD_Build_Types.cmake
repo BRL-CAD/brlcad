@@ -100,6 +100,18 @@ if(CMAKE_BUILD_TYPE)
   endif("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
 endif(CMAKE_BUILD_TYPE)
 
+
+# If we don't have any build type defined at all, go with Release.  Thinking is
+# that for non-debugging use this will provide users with the best performance.
+# We build with debug info enabled by default, even in Release, so the main
+# advantages of Debug building are better backtraces/debugging behavior and
+# shorter build times.  Those aren't critical for normal use, so make the
+# "default" setting the one that will give new users what they most likely are
+# expecting/wanting.
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif(NOT CMAKE_BUILD_TYPE)
+
 # CMake configuration types need to be overridden.  If a CMAKE_BUILD_TYPE
 # has been specified, use that - otherwise default to Debug.
 if(CMAKE_CONFIGURATION_TYPES)

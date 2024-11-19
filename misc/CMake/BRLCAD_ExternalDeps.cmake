@@ -501,7 +501,8 @@ function(rpath_build_dir_process ROOT_DIR lf)
   endif(APPLE)
 endfunction(rpath_build_dir_process)
 
-
+# Utility routines for bext management
+include(BRLCAD_EXT_Setup)
 
 #####################################################################
 # Processing for BRLCAD_EXT_INSTALL_DIR contents. We need to
@@ -514,9 +515,17 @@ function(brlcad_process_ext)
     return()
   endif(BRLCAD_DISABLE_RELOCATION)
 
+  # For repeat configure passes, we need to check any existing files
+  # copied against the ${BRLCAD_EXT_DIR}/install dir's contents, to
+  # detect if the latter has changed and we need to redo the process.
+  set(TP_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
+  set(TP_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
+
+  # If we are using git, do some checks
+  bext_sha1_checks()
+
   if(NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}" OR NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
     message("Attempting to prepare our own version of the bext dependencies\n")
-    include(BRLCAD_EXT_Setup)
     brlcad_ext_setup()
   endif()
 
@@ -567,12 +576,6 @@ function(brlcad_process_ext)
   foreach(ep ${EXCLUDED_PATTERNS})
     list(FILTER TP_FILES EXCLUDE REGEX ${ep})
   endforeach(ep ${EXCLUDED_PATTERNS})
-
-  # For repeat configure passes, we need to check any existing files
-  # copied against the ${BRLCAD_EXT_DIR}/install dir's contents, to
-  # detect if the latter has changed and we need to redo the process.
-  set(TP_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
-  set(TP_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
 
   # For the very first pass we bulk copy the contents of the
   # BRLCAD_EXT_INSTALL_DIR tree into our own directory.  For some of the
