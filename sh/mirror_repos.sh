@@ -7,6 +7,28 @@
 
 # This script is inspired by the following gist:
 # https://gist.github.com/caniszczyk/3856584?permalink_comment_id=3711733#gistcomment-3711733
+#
+#
+#
+# Note that once all these repositories are copied, in order to
+# do a completely local clone from them some git magic is needed.
+# Still working out the best way to handle this, but the first command
+# I've actually gotten to do a local submodule checkout with internet
+# disabled is:
+#
+# git -c url."file:///home/user/backup/BRL-CAD/".insteadOf="https://github.com/BRL-CAD/" -c protocol.file.allow=always submodule update --init astyle/
+#
+# hints from:
+# https://lists.archlinux.org/archives/list/arch-dev-public@lists.archlinux.org/thread/YYY6KN2BJH7KR722GF26SEWNXPLAANNQ/
+# https://stackoverflow.com/a/51920532
+#
+# Presumably if we were to move to a new hosting solution, the above would work
+# with URLs instead of file:// once we uploaded the repositories.  (The
+# protocol.file.allow option would presumably not be needed in that case.  It
+# is added here because from the local filesystem we get a fatal: transport
+# 'file' not allowed error without it.)
+
+
 
 # Make the url to the input github organization's repository page.  Note that we can only
 # get up to 100 per page, so we need multiple requests.
