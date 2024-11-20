@@ -72,7 +72,7 @@
 #
 # Instruct git to remap the github.com URL to our local copy:
 #
-#	-c url."file:///home/user/github/".insteadOf="https://github.com/"  - this
+#	-c url."file:///home/user/github/".insteadOf="https://github.com/"
 #
 # Allow the file:// protocol:
 #
