@@ -32,9 +32,6 @@ subcommands:
 <refsection xml:id="subcommands"><title>SUBCOMMANDS</title>
 <variablelist remap="TP">
   <varlistentry>
-    <term><emphasis remap="B" role="bold">aet</emphasis>
-    [[<emphasis>-i</emphasis>]<emphasis> azimuth elevation </emphasis>[<emphasis>twist</emphasis>]]
-    </term>
     <term><emphasis remap="B" role="bold">ae</emphasis>
     [[<emphasis>-i</emphasis>]<emphasis> azimuth elevation </emphasis>[<emphasis>twist</emphasis>]]
     </term>
@@ -237,7 +234,7 @@ subcommands:
 
 	     <example><title>Increase the azimuth by 10 degrees</title>
     <para>
-      <prompt>mged&gt; </prompt><userinput>view aet -i 10 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>view ae -i 10 0</userinput>
     </para>
     <para>Sets the view by increasing the current azimuth by 10 degrees
     </para>
