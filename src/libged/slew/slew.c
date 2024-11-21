@@ -106,9 +106,12 @@ const struct ged_cmd slew_cmd = { &slew_cmd_impl };
 struct ged_cmd_impl sv_cmd_impl = {"sv", ged_slew_core, GED_CMD_DEFAULT};
 const struct ged_cmd sv_cmd = { &sv_cmd_impl };
 
-const struct ged_cmd *slew_cmds[] = { &slew_cmd, &sv_cmd, NULL };
+struct ged_cmd_impl vslew_cmd_impl = {"vslew", ged_slew_core, GED_CMD_DEFAULT};
+const struct ged_cmd vslew_cmd = { &vslew_cmd_impl };
 
-static const struct ged_plugin pinfo = { GED_API,  slew_cmds, 2 };
+const struct ged_cmd *slew_cmds[] = { &slew_cmd, &sv_cmd, &vslew_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  slew_cmds, 3 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
