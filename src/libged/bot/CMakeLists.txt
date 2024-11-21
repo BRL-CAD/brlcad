@@ -50,8 +50,7 @@ set(
   ../../libbu/fort.c
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-bot SHARED ${BOT_SRCS})
+ged_plugin_library(ged-bot ${BOT_SRCS})
 target_include_directories(
   ged-bot
   BEFORE
@@ -61,9 +60,6 @@ if(BRLCAD_ENABLE_OPENVDB)
   target_include_directories(ged-bot SYSTEM PRIVATE ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
 endif(BRLCAD_ENABLE_OPENVDB)
 target_link_libraries(ged-bot ${BOT_LIBS})
-set_property(TARGET ged-bot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-bot ${BOT_SRCS})
-plugin_setup(ged-bot ged)
 
 cmakefiles(
   CMakeLists.txt

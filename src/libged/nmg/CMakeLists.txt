@@ -20,12 +20,8 @@ set(
   nmg_simplify.c
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-nmg SHARED ${NMG_SRCS})
+ged_plugin_library(ged-nmg ${NMG_SRCS})
 target_link_libraries(ged-nmg libged libbu)
-set_property(TARGET ged-nmg APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-nmg ${NMG_SRCS})
-plugin_setup(ged-nmg ged)
 
 cmakefiles(
   CMakeLists.txt

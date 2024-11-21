@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-log SHARED log.c)
+ged_plugin_library(ged-log log.c)
 target_link_libraries(ged-log libged libbu)
-set_property(TARGET ged-log APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-log log.c)
-plugin_setup(ged-log ged)
 
 cmakefiles(
   CMakeLists.txt

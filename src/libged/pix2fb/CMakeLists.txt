@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-pix2fb SHARED pix2fb.c)
+ged_plugin_library(ged-pix2fb pix2fb.c)
 target_link_libraries(ged-pix2fb libged libdm libbu)
-set_property(TARGET ged-pix2fb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-pix2fb pix2fb.c)
-plugin_setup(ged-pix2fb ged)
 
 cmakefiles(
   CMakeLists.txt

@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-hide SHARED hide.c)
+ged_plugin_library(ged-hide hide.c)
 target_link_libraries(ged-hide libged libbu)
-set_property(TARGET ged-hide APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-hide hide.c)
-plugin_setup(ged-hide ged)
 
 cmakefiles(
   CMakeLists.txt

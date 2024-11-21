@@ -8,12 +8,8 @@ include_directories(
 
 set(SELECT_SRCS select.c select2.cpp)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-select SHARED ${SELECT_SRCS})
+ged_plugin_library(ged-select ${SELECT_SRCS})
 target_link_libraries(ged-select libged libbu)
-set_property(TARGET ged-select APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-select ${SELECT_SRCS})
-plugin_setup(ged-select ged)
 
 cmakefiles(
   CMakeLists.txt

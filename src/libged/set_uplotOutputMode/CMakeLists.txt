@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-set_uplotOutputMode SHARED set_uplotOutputMode.c)
+ged_plugin_library(ged-set_uplotOutputMode set_uplotOutputMode.c)
 target_link_libraries(ged-set_uplotOutputMode libged libbu)
-set_property(TARGET ged-set_uplotOutputMode APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-set_uplotOutputMode set_uplotOutputMode.c)
-plugin_setup(ged-set_uplotOutputMode ged)
 
 cmakefiles(
   CMakeLists.txt

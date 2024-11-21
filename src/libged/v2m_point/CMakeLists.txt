@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-v2m_point SHARED v2m_point.c)
+ged_plugin_library(ged-v2m_point v2m_point.c)
 target_link_libraries(ged-v2m_point libged libbu)
-set_property(TARGET ged-v2m_point APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-v2m_point v2m_point.c)
-plugin_setup(ged-v2m_point ged)
 
 cmakefiles(
   CMakeLists.txt

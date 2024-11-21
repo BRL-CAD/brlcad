@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-fbclear SHARED fbclear.c)
+ged_plugin_library(ged-fbclear fbclear.c)
 target_link_libraries(ged-fbclear libged libdm libbu)
-set_property(TARGET ged-fbclear APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-fbclear fbclear.c)
-plugin_setup(ged-fbclear ged)
 
 cmakefiles(
   CMakeLists.txt

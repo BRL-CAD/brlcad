@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-killall SHARED killall.c)
+ged_plugin_library(ged-killall killall.c)
 target_link_libraries(ged-killall libged libbu)
-set_property(TARGET ged-killall APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-killall killall.c)
-plugin_setup(ged-killall ged)
 
 cmakefiles(
   CMakeLists.txt

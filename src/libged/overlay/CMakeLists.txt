@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-overlay SHARED overlay.c)
+ged_plugin_library(ged-overlay overlay.c)
 target_link_libraries(ged-overlay libged libdm libbu)
-set_property(TARGET ged-overlay APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-overlay overlay.c)
-plugin_setup(ged-overlay ged)
 
 cmakefiles(
   CMakeLists.txt

@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-rmater SHARED rmater.c)
+ged_plugin_library(ged-rmater rmater.c)
 target_link_libraries(ged-rmater libged libbu)
-set_property(TARGET ged-rmater APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-rmater rmater.c)
-plugin_setup(ged-rmater ged)
 
 cmakefiles(
   CMakeLists.txt

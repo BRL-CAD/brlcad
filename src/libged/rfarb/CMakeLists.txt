@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-rfarb SHARED rfarb.c)
+ged_plugin_library(ged-rfarb rfarb.c)
 target_link_libraries(ged-rfarb libged libbu)
-set_property(TARGET ged-rfarb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-rfarb rfarb.c)
-plugin_setup(ged-rfarb ged)
 
 cmakefiles(
   CMakeLists.txt

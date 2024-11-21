@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-rcodes SHARED rcodes.c)
+ged_plugin_library(ged-rcodes rcodes.c)
 target_link_libraries(ged-rcodes libged libbu)
-set_property(TARGET ged-rcodes APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-rcodes rcodes.c)
-plugin_setup(ged-rcodes ged)
 
 cmakefiles(
   CMakeLists.txt

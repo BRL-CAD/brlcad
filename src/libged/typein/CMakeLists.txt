@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-typein SHARED typein.c)
+ged_plugin_library(ged-typein typein.c)
 target_link_libraries(ged-typein libged libbu)
-set_property(TARGET ged-typein APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-typein typein.c)
-plugin_setup(ged-typein ged)
 
 cmakefiles(
   CMakeLists.txt

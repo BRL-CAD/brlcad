@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-voxelize SHARED voxelize.c)
+ged_plugin_library(ged-voxelize voxelize.c)
 target_link_libraries(ged-voxelize libged libbu)
-set_property(TARGET ged-voxelize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-voxelize voxelize.c)
-plugin_setup(ged-voxelize ged)
 
 cmakefiles(
   CMakeLists.txt

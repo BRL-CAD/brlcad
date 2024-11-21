@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-adjust SHARED adjust.c)
+ged_plugin_library(ged-adjust adjust.c)
 target_link_libraries(ged-adjust libged libbu)
-set_property(TARGET ged-adjust APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-adjust adjust.c)
-plugin_setup(ged-adjust ged)
 
 cmakefiles(
   CMakeLists.txt

@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-xpush SHARED xpush.c)
+ged_plugin_library(ged-xpush xpush.c)
 target_link_libraries(ged-xpush libged libbu)
-set_property(TARGET ged-xpush APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-xpush xpush.c)
-plugin_setup(ged-xpush ged)
 
 cmakefiles(
   CMakeLists.txt

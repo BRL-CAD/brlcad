@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-edit SHARED "edit.c;edit2.cpp")
+ged_plugin_library(ged-edit edit.c edit2.cpp)
 target_link_libraries(ged-edit libged libbu)
-set_property(TARGET ged-edit APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-edit "edit.c;edit2.cpp")
-plugin_setup(ged-edit ged)
 
 cmakefiles(
   CMakeLists.txt

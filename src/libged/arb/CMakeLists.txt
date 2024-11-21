@@ -8,12 +8,8 @@ include_directories(
 
 set(arb_srcs arb.c rotate_arb_face.c)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-arb SHARED ${arb_srcs})
+ged_plugin_library(ged-arb ${arb_srcs})
 target_link_libraries(ged-arb libged libbu)
-set_property(TARGET ged-arb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-arb ${arb_srcs})
-plugin_setup(ged-arb ged)
 
 cmakefiles(
   CMakeLists.txt

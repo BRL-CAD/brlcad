@@ -21,12 +21,8 @@ set(
   check_volume.c
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-check SHARED ${CHECK_SRCS})
+ged_plugin_library(ged-check ${CHECK_SRCS})
 target_link_libraries(ged-check libged libbu)
-set_property(TARGET ged-check APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-check ${CHECK_SRCS})
-plugin_setup(ged-check ged)
 
 cmakefiles(
   CMakeLists.txt

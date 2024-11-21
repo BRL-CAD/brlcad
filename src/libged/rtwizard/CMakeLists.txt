@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-rtwizard SHARED rtwizard.c)
+ged_plugin_library(ged-rtwizard rtwizard.c)
 target_link_libraries(ged-rtwizard libged libbu)
-set_property(TARGET ged-rtwizard APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-rtwizard rtwizard.c)
-plugin_setup(ged-rtwizard ged)
 
 cmakefiles(
   CMakeLists.txt

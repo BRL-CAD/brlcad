@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-comb_color SHARED comb_color.c)
+ged_plugin_library(ged-comb_color comb_color.c)
 target_link_libraries(ged-comb_color libged libbu)
-set_property(TARGET ged-comb_color APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-comb_color comb_color.c)
-plugin_setup(ged-comb_color ged)
 
 cmakefiles(
   CMakeLists.txt

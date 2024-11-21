@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-mrot SHARED mrot.c)
+ged_plugin_library(ged-mrot mrot.c)
 target_link_libraries(ged-mrot libged libbu)
-set_property(TARGET ged-mrot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-mrot mrot.c)
-plugin_setup(ged-mrot ged)
 
 cmakefiles(
   CMakeLists.txt

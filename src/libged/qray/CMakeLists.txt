@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-qray SHARED qray.c)
+ged_plugin_library(ged-qray qray.c)
 target_link_libraries(ged-qray libged libbu)
-set_property(TARGET ged-qray APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-qray qray.c)
-plugin_setup(ged-qray ged)
 
 cmakefiles(
   CMakeLists.txt

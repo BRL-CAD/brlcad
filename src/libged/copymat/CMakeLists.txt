@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-copymat SHARED copymat.c)
+ged_plugin_library(ged-copymat copymat.c)
 target_link_libraries(ged-copymat libged libbu)
-set_property(TARGET ged-copymat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-copymat copymat.c)
-plugin_setup(ged-copymat ged)
 
 cmakefiles(
   CMakeLists.txt

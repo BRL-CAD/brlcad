@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-human SHARED human.c)
+ged_plugin_library(ged-human human.c)
 target_link_libraries(ged-human libged libbu)
-set_property(TARGET ged-human APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-human human.c)
-plugin_setup(ged-human ged)
 
 cmakefiles(
   CMakeLists.txt

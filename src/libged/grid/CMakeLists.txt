@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-grid SHARED grid.c)
+ged_plugin_library(ged-grid grid.c)
 target_link_libraries(ged-grid libged libbu)
-set_property(TARGET ged-grid APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-grid grid.c)
-plugin_setup(ged-grid ged)
 
 cmakefiles(
   CMakeLists.txt

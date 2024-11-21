@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-perspective SHARED perspective.c)
+ged_plugin_library(ged-perspective perspective.c)
 target_link_libraries(ged-perspective libged libbu)
-set_property(TARGET ged-perspective APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-perspective perspective.c)
-plugin_setup(ged-perspective ged)
 
 cmakefiles(
   CMakeLists.txt

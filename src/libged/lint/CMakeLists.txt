@@ -15,12 +15,8 @@ set(
   missing.cpp
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-lint SHARED ${LINT_SRCS})
+ged_plugin_library(ged-lint ${LINT_SRCS})
 target_link_libraries(ged-lint libged libbu)
-set_property(TARGET ged-lint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-lint ${LINT_SRCS})
-plugin_setup(ged-lint ged)
 
 cmakefiles(
   CMakeLists.txt

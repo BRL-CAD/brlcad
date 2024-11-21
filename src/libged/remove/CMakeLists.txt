@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-remove SHARED remove.c)
+ged_plugin_library(ged-remove remove.c)
 target_link_libraries(ged-remove libged libbu)
-set_property(TARGET ged-remove APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-remove remove.c)
-plugin_setup(ged-remove ged)
 
 cmakefiles(
   CMakeLists.txt

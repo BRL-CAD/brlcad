@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-model2view_lu SHARED model2view_lu.c)
+ged_plugin_library(ged-model2view_lu model2view_lu.c)
 target_link_libraries(ged-model2view_lu libged libbu)
-set_property(TARGET ged-model2view_lu APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-model2view_lu model2view_lu.c)
-plugin_setup(ged-model2view_lu ged)
 
 cmakefiles(
   CMakeLists.txt

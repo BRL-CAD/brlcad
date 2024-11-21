@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-mirror SHARED mirror.c)
+ged_plugin_library(ged-mirror mirror.c)
 target_link_libraries(ged-mirror libged libbu)
-set_property(TARGET ged-mirror APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-mirror mirror.c)
-plugin_setup(ged-mirror ged)
 
 cmakefiles(
   CMakeLists.txt

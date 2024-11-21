@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-vrot SHARED vrot.c)
+ged_plugin_library(ged-vrot vrot.c)
 target_link_libraries(ged-vrot libged libbu)
-set_property(TARGET ged-vrot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-vrot vrot.c)
-plugin_setup(ged-vrot ged)
 
 cmakefiles(
   CMakeLists.txt

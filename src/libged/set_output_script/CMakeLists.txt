@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-set_output_script SHARED set_output_script.c)
+ged_plugin_library(ged-set_output_script set_output_script.c)
 target_link_libraries(ged-set_output_script libged libbu)
-set_property(TARGET ged-set_output_script APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-set_output_script set_output_script.c)
-plugin_setup(ged-set_output_script ged)
 
 cmakefiles(
   CMakeLists.txt

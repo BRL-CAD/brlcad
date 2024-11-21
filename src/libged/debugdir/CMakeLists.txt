@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-debugdir SHARED debugdir.c)
+ged_plugin_library(ged-debugdir debugdir.c)
 target_link_libraries(ged-debugdir libged libbu)
-set_property(TARGET ged-debugdir APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-debugdir debugdir.c)
-plugin_setup(ged-debugdir ged)
 
 cmakefiles(
   CMakeLists.txt

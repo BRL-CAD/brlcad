@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-ocenter SHARED ocenter.c)
+ged_plugin_library(ged-ocenter ocenter.c)
 target_link_libraries(ged-ocenter libged libbu)
-set_property(TARGET ged-ocenter APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-ocenter ocenter.c)
-plugin_setup(ged-ocenter ged)
 
 cmakefiles(
   CMakeLists.txt

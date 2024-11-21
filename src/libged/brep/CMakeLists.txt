@@ -49,12 +49,8 @@ set(
   valid.cpp
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-brep SHARED ${BREP_SRCS})
+ged_plugin_library(ged-brep ${BREP_SRCS})
 target_link_libraries(ged-brep libged libbu)
-set_property(TARGET ged-brep APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-brep ${BREP_SRCS})
-plugin_setup(ged-brep ged)
 
 cmakefiles(
   CMakeLists.txt

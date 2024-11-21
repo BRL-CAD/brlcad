@@ -23,12 +23,8 @@ set(
   scale_tor.c
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-pscale SHARED ${PSCALE_SRCS})
+ged_plugin_library(ged-pscale ${PSCALE_SRCS})
 target_link_libraries(ged-pscale libged libbu)
-set_property(TARGET ged-pscale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-pscale ${PSCALE_SRCS})
-plugin_setup(ged-pscale ged)
 
 cmakefiles(
   CMakeLists.txt

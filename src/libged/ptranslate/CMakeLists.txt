@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-ptranslate SHARED ptranslate.c)
+ged_plugin_library(ged-ptranslate ptranslate.c)
 target_link_libraries(ged-ptranslate libged libbu)
-set_property(TARGET ged-ptranslate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-ptranslate ptranslate.c)
-plugin_setup(ged-ptranslate ged)
 
 cmakefiles(
   CMakeLists.txt

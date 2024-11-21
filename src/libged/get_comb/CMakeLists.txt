@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-get_comb SHARED get_comb.c)
+ged_plugin_library(ged-get_comb get_comb.c)
 target_link_libraries(ged-get_comb libged libbu)
-set_property(TARGET ged-get_comb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-get_comb get_comb.c)
-plugin_setup(ged-get_comb ged)
 
 cmakefiles(
   CMakeLists.txt

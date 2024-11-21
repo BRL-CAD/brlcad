@@ -18,12 +18,8 @@ set(
   op_pnts_vol.cpp
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-analyze SHARED ${analyze_srcs})
+ged_plugin_library(ged-analyze ${analyze_srcs})
 target_link_libraries(ged-analyze libged libanalyze libbu)
-set_property(TARGET ged-analyze APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-analyze analyze.c)
-plugin_setup(ged-analyze ged)
 
 cmakefiles(
   CMakeLists.txt

@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-erase SHARED erase.c erase2.cpp)
+ged_plugin_library(ged-erase erase.c erase2.cpp)
 target_link_libraries(ged-erase libged libbu)
-set_property(TARGET ged-erase APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-erase erase.c erase2.cpp)
-plugin_setup(ged-erase ged)
 
 cmakefiles(
   CMakeLists.txt

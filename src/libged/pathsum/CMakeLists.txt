@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-pathsum SHARED pathsum.c)
+ged_plugin_library(ged-pathsum pathsum.c)
 target_link_libraries(ged-pathsum libged libbu)
-set_property(TARGET ged-pathsum APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-pathsum pathsum.c)
-plugin_setup(ged-pathsum ged)
 
 cmakefiles(
   CMakeLists.txt

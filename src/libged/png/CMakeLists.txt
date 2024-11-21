@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-png SHARED png.c)
+ged_plugin_library(ged-png png.c)
 target_link_libraries(ged-png libged libbu)
-set_property(TARGET ged-png APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-png png.c)
-plugin_setup(ged-png ged)
 
 cmakefiles(
   CMakeLists.txt

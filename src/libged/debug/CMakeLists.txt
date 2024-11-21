@@ -18,12 +18,8 @@ add_custom_command(
 distclean(${DEBUG_CMD_CPP})
 set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-debug SHARED debug.cpp)
+ged_plugin_library(ged-debug debug.cpp)
 target_link_libraries(ged-debug libged libbu)
-set_property(TARGET ged-debug APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-debug debug.cpp)
-plugin_setup(ged-debug ged)
 
 cmakefiles(
   CMakeLists.txt

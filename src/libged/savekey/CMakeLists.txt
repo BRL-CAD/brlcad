@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-savekey SHARED savekey.c)
+ged_plugin_library(ged-savekey savekey.c)
 target_link_libraries(ged-savekey libged libbu)
-set_property(TARGET ged-savekey APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-savekey savekey.c)
-plugin_setup(ged-savekey ged)
 
 cmakefiles(
   CMakeLists.txt

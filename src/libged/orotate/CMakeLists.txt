@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-orotate SHARED orotate.c)
+ged_plugin_library(ged-orotate orotate.c)
 target_link_libraries(ged-orotate libged libbu)
-set_property(TARGET ged-orotate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-orotate orotate.c)
-plugin_setup(ged-orotate ged)
 
 cmakefiles(
   CMakeLists.txt

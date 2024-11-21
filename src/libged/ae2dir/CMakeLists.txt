@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-ae2dir SHARED ae2dir.c)
+ged_plugin_library(ged-ae2dir ae2dir.c)
 target_link_libraries(ged-ae2dir libged libbu)
-set_property(TARGET ged-ae2dir APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-ae2dir ae2dir.c)
-plugin_setup(ged-ae2dir ged)
 
 cmakefiles(
   CMakeLists.txt

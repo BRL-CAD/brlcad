@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-scale SHARED scale.c)
+ged_plugin_library(ged-scale scale.c)
 target_link_libraries(ged-scale libged libbu)
-set_property(TARGET ged-scale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-scale scale.c)
-plugin_setup(ged-scale ged)
 
 cmakefiles(
   CMakeLists.txt

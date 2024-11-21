@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-cpi SHARED cpi.c)
+ged_plugin_library(ged-cpi cpi.c)
 target_link_libraries(ged-cpi libged libbu)
-set_property(TARGET ged-cpi APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-cpi cpi.c)
-plugin_setup(ged-cpi ged)
 
 cmakefiles(
   CMakeLists.txt

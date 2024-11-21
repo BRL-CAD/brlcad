@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-solid_report SHARED solid_report.c)
+ged_plugin_library(ged-solid_report solid_report.c)
 target_link_libraries(ged-solid_report libged libbu)
-set_property(TARGET ged-solid_report APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-solid_report solid_report.c)
-plugin_setup(ged-solid_report ged)
 
 cmakefiles(
   CMakeLists.txt

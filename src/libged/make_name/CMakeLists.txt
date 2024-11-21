@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-make_name SHARED make_name.c)
+ged_plugin_library(ged-make_name make_name.c)
 target_link_libraries(ged-make_name libged libbu)
-set_property(TARGET ged-make_name APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-make_name make_name.c)
-plugin_setup(ged-make_name ged)
 
 cmakefiles(
   CMakeLists.txt

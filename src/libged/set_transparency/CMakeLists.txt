@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-set_transparency SHARED set_transparency.c)
+ged_plugin_library(ged-set_transparency set_transparency.c)
 target_link_libraries(ged-set_transparency libged libbu)
-set_property(TARGET ged-set_transparency APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-set_transparency set_transparency.c)
-plugin_setup(ged-set_transparency ged)
 
 cmakefiles(
   CMakeLists.txt

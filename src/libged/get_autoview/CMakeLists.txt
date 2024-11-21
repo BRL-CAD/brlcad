@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-get_autoview SHARED get_autoview.c)
+ged_plugin_library(ged-get_autoview get_autoview.c)
 target_link_libraries(ged-get_autoview libged libdm libbu)
-set_property(TARGET ged-get_autoview APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-get_autoview get_autoview.c)
-plugin_setup(ged-get_autoview ged)
 
 cmakefiles(
   CMakeLists.txt

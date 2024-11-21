@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-oscale SHARED oscale.c)
+ged_plugin_library(ged-oscale oscale.c)
 target_link_libraries(ged-oscale libged libbu)
-set_property(TARGET ged-oscale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-oscale oscale.c)
-plugin_setup(ged-oscale ged)
 
 cmakefiles(
   CMakeLists.txt

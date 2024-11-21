@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-concat SHARED concat.cpp)
+ged_plugin_library(ged-concat concat.cpp)
 target_link_libraries(ged-concat libged libbu)
-set_property(TARGET ged-concat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-concat concat.cpp)
-plugin_setup(ged-concat ged)
 
 cmakefiles(
   CMakeLists.txt

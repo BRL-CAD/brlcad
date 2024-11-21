@@ -17,12 +17,8 @@ add_custom_command(
 distclean(${ENV_CMD_C})
 set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-env SHARED env.c)
+ged_plugin_library(ged-env env.c)
 target_link_libraries(ged-env libged libbu)
-set_property(TARGET ged-env APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-env env.c)
-plugin_setup(ged-env ged)
 
 cmakefiles(
   CMakeLists.txt

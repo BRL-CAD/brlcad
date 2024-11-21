@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-vdraw SHARED vdraw.c)
+ged_plugin_library(ged-vdraw vdraw.c)
 target_link_libraries(ged-vdraw libged libbu)
-set_property(TARGET ged-vdraw APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-vdraw vdraw.c)
-plugin_setup(ged-vdraw ged)
 
 cmakefiles(
   CMakeLists.txt

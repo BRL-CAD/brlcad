@@ -15,12 +15,8 @@ include_directories(
   ${AVOID_INCLUDE_DIR}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-graph SHARED graph.cpp)
+ged_plugin_library(ged-graph graph.cpp)
 target_link_libraries(ged-graph libged libbu ${ADAPTAGRAMS_LIBRARIES})
-set_property(TARGET ged-graph APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-graph graph.cpp)
-plugin_setup(ged-graph ged)
 
 cmakefiles(
   CMakeLists.txt

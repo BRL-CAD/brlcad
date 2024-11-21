@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-gqa SHARED gqa.cpp)
+ged_plugin_library(ged-gqa gqa.cpp)
 target_link_libraries(ged-gqa libged libbu)
-set_property(TARGET ged-gqa APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-gqa gqa.cpp)
-plugin_setup(ged-gqa ged)
 
 cmakefiles(
   CMakeLists.txt

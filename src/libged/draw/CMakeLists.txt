@@ -8,12 +8,8 @@ include_directories(
 
 set(DRAW_SRCS draw.c draw2.cpp loadview.c preview.c)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-draw SHARED ${DRAW_SRCS})
+ged_plugin_library(ged-draw ${DRAW_SRCS})
 target_link_libraries(ged-draw libged libbu)
-set_property(TARGET ged-draw APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-draw ${DRAW_SRCS})
-plugin_setup(ged-draw ged)
 
 cmakefiles(
   CMakeLists.txt

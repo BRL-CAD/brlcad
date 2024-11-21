@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-rtcheck SHARED rtcheck.c rtcheck2.cpp)
+ged_plugin_library(ged-rtcheck rtcheck.c rtcheck2.cpp)
 target_link_libraries(ged-rtcheck libged libbu)
-set_property(TARGET ged-rtcheck APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-rtcheck rtcheck.c rtcheck2.cpp)
-plugin_setup(ged-rtcheck ged)
 
 cmakefiles(
   CMakeLists.txt

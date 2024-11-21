@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-sphgroup SHARED sphgroup.c)
+ged_plugin_library(ged-sphgroup sphgroup.c)
 target_link_libraries(ged-sphgroup libged libbu)
-set_property(TARGET ged-sphgroup APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-sphgroup sphgroup.c)
-plugin_setup(ged-sphgroup ged)
 
 cmakefiles(
   CMakeLists.txt

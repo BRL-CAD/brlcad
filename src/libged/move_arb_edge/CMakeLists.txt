@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-move_arb_edge SHARED move_arb_edge.c)
+ged_plugin_library(ged-move_arb_edge move_arb_edge.c)
 target_link_libraries(ged-move_arb_edge libged libbu)
-set_property(TARGET ged-move_arb_edge APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-move_arb_edge move_arb_edge.c)
-plugin_setup(ged-move_arb_edge ged)
 
 cmakefiles(
   CMakeLists.txt

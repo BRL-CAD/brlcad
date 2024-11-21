@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-rmap SHARED rmap.c)
+ged_plugin_library(ged-rmap rmap.c)
 target_link_libraries(ged-rmap libged libbu)
-set_property(TARGET ged-rmap APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-rmap rmap.c)
-plugin_setup(ged-rmap ged)
 
 cmakefiles(
   CMakeLists.txt

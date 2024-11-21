@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-3ptarb SHARED 3ptarb.c)
+ged_plugin_library(ged-3ptarb 3ptarb.c)
 target_link_libraries(ged-3ptarb libged libbu)
-set_property(TARGET ged-3ptarb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-3ptarb 3ptarb.c)
-plugin_setup(ged-3ptarb ged)
 
 cmakefiles(
   CMakeLists.txt

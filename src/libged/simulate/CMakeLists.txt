@@ -45,13 +45,9 @@ set(
 
 set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-simulate SHARED ${bullet_srcs})
+ged_plugin_library(ged-simulate ${bullet_srcs})
 target_include_directories(ged-simulate BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
 target_link_libraries(ged-simulate libged libbu ${BULLET_LIBRARIES})
-set_property(TARGET ged-simulate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-simulate ${bullet_srcs})
-plugin_setup(ged-simulate ged)
 
 cmakefiles(
   CMakeLists.txt

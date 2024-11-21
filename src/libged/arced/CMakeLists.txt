@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-arced SHARED arced.c)
+ged_plugin_library(ged-arced arced.c)
 target_link_libraries(ged-arced libged libbu)
-set_property(TARGET ged-arced APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-arced arced.c)
-plugin_setup(ged-arced ged)
 
 cmakefiles(
   CMakeLists.txt

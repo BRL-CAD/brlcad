@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-otranslate SHARED otranslate.c)
+ged_plugin_library(ged-otranslate otranslate.c)
 target_link_libraries(ged-otranslate libged libbu)
-set_property(TARGET ged-otranslate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-otranslate otranslate.c)
-plugin_setup(ged-otranslate ged)
 
 cmakefiles(
   CMakeLists.txt

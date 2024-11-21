@@ -13,7 +13,8 @@ add_custom_target(ged_plugins_sentinel DEPENDS ${CMAKE_BINARY_DIR}/ged_plugins.s
 set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ged")
 
 function(ged_plugin_library name)
-  add_library(${name} ${ARGN})
+  add_library(${name} SHARED ${ARGN})
+  target_compile_definitions(${name} PRIVATE GED_PLUGIN BRLCADBUILD HAVE_CONFIG_H)
   set(dep_includes)
   foreach(ll ${libslist})
     if(TARGET ${ll})
@@ -25,6 +26,8 @@ function(ged_plugin_library name)
   endforeach(ll ${libslist})
   brlcad_include_dirs(${name} dep_includes PRIVATE)
   add_dependencies(ged_plugins_sentinel ${name})
+  validate_style(${name} ${ARGN})
+  plugin_setup(${name} ged)
 endfunction(ged_plugin_library name)
 
 # This target is supplied so applications wanting to run libged
@@ -389,10 +392,11 @@ set(
   brep/ged_brep.h
   check/check_private.h
   ged_private.h
+  include/plugin.h
   joint/joint.h
   osg.cpp
-  pscale/pscale.h
   pnts_util.h
+  pscale/pscale.h
   qray.h
   simulate/NOTES
   simulate/rt_collision_algorithm.hpp
@@ -402,7 +406,6 @@ set(
   simulate/rt_motion_state.hpp
   simulate/simulation.hpp
   simulate/utility.hpp
-  include/plugin.h
 )
 cmakefiles(${ged_ignore_files})
 

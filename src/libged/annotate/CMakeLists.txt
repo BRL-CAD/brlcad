@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-annotate SHARED annotate.c)
+ged_plugin_library(ged-annotate annotate.c)
 target_link_libraries(ged-annotate libged libbu)
-set_property(TARGET ged-annotate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-annotate annotate.c)
-plugin_setup(ged-annotate ged)
 
 cmakefiles(
   CMakeLists.txt

@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-killtree SHARED killtree.c)
+ged_plugin_library(ged-killtree killtree.c)
 target_link_libraries(ged-killtree libged libbu)
-set_property(TARGET ged-killtree APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-killtree killtree.c)
-plugin_setup(ged-killtree ged)
 
 cmakefiles(
   CMakeLists.txt

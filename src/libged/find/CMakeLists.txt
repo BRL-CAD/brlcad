@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-find SHARED find.c)
+ged_plugin_library(ged-find find.c)
 target_link_libraries(ged-find libged libbu)
-set_property(TARGET ged-find APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-find find.c)
-plugin_setup(ged-find ged)
 
 cmakefiles(
   CMakeLists.txt

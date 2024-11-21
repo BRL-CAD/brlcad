@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-shaded_mode SHARED shaded_mode.c)
+ged_plugin_library(ged-shaded_mode shaded_mode.c)
 target_link_libraries(ged-shaded_mode libged libbu)
-set_property(TARGET ged-shaded_mode APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-shaded_mode shaded_mode.c)
-plugin_setup(ged-shaded_mode ged)
 
 cmakefiles(
   CMakeLists.txt

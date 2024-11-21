@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-heal SHARED heal.c)
+ged_plugin_library(ged-heal heal.c)
 target_link_libraries(ged-heal libged libbu)
-set_property(TARGET ged-heal APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-heal heal.c)
-plugin_setup(ged-heal ged)
 
 cmakefiles(
   CMakeLists.txt

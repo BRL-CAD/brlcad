@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-rtabort SHARED rtabort.c)
+ged_plugin_library(ged-rtabort rtabort.c)
 target_link_libraries(ged-rtabort libged libbu)
-set_property(TARGET ged-rtabort APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-rtabort rtabort.c)
-plugin_setup(ged-rtabort ged)
 
 cmakefiles(
   CMakeLists.txt

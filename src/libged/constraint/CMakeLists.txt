@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-constraint SHARED constraint.c)
+ged_plugin_library(ged-constraint constraint.c)
 target_link_libraries(ged-constraint libged libbu)
-set_property(TARGET ged-constraint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-constraint constraint.c)
-plugin_setup(ged-constraint ged)
 
 cmakefiles(
   CMakeLists.txt

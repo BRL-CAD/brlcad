@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-setview SHARED setview.c)
+ged_plugin_library(ged-setview setview.c)
 target_link_libraries(ged-setview libged libbu)
-set_property(TARGET ged-setview APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-setview setview.c)
-plugin_setup(ged-setview ged)
 
 cmakefiles(
   CMakeLists.txt

@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-tops SHARED tops.c)
+ged_plugin_library(ged-tops tops.c)
 target_link_libraries(ged-tops libged libbu)
-set_property(TARGET ged-tops APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-tops tops.c)
-plugin_setup(ged-tops ged)
 
 cmakefiles(
   CMakeLists.txt

@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-zap SHARED zap.c zap2.cpp)
+ged_plugin_library(ged-zap zap.c zap2.cpp)
 target_link_libraries(ged-zap libged libbu)
-set_property(TARGET ged-zap APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-zap zap.c zap2.cpp)
-plugin_setup(ged-zap ged)
 
 cmakefiles(
   CMakeLists.txt

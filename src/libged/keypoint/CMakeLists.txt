@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-keypoint SHARED keypoint.c)
+ged_plugin_library(ged-keypoint keypoint.c)
 target_link_libraries(ged-keypoint libged libbu)
-set_property(TARGET ged-keypoint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-keypoint keypoint.c)
-plugin_setup(ged-keypoint ged)
 
 cmakefiles(
   CMakeLists.txt

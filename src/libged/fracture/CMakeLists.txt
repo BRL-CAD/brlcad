@@ -6,12 +6,8 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-fracture SHARED fracture.c)
+ged_plugin_library(ged-fracture fracture.c)
 target_link_libraries(ged-fracture libged libbu)
-set_property(TARGET ged-fracture APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-fracture fracture.c)
-plugin_setup(ged-fracture ged)
 
 cmakefiles(
   CMakeLists.txt

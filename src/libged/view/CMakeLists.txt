@@ -36,12 +36,8 @@ set(
   ypr.c
 )
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-view SHARED ${VIEW_SRCS})
+ged_plugin_library(ged-view ${VIEW_SRCS})
 target_link_libraries(ged-view libged libbu)
-set_property(TARGET ged-view APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-validate_style(ged-view ${VIEW_SRCS})
-plugin_setup(ged-view ged)
 
 cmakefiles(
   CMakeLists.txt
