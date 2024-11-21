@@ -24,6 +24,7 @@
  */
 
 #include "ged.h"
+#include "../ged_cmds.h"
 
 /*
  * Erase all currently displayed geometry and draw the specified object(s)
@@ -55,12 +56,12 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
 
 	av[0] = "zap";
 	av[1] = (char *)0;
-	ged_exec(gedp, 1, av);
+	ged_cmd_exec_zap(gedp, 1, av);
     }
 
     /* Draw the new object(s) */
     argv[0] = "draw";
-    return ged_exec(gedp, argc, argv);
+    return ged_cmd_exec_draw(gedp, argc, argv);
 }
 
 
