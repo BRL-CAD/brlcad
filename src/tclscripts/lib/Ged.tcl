@@ -1580,6 +1580,7 @@ package provide cadwidgets::Ged 1.0
     eval $mGed dbfind $args
 }
 
+# TODO - this needs to go away
 ::itcl::body cadwidgets::Ged::dbip {args} {
     eval $mGed dbip $args
 }

@@ -151,6 +151,7 @@ endif(TARGET btclsh)
 cmakefiles(
   CMakeLists.txt
   ${tclscripts_TCLSCRIPTS}
+  ged_notfound.txt
   README
 )
 
