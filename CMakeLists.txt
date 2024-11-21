@@ -1083,8 +1083,16 @@ if(NOT MSVC)
   if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
     # LTO bug in GCC 4.8.5 (__fread_chk_warn)
   else()
-    check_c_flag(flto GROUPS OPTIMIZE_C_FLAGS)
-    check_cxx_flag(flto GROUPS OPTIMIZE_CXX_FLAGS)
+    # Try flto=auto first to avoid lto-wrapper serial compilation warnings
+    # https://stackoverflow.com/questions/72218980/gcc-v12-1-warning-about-serial-compilation
+    check_c_flag("flto=auto" GROUPS OPTIMIZE_C_FLAGS VARS flto_auto_c_flag_found)
+    if (NOT flto_auto_c_flag_found)
+      check_c_flag(flto GROUPS OPTIMIZE_C_FLAGS)
+    endif()
+    check_cxx_flag("flto=auto" GROUPS OPTIMIZE_CXX_FLAGS VARS flto_auto_cxx_flag_found)
+    if (NOT flto_auto_cxx_flag_found)
+      check_cxx_flag(flto GROUPS OPTIMIZE_CXX_FLAGS)
+    endif()
 
     # When compiling with O3 + flto, GCC 6.3 (e.g. on Debian x64, and maybe
     # others, but I haven't tested) fails to link executables using libbrep.
