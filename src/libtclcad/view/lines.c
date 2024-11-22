@@ -118,7 +118,7 @@ to_data_lines(struct ged *gedp,
     struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp;
 
-    ret = ged_exec(gedp, argc, argv);
+    ret = ged_exec_view(gedp, argc, argv);
 
     gedp->ged_gvp = btmp;
 

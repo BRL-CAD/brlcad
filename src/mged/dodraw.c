@@ -65,13 +65,13 @@ cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy)
 	av[0] = "erase";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)ged_exec(GEDP, 2, (const char **)av);
+	(void)ged_exec_erase(GEDP, 2, (const char **)av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
 	av[2] = shortname;
 	av[3] = NULL;
-	(void)ged_exec(GEDP, 3, (const char **)av);
+	(void)ged_exec_kill(GEDP, 3, (const char **)av);
     }
 
     for (i=0; i < vbp->nused; i++) {
@@ -319,15 +319,11 @@ add_solid_path_to_result(
 int
 redraw_visible_objects(void)
 {
-    int ret, ac = 1;
-    char *av[] = {NULL, NULL};
+    const char *av[1] = {"redraw"};
+    int ret = ged_exec(GEDP, 1, av);
 
-    av[0] = "redraw";
-    ret = ged_exec(GEDP, ac, (const char **)av);
-
-    if (ret & BRLCAD_ERROR) {
+    if (ret & BRLCAD_ERROR)
 	return TCL_ERROR;
-    }
 
     return TCL_OK;
 }

@@ -64,7 +64,7 @@ main(int ac, char *av[])
     /* do it. */
     mk_id(db_fp, "coil");
     GED_INIT(&ged, db_fp);
-    flag = ged_exec(&ged, ac, (const char**)av);
+    flag = ged_exec_coil(&ged, ac, (const char**)av);
     /* Close database */
     db_close(db_fp->dbip);
     if (flag & BRLCAD_ERROR)

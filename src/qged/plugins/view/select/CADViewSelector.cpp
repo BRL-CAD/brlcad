@@ -280,7 +280,7 @@ CADViewSelector::erase_objs()
 	av[i+1] = bu_vls_cstr(&s->s_name);
 	scnt++;
     }
-    ged_exec(gedp, scnt, av);
+    ged_exec_erase(gedp, scnt, av);
     bu_free(av, "av");
 }
 
@@ -304,7 +304,7 @@ CADViewSelector::do_draw_selections()
 	i++;
     }
 
-    ged_exec(gedp, (int)(ss->selected.size()+1), av);
+    ged_exec_draw(gedp, (int)(ss->selected.size()+1), av);
     for (size_t j = 0; j < ss->selected.size()+1; j++) {
 	bu_free((void *)av[j], "path");
     }
@@ -333,7 +333,7 @@ CADViewSelector::do_erase_selections()
 	i++;
     }
 
-    ged_exec(gedp, (int)(ss->selected.size()+1), av);
+    ged_exec_erase(gedp, (int)(ss->selected.size()+1), av);
     for (size_t j = 0; j < ss->selected.size()+1; j++) {
 	bu_free((void *)av[j], "path");
     }

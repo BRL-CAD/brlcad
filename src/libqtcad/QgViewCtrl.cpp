@@ -97,7 +97,7 @@ QgViewCtrl::fbclear_cmd()
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     const char *av[2] = {NULL};
     av[0] = "fbclear";
-    ged_exec(gedp, 1, (const char **)av);
+    ged_exec_fbclear(gedp, 1, (const char **)av);
     emit view_changed(QG_VIEW_REFRESH);
 }
 
@@ -177,12 +177,12 @@ QgViewCtrl::raytrace_cmd()
 	av[0] = "process";
 	av[1] = "pabort";
 	av[2] = bu_vls_cstr(&pid_str);
-	ged_exec(gedp, 3, (const char **)av);
+	ged_exec_process(gedp, 3, (const char **)av);
 	goto cmd_cleanup;
     }
 
     av[0] = "ert";
-    ged_exec(gedp, 1, (const char **)av);
+    ged_exec_ert(gedp, 1, (const char **)av);
     emit view_changed(QG_VIEW_REFRESH);
 
 cmd_cleanup:

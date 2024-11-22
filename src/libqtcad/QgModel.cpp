@@ -893,7 +893,7 @@ QgModel::draw(const char *inst_path)
     argv[1] = inst_path;
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    int ret = ged_exec(gedp, 2, argv);
+    int ret = ged_exec_draw(gedp, 2, argv);
 
     emit view_change(QG_VIEW_DRAWN);
     return ret;
@@ -926,7 +926,7 @@ QgModel::erase(const char *inst_path)
     argv[1] = inst_path;
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    int ret = ged_exec(gedp, 2, argv);
+    int ret = ged_exec_erase(gedp, 2, argv);
 
     emit view_change(QG_VIEW_DRAWN);
     return ret;

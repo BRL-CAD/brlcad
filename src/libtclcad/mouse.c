@@ -226,7 +226,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     cmd_argv[10] = bu_vls_addr(&dir[Z]);
 
     gedp->ged_gvp = gdvp;
-    ret = ged_exec(gedp, cmd_argc, cmd_argv);
+    ret = ged_exec_brep(gedp, cmd_argc, cmd_argv);
 
     bu_vls_free(&start[X]);
     bu_vls_free(&start[Y]);
@@ -326,7 +326,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     cmd_argv[6] = bu_vls_addr(&delta[Y]);
     cmd_argv[7] = bu_vls_addr(&delta[Z]);
 
-    ret = ged_exec(gedp, cmd_argc, cmd_argv);
+    ret = ged_exec_brep(gedp, cmd_argc, cmd_argv);
 
     bu_free((void *)brep_name, "brep_name");
     bu_vls_free(&delta[X]);
@@ -445,7 +445,7 @@ to_mouse_constrain_rot(struct ged *gedp,
     av[2] = bu_vls_addr(&rot_vls);
     av[3] = (char *)0;
 
-    ret = ged_exec(gedp, ac, (const char **)av);
+    ret = ged_exec_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
 
     if (ret == BRLCAD_OK) {
@@ -556,7 +556,7 @@ to_mouse_constrain_trans(struct ged *gedp,
     av[2] = bu_vls_addr(&tran_vls);
     av[3] = (char *)0;
 
-    ret = ged_exec(gedp, ac, (const char **)av);
+    ret = ged_exec_tra(gedp, ac, (const char **)av);
     bu_vls_free(&tran_vls);
 
     if (ret == BRLCAD_OK) {
@@ -627,6 +627,7 @@ to_mouse_find_arb_edge(struct ged *gedp,
     av[3] = (char *)argv[5];
     av[4] = (char *)0;
 
+    // TODO - above is not a current GED command - broken
     (void)ged_exec(gedp, 4, (const char **)av);
     bu_vls_free(&pt_vls);
 
@@ -688,6 +689,7 @@ to_mouse_find_bot_edge(struct ged *gedp,
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
+    // TODO - above is not a current GED command - broken
     (void)ged_exec(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
@@ -749,6 +751,7 @@ to_mouse_find_bot_pnt(struct ged *gedp,
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
+    // TODO - above is not a current GED command - broken
     (void)ged_exec(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
@@ -812,6 +815,7 @@ to_mouse_find_metaball_pnt(struct ged *gedp,
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
+    // TODO - above is not a current GED command - broken
     (void)ged_exec(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
@@ -875,6 +879,7 @@ to_mouse_find_pipe_pnt(struct ged *gedp,
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
+    // TODO - above is not a current GED command - broken
     (void)ged_exec(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
@@ -965,7 +970,7 @@ to_mouse_joint_select(
     cmd_argv[10] = bu_vls_addr(&dir[Z]);
 
     gedp->ged_gvp = gdvp;
-    ret = ged_exec(gedp, cmd_argc, cmd_argv);
+    ret = ged_exec_joint2(gedp, cmd_argc, cmd_argv);
 
     bu_vls_free(&start[X]);
     bu_vls_free(&start[Y]);
@@ -1063,7 +1068,7 @@ to_mouse_joint_selection_translate(
     cmd_argv[6] = bu_vls_addr(&delta[Y]);
     cmd_argv[7] = bu_vls_addr(&delta[Z]);
 
-    ret = ged_exec(gedp, cmd_argc, cmd_argv);
+    ret = ged_exec_joint2(gedp, cmd_argc, cmd_argv);
 
     if (ret != BRLCAD_OK) {
 	bu_free((void *)joint_name, "joint_name");
@@ -1084,7 +1089,7 @@ to_mouse_joint_selection_translate(
     cmd_argv[1] = joint_name;
     cmd_argv[2] = "RP1";
     cmd_argv[3] = NULL;
-    ret = ged_exec(gedp, cmd_argc, cmd_argv);
+    ret = ged_exec_get(gedp, cmd_argc, cmd_argv);
 
     if (ret == BRLCAD_OK) {
 	char *path_name = bu_strdup(bu_vls_cstr(gedp->ged_result_str));
@@ -1096,7 +1101,7 @@ to_mouse_joint_selection_translate(
 	cmd_argv[0] = "how";
 	cmd_argv[1] = path_name;
 	cmd_argv[2] = NULL;
-	ret = ged_exec(gedp, cmd_argc, cmd_argv);
+	ret = ged_exec_how(gedp, cmd_argc, cmd_argv);
 
 	if (ret == BRLCAD_OK) {
 	    bu_sscanf(bu_vls_cstr(gedp->ged_result_str), "%d", &dmode);
@@ -1112,7 +1117,7 @@ to_mouse_joint_selection_translate(
 	cmd_argv[0] = "erase";
 	cmd_argv[1] = path_name;
 	cmd_argv[2] = NULL;
-	ret = ged_exec(gedp, cmd_argc, cmd_argv);
+	ret = ged_exec_erase(gedp, cmd_argc, cmd_argv);
 
 	if (ret == BRLCAD_OK) {
 	    /* redraw path with its previous display mode */
@@ -1122,7 +1127,7 @@ to_mouse_joint_selection_translate(
 	    cmd_argv[2] = bu_vls_cstr(&path_dmode);
 	    cmd_argv[3] = path_name;
 	    cmd_argv[4] = NULL;
-	    ret = ged_exec(gedp, cmd_argc, cmd_argv);
+	    ret = ged_exec_draw(gedp, cmd_argc, cmd_argv);
 
 	    to_refresh_all_views(current_top);
 	}
@@ -1221,7 +1226,7 @@ to_mouse_move_arb_edge(struct ged *gedp,
     av[4] = bu_vls_addr(&pt_vls);
     av[5] = (char *)0;
 
-    ret = ged_exec(gedp, 5, (const char **)av);
+    ret = ged_exec_move_arb_edge(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
     if (ret == BRLCAD_OK) {
@@ -1317,7 +1322,7 @@ to_mouse_move_arb_face(struct ged *gedp,
     av[4] = bu_vls_addr(&pt_vls);
     av[5] = (char *)0;
 
-    ret = ged_exec(gedp, 5, (const char **)av);
+    ret = ged_exec_move_arb_face(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
     if (ret == BRLCAD_OK) {
@@ -1483,7 +1488,7 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 
     gedp->ged_gvp = gdvp;
     av[0] = "bot_move_pnt";
-
+    // TODO - bot_move_pnt is not a current LIBGED cmd - the following are broken
     if (rflag) {
 	av[1] = "-r";
 	av[2] = (char *)argv[2];
@@ -1601,6 +1606,7 @@ to_mouse_move_bot_pnts(struct ged *gedp,
 	int ac = argc - 2;
 	char **av = (char **)bu_calloc(ac, sizeof(char *), "to_mouse_move_bot_pnts: av[]");
 	av[0] = "bot_move_pnts";
+	// TODO - above is not a current GED command - broken
 
 	av[1] = (char *)argv[4];
 	av[2] = bu_vls_addr(&pt_vls);
@@ -1814,7 +1820,7 @@ to_mouse_orotate(struct ged *gedp,
 	av[4] = bu_vls_addr(&rot_z_vls);
 	av[5] = (char *)0;
 
-	if (ged_exec(gedp, 5, (const char **)av) == BRLCAD_OK) {
+	if (ged_exec_orotate(gedp, 5, (const char **)av) == BRLCAD_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
@@ -1919,7 +1925,7 @@ to_mouse_oscale(struct ged *gedp,
 	av[2] = bu_vls_addr(&sf_vls);
 	av[3] = (char *)0;
 
-	if (ged_exec(gedp, 3, (const char **)av) == BRLCAD_OK) {
+	if (ged_exec_oscale(gedp, 3, (const char **)av) == BRLCAD_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
@@ -2049,7 +2055,7 @@ to_mouse_otranslate(struct ged *gedp,
 	av[4] = bu_vls_addr(&tran_z_vls);
 	av[5] = (char *)0;
 
-	if (ged_exec(gedp, 5, (const char **)av) == BRLCAD_OK) {
+	if (ged_exec_otranslate(gedp, 5, (const char **)av) == BRLCAD_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
@@ -2807,7 +2813,7 @@ to_mouse_rect(struct ged *gedp,
     av[3] = bu_vls_addr(&dy_vls);
     av[4] = (char *)0;
 
-    ret = ged_exec(gedp, ac, (const char **)av);
+    ret = ged_exec_rect(gedp, ac, (const char **)av);
     bu_vls_free(&dx_vls);
     bu_vls_free(&dy_vls);
 
@@ -2889,7 +2895,7 @@ to_mouse_rot(struct ged *gedp,
     av[2] = bu_vls_addr(&rot_vls);
     av[3] = (char *)0;
 
-    ret = ged_exec(gedp, ac, (const char **)av);
+    ret = ged_exec_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
 
     if (ret == BRLCAD_OK) {
@@ -2983,7 +2989,7 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     av[4] = bu_vls_addr(&pt_vls);
     av[5] = (char *)0;
 
-    ret = ged_exec(gedp, 5, (const char **)av);
+    ret = ged_exec_rotate_arb_face(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
     if (ret == BRLCAD_OK) {
@@ -3192,7 +3198,7 @@ to_mouse_scale(struct ged *gedp,
     av[0] = "zoom";
     av[1] = bu_vls_addr(&zoom_vls);
     av[2] = (char *)0;
-    ret = ged_exec(gedp, 2, (const char **)av);
+    ret = ged_exec_zoom(gedp, 2, (const char **)av);
     bu_vls_free(&zoom_vls);
 
     if (ret == BRLCAD_OK) {
@@ -3285,7 +3291,7 @@ to_mouse_protate(struct ged *gedp,
     av[3] = bu_vls_addr(&mrot_vls);
     av[4] = (char *)0;
 
-    ret = ged_exec(gedp, 4, (const char **)av);
+    ret = ged_exec_protate(gedp, 4, (const char **)av);
     bu_vls_free(&mrot_vls);
 
     if (ret == BRLCAD_OK) {
@@ -3379,7 +3385,7 @@ to_mouse_pscale(struct ged *gedp,
     av[4] = bu_vls_addr(&sf_vls);
     av[5] = (char *)0;
 
-    ret = ged_exec(gedp, 5, (const char **)av);
+    ret = ged_exec_pscale(gedp, 5, (const char **)av);
     bu_vls_free(&sf_vls);
 
     if (ret == BRLCAD_OK) {
@@ -3474,7 +3480,7 @@ to_mouse_ptranslate(struct ged *gedp,
     av[4] = bu_vls_addr(&tvec_vls);
     av[5] = (char *)0;
 
-    ret = ged_exec(gedp, 5, (const char **)av);
+    ret = ged_exec_ptranslate(gedp, 5, (const char **)av);
     bu_vls_free(&tvec_vls);
 
     if (ret == BRLCAD_OK) {
@@ -3562,7 +3568,7 @@ to_mouse_trans(struct ged *gedp,
     av[2] = bu_vls_addr(&trans_vls);
     av[3] = (char *)0;
 
-    ret = ged_exec(gedp, ac, (const char **)av);
+    ret = ged_exec_tra(gedp, ac, (const char **)av);
     bu_vls_free(&trans_vls);
 
     if (ret == BRLCAD_OK) {

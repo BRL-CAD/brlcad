@@ -718,12 +718,12 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
     if (argc > 1) {
 	struct bu_vls rcache = BU_VLS_INIT_ZERO;
 	int who_ret;
-	const char *who_cmd[2] = {"who", NULL};
+	const char *who_cmd[1] = {"who"};
 
 	/* Stash previous result string state so who cmd doesn't replace it */
 	bu_vls_sprintf(&rcache, "%s", bu_vls_addr(GEDP->ged_result_str));
 
-	who_ret = ged_exec(GEDP, 1, who_cmd);
+	who_ret = ged_exec_who(GEDP, 1, who_cmd);
 	if (who_ret == BRLCAD_OK) {
 	    /* worst possible is a bunch of 1-char names, allocate and
 	     * split into an argv accordingly.
@@ -1126,7 +1126,6 @@ cmdline(struct bu_vls *vp, int record)
     */
 
     if (glob_compat_mode) {
-	const char **av;
 	struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 	if (GEDP == GED_NULL)
 	    return CMD_BAD;
@@ -1135,13 +1134,9 @@ cmdline(struct bu_vls *vp, int record)
 	bu_vls_sprintf(&tmpstr, "%s", bu_vls_addr(GEDP->ged_result_str));
 
 	/* Run ged_glob */
-	av = (const char **)bu_malloc(sizeof(char *)*3, "ged_glob argv");
-
-	av[0] = "glob";
-	av[1] = bu_vls_addr(vp);
-	av[2] = NULL;
-
-	(void)ged_exec(GEDP, 2, (const char **)av);
+	const char *av[2] = {"glob", NULL};
+	av[1] = bu_vls_cstr(vp);
+	(void)ged_exec_glob(GEDP, 2, av);
 	if (bu_vls_strlen(GEDP->ged_result_str) > 0) {
 	    bu_vls_sprintf(&globbed, "%s", bu_vls_addr(GEDP->ged_result_str));
 	} else {
@@ -1153,7 +1148,6 @@ cmdline(struct bu_vls *vp, int record)
 
 	/* cleanup */
 	bu_vls_free(&tmpstr);
-	bu_free((void *)av, "ged_glob argv");
     } else {
 	bu_vls_vlscat(&globbed, vp);
     }
@@ -1987,11 +1981,8 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 
 	if (mged_variables->mv_autosize && non_empty) {
 	    struct view_ring *vrp;
-	    char *av[2];
-
-	    av[0] = "autoview";
-	    av[1] = (char *)0;
-	    ged_exec(GEDP, 1, (const char **)av);
+	    const char *av[1] = {"autoview"};
+	    ged_exec_autoview(GEDP, 1, (const char **)av);
 
 	    (void)mged_svbase();
 
@@ -2112,10 +2103,7 @@ cmd_ps(ClientData UNUSED(clientData),
        const char **UNUSED(argv))
 {
     int ret = 0;
-    const char *av[3];
-    av[0] = "process";
-    av[1] = "list";
-    av[2] = NULL;
+    const char *av[2] = {"process", "list"};
     ret = ged_exec(GEDP, 2, (const char **)av);
     /* For the next couple releases, print a rename notice */
     mged_pr_output(interpreter);

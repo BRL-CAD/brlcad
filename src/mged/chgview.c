@@ -166,7 +166,7 @@ mged_center(point_t center)
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_exec(GEDP, 4, (const char **)av);
+    ged_exec_center(GEDP, 4, (const char **)av);
     (void)mged_svbase();
     view_state->vs_flag = 1;
 }
@@ -222,15 +222,11 @@ cmd_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 void
 size_reset(void)
 {
-    char *av[2];
-
-    if (GEDP == GED_NULL) {
+    if (GEDP == GED_NULL)
 	return;
-    }
 
-    av[0] = "autoview";
-    av[1] = (char *)0;
-    ged_exec(GEDP, 1, (const char **)av);
+    const char *av[1] = {"autoview"};
+    ged_exec_autoview(GEDP, 1, (const char **)av);
     view_state->vs_gvp->gv_i_scale = view_state->vs_gvp->gv_scale;
     view_state->vs_flag = 1;
 }
@@ -466,7 +462,7 @@ edit_com(int argc,
 
 	    av[0] = "autoview";
 	    av[1] = (char *)0;
-	    ged_exec(GEDP, 1, (const char **)av);
+	    ged_exec_autoview(GEDP, 1, (const char **)av);
 
 	    (void)mged_svbase();
 
@@ -606,7 +602,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		ac = 2;
 	    }
 
-	    ged_exec(GEDP, ac, (const char **)av);
+	    ged_exec_autoview(GEDP, ac, (const char **)av);
 	    view_state->vs_flag = 1;
 	}
 	(void)mged_svbase();
@@ -684,7 +680,7 @@ int
 cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
     void (*tmp_callback)(unsigned int, int) = GEDP->ged_destroy_vlist_callback;
-    char *av[2] = {"zap", (char *)0};
+    const char *av[1] = {"zap"};
 
     CHECK_DBI_NULL;
 
@@ -697,7 +693,7 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 	button(BE_REJECT);
     }
 
-    ged_exec(GEDP, 1, (const char **)av);
+    ged_exec_zap(GEDP, 1, (const char **)av);
 
     (void)chg_state(STATE, STATE, "zap");
     solid_list_callback();
@@ -2560,8 +2556,7 @@ abs_zoom(void)
 
     av[0] = "zoom";
     av[1] = "1.0";
-    av[2] = (char *)0;
-    ged_exec(GEDP, 2, (const char **)av);
+    ged_exec_zoom(GEDP, 2, (const char **)av);
 
     if (!ZERO(view_state->vs_absolute_tran[X])
 	|| !ZERO(view_state->vs_absolute_tran[Y])
@@ -2591,9 +2586,8 @@ mged_zoom(double val)
 
     av[0] = "zoom";
     av[1] = buf;
-    av[2] = (char *)0;
 
-    ret = ged_exec(GEDP, 2, (const char **)av);
+    ret = ged_exec_zoom(GEDP, 2, (const char **)av);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(INTERP, &ds);
@@ -2904,7 +2898,7 @@ setview(double a1,
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_exec(GEDP, 4, (const char **)av);
+    ged_exec_setview(GEDP, 4, (const char **)av);
 
     if (!ZERO(view_state->vs_absolute_tran[X])
 	|| !ZERO(view_state->vs_absolute_tran[Y])
@@ -2949,7 +2943,7 @@ slewview(vect_t view_pos)
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_exec(GEDP, 4, (const char **)av);
+    ged_exec_slew(GEDP, 4, (const char **)av);
 
     /* all this for ModelDelta */
     MAT_DELTAS_GET_NEG(new_model_center, view_state->vs_gvp->gv_center);

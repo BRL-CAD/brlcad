@@ -136,11 +136,9 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
     }
 
     if (ctx->post_open_cnt < 2) {
-	const char *av[3];
-	av[0] = "opendb";
-	av[1] = "-c";
+	const char *av[3] = {"opendb", "-c", NULL};
 	av[2] = fname;
-	ctx->ged_ret = ged_exec(gedp, 3, (const char **)av);
+	ctx->ged_ret = ged_exec_opendb(gedp, 3, av);
     }
 
     if (gedp->dbip == DBI_NULL) {
@@ -407,7 +405,7 @@ f_opendb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     ctx.argv = av;
     ctx.argc = argc+ind;
 
-    ctx.ged_ret = ged_exec(GEDP, argc+ind, (const char **)av);
+    ctx.ged_ret = ged_exec_opendb(GEDP, argc+ind, (const char **)av);
 
     // Done - restore standard values
     GEDP->ged_pre_opendb_callback = pre_opendb_clbk;
@@ -453,10 +451,8 @@ f_closedb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     void *gctx = GEDP->ged_db_callback_udata;
     GEDP->ged_db_callback_udata = (void *)&ctx;
 
-    const char *av[2];
-    av[0] = "closedb";
-    av[1] = NULL;
-    ged_exec(GEDP, 1, (const char **)av);
+    const char *av[1] = {"closedb"};
+    ged_exec_closedb(GEDP, 1, (const char **)av);
 
     GEDP->ged_db_callback_udata = gctx;
 

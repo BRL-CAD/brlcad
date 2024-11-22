@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
     av[1] = "all.g";
     av[2] = "ellipse.r";
     av[3] = NULL;
-    ged_exec(g, ac, (const char **)av);
+    ged_exec_rm(g, ac, (const char **)av);
     s->g_update(g->dbip);
 
     std::cout << "\nRemoved ellipse.r from all.g:\n";
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
     av[1] = "all.g";
     av[2] = "ellipse.r";
     av[3] = NULL;
-    ged_exec(g, ac, (const char **)av);
+    ged_exec_g(g, ac, (const char **)av);
     s->g_update(g->dbip);
 
     std::cout << "\nAdded ellipse.r back to the end of all.g, no call to open:\n";
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
     av[1] = "tor.r";
     av[2] = "tor";
     av[3] = NULL;
-    ged_exec(g, ac, (const char **)av);
+    ged_exec_rm(g, ac, (const char **)av);
     s->g_update(g->dbip);
 
     std::cout << "\ntops tree after removing tor from tor.r:\n";
@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
     av[1] = "-f";
     av[2] = "all.g";
     av[3] = NULL;
-    ged_exec(g, ac, (const char **)av);
+    ged_exec_kill(g, ac, (const char **)av);
     s->g_update(g->dbip);
     std::cout << "\ntops tree after deleting all.g:\n";
     print_tops(s);
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
 	av[1] = "-f";
 	av[2] = obj;
 	av[3] = NULL;
-	ged_exec(g, ac, (const char **)av);
+	ged_exec_kill(g, ac, (const char **)av);
 	i++;
 	obj = objs[i];
     }

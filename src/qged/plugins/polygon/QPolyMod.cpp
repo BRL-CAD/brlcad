@@ -776,11 +776,10 @@ QPolyMod::sketch_name_update()
 
 	// Passed the tests - remove old object.
 	int ac = 2;
-	const char *av[3];
+	const char *av[2] = {"kill", NULL};
 	av[0] = "kill";
 	av[1] = dp->d_namep;
-	av[2] = NULL;
-	ged_exec(gedp, ac, av);
+	ged_exec_kill(gedp, ac, av);
     }
 
     ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);

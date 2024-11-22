@@ -214,8 +214,8 @@ boundingBox
 InformationGatherer::getBBData(std::string component)
 {
     // Gather bounding box dimensions
-    const char* cmd[4] = { "bb", "-q", component.c_str(), NULL };
-    ged_exec(g, 3, cmd);
+    const char* cmd[3] = { "bb", "-q", component.c_str()};
+    ged_exec_bb(g, 3, cmd);
     std::istringstream ss(bu_vls_addr(g->ged_result_str));
 
     /* interested in saving X, Y, Z, Volume from output
@@ -268,8 +268,8 @@ InformationGatherer::getMainComp()
     if (!topcomp.empty()) {
 	const char *topname = topcomp.c_str();
         // check if main comp exists
-        const char* cmd[3] = { "exists", topname, NULL };
-        ged_exec(g, 2, cmd);
+        const char* cmd[2] = { "exists", topname };
+        ged_exec_exists(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
         if (res != "1") {
             bu_exit(BRLCAD_ERROR, "Could not find component (%s), aborting.\n", topname);
@@ -282,9 +282,8 @@ InformationGatherer::getMainComp()
     }
 
     // get top level objects
-    const char* cmd[3] = { "tops", "-n", NULL };
-
-    ged_exec(g, 2, cmd);
+    const char* cmd[2] = { "tops", "-n" };
+    ged_exec_tops(g, 2, cmd);
     std::istringstream ss(bu_vls_addr(g->ged_result_str));
     std::string comp;
     std::vector<ComponentData> topComponents;
@@ -306,9 +305,8 @@ InformationGatherer::getMainComp()
     if (largestComponents.size() != 0) {
         return;
     } else {
-        const char* search_cmd[5] = { "search",  ".",  "-type", "comb", NULL };
-
-        ged_exec(g, 4, search_cmd);
+        const char* search_cmd[4] = { "search",  ".",  "-type", "comb" };
+        ged_exec_search(g, 4, search_cmd);
         std::stringstream ss2(bu_vls_addr(g->ged_result_str));
         std::string val2;
         std::vector<ComponentData> topComponents2;
@@ -398,21 +396,21 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
     //Gather title
     const char* cmd[6] = { "title", NULL, NULL, NULL, NULL };
-    ged_exec(g, 1, cmd);
+    ged_exec_title(g, 1, cmd);
     infoMap["title"] = bu_vls_addr(g->ged_result_str);
 
 
     //Gather DB Version
     cmd[0] = "dbversion";
     cmd[1] = NULL;
-    ged_exec(g, 1, cmd);
+    ged_exec_dbversion(g, 1, cmd);
     infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // CHECK
     //Gather primitives, regions, total objects
     /*
     cmd[0] = "summary";
-    ged_exec(g, 1, cmd);
+    ged_exec_summary(g, 1, cmd);
     char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
     int count = 0;
     while (res != NULL) {
@@ -432,7 +430,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     // Gather units
     cmd[0] = "units";
     cmd[1] = NULL;
-    ged_exec(g, 1, cmd);
+    ged_exec_units(g, 1, cmd);
     std::string result = bu_vls_addr(g->ged_result_str);
     std::size_t first = result.find_first_of("\'");
     std::size_t last = result.find_last_of("\'");

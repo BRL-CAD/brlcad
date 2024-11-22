@@ -360,13 +360,13 @@ QgEdMainWindow::do_dm_init()
     av[1] = "bg";
     av[2] = "110/110/110";
     av[3] = "0/0/50";
-    ged_exec(gedp, 4, (const char **)av);
+    ged_exec_dm(gedp, 4, (const char **)av);
 
     av[0] = "view";
     av[1] = "lod";
     av[2] = "mesh";
     av[3] = "1";
-    ged_exec(gedp, 4, (const char **)av);
+    ged_exec_view(gedp, 4, (const char **)av);
 
     emit ap->view_update(QG_VIEW_REFRESH);
     ///////////////////////////////////////////////////////////////////////////

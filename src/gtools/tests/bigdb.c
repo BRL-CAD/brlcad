@@ -137,22 +137,22 @@ main(int ac, char *av[])
 	/* validate */
 
 	struct ged *gedp = ged_open("db", filename, 1);
-	const char *tops_cmd[3] = {"tops", "-n", NULL};
-	const char *title_cmd[2] = {"title", NULL};
 	const char *id = NULL;
 	struct bu_vls vp = BU_VLS_INIT_ZERO;
 	char *base = bu_path_basename(av[0], NULL);
 	size_t idlen = 0;
 	int match = 0;
 
-	ged_exec(gedp, 2, tops_cmd);
+	const char *tops_cmd[2] = {"tops", "-n"};
+	ged_exec_tops(gedp, 2, tops_cmd);
 
 	bu_vls_trimspace(gedp->ged_result_str); /* trailing newline */
 	printf("%s_tops=\"%s\"\n", base, bu_vls_cstr(gedp->ged_result_str));
 	if (!BU_STR_EQUIV(bu_vls_cstr(gedp->ged_result_str), ORIGIN_SPHERE))
 	    failures++;
 
-	ged_exec(gedp, 1, title_cmd);
+	const char *title_cmd[1] = {"title"};
+	ged_exec_title(gedp, 1, title_cmd);
 
 	id = bu_vls_cstr(gedp->ged_result_str);
 	idlen = bu_vls_strlen(gedp->ged_result_str);

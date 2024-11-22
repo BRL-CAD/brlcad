@@ -332,9 +332,8 @@ main(int ac, char *av[])
     /* write out header */
     {
 	struct bu_vls vp = BU_VLS_INIT_ZERO;
-	const char *title[2] = {"title", NULL};
-
-	ged_exec(gp, 1, title);
+	const char *title[1] = {"title"};
+	ged_exec_title(gp, 1, title);
 	bu_vls_printf(&vp, "%s\\n", bu_vls_addr(gp->ged_result_str));
 	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
 	    char base[MAXPATHLEN] = {0};
@@ -354,14 +353,11 @@ main(int ac, char *av[])
 
 	objs = bu_argv_dup(ac - 1, (const char **)(av + 1));
     } else {
-	char **topobjs;
-	const char *tops[3] = {"tops", "-n", NULL};
-
 	/* all top-level objects */
+	const char *tops[2] = {"tops", "-n"};
+	ged_exec_tops(gp, 2, tops);
 
-	ged_exec(gp, 2, tops);
-
-	topobjs = (char **)bu_calloc(bu_vls_strlen(gp->ged_result_str) + 1, sizeof(char *), "alloc topobjs");
+	char **topobjs = (char **)bu_calloc(bu_vls_strlen(gp->ged_result_str) + 1, sizeof(char *), "alloc topobjs");
 	c = (int)bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
 	objs = bu_argv_dup(c, (const char **)topobjs);
 	bu_free(topobjs, "free topobjs");
