@@ -36,6 +36,14 @@
  *
  * Given a file defining a libged plugin, extract and report the names of the
  * command(s) that this plugin provides.
+ *
+ * TODO - the conventions would be a bit different, but it might also be useful
+ * to be able to scan for tables of subcommands (either bu_cmdtab or std::map -
+ * to support such a scheme we could typedef specific types for tables intended
+ * for scanning.)  Right now we have a lot of bot_* functions, for example,
+ * that will eventually be subsumed into bot - if we want calling code to be
+ * able to have some C compile-time assurance that those subcommands haven't
+ * changed name or been removed, we might actually be able to do it.
  */
 
 #include <cstdio>
