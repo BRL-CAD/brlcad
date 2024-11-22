@@ -147,10 +147,10 @@ function(bext_sha1_checks)
 
   # If this logic isn't working, first thing to check is whether
   # we are successfully getting SHA1 hashes
-  message("bext SHA1: ${LOCAL_SHA1}")
-  message("remote VERSION SHA1: ${REMOTE_VER_SHA1}")
-  message("remote ${TARGET_BRANCH} SHA1: ${REMOTE_BRANCH_SHA1}")
-  message("OLD_SHA1: ${OLD_SHA1}")
+  #message("bext SHA1: ${LOCAL_SHA1}")
+  #message("remote VERSION SHA1: ${REMOTE_VER_SHA1}")
+  #message("remote ${TARGET_BRANCH} SHA1: ${REMOTE_BRANCH_SHA1}")
+  #message("OLD_SHA1: ${OLD_SHA1}")
 
   # If we don't have a matching release tag, check whether the src/bext SHA1
   # and the bext sha1 line up.  It's not (always) a show stopper if they
