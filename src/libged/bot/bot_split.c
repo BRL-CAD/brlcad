@@ -32,7 +32,6 @@
 #include "bu/path.h"
 #include "rt/geom.h"	/* for rt_bot_split (in raytrace.h) */
 #include "../ged_private.h"
-#include "../ged_cmds.h"
 
 
 int
@@ -97,7 +96,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 
 	    /* Set make_name's count to 0 */
 	    const char *av[4] = {"make_name", "-s", "0", NULL};
-	    ged_cmd_exec_make_name(gedp, ac, av);
+	    ged_exec_make_name(gedp, ac, av);
 
 	    ac = 2;
 	    av[2] = NULL;
@@ -105,7 +104,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 		/* Get a unique name based on the original name */
 		av[1] = obj;
-		ged_cmd_exec_make_name(gedp, ac, av);
+		ged_exec_make_name(gedp, ac, av);
 
 		/* Create the bot */
 		RT_DB_INTERNAL_INIT(&bot_intern);

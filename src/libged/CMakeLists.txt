@@ -56,7 +56,7 @@ function(ged_plugin_library name)
     if (EXISTS ${sf})
       #set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${sf})
       execute_process(COMMAND ${GED_HDR_SCANNER} ${sf} OUTPUT_VARIABLE CMD_NAMES)
-    else()
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${sf})
       #set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${sf})
       execute_process(COMMAND ${GED_HDR_SCANNER} ${CMAKE_CURRENT_SOURCE_DIR}/${sf} OUTPUT_VARIABLE CMD_NAMES)
     endif (EXISTS ${sf})
@@ -107,27 +107,20 @@ set_target_properties(ged_subprocesses PROPERTIES FOLDER "BRL-CAD Plugins")
 
 # Set up the basic files for the plugin functions.  Specific command
 # contents will be added after we've defined the plugins.
-set(GED_HDR_SRCS
-  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h
-  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp
-  )
-file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#include \"ged.h\"\n")
-
-# TODO - if this does become the general mechanism for libged, the following
-# hack should be retired in favor of ifndef GED_PLUGIN protecting the declaration
-# in ged/commands.h - that will cover all libged plugins, not just the ones that
-# include ged_cmds.h already
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#ifndef GED_CMDS_IMPL\n")
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#  define ged_exec ged_exec_nouse\n")
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#endif\n")
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "__BEGIN_DECLS\n")
-file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "#define GED_CMDS_IMPL\n")
-
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "#include \"./ged_cmds.h\"\n")
+set(GED_HDR_DIR ${PROJECT_BINARY_DIR}/${INCLUDE_DIR}/brlcad/ged)
+file(MAKE_DIRECTORY ${GED_HDR_DIR})
+set(GED_CMD_HDR ${GED_HDR_DIR}/ged_cmds.h)
+set(GED_CMD_SRC ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp)
+# cmds header
+file(COPY ged_cmds.h DESTINATION ${GED_HDR_DIR})
+distclean("${GED_CMD_HDR}")
+# cmds source file
+file(WRITE  ${GED_CMD_SRC} "#include \"ged/ged_cmds.h\"\n")
+distclean("${GED_CMD_SRC}")
 
 set(
   LIBGED_SOURCES
-  ${GED_HDR_SRCS}
+  ${GED_CMD_SRC}
   exec.cpp
   exec_mapping.cpp
   ged_init.cpp
@@ -437,23 +430,19 @@ add_subdirectory(zap)
 add_subdirectory(zoom)
 
 # Plugins defined - now generate the wrappers
-# TODO - if we do make this a general solution, the ged_cmd_exec_ prefix
-# will become ged_exec_ - right now we're inserting _cmd_ to allow the
-# define ged_exec ged_exec_nouse hack to force failure of raw ged_exec
-# locally.  We can't do the simple thing until we do a full removal
-# of raw ged_exec from the plugins.
 file(STRINGS ${GED_CMD_LIST} GED_CMDS)
+list(SORT GED_CMDS)
 foreach(gc ${GED_CMDS})
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "GED_EXPORT extern int ged_cmd_exec_${gc}(struct ged *, int, const char **);\n")
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "int ged_cmd_exec_${gc}(struct ged *gedp, int argc, const char **argv) {\n")
-  # Might as well allow the caller to optionally avoid setting argv[0] if they don't need to,
+  file(APPEND ${GED_CMD_HDR} "GED_EXPORT extern int ged_exec_${gc}(struct ged *, int, const char **);\n")
+  file(APPEND ${GED_CMD_SRC} "int ged_exec_${gc}(struct ged *gedp, int argc, const char **argv) {\n")
+  # Allow the caller to optionally avoid setting argv[0] if they don't need to,
   # since the function name has that info...
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "    static const char *cmdname = \"${gc}\";\n")
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "    if (!argv[0]) argv[0] = cmdname;\n")
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "    return ged_exec(gedp, argc, argv);\n")
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "}\n")
+  file(APPEND ${GED_CMD_SRC} "    static const char *cmdname = \"${gc}\";\n")
+  file(APPEND ${GED_CMD_SRC} "    if (!argv[0]) argv[0] = cmdname;\n")
+  file(APPEND ${GED_CMD_SRC} "    return ged_exec(gedp, argc, argv);\n")
+  file(APPEND ${GED_CMD_SRC} "}\n")
 endforeach()
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "__END_DECLS\n")
+file(APPEND ${GED_CMD_HDR} "__END_DECLS\n")
 file(REMOVE ${GED_CMD_LIST})
 
 set(
@@ -467,6 +456,7 @@ set(
   brep/ged_brep.h
   check/check_private.h
   ged_cmd_scanner.cpp
+  ged_cmds.h
   ged_private.h
   include/plugin.h
   joint/joint.h

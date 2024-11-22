@@ -59,6 +59,12 @@
 #include "ged/debug.h"
 #include "ged/rt.h"
 
+// At least for the moment these wrappers are not public API - include them
+// only for the BRL-CAD build itself.
+#ifdef BRLCADBUILD
+#include "ged/ged_cmds.h"
+#endif
+
 /** @} */
 
 __BEGIN_DECLS

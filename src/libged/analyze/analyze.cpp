@@ -39,7 +39,6 @@ extern "C" {
 }
 #include "./ged_analyze.h"
 #include "../ged_private.h"
-#include "../ged_cmds.h"
 
 #define DB_SOLID INT_MAX
 #define DB_NON_SOLID INT_MAX - 1
@@ -399,7 +398,7 @@ clear_obj(struct ged *gedp, const char *name)
     bu_vls_sprintf(&tmpstr, "%s", bu_vls_cstr(gedp->ged_result_str));
     const char *av[4] = {"kill", "-f", "-q", NULL};
     av[3] = name;
-    ged_cmd_exec_kill(gedp, 4, (const char **)av);
+    ged_exec_kill(gedp, 4, (const char **)av);
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 
@@ -413,7 +412,7 @@ mv_obj(struct ged *gedp, const char *n1, const char *n2)
     const char *av[3] = {"mv", NULL, NULL};
     av[1] = n1;
     av[2] = n2;
-    ged_cmd_exec_mv(gedp, 3, (const char **)av);
+    ged_exec_mv(gedp, 3, (const char **)av);
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 

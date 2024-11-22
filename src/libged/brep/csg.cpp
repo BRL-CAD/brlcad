@@ -45,7 +45,6 @@
 #include "wdb.h"
 #include "analyze.h"
 #include "ged.h"
-#include "../ged_cmds.h"
 
 /* TODO - this indicates something should be public API from libbrep... */
 #include "../libbrep/shape_recognition/shape_recognition.h"
@@ -578,7 +577,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		    int ac = 3;
 		    const char *av[3] = {"killtree", "-f", NULL};
 		    av[2] = bu_vls_cstr(&comb_name);
-		    (void)ged_cmd_exec_killtree(gedp, ac, av);
+		    (void)ged_exec_killtree(gedp, ac, av);
 		    bu_vls_printf(log, "Error: %s did not pass diff test at tol %f, rejecting\n", bu_vls_addr(&comb_name), tol.dist);
 		    return 2;
 		}
