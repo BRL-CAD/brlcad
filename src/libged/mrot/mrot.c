@@ -35,9 +35,12 @@
 int
 ged_mrot_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
-    int ac;
     char *av[6];
+    char coord;
+    int ac;
+    int i;
+    int ret;
+    mat_t rmat;
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -65,7 +68,10 @@ ged_mrot_core(struct ged *gedp, int argc, const char *argv[])
 	av[i+1] = (char *)argv[i];
     av[i+1] = (char *)0;
 
-    return ged_exec(gedp, ac, (const char **)av);
+    if ((ret = ged_rot_args(gedp, ac, (const char **)av, &coord, rmat)) != BRLCAD_OK)
+	return ret;
+
+    return _ged_do_rot(gedp, coord, rmat, NULL);
 }
 
 
