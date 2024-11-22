@@ -576,13 +576,9 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		if (analyze_raydiff(NULL, gedp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
 		    /* remove generated tree if debugging flag isn't passed - not valid */
 		    int ac = 3;
-		    const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
-		    av[0] = "killtree";
-		    av[1] = "-f";
-		    av[2] = bu_vls_addr(&comb_name);
-		    av[3] = (char *)0;
+		    const char *av[4] = {NULL, "-f", NULL, NULL};
+		    av[2] = bu_vls_cstr(&comb_name);
 		    (void)ged_cmd_exec_killtree(gedp, ac, av);
-		    bu_free(av, "free av array");
 		    bu_vls_printf(log, "Error: %s did not pass diff test at tol %f, rejecting\n", bu_vls_addr(&comb_name), tol.dist);
 		    return 2;
 		}

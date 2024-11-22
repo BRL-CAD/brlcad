@@ -437,10 +437,19 @@ add_subdirectory(zap)
 add_subdirectory(zoom)
 
 # Plugins defined - now generate the wrappers
+# TODO - if we do make this a general solution, the ged_cmd_exec_ prefix
+# will become ged_exec_ - right now we're inserting _cmd_ to allow the
+# define ged_exec ged_exec_nouse hack to force failure of raw ged_exec
+# locally.  We can't do the simple thing until we do a full removal
+# of raw ged_exec from the plugins.
 file(STRINGS ${GED_CMD_LIST} GED_CMDS)
 foreach(gc ${GED_CMDS})
   file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "GED_EXPORT extern int ged_cmd_exec_${gc}(struct ged *, int, const char **);\n")
   file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "int ged_cmd_exec_${gc}(struct ged *gedp, int argc, const char **argv) {\n")
+  # Might as well allow the caller to optionally avoid setting argv[0] if they don't need to,
+  # since the function name has that info...
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "    static const char *cmdname = \"${gc}\";\n")
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "    if (!argv[0]) argv[0] = cmdname;\n")
   file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "    return ged_exec(gedp, argc, argv);\n")
   file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "}\n")
 endforeach()

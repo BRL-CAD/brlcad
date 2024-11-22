@@ -52,10 +52,7 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
 
     /* First, clear the screen */
     {
-	const char *av[2];
-
-	av[0] = "zap";
-	av[1] = (char *)0;
+	const char *av[2] = {NULL};
 	ged_cmd_exec_zap(gedp, 1, av);
     }
 
