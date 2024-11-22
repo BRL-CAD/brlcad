@@ -483,33 +483,31 @@ static int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
 {
     int ret = BRLCAD_OK;
-    const char *mav[3];
-    const char *cmdname = "facetize";
+    const char *mav[3] = {"facetize", NULL, NULL};
     /* o or n may point to a d_namep location, which will change with
      * moves, so copy them up front for consistent values */
     struct bu_vls oname = BU_VLS_INIT_ZERO;
     struct bu_vls nname = BU_VLS_INIT_ZERO;
     struct bu_vls tname = BU_VLS_INIT_ZERO;
-    mav[0] = cmdname;
     bu_vls_sprintf(&oname, "%s", o);
     bu_vls_sprintf(&nname, "%s", n);
     bu_vls_sprintf(&tname, "%s", o);
     bu_vls_incr(&tname, NULL, "0:0:0:0:-", &_old_db_uniq_test, (void *)gedp);
-    mav[1] = bu_vls_addr(&oname);
-    mav[2] = bu_vls_addr(&tname);
-    if (ged_exec(gedp, 3, (const char **)mav) != BRLCAD_OK) {
+    mav[1] = bu_vls_cstr(&oname);
+    mav[2] = bu_vls_cstr(&tname);
+    if (ged_exec_facetize(gedp, 3, (const char **)mav) != BRLCAD_OK) {
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_obj_swap_memfree;
     }
-    mav[1] = bu_vls_addr(&nname);
-    mav[2] = bu_vls_addr(&oname);
-    if (ged_exec(gedp, 3, (const char **)mav) != BRLCAD_OK) {
+    mav[1] = bu_vls_cstr(&nname);
+    mav[2] = bu_vls_cstr(&oname);
+    if (ged_exec_facetize(gedp, 3, (const char **)mav) != BRLCAD_OK) {
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_obj_swap_memfree;
     }
-    mav[1] = bu_vls_addr(&tname);
-    mav[2] = bu_vls_addr(&nname);
-    if (ged_exec(gedp, 3, (const char **)mav) != BRLCAD_OK) {
+    mav[1] = bu_vls_cstr(&tname);
+    mav[2] = bu_vls_cstr(&nname);
+    if (ged_exec_facetize(gedp, 3, (const char **)mav) != BRLCAD_OK) {
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_obj_swap_memfree;
     }
@@ -994,7 +992,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	av[0] = "kill";
 	av[1] = bu_vls_addr(&tmpname);
 	av[2] = NULL;
-	(void)ged_exec(gedp, 2, (const char **)av);
+	(void)ged_exec_kill(gedp, 2, (const char **)av);
 
 	if (ret == FACETIZE_FAILURE) {
 	    bu_vls_free(&tmpname);
@@ -2202,9 +2200,7 @@ static void
 _ged_methodattr_set(struct ged *gedp, struct _old_ged_facetize_opts *opts, const char *rcname, int method, struct _ged_facetize_report_info *info)
 {
     struct bu_vls anum = BU_VLS_INIT_ZERO;
-    const char *attrav[5];
-    attrav[0] = "attr";
-    attrav[1] = "set";
+    const char *attrav[5] = {"attr", "set", NULL, NULL, NULL};
     attrav[2] = rcname;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
@@ -2212,25 +2208,25 @@ _ged_methodattr_set(struct ged *gedp, struct _old_ged_facetize_opts *opts, const
 	struct bg_tess_tol *tol = &(wdbp->wdb_ttol);
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:nmg_abs";
 	bu_vls_sprintf(&anum, "%g", tol->abs);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:nmg_rel";
 	bu_vls_sprintf(&anum, "%g", tol->rel);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:nmg_norm";
 	bu_vls_sprintf(&anum, "%g", tol->norm);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
@@ -2238,19 +2234,19 @@ _ged_methodattr_set(struct ged *gedp, struct _old_ged_facetize_opts *opts, const
     if (info && method == FACETIZE_CONTINUATION) {
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:continuation_feature_size";
 	bu_vls_sprintf(&anum, "%g", info->feature_size);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:continuation_average_thickness";
 	bu_vls_sprintf(&anum, "%g", info->avg_thickness);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
@@ -2258,25 +2254,25 @@ _ged_methodattr_set(struct ged *gedp, struct _old_ged_facetize_opts *opts, const
     if (method == FACETIZE_SPSR) {
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:spsr_depth";
 	bu_vls_sprintf(&anum, "%d", opts->s_opts.depth);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:spsr_weight";
 	bu_vls_sprintf(&anum, "%g", opts->s_opts.point_weight);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:spsr_samples_per_node";
 	bu_vls_sprintf(&anum, "%g", opts->s_opts.samples_per_node);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
@@ -2284,7 +2280,7 @@ _ged_methodattr_set(struct ged *gedp, struct _old_ged_facetize_opts *opts, const
     if (info && info->failure_mode == FACETIZE_FAILURE_PNTGEN) {
 	attrav[3] = "facetize:EMPTY";
 	attrav[4] = "1";
-	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+	if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
@@ -2885,18 +2881,16 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _old
 		}
 	    } else {
 		/* By default, store the original region name and target bot name in attributes to make resuming easier */
-		const char *attrav[5];
-		attrav[0] = "attr";
-		attrav[1] = "set";
+		const char *attrav[5] = {"attr", "set", NULL, NULL, NULL};
 		attrav[2] = rcname;
 		attrav[3] = "facetize:original_region";
 		attrav[4] = n->d_namep;
-		if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+		if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 		    bu_log("Error adding attribute facetize_original_region to comb %s", rcname);
 		}
 		attrav[3] = "facetize:target_name";
 		attrav[4] = ssname;
-		if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
+		if (ged_exec_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 		    bu_log("Error adding attribute facetize_target_name to comb %s", rcname);
 		    bu_log("Error adding %s to comb %s", ssname, rcname);
 		}

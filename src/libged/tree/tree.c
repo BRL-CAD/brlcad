@@ -312,8 +312,8 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 
     /* tree of all displayed objects */
     if (argc == 1) {
-	char *whocmd[2] = {"who", NULL};
-	if (ged_exec(gedp, 1, (const char **)whocmd) == BRLCAD_OK) {
+	const char *whocmd[1] = {"who"};
+	if (ged_exec_who(gedp, 1, (const char **)whocmd) == BRLCAD_OK) {
 	    buffer = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 

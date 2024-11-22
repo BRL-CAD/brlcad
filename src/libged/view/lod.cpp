@@ -105,8 +105,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    gvp->gv_s->adaptive_plot_csg = 1;
 	    gvp->gv_s->adaptive_plot_mesh = 1;
 	    int rac = 1;
-	    const char *rav[2] = {"redraw", NULL};
-	    ged_exec(gedp, rac, (const char **)rav);
+	    const char *rav[1] = {"redraw"};
+	    ged_exec_redraw(gedp, rac, (const char **)rav);
 	}
 	return BRLCAD_OK;
     }
@@ -115,8 +115,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    gvp->gv_s->adaptive_plot_csg = 0;
 	    gvp->gv_s->adaptive_plot_mesh = 0;
 	    int rac = 1;
-	    const char *rav[2] = {"redraw", NULL};
-	    ged_exec(gedp, rac, (const char **)rav);
+	    const char *rav[1] = {"redraw"};
+	    ged_exec_redraw(gedp, rac, (const char **)rav);
 	}
 	return BRLCAD_OK;
     }
@@ -130,8 +130,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    if (!gvp->gv_s->adaptive_plot_csg) {
 		gvp->gv_s->adaptive_plot_csg = 1;
 		int rac = 1;
-		const char *rav[2] = {"redraw", NULL};
-		ged_exec(gedp, rac, (const char **)rav);
+		const char *rav[1] = {"redraw"};
+		ged_exec_redraw(gedp, rac, (const char **)rav);
 	    }
 	    return BRLCAD_OK;
 	}
@@ -139,8 +139,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    if (gvp->gv_s->adaptive_plot_csg) {
 		gvp->gv_s->adaptive_plot_csg = 0;
 		int rac = 1;
-		const char *rav[2] = {"redraw", NULL};
-		ged_exec(gedp, rac, (const char **)rav);
+		const char *rav[1] = {"redraw"};
+		ged_exec_redraw(gedp, rac, (const char **)rav);
 	    }
 	    return BRLCAD_OK;
 	}
@@ -157,8 +157,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    if (!gvp->gv_s->adaptive_plot_mesh) {
 		gvp->gv_s->adaptive_plot_mesh = 1;
 		int rac = 1;
-		const char *rav[2] = {"redraw", NULL};
-		ged_exec(gedp, rac, (const char **)rav);
+		const char *rav[1] = {"redraw"};
+		ged_exec_redraw(gedp, rac, (const char **)rav);
 	    }
 	    return BRLCAD_OK;
 	}
@@ -166,8 +166,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    if (gvp->gv_s->adaptive_plot_mesh) {
 		gvp->gv_s->adaptive_plot_mesh = 0;
 		int rac = 1;
-		const char *rav[2] = {"redraw", NULL};
-		ged_exec(gedp, rac, (const char **)rav);
+		const char *rav[1] = {"redraw"};
+		ged_exec_redraw(gedp, rac, (const char **)rav);
 	    }
 	    return BRLCAD_OK;
 	}

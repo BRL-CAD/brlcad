@@ -187,13 +187,13 @@ restore_comb(struct ged *gedp, const struct directory *dp, const char *saved_nam
     av[1] = name;
     av[2] = NULL;
     av[3] = NULL;
-    (void)ged_exec(gedp, 2, (const char **)av);
+    (void)ged_exec_kill(gedp, 2, (const char **)av);
 
     av[0] = "mv";
     av[1] = saved_name;
     av[2] = name;
 
-    (void)ged_exec(gedp, 3, (const char **)av);
+    (void)ged_exec_mv(gedp, 3, (const char **)av);
 
     bu_free(name, "bu_strdup'd name");
 }
@@ -584,12 +584,9 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     } else if (save_comb_flag) {
 	/* eliminate the temporary combination */
-	const char *av[3];
-
-	av[0] = "kill";
+	const char *av[2] = {"kill", NULL};
 	av[1] = saved_name;
-	av[2] = NULL;
-	(void)ged_exec(gedp, 2, (const char **)av);
+	(void)ged_exec_kill(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;

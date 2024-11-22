@@ -393,7 +393,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	av[i+2] = argv[i];
     }
     av[argc+2] = NULL;
-    ged_exec(wgedp, argc+2, av);
+    ged_exec_keep(wgedp, argc+2, av);
     ged_close(wgedp);
 
     /* Capture the current tops list.  If we're not doing an in-place overwrite, we
@@ -434,7 +434,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     av[3] = kfname;
     av[4] = affix;
     av[5] = NULL;
-    ged_exec(s->gedp, 5, av);
+    ged_exec_dbconcat(s->gedp, 5, av);
     bu_free(av, "av");
 
     bu_vls_free(&prefix_str);
@@ -479,7 +479,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	mav[1] = oname;
 	mav[2] = bu_vls_cstr(&nname);
 	mav[3] = NULL;
-	ged_exec(s->gedp, 3, mav);
+	ged_exec_mvall(s->gedp, 3, mav);
 	new_tobjs.erase(std::string(oname));
 	new_tobjs.insert(std::string(bu_vls_cstr(&nname)));
 	bu_vls_free(&nname);

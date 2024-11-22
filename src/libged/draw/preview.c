@@ -137,11 +137,8 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 
     /* If new treewalk is needed, get new objects into view. */
     if (preview_tree_walk_needed) {
-	const char *av[2];
-
-	av[0] = "zap";
-	av[1] = NULL;
-	(void)ged_exec(_ged_current_gedp, 1, av);
+	const char *av[1] = {"zap"};
+	(void)ged_exec_zap(_ged_current_gedp, 1, av);
 
 	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
     }
@@ -404,16 +401,11 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     while (_loadframe(gedp, fp) == BRLCAD_OK) {
 	if (image_name) {
 	    struct bu_vls fullname = BU_VLS_INIT_ZERO;
-	    const char *screengrab_args[3];
-	    int screengrab_argc = 0;
-
-	    screengrab_args[screengrab_argc++] = "screengrab";
-
-	    bu_vls_sprintf(&fullname, "%s%05d%s", bu_vls_addr(&name),
-			   preview_currentframe, bu_vls_addr(&extension));
-	    screengrab_args[screengrab_argc++] = bu_vls_addr(&fullname);
-
-	    ged_exec(gedp, screengrab_argc, screengrab_args);
+	    const char *screengrab_args[2] = {"screengrab", NULL};
+	    bu_vls_sprintf(&fullname, "%s%05d%s", bu_vls_cstr(&name),
+			   preview_currentframe, bu_vls_cstr(&extension));
+	    screengrab_args[1] = bu_vls_cstr(&fullname);
+	    ged_exec_screengrab(gedp, 2, screengrab_args);
 
 	    bu_vls_free(&fullname);
 	}

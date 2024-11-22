@@ -196,8 +196,7 @@ plot_shaded_eval(
     /* make a name for the temp brep */
     av[0] = "make_name";
     av[1] = tmp_basename;
-
-    ged_exec(gedp, 2, (const char **)av);
+    ged_exec_make_name(gedp, 2, (const char **)av);
 
     brep_name = bu_vls_strdup(gedp->ged_result_str);
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -206,7 +205,7 @@ plot_shaded_eval(
     av[0] = "brep";
     av[1] = path_name;
     av[2] = brep_name;
-    ret = ged_exec(gedp, 3, av);
+    ret = ged_exec_brep(gedp, 3, av);
 
     if (ret == BRLCAD_OK) {
 	int brep_made = 0;
@@ -250,7 +249,7 @@ plot_shaded_eval(
 	/* kill temp brep */
 	av[0] = "kill";
 	av[1] = brep_name;
-	ged_exec(gedp, 2, av);
+	ged_exec_kill(gedp, 2, av);
     }
     bu_free((char *)brep_name, "vls_strdup");
 
@@ -856,7 +855,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		for (int ie = 0; ie < argc; ie++) {
 		    eav[ie+1] = argv[ie];
 		}
-		int eret = ged_exec(gedp, argc+1, eav);
+		int eret = ged_exec_E(gedp, argc+1, eav);
 		bu_free(eav, "eav");
 		return eret;
 	    } else {
@@ -908,8 +907,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		 * view size for plotting.
 		 */
 		if (dgcdp.autoview) {
-		    const char *autoview_args[2] = {"autoview", NULL};
-		    ged_exec(gedp, 1, autoview_args);
+		    const char *autoview_args[1] = {"autoview"};
+		    ged_exec_autoview(gedp, 1, autoview_args);
 		}
 
 		/* Set the view threshold */

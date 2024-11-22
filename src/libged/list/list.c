@@ -44,7 +44,6 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     int recurse = 0;
     int verbose = 99;
     char *terse_parm = "-t";
-    char *listeval = "listeval";
     struct rt_db_internal intern;
     static const char *usage = "[-r] [-t] [-v] <objects>";
 
@@ -84,25 +83,23 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 
     for (arg = 0; arg < argc; arg++) {
 	if (recurse) {
-	    char *tmp_argv[3] = {NULL, NULL, NULL};
-
-	    tmp_argv[0] = listeval;
+	    char *tmp_argv[3] = {"listeval", NULL, NULL};
 	    if (verbose) {
 		tmp_argv[1] = (char *)argv[arg];
-		ged_exec(gedp, 2, (const char **)tmp_argv);
+		ged_exec_listeval(gedp, 2, (const char **)tmp_argv);
 	    } else {
 		tmp_argv[1] = terse_parm;
 		tmp_argv[2] = (char *)argv[arg];
-		ged_exec(gedp, 3, (const char **)tmp_argv);
+		ged_exec_listeval(gedp, 3, (const char **)tmp_argv);
 	    }
 	} else if (strchr(argv[arg], '/')) {
 	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
 		continue;
 	    }
 
-	    /* dp should have resolved to a shape. A slash still in d_namep likely means the 
-	     string is a name with a slash, not a path. 
-	     NOTE: this only works if the user is requesting a top-level name with a slash. 
+	    /* dp should have resolved to a shape. A slash still in d_namep likely means the
+	     string is a name with a slash, not a path.
+	     NOTE: this only works if the user is requesting a top-level name with a slash.
 	     A slashed name anywhere else in the hierarchy will fail the db_lookup */
 	    if (strchr(dp->d_namep, '/')) {
 		_ged_do_list(gedp, dp, verbose);	/* very verbose */

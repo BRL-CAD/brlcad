@@ -690,10 +690,8 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
 
     /* Mark it hidden */
     {
-	const char *av[2];
-	av[0] = "hide";
-	av[1] = GED_DB_DENSITY_OBJECT;
-	(void)ged_exec(gedp, 2, (const char **)av);
+	const char *av[2] = {"hide", GED_DB_DENSITY_OBJECT};
+	(void)ged_exec_hide(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -1203,10 +1201,8 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 
     /* Mark it hidden */
     {
-	const char *av[2];
-	av[0] = "hide";
-	av[1] = GED_DB_DENSITY_OBJECT;
-	(void)ged_exec(gedp, 2, (const char **)av);
+	const char *av[2] = {"hide", GED_DB_DENSITY_OBJECT};
+	(void)ged_exec_hide(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;

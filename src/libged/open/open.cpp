@@ -119,10 +119,8 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Close current database, if we have one */
     if (gedp->dbip) {
-	const char *av[2];
-	av[0] = "closedb";
-	av[1] = (char *)0;
-	ged_exec(gedp, 1, (const char **)av);
+	const char *av[1] = {"closedb"};
+	ged_exec_closedb(gedp, 1, (const char **)av);
     }
 
     /* Set up the new database info in gedp */

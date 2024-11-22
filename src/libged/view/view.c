@@ -176,14 +176,10 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    struct bu_vls opath = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
-	    const char *av[6];
-	    av[0] = "draw";
-	    av[1] = "-R";
-	    av[2] = "-V";
+	    const char *av[5] = {"draw", "-R", "-V", NULL, NULL};
 	    av[3] = bu_vls_cstr(&v->gv_name);
 	    av[4] = bu_vls_cstr(&opath);
-	    av[5] = NULL;
-	    ged_exec(gedp, 5, av);
+	    ged_exec_draw(gedp, 5, av);
 	    bu_vls_free(&opath);
 	}
 	return BRLCAD_OK;

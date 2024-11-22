@@ -38,9 +38,9 @@ __BEGIN_DECLS
 /** @addtogroup ged_plugins */
 /** @{ */
 /** Execute plugin based command */
-//#ifndef GED_PLUGIN
+#ifndef GED_PLUGIN
 GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
-//#endif
+#endif
 /** @} */
 
 /* LIBGED maintains this list - callers should regard it as read only.  This

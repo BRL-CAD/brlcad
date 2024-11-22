@@ -88,7 +88,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	const char *xav[3] = {NULL};
 	xav[0] = "xpush";
 	xav[1] = dpa[i]->d_namep;
-	ged_exec(wgedp, xac, (const char **)xav);
+	ged_exec_xpush(wgedp, xac, (const char **)xav);
     }
 
     /* Used the libged tolerances */
@@ -227,7 +227,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	av[i+2] = argv[i];
     }
     av[argc+2] = NULL;
-    ged_exec(wgedp, argc+2, av);
+    ged_exec_keep(wgedp, argc+2, av);
 
     /* Merge working geometry into original file */
     av[0] = "dbconcat";
@@ -235,7 +235,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     av[2] = bu_vls_cstr(&kwfile);
     av[3] = "brep_facetize_"; // TODO - customize
     av[4] = NULL;
-    ged_exec(s->gedp, 4, av);
+    ged_exec_dbconcat(s->gedp, 4, av);
     bu_free(av, "av");
     bu_vls_free(&kwfile);
 

@@ -52,10 +52,8 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     /* Clear any geometry displayed in application views.
      * TODO - properly speaking, we should only be zapping geometry data here
      * and not clearing all scene objects... */
-    const char *av[2];
-    av[0] = "zap";
-    av[1] = (char *)0;
-    ged_exec(gedp, 1, (const char **)av);
+    const char *av[1] = {"zap"};
+    ged_exec_zap(gedp, 1, (const char **)av);
 
     /* close current database */
     if (gedp->dbip)
