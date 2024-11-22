@@ -112,11 +112,17 @@ set(GED_HDR_SRCS
   ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp
   )
 file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#include \"ged.h\"\n")
+
+# TODO - if this does become the general mechanism for libged, the following
+# hack should be retired in favor of ifndef GED_PLUGIN protecting the declaration
+# in ged/commands.h - that will cover all libged plugins, not just the ones that
+# include ged_cmds.h already
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#ifndef GED_CMDS_IMPL\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#  define ged_exec ged_exec_nouse\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#endif\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "__BEGIN_DECLS\n")
 file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "#define GED_CMDS_IMPL\n")
+
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "#include \"./ged_cmds.h\"\n")
 
 set(
