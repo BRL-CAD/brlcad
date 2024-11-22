@@ -306,7 +306,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     struct rt_db_internal new_intern;
     const char *new_name;
     int use_air = 0;
-    struct ged ged;
+    struct ged ged; // Use a local ged struct to avoid needing global MGED state
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -320,7 +320,6 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    /*XXX Temporary.  TODO - why are we not using the applications GEDP here? */
     GED_INIT(&ged, wdbp);
 
     i = 1;
@@ -1950,12 +1949,12 @@ int
 wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-    struct ged ged;
+    RT_CHECK_WDB(wdbp);
+    struct ged ged; // Use a local ged struct to avoid needing global MGED state
     struct bu_hook_list save_hook_list = BU_HOOK_LIST_INIT_ZERO;
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
-    /* TODO - why are we not using the applications GEDP here? */
     GED_INIT(&ged, wdbp);
 
     bu_log_hook_save_all(&save_hook_list);
