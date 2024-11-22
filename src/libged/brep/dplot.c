@@ -35,6 +35,7 @@
 #include "wdb.h"
 
 #include "../ged_private.h"
+#include "../ged_cmds.h"
 #include "./dplot_reader.h"
 
 enum {
@@ -100,7 +101,7 @@ dplot_overlay(
     if (name) {
 	cmd_av[3] = name;
     }
-    ret = ged_exec(gedp, cmd_ac, cmd_av);
+    ret = ged_cmd_exec_overlay(gedp, cmd_ac, cmd_av);
     bu_vls_free(&overlay_name);
 
     if (ret != BRLCAD_OK) {

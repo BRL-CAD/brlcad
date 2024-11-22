@@ -6,16 +6,29 @@ brlcad_find_package(PNG REQUIRED)
 brlcad_find_package(REGEX REQUIRED)
 
 add_custom_command(
-  OUTPUT "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
-  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
+  OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins.sentinel"
+  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins.sentinel"
 )
-add_custom_target(ged_plugins_sentinel DEPENDS ${CMAKE_BINARY_DIR}/ged_plugins.sentinel)
+add_custom_target(ged_plugins_sentinel DEPENDS ${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins.sentinel)
 set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ged")
 
+# Utility program
+set(GED_HDR_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/ged_cmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
+try_compile(${CMAKE_BINARY_DIR}/CMakeTmp
+  SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/ged_cmd_scanner.cpp
+  COPY_FILE ${GED_HDR_SCANNER}
+  OUTPUT_VARIABLE GED_SCANNER_BLD_OUT)
+if (NOT EXISTS ${GED_HDR_SCANNER})
+  message(FATAL_ERROR "Unable to build ged command scanner: ${GED_SCANNER_BLD_OUT}")
+endif()
+set(GED_CMD_LIST ${CMAKE_CURRENT_BINARY_DIR}/../ged_cmds.txt)
+file(REMOVE ${GED_CMD_LIST})
+
+# Primary function for adding a LIBGED plugin
 function(ged_plugin_library name)
   add_library(${name} SHARED ${ARGN})
   target_compile_definitions(${name} PRIVATE GED_PLUGIN BRLCADBUILD HAVE_CONFIG_H)
-  set(dep_includes)
+  set(dep_includes ${CMAKE_CURRENT_BINARY_DIR})
   foreach(ll ${libslist})
     if(TARGET ${ll})
       get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
@@ -28,6 +41,27 @@ function(ged_plugin_library name)
   add_dependencies(ged_plugins_sentinel ${name})
   validate_style(${name} ${ARGN})
   plugin_setup(${name} ged)
+  # Scan plugin files to build up cmd list.
+
+  # TODO:  Note that to be strictly correct, we should be making CMake
+  # reconfigure every time one of the plugin files changes to avoid the
+  # function definitions being out of sync.  The lines below that are commented
+  # out should do that, but it also means any editing of libged plugins will
+  # force a reconfigure.  That seems a little excessive, since actual breaking
+  # cases will likely be rare...  If it's a problem we could also try to make
+  # the generation of the libged input files a build-time activity.  That's
+  # almost certainly possible - the current approach was chosen for
+  # implementation simplicity during initial testing.
+  foreach(sf ${ARGN})
+    if (EXISTS ${sf})
+      #set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${sf})
+      execute_process(COMMAND ${GED_HDR_SCANNER} ${sf} OUTPUT_VARIABLE CMD_NAMES)
+    else()
+      #set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${sf})
+      execute_process(COMMAND ${GED_HDR_SCANNER} ${CMAKE_CURRENT_SOURCE_DIR}/${sf} OUTPUT_VARIABLE CMD_NAMES)
+    endif (EXISTS ${sf})
+    file(APPEND ${GED_CMD_LIST} ${CMD_NAMES})
+  endforeach(sf ${ARGN})
 endfunction(ged_plugin_library name)
 
 # This target is supplied so applications wanting to run libged
@@ -71,8 +105,23 @@ endfunction(ged_subprocess_library name)
 add_custom_target(ged_subprocesses ALL DEPENDS ged_subprocesses_sentinel)
 set_target_properties(ged_subprocesses PROPERTIES FOLDER "BRL-CAD Plugins")
 
+# Set up the basic files for the plugin functions.  Specific command
+# contents will be added after we've defined the plugins.
+set(GED_HDR_SRCS
+  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h
+  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp
+  )
+file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#include \"ged.h\"\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#ifndef GED_CMDS_IMPL\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#  define ged_exec ged_exec_nouse\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "#endif\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "__BEGIN_DECLS\n")
+file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "#define GED_CMDS_IMPL\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "#include \"./ged_cmds.h\"\n")
+
 set(
   LIBGED_SOURCES
+  ${GED_HDR_SRCS}
   exec.cpp
   exec_mapping.cpp
   ged_init.cpp
@@ -381,6 +430,17 @@ add_subdirectory(xpush)
 add_subdirectory(zap)
 add_subdirectory(zoom)
 
+# Plugins defined - now generate the wrappers
+file(STRINGS ${GED_CMD_LIST} GED_CMDS)
+foreach(gc ${GED_CMDS})
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "GED_EXPORT extern int ged_cmd_exec_${gc}(struct ged *, int, const char **);\n")
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "int ged_cmd_exec_${gc}(struct ged *gedp, int argc, const char **argv) {\n")
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "    return ged_exec(gedp, argc, argv);\n")
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp "}\n")
+endforeach()
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.h "__END_DECLS\n")
+file(REMOVE ${GED_CMD_LIST})
+
 set(
   ged_ignore_files
   CMakeLists.txt
@@ -391,6 +451,7 @@ set(
   bot/ged_bot.h
   brep/ged_brep.h
   check/check_private.h
+  ged_cmd_scanner.cpp
   ged_private.h
   include/plugin.h
   joint/joint.h
