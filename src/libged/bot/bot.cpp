@@ -1166,6 +1166,12 @@ extern "C" {
     struct ged_cmd_impl get_bot_edges_cmd_impl = {"get_bot_edges", ged_get_bot_edges_core, GED_CMD_DEFAULT};
     const struct ged_cmd get_bot_edges_cmd = { &get_bot_edges_cmd_impl };
 
+/*
+  struct ged_cmd_impl _cmd_impl = {"", , GED_CMD_DEFAULT};
+  const struct ged_cmd _cmd = { &_cmd_impl };
+*/
+
+
     const struct ged_cmd *bot_cmds[] = {
 	&bot_cmd,
 	&bot_condense_cmd,
