@@ -226,7 +226,7 @@ op_pnts_vol(
     // in the point set being unchanged.
     if (!dp && (op == DB_OP_UNION || op == DB_OP_SUBTRACT)) {
 	if (output_pnts_obj) {
-	    const char *av[3] = {NULL};
+	    const char *av[3] = {"copy", NULL, NULL};
 	    av[1] = pnts_obj;
 	    av[2] = output_pnts_obj;
 	    (void)ged_cmd_exec_copy(gedp, 3, (const char **)av);

@@ -96,7 +96,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    struct rt_bot_list *rblp;
 
 	    /* Set make_name's count to 0 */
-	    const char *av[4] = {NULL, "-s", "0", NULL};
+	    const char *av[4] = {"make_name", "-s", "0", NULL};
 	    ged_cmd_exec_make_name(gedp, ac, av);
 
 	    ac = 2;
