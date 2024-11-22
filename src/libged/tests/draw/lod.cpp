@@ -117,7 +117,7 @@ main(int ac, char *av[]) {
     s_av[2] = "swrast";
     s_av[3] = "SW";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_dm(dbp, 4, s_av);
 
     struct bview *v = dbp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
@@ -144,28 +144,28 @@ main(int ac, char *av[]) {
     s_av[2] = "cache";
     s_av[3] = "clear";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     /* Generate geometry appropriate for mesh LoD */
     s_av[0] = "tol";
     s_av[1] = "rel";
     s_av[2] = "0.0002";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_tol(dbp, 3, s_av);
 
     s_av[0] = "facetize";
     s_av[1] = "-r";
     s_av[2] = "all.g";
     s_av[3] = "all.bot";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_facetize(dbp, 4, s_av);
     dbp->dbi_state->update();
 
     s_av[0] = "ae";
     s_av[1] = "35";
     s_av[2] = "25";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_ae(dbp, 3, s_av);
 
 
     /***** Mesh LoD ****/
@@ -175,17 +175,17 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(1, dbp, av[1], false, clear_images, soft_fail, 0, "lod_clear", "lod");
     bu_log("Done.\n");
@@ -196,14 +196,14 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "scale";
     s_av[3] = "0.8";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(2, dbp, av[1], false, clear_images, soft_fail, 10, "lod_clear", "lod");
 
@@ -213,7 +213,7 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(1, dbp, av[1], false, clear_images, soft_fail, 0, "lod_clear", "lod");
 
@@ -223,7 +223,7 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(2, dbp, av[1], true, clear_images, soft_fail, 10, "lod_clear", "lod");
 
@@ -235,14 +235,14 @@ main(int ac, char *av[]) {
     s_av[1] = "rel";
     s_av[2] = "0.01";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_tol(dbp, 3, s_av);
 
     s_av[0] = "brep";
     s_av[1] = "all.g";
     s_av[2] = "brep";
     s_av[3] = "all.brep";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_brep(dbp, 4, s_av);
     dbp->dbi_state->update();
 
     bu_log("Sanity - testing shaded mode 1 (triangle only) drawing, Level-of-Detail disabled...\n");
@@ -251,17 +251,17 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.brep";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 5, "lod_clear", "lod");
     bu_log("Done.\n");
@@ -272,7 +272,7 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(4, dbp, av[1], false, clear_images, soft_fail, 10, "lod_clear", "lod");
 
@@ -282,7 +282,7 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 5, "lod_clear", "lod");
 
@@ -292,7 +292,7 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(4, dbp, av[1], true, clear_images, soft_fail, 10, "lod_clear", "lod");
 
@@ -306,17 +306,17 @@ main(int ac, char *av[]) {
     s_av[2] = "csg";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(5, dbp, av[1], false, clear_images, soft_fail, 0, "lod_clear", "lod");
     bu_log("Done.\n");
@@ -327,7 +327,7 @@ main(int ac, char *av[]) {
     s_av[2] = "csg";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(6, dbp, av[1], false, clear_images, soft_fail, 10, "lod_clear", "lod");
 
@@ -337,7 +337,7 @@ main(int ac, char *av[]) {
     s_av[2] = "csg";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(5, dbp, av[1], false, clear_images, soft_fail, 0, "lod_clear", "lod");
 
@@ -347,7 +347,7 @@ main(int ac, char *av[]) {
     s_av[2] = "csg";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     img_cmp(6, dbp, av[1], true, clear_images, soft_fail, 10, "lod_clear", "lod");
 
@@ -361,14 +361,14 @@ main(int ac, char *av[]) {
     s_av[2] = "cache";
     s_av[3] = "clear";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     /* Generate cached LoD data */
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "cache";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_view(dbp, 3, s_av);
 
     /* Enable LoD and check drawing of meshes and breps */
     s_av[0] = "view";
@@ -376,24 +376,24 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "scale";
     s_av[3] = "0.8";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(2, dbp, av[1], true, clear_images, soft_fail, 10, "lod_clear", "lod");
 
@@ -401,11 +401,11 @@ main(int ac, char *av[]) {
     s_av[1] = "-m1";
     s_av[2] = "all.brep";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(4, dbp, av[1], true, clear_images, soft_fail, 10, "lod_clear", "lod");
 
@@ -415,7 +415,7 @@ main(int ac, char *av[]) {
     s_av[2] = "cache";
     s_av[3] = "clear";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     ged_close(dbp);
 

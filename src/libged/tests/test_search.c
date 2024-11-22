@@ -71,7 +71,7 @@ int run_search_check_count(struct ged *dbp, int expected_count, int num_args, ..
 	cmd[i] = va_arg(args, char*);
     }
 
-    int ged_ret = ged_exec(dbp, num_args + 1, cmd);
+    int ged_ret = ged_exec_search(dbp, num_args + 1, cmd);
     if (ged_ret) {
 	printf("ERROR: bad return for %s\n", *cmd);
 	return ged_ret;
@@ -126,7 +126,7 @@ main(int ac, char *av[]) {
 		{
 		    // verbosity
 		    const char *cmd[6] = {"search", "-v", ".", "-type", "region", NULL};
-		    ged_exec(dbp, 5, cmd);
+		    ged_exec_search(dbp, 5, cmd);
 		    split_ret = split_newline(bu_vls_addr(dbp->ged_result_str));
 
 		    if (!split_ret.count) {
@@ -143,7 +143,7 @@ main(int ac, char *av[]) {
 		    // max verbosity
 		    cmd[1] = "-vvv";
 		    cmd[2] = "/";
-		    ged_exec(dbp, 5, cmd);
+		    ged_exec_search(dbp, 5, cmd);
 		    split_ret = split_newline(bu_vls_addr(dbp->ged_result_str));
 		    if (split_ret.count) {
 			// should see union 'u' as second char of first search result

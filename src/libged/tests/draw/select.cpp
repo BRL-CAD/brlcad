@@ -117,7 +117,7 @@ main(int ac, char *av[]) {
     s_av[2] = "swrast";
     s_av[3] = "SW";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_dm(dbp, 4, s_av);
 
     struct bview *v = dbp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
@@ -142,7 +142,7 @@ main(int ac, char *av[]) {
     s_av[1] = "35";
     s_av[2] = "25";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_ae(dbp, 3, s_av);
 
     /***** Basic CSG wireframe ****/
     bu_log("Sanity - basic wireframe, no selection...\n");
@@ -152,17 +152,17 @@ main(int ac, char *av[]) {
     s_av[2] = "csg";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(1, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
     bu_log("Done.\n");
@@ -172,7 +172,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(2, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -182,7 +182,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(1, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -192,7 +192,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(2, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -202,7 +202,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(2, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -212,7 +212,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/box.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -221,7 +221,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(4, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -230,7 +230,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "expand";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(4, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -239,7 +239,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(5, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -248,7 +248,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "collapse";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(5, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -257,23 +257,23 @@ main(int ac, char *av[]) {
 
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.g/box.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(6, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -282,7 +282,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "clear";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(1, dbp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -293,14 +293,14 @@ main(int ac, char *av[]) {
     s_av[1] = "rel";
     s_av[2] = "0.0002";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_tol(dbp, 3, s_av);
 
     s_av[0] = "facetize";
     s_av[1] = "-r";
     s_av[2] = "all.g";
     s_av[3] = "all.bot";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_facetize(dbp, 4, s_av);
     dbp->dbi_state->update();
 
 
@@ -309,17 +309,17 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(7, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
     bu_log("Done.\n");
@@ -329,7 +329,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(8, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -339,7 +339,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(7, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -349,7 +349,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(8, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -359,7 +359,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(8, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -369,7 +369,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(9, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -378,7 +378,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(10, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -387,7 +387,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "expand";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(10, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -396,7 +396,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(11, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -405,7 +405,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "collapse";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(11, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -414,23 +414,23 @@ main(int ac, char *av[]) {
 
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(12, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -439,7 +439,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "clear";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(7, dbp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -449,7 +449,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rel";
     s_av[2] = "0.01";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_tol(dbp, 3, s_av);
 
     bu_log("Sanity - basic LoD wireframe, no selection...\n");
 
@@ -458,17 +458,17 @@ main(int ac, char *av[]) {
     s_av[2] = "csg";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(13, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
     bu_log("Done.\n");
@@ -478,7 +478,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(14, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -488,7 +488,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(13, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -498,7 +498,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(14, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -508,7 +508,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(14, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -518,7 +518,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/box.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(15, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -527,7 +527,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(16, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -536,7 +536,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "expand";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(16, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -545,7 +545,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(17, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -554,7 +554,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "collapse";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(17, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -563,23 +563,23 @@ main(int ac, char *av[]) {
 
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.g/box.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(18, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -588,7 +588,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "clear";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(13, dbp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
 
@@ -597,31 +597,31 @@ main(int ac, char *av[]) {
     // Temporary - remove when above CSG tests can be enabled
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "mesh";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "scale";
     s_av[3] = "0.8";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(19, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
     bu_log("Done.\n");
@@ -631,7 +631,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
@@ -641,7 +641,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(19, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
@@ -651,7 +651,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
@@ -661,7 +661,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
@@ -671,7 +671,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(21, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
@@ -680,7 +680,7 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(22, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
@@ -689,7 +689,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "expand";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(22, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
@@ -698,7 +698,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     img_cmp(23, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
@@ -707,7 +707,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "collapse";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(23, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
@@ -716,23 +716,23 @@ main(int ac, char *av[]) {
 
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_select(dbp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(24, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
@@ -741,7 +741,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "clear";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_select(dbp, 2, s_av);
 
     img_cmp(19, dbp, av[1], true, clear_images, soft_fail, 10, "select_clear", "select");
 

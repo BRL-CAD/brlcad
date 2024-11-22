@@ -51,7 +51,7 @@ poly_circ(struct ged *gedp)
     s_av[6] = "256";
     s_av[7] = "circle";
     s_av[8] = NULL;
-    ged_exec(gedp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -60,7 +60,7 @@ poly_circ(struct ged *gedp)
     s_av[4] = "300";
     s_av[5] = "300";
     s_av[6] = NULL;
-    ged_exec(gedp, 6, s_av);
+    ged_exec_view(gedp, 6, s_av);
 }
 
 /* Creates a view ellipse "e1" */
@@ -77,7 +77,7 @@ poly_ell(struct ged *gedp)
     s_av[6] = "256";
     s_av[7] = "ellipse";
     s_av[8] = NULL;
-    ged_exec(gedp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -86,7 +86,7 @@ poly_ell(struct ged *gedp)
     s_av[4] = "400";
     s_av[5] = "300";
     s_av[6] = NULL;
-    ged_exec(gedp, 6, s_av);
+    ged_exec_view(gedp, 6, s_av);
 }
 
 /* Creates a view square "s1" */
@@ -103,7 +103,7 @@ poly_sq(struct ged *gedp)
     s_av[6] = "200";
     s_av[7] = "square";
     s_av[8] = NULL;
-    ged_exec(gedp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -112,7 +112,7 @@ poly_sq(struct ged *gedp)
     s_av[4] = "310";
     s_av[5] = "310";
     s_av[6] = NULL;
-    ged_exec(gedp, 6, s_av);
+    ged_exec_view(gedp, 6, s_av);
 }
 
 /* Creates a view rectangle "r1" */
@@ -129,7 +129,7 @@ poly_rect(struct ged *gedp)
     s_av[6] = "190";
     s_av[7] = "rectangle";
     s_av[8] = NULL;
-    ged_exec(gedp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -138,7 +138,7 @@ poly_rect(struct ged *gedp)
     s_av[4] = "380";
     s_av[5] = "290";
     s_av[6] = NULL;
-    ged_exec(gedp, 6, s_av);
+    ged_exec_view(gedp, 6, s_av);
 }
 
 
@@ -155,36 +155,36 @@ poly_general(struct ged *gedp)
     s_av[5] = "190";
     s_av[6] = "350";
     s_av[7] = NULL;
-    ged_exec(gedp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[4] = "append";
     s_av[5] = "400";
     s_av[6] = "300";
-    ged_exec(gedp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[4] = "append";
     s_av[5] = "380";
     s_av[6] = "300";
-    ged_exec(gedp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[4] = "append";
     s_av[5] = "230";
     s_av[6] = "245";
-    ged_exec(gedp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[4] = "append";
     s_av[5] = "180";
     s_av[6] = "150";
-    ged_exec(gedp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[4] = "append";
     s_av[5] = "210";
     s_av[6] = "300";
-    ged_exec(gedp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[4] = "close";
     s_av[5] = NULL;
-    ged_exec(gedp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 }
 
 int
@@ -266,7 +266,7 @@ main(int ac, char *av[]) {
     s_av[2] = "swrast";
     s_av[3] = "SW";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_dm(dbp, 4, s_av);
 
     struct bview *v = dbp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
@@ -295,17 +295,17 @@ main(int ac, char *av[]) {
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_draw(dbp, 2, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     s_av[0] = "ae";
     s_av[1] = "35";
     s_av[2] = "25";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_ae(dbp, 3, s_av);
     img_cmp(1, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
 
     // Check that everything is in fact cleared
@@ -354,14 +354,14 @@ main(int ac, char *av[]) {
     s_av[3] = "draw";
     s_av[4] = "DOWN";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
     // Should be an empty scene - make sure we don't clear after this
     // comparison, as we want to re-enable the drawing of this object.
     img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
 
     s_av[4] = "UP";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
     // Enabling the draw should produce the same visual as the general polygon
     // draw test above, so we can check using the same image
     img_cmp(6, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
@@ -379,7 +379,7 @@ main(int ac, char *av[]) {
     s_av[5] = "u";
     s_av[6] = "e1";
     s_av[7] = NULL;
-    ged_exec(dbp, 7, s_av);
+    ged_exec_view(dbp, 7, s_av);
 
     // Result is stored in c1 - turn off e1
     s_av[0] = "view";
@@ -388,7 +388,7 @@ main(int ac, char *av[]) {
     s_av[3] = "draw";
     s_av[4] = "DOWN";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
 
     // See if we got what we expected
     img_cmp(7, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
@@ -406,7 +406,7 @@ main(int ac, char *av[]) {
     s_av[5] = "-";
     s_av[6] = "e1";
     s_av[7] = NULL;
-    ged_exec(dbp, 7, s_av);
+    ged_exec_view(dbp, 7, s_av);
 
     // Result is stored in c1 - turn off e1
     s_av[0] = "view";
@@ -415,7 +415,7 @@ main(int ac, char *av[]) {
     s_av[3] = "draw";
     s_av[4] = "DOWN";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
 
     // See if we got what we expected
     img_cmp(8, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
@@ -433,7 +433,7 @@ main(int ac, char *av[]) {
     s_av[5] = "+";
     s_av[6] = "e1";
     s_av[7] = NULL;
-    ged_exec(dbp, 7, s_av);
+    ged_exec_view(dbp, 7, s_av);
 
     // Result is stored in c1 - turn off e1
     s_av[0] = "view";
@@ -442,7 +442,7 @@ main(int ac, char *av[]) {
     s_av[3] = "draw";
     s_av[4] = "DOWN";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
 
     // See if we got what we expected
     img_cmp(9, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
@@ -458,7 +458,7 @@ main(int ac, char *av[]) {
     s_av[3] = "color";
     s_av[4] = "0/255/0";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
 
     // See if we got what we expected
     img_cmp(10, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
@@ -476,7 +476,7 @@ main(int ac, char *av[]) {
     s_av[6] = "10";
     s_av[7] = "3";
     s_av[8] = NULL;
-    ged_exec(dbp, 8, s_av);
+    ged_exec_view(dbp, 8, s_av);
 
     // See if we got what we expected
     img_cmp(11, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
@@ -487,11 +487,11 @@ main(int ac, char *av[]) {
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_draw(dbp, 2, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -506,7 +506,7 @@ main(int ac, char *av[]) {
     s_av[10] = "-13.526";
     s_av[11] = "8";
     s_av[12] = NULL;
-    ged_exec(dbp, 12, s_av);
+    ged_exec_view(dbp, 12, s_av);
 
     img_cmp(12, dbp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
 
@@ -515,7 +515,7 @@ main(int ac, char *av[]) {
     s_av[2] = "4";
     s_av[3] = "11";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_ae(dbp, 4, s_av);
     img_cmp(13, dbp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
 
     s_av[0] = "ae";
@@ -523,7 +523,7 @@ main(int ac, char *av[]) {
     s_av[2] = "0";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_ae(dbp, 4, s_av);
     img_cmp(14, dbp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
 
     s_av[0] = "ae";
@@ -531,7 +531,7 @@ main(int ac, char *av[]) {
     s_av[2] = "16";
     s_av[3] = "143";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_ae(dbp, 4, s_av);
     img_cmp(15, dbp, av[1], false, clear_images, soft_fail, 50, "clear", "v");
 
     s_av[0] = "ae";
@@ -539,7 +539,7 @@ main(int ac, char *av[]) {
     s_av[2] = "-15";
     s_av[3] = "180";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_ae(dbp, 4, s_av);
     img_cmp(16, dbp, av[1], false, clear_images, soft_fail, 60, "clear", "v");
 
     s_av[0] = "ae";
@@ -547,7 +547,7 @@ main(int ac, char *av[]) {
     s_av[2] = "5";
     s_av[3] = "-140";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_ae(dbp, 4, s_av);
     img_cmp(17, dbp, av[1], true, clear_images, soft_fail, 35, "clear", "v");
 
     // Restore view to ae 35/25
@@ -556,7 +556,7 @@ main(int ac, char *av[]) {
     s_av[2] = "25";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_ae(dbp, 4, s_av);
     bu_log("Done.\n");
 
     /***** Test axes ****/
@@ -564,11 +564,11 @@ main(int ac, char *av[]) {
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_draw(dbp, 2, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -579,7 +579,7 @@ main(int ac, char *av[]) {
     s_av[6] = "1";
     s_av[7] = "1";
     s_av[8] = NULL;
-    ged_exec(dbp, 8, s_av);
+    ged_exec_view(dbp, 8, s_av);
 
     img_cmp(18, dbp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
 
@@ -590,7 +590,7 @@ main(int ac, char *av[]) {
     s_av[4] = "axes_color";
     s_av[5] = "0/0/255";
     s_av[6] = NULL;
-    ged_exec(dbp, 6, s_av);
+    ged_exec_view(dbp, 6, s_av);
 
     img_cmp(19, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
@@ -602,14 +602,14 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_view(dbp, 4, s_av);
 
     s_av[0] = "facetize";
     s_av[1] = "-r";
     s_av[2] = "all.g";
     s_av[3] = "all.bot";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_facetize(dbp, 4, s_av);
     dbp->dbi_state->update();
 
 
@@ -617,11 +617,11 @@ main(int ac, char *av[]) {
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(20, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
@@ -631,11 +631,11 @@ main(int ac, char *av[]) {
     s_av[1] = "-m2";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(21, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
@@ -645,11 +645,11 @@ main(int ac, char *av[]) {
     s_av[1] = "-m3";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(22, dbp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
@@ -659,11 +659,11 @@ main(int ac, char *av[]) {
     s_av[1] = "-m4";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(23, dbp, av[1], true, clear_images, soft_fail, 35, "clear", "v");
     bu_log("Done.\n");
@@ -673,11 +673,11 @@ main(int ac, char *av[]) {
     s_av[1] = "-m5";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(24, dbp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
@@ -687,17 +687,17 @@ main(int ac, char *av[]) {
     s_av[1] = "-m2";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(dbp, 4, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(1, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
@@ -708,18 +708,18 @@ main(int ac, char *av[]) {
     s_av[1] = "-m2";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-A";
     s_av[2] = "-m0";
     s_av[3] = "all.g";
     s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(dbp, 4, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(25, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
@@ -728,7 +728,7 @@ main(int ac, char *av[]) {
     // Done with moss.g
     s_av[0] = "closedb";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_closedb(dbp, 1, s_av);
     bu_file_delete("moss_tmp.g");
 
     /* The rook model is a more appropriate test case for mode 3, since its
@@ -737,18 +737,18 @@ main(int ac, char *av[]) {
     s_av[0] = "opendb";
     s_av[1] = bu_vls_cstr(&fname);
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_opendb(dbp, 2, s_av);
 
     bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
     s_av[0] = "draw";
     s_av[1] = "-m3";
     s_av[2] = "scene.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_autoview(dbp, 1, s_av);
 
     img_cmp(26, dbp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");

@@ -38,7 +38,7 @@ __BEGIN_DECLS
 /** @addtogroup ged_plugins */
 /** @{ */
 /** Execute plugin based command */
-#ifndef GED_PLUGIN
+#if !defined(GED_PLUGIN) && !defined(GED_EXEC_NORAW)
 GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
 #endif
 /** @} */

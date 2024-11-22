@@ -84,7 +84,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
     s_av[1] = "-D";
     s_av[2] = bu_vls_cstr(dm_get_pathname(dmp));
     s_av[3] = bu_vls_cstr(&tname);
-    if (ged_exec(gedp, 4, s_av) & BRLCAD_ERROR) {
+    if (ged_exec_screengrab(gedp, 4, s_av) & BRLCAD_ERROR) {
 	bu_log("Failed to grab screen for DM %s\n", bu_vls_cstr(dm_get_pathname(dmp)));
 	bu_vls_free(&tname);
 	return;
@@ -210,7 +210,7 @@ main(int ac, char *av[]) {
 	bu_vls_sprintf(&dm_name, "SW%zd", i);
 	s_av[5] = bu_vls_cstr(&dm_name);
 	s_av[6] = NULL;
-	ged_exec(dbp, 6, s_av);
+	ged_exec_dm(dbp, 6, s_av);
 	bu_vls_free(&dm_name);
 
 	struct dm *dmp = (struct dm *)v->dmp;
@@ -262,7 +262,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(dbp, 4, s_av);
 
     // Sanity
     img_cmp(0, 1, dbp, av[1], soft_fail);

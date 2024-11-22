@@ -121,7 +121,7 @@ _tree_print_node(struct ged *gedp,
 	}
 
 	/* FIXME: manually list all the attributes, if any.  should be
-	 * calling ged_exec(attr show) so output formatting is consistent.
+	 * calling ged_exec_attr(show) so output formatting is consistent.
 	 */
 	if (avs.count) {
 	    struct bu_attribute_value_pair *avpp;

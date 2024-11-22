@@ -51,7 +51,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[1] = tmpfil;
     av[2] = dp->d_namep;
     av[3] = NULL;
-    ged_exec(gedp, 3, av);
+    ged_exec_keep(gedp, 3, av);
 
     // Work on the brep
     struct ged *wgedp = ged_open("db", tmpfil, 1);
@@ -64,7 +64,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[1] = dp->d_namep;
     av[2] = "csg";
     av[3] = NULL;
-    if (ged_exec(wgedp, 3, av) != BRLCAD_OK) {
+    if (ged_exec_brep(wgedp, 3, av) != BRLCAD_OK) {
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
     }
@@ -72,7 +72,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[0] = "kill";
     av[2] = dp->d_namep;
     av[3] = NULL;
-    if (ged_exec(wgedp, 2, av) != BRLCAD_OK) {
+    if (ged_exec_kill(wgedp, 2, av) != BRLCAD_OK) {
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
     }
@@ -91,7 +91,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[4] = bu_vls_cstr(&comb_name);
     av[5] = dp->d_namep;
     av[6] = NULL;
-    if (ged_exec(wgedp, 6, av) != BRLCAD_OK) {
+    if (ged_exec_facetize(wgedp, 6, av) != BRLCAD_OK) {
 	bu_vls_free(&comb_name);
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
@@ -101,7 +101,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[1] = "-f";
     av[2] = bu_vls_cstr(&comb_name);
     av[3] = NULL;
-    if (ged_exec(wgedp, 3, av) != BRLCAD_OK) {
+    if (ged_exec_killtree(wgedp, 3, av) != BRLCAD_OK) {
 	bu_vls_free(&comb_name);
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
@@ -115,7 +115,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[1] = "-O";
     av[2] = tmpfil;
     av[3] = NULL;
-    if (ged_exec(gedp, 3, av) != BRLCAD_OK) {
+    if (ged_exec_dbconcat(gedp, 3, av) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
 

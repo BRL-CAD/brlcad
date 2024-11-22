@@ -63,7 +63,7 @@ main(int ac, char *av[]) {
 	bu_log("Invoked %zu times (%.1lf per sec)\n", invocations, invocations / ((bu_gettime() - start) / 1000000.0));
     } else {
 	ged_init(&g);
-	ged_exec(&g, 1, list);
+	ged_exec_l(&g, 1, list);
 	/* intentionally sinking the ged result string
 	*/
 	printf("%s\n", bu_vls_addr(g.ged_result_str));

@@ -48,7 +48,7 @@ main(int ac, char *av[]) {
     }
 
     gedp = ged_open("db", av[1], 1);
-    ged_exec(gedp, 3, gqa);
+    ged_exec_gqa(gedp, 3, gqa);
     printf("%s\n", bu_vls_cstr(gedp->ged_result_str));
 
     // Example of programmatically extracting the resulting plot data (assuming

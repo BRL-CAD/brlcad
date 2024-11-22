@@ -109,14 +109,14 @@ scene_clear(struct ged *gedp, int vnum, int cnum)
     if (cnum < 0) {
 	s_av[0] = "Z";
 	s_av[1] = NULL;
-	ged_exec(gedp, 1, s_av);
+	ged_exec_Z(gedp, 1, s_av);
     } else {
 	struct bu_vls vname = BU_VLS_INIT_ZERO;
 	s_av[0] = "Z";
 	s_av[1] = "-V";
 	bu_vls_sprintf(&vname, "V%d", vnum);
 	s_av[2] = bu_vls_cstr(&vname);
-	ged_exec(gedp, 3, s_av);
+	ged_exec_Z(gedp, 3, s_av);
 	bu_vls_free(&vname);
     }
     dm_refresh(gedp, vnum);
@@ -150,7 +150,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, bool clear, int so
     s_av[1] = "-D";
     s_av[2] = bu_vls_cstr(dm_get_pathname(dmp));
     s_av[3] = bu_vls_cstr(&tname);
-    if (ged_exec(gedp, 4, s_av) & BRLCAD_ERROR) {
+    if (ged_exec_screengrab(gedp, 4, s_av) & BRLCAD_ERROR) {
 	bu_log("Failed to grab screen for DM %s\n", bu_vls_cstr(dm_get_pathname(dmp)));
 	if (clear)
 	    scene_clear(gedp, vnum, cnum);
@@ -230,7 +230,7 @@ poly_circ(struct ged *gedp, int v_id, int local)
 	s_av[9] = "256";
 	s_av[10] = "circle";
 	s_av[11] = NULL;
-	ged_exec(gedp, 11, s_av);
+	ged_exec_view(gedp, 11, s_av);
     } else {
 	s_av[0] = "view";
 	s_av[1] = "-V";
@@ -243,7 +243,7 @@ poly_circ(struct ged *gedp, int v_id, int local)
 	s_av[8] = "256";
 	s_av[9] = "circle";
 	s_av[10] = NULL;
-	ged_exec(gedp, 10, s_av);
+	ged_exec_view(gedp, 10, s_av);
     }
 
     s_av[0] = "view";
@@ -255,7 +255,7 @@ poly_circ(struct ged *gedp, int v_id, int local)
     s_av[6] = "300";
     s_av[7] = "300";
     s_av[8] = NULL;
-    ged_exec(gedp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
     bu_vls_free(&vname);
 }
@@ -291,7 +291,7 @@ vline(struct ged *gedp, int l_id, int x0, int y0, int z0, int x1, int y1, int z1
     s_av[6] = bu_vls_cstr(&vy0);
     s_av[7] = bu_vls_cstr(&vz0);
     s_av[8] = NULL;
-    ged_exec(gedp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -302,7 +302,7 @@ vline(struct ged *gedp, int l_id, int x0, int y0, int z0, int x1, int y1, int z1
     s_av[6] = bu_vls_cstr(&vy1);
     s_av[7] = bu_vls_cstr(&vz1);
     s_av[8] = NULL;
-    ged_exec(gedp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
     bu_vls_free(&lname);
     bu_vls_free(&vx0);
@@ -350,7 +350,7 @@ l_line(struct ged *gedp, int v_id, int l_id, int x0, int y0, int z0, int x1, int
     s_av[9] = bu_vls_cstr(&vy0);
     s_av[10] = bu_vls_cstr(&vz0);
     s_av[11] = NULL;
-    ged_exec(gedp, 11, s_av);
+    ged_exec_view(gedp, 11, s_av);
 
     s_av[0] = "view";
     s_av[1] = "-V";
@@ -364,7 +364,7 @@ l_line(struct ged *gedp, int v_id, int l_id, int x0, int y0, int z0, int x1, int
     s_av[9] = bu_vls_cstr(&vy1);
     s_av[10] = bu_vls_cstr(&vz1);
     s_av[11] = NULL;
-    ged_exec(gedp, 11, s_av);
+    ged_exec_view(gedp, 11, s_av);
 
     bu_vls_free(&vname);
     bu_vls_free(&lname);
@@ -464,7 +464,7 @@ main(int ac, char *av[]) {
 	bu_vls_sprintf(&dm_name, "SW%zd", i);
 	s_av[5] = bu_vls_cstr(&dm_name);
 	s_av[6] = NULL;
-	ged_exec(dbp, 6, s_av);
+	ged_exec_dm(dbp, 6, s_av);
 	bu_vls_free(&dm_name);
 
 	struct dm *dmp = (struct dm *)v->dmp;
@@ -495,25 +495,25 @@ main(int ac, char *av[]) {
     s_av[5] = "25";
     s_av[6] = "0";
     s_av[7] = NULL;
-    ged_exec(dbp, 7, s_av);
+    ged_exec_view(dbp, 7, s_av);
 
     s_av[2] = "V1";
     s_av[4] = "90";
     s_av[5] = "0";
     s_av[6] = "0";
-    ged_exec(dbp, 7, s_av);
+    ged_exec_view(dbp, 7, s_av);
 
     s_av[2] = "V2";
     s_av[4] = "0";
     s_av[5] = "90";
     s_av[6] = "0";
-    ged_exec(dbp, 7, s_av);
+    ged_exec_view(dbp, 7, s_av);
 
     s_av[2] = "V3";
     s_av[4] = "0";
     s_av[5] = "0";
     s_av[6] = "90";
-    ged_exec(dbp, 7, s_av);
+    ged_exec_view(dbp, 7, s_av);
 
 
     /************************************/
@@ -523,7 +523,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(dbp, 4, s_av);
 
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
@@ -532,7 +532,7 @@ main(int ac, char *av[]) {
 
     /* Make sure "Z" clears everything */
     s_av[0] = "Z";
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -553,7 +553,7 @@ main(int ac, char *av[]) {
 
     /* Make sure "Z" clears everything */
     s_av[0] = "Z";
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -579,7 +579,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_draw(dbp, 5, s_av);
 
     img_cmp(0, -1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
@@ -593,7 +593,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_draw(dbp, 5, s_av);
 
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
@@ -607,7 +607,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_draw(dbp, 5, s_av);
 
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
@@ -621,7 +621,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_draw(dbp, 5, s_av);
 
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
@@ -634,7 +634,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V0";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_Z(dbp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -648,7 +648,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V2";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_Z(dbp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -663,7 +663,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V3";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_Z(dbp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -677,7 +677,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V1";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_Z(dbp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -724,7 +724,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V0";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_Z(dbp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -739,7 +739,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V2";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_Z(dbp, 3, s_av);
 
     img_cmp(0, -1, dbp, av[1], false, soft_fail);
     img_cmp(1, 3, dbp, av[1], false, soft_fail);
@@ -752,7 +752,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V3";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_Z(dbp, 3, s_av);
 
     img_cmp(0, -1, dbp, av[1], false, soft_fail);
     img_cmp(1, 3, dbp, av[1], false, soft_fail);
@@ -764,7 +764,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V1";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_Z(dbp, 3, s_av);
 
     img_cmp(0, -1, dbp, av[1], false, soft_fail);
     img_cmp(1, -1, dbp, av[1], false, soft_fail);
@@ -791,7 +791,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(dbp, 4, s_av);
 
     vline(dbp, 1, -200, -200, -200, 200, 200, 200);
     img_cmp(0, 4, dbp, av[1], false, soft_fail);
@@ -801,7 +801,7 @@ main(int ac, char *av[]) {
 
     /* Make sure we've cleared everything */
     s_av[0] = "Z";
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -821,7 +821,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(dbp, 4, s_av);
 
     l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
     img_cmp(0, 5, dbp, av[1], false, soft_fail);
@@ -860,7 +860,7 @@ main(int ac, char *av[]) {
     s_av[3] = "color";
     s_av[4] = "0/255/0";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
     img_cmp(0, 6, dbp, av[1], false, soft_fail);
     img_cmp(1, 6, dbp, av[1], false, soft_fail);
     img_cmp(2, 6, dbp, av[1], false, soft_fail);
@@ -922,7 +922,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(dbp, 4, s_av);
     l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
     l_line(dbp, 2, 2, -50, -50, -30, 100, -70, 80);
     l_line(dbp, 1, 1, 50, -20, 10, 130, 70, -80);
@@ -935,7 +935,7 @@ main(int ac, char *av[]) {
     s_av[3] = "color";
     s_av[4] = "0/255/0";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
 
     img_cmp(0, 6, dbp, av[1], false, soft_fail);
     img_cmp(1, 6, dbp, av[1], false, soft_fail);
@@ -945,7 +945,7 @@ main(int ac, char *av[]) {
     s_av[0] = "Z";
     s_av[1] = "-S";
     s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    ged_exec_Z(dbp, 2, s_av);
 
     img_cmp(0, 8, dbp, av[1], false, soft_fail);
     img_cmp(1, 8, dbp, av[1], false, soft_fail);
@@ -969,7 +969,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(dbp, 4, s_av);
     l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
     l_line(dbp, 2, 2, -50, -50, -30, 100, -70, 80);
     l_line(dbp, 1, 1, 50, -20, 10, 130, 70, -80);
@@ -982,7 +982,7 @@ main(int ac, char *av[]) {
     s_av[3] = "color";
     s_av[4] = "0/255/0";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_view(dbp, 5, s_av);
 
     img_cmp(0, 6, dbp, av[1], false, soft_fail);
     img_cmp(1, 6, dbp, av[1], false, soft_fail);
@@ -1016,7 +1016,7 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    ged_exec_draw(dbp, 3, s_av);
 
     img_cmp(0, -1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
@@ -1030,7 +1030,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_draw(dbp, 5, s_av);
 
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
@@ -1040,7 +1040,7 @@ main(int ac, char *av[]) {
     // Clear shared views
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+    ged_exec_Z(dbp, 1, s_av);
 
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, -1, dbp, av[1], false, soft_fail);
@@ -1059,7 +1059,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec(dbp, 5, s_av);
+    ged_exec_draw(dbp, 5, s_av);
 
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, -1, dbp, av[1], false, soft_fail);

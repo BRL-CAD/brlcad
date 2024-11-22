@@ -102,9 +102,8 @@ dm_refresh(struct ged *gedp)
 extern "C" void
 scene_clear(struct ged *gedp)
 {
-    const char *s_av[2] = {NULL};
-    s_av[0] = "Z";
-    ged_exec(gedp, 1, s_av);
+    const char *s_av[1] = {"Z"};
+    ged_exec_Z(gedp, 1, s_av);
     dm_refresh(gedp);
 }
 
@@ -123,10 +122,9 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
     }
 
     dm_refresh(gedp);
-    const char *s_av[2] = {NULL};
-    s_av[0] = "screengrab";
+    const char *s_av[2] = {"screengrab", NULL};
     s_av[1] = bu_vls_cstr(&tname);
-    ged_exec(gedp, 2, s_av);
+    ged_exec_screengrab(gedp, 2, s_av);
 
     timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_PNG, 0, 0);
     if (!timg) {
