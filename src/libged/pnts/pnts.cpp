@@ -1351,7 +1351,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    nargv[0] = argv[0];
+    nargv[0] = "pnts";
     nargv[1] = r_cmd;
     nargv[2] = s_opt;
     nargv[3] = argv[5];
