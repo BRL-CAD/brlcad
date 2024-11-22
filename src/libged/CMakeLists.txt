@@ -122,7 +122,6 @@ set(
   LIBGED_SOURCES
   ${GED_CMD_SRC}
   exec.cpp
-  exec_mapping.cpp
   ged_init.cpp
   columns.c
   dbi_state.cpp
