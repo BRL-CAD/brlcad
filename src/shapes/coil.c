@@ -47,7 +47,7 @@ int
 main(int ac, char *av[])
 {
 
-    struct rt_wdb *db_fp = NULL;
+    struct rt_wdb *wdbp = NULL;
     struct ged ged;
     int flag;
 
@@ -57,16 +57,17 @@ main(int ac, char *av[])
     if (bu_file_exists(DEFAULT_COIL_FILENAME, NULL))
 	bu_exit(2, "%s: refusing to overwrite pre-existing file %s\n", av[0], DEFAULT_COIL_FILENAME);
 
-    db_fp = wdb_fopen(DEFAULT_COIL_FILENAME);
-    if (!db_fp)
+    wdbp = wdb_fopen(DEFAULT_COIL_FILENAME);
+    if (!wdbp)
 	bu_exit(2, "%s: unable to open %s for writing\n", av[0], DEFAULT_COIL_FILENAME);
 
     /* do it. */
-    mk_id(db_fp, "coil");
-    GED_INIT(&ged, db_fp);
+    mk_id(wdbp, "coil");
+    ged_init(&ged);
+    ged.dbip = wdbp->dbip;
     flag = ged_exec_coil(&ged, ac, (const char**)av);
     /* Close database */
-    db_close(db_fp->dbip);
+    db_close(wdbp->dbip);
     if (flag & BRLCAD_ERROR)
 	/* Creation failed - remove file */
 	bu_file_delete(DEFAULT_COIL_FILENAME);

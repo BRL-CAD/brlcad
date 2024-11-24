@@ -224,8 +224,8 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
     dbip = db_create_inmem();
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
 
-    BU_GET(g, struct ged);
-    GED_INIT(g, wdbp);
+    g = ged_create();
+    g->dbip = wdbp->dbip;
 
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);

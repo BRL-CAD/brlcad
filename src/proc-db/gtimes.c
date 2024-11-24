@@ -98,8 +98,9 @@ main(int ac, char *av[])
     timer = bu_gettime();
     {
       struct ged ged;
-      struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-      GED_INIT(&ged, wdbp);
+      const struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+      ged_init(&ged);
+      ged.dbip = wdbp->dbip;
 
       const char *tops_av[1] = {"tops"};
       (void)ged_exec_tops(&ged, 1, (const char **)tops_av);

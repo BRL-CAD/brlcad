@@ -98,14 +98,6 @@ struct ged_callback_state;
 #define GED_SEM_LIST GED_SEM_STATS+1
 #define GED_SEM_LAST GED_SEM_LIST+1
 
-#define GED_INIT(_gedp, _wdbp) { \
-    ged_init((_gedp)); \
-    (_gedp)->dbip = NULL; \
-    if ((struct rt_wdb *)(_wdbp) != NULL) {\
-	(_gedp)->dbip = ((struct rt_wdb *)(_wdbp))->dbip; \
-    } \
-}
-
 #define GED_INITIALIZED(_gedp) ((_gedp)->dbip != NULL)
 #define GED_LOCAL2BASE(_gedp) ((_gedp)->dbip->dbi_local2base)
 #define GED_BASE2LOCAL(_gedp) ((_gedp)->dbip->dbi_base2local)
@@ -198,7 +190,12 @@ struct ged_cmd;
 /* struct details are private - use accessor functions to manipulate */
 struct ged_results;
 
+/* Need to see if we can start hiding aspects of the GED state.
+ * Define an impl container to hold internal details. */
+struct ged_impl;
+
 struct ged {
+    struct ged_impl             *i;
     struct bu_vls               go_name;
     struct db_i                 *dbip;
     DbiState			*dbi_state;
@@ -270,8 +267,7 @@ struct ged {
     struct bu_ptbl		ged_subp; /**< @brief  forked sub-processes */
 
     /* Callbacks */
-
-    struct ged_callback_state    *ged_cbs;
+    struct ged_callback_state *ged_cbs;
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
@@ -371,6 +367,17 @@ struct ged {
 
 };
 
+// Create and destroy a ged container.  Handles all initialization - no
+// need to call init or free using these routines.
+GED_EXPORT struct ged *ged_create();
+GED_EXPORT void ged_destroy(struct ged *);
+
+// If you create a ged container on the stack or without using create/destroy,
+// you need to call ged_init before it can be used and ged_free once you are
+// done with it.
+GED_EXPORT extern void ged_init(struct ged *gedp);
+GED_EXPORT extern void ged_free(struct ged *gedp);
+
 /* accessor functions for ged_results - calling
  * applications should not work directly with the
  * internals of ged_results, which are not guaranteed
@@ -382,14 +389,15 @@ GED_EXPORT extern void ged_results_clear(struct ged_results *results);
 GED_EXPORT extern void ged_results_free(struct ged_results *results);
 
 
-
-GED_EXPORT extern void ged_close(struct ged *gedp);
-GED_EXPORT extern void ged_free(struct ged *gedp);
-GED_EXPORT extern void ged_init(struct ged *gedp);
-/* Call BU_PUT to release returned ged structure */
+// Call ged_close to release returned ged structure.  To open and close a
+// database without creating and destroying ged structure pointers (i.e. to
+// reuse a struct) call the ged_exec_open and ged_exec_close commands rather
+// than using these functions.
 GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 				       const char *filename,
 				       int existing_only);
+// Note that ged_close frees all memory and deletes the gedp
+GED_EXPORT extern void ged_close(struct ged *gedp);
 
 
 /**

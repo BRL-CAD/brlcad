@@ -320,7 +320,8 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    GED_INIT(&ged, wdbp);
+    ged_init(&ged);
+    ged.dbip = wdbp->dbip;
 
     i = 1;
 
@@ -1955,7 +1956,8 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
-    GED_INIT(&ged, wdbp);
+    ged_init(&ged);
+    ged.dbip = wdbp->dbip;
 
     bu_log_hook_save_all(&save_hook_list);
 

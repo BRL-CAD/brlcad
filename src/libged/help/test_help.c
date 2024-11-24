@@ -31,7 +31,7 @@ int main(int ac, char *av[]) {
 
   bu_setprogname(av[0]);
 
-  GED_INIT(&g, NULL);
+  ged_init(&g);
 
   return ged_exec(&g, ac, (const char **)av);
 }

@@ -92,73 +92,8 @@ ged_close(struct ged *gedp)
 	bu_ptbl_reset(&gedp->ged_subp);
     }
 
-    ged_free(gedp);
-    BU_PUT(gedp, struct ged);
+    ged_destroy(gedp);
     gedp = NULL;
-}
-
-void
-ged_free(struct ged *gedp)
-{
-    if (gedp == GED_NULL)
-	return;
-
-    bu_vls_free(&gedp->go_name);
-
-    gedp->ged_gvp = NULL;
-
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_free_views); i++) {
-	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_free_views, i);
-	bv_free(gdvp);
-	bu_free((void *)gdvp, "bv");
-    }
-    bu_ptbl_free(&gedp->ged_free_views);
-    bv_set_free(&gedp->ged_views);
-
-    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
-
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
-	    // TODO - FREE_BV_SCENE_OBJ macro is stashing on the free_scene_obj list, not
-	    // BU_PUT-ing the solid objects themselves - is that what we expect
-	    // when doing ged_free?  I.e., is ownership of the free solid list
-	    // with the struct ged or with the application as a whole?  We're
-	    // BU_PUT-ing gedp->ged_views.free_scene_obj - above why just that one?
-#if 0
-	    struct bv_scene_obj *sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
-	    RT_FREE_VLIST(&(sp->s_vlist));
-#endif
-	}
-	bu_ptbl_free(&gedp->free_solids);
-
-	if (gedp->ged_gdp->gd_headDisplay)
-	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
-	if (gedp->ged_gdp->gd_headVDraw)
-	    BU_PUT(gedp->ged_gdp->gd_headVDraw, struct bu_vls);
-	qray_free(gedp->ged_gdp);
-	BU_PUT(gedp->ged_gdp, struct ged_drawable);
-    }
-
-    if (gedp->ged_log) {
-	bu_vls_free(gedp->ged_log);
-	BU_PUT(gedp->ged_log, struct bu_vls);
-    }
-
-    if (gedp->ged_results) {
-	ged_results_free(gedp->ged_results);
-	BU_PUT(gedp->ged_results, struct ged_results);
-    }
-
-    if (gedp->ged_result_str) {
-	bu_vls_free(gedp->ged_result_str);
-	BU_PUT(gedp->ged_result_str, struct bu_vls);
-    }
-
-    BU_PUT(gedp->ged_cbs, struct ged_callback_state);
-
-    bu_ptbl_free(&gedp->ged_subp);
-
-    if (gedp->ged_fbs)
-	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
 }
 
 void
@@ -254,12 +189,95 @@ ged_init(struct ged *gedp)
     gedp->ged_interp = NULL;
 }
 
+struct ged *
+ged_create()
+{
+    struct ged *gedp;
+    BU_GET(gedp, struct ged);
+    ged_init(gedp);
+    return gedp;
+}
+
+void
+ged_free(struct ged *gedp)
+{
+    if (!gedp)
+	return;
+
+    bu_vls_free(&gedp->go_name);
+
+    gedp->ged_gvp = NULL;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_free_views); i++) {
+	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_free_views, i);
+	bv_free(gdvp);
+	bu_free((void *)gdvp, "bv");
+    }
+    bu_ptbl_free(&gedp->ged_free_views);
+    bv_set_free(&gedp->ged_views);
+
+    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
+
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
+	    // TODO - FREE_BV_SCENE_OBJ macro is stashing on the free_scene_obj list, not
+	    // BU_PUT-ing the solid objects themselves - is that what we expect
+	    // when doing ged_free?  I.e., is ownership of the free solid list
+	    // with the struct ged or with the application as a whole?  We're
+	    // BU_PUT-ing gedp->ged_views.free_scene_obj - above why just that one?
+#if 0
+	    struct bv_scene_obj *sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
+	    RT_FREE_VLIST(&(sp->s_vlist));
+#endif
+	}
+	bu_ptbl_free(&gedp->free_solids);
+
+	if (gedp->ged_gdp->gd_headDisplay)
+	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
+	if (gedp->ged_gdp->gd_headVDraw)
+	    BU_PUT(gedp->ged_gdp->gd_headVDraw, struct bu_vls);
+	qray_free(gedp->ged_gdp);
+	BU_PUT(gedp->ged_gdp, struct ged_drawable);
+    }
+
+    if (gedp->ged_log) {
+	bu_vls_free(gedp->ged_log);
+	BU_PUT(gedp->ged_log, struct bu_vls);
+    }
+
+    if (gedp->ged_results) {
+	ged_results_free(gedp->ged_results);
+	BU_PUT(gedp->ged_results, struct ged_results);
+    }
+
+    if (gedp->ged_result_str) {
+	bu_vls_free(gedp->ged_result_str);
+	BU_PUT(gedp->ged_result_str, struct bu_vls);
+    }
+
+    BU_PUT(gedp->ged_cbs, struct ged_callback_state);
+
+    bu_ptbl_free(&gedp->ged_subp);
+
+    if (gedp->ged_fbs)
+	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
+
+}
+
+void
+ged_destroy(struct ged *gedp)
+{
+    if (!gedp)
+	return;
+
+    ged_free(gedp);
+    BU_PUT(gedp, struct ged);
+}
 
 struct ged *
 ged_open(const char *dbtype, const char *filename, int existing_only)
 {
-    struct ged *gedp;
-    struct rt_wdb *wdbp;
+    struct ged *gedp = NULL;
+    struct rt_wdb *wdbp = NULL;
     struct mater *save_materp = MATER_NULL;
 
     if (filename == NULL)
@@ -350,8 +368,8 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	}
     }
 
-    BU_GET(gedp, struct ged);
-    GED_INIT(gedp, wdbp);
+    gedp = ged_create();
+    gedp->dbip = wdbp->dbip;
 #if 0
     // Archer doesn't tolerate populating the GEDP with an initial view at the
     // moment.  Probably should fix that, as there are lots of ged commands

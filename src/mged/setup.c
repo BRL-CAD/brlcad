@@ -471,8 +471,7 @@ mged_setup(Tcl_Interp **interpreter)
     }
     bu_vls_free(&tlog);
 
-    BU_GET(GEDP, struct ged);
-    GED_INIT(GEDP, NULL);
+    GEDP = ged_create();
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
     GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;

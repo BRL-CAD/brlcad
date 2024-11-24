@@ -41,7 +41,7 @@
 
 int main(int ac, char *av[])
 {
-    struct rt_wdb *db_fp = NULL;
+    struct rt_wdb *wdbp = NULL;
     const char *filename = NULL;
     struct ged ged;
     int ret;
@@ -53,16 +53,17 @@ int main(int ac, char *av[])
     /* Just using "tire.g" for now. */
     if (bu_file_exists(filename, NULL))
 	bu_exit(1, "ERROR - refusing to overwrite existing [%s] file.", filename);
-    db_fp = wdb_fopen(filename);
-    mk_id(db_fp, "Tire");
+    wdbp = wdb_fopen(filename);
+    mk_id(wdbp, "Tire");
 
-    GED_INIT(&ged, db_fp);
+    ged_init(&ged);
+    ged.dbip =  wdbp->dbip;
 
     /* create the tire */
     ret = ged_exec_tire(&ged, ac, (const char **)av);
 
     /* Close database */
-    db_close(db_fp->dbip);
+    db_close(wdbp->dbip);
     if (ret & BRLCAD_ERROR) {
 	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));

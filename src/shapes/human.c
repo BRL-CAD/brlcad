@@ -39,7 +39,7 @@
 
 int main(int ac, char *av[])
 {
-    struct rt_wdb *db_fp = NULL;
+    struct rt_wdb *wdbp = NULL;
     struct ged ged;
     int ret;
     const char *filename = NULL;
@@ -48,15 +48,16 @@ int main(int ac, char *av[])
 
     filename = DEFAULT_FILENAME;
 
-    db_fp = wdb_fopen(filename);
+    wdbp = wdb_fopen(filename);
 
-    mk_id_units(db_fp, "Human Model", "in");
+    mk_id_units(wdbp, "Human Model", "in");
 
-    GED_INIT(&ged, db_fp);
+    ged_init(&ged);
+    ged.dbip = wdbp->dbip;
     bu_log("Building\n");
     ret = ged_exec_human(&ged, ac, (const char **)av);
     bu_log("Finished Building\n");
-    db_close(db_fp->dbip);
+    db_close(wdbp->dbip);
 
     if (ret) {
 	bu_file_delete(filename);
