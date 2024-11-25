@@ -215,6 +215,7 @@ set(
   regionfix.c
   roots.c
   search.cpp
+  search_old.cpp
   shoot.c
   timer.cpp
   tol.c
@@ -304,6 +305,7 @@ set(
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
   search.h
+  search_old.h
   subd_test_bot.asc
   test_bot2nurbs.cpp
   test_brepreport.cpp

@@ -129,6 +129,13 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.42
+----
+include/raytrace librt
+	db_search_context removed in favor of new db_search params -
+	old db_search function signature can temporarily be obtained
+	under the name db_search_old
+
 7.40
 ----
 include/bu/process.h
@@ -1726,3 +1733,4 @@ s/ambSlow=[0-9]*//g
 ----
 s/bv_mesh_lod_custom_key/bu_data_hash/g
 s/x/solid_report/g
+s/db_search\(/db_search_old\(/g

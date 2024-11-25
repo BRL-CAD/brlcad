@@ -184,6 +184,25 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 RT_EXPORT extern int db_cyclic_paths(struct bu_ptbl *cyclic_paths, const struct db_i *dbip, struct directory *sdp);
 
 
+/* Deprecated */
+typedef int(*db_search_callback_t)(int, const char*[],void*);
+struct db_search_context {
+    db_search_callback_t _e_callback; /**< @brief A function that evaluates an array of strings and returns a boolean. */
+    void *_e_userdata; /**< @brief A pointer that will be passed to the callback, usually a pointer to an interpreter. */
+};
+RT_EXPORT extern struct db_search_context *db_search_context_create(void); /* FIXME: is this really needed? why not just use the struct directly from the stack or let the user handle allocation? */
+RT_EXPORT extern void db_search_context_destroy(struct db_search_context *ctx);
+RT_EXPORT extern void db_search_register_exec(struct db_search_context *, db_search_callback_t);
+RT_EXPORT extern void db_search_register_data(struct db_search_context *, void *);
+RT_EXPORT extern int db_search_old(struct bu_ptbl *results,
+			       int flags,
+			       const char *filter,
+			       int path_c,
+			       struct directory **path_v,
+			       struct db_i *dbip,
+			       struct db_search_context *ctx
+			      );
+
 __END_DECLS
 
 #endif /* RT_SEARCH_H*/
