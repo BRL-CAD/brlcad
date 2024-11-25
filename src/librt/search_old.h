@@ -63,7 +63,7 @@
 #include "raytrace.h"
 
 /* node struct - holds data specific to each node under consideration */
-struct db_node_t {
+struct db_node_old_t {
     struct db_full_path *path;
     struct bu_ptbl *full_paths;
     int flags;
@@ -71,7 +71,7 @@ struct db_node_t {
 };
 
 /* search node type */
-enum db_search_ntype {
+enum db_search_old_ntype {
     N_ABOVE = 1,                        /* must start > 0 */
     N_AND, N_ATTR, N_BELOW,
     N_CLOSEPAREN, N_DEPTH, N_EXEC, N_EXECDIR, N_EXPR,
@@ -81,9 +81,9 @@ enum db_search_ntype {
 };
 
 
-struct db_plan_t {
-    struct db_plan_t *next;			/* next node */
-    int (*eval)(struct db_plan_t *, struct db_node_t *, struct db_i *dbip, struct bu_ptbl *results);
+struct db_plan_old_t {
+    struct db_plan_old_t *next;			/* next node */
+    int (*eval)(struct db_plan_old_t *, struct db_node_old_t *, struct db_i *dbip, struct bu_ptbl *results);
     /* node evaluation function */
 #define F_EQUAL 1 /* [acm]time inum links size */
 #define F_LESSTHAN 2
@@ -96,7 +96,7 @@ struct db_plan_t {
     int max_depth;
     mat_t m;
     int flags;				/* private flags */
-    enum db_search_ntype type;		/* plan node type */
+    enum db_search_old_ntype type;		/* plan node type */
     struct bu_ptbl *plans;              /* set of all allocated plans */
     union {
 	gid_t _g_data;			/* gid */
@@ -104,7 +104,7 @@ struct db_plan_t {
 	    unsigned int _f_flags;
 	    unsigned int _f_mask;
 	} fl;
-	struct db_plan_t *_p_data[2];	/* PLAN trees */
+	struct db_plan_old_t *_p_data[2];	/* PLAN trees */
 	struct _ex {
 	    void *_e_userdata;
 	    db_search_callback_t _e_callback;
@@ -113,8 +113,8 @@ struct db_plan_t {
 	    int *_e_holes;
 	    int _e_nholes;
 	} ex;
-	struct db_plan_t *_ab_data[2];	/* PLAN trees */
-	struct db_plan_t *_bl_data[2];  /* PLAN trees */
+	struct db_plan_old_t *_ab_data[2];	/* PLAN trees */
+	struct db_plan_old_t *_bl_data[2];  /* PLAN trees */
 	char *_a_data[2];		/* array of char pointers */
 	char *_c_data;			/* char pointer */
 	char *_ci_data;			/* char pointer */
@@ -132,45 +132,43 @@ struct db_plan_t {
 };
 
 
-typedef struct _option {
+typedef struct _option_old {
     const char *name;				/* option name */
-    enum db_search_ntype token;			/* token type */
-    int (*create)(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);	/* create function */
+    enum db_search_old_ntype token;			/* token type */
+    int (*create)(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);	/* create function */
 #define O_NONE		0x01			/* no call required */
 #define O_ZERO		0x02			/* pass: nothing */
 #define O_ARGV		0x04			/* pass: argv, increment argv */
 #define O_ARGVP		0x08		/* pass: *argv, N_OK || N_EXEC || N_EXECDIR */
     int flags;
-} OPTION;
-
-extern int isdepth, isoutput;
+} OPTION_OLD;
 
 __BEGIN_DECLS
 
-static int c_attr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_objparam(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_iname(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_depth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_name(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_nnodes(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_regex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_iregex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_path(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_print(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_matrix(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_type(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_bool(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_openparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_closeparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_not(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_or(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_above(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_below(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_exec(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
-static int c_size(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_attr(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_objparam(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_iname(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_maxdepth(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_mindepth(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_depth(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_name(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_nnodes(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_regex(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_iregex(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_path(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_print(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_stdattr(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_matrix(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_type(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_bool(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_openparen(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_closeparen(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_not(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_or(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_above(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_below(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_exec(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_size(char *, char ***, int, struct db_plan_old_t **, int *, struct bu_ptbl *, struct db_search_context *);
 
 __END_DECLS
 

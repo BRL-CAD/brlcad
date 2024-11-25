@@ -151,8 +151,6 @@ typedef struct _option {
     int flags;
 } OPTION;
 
-extern int isdepth, isoutput;
-
 __BEGIN_DECLS
 
 static int c_attr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
