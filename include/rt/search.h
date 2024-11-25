@@ -37,35 +37,14 @@
 
 __BEGIN_DECLS
 
-typedef int(*db_search_callback_t)(int, const char*[],void*);
-
 /**
  * @brief Execution context for the -exec filter.
  */
 struct db_search_context {
-    db_search_callback_t _e_callback; /**< @brief A function that evaluates an array of strings and returns a boolean. */
-    void *_e_userdata; /**< @brief A pointer that will be passed to the callback, usually a pointer to an interpreter. */
+    bu_clbk_t clbk; /**< @brief A function that evaluates an array of strings and returns a boolean. */
+    void *u1; /**< @brief A pointer that will be passed to the callback. */
+    void *u2; /**< @brief A pointer that will be passed to the callback. */
 };
-
-/**
- * @brief Allocates a new context.
- */
-RT_EXPORT extern struct db_search_context *db_search_context_create(void); /* FIXME: is this really needed? why not just use the struct directly from the stack or let the user handle allocation? */
-
-/**
- * @brief Free a context created by db_search_context_create.
- */
-RT_EXPORT extern void db_search_context_destroy(struct db_search_context *ctx);
-
-/**
- * @brief Register a callback for -exec filters.
- */
-RT_EXPORT extern void db_search_register_exec(struct db_search_context *, db_search_callback_t);
-
-/**
- * @brief Register a userdata for the callback.
- */
-RT_EXPORT extern void db_search_register_data(struct db_search_context *, void *);
 
 /**
  * @brief Search for objects in a geometry database using filters

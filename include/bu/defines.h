@@ -196,6 +196,13 @@
 #define BU_FORTRAN(lc, uc) lc ## _
 
 
+/**
+ * There are a fair number of callback mechanisms defined in BRL-CAD code.
+ * Many use a common function prototype, so define it here to provide all the
+ * various libraries a common type to use.
+ */
+typedef int(*bu_clbk_t)(int, const char**,void*,void*);
+
 /** @} */
 
 #endif  /* BU_DEFINES_H */

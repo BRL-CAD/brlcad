@@ -1506,7 +1506,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
     /* Only try to exec if we actually have a callback */
     if (plan->p_un.ex._e_callback) {
-	ret = (*plan->p_un.ex._e_callback)(plan->p_un.ex._e_argc, (const char**)plan->p_un.ex._e_argv, plan->p_un.ex._e_userdata);
+	ret = (*plan->p_un.ex._e_callback)(plan->p_un.ex._e_argc, (const char**)plan->p_un.ex._e_argv, plan->p_un.ex._e_userdata1, plan->p_un.ex._e_userdata2);
     } else {
 	ret = 1;
     }
@@ -1581,8 +1581,9 @@ c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t 
     newplan->p_un.ex._e_argc = l;
     newplan->p_un.ex._e_holes = holes;
     newplan->p_un.ex._e_nholes = nholes;
-    newplan->p_un.ex._e_callback = ctx->_e_callback;
-    newplan->p_un.ex._e_userdata = ctx->_e_userdata;
+    newplan->p_un.ex._e_callback = ctx->clbk;
+    newplan->p_un.ex._e_userdata1 = ctx->u1;
+    newplan->p_un.ex._e_userdata2 = ctx->u1;
 
     (*resultplan) = newplan;
 
@@ -2564,35 +2565,6 @@ db_search_free(struct bu_ptbl *search_results)
 	}
     }
     bu_ptbl_free(search_results);
-}
-
-
-struct db_search_context *
-db_search_context_create(void)
-{
-    struct db_search_context *ctx = (struct db_search_context *)bu_malloc(sizeof(struct db_search_context), "db_search ctx");
-    ctx->_e_callback = NULL;
-    ctx->_e_userdata = NULL;
-    return ctx;
-}
-
-
-void
-db_search_context_destroy(struct db_search_context *ctx)
-{
-    bu_free(ctx, "db_search ctx");
-}
-
-
-void db_search_register_exec(struct db_search_context *ctx, db_search_callback_t callback)
-{
-    ctx->_e_callback = callback;
-}
-
-
-void db_search_register_data(struct db_search_context *ctx, void *userdata)
-{
-    ctx->_e_userdata = userdata;
 }
 
 

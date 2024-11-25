@@ -194,7 +194,7 @@ mged_pr_output(Tcl_Interp *interp)
 
 
 int
-mged_db_search_callback(int argc, const char *argv[], void *userdata)
+mged_db_search_callback(int argc, const char *argv[], void *userdata, void *UNUSED(d2))
 {
     /* FIXME: pretty much copied from tclcad, ideally this should call
      * tclcad's eval instead of doing its own thing but this is probably

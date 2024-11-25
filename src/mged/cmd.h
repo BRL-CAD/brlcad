@@ -39,7 +39,7 @@ struct cmdtab {
 };
 
 
-extern int mged_db_search_callback(int, const char **, void *);
+extern int mged_db_search_callback(int, const char **, void *, void*);
 
 
 /* Commands */

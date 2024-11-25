@@ -97,15 +97,6 @@ struct ged_search {
     int search_type;
 };
 
-
-static db_search_callback_t
-ged_get_interp_eval_callback(struct ged *gedp)
-{
-    /* FIXME this might need to be more robust? */
-    return gedp->ged_interp_eval;
-}
-
-
 static int
 _path_scrub(struct bu_vls *prefix, struct bu_vls *path)
 {
@@ -369,10 +360,12 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     const char *usage = "[-a] [-v[v..]] [-Q] [-h] [path] [expressions...]\n";
     /* COPY argv_orig to argv; */
     char **argv = NULL;
-    struct db_search_context *ctx = db_search_context_create();
+    struct db_search_context *ctx;
+    BU_GET(ctx, struct db_search_context);
 
-    db_search_register_data(ctx, (void *)gedp->ged_interp);
-    db_search_register_exec(ctx, ged_get_interp_eval_callback(gedp));
+    ctx->clbk = gedp->ged_interp_eval;
+    ctx->u1 = (void *)gedp->ged_interp;
+    ctx->u2 = NULL;
 
 
     /* Find how many options we have. Once we get support
@@ -718,7 +711,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     bu_vls_free(&prefix);
     bu_vls_free(&search_string);
     bu_argv_free(argc, argv);
-    db_search_context_destroy(ctx);
+    BU_PUT(ctx, struct db_search_context);
     _ged_free_search_set(search_set);
     return BRLCAD_OK;
 }

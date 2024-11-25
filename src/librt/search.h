@@ -106,8 +106,9 @@ struct db_plan_t {
 	} fl;
 	struct db_plan_t *_p_data[2];	/* PLAN trees */
 	struct _ex {
-	    void *_e_userdata;
-	    db_search_callback_t _e_callback;
+	    bu_clbk_t _e_callback;
+	    void *_e_userdata1;
+	    void *_e_userdata2;
 	    char **_e_argv;		/* argv array */
 	    int _e_argc;		/* allocated length */
 	    int *_e_holes;

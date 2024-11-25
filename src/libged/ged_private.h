@@ -46,8 +46,8 @@
 
 class Ged_Internal {
     public:
-	std::map<std::string, ged_func_ptr> cmd_prerun_clbk;
-	std::map<std::string, ged_func_ptr> cmd_postrun_clbk;
+	std::map<std::string, bu_clbk_t> cmd_prerun_clbk;
+	std::map<std::string, bu_clbk_t> cmd_postrun_clbk;
 };
 
 struct ged_impl {

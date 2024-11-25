@@ -371,7 +371,7 @@ struct ged {
     //
     // fbserv_obj: fbs_callback
     // bv.h gv_callback (only used by MGED?)
-    // db_search_callback_t
+    // bu_clbk_t
 
     // TODO - this probably should be handled with a registration function of some kind
     // that assigns contexts based on dm type - right now the dms more or less have to
@@ -385,7 +385,7 @@ struct ged {
     void *ged_ctx; /* Temporary - do not rely on when designing new functionality */
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
-    db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
+    bu_clbk_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
 };
 
