@@ -485,7 +485,10 @@ mged_setup(Tcl_Interp **interpreter)
     GEDP->ged_post_closedb_callback = &mged_post_closedb_clbk;
     GEDP->ged_db_callback_udata = &mged_global_db_ctx;
     GEDP->ged_interp = (void *)interpreter;
-    GEDP->ged_interp_eval = &mged_db_search_callback;
+
+    // Register during-execution callback function for search command
+    ged_clbk_set(GEDP, "search", 0, &mged_db_search_callback, (void *)*interpreter);
+
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
     t_iod->interp = *interpreter;
@@ -525,7 +528,6 @@ mged_setup(Tcl_Interp **interpreter)
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
     GEDP->ged_interp = (void *)*interpreter;
-    GEDP->ged_interp_eval = &mged_db_search_callback;
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

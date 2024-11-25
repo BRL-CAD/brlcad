@@ -194,7 +194,7 @@ mged_pr_output(Tcl_Interp *interp)
 
 
 int
-mged_db_search_callback(int argc, const char *argv[], void *userdata, void *UNUSED(d2))
+mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2)
 {
     /* FIXME: pretty much copied from tclcad, ideally this should call
      * tclcad's eval instead of doing its own thing but this is probably
@@ -213,15 +213,15 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata, void *UNUS
     for (i = 1; i < argc; ++i)
 	Tcl_DStringAppendElement(&script, argv[i]);
 
-    ret = Tcl_Eval((Tcl_Interp *)userdata, Tcl_DStringValue(&script));
+    ret = Tcl_Eval((Tcl_Interp *)u2, Tcl_DStringValue(&script));
     Tcl_DStringFree(&script);
 
-    result = Tcl_GetStringResult((Tcl_Interp *)userdata);
+    result = Tcl_GetStringResult((Tcl_Interp *)u2);
     len = strlen(result);
     if (len > 0)
 	bu_log("%s%s", result, result[len-1] == '\n' ? "" : "\n");
 
-    Tcl_ResetResult((Tcl_Interp *)userdata);
+    Tcl_ResetResult((Tcl_Interp *)u2);
 
     /* NOTE: Tcl_Eval saves the last -exec result to GEDP->ged_result_str 
        this causes a duplicate print of the last 'search -exec' in mged (since

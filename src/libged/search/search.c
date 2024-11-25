@@ -360,10 +360,16 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     const char *usage = "[-a] [-v[v..]] [-Q] [-h] [path] [expressions...]\n";
     /* COPY argv_orig to argv; */
     char **argv = NULL;
-    bu_clbk_t clbk = gedp->ged_interp_eval;
-    void *u1 = (void *)gedp->ged_interp;
+
+
+    bu_clbk_t clbk = NULL;
+    void *u1 = (void *)gedp;
     void *u2 = NULL;
 
+    if (ged_clbk_get(&clbk, &u2, gedp, argv_orig[0], 0) == BRLCAD_ERROR) {
+	bu_log("search cmd callback retrieval error\n");
+	return BRLCAD_ERROR;
+    }
 
     /* Find how many options we have. Once we get support
      * for long options, this logic will have to get more sophisticated
