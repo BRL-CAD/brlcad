@@ -42,6 +42,20 @@
 #include "bv/util.h"
 #include "ged.h"
 
+#ifdef __cplusplus
+
+class Ged_Internal {
+    public:
+	std::map<std::string, ged_func_ptr> cmd_prerun_clbk;
+	std::map<std::string, ged_func_ptr> cmd_postrun_clbk;
+};
+
+struct ged_impl {
+    uint32_t magic;
+    Ged_Internal *i;
+};
+#endif
+
 __BEGIN_DECLS
 
 #ifndef FALSE

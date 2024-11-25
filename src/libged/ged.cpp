@@ -102,6 +102,11 @@ ged_init(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
+    /* Create internal containers */
+    BU_GET(gedp->i, struct ged_impl);
+    gedp->i->magic = GED_MAGIC;
+    gedp->i->i = new Ged_Internal;
+
     gedp->dbip = NULL;
 
     // TODO - rename to ged_name
@@ -261,6 +266,13 @@ ged_free(struct ged *gedp)
     if (gedp->ged_fbs)
 	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
 
+
+    /* Free internal containers */
+    delete gedp->i->i;
+    gedp->i->i = NULL;
+    gedp->i->magic = 0;
+    BU_PUT(gedp->i, struct ged_impl);
+    gedp->i = NULL;;
 }
 
 void

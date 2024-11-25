@@ -189,6 +189,7 @@ __BEGIN_DECLS
 
 /* ged */
 
+#define GED_MAGIC	                0x20474544 /**<  GED */
 #define GED_CMD_MAGIC			0x65786563 /**< exec */
 
 /* fb */
