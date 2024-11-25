@@ -519,13 +519,48 @@ ged_destroy_vlist_cb(struct ged *gedp, unsigned int i, int j)
     }
 }
 
-#if 0
 int
-ged_io_handler_cb(struct ged *, ged_io_handler_callback_t *cb, void *, int)
+ged_clbk_set(struct ged *gedp, const char *cmd, int pre, bu_clbk_t f, void *d)
 {
-    if (
+    int ret = BRLCAD_OK;
+    if (!gedp || !cmd)
+	return BRLCAD_ERROR;
+    if (!ged_cmd_valid(cmd, NULL))
+	return BRLCAD_ERROR;
+    std::string scmd = std::string(cmd);
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (pre) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    std::map<std::string, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(scmd);
+    if (c_it != cm->end())
+	ret |= GED_OVERRIDE;
+    (*cm)[scmd] = std::make_pair(f, d);
+    return ret;
 }
-#endif
+
+int
+ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int pre)
+{
+    if (!gedp || !cmd || !f || !d)
+	return BRLCAD_ERROR;
+    if (!ged_cmd_valid(cmd, NULL))
+	return BRLCAD_ERROR;
+    GED_CK_MAGIC(gedp);
+    std::string scmd = std::string(cmd);
+    Ged_Internal *gedip = gedp->i->i;
+    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (pre) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    std::map<std::string, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(scmd);
+    c_it = cm->find(scmd);
+    if (c_it == cm->end()) {
+	// Nothing set, which is fine - return NULL
+	(*f) = NULL;
+	(*d) = NULL;
+	return BRLCAD_OK;
+    }
+    (*f) = c_it->second.first;
+    (*d) = c_it->second.second;
+    return BRLCAD_OK;
+}
 
 // Local Variables:
 // tab-width: 8

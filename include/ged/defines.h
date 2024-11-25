@@ -68,11 +68,15 @@
 
 /* Sequence starts after BRLCAD_ERROR, to be compatible with
  * BU return codes */
-#define GED_HELP    0x0002 /**< invalid specification, result contains usage */
-#define GED_MORE    0x0004 /**< incomplete specification, can specify again interactively */
-#define GED_QUIET   0x0008 /**< don't set or modify the result string */
-#define GED_UNKNOWN 0x0010 /**< argv[0] was not a known command */
-#define GED_EXIT    0x0020 /**< command is requesting a clean application shutdown */
+#define GED_HELP     0x0002 /**< invalid specification, result contains usage */
+#define GED_MORE     0x0004 /**< incomplete specification, can specify again interactively */
+#define GED_QUIET    0x0008 /**< don't set or modify the result string */
+#define GED_UNKNOWN  0x0010 /**< argv[0] was not a known command */
+#define GED_EXIT     0x0020 /**< command is requesting a clean application shutdown */
+#define GED_OVERRIDE 0x0040 /**< used to indicate settings have been overridden */
+
+/* Check the internal GED magic */
+#define GED_CK_MAGIC(_p) BU_CKMAG(_p->i, GED_MAGIC, "ged")
 
 /* Forward declaration */
 struct ged;
@@ -399,6 +403,34 @@ GED_EXPORT void ged_destroy(struct ged *);
 // done with it.
 GED_EXPORT extern void ged_init(struct ged *gedp);
 GED_EXPORT extern void ged_free(struct ged *gedp);
+
+
+// Associate a callback function pointer for a command.  If pre is non-zero,
+// function will be registered to run BEFORE actual cmd logic is run, and if
+// zero will be registered to run AFTER the cmd logic is run.
+//
+// Only one function can be registered for each pre/post command slot - an
+// assignment to a command slot that already has an assigned function will
+// result in the previous function pointer being cleared and replaced.  If an
+// existing pointer has been overridden GED_OVERRIDE will be set in return
+// code.  An overriding assignment will override both the function and data
+// values - a NULL data value in d will overwrite an existing non-NULL value.
+//
+// If f is NULL, any existing callback function pointer in the specified slot
+// is cleared along with its data pointer.
+//
+// d optionally associates user supplied data with the callback.  The bu_clbk_t
+// function signature has two data pointers - this value will be supplied as
+// the second pointer argument.  (The first will be the ged pointer.)
+//
+// To clear all command callbacks, iterate over the ged_cmd_list results
+// and assign NULL f values.
+GED_EXPORT extern int ged_clbk_set(struct ged *gedp, const char *cmd, int pre, bu_clbk_t f, void *d);
+
+// Method calling code can use to get the current clbk info for a specific command.
+GED_EXPORT extern int ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int pre);
+
+
 
 /* accessor functions for ged_results - calling
  * applications should not work directly with the

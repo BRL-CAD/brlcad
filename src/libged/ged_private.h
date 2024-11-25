@@ -46,15 +46,21 @@
 
 class Ged_Internal {
     public:
-	std::map<std::string, bu_clbk_t> cmd_prerun_clbk;
-	std::map<std::string, bu_clbk_t> cmd_postrun_clbk;
+	struct ged *gedp;
+	std::map<std::string, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
+	std::map<std::string, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
 };
+
+#else
+
+#define Ged_Internal void
+
+#endif
 
 struct ged_impl {
     uint32_t magic;
     Ged_Internal *i;
 };
-#endif
 
 __BEGIN_DECLS
 

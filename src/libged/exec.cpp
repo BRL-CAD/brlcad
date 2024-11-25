@@ -40,6 +40,8 @@ extern "C" void libged_init(void);
 extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[])
 {
+    int cret = BRLCAD_OK;
+
     if (!gedp || !argc || !argv) {
 	return BRLCAD_ERROR;
     }
@@ -50,51 +52,73 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	start = bu_gettime();
     }
 
-    // TODO - right now this is the map from the libged load - should
-    // probably use this to initialize a struct ged copy when ged_init
-    // is called, so client codes can add their own commands to their
-    // gedp...
+    // TODO - right now this is the map from the libged load - should probably
+    // use this to initialize a struct ged copy when ged_init is called, so
+    // client codes can add their own commands to their gedp...
     //
-    // The ged_cmds map should always reflect the original, vanilla
-    // state of libged's command set so we have a clean fallback
-    // available if we ever need it to fall back on/recover with.
+    // The ged_cmds map should always reflect the original, vanilla state of
+    // libged's command set so we have a clean fallback available if we ever
+    // need it to fall back on/recover with.
     std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
 
-    // On OpenBSD, if the executable was launched in a way that
-    // requires bu_setprogname to find the BRL-CAD root directory the
-    // initial libged initialization would have failed.  If we have no
-    // ged_cmds at all this is probably what happened, so call
-    // libged_init again here.  By the time we are calling ged_exec
-    // bu_setprogname should be set and we should be ready to actually
-    // find the commands.
-    if (!cmap->size()) {
+    // On OpenBSD, if the executable was launched in a way that requires
+    // bu_setprogname to find the BRL-CAD root directory the initial libged
+    // initialization would have failed.  If we have no ged_cmds at all this is
+    // probably what happened, so call libged_init again here.  By the time we
+    // are calling ged_exec bu_setprogname should be set and we should be ready
+    // to actually find the commands.
+    if (!cmap->size())
 	libged_init();
-    }
 
-    /* libged is only concerned with the basename in order for
-     * command-line applications to pass an argv[0].
-     */
+    /* libged is only concerned with the basename in order for command-line
+     * applications to pass an argv[0]. */
     struct bu_vls cmdvls = BU_VLS_INIT_ZERO;
     bu_path_component(&cmdvls, argv[0], BU_PATH_BASENAME);
     std::string cmdname = bu_vls_cstr(&cmdvls);
     bu_vls_free(&cmdvls);
 
+    // Validate the command name.  If we don't know what this is, we can't run
+    // it successfully and need to bail.
     std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(cmdname);
     if (c_it == cmap->end()) {
 	bu_vls_printf(gedp->ged_result_str, "unknown command: %s", cmdname.c_str());
 	return (BRLCAD_ERROR | GED_UNKNOWN);
     }
-
     const struct ged_cmd *cmd = c_it->second;
 
-    // TODO - if interactive command via cmd->i->interactive, don't
-    // execute unless we have the necessary callbacks defined in gedp
 
-    int cret = (*cmd->i->cmd)(gedp, argc, argv);
-
-    if (tstr) {
-	bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
+    // We have a command now - check for a pre-exec callback.
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), 1) == BRLCAD_OK) && f) {
+	cret = (*f)(argc, argv, gedp, d);
+	if (cret != BRLCAD_OK)
+	    bu_log("error running %s pre-execution callback\n", cmdname.c_str());
     }
+
+    // TODO - if interactive command via cmd->i->interactive, don't execute
+    // unless we have the necessary callbacks defined in gedp
+
+    // Preliminaries complete - do the actual command execution call
+    cret = (*cmd->i->cmd)(gedp, argc, argv);
+
+    // If we didn't execute successfully, don't execute the post run hook
+    if (cret != BRLCAD_OK) {
+	if (tstr)
+	    bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
+
+	return cret;
+    }
+
+    // Command execution complete - check for a post command callback.
+    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), 0) == BRLCAD_OK) && f) {
+	cret = (*f)(argc, argv, gedp, d);
+	if (cret != BRLCAD_OK)
+	    bu_log("error running %s post-execution callback\n", cmdname.c_str());
+    }
+
+    if (tstr)
+	bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
 
     return cret;
 }
