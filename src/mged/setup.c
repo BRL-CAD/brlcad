@@ -417,6 +417,11 @@ cmd_setup(void)
     struct cmdtab *ctp;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
 
+    // TODO - should be using libged cmd list to populate everything
+    // in this table that is a plain wrapper - that way all ged commands
+    // are always automatically there and we can delete the hardcoded
+    // logic.
+
     for (ctp = mged_cmdtab; ctp->name != NULL; ctp++) {
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
