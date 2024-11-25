@@ -194,6 +194,28 @@ struct ged_results;
  * Define an impl container to hold internal details. */
 struct ged_impl;
 
+// TODO - in the above struct, we can hide a general callback mechanism where
+// we can allow apps (via accessor functions) to set app level pre and post
+// command execution callbacks on any command.  We should also be able to
+// define the "generic" callbacks that aren't specific to just one command
+// (view refresh being the canonical example), maybe via separate functions
+// from the command specific callbacks.  Goal would be to eliminate the need
+// for the command tables in libtclcad and mged in favor of setting callback
+// functions.  Another tell that we're getting it right will be the ability to
+// eliminate most of the current callback hooks explicitly spelled out in the
+// ged struct.
+//
+// ged_exec will always check for a specific command's callbacks, but commands
+// can also internally check for things like the view refresh callback if the
+// command implementation knows it will need to trigger it (draw, for example,
+// should check for a view refresh callback once its work is done.)  Probably
+// need to track to make sure we don't have infinite loops of callbacks calling
+// callbacks assigned at run time - it'll be a situation similar to the Qt
+// signal/slots mechanism where you can accidentally set such things up.
+// Probably want to allow more than one callback function on the same command,
+// maybe checking to prevent multiple calls to the same function getting
+// assigned by mistake.
+
 struct ged {
     struct ged_impl             *i;
     struct bu_vls               go_name;
