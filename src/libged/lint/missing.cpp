@@ -155,7 +155,7 @@ _ged_missing_check(lint_data *mdata)
     if (mdata->argc) {
 	const char *osearch = "-type comb";
 	struct bu_ptbl pc = BU_PTBL_INIT_ZERO;
-	if (db_search(&pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, mdata->argc, mdata->dpa, gedp->dbip, NULL) < 0) {
+	if (db_search(&pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, mdata->argc, mdata->dpa, gedp->dbip, NULL, NULL, NULL) < 0) {
 	    ret = BRLCAD_ERROR;
 	} else {
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(&pc); i++) {

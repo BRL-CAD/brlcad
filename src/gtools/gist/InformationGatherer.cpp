@@ -256,7 +256,7 @@ InformationGatherer::getNumEntities(std::string component)
     // TODO/NOTE: is union the best heuristic for 'entities'?
     struct directory* dp = db_lookup(g->dbip, component.c_str(), LOOKUP_QUIET);
     const char* filter = "-bool u";
-    int entities = db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, filter, 1, &dp, g->dbip, NULL);
+    int entities = db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, filter, 1, &dp, g->dbip, NULL, NULL, NULL);
 
     return entities > 0 ? entities : 0; // clamp errors to 0
 }
@@ -488,7 +488,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     int totalEntities = 0;
     // gather groups and regions
     const char* sFilter = "-above -type region";
-    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
         res_len = BU_PTBL_LEN(&results);
         infoMap["assemblies"] = std::to_string(res_len);
         totalEntities += res_len;
@@ -497,7 +497,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     res_len = 0;
     // gather primitive shapes
     sFilter = "-not -type region -and -not -type comb";
-    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
         res_len = BU_PTBL_LEN(&results);
         infoMap["primitives"] = std::to_string(res_len);
         totalEntities += res_len;
@@ -506,7 +506,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     res_len = 0;
     // gather primitive shapes
     sFilter = "-type region";
-    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
         res_len = BU_PTBL_LEN(&results);
         infoMap["regions"] = std::to_string(res_len);
         totalEntities += res_len;
@@ -563,11 +563,11 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     bool hasImplicit = false;
     const char* tfilter = "-type brep -or -type bot -or -type vol -or -type sketch";
 
-    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL, NULL, NULL) > 0) {
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep -not -type bot -not -type vol -not -type sketch";
-    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL, NULL, NULL) > 0) {
         hasImplicit = true;
     }
 

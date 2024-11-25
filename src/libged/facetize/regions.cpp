@@ -76,7 +76,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *active_regions = "( -type r ! -below -type r )";
     struct bu_ptbl *ar = NULL;
     BU_ALLOC(ar, struct bu_ptbl);
-    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL, NULL, NULL) < 0) {
 	if (s->verbosity >= 0) {
 	    bu_log("regions.cpp:%d Problem searching for active regions - aborting.\n", __LINE__);
 	}
@@ -146,7 +146,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *active_solids = "! -type comb";
     struct bu_ptbl *as = NULL;
     BU_ALLOC(as, struct bu_ptbl);
-    if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, argc, dpa, dbip, NULL, NULL, NULL) < 0) {
 	if (s->verbosity >= 0) {
 	    bu_log("regions.cpp:%d Problem searching for active solids - aborting.\n", __LINE__);
 	}
@@ -252,7 +252,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *implicit_regions = "( ! -below -type r ! -type comb )";
     struct bu_ptbl *ir = NULL;
     BU_ALLOC(ir, struct bu_ptbl);
-    if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, argc, dpa, dbip, NULL, NULL, NULL) < 0) {
 	if (s->verbosity >= 0) {
 	    bu_log("Problem searching for implicit regions - aborting.\n");
 	}

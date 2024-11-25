@@ -243,7 +243,7 @@ op_pnts_vol(
      * non non-volumetric object types in its hierarchy.  If
      * there is such an object, abandon the test.  */
     const char *tfilter = "! -type shape";
-    if (db_search(NULL, DB_SEARCH_QUIET, tfilter, 1, &dp, gedp->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, tfilter, 1, &dp, gedp->dbip, NULL, NULL, NULL) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "Non-solid object found in %s, aborting\n", vol_obj);
 	rt_db_free_internal(&tpnts_intern);
 	return -1;

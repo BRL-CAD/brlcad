@@ -581,7 +581,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     if (bu_vls_strlen(&search_filter)) {
 	int s_flags = 0;
 	s_flags |= DB_SEARCH_RETURN_UNIQ_DP;
-	(void)db_search(&sobjs, s_flags, bu_vls_cstr(&search_filter), 0, NULL, dbip, NULL);
+	(void)db_search(&sobjs, s_flags, bu_vls_cstr(&search_filter), 0, NULL, dbip, NULL, NULL, NULL);
 
 	// If we're not allowed *any* objects according to the filters, there's no point in
 	// doing any more work - just print the header and exit.

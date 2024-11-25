@@ -103,7 +103,7 @@ _ged_invalid_shape_check(lint_data *ldata)
     struct bu_vls sopts = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sopts, "! -type comb %s", ldata->filter.c_str());
     BU_ALLOC(pc, struct bu_ptbl);
-    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), ldata->argc, ldata->dpa, ldata->gedp->dbip, NULL) < 0) {
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), ldata->argc, ldata->dpa, ldata->gedp->dbip, NULL, NULL, NULL) < 0) {
 	ret = BRLCAD_ERROR;
 	bu_free(pc, "pc table");
     } else {

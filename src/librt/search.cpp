@@ -304,7 +304,7 @@ f_expr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
  * to a N_EXPR node containing the expression and the ')' node is discarded.
  */
 static int
-c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     (*resultplan) = (palloc(N_OPENPAREN, (int (*)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct bu_ptbl *))-1, tbl));
     return BRLCAD_OK;
@@ -312,7 +312,7 @@ c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), s
 
 
 static int
-c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct bu_ptbl *))-1, tbl));
     return BRLCAD_OK;
@@ -340,7 +340,7 @@ f_not(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, stru
 
 
 static int
-c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     (*resultplan) = (palloc(N_NOT, f_not, tbl));
     return BRLCAD_OK;
@@ -396,7 +396,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
 
 static int
-c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     (*resultplan) =  (palloc(N_BELOW, f_below, tbl));
     return BRLCAD_OK;
@@ -444,7 +444,7 @@ f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
 
 static int
-c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     (*resultplan) =  (palloc(N_ABOVE, f_above, tbl));
     return BRLCAD_OK;
@@ -478,7 +478,7 @@ f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struc
 
 
 static int
-c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     (*resultplan) = (palloc(N_OR, f_or, tbl));
     return BRLCAD_OK;
@@ -512,7 +512,7 @@ f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
 
 static int
-c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -549,7 +549,7 @@ f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
 
 
 static int
-c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -614,14 +614,14 @@ c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_pla
 
 
 static int
-c_regex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_regex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     return c_regex_common(N_REGEX, pattern, 0, resultplan, tbl);
 }
 
 
 static int
-c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     return c_regex_common(N_IREGEX, pattern, 1, resultplan, tbl);
 }
@@ -859,7 +859,7 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
 
 
 static int
-c_objparam(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_objparam(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -938,7 +938,7 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 
 
 static int
-c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1012,7 +1012,7 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i
 
 
 static int
-c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1178,7 +1178,7 @@ return_label:
 
 
 static int
-c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1254,7 +1254,7 @@ f_size(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
 
 static int
-c_size(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_size(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1289,7 +1289,7 @@ f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
 
 static int
-c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     int bool_type = 0;
     struct db_plan_t *newplan;
@@ -1329,7 +1329,7 @@ f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSE
 
 
 static int
-c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1361,7 +1361,7 @@ f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSE
 
 
 static int
-c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1528,7 +1528,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
 
 static int
-c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t **resultplan, int *db_search_isoutput, struct bu_ptbl *tbl, struct db_search_context *ctx)
+c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t **resultplan, int *db_search_isoutput, struct bu_ptbl *tbl, struct _db_search_ctx *ctx)
 {
     struct db_plan_t *newplan;
     char **e_argv = NULL;
@@ -1592,7 +1592,7 @@ c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t 
 
 
 static int
-c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1674,7 +1674,7 @@ f_matrix(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
 
 
 static int
-c_matrix(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_matrix(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1786,7 +1786,7 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
 
 
 static int
-c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1818,7 +1818,7 @@ f_path(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
 
 static int
-c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1858,7 +1858,7 @@ f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *
 
 
 static int
-c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *db_search_isoutput, struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *db_search_isoutput, struct bu_ptbl *tbl, struct _db_search_ctx *UNUSED(ctx))
 {
     *db_search_isoutput = 1;
     (*resultplan) = palloc(N_PRINT, f_print, tbl);
@@ -1899,7 +1899,7 @@ find_create(char ***argvp,
 	    struct bu_ptbl *UNUSED(results),
 	    int *db_search_isoutput,
 	    int quiet, struct bu_ptbl *tbl,
-	    struct db_search_context *ctx)
+	    struct _db_search_ctx *ctx)
 {
     OPTION *p;
     struct db_plan_t *newplan = NULL;
@@ -2396,7 +2396,7 @@ static struct db_plan_t *
 db_search_form_plan(char **argv,
 		    int quiet,
 		    struct bu_ptbl *tbl,
-		    struct db_search_context *ctx)
+		    struct _db_search_ctx *ctx)
 {
     struct db_plan_t *plan = NULL;
     struct db_plan_t *tail = NULL;
@@ -2575,7 +2575,10 @@ db_search(struct bu_ptbl *search_results,
 	  int input_path_cnt,
 	  struct directory **input_paths,
 	  struct db_i *dbip,
-	  struct db_search_context *ctx)
+	  bu_clbk_t clbk,
+	  void *u1,
+	  void *u2
+	  )
 {
     int i = 0;
     int result_cnt = 0;
@@ -2584,6 +2587,10 @@ db_search(struct bu_ptbl *search_results,
     struct directory **top_level_objects = NULL;
     struct directory **paths = input_paths;
     int path_cnt = input_path_cnt;
+    struct _db_search_ctx ctx;
+    ctx.clbk = clbk;
+    ctx.u1 = u1;
+    ctx.u2 = u2;
 
     /* Note that dbplan references strings using memory
      * in the following two objects, so they mustn't be
@@ -2597,9 +2604,9 @@ db_search(struct bu_ptbl *search_results,
     /* get the plan string into an argv array */
     bu_argv_from_string(&plan_argv[0], strlen(plan_str), mutable_plan_str);
     if (!(search_flags & DB_SEARCH_QUIET)) {
-	dbplan = db_search_form_plan(plan_argv, 0, &dbplans, ctx);
+	dbplan = db_search_form_plan(plan_argv, 0, &dbplans, &ctx);
     } else {
-	dbplan = db_search_form_plan(plan_argv, 1, &dbplans, ctx);
+	dbplan = db_search_form_plan(plan_argv, 1, &dbplans, &ctx);
     }
     /* No plan, no search */
     if (!dbplan) {

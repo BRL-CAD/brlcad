@@ -261,7 +261,7 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	return BRLCAD_OK;
 
     struct bu_ptbl objs = BU_PTBL_INIT_ZERO;
-    if (db_search(&objs, DB_SEARCH_RETURN_UNIQ_DP, "-type shape", 1, &einfo->dp, einfo->gedp->dbip, NULL) < 0) {
+    if (db_search(&objs, DB_SEARCH_RETURN_UNIQ_DP, "-type shape", 1, &einfo->dp, einfo->gedp->dbip, NULL, NULL, NULL) < 0) {
     	bu_vls_printf(gedp->ged_result_str, "search error\n");
 	return BRLCAD_ERROR;
     }

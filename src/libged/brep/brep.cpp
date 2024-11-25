@@ -575,7 +575,7 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
     db_update_nref(gedp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gb->dp, gedp->dbip, NULL);
+    (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gb->dp, gedp->dbip, NULL, NULL, NULL);
     for (size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct db_full_path *fp = (struct db_full_path *)BU_PTBL_GET(&breps, i);
 	mat_t m;

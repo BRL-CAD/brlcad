@@ -245,15 +245,15 @@ comb_flatten(struct ged *gedp, struct directory *dp)
     struct directory **dp_curr;
 
     /* if there are non-union booleans in this comb's tree, error out */
-    result_cnt = db_search(NULL, DB_SEARCH_TREE, only_unions_in_tree_plan, 1, &dp, gedp->dbip, NULL);
+    result_cnt = db_search(NULL, DB_SEARCH_TREE, only_unions_in_tree_plan, 1, &dp, gedp->dbip, NULL, NULL, NULL);
     if (result_cnt) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree contains non-union booleans", dp->d_namep);
 	return BRLCAD_ERROR;
     }
 
     /* Find the solids and combs in the tree */
-    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solids_in_tree_plan, 1, &dp, gedp->dbip, NULL);
-    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->dbip, NULL);
+    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solids_in_tree_plan, 1, &dp, gedp->dbip, NULL, NULL, NULL);
+    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->dbip, NULL, NULL, NULL);
 
     /* If it's all solids already, nothing to do */
     if (!BU_PTBL_LEN(&combs)) {
@@ -267,7 +267,7 @@ comb_flatten(struct ged *gedp, struct directory *dp)
     obj_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
-    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->dbip, NULL);
+    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->dbip, NULL, NULL, NULL);
     bu_vls_free(&plan_string);
 
     /* Done searching - now we can free the path list and clear the original tree */
@@ -339,7 +339,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     int failure_case = 0;
 
     /* Find the regions - need full paths here, because we'll be checking parents */
-    (void)db_search(&regions, DB_SEARCH_TREE, regions_in_tree_plan, 1, &dp, gedp->dbip, NULL);
+    (void)db_search(&regions, DB_SEARCH_TREE, regions_in_tree_plan, 1, &dp, gedp->dbip, NULL, NULL, NULL);
 
     /* If it's all non-region combs and solids already, nothing to do except possibly set the region flag*/
     if (!BU_PTBL_LEN(&regions)) {
@@ -353,7 +353,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     obj_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
-    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->dbip, NULL);
+    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->dbip, NULL, NULL, NULL);
     bu_vls_free(&plan_string);
 
     /* release our db_ls path */
@@ -425,7 +425,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
 
 	bu_ptbl_init(&stack, 64, "comb mvall working stack");
 
-	(void)db_search(&combs_in_tree, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->dbip, NULL);
+	(void)db_search(&combs_in_tree, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->dbip, NULL, NULL, NULL);
 	bu_ptbl_ins(&combs_in_tree, (long *)dp);
 	for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_wrap)) {
 	    if ((*dp_curr) != dp) {
@@ -474,7 +474,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
     struct db_i *dbip = gedp->dbip;
 
     BU_ALLOC(bot_dps, struct bu_ptbl);
-    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, 1, &dp, gedp->dbip, NULL) < 0) {
+    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, 1, &dp, gedp->dbip, NULL, NULL, NULL) < 0) {
 	bu_log("Problem searching for BoTs - aborting.\n");
 	ret = BRLCAD_ERROR;
 	goto comb_decimate_memfree;

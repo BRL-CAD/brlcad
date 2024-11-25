@@ -38,15 +38,6 @@
 __BEGIN_DECLS
 
 /**
- * @brief Execution context for the -exec filter.
- */
-struct db_search_context {
-    bu_clbk_t clbk; /**< @brief A function that evaluates an array of strings and returns a boolean. */
-    void *u1; /**< @brief A pointer that will be passed to the callback. */
-    void *u2; /**< @brief A pointer that will be passed to the callback. */
-};
-
-/**
  * @brief Search for objects in a geometry database using filters
  *
  * The db_search function is a programmatic find-style interface that
@@ -76,8 +67,11 @@ struct db_search_context {
  * @param dbip The database instance pointer corresponding to the
  * current geometry database.
  *
- * @param ctx Context for -exec. Can be NULL if there are no -exec filters present.
+ * @param clbk Optional callback function to call for -exec
  *
+ * @param u1 Optional user data pointer
+ *
+ * @param u2 Optional user data pointer
  *
  * @return Negative return values indicate a problem with the search,
  * and non-negative values indicate a successful search.  Non-negative
@@ -118,7 +112,9 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
 			       int path_c,
 			       struct directory **path_v,
 			       struct db_i *dbip,
-			       struct db_search_context *ctx
+			       bu_clbk_t clbk,
+			       void *u1,
+			       void *u2
 			      );
 
 /* These are the possible search flags. */

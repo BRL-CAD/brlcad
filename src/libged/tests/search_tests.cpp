@@ -79,11 +79,13 @@ bool search_count_helper(const int expected_count,
 			 int path_c,
 			 struct directory **path_v,
 			 struct db_i *dbip,
-			 struct db_search_context *ctx)
+			 bu_clbk_t clbk,
+			 void *u1,
+			 void *u2)
 {
     // ensure good return, and count inside ptbl match expectations
     struct bu_ptbl search_results = BU_PTBL_INIT_ZERO;
-    int ret = db_search(&search_results, flags, filter, path_c, path_v, dbip, ctx);
+    int ret = db_search(&search_results, flags, filter, path_c, path_v, dbip, clbk, u1, u2);
 
     bool count_matches = (ret >= 0 && BU_PTBL_LEN(&search_results) == (unsigned long)expected_count);
     db_search_free(&search_results);
@@ -97,10 +99,10 @@ bool GenericSearches(struct ged* gedp) {
     const int EXPECTED_HIDD = 11;
     const int EXPECTED_UNIQ = 8;
     
-    bool tree = search_count_helper(EXPECTED_TREE, DB_SEARCH_TREE, "", 0, NULL, gedp->dbip, NULL);
-    bool flat = search_count_helper(EXPECTED_FLAT, DB_SEARCH_FLAT, "", 0, NULL, gedp->dbip, NULL);
-    bool hidd = search_count_helper(EXPECTED_HIDD, DB_SEARCH_HIDDEN, "", 0, NULL, gedp->dbip, NULL);
-    bool uniq = search_count_helper(EXPECTED_UNIQ, DB_SEARCH_RETURN_UNIQ_DP, "", 0, NULL, gedp->dbip, NULL);
+    bool tree = search_count_helper(EXPECTED_TREE, DB_SEARCH_TREE, "", 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    bool flat = search_count_helper(EXPECTED_FLAT, DB_SEARCH_FLAT, "", 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    bool hidd = search_count_helper(EXPECTED_HIDD, DB_SEARCH_HIDDEN, "", 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    bool uniq = search_count_helper(EXPECTED_UNIQ, DB_SEARCH_RETURN_UNIQ_DP, "", 0, NULL, gedp->dbip, NULL, NULL, NULL);
 
     return (tree && flat && hidd && uniq);
 }
@@ -110,7 +112,7 @@ bool PathSearches(struct ged* gedp) {
     const char* COMB_NAME = "ball_inside";
 
     struct directory* path_dp = db_lookup(gedp->dbip, COMB_NAME, LOOKUP_QUIET);
-    bool path = search_count_helper(EXPECTED_PATH, DB_SEARCH_TREE, "", 1, &path_dp, gedp->dbip, NULL);
+    bool path = search_count_helper(EXPECTED_PATH, DB_SEARCH_TREE, "", 1, &path_dp, gedp->dbip, NULL, NULL, NULL);
 
     return path;
 }
@@ -120,9 +122,9 @@ bool TypeSearches(struct ged* gedp) {
     const int EXPECTED_REGION = 4;
     const int EXPECTED_COMB = 6;
 
-    bool shape = search_count_helper(EXPECTED_SHAPE, DB_SEARCH_TREE, "-type shape", 0, NULL, gedp->dbip, NULL);
-    bool region = search_count_helper(EXPECTED_REGION, DB_SEARCH_TREE, "-type region", 0, NULL, gedp->dbip, NULL);
-    bool comb = search_count_helper(EXPECTED_COMB, DB_SEARCH_TREE, "-type comb", 0, NULL, gedp->dbip, NULL);
+    bool shape = search_count_helper(EXPECTED_SHAPE, DB_SEARCH_TREE, "-type shape", 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    bool region = search_count_helper(EXPECTED_REGION, DB_SEARCH_TREE, "-type region", 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    bool comb = search_count_helper(EXPECTED_COMB, DB_SEARCH_TREE, "-type comb", 0, NULL, gedp->dbip, NULL, NULL, NULL);
 
     return (shape && region && comb);
 }
@@ -130,7 +132,7 @@ bool TypeSearches(struct ged* gedp) {
 bool AttrSearches(struct ged* gedp) {
     const int EXPECTED_ID = 2;
 
-    bool id = search_count_helper(EXPECTED_ID, DB_SEARCH_TREE, "-attr region_id=1001", 0, NULL, gedp->dbip, NULL);
+    bool id = search_count_helper(EXPECTED_ID, DB_SEARCH_TREE, "-attr region_id=1001", 0, NULL, gedp->dbip, NULL, NULL, NULL);
 
     return id;
 }
@@ -140,7 +142,7 @@ bool OrSearches(struct ged* gedp) {
     
     const char* sFilter = "-type region -or -type arb8";
 
-    bool reg_arb = search_count_helper(EXPECTED_REG_ARB, DB_SEARCH_TREE, sFilter, 0, NULL, gedp->dbip, NULL);
+    bool reg_arb = search_count_helper(EXPECTED_REG_ARB, DB_SEARCH_TREE, sFilter, 0, NULL, gedp->dbip, NULL, NULL, NULL);
     
     return reg_arb;
 }
@@ -150,7 +152,7 @@ bool AndSearches(struct ged* gedp) {
 
     const char* sFilter = "-type region -and -type comb";
 
-    bool reg_comb = search_count_helper(EXPECTED_REG_COMB, DB_SEARCH_TREE, sFilter, 0, NULL, gedp->dbip, NULL);
+    bool reg_comb = search_count_helper(EXPECTED_REG_COMB, DB_SEARCH_TREE, sFilter, 0, NULL, gedp->dbip, NULL, NULL, NULL);
 
     return reg_comb;
 }

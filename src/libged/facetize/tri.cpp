@@ -1162,7 +1162,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
      * to their data. */
     const char *sfilter = "-type shape -or -type pnts";
     struct bu_ptbl leaf_dps = BU_PTBL_INIT_ZERO;
-    if (db_search(&leaf_dps, DB_SEARCH_RETURN_UNIQ_DP, sfilter, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(&leaf_dps, DB_SEARCH_RETURN_UNIQ_DP, sfilter, argc, dpa, dbip, NULL, NULL, NULL) < 0) {
 	// Empty input - nothing to facetize.
 	return BRLCAD_OK;
     }

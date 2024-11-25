@@ -418,8 +418,8 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     db_update_nref(gedp->dbip, &rt_uniresource);
     const char *mname_search = "-attr material_name";
     const char *mid_search = "-attr material_id";
-    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL);
-    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL);
+    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
 	dp = (struct directory *)BU_PTBL_GET(&mn_objs, i);
 	mns.insert(dp);
@@ -1481,8 +1481,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 
     // Find the objects we need to work with (if any)
     db_update_nref(gedp->dbip, &rt_uniresource);
-    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL);
-    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL);
+    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
 	dp = (struct directory *)BU_PTBL_GET(&mn_objs, i);
 	mns.insert(dp);

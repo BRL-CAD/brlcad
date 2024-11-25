@@ -893,7 +893,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
 		      (std::string() +
 		       "-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
-		       + gcv_options.default_name + "* )").c_str(), 0, NULL, &db, NULL))
+		       + gcv_options.default_name + "* )").c_str(), 0, NULL, &db, NULL, NULL, NULL))
 	bu_bomb("db_search() failed");
 
     const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
@@ -906,11 +906,11 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
     // Set region flags, add .r suffix to regions if not already present
     renamed.clear();
     const char *reg_search = "-type comb -above=1 -type shape";
-    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL))
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL, NULL, NULL))
 	bu_bomb("db_search() failed");
     bu_ptbl found_instances = BU_PTBL_INIT_ZERO;
     AutoPtr<bu_ptbl, db_search_free> autofree_found_instances(&found_instances);
-    if (0 > db_search(&found_instances, DB_SEARCH_TREE, reg_search, 0, NULL, &db, NULL))
+    if (0 > db_search(&found_instances, DB_SEARCH_TREE, reg_search, 0, NULL, &db, NULL, NULL, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -963,7 +963,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
     BU_PTBL_INIT(&found);
 
     renamed.clear();
-    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db, NULL))
+    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db, NULL, NULL, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -1024,7 +1024,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
     BU_PTBL_INIT(&found);
 
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, 
-		      "-attr rhino::type=ON_InstanceDefinition -not -below -type comb", 0, NULL, &db, NULL))
+		      "-attr rhino::type=ON_InstanceDefinition -not -below -type comb", 0, NULL, &db, NULL, NULL, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -1042,7 +1042,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
     BU_PTBL_INIT(&found);
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      "-type shape -not -below -type region", 0, NULL, &db, NULL))
+		      "-type shape -not -below -type region", 0, NULL, &db, NULL, NULL, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
