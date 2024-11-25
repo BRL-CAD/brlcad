@@ -1583,7 +1583,7 @@ c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t 
     newplan->p_un.ex._e_nholes = nholes;
     newplan->p_un.ex._e_callback = ctx->clbk;
     newplan->p_un.ex._e_userdata1 = ctx->u1;
-    newplan->p_un.ex._e_userdata2 = ctx->u1;
+    newplan->p_un.ex._e_userdata2 = ctx->u2;
 
     (*resultplan) = newplan;
 
