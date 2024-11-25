@@ -405,9 +405,12 @@ GED_EXPORT extern void ged_init(struct ged *gedp);
 GED_EXPORT extern void ged_free(struct ged *gedp);
 
 
-// Associate a callback function pointer for a command.  If pre is non-zero,
-// function will be registered to run BEFORE actual cmd logic is run, and if
-// zero will be registered to run AFTER the cmd logic is run.
+// Associate a callback function pointer for a command.  If mode is less than zero,
+// function will be registered to run BEFORE actual cmd logic is run, and if greater
+// than zero will be registered to run AFTER the cmd logic is run.  If mode is zero,
+// then it is intended to be used *during* command execution and it will be up
+// to the command's implementation to incorporate the callback into its
+// execution logic.
 //
 // Only one function can be registered for each pre/post command slot - an
 // assignment to a command slot that already has an assigned function will
@@ -425,10 +428,10 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 //
 // To clear all command callbacks, iterate over the ged_cmd_list results
 // and assign NULL f values.
-GED_EXPORT extern int ged_clbk_set(struct ged *gedp, const char *cmd, int pre, bu_clbk_t f, void *d);
+GED_EXPORT extern int ged_clbk_set(struct ged *gedp, const char *cmd, int mode, bu_clbk_t f, void *d);
 
 // Method calling code can use to get the current clbk info for a specific command.
-GED_EXPORT extern int ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int pre);
+GED_EXPORT extern int ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int mode);
 
 
 

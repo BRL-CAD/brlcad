@@ -90,7 +90,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     // We have a command now - check for a pre-exec callback.
     bu_clbk_t f = NULL;
     void *d = NULL;
-    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), 1) == BRLCAD_OK) && f) {
+    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), -1) == BRLCAD_OK) && f) {
 	cret = (*f)(argc, argv, gedp, d);
 	if (cret != BRLCAD_OK)
 	    bu_log("error running %s pre-execution callback\n", cmdname.c_str());
@@ -111,7 +111,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Command execution complete - check for a post command callback.
-    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), 0) == BRLCAD_OK) && f) {
+    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), -1) == BRLCAD_OK) && f) {
 	cret = (*f)(argc, argv, gedp, d);
 	if (cret != BRLCAD_OK)
 	    bu_log("error running %s post-execution callback\n", cmdname.c_str());

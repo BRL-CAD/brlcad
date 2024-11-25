@@ -530,7 +530,8 @@ ged_clbk_set(struct ged *gedp, const char *cmd, int pre, bu_clbk_t f, void *d)
     std::string scmd = std::string(cmd);
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
-    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (pre) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (pre < 0) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    cm = (pre == 0) ? &gedip->cmd_during_clbk : cm;
     std::map<std::string, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(scmd);
     if (c_it != cm->end())
 	ret |= GED_OVERRIDE;
@@ -549,6 +550,7 @@ ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int pre)
     std::string scmd = std::string(cmd);
     Ged_Internal *gedip = gedp->i->i;
     std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (pre) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    cm = (pre == 0) ? &gedip->cmd_during_clbk : cm;
     std::map<std::string, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(scmd);
     c_it = cm->find(scmd);
     if (c_it == cm->end()) {
