@@ -484,7 +484,6 @@ mged_setup(Tcl_Interp **interpreter)
     GEDP->ged_pre_closedb_callback = &mged_pre_closedb_clbk;
     GEDP->ged_post_closedb_callback = &mged_post_closedb_clbk;
     GEDP->ged_db_callback_udata = &mged_global_db_ctx;
-    GEDP->ged_interp = (void *)interpreter;
 
     // Register during-execution callback function for search command
     ged_clbk_set(GEDP, "search", 0, &mged_db_search_callback, (void *)*interpreter);
