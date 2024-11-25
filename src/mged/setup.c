@@ -491,7 +491,7 @@ mged_setup(Tcl_Interp **interpreter)
     GEDP->ged_db_callback_udata = &mged_global_db_ctx;
 
     // Register during-execution callback function for search command
-    ged_clbk_set(GEDP, "search", 0, &mged_db_search_callback, (void *)*interpreter);
+    ged_clbk_set(GEDP, "search", GED_CLBK_DURING, &mged_db_search_callback, (void *)*interpreter);
 
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;

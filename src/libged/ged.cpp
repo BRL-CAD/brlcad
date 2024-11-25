@@ -530,8 +530,8 @@ ged_clbk_set(struct ged *gedp, const char *cmd, int mode, bu_clbk_t f, void *d)
     std::string scmd = std::string(cmd);
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
-    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (mode < 0) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
-    cm = (mode == 0) ? &gedip->cmd_during_clbk : cm;
+    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    cm = (mode == GED_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
     std::map<std::string, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(scmd);
     if (c_it != cm->end())
 	ret |= GED_OVERRIDE;
@@ -549,8 +549,8 @@ ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int mode
     GED_CK_MAGIC(gedp);
     std::string scmd = std::string(cmd);
     Ged_Internal *gedip = gedp->i->i;
-    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (mode < 0) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
-    cm = (mode == 0) ? &gedip->cmd_during_clbk : cm;
+    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    cm = (mode == GED_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
     std::map<std::string, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(scmd);
     c_it = cm->find(scmd);
     if (c_it == cm->end()) {
