@@ -391,7 +391,7 @@ struct ged {
 
 // Create and destroy a ged container.  Handles all initialization - no
 // need to call init or free using these routines.
-GED_EXPORT struct ged *ged_create();
+GED_EXPORT struct ged *ged_create(void);
 GED_EXPORT void ged_destroy(struct ged *);
 
 // If you create a ged container on the stack or without using create/destroy,

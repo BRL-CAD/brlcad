@@ -190,7 +190,7 @@ ged_init(struct ged *gedp)
 }
 
 struct ged *
-ged_create()
+ged_create(void)
 {
     struct ged *gedp;
     BU_GET(gedp, struct ged);
