@@ -302,7 +302,6 @@ GED_EXPORT extern int dl_redraw(struct display_list *gdlp, struct ged *gedp, int
 GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
 GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
-GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
