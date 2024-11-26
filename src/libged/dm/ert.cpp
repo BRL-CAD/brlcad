@@ -44,7 +44,6 @@
 
 #include "../ged_private.h"
 
-
 extern "C" int
 ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -159,7 +158,25 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 	gd_rt_cmd[j] = bu_strdup(args[j].c_str());
     }
 
-    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), 0);
+    // If we need to do something at the end of the ert cmd, find out - we'll have to pass that on to the rt
+    // subprocess control.
+    bu_clbk_t clbk = NULL;
+    void *u1 = NULL;
+    void *u2 = NULL;
+    ged_clbk_get(&clbk, &u2, gedp, "ert", GED_CLBK_LINGER);
+
+    // We need to know the pid of the rt command that has been launched
+    int rt_pid = -1;
+
+    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), 0, &rt_pid, clbk, u2);
+
+    clbk = NULL;
+    u1 = (void *)&rt_pid;
+    u2 = NULL;
+    ged_clbk_get(&clbk, &u2, gedp, "ert", GED_CLBK_DURING);
+
+    if (clbk)
+	(*clbk)(argc, argv, u1, u2);
 
     bu_vls_cstr(&wstr);
     for (size_t j = 0; j < args.size(); j++) {

@@ -50,6 +50,7 @@ class Ged_Internal {
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
+	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
 };
 
 #else
@@ -116,6 +117,9 @@ __BEGIN_DECLS
 /* Common flags used by multiple GED commands for help printing */
 #define HELPFLAG "--print-help"
 #define PURPOSEFLAG "--print-purpose"
+
+// Pid return function clbk signature
+typedef void (*ged_pid_clbk_ptr)(int *, int);
 
 // Private bookkeeping structure used by callback handlers
 struct ged_callback_state {
@@ -418,7 +422,17 @@ _ged_rt_output_handler(void *clientData, int mask);
 
 GED_EXPORT extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-GED_EXPORT extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt);
+GED_EXPORT extern int _ged_run_rt(
+	struct ged *gdp,
+       	int cmd_len,
+       	const char **gd_rt_cmd,
+       	int argc,
+       	const char **argv,
+       	int stdout_is_txt,
+       	int *pid,
+	bu_clbk_t end_clbk,
+	void *end_clbk_data);
+
 GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
 			  vect_t eye_model,

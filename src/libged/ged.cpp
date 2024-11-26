@@ -140,9 +140,6 @@ ged_init(struct ged *gedp)
     gedp->fbs_open_client_handler = NULL;
     gedp->fbs_close_client_handler = NULL;
 
-    gedp->ged_subprocess_init_callback = NULL;
-    gedp->ged_subprocess_end_callback = NULL;
-
     BU_GET(gedp->ged_gdp, struct ged_drawable);
     BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
     BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
@@ -535,6 +532,7 @@ ged_clbk_set(struct ged *gedp, const char *cmd_str, int mode, bu_clbk_t f, void 
 
     std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
     cm = (mode == GED_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
+    cm = (mode == GED_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
     std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
     if (c_it != cm->end())
 	ret |= GED_OVERRIDE;
@@ -564,6 +562,7 @@ ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd_str, int 
 
     std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
     cm = (mode == GED_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
+    cm = (mode == GED_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
     std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
     if (c_it == cm->end()) {
 	// Nothing set, which is fine - return NULL

@@ -458,7 +458,7 @@ GshState::disconnect(struct ged_subprocess *p, bu_process_io_t t)
     // All communication has ceased between the app and the subprocess,
     // time to call the end callback (if any)
     if (p->end_clbk)
-	p->end_clbk(0, p->end_clbk_data);
+	p->end_clbk(0, NULL, NULL, p->end_clbk_data);
 }
 
 void

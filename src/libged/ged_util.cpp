@@ -1629,7 +1629,7 @@ _ged_rt_output_handler2(void *clientData, int type)
 	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	if (rrtp->end_clbk)
-	    rrtp->end_clbk(aborted, rrtp->end_clbk_data);
+	    rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
 
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
@@ -1725,7 +1725,7 @@ _ged_rt_output_handler(void *clientData, int mask)
 	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	if (rrtp->end_clbk)
-	    rrtp->end_clbk(aborted, rrtp->end_clbk_data);
+	    rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
 
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
@@ -1807,7 +1807,7 @@ _ged_rt_write(struct ged *gedp,
 }
 
 int
-_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt)
+_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt, int *pid_ctx, bu_clbk_t end_clbk, void *end_clbk_data)
 {
     FILE *fp_in;
     vect_t eye_model;
@@ -1816,6 +1816,9 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 
     bu_process_create(&p, gd_rt_cmd, BU_PROCESS_DEFAULT);
 
+    if (pid_ctx)
+	*pid_ctx = bu_process_pid(p);
+
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
 	for (int i = 0; i < cmd_len; i++) {
@@ -1823,10 +1826,6 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 	}
 	bu_vls_printf(gedp->ged_result_str, "\n");
 	return BRLCAD_ERROR;
-    }
-
-    if (gedp->ged_subprocess_init_callback) {
-	(*gedp->ged_subprocess_init_callback)(bu_process_pid(p), gedp->ged_subprocess_clbk_context);
     }
 
     fp_in = bu_process_file_open(p, BU_PROCESS_STDIN);
@@ -1841,8 +1840,8 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     run_rtp->stdin_active = 0;
     run_rtp->stdout_active = 0;
     run_rtp->stderr_active = 0;
-    run_rtp->end_clbk = gedp->ged_subprocess_end_callback;
-    run_rtp->end_clbk_data = gedp->ged_subprocess_clbk_context;
+    run_rtp->end_clbk = end_clbk;
+    run_rtp->end_clbk_data = end_clbk_data;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;

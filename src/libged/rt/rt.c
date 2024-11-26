@@ -124,7 +124,7 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     *vp++ = gedp->dbip->dbi_filename;
     gd_rt_cmd_len = vp - gd_rt_cmd;
 
-    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), stdout_txt);
+    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), stdout_txt, NULL, NULL, NULL);
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 

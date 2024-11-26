@@ -126,7 +126,7 @@ struct ged_subprocess {
     void *chan;
     int aborted;
     struct ged *gedp;
-    void (*end_clbk)(int, void *);	/**< @brief  function called when process completes */
+    bu_clbk_t end_clbk;	/**< @brief  function called when process completes */
     void *end_clbk_data;
     int stdin_active;
     int stdout_active;
@@ -301,15 +301,6 @@ struct ged {
     void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
-    /* Functions assigned to ged_subprocess init_clbk and end_clbk
-     * slots when the ged_subprocess is created.  TODO - eventually
-     * this should be command-specific callback registrations, but
-     * first we'll get the basic mechanism working, then introduce
-     * that extra complication... */
-    void (*ged_subprocess_init_callback)(int, void *);	/**< @brief  function called when process starts */
-    void (*ged_subprocess_end_callback)(int, void *);	/**< @brief  function called when process completes */
-    void *ged_subprocess_clbk_context;
-
     /* Handler functions for I/O communication with asynchronous subprocess commands.  There
      * are two opaque data structures at play here, with different scopes.  One is the "data"
      * pointer passed to ged_create_io_handler, which is used to store command-specific
@@ -379,6 +370,11 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 #define GED_CLBK_DURING 0
 #define GED_CLBK_POST 1
 
+// In some cases (rt launches in particular) the client application may need
+// to take action when the subprocess ends, not simply when the command
+// returns.  Distinguished from GED_CLBK_POST with this setting.
+#define GED_CLBK_LINGER 2
+
 // Associate a callback function pointer for a command.  If mode is less than
 // zero, function will be registered to run BEFORE actual cmd logic is run, and
 // if greater than zero will be registered to run AFTER the cmd logic is run.
@@ -389,7 +385,8 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 // utilizes it.  The "search" command is an example of a command that utilizes
 // a "GED_CLBK_DURING" callback. PRE and POST callbacks are handled
 // automatically by ged_exec, and command implementations should not invoke
-// them directly.
+// them directly. LINGER is a special case involving commands utilizing long
+// running subprocesses.
 //
 // Only one function can be registered for each pre/post command slot - an
 // assignment to a command slot that already has an assigned function will
@@ -403,7 +400,10 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 //
 // d optionally associates user supplied data with the callback.  The bu_clbk_t
 // function signature has two data pointers - this value will be supplied as
-// the second pointer argument.  (The first will be the ged pointer.)
+// the second pointer argument.  (The first will usually be the ged pointer,
+// but that is not guaranteed in the GED_CLBK_DURING and GED_CLBK_LINGER cases
+// - check the command implementation to see what data it is returning via the
+// first ptr.)
 //
 // To clear all command callbacks, iterate over the ged_cmd_list results
 // and assign NULL f values.

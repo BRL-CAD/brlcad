@@ -141,7 +141,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     // time to call the end callback (if any)
     if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
 	if (p->end_clbk)
-	    p->end_clbk(0, p->end_clbk_data);
+	    p->end_clbk(0, NULL, NULL, p->end_clbk_data);
     }
 
     emit ca->view_update(QG_VIEW_REFRESH);
@@ -401,18 +401,23 @@ qged_view_update(struct ged *gedp)
     return view_flags;
 }
 
-extern "C" void
-raytrace_start(int val, void *ctx)
+extern "C" int
+raytrace_start(int UNUSED(argc), const char **UNUSED(argv), void *valp, void *ctx)
 {
+    if (!valp)
+	return BRLCAD_OK;
+    int val = *(int *)valp;
     QgEdApp *ap = (QgEdApp *)ctx;
     ap->w->IndicateRaytraceStart(val);
+    return BRLCAD_OK;
 }
 
-extern "C" void
-raytrace_done(int val, void *ctx)
+extern "C" int
+raytrace_done(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(valp), void *ctx)
 {
     QgEdApp *ap = (QgEdApp *)ctx;
-    ap->w->IndicateRaytraceDone(val);
+    ap->w->IndicateRaytraceDone();
+    return BRLCAD_OK;
 }
 
 int
@@ -447,18 +452,17 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// If we need command-specific subprocess awareness for
 	// a command, set it up
 	if (BU_STR_EQUAL(argv[0], "ert")) {
-	    gedp->ged_subprocess_init_callback = &raytrace_start;
-	    gedp->ged_subprocess_end_callback = &raytrace_done;
-	    gedp->ged_subprocess_clbk_context = (void *)this;
+	    ged_clbk_set(gedp, "ert", GED_CLBK_DURING, &raytrace_start, (void *)this);
+	    ged_clbk_set(gedp, "ert", GED_CLBK_LINGER, &raytrace_done, (void *)this);
 	}
 
 	// Ask the model to execute the command
 	ret = mdl->run_cmd(msg, argc, argv);
 
-	gedp->ged_subprocess_init_callback = NULL;
-	gedp->ged_subprocess_end_callback = NULL;
-	gedp->ged_subprocess_clbk_context = NULL;
-
+	if (BU_STR_EQUAL(argv[0], "ert")) {
+	    ged_clbk_set(gedp, "ert", GED_CLBK_DURING, NULL, NULL);
+	    ged_clbk_set(gedp, "ert", GED_CLBK_LINGER, NULL, NULL);
+	}
     } else {
 	for (int i = 0; i < argc; i++) {
 	    char *tstr = bu_strdup(argv[i]);

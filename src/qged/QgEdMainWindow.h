@@ -83,7 +83,7 @@ class QgEdMainWindow : public QMainWindow
 	void IndicateRaytraceStart(int);
 
 	// Clear visual window changes indicating a raytrace has begun
-	void IndicateRaytraceDone(int);
+	void IndicateRaytraceDone();
 
 	// Determine interaction mode based on selected palettes and the supplied point
 	int InteractionMode(QPoint &gpos);

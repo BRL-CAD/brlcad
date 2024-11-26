@@ -465,9 +465,9 @@ QgEdMainWindow::IndicateRaytraceStart(int val)
 }
 
 void
-QgEdMainWindow::IndicateRaytraceDone(int val)
+QgEdMainWindow::IndicateRaytraceDone()
 {
-    vcw->raytrace_done(val);
+    vcw->raytrace_done();
 }
 
 int

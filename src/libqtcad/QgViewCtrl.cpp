@@ -146,16 +146,23 @@ QgViewCtrl::do_view_update(unsigned long long flags)
     }
 }
 
-void rt_cmd_start(int pid, void *ctx)
+int
+rt_cmd_start(int UNUSED(ac), const char **UNUSED(av), void *pid_ptr, void *ctx)
 {
+    int *pidp = (int *)pid_ptr;
+    if (!pidp)
+	return BRLCAD_OK;
     QgViewCtrl *vctrl = (QgViewCtrl *)ctx;
-    vctrl->raytrace_start(pid);
+    vctrl->raytrace_start(*pidp);
+    return BRLCAD_OK;
 }
 
-void rt_cmd_done(int pid, void *ctx)
+int
+rt_cmd_done(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(u1), void *ctx)
 {
     QgViewCtrl *vctrl = (QgViewCtrl *)ctx;
-    vctrl->raytrace_done(pid);
+    vctrl->raytrace_done();
+    return BRLCAD_OK;
 }
 
 void
@@ -166,9 +173,8 @@ QgViewCtrl::raytrace_cmd()
     const char *av[4] = {NULL};
     struct bu_vls pid_str = BU_VLS_INIT_ZERO;
 
-    gedp->ged_subprocess_init_callback = &rt_cmd_start;
-    gedp->ged_subprocess_end_callback = &rt_cmd_done;
-    gedp->ged_subprocess_clbk_context = (void *)this;
+    ged_clbk_set(gedp, "ert", GED_CLBK_DURING, &rt_cmd_start, (void *)this);
+    ged_clbk_set(gedp, "ert", GED_CLBK_LINGER, &rt_cmd_done, (void *)this);
 
     if (raytrace_running) {
 	if (pid < 0)
@@ -186,9 +192,8 @@ QgViewCtrl::raytrace_cmd()
     emit view_changed(QG_VIEW_REFRESH);
 
 cmd_cleanup:
-    gedp->ged_subprocess_init_callback = NULL;
-    gedp->ged_subprocess_end_callback =NULL;
-    gedp->ged_subprocess_clbk_context = NULL;
+    ged_clbk_set(gedp, "ert", GED_CLBK_DURING, NULL, NULL);
+    ged_clbk_set(gedp, "ert", GED_CLBK_LINGER, NULL, NULL);
     bu_vls_free(&pid_str);
 }
 
@@ -202,7 +207,7 @@ QgViewCtrl::raytrace_start(int rpid)
 }
 
 void
-QgViewCtrl::raytrace_done(int)
+QgViewCtrl::raytrace_done()
 {
     QTCAD_SLOT("QgViewCtrl::raytrace_done", 1);
     raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace.png")));

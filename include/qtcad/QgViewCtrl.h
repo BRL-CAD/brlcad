@@ -77,7 +77,7 @@ class QTCAD_EXPORT QgViewCtrl : public QToolBar
 	// execution logic.
 	void raytrace_cmd();
 	void raytrace_start(int);
-	void raytrace_done(int);
+	void raytrace_done();
 
     public:
 	// Left mouse behavior controls (when not using a tool or editing)
