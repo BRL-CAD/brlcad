@@ -161,17 +161,6 @@ struct ged_solid_data {
     struct bview *v;
 };
 
-struct _ged_funtab {
-    char *ft_name;
-    char *ft_parms;
-    char *ft_comment;
-    int (*ft_func)(void);
-    int ft_min;
-    int ft_max;
-    int tcl_converted;
-};
-
-
 struct _ged_id_names {
     struct bu_list l;
     struct bu_vls name;		/**< name associated with region id */

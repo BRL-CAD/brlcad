@@ -35,6 +35,17 @@
 
 #include "../ged_private.h"
 
+struct _ged_funtab {
+    char *ft_name;
+    char *ft_parms;
+    char *ft_comment;
+    int (*ft_func)(void);
+    int ft_min;
+    int ft_max;
+    int tcl_converted;
+};
+
+
 static struct _ged_funtab joint_subcommand_table[] = {
     {"joint ", "",                        "Joint command table",                                NULL, 0, 0,                     FALSE},
     {"?",      "[commands]",              "summary of available joint commands",                NULL, 0, _GED_FUNTAB_UNLIMITED, FALSE},
