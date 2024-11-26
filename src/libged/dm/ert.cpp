@@ -91,12 +91,6 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     // framebuffer server.
     struct fbserv_obj *fbs = gedp->ged_fbs;
     fbs->fbs_fbp = fbp;
-    fbs->fbs_is_listening = gedp->fbs_is_listening;
-    fbs->fbs_listen_on_port = gedp->fbs_listen_on_port;
-    fbs->fbs_open_server_handler = gedp->fbs_open_server_handler;
-    fbs->fbs_close_server_handler = gedp->fbs_close_server_handler;
-    fbs->fbs_open_client_handler = gedp->fbs_open_client_handler;
-    fbs->fbs_close_client_handler = gedp->fbs_close_client_handler;
     if (!fbs->fbs_is_listening || fbs_open(fbs, 0) != BRLCAD_OK) {
 	bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
 	return BRLCAD_ERROR;

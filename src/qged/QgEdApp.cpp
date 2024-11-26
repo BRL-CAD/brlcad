@@ -194,10 +194,10 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     gedp->ged_gvp = w->CurrentView();
 
     // Set up the connections needed for embedded raytracing
-    gedp->fbs_is_listening = &qdm_is_listening;
-    gedp->fbs_listen_on_port = &qdm_listen_on_port;
-    gedp->fbs_open_server_handler = &qdm_open_server_handler;
-    gedp->fbs_close_server_handler = &qdm_close_server_handler;
+    gedp->ged_fbs->fbs_is_listening = &qdm_is_listening;
+    gedp->ged_fbs->fbs_listen_on_port = &qdm_listen_on_port;
+    gedp->ged_fbs->fbs_open_server_handler = &qdm_open_server_handler;
+    gedp->ged_fbs->fbs_close_server_handler = &qdm_close_server_handler;
 
     // Unfortunately, there are technical differences involved with
     // the embedded fb mechanisms depending on whether we are using
@@ -205,13 +205,13 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     int type = w->CurrentDisplay()->view_type();
 #ifdef BRLCAD_OPENGL
     if (type == QgView_GL) {
-	gedp->fbs_open_client_handler = &qdm_open_client_handler;
+	gedp->ged_fbs->fbs_open_client_handler = &qdm_open_client_handler;
     }
 #endif
     if (type == QgView_SW) {
-	gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+	gedp->ged_fbs->fbs_open_client_handler = &qdm_open_sw_client_handler;
     }
-    gedp->fbs_close_client_handler = &qdm_close_client_handler;
+    gedp->ged_fbs->fbs_close_client_handler = &qdm_close_client_handler;
 
     // Read the saved window size, if any
     QSettings settings("BRL-CAD", "QGED");

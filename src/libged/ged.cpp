@@ -133,12 +133,6 @@ ged_init(struct ged *gedp)
     /* Create a non-opened fbserv */
     BU_GET(gedp->ged_fbs, struct fbserv_obj);
     gedp->ged_fbs->fbs_listener.fbsl_fd = -1;
-    gedp->fbs_is_listening = NULL;
-    gedp->fbs_listen_on_port = NULL;
-    gedp->fbs_open_server_handler = NULL;
-    gedp->fbs_close_server_handler = NULL;
-    gedp->fbs_open_client_handler = NULL;
-    gedp->fbs_close_client_handler = NULL;
 
     BU_GET(gedp->ged_gdp, struct ged_drawable);
     BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
