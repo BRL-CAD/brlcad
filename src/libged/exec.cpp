@@ -87,13 +87,16 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     const struct ged_cmd *cmd = c_it->second;
 
 
-    // We have a command now - check for a pre-exec callback.
+    // We have a command now - push it onto the stack
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+    gedip->exec_stack.push(cmdname);
+
+    // Check for a pre-exec callback.
     bu_clbk_t f = NULL;
     void *d = NULL;
     if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), GED_CLBK_PRE) == BRLCAD_OK) && f) {
-	// TODO - should probably have some recursive guards here... counters in
-	// the internal state or some such...
-	cret = (*f)(argc, argv, gedp, d);
+	cret = ged_clbk_exec(gedp->ged_result_str, gedp, GED_CMD_RECURSION_LIMIT, f, argc, argv, gedp, d);
 	if (cret != BRLCAD_OK)
 	    bu_log("error running %s pre-execution callback\n", cmdname.c_str());
     }
@@ -104,19 +107,20 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     // Preliminaries complete - do the actual command execution call
     cret = (*cmd->i->cmd)(gedp, argc, argv);
 
-    // If we didn't execute successfully, don't execute the post run hook
+    // If we didn't execute successfully, don't execute the post run hook.  (If
+    // a specific command wants to anyway, it can do so in its own
+    // implementation.)
     if (cret != BRLCAD_OK) {
 	if (tstr)
 	    bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
 
+	gedip->exec_stack.pop();
 	return cret;
     }
 
     // Command execution complete - check for a post command callback.
     if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), GED_CLBK_POST) == BRLCAD_OK) && f) {
-	// TODO - should probably have some recursive guards here... counters in
-	// the internal state or some such...
-	cret = (*f)(argc, argv, gedp, d);
+	cret = ged_clbk_exec(gedp->ged_result_str, gedp, GED_CMD_RECURSION_LIMIT, f, argc, argv, gedp, d);
 	if (cret != BRLCAD_OK)
 	    bu_log("error running %s post-execution callback\n", cmdname.c_str());
     }
@@ -124,6 +128,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     if (tstr)
 	bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
 
+    gedip->exec_stack.pop();
     return cret;
 }
 

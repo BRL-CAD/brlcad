@@ -393,6 +393,18 @@ GED_EXPORT extern int ged_clbk_set(struct ged *gedp, const char *cmd, int mode, 
 // Method calling code can use to get the current clbk info for a specific command.
 GED_EXPORT extern int ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int mode);
 
+// Wrapper that utilizes internal libged capabilities to detect recursive callbacks
+// Using this is optional - caller can also use results of ged_clbk_get directly -
+// but if they wish to detect and report recursion this functionality is helpful.
+GED_EXPORT extern int ged_clbk_exec(
+	struct bu_vls *log,
+	struct ged *gedp,
+	int limit,
+	bu_clbk_t f,
+	int ac,
+	const char **av,
+	void *u1,
+	void *u2);
 
 // Functions for associating and retrieving application context information for
 // specific dm types.  Not really using this yet, but we will eventually need

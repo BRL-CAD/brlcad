@@ -436,6 +436,39 @@ _ged_open_dbip(const char *filename, int existing_only)
 
 /* Callback wrapper functions */
 
+int
+ged_clbk_exec(struct bu_vls *log, struct ged *gedp, int limit, bu_clbk_t f, int ac, const char **av, void *u1, void *u2)
+{
+    if (!gedp || !f)
+	return BRLCAD_ERROR;
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+    int rlimit = (limit > 0) ? limit : 1;
+
+    gedip->recursion_depth_cnt[f]++;
+
+    if (gedip->recursion_depth_cnt[f] > rlimit) {
+	if (log) {
+	    // Print out ged_exec call stack that got us here.  If the
+	    // recursion is all in callback functions this won't help, but at
+	    // the very least we'll know which ged command to start with.
+	    bu_vls_printf(log, "Callback recursion limit %d exceeded.  ged_exec call stack:\n", rlimit);
+	    std::stack<std::string> lexec_stack = gedip->exec_stack;
+	    while (!lexec_stack.empty()) {
+		bu_vls_printf(log, "%s\n", lexec_stack.top().c_str());
+		lexec_stack.pop();
+	    }
+	}
+	return BRLCAD_ERROR;
+    }
+
+    int ret = (*f)(ac, av, u1, u2);
+
+    gedip->recursion_depth_cnt[f]++;
+
+    return ret;
+}
+
 void
 ged_refresh_cb(struct ged *gedp)
 {

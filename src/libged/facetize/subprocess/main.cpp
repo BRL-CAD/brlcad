@@ -464,8 +464,8 @@ facetize_process(int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" {
 #include "../../include/plugin.h"
+extern "C" {
 struct ged_cmd_process_impl fp_impl = {
     facetize_process
 };

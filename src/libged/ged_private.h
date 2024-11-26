@@ -44,6 +44,10 @@
 
 #ifdef __cplusplus
 
+#include <map>
+#include <stack>
+#include <string>
+
 class Ged_Internal {
     public:
 	struct ged *gedp;
@@ -51,6 +55,10 @@ class Ged_Internal {
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
+
+	std::map<bu_clbk_t, int> recursion_depth_cnt;
+
+	std::stack<std::string> exec_stack;
 
 	std::map<std::string, void *> dm_map;
 };
@@ -109,6 +117,7 @@ __BEGIN_DECLS
 /* Default libged column width assumption */
 #define GED_TERMINAL_WIDTH 80
 
+#define GED_CMD_RECURSION_LIMIT 100
 
 /* Callback management related structures */
 #define GED_REFRESH_FUNC_NULL ((ged_refresh_func_t)0)
