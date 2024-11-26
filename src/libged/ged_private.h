@@ -130,9 +130,6 @@ __BEGIN_DECLS
 #define HELPFLAG "--print-help"
 #define PURPOSEFLAG "--print-purpose"
 
-// Pid return function clbk signature
-typedef void (*ged_pid_clbk_ptr)(int *, int);
-
 // Private bookkeeping structure used by callback handlers
 struct ged_callback_state {
     int ged_refresh_handler_cnt;
