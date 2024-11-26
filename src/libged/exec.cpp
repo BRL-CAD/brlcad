@@ -91,6 +91,17 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
     gedip->exec_stack.push(cmdname);
+    gedip->cmd_recursion_depth_cnt[cmdname]++;
+
+    if (gedip->cmd_recursion_depth_cnt[cmdname] > GED_CMD_RECURSION_LIMIT) {
+	bu_vls_printf(gedp->ged_result_str, "Recursion limit %d exceeded for command %s - aborted.  ged_exec call stack:\n", GED_CMD_RECURSION_LIMIT, cmdname.c_str());
+	std::stack<std::string> lexec_stack = gedip->exec_stack;
+	while (!lexec_stack.empty()) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", lexec_stack.top().c_str());
+	    lexec_stack.pop();
+	}
+	return BRLCAD_ERROR;
+    }
 
     // Check for a pre-exec callback.
     bu_clbk_t f = NULL;
@@ -114,6 +125,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	if (tstr)
 	    bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
 
+	gedip->cmd_recursion_depth_cnt[cmdname]--;
 	gedip->exec_stack.pop();
 	return cret;
     }
@@ -128,6 +140,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     if (tstr)
 	bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
 
+    gedip->cmd_recursion_depth_cnt[cmdname]--;
     gedip->exec_stack.pop();
     return cret;
 }

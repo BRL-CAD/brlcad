@@ -445,9 +445,9 @@ ged_clbk_exec(struct bu_vls *log, struct ged *gedp, int limit, bu_clbk_t f, int 
     Ged_Internal *gedip = gedp->i->i;
     int rlimit = (limit > 0) ? limit : 1;
 
-    gedip->recursion_depth_cnt[f]++;
+    gedip->clbk_recursion_depth_cnt[f]++;
 
-    if (gedip->recursion_depth_cnt[f] > rlimit) {
+    if (gedip->clbk_recursion_depth_cnt[f] > rlimit) {
 	if (log) {
 	    // Print out ged_exec call stack that got us here.  If the
 	    // recursion is all in callback functions this won't help, but at
@@ -462,9 +462,10 @@ ged_clbk_exec(struct bu_vls *log, struct ged *gedp, int limit, bu_clbk_t f, int 
 	return BRLCAD_ERROR;
     }
 
+    // Checks complete - actually run the callback
     int ret = (*f)(ac, av, u1, u2);
 
-    gedip->recursion_depth_cnt[f]++;
+    gedip->clbk_recursion_depth_cnt[f]++;
 
     return ret;
 }

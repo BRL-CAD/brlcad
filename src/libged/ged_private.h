@@ -56,7 +56,8 @@ class Ged_Internal {
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
 
-	std::map<bu_clbk_t, int> recursion_depth_cnt;
+	std::map<bu_clbk_t, int> clbk_recursion_depth_cnt;
+	std::map<std::string, int> cmd_recursion_depth_cnt;
 
 	std::stack<std::string> exec_stack;
 
