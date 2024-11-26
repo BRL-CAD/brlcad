@@ -47,9 +47,9 @@
 class Ged_Internal {
     public:
 	struct ged *gedp;
-	std::map<std::string, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
-	std::map<std::string, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
-	std::map<std::string, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
+	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
+	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
+	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
 };
 
 #else

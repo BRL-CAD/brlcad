@@ -538,11 +538,13 @@ QgEdApp::run_qcmd(const QString &command)
     QgConsole *console = w->console;
     const char *cmd = bu_strdup(command.toLocal8Bit().data());
 
+    // TODO - replace with "quit" cmd libged callback
     if (BU_STR_EQUAL(cmd, "q")) {
 	w->closeEvent(NULL);
 	bu_exit(0, "exit");
     }
 
+    // TODO - replace with "clear" cmd libged callback
     if (BU_STR_EQUAL(cmd, "clear")) {
 	if (console) {
 	    console->clear();

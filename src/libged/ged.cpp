@@ -50,6 +50,10 @@
 #include "bv/defines.h"
 
 #include "./ged_private.h"
+#include "./include/plugin.h"
+
+extern "C" void libged_init(void);
+
 extern "C" {
 #include "./qray.h"
 }
@@ -142,9 +146,6 @@ ged_init(struct ged *gedp)
     gedp->ged_post_closedb_callback = NULL;
     gedp->ged_db_callback_udata = NULL;
 
-    gedp->ged_screen_clear_callback = NULL;
-    gedp->ged_screen_clear_callback_udata = NULL;
-
     gedp->ged_subprocess_init_callback = NULL;
     gedp->ged_subprocess_end_callback = NULL;
 
@@ -153,9 +154,6 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
     BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
     BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
-
-    gedp->ged_exit_callback = NULL;
-    gedp->ged_exit_callback_udata = NULL;
 
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
@@ -520,39 +518,59 @@ ged_destroy_vlist_cb(struct ged *gedp, unsigned int i, int j)
 }
 
 int
-ged_clbk_set(struct ged *gedp, const char *cmd, int mode, bu_clbk_t f, void *d)
+ged_clbk_set(struct ged *gedp, const char *cmd_str, int mode, bu_clbk_t f, void *d)
 {
     int ret = BRLCAD_OK;
-    if (!gedp || !cmd)
+    if (!gedp || !cmd_str)
 	return BRLCAD_ERROR;
-    if (ged_cmd_valid(cmd, NULL))
-	return BRLCAD_ERROR;
-    std::string scmd = std::string(cmd);
+
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
-    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+
+    // Translate the string to a ged pointer.  Commands can have multiple strings
+    // associated with the same function - we want to use the cmd pointer as the
+    // lookup key, since it will be the same regardless of the string.
+    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
+    if (!cmap->size())
+	libged_init();
+    std::string scmd = std::string(cmd_str);
+    std::map<std::string, const struct ged_cmd *>::iterator cm_it = cmap->find(scmd);
+    if (cm_it == cmap->end())
+	return (BRLCAD_ERROR | GED_UNKNOWN);
+    const struct ged_cmd *cmd = cm_it->second;
+
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
     cm = (mode == GED_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
-    std::map<std::string, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(scmd);
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
     if (c_it != cm->end())
 	ret |= GED_OVERRIDE;
-    (*cm)[scmd] = std::make_pair(f, d);
+    (*cm)[cmd->i->cmd] = std::make_pair(f, d);
     return ret;
 }
 
 int
-ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int mode)
+ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd_str, int mode)
 {
-    if (!gedp || !cmd || !f || !d)
-	return BRLCAD_ERROR;
-    if (ged_cmd_valid(cmd, NULL))
+    if (!gedp || !cmd_str || !f || !d)
 	return BRLCAD_ERROR;
     GED_CK_MAGIC(gedp);
-    std::string scmd = std::string(cmd);
     Ged_Internal *gedip = gedp->i->i;
-    std::map<std::string, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+
+    // Translate the string to a ged pointer.  Commands can have multiple strings
+    // associated with the same function - we want to use the cmd pointer as the
+    // lookup key, since it will be the same regardless of the string.
+    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
+    if (!cmap->size())
+	libged_init();
+    std::string scmd = std::string(cmd_str);
+    std::map<std::string, const struct ged_cmd *>::iterator cm_it = cmap->find(scmd);
+    if (cm_it == cmap->end())
+	return (BRLCAD_ERROR | GED_UNKNOWN);
+    const struct ged_cmd *cmd = cm_it->second;
+
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
     cm = (mode == GED_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
-    std::map<std::string, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(scmd);
-    c_it = cm->find(scmd);
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
     if (c_it == cm->end()) {
 	// Nothing set, which is fine - return NULL
 	(*f) = NULL;

@@ -318,11 +318,12 @@ gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     //gs->view_update_signal.emit(QG_VIEW_REFRESH);
 }
 
-void
-Gsh_ClearScreen(struct ged *, void *d)
+int
+Gsh_ClearScreen(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *d)
 {
     GshState *gs = (GshState *)d;
     gs->l.get()->ClearScreen();
+    return BRLCAD_OK;
 }
 
 GshState::GshState()
@@ -355,8 +356,7 @@ GshState::GshState()
     gedp->ged_io_data = (void *)this;
 
     // Tell libged how to clear the screen
-    gedp->ged_screen_clear_callback = &Gsh_ClearScreen;
-    gedp->ged_screen_clear_callback_udata = (void *)this;
+    ged_clbk_set(gedp, "clear", GED_CLBK_POST, &Gsh_ClearScreen, (void *)this);
 }
 
 GshState::~GshState()

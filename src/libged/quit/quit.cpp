@@ -27,17 +27,12 @@
 
 #include "../ged_private.h"
 
+// quit is a no-op at the libged level - it's purpose is to support ged_exec
+// callback hooks that call any application callback functions assigned to this
+// command and return GED_EXIT for the application to handle.
 extern "C" int
-ged_quit_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
+ged_quit_core(struct ged *UNUSED(gedp), int UNUSED(argc), const char **UNUSED(argv))
 {
-    // In its current form, quit is pretty basic - unless the
-    // application has a callback set, just return GED_EXIT
-    if (!gedp || !gedp->ged_exit_callback)
-	return GED_EXIT;
-
-    // Fire the exit callback if we've got one
-    (*gedp->ged_exit_callback)(gedp, gedp->ged_exit_callback_udata);
-
     return GED_EXIT;
 }
 
