@@ -51,6 +51,8 @@ class Ged_Internal {
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
+
+	std::map<std::string, void *> dm_map;
 };
 
 #else

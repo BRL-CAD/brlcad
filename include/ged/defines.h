@@ -294,12 +294,12 @@ struct ged {
 
     /* Callbacks */
     struct ged_callback_state *ged_cbs;
-    void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
-    void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
-    void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
-    void			(*ged_create_vlist_scene_obj_callback)(struct bv_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
-    void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
-    void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
+    void (*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
+    void *ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
+    void (*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
+    void (*ged_create_vlist_scene_obj_callback)(struct bv_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
+    void (*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
+    void (*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
     /* Handler functions for I/O communication with asynchronous subprocess commands.  There
      * are two opaque data structures at play here, with different scopes.  One is the "data"
@@ -329,21 +329,8 @@ struct ged {
     //
     // fbserv_obj: fbs_callback
     // bv.h gv_callback (only used by MGED?)
-    // bu_clbk_t
-
-    // TODO - this probably should be handled with a registration function of some kind
-    // that assigns contexts based on dm type - right now the dms more or less have to
-    // assume that whatever is in here is intended for their initialization, and if a
-    // program wants to attach multiple types of DMs a single pointer is not a great way
-    // to manage things.  A map would be better, but that's a C++ construct so we can't
-    // expose it directly here - need some sort of means to manage the setting and getting,
-    // maybe with functions like:
-    // ged_ctx_set(const char *dm_type, void *ctx)
-    // ged_ctx_get(const char *dm_type)
-    void *ged_ctx; /* Temporary - do not rely on when designing new functionality */
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
-
 };
 
 // Create and destroy a ged container.  Handles all initialization - no
@@ -406,6 +393,14 @@ GED_EXPORT extern int ged_clbk_set(struct ged *gedp, const char *cmd, int mode, 
 // Method calling code can use to get the current clbk info for a specific command.
 GED_EXPORT extern int ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd, int mode);
 
+
+// Functions for associating and retrieving application context information for
+// specific dm types.  Not really using this yet, but we will eventually need
+// some way to provide application contents for the dm attach command to work.
+//
+// NOTE - this API is still experimental
+GED_EXPORT extern void ged_dm_ctx_set(struct ged *gedp, const char *dm_type, void *ctx);
+GED_EXPORT extern void *ged_dm_ctx_get(struct ged *gedp, const char *dm_type);
 
 
 /* accessor functions for ged_results - calling

@@ -173,7 +173,6 @@ ged_init(struct ged *gedp)
 
     gedp->dbi_state = NULL;
 
-    gedp->ged_ctx = NULL;
     gedp->ged_interp = NULL;
 }
 
@@ -567,6 +566,31 @@ ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd_str, int 
     (*f) = c_it->second.first;
     (*d) = c_it->second.second;
     return BRLCAD_OK;
+}
+
+void
+ged_dm_ctx_set(struct ged *gedp, const char *dm_type, void *ctx)
+{
+    if (!gedp || !dm_type)
+	return;
+
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+    gedip->dm_map[std::string(dm_type)] = ctx;
+}
+
+void *
+ged_dm_ctx_get(struct ged *gedp, const char *dm_type)
+{
+    if (!gedp || !dm_type)
+	return NULL;
+
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+    std::string dm(dm_type);
+    if (gedip->dm_map.find(dm) == gedip->dm_map.end())
+	return NULL;
+    return gedip->dm_map[dm];
 }
 
 // Local Variables:

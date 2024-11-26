@@ -91,13 +91,12 @@ mged_dm_init(struct mged_dm *o_dm,
     /* register application provided routines */
     cmd_hook = dm_commands;
 
-    /* In case the user wants swrast in headless mode, set ged_ctx to the view.
-     * Other dms will either not use the ctx argument or will catch the
-     * BV_MAGIC value and not initialize (such as qtgl, which needs a context
-     * from a parent Qt widget and won't work in MGED.) */
-    GEDP->ged_ctx = view_state->vs_gvp;
-
-    if ((DMP = dm_open(GEDP->ged_ctx, (void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    /* In case the user wants swrast in headless mode, pass the view in the
+     * context slot.  Other dms will either not use the ctx argument or will
+     * catch the BV_MAGIC value and not initialize (such as qtgl, which needs a
+     * context from a parent Qt widget and won't work in MGED.) */
+    void *ctx = view_state->vs_gvp;
+    if ((DMP = dm_open(ctx, (void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
