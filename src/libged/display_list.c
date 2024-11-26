@@ -1092,34 +1092,6 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 
 }
 
-
-int
-dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
-{
-    int found = 0;
-    struct bv_scene_obj *sp;
-
-    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	size_t i;
-	if (!sp->s_u_data)
-	    continue;
-	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-
-	for (i = 0; i < bdata->s_fullpath.fp_len; ++i) {
-	    if (*obj == *DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep &&
-		BU_STR_EQUAL(obj, DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep)) {
-		found = 1;
-		if (illum)
-		    sp->s_iflag = UP;
-		else
-		    sp->s_iflag = DOWN;
-	    }
-	}
-    }
-    return found;
-}
-
-
 void
 dl_set_iflag(struct bu_list *hdlp, int iflag)
 {
