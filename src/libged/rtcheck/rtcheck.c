@@ -37,6 +37,25 @@
 
 #include "../ged_private.h"
 
+static void
+dl_set_flag(struct bu_list *hdlp, int flag)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct bv_scene_obj *sp;
+    /* calculate the bounding for of all solids being displayed */
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    sp->s_flag = flag;
+	}
+
+	gdlp = next_gdlp;
+    }
+}
+
 struct ged_rtcheck {
     struct ged_subprocess *rrtp;
     FILE *fp;
