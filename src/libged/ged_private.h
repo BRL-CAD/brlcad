@@ -305,7 +305,6 @@ GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
 GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
 GED_EXPORT void dl_zap(struct ged *gedp);
 GED_EXPORT int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
-GED_EXPORT void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
