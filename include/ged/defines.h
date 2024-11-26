@@ -389,12 +389,17 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 #define GED_CLBK_DURING 0
 #define GED_CLBK_POST 1
 
-// Associate a callback function pointer for a command.  If mode is less than zero,
-// function will be registered to run BEFORE actual cmd logic is run, and if greater
-// than zero will be registered to run AFTER the cmd logic is run.  If mode is zero,
-// then it is intended to be used *during* command execution and it will be up
-// to the command's implementation to incorporate the callback into its
-// execution logic.
+// Associate a callback function pointer for a command.  If mode is less than
+// zero, function will be registered to run BEFORE actual cmd logic is run, and
+// if greater than zero will be registered to run AFTER the cmd logic is run.
+// If mode is zero, then it is intended to be used *during* command execution
+// and it will be up to the command's implementation to incorporate the
+// callback into its execution logic. A "GED_CLBK_DURING" will be a no-op
+// unless the command implementation logic of the libged command in question
+// utilizes it.  The "search" command is an example of a command that utilizes
+// a "GED_CLBK_DURING" callback. PRE and POST callbacks are handled
+// automatically by ged_exec, and command implementations should not invoke
+// them directly.
 //
 // Only one function can be registered for each pre/post command slot - an
 // assignment to a command slot that already has an assigned function will
