@@ -175,9 +175,6 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     installEventFilter(efilter);
 
     // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets
-    //
-    // TODO - need to fix a bug with the theme - observing it in qged.  See
-    // https://github.com/Alexhuszagh/BreezeStyleSheets/issues/25
     QFile file(":/dark.qss");
     file.open(QFile::ReadOnly | QFile::Text);
     QTextStream stream(&file);
