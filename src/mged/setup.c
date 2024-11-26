@@ -417,10 +417,17 @@ cmd_setup(void)
     struct cmdtab *ctp;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
 
-    // TODO - should be using libged cmd list to populate everything
-    // in this table that is a plain wrapper - that way all ged commands
-    // are always automatically there and we can delete the hardcoded
-    // logic.
+    // TODO - should be using libged cmd list to populate everything in this
+    // table that is a plain wrapper - that way all ged commands are always
+    // automatically there and we can delete the hardcoded logic.  Drawback
+    // would be we would lose the compile time check that libged has what MGED
+    // is expecting... a compromise might be to have mged validate such a list
+    // at startup and exit if any expected commands aren't valid.
+    //
+    // In the case of a conflicting cmd name between the non-plain wrappers and
+    // the above table contents the MGED tbl should win, but we should also
+    // look into the reasons for the wrappers NOT being plain and try to find a
+    // way (callbacks, etc.) to avoid the need for non-plain wrappers.
 
     for (ctp = mged_cmdtab; ctp->name != NULL; ctp++) {
 	bu_vls_strcpy(&temp, "_mged_");
