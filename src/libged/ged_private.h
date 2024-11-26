@@ -310,10 +310,6 @@ GED_EXPORT void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspecti
 
 GED_EXPORT void dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, struct bu_vls *vls);
 
-GED_EXPORT void dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag);
-
-GED_EXPORT void dl_write_animate(struct bu_list *hdlp, FILE *fp);
-
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bv_vlblock *vbp,

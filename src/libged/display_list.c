@@ -1868,39 +1868,6 @@ dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag_val)
 }
 
 
-void
-dl_write_animate(struct bu_list *hdlp, FILE *fp)
-{
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    size_t i;
-    struct bv_scene_obj *sp;
-
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_u_data)
-		continue;
-	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-
-	    for (i = 0; i < bdata->s_fullpath.fp_len; i++) {
-                if (!(DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags & RT_DIR_USED)) {
-		    struct animate *anp;
-                    for (anp = DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_animate; anp; anp=anp->an_forw) {
-			db_write_anim(fp, anp);
-		    }
-                    DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags |= RT_DIR_USED;
-		}
-	    }
-        }
-
-        gdlp = next_gdlp;
-    }
-}
-
-
 unsigned long long
 dl_name_hash(struct ged *gedp)
 {
