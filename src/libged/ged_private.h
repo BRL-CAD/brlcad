@@ -316,7 +316,6 @@ GED_EXPORT void dl_write_animate(struct bu_list *hdlp, FILE *fp);
 
 GED_EXPORT int dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
 GED_EXPORT int dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
-GED_EXPORT void dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparency);
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
