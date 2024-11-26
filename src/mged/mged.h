@@ -543,10 +543,10 @@ int f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
 int f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
 void mged_output_handler(struct ged *, char *line);
 void mged_refresh_handler(void *clientdata);
-void mged_pre_opendb_clbk(struct ged *gedp, void *ctx);
-void mged_post_opendb_clbk(struct ged *gedp, void *ctx);
-void mged_pre_closedb_clbk(struct ged *gedp, void *ctx);
-void mged_post_closedb_clbk(struct ged *gedp, void *ctx);
+int mged_pre_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
+int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
+int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
+int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 
 /* mged.c */
 int event_check(int non_blocking);

@@ -40,10 +40,6 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     if (!gedp->dbip)
 	return BRLCAD_OK;
 
-    // If the caller has work to do first, trigger it
-    if (gedp->ged_pre_closedb_callback)
-	(*gedp->ged_pre_closedb_callback)(gedp, gedp->ged_db_callback_udata);
-
     /* set result while we still have the info */
     bu_vls_sprintf(gedp->ged_result_str, "closed %s", gedp->dbip->dbi_filename);
 
@@ -82,10 +78,6 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 	}
 	bu_ptbl_reset(&gedp->ged_subp);
     }
-
-    // If the caller has work to do after close, trigger it
-    if (gedp->ged_post_closedb_callback)
-	(*gedp->ged_post_closedb_callback)(gedp, gedp->ged_db_callback_udata);
 
     return BRLCAD_OK;
 }

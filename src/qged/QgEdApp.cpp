@@ -37,34 +37,38 @@
 #include "fbserv.h"
 #include "QgEdFilter.h"
 
-void
-qged_pre_opendb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+int
+qged_pre_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
-void
-qged_post_opendb_clbk(struct ged *UNUSED(gedp), void *ctx)
+int
+qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
 {
     QgEdApp *a = (QgEdApp *)ctx;
     emit a->dbi_update(a->mdl->gedp->dbip);
     if (!a->w)
-	return;
+	return BRLCAD_OK;
     if (!a->mdl->gedp->dbip) {
 	a->w->statusBar()->showMessage("open failed");
-	return;
+	return BRLCAD_OK;
     }
     QString fileName(a->mdl->gedp->dbip->dbi_filename);
     a->w->statusBar()->showMessage(fileName);
+    return BRLCAD_OK;
 }
 
-void
-qged_pre_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+int
+qged_pre_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
-void
-qged_post_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+int
+qged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
 extern "C" void
@@ -247,11 +251,10 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     }
 
     // Assign QGED specific open/close db handlers to the gedp
-    mdl->gedp->ged_pre_opendb_callback = &qged_pre_opendb_clbk;
-    mdl->gedp->ged_post_opendb_callback = &qged_post_opendb_clbk;
-    mdl->gedp->ged_pre_closedb_callback = &qged_pre_closedb_clbk;
-    mdl->gedp->ged_post_closedb_callback = &qged_post_closedb_clbk;
-    mdl->gedp->ged_db_callback_udata = (void *)qApp;
+    ged_clbk_set(mdl->gedp, "opendb", GED_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "opendb", GED_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "closedb", GED_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "closedb", GED_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
 
     // Assign QGED specific I/O handlers to the gedp
     mdl->gedp->ged_create_io_handler = &qt_create_io_handler;

@@ -259,28 +259,32 @@ class GshState {
 /* For gsh these are mostly no-op, but define placeholder
  * functions in case we need to pre or post actions for
  * database opening in the future. */
-extern "C" void
-gsh_pre_opendb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+extern "C" int
+gsh_pre_opendb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
-extern "C" void
-gsh_post_opendb_clbk(struct ged *UNUSED(gedp), void *ctx)
+extern "C" int
+gsh_post_opendb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
 {
     GshState *s = (GshState *)ctx;
     if (!s->gedp->dbip)
-	return;
+	return BRLCAD_OK;
     s->gfile = std::string(s->gedp->dbip->dbi_filename);
+    return BRLCAD_OK;
 }
 
-extern "C" void
-gsh_pre_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+extern "C" int
+gsh_pre_closedb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
-extern "C" void
-gsh_post_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+extern "C" int
+gsh_post_closedb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
 /* Cross platform I/O subprocess listening is tricky.  Tcl and Qt both have
@@ -344,11 +348,11 @@ GshState::GshState()
     view_checkpoint();
 
     // Assign gsh specific open/close db handlers to the gedp
-    gedp->ged_pre_opendb_callback = &gsh_pre_opendb_clbk;
-    gedp->ged_post_opendb_callback = &gsh_post_opendb_clbk;
-    gedp->ged_pre_closedb_callback = &gsh_pre_closedb_clbk;
-    gedp->ged_post_closedb_callback = &gsh_post_closedb_clbk;
-    gedp->ged_db_callback_udata = (void *)this;
+    ged_clbk_set(gedp, "opendb", GED_CLBK_PRE, &gsh_pre_opendb_clbk, (void *)this);
+    ged_clbk_set(gedp, "opendb", GED_CLBK_POST, &gsh_post_opendb_clbk, (void *)this);
+    ged_clbk_set(gedp, "closedb", GED_CLBK_PRE, &gsh_pre_closedb_clbk, (void *)this);
+    ged_clbk_set(gedp, "closedb", GED_CLBK_POST, &gsh_post_closedb_clbk, (void *)this);
+
 
     // Assign gsh specific I/O handlers to the gedp
     gedp->ged_create_io_handler = &gsh_create_io_handler;

@@ -491,11 +491,11 @@ mged_setup(Tcl_Interp **interpreter)
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
-    GEDP->ged_pre_opendb_callback = &mged_pre_opendb_clbk;
-    GEDP->ged_post_opendb_callback = &mged_post_opendb_clbk;
-    GEDP->ged_pre_closedb_callback = &mged_pre_closedb_clbk;
-    GEDP->ged_post_closedb_callback = &mged_post_closedb_clbk;
-    GEDP->ged_db_callback_udata = &mged_global_db_ctx;
+
+    ged_clbk_set(GEDP, "opendb", GED_CLBK_PRE, &mged_pre_opendb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(GEDP, "opendb", GED_CLBK_POST, &mged_post_opendb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(GEDP, "closedb", GED_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(GEDP, "closedb", GED_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
 
     // Register during-execution callback function for search command
     ged_clbk_set(GEDP, "search", GED_CLBK_DURING, &mged_db_search_callback, (void *)*interpreter);
