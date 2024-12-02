@@ -42,6 +42,13 @@ RT_EXPORT extern int rt_pipe_ck(const struct bu_list *headp);
 RT_EXPORT extern int rt_pipe_get_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps);
 RT_EXPORT extern struct wdb_pipe_pnt *rt_pipe_get_seg_i(struct rt_pipe_internal *pipeip, int seg_i);
 
+RT_EXPORT extern int rt_pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt);
+RT_EXPORT extern struct wdb_pipe_pnt *rt_pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt);
+RT_EXPORT extern struct wdb_pipe_pnt *rt_pipe_delete_pnt(struct wdb_pipe_pnt *ps);
+RT_EXPORT extern struct wdb_pipe_pnt *rt_pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt);
+RT_EXPORT extern struct wdb_pipe_pnt *rt_pipe_find_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t model_pt, matp_t view2model);
+
+
 /** @} */
 
 __END_DECLS

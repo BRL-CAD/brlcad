@@ -44,7 +44,7 @@
 int
 ged_pipe_append_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
-    return _ged_pipe_append_pnt_common(gedp, argc, argv, _ged_pipe_add_pnt);
+    return _ged_pipe_append_pnt_common(gedp, argc, argv, rt_pipe_add_pnt);
 }
 
 
@@ -117,7 +117,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (_ged_pipe_delete_pnt(ps) == ps) {
+    if (rt_pipe_delete_pnt(ps) == ps) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot delete pipe segment %d", argv[0], seg_i);
 	return BRLCAD_ERROR;
@@ -196,7 +196,7 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 	return BRLCAD_ERROR;
     }
 
-    nearest = find_pipe_pnt_nearest_pnt(&((struct rt_pipe_internal *)intern.idb_ptr)->pipe_segs_head,
+    nearest = rt_pipe_find_pnt_nearest_pnt(&((struct rt_pipe_internal *)intern.idb_ptr)->pipe_segs_head,
 				     model_pt, gedp->ged_gvp->gv_view2model);
     seg_i = rt_pipe_get_i_seg((struct rt_pipe_internal *)intern.idb_ptr, nearest);
     rt_db_free_internal(&intern);
@@ -305,7 +305,7 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	VADD2(ps_pt, ps_pt, ps->pp_coord);
     }
 
-    if (_ged_pipe_move_pnt(pipeip, ps, ps_pt)) {
+    if (rt_pipe_move_pnt(pipeip, ps, ps_pt)) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
 	return BRLCAD_ERROR;
@@ -333,7 +333,7 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 int
 ged_pipe_prepend_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
-    return _ged_pipe_append_pnt_common(gedp, argc, argv, _ged_pipe_ins_pnt);
+    return _ged_pipe_append_pnt_common(gedp, argc, argv, rt_pipe_ins_pnt);
 }
 
 #ifdef GED_PLUGIN
