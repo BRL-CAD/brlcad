@@ -31,6 +31,8 @@ set(edit_srcs
   scale_tor.c
   translate_extrude.c
   translate_tgc.c
+  edarb.c
+  facedef.c
   )
 
 ged_plugin_library(ged-edit ${edit_srcs})

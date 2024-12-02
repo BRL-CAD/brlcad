@@ -2437,6 +2437,9 @@ err_missing_arg:
 struct ged_cmd_impl edit_cmd_impl = {"edit", ged_edit_core, GED_CMD_DEFAULT};
 const struct ged_cmd edit_cmd = { &edit_cmd_impl };
 
+struct ged_cmd_impl edarb_cmd_impl = {"edarb", ged_edarb_core, GED_CMD_DEFAULT};
+const struct ged_cmd edarb_cmd = { &edarb_cmd_impl };
+
 struct ged_cmd_impl protate_cmd_impl = {"protate", ged_protate_core, GED_CMD_DEFAULT};
 const struct ged_cmd protate_cmd = { &protate_cmd_impl };
 
@@ -2446,9 +2449,10 @@ const struct ged_cmd pscale_cmd = { &pscale_cmd_impl };
 struct ged_cmd_impl ptranslate_cmd_impl = {"ptranslate", ged_ptranslate_core, GED_CMD_DEFAULT};
 const struct ged_cmd ptranslate_cmd = { &ptranslate_cmd_impl };
 
-const struct ged_cmd *edit_pcmds[] = { &edit_cmd, &protate_cmd, &pscale_cmd, &ptranslate_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  edit_pcmds, 4 };
+const struct ged_cmd *edit_pcmds[] = { &edit_cmd, &edarb_cmd, &protate_cmd, &pscale_cmd, &ptranslate_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  edit_pcmds, 5 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

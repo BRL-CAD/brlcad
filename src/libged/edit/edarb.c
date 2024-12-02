@@ -30,6 +30,7 @@
 #include "bu/cmd.h"
 #include "rt/arb_edit.h"
 #include "../ged_private.h"
+#include "./ged_edit.h"
 
 /*
  * An ARB edge is moved by finding the direction of the line
@@ -364,26 +365,6 @@ ged_edarb_core(struct ged *gedp, int argc, const char *argv[])
 
     return BRLCAD_ERROR;
 }
-
-
-#ifdef GED_PLUGIN
-#include "../include/plugin.h"
-struct ged_cmd_impl edarb_cmd_impl = {
-    "edarb",
-    ged_edarb_core,
-    GED_CMD_DEFAULT
-};
-
-const struct ged_cmd edarb_cmd = { &edarb_cmd_impl };
-const struct ged_cmd *edarb_cmds[] = { &edarb_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  edarb_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

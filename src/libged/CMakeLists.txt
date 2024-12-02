@@ -127,7 +127,6 @@ set(
   dbi_state.cpp
   display_list.c
   draw.cpp
-  facedef.c
   ged.cpp
   ged_util.cpp
   get_obj_bounds.c
@@ -241,7 +240,6 @@ add_subdirectory(dump)
 add_subdirectory(dup)
 add_subdirectory(eac)
 add_subdirectory(echo)
-add_subdirectory(edarb)
 add_subdirectory(edcodes)
 add_subdirectory(edcomb)
 add_subdirectory(edit)

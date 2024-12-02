@@ -245,9 +245,6 @@ GED_EXPORT void draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, vo
 GED_EXPORT void vls_col_item(struct bu_vls *str, const char *cp);
 GED_EXPORT void vls_col_eol(struct bu_vls *str);
 
-/* defined in facedef.c */
-GED_EXPORT extern int edarb_facedef(void *data, int argc, const char *argv[]);
-
 /* defined in ged.c */
 GED_EXPORT extern struct db_i *_ged_open_dbip(const char *filename,
 				   int existing_only);

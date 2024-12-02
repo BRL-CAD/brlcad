@@ -121,8 +121,11 @@ GED_EXPORT extern int _ged_translate_tgc(struct ged *gedp,
 			      vect_t tvec,
 			      int rflag);
 
+/* defined in facedef.c */
+GED_EXPORT extern int edarb_facedef(void *data, int argc, const char *argv[]);
 
 
+extern int ged_edarb_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_protate_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_pscale_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_ptranslate_core(struct ged *gedp, int argc, const char *argv[]);
