@@ -50,38 +50,6 @@
           } \
           BU_LIST_INIT( &((p)->s_vlist) ); }
 
-void
-cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy)
-{
-    size_t i;
-    char shortname[32];
-    char namebuf[64];
-    char *av[4];
-
-    bu_strlcpy(shortname, name, sizeof(shortname));
-
-    /* Remove any residue colors from a previous overlay w/same name */
-    if (DBIP->dbi_read_only) {
-	av[0] = "erase";
-	av[1] = shortname;
-	av[2] = NULL;
-	(void)ged_exec_erase(GEDP, 2, (const char **)av);
-    } else {
-	av[0] = "kill";
-	av[1] = "-f";
-	av[2] = shortname;
-	av[3] = NULL;
-	(void)ged_exec_kill(GEDP, 3, (const char **)av);
-    }
-
-    for (i=0; i < vbp->nused; i++) {
-	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
-
-	snprintf(namebuf, sizeof(namebuf), "%s%lx",	shortname, vbp->rgb[i]);
-	invent_solid(GEDP, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, 0);
-    }
-}
-
 
 /*
  * Compute the min, max, and center points of the solid.

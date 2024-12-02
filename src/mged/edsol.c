@@ -38,6 +38,7 @@
 #include "rt/arb_edit.h"
 #include "wdb.h"
 #include "rt/db4.h"
+#include "ged/view/nmg.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -1623,32 +1624,13 @@ nmg_ed(int arg, int UNUSED(a), int UNUSED(b))
 	    }
 
 	    nmg_pr_fu_around_eu(es_eu, &mged_tol);
-	    {
-		struct model *m;
-		struct bv_vlblock*vbp;
-		long *tab;
 
-		m = nmg_find_model(&es_eu->l.magic);
-		NMG_CK_MODEL(m);
+	    nmg_plot_eu(GEDP, es_eu, &mged_tol);
 
-		if (*es_eu->g.magic_p == NMG_EDGE_G_LSEG_MAGIC) {
-		    /* get space for list of items processed */
-		    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
-					    "nmg_ed tab[]");
-		    vbp = rt_vlblock_init();
-
-		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, &mged_tol);
-		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
-
-		    bv_vlblock_free(vbp);
-		    bu_free((void *)tab, "nmg_ed tab[]");
-		}
-		view_state->vs_flag = 1;
-	    }
-	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
-	    }
 	    /* no change of state or es_edflag */
+	    view_state->vs_flag = 1;
 	    return;
 	case ECMD_NMG_FORW:
 	    if (!es_eu) {

@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "./ged_private.h"
+#include "ged/view/nmg.h"
 
 int
 _ged_do_rot(struct ged *gedp,
@@ -180,6 +181,29 @@ ged_dl_hash(struct display_list *dl)
     bu_data_hash_destroy(state);
 
     return hash_val;
+}
+
+void
+nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, struct bn_tol *tol)
+{
+    if (!gedp || !es_eu || !tol)
+	return;
+
+    if (*es_eu->g.magic_p != NMG_EDGE_G_LSEG_MAGIC)
+	return;
+
+    struct model *m = nmg_find_model(&es_eu->l.magic);
+    NMG_CK_MODEL(m);
+
+    /* get space for list of items processed */
+    long *tab = (long *)bu_calloc(m->maxindex+1, sizeof(long), "nmg_ed tab[]");
+    struct bv_vlblock *vbp = rt_vlblock_init();
+
+    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, tol);
+    _ged_cvt_vlblock_to_solids(gedp, vbp, "_EU_", 0);      /* swipe vlist */
+
+    bv_vlblock_free(vbp);
+    bu_free((void *)tab, "nmg_ed tab[]");
 }
 
 /*
