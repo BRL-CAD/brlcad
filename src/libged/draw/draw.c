@@ -34,8 +34,8 @@
 #include "bu/time.h"
 #include "raytrace.h"
 
-
 #include "../ged_private.h"
+#include "./ged_draw.h"
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
@@ -1609,6 +1609,9 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 struct ged_cmd_impl draw_cmd_impl = {"draw", ged_draw_core, GED_CMD_DEFAULT};
 const struct ged_cmd draw_cmd = { &draw_cmd_impl };
 
+struct ged_cmd_impl bigE_cmd_impl = {"E", ged_E_core, GED_CMD_DEFAULT};
+const struct ged_cmd bigE_cmd = { &bigE_cmd_impl };
+
 struct ged_cmd_impl e_cmd_impl = {"e", ged_draw_core, GED_CMD_DEFAULT};
 const struct ged_cmd e_cmd = { &e_cmd_impl };
 
@@ -1626,9 +1629,9 @@ extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
 struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
 const struct ged_cmd preview_cmd = { &preview_cmd_impl };
 
-const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
+const struct ged_cmd *draw_cmds[] = { &draw_cmd, &bigE_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 6 };
+static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 7 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
