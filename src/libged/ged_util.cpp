@@ -2273,26 +2273,6 @@ _ged_set_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const cha
     return BRLCAD_OK;
 }
 
-/*
- * Returns point mbp_i.
- */
-struct wdb_metaball_pnt *
-_ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i)
-{
-    int i = 0;
-    struct wdb_metaball_pnt *curr_mbpp;
-
-    for (BU_LIST_FOR(curr_mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
-	if (i == mbp_i)
-	    return curr_mbpp;
-
-	++i;
-    }
-
-    return (struct wdb_metaball_pnt *)NULL;
-}
-
-
 #define GED_METABALL_SCALE(_d, _scale) \
     if ((_scale) < 0.0) \
 	(_d) = -(_scale); \
@@ -2316,7 +2296,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
 		mbp_i = 0;
 
-	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
+	    if ((mbpp = rt_metaball_get_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
 		return BRLCAD_ERROR;
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
@@ -2328,7 +2308,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
 		mbp_i = 0;
 
-	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
+	    if ((mbpp = rt_metaball_get_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
 		return BRLCAD_ERROR;
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");

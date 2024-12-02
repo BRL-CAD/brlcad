@@ -48,6 +48,8 @@ RT_EXPORT extern int rt_metaball_add_point(struct rt_metaball_internal *,
 					   const point_t *loc,
 					   const fastf_t fldstr,
 					   const fastf_t goo);
+RT_EXPORT extern struct wdb_metaball_pnt * rt_metaball_get_pt_i(
+	struct rt_metaball_internal *mbip, int mbp_i);
 
 /** @} */
 

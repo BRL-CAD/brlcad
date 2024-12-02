@@ -994,6 +994,24 @@ rt_metaball_form(struct bu_vls *logstr, const struct rt_functab *ftp)
     return BRLCAD_OK;
 }
 
+/*
+ * Returns point mbp_i.
+ */
+struct wdb_metaball_pnt *
+rt_metaball_get_pt_i(struct rt_metaball_internal *mbip, int mbp_i)
+{
+    int i = 0;
+    struct wdb_metaball_pnt *curr_mbpp;
+
+    for (BU_LIST_FOR(curr_mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
+	if (i == mbp_i)
+	    return curr_mbpp;
+
+	++i;
+    }
+
+    return (struct wdb_metaball_pnt *)NULL;
+}
 
 /*
  * Local Variables:

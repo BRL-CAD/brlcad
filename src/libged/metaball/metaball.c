@@ -415,7 +415,7 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     mbip = (struct rt_metaball_internal *)intern.idb_ptr;
-    if ((mbp = _ged_get_metaball_pt_i(mbip, pt_i)) == (struct wdb_metaball_pnt *)NULL) {
+    if ((mbp = rt_metaball_get_pt_i(mbip, pt_i)) == (struct wdb_metaball_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
@@ -518,7 +518,7 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     mbip = (struct rt_metaball_internal *)intern.idb_ptr;
-    if ((mbp = _ged_get_metaball_pt_i(mbip, seg_i)) == (struct wdb_metaball_pnt *)NULL) {
+    if ((mbp = rt_metaball_get_pt_i(mbip, seg_i)) == (struct wdb_metaball_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;

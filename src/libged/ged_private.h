@@ -369,10 +369,8 @@ GED_EXPORT extern int _ged_set_metaball(struct ged *gedp,
 			     struct rt_metaball_internal *mbip,
 			     const char *attribute,
 			     fastf_t sf);
-GED_EXPORT extern struct wdb_metaball_pnt *
-_ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i);
 
-/* defined in tops.c */
+/* defined in ged_util.cpp */
 GED_EXPORT struct directory **
 _ged_dir_getspace(struct db_i *dbip,
 		  size_t num_entries);
