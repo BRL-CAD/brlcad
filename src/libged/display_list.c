@@ -561,7 +561,7 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 }
 
 
-static void
+void
 color_soltab(struct bv_scene_obj *sp)
 {
     const struct mater *mp;
@@ -632,10 +632,10 @@ dl_color_soltab(struct bu_list *hdlp)
 
 
 /* Set solid's basecolor, color, and color flags based on client data and tree
- *  * state. If user color isn't set in client data, the solid's region id must be
- *   * set for proper material lookup.
- *    */
-static void
+ * state. If user color isn't set in client data, the solid's region id must be
+ * set for proper material lookup.
+ */
+void
 solid_set_color_info(
     struct bv_scene_obj *sp,
     unsigned char *wireframe_color_override,
@@ -806,193 +806,6 @@ dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
     }
     ged_create_vlist_display_list_cb(gedp, gdlp);
     return ret;
-}
-
-
-union tree *
-append_solid_to_display_list(
-    struct db_tree_state *tsp,
-    const struct db_full_path *pathp,
-    struct rt_db_internal *ip,
-    void *client_data)
-{
-    point_t min, max;
-    union tree *curtree;
-    struct ged_solid_data *bv_data = (struct ged_solid_data *)client_data;
-
-    RT_CK_DB_INTERNAL(ip);
-    BG_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
-
-    VSETALL(min, INFINITY);
-    VSETALL(max, -INFINITY);
-
-    if (!bv_data) {
-        return TREE_NULL;
-    }
-
-    if (RT_G_DEBUG & RT_DEBUG_TREEWALK) {
-        char *sofar = db_path_to_string(pathp);
-
-        bu_log("append_solid_to_display_list(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
-
-        bu_free((void *)sofar, "path string");
-    }
-
-    /* create solid */
-    struct bv_scene_obj *sp = bv_obj_get(bv_data->v, BV_DB_OBJS);
-    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
-    if (!bdata) {
-	BU_GET(bdata, struct ged_bv_data);
-	db_full_path_init(&bdata->s_fullpath);
-	sp->s_u_data = (void *)bdata;
-    } else {
-	bdata->s_fullpath.fp_len = 0;
-    }
-    if (!sp->s_u_data)
-	return TREE_NULL;
-
-    sp->s_size = 0;
-    VSETALL(sp->s_center, 0.0);
-
-    if (ip->idb_meth->ft_bbox) {
-        if (ip->idb_meth->ft_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
-	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
-		bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-	    } else {
-		bu_log("plot failure - invalid path\n");
-	    }
-
-            return TREE_NULL;
-        }
-
-        sp->s_center[X] = (min[X] + max[X]) * 0.5;
-        sp->s_center[Y] = (min[Y] + max[Y]) * 0.5;
-        sp->s_center[Z] = (min[Z] + max[Z]) * 0.5;
-
-        sp->s_size = max[X] - min[X];
-        V_MAX(sp->s_size, max[Y] - min[Y]);
-        V_MAX(sp->s_size, max[Z] - min[Z]);
-    } else if (ip->idb_meth->ft_plot) {
-        /* As a fallback for primitives that don't have a bbox function, use
-         * the old bounding method of calculating a plot for the primitive and
-         * using the extent of the plotted segments as the bounds.
-         */
-        int plot_status;
-        struct bu_list vhead;
-        struct bv_vlist *vp;
-
-        BU_LIST_INIT(&vhead);
-
-        plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-					    tsp->ts_tol, NULL);
-
-        if (plot_status < 0) {
-	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
-		bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-	    } else {
-		bu_log("plot failure - invalid path\n");
-	    }
-
-            return TREE_NULL;
-        }
-
-        solid_append_vlist(sp, (struct bv_vlist *)&vhead);
-
-        bv_scene_obj_bound(sp, bv_data->v);
-
-        while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
-            BU_LIST_DEQUEUE(&vp->l);
-            bu_free(vp, "solid vp");
-        }
-    }
-
-    sp->s_vlen = 0;
-    db_dup_full_path(&bdata->s_fullpath, pathp);
-    sp->s_flag = DOWN;
-    sp->s_iflag = DOWN;
-
-    if (bv_data->draw_solid_lines_only) {
-        sp->s_soldash = 0;
-    } else {
-        sp->s_soldash = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
-    }
-
-    sp->s_old.s_Eflag = 0;
-    sp->s_old.s_regionid = tsp->ts_regionid;
-
-    if (ip->idb_type == ID_GRIP) {
-        float mater_color[3];
-
-        /* Temporarily change mater color for pseudo solid to get the desired
-         * default color.
-         */
-        mater_color[RED] = tsp->ts_mater.ma_color[RED];
-        mater_color[GRN] = tsp->ts_mater.ma_color[GRN];
-        mater_color[BLU] = tsp->ts_mater.ma_color[BLU];
-
-        tsp->ts_mater.ma_color[RED] = 0;
-        tsp->ts_mater.ma_color[GRN] = 128;
-        tsp->ts_mater.ma_color[BLU] = 128;
-
-        if (bv_data->wireframe_color_override) {
-            solid_set_color_info(sp, (unsigned char *)&(bv_data->wireframe_color), tsp);
-        } else {
-            solid_set_color_info(sp, NULL, tsp);
-        }
-
-        tsp->ts_mater.ma_color[RED] = mater_color[RED];
-        tsp->ts_mater.ma_color[GRN] = mater_color[GRN];
-        tsp->ts_mater.ma_color[BLU] = mater_color[BLU];
-
-    } else {
-        if (bv_data->wireframe_color_override) {
-	    unsigned char wire_color[3];
-	    wire_color[RED] = (unsigned char)bv_data->wireframe_color[RED];
-	    wire_color[GRN] = (unsigned char)bv_data->wireframe_color[GRN];
-	    wire_color[BLU] = (unsigned char)bv_data->wireframe_color[BLU];
-            solid_set_color_info(sp, wire_color, tsp);
-        } else {
-	    const char *attr_color = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
-	    if (attr_color) {
-		int i;
-		unsigned char obj_color[3];
-		int color[3];
-		int color_cnt = sscanf(attr_color, "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
-		if (color_cnt == 3 && color[0] >= 0 && color[1] >= 0 && color[2] >= 0) {
-		    for (i = 0; i < 3; i++) {
-			if (color[i] > 255) color[i] = 255;
-		    }
-		    obj_color[RED] = (unsigned char)color[RED];
-		    obj_color[GRN] = (unsigned char)color[GRN];
-		    obj_color[BLU] = (unsigned char)color[BLU];
-		    solid_set_color_info(sp, obj_color, tsp);
-		} else {
-		    solid_set_color_info(sp, NULL, tsp);
-		}
-	    } else {
-		solid_set_color_info(sp, NULL, tsp);
-	    }
-	}
-    }
-
-    sp->s_dlist = 0;
-    sp->s_os->transparency = bv_data->transparency;
-    sp->s_os->s_dmode = bv_data->dmode;
-    MAT_COPY(sp->s_mat, tsp->ts_mat);
-
-    /* append solid to display list */
-    bu_semaphore_acquire(RT_SEM_MODEL);
-    BU_LIST_APPEND(bv_data->gdlp->dl_head_scene_obj.back, &sp->l);
-    bu_semaphore_release(RT_SEM_MODEL);
-
-    /* indicate success by returning something other than TREE_NULL */
-    BU_GET(curtree, union tree);
-    RT_TREE_INIT(curtree);
-    curtree->tr_op = OP_NOP;
-
-    return curtree;
 }
 
 

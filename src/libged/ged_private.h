@@ -278,13 +278,12 @@ GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
 extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
-/* Returns a bu_ptbl of all solids referenced by the display list */
-extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
 GED_EXPORT extern void dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp);
 
-GED_EXPORT extern int dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions);
-GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
+GED_EXPORT extern void color_soltab(struct bv_scene_obj *sp);
+GED_EXPORT extern void solid_set_color_info(struct bv_scene_obj *sp, unsigned char *wireframe_color_override, struct db_tree_state *tsp);
+
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
