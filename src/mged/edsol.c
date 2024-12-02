@@ -38,7 +38,7 @@
 #include "rt/arb_edit.h"
 #include "wdb.h"
 #include "rt/db4.h"
-#include "ged/view/nmg.h"
+#include "ged/view/ged_view_tmp.h"
 
 #include "./mged.h"
 #include "./sedit.h"
