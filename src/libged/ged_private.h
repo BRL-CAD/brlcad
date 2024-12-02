@@ -86,6 +86,7 @@ __BEGIN_DECLS
 #endif
 
 #define _GED_V4_MAXNAME NAMESIZE
+/* Default libged column width assumption */
 #define _GED_TERMINAL_WIDTH 80
 #define _GED_COLUMNS ((_GED_TERMINAL_WIDTH + _GED_V4_MAXNAME - 1) / _GED_V4_MAXNAME)
 
@@ -115,8 +116,6 @@ __BEGIN_DECLS
 #define DG_GED_MAX 2047.0
 #define DG_GED_MIN -2048.0
 
-/* Default libged column width assumption */
-#define GED_TERMINAL_WIDTH 80
 
 #define GED_CMD_RECURSION_LIMIT 100
 

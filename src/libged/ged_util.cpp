@@ -477,7 +477,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 
     if (cwidth > 80)
 	cwidth = 80;
-    numcol = GED_TERMINAL_WIDTH / cwidth;
+    numcol = _GED_TERMINAL_WIDTH / cwidth;
 
     /*
      * For the number of (full and partial) lines that will be needed,
