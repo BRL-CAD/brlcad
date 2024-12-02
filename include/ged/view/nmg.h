@@ -33,6 +33,8 @@
 #define GED_VIEW_NMG_H
 
 #include "common.h"
+#include "bn.h"
+#include "nmg.h"
 #include "ged/defines.h"
 
 __BEGIN_DECLS
