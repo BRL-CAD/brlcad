@@ -109,7 +109,6 @@
 
 #include "../ged_private.h"
 
-
 #define REV_BU_LIST_FOR(p, structure, hp)	\
     (p)=BU_LIST_LAST(structure, hp);	\
        BU_LIST_NOT_HEAD(p, hp);		\
