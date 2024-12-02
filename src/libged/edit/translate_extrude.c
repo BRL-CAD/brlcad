@@ -31,8 +31,8 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
-#include "./ged_private.h"
-
+#include "../ged_private.h"
+#include "./ged_edit.h"
 
 int
 _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, vect_t tvec, int rflag)

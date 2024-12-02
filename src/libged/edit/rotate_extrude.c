@@ -1,4 +1,4 @@
-/*                         R O T A T E _ T G C . C
+/*                         R O T A T E _ E X T R U D E . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2024 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/rotate_tgc.c
+/** @file libged/rotate_extrude.c
  *
- * The rotate_tgc command.
+ * The rotate_extrude command.
  *
  */
 
@@ -31,43 +31,22 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
+#include "./ged_edit.h"
 
 
 int
-_ged_rotate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribute, matp_t rmat)
+_ged_rotate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, matp_t rmat)
 {
-    RT_TGC_CK_MAGIC(tgc);
+    RT_EXTRUDE_CK_MAGIC(extrude);
 
     switch (attribute[0]) {
 	case 'h':
 	case 'H':
-	    switch (attribute[1]) {
-		case '\0':
-		    MAT4X3VEC(tgc->h, rmat, tgc->h);
-		    break;
-		case 'a':
-		case 'A':
-		    if ((attribute[2] == 'b' || attribute[2] == 'B') &&
-			attribute[3] == '\0') {
-			MAT4X3VEC(tgc->a, rmat, tgc->a);
-			MAT4X3VEC(tgc->b, rmat, tgc->b);
-			MAT4X3VEC(tgc->c, rmat, tgc->c);
-			MAT4X3VEC(tgc->d, rmat, tgc->d);
-		    } else {
-			bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-			return BRLCAD_ERROR;
-		    }
-
-		    break;
-		default:
-		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		    return BRLCAD_ERROR;
-	    }
-
+	    MAT4X3VEC(extrude->h, rmat, extrude->h);
 	    break;
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
 	    return BRLCAD_ERROR;
     }
 

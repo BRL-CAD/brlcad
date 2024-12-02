@@ -1,4 +1,4 @@
-/*                         R O T A T E _ E X T R U D E . C
+/*                      R O T A T E _ E T O . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2024 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/rotate_extrude.c
+/** @file libged/rotate_eto.c
  *
- * The rotate_extrude command.
+ * The rotate_eto command.
  *
  */
 
@@ -31,21 +31,26 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
-#include "./ged_private.h"
-
+#include "../ged_private.h"
+#include "./ged_edit.h"
 
 int
-_ged_rotate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, matp_t rmat)
+_ged_rotate_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribute, matp_t rmat)
 {
-    RT_EXTRUDE_CK_MAGIC(extrude);
+    RT_ETO_CK_MAGIC(eto);
+
+    if (attribute[1] != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "bad eto attribute - %s", attribute);
+	return BRLCAD_ERROR;
+    }
 
     switch (attribute[0]) {
-	case 'h':
-	case 'H':
-	    MAT4X3VEC(extrude->h, rmat, extrude->h);
+	case 'c':
+	case 'C':
+	    MAT4X3VEC(eto->eto_C, rmat, eto->eto_C);
 	    break;
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad eto attribute - %s", attribute);
 	    return BRLCAD_ERROR;
     }
 

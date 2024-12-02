@@ -139,15 +139,9 @@ set(
   points_eval.c
   polyclip.cpp
   qray.c
-  rotate_eto.c
-  rotate_extrude.c
-  rotate_hyp.c
-  rotate_tgc.c
   tab_complete.cpp
   trace.c
   track.c
-  translate_extrude.c
-  translate_tgc.c
   vutil.c
   view/data_lines.c
   wdb_importFg4Section.c

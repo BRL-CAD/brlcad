@@ -32,7 +32,6 @@
 
 #include "../ged_private.h"
 #include "./ged_edit.h"
-#include "./pscale.h"
 
 int
 ged_pscale_core(struct ged *gedp, int argc, const char *argv[])

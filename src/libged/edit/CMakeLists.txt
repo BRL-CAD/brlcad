@@ -13,6 +13,10 @@ set(edit_srcs
   pscale.c
   ptranslate.c
   pscale.c
+  rotate_eto.c
+  rotate_extrude.c
+  rotate_hyp.c
+  rotate_tgc.c
   scale_ehy.c
   scale_ell.c
   scale_epa.c
@@ -25,6 +29,8 @@ set(edit_srcs
   scale_superell.c
   scale_tgc.c
   scale_tor.c
+  translate_extrude.c
+  translate_tgc.c
   )
 
 ged_plugin_library(ged-edit ${edit_srcs})
@@ -33,7 +39,6 @@ target_link_libraries(ged-edit libged libbu)
 cmakefiles(
   CMakeLists.txt
   ${edit_srcs}
-  pscale.h
   ged_edit.h
   ged_edit2.h
   uri.hh

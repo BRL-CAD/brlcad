@@ -364,30 +364,6 @@ GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 GED_EXPORT extern void _ged_wait_status(struct bu_vls *logstr,
 			     int status);
 
-/* defined in rotate_eto.c */
-GED_EXPORT extern int _ged_rotate_eto(struct ged *gedp,
-			   struct rt_eto_internal *eto,
-			   const char *attribute,
-			   matp_t rmat);
-
-/* defined in rotate_extrude.c */
-GED_EXPORT extern int _ged_rotate_extrude(struct ged *gedp,
-			       struct rt_extrude_internal *extrude,
-			       const char *attribute,
-			       matp_t rmat);
-
-/* defined in rotate_hyp.c */
-GED_EXPORT extern int _ged_rotate_hyp(struct ged *gedp,
-			   struct rt_hyp_internal *hyp,
-			   const char *attribute,
-			   matp_t rmat);
-
-/* defined in rotate_tgc.c */
-GED_EXPORT extern int _ged_rotate_tgc(struct ged *gedp,
-			   struct rt_tgc_internal *tgc,
-			   const char *attribute,
-			   matp_t rmat);
-
 /* defined in edit_metaball.c */
 GED_EXPORT extern int _ged_scale_metaball(struct ged *gedp,
 			       struct rt_metaball_internal *mbip,
@@ -464,20 +440,6 @@ GED_EXPORT extern int _ged_scale_tor(struct ged *gedp,
 GED_EXPORT struct directory **
 _ged_dir_getspace(struct db_i *dbip,
 		  size_t num_entries);
-
-/* defined in translate_extrude.c */
-GED_EXPORT extern int _ged_translate_extrude(struct ged *gedp,
-				  struct rt_extrude_internal *extrude,
-				  const char *attribute,
-				  vect_t tvec,
-				  int rflag);
-
-/* defined in translate_tgc.c */
-GED_EXPORT extern int _ged_translate_tgc(struct ged *gedp,
-			      struct rt_tgc_internal *tgc,
-			      const char *attribute,
-			      vect_t tvec,
-			      int rflag);
 
 /* defined in vutil.c */
 GED_EXPORT extern int _ged_do_rot(struct ged *gedp,

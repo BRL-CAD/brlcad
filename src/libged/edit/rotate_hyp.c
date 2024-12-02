@@ -31,8 +31,8 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
-#include "./ged_private.h"
-
+#include "../ged_private.h"
+#include "./ged_edit.h"
 
 int
 _ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, matp_t rmat)

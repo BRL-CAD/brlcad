@@ -40,6 +40,89 @@
 
 __BEGIN_DECLS
 
+/* defined in rotate_eto.c */
+GED_EXPORT extern int _ged_rotate_eto(struct ged *gedp,
+			   struct rt_eto_internal *eto,
+			   const char *attribute,
+			   matp_t rmat);
+
+/* defined in rotate_extrude.c */
+GED_EXPORT extern int _ged_rotate_extrude(struct ged *gedp,
+			       struct rt_extrude_internal *extrude,
+			       const char *attribute,
+			       matp_t rmat);
+
+/* defined in rotate_hyp.c */
+GED_EXPORT extern int _ged_rotate_hyp(struct ged *gedp,
+			   struct rt_hyp_internal *hyp,
+			   const char *attribute,
+			   matp_t rmat);
+
+/* defined in rotate_tgc.c */
+GED_EXPORT extern int _ged_rotate_tgc(struct ged *gedp,
+			   struct rt_tgc_internal *tgc,
+			   const char *attribute,
+			   matp_t rmat);
+
+/* defined in scale_ehy.c */
+extern int _ged_scale_ehy(struct ged *gedp,
+			  struct rt_ehy_internal *ehy,
+			  const char *attribute,
+			  fastf_t sf,
+			  int rflag);
+
+/* defined in scale_ell.c */
+extern int _ged_scale_ell(struct ged *gedp,
+			  struct rt_ell_internal *ell,
+			  const char *attribute,
+			  fastf_t sf,
+			  int rflag);
+
+/* defined in scale_epa.c */
+extern int _ged_scale_epa(struct ged *gedp,
+			  struct rt_epa_internal *epa,
+			  const char *attribute,
+			  fastf_t sf,
+			  int rflag);
+
+/* defined in scale_eto.c */
+extern int _ged_scale_eto(struct ged *gedp,
+			  struct rt_eto_internal *eto,
+			  const char *attribute,
+			  fastf_t sf,
+			  int rflag);
+
+/* defined in scale_extrude.c */
+extern int _ged_scale_extrude(struct ged *gedp,
+			      struct rt_extrude_internal *extrude,
+			      const char *attribute,
+			      fastf_t sf,
+			      int rflag);
+
+/* defined in scale_hyp.c */
+extern int _ged_scale_hyp(struct ged *gedp,
+			  struct rt_hyp_internal *hyp,
+			  const char *attribute,
+			  fastf_t sf,
+			  int rflag);
+
+
+/* defined in translate_extrude.c */
+GED_EXPORT extern int _ged_translate_extrude(struct ged *gedp,
+				  struct rt_extrude_internal *extrude,
+				  const char *attribute,
+				  vect_t tvec,
+				  int rflag);
+
+/* defined in translate_tgc.c */
+GED_EXPORT extern int _ged_translate_tgc(struct ged *gedp,
+			      struct rt_tgc_internal *tgc,
+			      const char *attribute,
+			      vect_t tvec,
+			      int rflag);
+
+
+
 extern int ged_protate_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_pscale_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_ptranslate_core(struct ged *gedp, int argc, const char *argv[]);
