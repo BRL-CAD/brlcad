@@ -280,8 +280,6 @@ extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp)
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 
 GED_EXPORT extern void color_soltab(struct bv_scene_obj *sp);
-GED_EXPORT extern void solid_set_color_info(struct bv_scene_obj *sp, unsigned char *wireframe_color_override, struct db_tree_state *tsp);
-
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,

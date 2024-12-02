@@ -40,6 +40,124 @@
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
 
+/* Set solid's basecolor, color, and color flags based on client data and tree
+ * state. If user color isn't set in client data, the solid's region id must be
+ * set for proper material lookup.
+ */
+static void
+solid_set_color_info(
+    struct bv_scene_obj *sp,
+    unsigned char *wireframe_color_override,
+    struct db_tree_state *tsp)
+{
+    unsigned char bcolor[3] = {255, 0, 0}; /* default */
+
+    sp->s_old.s_uflag = 0;
+    sp->s_old.s_dflag = 0;
+    if (wireframe_color_override) {
+	sp->s_old.s_uflag = 1;
+
+	bcolor[RED] = wireframe_color_override[RED];
+	bcolor[GRN] = wireframe_color_override[GRN];
+	bcolor[BLU] = wireframe_color_override[BLU];
+    } else if (tsp) {
+	if (tsp->ts_mater.ma_color_valid) {
+	    bcolor[RED] = tsp->ts_mater.ma_color[RED] * 255.0;
+	    bcolor[GRN] = tsp->ts_mater.ma_color[GRN] * 255.0;
+	    bcolor[BLU] = tsp->ts_mater.ma_color[BLU] * 255.0;
+	} else {
+	    sp->s_old.s_dflag = 1;
+	}
+    }
+
+    sp->s_old.s_basecolor[RED] = bcolor[RED];
+    sp->s_old.s_basecolor[GRN] = bcolor[GRN];
+    sp->s_old.s_basecolor[BLU] = bcolor[BLU];
+
+    color_soltab(sp);
+}
+
+
+
+void
+dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
+{
+    if (!dgcdp || !dgcdp->v)
+	return;
+
+    struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_DB_OBJS);
+    if (!sp)
+	return;
+
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
+    if (!sp->s_u_data)
+	return;
+
+
+    if (BU_LIST_IS_EMPTY(&(sp->s_vlist)))
+	sp->s_vlen = 0;
+
+    struct bv_vlist *bvv = (struct bv_vlist *)vhead;
+    sp->s_vlen += bv_vlist_cmd_cnt(bvv);
+    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
+
+    bv_scene_obj_bound(sp, dgcdp->v);
+
+    db_dup_full_path(&bdata->s_fullpath, pathp);
+
+    sp->s_flag = DOWN;
+    sp->s_iflag = DOWN;
+    sp->s_soldash = dashflag;
+    sp->s_old.s_Eflag = 0;
+
+    if (tsp) {
+	sp->s_old.s_regionid = tsp->ts_regionid;
+    }
+
+    solid_set_color_info(sp, wireframe_color_override, tsp);
+
+    sp->s_dlist = 0;
+    sp->s_os->transparency = dgcdp->vs.transparency;
+    sp->s_os->s_dmode = dgcdp->vs.s_dmode;
+
+    /* append solid to display list */
+    bu_semaphore_acquire(RT_SEM_MODEL);
+    BU_LIST_APPEND(dgcdp->gdlp->dl_head_scene_obj.back, &sp->l);
+    bu_semaphore_release(RT_SEM_MODEL);
+
+    ged_create_vlist_solid_cb(dgcdp->gedp, sp);
+
+}
+
+/**
+ * Once the vlist has been created, perform the common tasks
+ * in handling the drawn solid.
+ *
+ * This routine must be prepared to run in parallel.
+ */
+void
+_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp)
+{
+
+    if (dgcdp->vs.color_override) {
+	unsigned char wcolor[3];
+
+	wcolor[0] = (unsigned char)dgcdp->vs.color[0];
+	wcolor[1] = (unsigned char)dgcdp->vs.color[1];
+	wcolor[2] = (unsigned char)dgcdp->vs.color[2];
+	dl_add_path(dashflag, vhead, pathp, tsp, wcolor, dgcdp);
+    } else {
+	dl_add_path(dashflag, vhead, pathp, tsp, NULL, dgcdp);
+    }
+}
+
 static fastf_t
 draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *dbip,
 		     const struct bn_tol *tol, const struct bg_tess_tol *ttol)

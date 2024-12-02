@@ -630,45 +630,6 @@ dl_color_soltab(struct bu_list *hdlp)
     }
 }
 
-
-/* Set solid's basecolor, color, and color flags based on client data and tree
- * state. If user color isn't set in client data, the solid's region id must be
- * set for proper material lookup.
- */
-void
-solid_set_color_info(
-    struct bv_scene_obj *sp,
-    unsigned char *wireframe_color_override,
-    struct db_tree_state *tsp)
-{
-    unsigned char bcolor[3] = {255, 0, 0}; /* default */
-
-    sp->s_old.s_uflag = 0;
-    sp->s_old.s_dflag = 0;
-    if (wireframe_color_override) {
-	sp->s_old.s_uflag = 1;
-
-	bcolor[RED] = wireframe_color_override[RED];
-	bcolor[GRN] = wireframe_color_override[GRN];
-	bcolor[BLU] = wireframe_color_override[BLU];
-    } else if (tsp) {
-	if (tsp->ts_mater.ma_color_valid) {
-	    bcolor[RED] = tsp->ts_mater.ma_color[RED] * 255.0;
-	    bcolor[GRN] = tsp->ts_mater.ma_color[GRN] * 255.0;
-	    bcolor[BLU] = tsp->ts_mater.ma_color[BLU] * 255.0;
-	} else {
-	    sp->s_old.s_dflag = 1;
-	}
-    }
-
-    sp->s_old.s_basecolor[RED] = bcolor[RED];
-    sp->s_old.s_basecolor[GRN] = bcolor[GRN];
-    sp->s_old.s_basecolor[BLU] = bcolor[BLU];
-
-    color_soltab(sp);
-}
-
-
 static void
 solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 {

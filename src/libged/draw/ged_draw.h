@@ -29,8 +29,11 @@
 #include "common.h"
 
 #include "ged.h"
+#include "../ged_private.h"
 
 __BEGIN_DECLS
+
+extern void _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp);
 
 extern int ged_E_core(struct ged *gedp, int argc, const char *argv[]);
 
