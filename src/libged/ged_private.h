@@ -386,8 +386,6 @@ GED_EXPORT extern int _ged_scale_pipe(struct ged *gedp,
 			   fastf_t sf,
 			   int rflag);
 
-GED_EXPORT extern int _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t));
-
 /* defined in scale_rhc.c */
 GED_EXPORT extern int _ged_scale_rhc(struct ged *gedp,
 			  struct rt_rhc_internal *rhc,

@@ -42,6 +42,111 @@
 #include "../ged_private.h"
 
 int
+_ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t))
+{
+    struct directory *dp;
+    static const char *usage = "pipe pt";
+    struct rt_db_internal intern;
+    struct rt_pipe_internal *pipeip;
+    mat_t mat;
+    point_t view_ps_pt;
+    point_t view_pp_coord;
+    point_t ps_pt;
+    struct wdb_pipe_pnt *prevpp;
+    double scan[3];
+    char *last;
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    if ((last = strrchr(argv[1], '/')) == NULL)
+	last = (char *)argv[1];
+    else
+	++last;
+
+    if (last[0] == '\0') {
+	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
+	return BRLCAD_ERROR;
+    }
+    /* convert from double to fastf_t */
+    VMOVE(view_ps_pt, scan);
+
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {
+	bu_vls_printf(gedp->ged_result_str, "Object not a PIPE");
+	rt_db_free_internal(&intern);
+
+	return BRLCAD_ERROR;
+    }
+
+    pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
+
+    /* use the view z from the first or last pipe point, depending on whether we're appending or prepending */
+    if (func == rt_pipe_add_pnt)
+	prevpp = BU_LIST_LAST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
+    else
+	prevpp = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
+
+    MAT4X3PNT(view_pp_coord, gedp->ged_gvp->gv_model2view, prevpp->pp_coord);
+    view_ps_pt[Z] = view_pp_coord[Z];
+    MAT4X3PNT(ps_pt, gedp->ged_gvp->gv_view2model, view_ps_pt);
+
+    if ((*func)(pipeip, (struct wdb_pipe_pnt *)NULL, ps_pt) == (struct wdb_pipe_pnt *)NULL) {
+	rt_db_free_internal(&intern);
+	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    {
+	mat_t invmat;
+	struct wdb_pipe_pnt *curr_ps;
+	point_t curr_pt;
+
+	bn_mat_inv(invmat, mat);
+	for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
+	    MAT4X3PNT(curr_pt, invmat, curr_ps->pp_coord);
+	    VMOVE(curr_ps->pp_coord, curr_pt);
+	}
+
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    }
+
+    rt_db_free_internal(&intern);
+    return BRLCAD_OK;
+}
+
+int
 ged_pipe_append_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     return _ged_pipe_append_pnt_common(gedp, argc, argv, rt_pipe_add_pnt);
