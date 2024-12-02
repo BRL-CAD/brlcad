@@ -712,7 +712,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 	if (dp != (struct directory *)NULL) {
 
 	    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
+		bu_vls_printf(gedp->ged_result_str, "could not import %s\n", dp->d_namep);
 		return BRLCAD_ERROR;
 	    }
 

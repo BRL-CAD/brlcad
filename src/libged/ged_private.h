@@ -336,32 +336,6 @@ GED_EXPORT extern void _ged_do_list(struct ged *gedp,
 GED_EXPORT extern vect_t _ged_eye_model;
 GED_EXPORT extern mat_t _ged_viewrot;
 GED_EXPORT extern struct ged *_ged_current_gedp;
-GED_EXPORT extern int _ged_cm_vsize(const int argc,
-			 const char **argv);
-GED_EXPORT extern int _ged_cm_eyept(const int argc,
-			 const char **argv);
-GED_EXPORT extern int _ged_cm_lookat_pt(const int argc,
-			     const char **argv);
-GED_EXPORT extern int _ged_cm_vrot(const int argc,
-			const char **argv);
-GED_EXPORT extern int _ged_cm_orientation(const int argc,
-			       const char **argv);
-GED_EXPORT extern int _ged_cm_set(const int argc,
-		       const char **argv);
-GED_EXPORT extern int _ged_cm_end(const int argc,
-		       const char **argv);
-GED_EXPORT extern int _ged_cm_null(const int argc,
-			const char **argv);
-
-/* defined in preview.c */
-extern void _ged_setup_rt(struct ged *gedp,
-			  char **vp,
-			  int printcmd);
-
-/* defined in red.c */
-
-extern char _ged_tmpfil[];
-
 
 /* defined in rt.c */
 GED_EXPORT extern void

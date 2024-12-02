@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "../ged_private.h"
+#include "./ged_draw.h"
 
 /**
  * here we define a minimal table of commands that are supported by the

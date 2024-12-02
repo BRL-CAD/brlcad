@@ -33,6 +33,15 @@
 
 __BEGIN_DECLS
 
+extern int _ged_cm_vsize(const int argc, const char **argv);
+extern int _ged_cm_eyept(const int argc, const char **argv);
+extern int _ged_cm_lookat_pt(const int argc, const char **argv);
+extern int _ged_cm_vrot(const int argc, const char **argv);
+extern int _ged_cm_orientation(const int argc, const char **argv);
+extern int _ged_cm_set(const int argc, const char **argv);
+extern int _ged_cm_end(const int argc, const char **argv);
+extern int _ged_cm_null(const int argc, const char **argv);
+
 extern void _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp);
 
 extern int ged_E_core(struct ged *gedp, int argc, const char *argv[]);

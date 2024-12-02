@@ -35,6 +35,7 @@
 #include "bu/getopt.h"
 
 #include "../ged_private.h"
+#include "./ged_draw.h"
 
 static struct bv_vlblock *preview_vbp;
 static double preview_delay;
