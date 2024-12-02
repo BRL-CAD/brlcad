@@ -72,7 +72,7 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 		  "vertexuse and vertex geometry of the selected vertex (via its "
 		  "coordinates) and higher-order topology containing the vertex. "
 		  "When specifying vertex to be removed, user generally will display "
-		  "vertex coordinates in object via the MGED command labelvert.\n");
+		  "vertex coordinates in object via the GED command labelvert.\n");
     bu_vls_printf(gedp->ged_result_str,
 		  "\tkill F         -  removes the "
 		  "faceuse and face geometry of the selected face (via its "

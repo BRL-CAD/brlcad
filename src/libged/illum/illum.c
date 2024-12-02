@@ -26,8 +26,69 @@
 #include "common.h"
 #include <string.h>
 
+#include "dm.h" // For labelvert - see if we really need the dm_set_dirty call there...
+
 #include "ged.h"
 #include "../ged_private.h"
+
+/* Usage:  labelvert solid(s) */
+int
+ged_labelvert_core(struct ged *gedp, int argc, const char *argv[])
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    int i;
+    struct bv_vlblock*vbp;
+    mat_t mat;
+    fastf_t scale;
+    static const char *usage = "object(s) - label vertices of wireframes of objects";
+
+    if (!gedp || !gedp->dbip)
+	return BRLCAD_ERROR;
+
+    if (argc < 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    vbp = rt_vlblock_init();
+    MAT_IDN(mat);
+    bn_mat_inv(mat, gedp->ged_gvp->gv_rotation);
+    scale = gedp->ged_gvp->gv_size / 100;          /* divide by # chars/screen */
+
+    for (i=1; i<argc; i++) {
+	struct bv_scene_obj *s;
+	struct directory *dp;
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	    continue;
+	/* Find uses of this solid in the solid table */
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	    for (BU_LIST_FOR(s, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+		if (!s->s_u_data)
+		    continue;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)s->s_u_data;
+		if (db_full_path_search(&bdata->s_fullpath, dp)) {
+		    rt_label_vlist_verts(vbp, &s->s_vlist, mat, scale, gedp->dbip->dbi_base2local);
+		}
+	    }
+
+	    gdlp = next_gdlp;
+	}
+    }
+
+    _ged_cvt_vlblock_to_solids(gedp, vbp, "_LABELVERT_", 0);
+
+    bv_vlblock_free(vbp);
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (dmp)
+	dm_set_dirty(dmp, 1);
+    return BRLCAD_OK;
+}
+
+
 
 static int
 dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
@@ -129,9 +190,19 @@ struct ged_cmd_impl illum_cmd_impl = {
 };
 
 const struct ged_cmd illum_cmd = { &illum_cmd_impl };
-const struct ged_cmd *illum_cmds[] = { &illum_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  illum_cmds, 1 };
+struct ged_cmd_impl labelvert_cmd_impl = {
+    "labelvert",
+    ged_labelvert_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd labelvert_cmd = { &labelvert_cmd_impl };
+
+
+const struct ged_cmd *illum_cmds[] = { &illum_cmd, &labelvert_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  illum_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

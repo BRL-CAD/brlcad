@@ -212,7 +212,6 @@ set mged_help_data(killtree)	$helplib_data(wdb_killtree)
 set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|ax|ay|az|aX|aY|aZ|aS|xadc|yadc|ang1|ang2|distadc [val])]}	{emulate knob twist (e.g. knob x 1)}}
 set mged_help_data(l)		$helplib_data(wdb_list)
 set mged_help_data(labelface)	{{object[s]}	{label faces of wireframes of objects}}
-set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
 set mged_help_data(lc)          {{[-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}} {list ident, material id, LOS, and aircode of regions within a group}}
 set mged_help_data(lint)        {{[options] object} {check/analyze/validate the given object}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)

@@ -210,7 +210,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"killtree", cmd_ged_erase_wrapper, ged_exec_killtree},
     {"knob", f_knob, GED_FUNC_PTR_NULL},
     {"l", cmd_ged_info_wrapper, ged_exec_l},
-    {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
+    {"labelvert", cmd_ged_view_wrapper, ged_exec_labelvert},
     {"labelface", f_labelface, GED_FUNC_PTR_NULL},
     {"lc", cmd_ged_plain_wrapper, ged_exec_lc},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
