@@ -6,13 +6,35 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-ged_plugin_library(ged-edit edit.c edit2.cpp)
+set(edit_srcs
+  edit.c
+  edit2.cpp
+  protate.c
+  pscale.c
+  ptranslate.c
+  pscale.c
+  scale_ehy.c
+  scale_ell.c
+  scale_epa.c
+  scale_eto.c
+  scale_extrude.c
+  scale_hyp.c
+  scale_part.c
+  scale_rhc.c
+  scale_rpc.c
+  scale_superell.c
+  scale_tgc.c
+  scale_tor.c
+  )
+
+ged_plugin_library(ged-edit ${edit_srcs})
 target_link_libraries(ged-edit libged libbu)
 
 cmakefiles(
   CMakeLists.txt
-  edit.c
-  edit2.cpp
+  ${edit_srcs}
+  pscale.h
+  ged_edit.h
   ged_edit2.h
   uri.hh
 )

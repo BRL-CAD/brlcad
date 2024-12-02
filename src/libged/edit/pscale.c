@@ -31,6 +31,7 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
+#include "./ged_edit.h"
 #include "./pscale.h"
 
 int
@@ -167,26 +168,6 @@ ged_pscale_core(struct ged *gedp, int argc, const char *argv[])
 
     return ret;
 }
-
-
-#ifdef GED_PLUGIN
-#include "../include/plugin.h"
-struct ged_cmd_impl pscale_cmd_impl = {
-    "pscale",
-    ged_pscale_core,
-    GED_CMD_DEFAULT
-};
-
-const struct ged_cmd pscale_cmd = { &pscale_cmd_impl };
-const struct ged_cmd *pscale_cmds[] = { &pscale_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  pscale_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

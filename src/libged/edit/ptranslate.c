@@ -1,4 +1,4 @@
-/*                         P R O T A T E . C
+/*                         P T R A N S L A T E . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2024 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/protate.c
+/** @file libged/ptranslate.c
  *
- * The protate command.
+ * The ptranslate command.
  */
 
 #include "common.h"
@@ -31,21 +31,20 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
-
+#include "./ged_edit.h"
 
 int
-ged_protate_core(struct ged *gedp, int argc, const char *argv[])
+ged_ptranslate_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd_name = argv[0];
     int ret;
-    mat_t rmat;
-    char *last;
+    int rflag;
     struct rt_db_internal intern;
+    vect_t tvec;
+    double scan[3];
+    char *last;
     struct directory *dp;
-
-    /* intentionally double for scan */
-    double rx, ry, rz;
-
-    static const char *usage = "obj attribute rvec";
+    static const char *usage = "[-r] obj attribute tvec";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -56,19 +55,33 @@ ged_protate_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
-    if (argc != 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (argc < 4 || argc > 5) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf %lf %lf", &rx, &ry, &rz) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad rotation vector - %s", argv[0], argv[3]);
+    if (argc == 5) {
+	if (argv[1][0] == '-' && argv[1][1] == 'r' && argv[1][2] == '\0') {
+	    rflag = 1;
+	    --argc;
+	    ++argv;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	    return BRLCAD_ERROR;
+	}
+    } else
+	rflag = 0;
+
+    if (sscanf(argv[3], "%lf %lf %lf", &scan[0], &scan[1], &scan[2]) != 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad translation vector - %s", cmd_name, argv[3]);
 	return BRLCAD_ERROR;
     }
+    /* convert from double to fastf_t */
+    VMOVE(tvec, scan);
 
     if ((last = strrchr(argv[1], '/')) == NULL)
 	last = (char *)argv[1];
@@ -76,12 +89,12 @@ ged_protate_core(struct ged *gedp, int argc, const char *argv[])
 	++last;
 
     if (last[0] == '\0') {
-	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", cmd_name, argv[1]);
 	return BRLCAD_ERROR;
     }
 
     if ((dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", cmd_name, argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -89,29 +102,21 @@ ged_protate_core(struct ged *gedp, int argc, const char *argv[])
     RT_CK_DB_INTERNAL(&intern);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	bu_vls_printf(gedp->ged_result_str, "%s: Object not eligible for rotating.", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Object not eligible for translating.", cmd_name);
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
     }
 
-    bn_mat_angles(rmat, rx, ry, rz);
-
     switch (intern.idb_minor_type) {
-	case DB5_MINORTYPE_BRLCAD_ETO:
-	    ret = _ged_rotate_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], rmat);
+	case DB5_MINORTYPE_BRLCAD_TGC:
+	    ret = _ged_translate_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], tvec, rflag);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	    ret = _ged_rotate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], rmat);
-	    break;
-	case DB5_MINORTYPE_BRLCAD_HYP:
-	    ret = _ged_rotate_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], rmat);
-	    break;
-	case DB5_MINORTYPE_BRLCAD_TGC:
-	    ret = _ged_rotate_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], rmat);
+	    ret = _ged_translate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], tvec, rflag);
 	    break;
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Object not yet supported.", cmd_name);
 	    rt_db_free_internal(&intern);
 
 	    return BRLCAD_ERROR;
@@ -125,26 +130,6 @@ ged_protate_core(struct ged *gedp, int argc, const char *argv[])
 
     return ret;
 }
-
-
-#ifdef GED_PLUGIN
-#include "../include/plugin.h"
-struct ged_cmd_impl protate_cmd_impl = {
-    "protate",
-    ged_protate_core,
-    GED_CMD_DEFAULT
-};
-
-const struct ged_cmd protate_cmd = { &protate_cmd_impl };
-const struct ged_cmd *protate_cmds[] = { &protate_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  protate_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

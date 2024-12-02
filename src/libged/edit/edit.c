@@ -34,7 +34,7 @@
 #include "raytrace.h"
 #include "ged.h"
 #include "../ged_private.h"
-
+#include "./ged_edit.h"
 
 /*
  * rotate: Proposed operations, and manual page
@@ -2434,16 +2434,21 @@ err_missing_arg:
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl edit_cmd_impl = {
-    "edit",
-    ged_edit_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl edit_cmd_impl = {"edit", ged_edit_core, GED_CMD_DEFAULT};
 const struct ged_cmd edit_cmd = { &edit_cmd_impl };
-const struct ged_cmd *edit_pcmds[] = { &edit_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  edit_pcmds, 1 };
+struct ged_cmd_impl protate_cmd_impl = {"protate", ged_protate_core, GED_CMD_DEFAULT};
+const struct ged_cmd protate_cmd = { &protate_cmd_impl };
+
+struct ged_cmd_impl pscale_cmd_impl = {"pscale", ged_pscale_core, GED_CMD_DEFAULT};
+const struct ged_cmd pscale_cmd = { &pscale_cmd_impl };
+
+struct ged_cmd_impl ptranslate_cmd_impl = {"ptranslate", ged_ptranslate_core, GED_CMD_DEFAULT};
+const struct ged_cmd ptranslate_cmd = { &ptranslate_cmd_impl };
+
+const struct ged_cmd *edit_pcmds[] = { &edit_cmd, &protate_cmd, &pscale_cmd, &ptranslate_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  edit_pcmds, 4 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

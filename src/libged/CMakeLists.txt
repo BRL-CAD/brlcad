@@ -347,11 +347,8 @@ add_subdirectory(pnts)
 add_subdirectory(prcolor)
 add_subdirectory(prefix)
 add_subdirectory(process)
-add_subdirectory(protate)
 add_subdirectory(ps)
-add_subdirectory(pscale)
 add_subdirectory(pset)
-add_subdirectory(ptranslate)
 add_subdirectory(pull)
 add_subdirectory(push)
 add_subdirectory(put)
@@ -460,7 +457,6 @@ set(
   joint/joint.h
   osg.cpp
   pnts_util.h
-  pscale/pscale.h
   qray.h
   simulate/NOTES
   simulate/rt_collision_algorithm.hpp
