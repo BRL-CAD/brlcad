@@ -323,13 +323,6 @@ GED_EXPORT extern int _ged_get_solid_keypoint(struct ged *const gedp,
 				   const struct rt_db_internal *const ip,
 				   const fastf_t *const mat);
 
-/*  defined in gqa.c (TODO - this is in lieu of putting these in struct ged.
- *  gqa is using globals, which may explain some bug reports we've gotten -
- *  this and the _ged_current_gedp both need to be scrubbed down to local gqa
- *  vars. */
-extern struct analyze_densities *_gd_densities;
-extern char *_gd_densities_source;
-
 /* defined in how.c */
 GED_EXPORT extern struct directory **_ged_build_dpp(struct ged *gedp,
 					 const char *path);
