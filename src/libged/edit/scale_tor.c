@@ -32,7 +32,7 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
-
+#include "./ged_edit.h"
 
 int
 _ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attribute, fastf_t sf, int rflag)

@@ -1,4 +1,4 @@
-/*                         S C A L E _ R P C . C
+/*                 S C A L E _  M E T A B A L L . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2024 United States Government as represented by
@@ -17,9 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/scale_rpc.c
+/** @file libged/scale_metaball.c
  *
- * The scale_rpc command.
+ * The scale_metaball command.
+ *
  */
 
 #include "common.h"
@@ -33,41 +34,57 @@
 #include "../ged_private.h"
 #include "./ged_edit.h"
 
+#define GED_METABALL_SCALE(_d, _scale) \
+    if ((_scale) < 0.0) \
+	(_d) = -(_scale); \
+    else		  \
+	(_d) *= (_scale);
+
 int
-_ged_scale_rpc(struct ged *gedp, struct rt_rpc_internal *rpc, const char *attribute, fastf_t sf, int rflag)
+_ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf, int rflag)
 {
-    RT_RPC_CK_MAGIC(rpc);
+    int mbp_i;
+    struct wdb_metaball_pnt *mbpp;
+
+    RT_METABALL_CK_MAGIC(mbip);
+
+    if (!rflag && sf > 0)
+	sf = -sf;
 
     switch (attribute[0]) {
-	case 'b':
-	case 'B':
-	    if (!rflag)
-		sf /= MAGNITUDE(rpc->rpc_B);
+	case 'f':
+	case 'F':
+	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
+		mbp_i = 0;
 
-	    VSCALE(rpc->rpc_B, rpc->rpc_B, sf);
-	    break;
-	case 'h':
-	case 'H':
-	    if (!rflag)
-		sf /= MAGNITUDE(rpc->rpc_H);
+	    if ((mbpp = rt_metaball_get_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
+		return BRLCAD_ERROR;
 
-	    VSCALE(rpc->rpc_H, rpc->rpc_H, sf);
+	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
+	    GED_METABALL_SCALE(mbpp->fldstr, sf);
+
 	    break;
-	case 'r':
-	case 'R':
-	    if (rflag)
-		rpc->rpc_r *= sf;
-	    else
-		rpc->rpc_r = sf;
+	case 's':
+	case 'S':
+	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
+		mbp_i = 0;
+
+	    if ((mbpp = rt_metaball_get_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
+		return BRLCAD_ERROR;
+
+	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
+	    GED_METABALL_SCALE(mbpp->sweat, sf);
 
 	    break;
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "bad rpc attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
 	    return BRLCAD_ERROR;
     }
 
     return BRLCAD_OK;
 }
+
+
 
 
 /*

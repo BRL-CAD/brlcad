@@ -31,6 +31,7 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
+#include "./ged_edit.h"
 
 int
 _ged_scale_ehy(struct ged *gedp, struct rt_ehy_internal *ehy, const char *attribute, fastf_t sf, int rflag)

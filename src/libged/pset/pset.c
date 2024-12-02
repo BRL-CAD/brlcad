@@ -32,6 +32,37 @@
 
 #include "../ged_private.h"
 
+static int
+_ged_set_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf)
+{
+    RT_METABALL_CK_MAGIC(mbip);
+
+    switch (attribute[0]) {
+	case 'm':
+	case 'M':
+	    if (sf <= METABALL_METABALL)
+		mbip->method = METABALL_METABALL;
+	    else if (sf >= METABALL_BLOB)
+		mbip->method = METABALL_BLOB;
+	    else
+		mbip->method = (int)sf;
+
+	    break;
+	case 't':
+	case 'T':
+	    if (sf < 0)
+		mbip->threshold = -sf;
+	    else
+		mbip->threshold = sf;
+
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
+	    return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
 
 int
 ged_pset_core(struct ged *gedp, int argc, const char *argv[])

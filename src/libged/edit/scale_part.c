@@ -31,6 +31,7 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
+#include "./ged_edit.h"
 
 int
 _ged_scale_part(struct ged *gedp, struct rt_part_internal *part, const char *attribute, fastf_t sf, int rflag)

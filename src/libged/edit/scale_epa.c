@@ -31,6 +31,7 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
+#include "./ged_edit.h"
 
 int
 _ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attribute, fastf_t sf, int rflag)

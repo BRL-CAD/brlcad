@@ -327,7 +327,11 @@ GED_EXPORT extern void _ged_do_list(struct ged *gedp,
 			 struct directory *dp,
 			 int verbose);
 
-/* defined in loadview.c */
+/* defined in loadview.c
+ *
+ * TODO - I'm thinking these shouldn't exist... need to figure out how they're
+ * being used and make them go away.
+ **/
 GED_EXPORT extern vect_t _ged_eye_model;
 GED_EXPORT extern mat_t _ged_viewrot;
 GED_EXPORT extern struct ged *_ged_current_gedp;
@@ -358,17 +362,6 @@ GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 /* defined in rtcheck.c */
 GED_EXPORT extern void _ged_wait_status(struct bu_vls *logstr,
 			     int status);
-
-/* defined in edit_metaball.c */
-GED_EXPORT extern int _ged_scale_metaball(struct ged *gedp,
-			       struct rt_metaball_internal *mbip,
-			       const char *attribute,
-			       fastf_t sf,
-			       int rflag);
-GED_EXPORT extern int _ged_set_metaball(struct ged *gedp,
-			     struct rt_metaball_internal *mbip,
-			     const char *attribute,
-			     fastf_t sf);
 
 /* defined in ged_util.cpp */
 GED_EXPORT struct directory **

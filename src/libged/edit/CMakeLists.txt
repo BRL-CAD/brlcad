@@ -23,6 +23,7 @@ set(edit_srcs
   scale_eto.c
   scale_extrude.c
   scale_hyp.c
+  scale_metaball.c
   scale_part.c
   scale_pipe.c
   scale_rhc.c
