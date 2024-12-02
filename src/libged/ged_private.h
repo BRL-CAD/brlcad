@@ -291,11 +291,6 @@ GED_EXPORT extern int _ged_drawtrees(struct ged *gedp,
 			  const char *argv[],
 			  int kind,
 			  struct _ged_client_data *_dgcdp);
-GED_EXPORT extern void _ged_drawH_part2(int dashflag,
-			     struct bu_list *vhead,
-			     const struct db_full_path *pathp,
-			     struct db_tree_state *tsp,
-			     struct _ged_client_data *dgcdp);
 
 /* defined in edbot.c */
 GED_EXPORT extern int _ged_select_botpts(struct ged *gedp,
