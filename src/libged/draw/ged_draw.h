@@ -33,6 +33,41 @@
 
 __BEGIN_DECLS
 
+struct _ged_client_data {
+    uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
+    struct ged *gedp;
+    struct rt_wdb *wdbp;
+    struct display_list *gdlp;
+    int fastpath_count;			/* statistics */
+    struct bv_vlblock *draw_edge_uses_vbp;
+    struct bview *v;
+
+    /* bigE related members */
+    struct application *ap;
+    struct bu_ptbl leaf_list;
+    struct rt_i *rtip;
+    time_t start_time;
+    time_t etime;
+    long nvectors;
+    int do_polysolids;
+    int num_halfs;
+    int autoview;
+    int nmg_fast_wireframe_draw;
+
+    // Debugging plotting specific options.  These don't actually belong with
+    // the drawing routines at all - they are analogous to the brep debugging
+    // plotting routines, and belong with nmg/bot/etc. plot subcommands.
+    int draw_nmg_only;
+    int nmg_triangulate;
+    int draw_normals;
+    int draw_no_surfaces;
+    int shade_per_vertex_normals;
+    int draw_edge_uses;
+    int do_not_draw_nmg_solids_during_debugging;
+
+    struct bv_obj_settings vs;
+};
+
 extern int _ged_cm_vsize(const int argc, const char **argv);
 extern int _ged_cm_eyept(const int argc, const char **argv);
 extern int _ged_cm_lookat_pt(const int argc, const char **argv);
@@ -43,6 +78,12 @@ extern int _ged_cm_end(const int argc, const char **argv);
 extern int _ged_cm_null(const int argc, const char **argv);
 
 extern void _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp);
+
+extern int _ged_drawtrees(struct ged *gedp,
+			  int argc,
+			  const char *argv[],
+			  int kind,
+			  struct _ged_client_data *_dgcdp);
 
 extern int ged_E_core(struct ged *gedp, int argc, const char *argv[]);
 
