@@ -529,21 +529,6 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 
 /*********************************************************/
 
-struct directory **
-_ged_getspace(struct db_i *dbip,
-	      size_t num_entries)
-{
-    struct directory **dir_basep;
-
-    if (num_entries == 0)
-	num_entries = db_directory_size(dbip);
-
-    /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_calloc((num_entries+1), sizeof(struct directory *), "_ged_getspace *dir[]");
-    return dir_basep;
-}
-
-
 void
 _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
 {

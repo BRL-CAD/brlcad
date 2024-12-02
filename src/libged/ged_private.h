@@ -437,15 +437,6 @@ GED_EXPORT extern void _ged_vls_col_pr4v(struct bu_vls *vls,
 			      int no_decorate,
 			      int ssflag);
 
-/**
- * This routine walks through the directory entry list and mallocs
- * enough space for pointers to hold the number of entries specified
- * by the argument if > 0.
- *
- */
-GED_EXPORT extern struct directory ** _ged_getspace(struct db_i *dbip,
-					 size_t num_entries);
-
 
 GED_EXPORT extern int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, int csoltab);
 

@@ -31,6 +31,19 @@
 
 #include "../ged_private.h"
 
+static struct directory **
+_ged_getspace(struct db_i *dbip,
+	size_t num_entries)
+{
+    struct directory **dir_basep;
+
+    if (num_entries == 0)
+	num_entries = db_directory_size(dbip);
+
+    /* Allocate and cast num_entries worth of pointers */
+    dir_basep = (struct directory **) bu_calloc((num_entries+1), sizeof(struct directory *), "_ged_getspace *dir[]");
+    return dir_basep;
+}
 
 struct dir_check_stuff {
     struct db_i *main_dbip;
