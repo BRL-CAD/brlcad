@@ -106,6 +106,55 @@ extern int _ged_scale_hyp(struct ged *gedp,
 			  fastf_t sf,
 			  int rflag);
 
+/* defined in scale_part.c */
+GED_EXPORT extern int _ged_scale_part(struct ged *gedp,
+                           struct rt_part_internal *part,
+                           const char *attribute,
+                           fastf_t sf,
+                           int rflag);
+
+/* defined in edpipe.c */
+GED_EXPORT extern int _ged_scale_pipe(struct ged *gedp,
+                           struct rt_pipe_internal *pipe_internal,
+                           const char *attribute,
+                           fastf_t sf,
+                           int rflag);
+
+/* defined in scale_rhc.c */
+GED_EXPORT extern int _ged_scale_rhc(struct ged *gedp,
+                          struct rt_rhc_internal *rhc,
+                          const char *attribute,
+                          fastf_t sf,
+                          int rflag);
+
+/* defined in scale_rpc.c */
+GED_EXPORT extern int _ged_scale_rpc(struct ged *gedp,
+                          struct rt_rpc_internal *rpc,
+                          const char *attribute,
+                          fastf_t sf,
+                          int rflag);
+
+/* defined in scale_superell.c */
+GED_EXPORT extern int _ged_scale_superell(struct ged *gedp,
+                               struct rt_superell_internal *superell,
+                               const char *attribute,
+                               fastf_t sf,
+                               int rflag);
+
+/* defined in scale_tgc.c */
+GED_EXPORT extern int _ged_scale_tgc(struct ged *gedp,
+                          struct rt_tgc_internal *tgc,
+                          const char *attribute,
+                          fastf_t sf,
+                          int rflag);
+
+/* defined in scale_tor.c */
+GED_EXPORT extern int _ged_scale_tor(struct ged *gedp,
+                          struct rt_tor_internal *tor,
+                          const char *attribute,
+                          fastf_t sf,
+                          int rflag);
+
 
 /* defined in translate_extrude.c */
 GED_EXPORT extern int _ged_translate_extrude(struct ged *gedp,

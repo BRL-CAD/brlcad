@@ -133,7 +133,6 @@ set(
   get_solid_kp.c
   inside.c
   path.c
-  pipe.c
   pnts_util.c
   points_eval.c
   polyclip.cpp

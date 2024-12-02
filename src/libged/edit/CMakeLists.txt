@@ -24,6 +24,7 @@ set(edit_srcs
   scale_extrude.c
   scale_hyp.c
   scale_part.c
+  scale_pipe.c
   scale_rhc.c
   scale_rpc.c
   scale_superell.c

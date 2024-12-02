@@ -1,4 +1,4 @@
-/*                        P I P E . C
+/*                   S C A L E _ P I P E . C
  * BRL-CAD
  *
  * Copyright (c) 1995-2024 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/edpipe.c
+/** @file libged/edit/scale_pipe.c
  *
  * Functions -
  *
@@ -39,7 +39,8 @@
 #include "ged.h"
 #include "wdb.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
+#include "./ged_edit.h"
 
 void
 pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps), fastf_t *UNUSED(new_pt))
@@ -61,7 +62,7 @@ edpipe_scale(fastf_t d, fastf_t scale)
 }
 
 
-void
+static void
 pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
@@ -90,7 +91,7 @@ pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 }
 
 
-void
+static void
 pipe_scale_id(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
@@ -119,7 +120,7 @@ pipe_scale_id(struct rt_pipe_internal *pipeip, fastf_t scale)
 }
 
 
-void
+static void
 pipe_seg_scale_od(struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_od;
@@ -144,7 +145,7 @@ pipe_seg_scale_od(struct wdb_pipe_pnt *ps, fastf_t scale)
 }
 
 
-void
+static void
 pipe_seg_scale_id(struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_id;
@@ -167,7 +168,7 @@ pipe_seg_scale_id(struct wdb_pipe_pnt *ps, fastf_t scale)
 }
 
 
-void
+static void
 pipe_seg_scale_radius(struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t old_radius;
@@ -198,7 +199,7 @@ pipe_seg_scale_radius(struct wdb_pipe_pnt *ps, fastf_t scale)
 }
 
 
-void
+static void
 pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
     struct bu_list head;
