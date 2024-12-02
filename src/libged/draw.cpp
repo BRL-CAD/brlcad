@@ -866,8 +866,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
   step.  That mode is also supported by this subtree walk.
 
 ******************************************************************************/
-
-extern "C" void
+static void
 draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 			 void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
 			 void *client_data, void *comb_inst_map)
@@ -955,7 +954,6 @@ draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 	    bu_bomb("db_functree_subtree: unrecognized operator\n");
     }
 }
-
 
 /**
  * This walker builds a list of db_full_path entries corresponding to
