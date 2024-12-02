@@ -4877,6 +4877,45 @@ rt_pipe_centroid(point_t *cent, struct rt_db_internal *ip)
     pipe_elements_free(&head);
 }
 
+/*
+ * Returns the index for the pipe segment matching ps.
+ */
+int
+rt_pipe_get_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps)
+{
+    struct wdb_pipe_pnt *curr_ps;
+    int seg_i = 0;
+
+    for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
+	if (curr_ps == ps)
+	    return seg_i;
+
+	++seg_i;
+    }
+
+    return -1;
+}
+
+
+/*
+ * Returns segment seg_i.
+ */
+struct wdb_pipe_pnt *
+rt_pipe_get_seg_i(struct rt_pipe_internal *pipeip, int seg_i)
+{
+    int i = 0;
+    struct wdb_pipe_pnt *curr_ps;
+
+    for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
+	if (i == seg_i)
+	    return curr_ps;
+
+	++i;
+    }
+
+    return (struct wdb_pipe_pnt *)NULL;
+}
+
 
 /*
  * Local Variables:

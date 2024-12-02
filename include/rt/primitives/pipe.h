@@ -39,6 +39,9 @@ RT_EXPORT extern void rt_vls_pipe_pnt(struct bu_vls *vp,
 RT_EXPORT extern void rt_pipe_pnt_print(const struct wdb_pipe_pnt *pipe_pnt, double mm2local);
 RT_EXPORT extern int rt_pipe_ck(const struct bu_list *headp);
 
+RT_EXPORT extern int rt_pipe_get_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps);
+RT_EXPORT extern struct wdb_pipe_pnt *rt_pipe_get_seg_i(struct rt_pipe_internal *pipeip, int seg_i);
+
 /** @} */
 
 __END_DECLS

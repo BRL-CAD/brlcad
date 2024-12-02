@@ -41,46 +41,6 @@
 
 #include "./ged_private.h"
 
-/*
- * Returns the index for the pipe segment matching ps.
- */
-int
-_ged_get_pipe_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps)
-{
-    struct wdb_pipe_pnt *curr_ps;
-    int seg_i = 0;
-
-    for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	if (curr_ps == ps)
-	    return seg_i;
-
-	++seg_i;
-    }
-
-    return -1;
-}
-
-
-/*
- * Returns segment seg_i.
- */
-struct wdb_pipe_pnt *
-_ged_get_pipe_seg_i(struct rt_pipe_internal *pipeip, int seg_i)
-{
-    int i = 0;
-    struct wdb_pipe_pnt *curr_ps;
-
-    for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	if (i == seg_i)
-	    return curr_ps;
-
-	++i;
-    }
-
-    return (struct wdb_pipe_pnt *)NULL;
-}
-
-
 void
 pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps), fastf_t *UNUSED(new_pt))
 {
@@ -530,7 +490,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 	    if (sscanf(attribute+1, "%d", &seg_i) != 1)
 		seg_i = 0;
 
-	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
+	    if ((ps = rt_pipe_get_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
 		return BRLCAD_ERROR;
 
 	    pipe_seg_scale_radius(ps, sf);
@@ -543,7 +503,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 	    if (sscanf(attribute+1, "%d", &seg_i) != 1)
 		seg_i = 0;
 
-	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
+	    if ((ps = rt_pipe_get_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
 		return BRLCAD_ERROR;
 
 	    pipe_seg_scale_id(ps, sf);
@@ -555,7 +515,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 	    if (sscanf(attribute+1, "%d", &seg_i) != 1)
 		seg_i = 0;
 
-	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
+	    if ((ps = rt_pipe_get_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
 		return BRLCAD_ERROR;
 
 	    pipe_seg_scale_od(ps, sf);

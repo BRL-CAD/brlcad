@@ -111,7 +111,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
-    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL) {
+    if ((ps = rt_pipe_get_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
@@ -198,7 +198,7 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 
     nearest = find_pipe_pnt_nearest_pnt(&((struct rt_pipe_internal *)intern.idb_ptr)->pipe_segs_head,
 				     model_pt, gedp->ged_gvp->gv_view2model);
-    seg_i = _ged_get_pipe_i_seg((struct rt_pipe_internal *)intern.idb_ptr, nearest);
+    seg_i = rt_pipe_get_i_seg((struct rt_pipe_internal *)intern.idb_ptr, nearest);
     rt_db_free_internal(&intern);
 
     if (seg_i < 0) {
@@ -295,7 +295,7 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
-    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL) {
+    if ((ps = rt_pipe_get_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;

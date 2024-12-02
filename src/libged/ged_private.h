@@ -386,10 +386,8 @@ GED_EXPORT extern int _ged_scale_pipe(struct ged *gedp,
 			   fastf_t sf,
 			   int rflag);
 
-GED_EXPORT extern int _ged_get_pipe_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps);
 GED_EXPORT extern int _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t));
 GED_EXPORT extern int _ged_pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt);
-GED_EXPORT extern struct wdb_pipe_pnt *_ged_get_pipe_seg_i(struct rt_pipe_internal *pipeip, int seg_i);
 GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt);
 GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_delete_pnt(struct wdb_pipe_pnt *ps);
 GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt);
