@@ -246,20 +246,6 @@ GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 GED_EXPORT extern int _ged_editit(const char *editstring,
 		       const char *file);
 
-/* defined in erase.c */
-extern void _ged_eraseobjpath(struct ged *gedp,
-			      int argc,
-			      const char *argv[],
-			      const int noisy,
-			      const int all,
-			      const int skip_first);
-extern void _ged_eraseobjall(struct ged *gedp,
-			     struct directory **dpp,
-			     int skip_first);
-extern void _ged_eraseobj(struct ged *gedp,
-			  struct directory **dpp,
-			  int skip_first);
-
 GED_EXPORT extern int _ged_get_obj_bounds2(struct ged *gedp,
 				int argc,
 				const char *argv[],
