@@ -31,6 +31,82 @@
 #include "bu/getopt.h"
 #include "../ged_private.h"
 
+static int
+_ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, double vy, double vwidth, double vheight, double vminz, int rflag)
+{
+    size_t i;
+    fastf_t vr = 0.0;
+    fastf_t vmin_x = 0.0;
+    fastf_t vmin_y = 0.0;
+    fastf_t vmax_x = 0.0;
+    fastf_t vmax_y = 0.0;
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+
+    if (rflag) {
+	vr = vwidth;
+    } else {
+	vmin_x = vx;
+	vmin_y = vy;
+
+	if (vwidth > 0)
+	    vmax_x = vx + vwidth;
+	else {
+	    vmin_x = vx + vwidth;
+	    vmax_x = vx;
+	}
+
+	if (vheight > 0)
+	    vmax_y = vy + vheight;
+	else {
+	    vmin_y = vy + vheight;
+	    vmax_y = vy;
+	}
+    }
+
+    if (rflag) {
+	for (i = 0; i < botip->num_vertices; i++) {
+	    point_t vloc;
+	    point_t vpt;
+	    vect_t diff;
+	    fastf_t mag;
+
+	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
+
+	    if (vpt[Z] < vminz)
+		continue;
+
+	    VSET(vloc, vx, vy, vpt[Z]);
+	    VSUB2(diff, vpt, vloc);
+	    mag = MAGNITUDE(diff);
+
+	    if (mag > vr)
+		continue;
+
+	    bu_vls_printf(gedp->ged_result_str, "%zu ", i);
+	}
+    } else {
+	for (i = 0; i < botip->num_vertices; i++) {
+	    point_t vpt;
+
+	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
+
+	    if (vpt[Z] < vminz)
+		continue;
+
+	    if (vmin_x <= vpt[X] && vpt[X] <= vmax_x &&
+		vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
+		bu_vls_printf(gedp->ged_result_str, "%zu ", i);
+	    }
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
+
+
 int
 dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag)
 {

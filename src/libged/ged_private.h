@@ -292,17 +292,6 @@ GED_EXPORT extern int _ged_drawtrees(struct ged *gedp,
 			  int kind,
 			  struct _ged_client_data *_dgcdp);
 
-/* defined in edbot.c */
-GED_EXPORT extern int _ged_select_botpts(struct ged *gedp,
-			      struct rt_bot_internal *botip,
-			      double vx,
-			      double vy,
-			      double vwidth,
-			      double vheight,
-			      double vminz,
-			      int rflag);
-
-
 /* defined in editit.c */
 GED_EXPORT extern int _ged_editit(const char *editstring,
 		       const char *file);
