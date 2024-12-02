@@ -151,28 +151,6 @@ GED_EXPORT extern void ged_create_vlist_display_list_cb(struct ged *, struct dis
 GED_EXPORT extern void ged_destroy_vlist_cb(struct ged *, unsigned int, int);
 GED_EXPORT extern void ged_io_handler_cb(struct ged *, void *, int);
 
-struct ged_solid_data {
-    struct display_list *gdlp;
-    int draw_solid_lines_only;
-    int wireframe_color_override;
-    int wireframe_color[3];
-    fastf_t transparency;
-    int dmode;
-    struct bview *v;
-};
-
-struct _ged_id_names {
-    struct bu_list l;
-    struct bu_vls name;		/**< name associated with region id */
-};
-
-
-struct _ged_id_to_names {
-    struct bu_list l;
-    int id;				/**< starting id (i.e. region id or air code) */
-    struct _ged_id_names headName;	/**< head of list of names */
-};
-
 /* Data for tree walk */
 struct draw_data_t {
     struct db_i *dbip;

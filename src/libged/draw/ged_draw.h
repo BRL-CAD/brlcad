@@ -33,6 +33,16 @@
 
 __BEGIN_DECLS
 
+struct ged_solid_data {
+    struct display_list *gdlp;
+    int draw_solid_lines_only;
+    int wireframe_color_override;
+    int wireframe_color[3];
+    fastf_t transparency;
+    int dmode;
+    struct bview *v;
+};
+
 struct _ged_client_data {
     uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
     struct ged *gedp;
