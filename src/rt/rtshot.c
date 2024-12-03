@@ -44,6 +44,115 @@
 
 #include "./rtuif.h"
 
+struct attr_data {
+    const char *key;
+    struct bu_hash_tbl *tbl;
+    int nregions; // Should be initialized to zero
+};
+
+static int
+save_attr_start(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
+{
+    if (!tsp)
+	return 0;
+    RT_CK_RTI(tsp->ts_rtip);
+    if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0)
+	return -1;  /* drop this region */
+    return 0;
+}
+
+
+static union tree *
+save_attr_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+{
+    struct attr_data *adata = (struct attr_data *)client_data;
+    struct bu_hash_tbl *tbl = adata->tbl;
+
+    RT_CK_DBI(tsp->ts_dbip);
+    RT_CK_FULL_PATH(pathp);
+    RT_CK_TREE(curtree);
+    RT_CK_RESOURCE(tsp->ts_resp);
+
+    // Ignore empty regions
+    if (curtree->tr_op == OP_NOP)
+	return curtree;
+    // Check for null tree
+    struct directory *dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+        return TREE_NULL;
+
+    // If we got this far, rt_gettrees would consider this a region.  Increment
+    // nregions accordingly to get our candidate hash key
+    uint32_t key = adata->nregions++;
+
+    // If the region attributes have an entry matching our key string,
+    // calculate and store the inverse matrix.
+    if (bu_avs_get(&tsp->ts_attrs, adata->key)) {
+	matp_t inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
+	bn_mat_inv(inv_mat, tsp->ts_mat);
+	bu_semaphore_acquire(RT_SEM_RESULTS);
+	(void)bu_hash_set(tbl, (const uint8_t *)&key, sizeof(key), (void *)inv_mat);
+	bu_semaphore_release(RT_SEM_RESULTS);
+    }
+
+    /* Indicate that we have swiped 'curtree' */
+    return TREE_NULL;
+}
+
+static union tree *
+save_attr_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
+{
+    RT_CK_DBTS(tsp);
+    RT_CK_FULL_PATH(pathp);
+    struct rt_i *rtip = tsp->ts_rtip;
+    RT_CK_RTI(rtip);
+    RT_CK_RESOURCE(tsp->ts_resp);
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+        return TREE_NULL;
+
+    matp_t mat = (matp_t)0;
+    if (!bn_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rtip->rti_tol))
+        mat = (matp_t)tsp->ts_mat;
+    struct soltab *stp = rt_find_identical_solid(mat, dp, rtip);
+    if (stp->st_id != 0 && stp->st_aradius <= -1)
+	return TREE_NULL;
+
+    if (stp->st_id != 0) {
+	stp->st_id = ip->idb_type;
+	stp->st_meth = &OBJ[ip->idb_type];
+	db_full_path_init(&stp->st_path);
+        db_dup_full_path(&stp->st_path, pathp);
+    }
+
+    union tree *curtree;
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
+    curtree->tr_op = OP_SOLID;
+    curtree->tr_a.tu_stp = stp;
+    curtree->tr_a.tu_regionp = NULL;
+    return curtree;
+}
+
+static int
+attr_calc_inv(struct rt_i *rtip, struct attr_data *adata, int ac, const char **av)
+{
+    if (!rtip || !adata || !adata->key)
+	return 0;
+    struct db_tree_state tree_state;
+    tree_state = rt_initial_tree_state;     /* struct copy */
+    tree_state.ts_dbip = rtip->rti_dbip;
+    tree_state.ts_rtip = rtip;
+    tree_state.ts_resp = NULL;
+    bu_avs_init_empty(&tree_state.ts_attrs);
+    int ret = db_walk_tree(rtip->rti_dbip, ac, av, 1,
+	    &tree_state,
+	    save_attr_start,
+	    save_attr_end,
+	    save_attr_leaf, (void *)adata);
+    return ret;
+}
+
 
 void
 usage(const char *argv0)
@@ -54,6 +163,7 @@ usage(const char *argv0)
     bu_log(" -d # # #		Set direction vector\n");
     bu_log(" -a # # #		Set shoot-at point\n\n");
     bu_log(" Other options:\n");
+    bu_log(" -A attr		Set attribute to check for when calculating inv (default=none)\n");
     bu_log(" -U #		Set reporting of air regions (default=1)\n");
     bu_log(" -u #		Set libbu debug flag\n");
     bu_log(" -x #		Set librt debug flags\n");
@@ -106,6 +216,7 @@ main(int argc, char **argv)
     const char *argv0 = argv[0];
     int atoival;
     struct resource res = RT_RESOURCE_INIT_ZERO;
+    struct bu_vls attr_key = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
@@ -125,6 +236,11 @@ main(int argc, char **argv)
 	    return 1;
 
 	switch (argv[0][1]) {
+	    case 'A':
+		bu_vls_sprintf(&attr_key, argv[1]);
+		argc -= 2;
+		argv += 2;
+		break;
 	    case 'R':
 		bundle_radius = atof(argv[1]);
 		argc -= 2;
@@ -300,6 +416,7 @@ main(int argc, char **argv)
 	    default:
 	    err:
 		usage(argv0);
+		bu_vls_free(&attr_key);
 		return 1;
 	}
     }
@@ -347,6 +464,16 @@ main(int argc, char **argv)
 	bu_exit(1, "rt_gettrees FAILED\n");
     }
     ap.attrs = attrs;
+
+    /* Calculate inv matrices */
+    struct attr_data *adata;
+    BU_GET(adata, struct attr_data);
+    adata->key = (bu_vls_strlen(&attr_key)) ? bu_vls_cstr(&attr_key) : NULL;
+    adata->tbl = bu_hash_create(64);
+    if (attr_calc_inv(rtip, adata, argc, (const char **)argv)) {
+	bu_exit(1, "attr_calc_inv FAILED\n");
+    }
+    rtip->rti_udata = (void *)adata;
 
     rt_prep(rtip);
 
@@ -455,6 +582,10 @@ main(int argc, char **argv)
 	(void)rt_shootray(&ap);
     }
 
+    bu_vls_free(&attr_key);
+    bu_hash_destroy(adata->tbl);
+    BU_PUT(adata, struct attr_data);
+
     return 0;
 }
 
@@ -491,6 +622,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     for (; pp != PartHeadp; pp = pp->pt_forw) {
 	matp_t inv_mat;
 	const uint8_t *key = (uint8_t *)&(pp->pt_regionp->reg_bit);
+	struct attr_data *adata = (struct attr_data *)ap->a_rt_i->rti_udata;
 
 	bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 	       pp->pt_regionp->reg_name,
@@ -498,10 +630,11 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_outseg->seg_stp->st_name,
 	       pp->pt_regionp->reg_bit);
 
-	inv_mat = (matp_t)bu_hash_get((struct bu_hash_tbl *)ap->a_rt_i->Orca_hash_tbl, key, sizeof(pp->pt_regionp->reg_bit));
+	inv_mat = (matp_t)bu_hash_get(adata->tbl, key, sizeof(pp->pt_regionp->reg_bit));
 	if (inv_mat) {
 	    bn_mat_print("inv_mat", inv_mat);
 	}
+
 
 	if (pp->pt_overlap_reg) {
 	    struct region *pp_reg;
@@ -526,9 +659,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 
 	if (inv_mat) {
 	    point_t in_trans;
-
 	    MAT4X3PNT(in_trans, inv_mat, inpt);
-	    bu_log("\ttransformed ORCA inhit = (%g %g %g)\n", V3ARGS(in_trans));
+	    bu_log("\ttransformed %s inhit = (%g %g %g)\n", adata->key, V3ARGS(in_trans));
 	}
 
 	/* outhit info */
@@ -550,8 +682,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    MAT4X3PNT(out_trans, inv_mat, outpt);
 	    MAT4X3VEC(dir_trans, inv_mat, ap->a_ray.r_dir);
 	    VUNITIZE(dir_trans);
-	    bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(out_trans));
-	    bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n", V3ARGS(dir_trans));
+	    bu_log("\ttransformed %s outhit = (%g %g %g)\n", adata->key, V3ARGS(out_trans));
+	    bu_log("\ttransformed %s ray direction = (%g %g %g)\n", adata->key, V3ARGS(dir_trans));
 	}
 
 	/* Plot inhit to outhit */
@@ -638,6 +770,9 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		pdv_3line(plotfp, pl->ap->a_ray.r_pt, inpt);
 	    }
 	}
+
+	struct attr_data *pladata = (struct attr_data *)pl->ap->a_rt_i->rti_udata;
+
 	for (; pp != &pl->PartHeadp; pp = pp->pt_forw) {
 	    fastf_t out;
 	    matp_t inv_mat;
@@ -647,11 +782,9 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		   pp->pt_regionp->reg_name, pp->pt_inseg->seg_stp->st_name,
 		   pp->pt_outseg->seg_stp->st_name, pp->pt_regionp->reg_bit);
 
-	    inv_mat = (matp_t)bu_hash_get((struct bu_hash_tbl *)pl->ap->a_rt_i->Orca_hash_tbl, key, sizeof(pp->pt_regionp->reg_bit));
-
-	    if (inv_mat) {
+	    inv_mat = (matp_t)bu_hash_get(pladata->tbl, key, sizeof(pp->pt_regionp->reg_bit));
+	    if (inv_mat)
 		bn_mat_print("inv_mat", inv_mat);
-	    }
 
 	    if (pp->pt_overlap_reg) {
 		struct region *pp_reg;
@@ -678,11 +811,10 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 
 	    if (inv_mat) {
 		point_t in_trans;
-
 		MAT4X3PNT(in_trans, inv_mat, inpt);
-		bu_log("\ttransformed ORCA inhit = (%g %g %g)\n", V3ARGS(
-			   in_trans));
+		bu_log("\ttransformed %s inhit = (%g %g %g)\n", pladata->key, V3ARGS(in_trans));
 	    }
+
 
 	    /* outhit info */
 	    stp = pp->pt_outseg->seg_stp;
@@ -705,10 +837,8 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		MAT4X3PNT(out_trans, inv_mat, outpt);
 		MAT4X3VEC(dir_trans, inv_mat, pl->ap->a_ray.r_dir);
 		VUNITIZE(dir_trans);
-		bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(
-			   out_trans));
-		bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n",
-		       V3ARGS(dir_trans));
+		bu_log("\ttransformed %s outhit = (%g %g %g)\n", pladata->key, V3ARGS(out_trans));
+		bu_log("\ttransformed %s ray direction = (%g %g %g)\n", pladata->key, V3ARGS(dir_trans));
 	    }
 
 	    /* Plot inhit to outhit */

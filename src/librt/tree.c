@@ -125,7 +125,6 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
 
 struct gettree_data
 {
-    struct bu_hash_tbl *tbl;
     struct rt_cache *cache;
 };
 
@@ -142,14 +141,12 @@ struct gettree_data
  * into the serial section.  (_rt_tree_region_assign, rt_bound_tree)
  */
 static union tree *
-_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct region *rp;
     struct directory *dp = NULL;
     size_t shader_len=0;
     struct rt_i *rtip;
-    struct bu_hash_tbl *tbl = ((struct gettree_data *)client_data)->tbl;
-    matp_t inv_mat;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
 
@@ -228,21 +225,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     /* leave critical section */
     bu_semaphore_release(RT_SEM_RESULTS);
 
-    if (tbl && bu_avs_get(&tsp->ts_attrs, "ORCA_Comp")) {
-	uint32_t key = rp->reg_bit;
-
-	inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
-	bn_mat_inv(inv_mat, tsp->ts_mat);
-
-	/* enter critical section */
-	bu_semaphore_acquire(RT_SEM_RESULTS);
-
-	(void)bu_hash_set(tbl, (const uint8_t *)&key, sizeof(key), (void *)inv_mat);
-
-	/* leave critical section */
-	bu_semaphore_release(RT_SEM_RESULTS);
-    }
-
     if (RT_G_DEBUG & RT_DEBUG_REGIONS) {
 	bu_log("Add Region %s instnum %ld\n",
 	       rp->reg_name, rp->reg_instnum);
@@ -304,8 +286,8 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
  * will be using the same hash, and will thus wait for the proper
  * semaphore.
  */
-static struct soltab *
-_rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rtip)
+struct soltab *
+rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rtip)
 {
     struct soltab *stp = RT_SOLTAB_NULL;
     int hash;
@@ -487,7 +469,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
      * become a dead solid, so by testing against -1 (instead of <= 0,
      * like before, oops), it isn't a problem.
      */
-    stp = _rt_find_identical_solid(mat, dp, rtip);
+    stp = rt_find_identical_solid(mat, dp, rtip);
     if (stp->st_id != 0) {
 	/* stp is an instance of a pre-existing solid */
 	if (stp->st_aradius <= -1) {
@@ -710,7 +692,6 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 {
     struct soltab *stp;
     struct region *regp;
-    struct bu_hash_tbl *tbl;
 
     size_t prev_sol_count;
     int ret = 0;
@@ -727,9 +708,6 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 
     if (argc <= 0)
 	return -1;	/* FAIL */
-
-    tbl = bu_hash_create(64);
-    rtip->Orca_hash_tbl = (void *)tbl;
 
     prev_sol_count = rtip->nsolids;
 
@@ -769,7 +747,6 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 	    bu_avs_init_empty(&tree_state.ts_attrs);
 	}
 
-	data.tbl = tbl;
 	if (rtip->rti_dbip->dbi_version > 4) {
 	    data.cache = rt_cache_open();
 	}
