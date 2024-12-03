@@ -810,6 +810,14 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_lookat_core(gedp, argc-1, argv+1);
     }
 
+    if (BU_STR_EQUAL(argv[1], "obj")) {
+	return _view_cmd_old_obj(gedp, argc-1, argv+1);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "print")) {
+	return _view_cmd_print(gedp, argc-1, argv+1);
+    }
+
     if (BU_STR_EQUAL(argv[1], "quat")) {
 	return ged_quat_core(gedp, argc-1, argv+1);
     }
@@ -818,10 +826,6 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	if (argc < 4)
 	    return ged_viewdir_core(gedp, argc-1, argv+1);
 	return ged_qvrot_core(gedp, argc-1, argv+1);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "print")) {
-	return _view_cmd_print(gedp, argc-1, argv+1);
     }
 
     if (BU_STR_EQUAL(argv[1], "saveview") || BU_STR_EQUAL(argv[1], "save")) {

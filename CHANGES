@@ -136,6 +136,12 @@ include/raytrace librt
 	old db_search function signature can temporarily be obtained
 	under the name db_search_old
 
+libged "how" command and its exposure in Tcl
+	Currently returning an internal GED numerical value - will
+	either be changed to report a human readable string instead
+	or (more likely) retired as a command outright in favor of
+	a "view obj [name] info mode" subcommand.
+
 7.40
 ----
 include/bu/process.h
