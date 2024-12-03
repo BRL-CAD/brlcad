@@ -202,7 +202,6 @@ fbserv_new_client(struct pkg_conn *pcp,
 	return;
 
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	ClientData fd;
 	if (clients[i].c_fd != 0)
 	    continue;
 
@@ -213,8 +212,11 @@ fbserv_new_client(struct pkg_conn *pcp,
 
 	clients[i].c_chan = chan;
 	clients[i].c_handler = fbserv_existing_client_handler;
-	fd = (ClientData)clients[i].c_fd;
-	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, fd);
+	/* load our client data container */
+	struct c_data *ed;
+	BU_GET(ed, struct c_data);
+	ed->fd = clients[i].c_fd;
+	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, (ClientData)ed);
 
 	return;
     }
