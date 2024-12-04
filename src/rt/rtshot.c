@@ -237,7 +237,7 @@ main(int argc, char **argv)
 
 	switch (argv[0][1]) {
 	    case 'A':
-		bu_vls_sprintf(&attr_key, argv[1]);
+		bu_vls_sprintf(&attr_key, "%s", argv[1]);
 		argc -= 2;
 		argv += 2;
 		break;
