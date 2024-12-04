@@ -41,6 +41,7 @@
 /* local headers */
 #include "./mged.h"
 #include "./cmd.h"
+#include "./f_cmd.h"
 
 /* catch auto-formatting errors in this file.  be careful as there are
  * mged_display() vars that use comma too.

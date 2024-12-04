@@ -283,19 +283,15 @@ void _set_invalid_parameter_handler(void (*callback)(const wchar_t*, const wchar
 static void
 attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char *display)
 {
-    int argc = 1;
-    const char *attach_cmd[5] = {NULL, NULL, NULL, NULL, NULL};
-
-    if (!manager) {
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&tcl_cmd, "attach ");
+    if (display && strlen(display) > 0)
+	bu_vls_printf(&tcl_cmd, "-d %s ", display);
+    if (!manager)
 	manager = "nu";
-    }
-
-    if (display && strlen(display) > 0) {
-	attach_cmd[argc++] = "-d";
-	attach_cmd[argc++] = display;
-    }
-    attach_cmd[argc++] = manager;
-    (void)f_attach((ClientData)NULL, interpreter, argc, attach_cmd);
+    bu_vls_printf(&tcl_cmd, "%s", manager);
+    Tcl_Eval(interpreter, bu_vls_cstr(&tcl_cmd));
+    bu_vls_free(&tcl_cmd);
     bu_log("%s\n", Tcl_GetStringResult(interpreter));
 }
 
@@ -1560,10 +1556,7 @@ main(int argc, char *argv[])
 	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	}
 
-	const char *av[2];
-	av[0] = "q";
-	av[1] = NULL;
-	f_quit((ClientData)NULL, INTERP, 1, av);
+	Tcl_Eval(INTERP, "q");
 	/* NOTREACHED */
     }
 
@@ -1831,18 +1824,11 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	count = read((int)sd->fd, (void *)&ch, 1);
 #endif
 
-	if (count < 0) {
+	if (count < 0)
 	    perror("READ ERROR");
-	}
 
-	if (count <= 0 && feof(stdin)) {
-	    const char *av[2];
-
-	    av[0] = "q";
-	    av[1] = NULL;
-
-	    f_quit((ClientData)NULL, INTERP, 1, av);
-	}
+	if (count <= 0 && feof(stdin))
+	    Tcl_Eval(INTERP, "q");
 
 	if (buf[0] == '\0')
 	    bu_bomb("Read a buf with a 0 starting it?\n");

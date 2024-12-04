@@ -1335,7 +1335,7 @@ mged_print_knobvals(Tcl_Interp *interp)
 
 /* Main processing of knob twists.  "knob id val id val ..." */
 int
-f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+f_knob(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i;
     fastf_t f;
@@ -1411,7 +1411,6 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	cmd = *argv;
 
 	if (BU_STR_EQUAL(cmd, "zap") || BU_STR_EQUAL(cmd, "zero")) {
-	    const char *av[3];
 
 	    VSETALL(view_state->vs_rate_model_rotate, 0.0);
 	    VSETALL(view_state->vs_rate_model_tran, 0.0);
@@ -1426,11 +1425,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    edit_rate_scale = 0.0;
 	    knob_update_rate_vars();
 
-	    av[0] = "adc";
-	    av[1] = "reset";
-	    av[2] = NULL;
-
-	    (void)f_adc(clientData, interp, 2, av);
+	    Tcl_Eval(interp, "adc reset");
 
 	    (void)mged_svbase();
 	} else if (BU_STR_EQUAL(cmd, "calibrate")) {
@@ -2358,105 +2353,60 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			goto usage;
 		} /* switch (cmd[1]) */
 	    } else if (BU_STR_EQUAL(cmd, "xadc")) {
-		const char *av[5];
-		char sval[32];
-		int nargs = 3;
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
 
-		av[0] = "adc";
-		if (incr_flag) {
-		    ++nargs;
-		    av[1] = "-i";
-		    av[2] = "x";
-		    av[3] = sval;
-		    av[4] = NULL;
-		} else {
-		    av[1] = "x";
-		    av[2] = sval;
-		    av[3] = NULL;
-		}
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "x %d", i);
 
-		sprintf(sval, "%d", i);
-		(void)f_adc(clientData, interp, nargs, av);
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
 	    } else if (BU_STR_EQUAL(cmd, "yadc")) {
-		const char *av[5];
-		char sval[32];
-		int nargs = 3;
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
 
-		av[0] = "adc";
-		if (incr_flag) {
-		    ++nargs;
-		    av[1] = "-i";
-		    av[2] = "y";
-		    av[3] = sval;
-		    av[4] = NULL;
-		} else {
-		    av[1] = "y";
-		    av[2] = sval;
-		    av[3] = NULL;
-		}
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "y %d", i);
 
-		sprintf(sval, "%d", i);
-		(void)f_adc(clientData, interp, nargs, av);
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
 	    } else if (BU_STR_EQUAL(cmd, "ang1")) {
-		const char *av[5];
-		char sval[32];
-		int nargs = 3;
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
 
-		av[0] = "adc";
-		if (incr_flag) {
-		    ++nargs;
-		    av[1] = "-i";
-		    av[2] = "a1";
-		    av[3] = sval;
-		    av[4] = NULL;
-		} else {
-		    av[1] = "a1";
-		    av[2] = sval;
-		    av[3] = NULL;
-		}
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "a1 %f", f);
 
-		sprintf(sval, "%f", f);
-		(void)f_adc(clientData, interp, nargs, av);
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
 	    } else if (BU_STR_EQUAL(cmd, "ang2")) {
-		const char *av[5];
-		char sval[32];
-		int nargs = 3;
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
 
-		av[0] = "adc";
-		if (incr_flag) {
-		    ++nargs;
-		    av[1] = "-i";
-		    av[2] = "a2";
-		    av[3] = sval;
-		    av[4] = NULL;
-		} else {
-		    av[1] = "a2";
-		    av[2] = sval;
-		    av[3] = NULL;
-		}
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "a2 %f", f);
 
-		sprintf(sval, "%f", f);
-		(void)f_adc(clientData, interp, nargs, av);
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
 	    } else if (BU_STR_EQUAL(cmd, "distadc")) {
-		const char *av[5];
-		char sval[32];
-		int nargs = 3;
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
 
-		av[0] = "adc";
-		if (incr_flag) {
-		    ++nargs;
-		    av[1] = "-i";
-		    av[2] = "odst";
-		    av[3] = sval;
-		    av[4] = NULL;
-		} else {
-		    av[1] = "odst";
-		    av[2] = sval;
-		    av[3] = NULL;
-		}
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "odst %d", i);
 
-		sprintf(sval, "%d", i);
-		(void)f_adc(clientData, interp, nargs, av);
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
 	    } else {
 usage:
 		Tcl_AppendResult(interp,

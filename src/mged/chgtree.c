@@ -117,14 +117,13 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     }
 
     if (STATE == ST_VIEW) {
-	const char *av[3];
-
-	av[0] = "sed";
-	av[1] = argv[2];  /* new name in argv[2] */
-	av[2] = NULL;
+	struct bu_vls sed_cmd = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&sed_cmd, "sed %s", argv[2]);
 
 	/* solid edit this new cylinder */
-	(void)f_sed(clientData, interp, 2, av);
+	Tcl_Eval(interp, bu_vls_cstr(&sed_cmd));
+
+	bu_vls_free(&sed_cmd);
     }
 
     return TCL_OK;
@@ -185,15 +184,13 @@ find_solid_with_path(struct db_full_path *pathp)
  * edited.
  */
 int
-cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+cmd_oed(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct db_full_path lhs;
     struct db_full_path rhs;
     struct db_full_path both;
-    const char *new_argv[4];
-    char number[32];
     int is_empty = 1;
 
     CHECK_DBI_NULL;
@@ -275,17 +272,17 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     (void)chg_state(ST_O_PICK, ST_O_PATH, "internal change of state");
 
     /* Select the matrix */
-    sprintf(number, "%lu", (long unsigned)lhs.fp_len);
-    new_argv[0] = "matpick";
-    new_argv[1] = number;
-    new_argv[2] = NULL;
-    if (f_matpick(clientData, interp, 2, new_argv) != TCL_OK) {
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&tcl_cmd, "matpick %lu", (long unsigned)lhs.fp_len);
+    if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) != TCL_OK) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
 	db_free_full_path(&both);
+	bu_vls_free(&tcl_cmd);
 	Tcl_AppendResult(interp, "error detected inside f_matpick", (char *)NULL);
 	return TCL_ERROR;
     }
+    bu_vls_free(&tcl_cmd);
     if (not_state(ST_O_EDIT, "Object EDIT")) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);

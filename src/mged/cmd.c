@@ -509,11 +509,13 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
     (void)cmd_draw(clientData, interpreter, 2, new_cmd);
 
     if (do_solid_edit) {
+	struct bu_vls sed_cmd = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&sed_cmd, "sed %s", argv[1]);
+
 	/* Also kick off solid edit mode */
-	new_cmd[0] = "sed";
-	new_cmd[1] = argv[1];
-	new_cmd[2] = (char *)NULL;
-	(void)f_sed(clientData, interpreter, 2, new_cmd);
+	Tcl_Eval(interpreter, bu_vls_cstr(&sed_cmd));
+
+	bu_vls_free(&sed_cmd);
     }
     return TCL_OK;
 }
@@ -1544,10 +1546,9 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
 
 int
-f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+f_postscript(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int status;
-    const char *av[2];
     struct mged_dm *dml;
     struct _view_state *vsp;
 
@@ -1584,9 +1585,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     refresh();
 
     view_state = vsp;  /* restore state info pointer */
-    av[0] = "release";
-    av[1] = NULL;
-    status = f_release(clientData, interpreter, 1, av);
+    Tcl_Eval(interpreter, "release");
     set_curr_dm(dml);
     GEDP->ged_gvp = view_state->vs_gvp;
 

@@ -45,6 +45,7 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 #include "./cmd.h"
+#include "./f_cmd.h"
 
 
 /* defined in chgview.c */
