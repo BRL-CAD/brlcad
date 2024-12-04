@@ -1585,7 +1585,7 @@ f_postscript(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, c
     refresh();
 
     view_state = vsp;  /* restore state info pointer */
-    Tcl_Eval(interpreter, "release");
+    status = Tcl_Eval(interpreter, "release");
     set_curr_dm(dml);
     GEDP->ged_gvp = view_state->vs_gvp;
 
