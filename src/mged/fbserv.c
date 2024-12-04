@@ -117,17 +117,6 @@ fbserv_drop_client(int sub)
     }
 }
 
-/* Container for holding data used in fb callbacks.
- * Not much here right now, but this is intended to
- * support elimination of globals down the road. */
-struct c_data {
-#ifdef USE_TCL_CHAN
-    Tcl_Channel chan;
-#endif
-    int fd;
-    struct mged_dm * dlp;
-};
-
 /*
  * Process arrivals from existing clients.
  */
@@ -136,8 +125,8 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
     int i;
 
-    struct c_data *d = (struct c_data *)clientData;
-    int fd = d->fd;
+    /* NOTE: assumes fd's will be small */
+    int fd = (uint16_t)((long)(uintptr_t)clientData & 0xFFFF);
 
     int npp;			/* number of processed packages */
     struct mged_dm *dlp = MGED_DM_NULL;
@@ -177,10 +166,6 @@ found:
 	if (pkg_suckin(clients[i].c_pkg) <= 0) {
 	    /* Probably EOF */
 	    fbserv_drop_client(i);
-	    if (d) {
-		BU_PUT(d, struct c_data);
-		d = NULL;
-	    }
 
 	    continue;
 	}
@@ -259,18 +244,13 @@ fbserv_new_client(struct pkg_conn *pcp)
 	clients[i].c_fd = pcp->pkc_fd;
 	fbserv_setup_socket(pcp->pkc_fd);
 
-	/* load our client data container */
-	struct c_data *ed;
-	BU_GET(ed, struct c_data);
-	ed->dlp = mged_curr_dm;
-	ed->fd = clients[i].c_fd;
 #ifdef USE_TCL_CHAN
 	clients[i].c_chan = chan;
 	clients[i].c_handler = fbserv_existing_client_handler;
-	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, (ClientData)ed);
+	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, (ClientData)clients[i].c_fd);
 #else
 	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
-		fbserv_existing_client_handler, (ClientData)ed);
+		fbserv_existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
 #endif
 	return;
     }
@@ -293,16 +273,17 @@ static void
 fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 #endif
 {
-    struct c_data *d = (struct c_data *)clientData;
     struct mged_dm *scdlp;  /* save current dm_list pointer */
-    struct mged_dm *dlp = NULL;
 
 #ifdef USE_TCL_CHAN
-    dlp = d->dlp;
+    struct mged_dm *dlp = (struct mged_dm *)clientData;
 #else
+    uintptr_t datafd = (uintptr_t)clientData;
+    int fd = (int)((int32_t)datafd & 0xFFFF);   /* fd's will be small */
+    struct mged_dm *dlp = NULL;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (d->fd == m_dmp->dm_netfd) {
+	if (fd == m_dmp->dm_netfd) {
 	    dlp = m_dmp;
 	    break;
 	}
@@ -321,11 +302,8 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
 	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
 #else
-    fbserv_new_client(pkg_getclient(d->fd, pkg_switch, communications_error, 0));
+    fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));
 #endif
-
-    // Data handed off to fbserv_existing_client_handler, we should be done with this now.
-    BU_PUT(d, struct c_data);
 
     /* restore */
     set_curr_dm(scdlp);
@@ -402,23 +380,17 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	 */
 
 #ifdef USE_TCL_CHAN
-	struct c_data *ed;
-	BU_GET(ed, struct c_data);
-	ed->dlp = mged_curr_dm;
-
 	/*XXX hardwired for now */
 	char hostname[32];
 	sprintf(hostname, "localhost");
 
 	if (dm_interp(DMP) != NULL)
-	    mged_curr_dm->dm_netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)ed);
+	    mged_curr_dm->dm_netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)mged_curr_dm);
 
 	if (mged_curr_dm->dm_netchan == NULL)
 	    ++port;
 	else
 	    break;
-
-	BU_PUT(ed, struct c_data);
 #else
 	char portname[32];
 	if (mged_variables->mv_port < 1024)
@@ -453,12 +425,8 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	// Need to pass a few things to fbserv_new_client_handler. ncdata's
 	// lifetime is governed by the needs of the Tcl file handlers, so it
 	// has to be freed once fbserv_new_client_handler is done.
-	struct c_data *ncdata;
-	BU_GET(ncdata, struct c_data);
-	ncdata->fd = mged_curr_dm->dm_netfd;
-	ncdata->dlp = mged_curr_dm;
 	Tcl_CreateFileHandler(mged_curr_dm->dm_netfd, TCL_READABLE,
-		fbserv_new_client_handler, (ClientData)ncdata);
+		fbserv_new_client_handler, (ClientData)(size_t)mged_curr_dm->dm_netfd);
     }
 #endif
 }
