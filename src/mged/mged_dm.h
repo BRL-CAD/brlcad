@@ -447,10 +447,6 @@ extern void set_curr_dm(struct mged_dm *nl);
 #define DMP mged_curr_dm->dm_dmp
 #define DMP_dirty mged_curr_dm->dm_dirty
 #define fbp mged_curr_dm->dm_fbp
-#define netfd mged_curr_dm->dm_netfd
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#define netchan mged_curr_dm->dm_netchan
-#endif
 #define clients mged_curr_dm->dm_clients
 #define mapped mged_curr_dm->dm_mapped
 #define owner mged_curr_dm->dm_owner

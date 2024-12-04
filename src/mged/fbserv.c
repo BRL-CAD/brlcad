@@ -40,6 +40,13 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
+// As maddening as this may be, we have to use different I/O
+// mechanisms based on which platform we're on.  Make a
+// define to key off of
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define USE_TCL_CHAN
+#endif
+
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 extern const struct pkg_switch pkg_switch[];
@@ -74,10 +81,10 @@ fbserv_setup_socket(int fd)
 	for (size = 256; size > 16; size /= 2) {
 	    val = size * 1024;
 	    m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
-			   (char *)&val, sizeof(val));
+		    (char *)&val, sizeof(val));
 	    val = size * 1024;
 	    n = setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
-			   (char *)&val, sizeof(val));
+		    (char *)&val, sizeof(val));
 	    if (m >= 0 && n >= 0) break;
 	}
 
@@ -93,10 +100,10 @@ fbserv_drop_client(int sub)
 {
     if (clients[sub].c_pkg != PKC_NULL) {
 	pkg_close(clients[sub].c_pkg);
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
 	Tcl_DeleteChannelHandler(clients[sub].c_chan,
-				 clients[sub].c_handler,
-				 (ClientData)clients[sub].c_fd);
+		clients[sub].c_handler,
+		(ClientData)clients[sub].c_fd);
 
 	if (dm_interp(DMP) != NULL) {
 	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), clients[sub].c_chan);
@@ -114,7 +121,11 @@ fbserv_drop_client(int sub)
  * Not much here right now, but this is intended to
  * support elimination of globals down the road. */
 struct c_data {
+#ifdef USE_TCL_CHAN
+    Tcl_Channel chan;
+#endif
     int fd;
+    struct mged_dm * dlp;
 };
 
 /*
@@ -143,7 +154,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 
     return;
 
- found:
+found:
     /* save */
     scdlp = mged_curr_dm;
 
@@ -188,151 +199,9 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 }
 
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-static struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
-
-static void
-fbserv_new_client(struct pkg_conn *pcp,
-		  Tcl_Channel chan)
-
-{
-    int i;
-
-    if (pcp == PKC_ERROR)
-	return;
-
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	if (clients[i].c_fd != 0)
-	    continue;
-
-	/* Found an available slot */
-	clients[i].c_pkg = pcp;
-	clients[i].c_fd = pcp->pkc_fd;
-	fbserv_setup_socket(pcp->pkc_fd);
-
-	clients[i].c_chan = chan;
-	clients[i].c_handler = fbserv_existing_client_handler;
-	/* load our client data container */
-	struct c_data *ed;
-	BU_GET(ed, struct c_data);
-	ed->fd = clients[i].c_fd;
-	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, (ClientData)ed);
-
-	return;
-    }
-
-    bu_log("fbserv_new_client: too many clients\n");
-    pkg_close(pcp);
-}
-
-
-static void
-fbserv_new_client_handler(ClientData clientData,
-			  Tcl_Channel chan,
-			  char *host,
-			  int port)
-{
-    struct mged_dm *dlp = (struct mged_dm *)clientData;
-    struct mged_dm *scdlp;  /* save current dm_list pointer */
-    uintptr_t fd;
-
-    if (dlp == NULL)
-	return;
-
-    /* save */
-    scdlp = mged_curr_dm;
-
-    set_curr_dm(dlp);
-
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
-	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
-
-    /* restore */
-    set_curr_dm(scdlp);
-}
-
-
-void
-fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
-{
-    int i;
-    int save_port;
-    int port;
-    char hostname[32];
-
-    /* Check to see if previously active --- if so then deactivate */
-    if (netchan != NULL) {
-	ClientData fd;
-
-	/* first drop all clients */
-	for (i = 0; i < MAX_CLIENTS; ++i)
-	    fbserv_drop_client(i);
-
-	fd = (ClientData)netfd;
-	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
-
-	if (dm_interp(DMP) != NULL) {
-	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), netchan);
-	}
-	netchan = NULL;
-
-	closesocket(netfd);
-	netfd = -1;
-    }
-
-    if (!mged_variables->mv_listen)
-	return;
-
-    if (!mged_variables->mv_fb) {
-	mged_variables->mv_listen = 0;
-	return;
-    }
-
-    /*XXX hardwired for now */
-    sprintf(hostname, "localhost");
-
-#define MAX_PORT_TRIES 100
-
-    save_port = mged_variables->mv_port;
-
-    if (mged_variables->mv_port < 0)
-	port = 5559;
-    else if (mged_variables->mv_port < 1024)
-	port = mged_variables->mv_port + 5559;
-    else
-	port = mged_variables->mv_port;
-
-    /* Try a reasonable number of times to hang a listen */
-    for (i = 0; i < MAX_PORT_TRIES; ++i) {
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-
-	if (dm_interp(DMP) != NULL) {
-	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)mged_curr_dm);
-	}
-
-	if (netchan == NULL)
-	    ++port;
-	else
-	    break;
-    }
-
-    if (netchan == NULL) {
-	mged_variables->mv_port = save_port;
-	mged_variables->mv_listen = 0;
-	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
-	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
-    } else {
-	mged_variables->mv_port = port;
-	Tcl_GetChannelHandle(netchan, TCL_READABLE, (ClientData *)&netfd);
-    }
-}
-
-
+#ifdef USE_TCL_CHAN
 static struct pkg_conn *
-fbserv_makeconn(int fd,
-		const struct pkg_switch *switchp)
+fbserv_makeconn(int fd, const struct pkg_switch *switchp)
 {
     struct pkg_conn *pc;
 #ifdef HAVE_WINSOCK_H
@@ -366,12 +235,15 @@ fbserv_makeconn(int fd,
 
     return pc;
 }
+#endif
 
-
-#else /* defined(_WIN32) && !defined(__CYGWIN__) */
-
+#ifdef USE_TCL_CHAN
+static void
+fbserv_new_client(struct pkg_conn *pcp, Tcl_Channel chan)
+#else
 static void
 fbserv_new_client(struct pkg_conn *pcp)
+#endif
 {
     int i;
 
@@ -387,12 +259,19 @@ fbserv_new_client(struct pkg_conn *pcp)
 	clients[i].c_fd = pcp->pkc_fd;
 	fbserv_setup_socket(pcp->pkc_fd);
 
+	/* load our client data container */
 	struct c_data *ed;
 	BU_GET(ed, struct c_data);
+	ed->dlp = mged_curr_dm;
 	ed->fd = clients[i].c_fd;
+#ifdef USE_TCL_CHAN
+	clients[i].c_chan = chan;
+	clients[i].c_handler = fbserv_existing_client_handler;
+	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, (ClientData)ed);
+#else
 	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
-			      fbserv_existing_client_handler, (ClientData)ed);
-
+		fbserv_existing_client_handler, (ClientData)ed);
+#endif
 	return;
     }
 
@@ -400,34 +279,50 @@ fbserv_new_client(struct pkg_conn *pcp)
     pkg_close(pcp);
 }
 
-
 /*
  * Accept any new client connections.
  */
+#ifdef USE_TCL_CHAN
+static void
+fbserv_new_client_handler(ClientData clientData,
+	Tcl_Channel chan,
+	char *host,
+	int port)
+#else
 static void
 fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
+#endif
 {
     struct c_data *d = (struct c_data *)clientData;
-    int fd = d->fd;
-    struct mged_dm *dlp;
     struct mged_dm *scdlp;  /* save current dm_list pointer */
+    struct mged_dm *dlp = NULL;
 
+#ifdef USE_TCL_CHAN
+    dlp = d->dlp;
+#else
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (fd == m_dmp->dm_netfd) {
+	if (d->fd == m_dmp->dm_netfd) {
 	    dlp = m_dmp;
-	    goto found;
+	    break;
 	}
     }
+#endif
+    if (dlp == NULL)
+	return;
 
-    return;
-
- found:
     /* save */
     scdlp = mged_curr_dm;
 
     set_curr_dm(dlp);
-    fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));
+
+#ifdef USE_TCL_CHAN
+    uintptr_t fd;
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
+	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
+#else
+    fbserv_new_client(pkg_getclient(d->fd, pkg_switch, communications_error, 0));
+#endif
 
     // Data handed off to fbserv_existing_client_handler, we should be done with this now.
     BU_PUT(d, struct c_data);
@@ -436,24 +331,43 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
     set_curr_dm(scdlp);
 }
 
-
 void
 fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     int i;
     int save_port;
-    char portname[32];
+
+#define MAX_PORT_TRIES 100
 
     /* Check to see if previously active --- if so then deactivate */
-    if (netfd >= 0) {
+#ifdef USE_TCL_CHAN
+    if (mged_curr_dm->dm_netchan != NULL) {
 	/* first drop all clients */
 	for (i = 0; i < MAX_CLIENTS; ++i)
 	    fbserv_drop_client(i);
 
-	Tcl_DeleteFileHandler(netfd);
-	close(netfd);
-	netfd = -1;
+	ClientData fd = (ClientData)mged_curr_dm->dm_netfd;
+	Tcl_DeleteChannelHandler(mged_curr_dm->dm_netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
+
+	if (dm_interp(DMP) != NULL)
+	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), mged_curr_dm->dm_netchan);
+
+	mged_curr_dm->dm_netchan = NULL;
+
+	closesocket(mged_curr_dm->dm_netfd);
+	mged_curr_dm->dm_netfd = -1;
     }
+#else
+    if (mged_curr_dm->dm_netfd >= 0) {
+	/* first drop all clients */
+	for (i = 0; i < MAX_CLIENTS; ++i)
+	    fbserv_drop_client(i);
+
+	Tcl_DeleteFileHandler(mged_curr_dm->dm_netfd);
+	close(mged_curr_dm->dm_netfd);
+	mged_curr_dm->dm_netfd = -1;
+    }
+#endif
 
     if (!mged_variables->mv_listen)
 	return;
@@ -463,46 +377,91 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	return;
     }
 
-#define MAX_PORT_TRIES 100
-
     save_port = mged_variables->mv_port;
+
+#ifdef USE_TCL_CHAN
+    int port;
+    if (mged_variables->mv_port < 0)
+	port = 5559;
+    else if (mged_variables->mv_port < 1024)
+	port = mged_variables->mv_port + 5559;
+    else
+	port = mged_variables->mv_port;
+#else
     if (mged_variables->mv_port < 0)
 	mged_variables->mv_port = 0;
+#endif
+
+
+
 
     /* Try a reasonable number of times to hang a listen */
     for (i = 0; i < MAX_PORT_TRIES; ++i) {
+	/*
+	 * Hang an unending listen for PKG connections
+	 */
+
+#ifdef USE_TCL_CHAN
+	struct c_data *ed;
+	BU_GET(ed, struct c_data);
+	ed->dlp = mged_curr_dm;
+
+	/*XXX hardwired for now */
+	char hostname[32];
+	sprintf(hostname, "localhost");
+
+	if (dm_interp(DMP) != NULL)
+	    mged_curr_dm->dm_netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)ed);
+
+	if (mged_curr_dm->dm_netchan == NULL)
+	    ++port;
+	else
+	    break;
+
+	BU_PUT(ed, struct c_data);
+#else
+	char portname[32];
 	if (mged_variables->mv_port < 1024)
 	    sprintf(portname, "%d", mged_variables->mv_port + 5559);
 	else
 	    sprintf(portname, "%d", mged_variables->mv_port);
 
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-	if ((netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
+	if ((mged_curr_dm->dm_netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
 	    ++mged_variables->mv_port;
 	else
 	    break;
+#endif
     }
 
-    if (netfd < 0) {
+#ifdef USE_TCL_CHAN
+    if (mged_curr_dm->dm_netchan == NULL) {
 	mged_variables->mv_port = save_port;
 	mged_variables->mv_listen = 0;
 	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
-	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+		mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+    } else {
+	mged_variables->mv_port = port;
+	Tcl_GetChannelHandle(mged_curr_dm->dm_netchan, TCL_READABLE, (ClientData *)&mged_curr_dm->dm_netfd);
+    }
+#else
+    if (mged_curr_dm->dm_netfd < 0) {
+	mged_variables->mv_port = save_port;
+	mged_variables->mv_listen = 0;
+	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
+		mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
     } else {
 	// Need to pass a few things to fbserv_new_client_handler. ncdata's
 	// lifetime is governed by the needs of the Tcl file handlers, so it
 	// has to be freed once fbserv_new_client_handler is done.
 	struct c_data *ncdata;
 	BU_GET(ncdata, struct c_data);
-	ncdata->fd = netfd;
-	Tcl_CreateFileHandler(netfd, TCL_READABLE,
-			      fbserv_new_client_handler, (ClientData)ncdata);
+	ncdata->fd = mged_curr_dm->dm_netfd;
+	ncdata->dlp = mged_curr_dm;
+	Tcl_CreateFileHandler(mged_curr_dm->dm_netfd, TCL_READABLE,
+		fbserv_new_client_handler, (ClientData)ncdata);
     }
+#endif
 }
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
 
 /*
  * This is where we go for message types we don't understand.
@@ -743,7 +702,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 
     type = pcp->pkc_type;
     ret = fb_writerect(fbp, x, y, width, height,
-		       (unsigned char *)&buf[4*NET_LONG_LEN]);
+	    (unsigned char *)&buf[4*NET_LONG_LEN]);
 
     if (type < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -821,7 +780,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 
     type = pcp->pkc_type;
     ret = fb_writerect(fbp, x, y, width, height,
-		       (unsigned char *)&buf[4*NET_LONG_LEN]);
+	    (unsigned char *)&buf[4*NET_LONG_LEN]);
 
     if (type < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -891,7 +850,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
     yorig = pkg_glong(&buf[3*NET_LONG_LEN]);
 
     ret = fb_setcursor(fbp, (unsigned char *)&buf[4*NET_LONG_LEN],
-		       xbits, ybits, xorig, yorig);
+	    xbits, ybits, xorig, yorig);
 
     if (pcp->pkc_type < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);

@@ -720,7 +720,7 @@ dm_var_init(struct mged_dm *target_dm)
 	dm_set_dirty(target_dm->dm_dmp, 1);
     }
     mapped = 1;
-    netfd = -1;
+    mged_curr_dm->dm_netfd = -1;
     owner = 1;
     am_mode = AMM_IDLE;
     adc_auto = 1;

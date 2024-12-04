@@ -1238,7 +1238,7 @@ main(int argc, char *argv[])
     bu_ptbl_init(&active_dm_set, 8, "dm set");
     bu_ptbl_ins(&active_dm_set, (long *)mged_curr_dm);
     mged_dm_init_state = mged_curr_dm;
-    netfd = -1;
+    mged_curr_dm->dm_netfd = -1;
 
     /* initialize predictor stuff */
     BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
