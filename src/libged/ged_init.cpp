@@ -59,10 +59,85 @@ ged_init_msgs()
     return bu_vls_cstr(&init_msgs);
 }
 
+int
+ged_cmd_exists(const char *cmd)
+{
+    if (!cmd)
+	return 0;
+
+    // On OpenBSD, if the executable was launched in a way that requires
+    // bu_setprogname to find the BRL-CAD root directory the initial libged
+    // initialization would have failed.  If we have no ged_cmds at all this is
+    // probably what happened, so call libged_init again here.  By the time we
+    // are calling ged_cmd_exists bu_setprogname should be set and we should be
+    // ready to actually find the commands.
+    if (!ged_cmd_map.size())
+	libged_init();
+
+    std::string scmd(cmd);
+    std::map<std::string, const struct ged_cmd *>::iterator cmd_it = ged_cmd_map.find(scmd);
+    if (cmd_it != ged_cmd_map.end())
+	return 1;
+
+    return 0;
+}
+
+int
+ged_cmd_same(const char *cmd1, const char *cmd2)
+{
+    // If one or both of the inputs are null, we're
+    // not mapping to function pointers
+    if (!cmd1 || !cmd2)
+	return 0;
+
+    // If the strings are the same, trivial yes
+    if (cmd1 == cmd2|| BU_STR_EQUAL(cmd1, cmd2))
+	return 1;
+
+    // On OpenBSD, if the executable was launched in a way that requires
+    // bu_setprogname to find the BRL-CAD root directory the initial libged
+    // initialization would have failed.  If we have no ged_cmds at all this is
+    // probably what happened, so call libged_init again here.  By the time we
+    // are calling ged_cmd_same bu_setprogname should be set and we should be
+    // ready to actually find the commands.
+    if (!ged_cmd_map.size()) {
+	libged_init();
+    }
+
+    ged_func_ptr c1 = NULL;
+    ged_func_ptr c2 = NULL;
+
+    {
+	std::string scmd1(cmd1);
+	std::map<std::string, const struct ged_cmd *>::iterator cmd1_it = ged_cmd_map.find(scmd1);
+	// If we can't map to a GED command, this is a no-go
+	if (cmd1_it == ged_cmd_map.end())
+	    return 0;
+	c1 = cmd1_it->second->i->cmd;
+    }
+
+    {
+	std::string scmd2(cmd2);
+	std::map<std::string, const struct ged_cmd *>::iterator cmd2_it = ged_cmd_map.find(scmd2);
+	// If we can't map to a GED command, this is a no-go
+	if (cmd2_it == ged_cmd_map.end())
+	    return 0;
+	c2 = cmd2_it->second->i->cmd;
+    }
+
+    // If they're both the same function pointer, cmd1 and cmd2 are the same
+    if (c1 == c2)
+	return 1;
+
+    return 0;
+}
+
+
 
 /* If func is NULL, just see if the string has a ged_cmd_map entry.
  * If func is defined, see if a) func and cmd have ged_cmd_map entries and
- * b) if they both do, whether they map to the same function. */
+ * b) if they both do, whether they map to the same function.
+ * DEPRECATED - used ged_cmd_exists and ged_cmd_same instead */
 int
 ged_cmd_valid(const char *cmd, const char *func)
 {
@@ -124,7 +199,7 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
     // bu_setprogname to find the BRL-CAD root directory the initial libged
     // initialization would have failed.  If we have no ged_cmds at all this is
     // probably what happened, so call libged_init again here.  By the time we
-    // are calling ged_cmd_valid bu_setprogname should be set and we should be
+    // are calling ged_cmd_lookup bu_setprogname should be set and we should be
     // ready to actually find the commands.
     if (!ged_cmd_map.size()) {
 	libged_init();

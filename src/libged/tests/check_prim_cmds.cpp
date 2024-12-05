@@ -52,10 +52,10 @@ main(int UNUSED(argc), const char **argv)
 	    continue;
 	if (skip_names.find(std::string(ftp->ft_label)) != skip_names.end())
 	    continue;
-	if (ged_cmd_valid(ftp->ft_label, NULL)) {
-	    no_cmds.insert(std::string(ftp->ft_label));
-	} else {
+	if (ged_cmd_exists(ftp->ft_label)) {
 	    have_cmds.insert(std::string(ftp->ft_label));
+	} else {
+	    no_cmds.insert(std::string(ftp->ft_label));
 	}
     }
 

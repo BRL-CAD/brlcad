@@ -426,8 +426,8 @@ main(int ac, char *av[]) {
 	    std::set<std::string> cdone;
 	    for (cs_it = cmd_set.begin(); cs_it != cmd_set.end(); cs_it++) {
 		std::string cs = *cs_it;
-		int cval = ged_cmd_valid(cmd.c_str(), cs.c_str());
-		if (cval == 0) {
+		int same = ged_cmd_same(cmd.c_str(), cs.c_str());
+		if (same) {
 		    // Aliases - use cmd as the key
 		    alias_sets[cmd].insert(cmd);
 		    alias_sets[cmd].insert(cs);

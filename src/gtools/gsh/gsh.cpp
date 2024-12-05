@@ -382,7 +382,7 @@ GshState::~GshState()
 int
 GshState::eval(int argc, const char **argv)
 {
-    if (ged_cmd_valid(argv[0], NULL)) {
+    if (!ged_cmd_exists(argv[0])) {
 	const char *ccmd = NULL;
 	int edist = ged_cmd_lookup(&ccmd, argv[0]);
 	if (edist) {

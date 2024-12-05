@@ -48,10 +48,10 @@ main(int UNUSED(argc), const char **argv)
     for (ctp = to_cmds; ctp->to_name != (char *)NULL; ctp++) {
 	if (skip_names.find(std::string(ctp->to_name)) != skip_names.end())
 	    continue;
-	if (ged_cmd_valid(ctp->to_name, NULL)) {
-	    no_collision.insert(std::string(ctp->to_name));
-	} else {
+	if (ged_cmd_exists(ctp->to_name)) {
 	    have_collision.insert(std::string(ctp->to_name));
+	} else {
+	    no_collision.insert(std::string(ctp->to_name));
 	}
     }
 

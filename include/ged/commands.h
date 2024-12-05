@@ -49,6 +49,20 @@ GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
  * call to get an updated list and size if commands are altered.  */
 GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
 
+/* Report whether a string identifies a valid LIBGED command.
+ *
+ * Returns 1 if cmd is a valid GED command, else returns 0.
+ */
+GED_EXPORT int ged_cmd_exists(const char *cmd);
+
+/* Determine whether cmd1 and cmd2 both refer to the same function pointer
+ * (i.e., they are aliases for the same command.)
+ *
+ * Returns 1 if both cmd1 and cmd2 invoke the same LIBGED function, else
+ * returns 0
+ */
+GED_EXPORT int ged_cmd_same(const char *cmd1, const char *cmd2);
+
 /* Report whether a string identifies a valid LIBGED command.  If func is
  * non-NULL, check that cmd and func both refer to the same function pointer
  * (i.e., they are aliases for the same command.)
@@ -60,8 +74,10 @@ GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
  * 0 indicates both cmd and func strings invoke the same LIBGED function
  * 1 indicates that either or both of cmd and func were invalid GED commands
  * 2 indicates that both were valid commands, but they did not match.
+ *
+ * DEPRECATED - use ged_cmd_same and ged_cmd_exists instead.
  */
-GED_EXPORT int ged_cmd_valid(const char *cmd, const char *func);
+DEPRECATED GED_EXPORT int ged_cmd_valid(const char *cmd, const char *func);
 
 /* Given a candidate cmd name, find the closest match to it among defined
  * GED commands.  Returns the bu_editdist distance between cmd and *ncmd

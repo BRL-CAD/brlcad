@@ -142,6 +142,10 @@ libged "how" command and its exposure in Tcl
 	or (more likely) retired as a command outright in favor of
 	a "view obj [name] info mode" subcommand.
 
+include/ged/commands.h
+	current ged_cmd_valid functionality will be replaced by
+	ged_cmd_exists and ged_cmd_same.
+
 7.40
 ----
 include/bu/process.h
