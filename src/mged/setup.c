@@ -431,6 +431,14 @@ cmd_setup(void)
     // way (callbacks, etc.) to avoid the need for non-plain wrappers.
 
     for (ctp = mged_cmdtab; ctp->name != NULL; ctp++) {
+
+	// Uncomment the following to have MGED report which entries in its
+	// command table collide with libged command names
+#if 0
+	if (ctp->ged_func == GED_FUNC_PTR_NULL && !ged_cmd_valid(ctp->name, NULL))
+	    bu_log("%12s: matches an existing GED command name, but uses an MGED wrapper function.\n", ctp->name);
+#endif
+
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
 
