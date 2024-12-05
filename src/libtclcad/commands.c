@@ -536,17 +536,6 @@ static void to_rt_end_callback_internal(int aborted);
 
 static void to_output_handler(struct ged *gedp, char *line);
 
-typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
-#define TO_WRAPPER_FUNC_PTR_NULL (to_wrapper_func_ptr)0
-
-
-struct to_cmdtab {
-    const char *to_name;
-    const char *to_usage;
-    int to_maxargs;
-    to_wrapper_func_ptr to_wrapper_func;
-    ged_func_ptr to_func;
-};
 
 
 static struct to_cmdtab ged_cmds[] = {
@@ -828,7 +817,7 @@ static struct to_cmdtab ged_cmds[] = {
 };
 
 
-static struct to_cmdtab to_cmds[] = {
+struct to_cmdtab to_cmds[] = {
     {"autoview",	"vname", TO_UNLIMITED, to_autoview, GED_FUNC_PTR_NULL},
     {"base2local",	(char *)0, TO_UNLIMITED, to_base2local, GED_FUNC_PTR_NULL},
     {"bg",	"[r g b]", TO_UNLIMITED, to_bg, GED_FUNC_PTR_NULL},

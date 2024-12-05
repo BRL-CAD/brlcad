@@ -87,6 +87,8 @@ if(BRLCAD_ENABLE_TCL)
   add_dependencies(libtclcad ged_plugins)
 endif(BRLCAD_ENABLE_TCL)
 
+add_subdirectory(tests)
+
 cmakefiles(
   ${LIBTCLCAD_SRCS}
   tclcad_private.h

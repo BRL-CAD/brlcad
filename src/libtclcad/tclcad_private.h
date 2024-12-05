@@ -32,10 +32,25 @@
 #include <tcl.h>
 
 #include "ged/defines.h"
+#include "tclcad/defines.h"
 
 __BEGIN_DECLS
 
 #define TO_UNLIMITED -1
+
+typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
+#define TO_WRAPPER_FUNC_PTR_NULL (to_wrapper_func_ptr)0
+
+struct to_cmdtab {
+    const char *to_name;
+    const char *to_usage;
+    int to_maxargs;
+    to_wrapper_func_ptr to_wrapper_func;
+    ged_func_ptr to_func;
+};
+
+// For the test program check_tclcad_cmds
+TCLCAD_EXPORT extern struct to_cmdtab to_cmds[];
 
 extern struct tclcad_obj HeadTclcadObj;
 extern struct tclcad_obj *current_top;
