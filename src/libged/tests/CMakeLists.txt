@@ -47,6 +47,12 @@ brlcad_add_test(NAME ged_test_search COMMAND ged_test_search "${CMAKE_CURRENT_SO
 brlcad_addexec(rt_search_test search_tests.cpp "librt;libbu;libged" TEST)
 brlcad_add_test(NAME rt_search_tests COMMAND rt_search_test "${CMAKE_CURRENT_SOURCE_DIR}/rt_search_tests.g")
 
+brlcad_addexec(ged_check_prim_cmds check_prim_cmds.cpp libged TEST)
+if(TARGET ged_check_prim_cmds)
+  add_dependencies(ged_check_prim_cmds  ged_plugins)
+endif(TARGET ged_check_prim_cmds)
+brlcad_add_test(NAME ged_test_prim_cmds_exist COMMAND ged_test_prim_cmds)
+
 add_subdirectory(bot)
 add_subdirectory(draw)
 
