@@ -121,6 +121,9 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     if (eventPtr->type == DestroyNotify || (unsigned long)eventPtr->xany.window == 0)
 	return TCL_OK;
 
+    // The set_curr_dm logic here appears to be important for Multipane mode -
+    // it doesn't do much if only one dm is up, but if the set_curr_dm calls
+    // are removed MGED doesn't update the multipane views correctly.
     save_dm_list = mged_curr_dm;
     GET_MGED_DM(mged_curr_dm, (unsigned long)eventPtr->xany.window);
 
