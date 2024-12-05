@@ -504,7 +504,7 @@ ged_create_vlist_solid_cb(struct ged *gedp, struct bv_scene_obj *s)
 	if (gedp->ged_cbs->ged_create_vlist_scene_obj_callback_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_create_vlist_scene_obj_callback!\n");
 	}
-	(*gedp->ged_create_vlist_scene_obj_callback)(s);
+	(*gedp->ged_create_vlist_scene_obj_callback)(gedp->vlist_ctx, s);
 	gedp->ged_cbs->ged_create_vlist_scene_obj_callback_cnt--;
     }
 }
@@ -517,7 +517,7 @@ ged_create_vlist_display_list_cb(struct ged *gedp, struct display_list *dl)
 	if (gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_create_vlist_callback!\n");
 	}
-	(*gedp->ged_create_vlist_display_list_callback)(dl);
+	(*gedp->ged_create_vlist_display_list_callback)(gedp->vlist_ctx, dl);
 	gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt--;
     }
 }

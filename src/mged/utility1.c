@@ -79,7 +79,7 @@ char ctemp[7];
  *
  */
 int
-editit(const char *command, const char *tempfile) {
+editit(struct mged_state *s, const char *command, const char *tempfile) {
     int argc = 5;
     const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     struct bu_vls editstring = BU_VLS_INIT_ZERO;
@@ -95,7 +95,7 @@ editit(const char *command, const char *tempfile) {
     av[4] = tempfile;
     av[5] = NULL;
 
-    ged_exec(GEDP, argc, (const char **)av);
+    ged_exec(s->GEDP, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     return TCL_OK;
@@ -107,8 +107,12 @@ editit(const char *command, const char *tempfile) {
  * control routine for editing color
  */
 int
-f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
+f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     const char **av;
     int i;
     struct bu_vls editstring = BU_VLS_INIT_ZERO;
@@ -127,7 +131,7 @@ f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     }
     av[argc] = NULL;
 
-    ged_exec(GEDP, argc, (const char **)av);
+    ged_exec(s->GEDP, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edcolor: av");
@@ -139,8 +143,12 @@ f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
  * control routine for editing region ident codes
  */
 int
-f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     const char **av;
     struct bu_vls editstring = BU_VLS_INIT_ZERO;
     int i;
@@ -164,7 +172,7 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     }
     av[argc] = NULL;
 
-    ged_exec(GEDP, argc, (const char **)av);
+    ged_exec(s->GEDP, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edcodes: av");
@@ -177,8 +185,12 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
  * control routine for editing mater information
  */
 int
-f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     const char **av;
     struct bu_vls editstring = BU_VLS_INIT_ZERO;
     int i;
@@ -202,7 +214,7 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     }
     av[argc] = NULL;
 
-    ged_exec(GEDP, argc + 1, (const char **)av);
+    ged_exec(s->GEDP, argc + 1, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edmater: av");
@@ -215,8 +227,12 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
  * Get editing string and call ged_red
  */
 int
-f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     const char **av;
     struct bu_vls editstring = BU_VLS_INIT_ZERO;
 
@@ -236,12 +252,12 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     av[2] = bu_vls_addr(&editstring);
     av[3] = argv[1];
 
-    if ( ged_exec(GEDP, 4, (const char **)av) & BRLCAD_ERROR ) {
+    if ( ged_exec(s->GEDP, 4, (const char **)av) & BRLCAD_ERROR ) {
 	mged_pr_output(interpreter);
-	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(GEDP->ged_result_str), (char *)NULL);
+	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(s->GEDP->ged_result_str), (char *)NULL);
     } else {
 	mged_pr_output(interpreter);
-	Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), (char *)NULL);
+	Tcl_AppendResult(interpreter, bu_vls_addr(s->GEDP->ged_result_str), (char *)NULL);
     }
 
     bu_vls_free(&editstring);

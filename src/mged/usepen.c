@@ -48,7 +48,7 @@ int ipathpos = 0;	/* path index of illuminated element */
  * variable "illump" pointing at it.
  */
 static void
-illuminate(int y) {
+illuminate(struct mged_state *s, int y) {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     int count;
@@ -61,8 +61,8 @@ illuminate(int y) {
      */
     count = ((fastf_t)y + GED_MAX) * mged_curr_dm->dm_ndrawn / GED_RANGE;
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -91,8 +91,12 @@ illuminate(int y) {
  * advance illump or ipathpos
  */
 int
-f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct display_list *gdlp;
     struct bv_scene_obj *sp;
     struct ged_bv_data *bdata = NULL;
@@ -137,8 +141,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	if (argc == 1 || *argv[1] == 'f') {
 	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_NEXT_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+		if (BU_LIST_NEXT_IS_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
@@ -149,8 +153,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	} else if (*argv[1] == 'b') {
 	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_PREV_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
+		if (BU_LIST_PREV_IS_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_PREV(display_list, s->GEDP->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
@@ -222,8 +226,12 @@ wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
  * n = edit arc from path [n-1] to [n]
  */
 int
-f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct bv_scene_obj *sp;
@@ -289,8 +297,8 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
  got:
     /* Include all solids with same tree top */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -313,11 +321,11 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     if (!illum_only) {
-	(void)chg_state(ST_O_PATH, ST_O_EDIT, "mouse press");
-	chg_l2menu(ST_O_EDIT);
+	(void)chg_state(s, ST_O_PATH, ST_O_EDIT, "mouse press");
+	chg_l2menu(s, ST_O_EDIT);
 
 	/* begin object editing - initialize */
-	init_oedit();
+	init_oedit(s);
     }
 
     update_views = 1;
@@ -362,6 +370,10 @@ f_mouse(
     int argc,
     const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct ged_bv_data *bdata = NULL;
     vect_t mousevec;		/* float pt -1..+1 mouse pos vect */
     int isave;
@@ -426,7 +438,7 @@ f_mouse(
 	if (xpos < MENUXLIM) {
 	    int i;
 
-	    if ((i = mmenu_select(ypos, 1)) < 0) {
+	    if ((i = mmenu_select(s, ypos, 1)) < 0) {
 		Tcl_AppendResult(interp,
 				 "mouse press outside valid menu\n",
 				 (char *)NULL);
@@ -460,7 +472,7 @@ f_mouse(
 	    /*
 	     * Use the mouse for illuminating a solid
 	     */
-	    illuminate(ypos);
+	    illuminate(s, ypos);
 	    return TCL_OK;
 
 	case ST_O_PATH:
@@ -482,26 +494,26 @@ f_mouse(
 	     * Use the DT for moving view center.  Make indicated
 	     * point be new view center (NEW).
 	     */
-	    slewview(mousevec);
+	    slewview(s, mousevec);
 	    return TCL_OK;
 
 	case ST_O_PICK:
 	    ipathpos = 0;
-	    (void)chg_state(ST_O_PICK, ST_O_PATH, "mouse press");
+	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "mouse press");
 	    view_state->vs_flag = 1;
 	    return TCL_OK;
 
 	case ST_S_PICK:
 	    /* Check details, Init menu, set state */
-	    init_sedit();		/* does chg_state */
+	    init_sedit(s);		/* does chg_state */
 	    view_state->vs_flag = 1;
 	    return TCL_OK;
 
 	case ST_S_EDIT:
 	    if ((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
-		sedit_mouse(mousevec);
+		sedit_mouse(s, mousevec);
 	    else
-		slewview(mousevec);
+		slewview(s, mousevec);
 	    return TCL_OK;
 
 	case ST_O_PATH:
@@ -526,14 +538,14 @@ f_mouse(
 	    }
 
 	case ST_S_VPICK:
-	    sedit_vpick(mousevec);
+	    sedit_vpick(s, mousevec);
 	    return TCL_OK;
 
 	case ST_O_EDIT:
 	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
-		objedit_mouse(mousevec);
+		objedit_mouse(s, mousevec);
 	    else
-		slewview(mousevec);
+		slewview(s, mousevec);
 
 	    return TCL_OK;
 

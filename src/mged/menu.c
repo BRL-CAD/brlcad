@@ -127,7 +127,7 @@ mmenu_set(int index, struct menu_item *value)
 
 
 void
-mmenu_set_all(int index, struct menu_item *value)
+mmenu_set_all(struct mged_state *s, int index, struct menu_item *value)
 {
     struct cmd_list *save_cmd_list;
     struct mged_dm *save_dm_list;
@@ -139,12 +139,12 @@ mmenu_set_all(int index, struct menu_item *value)
 	if (p->dm_tie)
 	    curr_cmd_list = p->dm_tie;
 
-	set_curr_dm(p);
+	set_curr_dm(s, p);
 	mmenu_set(index, value);
     }
 
     curr_cmd_list = save_cmd_list;
-    set_curr_dm(save_dm_list);
+    set_curr_dm(s, save_dm_list);
 }
 
 
@@ -278,7 +278,7 @@ mmenu_display(int y_top)
  * -1 if pen is ABOVE menu (error)
  */
 int
-mmenu_select(int pen_y, int do_func)
+mmenu_select(struct mged_state *s, int pen_y, int do_func)
 {
     static int menu, item;
     struct menu_item **m;
@@ -308,7 +308,7 @@ mmenu_select(int pen_y, int do_func)
 	    /* It's up to the menu_func to set menu_state->ms_flag=0
 	     * if no arrow is desired */
 	    if (do_func && mptr->menu_func != NULL)
-		(*(mptr->menu_func))(mptr->menu_arg, menu, item);
+		(*(mptr->menu_func))(s, mptr->menu_arg, menu, item);
 
 	    return 1;		/* menu claims pen value */
 	}

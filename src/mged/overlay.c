@@ -35,20 +35,24 @@
 
 /* Usage:  overlay file.plot3 [name] */
 int
-cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+cmd_overlay(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int ret;
     Tcl_DString ds;
 
-    if (GEDP == GED_NULL)
+    if (s->GEDP == GED_NULL)
 	return TCL_OK;
 
     Tcl_DStringInit(&ds);
 
-    if (GEDP->ged_gvp)
-	GEDP->ged_gvp->dmp = (void *)mged_curr_dm->dm_dmp;
-    ret = ged_exec(GEDP, argc, argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
+    if (s->GEDP->ged_gvp)
+	s->GEDP->ged_gvp->dmp = (void *)mged_curr_dm->dm_dmp;
+    ret = ged_exec(s->GEDP, argc, argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret & GED_HELP)

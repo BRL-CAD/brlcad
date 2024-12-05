@@ -88,8 +88,8 @@ typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 /* Callback related definitions */
 typedef void (*ged_io_func_t)(void *, int);
 typedef void (*ged_refresh_func_t)(void *);
-typedef void (*ged_create_vlist_solid_func_t)(struct bv_scene_obj *);
-typedef void (*ged_create_vlist_display_list_func_t)(struct display_list *);
+typedef void (*ged_create_vlist_solid_func_t)(void *, struct bv_scene_obj *);
+typedef void (*ged_create_vlist_display_list_func_t)(void *, struct display_list *);
 typedef void (*ged_destroy_vlist_func_t)(unsigned int, int);
 struct ged_callback_state;
 
@@ -297,9 +297,10 @@ struct ged {
     void (*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void *ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void (*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
-    void (*ged_create_vlist_scene_obj_callback)(struct bv_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
-    void (*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
+    void (*ged_create_vlist_scene_obj_callback)(void *, struct bv_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
+    void (*ged_create_vlist_display_list_callback)(void *, struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void (*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
+    void *vlist_ctx;
 
     /* Handler functions for I/O communication with asynchronous subprocess commands.  There
      * are two opaque data structures at play here, with different scopes.  One is the "data"

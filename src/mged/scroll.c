@@ -120,7 +120,7 @@ set_scroll(void)
  * Reset all scroll bars to the zero position.
  */
 void
-sl_halt_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
+sl_halt_scroll(struct mged_state *UNUSED(s), int UNUSED(a), int UNUSED(b), int UNUSED(c))
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -131,7 +131,7 @@ sl_halt_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
 
 
 void
-sl_toggle_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
+sl_toggle_scroll(struct mged_state *s, int UNUSED(a), int UNUSED(b), int UNUSED(c))
 {
     mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
@@ -141,7 +141,7 @@ sl_toggle_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	set_scroll_private(sdp, name, base, value, NULL);
+	set_scroll_private(sdp, name, base, value, s);
     }
 }
 

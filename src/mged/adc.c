@@ -88,7 +88,7 @@ adc_set_dirty_flag(void)
 
 
 void
-adc_set_scroll(void)
+adc_set_scroll(struct mged_state *s)
 {
     struct mged_dm *save_m_dmp;
     save_m_dmp = mged_curr_dm;
@@ -96,14 +96,14 @@ adc_set_scroll(void)
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
 	if (m_dmp->dm_adc_state == adc_state) {
-	    set_curr_dm(m_dmp);
+	    set_curr_dm(s, m_dmp);
 	    set_scroll();
 	    DMP_dirty = 1;
 	    dm_set_dirty(DMP, 1);
 	}
     }
 
-    set_curr_dm(save_m_dmp);
+    set_curr_dm(s, save_m_dmp);
 }
 
 
@@ -435,11 +435,15 @@ adc_print_vars(void)
 
 int
 f_adc (
-    ClientData UNUSED(clientData),
+    ClientData clientData,
     Tcl_Interp *interp,
     int argc,
     const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     const char *parameter;
     const char **argp = argv;
@@ -469,7 +473,7 @@ f_adc (
 	    adc_auto = 0;
 	}
 
-	adc_set_scroll();
+	adc_set_scroll(s);
 
 	return TCL_OK;
     }
@@ -512,7 +516,7 @@ f_adc (
 	    else
 		adc_state->adc_draw = 0;
 
-	    adc_set_scroll();
+	    adc_set_scroll(s);
 
 	    return TCL_OK;
 	}

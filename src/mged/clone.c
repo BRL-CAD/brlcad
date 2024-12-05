@@ -901,8 +901,12 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
  * copies of objects along a spline path.
  */
 int
-f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *mged_s = ctp->s;
+
     size_t ret;
     struct spline s;
     vect_t *verts;
@@ -1145,11 +1149,11 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		dps[j] = copy_object(DBIP, &rt_uniresource, &state);
 
 		if (!no_draw || !is_dm_null()) {
-		    redraw_visible_objects();
-		    size_reset();
+		    redraw_visible_objects(mged_s);
+		    size_reset(mged_s);
 		    new_mats();
-		    mged_color_soltab();
-		    refresh();
+		    mged_color_soltab(mged_s);
+		    refresh(mged_s);
 		}
 		fprintf(stdout, ".");
 		fflush(stdout);

@@ -76,8 +76,11 @@ static int get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol
  * one of four functions before calculating new vertices.
  */
 int
-f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     short int i;
     int face, prod, plane;
     struct rt_db_internal intern;
@@ -309,7 +312,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     rt_db_free_internal(&intern);
 
     /* draw the new solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
 
  end:
     (void)signal(SIGINT, SIG_IGN);

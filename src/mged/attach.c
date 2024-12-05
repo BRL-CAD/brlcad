@@ -65,28 +65,30 @@ int mged_default_dlist = 0;   /* This variable is available via Tcl for controll
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
 /* If we changed the active dm, need to update GEDP as well.. */
-void set_curr_dm(struct mged_dm *nc)
+void set_curr_dm(struct mged_state *s, struct mged_dm *nc)
 {
     mged_curr_dm = nc;
     if (nc != MGED_DM_NULL && nc->dm_view_state) {
-	GEDP->ged_gvp = nc->dm_view_state->vs_gvp;
-	GEDP->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
+	s->GEDP->ged_gvp = nc->dm_view_state->vs_gvp;
+	s->GEDP->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
     } else {
-	if (GEDP) {
-	    GEDP->ged_gvp = NULL;
+	if (s->GEDP) {
+	    s->GEDP->ged_gvp = NULL;
 	}
     }
 }
 
 int
-mged_dm_init(struct mged_dm *o_dm,
+mged_dm_init(
+	struct mged_state *s,
+	struct mged_dm *o_dm,
 	const char *dm_type,
 	int argc,
 	const char *argv[])
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    dm_var_init(o_dm);
+    dm_var_init(s, o_dm);
 
     /* register application provided routines */
     cmd_hook = dm_commands;
@@ -105,8 +107,8 @@ mged_dm_init(struct mged_dm *o_dm,
 
 #ifdef HAVE_TK
     if (dm_graphical(DMP) && !BU_STR_EQUAL(dm_get_dm_name(DMP), "swrast")) {
-	Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
-	Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+	Tk_DeleteGenericHandler(doEvent, (ClientData)s);
+	Tk_CreateGenericHandler(doEvent, (ClientData)s);
     }
 #endif
     (void)dm_configure_win(DMP, 0);
@@ -157,7 +159,7 @@ mged_slider_free_vls(struct mged_dm *p)
 
 
 int
-release(char *name, int need_close)
+release(struct mged_state *s, char *name, int need_close)
 {
     struct mged_dm *save_dm_list = MGED_DM_NULL;
     struct bu_vls *pathname = NULL;
@@ -181,7 +183,7 @@ release(char *name, int need_close)
 	    if (p != mged_curr_dm) {
 		save_dm_list = mged_curr_dm;
 		p = m_dmp;
-		set_curr_dm(p);
+		set_curr_dm(s, p);
 	    }
 	    break;
 	}
@@ -197,7 +199,7 @@ release(char *name, int need_close)
 	if (mged_variables->mv_listen) {
 	    /* drop all clients */
 	    mged_variables->mv_listen = 0;
-	    fbserv_set_port(NULL, NULL, NULL, NULL, NULL);
+	    fbserv_set_port(NULL, NULL, NULL, NULL, s);
 	}
 
 	/* release framebuffer resources */
@@ -228,12 +230,12 @@ release(char *name, int need_close)
     bu_free((void *)mged_curr_dm, "release: mged_curr_dm");
 
     if (save_dm_list != MGED_DM_NULL)
-	set_curr_dm(save_dm_list);
+	set_curr_dm(s, save_dm_list);
     else {
 	if (BU_PTBL_LEN(&active_dm_set) > 0) {
-	    set_curr_dm((struct mged_dm *)BU_PTBL_GET(&active_dm_set, 0));
+	    set_curr_dm(s, (struct mged_dm *)BU_PTBL_GET(&active_dm_set, 0));
 	} else {
-	    set_curr_dm(MGED_DM_NULL);
+	    set_curr_dm(s, MGED_DM_NULL);
 	}
     }
     return TCL_OK;
@@ -241,8 +243,12 @@ release(char *name, int need_close)
 
 
 int
-f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_release(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 2 < argc) {
@@ -261,12 +267,12 @@ f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 	else
 	    bu_vls_strcpy(&vls, argv[1]);
 
-	status = release(bu_vls_addr(&vls), 1);
+	status = release(s, bu_vls_addr(&vls), 1);
 
 	bu_vls_free(&vls);
 	return status;
     } else
-	return release((char *)NULL, 1);
+	return release(s, (char *)NULL, 1);
 }
 
 
@@ -288,8 +294,12 @@ print_valid_dm(Tcl_Interp *interpreter)
 
 
 int
-f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_attach(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -312,13 +322,16 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 	return TCL_ERROR;
     }
 
-    return mged_attach(argv[argc - 1], argc, argv);
+    return mged_attach(s, argv[argc - 1], argc, argv);
 }
 
 
 int
-gui_setup(const char *dstr)
+gui_setup(struct mged_state *s, const char *dstr)
 {
+    if (!s)
+	return TCL_ERROR;
+
 #ifdef HAVE_TK
     Tk_GenericProc *handler = doEvent;
 #endif
@@ -382,7 +395,7 @@ gui_setup(const char *dstr)
     }
 
     /* create the event handler */
-    Tk_CreateGenericHandler(handler, (ClientData)NULL);
+    Tk_CreateGenericHandler(handler, (ClientData)s);
 
     Tcl_Eval(INTERP, "wm withdraw .");
     Tcl_Eval(INTERP, "tk appname mged");
@@ -393,7 +406,7 @@ gui_setup(const char *dstr)
 
 
 int
-mged_attach(const char *wp_name, int argc, const char *argv[])
+mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *argv[])
 {
     int opt_argc;
     char **opt_argv;
@@ -425,16 +438,16 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 
 	struct bu_vls *dname = dm_get_dname(tmp_dmp);
 	if (dname && bu_vls_strlen(dname)) {
-	    if (gui_setup(bu_vls_cstr(dname)) == TCL_ERROR) {
+	    if (gui_setup(s, bu_vls_cstr(dname)) == TCL_ERROR) {
 		bu_free((void *)mged_curr_dm, "f_attach: dm_list");
-		set_curr_dm(o_dm);
+		set_curr_dm(s, o_dm);
 		bu_vls_free(&tmp_vls);
 		dm_close(tmp_dmp);
 		return TCL_ERROR;
 	    }
-	} else if (gui_setup((char *)NULL) == TCL_ERROR) {
+	} else if (gui_setup(s, (char *)NULL) == TCL_ERROR) {
 	    bu_free((void *)mged_curr_dm, "f_attach: dm_list");
-	    set_curr_dm(o_dm);
+	    set_curr_dm(s, o_dm);
 	    bu_vls_free(&tmp_vls);
 	    dm_close(tmp_dmp);
 	    return TCL_ERROR;
@@ -450,7 +463,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (mged_dm_init(o_dm, wp_name, argc, argv) == TCL_ERROR) {
+    if (mged_dm_init(s, o_dm, wp_name, argc, argv) == TCL_ERROR) {
 	goto Bad;
     }
 
@@ -461,7 +474,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	cs_set_bg(sdp, name, base, value, NULL);
+	cs_set_bg(sdp, name, base, value, s);
     }
 
     mged_link_vars(mged_curr_dm);
@@ -476,7 +489,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     share_dlist(mged_curr_dm);
 
     if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(GEDP->ged_gdp->gd_headDisplay);
+	createDLists(s->GEDP->ged_gdp->gd_headDisplay);
 	dlist_state->dl_active = 1;
     }
 
@@ -484,8 +497,8 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     (void)dm_set_win_bounds(DMP, windowbounds);
     mged_fb_open();
 
-    GEDP->ged_gvp = mged_curr_dm->dm_view_state->vs_gvp;
-    GEDP->ged_gvp->gv_s->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
+    s->GEDP->ged_gvp = mged_curr_dm->dm_view_state->vs_gvp;
+    s->GEDP->ged_gvp->gv_s->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
 
     return TCL_OK;
 
@@ -493,9 +506,9 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     Tcl_AppendResult(INTERP, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
     if (DMP != (struct dm *)0)
-	release((char *)NULL, 1);  /* release() will call dm_close */
+	release(s, (char *)NULL, 1);  /* release() will call dm_close */
     else
-	release((char *)NULL, 0);  /* release() will not call dm_close */
+	release(s, (char *)NULL, 0);  /* release() will not call dm_close */
 
     return TCL_ERROR;
 }
@@ -504,7 +517,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 #define MAX_ATTACH_RETRIES 100
 
 void
-get_attached(void)
+get_attached(struct mged_state *s)
 {
     char *tok;
     int inflimit = MAX_ATTACH_RETRIES;
@@ -576,7 +589,7 @@ get_attached(void)
     argv[0] = "";
     argv[1] = "";
     argv[2] = (char *)NULL;
-    (void)mged_attach(bu_vls_cstr(&wanted_type), argc, argv);
+    (void)mged_attach(s, bu_vls_cstr(&wanted_type), argc, argv);
     bu_vls_free(&wanted_type);
 }
 
@@ -585,8 +598,11 @@ get_attached(void)
  * Run a display manager specific command(s).
  */
 int
-f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_dm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
@@ -631,7 +647,7 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
     }
 
 
-    return cmd_hook(argc-1, argv+1);
+    return cmd_hook(argc-1, argv+1, (void *)s);
 }
 
 
@@ -648,7 +664,7 @@ is_dm_null(void)
 
 
 void
-dm_var_init(struct mged_dm *target_dm)
+dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
 {
     BU_ALLOC(adc_state, struct _adc_state);
     *adc_state = *target_dm->dm_adc_state;		/* struct copy */
@@ -704,7 +720,7 @@ dm_var_init(struct mged_dm *target_dm)
     BU_GET(view_state->vs_gvp->gv_objs.view_objs, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->gv_objs.view_objs, 8, "view_objs init");
 
-    view_state->vs_gvp->vset = &GEDP->ged_views;
+    view_state->vs_gvp->vset = &s->GEDP->ged_views;
     view_state->vs_gvp->independent = 0;
 
     view_state->vs_gvp->gv_clientData = (void *)view_state;

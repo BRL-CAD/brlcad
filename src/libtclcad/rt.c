@@ -584,6 +584,10 @@ tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 int
 tclcad_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
+    // Make sure we didn't accidentally wind up with the wrong data type
+    struct application *ap = (struct application *)clientData;
+    RT_CK_APPLICATION(ap);
+
     struct dbcmdstruct *dbcmd;
 
     if (argc < 2) {

@@ -147,7 +147,7 @@ found:
     /* save */
     scdlp = mged_curr_dm;
 
-    set_curr_dm(dlp);
+    set_curr_dm(MGED_STATE, dlp);
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
 	if (clients[i].c_fd == 0)
 	    continue;
@@ -180,7 +180,7 @@ found:
     }
 
     /* restore */
-    set_curr_dm(scdlp);
+    set_curr_dm(MGED_STATE, scdlp);
 }
 
 
@@ -295,7 +295,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
     /* save */
     scdlp = mged_curr_dm;
 
-    set_curr_dm(dlp);
+    set_curr_dm(MGED_STATE, dlp);
 
 #ifdef USE_TCL_CHAN
     uintptr_t fd;
@@ -306,7 +306,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 #endif
 
     /* restore */
-    set_curr_dm(scdlp);
+    set_curr_dm(MGED_STATE, scdlp);
 }
 
 void

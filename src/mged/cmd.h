@@ -26,18 +26,7 @@
 
 #include "common.h"
 
-#include <tcl.h>
-#include "ged.h"
-
-
-typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
-
-struct cmdtab {
-    const char *name;
-    tcl_func_ptr tcl_func;
-    ged_func_ptr ged_func;
-};
-
+#include "mged.h"
 
 extern int mged_db_search_callback(int, const char **, void *, void*);
 

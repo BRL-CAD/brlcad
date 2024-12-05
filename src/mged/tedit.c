@@ -79,8 +79,12 @@ static int j;
 int writesolid(void), readsolid(void);
 
 int
-f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     FILE *fp;
 
     CHECK_DBI_NULL;
@@ -111,14 +115,14 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     (void)fclose(fp);
 
-    if (editit(argv[0], tmpfil) == TCL_OK) {
+    if (editit(s, argv[0], tmpfil) == TCL_OK) {
 	if (readsolid()) {
 	    bu_file_delete(tmpfil);
 	    return TCL_ERROR;
 	}
 
 	/* Update the display */
-	replot_editing_solid();
+	replot_editing_solid(s);
 	view_state->vs_flag = 1;
 	Tcl_AppendResult(interp, "done\n", (char *)NULL);
     }

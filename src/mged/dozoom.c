@@ -47,7 +47,7 @@ unsigned char geometry_default_color[] = { 255, 0, 0 };
  * screen position for the object.
  */
 void
-dozoom(int which_eye)
+dozoom(struct mged_state *s, int which_eye)
 {
     int ndrawn = 0;
     fastf_t inv_viewsize = 0.0;
@@ -137,12 +137,12 @@ dozoom(int which_eye)
     if (dm_get_transparency(DMP)) {
 	/* First, draw opaque stuff */
 
-	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, s->GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
 	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-	if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
+	if (mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 
 	mged_curr_dm->dm_ndrawn += ndrawn;
 
@@ -151,7 +151,7 @@ dozoom(int which_eye)
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, s->GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -160,14 +160,14 @@ dozoom(int which_eye)
 
     } else {
 
-	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, s->GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
     }
 
     /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-    if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
+    if (mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 
     mged_curr_dm->dm_ndrawn += ndrawn;
 
@@ -202,14 +202,14 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+    ndrawn = dm_draw_head_dl(DMP, s->GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 
     mged_curr_dm->dm_ndrawn += ndrawn;
 
     /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-    if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
+    if (mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 }
 
 /*
@@ -241,8 +241,9 @@ createDLists(struct bu_list *hdlp)
  * display manager that has already created the display list)
  */
 void
-createDListSolid(struct bv_scene_obj *sp)
+createDListSolid(void *vlist_ctx, struct bv_scene_obj *sp)
 {
+    struct mged_state *s = (struct mged_state *)vlist_ctx;
     struct mged_dm *save_dlp;
 
     save_dlp = mged_curr_dm;
@@ -273,7 +274,7 @@ createDListSolid(struct bv_scene_obj *sp)
 	dm_set_dirty(DMP, 1);
     }
 
-    set_curr_dm(save_dlp);
+    set_curr_dm(s, save_dlp);
 }
 
 /*
@@ -285,11 +286,12 @@ createDListSolid(struct bv_scene_obj *sp)
  * display manager that has already created the display list)
  */
 void
-createDListAll(struct display_list *gdlp)
+createDListAll(void *vlist_ctx, struct display_list *gdlp)
 {
+    struct mged_state *s = (struct mged_state *)vlist_ctx;
     struct bv_scene_obj *sp;
     for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	createDListSolid(sp);
+	createDListSolid(s, sp);
     }
 }
 

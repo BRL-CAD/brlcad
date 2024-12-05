@@ -77,8 +77,12 @@ editarb(vect_t pos_model)
 /* Extrude command - project an arb face */
 /* Format: extrude face distance */
 int
-f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     static int face;
     static fastf_t dist;
     struct rt_arb_internal *arb;
@@ -130,7 +134,7 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* draw the updated solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -141,8 +145,11 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 /* Mirface command - mirror an arb face */
 /* Format: mirror face axis */
 int
-f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
 
     int face;
     struct rt_arb_internal *arb;
@@ -176,7 +183,7 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* draw the updated solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
     view_state->vs_flag = 1;
 
     return TCL_OK;
@@ -187,8 +194,12 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
  * Format: edgedir deltax deltay deltaz OR edgedir rot fb
 */
 int
-f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int i;
     vect_t slope;
     fastf_t rot, fb_a;
@@ -241,7 +252,7 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     /* get it done */
     newedge = 1;
     editarb(slope);
-    sedit();
+    sedit(s);
     return TCL_OK;
 }
 
@@ -262,8 +273,12 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
  *     ------------------------------------------------
  */
 int
-f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /*
      * 1) Why were all vars declared static?
      * 2) Recompute plane equations?
@@ -298,11 +313,12 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* draw the updated solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
     view_state->vs_flag = 1;
 
     return TCL_OK;
 }
+
 
 
 /*

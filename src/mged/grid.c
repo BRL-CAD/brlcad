@@ -449,8 +449,12 @@ update_grids(fastf_t sf)
 
 
 int
-f_grid_set (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_grid_set (ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 5 < argc) {
@@ -461,7 +465,7 @@ f_grid_set (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_ERROR;
     }
 
-    mged_vls_struct_parse(&vls, "Grid", grid_vparse,
+    mged_vls_struct_parse(s, &vls, "Grid", grid_vparse,
 			  (char *)grid_state, argc, argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);

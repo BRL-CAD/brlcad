@@ -213,7 +213,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
     newvalue = Tcl_GetVar(interp, sp->sp_name,
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_printf(&str, "%s=\"%s\"", name1, newvalue);
-    if (bu_struct_parse(&str, mged_vparse, (char *)mged_variables, NULL) < 0) {
+    if (bu_struct_parse(&str, mged_vparse, (char *)mged_variables, MGED_STATE) < 0) {
 	Tcl_AppendResult(interp, "ERROR OCCURRED WHEN SETTING ", name1,
 			 " TO ", newvalue, "\n", (char *)NULL);
     }
@@ -281,8 +281,12 @@ mged_variable_setup(Tcl_Interp *interp)
 
 
 int
-f_set(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 2 < argc) {
@@ -293,7 +297,7 @@ f_set(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    mged_vls_struct_parse_old(&vls, "mged variables", mged_vparse,
+    mged_vls_struct_parse_old(s, &vls, "mged variables", mged_vparse,
 			      (char *)mged_variables, argc, argv);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -307,8 +311,9 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 		   const char *UNUSED(name),
 		   void *UNUSED(base),
 		   const char *UNUSED(value),
-		   void *UNUSED(data))
+		   void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
     struct mged_dm *save_m_dmp;
 
     save_m_dmp = mged_curr_dm;
@@ -316,7 +321,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_mged_variables == save_m_dmp->dm_mged_variables) {
-	    set_curr_dm(m_dmp);
+	    set_curr_dm(s, m_dmp);
 
 	    if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 		if (mged_variables->mv_sliders)	/* zero slider variables */
@@ -329,7 +334,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 	}
     }
 
-    set_curr_dm(save_m_dmp);
+    set_curr_dm(s, save_m_dmp);
 }
 
 
@@ -374,8 +379,9 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(name),
 	  void *UNUSED(base),
 	  const char *UNUSED(value),
-	  void *UNUSED(data))
+	  void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
     struct mged_dm *save_dlp;
 
     /* save current display manager */
@@ -395,8 +401,8 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 
 	    if (dm_get_displaylist(dlp1->dm_dmp) &&
 		dlp1->dm_dlist_state->dl_active == 0) {
-		set_curr_dm(dlp1);
-		createDLists(GEDP->ged_gdp->gd_headDisplay);
+		set_curr_dm(s, dlp1);
+		createDLists(s->GEDP->ged_gdp->gd_headDisplay);
 		dlp1->dm_dlist_state->dl_active = 1;
 		dlp1->dm_dirty = 1;
 		dm_set_dirty(dlp1->dm_dmp, 1);
@@ -439,8 +445,8 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 
 		    dlp1->dm_dlist_state->dl_active = 0;
 
-		    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-		    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+		    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
+		    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
 			next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 			(void)dm_make_current(dlp1->dm_dmp);
@@ -457,7 +463,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
     }
 
     /* restore current display manager */
-    set_curr_dm(save_dlp);
+    set_curr_dm(s, save_dlp);
 }
 
 

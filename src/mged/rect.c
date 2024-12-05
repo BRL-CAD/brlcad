@@ -33,7 +33,7 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
-extern void mged_center(fastf_t *center); /* from chgview.c */
+extern void mged_center(struct mged_state *s, fastf_t *center); /* from chgview.c */
 extern int mged_vscale(fastf_t sfactor);
 
 static void adjust_rect_for_zoom(void);
@@ -264,7 +264,7 @@ rt_rect_area(void)
 
 
 void
-zoom_rect_area(void)
+zoom_rect_area(struct mged_state *s)
 {
     fastf_t width, height;
     fastf_t sf;
@@ -291,7 +291,7 @@ zoom_rect_area(void)
 
     /* find new model center */
     MAT4X3PNT(new_model_center, view_state->vs_gvp->gv_view2model, new_view_center);
-    mged_center(new_model_center);
+    mged_center(s, new_model_center);
 
     /* zoom in to fill rectangle */
     if (rubber_band->rb_width >= 0.0)

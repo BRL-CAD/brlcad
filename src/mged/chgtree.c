@@ -131,7 +131,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 
 
 struct bv_scene_obj *
-find_solid_with_path(struct db_full_path *pathp)
+find_solid_with_path(struct mged_state *s, struct db_full_path *pathp)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -141,8 +141,8 @@ find_solid_with_path(struct db_full_path *pathp)
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -184,8 +184,11 @@ find_solid_with_path(struct db_full_path *pathp)
  * edited.
  */
 int
-cmd_oed(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct db_full_path lhs;
@@ -209,8 +212,8 @@ cmd_oed(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -252,13 +255,13 @@ cmd_oed(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN(modelchanges);	/* No changes yet */
-    (void)chg_state(ST_VIEW, ST_O_PICK, "internal change of state");
+    (void)chg_state(s, ST_VIEW, ST_O_PICK, "internal change of state");
     /* reset accumulation local scale factors */
     acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
     new_mats();
 
     /* Find the one solid, set s_iflag UP, point illump at it */
-    illump = find_solid_with_path(&both);
+    illump = find_solid_with_path(s, &both);
     if (!illump) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
@@ -266,10 +269,10 @@ cmd_oed(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	Tcl_AppendResult(interp, "Unable to find solid matching path", (char *)NULL);
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = 0;
-	(void)chg_state(ST_O_PICK, ST_VIEW, "error recovery");
+	(void)chg_state(s, ST_O_PICK, ST_VIEW, "error recovery");
 	return TCL_ERROR;
     }
-    (void)chg_state(ST_O_PICK, ST_O_PATH, "internal change of state");
+    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "internal change of state");
 
     /* Select the matrix */
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
