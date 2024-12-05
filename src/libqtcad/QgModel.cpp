@@ -821,7 +821,7 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
-    if (ged_cmd_valid(argv[0], NULL)) {
+    if (!ged_cmd_exists(argv[0])) {
 	const char *ccmd = NULL;
 	int edist = ged_cmd_lookup(&ccmd, argv[0]);
 	if (edist) {

@@ -435,7 +435,7 @@ cmd_setup(void)
 	// Uncomment the following to have MGED report which entries in its
 	// command table collide with libged command names
 #if 0
-	if (ctp->ged_func == GED_FUNC_PTR_NULL && !ged_cmd_valid(ctp->name, NULL))
+	if (ctp->ged_func == GED_FUNC_PTR_NULL && ged_cmd_exists(ctp->name)
 	    bu_log("%12s: matches an existing GED command name, but uses an MGED wrapper function.\n", ctp->name);
 #endif
 
