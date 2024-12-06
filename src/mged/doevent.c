@@ -116,7 +116,6 @@ int
 doEvent(ClientData clientData, XEvent *eventPtr)
 {
     struct mged_state *s = (struct mged_state *)clientData;
-    MGED_CK_STATE(s);
     struct mged_dm *save_dm_list;
     int status;
 
@@ -131,6 +130,8 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 
     /* it's an event for a window that I'm not handling */
     if (mged_curr_dm == MGED_DM_NULL) {
+	if (save_dm_list)
+	    MGED_CK_STATE(s);
 	set_curr_dm(s, save_dm_list);
 	return TCL_OK;
     }
@@ -141,6 +142,8 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 
     /* no further processing of this event */
     if (status != TCL_OK) {
+	if (save_dm_list)
+	    MGED_CK_STATE(s);
 	set_curr_dm(s, save_dm_list);
 	return status;
     }
@@ -204,6 +207,8 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     }
 #endif
 
+    if (save_dm_list)
+	MGED_CK_STATE(s);
     set_curr_dm(s, save_dm_list);
     return status;
 }
