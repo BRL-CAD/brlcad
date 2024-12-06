@@ -36,7 +36,7 @@
 #include "./mged.h"
 
 /* defined in chgmodel.c */
-extern void set_localunit_TclVar(void);
+extern void set_localunit_TclVar(struct mged_state *s);
 
 /* Shorthand for open/close db callback function pointer type */
 typedef void (*db_clbk_t )(struct ged *, void *);
@@ -182,7 +182,8 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
     mctx->post_open_cnt++;
-    struct ged *gedp = (struct ged *)vgedp;
+    struct ged *gedp = (struct ged *)vgedp; // TODO - just use s->GEDP here?
+    struct mged_state *s = mctx->s;
 
     /* Sync global to GED results */
     DBIP = gedp->dbip;
@@ -270,7 +271,7 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
 	bu_vls_free(&cmd);
     }
 
-    set_localunit_TclVar();
+    set_localunit_TclVar(s);
 
     /* Print title/units information */
     if (interactive) {

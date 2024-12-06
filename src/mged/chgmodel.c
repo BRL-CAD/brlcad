@@ -57,7 +57,7 @@ extern int be_s_trans(ClientData, Tcl_Interp *, int, char **);
 
 /* tell him it already exists */
 void
-aexists(const char *name)
+aexists(struct mged_state *s, const char *name)
 {
     Tcl_AppendResult(INTERP, name, ":  already exists\n", (char *)NULL);
 }
@@ -206,7 +206,7 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_O_EDIT, "Object Rotation"))
+    if (not_state(s, ST_O_EDIT, "Object Rotation"))
 	return TCL_ERROR;
 
     /* Check for -i option */
@@ -250,7 +250,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_O_EDIT, "Object Scaling"))
+    if (not_state(s, ST_O_EDIT, "Object Scaling"))
 	return TCL_ERROR;
 
     if (atof(argv[1]) <= 0.0) {
@@ -336,7 +336,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return f_param(clientData, interp, argc, argv);
     }
 
-    if (not_state(ST_O_EDIT, "Object Translation"))
+    if (not_state(s, ST_O_EDIT, "Object Translation"))
 	return TCL_ERROR;
 
     /* Remainder of code concerns object edit case */
@@ -398,7 +398,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_O_EDIT, "Object Rotation"))
+    if (not_state(s, ST_O_EDIT, "Object Rotation"))
 	return TCL_ERROR;
 
     if (movedir != ROTARROW) {
@@ -432,7 +432,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 
 void
-set_localunit_TclVar(void)
+set_localunit_TclVar(struct mged_state *s)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct bu_vls units_vls = BU_VLS_INIT_ZERO;

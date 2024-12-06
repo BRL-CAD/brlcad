@@ -97,12 +97,11 @@ struct mged_state {
     Tcl_Interp *interp;
 };
 extern struct mged_state *MGED_STATE;
+#define INTERP s->interp
 
 /* TODO - eventually these should be replace by mged_state */
 extern struct db_i *DBIP;   /* defined in mged.c */
 extern struct rt_wdb *WDBP; /* defined in mged.c */
-extern Tcl_Interp *ged_interp;
-#define INTERP ged_interp
 
 typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
 
@@ -222,15 +221,15 @@ extern void eraseobjall(struct directory **dpp);
 extern void mged_finish(struct mged_state *s, int exitcode);
 extern void slewview(struct mged_state *s, vect_t view_pos);
 extern void mmenu_init(void);
-extern void moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate);
-extern void moveHobj(struct directory *dp, matp_t xlate);
+extern void moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp, matp_t xlate);
+extern void moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate);
 extern void quit(struct mged_state *s);
 extern void refresh(struct mged_state *s);
 extern void sedit(struct mged_state *s);
 extern void setview(struct mged_state *s, double a1, double a2, double a3);
 extern void adcursor(void);
 extern void mmenu_display(int y_top);
-extern void mmenu_set(int idx, struct menu_item *value);
+extern void mmenu_set(struct mged_state *s, int idx, struct menu_item *value);
 extern void mmenu_set_all(struct mged_state *s, int idx, struct menu_item *value);
 extern void sedit_menu(struct mged_state *s);
 extern void get_attached(struct mged_state *s);
@@ -238,7 +237,7 @@ extern void (*cur_sigint)(int);	/* Current SIGINT status */
 extern void sig2(int);
 extern void sig3(int);
 
-extern void aexists(const char *name);
+extern void aexists(struct mged_state *s, const char *name);
 extern int release(struct mged_state *s, char *name, int need_close);
 
 /* mged.c */
@@ -247,10 +246,10 @@ extern void mged_view_callback(struct bview *gvp, void *clientData);
 /* buttons.c */
 extern void button(struct mged_state *s, int bnum);
 extern void press(char *str);
-extern char *label_button(int bnum);
-extern int not_state(int desired, char *str);
+extern char *label_button(struct mged_state *s, int bnum);
+extern int not_state(struct mged_state *s, int desired, char *str);
 extern int chg_state(struct mged_state *s, int from, int to, char *str);
-extern void state_err(char *str);
+extern void state_err(struct mged_state *s, char *str);
 
 extern int invoke_db_wrapper(Tcl_Interp *interpreter, int argc, const char *argv[]);
 
@@ -488,15 +487,15 @@ int mged_erot_xyz(struct mged_state *s, char origin, vect_t rvec);
 int mged_svbase(void);
 int mged_vrot_xyz(char origin, char coords, vect_t rvec);
 void size_reset(struct mged_state *s);
-void solid_list_callback(void);
+void solid_list_callback(struct mged_state *s);
 
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 extern void view_ring_destroy(struct mged_dm *dlp);
 
 /* cmd.c */
 int cmdline(struct mged_state *s, struct bu_vls *vp, int record);
-int mged_cmd(int argc, const char *argv[], struct funtab in_functions[]);
-void mged_print_result(int status);
+int mged_cmd(struct mged_state *s, int argc, const char *argv[], struct funtab in_functions[]);
+void mged_print_result(struct mged_state *s, int status);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
 
@@ -582,7 +581,7 @@ void pr_prompt(int show_prompt);
 
 /* grid.c */
 extern void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);
-extern void snap_keypoint_to_grid(void);
+extern void snap_keypoint_to_grid(struct mged_state *s);
 extern void snap_view_center_to_grid(void);
 extern void snap_to_grid(fastf_t *mx, fastf_t *my);
 extern void snap_view_to_grid(fastf_t view_dx, fastf_t view_dy);
@@ -601,17 +600,17 @@ void wrt_view(mat_t out, const mat_t change, const mat_t in);
 void wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point);
 
 /* tedit.c */
-int get_editor_string(struct bu_vls *editstring);
+int get_editor_string(struct mged_state *s, struct bu_vls *editstring);
 
 /* titles.c */
-void create_text_overlay(struct bu_vls *vp);
+void create_text_overlay(struct mged_state *s, struct bu_vls *vp);
 void screen_vls(int xbase, int ybase, struct bu_vls *vp);
-void dotitles(struct bu_vls *overlay_vls);
+void dotitles(struct mged_state *s, struct bu_vls *overlay_vls);
 
 /* rect.c */
 void zoom_rect_area(struct mged_state *);
 void paint_rect_area(void);
-void rt_rect_area(void);
+void rt_rect_area(struct mged_state *);
 void draw_rect(void);
 void set_rect(const struct bu_structparse *, const char *, void *, const char *, void *);
 void rect_view2image(void);
@@ -620,11 +619,11 @@ void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, cons
 
 
 /* track.c */
-int wrobj(char name[], int flags);
+int wrobj(struct mged_state *s, char name[], int flags);
 
 /* edsol.c */
 extern int inpara;	/* parameter input from keyboard flag */
-void vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
+void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
@@ -670,21 +669,21 @@ extern void mged_variable_setup(struct mged_state *s);
 
 /* scroll.c */
 void set_scroll(void);
-int scroll_select(int pen_x, int pen_y, int do_func);
-int scroll_display(int y_top);
+int scroll_select(struct mged_state *s, int pen_x, int pen_y, int do_func);
+int scroll_display(struct mged_state *s, int y_top);
 
 /* edpipe.c */
-void pipe_scale_od(struct rt_db_internal *, fastf_t);
-void pipe_scale_id(struct rt_db_internal *, fastf_t);
-void pipe_seg_scale_od(struct wdb_pipe_pnt *, fastf_t);
-void pipe_seg_scale_id(struct wdb_pipe_pnt *, fastf_t);
-void pipe_seg_scale_radius(struct wdb_pipe_pnt *, fastf_t);
-void pipe_scale_radius(struct rt_db_internal *, fastf_t);
+void pipe_scale_od(struct mged_state *s, struct rt_db_internal *, fastf_t);
+void pipe_scale_id(struct mged_state *s, struct rt_db_internal *, fastf_t);
+void pipe_seg_scale_od(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
+void pipe_seg_scale_id(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
+void pipe_seg_scale_radius(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
+void pipe_scale_radius(struct mged_state *s, struct rt_db_internal *, fastf_t);
 struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
 struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 void pipe_ins_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
-struct wdb_pipe_pnt *pipe_del_pnt(struct wdb_pipe_pnt *);
-void pipe_move_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
+struct wdb_pipe_pnt *pipe_del_pnt(struct mged_state *s, struct wdb_pipe_pnt *);
+void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
 /* vparse.c */
 extern void mged_vls_struct_parse(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */

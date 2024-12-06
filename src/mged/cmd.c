@@ -59,8 +59,8 @@
 #include "./sedit.h"
 
 
-extern void update_grids(fastf_t sf);		/* in grid.c */
-extern void set_localunit_TclVar(void);		/* in chgmodel.c */
+extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
+extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;
@@ -119,13 +119,16 @@ static struct bu_vls tcl_log_str = BU_VLS_INIT_ZERO;
 int
 gui_output(void *clientData, void *str)
 {
-    int len;
+    struct mged_state *s = (struct mged_state *)clientData;
+    MGED_CK_STATE(s);
+
+	int len;
     Tcl_DString tclcommand;
     Tcl_Obj *save_result;
     static int level = 0;
 
     if (level > 50) {
-	bu_log_delete_hook(gui_output, clientData);
+	bu_log_delete_hook(gui_output, s);
 	/* Now safe to run bu_log? */
 	bu_log("Ack! Something horrible just happened recursively.\n");
 	return 0;
@@ -138,7 +141,7 @@ gui_output(void *clientData, void *str)
     save_result = Tcl_GetObjResult(INTERP);
     Tcl_IncrRefCount(save_result);
     ++level;
-    Tcl_Eval((Tcl_Interp *)clientData, Tcl_DStringValue(&tclcommand));
+    Tcl_Eval(INTERP, Tcl_DStringValue(&tclcommand));
     --level;
     Tcl_SetObjResult(INTERP, save_result);
     Tcl_DecrRefCount(save_result);
@@ -361,7 +364,7 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
     if (ret)
 	return TCL_ERROR;
 
-    solid_list_callback();
+    solid_list_callback(s);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -890,8 +893,12 @@ cmd_tk(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
  * output hook!
  */
 int
-cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls infocommand = BU_VLS_INIT_ZERO;
     int status;
 
@@ -904,7 +911,7 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
 	return TCL_ERROR;
     }
 
-    bu_log_delete_hook(gui_output, (void *)interpreter);/* Delete the existing hook */
+    bu_log_delete_hook(gui_output, (void *)s);/* Delete the existing hook */
 
     if (argc < 2)
 	return TCL_OK;
@@ -934,7 +941,7 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
     bu_vls_sprintf(&tcl_output_cmd, "%s", argv[1]);
 
     /* Set up the libbu hook */
-    bu_log_add_hook(gui_output, (void *)interpreter);
+    bu_log_add_hook(gui_output, (void *)s);
 
     Tcl_ResetResult(interpreter);
     return TCL_OK;
@@ -1286,7 +1293,7 @@ end:
 
 
 void
-mged_print_result(int UNUSED(status))
+mged_print_result(struct mged_state *s, int UNUSED(status))
 {
     size_t len;
     const char *result = Tcl_GetStringResult(INTERP);
@@ -1311,6 +1318,7 @@ mged_print_result(int UNUSED(status))
  */
 int
 mged_cmd(
+    struct mged_state *s,
     int argc,
     const char *argv[],
     struct funtab in_functions[])
@@ -1765,8 +1773,11 @@ wdb_deleteProc_rt(void *clientData)
 
 
 int
-cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
+cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
 
     struct rt_i *rtip;
     struct application *ap;
@@ -1917,9 +1928,9 @@ cmd_units(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     if (ret)
 	return TCL_ERROR;
 
-    set_localunit_TclVar();
+    set_localunit_TclVar(s);
     sf = DBIP->dbi_base2local / sf;
-    update_grids(sf);
+    update_grids(s,sf);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -2197,8 +2208,12 @@ cmd_ps(ClientData clientData,
 
 
 int
-cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
+cmd_stub(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     CHECK_DBI_NULL;
 
     if (argc != 1) {

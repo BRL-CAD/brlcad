@@ -260,6 +260,7 @@ cs_update(const struct bu_structparse *sdp,
 	  const char *value,
 	  void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
     struct bu_structparse *sp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int offset;

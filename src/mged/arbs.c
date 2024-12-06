@@ -64,6 +64,10 @@ char *p_rfin[] = {
 int
 f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct directory *dp;
     int i;
     int solve[3];

@@ -86,7 +86,7 @@ editit(struct mged_state *s, const char *command, const char *tempfile) {
 
     CHECK_DBI_NULL;
 
-    get_editor_string(&editstring);
+    get_editor_string(s, &editstring);
 
     av[0] = command;
     av[1] = "-e";
@@ -119,7 +119,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 
     CHECK_DBI_NULL;
 
-    get_editor_string(&editstring);
+    get_editor_string(s, &editstring);
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
     av[0] = argv[0];
@@ -160,7 +160,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    get_editor_string(&editstring);
+    get_editor_string(s, &editstring);
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcodes: av");
     av[0] = argv[0];
@@ -202,7 +202,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    get_editor_string(&editstring);
+    get_editor_string(s, &editstring);
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
     av[0] = (const char *)argv[0];
@@ -243,7 +243,7 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    get_editor_string(&editstring);
+    get_editor_string(s, &editstring);
 
     av = (const char **)bu_calloc(4, sizeof(char *), "f_red: av");
 
@@ -273,6 +273,7 @@ static void Do_printnode(struct db_i *dbip2, struct rt_comb_internal *comb, unio
 static int
 printcodes(FILE *fp, struct directory *dp, int pathpos)
 {
+    struct mged_state *s = MGED_STATE;
     int i;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;

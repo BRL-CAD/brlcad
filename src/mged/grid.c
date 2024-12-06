@@ -289,7 +289,7 @@ snap_to_grid(
 
 
 void
-snap_keypoint_to_grid(void)
+snap_keypoint_to_grid(struct mged_state *s)
 {
     point_t view_pt;
     point_t model_pt;
@@ -424,7 +424,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 
 
 void
-update_grids(fastf_t sf)
+update_grids(struct mged_state *s, fastf_t sf)
 {
     struct bu_vls save_result = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;

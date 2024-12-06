@@ -76,7 +76,7 @@ static int svec[11];
 static int j;
 
 
-int writesolid(void), readsolid(void);
+int writesolid(struct mged_state *), readsolid(struct mged_state *);
 
 int
 f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -100,14 +100,14 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Only do this if in solid edit state */
-    if (not_state(ST_S_EDIT, "Primitive Text Edit"))
+    if (not_state(s, ST_S_EDIT, "Primitive Text Edit"))
 	return TCL_ERROR;
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (fp == NULL)
 	return TCL_ERROR;
 
-    if (writesolid()) {
+    if (writesolid(s)) {
 	bu_file_delete(tmpfil);
 	fclose(fp);
 	return TCL_ERROR;
@@ -116,7 +116,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     (void)fclose(fp);
 
     if (editit(s, argv[0], tmpfil) == TCL_OK) {
-	if (readsolid()) {
+	if (readsolid(s)) {
 	    bu_file_delete(tmpfil);
 	    return TCL_ERROR;
 	}
@@ -157,7 +157,7 @@ useThisVertex(int idx)
 
 /* Write numerical parameters of a solid into a file */
 int
-writesolid(void)
+writesolid(struct mged_state *s)
 {
     int i;
     FILE *fp;
@@ -343,7 +343,7 @@ Get_next_line(FILE *fp)
 
 /* Read numerical parameters of solid from file */
 int
-readsolid(void)
+readsolid(struct mged_state *s)
 {
     int i;
     FILE *fp;
@@ -915,7 +915,7 @@ readsolid(void)
 
 
 int
-get_editor_string(struct bu_vls *editstring)
+get_editor_string(struct mged_state *s, struct bu_vls *editstring)
 {
     char buffer[RT_MAXLINE] = {0};
     int count = 0;

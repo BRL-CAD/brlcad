@@ -45,7 +45,7 @@ extern void set_absolute_tran(void); /* defined in set.c */
 extern void set_absolute_view_tran(void); /* defined in set.c */
 extern void set_absolute_model_tran(void); /* defined in set.c */
 
-void solid_list_callback(void);
+void solid_list_callback(struct mged_state *s);
 void knob_update_rate_vars(void);
 int mged_svbase(void);
 int mged_vrot(char origin, fastf_t *newrot);
@@ -557,7 +557,7 @@ cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *ar
 
 
 void
-solid_list_callback(void)
+solid_list_callback(struct mged_state *s)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     Tcl_Obj *save_obj;
@@ -636,7 +636,7 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
     ged_exec_zap(s->GEDP, 1, (const char **)av);
 
     (void)chg_state(s, STATE, STATE, "zap");
-    solid_list_callback();
+    solid_list_callback(s);
 
     s->GEDP->ged_destroy_vlist_callback = tmp_callback;
 
@@ -645,8 +645,12 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
 
 
 int
-f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
@@ -873,7 +877,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     if (STATE != ST_S_PICK && STATE != ST_O_PICK) {
-	state_err("keyboard illuminate pick");
+	state_err(s, "keyboard illuminate pick");
 	goto bail_out;
     }
 
@@ -1050,7 +1054,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_VIEW, "keyboard solid edit start")) {
+    if (not_state(s, ST_VIEW, "keyboard solid edit start")) {
 	return TCL_ERROR;
     }
 
@@ -3636,7 +3640,7 @@ mged_etran(struct mged_state *s,
 
     if (STATE == ST_S_EDIT) {
 	es_keyfixed = 0;
-	get_solid_keypoint(es_keypoint, &es_keytag,
+	get_solid_keypoint(s, es_keypoint, &es_keytag,
 			   &es_int, es_mat);
 	save_edflag = es_edflag;
 

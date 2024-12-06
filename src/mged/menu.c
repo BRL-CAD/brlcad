@@ -98,7 +98,7 @@ mmenu_init(void)
 
 
 void
-mmenu_set(int index, struct menu_item *value)
+mmenu_set(struct mged_state *s, int index, struct menu_item *value)
 {
     Tcl_DString ds_menu;
     struct bu_vls menu_string = BU_VLS_INIT_ZERO;
@@ -140,7 +140,7 @@ mmenu_set_all(struct mged_state *s, int index, struct menu_item *value)
 	    curr_cmd_list = p->dm_tie;
 
 	set_curr_dm(s, p);
-	mmenu_set(index, value);
+	mmenu_set(s, index, value);
     }
 
     curr_cmd_list = save_cmd_list;

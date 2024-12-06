@@ -112,7 +112,7 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_VIEW, "Ray-trace of current view"))
+    if (not_state(s, ST_VIEW, "Ray-trace of current view"))
 	return TCL_ERROR;
 
     Tcl_DStringInit(&ds);
@@ -195,7 +195,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_VIEW, "animate from matrix file"))
+    if (not_state(s, ST_VIEW, "animate from matrix file"))
 	return TCL_ERROR;
 
     if ((fp = fopen(argv[1], "r")) == NULL) {

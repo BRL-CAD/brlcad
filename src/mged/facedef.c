@@ -68,7 +68,7 @@ char *p_nupnt[] = {
 
 
 static void get_pleqn(fastf_t *plane, const char *argv[]), get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb), get_nupnt(fastf_t *plane, const char *argv[]);
-static int get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol);
+static int get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct bn_tol *tol);
 
 /*
  * Redefines one of the defining planes for a GENARB8. Finds which
@@ -243,7 +243,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    if (get_3pts(planes[plane], &argv[3], &mged_tol)) {
+	    if (get_3pts(s, planes[plane], &argv[3], &mged_tol)) {
 		status = TCL_ERROR;
 		goto end;
 	    }
@@ -350,7 +350,7 @@ get_pleqn(fastf_t *plane, const char *argv[])
  * -1 failure
  */
 static int
-get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
+get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 {
     int i;
     point_t a, b, c;

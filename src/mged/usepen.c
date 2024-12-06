@@ -263,7 +263,7 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_O_PATH, "Object Edit matrix pick"))
+    if (not_state(s, ST_O_PATH, "Object Edit matrix pick"))
 	return TCL_ERROR;
 
     if (!illump->s_u_data)
@@ -414,7 +414,7 @@ f_mouse(
 	    if (scroll_active)
 		ypos = scroll_y;
 
-	    if ((i = scroll_select(xpos, ypos, 1)) < 0) {
+	    if ((i = scroll_select(s, xpos, ypos, 1)) < 0) {
 		Tcl_AppendResult(interp,
 				 "mouse press outside valid scroll area\n",
 				 (char *)NULL);
@@ -550,7 +550,7 @@ f_mouse(
 	    return TCL_OK;
 
 	default:
-	    state_err("mouse press");
+	    state_err(s, "mouse press");
 	    return TCL_ERROR;
     }
     /* NOTREACHED */

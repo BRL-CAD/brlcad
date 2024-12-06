@@ -61,7 +61,7 @@ extern struct rt_db_internal es_int;
  * Prepare the numerical display of the currently edited solid/object.
  */
 void
-create_text_overlay(struct bu_vls *vp)
+create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 {
     struct directory *dp;
 
@@ -86,7 +86,7 @@ create_text_overlay(struct bu_vls *vp)
 	bu_vls_strcat(vp, dp->d_namep);
 	bu_vls_strcat(vp, ": ");
 
-	vls_solid(vp, &es_int, bn_mat_identity);
+	vls_solid(s, vp, &es_int, bn_mat_identity);
 
 	if (bdata->s_fullpath.fp_len > 1) {
 	    bu_vls_strcat(vp, "\n** PATH --  ");
@@ -94,7 +94,7 @@ create_text_overlay(struct bu_vls *vp)
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
-	    vls_solid(vp, &es_int, es_mat);
+	    vls_solid(s, vp, &es_int, es_mat);
 	}
     }
 
@@ -113,7 +113,7 @@ create_text_overlay(struct bu_vls *vp)
 	    /* object edit option selected */
 	    bn_mat_mul(new_mat, modelchanges, es_mat);
 
-	    vls_solid(vp, &es_int, new_mat);
+	    vls_solid(s, vp, &es_int, new_mat);
 	}
     }
 
@@ -212,7 +212,7 @@ screen_vls(
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void
-dotitles(struct bu_vls *overlay_vls)
+dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 {
     size_t i = 0;
 
@@ -402,7 +402,7 @@ dotitles(struct bu_vls *overlay_vls)
 			    GED2PM1(XMIN), GED2PM1(YMIN));
 
 	    /* Display scroll bars */
-	    scroll_ybot = scroll_display(SCROLLY);
+	    scroll_ybot = scroll_display(s, SCROLLY);
 	    y = MENUY;
 	    x = MENUX;
 
@@ -495,7 +495,7 @@ dotitles(struct bu_vls *overlay_vls)
 	/*
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
-	/* create_text_overlay(&vls); */
+	/* create_text_overlay(s, &vls); */
 	if (mged_variables->mv_orig_gui) {
 	    screen_vls(SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls);
 	} else {

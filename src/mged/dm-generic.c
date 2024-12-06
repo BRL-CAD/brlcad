@@ -90,7 +90,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		rb_set_dirty_flag(sdp, name, base, value, NULL);
 	    }
 	    else if (mged_variables->mv_mouse_behavior == 'r')
-		rt_rect_area();
+		rt_rect_area(s);
 	    else if (mged_variables->mv_mouse_behavior == 'z')
 		zoom_rect_area(s);
 	}
@@ -122,7 +122,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    mged_variables->mv_orig_gui) {
 #define MENUXLIM (-1250)
 
-	    if (x >= MENUXLIM && scroll_select(x, y, 0)) {
+	    if (x >= MENUXLIM && scroll_select(s, x, y, 0)) {
 		stolen = 1;
 		goto end;
 	    }
@@ -278,7 +278,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			    edobj = BE_O_XY;
 			}
 
-			snap_keypoint_to_grid();
+			snap_keypoint_to_grid(s);
 
 			if (STATE == ST_S_EDIT)
 			    es_edflag = save_edflag;

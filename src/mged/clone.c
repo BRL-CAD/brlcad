@@ -80,6 +80,7 @@
  * requested and values necessary to perform the cloning operation.
  */
 struct clone_state {
+    struct mged_state *s;
     Tcl_Interp *interp;         /* Stash a pointer to the tcl interpreter for output */
     struct directory *src;	/* Source object */
     size_t incr;		/* Amount to increment between copies */
@@ -283,6 +284,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     size_t i, j;
+    struct mged_state *s = state->s;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -529,6 +531,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
     union record *rp = (union record *)NULL;
     size_t i;
     size_t j;
+    struct mged_state *s = state->s;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -743,6 +746,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     union record *rp = (union record *)NULL;
     struct directory *mdp = (struct directory *)NULL;
     struct directory *copy = (struct directory *)NULL;
+    struct mged_state *s = state->s;
 
     struct bu_vls *copyname = NULL;
     struct bu_vls *nextname = NULL;
@@ -1113,6 +1117,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	struct clone_state state;
 	struct directory **dps = (struct directory **)NULL;
 
+	state.s = mged_s;
 	state.interp = interp;
 	state.incr = inc;
 	state.n_copies = 1;

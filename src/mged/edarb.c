@@ -99,7 +99,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_S_EDIT, "Extrude"))
+    if (not_state(s, ST_S_EDIT, "Extrude"))
 	return TCL_ERROR;
 
     if (es_int.idb_type != ID_ARB8) {
@@ -164,7 +164,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_S_EDIT, "Mirface"))
+    if (not_state(s, ST_S_EDIT, "Mirface"))
 	return TCL_ERROR;
 
     if (es_int.idb_type != ID_ARB8) {
@@ -214,7 +214,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_S_EDIT, "Edgedir"))
+    if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
     if (es_edflag != EARB) {
@@ -296,7 +296,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_S_EDIT, "Permute"))
+    if (not_state(s, ST_S_EDIT, "Permute"))
 	return TCL_ERROR;
 
     if (es_int.idb_type != ID_ARB8) {

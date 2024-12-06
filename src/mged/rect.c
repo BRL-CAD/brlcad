@@ -215,7 +215,7 @@ paint_rect_area(void)
 
 
 void
-rt_rect_area(void)
+rt_rect_area(struct mged_state *s)
 {
     int xmin, xmax;
     int ymin, ymax;

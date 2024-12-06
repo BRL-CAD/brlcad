@@ -394,7 +394,7 @@ mged_adc_reset(void)
 
 
 static void
-adc_print_vars(void)
+adc_print_vars(struct mged_state *s)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1034,7 +1034,7 @@ f_adc (
     }
 
     if (BU_STR_EQUAL(parameter, "vars")) {
-	adc_print_vars();
+	adc_print_vars(s);
 	return TCL_OK;
     }
 

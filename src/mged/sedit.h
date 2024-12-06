@@ -28,6 +28,8 @@
 #ifndef MGED_SEDIT_H
 #define MGED_SEDIT_H
 
+#include "mged.h"
+
 #define MGED_SMALL_SCALE 1.0e-10
 
 /* These EDIT_CLASS_ values go in es_edclass. */
@@ -270,7 +272,7 @@ extern point_t curr_e_axes_pos;	/* center of editing xforms */
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */
 
-extern void get_solid_keypoint(fastf_t *pt,
+extern void get_solid_keypoint(struct mged_state *s, fastf_t *pt,
 			       char **strp,
 			       struct rt_db_internal *ip,
 			       fastf_t *mat);

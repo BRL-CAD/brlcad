@@ -58,7 +58,7 @@
 extern int doMotion;			/* defined in buttons.c */
 
 #ifdef HAVE_X11_TYPES
-static void motion_event_handler(XMotionEvent *);
+static void motion_event_handler(struct mged_state *, XMotionEvent *);
 #endif
 
 #ifdef IR_KNOBS
@@ -176,7 +176,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	/* no further processing of this event */
 	status = TCL_RETURN;
     } else if (eventPtr->type == MotionNotify) {
-	motion_event_handler((XMotionEvent *)eventPtr);
+	motion_event_handler(s, (XMotionEvent *)eventPtr);
 	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */
@@ -242,7 +242,7 @@ common_dbtext(char *str)
 
 #ifdef HAVE_X11_TYPES
 static void
-motion_event_handler(XMotionEvent *xmotion)
+motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 {
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;

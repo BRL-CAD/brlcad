@@ -154,8 +154,10 @@ nmg_eu_dist_set(const struct bu_structparse *UNUSED(sdp),
 		const char *UNUSED(name),
 		void *UNUSED(base),
 		const char *UNUSED(value),
-		void *UNUSED(data))
+		void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     nmg_eue_dist = mged_variables->mv_nmg_eu_dist;

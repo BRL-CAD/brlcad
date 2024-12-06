@@ -56,7 +56,7 @@
  * Also finds s_vlen;
  */
 static void
-mged_bound_solid(struct bv_scene_obj *sp)
+mged_bound_solid(struct mged_state *s, struct bv_scene_obj *sp)
 {
     point_t bmin, bmax;
     size_t length = 0;
@@ -114,7 +114,7 @@ drawH_part2(struct mged_state *s, int dashflag, struct bu_list *vhead, const str
      * Compute the min, max, and center points.
      */
     BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
-    mged_bound_solid(sp);
+    mged_bound_solid(s, sp);
 
     /*
      * If this solid is new, fill in its information.

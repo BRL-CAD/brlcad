@@ -53,6 +53,10 @@
 int
 f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct directory *proto;
     struct directory *dp;
     struct rt_db_internal internal;
@@ -75,7 +79,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
 
     if (db_lookup(DBIP,  argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
-	aexists(argv[2]);
+	aexists(s, argv[2]);
 	return TCL_ERROR;
     }
 
@@ -207,7 +211,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_VIEW, "Object Illuminate")) {
+    if (not_state(s, ST_VIEW, "Object Illuminate")) {
 	return TCL_ERROR;
     }
 
@@ -286,7 +290,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
     bu_vls_free(&tcl_cmd);
-    if (not_state(ST_O_EDIT, "Object EDIT")) {
+    if (not_state(s, ST_O_EDIT, "Object EDIT")) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
 	db_free_full_path(&both);

@@ -120,7 +120,7 @@ set_scroll(void)
  * Reset all scroll bars to the zero position.
  */
 void
-sl_halt_scroll(struct mged_state *UNUSED(s), int UNUSED(a), int UNUSED(b), int UNUSED(c))
+sl_halt_scroll(struct mged_state *s, int UNUSED(a), int UNUSED(b), int UNUSED(c))
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -159,6 +159,7 @@ sl_toggle_scroll(struct mged_state *s, int UNUSED(a), int UNUSED(b), int UNUSED(
 static void
 sl_tol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -178,6 +179,7 @@ sl_tol(struct scroll_item *mptr, double val)
 static void
 sl_atol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (DBIP == DBI_NULL)
@@ -200,6 +202,7 @@ sl_atol(struct scroll_item *mptr, double val)
 static void
 sl_rrtol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -219,6 +222,7 @@ sl_rrtol(struct scroll_item *mptr, double val)
 static void
 sl_artol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -238,6 +242,7 @@ sl_artol(struct scroll_item *mptr, double val)
 static void
 sl_adctol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -257,6 +262,7 @@ sl_adctol(struct scroll_item *mptr, double val)
 static void
 sl_itol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -285,7 +291,7 @@ sl_itol(struct scroll_item *mptr, double val)
  * position used.
  */
 int
-scroll_display(int y_top)
+scroll_display(struct mged_state *s, int y_top)
 {
     int y;
     struct scroll_item *mptr;
@@ -699,7 +705,7 @@ scroll_display(int y_top)
  * -1 if pen is ABOVE scroll (error)
  */
 int
-scroll_select(int pen_x, int pen_y, int do_func)
+scroll_select(struct mged_state *UNUSED(s), int pen_x, int pen_y, int do_func)
 {
     int yy;
     struct scroll_item **m;

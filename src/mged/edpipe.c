@@ -52,7 +52,7 @@ pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps),
 
 
 void
-pipe_scale_od(struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_od(struct mged_state *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -83,7 +83,7 @@ pipe_scale_od(struct rt_db_internal *db_int, fastf_t scale)
 
 
 void
-pipe_scale_id(struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_id(struct mged_state *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -117,7 +117,7 @@ pipe_scale_id(struct rt_db_internal *db_int, fastf_t scale)
 
 
 void
-pipe_seg_scale_od(struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_od(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_od;
 
@@ -147,7 +147,7 @@ pipe_seg_scale_od(struct wdb_pipe_pnt *ps, fastf_t scale)
 
 
 void
-pipe_seg_scale_id(struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_id(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_id;
 
@@ -175,7 +175,7 @@ pipe_seg_scale_id(struct wdb_pipe_pnt *ps, fastf_t scale)
 
 
 void
-pipe_seg_scale_radius(struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_radius(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t old_radius;
     struct wdb_pipe_pnt *head;
@@ -209,7 +209,7 @@ pipe_seg_scale_radius(struct wdb_pipe_pnt *ps, fastf_t scale)
 
 
 void
-pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_radius(struct mged_state *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct bu_list head;
     struct wdb_pipe_pnt *old_ps, *new_ps;
@@ -409,7 +409,7 @@ pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const poi
 
 
 struct wdb_pipe_pnt *
-pipe_del_pnt(struct wdb_pipe_pnt *ps)
+pipe_del_pnt(struct mged_state *s, struct wdb_pipe_pnt *ps)
 {
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
@@ -458,7 +458,7 @@ pipe_del_pnt(struct wdb_pipe_pnt *ps)
 
 
 void
-pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
+pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
 {
     point_t old_pt;
 

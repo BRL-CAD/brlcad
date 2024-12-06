@@ -120,9 +120,6 @@ extern struct _axes_state default_axes_state;
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
-/* should only be accessed via INTERP define in mged.h */
-Tcl_Interp *ged_interp = (Tcl_Interp *)NULL;
-
 /* these two file descriptors are where we store fileno(stdout) and
  * fileno(stderr) during graphical startup so that we may restore them
  * when we're done (which is needed so atexit() calls to bu_log() will
@@ -304,7 +301,7 @@ mged_notify(int UNUSED(i))
 
 
 void
-reset_input_strings(void)
+reset_input_strings(struct mged_state *s)
 {
     if (BU_LIST_IS_HEAD(curr_cmd_list, &head_cmd_list.l)) {
 	/* Truncate input string */
@@ -341,7 +338,7 @@ quit(struct mged_state *s)
 void
 sig2(int UNUSED(sig))
 {
-    reset_input_strings();
+    reset_input_strings(MGED_STATE);
 
     (void)signal(SIGINT, SIG_IGN);
 }
@@ -513,7 +510,7 @@ mged_insert_char(char ch)
 
 
 static void
-do_tab_expansion(void)
+do_tab_expansion(struct mged_state *s)
 {
     int ret;
     Tcl_Obj *result;
@@ -707,7 +704,7 @@ mged_process_char(struct mged_state *s, char ch)
 	    escaped = bracketed = 0;
 	    break;
 	case '\t':                      /* do TAB expansion */
-	    do_tab_expansion();
+	    do_tab_expansion(s);
 	    break;
 	case CTRL_A:                    /* Go to beginning of line */
 	    pr_prompt(interactive);
@@ -1894,6 +1891,12 @@ cmd_stuff_str(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, 
 void
 std_out_or_err(ClientData clientData, int UNUSED(mask))
 {
+    // TODO - we're already using clientData for something else, and experience
+    // with fbserv makes me wary of trying to change what is being passed
+    // through clientData with an fd - for now, just punt and use the overall
+    // state global.
+    struct mged_state *s = MGED_STATE;
+
 #if !defined(_WIN32) || defined(__CYGWIN__)
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 #else
@@ -2319,7 +2322,7 @@ refresh(struct mged_state *s)
 	    if (DBIP != DBI_NULL) {
 		if (do_overlay) {
 		    bu_vls_trunc(&overlay_vls, 0);
-		    create_text_overlay(&overlay_vls);
+		    create_text_overlay(s, &overlay_vls);
 		    do_overlay = 0;
 		}
 
@@ -2407,7 +2410,7 @@ refresh(struct mged_state *s)
 
 			/* Display titles, etc., if desired */
 			bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-			dotitles(&tmp_vls);
+			dotitles(s, &tmp_vls);
 			bu_vls_trunc(&tmp_vls, 0);
 		    }
 		}
@@ -2504,7 +2507,7 @@ mged_finish(struct mged_state *s, int exitcode)
     }
 
     /* no longer send bu_log() output to Tcl */
-    bu_log_delete_hook(gui_output, (void *)INTERP);
+    bu_log_delete_hook(gui_output, (void *)s);
 
     /* restore stdout/stderr just in case anyone tries to write before
      * we finally exit (e.g., an atexit() callback).

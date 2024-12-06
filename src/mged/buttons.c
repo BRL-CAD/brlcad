@@ -322,7 +322,7 @@ f_press(ClientData clientData,
  * Useful for displays with programmable button labels, etc.
  */
 char *
-label_button(int bnum)
+label_button(struct mged_state *s, int bnum)
 {
     struct buttons *bp;
 
@@ -595,7 +595,7 @@ be_o_illuminate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(ar
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    if (not_state(ST_VIEW, "Matrix Illuminate"))
+    if (not_state(s, ST_VIEW, "Matrix Illuminate"))
 	return TCL_ERROR;
 
     if (ill_common(s)) {
@@ -617,7 +617,7 @@ be_s_illuminate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(ar
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    if (not_state(ST_VIEW, "Primitive Illuminate"))
+    if (not_state(s, ST_VIEW, "Primitive Illuminate"))
 	return TCL_ERROR;
 
     if (ill_common(s)) {
@@ -628,9 +628,13 @@ be_s_illuminate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(ar
 
 
 int
-be_o_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Scale"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_SCALE;
@@ -647,9 +651,13 @@ be_o_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED
 
 
 int
-be_o_xscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Local X Scale"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Local X Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_XSCALE;
@@ -666,9 +674,13 @@ be_o_xscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSE
 
 
 int
-be_o_yscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Local Y Scale"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Local Y Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_YSCALE;
@@ -685,9 +697,13 @@ be_o_yscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSE
 
 
 int
-be_o_zscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Local Z Scale"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Local Z Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_ZSCALE;
@@ -704,9 +720,13 @@ be_o_zscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSE
 
 
 int
-be_o_x(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_x(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix X Motion"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix X Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_X;
@@ -719,9 +739,13 @@ be_o_x(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(arg
 
 
 int
-be_o_y(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_y(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Y Motion"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Y Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_Y;
@@ -734,9 +758,13 @@ be_o_y(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(arg
 
 
 int
-be_o_xy(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_xy(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix XY Motion"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix XY Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_XY;
@@ -749,9 +777,13 @@ be_o_xy(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 
 
 int
-be_o_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Rotation"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Rotation"))
 	return TCL_ERROR;
 
     edobj = BE_O_ROTATE;
@@ -799,7 +831,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	mged_color_soltab(s);
 	(void)chg_state(s, ST_O_EDIT, ST_VIEW, "Edit Accept");
     } else {
-	if (not_state(ST_S_EDIT, "Edit Accept"))
+	if (not_state(s, ST_S_EDIT, "Edit Accept"))
 	    return TCL_ERROR;
 	return TCL_OK;
     }
@@ -835,7 +867,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 
     switch (STATE) {
 	default:
-	    state_err("Edit Reject");
+	    state_err(s, "Edit Reject");
 	    return TCL_ERROR;
 
 	case ST_S_EDIT:
@@ -898,7 +930,7 @@ be_s_edit(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     struct mged_state *s = ctp->s;
 
     /* solid editing */
-    if (not_state(ST_S_EDIT, "Primitive Edit (Menu)"))
+    if (not_state(s, ST_S_EDIT, "Primitive Edit (Menu)"))
 	return TCL_ERROR;
 
     edsol = BE_S_EDIT;
@@ -908,15 +940,19 @@ be_s_edit(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 
 
 int
-be_s_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /* rotate solid */
-    if (not_state(ST_S_EDIT, "Primitive Rotate"))
+    if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
     es_edflag = SROT;
     edsol = BE_S_ROTATE;
-    mmenu_set(MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, MENU_NULL);
 
     set_e_axes_pos(1);
     return TCL_OK;
@@ -924,16 +960,20 @@ be_s_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSE
 
 
 int
-be_s_trans(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /* translate solid */
-    if (not_state(ST_S_EDIT, "Primitive Translate"))
+    if (not_state(s, ST_S_EDIT, "Primitive Translate"))
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
     es_edflag = STRANS;
     movedir = UARROW | RARROW;
-    mmenu_set(MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, MENU_NULL);
 
     set_e_axes_pos(1);
     return TCL_OK;
@@ -941,15 +981,19 @@ be_s_trans(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED
 
 
 int
-be_s_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /* scale solid */
-    if (not_state(ST_S_EDIT, "Primitive Scale"))
+    if (not_state(s, ST_S_EDIT, "Primitive Scale"))
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
     es_edflag = SSCALE;
-    mmenu_set(MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, MENU_NULL);
     acc_sc_sol = 1.0;
 
     set_e_axes_pos(1);
@@ -962,7 +1006,7 @@ be_s_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED
  * Returns !0 and prints error message if state mismatch.
  */
 int
-not_state(int desired, char *str)
+not_state(struct mged_state *s, int desired, char *str)
 {
     if (STATE != desired) {
 	Tcl_AppendResult(INTERP, "Unable to do <", str, "> from ", state_str[STATE], " state.\n", (char *)NULL);
@@ -1045,7 +1089,7 @@ chg_state(struct mged_state *s, int from, int to, char *str)
 
 
 void
-state_err(char *str)
+state_err(struct mged_state *s, char *str)
 {
     Tcl_AppendResult(INTERP, "Unable to do <", str, "> from ", state_str[STATE],
 		     " state.\n", (char *)NULL);
@@ -1070,13 +1114,13 @@ btn_item_hit(struct mged_state *s, int arg, int menu, int UNUSED(item))
  * Also called from main() with arg 0 in init.
  */
 void
-btn_head_menu(struct mged_state *UNUSED(s), int i, int UNUSED(menu), int UNUSED(item)) {
+btn_head_menu(struct mged_state *s, int i, int UNUSED(menu), int UNUSED(item)) {
     switch (i) {
 	case 0:
-	    mmenu_set(MENU_GEN, first_menu);
+	    mmenu_set(s, MENU_GEN, first_menu);
 	    break;
 	case 1:
-	    mmenu_set(MENU_GEN, second_menu);
+	    mmenu_set(s, MENU_GEN, second_menu);
 	    break;
 	case 2:
 	    /* nothing happens */
