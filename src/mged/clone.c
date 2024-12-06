@@ -909,10 +909,11 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 {
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
-    struct mged_state *mged_s = ctp->s;
+    struct mged_state *s = ctp->s;
 
     size_t ret;
-    struct spline s;
+    //struct spline s;
+    struct spline c_s;
     vect_t *verts;
     struct link *links;
     int opt;
@@ -1024,19 +1025,19 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
-    s.n_segs = atoi(tok);
-    s.t = (fastf_t *)bu_malloc(sizeof(fastf_t) * (s.n_segs+1), "t");
-    s.k = (struct knot *)bu_malloc(sizeof(struct knot) * (s.n_segs+1), "k");
-    for (i = 0; i <= s.n_segs; i++) {
+    c_s.n_segs = atoi(tok);
+    c_s.t = (fastf_t *)bu_malloc(sizeof(fastf_t) * (c_s.n_segs+1), "t");
+    c_s.k = (struct knot *)bu_malloc(sizeof(struct knot) * (c_s.n_segs+1), "k");
+    for (i = 0; i <= c_s.n_segs; i++) {
 	bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
 	if (strstr(tok, "P") != NULL) {
 	    bu_fgets(line, 81, points);
 	    bu_fgets(line, 81, points);
 	    bu_strlcpy(tok, strtok(line, ","), sizeof(tok));
 	}
-	s.t[i] = atof(tok);
+	c_s.t[i] = atof(tok);
     }
-    for (i = 0; i <= s.n_segs; i++)
+    for (i = 0; i <= c_s.n_segs; i++)
 	for (j = 0; j < 3; j++) {
 	    for (k = 0; k < 4; k++) {
 		bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
@@ -1045,17 +1046,17 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		    bu_fgets(line, 81, points);
 		    bu_strlcpy(tok, strtok(line, ","), sizeof(tok));
 		}
-		s.k[i].c[j][k] = atof(tok);
+		c_s.k[i].c[j][k] = atof(tok);
 	    }
-	    s.k[i].pt[j] = s.k[i].c[j][0];
+	    c_s.k[i].pt[j] = c_s.k[i].c[j][0];
 	}
     fclose(points);
 
     /* Interpolate link vertices *********************/
-    for (i = 0; i < s.n_segs; i++) /* determine initial track length */
-	totlen += DIST_PNT_PNT(s.k[i].pt, s.k[i+1].pt);
+    for (i = 0; i < c_s.n_segs; i++) /* determine initial track length */
+	totlen += DIST_PNT_PNT(c_s.k[i].pt, c_s.k[i+1].pt);
     len = totlen/(n_verts-1);
-    VMOVE(verts[0], s.k[0].pt);
+    VMOVE(verts[0], c_s.k[0].pt);
     olen = 2*len;
 
     for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) {
@@ -1071,9 +1072,9 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		/* for each sub-link */
 		if ((k == 0) && (j == 0)) {continue;} /* the first sub-link of the first link is already in position */
 		min = mid;
-		max = s.t[s.n_segs];
+		max = c_s.t[c_s.n_segs];
 		mid = (min+max)/2;
-		interp_spl(mid, s, pt);
+		interp_spl(mid, c_s, pt);
 		dist_to_next = (k > 0) ? links[k-1].len : links[n_links-1].len; /* links[k].len;*/
 		while (fabs(DIST_PNT_PNT(verts[n_links*j+k-1], pt) - dist_to_next) >= VUNITIZE_TOL) {
 		    if (DIST_PNT_PNT(verts[n_links*j+k-1], pt) > dist_to_next) {
@@ -1083,13 +1084,13 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 			min = mid;
 			mid = (min+max)/2;
 		    }
-		    interp_spl(mid, s, pt);
+		    interp_spl(mid, c_s, pt);
 		    if (fabs(min-max) <= VUNITIZE_TOL) {break;}
 		}
-		interp_spl(mid, s, verts[n_links*j+k]);
+		interp_spl(mid, c_s, verts[n_links*j+k]);
 	    }
 
-	interp_spl(s.t[s.n_segs], s, verts[n_verts*n_links-1]);
+	interp_spl(c_s.t[c_s.n_segs], c_s, verts[n_verts*n_links-1]);
 	totlen = 0.0;
 	for (j = 0; j < n_verts*n_links-1; j++)
 	    totlen += DIST_PNT_PNT(verts[j], verts[j+1]);
@@ -1117,7 +1118,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	struct clone_state state;
 	struct directory **dps = (struct directory **)NULL;
 
-	state.s = mged_s;
+	state.s = s;
 	state.interp = interp;
 	state.incr = inc;
 	state.n_copies = 1;
@@ -1154,11 +1155,11 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		dps[j] = copy_object(DBIP, &rt_uniresource, &state);
 
 		if (!no_draw || !is_dm_null()) {
-		    redraw_visible_objects(mged_s);
-		    size_reset(mged_s);
+		    redraw_visible_objects(s);
+		    size_reset(s);
 		    new_mats();
-		    mged_color_soltab(mged_s);
-		    refresh(mged_s);
+		    mged_color_soltab(s);
+		    refresh(s);
 		}
 		fprintf(stdout, ".");
 		fflush(stdout);
@@ -1168,8 +1169,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	bu_free(dps, "free dps array");
     }
 
-    free(s.t);
-    free(s.k);
+    free(c_s.t);
+    free(c_s.k);
     free(links);
     free(verts);
     (void)signal(SIGINT, SIG_IGN);

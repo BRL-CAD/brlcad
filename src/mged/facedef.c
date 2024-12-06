@@ -67,7 +67,9 @@ char *p_nupnt[] = {
 };
 
 
-static void get_pleqn(fastf_t *plane, const char *argv[]), get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb), get_nupnt(fastf_t *plane, const char *argv[]);
+static void get_pleqn(struct mged_state *s, fastf_t *plane, const char *argv[]);
+static void get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb);
+static void get_nupnt(struct mged_state *s, fastf_t *plane, const char *argv[]);
 static int get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct bn_tol *tol);
 
 /*
@@ -120,7 +122,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* apply es_mat editing to parameters.  "new way" */
-    transform_editing_solid(&intern, es_mat, &es_int, 0);
+    transform_editing_solid(s, &intern, es_mat, &es_int, 0);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -223,7 +225,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    get_pleqn(planes[plane], &argv[3]);
+	    get_pleqn(s, planes[plane], &argv[3]);
 	    break;
 	case 'b':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
@@ -267,7 +269,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    get_rotfb(planes[plane], &argv[3], arb);
+	    get_rotfb(s, planes[plane], &argv[3], arb);
 	    break;
 	case 'd':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
@@ -283,7 +285,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    get_nupnt(planes[plane], &argv[3]);
+	    get_nupnt(s, planes[plane], &argv[3]);
 	    break;
 	case 'q':
 	    return TCL_OK;
@@ -325,7 +327,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
  * into 'plane'.
  */
 static void
-get_pleqn(fastf_t *plane, const char *argv[])
+get_pleqn(struct mged_state *s, fastf_t *plane, const char *argv[])
 {
     int i;
 
@@ -379,7 +381,7 @@ get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct 
  * a vertex is chosen as fixed point.
  */
 static void
-get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
+get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
     fastf_t rota, fb_a;
     short int i, temp;
@@ -416,7 +418,7 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
  * input point.
  */
 static void
-get_nupnt(fastf_t *plane, const char *argv[])
+get_nupnt(struct mged_state *s, fastf_t *plane, const char *argv[])
 {
     int i;
     point_t pt;

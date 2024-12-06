@@ -143,7 +143,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    if (grid_state->snap)
-		snap_to_grid(&fx, &fy);
+		snap_to_grid(s, &fx, &fy);
 
 	    if (mged_variables->mv_perspective_mode)
 		VSET(view_pt, fx, fy, 0.0);
@@ -163,7 +163,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    mged_variables->mv_mouse_behavior == 'z') && !stolen) {
 
 	    if (grid_state->snap)
-		snap_to_grid(&fx, &fy);
+		snap_to_grid(s, &fx, &fy);
 
 	    rubber_band->rb_active = 1;
 	    rubber_band->rb_x = fx;
@@ -192,7 +192,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t view_pt;
 
 	    if (grid_state->snap)
-		snap_to_grid(&fx, &fy);
+		snap_to_grid(s, &fx, &fy);
 
 	    VSET(view_pt, fx, fy, 1.0);
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -203,7 +203,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t view_pt;
 	    point_t model_pt;
 
-	    snap_to_grid(&fx, &fy);
+	    snap_to_grid(s, &fx, &fy);
 	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
@@ -215,7 +215,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t view_pt;
 	    point_t model_pt;
 
-	    snap_to_grid(&fx, &fy);
+	    snap_to_grid(s, &fx, &fy);
 	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
@@ -229,7 +229,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 	    point_t vcenter;
 
-	    snap_to_grid(&fx, &fy);
+	    snap_to_grid(s, &fx, &fy);
 	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
 	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, vcenter);
 	    view_pt[X] = fx;
@@ -285,7 +285,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			else
 			    edobj = save_edflag;
 		    } else
-			snap_view_center_to_grid();
+			snap_view_center_to_grid(s);
 		}
 
 		break;
@@ -352,7 +352,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    VSET(view_pt, dm_Xx2Normal(DMP, dm_omx), dm_Xy2Normal(DMP, dm_omy, 1), 0.0);
 
 		    if (grid_state->snap)
-			snap_to_grid(&view_pt[X], &view_pt[Y]);
+			snap_to_grid(s, &view_pt[X], &view_pt[Y]);
 
 		    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 		    VSCALE(model_pt, model_pt, base2local);

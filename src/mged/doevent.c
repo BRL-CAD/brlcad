@@ -269,7 +269,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		fastf_t y = dm_Xy2Normal(DMP, my, 1);
 
 		if (grid_state->snap)
-		    snap_to_grid(&x, &y);
+		    snap_to_grid(s, &x, &y);
 
 		rubber_band->rb_width = x - rubber_band->rb_x;
 		rubber_band->rb_height = y - rubber_band->rb_y;
@@ -378,7 +378,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 			view_pt[X] = dm_mouse_dx / (fastf_t)width * 2.0;
 			view_pt[Y] = -dm_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 			view_pt[Z] = 0.0;
-			round_to_grid(&view_pt[X], &view_pt[Y]);
+			round_to_grid(s, &view_pt[X], &view_pt[Y]);
 
 			MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 			MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
@@ -401,7 +401,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 			    dm_mouse_dx += dx;
 			    dm_mouse_dy += dy;
 
-			    snap_view_to_grid(dm_mouse_dx / (fastf_t)width * 2.0,
+			    snap_view_to_grid(s, dm_mouse_dx / (fastf_t)width * 2.0,
 					      -dm_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0);
 
 			    mged_variables->mv_coords = save_coords;
@@ -460,7 +460,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		VSET(view_pt, dm_Xx2Normal(DMP, mx), dm_Xy2Normal(DMP, my, 1), 0.0);
 
 		if (grid_state->snap)
-		    snap_to_grid(&view_pt[X], &view_pt[Y]);
+		    snap_to_grid(s, &view_pt[X], &view_pt[Y]);
 
 		MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 		VSCALE(model_pt, model_pt, base2local);

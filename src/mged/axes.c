@@ -139,7 +139,7 @@ draw_e_axes(void)
 
 
 void
-draw_m_axes(void)
+draw_m_axes(struct mged_state *s)
 {
     point_t m_ap;			/* axes position in model coordinates, mm */
     point_t v_ap;			/* axes position in view coordinates */

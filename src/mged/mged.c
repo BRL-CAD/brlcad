@@ -137,7 +137,6 @@ struct stdio_data {
 struct mged_state *MGED_STATE = NULL;
 
 /* FIXME: these are problematic globals */
-struct db_i *DBIP = DBI_NULL;	/* database instance pointer */
 struct rt_wdb *WDBP = RT_WDB_NULL;
 
 /* called by numerous functions to indicate truthfully whether the
@@ -2392,7 +2391,7 @@ refresh(struct mged_state *s)
 			    draw_rect();
 
 			if (grid_state->draw)
-			    draw_grid();
+			    draw_grid(s);
 
 			/* Compute and display angle/distance cursor */
 			if (adc_state->adc_draw)

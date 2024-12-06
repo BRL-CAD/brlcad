@@ -37,8 +37,6 @@
 extern point_t e_axes_pos;  /* from edsol.c */
 extern point_t curr_e_axes_pos;  /* from edsol.c */
 
-void draw_grid(void);
-void snap_to_grid(fastf_t *mx, fastf_t *my);
 static void grid_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void set_grid_draw(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *, void *);
@@ -96,6 +94,9 @@ set_grid_draw(const struct bu_structparse *sdp,
 	      const char *value,
 	      void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
+
     if (DBIP == DBI_NULL) {
 	grid_state->draw = 0;
 	return;
@@ -139,7 +140,7 @@ set_grid_res(const struct bu_structparse *sdp,
 
 
 void
-draw_grid(void)
+draw_grid(struct mged_state *s)
 {
     int i, j;
     int nh, nv;
@@ -234,6 +235,7 @@ draw_grid(void)
 
 void
 snap_to_grid(
+    struct mged_state *s,
     fastf_t *mx,		/* input and return values */
     fastf_t *my)		/* input and return values */
 {
@@ -309,7 +311,7 @@ snap_keypoint_to_grid(struct mged_state *s)
 	MAT4X3PNT(model_pt, modelchanges, e_axes_pos);
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     }
-    snap_to_grid(&view_pt[X], &view_pt[Y]);
+    snap_to_grid(s, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, base2local);
 
@@ -327,7 +329,7 @@ snap_keypoint_to_grid(struct mged_state *s)
 
 
 void
-snap_view_center_to_grid(void)
+snap_view_center_to_grid(struct mged_state *s)
 {
     point_t view_pt, model_pt;
 
@@ -336,7 +338,7 @@ snap_view_center_to_grid(void)
 
     MAT_DELTAS_GET_NEG(model_pt, view_state->vs_gvp->gv_center);
     MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
-    snap_to_grid(&view_pt[X], &view_pt[Y]);
+    snap_to_grid(s, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
@@ -355,7 +357,7 @@ snap_view_center_to_grid(void)
  * Return values in the +-2.0 range that have been snapped to the nearest grid distance.
  */
 void
-round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
+round_to_grid(struct mged_state *s, fastf_t *view_dx, fastf_t *view_dy)
 {
     fastf_t grid_units_h, grid_units_v;
     fastf_t sf, inv_sf;
@@ -397,7 +399,7 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
 
 
 void
-snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
+snap_view_to_grid(struct mged_state *s, fastf_t view_dx, fastf_t view_dy)
 {
     point_t model_pt, view_pt;
     point_t vcenter, diff;
@@ -407,7 +409,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 	ZERO(grid_state->res_v))
 	return;
 
-    round_to_grid(&view_dx, &view_dy);
+    round_to_grid(s, &view_dx, &view_dy);
 
     VSET(view_pt, view_dx, view_dy, 0.0);
 

@@ -249,7 +249,7 @@ replot_modified_solid(
     mged_ttol.rel = mged_rel_tol;
     mged_ttol.norm = mged_nrm_tol;
 
-    transform_editing_solid(&intern, mat, ip, 0);
+    transform_editing_solid(s, &intern, mat, ip, 0);
 
     if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
 	if (!sp->s_u_data)

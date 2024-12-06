@@ -59,7 +59,7 @@ mged_refresh_handler(void *clientdata)
 }
 
 static void
-_post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
+_post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_ctx *ctx)
 {
     char line[128];
     int argc = ctx->argc;
@@ -189,7 +189,7 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
     DBIP = gedp->dbip;
 
     if (DBIP == DBI_NULL || mctx->old_dbip == gedp->dbip) {
-	_post_opendb_failed(gedp, mctx);
+	_post_opendb_failed(s, gedp, mctx);
 	mctx->post_open_cnt--;
 	return BRLCAD_OK;
     }
@@ -325,6 +325,7 @@ int
 mged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
+    struct mged_state *s = mctx->s;
     mctx->old_dbip = NULL;
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;

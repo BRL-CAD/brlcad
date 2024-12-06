@@ -2689,6 +2689,7 @@ replot_editing_solid(struct mged_state *s)
 
 void
 transform_editing_solid(
+    struct mged_state *s,
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
     struct rt_db_internal *is,		/* input solid */
@@ -4857,7 +4858,7 @@ sedit(struct mged_state *s)
 		bn_mat_scale_about_pnt(scalemat, es_keypoint, es_scale);
 		bn_mat_mul(mat1, scalemat, es_mat);
 		bn_mat_mul(mat, es_invmat, mat1);
-		transform_editing_solid(&es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &es_int, mat, &es_int, 1);
 
 		/* reset solid scale factor */
 		es_scale = 1.0;
@@ -4896,7 +4897,7 @@ sedit(struct mged_state *s)
 			MAT_IDN(mat);
 			MAT_DELTAS_VEC_NEG(mat, delta);
 		    }
-		    transform_editing_solid(&es_int, mat, &es_int, 1);
+		    transform_editing_solid(s, &es_int, mat, &es_int, 1);
 		}
 	    }
 	    break;
@@ -5192,7 +5193,7 @@ sedit(struct mged_state *s)
 		    MAT4X3PNT(work, es_invmat, rot_point);
 		    bn_mat_xform_about_pnt(mat, incr_change, work);
 		}
-		transform_editing_solid(&es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &es_int, mat, &es_int, 1);
 
 		MAT_IDN(incr_change);
 	    }
@@ -6811,7 +6812,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		VSUB2(delta, raw_kp, raw_mp);
 		MAT_IDN(mat);
 		MAT_DELTAS_VEC_NEG(mat, delta);
-		transform_editing_solid(&es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &es_int, mat, &es_int, 1);
 	    }
 
 	    break;
@@ -7331,7 +7332,7 @@ vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, co
     RT_CK_DB_INTERNAL(ip);
 
     id = ip->idb_type;
-    transform_editing_solid(&intern, mat, (struct rt_db_internal *)ip, 0);
+    transform_editing_solid(s, &intern, mat, (struct rt_db_internal *)ip, 0);
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
 	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, base2local) < 0)
@@ -8915,8 +8916,12 @@ f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(
 
 
 int
-f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int status;
     struct rt_db_internal ces_int;
     Tcl_Obj *pto;
@@ -8968,7 +8973,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     /* apply matrices along the path */
     RT_DB_INTERNAL_INIT(&ces_int);
-    transform_editing_solid(&ces_int, es_mat, &es_int, 0);
+    transform_editing_solid(s, &ces_int, es_mat, &es_int, 0);
 
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&ces_int);
@@ -9068,7 +9073,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     *((uint32_t *)es_int.idb_ptr) = save_magic;
 
     if (context)
-	transform_editing_solid(&es_int, es_invmat, &es_int, 1);
+	transform_editing_solid(s, &es_int, es_invmat, &es_int, 1);
 
     /* must re-calculate the face plane equations for arbs */
     if (es_int.idb_type == ID_ARB8) {

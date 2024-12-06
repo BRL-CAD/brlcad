@@ -92,15 +92,15 @@
 struct mged_state {
     uint32_t magic;
     struct ged *GEDP;
-    struct db_i *DBIP;
+    struct db_i *dbip;
     struct rt_wdb *WDBP;
     Tcl_Interp *interp;
 };
 extern struct mged_state *MGED_STATE;
 #define INTERP s->interp
+#define DBIP s->dbip
 
 /* TODO - eventually these should be replace by mged_state */
-extern struct db_i *DBIP;   /* defined in mged.c */
 extern struct rt_wdb *WDBP; /* defined in mged.c */
 
 typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
@@ -580,12 +580,12 @@ extern int interactive; /* for pr_prompt */
 void pr_prompt(int show_prompt);
 
 /* grid.c */
-extern void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);
+extern void round_to_grid(struct mged_state *s, fastf_t *view_dx, fastf_t *view_dy);
 extern void snap_keypoint_to_grid(struct mged_state *s);
-extern void snap_view_center_to_grid(void);
-extern void snap_to_grid(fastf_t *mx, fastf_t *my);
-extern void snap_view_to_grid(fastf_t view_dx, fastf_t view_dy);
-extern void draw_grid(void);
+extern void snap_view_center_to_grid(struct mged_state *s);
+extern void snap_to_grid(struct mged_state *s, fastf_t *mx, fastf_t *my);
+extern void snap_view_to_grid(struct mged_state *s, fastf_t view_dx, fastf_t view_dy);
+extern void draw_grid(struct mged_state *s);
 
 /* menu.c */
 int mmenu_select(struct mged_state *s, int pen_y, int do_func);
@@ -625,6 +625,7 @@ int wrobj(struct mged_state *s, char name[], int flags);
 extern int inpara;	/* parameter input from keyboard flag */
 void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
+    struct mged_state *s,
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
     struct rt_db_internal *is,		/* input solid */

@@ -57,9 +57,9 @@ void usejoy(double xangle, double yangle, double zangle);
 int knob_rot(struct mged_state *s, vect_t rvec, char origin, int mf, int vf, int ef);
 int knob_tran(struct mged_state *s, vect_t tvec, int model_flag, int view_flag, int edit_flag);
 int mged_etran(struct mged_state *s, char coords, vect_t tvec);
-int mged_mtran(const vect_t tvec);
-int mged_otran(const vect_t tvec);
-int mged_vtran(const vect_t tvec);
+int mged_mtran(struct mged_state *s, const vect_t tvec);
+int mged_otran(struct mged_state *s, const vect_t tvec);
+int mged_vtran(struct mged_state *s, const vect_t tvec);
 
 
 extern vect_t curr_e_axes_pos;
@@ -2400,11 +2400,11 @@ knob_tran(struct mged_state *s,
 		       !view_flag && !model_flag) || edit_flag)) {
 	mged_etran(s, mged_variables->mv_coords, tvec);
     } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	mged_mtran(tvec);
+	mged_mtran(s, tvec);
     } else if (mged_variables->mv_coords == 'o') {
-	mged_otran(tvec);
+	mged_otran(s, tvec);
     } else {
-	mged_vtran(tvec);
+	mged_vtran(s, tvec);
     }
 
     return TCL_OK;
@@ -3667,7 +3667,7 @@ mged_etran(struct mged_state *s,
 
 
 int
-mged_otran(const vect_t tvec)
+mged_otran(struct mged_state *s, const vect_t tvec)
 {
     vect_t work = VINIT_ZERO;
 
@@ -3676,12 +3676,12 @@ mged_otran(const vect_t tvec)
 	MAT4X3PNT(work, acc_rot_sol, tvec);
     }
 
-    return mged_mtran(work);
+    return mged_mtran(s, work);
 }
 
 
 int
-mged_mtran(const vect_t tvec)
+mged_mtran(struct mged_state *s, const vect_t tvec)
 {
     point_t delta;
     point_t vc, nvc;
@@ -3700,7 +3700,7 @@ mged_mtran(const vect_t tvec)
 
 
 int
-mged_vtran(const vect_t tvec)
+mged_vtran(struct mged_state *s, const vect_t tvec)
 {
     vect_t tt;
     point_t delta;
