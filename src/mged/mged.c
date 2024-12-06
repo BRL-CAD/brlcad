@@ -136,9 +136,6 @@ struct stdio_data {
 
 struct mged_state *MGED_STATE = NULL;
 
-/* FIXME: these are problematic globals */
-struct rt_wdb *WDBP = RT_WDB_NULL;
-
 /* called by numerous functions to indicate truthfully whether the
  * views need to be redrawn.
  */

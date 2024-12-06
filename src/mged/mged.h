@@ -93,15 +93,14 @@ struct mged_state {
     uint32_t magic;
     struct ged *GEDP;
     struct db_i *dbip;
-    struct rt_wdb *WDBP;
+    struct rt_wdb *wdbp;
     Tcl_Interp *interp;
 };
 extern struct mged_state *MGED_STATE;
 #define INTERP s->interp
 #define DBIP s->dbip
+#define WDBP s->wdbp
 
-/* TODO - eventually these should be replace by mged_state */
-extern struct rt_wdb *WDBP; /* defined in mged.c */
 
 typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
 

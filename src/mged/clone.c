@@ -375,6 +375,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     mat_t matrix;
     struct directory *proto2;
     struct bu_external external;
+    struct mged_state *s = state->s;
 
     MAT_IDN(matrix);
 
@@ -639,6 +640,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
     struct directory *dp = (struct directory *)NULL;
     struct bu_vls *name;
     size_t i;
+    struct mged_state *s = state->s;
 
     /* sanity */
     if (!proto) {
