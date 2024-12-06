@@ -2484,6 +2484,23 @@ mged_finish(struct mged_state *s, int exitcode)
 	}
     }
 
+    /* We're on our way out - stop firing doEvent */
+    Tk_DeleteGenericHandler(doEvent, (ClientData)s);
+
+    /* no longer send bu_log() output to Tcl */
+    bu_log_delete_hook(gui_output, (void *)s);
+
+    /* restore stdout/stderr just in case anyone tries to write before
+     * we finally exit (e.g., an atexit() callback).
+     */
+    ret = dup2(stdfd[0], fileno(stdout));
+    if (ret == -1)
+	perror("dup2");
+    ret = dup2(stdfd[1], fileno(stderr));
+    if (ret == -1)
+	perror("dup2");
+
+
     /* Release all displays */
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -2505,19 +2522,6 @@ mged_finish(struct mged_state *s, int exitcode)
 	bu_vls_free(&c->cl_name);
 	bu_vls_free(&c->cl_more_default);
     }
-
-    /* no longer send bu_log() output to Tcl */
-    bu_log_delete_hook(gui_output, (void *)s);
-
-    /* restore stdout/stderr just in case anyone tries to write before
-     * we finally exit (e.g., an atexit() callback).
-     */
-    ret = dup2(stdfd[0], fileno(stdout));
-    if (ret == -1)
-	perror("dup2");
-    ret = dup2(stdfd[1], fileno(stderr));
-    if (ret == -1)
-	perror("dup2");
 
     /* Be certain to close the database cleanly before exiting */
     Tcl_Preserve((ClientData)INTERP);
@@ -2541,9 +2545,6 @@ mged_finish(struct mged_state *s, int exitcode)
     s->magic = 0; // make sure anything trying to use this after free gets a magic failure
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
-
-    /* 8.5 seems to have some bugs in their reference counting */
-    /* Tcl_DeleteInterp(INTERP); */
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
     if (cbreak_mode > 0) {

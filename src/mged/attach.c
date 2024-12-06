@@ -67,23 +67,6 @@ static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GE
 /* If we changed the active dm, need to update GEDP as well.. */
 void set_curr_dm(struct mged_state *s, struct mged_dm *nc)
 {
-    // Normally we can assume mged_state is present, since it is allocated early
-    // in the application startup, but set_curr_dm is called from doEvent which
-    // gets triggered even during shutdown.  So we need to sanity check in this
-    // instance.
-    if (!s)
-	return;
-
-    // Make sure the magic is non-zero.  We don't want to bomb if we're
-    // shutting down and some pending function callback still has the
-    // non-nulled MGED_STATE value, so we just do the check.
-    if (UNLIKELY(( ((uintptr_t)(s) == 0) /* non-zero pointer */
-		    || ((uintptr_t)(s) & (sizeof((uintptr_t)(s))-1)) /* aligned ptr */
-		    || (*((const uint32_t *)(s)) != (uint32_t)(MGED_STATE_MAGIC)) /* matches value */
-		 ))) {
-	return;
-    }
-
     mged_curr_dm = nc;
     if (nc != MGED_DM_NULL && nc->dm_view_state) {
 	s->GEDP->ged_gvp = nc->dm_view_state->vs_gvp;
