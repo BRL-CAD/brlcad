@@ -91,7 +91,7 @@
 
 
 extern void draw_e_axes(void);
-extern void draw_m_axes(void);
+extern void draw_m_axes(struct mged_state *);
 extern void draw_v_axes(void);
 
 /* defined in chgmodel.c */
@@ -2398,7 +2398,7 @@ refresh(struct mged_state *s)
 			    draw_v_axes();
 
 			if (axes_state->ax_model_draw)
-			    draw_m_axes();
+			    draw_m_axes(s);
 
 			if (axes_state->ax_edit_draw &&
 				(STATE == ST_S_EDIT || STATE == ST_O_EDIT))
