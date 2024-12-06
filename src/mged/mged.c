@@ -1317,8 +1317,7 @@ main(int argc, char *argv[])
 
     /* prepare mged, adjust our path, get set up to use Tcl */
 
-    // TODO - return mged_state from this call
-    mged_setup(s, &INTERP);
+    mged_setup(s);
     new_mats();
 
     mmenu_init();
@@ -2534,7 +2533,7 @@ mged_finish(struct mged_state *s, int exitcode)
 
     /* XXX should deallocate libbu semaphores */
 
-    mged_global_variable_teardown(INTERP);
+    mged_global_variable_teardown(s);
 
     s->magic = 0; // make sure anything trying to use this after free gets a magic failure
     BU_PUT(s, struct mged_state);

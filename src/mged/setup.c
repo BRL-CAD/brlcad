@@ -52,7 +52,7 @@
 extern Tk_Window tkwin; /* in cmd.c */
 
 extern void init_qray(void);
-extern void mged_global_variable_setup(Tcl_Interp *interpreter);
+extern void mged_global_variable_setup(struct mged_state *s);
 
 const char cmd3525[] = {'3', '5', COMMA, '2', '5', '\0'};
 const char cmd4545[] = {'4', '5', COMMA, '4', '5', '\0'};
@@ -443,14 +443,14 @@ cmd_setup(struct mged_state *s)
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
 
-	(void)Tcl_CreateCommand(INTERP, ctp->name, ctp->tcl_func,
+	(void)Tcl_CreateCommand(s->interp, ctp->name, ctp->tcl_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(INTERP, bu_vls_addr(&temp), ctp->tcl_func,
+	(void)Tcl_CreateCommand(s->interp, bu_vls_addr(&temp), ctp->tcl_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 
     /* Init mged's Tcl interface to libwdb */
-    Wdb_Init(INTERP);
+    Wdb_Init(s->interp);
 
     tkwin = NULL;
 
@@ -462,7 +462,7 @@ cmd_setup(struct mged_state *s)
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
 void
-mged_setup(struct mged_state *s, Tcl_Interp **interpreter)
+mged_setup(struct mged_state *s)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
@@ -475,25 +475,20 @@ mged_setup(struct mged_state *s, Tcl_Interp **interpreter)
 	Tcl_FindExecutable("mged");
     }
 
-    if (!interpreter ) {
-      bu_log("mged_setup Error - interpreter is NULL!\n");
-      return;
-    }
-
-    if (*interpreter != NULL)
-	Tcl_DeleteInterp(*interpreter);
+    if (s->interp != NULL)
+	Tcl_DeleteInterp(s->interp);
 
     /* Create the interpreter */
-    *interpreter = Tcl_CreateInterp();
+    s->interp = Tcl_CreateInterp();
+    INTERP = s->interp;
 
     /* Do basic Tcl initialization - note that Tk
      * is not initialized at this point. */
-    if (tclcad_init(*interpreter, 0, &tlog) == TCL_ERROR) {
+    if (tclcad_init(s->interp, 0, &tlog) == TCL_ERROR) {
 	bu_log("tclcad_init error:\n%s\n", bu_vls_addr(&tlog));
     }
     bu_vls_free(&tlog);
 
-    s->interp = *interpreter;
     mged_global_db_ctx.s = s;
 
     s->GEDP = ged_create();
@@ -513,11 +508,11 @@ mged_setup(struct mged_state *s, Tcl_Interp **interpreter)
     ged_clbk_set(s->GEDP, "closedb", GED_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
 
     // Register during-execution callback function for search command
-    ged_clbk_set(s->GEDP, "search", GED_CLBK_DURING, &mged_db_search_callback, (void *)*interpreter);
+    ged_clbk_set(s->GEDP, "search", GED_CLBK_DURING, &mged_db_search_callback, (void *)s->interp);
 
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
-    t_iod->interp = *interpreter;
+    t_iod->interp = s->interp;
     s->GEDP->ged_io_data = t_iod;
 
     /* Set up the default state of the standard open/close db container */
@@ -528,7 +523,7 @@ mged_setup(struct mged_state *s, Tcl_Interp **interpreter)
     mged_global_db_ctx.created_new_db = 0;
     mged_global_db_ctx.ret = 0;
     mged_global_db_ctx.ged_ret = 0;
-    mged_global_db_ctx.interpreter = *interpreter;
+    mged_global_db_ctx.interpreter = s->interp;
     mged_global_db_ctx.old_dbip = NULL;
     mged_global_db_ctx.post_open_cnt = 0;
 
@@ -551,12 +546,12 @@ mged_setup(struct mged_state *s, Tcl_Interp **interpreter)
     cmd_setup(s);
 
     history_setup();
-    mged_global_variable_setup(*interpreter);
-    mged_variable_setup(*interpreter);
+    mged_global_variable_setup(s);
+    mged_variable_setup(s);
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(*interpreter, bu_vls_addr(&str), state_str[STATE], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[STATE], TCL_GLOBAL_ONLY);
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);
@@ -565,9 +560,9 @@ set mged_display(.topid_0.ur,aet) {az=35.00  el=25.00  tw=0.00};\
 set mged_display(.topid_0.ur,size) sz=1000.000;\
 set mged_display(.topid_0.ur,center) {cent=(0.000 0.000 0.000)};\
 set mged_display(units) mm");
-    Tcl_Eval(*interpreter, bu_vls_addr(&str));
+    Tcl_Eval(s->interp, bu_vls_addr(&str));
 
-    Tcl_ResetResult(*interpreter);
+    Tcl_ResetResult(s->interp);
 
     bu_vls_free(&str);
 }

@@ -1687,37 +1687,37 @@ f_winset(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 
 void
-mged_global_variable_setup(Tcl_Interp *interpreter)
+mged_global_variable_setup(struct mged_state *s)
 {
-    Tcl_LinkVar(interpreter, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
-    Tcl_LinkVar(interpreter, "mged_default(db_warn)", (char *)&mged_db_warn, TCL_LINK_INT);
-    Tcl_LinkVar(interpreter, "mged_default(db_upgrade)", (char *)&mged_db_upgrade, TCL_LINK_INT);
-    Tcl_LinkVar(interpreter, "mged_default(db_version)", (char *)&mged_db_version, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "mged_default(db_warn)", (char *)&mged_db_warn, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_db_upgrade, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_db_version, TCL_LINK_INT);
 
-    Tcl_LinkVar(interpreter, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
-    Tcl_LinkVar(interpreter, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
-    Tcl_LinkVar(interpreter, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 
     /* link some tcl variables to these corresponding globals */
-    Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
-    Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
+    Tcl_LinkVar(s->interp, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
+    Tcl_LinkVar(s->interp, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 }
 
 
 void
-mged_global_variable_teardown(Tcl_Interp *interpreter)
+mged_global_variable_teardown(struct mged_state *s)
 {
-    Tcl_UnlinkVar(interpreter, "mged_default(dlist)");
-    Tcl_UnlinkVar(interpreter, "mged_default(mged_db_warn)");
-    Tcl_UnlinkVar(interpreter, "mged_default(mged_db_upgrade)");
-    Tcl_UnlinkVar(interpreter, "mged_default(mged_db_version)");
+    Tcl_UnlinkVar(s->interp, "mged_default(dlist)");
+    Tcl_UnlinkVar(s->interp, "mged_default(mged_db_warn)");
+    Tcl_UnlinkVar(s->interp, "mged_default(mged_db_upgrade)");
+    Tcl_UnlinkVar(s->interp, "mged_default(mged_db_version)");
 
-    Tcl_UnlinkVar(interpreter, "edit_class");
-    Tcl_UnlinkVar(interpreter, "edit_solid_flag");
-    Tcl_UnlinkVar(interpreter, "edit_object_flag");
+    Tcl_UnlinkVar(s->interp, "edit_class");
+    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+    Tcl_UnlinkVar(s->interp, "edit_object_flag");
 
-    Tcl_UnlinkVar(interpreter, "glob_compat_mode");
-    Tcl_UnlinkVar(interpreter, "output_as_return");
+    Tcl_UnlinkVar(s->interp, "glob_compat_mode");
+    Tcl_UnlinkVar(s->interp, "output_as_return");
 }
 
 

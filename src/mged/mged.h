@@ -210,8 +210,8 @@ extern jmp_buf jmp_env;
  * GED functions referenced in more than one source file:
  */
 
-extern void mged_setup(struct mged_state *s, Tcl_Interp **interpreter);
-extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
+extern void mged_setup(struct mged_state *s);
+extern void mged_global_variable_teardown(struct mged_state *s); /* cmd.c */
 extern void buildHrot(mat_t, double, double, double);
 extern void dozoom(struct mged_state *s, int which_eye);
 #ifndef _WIN32
@@ -666,7 +666,7 @@ int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 /* set.c */
 extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);
-extern void mged_variable_setup(Tcl_Interp *interpreter);
+extern void mged_variable_setup(struct mged_state *s);
 
 /* scroll.c */
 void set_scroll(void);

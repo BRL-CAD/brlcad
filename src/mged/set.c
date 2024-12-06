@@ -264,8 +264,9 @@ unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
  **/
 
 void
-mged_variable_setup(Tcl_Interp *interp)
+mged_variable_setup(struct mged_state *s)
 {
+    Tcl_Interp *interp = s->interp;
     struct bu_structparse *sp;
 
     for (sp = &mged_vparse[0]; sp->sp_name != NULL; sp++) {
