@@ -52,6 +52,7 @@ void
 mged_refresh_handler(void *clientdata)
 {
     struct mged_state *s = (struct mged_state *)clientdata;
+    MGED_CK_STATE(s);
 
     view_state->vs_flag = 1;
     refresh(s);

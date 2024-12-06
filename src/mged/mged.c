@@ -1053,6 +1053,7 @@ main(int argc, char *argv[])
 
     BU_GET(MGED_STATE, struct mged_state);
     struct mged_state *s = MGED_STATE;
+    s->magic = MGED_STATE_MAGIC;
 
     char *attach = (char *)NULL;
 
@@ -2535,7 +2536,9 @@ mged_finish(struct mged_state *s, int exitcode)
 
     mged_global_variable_teardown(INTERP);
 
+    s->magic = 0; // make sure anything trying to use this after free gets a magic failure
     BU_PUT(s, struct mged_state);
+    MGED_STATE = NULL; // sanity
 
     /* 8.5 seems to have some bugs in their reference counting */
     /* Tcl_DeleteInterp(INTERP); */

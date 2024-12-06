@@ -197,6 +197,7 @@ int
 mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2)
 {
     struct mged_state *s = (struct mged_state *)u2;
+    MGED_CK_STATE(s);
     Tcl_Interp *interp = s->interp;
 
     /* FIXME: pretty much copied from tclcad, ideally this should call

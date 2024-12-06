@@ -85,8 +85,12 @@
 #define MGED_CMD_MAGIC 0x4D474544 /**< MGED */
 #define MGED_CK_CMD(_bp) BU_CKMAG(_bp, MGED_CMD_MAGIC , "cmdtab")
 
+#define MGED_STATE_MAGIC 0x4D474553 /**< MGEDS*/
+#define MGED_CK_STATE(_bp) BU_CKMAG(_bp, MGED_STATE_MAGIC , "mged_state")
+
 /* global application state */
 struct mged_state {
+    uint32_t magic;
     struct ged *GEDP;
     struct db_i *DBIP;
     struct rt_wdb *WDBP;

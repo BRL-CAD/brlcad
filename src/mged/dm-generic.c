@@ -652,6 +652,7 @@ int
 dm_commands(int argc, const char *argv[], void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct dm_hook_data mged_dm_hook;
     if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;

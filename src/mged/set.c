@@ -314,6 +314,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 		   void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct mged_dm *save_m_dmp;
 
     save_m_dmp = mged_curr_dm;
@@ -382,6 +383,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	  void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct mged_dm *save_dlp;
 
     /* save current display manager */
