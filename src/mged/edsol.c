@@ -1622,9 +1622,9 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		return;
 	    }
 
-	    nmg_pr_fu_around_eu(es_eu, &mged_tol);
+	    nmg_pr_fu_around_eu(es_eu, &s->tol.tol);
 
-	    nmg_plot_eu(s->gedp, es_eu, &mged_tol);
+	    nmg_plot_eu(s->gedp, es_eu, &s->tol.tol);
 
 	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
@@ -1780,7 +1780,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 			VSUB2(edge2, eu2->eumate_p->vu_p->v_p->vg_p->coord, v2->vg_p->coord);
 
 			if ((ret_val = bg_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
-							    v2->vg_p->coord, edge2, &mged_tol)) > (-1))
+							    v2->vg_p->coord, edge2, &s->tol.tol)) > (-1))
 			{
 			    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
@@ -1962,7 +1962,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 				    if (l == i || l == j || l == k)
 					continue;
 
-				    if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > mged_tol.dist) {
+				    if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > s->tol.tol.dist) {
 					good_vert = 0;
 					break;
 				    }
@@ -2554,10 +2554,10 @@ init_sedit(struct mged_state *s)
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	type = rt_arb_std_type(&es_int, &mged_tol);
+	type = rt_arb_std_type(&es_int, &s->tol.tol);
 	es_type = type;
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol)) {
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol)) {
 	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
@@ -4707,7 +4707,7 @@ sedit(struct mged_state *s)
 		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
 
-		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    }
 	    break;
 	case ECMD_ARB_SETUP_ROTFACE:
@@ -4829,7 +4829,7 @@ sedit(struct mged_state *s)
 		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 	    }
 
-	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
+	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    MAT_IDN(incr_change);
 
 	    /* no need to calc_planes again */
@@ -5120,7 +5120,7 @@ sedit(struct mged_state *s)
 		} else {
 		    VMOVE(work, es_para);
 		}
-		editarb(work);
+		editarb(s, work);
 	    }
 	    break;
 
@@ -5523,7 +5523,7 @@ sedit(struct mged_state *s)
 			MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, view_z_dir);
 
 			/* intersect line through new_pt with plane of loop */
-			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
+			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &s->tol.tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
 			    Tcl_AppendResult(s->interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
 			    mged_print_result(s, TCL_ERROR);
@@ -5533,7 +5533,7 @@ sedit(struct mged_state *s)
 		    }
 		}
 
-		if (nmg_move_edge_thru_pnt(es_eu, new_pt, &mged_tol) < 0) {
+		if (nmg_move_edge_thru_pnt(es_eu, new_pt, &s->tol.tol) < 0) {
 		    VPRINT("Unable to hit", new_pt);
 		}
 	    }
@@ -5597,7 +5597,7 @@ sedit(struct mged_state *s)
 			bu_exit(EXIT_FAILURE,  "sedit(s): killed edge and emptied loop!\n");
 		    }
 		    es_eu = prev_eu;
-		    nmg_rebound(m, &mged_tol);
+		    nmg_rebound(m, &s->tol.tol);
 
 		    /* fix edge geometry for modified edge (next_eu) */
 		    eg = next_eu->g.lseg_p;
@@ -5610,7 +5610,7 @@ sedit(struct mged_state *s)
 		    /* wire edge, just kill it */
 		    (void)nmg_keu(es_eu);
 		    es_eu = (struct edgeuse *)NULL;
-		    nmg_rebound(m, &mged_tol);
+		    nmg_rebound(m, &s->tol.tol);
 		}
 	    }
 
@@ -5676,7 +5676,7 @@ sedit(struct mged_state *s)
 			MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, view_z_dir);
 
 			/* intersect line through new_pt with plane of loop */
-			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
+			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &s->tol.tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
 			    Tcl_AppendResult(s->interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
 			    mged_print_result(s, TCL_ERROR);
@@ -5687,7 +5687,7 @@ sedit(struct mged_state *s)
 		}
 		es_eu = nmg_esplit(v, es_eu, 0);
 		nmg_vertex_gv(es_eu->vu_p->v_p, new_pt);
-		nmg_rebound(m, &mged_tol);
+		nmg_rebound(m, &s->tol.tol);
 		eg = es_eu->g.lseg_p;
 		NMG_CK_EDGE_G_LSEG(eg);
 		VMOVE(eg->e_pt, new_pt);
@@ -5726,7 +5726,7 @@ sedit(struct mged_state *s)
 
 		VSUB2(extrude_vec, to_pt, lu_keypoint);
 
-		if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &mged_tol) < 1) {
+		if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &s->tol.tol) < 1) {
 		    Tcl_AppendResult(s->interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
@@ -5761,13 +5761,13 @@ sedit(struct mged_state *s)
 		    nmg_face_g(fu, new_lu_pl);
 		}
 
-		(void)nmg_extrude_face(fu, extrude_vec, &RTG.rtg_vlfree, &mged_tol);
+		(void)nmg_extrude_face(fu, extrude_vec, &RTG.rtg_vlfree, &s->tol.tol);
 
-		nmg_fix_normals(fu->s_p, &RTG.rtg_vlfree, &mged_tol);
+		nmg_fix_normals(fu->s_p, &RTG.rtg_vlfree, &s->tol.tol);
 
 		m = nmg_find_model(&fu->l.magic);
-		nmg_rebound(m, &mged_tol);
-		(void)nmg_ck_geometry(m, &RTG.rtg_vlfree, &mged_tol);
+		nmg_rebound(m, &s->tol.tol);
+		(void)nmg_ck_geometry(m, &RTG.rtg_vlfree, &s->tol.tol);
 
 		es_eu = (struct edgeuse *)NULL;
 
@@ -6687,7 +6687,7 @@ sedit(struct mged_state *s)
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
 	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }
@@ -6894,7 +6894,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
 	    MAT4X3PNT(pos_model, es_invmat, temp);
-	    editarb(pos_model);
+	    editarb(s, pos_model);
 
 	    break;
 	case EARB:
@@ -6903,7 +6903,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
 	    MAT4X3PNT(pos_model, es_invmat, temp);
-	    editarb(pos_model);
+	    editarb(s, pos_model);
 
 	    break;
 	case ECMD_ARB_MOVE_FACE:
@@ -6921,7 +6921,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 		RT_ARB_CK_MAGIC(arb);
 
-		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    }
 
 	    break;
@@ -7417,7 +7417,7 @@ init_oedit_guts(struct mged_state *s)
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	es_type = rt_arb_std_type(&es_int, &mged_tol);
+	es_type = rt_arb_std_type(&es_int, &s->tol.tol);
     }
 
     /* Save aggregate path matrix */
@@ -7656,7 +7656,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     VMOVE(tempvec, arb->pt[fixv]);
     es_peqn[es_menu][W]=VDOT(es_peqn[es_menu], tempvec);
 
-    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol))
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol))
 	return CMD_BAD;
 
     /* draw the new version of the solid */
@@ -9083,7 +9083,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
 	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }

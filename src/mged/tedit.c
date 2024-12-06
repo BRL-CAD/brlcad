@@ -217,7 +217,7 @@ writesolid(struct mged_state *s)
 	case ID_ARB8:
 	    for (j=0; j<8; j++) uvec[j] = -1;
 	    arb = (struct rt_arb_internal *)es_int.idb_ptr;
-	    numUnique = rt_arb_get_cgtype(&cgtype, arb, &mged_tol, uvec, svec);
+	    numUnique = rt_arb_get_cgtype(&cgtype, arb, &s->tol.tol, uvec, svec);
 	    j = 0;
 	    for (i=0; i<8; i++) {
 		if (useThisVertex(i)) {

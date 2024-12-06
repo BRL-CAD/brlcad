@@ -88,12 +88,24 @@
 #define MGED_STATE_MAGIC 0x4D474553 /**< MGEDS*/
 #define MGED_CK_STATE(_bp) BU_CKMAG(_bp, MGED_STATE_MAGIC , "mged_state")
 
+
+/* Tolerances */
+struct mged_tol {
+    double abs_tol; /* abs surface tolerance */
+    double rel_tol; /* rel surface tolerance */
+    double nrm_tol; /* surface normal tolerance */
+    struct bn_tol tol;  /* calculation tolerance */
+    struct bg_tess_tol ttol; /* XXX needs to replace abs_tol, et al. */
+};
+
+
 /* global application state */
 struct mged_state {
     uint32_t magic;
     struct ged *gedp;
     struct db_i *dbip;
     struct rt_wdb *wdbp;
+    struct mged_tol tol;
     Tcl_Interp *interp;
 };
 extern struct mged_state *MGED_STATE;
@@ -141,13 +153,6 @@ extern int mged_db_warn;
 #  define TRUE 1
 #endif
 
-/* Tolerances */
-extern double mged_abs_tol; /* abs surface tolerance */
-extern double mged_rel_tol; /* rel surface tolerance */
-extern double mged_nrm_tol; /* surface normal tolerance */
-
-extern struct bn_tol mged_tol;  /* calculation tolerance */
-extern struct bg_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et al. */
 
 
 /* default region codes defined in mover.c */
@@ -535,7 +540,7 @@ void createDListAll(void *, struct display_list *);
 void freeDListsAll(unsigned int dlist, int range);
 
 /* edarb.c */
-int editarb(vect_t pos_model);
+int editarb(struct mged_state *s, vect_t pos_model);
 extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */

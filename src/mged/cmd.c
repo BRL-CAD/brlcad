@@ -1990,12 +1990,13 @@ cmd_tol(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
     if (ret)
 	return TCL_ERROR;
 
+    s->tol.tol = s->wdbp->wdb_tol;
+    s->tol.ttol = s->wdbp->wdb_ttol;
+
     /* hack to keep mged tolerance settings current */
-    mged_ttol = s->wdbp->wdb_ttol;
-    mged_tol = s->wdbp->wdb_tol;
-    mged_abs_tol = mged_ttol.abs;
-    mged_rel_tol = mged_ttol.rel;
-    mged_nrm_tol = mged_ttol.norm;
+    s->tol.abs_tol = s->tol.ttol.abs;
+    s->tol.rel_tol = s->tol.ttol.rel;
+    s->tol.nrm_tol = s->tol.ttol.norm;
 
     return TCL_OK;
 }

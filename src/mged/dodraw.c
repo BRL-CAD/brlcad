@@ -244,14 +244,14 @@ replot_modified_solid(
     /* Draw (plot) a normal solid */
     RT_CK_DB_INTERNAL(ip);
 
-    mged_ttol.magic = BG_TESS_TOL_MAGIC;
-    mged_ttol.abs = mged_abs_tol;
-    mged_ttol.rel = mged_rel_tol;
-    mged_ttol.norm = mged_nrm_tol;
+    s->tol.ttol.magic = BG_TESS_TOL_MAGIC;
+    s->tol.ttol.abs = s->tol.abs_tol;
+    s->tol.ttol.rel = s->tol.rel_tol;
+    s->tol.ttol.norm = s->tol.nrm_tol;
 
     transform_editing_solid(s, &intern, mat, ip, 0);
 
-    if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
+    if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &s->tol.ttol, &s->tol.tol, NULL) < 0) {
 	if (!sp->s_u_data)
 	    return -1;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;

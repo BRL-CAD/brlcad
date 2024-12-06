@@ -55,13 +55,13 @@ int newedge;
  *
  */
 int
-editarb(vect_t pos_model)
+editarb(struct mged_state *s, vect_t pos_model)
 {
     int ret = 0;
     struct rt_arb_internal *arb;
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
 
-    ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &mged_tol);
+    ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &s->tol.tol);
 
     // arb_edit doesn't zero out our global any more as a library call, so
     // reset once operation is complete.
@@ -128,7 +128,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    if (arb_extrude(arb, face, dist, &mged_tol, es_peqn)) {
+    if (arb_extrude(arb, face, dist, &s->tol.tol, es_peqn)) {
 	Tcl_AppendResult(interp, "Error extruding ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -177,7 +177,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     face = atoi(argv[1]);
 
-    if (arb_mirror_face_axis(arb, es_peqn, face, argv[2], &mged_tol)) {
+    if (arb_mirror_face_axis(arb, es_peqn, face, argv[2], &s->tol.tol)) {
 	Tcl_AppendResult(interp, "Mirface: mirror operation failed\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -251,7 +251,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* get it done */
     newedge = 1;
-    editarb(slope);
+    editarb(s, slope);
     sedit(s);
     return TCL_OK;
 }
@@ -307,7 +307,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    if (arb_permute(arb, argv[1], &mged_tol)) {
+    if (arb_permute(arb, argv[1], &s->tol.tol)) {
 	Tcl_AppendResult(interp, "Permute failed.\n", (char *)NULL);
 	return TCL_ERROR;
     }

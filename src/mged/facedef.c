@@ -128,7 +128,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    if (rt_arb_calc_planes(&error_msg, arb, es_type, planes, &mged_tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, es_type, planes, &s->tol.tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
 			 "Unable to determine plane equations\n", (char *)NULL);
 	status = TCL_ERROR;
@@ -245,7 +245,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    if (get_3pts(s, planes[plane], &argv[3], &mged_tol)) {
+	    if (get_3pts(s, planes[plane], &argv[3], &s->tol.tol)) {
 		status = TCL_ERROR;
 		goto end;
 	    }
@@ -296,7 +296,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, es_type, (const plane_t *)planes, &mged_tol) < 0) {
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)planes, &s->tol.tol) < 0) {
 	Tcl_AppendResult(interp, "facedef:  unable to find points\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
