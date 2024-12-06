@@ -257,8 +257,8 @@ rt_rect_area(struct mged_state *s)
 		  dm_get_width(DMP), dm_get_height(DMP), dm_get_aspect(DMP),
 		  mged_variables->mv_port, xmin, ymin, xmax, ymax,
 		  color_scheme->cs_bg[0], color_scheme->cs_bg[1], color_scheme->cs_bg[2]);
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
-    (void)Tcl_ResetResult(INTERP);
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
+    (void)Tcl_ResetResult(s->interp);
     bu_vls_free(&vls);
 }
 

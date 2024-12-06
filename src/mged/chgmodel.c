@@ -59,7 +59,7 @@ extern int be_s_trans(ClientData, Tcl_Interp *, int, char **);
 void
 aexists(struct mged_state *s, const char *name)
 {
-    Tcl_AppendResult(INTERP, name, ":  already exists\n", (char *)NULL);
+    Tcl_AppendResult(s->interp, name, ":  already exists\n", (char *)NULL);
 }
 
 
@@ -99,12 +99,12 @@ f_make(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	av[6] = argv[2];
 	av[7] = (char *)0;
 
-	ret = ged_exec(s->GEDP, 7, (const char **)av);
+	ret = ged_exec(s->gedp, 7, (const char **)av);
     } else
-	ret = ged_exec(s->GEDP, argc, (const char **)argv);
+	ret = ged_exec(s->gedp, argc, (const char **)argv);
 
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(s->GEDP->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK) {
@@ -406,7 +406,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	movedir = ROTARROW;
     }
     VSET(specified_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-    VSCALE(specified_pt, specified_pt, DBIP->dbi_local2base);
+    VSCALE(specified_pt, specified_pt, s->dbip->dbi_local2base);
     VSET(direc, atof(argv[4]), atof(argv[5]), atof(argv[6]));
 
     if (NEAR_ZERO(direc[0], SQRT_SMALL_FASTF) &&
@@ -438,17 +438,17 @@ set_localunit_TclVar(struct mged_state *s)
     struct bu_vls units_vls = BU_VLS_INIT_ZERO;
     const char *str = NULL;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
-    str = bu_units_string(DBIP->dbi_local2base);
+    str = bu_units_string(s->dbip->dbi_local2base);
     if (str)
 	bu_vls_strcpy(&units_vls, str);
     else
-	bu_vls_printf(&units_vls, "%gmm", DBIP->dbi_local2base);
+	bu_vls_printf(&units_vls, "%gmm", s->dbip->dbi_local2base);
 
     bu_vls_strcpy(&vls, "localunit");
-    Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);
 
     bu_vls_free(&vls);
     bu_vls_free(&units_vls);

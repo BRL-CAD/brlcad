@@ -69,7 +69,7 @@ mged_bound_solid(struct mged_state *s, struct bv_scene_obj *sp)
     if (cmd) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);
-	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -99,7 +99,7 @@ drawH_part2(struct mged_state *s, int dashflag, struct bu_list *vhead, const str
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	struct bv_scene_obj *free_scene_obj = bv_set_fsos(&s->GEDP->ged_views);
+	struct bv_scene_obj *free_scene_obj = bv_set_fsos(&s->gedp->ged_views);
 	GET_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 	BU_LIST_APPEND(&free_scene_obj->l, &((sp)->l) );
 	sp->s_dlist = 0;
@@ -154,7 +154,7 @@ drawH_part2(struct mged_state *s, int dashflag, struct bu_list *vhead, const str
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(display_list, s->GEDP->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_PREV(display_list, s->gedp->ged_gdp->gd_headDisplay);
 	BU_LIST_APPEND(gdlp->dl_head_scene_obj.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
@@ -180,7 +180,7 @@ replot_original_solid(struct mged_state *s, struct bv_scene_obj *sp)
     struct directory *dp;
     mat_t mat;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return 0;
 
     if (!sp->s_u_data)
@@ -188,14 +188,14 @@ replot_original_solid(struct mged_state *s, struct bv_scene_obj *sp)
     struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
     dp = LAST_SOLID(bdata);
     if (sp->s_old.s_Eflag) {
-	Tcl_AppendResult(INTERP, "replot_original_solid(", dp->d_namep,
+	Tcl_AppendResult(s->interp, "replot_original_solid(", dp->d_namep,
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	return -1;
     }
-    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
-    if (rt_db_get_internal(&intern, dp, DBIP, mat, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, dp->d_namep, ":  solid import failure\n", (char *)NULL);
+    if (rt_db_get_internal(&intern, dp, s->dbip, mat, &rt_uniresource) < 0) {
+	Tcl_AppendResult(s->interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
 	return -1;		/* ERROR */
     }
     RT_CK_DB_INTERNAL(&intern);
@@ -234,7 +234,7 @@ replot_modified_solid(
     BU_LIST_INIT(&vhead);
 
     if (sp == NULL) {
-	Tcl_AppendResult(INTERP, "replot_modified_solid() sp==NULL?\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "replot_modified_solid() sp==NULL?\n", (char *)NULL);
 	return -1;
     }
 
@@ -256,7 +256,7 @@ replot_modified_solid(
 	    return -1;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	if (bdata->s_fullpath.fp_len > 0)
-	    Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
+	    Tcl_AppendResult(s->interp, LAST_SOLID(bdata)->d_namep,
 		    ": re-plot failure\n", (char *)NULL);
 	return -1;
     }
@@ -289,7 +289,7 @@ int
 redraw_visible_objects(struct mged_state *s)
 {
     const char *av[1] = {"redraw"};
-    int ret = ged_exec_redraw(s->GEDP, 1, av);
+    int ret = ged_exec_redraw(s->gedp, 1, av);
 
     if (ret & BRLCAD_ERROR)
 	return TCL_ERROR;

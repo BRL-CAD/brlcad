@@ -95,7 +95,7 @@ editit(struct mged_state *s, const char *command, const char *tempfile) {
     av[4] = tempfile;
     av[5] = NULL;
 
-    ged_exec(s->GEDP, argc, (const char **)av);
+    ged_exec(s->gedp, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     return TCL_OK;
@@ -131,7 +131,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
     }
     av[argc] = NULL;
 
-    ged_exec(s->GEDP, argc, (const char **)av);
+    ged_exec(s->gedp, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edcolor: av");
@@ -172,7 +172,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     }
     av[argc] = NULL;
 
-    ged_exec(s->GEDP, argc, (const char **)av);
+    ged_exec(s->gedp, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edcodes: av");
@@ -214,7 +214,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     }
     av[argc] = NULL;
 
-    ged_exec(s->GEDP, argc + 1, (const char **)av);
+    ged_exec(s->gedp, argc + 1, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edmater: av");
@@ -252,12 +252,12 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
     av[2] = bu_vls_addr(&editstring);
     av[3] = argv[1];
 
-    if ( ged_exec(s->GEDP, 4, (const char **)av) & BRLCAD_ERROR ) {
+    if ( ged_exec(s->gedp, 4, (const char **)av) & BRLCAD_ERROR ) {
 	mged_pr_output(interpreter);
-	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(s->GEDP->ged_result_str), (char *)NULL);
+	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
     } else {
 	mged_pr_output(interpreter);
-	Tcl_AppendResult(interpreter, bu_vls_addr(s->GEDP->ged_result_str), (char *)NULL);
+	Tcl_AppendResult(interpreter, bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
     }
 
     bu_vls_free(&editstring);
@@ -289,8 +289,8 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return 0;
 
-    if ((id=rt_db_get_internal(&intern, dp, DBIP, (matp_t)NULL, &rt_uniresource)) < 0) {
-	Tcl_AppendResult(INTERP, "printcodes: Cannot get records for ",
+    if ((id=rt_db_get_internal(&intern, dp, s->dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
+	Tcl_AppendResult(s->interp, "printcodes: Cannot get records for ",
 			 dp->d_namep, "\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -316,7 +316,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 
     if (comb->tree) {
 	path[pathpos] = dp;
-	db_tree_funcleaf(DBIP, comb, comb->tree, Do_printnode,
+	db_tree_funcleaf(s->dbip, comb, comb->tree, Do_printnode,
 			 (void *)fp, (void *)&pathpos, (void *)NULL, (void *)NULL);
     }
 

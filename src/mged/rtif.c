@@ -75,9 +75,9 @@ cmd_rt(ClientData clientData,
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_exec(s->GEDP, argc, (const char **)argv);
+    ret = ged_exec(s->gedp, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(s->GEDP->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK)
@@ -117,8 +117,8 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_exec(s->GEDP, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(s->GEDP->ged_result_str), -1);
+    ret = ged_exec(s->gedp, argc, (const char **)argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK)
@@ -210,13 +210,13 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	mode = atoi(argv[2]);
     switch (mode) {
 	case 1:
-	    if ((dp = db_lookup(DBIP, "EYE", LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((dp = db_lookup(s->dbip, "EYE", LOOKUP_NOISY)) == RT_DIR_NULL) {
 		mode = -1;
 		break;
 	    }
 
-	    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+	    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 		for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -384,13 +384,13 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	insertArgv[2] = (char *)0;
 	newArgv = bu_argv_dupinsert(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
 	newArgc = argc + insertArgc;
-	ret = ged_exec(s->GEDP, newArgc, (const char **)newArgv);
+	ret = ged_exec(s->gedp, newArgc, (const char **)newArgv);
 	bu_argv_free(newArgc, newArgv);
     } else {
-	ret = ged_exec(s->GEDP, argc, (const char **)argv);
+	ret = ged_exec(s->gedp, argc, (const char **)argv);
     }
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(s->GEDP->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK)
@@ -418,9 +418,9 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_exec(s->GEDP, argc, (const char **)argv);
+    ret = ged_exec(s->gedp, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(s->GEDP->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK)

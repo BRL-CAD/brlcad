@@ -91,16 +91,12 @@
 /* global application state */
 struct mged_state {
     uint32_t magic;
-    struct ged *GEDP;
+    struct ged *gedp;
     struct db_i *dbip;
     struct rt_wdb *wdbp;
     Tcl_Interp *interp;
 };
 extern struct mged_state *MGED_STATE;
-#define INTERP s->interp
-#define DBIP s->dbip
-#define WDBP s->wdbp
-
 
 typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
 
@@ -130,9 +126,9 @@ extern int mged_db_warn;
  * All GED files are stored in a fixed base unit (MM).  These factors
  * convert database unit to local (or working) units.
  */
-#define base2local (DBIP->dbi_base2local)
-#define local2base (DBIP->dbi_local2base)
-#define cur_title (DBIP->dbi_title)      /* current model title */
+#define base2local (s->dbip->dbi_base2local)
+#define local2base (s->dbip->dbi_local2base)
+#define cur_title (s->dbip->dbi_title)      /* current model title */
 
 
 /* Some useful constants, if they haven't been defined elsewhere. */
@@ -294,7 +290,7 @@ extern char *state_str[]; /* identifying strings */
 
 /* Cloned mged macros for use in Tcl/Tk */
 #define TCL_READ_ERR {\
-	Tcl_AppendResult(INTERP, "Database read error, aborting\n", (char *)NULL);\
+	Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);\
     }
 
 #define TCL_READ_ERR_return {\
@@ -303,7 +299,7 @@ extern char *state_str[]; /* identifying strings */
     }
 
 #define TCL_WRITE_ERR { \
-	Tcl_AppendResult(INTERP, "Database write error, aborting.\n", (char *)NULL);\
+	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);\
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_WRITE_ERR_return { \
@@ -311,7 +307,7 @@ extern char *state_str[]; /* identifying strings */
 	return TCL_ERROR; }
 
 #define TCL_ALLOC_ERR { \
-	Tcl_AppendResult(INTERP, "\
+	Tcl_AppendResult(s->interp, "\
 An error has occurred while adding a new object to the database.\n", (char *)NULL); \
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
@@ -321,7 +317,7 @@ An error has occurred while adding a new object to the database.\n", (char *)NUL
 
 /* For errors from db_delete() or db_dirdelete() */
 #define TCL_DELETE_ERR(_name) { \
-	Tcl_AppendResult(INTERP, "An error has occurred while deleting '", _name, \
+	Tcl_AppendResult(s->interp, "An error has occurred while deleting '", _name, \
 			 "' from the database.\n", (char *)NULL);\
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
@@ -331,7 +327,7 @@ An error has occurred while adding a new object to the database.\n", (char *)NUL
 
 /* A verbose message to attempt to soothe and advise the user */
 #define TCL_ERROR_RECOVERY_SUGGESTION\
-    Tcl_AppendResult(INTERP, "\
+    Tcl_AppendResult(s->interp, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -392,15 +388,15 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-    if (DBIP == DBI_NULL) { \
-	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
+    if (s->dbip == DBI_NULL) { \
+	Tcl_AppendResult(s->interp, "A database is not open!\n", (char *)NULL); \
 	return TCL_ERROR; \
     }
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-    if (DBIP->dbi_read_only) { \
-	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+    if (s->dbip->dbi_read_only) { \
+	Tcl_AppendResult(s->interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
 	return TCL_ERROR; \
     }
 

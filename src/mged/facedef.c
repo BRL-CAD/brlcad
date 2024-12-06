@@ -331,7 +331,7 @@ get_pleqn(struct mged_state *s, fastf_t *plane, const char *argv[])
 {
     int i;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     for (i=0; i<4; i++)
@@ -367,7 +367,7 @@ get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct 
 	c[i] = atof(argv[6+i]) * local2base;
 
     if (bg_make_plane_3pnts(plane, a, b, c, tol) < 0) {
-	Tcl_AppendResult(INTERP, "Facedef: not a plane\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Facedef: not a plane\n", (char *)NULL);
 	return -1;		/* failure */
     }
     return 0;			/* success */
@@ -387,7 +387,7 @@ get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct
     short int i, temp;
     point_t pt;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     rota= atof(argv[0]) * DEG2RAD;
@@ -423,7 +423,7 @@ get_nupnt(struct mged_state *s, fastf_t *plane, const char *argv[])
     int i;
     point_t pt;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     for (i=0; i<3; i++)

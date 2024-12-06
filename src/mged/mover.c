@@ -49,19 +49,19 @@ moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate)
 {
     struct rt_db_internal intern;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, dp, DBIP, xlate, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, "rt_db_get_internal() failed for ", dp->d_namep,
+    if (rt_db_get_internal(&intern, dp, s->dbip, xlate, &rt_uniresource) < 0) {
+	Tcl_AppendResult(s->interp, "rt_db_get_internal() failed for ", dp->d_namep,
 			 (char *)NULL);
 	rt_db_free_internal(&intern);
 	READ_ERR_return;
     }
 
-    if (rt_db_put_internal(dp, DBIP, &intern, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, "moveHobj(", dp->d_namep,
+    if (rt_db_put_internal(dp, s->dbip, &intern, &rt_uniresource) < 0) {
+	Tcl_AppendResult(s->interp, "moveHobj(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	rt_db_free_internal(&intern);
 	TCL_WRITE_ERR;
@@ -82,10 +82,10 @@ moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
-    if (rt_db_get_internal(&intern, cdp, DBIP, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, cdp, s->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	READ_ERR_return;
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -100,13 +100,13 @@ moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp,
 		tp->tr_l.tl_mat = (matp_t)bu_malloc(16 * sizeof(fastf_t), "tl_mat");
 		MAT_COPY(tp->tr_l.tl_mat, xlate);
 	    }
-	    if (rt_db_put_internal(cdp, DBIP, &intern, &rt_uniresource) < 0) {
-		Tcl_AppendResult(INTERP, "rt_db_put_internal failed for ",
+	    if (rt_db_put_internal(cdp, s->dbip, &intern, &rt_uniresource) < 0) {
+		Tcl_AppendResult(s->interp, "rt_db_put_internal failed for ",
 				 cdp->d_namep, "\n", (char *)NULL);
 		rt_db_free_internal(&intern);
 	    }
 	} else {
-	    Tcl_AppendResult(INTERP, "moveHinst:  couldn't find ", cdp->d_namep,
+	    Tcl_AppendResult(s->interp, "moveHinst:  couldn't find ", cdp->d_namep,
 			     "/", dp->d_namep, "\n", (char *)NULL);
 	    rt_db_free_internal(&intern);
 	}

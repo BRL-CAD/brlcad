@@ -314,7 +314,7 @@ reset_input_strings(struct mged_state *s)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "reset_input_strings");
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 }
@@ -468,16 +468,16 @@ do_rc(struct mged_state *s)
 	bu_log("If you are setting variables in your %s, you will ", RCFILE);
 	bu_log("need to change those\ncommands.\n\n");
     }
-    if (Tcl_EvalFile(INTERP, bu_vls_addr(&str)) != TCL_OK) {
+    if (Tcl_EvalFile(s->interp, bu_vls_addr(&str)) != TCL_OK) {
 	bu_log("Error reading %s:\n%s\n", RCFILE,
-	       Tcl_GetVar(INTERP, "errorInfo", TCL_GLOBAL_ONLY));
+	       Tcl_GetVar(s->interp, "errorInfo", TCL_GLOBAL_ONLY));
     }
 
     bu_vls_free(&str);
 
     /* No telling what the commands may have done to the result string -
      * make sure we start with a clean slate */
-    bu_vls_trunc(s->GEDP->ged_result_str, 0);
+    bu_vls_trunc(s->gedp->ged_result_str, 0);
     return 0;
 }
 
@@ -516,14 +516,14 @@ do_tab_expansion(struct mged_state *s)
     struct bu_vls tab_expansion = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&tab_expansion, "tab_expansion {%s}", bu_vls_addr(&input_str));
-    ret = Tcl_Eval(INTERP, bu_vls_addr(&tab_expansion));
+    ret = Tcl_Eval(s->interp, bu_vls_addr(&tab_expansion));
     bu_vls_free(&tab_expansion);
 
     if (ret == TCL_OK) {
-	result = Tcl_GetObjResult(INTERP);
-	Tcl_ListObjIndex(INTERP, result, 0, &newCommand);
-	Tcl_ListObjIndex(INTERP, result, 1, &matches);
-	Tcl_ListObjLength(INTERP, matches, &numExpansions);
+	result = Tcl_GetObjResult(s->interp);
+	Tcl_ListObjIndex(s->interp, result, 0, &newCommand);
+	Tcl_ListObjIndex(s->interp, result, 1, &matches);
+	Tcl_ListObjLength(s->interp, matches, &numExpansions);
 	if (numExpansions > 1) {
 	    /* show the possible matches */
 	    bu_log("\n%s\n", Tcl_GetString(matches));
@@ -543,7 +543,7 @@ do_tab_expansion(struct mged_state *s)
 	bu_log("%s", bu_vls_addr(&input_str));
     } else {
 	bu_log("ERROR\n");
-	bu_log("%s\n", Tcl_GetStringResult(INTERP));
+	bu_log("%s\n", Tcl_GetStringResult(s->interp));
     }
 }
 
@@ -1239,7 +1239,7 @@ main(int argc, char *argv[])
 
     /* register application provided routines */
 
-    DMP = dm_open(NULL, INTERP, "nu", 0, NULL);
+    DMP = dm_open(NULL, s->interp, "nu", 0, NULL);
     struct bu_vls *dpvp = dm_get_pathname(DMP);
     if (dpvp) {
 	bu_vls_strcpy(dpvp, "nu");
@@ -1318,7 +1318,7 @@ main(int argc, char *argv[])
     mged_link_vars(mged_curr_dm);
 
     bu_vls_printf(&input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&input_str));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&input_str));
     bu_vls_trunc(&input_str, 0);
 
     if (dpy_string == (char *)NULL) {
@@ -1330,7 +1330,7 @@ main(int argc, char *argv[])
 	if (classic_mged) {
 	    /* identify */
 
-	    (void)Tcl_Eval(INTERP, "set mged_console_mode classic");
+	    (void)Tcl_Eval(s->interp, "set mged_console_mode classic");
 
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
 
@@ -1349,20 +1349,20 @@ main(int argc, char *argv[])
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    struct bu_vls error = BU_VLS_INIT_ZERO;
 
-	    (void)Tcl_Eval(INTERP, "set mged_console_mode gui");
+	    (void)Tcl_Eval(s->interp, "set mged_console_mode gui");
 
 	    if (dpy_string != (char *)NULL)
 		bu_vls_printf(&vls, "loadtk %s", dpy_string);
 	    else
 		bu_vls_strcpy(&vls, "loadtk");
 
-	    status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
-	    bu_vls_strcpy(&error, Tcl_GetStringResult(INTERP));
+	    status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
+	    bu_vls_strcpy(&error, Tcl_GetStringResult(s->interp));
 	    bu_vls_free(&vls);
 
 	    if (status != TCL_OK && !dpy_string) {
 		/* failed to load tk, try localhost X11 if DISPLAY was not set */
-		status = Tcl_Eval(INTERP, "loadtk :0");
+		status = Tcl_Eval(s->interp, "loadtk :0");
 	    }
 
 	    if (status != TCL_OK) {
@@ -1375,7 +1375,7 @@ main(int argc, char *argv[])
 	    bu_vls_free(&error);
 	}
     } else {
-	(void)Tcl_Eval(INTERP, "set mged_console_mode batch");
+	(void)Tcl_Eval(s->interp, "set mged_console_mode batch");
     }
 
     if (!interactive || classic_mged || old_mged_gui) {
@@ -1394,25 +1394,25 @@ main(int argc, char *argv[])
 	     * to allow mged to process args after the db as a command
 	     */
 	    struct cmdtab ec = {MGED_CMD_MAGIC, NULL, NULL, NULL, s};
-	    if (f_opendb(&ec, INTERP, 2, av) == TCL_ERROR) {
+	    if (f_opendb(&ec, s->interp, 2, av) == TCL_ERROR) {
 		if (!run_in_foreground && use_pipe) {
 		    notify_parent_done(parent_pipe[1]);
 		}
 		mged_finish(s, 1);
 	    }
 	} else {
-	    (void)Tcl_Eval(INTERP, "opendb_callback nul");
+	    (void)Tcl_Eval(s->interp, "opendb_callback nul");
 	}
     }
 
-    if (DBIP != DBI_NULL && (read_only_flag || DBIP->dbi_read_only)) {
-	DBIP->dbi_read_only = 1;
+    if (s->dbip != DBI_NULL && (read_only_flag || s->dbip->dbi_read_only)) {
+	s->dbip->dbi_read_only = 1;
 	bu_log("Opened in READ ONLY mode\n");
     }
 
-    if (DBIP != DBI_NULL) {
+    if (s->dbip != DBI_NULL) {
 	setview(s, 0.0, 0.0, 0.0);
-	s->GEDP->ged_gdp->gd_rtCmdNotify = mged_notify;
+	s->gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */
@@ -1446,15 +1446,15 @@ main(int argc, char *argv[])
 
 	    if (old_mged_gui) {
 		bu_vls_strcpy(&vls, "gui");
-		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;
 		const char *archer_trans;
 		Tcl_DStringInit(&temp);
 		const char *archer = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "archer", "archer_launch.tcl", NULL);
-		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
-		tclcad_set_argv(INTERP, argc, (const char **)argv);
-		status = Tcl_EvalFile(INTERP, archer_trans);
+		archer_trans = Tcl_TranslateFileName(s->interp, archer, &temp);
+		tclcad_set_argv(s->interp, argc, (const char **)argv);
+		status = Tcl_EvalFile(s->interp, archer_trans);
 		Tcl_DStringFree(&temp);
 	    }
 	    bu_vls_free(&vls);
@@ -1473,10 +1473,10 @@ main(int argc, char *argv[])
 		if (use_pipe) {
 		    /* too late to fall back to classic, we forked and detached already */
 		    bu_log("Unable to initialize an MGED graphical user interface.\nTry using foreground (-f) or classic-mode (-c) options to MGED.\n");
-		    bu_log("%s\nMGED aborted.\n", Tcl_GetStringResult(INTERP));
+		    bu_log("%s\nMGED aborted.\n", Tcl_GetStringResult(s->interp));
 		    mged_finish(s, 1);
 		}
-		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(INTERP));
+		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(s->interp));
 		classic_mged = 1;
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -1501,7 +1501,7 @@ main(int argc, char *argv[])
 		/* since we're in GUI mode, display any bu_bomb()
 		 * calls in text dialog windows.
 		 */
-		bu_bomb_add_hook(mged_bomb_hook, INTERP);
+		bu_bomb_add_hook(mged_bomb_hook, s->interp);
 	    } /* status -- gui initialized */
 	} /* classic */
 
@@ -1528,7 +1528,7 @@ main(int argc, char *argv[])
 	if (!attach) {
 	    get_attached(s);
 	} else {
-	    attach_display_manager(INTERP, attach, dpy_string);
+	    attach_display_manager(s->interp, attach, dpy_string);
 	}
     }
 
@@ -1551,11 +1551,11 @@ main(int argc, char *argv[])
 	// anything produced by a process that already exited,
 	// and loop while libged still reports running processes.
 	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
-	while (BU_PTBL_LEN(&s->GEDP->ged_subp)) {
+	while (BU_PTBL_LEN(&s->gedp->ged_subp)) {
 	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	}
 
-	Tcl_Eval(INTERP, "q");
+	Tcl_Eval(s->interp, "q");
 	/* NOTREACHED */
     }
 
@@ -1602,7 +1602,7 @@ main(int argc, char *argv[])
 	    perror("dup");
 
 	bu_vls_printf(&vls, "output_hook output_callback");
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 /* FIXME: windows has dup() and dup2(), so this should work there too */
@@ -1649,11 +1649,11 @@ main(int argc, char *argv[])
 
 	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
 		chan = Tcl_GetStdChannel(TCL_STDOUT);
-		Tcl_UnregisterChannel(INTERP, chan);
+		Tcl_UnregisterChannel(s->interp, chan);
 		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
-		Tcl_RegisterChannel(INTERP, chan);
-		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
-		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
+		Tcl_RegisterChannel(s->interp, chan);
+		Tcl_SetChannelOption(s->interp, chan, "-blocking", "false");
+		Tcl_SetChannelOption(s->interp, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
 		/* intermittently, the process of Tcl_UnregisterChannel does not
 		 * finish cleaning up the write threads before we spawn new
@@ -1662,20 +1662,20 @@ main(int argc, char *argv[])
 		 * from the channel. Calling puts with an empty string here
 		 * *appears* to force a sync and resolve the issue.
 		 */
-		if (Tcl_Eval(INTERP, "puts \"\"") != TCL_OK)
+		if (Tcl_Eval(s->interp, "puts \"\"") != TCL_OK)
 		    perror("STDOUT chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 
 	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
 		chan = Tcl_GetStdChannel(TCL_STDERR);
-		Tcl_UnregisterChannel(INTERP, chan);
+		Tcl_UnregisterChannel(s->interp, chan);
 		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
-		Tcl_RegisterChannel(INTERP, chan);
-		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
-		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
+		Tcl_RegisterChannel(s->interp, chan);
+		Tcl_SetChannelOption(s->interp, chan, "-blocking", "false");
+		Tcl_SetChannelOption(s->interp, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
-		if (Tcl_Eval(INTERP, "puts stderr \"\"") != TCL_OK)
+		if (Tcl_Eval(s->interp, "puts stderr \"\"") != TCL_OK)
 		    perror("STDERR chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
@@ -1829,7 +1829,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    perror("READ ERROR");
 
 	if (count <= 0 && feof(stdin))
-	    Tcl_Eval(INTERP, "q");
+	    Tcl_Eval(s->interp, "q");
 
 	if (buf[0] == '\0')
 	    bu_bomb("Read a buf with a 0 starting it?\n");
@@ -1923,14 +1923,14 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 
     line[count] = '\0';
 
-    save_result = Tcl_GetObjResult(INTERP);
+    save_result = Tcl_GetObjResult(s->interp);
     Tcl_IncrRefCount(save_result);
 
     bu_vls_printf(&vls, "output_callback {%s}", line);
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
-    Tcl_SetObjResult(INTERP, save_result);
+    Tcl_SetObjResult(s->interp, save_result);
     Tcl_DecrRefCount(save_result);
 }
 
@@ -1969,7 +1969,7 @@ event_check(struct mged_state *s, int non_blocking)
 
     non_blocking = 0;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return non_blocking;
 
     /*********************************
@@ -2000,7 +2000,7 @@ event_check(struct mged_state *s, int non_blocking)
 		      edit_rate_model_rotate[Y],
 		      edit_rate_model_rotate[Z]);
 
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	mged_variables->mv_coords = save_coords;
@@ -2034,7 +2034,7 @@ event_check(struct mged_state *s, int non_blocking)
 		      edit_rate_object_rotate[Y],
 		      edit_rate_object_rotate[Z]);
 
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	mged_variables->mv_coords = save_coords;
@@ -2068,7 +2068,7 @@ event_check(struct mged_state *s, int non_blocking)
 		      edit_rate_view_rotate[Y],
 		      edit_rate_view_rotate[Z]);
 
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	mged_variables->mv_coords = save_coords;
@@ -2101,7 +2101,7 @@ event_check(struct mged_state *s, int non_blocking)
 		      edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
 		      edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
 
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	mged_variables->mv_coords = save_coords;
@@ -2134,7 +2134,7 @@ event_check(struct mged_state *s, int non_blocking)
 		      edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
 		      edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
 
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	mged_variables->mv_coords = save_coords;
@@ -2160,7 +2160,7 @@ event_check(struct mged_state *s, int non_blocking)
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
 
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	if (STATE == ST_S_EDIT)
@@ -2186,7 +2186,7 @@ event_check(struct mged_state *s, int non_blocking)
 			  view_state->vs_rate_model_rotate[Y],
 			  view_state->vs_rate_model_rotate[Z]);
 
-	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
 	if (view_state->vs_rateflag_model_tran) {
@@ -2198,7 +2198,7 @@ event_check(struct mged_state *s, int non_blocking)
 			  view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
 			  view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
 
-	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
 	if (view_state->vs_rateflag_rotate) {
@@ -2211,7 +2211,7 @@ event_check(struct mged_state *s, int non_blocking)
 			  view_state->vs_rate_rotate[Y],
 			  view_state->vs_rate_rotate[Z]);
 
-	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
 	if (view_state->vs_rateflag_tran) {
@@ -2223,7 +2223,7 @@ event_check(struct mged_state *s, int non_blocking)
 			  view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
 			  view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
 
-	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
 	if (view_state->vs_rateflag_scale) {
@@ -2232,7 +2232,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    non_blocking++;
 	    bu_vls_printf(&vls, "zoom %f",
 			  1.0 / (1.0 - (view_state->vs_rate_scale / 10.0)));
-	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
 
@@ -2269,7 +2269,7 @@ refresh(struct mged_state *s)
      * TODO - this is currently a no-op because the gui_output callback
      * is still in the old form of trying to immediately print the bu_log
      * output to the interp. */
-    mged_pr_output(INTERP);
+    mged_pr_output(s->interp);
 
     /* Display Manager / Views */
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -2315,7 +2315,7 @@ refresh(struct mged_state *s)
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
 
-	    if (DBIP != DBI_NULL) {
+	    if (s->dbip != DBI_NULL) {
 		if (do_overlay) {
 		    bu_vls_trunc(&overlay_vls, 0);
 		    create_text_overlay(s, &overlay_vls);
@@ -2333,7 +2333,7 @@ refresh(struct mged_state *s)
 
 		dm_draw_begin(DMP);	/* update displaylist prolog */
 
-		if (DBIP != DBI_NULL) {
+		if (s->dbip != DBI_NULL) {
 		    /* do framebuffer underlay */
 		    if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
 			if (mged_variables->mv_fb_all)
@@ -2462,18 +2462,18 @@ mged_finish(struct mged_state *s, int exitcode)
 
     /* If we're in script mode, wait for subprocesses to finish before we
      * wrap up */
-    if (s->GEDP && !interactive) {
+    if (s->gedp && !interactive) {
 	struct bu_ptbl rmp = BU_PTBL_INIT_ZERO;
-	while (BU_PTBL_LEN(&s->GEDP->ged_subp)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&s->GEDP->ged_subp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->GEDP->ged_subp, i);
+	while (BU_PTBL_LEN(&s->gedp->ged_subp)) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&s->gedp->ged_subp); i++) {
+		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->gedp->ged_subp, i);
 		if (!bu_process_wait_n(&rrp->p, 1)) {
 		    bu_ptbl_ins(&rmp, (long *)rrp);
 		}
 	    }
 	    for (size_t i = 0; i < BU_PTBL_LEN(&rmp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->GEDP->ged_subp, i);
-		bu_ptbl_rm(&s->GEDP->ged_subp, (long *)rrp);
+		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->gedp->ged_subp, i);
+		bu_ptbl_rm(&s->gedp->ged_subp, (long *)rrp);
 		BU_PUT(rrp, struct ged_subprocess);
 	    }
 	    bu_ptbl_reset(&rmp);
@@ -2516,19 +2516,19 @@ mged_finish(struct mged_state *s, int exitcode)
 	perror("dup2");
 
     /* Be certain to close the database cleanly before exiting */
-    Tcl_Preserve((ClientData)INTERP);
-    Tcl_Eval(INTERP, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
-    Tcl_Release((ClientData)INTERP);
+    Tcl_Preserve((ClientData)s->interp);
+    Tcl_Eval(s->interp, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
+    Tcl_Release((ClientData)s->interp);
 
-    struct tclcad_io_data *giod = (struct tclcad_io_data *)s->GEDP->ged_io_data;
-    ged_close(s->GEDP);
-    s->GEDP = GED_NULL;
+    struct tclcad_io_data *giod = (struct tclcad_io_data *)s->gedp->ged_io_data;
+    ged_close(s->gedp);
+    s->gedp = GED_NULL;
     if (giod) {
 	tclcad_destroy_io_data(giod);
     }
 
-    WDBP = RT_WDB_NULL;
-    DBIP = DBI_NULL;
+    s->wdbp = RT_WDB_NULL;
+    s->dbip = DBI_NULL;
 
     /* XXX should deallocate libbu semaphores */
 

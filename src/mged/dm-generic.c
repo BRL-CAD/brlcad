@@ -57,15 +57,15 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
     int status;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return TCL_OK;
 
     if (BU_STR_EQUAL(argv[0], "idle")) {
 
 	/* redraw after scaling */
-	if (s->GEDP && s->GEDP->ged_gvp &&
-	    s->GEDP->ged_gvp->gv_s->adaptive_plot_csg &&
-	    s->GEDP->ged_gvp->gv_s->redraw_on_zoom &&
+	if (s->gedp && s->gedp->ged_gvp &&
+	    s->gedp->ged_gvp->gv_s->adaptive_plot_csg &&
+	    s->gedp->ged_gvp->gv_s->redraw_on_zoom &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||
 	     am_mode == AMM_CON_SCALE_Y ||
@@ -106,7 +106,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	fastf_t fx, fy;
 
 	if (argc < 3) {
-	    Tcl_AppendResult(INTERP, "dm m: need more parameters\n",
+	    Tcl_AppendResult(s->interp, "dm m: need more parameters\n",
 			     "dm m xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -240,7 +240,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	} else
 	    bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
-	status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	mged_variables->mv_orig_gui = old_orig_gui;
 	bu_vls_free(&vls);
 
@@ -249,7 +249,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[0], "am")) {
 	if (argc < 4) {
-	    Tcl_AppendResult(INTERP, "dm am: need more parameters\n",
+	    Tcl_AppendResult(s->interp, "dm am: need more parameters\n",
 			     "dm am <r|t|s> xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -302,7 +302,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		am_mode = AMM_SCALE;
 		break;
 	    default:
-		Tcl_AppendResult(INTERP, "dm am: need more parameters\n",
+		Tcl_AppendResult(s->interp, "dm am: need more parameters\n",
 				 "dm am <r|t|s> xpos ypos\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -315,7 +315,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	fastf_t td; /* tick distance */
 
 	if (argc < 4) {
-	    Tcl_AppendResult(INTERP, "dm adc: need more parameters\n",
+	    Tcl_AppendResult(s->interp, "dm adc: need more parameters\n",
 			     "dm adc 1|2|t|d xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -329,7 +329,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
-		Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
 		am_mode = AMM_ADC_ANG1;
@@ -339,7 +339,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
-		Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
 		am_mode = AMM_ADC_ANG2;
@@ -358,7 +358,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    VSCALE(model_pt, model_pt, base2local);
 
 		    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
-		    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 
 		    bu_vls_free(&vls);
 		    am_mode = AMM_ADC_TRAN;
@@ -374,13 +374,13 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		td = sqrt(fx * fx + fy * fy);
 
 		bu_vls_printf(&vls, "adc dst %lf\n", td);
-		Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
 		am_mode = AMM_ADC_DIST;
 		break;
 	    default:
-		Tcl_AppendResult(INTERP, "dm adc: unrecognized parameter - ", argv[1],
+		Tcl_AppendResult(s->interp, "dm adc: unrecognized parameter - ", argv[1],
 				 "\ndm adc 1|2|t|d xpos ypos\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -390,7 +390,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[0], "con")) {
 	if (argc < 5) {
-	    Tcl_AppendResult(INTERP, "dm con: need more parameters\n",
+	    Tcl_AppendResult(s->interp, "dm con: need more parameters\n",
 			     "dm con r|t|s x|y|z xpos ypos\n",
 			     "dm con a x|y|1|2|d xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -418,7 +418,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			am_mode = AMM_CON_DIST;
 			break;
 		    default:
-			Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[2],
+			Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[2],
 					 "\ndm con a x|y|1|2|d xpos ypos\n", (char *)NULL);
 		}
 		break;
@@ -434,7 +434,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			am_mode = AMM_CON_ROT_Z;
 			break;
 		    default:
-			Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[2],
+			Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[2],
 					 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -451,7 +451,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			am_mode = AMM_CON_TRAN_Z;
 			break;
 		    default:
-			Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[2],
+			Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[2],
 					 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -495,13 +495,13 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			am_mode = AMM_CON_SCALE_Z;
 			break;
 		    default:
-			Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[2],
+			Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[2],
 					 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		break;
 	    default:
-		Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[1],
+		Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[1],
 				 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -515,7 +515,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	/* get the window size */
 	if (argc == 1) {
 	    bu_vls_printf(&vls, "%d %d", dm_get_width(DMP), dm_get_height(DMP));
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
@@ -531,7 +531,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    return TCL_OK;
 	}
 
-	Tcl_AppendResult(INTERP, "Usage: dm size [width height]\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Usage: dm size [width height]\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -543,7 +543,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	} else if (argc == 2) {
 	    dm_internal_var(&tmp_vls, DMP, argv[1]);
 	}
-	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 	return TCL_OK;
     }
@@ -553,7 +553,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 	if (argc != 1 && argc != 4) {
 	    bu_vls_printf(&vls, "Usage: dm bg [r g b]");
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_ERROR;
@@ -564,7 +564,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    unsigned char *dm_bg;
 	    dm_get_bg(&dm_bg, NULL, DMP);
 	    bu_vls_printf(&vls, "%d %d %d", dm_bg[0], dm_bg[1], dm_bg[2]);
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
@@ -574,7 +574,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    sscanf(argv[2], "%d", &g) != 1 ||
 	    sscanf(argv[3], "%d", &b) != 1) {
 	    bu_vls_printf(&vls, "Usage: dm bg r g b");
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_ERROR;
@@ -586,7 +586,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	return dm_set_bg(DMP, r, g, b, r, g, b);
     }
 
-    Tcl_AppendResult(INTERP, "dm: bad command - ", argv[0], "\n", (char *)NULL);
+    Tcl_AppendResult(s->interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
     return TCL_ERROR;
 }
 
@@ -695,7 +695,7 @@ dm_commands(int argc, const char *argv[], void *data)
 	    }
 	}
 
-	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;

@@ -109,7 +109,7 @@ mmenu_set(struct mged_state *s, int index, struct menu_item *value)
 
     bu_vls_printf(&menu_string, "mmenu_set %s %d ", bu_vls_addr(&curr_cmd_list->cl_name), index);
 
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&menu_string));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&menu_string));
 
     Tcl_DStringFree(&ds_menu);
     bu_vls_free(&menu_string);

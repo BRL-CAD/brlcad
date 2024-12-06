@@ -219,7 +219,7 @@ button(struct mged_state *s, int bnum)
 	    continue;
 
 	struct cmdtab bcmdtab = {MGED_CMD_MAGIC, bp->bu_name, NULL, NULL, s};
-	bp->bu_func((ClientData)&bcmdtab, INTERP, 0, NULL);
+	bp->bu_func((ClientData)&bcmdtab, s->interp, 0, NULL);
 	return;
     }
 
@@ -337,7 +337,7 @@ label_button(struct mged_state *s, int bnum)
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&tmp_vls, "label_button(%d):  Not a defined operation\n", bnum);
-	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -559,8 +559,8 @@ ill_common(struct mged_state *s) {
     int is_empty = 1;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -572,7 +572,7 @@ ill_common(struct mged_state *s) {
     }
 
     if (is_empty) {
-	Tcl_AppendResult(INTERP, "no solids in view\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "no solids in view\n", (char *)NULL);
 	return 0;	/* BAD */
     }
 
@@ -811,7 +811,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	mmenu_set_all(s, MENU_L1, MENU_NULL);
 	mmenu_set_all(s, MENU_L2, MENU_NULL);
 
-	dl_set_iflag(s->GEDP->ged_gdp->gd_headDisplay, DOWN);
+	dl_set_iflag(s->gedp->ged_gdp->gd_headDisplay, DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = NULL;
@@ -846,7 +846,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "end_edit_callback");
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
     return TCL_OK;
@@ -900,7 +900,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     illump = NULL;		/* None selected */
 
     /* Clear illumination flags */
-    dl_set_iflag(s->GEDP->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_iflag(s->gedp->ged_gdp->gd_headDisplay, DOWN);
 
     mged_color_soltab(s);
     (void)chg_state(s, STATE, ST_VIEW, "Edit Reject");
@@ -915,7 +915,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "end_edit_callback");
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
     return TCL_OK;
@@ -1009,8 +1009,8 @@ int
 not_state(struct mged_state *s, int desired, char *str)
 {
     if (STATE != desired) {
-	Tcl_AppendResult(INTERP, "Unable to do <", str, "> from ", state_str[STATE], " state.\n", (char *)NULL);
-	Tcl_AppendResult(INTERP, "Expecting ", state_str[desired], " state.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[STATE], " state.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Expecting ", state_str[desired], " state.\n", (char *)NULL);
 	return -1;
     }
 
@@ -1081,7 +1081,7 @@ chg_state(struct mged_state *s, int from, int to, char *str)
     set_curr_dm(s, save_dm_list);
 
     bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(INTERP, bu_vls_addr(&vls), state_str[STATE], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&vls), state_str[STATE], TCL_GLOBAL_ONLY);
     bu_vls_free(&vls);
 
     return 0;		/* GOOD */
@@ -1091,7 +1091,7 @@ chg_state(struct mged_state *s, int from, int to, char *str)
 void
 state_err(struct mged_state *s, char *str)
 {
-    Tcl_AppendResult(INTERP, "Unable to do <", str, "> from ", state_str[STATE],
+    Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[STATE],
 		     " state.\n", (char *)NULL);
 }
 
@@ -1130,7 +1130,7 @@ btn_head_menu(struct mged_state *s, int i, int UNUSED(menu), int UNUSED(item)) {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -1156,7 +1156,7 @@ chg_l2menu(struct mged_state *s, int i) {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 

@@ -253,7 +253,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
     fastf_t fx, fy;
     fastf_t td;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     width = dm_get_width(DMP);
@@ -342,7 +342,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 				      dy * 0.25, dx * 0.25);
 		}
 
-		(void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
+		(void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 		mged_variables->mv_coords = save_coords;
 
 		goto reset_edflag;
@@ -417,7 +417,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    }
 		}
 
-		(void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
+		(void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 		mged_variables->mv_coords = save_coords;
 
 		goto reset_edflag;
@@ -746,7 +746,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
     }
 
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 
  reset_edflag:
     if (save_edflag != -1) {
@@ -774,7 +774,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
     int setting;
     fastf_t f;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     if (button0) {
@@ -1418,7 +1418,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
     /* Keep track of the knob values */
     knob_values[dmep->first_axis] = dmep->axis_data[0];
 
-    Tcl_Eval(INTERP, bu_vls_addr(&cmd));
+    Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 
     if (save_edflag != -1) {
 	if (STATE == ST_S_EDIT)
@@ -1455,7 +1455,7 @@ buttons_event_handler(XDeviceButtonEvent *dbep, int press)
 			  label_button(bmap[dbep->button - 1]));
 	}
 
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 	bu_vls_free(&cmd);
     } else {
 	if (dbep->button == 1)

@@ -195,7 +195,7 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 			    save_dlp = mged_curr_dm;
 
 			    set_curr_dm(s, dlp1);
-			    createDLists(s->GEDP->ged_gdp->gd_headDisplay);
+			    createDLists(s->gedp->ged_gdp->gd_headDisplay);
 
 			    /* restore */
 			    set_curr_dm(s, save_dlp);

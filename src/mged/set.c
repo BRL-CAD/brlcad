@@ -163,7 +163,7 @@ nmg_eu_dist_set(const struct bu_structparse *UNUSED(sdp),
     nmg_eue_dist = mged_variables->mv_nmg_eu_dist;
 
     bu_vls_printf(&tmp_vls, "New nmg_eue_dist = %g\n", nmg_eue_dist);
-    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
     bu_vls_free(&tmp_vls);
 }
 
@@ -407,7 +407,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	    if (dm_get_displaylist(dlp1->dm_dmp) &&
 		dlp1->dm_dlist_state->dl_active == 0) {
 		set_curr_dm(s, dlp1);
-		createDLists(s->GEDP->ged_gdp->gd_headDisplay);
+		createDLists(s->gedp->ged_gdp->gd_headDisplay);
 		dlp1->dm_dlist_state->dl_active = 1;
 		dlp1->dm_dirty = 1;
 		dm_set_dirty(dlp1->dm_dmp, 1);
@@ -450,8 +450,8 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 
 		    dlp1->dm_dlist_state->dl_active = 0;
 
-		    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-		    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+		    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+		    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 			next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 			(void)dm_make_current(dlp1->dm_dmp);

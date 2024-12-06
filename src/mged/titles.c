@@ -161,7 +161,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    }
 	}
 
-	Tcl_SetVar(INTERP, "edit_info", bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, "edit_info", bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_free(&vls);
     }
 }
@@ -237,7 +237,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     vect_t temp = VINIT_ZERO;
     fastf_t tmp_val = 0.0;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     /* Set the Tcl variables to the appropriate values. */
@@ -272,18 +272,18 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	}
 
 	bu_vls_printf(&vls, "%s(path_lhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), bu_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(path_rhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), bu_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
 	bu_vls_free(&path_rhs);
 	bu_vls_free(&path_lhs);
     } else {
 	bu_vls_printf(&vls, "%s(path_lhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(path_rhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
     /* take some care here to avoid buffer overrun */
@@ -307,7 +307,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     }
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_center_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_center_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     tmp_val = view_state->vs_gvp->gv_size*base2local;
@@ -316,17 +316,17 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     } else {
 	sprintf(size, "sz=%.3g", tmp_val);
     }
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_size_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_size_name),
 	       size, TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "%s(units)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(INTERP, bu_vls_addr(&vls),
-	       (char *)bu_units_string(DBIP->dbi_local2base), TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&vls),
+	       (char *)bu_units_string(s->dbip->dbi_local2base), TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f", V3ARGS(view_state->vs_gvp->gv_aet));
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_aet_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_aet_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     sprintf(ang_x, "%.2f", view_state->vs_rate_rotate[X]);
@@ -335,7 +335,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "ang=(%s %s %s)", ang_x, ang_y, ang_z);
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_ang_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_ang_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
@@ -508,7 +508,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls,
 		      " cent=(%s, %s, %s), %s %s, ", cent_x, cent_y, cent_z,
-		      size, bu_units_string(DBIP->dbi_local2base));
+		      size, bu_units_string(s->dbip->dbi_local2base));
 	bu_vls_printf(&vls, "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)", V3ARGS(view_state->vs_gvp->gv_aet),
 		      ang_x, ang_y, ang_z);
 	dm_set_fg(DMP,
@@ -551,11 +551,11 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    dm_draw_string_2d(DMP, bu_vls_addr(&vls),
 			      GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
 	}
-	Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_adc_name),
+	Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_adc_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	ss_line_not_drawn = 0;
     } else {
-	Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
     if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
@@ -580,13 +580,13 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(keypoint)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&kp_vls), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), bu_vls_addr(&kp_vls), TCL_GLOBAL_ONLY);
 
 	bu_vls_free(&kp_vls);
     } else {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(keypoint)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
     if (illump != NULL && illump->s_u_data != NULL) {
@@ -626,7 +626,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	dm_draw_string_2d(DMP, bu_vls_addr(&vls),
 			  GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
     }
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_fps_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_fps_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     bu_vls_free(&vls);

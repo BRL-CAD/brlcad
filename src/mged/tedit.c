@@ -186,7 +186,7 @@ writesolid(struct mged_state *s)
 	struct rt_datum_internal *datum;
 
 	default:
-	    Tcl_AppendResult(INTERP, "Cannot text edit this solid type\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    (void)fclose(fp);
 	    return 1;
 	case ID_TOR:
@@ -378,7 +378,7 @@ readsolid(struct mged_state *s)
 	double a, b, c, d, e, f, g;
 
 	default:
-	    Tcl_AppendResult(INTERP, "Cannot text edit this solid type\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
 	    break;
 	case ID_TOR:
@@ -925,10 +925,10 @@ get_editor_string(struct mged_state *s, struct bu_vls *editstring)
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
 
-    os = Tcl_GetVar(INTERP, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
-    editor = Tcl_GetVar(INTERP, "editor", TCL_GLOBAL_ONLY);
+    os = Tcl_GetVar(s->interp, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
+    editor = Tcl_GetVar(s->interp, "editor", TCL_GLOBAL_ONLY);
     if (!editor || editor[0] == '\0')
-	editor = Tcl_GetVar(INTERP, "EDITOR", TCL_GLOBAL_ONLY);
+	editor = Tcl_GetVar(s->interp, "EDITOR", TCL_GLOBAL_ONLY);
 
     if (!editor || editor[0] == '\0')
 	editor = getenv("EDITOR");

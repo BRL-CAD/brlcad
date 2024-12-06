@@ -273,7 +273,7 @@ cs_update(const struct bu_structparse *sdp,
     for (sp = &color_scheme_vparse[CS_OFFSET]; sp->sp_name != NULL; sp += 3) {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "rset cs %s [rset cs %s]", sp->sp_name, (sp+offset)->sp_name);
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
     }
 
     cs_set_bg(sdp, name, base, value, data);
@@ -305,20 +305,20 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
     // the notion of the "current" dm in situations
     // where we act on all dm instances.  set_curr_dm
     // should probably be replaced with get_next_dm
-    struct bview *cbv = s->GEDP->ged_gvp;
+    struct bview *cbv = s->gedp->ged_gvp;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_color_scheme == color_scheme) {
 	    m_dmp->dm_dirty = 1;
 	    dm_set_dirty(m_dmp->dm_dmp, 1);
 	    set_curr_dm(s, m_dmp);
-	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	}
     }
 
     bu_vls_free(&vls);
     set_curr_dm(s, save_curr_m_dmp);
-    s->GEDP->ged_gvp = cbv;
+    s->gedp->ged_gvp = cbv;
 }
 
 

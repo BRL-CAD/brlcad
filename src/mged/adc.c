@@ -428,7 +428,7 @@ adc_print_vars(struct mged_state *s)
 		  adc_state->adc_anchor_pt_dst[X] * base2local,
 		  adc_state->adc_anchor_pt_dst[Y] * base2local,
 		  adc_state->adc_anchor_pt_dst[Z] * base2local);
-    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 }
 

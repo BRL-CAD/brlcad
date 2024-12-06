@@ -86,11 +86,11 @@ void set_curr_dm(struct mged_state *s, struct mged_dm *nc)
 
     mged_curr_dm = nc;
     if (nc != MGED_DM_NULL && nc->dm_view_state) {
-	s->GEDP->ged_gvp = nc->dm_view_state->vs_gvp;
-	s->GEDP->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
+	s->gedp->ged_gvp = nc->dm_view_state->vs_gvp;
+	s->gedp->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
     } else {
-	if (s->GEDP) {
-	    s->GEDP->ged_gvp = NULL;
+	if (s->gedp) {
+	    s->gedp->ged_gvp = NULL;
 	}
     }
 }
@@ -115,7 +115,7 @@ mged_dm_init(
      * catch the BV_MAGIC value and not initialize (such as qtgl, which needs a
      * context from a parent Qt widget and won't work in MGED.) */
     void *ctx = view_state->vs_gvp;
-    if ((DMP = dm_open(ctx, (void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    if ((DMP = dm_open(ctx, (void *)s->interp, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
@@ -133,7 +133,7 @@ mged_dm_init(
     struct bu_vls *pathname = dm_get_pathname(DMP);
     if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_cstr(pathname));
-	Tcl_Eval(INTERP, bu_vls_cstr(&vls));
+	Tcl_Eval(s->interp, bu_vls_cstr(&vls));
     }
     bu_vls_free(&vls);
 
@@ -206,7 +206,7 @@ release(struct mged_state *s, char *name, int need_close)
 	}
 
 	if (p == MGED_DM_NULL) {
-	    Tcl_AppendResult(INTERP, "release: ", name, " not found\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "release: ", name, " not found\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
     } else if (DMP && BU_STR_EQUAL("nu", bu_vls_cstr(dm_get_pathname(DMP))))
@@ -356,66 +356,66 @@ gui_setup(struct mged_state *s, const char *dstr)
     if (tkwin != NULL)
 	return TCL_OK;
 
-    Tcl_ResetResult(INTERP);
+    Tcl_ResetResult(s->interp);
 
     /* set DISPLAY to dstr */
     if (dstr != (char *)NULL) {
-	Tcl_SetVar(INTERP, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
     }
 
 #ifdef HAVE_TK
     /* This runs the tk.tcl script */
-    if (Tk_Init(INTERP) == TCL_ERROR) {
-	const char *result = Tcl_GetStringResult(INTERP);
+    if (Tk_Init(s->interp) == TCL_ERROR) {
+	const char *result = Tcl_GetStringResult(s->interp);
 	/* hack to avoid a stupid Tk error */
 	if (bu_strncmp(result, "this isn't a Tk applicationcouldn't", 35) == 0) {
 	    result = (result + 27);
-	    Tcl_ResetResult(INTERP);
-	    Tcl_AppendResult(INTERP, result, (char *)NULL);
+	    Tcl_ResetResult(s->interp);
+	    Tcl_AppendResult(s->interp, result, (char *)NULL);
 	}
 	return TCL_ERROR;
     }
 
     /* Initialize [incr Tk] */
-    if (Tcl_Eval(INTERP, "package require Itk") != TCL_OK) {
+    if (Tcl_Eval(s->interp, "package require Itk") != TCL_OK) {
       return TCL_ERROR;
     }
 
     /* Import [incr Tk] commands into the global namespace */
-    if (Tcl_Import(INTERP, Tcl_GetGlobalNamespace(INTERP),
+    if (Tcl_Import(s->interp, Tcl_GetGlobalNamespace(s->interp),
 		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
 #endif
 
     /* Initialize the Iwidgets package */
-    if (Tcl_Eval(INTERP, "package require Iwidgets") != TCL_OK) {
+    if (Tcl_Eval(s->interp, "package require Iwidgets") != TCL_OK) {
 	return TCL_ERROR;
     }
 
     /* Import iwidgets into the global namespace */
-    if (Tcl_Import(INTERP, Tcl_GetGlobalNamespace(INTERP),
+    if (Tcl_Import(s->interp, Tcl_GetGlobalNamespace(s->interp),
 		   "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
 
     /* Initialize libtclcad */
 #ifdef HAVE_TK
-    (void)tclcad_init(INTERP, 1, NULL);
+    (void)tclcad_init(s->interp, 1, NULL);
 #else
-    (void)tclcad_init(INTERP, 0, NULL);
+    (void)tclcad_init(s->interp, 0, NULL);
 #endif
 
 #ifdef HAVE_TK
-    if ((tkwin = Tk_MainWindow(INTERP)) == NULL) {
+    if ((tkwin = Tk_MainWindow(s->interp)) == NULL) {
 	return TCL_ERROR;
     }
 
     /* create the event handler */
     Tk_CreateGenericHandler(handler, (ClientData)s);
 
-    Tcl_Eval(INTERP, "wm withdraw .");
-    Tcl_Eval(INTERP, "tk appname mged");
+    Tcl_Eval(s->interp, "wm withdraw .");
+    Tcl_Eval(s->interp, "tk appname mged");
 #endif
 
     return TCL_OK;
@@ -446,7 +446,7 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	/* look for "-d display_string" and use it if provided */
-	tmp_dmp = dm_open(NULL, INTERP, "nu", 0, NULL);
+	tmp_dmp = dm_open(NULL, s->interp, "nu", 0, NULL);
 
 	opt_argc = argc - 1;
 	opt_argv = bu_argv_dup(opt_argc, argv + 1);
@@ -496,17 +496,17 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
 
     mged_link_vars(mged_curr_dm);
 
-    Tcl_ResetResult(INTERP);
+    Tcl_ResetResult(s->interp);
     const char *dm_name = dm_get_dm_name(DMP);
     const char *dm_lname = dm_get_dm_lname(DMP);
     if (dm_name && dm_lname) {
-	Tcl_AppendResult(INTERP, "ATTACHING ", dm_name, " (", dm_lname,	")\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "ATTACHING ", dm_name, " (", dm_lname,	")\n", (char *)NULL);
     }
 
     share_dlist(mged_curr_dm);
 
     if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(s->GEDP->ged_gdp->gd_headDisplay);
+	createDLists(s->gedp->ged_gdp->gd_headDisplay);
 	dlist_state->dl_active = 1;
     }
 
@@ -514,13 +514,13 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
     (void)dm_set_win_bounds(DMP, windowbounds);
     mged_fb_open();
 
-    s->GEDP->ged_gvp = mged_curr_dm->dm_view_state->vs_gvp;
-    s->GEDP->ged_gvp->gv_s->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
+    s->gedp->ged_gvp = mged_curr_dm->dm_view_state->vs_gvp;
+    s->gedp->ged_gvp->gv_s->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
 
     return TCL_OK;
 
  Bad:
-    Tcl_AppendResult(INTERP, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
+    Tcl_AppendResult(s->interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
     if (DMP != (struct dm *)0)
 	release(s, (char *)NULL, 1);  /* release() will call dm_close */
@@ -737,7 +737,7 @@ dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
     BU_GET(view_state->vs_gvp->gv_objs.view_objs, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->gv_objs.view_objs, 8, "view_objs init");
 
-    view_state->vs_gvp->vset = &s->GEDP->ged_views;
+    view_state->vs_gvp->vset = &s->gedp->ged_views;
     view_state->vs_gvp->independent = 0;
 
     view_state->vs_gvp->gv_clientData = (void *)view_state;

@@ -97,7 +97,7 @@ set_grid_draw(const struct bu_structparse *sdp,
     struct mged_state *s = (struct mged_state *)data;
     MGED_CK_STATE(s);
 
-    if (DBIP == DBI_NULL) {
+    if (s->dbip == DBI_NULL) {
 	grid_state->draw = 0;
 	return;
     }
@@ -158,7 +158,7 @@ draw_grid(struct mged_state *s)
     fastf_t inv_grid_res_v;
     fastf_t inv_aspect;
 
-    if (DBIP == DBI_NULL ||
+    if (s->dbip == DBI_NULL ||
 	ZERO(grid_state->res_h) ||
 	ZERO(grid_state->res_v))
 	return;
@@ -248,7 +248,7 @@ snap_to_grid(
     fastf_t sf;
     fastf_t inv_sf;
 
-    if (DBIP == DBI_NULL ||
+    if (s->dbip == DBI_NULL ||
 	ZERO(grid_state->res_h) ||
 	ZERO(grid_state->res_v))
 	return;
@@ -297,7 +297,7 @@ snap_keypoint_to_grid(struct mged_state *s)
     point_t model_pt;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     if (STATE != ST_S_EDIT && STATE != ST_O_EDIT) {
@@ -319,7 +319,7 @@ snap_keypoint_to_grid(struct mged_state *s)
 	bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
     else
 	bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
     bu_vls_free(&cmd);
 
     /* save model_pt in local units */
@@ -333,7 +333,7 @@ snap_view_center_to_grid(struct mged_state *s)
 {
     point_t view_pt, model_pt;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     MAT_DELTAS_GET_NEG(model_pt, view_state->vs_gvp->gv_center);
@@ -363,7 +363,7 @@ round_to_grid(struct mged_state *s, fastf_t *view_dx, fastf_t *view_dy)
     fastf_t sf, inv_sf;
     int nh, nv;
 
-    if (DBIP == DBI_NULL ||
+    if (s->dbip == DBI_NULL ||
 	ZERO(grid_state->res_h) ||
 	ZERO(grid_state->res_v))
 	return;
@@ -404,7 +404,7 @@ snap_view_to_grid(struct mged_state *s, fastf_t view_dx, fastf_t view_dy)
     point_t model_pt, view_pt;
     point_t vcenter, diff;
 
-    if (DBIP == DBI_NULL ||
+    if (s->dbip == DBI_NULL ||
 	ZERO(grid_state->res_h) ||
 	ZERO(grid_state->res_v))
 	return;
@@ -438,12 +438,12 @@ update_grids(struct mged_state *s, fastf_t sf)
 	VSCALE(dlp->dm_grid_state->anchor, dlp->dm_grid_state->anchor, sf);
     }
 
-    bu_vls_strcpy(&save_result, Tcl_GetStringResult(INTERP));
+    bu_vls_strcpy(&save_result, Tcl_GetStringResult(s->interp));
 
     bu_vls_printf(&cmd, "grid_control_update %lf\n", sf);
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 
-    Tcl_SetResult(INTERP, bu_vls_addr(&save_result), TCL_VOLATILE);
+    Tcl_SetResult(s->interp, bu_vls_addr(&save_result), TCL_VOLATILE);
 
     bu_vls_free(&save_result);
     bu_vls_free(&cmd);

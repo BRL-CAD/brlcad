@@ -1120,7 +1120,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     switch (arg) {
@@ -1130,12 +1130,12 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case MENU_PIPE_NEXT_PT:
 	    if (!es_pipe_pnt) {
-		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
 		return;
 	    }
 	    next = BU_LIST_NEXT(wdb_pipe_pnt, &es_pipe_pnt->l);
 	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(INTERP, "Current segment is the last\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "Current segment is the last\n", (char *)NULL);
 		return;
 	    }
 	    es_pipe_pnt = next;
@@ -1146,12 +1146,12 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case MENU_PIPE_PREV_PT:
 	    if (!es_pipe_pnt) {
-		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
 		return;
 	    }
 	    prev = BU_LIST_PREV(wdb_pipe_pnt, &es_pipe_pnt->l);
 	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(INTERP, "Current segment is the first\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "Current segment is the first\n", (char *)NULL);
 		return;
 	    }
 	    es_pipe_pnt = prev;
@@ -1165,7 +1165,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case MENU_PIPE_MOV_PT:
 	    if (!es_pipe_pnt) {
-		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
 		es_edflag = IDLE;
 		return;
 	    }
@@ -1176,7 +1176,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	case MENU_PIPE_PT_ID:
 	case MENU_PIPE_PT_RADIUS:
 	    if (!es_pipe_pnt) {
-		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
 		es_edflag = IDLE;
 		return;
 	    }
@@ -1496,7 +1496,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     struct wdb_metaball_pnt *next, *prev;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     switch (arg) {
@@ -1518,12 +1518,12 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case MENU_METABALL_NEXT_PT:
 	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
 		return;
 	    }
 	    next = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
 	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(INTERP, "Current point is the last\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "Current point is the last\n", (char *)NULL);
 		return;
 	    }
 	    es_metaball_pnt = next;
@@ -1534,12 +1534,12 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case MENU_METABALL_PREV_PT:
 	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
 		return;
 	    }
 	    prev = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
 	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(INTERP, "Current point is the first\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "Current point is the first\n", (char *)NULL);
 		return;
 	    }
 	    es_metaball_pnt = prev;
@@ -1550,7 +1550,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case MENU_METABALL_MOV_PT:
 	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
 		es_edflag = IDLE;
 		return;
 	    }
@@ -1560,7 +1560,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
 	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
 		es_edflag = IDLE;
 		return;
 	    }
@@ -1609,7 +1609,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     switch (arg) {
 	default:
-	    Tcl_AppendResult(INTERP, "nmg_ed: undefined menu event?\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "nmg_ed: undefined menu event?\n", (char *)NULL);
 	    return;
 	case ECMD_NMG_EPICK:
 	case ECMD_NMG_EMOVE:
@@ -1618,13 +1618,13 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case ECMD_NMG_EDEBUG:
 	    if (!es_eu) {
-		Tcl_AppendResult(INTERP, "nmg_ed: no edge selected yet\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "nmg_ed: no edge selected yet\n", (char *)NULL);
 		return;
 	    }
 
 	    nmg_pr_fu_around_eu(es_eu, &mged_tol);
 
-	    nmg_plot_eu(s->GEDP, es_eu, &mged_tol);
+	    nmg_plot_eu(s->gedp, es_eu, &mged_tol);
 
 	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
@@ -1633,7 +1633,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    return;
 	case ECMD_NMG_FORW:
 	    if (!es_eu) {
-		Tcl_AppendResult(INTERP, "nmg_ed: no edge selected yet\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "nmg_ed: no edge selected yet\n", (char *)NULL);
 		return;
 	    }
 	    NMG_CK_EDGEUSE(es_eu);
@@ -1645,7 +1645,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -1665,7 +1665,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -1685,7 +1685,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -1724,13 +1724,13 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		}
 
 		if (!wire_loop_count) {
-		    Tcl_AppendResult(INTERP, "No sketch (wire loop) to extrude\n",
+		    Tcl_AppendResult(s->interp, "No sketch (wire loop) to extrude\n",
 				     (char *)NULL);
 		    return;
 		}
 
 		if (wire_loop_count > 1) {
-		    Tcl_AppendResult(INTERP, "Too many wire loops!  Don't know which to extrude!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "Too many wire loops!  Don't know which to extrude!\n", (char *)NULL);
 		    return;
 		}
 
@@ -1743,7 +1743,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		area = nmg_loop_plane_area(lu, lu_pl);
 
 		if (area < 0.0) {
-		    Tcl_AppendResult(INTERP, "Cannot extrude loop with no area\n",
+		    Tcl_AppendResult(s->interp, "Cannot extrude loop with no area\n",
 				     (char *)NULL);
 		    return;
 		}
@@ -1804,7 +1804,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 					      V3ARGS(isect_pt));
 			    }
 
-			    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls),
+			    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls),
 					     (char *)NULL);
 			    bu_vls_free(&tmp_vls);
 			    return;
@@ -1818,7 +1818,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		s_tmp = BU_LIST_FIRST(shell, &r_tmp->s_hd);
 		lu_copy = nmg_dup_loop(lu, &s_tmp->l.magic, (long **)0);
 		if (!lu_copy) {
-		    Tcl_AppendResult(INTERP, "Failed to make copy of loop\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "Failed to make copy of loop\n", (char *)NULL);
 		    nmg_km(m_tmp);
 		    return;
 		}
@@ -2480,7 +2480,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 	    }
 	    /* fall through */
 	default:
-	    Tcl_AppendResult(INTERP, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
 	    VSETALL(mpt, 0.0);
 	    *strp = "(origin)";
 	    break;
@@ -2515,14 +2515,14 @@ init_sedit(struct mged_state *s)
     int type;
     int id;
 
-    if (DBIP == DBI_NULL || !illump)
+    if (s->dbip == DBI_NULL || !illump)
 	return;
 
     /*
      * Check for a processed region or other illegal solid.
      */
     if (illump->s_old.s_Eflag) {
-	Tcl_AppendResult(INTERP,
+	Tcl_AppendResult(s->interp,
 			 "Unable to Solid_Edit a processed region;  select a primitive instead\n", (char *)NULL);
 	return;
     }
@@ -2532,13 +2532,13 @@ init_sedit(struct mged_state *s)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
-			   DBIP, NULL, &rt_uniresource) < 0) {
+			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
-	    Tcl_AppendResult(INTERP, "init_sedit(",
+	    Tcl_AppendResult(s->interp, "init_sedit(",
 		    LAST_SOLID(bdata)->d_namep,
 		    "):  solid import failure\n", (char *)NULL);
 	} else {
-	    Tcl_AppendResult(INTERP, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
 	}
 	rt_db_free_internal(&es_int);
 	return;				/* FAIL */
@@ -2558,7 +2558,7 @@ init_sedit(struct mged_state *s)
 	es_type = type;
 
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol)) {
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&error_msg),
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
 	    rt_db_free_internal(&es_int);
@@ -2579,7 +2579,7 @@ init_sedit(struct mged_state *s)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2612,7 +2612,7 @@ init_sedit(struct mged_state *s)
 
 	bu_vls_strcpy(&vls, "begin_edit_callback ");
 	db_path_to_vls(&vls, &bdata->s_fullpath);
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 }
@@ -2668,15 +2668,15 @@ replot_editing_solid(struct mged_state *s)
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     illdp = LAST_SOLID(bdata);
 
-    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (sp->s_u_data) {
 		bdata = (struct ged_bv_data *)sp->s_u_data;
 		if (LAST_SOLID(bdata) == illdp) {
-		    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+		    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 		    (void)replot_modified_solid(s, sp, &es_int, mat);
 		}
 	    }
@@ -2695,7 +2695,7 @@ transform_editing_solid(
     struct rt_db_internal *is,		/* input solid */
     int freeflag)
 {
-    if (rt_matrix_transform(os, mat, is, freeflag, DBIP, &rt_uniresource) < 0)
+    if (rt_matrix_transform(os, mat, is, freeflag, s->dbip, &rt_uniresource) < 0)
 	bu_exit(EXIT_FAILURE, "transform_editing_solid failed to apply a matrix transform, aborting");
 }
 
@@ -2816,13 +2816,13 @@ get_rotation_vertex(struct mged_state *s)
 		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), arb_vertices[type][loc]);
 
     while (!valid) {
-	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {
-	    Tcl_AppendResult(INTERP, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
+	if (Tcl_Eval(s->interp, bu_vls_addr(&cmd)) != TCL_OK) {
+	    Tcl_AppendResult(s->interp, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
 	    /* Using default */
 	    return arb_vertices[type][loc];
 	}
 
-	vertex = atoi(Tcl_GetVar(INTERP, "vertex_num", TCL_GLOBAL_ONLY));
+	vertex = atoi(Tcl_GetVar(s->interp, "vertex_num", TCL_GLOBAL_ONLY));
 	for (j=0; j<4; j++) {
 	    if (vertex==arb_vertices[type][loc+j])
 		valid = 1;
@@ -2853,7 +2853,7 @@ get_file_name(struct mged_state *s, char *str)
 	while (ptr1 != fptr)
 	    *ptr2++ = *ptr1++;
 	*ptr2 = '\0';
-	Tcl_SetVar(INTERP, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
 	bu_free((void *)dir, "get_file_name: directory string");
     }
 
@@ -2865,12 +2865,12 @@ get_file_name(struct mged_state *s, char *str)
     }
     bu_vls_free(&varname_vls);
 
-    if (Tcl_Eval(INTERP, bu_vls_addr(&cmd))) {
+    if (Tcl_Eval(s->interp, bu_vls_addr(&cmd))) {
 	bu_vls_free(&cmd);
 	return (char *)NULL;
-    } else if (Tcl_GetStringResult(INTERP)[0] != '\0') {
+    } else if (Tcl_GetStringResult(s->interp)[0] != '\0') {
 	bu_vls_free(&cmd);
-	return Tcl_GetStringResult(INTERP);
+	return Tcl_GetStringResult(s->interp);
     } else {
 	bu_vls_free(&cmd);
     }
@@ -3720,7 +3720,7 @@ pscale(struct mged_state *s)
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
 	    {
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
@@ -3737,7 +3737,7 @@ pscale(struct mged_state *s)
 	case MENU_PIPE_PT_ID:	/* scale ID of one pipe segment */
 	    {
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
@@ -3754,7 +3754,7 @@ pscale(struct mged_state *s)
 	case MENU_PIPE_PT_RADIUS:	/* scale bend radius at selected point */
 	    {
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
@@ -3786,7 +3786,7 @@ pscale(struct mged_state *s)
 			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC) {
-			Tcl_AppendResult(INTERP, "Entire pipe solid has zero OD!\n", (char *)NULL);
+			Tcl_AppendResult(s->interp, "Entire pipe solid has zero OD!\n", (char *)NULL);
 			return;
 		    }
 
@@ -3913,7 +3913,7 @@ pscale(struct mged_state *s)
 	case MENU_METABALL_PT_SET_GOO:
 	    {
 		if (!es_metaball_pnt || !inpara) {
-		    Tcl_AppendResult(INTERP, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
 		    return;
 		}
 		es_metaball_pnt->sweat *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
@@ -3922,7 +3922,7 @@ pscale(struct mged_state *s)
 	case MENU_METABALL_PT_FLDSTR:
 	    {
 		if (!es_metaball_pnt || !inpara) {
-		    Tcl_AppendResult(INTERP, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
 		    return;
 		}
 		es_metaball_pnt->fldstr *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
@@ -3957,7 +3957,7 @@ sedit(struct mged_state *s)
     mat_t edit;
     point_t rot_point;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     sedraw = 0;
@@ -3996,7 +3996,7 @@ sedit(struct mged_state *s)
 
 		if (stat(fname, &stat_buf)) {
 		    bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-		    Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+		    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 		    bu_vls_free(&message);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
@@ -4005,7 +4005,7 @@ sedit(struct mged_state *s)
 		need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
 		if (stat_buf.st_size < need_size) {
 		    bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-		    Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+		    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 		    bu_vls_free(&message);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
@@ -4026,13 +4026,13 @@ sedit(struct mged_state *s)
 
 		if (inpara == 2) {
 		    if (stat(ebm->name, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
+			Tcl_AppendResult(s->interp, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
 			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", ebm->name,
+			Tcl_AppendResult(s->interp, "File (", ebm->name,
 					 ") is too small, set data source name first", (char *)NULL);
 			mged_print_result(s, TCL_ERROR);
 			return;
@@ -4040,7 +4040,7 @@ sedit(struct mged_state *s)
 		    ebm->xdim = es_para[0];
 		    ebm->ydim = es_para[1];
 		} else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP, "width and length of data source are required\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "width and length of data source are required\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
@@ -4063,7 +4063,7 @@ sedit(struct mged_state *s)
 
 		    if (stat(fname, &stat_buf)) {
 			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
 			mged_print_result(s, TCL_ERROR);
 			return;
@@ -4071,7 +4071,7 @@ sedit(struct mged_state *s)
 		    need_size = ebm->xdim * ebm->ydim * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
 			bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
 			mged_print_result(s, TCL_ERROR);
 			return;
@@ -4092,7 +4092,7 @@ sedit(struct mged_state *s)
 		if (inpara == 1)
 		    ebm->tallness = es_para[0];
 		else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP,
+		    Tcl_AppendResult(s->interp,
 				     "extrusion depth required\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
@@ -4114,7 +4114,7 @@ sedit(struct mged_state *s)
 		if (inpara == 3) {
 		    VMOVE(vol->cellsize, es_para);
 		} else if (inpara > 0 && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x, y, and z cell sizes are required\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x, y, and z cell sizes are required\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
 		} else if (es_scale > 0.0) {
@@ -4135,13 +4135,13 @@ sedit(struct mged_state *s)
 
 		if (inpara == 3) {
 		    if (stat(vol->name, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of file ", vol->name, (char *)NULL);
+			Tcl_AppendResult(s->interp, "Cannot get status of file ", vol->name, (char *)NULL);
 			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * es_para[2] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", vol->name,
+			Tcl_AppendResult(s->interp, "File (", vol->name,
 					 ") is too small, set file name first", (char *)NULL);
 			mged_print_result(s, TCL_ERROR);
 			return;
@@ -4150,7 +4150,7 @@ sedit(struct mged_state *s)
 		    vol->ydim = es_para[1];
 		    vol->zdim = es_para[2];
 		} else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP, "x, y, and z file sizes are required\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x, y, and z file sizes are required\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
@@ -4225,7 +4225,7 @@ sedit(struct mged_state *s)
 
 		    if (stat(fname, &stat_buf)) {
 			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
 			mged_print_result(s, TCL_ERROR);
 			return;
@@ -4233,7 +4233,7 @@ sedit(struct mged_state *s)
 		    need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
 			bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
 			mged_print_result(s, TCL_ERROR);
 			return;
@@ -4257,17 +4257,17 @@ sedit(struct mged_state *s)
 		old_mode = bot->mode;
 		sprintf(mode, " %d", old_mode - 1);
 		if (dm_get_pathname(DMP)) {
-		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
+		    ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_mode_radio ",
 			    bu_vls_addr(dm_get_pathname(DMP)), " _bot_mode_result",
 			    " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
 			    " { surface volume plate plate/nocosine }",
 			    " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
 		}
 		if (ret_tcl != TCL_OK) {
-		    Tcl_AppendResult(INTERP, "Mode selection failed!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "Mode selection failed!\n", (char *)NULL);
 		    break;
 		}
-		radio_result = Tcl_GetVar(INTERP, "_bot_mode_result", TCL_GLOBAL_ONLY);
+		radio_result = Tcl_GetVar(s->interp, "_bot_mode_result", TCL_GLOBAL_ONLY);
 		bot->mode = atoi(radio_result) + 1;
 		if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
 		    if (old_mode != RT_BOT_PLATE && old_mode != RT_BOT_PLATE_NOCOS) {
@@ -4297,17 +4297,17 @@ sedit(struct mged_state *s)
 		RT_BOT_CK_MAGIC(bot);
 		sprintf(orient, " %d", bot->orientation - 1);
 		if (dm_get_pathname(DMP)) {
-		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
+		    ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_orient_radio ",
 			    bu_vls_addr(dm_get_pathname(DMP)), " _bot_orient_result",
 			    " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
 			    " { none right-hand-rule left-hand-rule }",
 			    " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
 		}
 		if (ret_tcl != TCL_OK) {
-		    Tcl_AppendResult(INTERP, "Face orientation selection failed!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "Face orientation selection failed!\n", (char *)NULL);
 		    break;
 		}
-		radio_result = Tcl_GetVar(INTERP, "_bot_orient_result", TCL_GLOBAL_ONLY);
+		radio_result = Tcl_GetVar(s->interp, "_bot_orient_result", TCL_GLOBAL_ONLY);
 		bot->orientation = atoi(radio_result) + 1;
 	    }
 	    break;
@@ -4321,11 +4321,11 @@ sedit(struct mged_state *s)
 		RT_BOT_CK_MAGIC(bot);
 
 		if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-		    if (Tcl_VarEval(INTERP, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+		    if (Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 				    "{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 				    (char *)NULL) != TCL_OK)
 		    {
-			bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(INTERP));
+			bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(s->interp));
 		    }
 		    break;
 		}
@@ -4335,11 +4335,11 @@ sedit(struct mged_state *s)
 		    if (!inpara)
 			break;
 
-		    (void)Tcl_VarEval(INTERP, "cad_dialog ", ".bot_err ",
+		    (void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 				      "$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
 				      "{No face is selected, so this operation will modify all the faces in this BOT} ",
 				      "\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
-		    if (atoi(Tcl_GetStringResult(INTERP)))
+		    if (atoi(Tcl_GetStringResult(s->interp)))
 			break;
 
 		    for (i=0; i<bot->num_faces; i++)
@@ -4390,7 +4390,7 @@ sedit(struct mged_state *s)
 		}
 
 		if (dm_get_pathname(DMP)) {
-		    ret_tcl = Tcl_VarEval(INTERP,
+		    ret_tcl = Tcl_VarEval(s->interp,
 			    "cad_list_buts",
 			    " .bot_list_flags ",
 			    bu_vls_addr(dm_get_pathname(DMP)),
@@ -4403,10 +4403,10 @@ sedit(struct mged_state *s)
 			    (char *)NULL);
 		}
 		if (ret_tcl != TCL_OK) {
-		    bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(INTERP));
+		    bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(s->interp));
 		    break;
 		}
-		dialog_result = Tcl_GetVar(INTERP, "_bot_flags_result", TCL_GLOBAL_ONLY);
+		dialog_result = Tcl_GetVar(s->interp, "_bot_flags_result", TCL_GLOBAL_ONLY);
 
 		if (dialog_result[0] == '1') {
 		    bot->bot_flags |= RT_BOT_USE_NORMALS;
@@ -4433,7 +4433,7 @@ sedit(struct mged_state *s)
 		RT_BOT_CK_MAGIC(bot);
 
 		if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-		    (void)Tcl_VarEval(INTERP, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+		    (void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 				      "{Cannot edit face mode in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 				      (char *)NULL);
 		    break;
@@ -4441,11 +4441,11 @@ sedit(struct mged_state *s)
 
 		if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
 		    /* setting mode for all faces */
-		    (void)Tcl_VarEval(INTERP, "cad_dialog ", ".bot_err ",
+		    (void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 				      "$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
 				      "{No face is selected, so this operation will modify all the faces in this BOT} ",
 				      "\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
-		    if (atoi(Tcl_GetStringResult(INTERP)))
+		    if (atoi(Tcl_GetStringResult(s->interp)))
 			break;
 
 		    face_state = -2;
@@ -4475,7 +4475,7 @@ sedit(struct mged_state *s)
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
 		if (dm_get_pathname(DMP)) {
-		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
+		    ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
 			    " _bot_fmode_result ", "\"BOT Face Mode\"",
 			    " \"Select the desired face mode\"", fmode,
 			    " { {Thickness centered about hit point} {Thickness appended to hit point} }",
@@ -4483,10 +4483,10 @@ sedit(struct mged_state *s)
 			    (char *)NULL);
 		}
 		if (ret_tcl != TCL_OK) {
-		    bu_log("ERROR: cad_radio: %s\n", Tcl_GetStringResult(INTERP));
+		    bu_log("ERROR: cad_radio: %s\n", Tcl_GetStringResult(s->interp));
 		    break;
 		}
-		radio_result = Tcl_GetVar(INTERP, "_bot_fmode_result", TCL_GLOBAL_ONLY);
+		radio_result = Tcl_GetVar(s->interp, "_bot_fmode_result", TCL_GLOBAL_ONLY);
 
 		if (face_state > -1) {
 		    if (atoi(radio_result))
@@ -4575,19 +4575,19 @@ sedit(struct mged_state *s)
 
 		bu_vls_printf(&tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS",
 			      extr->sketch_name);
-		ret_tcl = Tcl_Eval(INTERP, bu_vls_addr(&tcl_cmd));
+		ret_tcl = Tcl_Eval(s->interp, bu_vls_addr(&tcl_cmd));
 		if (ret_tcl != TCL_OK) {
-		    bu_log("ERROR: %s\n", Tcl_GetStringResult(INTERP));
+		    bu_log("ERROR: %s\n", Tcl_GetStringResult(s->interp));
 		    bu_vls_free(&tcl_cmd);
 		    break;
 		}
 
-		if (atoi(Tcl_GetStringResult(INTERP)) == 1)
+		if (atoi(Tcl_GetStringResult(s->interp)) == 1)
 		    break;
 
 		bu_vls_free(&tcl_cmd);
 
-		sketch_name = Tcl_GetVar(INTERP, "final_sketch_name", TCL_GLOBAL_ONLY);
+		sketch_name = Tcl_GetVar(s->interp, "final_sketch_name", TCL_GLOBAL_ONLY);
 		if (extr->sketch_name)
 		    bu_free((char *)extr->sketch_name, "extr->sketch_name");
 		extr->sketch_name = bu_strdup(sketch_name);
@@ -4602,14 +4602,14 @@ sedit(struct mged_state *s)
 		    rt_db_free_internal(&tmp_ip);
 		}
 
-		if ((dp = db_lookup(DBIP, sketch_name, 0)) == RT_DIR_NULL) {
+		if ((dp = db_lookup(s->dbip, sketch_name, 0)) == RT_DIR_NULL) {
 		    bu_log("Warning: %s does not exist!\n",
 			   sketch_name);
 		    extr->skt = (struct rt_sketch_internal *)NULL;
 		} else {
 		    /* import the new sketch */
 
-		    if (rt_db_get_internal(&tmp_ip, dp, DBIP, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+		    if (rt_db_get_internal(&tmp_ip, dp, s->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 			bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
 			       sketch_name);
 			extr->skt = (struct rt_sketch_internal *)NULL;
@@ -4637,7 +4637,7 @@ sedit(struct mged_state *s)
 
 		/* check for zero H vector */
 		if (MAGNITUDE(extr->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
+		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    VSET(extr->h, 0.0, 0.0, 1.0);
@@ -4685,7 +4685,7 @@ sedit(struct mged_state *s)
 		    mmenu_set(s, MENU_L1, which_menu[es_type+6]);
 		    break;
 		default:
-		    Tcl_AppendResult(INTERP, "Bad menu item.\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "Bad menu item.\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
 	    }
@@ -4723,7 +4723,7 @@ sedit(struct mged_state *s)
 
 	    /* special case for arb7 */
 	    if (es_type == ARB7  && pnt5) {
-		Tcl_AppendResult(INTERP, "\nFixed vertex is point 5.\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "\nFixed vertex is point 5.\n", (char *)NULL);
 		fixv = 5;
 	    } else {
 		fixv = get_rotation_vertex(s);
@@ -4797,7 +4797,7 @@ sedit(struct mged_state *s)
 		    es_peqn[es_menu][1] = cos(fb_a) * sin(rota);
 		    es_peqn[es_menu][2] = sin(fb_a);
 		} else {
-		    Tcl_AppendResult(INTERP, "Must be < rot fb | xdeg ydeg zdeg >\n",
+		    Tcl_AppendResult(s->interp, "Must be < rot fb | xdeg ydeg zdeg >\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
@@ -5015,7 +5015,7 @@ sedit(struct mged_state *s)
 		}
 		/* check for zero H vector */
 		if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
+		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    VSET(cli->h, 0.0, 0.0, 1.0);
@@ -5046,7 +5046,7 @@ sedit(struct mged_state *s)
 
 		/* check for zero H vector */
 		if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
+		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    VSET(tgc->h, 0.0, 0.0, 1.0);
@@ -5094,7 +5094,7 @@ sedit(struct mged_state *s)
 
 		/* check for zero H vector */
 		if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
+		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    VSET(tgc->h, 0.0, 0.0, 1.0);
@@ -5477,7 +5477,7 @@ sedit(struct mged_state *s)
 		point_t new_pt;
 
 		if (!es_eu) {
-		    Tcl_AppendResult(INTERP, "No edge selected!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
@@ -5493,7 +5493,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for edge move\n",
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for edge move\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
@@ -5525,7 +5525,7 @@ sedit(struct mged_state *s)
 			/* intersect line through new_pt with plane of loop */
 			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
-			    Tcl_AppendResult(INTERP, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
+			    Tcl_AppendResult(s->interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
 			    mged_print_result(s, TCL_ERROR);
 			    break;
 			}
@@ -5545,7 +5545,7 @@ sedit(struct mged_state *s)
 		struct edge_g_lseg *eg;
 
 		if (!es_eu) {
-		    Tcl_AppendResult(INTERP, "No edge selected!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
@@ -5562,7 +5562,7 @@ sedit(struct mged_state *s)
 
 		    if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 			/* Currently can only kill wire edges or edges in wire loops */
-			Tcl_AppendResult(INTERP, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
+			Tcl_AppendResult(s->interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
 			mged_print_result(s, TCL_ERROR);
 			es_edflag = IDLE;
 			break;
@@ -5579,7 +5579,7 @@ sedit(struct mged_state *s)
 			    /* refuse to delete last edge that runs
 			     * to/from same vertex
 			     */
-			    Tcl_AppendResult(INTERP, "Cannot delete last edge running to/from same vertex\n", (char *)NULL);
+			    Tcl_AppendResult(s->interp, "Cannot delete last edge running to/from same vertex\n", (char *)NULL);
 			    mged_print_result(s, TCL_ERROR);
 			    break;
 			}
@@ -5626,7 +5626,7 @@ sedit(struct mged_state *s)
 		plane_t pl;
 
 		if (!es_eu) {
-		    Tcl_AppendResult(INTERP, "No edge selected!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
@@ -5643,7 +5643,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for edge split\n",
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for edge split\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
@@ -5658,7 +5658,7 @@ sedit(struct mged_state *s)
 
 		    /* Currently, can only split wire edges or edges in wire loops */
 		    if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
-			Tcl_AppendResult(INTERP, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
+			Tcl_AppendResult(s->interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
 			es_edflag = IDLE;
 			mged_print_result(s, TCL_ERROR);
 			break;
@@ -5678,7 +5678,7 @@ sedit(struct mged_state *s)
 			/* intersect line through new_pt with plane of loop */
 			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
-			    Tcl_AppendResult(INTERP, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
+			    Tcl_AppendResult(s->interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
 			    mged_print_result(s, TCL_ERROR);
 			    break;
 			}
@@ -5717,7 +5717,7 @@ sedit(struct mged_state *s)
 		} else if (inpara == 1) {
 		    VJOIN1(to_pt, lu_keypoint, es_para[0], lu_pl);
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for loop extrusion\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for loop extrusion\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
@@ -5727,7 +5727,7 @@ sedit(struct mged_state *s)
 		VSUB2(extrude_vec, to_pt, lu_keypoint);
 
 		if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &mged_tol) < 1) {
-		    Tcl_AppendResult(INTERP, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
@@ -5743,7 +5743,7 @@ sedit(struct mged_state *s)
 		new_lu = nmg_dup_loop(lu_copy, &es_s->l.magic, (long **)0);
 		area = nmg_loop_plane_area(new_lu, new_lu_pl);
 		if (area < 0.0) {
-		    Tcl_AppendResult(INTERP, "loop to be extruded as no area!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "loop to be extruded as no area!\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
@@ -5793,7 +5793,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for segment selection\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment selection\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
@@ -5801,7 +5801,7 @@ sedit(struct mged_state *s)
 
 		es_pipe_pnt = find_pipe_pnt_nearest_pnt(&pipeip->pipe_segs_head, new_pt);
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "No PIPE segment selected\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No PIPE segment selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		} else
 		    rt_pipe_pnt_print(es_pipe_pnt, base2local);
@@ -5825,14 +5825,14 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for segment split\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment split\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
 
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
@@ -5858,14 +5858,14 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for segment movement\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment movement\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
 
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
@@ -5891,7 +5891,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for 'append segment'\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for 'append segment'\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
@@ -5918,7 +5918,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
@@ -5930,7 +5930,7 @@ sedit(struct mged_state *s)
 	case ECMD_PIPE_PT_DEL:
 	    {
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
@@ -5971,7 +5971,7 @@ sedit(struct mged_state *s)
 			VMOVE(pick_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for 'pick point'\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for 'pick point'\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
@@ -5987,7 +5987,7 @@ sedit(struct mged_state *s)
 		       es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		mged_print_result(s, TCL_ERROR);
 		bu_vls_free(&tmp_vls);
 	    }
@@ -6011,7 +6011,7 @@ sedit(struct mged_state *s)
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
@@ -6036,7 +6036,7 @@ sedit(struct mged_state *s)
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
@@ -6061,7 +6061,7 @@ sedit(struct mged_state *s)
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
@@ -6086,7 +6086,7 @@ sedit(struct mged_state *s)
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
@@ -6316,7 +6316,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
@@ -6369,7 +6369,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
@@ -6421,7 +6421,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
@@ -6465,7 +6465,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
@@ -6485,7 +6485,7 @@ sedit(struct mged_state *s)
 		RT_BOT_CK_MAGIC(bot);
 
 		if (bot_verts[0] < 0 || bot_verts[1] < 0) {
-		    Tcl_AppendResult(INTERP, "No BOT edge selected\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No BOT edge selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
@@ -6506,7 +6506,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
@@ -6529,7 +6529,7 @@ sedit(struct mged_state *s)
 		RT_BOT_CK_MAGIC(bot);
 
 		if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
-		    Tcl_AppendResult(INTERP, "No BOT triangle selected\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No BOT triangle selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
@@ -6547,7 +6547,7 @@ sedit(struct mged_state *s)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
@@ -6583,7 +6583,7 @@ sedit(struct mged_state *s)
 		} else if (inpara == 3) {
 		    VMOVE(new_pt, es_para);
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for control point selection\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for control point selection\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
@@ -6613,7 +6613,7 @@ sedit(struct mged_state *s)
 		es_metaball_pnt = nearest;
 
 		if (!es_metaball_pnt) {
-		    Tcl_AppendResult(INTERP, "No METABALL control point selected\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "No METABALL control point selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		} else {
 		    rt_metaball_pnt_print(es_metaball_pnt, base2local);
@@ -6674,7 +6674,7 @@ sedit(struct mged_state *s)
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", es_edflag);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		mged_print_result(s, TCL_ERROR);
 		bu_vls_free(&tmp_vls);
 	    }
@@ -6688,7 +6688,7 @@ sedit(struct mged_state *s)
 	RT_ARB_CK_MAGIC(arb);
 
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&error_msg), (char *)0);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }
 
@@ -6704,7 +6704,7 @@ sedit(struct mged_state *s)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "active_edit_callback");
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 
@@ -6940,7 +6940,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 		tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_gvp->gv_model2view);
 		if (tmp_vert < 0) {
-		    Tcl_AppendResult(INTERP, "ECMD_BOT_PICKV: unable to find a vertex!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "ECMD_BOT_PICKV: unable to find a vertex!\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
@@ -6950,7 +6950,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		bot_verts[2] = -1;
 		VSCALE(selected_pt, &bot->vertices[tmp_vert*3], base2local);
 		sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
-		Tcl_AppendResult(INTERP, tmp_msg, (char *)NULL);
+		Tcl_AppendResult(s->interp, tmp_msg, (char *)NULL);
 		mged_print_result(s, TCL_OK);
 	    }
 	    break;
@@ -6968,7 +6968,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		pos_view[Y] = mousevec[Y];
 
 		if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, view_state->vs_gvp->gv_model2view)) {
-		    Tcl_AppendResult(INTERP, "ECMD_BOT_PICKE: unable to find an edge!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "ECMD_BOT_PICKE: unable to find an edge!\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
@@ -6979,7 +6979,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		VSCALE(from_pt, &bot->vertices[vert1*3], base2local);
 		VSCALE(to_pt, &bot->vertices[vert2*3], base2local);
 		sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
-		Tcl_AppendResult(INTERP, tmp_msg, (char *)NULL);
+		Tcl_AppendResult(s->interp, tmp_msg, (char *)NULL);
 		mged_print_result(s, TCL_OK);
 	    }
 	    break;
@@ -7028,14 +7028,14 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		    sscanf(bu_vls_addr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
 		    bu_vls_free(&vls);
 		} else {
-		    Tcl_LinkVar(INTERP, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
-		    Tcl_LinkVar(INTERP, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT);
-		    Tcl_LinkVar(INTERP, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT);
+		    Tcl_LinkVar(s->interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
+		    Tcl_LinkVar(s->interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT);
+		    Tcl_LinkVar(s->interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT);
 
-		    ret_tcl = Tcl_VarEval(INTERP, "bot_face_select ", bu_vls_addr(&vls), (char *)NULL);
+		    ret_tcl = Tcl_VarEval(s->interp, "bot_face_select ", bu_vls_addr(&vls), (char *)NULL);
 		    bu_vls_free(&vls);
 		    if (ret_tcl != TCL_OK) {
-			bu_log("bot_face_select failed: %s\n", Tcl_GetStringResult(INTERP));
+			bu_log("bot_face_select failed: %s\n", Tcl_GetStringResult(s->interp));
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
@@ -7065,7 +7065,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		pos_view[Y] = mousevec[Y];
 		if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
 						view_state->vs_gvp->gv_model2view, &RTG.rtg_vlfree, &tmp_tol)) == (struct edge *)NULL) {
-		    Tcl_AppendResult(INTERP, "ECMD_NMG_EPICK: unable to find an edge\n",
+		    Tcl_AppendResult(s->interp, "ECMD_NMG_EPICK: unable to find an edge\n",
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
@@ -7080,7 +7080,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 				  "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 				  (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 				  V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
@@ -7115,7 +7115,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 	    break;
 	default:
-	    Tcl_AppendResult(INTERP, "mouse press undefined in this solid edit mode\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
     }
@@ -7248,7 +7248,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 	update_edit_absolute_tran(pos_view);
     } else {
-	Tcl_AppendResult(INTERP, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
 	return;
     }
 }
@@ -7325,7 +7325,7 @@ vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, co
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     BU_CK_VLS(vp);
@@ -7336,10 +7336,10 @@ vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, co
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
 	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, base2local) < 0)
-	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "vls_solid: describe error\n", (char *)NULL);
     } else {
 	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, base2local) < 0)
-	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "vls_solid: describe error\n", (char *)NULL);
     }
 
     if (id == ID_PIPE && es_pipe_pnt) {
@@ -7375,7 +7375,7 @@ init_oedit_guts(struct mged_state *s)
     es_edflag = -1;
     MAT_IDN(es_mat);
 
-    if (DBIP == DBI_NULL || !illump) {
+    if (s->dbip == DBI_NULL || !illump) {
 	return;
     }
 
@@ -7396,13 +7396,13 @@ init_oedit_guts(struct mged_state *s)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
-			   DBIP, NULL, &rt_uniresource) < 0) {
+			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
-	    Tcl_AppendResult(INTERP, "init_oedit(",
+	    Tcl_AppendResult(s->interp, "init_oedit(",
 		    LAST_SOLID(bdata)->d_namep,
 		    "):  solid import failure\n", (char *)NULL);
 	} else {
-	    Tcl_AppendResult(INTERP, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
 	}
 	rt_db_free_internal(&es_int);
 	button(s, BE_REJECT);
@@ -7421,7 +7421,7 @@ init_oedit_guts(struct mged_state *s)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7474,7 +7474,7 @@ init_oedit(struct mged_state *s)
 
     /* begin edit callback */
     bu_vls_strcpy(&vls, "begin_edit_callback {}");
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -7515,7 +7515,7 @@ oedit_apply(struct mged_state *s, int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, topm, ipathpos-1, &rt_uniresource);
+	    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
@@ -7537,8 +7537,8 @@ oedit_apply(struct mged_state *s, int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -7563,14 +7563,14 @@ oedit_accept(struct mged_state *s)
     struct display_list *next_gdlp;
     struct bv_scene_obj *sp;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
-    if (DBIP->dbi_read_only) {
+    if (s->dbip->dbi_read_only) {
 	oedit_reject();
 
-	gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -7736,8 +7736,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* Scale change on export is 1.0 -- no change */
-    if (rt_db_put_internal(dp, DBIP, &es_int, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, "sedit_apply(", dp->d_namep,
+    if (rt_db_put_internal(dp, s->dbip, &es_int, &rt_uniresource) < 0) {
+	Tcl_AppendResult(s->interp, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
 	    rt_db_free_internal(&es_int);
@@ -7756,8 +7756,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	/* XXX hack to restore es_int after rt_db_put_internal blows it away */
 	/* Read solid description into es_int again! Gaak! */
 	if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
-			       DBIP, NULL, &rt_uniresource) < 0) {
-	    Tcl_AppendResult(INTERP, "sedit_apply(",
+			       s->dbip, NULL, &rt_uniresource) < 0) {
+	    Tcl_AppendResult(s->interp, "sedit_apply(",
 			     LAST_SOLID(bdata)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
 	    rt_db_free_internal(&es_int);
@@ -7773,13 +7773,13 @@ sedit_apply(struct mged_state *s, int accept_flag)
 void
 sedit_accept(struct mged_state *s)
 {
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     if (not_state(s, ST_S_EDIT, "Solid edit accept"))
 	return;
 
-    if (DBIP->dbi_read_only) {
+    if (s->dbip->dbi_read_only) {
 	sedit_reject(s);
 	bu_log("Sorry, this database is READ-ONLY\n");
 	pr_prompt(interactive);
@@ -7828,8 +7828,8 @@ sedit_reject(struct mged_state *s)
 	    return;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
-	gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -9130,7 +9130,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	return TCL_ERROR;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
-			   DBIP, NULL, &rt_uniresource) < 0) {
+			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(interp, "sedit_reset(",
 		    LAST_SOLID(bdata)->d_namep,
@@ -9265,7 +9265,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);

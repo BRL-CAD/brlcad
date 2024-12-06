@@ -90,8 +90,8 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (not_state(s, ST_VIEW, "Presented Area Calculation") == TCL_ERROR)
 	return TCL_ERROR;
 
-    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -107,8 +107,8 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -198,8 +198,8 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
      * Write out rotated but unclipped, untranslated,
      * and unscaled vectors
      */
-    gdlp = BU_LIST_NEXT(display_list, s->GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -248,7 +248,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     fclose(fp_w);
 
     Tcl_AppendResult(interp, "Presented area from this viewpoint, square ",
-		     bu_units_string(DBIP->dbi_local2base), ":\n", (char *)NULL);
+		     bu_units_string(s->dbip->dbi_local2base), ":\n", (char *)NULL);
 
     /* Read result */
     bu_fgets(result, RT_MAXLINE, fp_r);

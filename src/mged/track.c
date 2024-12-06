@@ -310,8 +310,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     for (i=0; i<11; i++) {
 	crname(s, solname, i, sizeof(solname));
 	crname(s, regname, i, sizeof(regname));
-	if ((db_lookup(DBIP, solname, LOOKUP_QUIET) != RT_DIR_NULL)	||
-	    (db_lookup(DBIP, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
+	if ((db_lookup(s->dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL)	||
+	    (db_lookup(s->dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
 	    solname[8] = regname[8] = '\0';
 	    if ((Trackpos += 10) > 500) {
@@ -505,7 +505,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    continue;
 	regname[8] = '\0';
 	crname(s, regname, i, sizeof(regname));
-	if (db_lookup(DBIP, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	if (db_lookup(s->dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 			     regname, "\n", (char *)NULL);
 	    continue;
@@ -514,7 +514,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* Add them all at once */
-    if (mk_comb(WDBP, grpname, &head,
+    if (mk_comb(s->wdbp, grpname, &head,
 		0, NULL, NULL, NULL,
 		0, 0, 0, 0,
 		0, 1, 1) < 0)
@@ -572,17 +572,17 @@ wrobj(struct mged_state *s, char name[], int flags)
     struct rt_db_internal intern;
     int i;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return 0;
 
-    if (db_lookup(DBIP, name, LOOKUP_QUIET) != RT_DIR_NULL) {
-	Tcl_AppendResult(INTERP, "track naming error: ", name,
+    if (db_lookup(s->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
+	Tcl_AppendResult(s->interp, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
 	return -1;
     }
 
     if (flags != RT_DIR_SOLID) {
-	Tcl_AppendResult(INTERP, "wrobj can only write solids, aborting\n");
+	Tcl_AppendResult(s->interp, "wrobj can only write solids, aborting\n");
 	return -1;
     }
 
@@ -628,19 +628,19 @@ wrobj(struct mged_state *s, char name[], int flags)
 	    }
 	    break;
 	default:
-	    Tcl_AppendResult(INTERP, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);
 	    return -1;
     }
 
-    if ((tdp = db_diradd(DBIP, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((tdp = db_diradd(s->dbip, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
-	Tcl_AppendResult(INTERP, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
     }
 
-    if (rt_db_put_internal(tdp, DBIP, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(tdp, s->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	Tcl_AppendResult(INTERP, "wrobj(", name, "):  write error\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "wrobj(", name, "):  write error\n", (char *)NULL);
 	TCL_ERROR_RECOVERY_SUGGESTION;
 	return -1;
     }
@@ -663,7 +663,7 @@ tancir(struct mged_state *s, fastf_t *cir1, fastf_t *cir2)
     if (mag > 1.0e-20 || mag < -1.0e-20) {
 	f = 1.0/mag;
     } else {
-	Tcl_AppendResult(INTERP, "tancir():  0-length vector!\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "tancir():  0-length vector!\n", (char *)NULL);
 	return;
     }
     VSCALE(work, work, f);
@@ -875,7 +875,7 @@ crregion(struct mged_state *s, char *region, char *op, int *members, int number,
     int i;
     struct bu_list head;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     BU_LIST_INIT(&head);
@@ -883,14 +883,14 @@ crregion(struct mged_state *s, char *region, char *op, int *members, int number,
     for (i=0; i<number; i++) {
 	solidname[8] = '\0';
 	crname(s, solidname, members[i], maxlen);
-	if (db_lookup(DBIP, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
-	    Tcl_AppendResult(INTERP, "region: ", region, " will skip member: ",
+	if (db_lookup(s->dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    Tcl_AppendResult(s->interp, "region: ", region, " will skip member: ",
 			     solidname, "\n", (char *)NULL);
 	    continue;
 	}
 	mk_addmember(solidname, &head, NULL, op[i]);
     }
-    (void)mk_comb(WDBP, region, &head,
+    (void)mk_comb(s->wdbp, region, &head,
 		  1, NULL, NULL, NULL,
 		  500+Trackpos+i, 0, mat_default, los_default,
 		  0, 1, 1);
@@ -914,7 +914,7 @@ track_itoa(struct mged_state *s, int n, char *cs, int w)
      */
     for (j = i; j < w; j++) cs[j] = ' ';
     if (i > w)
-	Tcl_AppendResult(INTERP, "track_itoa: field length too small\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "track_itoa: field length too small\n", (char *)NULL);
     cs[w] = '\0';
     /* reverse the array
      */
