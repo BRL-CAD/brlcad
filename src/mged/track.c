@@ -59,6 +59,7 @@ void bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void top(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void crregion(struct mged_state *s, char *region, char *op, const int *members, int number, char *solidname, int maxlen, int los_default, int mat_default);
 static void track_itoa(struct mged_state *s, int n, char *cs, int w);
+int wrobj(struct mged_state *s, char name[], int flags);
 
 /*
  * adds track given "wheel" info

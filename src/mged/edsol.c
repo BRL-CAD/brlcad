@@ -60,6 +60,8 @@ static void arb5_mv_face(struct mged_state *, int, int, int), arb4_mv_face(struc
 static void arb6_rot_face(struct mged_state *, int, int, int), arb5_rot_face(struct mged_state *, int, int, int), arb4_rot_face(struct mged_state *, int, int, int), arb_control(struct mged_state *, int, int, int);
 static void init_sedit_vars(void), init_oedit_vars(void), init_oedit_guts(struct mged_state *);
 
+int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
+
 point_t e_axes_pos;
 point_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */

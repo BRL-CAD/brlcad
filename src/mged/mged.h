@@ -422,7 +422,6 @@ int get_editor_string(struct mged_state *s, struct bu_vls *editstring);
 
 /* titles.c */
 void create_text_overlay(struct mged_state *s, struct bu_vls *vp);
-void screen_vls(int xbase, int ybase, struct bu_vls *vp);
 void dotitles(struct mged_state *s, struct bu_vls *overlay_vls);
 
 /* rect.c */
@@ -434,10 +433,6 @@ void set_rect(const struct bu_structparse *, const char *, void *, const char *,
 void rect_view2image(void);
 void rect_image2view(void);
 void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
-
-
-/* track.c */
-int wrobj(struct mged_state *s, char name[], int flags);
 
 /* edsol.c */
 extern int inpara;	/* parameter input from keyboard flag */
@@ -458,28 +453,12 @@ void oedit_abs_scale(struct mged_state *s);
 void oedit_accept(struct mged_state *s);
 void oedit_reject(void);
 void objedit_mouse(struct mged_state *s, const vect_t mousevec);
-extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt, const mat_t mat);
 void label_edited_solid(int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
 void init_oedit(struct mged_state *s);
 void init_sedit(struct mged_state *s);
 
 /* share.c */
 void usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2);
-
-/* inside.c */
-int torin(struct rt_db_internal *ip, fastf_t thick[6]);
-int tgcin(struct rt_db_internal *ip, fastf_t thick[6]);
-int rhcin(struct rt_db_internal *ip, fastf_t thick[4]);
-int rpcin(struct rt_db_internal *ip, fastf_t thick[4]);
-int partin(struct rt_db_internal *ip, fastf_t *thick);
-int nmgin(struct rt_db_internal *ip, fastf_t thick);
-
-/* cgtype is # of points, 4..8 */
-int arbin(struct rt_db_internal *ip, fastf_t thick[6], int face, int cgtype, plane_t planes[6]);
-int ehyin(struct rt_db_internal *ip, fastf_t thick[2]);
-int ellgin(struct rt_db_internal *ip, fastf_t thick[6]);
-int epain(struct rt_db_internal *ip, fastf_t thick[2]);
-int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
 extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
@@ -507,9 +486,6 @@ void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_p
 /* vparse.c */
 extern void mged_vls_struct_parse(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */
 extern void mged_vls_struct_parse_old(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, char *structp, int argc, const char *argv[]);
-
-/* rtif.c */
-int build_tops(char **start, char **end);
 
 /* mater.c */
 void mged_color_soltab(struct mged_state *s);
