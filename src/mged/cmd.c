@@ -58,18 +58,6 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-struct funtab {
-    char *ft_name;
-    char *ft_parms;
-    char *ft_comment;
-    int (*ft_func)(int, const char **);
-    int ft_min;
-    int ft_max;
-    int tcl_converted;
-};
-
-
-
 extern void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
 extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
