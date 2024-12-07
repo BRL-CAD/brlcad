@@ -320,17 +320,6 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n"
     }
 
 
-struct funtab {
-    char *ft_name;
-    char *ft_parms;
-    char *ft_comment;
-    int (*ft_func)(int, const char **);
-    int ft_min;
-    int ft_max;
-    int tcl_converted;
-};
-
-
 struct mged_hist {
     struct bu_list l;
     struct bu_vls mh_command;
@@ -406,7 +395,6 @@ extern void view_ring_destroy(struct mged_dm *dlp);
 
 /* cmd.c */
 int cmdline(struct mged_state *s, struct bu_vls *vp, int record);
-int mged_cmd(struct mged_state *s, int argc, const char *argv[], struct funtab in_functions[]);
 void mged_print_result(struct mged_state *s, int status);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);

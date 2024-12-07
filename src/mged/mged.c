@@ -2342,12 +2342,8 @@ main(int argc, char *argv[])
 
     /* If this is an argv[] invocation, do it now */
     if (argc > 1) {
-	/* Call cmdline instead of calling mged_cmd directly so that
-	 * access to Tcl/Tk is possible.
-	 */
-	for (argc -= 1, argv += 1; argc; --argc, ++argv) {
+	for (argc -= 1, argv += 1; argc; --argc, ++argv)
 	    bu_vls_printf(&s->input_str, "%s ", *argv);
-	}
 
 	cmdline(s, &s->input_str, TRUE);
 	bu_vls_free(&s->input_str);

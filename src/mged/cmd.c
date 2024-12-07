@@ -58,6 +58,18 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+struct funtab {
+    char *ft_name;
+    char *ft_parms;
+    char *ft_comment;
+    int (*ft_func)(int, const char **);
+    int ft_min;
+    int ft_max;
+    int tcl_converted;
+};
+
+
+
 extern void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
 extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
@@ -1306,69 +1318,6 @@ mged_print_result(struct mged_state *s, int UNUSED(status))
 
     Tcl_ResetResult(s->interp);
 }
-
-
-/**
- * Check a table for the command, check for the correct minimum and
- * maximum number of arguments, and pass control to the proper
- * function.  If the number of arguments is incorrect, print out a
- * short help message.
- */
-int
-mged_cmd(
-    struct mged_state *s,
-    int argc,
-    const char *argv[],
-    struct funtab in_functions[])
-{
-    struct funtab *ftp;
-    struct funtab *functions;
-
-    if (argc == 0)
-	return CMD_OK;	/* No command entered, that's fine */
-
-    /* if no function table is provided, use the default mged function table */
-    if (in_functions == (struct funtab *)NULL) {
-	bu_log("mged_cmd: failed to supply function table!\n");
-	return CMD_BAD;
-    } else
-	functions = in_functions;
-
-    for (ftp = &functions[1]; ftp->ft_name; ftp++) {
-	if (!BU_STR_EQUAL(ftp->ft_name, argv[0]))
-	    continue;
-	/* We have a match */
-	if ((ftp->ft_min <= argc) && (ftp->ft_max < 0 || argc <= ftp->ft_max)) {
-	    /* Input has the right number of args.  Call function
-	     * listed in table, with main(argc, argv) style args
-	     */
-
-	    switch (ftp->ft_func(argc, argv)) {
-		case CMD_OK:
-		    return CMD_OK;
-		case CMD_BAD:
-		    return CMD_BAD;
-		case CMD_MORE:
-		    return CMD_MORE;
-		default:
-		    Tcl_AppendResult(s->interp, "mged_cmd(): Invalid return from ",
-				     ftp->ft_name, "\n", (char *)NULL);
-		    return CMD_BAD;
-	    }
-	}
-
-	Tcl_AppendResult(s->interp, "Usage: ", functions[0].ft_name, ftp->ft_name,
-			 " ", ftp->ft_parms, "\n\t(", ftp->ft_comment,
-			 ")\n", (char *)NULL);
-	return CMD_BAD;
-    }
-
-    Tcl_AppendResult(s->interp, functions[0].ft_name, argv[0],
-		     ": no such command, type '", functions[0].ft_name,
-		     "?' for help\n", (char *)NULL);
-    return CMD_BAD;
-}
-
 
 /**
  * Let the user temporarily escape from the editor Format: %
