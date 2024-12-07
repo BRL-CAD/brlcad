@@ -320,8 +320,6 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n"
     }
 
 
-#define FUNTAB_UNLIMITED -1
-
 struct funtab {
     char *ft_name;
     char *ft_parms;
