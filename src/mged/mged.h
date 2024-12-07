@@ -111,6 +111,7 @@ struct mged_state {
     /* >0 means interactive. Gets set to 0 if there's libdm graphics support,
      * and forced with -c option. */
     int classic_mged;
+    int interactive; /* for pr_prompt */
 
     /* Prompt and input lines */
     size_t input_str_index;
@@ -395,8 +396,7 @@ void new_edit_mats(struct mged_state *s);
 void new_mats(void);
 void pr_beep(void);
 
-extern int interactive; /* for pr_prompt */
-void pr_prompt(struct mged_state *s, int show_prompt);
+void pr_prompt(struct mged_state *s);
 
 /* grid.c */
 extern void round_to_grid(struct mged_state *s, fastf_t *view_dx, fastf_t *view_dy);

@@ -4729,7 +4729,7 @@ sedit(struct mged_state *s)
 		fixv = get_rotation_vertex(s);
 	    }
 
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    fixv--;
 	    es_edflag = ECMD_ARB_ROTATE_FACE;
 	    view_state->vs_flag = 1;	/* draw arrow, etc. */
@@ -7584,7 +7584,7 @@ oedit_accept(struct mged_state *s)
 	}
 
 	bu_log("Sorry, this database is READ-ONLY\n");
-	pr_prompt(s, interactive);
+	pr_prompt(s);
 
 	return;
     }
@@ -7782,7 +7782,7 @@ sedit_accept(struct mged_state *s)
     if (s->dbip->dbi_read_only) {
 	sedit_reject(s);
 	bu_log("Sorry, this database is READ-ONLY\n");
-	pr_prompt(s, interactive);
+	pr_prompt(s);
 	return;
     }
 

@@ -72,7 +72,7 @@ _post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_c
 
     /* File does not exist, but nobody told us one way or the other
      * about creation - ask */
-    if (interactive && !ctx->force_create) {
+    if (s->interactive && !ctx->force_create) {
 	if (ctx->init_flag) {
 	    if (s->classic_mged) {
 		bu_log("Create new database (y|n)[n]? ");
@@ -257,7 +257,7 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
     set_localunit_TclVar(s);
 
     /* Print title/units information */
-    if (interactive) {
+    if (s->interactive) {
 	bu_vls_printf(gedp->ged_result_str, "%s (units=%s)\n", s->dbip->dbi_title,
 		      bu_units_string(s->dbip->dbi_local2base));
     }

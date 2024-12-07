@@ -147,10 +147,6 @@ double frametime;	/* time needed to draw last frame */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
-int interactive = 0;	/* >0 means interactive, intentionally starts
-                         * 0 to know when interactive, e.g., via -C
-                         * option
-			 */
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 
 
@@ -217,11 +213,10 @@ mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
 
 
 void
-pr_prompt(struct mged_state *s, int show_prompt)
+pr_prompt(struct mged_state *s)
 {
-    if (show_prompt) {
+    if (s->interactive)
 	bu_log("%s", bu_vls_addr(&s->mged_prompt));
-    }
 }
 
 
@@ -262,7 +257,7 @@ attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char 
 static void
 mged_notify(int UNUSED(i))
 {
-    pr_prompt(MGED_STATE, interactive);
+    pr_prompt(MGED_STATE);
 }
 
 
@@ -279,7 +274,7 @@ reset_input_strings(struct mged_state *s)
 	curr_cmd_list->cl_quote_string = 0;
 	bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
 	bu_log("\n");
-	pr_prompt(s, interactive);
+	pr_prompt(s);
     } else {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -457,7 +452,7 @@ mged_insert_char(struct mged_state *s, char ch)
 	bu_vls_strcat(&temp, bu_vls_addr(&s->input_str)+s->input_str_index);
 	bu_vls_trunc(&s->input_str, s->input_str_index);
 	bu_log("%c%s", (int)ch, bu_vls_addr(&temp));
-	pr_prompt(s, interactive);
+	pr_prompt(s);
 	bu_vls_putc(&s->input_str, (int)ch);
 	bu_log("%s", bu_vls_addr(&s->input_str));
 	bu_vls_vlscat(&s->input_str, &temp);
@@ -492,7 +487,7 @@ do_tab_expansion(struct mged_state *s)
 	}
 
 	/* display the expanded line */
-	pr_prompt(s, interactive);
+	pr_prompt(s);
 	s->input_str_index = 0;
 	bu_vls_trunc(&s->input_str, 0);
 	bu_vls_strcat(&s->input_str, Tcl_GetString(newCommand));
@@ -634,7 +629,7 @@ mged_process_char(struct mged_state *s, char ch)
 		(void)signal(SIGINT, sig2);
 	    }
 #endif
-	    pr_prompt(s, interactive); /* Print prompt for more input */
+	    pr_prompt(s); /* Print prompt for more input */
 	    s->input_str_index = 0;
 	    freshline = 1;
 	    escaped = bracketed = 0;
@@ -653,7 +648,7 @@ mged_process_char(struct mged_state *s, char ch)
 		bu_vls_strcat(&temp, bu_vls_addr(&s->input_str)+s->input_str_index);
 		bu_vls_trunc(&s->input_str, s->input_str_index-1);
 		bu_log("\b%s ", bu_vls_addr(&temp));
-		pr_prompt(s, interactive);
+		pr_prompt(s);
 		bu_log("%s", bu_vls_addr(&s->input_str));
 		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
@@ -665,7 +660,7 @@ mged_process_char(struct mged_state *s, char ch)
 	    do_tab_expansion(s);
 	    break;
 	case CTRL_A:                    /* Go to beginning of line */
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    s->input_str_index = 0;
 	    escaped = bracketed = 0;
 	    break;
@@ -690,18 +685,18 @@ mged_process_char(struct mged_state *s, char ch)
 	    bu_vls_strcpy(&temp, bu_vls_addr(&s->input_str)+s->input_str_index+1);
 	    bu_vls_trunc(&s->input_str, s->input_str_index);
 	    bu_log("%s ", bu_vls_addr(&temp));
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    bu_log("%s", bu_vls_addr(&s->input_str));
 	    bu_vls_vlscat(&s->input_str, &temp);
 	    bu_vls_free(&temp);
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_U:                   /* Delete whole line */
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&s->input_str));
 	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    bu_vls_trunc(&s->input_str, 0);
 	    s->input_str_index = 0;
 	    escaped = bracketed = 0;
@@ -711,17 +706,17 @@ mged_process_char(struct mged_state *s, char ch)
 	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 	    bu_vls_trunc(&s->input_str, s->input_str_index);
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    bu_log("%s", bu_vls_addr(&s->input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_L:                   /* Redraw line */
 	    bu_log("\n");
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    bu_log("%s", bu_vls_addr(&s->input_str));
 	    if (s->input_str_index == bu_vls_strlen(&s->input_str))
 		break;
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    bu_log("%*s", (int)s->input_str_index, bu_vls_addr(&s->input_str));
 	    escaped = bracketed = 0;
 	    break;
@@ -796,12 +791,12 @@ mged_process_char(struct mged_state *s, char ch)
 		}
 	    }
 
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&s->input_str));
 	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    bu_vls_trunc(&s->input_str, 0);
 	    bu_vls_vlscat(&s->input_str, vp);
 	    if (bu_vls_strlen(&s->input_str) > 0) {
@@ -839,14 +834,14 @@ mged_process_char(struct mged_state *s, char ch)
 
 		len = bu_vls_strlen(&s->input_str);
 		bu_vls_trunc(&s->input_str, s->input_str_index);
-		pr_prompt(s, interactive);
+		pr_prompt(s);
 		bu_log("%s%s", bu_vls_addr(&s->input_str), bu_vls_addr(&temp));
 
 		bu_vls_strncpy(&temp2, SPACES, len - s->input_str_index);
 		bu_log("%s", bu_vls_addr(&temp2));
 		bu_vls_free(&temp2);
 
-		pr_prompt(s, interactive);
+		pr_prompt(s);
 		bu_log("%s", bu_vls_addr(&s->input_str));
 		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
@@ -876,14 +871,14 @@ mged_process_char(struct mged_state *s, char ch)
 		i = curr - start;
 		bu_vls_strcpy(&temp, curr);
 		bu_vls_trunc(&s->input_str, s->input_str_index);
-		pr_prompt(s, interactive);
+		pr_prompt(s);
 		bu_log("%s%s", bu_vls_addr(&s->input_str), bu_vls_addr(&temp));
 
 		bu_vls_strncpy(&temp2, SPACES, i - s->input_str_index);
 		bu_log("%s", bu_vls_addr(&temp2));
 		bu_vls_free(&temp2);
 
-		pr_prompt(s, interactive);
+		pr_prompt(s);
 		bu_log("%s", bu_vls_addr(&s->input_str));
 		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
@@ -912,7 +907,7 @@ mged_process_char(struct mged_state *s, char ch)
 		s->input_str_index = curr - start;
 		bu_vls_strcpy(&temp, start+s->input_str_index);
 		bu_vls_trunc(&s->input_str, s->input_str_index);
-		pr_prompt(s, interactive);
+		pr_prompt(s);
 		bu_log("%s", bu_vls_addr(&s->input_str));
 		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
@@ -945,7 +940,7 @@ mged_process_char(struct mged_state *s, char ch)
 
 		bu_vls_strcpy(&temp, start+s->input_str_index);
 		bu_vls_trunc(&s->input_str, s->input_str_index);
-		pr_prompt(s, interactive);
+		pr_prompt(s);
 		bu_log("%s", bu_vls_addr(&s->input_str));
 		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
@@ -1380,7 +1375,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 		bu_vls_trunc(&s->input_str, 0);
 		(void)signal(SIGINT, SIG_IGN);
 	    }
-	    pr_prompt(s, interactive);
+	    pr_prompt(s);
 	    s->input_str_index = 0;
 	} else {
 	    bu_vls_trunc(&s->input_str, 0);
@@ -1708,7 +1703,7 @@ mged_finish(struct mged_state *s, int exitcode)
 
     /* If we're in script mode, wait for subprocesses to finish before we
      * wrap up */
-    if (s->gedp && !interactive) {
+    if (s->gedp && !s->interactive) {
 	struct bu_ptbl rmp = BU_PTBL_INIT_ZERO;
 	while (BU_PTBL_LEN(&s->gedp->ged_subp)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(&s->gedp->ged_subp); i++) {
@@ -1838,6 +1833,10 @@ main(int argc, char *argv[])
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
     s->classic_mged = 1;
+    s->interactive = 0; /* >0 means interactive, intentionally starts
+                         * 0 to know when interactive, e.g., via -C
+                         * option
+			 */
     bu_vls_init(&s->input_str);
     bu_vls_init(&s->input_str_prefix);
     bu_vls_init(&s->scratchline);
@@ -1890,7 +1889,7 @@ main(int argc, char *argv[])
 		break;
 	    case 'C':
 		s->classic_mged = 0;
-		interactive = 2; // >1 to indicate requested
+		s->interactive = 2; // >1 to indicate requested
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
@@ -1942,16 +1941,16 @@ main(int argc, char *argv[])
 
     if (argc > 1) {
 	/* if there is more than a file name remaining, mged is not interactive */
-	interactive = 0;
+	s->interactive = 0;
     } else {
 	/* we init to 0, so if we're non-0 here, it was probably requested */
-	if (!interactive) {
-	    interactive = bu_interactive();
+	if (!s->interactive) {
+	    s->interactive = bu_interactive();
 	}
     } /* argc > 1 */
 
     if (bu_debug > 0)
-	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, s->classic_mged);
+	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", s->interactive, s->classic_mged);
 
 
 #if defined(SIGPIPE) && defined(SIGINT)
@@ -2125,7 +2124,7 @@ main(int argc, char *argv[])
 	s->dpy_string = getenv("DISPLAY");
 
     /* show ourselves */
-    if (interactive) {
+    if (s->interactive) {
 	if (s->classic_mged) {
 	    /* identify */
 
@@ -2176,7 +2175,7 @@ main(int argc, char *argv[])
 	(void)Tcl_Eval(s->interp, "set mged_console_mode batch");
     }
 
-    if (!interactive || s->classic_mged || old_mged_gui) {
+    if (!s->interactive || s->classic_mged || old_mged_gui) {
 	/* Open the database */
 	if (argc >= 1) {
 	    const char *av[3];
@@ -2214,7 +2213,7 @@ main(int argc, char *argv[])
     }
 
     /* --- Now safe to process commands. --- */
-    if (interactive) {
+    if (s->interactive) {
 
 	/* This is an interactive mged, process .mgedrc */
 	do_rc(s);
@@ -2322,7 +2321,7 @@ main(int argc, char *argv[])
     }
 
     /* initialize a display manager */
-    if (interactive && s->classic_mged) {
+    if (s->interactive && s->classic_mged) {
 	if (!attach) {
 	    get_attached(s);
 	} else {
@@ -2353,7 +2352,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
     }
 
-    if (s->classic_mged || !interactive) {
+    if (s->classic_mged || !s->interactive) {
 	struct stdio_data *sd;
 	BU_GET(sd, struct stdio_data);
 	sd->s = s;
@@ -2372,7 +2371,7 @@ main(int argc, char *argv[])
 #endif
 
 	bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
-	pr_prompt(s, interactive);
+	pr_prompt(s);
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	if (cbreak_mode) {

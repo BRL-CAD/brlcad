@@ -1300,7 +1300,7 @@ mged_print_result(struct mged_state *s, int UNUSED(status))
 	bu_log("%s%s", result,
 	       result[len-1] == '\n' ? "" : "\n");
 
-	pr_prompt(s, interactive);
+	pr_prompt(s);
     }
 
     Tcl_ResetResult(s->interp);
@@ -2188,9 +2188,9 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interpreter, int argc, const ch
 
     if (s->classic_mged) {
 	bu_log("\r%s\n", argv[1]);
-	pr_prompt(s, interactive);
+	pr_prompt(s);
 	bu_log("%s", bu_vls_addr(&s->input_str));
-	pr_prompt(s, interactive);
+	pr_prompt(s);
 	for (i = 0; i < s->input_str_index; ++i)
 	    bu_log("%c", bu_vls_addr(&s->input_str)[i]);
     }
