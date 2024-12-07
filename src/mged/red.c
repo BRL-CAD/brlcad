@@ -267,8 +267,10 @@ int save_comb(struct directory *dpold)
     /* Make a new name */
     mktemp_comb(red_tmpcomb);
 
-    if (rt_db_get_internal(&intern, dpold, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
-	TCL_READ_ERR_return;
+    if (rt_db_get_internal(&intern, dpold, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
+	return TCL_ERROR;
+    }
 
     if ((dp=db_diradd(dbip, red_tmpcomb, -1L, 0, dpold->d_flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,

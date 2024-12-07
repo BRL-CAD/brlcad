@@ -301,14 +301,6 @@ extern char *state_str[]; /* identifying strings */
 
 
 /* Cloned mged macros for use in Tcl/Tk */
-#define TCL_READ_ERR {\
-	Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);\
-    }
-
-#define TCL_READ_ERR_return {\
-	TCL_READ_ERR;\
-	return TCL_ERROR;\
-    }
 
 #define TCL_WRITE_ERR { \
 	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);\

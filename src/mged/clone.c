@@ -313,7 +313,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	/* get an in-memory reference to the object being copied */
 	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
-	    TCL_READ_ERR;
+	    Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
 	    return;
 	}
 
@@ -539,7 +539,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 
 	/* get a v4 in-memory reference to the object being copied */
 	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
-	    TCL_READ_ERR;
+	    Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
 	    return NULL;
 	}
 
@@ -766,7 +766,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 
 	    /* get an in-memory record of this object */
 	    if ((rp = db_getmrec(_dbip, dp)) == (union record *)0) {
-		TCL_READ_ERR;
+		Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
 		goto done_copy_tree;
 	    }
 	    /*

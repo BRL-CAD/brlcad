@@ -84,7 +84,8 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     }
 
     if ((id = rt_db_get_internal(&internal, proto, s->dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
-	TCL_READ_ERR_return;
+	Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
+	return TCL_ERROR;
     }
     /* make sure it is a TGC */
     if (id != ID_TGC) {
