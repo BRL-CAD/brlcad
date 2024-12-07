@@ -457,6 +457,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     ctx.interpreter = interpreter;
     ctx.ret = TCL_OK;
     ctx.old_dbip = NULL;
+    ctx.s = s;
 
     if (argc != 1) {
 	Tcl_AppendResult(interpreter, "Unexpected argument [%s]\n", (const char *)argv[1], NULL);
