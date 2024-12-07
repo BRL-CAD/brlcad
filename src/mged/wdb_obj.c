@@ -55,23 +55,10 @@
 #include "raytrace.h"
 #include "tclcad.h"
 
-
-/* A verbose message to attempt to soothe and advise the user */
-#define WDB_TCL_ERROR_RECOVERY_SUGGESTION\
-    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "\
-The in-memory table of contents may not match the status of the on-disk\n\
-database.  The on-disk database should still be intact.  For safety, \n\
-you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
-
-
-#define WDB_TCL_WRITE_ERR { \
-	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting.\n", (char *)NULL); \
-	WDB_TCL_ERROR_RECOVERY_SUGGESTION; }
-
-#define WDB_TCL_WRITE_ERR_return { \
-	WDB_TCL_WRITE_ERR; \
-	return TCL_ERROR; }
-
+#define ERROR_RECOVERY_SUGGESTION "\
+  The in-memory table of contents may not match the status of the on-disk\n\
+  database.  The on-disk database should still be intact.  For safety, \n\
+  you should exit MGED now, and resolve the I/O problem, before continuing.\n"
 
 #define WDB_TCL_CHECK_READ_ONLY \
     if ((Tcl_Interp *)wdbp->wdb_interp) { \
@@ -839,7 +826,9 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 
     if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	WDB_TCL_WRITE_ERR_return;
+	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting.\n", (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	return TCL_ERROR;
     }
 
     rt_db_free_internal(&intern);

@@ -103,11 +103,15 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     (void)signal(SIGINT, SIG_IGN);
 
     if ((dp = db_diradd(s->dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == RT_DIR_NULL) {
-	TCL_ALLOC_ERR_return;
+	Tcl_AppendResult(s->interp, "An error has occurred while adding a new object to the database.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	return TCL_ERROR;
     }
 
     if (rt_db_put_internal(dp, s->dbip, &internal, &rt_uniresource) < 0) {
-	TCL_WRITE_ERR_return;
+	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	return TCL_ERROR;
     }
 
     {

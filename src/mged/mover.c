@@ -57,14 +57,16 @@ moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate)
 	Tcl_AppendResult(s->interp, "rt_db_get_internal() failed for ", dp->d_namep,
 			 (char *)NULL);
 	rt_db_free_internal(&intern);
-	READ_ERR_return;
+	printf("Database read error, aborting\n");
+	return;
     }
 
     if (rt_db_put_internal(dp, s->dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(s->interp, "moveHobj(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	rt_db_free_internal(&intern);
-	TCL_WRITE_ERR;
+	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
 	return;
     }
 }
@@ -85,8 +87,10 @@ moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp,
     if (s->dbip == DBI_NULL)
 	return;
 
-    if (rt_db_get_internal(&intern, cdp, s->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
-	READ_ERR_return;
+    if (rt_db_get_internal(&intern, cdp, s->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	printf("Database read error, aborting\n");
+	return;
+    }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (comb->tree) {

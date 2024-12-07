@@ -289,7 +289,9 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     if (rt_db_put_internal(dp, s->dbip, &internal, &rt_uniresource) < 0) {
 	rt_db_free_internal(&internal);
-	TCL_WRITE_ERR_return;
+    	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	return TCL_ERROR;
     }
 
     {

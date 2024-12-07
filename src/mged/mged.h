@@ -299,96 +299,11 @@ extern char *state_str[]; /* identifying strings */
 #define ST_S_VPICK	7 /* Vertex Pick */
 #define ST_S_NO_EDIT	8 /* Solid edit without Rotate, translate, or scale */
 
-
-/* Cloned mged macros for use in Tcl/Tk */
-
-#define TCL_WRITE_ERR { \
-	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);\
-	TCL_ERROR_RECOVERY_SUGGESTION; }
-
-#define TCL_WRITE_ERR_return { \
-	TCL_WRITE_ERR; \
-	return TCL_ERROR; }
-
-#define TCL_ALLOC_ERR { \
-	Tcl_AppendResult(s->interp, "\
-An error has occurred while adding a new object to the database.\n", (char *)NULL); \
-	TCL_ERROR_RECOVERY_SUGGESTION; }
-
-#define TCL_ALLOC_ERR_return { \
-	TCL_ALLOC_ERR; \
-	return TCL_ERROR;  }
-
-/* For errors from db_delete() or db_dirdelete() */
-#define TCL_DELETE_ERR(_name) { \
-	Tcl_AppendResult(s->interp, "An error has occurred while deleting '", _name, \
-			 "' from the database.\n", (char *)NULL);\
-	TCL_ERROR_RECOVERY_SUGGESTION; }
-
-#define TCL_DELETE_ERR_return(_name) {  \
-	TCL_DELETE_ERR(_name); \
-	return TCL_ERROR;  }
-
-/* A verbose message to attempt to soothe and advise the user */
-#define TCL_ERROR_RECOVERY_SUGGESTION\
-    Tcl_AppendResult(s->interp, "\
+#define ERROR_RECOVERY_SUGGESTION "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
-you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
+you should exit MGED now, and resolve the I/O problem, before continuing.\n"
 
-
-/**
- * Helpful macros to inform the user of trouble encountered in library
- * routines, and bail out.  They are intended to be used mainly in
- * top-level command processing routines, and therefore include a
- * "return" statement and curley brackets.  Thus, they should only be
- * used in void functions.  The word "return" is not in upper case in
- * these macros, to enable editor searches for the word "return" to
- * succeed.
- */
-/* For errors from db_get() or db_getmrec() */
-#define READ_ERR { \
-	printf("Database read error, aborting\n"); }
-
-#define READ_ERR_return { \
-	READ_ERR; \
-	return;  }
-
-/* For errors from db_put() */
-#define WRITE_ERR { \
-	printf("Database write error, aborting.\n"); \
-	ERROR_RECOVERY_SUGGESTION; }
-
-#define WRITE_ERR_return { \
-	WRITE_ERR; \
-	return;  }
-
-/* For errors from db_diradd() or db_alloc() */
-#define ALLOC_ERR { \
-	printf("\
-An error has occurred while adding a new object to the database.\n"); \
-	ERROR_RECOVERY_SUGGESTION; }
-
-#define ALLOC_ERR_return { \
-	ALLOC_ERR; \
-	return;  }
-
-/* For errors from db_delete() or db_dirdelete() */
-#define DELETE_ERR(_name) { \
-	printf("\
-An error has occurred while deleting '%s' from the database.\n", _name); \
-	ERROR_RECOVERY_SUGGESTION; }
-
-#define DELETE_ERR_return(_name) {  \
-	DELETE_ERR(_name); \
-	return;  }
-
-/* A verbose message to attempt to soothe and advise the user */
-#define ERROR_RECOVERY_SUGGESTION	\
-    printf("\
-The in-memory table of contents may not match the status of the on-disk\n\
-database.  The on-disk database should still be intact.  For safety, \n\
-you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \

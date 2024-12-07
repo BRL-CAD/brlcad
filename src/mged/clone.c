@@ -307,8 +307,8 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
 	if ((dp == RT_DIR_NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
-	    TCL_ALLOC_ERR;
-	    return;
+	    Tcl_AppendResult(s->interp, "An error has occurred while adding a new object to the database.\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
 	}
 
 	/* get an in-memory reference to the object being copied */
@@ -570,7 +570,8 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
 	if ((dp == NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
-	    TCL_ALLOC_ERR;
+	    Tcl_AppendResult(s->interp, "An error has occurred while adding a new object to the database.\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
 	    return NULL;
 	}
 
