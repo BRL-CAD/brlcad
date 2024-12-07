@@ -173,7 +173,6 @@ extern int mged_db_warn;
 
 extern mat_t modelchanges;		/* full changes this edit */
 extern mat_t incr_change;		/* change(s) from last cycle */
-extern point_t recip_vanishing_point;
 
 /* defined in buttons.c */
 extern fastf_t acc_sc_sol;	/* accumulate solid scale factor */
@@ -182,8 +181,6 @@ extern fastf_t acc_sc[3];	/* accumulate local object scale factors */
 extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in mged.c */
-extern FILE *infile;
-extern FILE *outfile;
 extern jmp_buf jmp_env;
 
 /*
@@ -192,13 +189,7 @@ extern jmp_buf jmp_env;
 
 extern void mged_setup(struct mged_state *s);
 extern void mged_global_variable_teardown(struct mged_state *s); /* cmd.c */
-extern void buildHrot(mat_t, double, double, double);
 extern void dozoom(struct mged_state *s, int which_eye);
-#ifndef _WIN32
-extern void itoa(int n, char *s, int w);
-#endif
-extern void eraseobj(struct directory **dpp);
-extern void eraseobjall(struct directory **dpp);
 extern void mged_finish(struct mged_state *s, int exitcode);
 extern void slewview(struct mged_state *s, vect_t view_pos);
 extern void mmenu_init(void);
@@ -462,7 +453,6 @@ extern void predictor_frame(void);
 extern void predictor_init(void);
 
 /* usepen.c */
-void buildHrot(mat_t mat, double alpha, double beta, double ggamma);
 void wrt_view(mat_t out, const mat_t change, const mat_t in);
 void wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point);
 
