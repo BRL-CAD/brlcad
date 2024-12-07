@@ -57,9 +57,8 @@ void crdummy(fastf_t *w, fastf_t *t, int flag);
 void trcurve(fastf_t *wh, fastf_t *t);
 void bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void top(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
-void crregion(struct mged_state *s, char *region, char *op, int *members, int number, char *solidname, int maxlen);
+void crregion(struct mged_state *s, char *region, char *op, const int *members, int number, char *solidname, int maxlen, int los_default, int mat_default);
 static void track_itoa(struct mged_state *s, int n, char *cs, int w);
-
 
 /*
  * adds track given "wheel" info
@@ -70,6 +69,10 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
+
+    int item_default = 1000;	/* GIFT region ID */
+    int mat_default = 1;	/* GIFT material code */
+    int los_default = 100;	/* Line-of-sight estimate */
 
     fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
     char solname[12], regname[12], grpname[9], oper[3];
@@ -451,7 +454,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     memb[0] = 1;
     memb[1] = 4;
     crname(s, regname, 1, sizeof(regname));
-    crregion(s, regname, oper, memb, 2, solname, sizeof(regname));
+    crregion(s, regname, oper, memb, 2, solname, sizeof(regname), los_default, mat_default);
     solname[8] = regname[8] = '\0';
 
     /* region 2 */
@@ -459,14 +462,14 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     memb[0] = 2;
     memb[1] = 3;
     memb[2] = 4;
-    crregion(s, regname, oper, memb, 3, solname, sizeof(regname));
+    crregion(s, regname, oper, memb, 3, solname, sizeof(regname), los_default, mat_default);
     solname[8] = regname[8] = '\0';
 
     /* region 5 */
     crname(s, regname, 5, sizeof(regname));
     memb[0] = 5;
     memb[1] = 8;
-    crregion(s, regname, oper, memb, 2, solname, sizeof(regname));
+    crregion(s, regname, oper, memb, 2, solname, sizeof(regname), los_default, mat_default);
     solname[8] = regname[8] = '\0';
 
     /* region 6 */
@@ -474,7 +477,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     memb[0] = 6;
     memb[1] = 7;
     memb[2] = 8;
-    crregion(s, regname, oper, memb, 3, solname, sizeof(regname));
+    crregion(s, regname, oper, memb, 3, solname, sizeof(regname), los_default, mat_default);
     solname[8] = regname[8] = '\0';
 
     /* region 9 */
@@ -483,7 +486,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     memb[1] = 1;
     memb[2] = 5;
     oper[2] = WMOP_SUBTRACT;
-    crregion(s, regname, oper, memb, 3, solname, sizeof(regname));
+    crregion(s, regname, oper, memb, 3, solname, sizeof(regname), los_default, mat_default);
     solname[8] = regname[8] = '\0';
 
     /* region 10 */
@@ -491,7 +494,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     memb[0] = 10;
     memb[1] = 4;
     memb[2] = 8;
-    crregion(s, regname, oper, memb, 3, solname, sizeof(regname));
+    crregion(s, regname, oper, memb, 3, solname, sizeof(regname), los_default, mat_default);
     solname[8] = regname[8] = '\0';
 
     /* group all the track regions */
@@ -870,7 +873,7 @@ top(fastf_t *vec1, fastf_t *vec2, fastf_t *t)
 
 
 void
-crregion(struct mged_state *s, char *region, char *op, int *members, int number, char *solidname, int maxlen)
+crregion(struct mged_state *s, char *region, char *op, const int *members, int number, char *solidname, int maxlen, int los_default, int mat_default)
 {
     int i;
     struct bu_list head;

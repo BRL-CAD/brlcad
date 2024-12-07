@@ -33,12 +33,6 @@
 
 #include "./mged.h"
 
-/* default region ident codes */
-int item_default = 1000;	/* GIFT region ID */
-int air_default = 0;
-int mat_default = 1;	/* GIFT material code */
-int los_default = 100;	/* Line-of-sight estimate */
-
 /*
  * This routine is used when the object to be moved is
  * the top level in its reference path.

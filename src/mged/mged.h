@@ -151,13 +151,6 @@ extern int mged_db_warn;
 #define local2base (s->dbip->dbi_local2base)
 #define cur_title (s->dbip->dbi_title)      /* current model title */
 
-
-/* default region codes defined in mover.c */
-extern int item_default;
-extern int air_default;
-extern int mat_default;
-extern int los_default;
-
 /**
  * Definitions.
  *
