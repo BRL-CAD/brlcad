@@ -41,23 +41,6 @@ extern void set_localunit_TclVar(struct mged_state *s);
 /* Shorthand for open/close db callback function pointer type */
 typedef void (*db_clbk_t )(struct ged *, void *);
 
-void
-mged_output_handler(struct ged *UNUSED(gp), char *line)
-{
-    if (line)
-	bu_log("%s", line);
-}
-
-void
-mged_refresh_handler(void *clientdata)
-{
-    struct mged_state *s = (struct mged_state *)clientdata;
-    MGED_CK_STATE(s);
-
-    view_state->vs_flag = 1;
-    refresh(s);
-}
-
 static void
 _post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_ctx *ctx)
 {

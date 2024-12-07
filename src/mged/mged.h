@@ -562,8 +562,6 @@ struct mged_opendb_ctx {
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
 
-void mged_output_handler(struct ged *, char *line);
-void mged_refresh_handler(void *clientdata);
 int mged_pre_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
 int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
 int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
