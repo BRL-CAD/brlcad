@@ -37,6 +37,8 @@
 
 #include "./mged.h"
 
+// Defined in mged.c
+extern int event_check(struct mged_state *s, int non_blocking);
 
 void
 mged_update(struct mged_state *s, int non_blocking)

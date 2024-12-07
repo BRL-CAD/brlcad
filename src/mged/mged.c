@@ -190,16 +190,6 @@ int mged_db_version = BRLCAD_DB_FORMAT_LATEST;
 struct bn_tol mged_tol;	/* calculation tolerance */
 struct bg_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
-
-#if !defined(_WIN32) || defined(__CYGWIN__)
-Tcl_FileProc stdin_input;
-Tcl_FileProc std_out_or_err;
-#else
-void stdin_input(ClientData clientData, int mask);
-void std_out_or_err(ClientData clientData, int mask);
-#endif
-
-
 static int
 mged_bomb_hook(void *clientData, void *data)
 {
@@ -321,15 +311,7 @@ reset_input_strings(struct mged_state *s)
 }
 
 
-/*
- * Handles finishing up.  Also called upon EOF on STDIN.
- */
-void
-quit(struct mged_state *s)
-{
-    mged_finish(s, 0);
-    /* NOTREACHED */
-}
+
 
 
 void
@@ -1020,240 +1002,6 @@ mged_process_char(struct mged_state *s, char ch)
     }
 }
 
-
-
-/*
- * standard input handling
- *
- * When the Tk event handler sees input on standard input, it calls
- * the routine "stdin_input" (registered with the
- * Tcl_CreateFileHandler call).  This routine simply appends the new
- * input to a growing string until the command is complete (it is
- * assumed that the routine gets a fill line.)
- *
- * If the command is incomplete, then allow the user to hit ^C to
- * start over, by setting up the multi_line_sig routine as the SIGINT
- * handler.
- */
-
-/**
- * stdin_input
- *
- * Called when a single character is ready for reading on standard
- * input (or an entire line if the terminal is not in cbreak mode.)
- */
-void
-stdin_input(ClientData clientData, int UNUSED(mask))
-{
-    int count;
-    char ch;
-    struct bu_vls temp = BU_VLS_INIT_ZERO;
-    struct stdio_data *sd = (struct stdio_data *)clientData;
-    struct mged_state *s = sd->s;
-
-    /* When not in cbreak mode, just process an entire line of input,
-     * and don't do any command-line manipulation.
-     */
-
-    if (!cbreak_mode) {
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	Tcl_DString ds;
-	Tcl_DStringInit(&ds);
-	count = Tcl_Gets(sd->chan, &ds);
-
-	if (count < 0) {
-	    BU_PUT(sd, struct stdio_data);
-	    quit(s); /* does not return */
-	}
-
-	bu_vls_strcat(&input_str, Tcl_DStringValue(&ds));
-	Tcl_DStringFree(&ds);
-#else
-	/* Get line from stdin */
-	if (bu_vls_gets(&temp, stdin) < 0) {
-	    BU_PUT(sd, struct stdio_data);
-	    quit(s);				/* does not return */
-	}
-	bu_vls_vlscat(&input_str, &temp);
-#endif
-
-	/* If there are any characters already in the command string
-	 * (left over from a CMD_MORE), then prepend them to the new
-	 * input.
-	 */
-
-	/* If no input and a default is supplied then use it */
-	if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-	    bu_vls_printf(&input_str_prefix, "%s%s\n",
-			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  bu_vls_addr(&curr_cmd_list->cl_more_default));
-	else
-	    bu_vls_printf(&input_str_prefix, "%s%s\n",
-			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  bu_vls_addr(&input_str));
-
-	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
-
-	/* If a complete line was entered, attempt to execute command. */
-
-	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
-	    curr_cmd_list = &head_cmd_list;
-	    if (curr_cmd_list->cl_tie)
-		set_curr_dm(s, curr_cmd_list->cl_tie);
-
-	    if (cmdline(s, &input_str_prefix, TRUE) == CMD_MORE) {
-		/* Remove newline */
-		bu_vls_trunc(&input_str_prefix,
-			     bu_vls_strlen(&input_str_prefix)-1);
-		bu_vls_trunc(&input_str, 0);
-
-		(void)signal(SIGINT, sig2);
-	    } else {
-		bu_vls_trunc(&input_str_prefix, 0);
-		bu_vls_trunc(&input_str, 0);
-		(void)signal(SIGINT, SIG_IGN);
-	    }
-	    pr_prompt(interactive);
-	    input_str_index = 0;
-	} else {
-	    bu_vls_trunc(&input_str, 0);
-	    /* Allow the user to hit ^C. */
-	    (void)signal(SIGINT, sig2);
-	}
-
-	bu_vls_free(&temp);
-	return;
-    }
-
-    /*XXXXX*/
-#define TRY_STDIN_INPUT_HACK
-#ifdef TRY_STDIN_INPUT_HACK
-    /* Grab everything --- assuming everything is <= page size */
-    {
-	char buf[BU_PAGE_SIZE];
-	int idx;
-#  ifdef _WIN32
-	count = Tcl_Read(sd->chan, buf, BU_PAGE_SIZE);
-#  else
-	count = read((int)sd->fd, (void *)buf, BU_PAGE_SIZE);
-#  endif
-
-#else
-	/* Grab single character from stdin */
-	count = read((int)sd->fd, (void *)&ch, 1);
-#endif
-
-	if (count < 0)
-	    perror("READ ERROR");
-
-	if (count <= 0 && feof(stdin))
-	    Tcl_Eval(s->interp, "q");
-
-	if (buf[0] == '\0')
-	    bu_bomb("Read a buf with a 0 starting it?\n");
-
-#ifdef TRY_STDIN_INPUT_HACK
-	/* Process everything in buf */
-	for (idx = 0, ch = buf[idx]; idx < count; ch = buf[++idx]) {
-	    int c = ch;
-
-	    /* explicit input sanitization */
-	    if (c < 0)
-		c = 0;
-	    if (c > CHAR_MAX)
-		c = CHAR_MAX;
-#endif
-	    mged_process_char(s, c);
-#ifdef TRY_STDIN_INPUT_HACK
-	}
-    }
-#endif
-}
-
-
-/**
- * Stuff a string to stdout while leaving the current command-line
- * alone
- */
-int
-cmd_stuff_str(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
-{
-    size_t i;
-
-    if (argc != 2) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "helpdevel stuff_str");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if (classic_mged) {
-	bu_log("\r%s\n", argv[1]);
-	pr_prompt(interactive);
-	bu_log("%s", bu_vls_addr(&input_str));
-	pr_prompt(interactive);
-	for (i = 0; i < input_str_index; ++i)
-	    bu_log("%c", bu_vls_addr(&input_str)[i]);
-    }
-
-    return TCL_OK;
-}
-
-
-void
-std_out_or_err(ClientData clientData, int UNUSED(mask))
-{
-    // TODO - we're already using clientData for something else, and experience
-    // with fbserv makes me wary of trying to change what is being passed
-    // through clientData with an fd - for now, just punt and use the overall
-    // state global.
-    struct mged_state *s = MGED_STATE;
-
-#if !defined(_WIN32) || defined(__CYGWIN__)
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-#else
-    Tcl_Channel chan = (Tcl_Channel)clientData;
-    Tcl_DString ds;
-#endif
-    int count;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-    char line[RT_MAXLINE+1] = {0};
-    Tcl_Obj *save_result;
-
-    /* Get data from stdout or stderr */
-
-#if !defined(_WIN32) || defined(__CYGWIN__)
-    count = read((int)fd, line, RT_MAXLINE);
-#else
-    Tcl_DStringInit(&ds);
-    count = Tcl_Gets(chan, &ds);
-    bu_strlcpy(line, Tcl_DStringValue(&ds), RT_MAXLINE);
-#endif
-
-    if (count <= 0) {
-	if (count < 0) {
-	    perror("READ ERROR");
-	}
-	return;
-    }
-
-    line[count] = '\0';
-
-    save_result = Tcl_GetObjResult(s->interp);
-    Tcl_IncrRefCount(save_result);
-
-    bu_vls_printf(&vls, "output_callback {%s}", line);
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    Tcl_SetObjResult(s->interp, save_result);
-    Tcl_DecrRefCount(save_result);
-}
-
-
 /**
  * Check for events, and dispatch them.  Eventually, this will be done
  * entirely by generating commands
@@ -1560,6 +1308,238 @@ event_check(struct mged_state *s, int non_blocking)
 
     return non_blocking;
 }
+
+/*
+ * standard input handling
+ *
+ * When the Tk event handler sees input on standard input, it calls
+ * the routine "stdin_input" (registered with the
+ * Tcl_CreateFileHandler call).  This routine simply appends the new
+ * input to a growing string until the command is complete (it is
+ * assumed that the routine gets a fill line.)
+ *
+ * If the command is incomplete, then allow the user to hit ^C to
+ * start over, by setting up the multi_line_sig routine as the SIGINT
+ * handler.
+ */
+
+/**
+ * stdin_input
+ *
+ * Called when a single character is ready for reading on standard
+ * input (or an entire line if the terminal is not in cbreak mode.)
+ */
+void
+stdin_input(ClientData clientData, int UNUSED(mask))
+{
+    int count;
+    char ch;
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
+    struct stdio_data *sd = (struct stdio_data *)clientData;
+    struct mged_state *s = sd->s;
+
+    /* When not in cbreak mode, just process an entire line of input,
+     * and don't do any command-line manipulation.
+     */
+
+    if (!cbreak_mode) {
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	Tcl_DString ds;
+	Tcl_DStringInit(&ds);
+	count = Tcl_Gets(sd->chan, &ds);
+
+	if (count < 0) {
+	    BU_PUT(sd, struct stdio_data);
+	    quit(s); /* does not return */
+	}
+
+	bu_vls_strcat(&input_str, Tcl_DStringValue(&ds));
+	Tcl_DStringFree(&ds);
+#else
+	/* Get line from stdin */
+	if (bu_vls_gets(&temp, stdin) < 0) {
+	    BU_PUT(sd, struct stdio_data);
+	    quit(s);				/* does not return */
+	}
+	bu_vls_vlscat(&input_str, &temp);
+#endif
+
+	/* If there are any characters already in the command string
+	 * (left over from a CMD_MORE), then prepend them to the new
+	 * input.
+	 */
+
+	/* If no input and a default is supplied then use it */
+	if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
+	    bu_vls_printf(&input_str_prefix, "%s%s\n",
+			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			  bu_vls_addr(&curr_cmd_list->cl_more_default));
+	else
+	    bu_vls_printf(&input_str_prefix, "%s%s\n",
+			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			  bu_vls_addr(&input_str));
+
+	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
+
+	/* If a complete line was entered, attempt to execute command. */
+
+	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
+	    curr_cmd_list = &head_cmd_list;
+	    if (curr_cmd_list->cl_tie)
+		set_curr_dm(s, curr_cmd_list->cl_tie);
+
+	    if (cmdline(s, &input_str_prefix, TRUE) == CMD_MORE) {
+		/* Remove newline */
+		bu_vls_trunc(&input_str_prefix,
+			     bu_vls_strlen(&input_str_prefix)-1);
+		bu_vls_trunc(&input_str, 0);
+
+		(void)signal(SIGINT, sig2);
+	    } else {
+		bu_vls_trunc(&input_str_prefix, 0);
+		bu_vls_trunc(&input_str, 0);
+		(void)signal(SIGINT, SIG_IGN);
+	    }
+	    pr_prompt(interactive);
+	    input_str_index = 0;
+	} else {
+	    bu_vls_trunc(&input_str, 0);
+	    /* Allow the user to hit ^C. */
+	    (void)signal(SIGINT, sig2);
+	}
+
+	bu_vls_free(&temp);
+	return;
+    }
+
+    /*XXXXX*/
+#define TRY_STDIN_INPUT_HACK
+#ifdef TRY_STDIN_INPUT_HACK
+    /* Grab everything --- assuming everything is <= page size */
+    {
+	char buf[BU_PAGE_SIZE];
+	int idx;
+#  ifdef _WIN32
+	count = Tcl_Read(sd->chan, buf, BU_PAGE_SIZE);
+#  else
+	count = read((int)sd->fd, (void *)buf, BU_PAGE_SIZE);
+#  endif
+
+#else
+	/* Grab single character from stdin */
+	count = read((int)sd->fd, (void *)&ch, 1);
+#endif
+
+	if (count < 0)
+	    perror("READ ERROR");
+
+	if (count <= 0 && feof(stdin))
+	    Tcl_Eval(s->interp, "q");
+
+	if (buf[0] == '\0')
+	    bu_bomb("Read a buf with a 0 starting it?\n");
+
+#ifdef TRY_STDIN_INPUT_HACK
+	/* Process everything in buf */
+	for (idx = 0, ch = buf[idx]; idx < count; ch = buf[++idx]) {
+	    int c = ch;
+
+	    /* explicit input sanitization */
+	    if (c < 0)
+		c = 0;
+	    if (c > CHAR_MAX)
+		c = CHAR_MAX;
+#endif
+	    mged_process_char(s, c);
+#ifdef TRY_STDIN_INPUT_HACK
+	}
+    }
+#endif
+}
+
+
+/**
+ * Stuff a string to stdout while leaving the current command-line
+ * alone
+ */
+int
+cmd_stuff_str(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    size_t i;
+
+    if (argc != 2) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&vls, "helpdevel stuff_str");
+	Tcl_Eval(interpreter, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (classic_mged) {
+	bu_log("\r%s\n", argv[1]);
+	pr_prompt(interactive);
+	bu_log("%s", bu_vls_addr(&input_str));
+	pr_prompt(interactive);
+	for (i = 0; i < input_str_index; ++i)
+	    bu_log("%c", bu_vls_addr(&input_str)[i]);
+    }
+
+    return TCL_OK;
+}
+
+
+void
+std_out_or_err(ClientData clientData, int UNUSED(mask))
+{
+    // TODO - we're already using clientData for something else, and experience
+    // with fbserv makes me wary of trying to change what is being passed
+    // through clientData with an fd - for now, just punt and use the overall
+    // state global.
+    struct mged_state *s = MGED_STATE;
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
+#else
+    Tcl_Channel chan = (Tcl_Channel)clientData;
+    Tcl_DString ds;
+#endif
+    int count;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    char line[RT_MAXLINE+1] = {0};
+    Tcl_Obj *save_result;
+
+    /* Get data from stdout or stderr */
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+    count = read((int)fd, line, RT_MAXLINE);
+#else
+    Tcl_DStringInit(&ds);
+    count = Tcl_Gets(chan, &ds);
+    bu_strlcpy(line, Tcl_DStringValue(&ds), RT_MAXLINE);
+#endif
+
+    if (count <= 0) {
+	if (count < 0) {
+	    perror("READ ERROR");
+	}
+	return;
+    }
+
+    line[count] = '\0';
+
+    save_result = Tcl_GetObjResult(s->interp);
+    Tcl_IncrRefCount(save_result);
+
+    bu_vls_printf(&vls, "output_callback {%s}", line);
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    Tcl_SetObjResult(s->interp, save_result);
+    Tcl_DecrRefCount(save_result);
+}
+
 
 
 /**
@@ -1869,6 +1849,15 @@ mged_finish(struct mged_state *s, int exitcode)
     Tcl_Exit(exitcode);
 }
 
+/*
+ * Handles finishing up.  Also called upon EOF on STDIN.
+ */
+void
+quit(struct mged_state *s)
+{
+    mged_finish(s, 0);
+    /* NOTREACHED */
+}
 
 int
 main(int argc, char *argv[])

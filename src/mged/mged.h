@@ -562,13 +562,7 @@ struct mged_opendb_ctx {
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
 
-int mged_pre_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
-int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
-int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
-int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
-
 /* mged.c */
-int event_check(struct mged_state *s, int non_blocking);
 void new_edit_mats(struct mged_state *s);
 void new_mats(void);
 void pr_beep(void);
