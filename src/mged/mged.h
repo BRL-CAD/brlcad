@@ -561,8 +561,7 @@ struct mged_opendb_ctx {
     int init_flag; /* >0 means in initialization stage */
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
-int f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
-int f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
+
 void mged_output_handler(struct ged *, char *line);
 void mged_refresh_handler(void *clientdata);
 int mged_pre_opendb_clbk(int ac, const char **av, void *gedp, void *ctx);
