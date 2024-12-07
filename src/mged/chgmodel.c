@@ -353,7 +353,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     for (i=0; i<3; i++) {
-	new_vertex[i] = atof(argv[i+1]) * local2base;
+	new_vertex[i] = atof(argv[i+1]) * s->dbip->dbi_local2base;
     }
 
     VMOVE(model_sol_pt, es_keypoint);

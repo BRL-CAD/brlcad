@@ -337,7 +337,7 @@ get_pleqn(struct mged_state *s, fastf_t *plane, const char *argv[])
     for (i=0; i<4; i++)
 	plane[i]= atof(argv[i]);
     VUNITIZE(&plane[0]);
-    plane[W] *= local2base;
+    plane[W] *= s->dbip->dbi_local2base;
     return;
 }
 
@@ -360,11 +360,11 @@ get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct 
     CHECK_DBI_NULL;
 
     for (i=0; i<3; i++)
-	a[i] = atof(argv[0+i]) * local2base;
+	a[i] = atof(argv[0+i]) * s->dbip->dbi_local2base;
     for (i=0; i<3; i++)
-	b[i] = atof(argv[3+i]) * local2base;
+	b[i] = atof(argv[3+i]) * s->dbip->dbi_local2base;
     for (i=0; i<3; i++)
-	c[i] = atof(argv[6+i]) * local2base;
+	c[i] = atof(argv[6+i]) * s->dbip->dbi_local2base;
 
     if (bg_make_plane_3pnts(plane, a, b, c, tol) < 0) {
 	Tcl_AppendResult(s->interp, "Facedef: not a plane\n", (char *)NULL);
@@ -406,7 +406,7 @@ get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct
     } else {
 	/* definite point given */
 	for (i=0; i<3; i++)
-	    pt[i]=atof(argv[2+i]) * local2base;
+	    pt[i]=atof(argv[2+i]) * s->dbip->dbi_local2base;
 	plane[W]=VDOT(&plane[0], pt);
     }
 }
@@ -427,7 +427,7 @@ get_nupnt(struct mged_state *s, fastf_t *plane, const char *argv[])
 	return;
 
     for (i=0; i<3; i++)
-	pt[i] = atof(argv[i]) * local2base;
+	pt[i] = atof(argv[i]) * s->dbip->dbi_local2base;
     plane[W] = VDOT(&plane[0], pt);
 }
 

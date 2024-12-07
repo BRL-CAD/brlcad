@@ -401,15 +401,15 @@ adc_print_vars(struct mged_state *s)
     bu_vls_printf(&vls, "draw = %d\n", adc_state->adc_draw);
     bu_vls_printf(&vls, "a1 = %.15e\n", adc_state->adc_a1);
     bu_vls_printf(&vls, "a2 = %.15e\n", adc_state->adc_a2);
-    bu_vls_printf(&vls, "dst = %.15e\n", adc_state->adc_dst * view_state->vs_gvp->gv_scale * base2local);
+    bu_vls_printf(&vls, "dst = %.15e\n", adc_state->adc_dst * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "odst = %d\n", adc_state->adc_dv_dist);
     bu_vls_printf(&vls, "hv = %.15e %.15e\n",
-		  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * base2local,
-		  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * base2local);
+		  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "xyz = %.15e %.15e %.15e\n",
-		  adc_state->adc_pos_model[X] * base2local,
-		  adc_state->adc_pos_model[Y] * base2local,
-		  adc_state->adc_pos_model[Z] * base2local);
+		  adc_state->adc_pos_model[X] * s->dbip->dbi_base2local,
+		  adc_state->adc_pos_model[Y] * s->dbip->dbi_base2local,
+		  adc_state->adc_pos_model[Z] * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "x = %d\n", adc_state->adc_dv_x);
     bu_vls_printf(&vls, "y = %d\n", adc_state->adc_dv_y);
     bu_vls_printf(&vls, "anchor_pos = %d\n", adc_state->adc_anchor_pos);
@@ -417,17 +417,17 @@ adc_print_vars(struct mged_state *s)
     bu_vls_printf(&vls, "anchor_a2 = %d\n", adc_state->adc_anchor_a2);
     bu_vls_printf(&vls, "anchor_dst = %d\n", adc_state->adc_anchor_dst);
     bu_vls_printf(&vls, "anchorpoint_a1 = %.15e %.15e %.15e\n",
-		  adc_state->adc_anchor_pt_a1[X] * base2local,
-		  adc_state->adc_anchor_pt_a1[Y] * base2local,
-		  adc_state->adc_anchor_pt_a1[Z] * base2local);
+		  adc_state->adc_anchor_pt_a1[X] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_a1[Y] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_a1[Z] * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "anchorpoint_a2 = %.15e %.15e %.15e\n",
-		  adc_state->adc_anchor_pt_a2[X] * base2local,
-		  adc_state->adc_anchor_pt_a2[Y] * base2local,
-		  adc_state->adc_anchor_pt_a2[Z] * base2local);
+		  adc_state->adc_anchor_pt_a2[X] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_a2[Y] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_a2[Z] * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "anchorpoint_dst = %.15e %.15e %.15e\n",
-		  adc_state->adc_anchor_pt_dst[X] * base2local,
-		  adc_state->adc_anchor_pt_dst[Y] * base2local,
-		  adc_state->adc_anchor_pt_dst[Z] * base2local);
+		  adc_state->adc_anchor_pt_dst[X] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_dst[Y] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_dst[Z] * s->dbip->dbi_base2local);
     Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 }
@@ -577,7 +577,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "dst")) {
 	if (argc == 0) {
-	    bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_gvp->gv_scale * base2local);
+	    bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
@@ -585,9 +585,9 @@ f_adc (
 	} else if (argc == 1) {
 	    if (!adc_state->adc_anchor_dst) {
 		if (incr_flag)
-		    adc_state->adc_dst += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_dst += user_pt[0] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 		else
-		    adc_state->adc_dst = user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_dst = user_pt[0] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 		adc_state->adc_dv_dist = (adc_state->adc_dst / M_SQRT1_2 - 1.0) * GED_MAX;
 
@@ -629,7 +629,7 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dh")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_grid[X] += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
+		adc_state->adc_pos_grid[X] += user_pt[0] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 		adc_grid_To_adc_view();
 		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
@@ -646,7 +646,7 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dv")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_grid[Y] += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
+		adc_state->adc_pos_grid[Y] += user_pt[0] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 		adc_grid_To_adc_view();
 		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
@@ -663,8 +663,8 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "hv")) {
 	if (argc == 0) {
 	    bu_vls_printf(&vls, "%.15e %.15e",
-			  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * base2local,
-			  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * base2local);
+			  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
@@ -672,11 +672,11 @@ f_adc (
 	} else if (argc == 2) {
 	    if (!adc_state->adc_anchor_pos) {
 		if (incr_flag) {
-		    adc_state->adc_pos_grid[X] += user_pt[X] / (view_state->vs_gvp->gv_scale * base2local);
-		    adc_state->adc_pos_grid[Y] += user_pt[Y] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_pos_grid[X] += user_pt[X] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		    adc_state->adc_pos_grid[Y] += user_pt[Y] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 		} else {
-		    adc_state->adc_pos_grid[X] = user_pt[X] / (view_state->vs_gvp->gv_scale * base2local);
-		    adc_state->adc_pos_grid[Y] = user_pt[Y] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_pos_grid[X] = user_pt[X] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		    adc_state->adc_pos_grid[Y] = user_pt[Y] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 		}
 
 		adc_state->adc_pos_grid[Z] = 0.0;
@@ -696,7 +696,7 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dx")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_model[X] += user_pt[0] * local2base;
+		adc_state->adc_pos_model[X] += user_pt[0] * s->dbip->dbi_local2base;
 		adc_model_To_adc_view();
 		adc_view_To_adc_grid();
 
@@ -713,7 +713,7 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dy")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_model[Y] += user_pt[0] * local2base;
+		adc_state->adc_pos_model[Y] += user_pt[0] * s->dbip->dbi_local2base;
 		adc_model_To_adc_view();
 		adc_view_To_adc_grid();
 
@@ -730,7 +730,7 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dz")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_model[Z] += user_pt[0] * local2base;
+		adc_state->adc_pos_model[Z] += user_pt[0] * s->dbip->dbi_local2base;
 		adc_model_To_adc_view();
 		adc_view_To_adc_grid();
 
@@ -746,7 +746,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "xyz")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, adc_state->adc_pos_model, base2local);
+	    VSCALE(scaled_pos, adc_state->adc_pos_model, s->dbip->dbi_base2local);
 
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -754,7 +754,7 @@ f_adc (
 
 	    return TCL_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, local2base);
+	    VSCALE(user_pt, user_pt, s->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(adc_state->adc_pos_model, adc_state->adc_pos_model, user_pt);
@@ -889,7 +889,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a1")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a1, base2local);
+	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a1, s->dbip->dbi_base2local);
 
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -897,7 +897,7 @@ f_adc (
 
 	    return TCL_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, local2base);
+	    VSCALE(user_pt, user_pt, s->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(adc_state->adc_anchor_pt_a1, adc_state->adc_anchor_pt_a1, user_pt);
@@ -942,7 +942,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a2")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a2, base2local);
+	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a2, s->dbip->dbi_base2local);
 
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -950,7 +950,7 @@ f_adc (
 
 	    return TCL_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, local2base);
+	    VSCALE(user_pt, user_pt, s->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(adc_state->adc_anchor_pt_a2, adc_state->adc_anchor_pt_a2, user_pt);
@@ -995,7 +995,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_dst")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_dst, base2local);
+	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_dst, s->dbip->dbi_base2local);
 
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -1003,7 +1003,7 @@ f_adc (
 
 	    return TCL_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, local2base);
+	    VSCALE(user_pt, user_pt, s->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(adc_state->adc_anchor_pt_dst, adc_state->adc_anchor_pt_dst, user_pt);

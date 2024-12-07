@@ -287,19 +287,19 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     }
 
     /* take some care here to avoid buffer overrun */
-    tmp_val = -view_state->vs_gvp->gv_center[MDX]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDX]*s->dbip->dbi_base2local;
     if (fabs(tmp_val) < 10e70) {
 	sprintf(cent_x, "%.3f", tmp_val);
     } else {
 	sprintf(cent_x, "%.3g", tmp_val);
     }
-    tmp_val = -view_state->vs_gvp->gv_center[MDY]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDY]*s->dbip->dbi_base2local;
     if (fabs(tmp_val) < 10e70) {
 	sprintf(cent_y, "%.3f", tmp_val);
     } else {
 	sprintf(cent_y, "%.3g", tmp_val);
     }
-    tmp_val = -view_state->vs_gvp->gv_center[MDZ]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDZ]*s->dbip->dbi_base2local;
     if (fabs(tmp_val) < 10e70) {
 	sprintf(cent_z, "%.3f", tmp_val);
     } else {
@@ -310,7 +310,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_center_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
-    tmp_val = view_state->vs_gvp->gv_size*base2local;
+    tmp_val = view_state->vs_gvp->gv_size*s->dbip->dbi_base2local;
     if (fabs(tmp_val) < 10e70) {
 	sprintf(size, "sz=%.3f", tmp_val);
     } else {
@@ -534,7 +534,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     if (adc_state->adc_draw) {
 	fastf_t f;
 
-	f = view_state->vs_gvp->gv_scale * base2local;
+	f = view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 	/* Angle/Distance cursor */
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls,
@@ -565,9 +565,9 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 		      " Keypoint: %s %s: (%g, %g, %g)",
 		      OBJ[es_int.idb_type].ft_name+3,	/* Skip ID_ */
 		      es_keytag,
-		      es_keypoint[X] * base2local,
-		      es_keypoint[Y] * base2local,
-		      es_keypoint[Z] * base2local);
+		      es_keypoint[X] * s->dbip->dbi_base2local,
+		      es_keypoint[Y] * s->dbip->dbi_base2local,
+		      es_keypoint[Z] * s->dbip->dbi_base2local);
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    dm_set_fg(DMP,
 			   color_scheme->cs_status_text2[0],

@@ -1139,10 +1139,10 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	for (i = 0; i < n_verts-1; i++) {
 	    for (j = 0; j < n_links; j++) {
 		if (i == 0) {
-		    VSCALE(state.trans, verts[n_links*i+j], local2base);
+		    VSCALE(state.trans, verts[n_links*i+j], s->dbip->dbi_local2base);
 		} else
-		    VSUB2SCALE(state.trans, verts[n_links*(i-1)+j], verts[n_links*i+j], local2base);
-		VSCALE(state.rpnt, verts[n_links*i+j], local2base);
+		    VSUB2SCALE(state.trans, verts[n_links*(i-1)+j], verts[n_links*i+j], s->dbip->dbi_local2base);
+		VSCALE(state.rpnt, verts[n_links*i+j], s->dbip->dbi_local2base);
 
 		VSUB2(pt, verts[n_links*i+j], verts[n_links*i+j+1]);
 		VSET(state.rot, 0, (M_PI - atan2(pt[Z], pt[X])),

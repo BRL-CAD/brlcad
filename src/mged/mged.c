@@ -1143,9 +1143,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
-		      edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
-		      edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
+		      edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1176,9 +1176,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
-		      edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
-		      edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
+		      edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1240,9 +1240,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-			  view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
-			  view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
-			  view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
+			  view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
@@ -1265,9 +1265,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-			  view_state->vs_rate_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
-			  view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
-			  view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
+			  view_state->vs_rate_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);

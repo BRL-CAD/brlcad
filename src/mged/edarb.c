@@ -123,7 +123,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     dist = atof(argv[2]);
     /* apply es_mat[15] to get to real model space */
     /* convert from the local unit (as input) to the base unit */
-    dist = dist * es_mat[15] * local2base;
+    dist = dist * es_mat[15] * s->dbip->dbi_local2base;
 
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);

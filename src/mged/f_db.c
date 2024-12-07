@@ -241,11 +241,11 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
 
 	bu_vls_strcpy(&cmd, "local2base");
 	Tcl_UnlinkVar(mctx->interpreter, bu_vls_addr(&cmd));
-	Tcl_LinkVar(mctx->interpreter, bu_vls_addr(&cmd), (char *)&local2base, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+	Tcl_LinkVar(mctx->interpreter, bu_vls_addr(&cmd), (char *)&s->dbip->dbi_local2base, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
 	bu_vls_strcpy(&cmd, "base2local");
 	Tcl_UnlinkVar(mctx->interpreter, bu_vls_addr(&cmd));
-	Tcl_LinkVar(mctx->interpreter, bu_vls_addr(&cmd), (char *)&base2local, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+	Tcl_LinkVar(mctx->interpreter, bu_vls_addr(&cmd), (char *)&s->dbip->dbi_base2local, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
 	// Restore the pre Tcl ged_result_str
 	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmp_gedr));

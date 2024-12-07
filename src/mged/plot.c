@@ -232,10 +232,10 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		    }
 
 		    fprintf(fp_w, "%.9e %.9e %.9e %.9e\n",
-			    last[X] * base2local,
-			    last[Y] * base2local,
-			    fin[X] * base2local,
-			    fin[Y] * base2local);
+			    last[X] * s->dbip->dbi_base2local,
+			    last[Y] * s->dbip->dbi_base2local,
+			    fin[X] * s->dbip->dbi_base2local,
+			    fin[Y] * s->dbip->dbi_base2local);
 
 		    VMOVE(last, fin);
 		}

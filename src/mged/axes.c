@@ -145,7 +145,7 @@ draw_m_axes(struct mged_state *s)
     point_t v_ap;			/* axes position in view coordinates */
     struct bv_axes gas;
 
-    VSCALE(m_ap, axes_state->ax_model_pos, local2base);
+    VSCALE(m_ap, axes_state->ax_model_pos, s->dbip->dbi_local2base);
     MAT4X3PNT(v_ap, view_state->vs_gvp->gv_model2view, m_ap);
 
     memset(&gas, 0, sizeof(struct bv_axes));

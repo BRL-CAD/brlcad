@@ -157,8 +157,8 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				     "Enter the Z coordinate value: ", (char *)NULL);
 		    return TCL_ERROR;
 		}
-		pt[i][0] = atof(argv[7+3*i+1]) * local2base;
-		pt[i][1] = atof(argv[7+3*i+2]) * local2base;
+		pt[i][0] = atof(argv[7+3*i+1]) * s->dbip->dbi_local2base;
+		pt[i][1] = atof(argv[7+3*i+2]) * s->dbip->dbi_local2base;
 		break;
 
 	    case 'y':
@@ -178,8 +178,8 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				     "Enter the Z coordinate value: ", (char *)NULL);
 		    return TCL_ERROR;
 		}
-		pt[i][0] = atof(argv[7+3*i+1]) * local2base;
-		pt[i][1] = atof(argv[7+3*i+2]) * local2base;
+		pt[i][0] = atof(argv[7+3*i+1]) * s->dbip->dbi_local2base;
+		pt[i][1] = atof(argv[7+3*i+2]) * s->dbip->dbi_local2base;
 		break;
 
 	    case 'z':
@@ -199,8 +199,8 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				     "Enter the Y coordinate value: ", (char *)NULL);
 		    return TCL_ERROR;
 		}
-		pt[i][0] = atof(argv[7+3*i+1]) * local2base;
-		pt[i][1] = atof(argv[7+3*i+2]) * local2base;
+		pt[i][0] = atof(argv[7+3*i+1]) * s->dbip->dbi_local2base;
+		pt[i][1] = atof(argv[7+3*i+2]) * s->dbip->dbi_local2base;
 		break;
 
 	    default:
@@ -219,7 +219,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
 	return TCL_ERROR;
     }
-    thick *= local2base;
+    thick *= s->dbip->dbi_local2base;
 
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -234,7 +234,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	VSET(aip->pt[i], 0.0, 0.0, 0.0);
     }
 
-    VSET(aip->pt[0], atof(argv[2])*local2base, atof(argv[3])*local2base, atof(argv[4])*local2base);
+    VSET(aip->pt[0], atof(argv[2])*s->dbip->dbi_local2base, atof(argv[3])*s->dbip->dbi_local2base, atof(argv[4])*s->dbip->dbi_local2base);
 
     ndotv = VDOT(aip->pt[0], norm);
 

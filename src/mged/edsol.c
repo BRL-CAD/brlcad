@@ -1139,7 +1139,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		return;
 	    }
 	    es_pipe_pnt = next;
-	    rt_pipe_pnt_print(es_pipe_pnt, base2local);
+	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
 	    es_edflag = IDLE;
 	    sedit(s);
@@ -1155,7 +1155,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		return;
 	    }
 	    es_pipe_pnt = prev;
-	    rt_pipe_pnt_print(es_pipe_pnt, base2local);
+	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
 	    es_edflag = IDLE;
 	    sedit(s);
@@ -1527,7 +1527,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		return;
 	    }
 	    es_metaball_pnt = next;
-	    rt_metaball_pnt_print(es_metaball_pnt, base2local);
+	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
 	    es_edflag = IDLE;
 	    sedit(s);
@@ -1543,7 +1543,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		return;
 	    }
 	    es_metaball_pnt = prev;
-	    rt_metaball_pnt_print(es_metaball_pnt, base2local);
+	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
 	    es_edflag = IDLE;
 	    sedit(s);
@@ -5804,7 +5804,7 @@ sedit(struct mged_state *s)
 		    Tcl_AppendResult(s->interp, "No PIPE segment selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		} else
-		    rt_pipe_pnt_print(es_pipe_pnt, base2local);
+		    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    }
 	    break;
 	case ECMD_PIPE_SPLIT:
@@ -5982,7 +5982,7 @@ sedit(struct mged_state *s)
 		MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, z_dir);
 		find_ars_nearest_pnt(&es_ars_crv, &es_ars_col, ars, pick_pt, view_dir);
 		VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		VSCALE(selected_pt, es_pt, base2local);
+		VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 		       es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
@@ -6006,7 +6006,7 @@ sedit(struct mged_state *s)
 		    if ((size_t)es_ars_col >= ars->pts_per_curve)
 			es_ars_col = 0;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		    VSCALE(selected_pt, es_pt, base2local);
+		    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
@@ -6031,7 +6031,7 @@ sedit(struct mged_state *s)
 		    if (es_ars_col < 0)
 			es_ars_col = ars->pts_per_curve - 1;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		    VSCALE(selected_pt, es_pt, base2local);
+		    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
@@ -6056,7 +6056,7 @@ sedit(struct mged_state *s)
 		    if ((size_t)es_ars_crv >= ars->ncurves)
 			es_ars_crv = 0;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		    VSCALE(selected_pt, es_pt, base2local);
+		    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
@@ -6081,7 +6081,7 @@ sedit(struct mged_state *s)
 		    if (es_ars_crv < 0)
 			es_ars_crv = ars->ncurves - 1;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		    VSCALE(selected_pt, es_pt, base2local);
+		    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
@@ -6616,7 +6616,7 @@ sedit(struct mged_state *s)
 		    Tcl_AppendResult(s->interp, "No METABALL control point selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		} else {
-		    rt_metaball_pnt_print(es_metaball_pnt, base2local);
+		    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 		}
 	    }
 	    break;
@@ -6948,7 +6948,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		bot_verts[0] = tmp_vert;
 		bot_verts[1] = -1;
 		bot_verts[2] = -1;
-		VSCALE(selected_pt, &bot->vertices[tmp_vert*3], base2local);
+		VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->dbip->dbi_base2local);
 		sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
 		Tcl_AppendResult(s->interp, tmp_msg, (char *)NULL);
 		mged_print_result(s, TCL_OK);
@@ -6976,8 +6976,8 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		bot_verts[0] = vert1;
 		bot_verts[1] = vert2;
 		bot_verts[2] = -1;
-		VSCALE(from_pt, &bot->vertices[vert1*3], base2local);
-		VSCALE(to_pt, &bot->vertices[vert2*3], base2local);
+		VSCALE(from_pt, &bot->vertices[vert1*3], s->dbip->dbi_base2local);
+		VSCALE(to_pt, &bot->vertices[vert2*3], s->dbip->dbi_base2local);
 		sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
 		Tcl_AppendResult(s->interp, tmp_msg, (char *)NULL);
 		mged_print_result(s, TCL_OK);
@@ -7335,10 +7335,10 @@ vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, co
     transform_editing_solid(s, &intern, mat, (struct rt_db_internal *)ip, 0);
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
-	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, base2local) < 0)
+	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, s->dbip->dbi_base2local) < 0)
 	    Tcl_AppendResult(s->interp, "vls_solid: describe error\n", (char *)NULL);
     } else {
-	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, base2local) < 0)
+	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, s->dbip->dbi_base2local) < 0)
 	    Tcl_AppendResult(s->interp, "vls_solid: describe error\n", (char *)NULL);
     }
 
@@ -7357,7 +7357,7 @@ vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, co
 	}
 
 	if (ps == es_pipe_pnt)
-	    rt_vls_pipe_pnt(vp, seg_no, &intern, base2local);
+	    rt_vls_pipe_pnt(vp, seg_no, &intern, s->dbip->dbi_base2local);
     }
 
     rt_db_free_internal(&intern);
@@ -7961,9 +7961,9 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	case ECMD_METABALL_PT_MOV:
 	case ECMD_METABALL_PT_ADD:
 	    /* must convert to base units */
-	    es_para[0] *= local2base;
-	    es_para[1] *= local2base;
-	    es_para[2] *= local2base;
+	    es_para[0] *= s->dbip->dbi_local2base;
+	    es_para[1] *= s->dbip->dbi_local2base;
+	    es_para[2] *= s->dbip->dbi_local2base;
 	    /* fall through */
 	default:
 	    break;
@@ -8719,7 +8719,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t key;
 
-		VSCALE(key, es_keypoint, base2local);
+		VSCALE(key, es_keypoint, s->dbip->dbi_base2local);
 		bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(key));
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -8728,9 +8728,9 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	    break;
 	case 3:
 	    VSET(es_keypoint,
-		 atof(argv[1]) * local2base,
-		 atof(argv[2]) * local2base,
-		 atof(argv[3]) * local2base);
+		 atof(argv[1]) * s->dbip->dbi_local2base,
+		 atof(argv[2]) * s->dbip->dbi_local2base,
+		 atof(argv[3]) * s->dbip->dbi_local2base);
 	    es_keytag = "user-specified";
 	    es_keyfixed = 1;
 	    break;

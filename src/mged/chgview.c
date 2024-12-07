@@ -665,8 +665,8 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     if (argc == 1) {
 	bu_vls_printf(&vls, "STATE=%s, ", state_str[STATE]);
 	bu_vls_printf(&vls, "Viewscale=%f (%f mm)\n",
-		      view_state->vs_gvp->gv_scale * base2local, view_state->vs_gvp->gv_scale);
-	bu_vls_printf(&vls, "base2local=%f\n", base2local);
+		      view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local, view_state->vs_gvp->gv_scale);
+	bu_vls_printf(&vls, "s->dbip->dbi_base2local=%f\n", s->dbip->dbi_base2local);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -689,21 +689,21 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     if (BU_STR_EQUAL(argv[1], "Viewscale")) {
-	bu_vls_printf(&vls, "%f", view_state->vs_gvp->gv_scale * base2local);
+	bu_vls_printf(&vls, "%f", view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
 
-    if (BU_STR_EQUAL(argv[1], "base2local")) {
-	bu_vls_printf(&vls, "%f", base2local);
+    if (BU_STR_EQUAL(argv[1], "s->dbip->dbi_base2local")) {
+	bu_vls_printf(&vls, "%f", s->dbip->dbi_base2local);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
 
-    if (BU_STR_EQUAL(argv[1], "local2base")) {
-	bu_vls_printf(&vls, "%f", local2base);
+    if (BU_STR_EQUAL(argv[1], "s->dbip->dbi_local2base")) {
+	bu_vls_printf(&vls, "%f", s->dbip->dbi_local2base);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_OK;
@@ -2107,7 +2107,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			do_rot = 1;
 			break;
 		    case 'X':
-			sf = f * local2base / view_state->vs_gvp->gv_scale;
+			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
 
 			if (incr_flag) {
 			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
@@ -2138,22 +2138,22 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[X] = f - last_edit_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * base2local;
+					tvec[X] = f - last_edit_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 					edit_absolute_model_tran[X] = sf;
 					last_edit_absolute_model_tran[X] = edit_absolute_model_tran[X];
 					break;
 				    case 'v':
-					tvec[X] = f - last_edit_absolute_view_tran[X] * view_state->vs_gvp->gv_scale * base2local;
+					tvec[X] = f - last_edit_absolute_view_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 					edit_absolute_view_tran[X] = sf;
 					last_edit_absolute_view_tran[X] = edit_absolute_view_tran[X];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-				tvec[X] = f - view_state->vs_last_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * base2local;
+				tvec[X] = f - view_state->vs_last_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 				view_state->vs_absolute_model_tran[X] = sf;
 				view_state->vs_last_absolute_model_tran[X] = view_state->vs_absolute_model_tran[X];
 			    } else {
-				tvec[X] = f - view_state->vs_last_absolute_tran[X] * view_state->vs_gvp->gv_scale * base2local;
+				tvec[X] = f - view_state->vs_last_absolute_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 				view_state->vs_absolute_tran[X] = sf;
 				view_state->vs_last_absolute_tran[X] = view_state->vs_absolute_tran[X];
 			    }
@@ -2163,7 +2163,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			do_tran = 1;
 			break;
 		    case 'Y':
-			sf = f * local2base / view_state->vs_gvp->gv_scale;
+			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
 
 			if (incr_flag) {
 			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
@@ -2194,22 +2194,22 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[Y] = f - last_edit_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * base2local;
+					tvec[Y] = f - last_edit_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 					edit_absolute_model_tran[Y] = sf;
 					last_edit_absolute_model_tran[Y] = edit_absolute_model_tran[Y];
 					break;
 				    case 'v':
-					tvec[Y] = f - last_edit_absolute_view_tran[Y] * view_state->vs_gvp->gv_scale * base2local;
+					tvec[Y] = f - last_edit_absolute_view_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 					edit_absolute_view_tran[Y] = sf;
 					last_edit_absolute_view_tran[Y] = edit_absolute_view_tran[Y];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-				tvec[Y] = f - view_state->vs_last_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * base2local;
+				tvec[Y] = f - view_state->vs_last_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 				view_state->vs_absolute_model_tran[Y] = sf;
 				view_state->vs_last_absolute_model_tran[Y] = view_state->vs_absolute_model_tran[Y];
 			    } else {
-				tvec[Y] = f - view_state->vs_last_absolute_tran[Y] * view_state->vs_gvp->gv_scale * base2local;
+				tvec[Y] = f - view_state->vs_last_absolute_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 				view_state->vs_absolute_tran[Y] = sf;
 				view_state->vs_last_absolute_tran[Y] = view_state->vs_absolute_tran[Y];
 			    }
@@ -2218,7 +2218,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			do_tran = 1;
 			break;
 		    case 'Z':
-			sf = f * local2base / view_state->vs_gvp->gv_scale;
+			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
 
 			if (incr_flag) {
 			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
@@ -2249,22 +2249,22 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[Z] = f - last_edit_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * base2local;
+					tvec[Z] = f - last_edit_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 					edit_absolute_model_tran[Z] = sf;
 					last_edit_absolute_model_tran[Z] = edit_absolute_model_tran[Z];
 					break;
 				    case 'v':
-					tvec[Z] = f - last_edit_absolute_view_tran[Z] * view_state->vs_gvp->gv_scale * base2local;
+					tvec[Z] = f - last_edit_absolute_view_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 					edit_absolute_view_tran[Z] = sf;
 					last_edit_absolute_view_tran[Z] = edit_absolute_view_tran[Z];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-				tvec[Z] = f - view_state->vs_last_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * base2local;
+				tvec[Z] = f - view_state->vs_last_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 				view_state->vs_absolute_model_tran[Z] = sf;
 				view_state->vs_last_absolute_model_tran[Z] = view_state->vs_absolute_model_tran[Z];
 			    } else {
-				tvec[Z] = f - view_state->vs_last_absolute_tran[Z] * view_state->vs_gvp->gv_scale * base2local;
+				tvec[Z] = f - view_state->vs_last_absolute_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 				view_state->vs_absolute_tran[Z] = sf;
 				view_state->vs_last_absolute_tran[Z] = view_state->vs_absolute_tran[Z];
 			    }
@@ -3622,15 +3622,15 @@ mged_etran(struct mged_state *s,
     /* compute delta */
     switch (coords) {
 	case 'm':
-	    VSCALE(delta, tvec, local2base);
+	    VSCALE(delta, tvec, s->dbip->dbi_local2base);
 	    break;
 	case 'o':
-	    VSCALE(p2, tvec, local2base);
+	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
 	    MAT4X3PNT(delta, acc_rot_sol, p2);
 	    break;
 	case 'v':
 	default:
-	    VSCALE(p2, tvec, local2base / view_state->vs_gvp->gv_scale);
+	    VSCALE(p2, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
 	    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, p2);
 	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
 	    VSUB2(delta, work, vcenter);
@@ -3686,7 +3686,7 @@ mged_mtran(struct mged_state *s, const vect_t tvec)
     point_t delta;
     point_t vc, nvc;
 
-    VSCALE(delta, tvec, local2base);
+    VSCALE(delta, tvec, s->dbip->dbi_local2base);
     MAT_DELTAS_GET_NEG(vc, view_state->vs_gvp->gv_center);
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, nvc);
@@ -3707,7 +3707,7 @@ mged_vtran(struct mged_state *s, const vect_t tvec)
     point_t work;
     point_t vc, nvc;
 
-    VSCALE(tt, tvec, local2base / view_state->vs_gvp->gv_scale);
+    VSCALE(tt, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
     MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, tt);
     MAT_DELTAS_GET_NEG(vc, view_state->vs_gvp->gv_center);
     VSUB2(delta, work, vc);

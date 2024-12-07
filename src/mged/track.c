@@ -116,7 +116,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    fw[0] = atof(argv[arg]) * local2base;
+    fw[0] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
 
     if (argc < arg+1) {
@@ -125,7 +125,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    lw[0] = atof(argv[arg]) * local2base;
+    lw[0] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
 
     if (fw[0] <= lw[0]) {
@@ -140,7 +140,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    fw[1] = lw[1] = atof(argv[arg]) * local2base;
+    fw[1] = lw[1] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
 
     if (argc < arg+1) {
@@ -149,7 +149,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    fw[2] = lw[2] = atof(argv[arg]) * local2base;
+    fw[2] = lw[2] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
     if (fw[2] <= 0) {
 	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
@@ -164,7 +164,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    dw[0] = atof(argv[arg]) * local2base;
+    dw[0] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
     if (dw[0] >= lw[0]) {
 	Tcl_AppendResult(interp, "DRIVE wheel not in the rear - STOP \n", (char *)NULL);
@@ -178,7 +178,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    dw[1] = atof(argv[arg]) * local2base;
+    dw[1] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
 
     if (argc < arg+1) {
@@ -187,7 +187,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    dw[2] = atof(argv[arg]) * local2base;
+    dw[2] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
     if (dw[2] <= 0) {
 	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
@@ -202,7 +202,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    iw[0] = atof(argv[arg]) * local2base;
+    iw[0] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
     if (iw[0] <= fw[0]) {
 	Tcl_AppendResult(interp, "IDLER wheel not in the front - STOP \n", (char *)NULL);
@@ -216,7 +216,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    iw[1] = atof(argv[arg]) * local2base;
+    iw[1] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
 
     if (argc < arg+1) {
@@ -225,7 +225,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    iw[2] = atof(argv[arg]) * local2base;
+    iw[2] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
     if (iw[2] <= 0) {
 	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
@@ -240,7 +240,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    tr[2] = tr[0] = atof(argv[arg]) * local2base;
+    tr[2] = tr[0] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
 
     if (argc < arg+1) {
@@ -249,7 +249,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    tr[1] = atof(argv[arg]) * local2base;
+    tr[1] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
     if (EQUAL(tr[0], tr[1])) {
 	Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
@@ -268,7 +268,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    tr[2] = atof(argv[arg]) * local2base;
+    tr[2] = atof(argv[arg]) * s->dbip->dbi_local2base;
     ++arg;
     if (tr[2] <= 0) {
 	Tcl_AppendResult(interp, "Track thickness <= 0 - STOP\n", (char *)NULL);

@@ -106,7 +106,7 @@ set_grid_draw(const struct bu_structparse *sdp,
 
     /* This gets done at most one time. */
     if (grid_auto_size && grid_state->draw) {
-	fastf_t res = view_state->vs_gvp->gv_size*base2local / 64.0;
+	fastf_t res = view_state->vs_gvp->gv_size*s->dbip->dbi_base2local / 64.0;
 
 	grid_state->res_h = res;
 	grid_state->res_v = res;
@@ -166,7 +166,7 @@ draw_grid(struct mged_state *s)
     inv_grid_res_h= 1.0 / grid_state->res_h;
     inv_grid_res_v= 1.0 / grid_state->res_v;
 
-    sf = view_state->vs_gvp->gv_scale*base2local;
+    sf = view_state->vs_gvp->gv_scale*s->dbip->dbi_base2local;
 
     /* sanity - don't draw the grid if it would fill the screen */
     {
@@ -183,7 +183,7 @@ draw_grid(struct mged_state *s)
     nv_dots = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * grid_state->res_major_v);
     nh_dots = 2.0 * sf * inv_grid_res_h + (2 * grid_state->res_major_h);
 
-    VSCALE(model_grid_anchor, grid_state->anchor, local2base);
+    VSCALE(model_grid_anchor, grid_state->anchor, s->dbip->dbi_local2base);
     MAT4X3PNT(view_grid_anchor, view_state->vs_gvp->gv_model2view, model_grid_anchor);
     VSCALE(view_grid_anchor_local, view_grid_anchor, sf);
 
@@ -253,13 +253,13 @@ snap_to_grid(
 	ZERO(grid_state->res_v))
 	return;
 
-    sf = view_state->vs_gvp->gv_scale*base2local;
+    sf = view_state->vs_gvp->gv_scale*s->dbip->dbi_base2local;
     inv_sf = 1 / sf;
 
     VSET(view_pt, *mx, *my, 0.0);
     VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
 
-    VSCALE(model_grid_anchor, grid_state->anchor, local2base);
+    VSCALE(model_grid_anchor, grid_state->anchor, s->dbip->dbi_local2base);
     MAT4X3PNT(view_grid_anchor, view_state->vs_gvp->gv_model2view, model_grid_anchor);
     VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
 
@@ -313,7 +313,7 @@ snap_keypoint_to_grid(struct mged_state *s)
     }
     snap_to_grid(s, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-    VSCALE(model_pt, model_pt, base2local);
+    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 
     if (STATE == ST_S_EDIT)
 	bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
@@ -344,7 +344,7 @@ snap_view_center_to_grid(struct mged_state *s)
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
     new_mats();
 
-    VSCALE(model_pt, model_pt, base2local);
+    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 
     /* save new center in local units */
     VMOVE(dm_work_pt, model_pt);
@@ -368,7 +368,7 @@ round_to_grid(struct mged_state *s, fastf_t *view_dx, fastf_t *view_dy)
 	ZERO(grid_state->res_v))
 	return;
 
-    sf = view_state->vs_gvp->gv_scale*base2local;
+    sf = view_state->vs_gvp->gv_scale*s->dbip->dbi_base2local;
     inv_sf = 1 / sf;
 
     /* convert mouse distance to grid units */
@@ -416,10 +416,10 @@ snap_view_to_grid(struct mged_state *s, fastf_t view_dx, fastf_t view_dy)
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
     MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
     VSUB2(diff, model_pt, vcenter);
-    VSCALE(diff, diff, base2local);
+    VSCALE(diff, diff, s->dbip->dbi_base2local);
     VSUB2(model_pt, dm_work_pt, diff);
 
-    VSCALE(model_pt, model_pt, local2base);
+    VSCALE(model_pt, model_pt, s->dbip->dbi_local2base);
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
     new_mats();
 }

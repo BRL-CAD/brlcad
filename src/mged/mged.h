@@ -142,13 +142,6 @@ struct cmdtab {
 extern int mged_db_version;
 extern int mged_db_warn;
 
-/*
- * All GED files are stored in a fixed base unit (MM).  These factors
- * convert database unit to local (or working) units.
- */
-#define base2local (s->dbip->dbi_base2local)
-#define local2base (s->dbip->dbi_local2base)
-
 /**
  * Definitions.
  *
