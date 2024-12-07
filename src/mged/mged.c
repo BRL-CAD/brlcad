@@ -147,10 +147,6 @@ double frametime;	/* time needed to draw last frame */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
-int classic_mged = 1;   /* >0 means interactive. gets set to 0 if
-			 * there's libdm graphics support, and forced
-			 * with -c option.
-			 */
 int interactive = 0;	/* >0 means interactive, intentionally starts
                          * 0 to know when interactive, e.g., via -C
                          * option
@@ -160,15 +156,6 @@ int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
-
-int mged_init_flag = 1;	/* >0 means in initialization stage */
-
-size_t input_str_index = 0;
-
-struct bu_vls input_str = BU_VLS_INIT_ZERO;
-struct bu_vls input_str_prefix = BU_VLS_INIT_ZERO;
-struct bu_vls scratchline = BU_VLS_INIT_ZERO;
-struct bu_vls mged_prompt = BU_VLS_INIT_ZERO;
 
 char *dpy_string = (char *)NULL;
 
@@ -238,10 +225,10 @@ mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
 
 
 void
-pr_prompt(int show_prompt)
+pr_prompt(struct mged_state *s, int show_prompt)
 {
     if (show_prompt) {
-	bu_log("%s", bu_vls_addr(&mged_prompt));
+	bu_log("%s", bu_vls_addr(&s->mged_prompt));
     }
 }
 
@@ -283,7 +270,7 @@ attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char 
 static void
 mged_notify(int UNUSED(i))
 {
-    pr_prompt(interactive);
+    pr_prompt(MGED_STATE, interactive);
 }
 
 
@@ -292,15 +279,15 @@ reset_input_strings(struct mged_state *s)
 {
     if (BU_LIST_IS_HEAD(curr_cmd_list, &head_cmd_list.l)) {
 	/* Truncate input string */
-	bu_vls_trunc(&input_str, 0);
-	bu_vls_trunc(&input_str_prefix, 0);
+	bu_vls_trunc(&s->input_str, 0);
+	bu_vls_trunc(&s->input_str_prefix, 0);
 	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
-	input_str_index = 0;
+	s->input_str_index = 0;
 
 	curr_cmd_list->cl_quote_string = 0;
-	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
 	bu_log("\n");
-	pr_prompt(interactive);
+	pr_prompt(s, interactive);
     } else {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -466,23 +453,23 @@ do_rc(struct mged_state *s)
 
 
 static void
-mged_insert_char(char ch)
+mged_insert_char(struct mged_state *s, char ch)
 {
-    if (input_str_index == bu_vls_strlen(&input_str)) {
+    if (s->input_str_index == bu_vls_strlen(&s->input_str)) {
 	bu_log("%c", (int)ch);
-	bu_vls_putc(&input_str, (int)ch);
-	++input_str_index;
+	bu_vls_putc(&s->input_str, (int)ch);
+	++s->input_str_index;
     } else {
 	struct bu_vls temp = BU_VLS_INIT_ZERO;
 
-	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
-	bu_vls_trunc(&input_str, input_str_index);
+	bu_vls_strcat(&temp, bu_vls_addr(&s->input_str)+s->input_str_index);
+	bu_vls_trunc(&s->input_str, s->input_str_index);
 	bu_log("%c%s", (int)ch, bu_vls_addr(&temp));
-	pr_prompt(interactive);
-	bu_vls_putc(&input_str, (int)ch);
-	bu_log("%s", bu_vls_addr(&input_str));
-	bu_vls_vlscat(&input_str, &temp);
-	++input_str_index;
+	pr_prompt(s, interactive);
+	bu_vls_putc(&s->input_str, (int)ch);
+	bu_log("%s", bu_vls_addr(&s->input_str));
+	bu_vls_vlscat(&s->input_str, &temp);
+	++s->input_str_index;
 	bu_vls_free(&temp);
     }
 }
@@ -498,7 +485,7 @@ do_tab_expansion(struct mged_state *s)
     int numExpansions=0;
     struct bu_vls tab_expansion = BU_VLS_INIT_ZERO;
 
-    bu_vls_printf(&tab_expansion, "tab_expansion {%s}", bu_vls_addr(&input_str));
+    bu_vls_printf(&tab_expansion, "tab_expansion {%s}", bu_vls_addr(&s->input_str));
     ret = Tcl_Eval(s->interp, bu_vls_addr(&tab_expansion));
     bu_vls_free(&tab_expansion);
 
@@ -513,17 +500,17 @@ do_tab_expansion(struct mged_state *s)
 	}
 
 	/* display the expanded line */
-	pr_prompt(interactive);
-	input_str_index = 0;
-	bu_vls_trunc(&input_str, 0);
-	bu_vls_strcat(&input_str, Tcl_GetString(newCommand));
+	pr_prompt(s, interactive);
+	s->input_str_index = 0;
+	bu_vls_trunc(&s->input_str, 0);
+	bu_vls_strcat(&s->input_str, Tcl_GetString(newCommand));
 
 	/* only one match remaining, pad space so we can keep going */
 	if (numExpansions == 1)
-	    bu_vls_strcat(&input_str, " ");
+	    bu_vls_strcat(&s->input_str, " ");
 
-	input_str_index = bu_vls_strlen(&input_str);
-	bu_log("%s", bu_vls_addr(&input_str));
+	s->input_str_index = bu_vls_strlen(&s->input_str);
+	bu_log("%s", bu_vls_addr(&s->input_str));
     } else {
 	bu_log("ERROR\n");
 	bu_log("%s\n", Tcl_GetStringResult(s->interp));
@@ -596,19 +583,19 @@ mged_process_char(struct mged_state *s, char ch)
 	     */
 
 	    /* If no input and a default is supplied then use it */
-	    if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-		bu_vls_printf(&input_str_prefix, "%s%s\n",
-			      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+	    if (!bu_vls_strlen(&s->input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
+		bu_vls_printf(&s->input_str_prefix, "%s%s\n",
+			      bu_vls_strlen(&s->input_str_prefix) > 0 ? " " : "",
 			      bu_vls_addr(&curr_cmd_list->cl_more_default));
 	    else {
 		if (curr_cmd_list->cl_quote_string)
-		    bu_vls_printf(&input_str_prefix, "%s\"%s\"\n",
-				  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-				  bu_vls_addr(&input_str));
+		    bu_vls_printf(&s->input_str_prefix, "%s\"%s\"\n",
+				  bu_vls_strlen(&s->input_str_prefix) > 0 ? " " : "",
+				  bu_vls_addr(&s->input_str));
 		else
-		    bu_vls_printf(&input_str_prefix, "%s%s\n",
-				  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-				  bu_vls_addr(&input_str));
+		    bu_vls_printf(&s->input_str_prefix, "%s%s\n",
+				  bu_vls_strlen(&s->input_str_prefix) > 0 ? " " : "",
+				  bu_vls_addr(&s->input_str));
 	    }
 
 	    curr_cmd_list->cl_quote_string = 0;
@@ -620,20 +607,20 @@ mged_process_char(struct mged_state *s, char ch)
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	    /*XXX Nothing yet */
-	    bu_log("WARNING: not running cmdline(%s)\n", bu_vls_cstr(&input_str_prefix));
+	    bu_log("WARNING: not running cmdline(%s)\n", bu_vls_cstr(&s->input_str_prefix));
 #else
-	    if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
+	    if (Tcl_CommandComplete(bu_vls_addr(&s->input_str_prefix))) {
 		curr_cmd_list = &head_cmd_list;
 		if (curr_cmd_list->cl_tie)
 		    set_curr_dm(s, curr_cmd_list->cl_tie);
 
 		reset_Tty(fileno(stdin)); /* Backwards compatibility */
 		(void)signal(SIGINT, SIG_IGN);
-		if (cmdline(s, &input_str_prefix, TRUE) == CMD_MORE) {
+		if (cmdline(s, &s->input_str_prefix, TRUE) == CMD_MORE) {
 		    /* Remove newline */
-		    bu_vls_trunc(&input_str_prefix,
-				 bu_vls_strlen(&input_str_prefix)-1);
-		    bu_vls_trunc(&input_str, 0);
+		    bu_vls_trunc(&s->input_str_prefix,
+				 bu_vls_strlen(&s->input_str_prefix)-1);
+		    bu_vls_trunc(&s->input_str, 0);
 		    (void)signal(SIGINT, sig2);
 		    /*
 		   *** The mged_prompt vls now contains prompt for
@@ -641,146 +628,146 @@ mged_process_char(struct mged_state *s, char ch)
 		   */
 		} else {
 		    /* All done; clear all strings. */
-		    bu_vls_trunc(&input_str_prefix, 0);
-		    bu_vls_trunc(&input_str, 0);
+		    bu_vls_trunc(&s->input_str_prefix, 0);
+		    bu_vls_trunc(&s->input_str, 0);
 		    (void)signal(SIGINT, SIG_IGN);
 		}
 		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
 		clr_Echo(fileno(stdin));
 	    } else {
-		bu_vls_trunc(&input_str, 0);
-		bu_vls_strcpy(&mged_prompt, "\r? ");
+		bu_vls_trunc(&s->input_str, 0);
+		bu_vls_strcpy(&s->mged_prompt, "\r? ");
 
 		/* Allow the user to hit ^C */
 		(void)signal(SIGINT, sig2);
 	    }
 #endif
-	    pr_prompt(interactive); /* Print prompt for more input */
-	    input_str_index = 0;
+	    pr_prompt(s, interactive); /* Print prompt for more input */
+	    s->input_str_index = 0;
 	    freshline = 1;
 	    escaped = bracketed = 0;
 	    break;
 	case DELETE:
 	case BACKSPACE:
-	    if (input_str_index == 0) {
+	    if (s->input_str_index == 0) {
 		pr_beep();
 		break;
 	    }
 
-	    if (input_str_index == bu_vls_strlen(&input_str)) {
+	    if (s->input_str_index == bu_vls_strlen(&s->input_str)) {
 		bu_log("\b \b");
-		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1);
+		bu_vls_trunc(&s->input_str, bu_vls_strlen(&s->input_str)-1);
 	    } else {
-		bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
-		bu_vls_trunc(&input_str, input_str_index-1);
+		bu_vls_strcat(&temp, bu_vls_addr(&s->input_str)+s->input_str_index);
+		bu_vls_trunc(&s->input_str, s->input_str_index-1);
 		bu_log("\b%s ", bu_vls_addr(&temp));
-		pr_prompt(interactive);
-		bu_log("%s", bu_vls_addr(&input_str));
-		bu_vls_vlscat(&input_str, &temp);
+		pr_prompt(s, interactive);
+		bu_log("%s", bu_vls_addr(&s->input_str));
+		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
 	    }
-	    --input_str_index;
+	    --s->input_str_index;
 	    escaped = bracketed = 0;
 	    break;
 	case '\t':                      /* do TAB expansion */
 	    do_tab_expansion(s);
 	    break;
 	case CTRL_A:                    /* Go to beginning of line */
-	    pr_prompt(interactive);
-	    input_str_index = 0;
+	    pr_prompt(s, interactive);
+	    s->input_str_index = 0;
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_E:                    /* Go to end of line */
-	    if (input_str_index < bu_vls_strlen(&input_str)) {
-		bu_log("%s", bu_vls_addr(&input_str)+input_str_index);
-		input_str_index = bu_vls_strlen(&input_str);
+	    if (s->input_str_index < bu_vls_strlen(&s->input_str)) {
+		bu_log("%s", bu_vls_addr(&s->input_str)+s->input_str_index);
+		s->input_str_index = bu_vls_strlen(&s->input_str);
 	    }
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_D:                    /* Delete character at cursor */
-	    if (input_str_index == bu_vls_strlen(&input_str) && input_str_index != 0) {
+	    if (s->input_str_index == bu_vls_strlen(&s->input_str) && s->input_str_index != 0) {
 		pr_beep(); /* Beep if at end of input string */
 		break;
 	    }
-	    if (input_str_index == bu_vls_strlen(&input_str) && input_str_index == 0) {
+	    if (s->input_str_index == bu_vls_strlen(&s->input_str) && s->input_str_index == 0) {
 		/* act like a usual shell, quit if the command prompt is empty */
 		bu_log("exit\n");
 		quit(s);
 	    }
 
-	    bu_vls_strcpy(&temp, bu_vls_addr(&input_str)+input_str_index+1);
-	    bu_vls_trunc(&input_str, input_str_index);
+	    bu_vls_strcpy(&temp, bu_vls_addr(&s->input_str)+s->input_str_index+1);
+	    bu_vls_trunc(&s->input_str, s->input_str_index);
 	    bu_log("%s ", bu_vls_addr(&temp));
-	    pr_prompt(interactive);
-	    bu_log("%s", bu_vls_addr(&input_str));
-	    bu_vls_vlscat(&input_str, &temp);
+	    pr_prompt(s, interactive);
+	    bu_log("%s", bu_vls_addr(&s->input_str));
+	    bu_vls_vlscat(&s->input_str, &temp);
 	    bu_vls_free(&temp);
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_U:                   /* Delete whole line */
-	    pr_prompt(interactive);
-	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
+	    pr_prompt(s, interactive);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&s->input_str));
 	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
-	    pr_prompt(interactive);
-	    bu_vls_trunc(&input_str, 0);
-	    input_str_index = 0;
+	    pr_prompt(s, interactive);
+	    bu_vls_trunc(&s->input_str, 0);
+	    s->input_str_index = 0;
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_K:                    /* Delete to end of line */
-	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str)-input_str_index);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&s->input_str)-s->input_str_index);
 	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
-	    bu_vls_trunc(&input_str, input_str_index);
-	    pr_prompt(interactive);
-	    bu_log("%s", bu_vls_addr(&input_str));
+	    bu_vls_trunc(&s->input_str, s->input_str_index);
+	    pr_prompt(s, interactive);
+	    bu_log("%s", bu_vls_addr(&s->input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_L:                   /* Redraw line */
 	    bu_log("\n");
-	    pr_prompt(interactive);
-	    bu_log("%s", bu_vls_addr(&input_str));
-	    if (input_str_index == bu_vls_strlen(&input_str))
+	    pr_prompt(s, interactive);
+	    bu_log("%s", bu_vls_addr(&s->input_str));
+	    if (s->input_str_index == bu_vls_strlen(&s->input_str))
 		break;
-	    pr_prompt(interactive);
-	    bu_log("%*s", (int)input_str_index, bu_vls_addr(&input_str));
+	    pr_prompt(s, interactive);
+	    bu_log("%*s", (int)s->input_str_index, bu_vls_addr(&s->input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */
-	    if (input_str_index == 0) {
+	    if (s->input_str_index == 0) {
 		pr_beep();
 		break;
 	    }
-	    --input_str_index;
+	    --s->input_str_index;
 	    bu_log("\b"); /* hopefully non-destructive! */
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_F:                   /* Forward one character */
-	    if (input_str_index == bu_vls_strlen(&input_str)) {
+	    if (s->input_str_index == bu_vls_strlen(&s->input_str)) {
 		pr_beep();
 		break;
 	    }
 
-	    bu_log("%c", bu_vls_addr(&input_str)[input_str_index]);
-	    ++input_str_index;
+	    bu_log("%c", bu_vls_addr(&s->input_str)[s->input_str_index]);
+	    ++s->input_str_index;
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_T:                  /* Transpose characters */
-	    if (input_str_index == 0) {
+	    if (s->input_str_index == 0) {
 		pr_beep();
 		break;
 	    }
-	    if (input_str_index == bu_vls_strlen(&input_str)) {
+	    if (s->input_str_index == bu_vls_strlen(&s->input_str)) {
 		bu_log("\b");
-		--input_str_index;
+		--s->input_str_index;
 	    }
-	    ch = bu_vls_addr(&input_str)[input_str_index];
-	    bu_vls_addr(&input_str)[input_str_index] =
-		bu_vls_addr(&input_str)[input_str_index - 1];
-	    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
+	    ch = bu_vls_addr(&s->input_str)[s->input_str_index];
+	    bu_vls_addr(&s->input_str)[s->input_str_index] =
+		bu_vls_addr(&s->input_str)[s->input_str_index - 1];
+	    bu_vls_addr(&s->input_str)[s->input_str_index - 1] = ch;
 	    bu_log("\b");
-	    bu_log("%c%c", bu_vls_addr(&input_str)[input_str_index-1], bu_vls_addr(&input_str)[input_str_index]);
-	    ++input_str_index;
+	    bu_log("%c%c", bu_vls_addr(&s->input_str)[s->input_str_index-1], bu_vls_addr(&s->input_str)[s->input_str_index]);
+	    ++s->input_str_index;
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_N:                  /* Next history command */
@@ -794,8 +781,8 @@ mged_process_char(struct mged_state *s, char ch)
 			pr_beep();
 			break;
 		    }
-		    bu_vls_trunc(&scratchline, 0);
-		    bu_vls_vlscat(&scratchline, &input_str);
+		    bu_vls_trunc(&s->scratchline, 0);
+		    bu_vls_vlscat(&s->scratchline, &s->input_str);
 		    freshline = 0;
 		} else {
 		    pr_beep();
@@ -811,25 +798,25 @@ mged_process_char(struct mged_state *s, char ch)
 		} else {
 		    vp = history_next((const char *)NULL);
 		    if (vp == NULL) {
-			vp = &scratchline;
+			vp = &s->scratchline;
 			freshline = 1;
 		    }
 		}
 	    }
 
-	    pr_prompt(interactive);
-	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
+	    pr_prompt(s, interactive);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&s->input_str));
 	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 
-	    pr_prompt(interactive);
-	    bu_vls_trunc(&input_str, 0);
-	    bu_vls_vlscat(&input_str, vp);
-	    if (bu_vls_strlen(&input_str) > 0) {
-		if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
-		    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-		bu_log("%s", bu_vls_addr(&input_str));
-		input_str_index = bu_vls_strlen(&input_str);
+	    pr_prompt(s, interactive);
+	    bu_vls_trunc(&s->input_str, 0);
+	    bu_vls_vlscat(&s->input_str, vp);
+	    if (bu_vls_strlen(&s->input_str) > 0) {
+		if (bu_vls_addr(&s->input_str)[bu_vls_strlen(&s->input_str)-1] == '\n')
+		    bu_vls_trunc(&s->input_str, bu_vls_strlen(&s->input_str)-1); /* del \n */
+		bu_log("%s", bu_vls_addr(&s->input_str));
+		s->input_str_index = bu_vls_strlen(&s->input_str);
 	    }
 	    escaped = bracketed = 0;
 	    break;
@@ -840,8 +827,8 @@ mged_process_char(struct mged_state *s, char ch)
 		int len;
 		struct bu_vls temp2 = BU_VLS_INIT_ZERO;
 
-		start = bu_vls_addr(&input_str);
-		curr = start + input_str_index - 1;
+		start = bu_vls_addr(&s->input_str);
+		curr = start + s->input_str_index - 1;
 
 		/* skip spaces */
 		while (curr > start && *curr == ' ')
@@ -851,25 +838,25 @@ mged_process_char(struct mged_state *s, char ch)
 		while (curr > start && *curr != ' ')
 		    --curr;
 
-		bu_vls_strcpy(&temp, start+input_str_index);
+		bu_vls_strcpy(&temp, start+s->input_str_index);
 
 		if (curr == start)
-		    input_str_index = 0;
+		    s->input_str_index = 0;
 		else
-		    input_str_index = curr - start + 1;
+		    s->input_str_index = curr - start + 1;
 
-		len = bu_vls_strlen(&input_str);
-		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt(interactive);
-		bu_log("%s%s", bu_vls_addr(&input_str), bu_vls_addr(&temp));
+		len = bu_vls_strlen(&s->input_str);
+		bu_vls_trunc(&s->input_str, s->input_str_index);
+		pr_prompt(s, interactive);
+		bu_log("%s%s", bu_vls_addr(&s->input_str), bu_vls_addr(&temp));
 
-		bu_vls_strncpy(&temp2, SPACES, len - input_str_index);
+		bu_vls_strncpy(&temp2, SPACES, len - s->input_str_index);
 		bu_log("%s", bu_vls_addr(&temp2));
 		bu_vls_free(&temp2);
 
-		pr_prompt(interactive);
-		bu_log("%s", bu_vls_addr(&input_str));
-		bu_vls_vlscat(&input_str, &temp);
+		pr_prompt(s, interactive);
+		bu_log("%s", bu_vls_addr(&s->input_str));
+		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
 	    }
 
@@ -883,8 +870,8 @@ mged_process_char(struct mged_state *s, char ch)
 		int i;
 		struct bu_vls temp2 = BU_VLS_INIT_ZERO;
 
-		start = bu_vls_addr(&input_str);
-		curr = start + input_str_index;
+		start = bu_vls_addr(&s->input_str);
+		curr = start + s->input_str_index;
 
 		/* skip spaces */
 		while (*curr != '\0' && *curr == ' ')
@@ -896,20 +883,20 @@ mged_process_char(struct mged_state *s, char ch)
 
 		i = curr - start;
 		bu_vls_strcpy(&temp, curr);
-		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt(interactive);
-		bu_log("%s%s", bu_vls_addr(&input_str), bu_vls_addr(&temp));
+		bu_vls_trunc(&s->input_str, s->input_str_index);
+		pr_prompt(s, interactive);
+		bu_log("%s%s", bu_vls_addr(&s->input_str), bu_vls_addr(&temp));
 
-		bu_vls_strncpy(&temp2, SPACES, i - input_str_index);
+		bu_vls_strncpy(&temp2, SPACES, i - s->input_str_index);
 		bu_log("%s", bu_vls_addr(&temp2));
 		bu_vls_free(&temp2);
 
-		pr_prompt(interactive);
-		bu_log("%s", bu_vls_addr(&input_str));
-		bu_vls_vlscat(&input_str, &temp);
+		pr_prompt(s, interactive);
+		bu_log("%s", bu_vls_addr(&s->input_str));
+		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
-		mged_insert_char(ch);
+		mged_insert_char(s, ch);
 
 	    escaped = bracketed = 0;
 	    break;
@@ -919,8 +906,8 @@ mged_process_char(struct mged_state *s, char ch)
 		char *start;
 		char *curr;
 
-		start = bu_vls_addr(&input_str);
-		curr = start + input_str_index;
+		start = bu_vls_addr(&s->input_str);
+		curr = start + s->input_str_index;
 
 		/* skip spaces */
 		while (*curr != '\0' && *curr == ' ')
@@ -930,15 +917,15 @@ mged_process_char(struct mged_state *s, char ch)
 		while (*curr != '\0' && *curr != ' ')
 		    ++curr;
 
-		input_str_index = curr - start;
-		bu_vls_strcpy(&temp, start+input_str_index);
-		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt(interactive);
-		bu_log("%s", bu_vls_addr(&input_str));
-		bu_vls_vlscat(&input_str, &temp);
+		s->input_str_index = curr - start;
+		bu_vls_strcpy(&temp, start+s->input_str_index);
+		bu_vls_trunc(&s->input_str, s->input_str_index);
+		pr_prompt(s, interactive);
+		bu_log("%s", bu_vls_addr(&s->input_str));
+		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
-		mged_insert_char(ch);
+		mged_insert_char(s, ch);
 
 	    escaped = bracketed = 0;
 	    break;
@@ -948,8 +935,8 @@ mged_process_char(struct mged_state *s, char ch)
 		char *start;
 		char *curr;
 
-		start = bu_vls_addr(&input_str);
-		curr = start + input_str_index - 1;
+		start = bu_vls_addr(&s->input_str);
+		curr = start + s->input_str_index - 1;
 
 		/* skip spaces */
 		while (curr > start && *curr == ' ')
@@ -960,18 +947,18 @@ mged_process_char(struct mged_state *s, char ch)
 		    --curr;
 
 		if (curr == start)
-		    input_str_index = 0;
+		    s->input_str_index = 0;
 		else
-		    input_str_index = curr - start + 1;
+		    s->input_str_index = curr - start + 1;
 
-		bu_vls_strcpy(&temp, start+input_str_index);
-		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt(interactive);
-		bu_log("%s", bu_vls_addr(&input_str));
-		bu_vls_vlscat(&input_str, &temp);
+		bu_vls_strcpy(&temp, start+s->input_str_index);
+		bu_vls_trunc(&s->input_str, s->input_str_index);
+		pr_prompt(s, interactive);
+		bu_log("%s", bu_vls_addr(&s->input_str));
+		bu_vls_vlscat(&s->input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
-		mged_insert_char(ch);
+		mged_insert_char(s, ch);
 
 	    escaped = bracketed = 0;
 	    break;
@@ -996,7 +983,7 @@ mged_process_char(struct mged_state *s, char ch)
 	    if (!isprint((int)ch))
 		break;
 
-	    mged_insert_char(ch);
+	    mged_insert_char(s, ch);
 	    escaped = bracketed = 0;
 	    break;
     }
@@ -1354,7 +1341,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    quit(s); /* does not return */
 	}
 
-	bu_vls_strcat(&input_str, Tcl_DStringValue(&ds));
+	bu_vls_strcat(&s->input_str, Tcl_DStringValue(&ds));
 	Tcl_DStringFree(&ds);
 #else
 	/* Get line from stdin */
@@ -1362,7 +1349,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    BU_PUT(sd, struct stdio_data);
 	    quit(s);				/* does not return */
 	}
-	bu_vls_vlscat(&input_str, &temp);
+	bu_vls_vlscat(&s->input_str, &temp);
 #endif
 
 	/* If there are any characters already in the command string
@@ -1371,40 +1358,40 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	 */
 
 	/* If no input and a default is supplied then use it */
-	if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-	    bu_vls_printf(&input_str_prefix, "%s%s\n",
-			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+	if (!bu_vls_strlen(&s->input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
+	    bu_vls_printf(&s->input_str_prefix, "%s%s\n",
+			  bu_vls_strlen(&s->input_str_prefix) > 0 ? " " : "",
 			  bu_vls_addr(&curr_cmd_list->cl_more_default));
 	else
-	    bu_vls_printf(&input_str_prefix, "%s%s\n",
-			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  bu_vls_addr(&input_str));
+	    bu_vls_printf(&s->input_str_prefix, "%s%s\n",
+			  bu_vls_strlen(&s->input_str_prefix) > 0 ? " " : "",
+			  bu_vls_addr(&s->input_str));
 
 	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
 
 	/* If a complete line was entered, attempt to execute command. */
 
-	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
+	if (Tcl_CommandComplete(bu_vls_addr(&s->input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
 	    if (curr_cmd_list->cl_tie)
 		set_curr_dm(s, curr_cmd_list->cl_tie);
 
-	    if (cmdline(s, &input_str_prefix, TRUE) == CMD_MORE) {
+	    if (cmdline(s, &s->input_str_prefix, TRUE) == CMD_MORE) {
 		/* Remove newline */
-		bu_vls_trunc(&input_str_prefix,
-			     bu_vls_strlen(&input_str_prefix)-1);
-		bu_vls_trunc(&input_str, 0);
+		bu_vls_trunc(&s->input_str_prefix,
+			     bu_vls_strlen(&s->input_str_prefix)-1);
+		bu_vls_trunc(&s->input_str, 0);
 
 		(void)signal(SIGINT, sig2);
 	    } else {
-		bu_vls_trunc(&input_str_prefix, 0);
-		bu_vls_trunc(&input_str, 0);
+		bu_vls_trunc(&s->input_str_prefix, 0);
+		bu_vls_trunc(&s->input_str, 0);
 		(void)signal(SIGINT, SIG_IGN);
 	    }
-	    pr_prompt(interactive);
-	    input_str_index = 0;
+	    pr_prompt(s, interactive);
+	    s->input_str_index = 0;
 	} else {
-	    bu_vls_trunc(&input_str, 0);
+	    bu_vls_trunc(&s->input_str, 0);
 	    /* Allow the user to hit ^C. */
 	    (void)signal(SIGINT, sig2);
 	}
@@ -1457,38 +1444,6 @@ stdin_input(ClientData clientData, int UNUSED(mask))
     }
 #endif
 }
-
-
-/**
- * Stuff a string to stdout while leaving the current command-line
- * alone
- */
-int
-cmd_stuff_str(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
-{
-    size_t i;
-
-    if (argc != 2) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "helpdevel stuff_str");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if (classic_mged) {
-	bu_log("\r%s\n", argv[1]);
-	pr_prompt(interactive);
-	bu_log("%s", bu_vls_addr(&input_str));
-	pr_prompt(interactive);
-	for (i = 0; i < input_str_index; ++i)
-	    bu_log("%c", bu_vls_addr(&input_str)[i]);
-    }
-
-    return TCL_OK;
-}
-
 
 void
 std_out_or_err(ClientData clientData, int UNUSED(mask))
@@ -1834,6 +1789,10 @@ mged_finish(struct mged_state *s, int exitcode)
     mged_global_variable_teardown(s);
 
     s->magic = 0; // make sure anything trying to use this after free gets a magic failure
+    bu_vls_free(&s->input_str);
+    bu_vls_free(&s->input_str_prefix);
+    bu_vls_free(&s->scratchline);
+    bu_vls_free(&s-> mged_prompt);
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
 
@@ -1886,6 +1845,11 @@ main(int argc, char *argv[])
     BU_GET(MGED_STATE, struct mged_state);
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
+    s->classic_mged = 1;
+    bu_vls_init(&s->input_str);
+    bu_vls_init(&s->input_str_prefix);
+    bu_vls_init(&s->scratchline);
+    bu_vls_init(&s-> mged_prompt);
 
     // Start out in an initialization state
     mged_global_db_ctx.init_flag = 1;
@@ -1910,7 +1874,7 @@ main(int argc, char *argv[])
 
 #if defined(HAVE_TK)
     if (dm_have_graphics()) {
-	classic_mged = 0;
+	s->classic_mged = 0;
     }
 #endif
 
@@ -1928,10 +1892,10 @@ main(int argc, char *argv[])
 		read_only_flag = 1;
 		break;
 	    case 'c':
-		classic_mged = 2; // >1 to indicate requested
+		s->classic_mged = 2; // >1 to indicate requested
 		break;
 	    case 'C':
-		classic_mged = 0;
+		s->classic_mged = 0;
 		interactive = 2; // >1 to indicate requested
 		break;
 	    case 'x':
@@ -1993,7 +1957,7 @@ main(int argc, char *argv[])
     } /* argc > 1 */
 
     if (bu_debug > 0)
-	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
+	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, s->classic_mged);
 
 
 #if defined(SIGPIPE) && defined(SIGINT)
@@ -2010,7 +1974,7 @@ main(int argc, char *argv[])
 #endif /* SIGPIPE && SIGINT */
 
 #ifdef HAVE_PIPE
-    if (!classic_mged && !run_in_foreground) {
+    if (!s->classic_mged && !run_in_foreground) {
 	pid_t pid;
 
 	fprintf(stdout, "Initializing and backgrounding, please wait...");
@@ -2159,9 +2123,9 @@ main(int argc, char *argv[])
     btn_head_menu(s, 0, 0, 0);
     mged_link_vars(mged_curr_dm);
 
-    bu_vls_printf(&input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&input_str));
-    bu_vls_trunc(&input_str, 0);
+    bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&s->input_str));
+    bu_vls_trunc(&s->input_str, 0);
 
     if (dpy_string == (char *)NULL) {
 	dpy_string = getenv("DISPLAY");
@@ -2169,7 +2133,7 @@ main(int argc, char *argv[])
 
     /* show ourselves */
     if (interactive) {
-	if (classic_mged) {
+	if (s->classic_mged) {
 	    /* identify */
 
 	    (void)Tcl_Eval(s->interp, "set mged_console_mode classic");
@@ -2220,7 +2184,7 @@ main(int argc, char *argv[])
 	(void)Tcl_Eval(s->interp, "set mged_console_mode batch");
     }
 
-    if (!interactive || classic_mged || old_mged_gui) {
+    if (!interactive || s->classic_mged || old_mged_gui) {
 	/* Open the database */
 	if (argc >= 1) {
 	    const char *av[3];
@@ -2268,7 +2232,7 @@ main(int argc, char *argv[])
 	 * to the defaults in their .mgedrc file.
 	 */
 
-	if (classic_mged) {
+	if (s->classic_mged) {
 	    /* start up a text command console */
 
 	    if (!run_in_foreground && use_pipe) {
@@ -2319,7 +2283,7 @@ main(int argc, char *argv[])
 		    mged_finish(s, 1);
 		}
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(s->interp));
-		classic_mged = 1;
+		s->classic_mged = 1;
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 		cbreak_mode = COMMAND_LINE_EDITING;
@@ -2366,7 +2330,7 @@ main(int argc, char *argv[])
     }
 
     /* initialize a display manager */
-    if (interactive && classic_mged) {
+    if (interactive && s->classic_mged) {
 	if (!attach) {
 	    get_attached(s);
 	} else {
@@ -2382,11 +2346,11 @@ main(int argc, char *argv[])
 	 * access to Tcl/Tk is possible.
 	 */
 	for (argc -= 1, argv += 1; argc; --argc, ++argv) {
-	    bu_vls_printf(&input_str, "%s ", *argv);
+	    bu_vls_printf(&s->input_str, "%s ", *argv);
 	}
 
-	cmdline(s, &input_str, TRUE);
-	bu_vls_free(&input_str);
+	cmdline(s, &s->input_str, TRUE);
+	bu_vls_free(&s->input_str);
 
 	// If we launched subcommands, we need to process their
 	// output before quitting.  Do one up front to catch
@@ -2401,7 +2365,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
     }
 
-    if (classic_mged || !interactive) {
+    if (s->classic_mged || !interactive) {
 	struct stdio_data *sd;
 	BU_GET(sd, struct stdio_data);
 	sd->s = s;
@@ -2419,8 +2383,8 @@ main(int argc, char *argv[])
 	(void)signal(SIGINT, SIG_IGN);
 #endif
 
-	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
-	pr_prompt(interactive);
+	bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
+	pr_prompt(s, interactive);
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	if (cbreak_mode) {

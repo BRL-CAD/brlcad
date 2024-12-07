@@ -74,7 +74,7 @@ _post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_c
      * about creation - ask */
     if (interactive && !ctx->force_create) {
 	if (ctx->init_flag) {
-	    if (classic_mged) {
+	    if (s->classic_mged) {
 		bu_log("Create new database (y|n)[n]? ");
 		(void)bu_fgets(line, sizeof(line), stdin);
 		if (bu_str_false(line)) {
@@ -274,7 +274,7 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
 	    (void)Tcl_Eval(mctx->interpreter, "after idle dbupgrade -f y");
 	} else {
 	    if (mged_db_warn) {
-		if (classic_mged)
+		if (s->classic_mged)
 		    bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tSee the dbupgrade command.");
 		else
 		    bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tSelect Tools-->Upgrade Database for info.");

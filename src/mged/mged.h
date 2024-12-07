@@ -107,6 +107,17 @@ struct mged_state {
     struct rt_wdb *wdbp;
     struct mged_tol tol;
     Tcl_Interp *interp;
+
+    /* >0 means interactive. Gets set to 0 if there's libdm graphics support,
+     * and forced with -c option. */
+    int classic_mged;
+
+    /* Prompt and input lines */
+    size_t input_str_index;
+    struct bu_vls input_str;
+    struct bu_vls input_str_prefix;
+    struct bu_vls scratchline;
+    struct bu_vls mged_prompt;
 };
 extern struct mged_state *MGED_STATE;
 
@@ -125,9 +136,6 @@ struct cmdtab {
 #include "./menu.h"
 
 /* initialization states */
-extern int classic_mged;        /* >0 means interactive. gets set to 0 if
-			         * there's libdm graphics support, and forced
-			         * with -c option. */
 extern char *dpy_string;
 extern int mged_db_upgrade;
 extern int mged_db_version;
@@ -568,7 +576,7 @@ void new_mats(void);
 void pr_beep(void);
 
 extern int interactive; /* for pr_prompt */
-void pr_prompt(int show_prompt);
+void pr_prompt(struct mged_state *s, int show_prompt);
 
 /* grid.c */
 extern void round_to_grid(struct mged_state *s, fastf_t *view_dx, fastf_t *view_dy);

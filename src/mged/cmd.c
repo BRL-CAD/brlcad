@@ -63,7 +63,6 @@ extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
 extern int mged_default_dlist;			/* in attach.c */
-extern int classic_mged;
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
@@ -1148,7 +1147,6 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
     int64_t start;
     int64_t finish;
     size_t len;
-    extern struct bu_vls mged_prompt;
     char *cp;
     const char *result;
 
@@ -1237,7 +1235,7 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 		bu_log("\n");
 	    }
 
-	    bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	    bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
 	    status = CMD_OK;
 	    goto end;
 
@@ -1247,10 +1245,10 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 	    /* First check to see if it's a secret message. */
 
 	    if ((cp = strstr(result, MORE_ARGS_STR)) != NULL) {
-		bu_vls_trunc(&mged_prompt, 0);
+		bu_vls_trunc(&s->mged_prompt, 0);
 
 		if (cp == result) {
-		    bu_vls_printf(&mged_prompt, "\r%s",
+		    bu_vls_printf(&s->mged_prompt, "\r%s",
 				  result+sizeof(MORE_ARGS_STR)-1);
 		} else {
 		    struct bu_vls buf = BU_VLS_INIT_ZERO;
@@ -1260,7 +1258,7 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 		    bu_log("%s%s", bu_vls_addr(&buf), result[len-1] == '\n' ? "" : "\n");
 		    bu_vls_free(&buf);
 
-		    bu_vls_printf(&mged_prompt, "\r%s",
+		    bu_vls_printf(&s->mged_prompt, "\r%s",
 				  result+sizeof(MORE_ARGS_STR)-1+len);
 		}
 
@@ -1277,7 +1275,7 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 	    if (record)
 		history_record(&save_vp, start, finish, CMD_BAD);
 
-	    bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	    bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
 	    status = CMD_BAD;
 
 	    /* Fall through to end */
@@ -1303,7 +1301,7 @@ mged_print_result(struct mged_state *s, int UNUSED(status))
 	bu_log("%s%s", result,
 	       result[len-1] == '\n' ? "" : "\n");
 
-	pr_prompt(interactive);
+	pr_prompt(s, interactive);
     }
 
     Tcl_ResetResult(s->interp);
@@ -1382,7 +1380,7 @@ f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    if (argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list) {
+    if (argc != 1 || !s->classic_mged || curr_cmd_list != &head_cmd_list) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "help %s", argv[0]);
@@ -2229,6 +2227,42 @@ cmd_stub(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, const
     Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
     return TCL_ERROR;
 }
+
+/**
+ * Stuff a string to stdout while leaving the current command-line
+ * alone
+ */
+int
+cmd_stuff_str(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    size_t i;
+
+    if (argc != 2) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&vls, "helpdevel stuff_str");
+	Tcl_Eval(interpreter, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (s->classic_mged) {
+	bu_log("\r%s\n", argv[1]);
+	pr_prompt(s, interactive);
+	bu_log("%s", bu_vls_addr(&s->input_str));
+	pr_prompt(s, interactive);
+	for (i = 0; i < s->input_str_index; ++i)
+	    bu_log("%c", bu_vls_addr(&s->input_str)[i]);
+    }
+
+    return TCL_OK;
+}
+
+
 
 
 /*

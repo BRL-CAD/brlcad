@@ -45,8 +45,6 @@
 #define V3BASE2LOCAL(_pt)	(_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 #define V4BASE2LOCAL(_pt)	(_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local, (_pt)[W]*base2local
 
-extern int classic_mged;
-
 /* editors to test, in order of discovery preference (EDITOR overrides) */
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
@@ -985,7 +983,7 @@ get_editor_string(struct mged_state *s, struct bu_vls *editstring)
      * 64 bit versions of Windows no longer ship EDIT, so there isn't
      * a standard console editor to fire up.  Best we can do is try for EDIT,
      * and if not found hope one of the unix console editors is available.*/
-    if (classic_mged && (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT"))) {
+    if (s->classic_mged && (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT"))) {
 	const char *editpath = bu_which("edit");
 	editor = "EDIT";
 	if (editpath) {
@@ -994,7 +992,7 @@ get_editor_string(struct mged_state *s, struct bu_vls *editstring)
 	}
     }
 
-    if (classic_mged) {
+    if (s->classic_mged) {
 	const char *which = NULL;
 
 	/* In this situation, make sure we're using an editor that will
