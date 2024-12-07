@@ -125,7 +125,6 @@ struct cmdtab {
 #include "./menu.h"
 
 /* initialization states */
-extern int mged_init_flag;	/* >0 means in initialization stage */
 extern int classic_mged;        /* >0 means interactive. gets set to 0 if
 			         * there's libdm graphics support, and forced
 			         * with -c option. */
@@ -559,6 +558,7 @@ struct mged_opendb_ctx {
     struct db_i *old_dbip;
     int post_open_cnt;
     struct mged_state *s;
+    int init_flag; /* >0 means in initialization stage */
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
 int f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);

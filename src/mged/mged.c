@@ -1048,6 +1048,9 @@ main(int argc, char *argv[])
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
 
+    // Start out in an initialization state
+    mged_global_db_ctx.init_flag = 1;
+
     char *attach = (char *)NULL;
 
     setmode(fileno(stdin), O_BINARY);
@@ -1683,7 +1686,7 @@ main(int argc, char *argv[])
 #endif
     }
 
-    mged_init_flag = 0;	/* all done with initialization */
+    mged_global_db_ctx.init_flag = 0; /* all done with initialization */
 
     /**************** M A I N   L O O P *********************/
     while (1) {

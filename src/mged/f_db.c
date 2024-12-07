@@ -90,7 +90,7 @@ _post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_c
     /* File does not exist, but nobody told us one way or the other
      * about creation - ask */
     if (interactive && !ctx->force_create) {
-	if (mged_init_flag) {
+	if (ctx->init_flag) {
 	    if (classic_mged) {
 		bu_log("Create new database (y|n)[n]? ");
 		(void)bu_fgets(line, sizeof(line), stdin);
@@ -147,7 +147,7 @@ _post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_c
     if (gedp->dbip == DBI_NULL) {
 	ctx->ret = TCL_ERROR;
 
-	if (mged_init_flag) {
+	if (ctx->init_flag) {
 	    /* we need to use bu_log here */
 	    bu_log("opendb: failed to create %s\n", fname);
 	    bu_log("opendb: no database is currently opened!\n");
