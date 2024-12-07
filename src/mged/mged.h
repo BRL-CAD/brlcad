@@ -118,6 +118,9 @@ struct mged_state {
     struct bu_vls input_str_prefix;
     struct bu_vls scratchline;
     struct bu_vls mged_prompt;
+
+    /* Display related */
+    char *dpy_string;
 };
 extern struct mged_state *MGED_STATE;
 
@@ -136,7 +139,6 @@ struct cmdtab {
 #include "./menu.h"
 
 /* initialization states */
-extern char *dpy_string;
 extern int mged_db_upgrade;
 extern int mged_db_version;
 extern int mged_db_warn;

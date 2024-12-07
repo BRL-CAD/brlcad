@@ -157,8 +157,6 @@ int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
 
-char *dpy_string = (char *)NULL;
-
 /*
  * 0 - no warn
  * 1 - warn
@@ -1849,7 +1847,8 @@ main(int argc, char *argv[])
     bu_vls_init(&s->input_str);
     bu_vls_init(&s->input_str_prefix);
     bu_vls_init(&s->scratchline);
-    bu_vls_init(&s-> mged_prompt);
+    bu_vls_init(&s->mged_prompt);
+    s->dpy_string = NULL;
 
     // Start out in an initialization state
     mged_global_db_ctx.init_flag = 1;
@@ -1886,7 +1885,7 @@ main(int argc, char *argv[])
 		attach = bu_optarg;
 		break;
 	    case 'd':
-		dpy_string = bu_optarg;
+		s->dpy_string = bu_optarg;
 		break;
 	    case 'r':
 		read_only_flag = 1;
@@ -2127,9 +2126,8 @@ main(int argc, char *argv[])
     (void)Tcl_Eval(s->interp, bu_vls_addr(&s->input_str));
     bu_vls_trunc(&s->input_str, 0);
 
-    if (dpy_string == (char *)NULL) {
-	dpy_string = getenv("DISPLAY");
-    }
+    if (!s->dpy_string)
+	s->dpy_string = getenv("DISPLAY");
 
     /* show ourselves */
     if (interactive) {
@@ -2157,16 +2155,15 @@ main(int argc, char *argv[])
 
 	    (void)Tcl_Eval(s->interp, "set mged_console_mode gui");
 
-	    if (dpy_string != (char *)NULL)
-		bu_vls_printf(&vls, "loadtk %s", dpy_string);
-	    else
-		bu_vls_strcpy(&vls, "loadtk");
+	    bu_vls_strcpy(&vls, "loadtk");
+	    if (s->dpy_string)
+		bu_vls_printf(&vls, " %s", s->dpy_string);
 
 	    status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_strcpy(&error, Tcl_GetStringResult(s->interp));
 	    bu_vls_free(&vls);
 
-	    if (status != TCL_OK && !dpy_string) {
+	    if (status != TCL_OK && !s->dpy_string) {
 		/* failed to load tk, try localhost X11 if DISPLAY was not set */
 		status = Tcl_Eval(s->interp, "loadtk :0");
 	    }
@@ -2334,7 +2331,7 @@ main(int argc, char *argv[])
 	if (!attach) {
 	    get_attached(s);
 	} else {
-	    attach_display_manager(s->interp, attach, dpy_string);
+	    attach_display_manager(s->interp, attach, s->dpy_string);
 	}
     }
 

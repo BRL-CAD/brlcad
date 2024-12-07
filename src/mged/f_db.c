@@ -86,9 +86,9 @@ _post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_c
 		struct bu_vls vls = BU_VLS_INIT_ZERO;
 		int status;
 
-		if (dpy_string != (char *)NULL)
+		if (s->dpy_string != (char *)NULL)
 		    bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
-			    dpy_string, fname);
+			    s->dpy_string, fname);
 		else
 		    bu_vls_printf(&vls, "cad_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
 			    fname);
