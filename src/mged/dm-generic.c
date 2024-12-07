@@ -223,8 +223,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->snap && !stolen &&
-		   STATE != ST_S_PICK && STATE != ST_O_PICK &&
-		   STATE != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
+		   GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK &&
+		   GEOM_EDIT_STATE != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
 	    point_t view_pt;
 	    point_t model_pt;
 	    point_t vcenter;
@@ -267,9 +267,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		if (grid_state->snap) {
 		    int save_edflag;
 
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_TRAN)
 				es_edflag = STRANS;
@@ -280,7 +280,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 			snap_keypoint_to_grid(s);
 
-			if (STATE == ST_S_EDIT)
+			if (GEOM_EDIT_STATE == ST_S_EDIT)
 			    es_edflag = save_edflag;
 			else
 			    edobj = save_edflag;
@@ -290,10 +290,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 		break;
 	    case 's':
-		if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+		if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 		    ZERO(acc_sc_sol))
 		    acc_sc_sol = 1.0;
-		else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+		else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 		    edit_absolute_scale = acc_sc_obj - 1.0;
 		    if (edit_absolute_scale > 0.0)
 			edit_absolute_scale /= 3.0;
@@ -459,10 +459,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    case 's':
 		switch (*argv[2]) {
 		    case 'x':
-			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
-			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[0] - 1.0;
 			    if (edit_absolute_scale > 0.0)
 				edit_absolute_scale /= 3.0;
@@ -471,10 +471,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			am_mode = AMM_CON_SCALE_X;
 			break;
 		    case 'y':
-			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
-			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[1] - 1.0;
 			    if (edit_absolute_scale > 0.0)
 				edit_absolute_scale /= 3.0;
@@ -483,10 +483,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			am_mode = AMM_CON_SCALE_Y;
 			break;
 		    case 'z':
-			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
-			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[2] - 1.0;
 			    if (edit_absolute_scale > 0.0)
 				edit_absolute_scale /= 3.0;

@@ -246,7 +246,7 @@ extern int edobj; /* object editing options */
 
 /* FIXME: ugh, main global editing state */
 extern int ged_state;	  /* (defined in titles.c) */
-#define STATE ged_state
+#define GEOM_EDIT_STATE ged_state
 
 /**
  * Editor States

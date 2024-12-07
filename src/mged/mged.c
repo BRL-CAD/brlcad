@@ -340,7 +340,7 @@ mged_view_callback(struct bview *gvp,
     if (!gvp)
 	return;
 
-    if (STATE != ST_VIEW) {
+    if (GEOM_EDIT_STATE != ST_VIEW) {
 	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, modelchanges);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
@@ -1030,7 +1030,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
-	if (STATE == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
@@ -1051,7 +1051,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (STATE == ST_S_EDIT)
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1064,7 +1064,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'o';
 
-	if (STATE == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
@@ -1085,7 +1085,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (STATE == ST_S_EDIT)
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1098,7 +1098,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
-	if (STATE == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
@@ -1119,7 +1119,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (STATE == ST_S_EDIT)
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1132,7 +1132,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
-	if (STATE == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_TRAN)
 		es_edflag = STRANS;
@@ -1152,7 +1152,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (STATE == ST_S_EDIT)
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1165,7 +1165,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
-	if (STATE == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_TRAN)
 		es_edflag = STRANS;
@@ -1185,7 +1185,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (STATE == ST_S_EDIT)
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1193,7 +1193,7 @@ event_check(struct mged_state *s, int non_blocking)
     if (edit_rateflag_scale) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	if (STATE == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_SCALE)
 		es_edflag = SSCALE;
@@ -1209,7 +1209,7 @@ event_check(struct mged_state *s, int non_blocking)
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	if (STATE == ST_S_EDIT)
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1647,7 +1647,7 @@ refresh(struct mged_state *s)
 			    draw_m_axes(s);
 
 			if (axes_state->ax_edit_draw &&
-				(STATE == ST_S_EDIT || STATE == ST_O_EDIT))
+				(GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT))
 			    draw_e_axes();
 
 			/* Display titles, etc., if desired */
@@ -2092,7 +2092,7 @@ main(int argc, char *argv[])
     MAT_IDN(modelchanges);
     MAT_IDN(acc_rot_sol);
 
-    STATE = ST_VIEW;
+    GEOM_EDIT_STATE = ST_VIEW;
     es_edflag = -1;
     es_edclass = EDIT_CLASS_NULL;
     inpara = newedge = 0;

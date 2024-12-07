@@ -574,7 +574,7 @@ mged_setup(struct mged_state *s)
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[STATE], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[GEOM_EDIT_STATE], TCL_GLOBAL_ONLY);
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);

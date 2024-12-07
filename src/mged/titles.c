@@ -99,7 +99,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
     }
 
     /* display path info for object editing also */
-    if (STATE == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
+    if (GEOM_EDIT_STATE == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	bu_vls_strcat(vp, "** PATH --  ");
@@ -341,7 +341,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (es_edflag >= 0 || (STATE == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
+    if (es_edflag >= 0 || (GEOM_EDIT_STATE == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */
@@ -411,7 +411,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 			   color_scheme->cs_state_text1[0],
 			   color_scheme->cs_state_text1[1],
 			   color_scheme->cs_state_text1[2], 1, 1.0);
-	    dm_draw_string_2d(DMP, state_str[STATE],
+	    dm_draw_string_2d(DMP, state_str[GEOM_EDIT_STATE],
 			      GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0);
 	} else {
 	    scroll_ybot = SCROLLY;
@@ -423,12 +423,12 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	 * Print information about object illuminated
 	 */
 	if (illump != NULL && illump->s_u_data != NULL &&
-	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
+	    (GEOM_EDIT_STATE == ST_O_PATH || GEOM_EDIT_STATE==ST_O_PICK || GEOM_EDIT_STATE==ST_S_PICK)) {
 
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
-		if (i == (size_t)ipathpos  &&  STATE == ST_O_PATH) {
+		if (i == (size_t)ipathpos  &&  GEOM_EDIT_STATE == ST_O_PATH) {
 		    dm_set_fg(DMP,
 				   color_scheme->cs_state_text1[0],
 				   color_scheme->cs_state_text1[1],
@@ -462,7 +462,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    mmenu_display(y);
 
 	    /* print parameter locations on screen */
-	    if (STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
+	    if (GEOM_EDIT_STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
 		/* region is a processed region */
 		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
 		xloc = (int)(temp[X]*GED_MAX);
@@ -558,7 +558,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
-    if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) {
 	struct bu_vls kp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&kp_vls,
@@ -600,7 +600,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    bu_vls_strcat(&vls, " Path: ");
 	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
 		if (i == (size_t)ipathpos  &&
-		    (STATE == ST_O_PATH || STATE == ST_O_EDIT))
+		    (GEOM_EDIT_STATE == ST_O_PATH || GEOM_EDIT_STATE == ST_O_EDIT))
 		    bu_vls_strcat(&vls, "/__MATRIX__");
 		bu_vls_printf(&vls, "/%s",
 			      DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep);

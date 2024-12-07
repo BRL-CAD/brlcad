@@ -313,10 +313,10 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		save_coords = mged_variables->mv_coords;
 		mged_variables->mv_coords = 'v';
 
-		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+		if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		    mged_variables->mv_transform == 'e') {
 
-		    if (STATE == ST_S_EDIT) {
+		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_ROTATE)
 			    es_edflag = SROT;
@@ -357,10 +357,10 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		fx = dx / (fastf_t)width * 2.0;
 		fy = -dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 
-		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+		if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		    mged_variables->mv_transform == 'e') {
 
-		    if (STATE == ST_S_EDIT) {
+		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
@@ -390,7 +390,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 			VSUB2(diff, model_pt, vcenter);
 			VSCALE(diff, diff, s->dbip->dbi_base2local);
 			VADD2(model_pt, dm_work_pt, diff);
-			if (STATE == ST_S_EDIT)
+			if (GEOM_EDIT_STATE == ST_S_EDIT)
 			    bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 			else
 			    bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
@@ -423,12 +423,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		goto reset_edflag;
 	    }
 	case AMM_SCALE:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT && !SEDIT_SCALE) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT && !SEDIT_SCALE) {
 		    save_edflag = es_edflag;
 		    es_edflag = SSCALE;
-		} else if (STATE == ST_O_EDIT && !OEDIT_SCALE) {
+		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_SCALE;
 		}
@@ -481,9 +481,9 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_X:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
 			es_edflag = SROT;
@@ -506,9 +506,9 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Y:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
 			es_edflag = SROT;
@@ -531,9 +531,9 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Z:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
 			es_edflag = SROT;
@@ -556,13 +556,13 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_X:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
 			es_edflag = STRANS;
-		} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_X;
 		}
@@ -580,13 +580,13 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Y:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
 			es_edflag = STRANS;
-		} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_Y;
 		}
@@ -604,13 +604,13 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Z:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
 			es_edflag = STRANS;
-		} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_XY;
 		}
@@ -628,13 +628,13 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_X:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
 			es_edflag = SSCALE;
-		} else if (STATE == ST_O_EDIT && !OEDIT_SCALE) {
+		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_XSCALE;
 		}
@@ -652,13 +652,13 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Y:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
 			es_edflag = SSCALE;
-		} else if (STATE == ST_O_EDIT && !OEDIT_SCALE) {
+		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_YSCALE;
 		}
@@ -676,13 +676,13 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Z:
-	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (STATE == ST_S_EDIT) {
+		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
 			es_edflag = SSCALE;
-		} else if (STATE == ST_O_EDIT && !OEDIT_SCALE) {
+		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_ZSCALE;
 		}
@@ -750,9 +750,9 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
  reset_edflag:
     if (save_edflag != -1) {
-	if (STATE == ST_S_EDIT)
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
-	else if (STATE == ST_O_EDIT)
+	else if (GEOM_EDIT_STATE == ST_O_EDIT)
 	    edobj = save_edflag;
     }
 
@@ -881,7 +881,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			      45.0 - 45.0*((double)setting) * INV_GED);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -896,11 +896,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -921,7 +921,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob z %f\n", setting / 512.0);
 		} else {
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -936,11 +936,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -978,7 +978,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		bu_vls_printf(&cmd, "knob distadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -991,11 +991,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_TRAN)
 				es_edflag = STRANS;
-			} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+			} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
 			}
@@ -1016,7 +1016,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob Z %f\n", setting / 512.0);
 		} else {
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1029,11 +1029,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_TRAN)
 				es_edflag = STRANS;
-			} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+			} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
 			}
@@ -1072,7 +1072,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		bu_vls_printf(&cmd, "knob yadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1087,11 +1087,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -1112,7 +1112,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob y %f\n", setting / 512.0);
 		} else {
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1127,11 +1127,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -1157,7 +1157,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 	    break;
 	case DIAL5:
 	    if (mged_variables->mv_rateknobs) {
-		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 		    && mged_variables->mv_transform == 'e') {
 		    switch (mged_variables->mv_coords) {
 			case 'm':
@@ -1170,11 +1170,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			    break;
 		    }
 
-		    if (STATE == ST_S_EDIT) {
+		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
-		    } else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+		    } else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
@@ -1195,7 +1195,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob Y %f\n", setting / 512.0);
 	    } else {
-		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 		    && mged_variables->mv_transform == 'e') {
 		    switch (mged_variables->mv_coords) {
 			case 'm':
@@ -1208,11 +1208,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			    break;
 		    }
 
-		    if (STATE == ST_S_EDIT) {
+		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
-		    } else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+		    } else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
@@ -1250,7 +1250,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		bu_vls_printf(&cmd, "knob xadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1265,11 +1265,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -1290,7 +1290,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob x %f\n", setting / 512.0);
 		} else {
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1305,11 +1305,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -1334,7 +1334,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 	    break;
 	case DIAL7:
 	    if (mged_variables->mv_rateknobs) {
-		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 		    && mged_variables->mv_transform == 'e') {
 		    switch (mged_variables->mv_coords) {
 			case 'm':
@@ -1347,11 +1347,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			    break;
 		    }
 
-		    if (STATE == ST_S_EDIT) {
+		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
-		    } else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+		    } else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
@@ -1372,7 +1372,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob X %f\n", setting / 512.0);
 	    } else {
-		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
+		if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)
 		    && mged_variables->mv_transform == 'e') {
 		    switch (mged_variables->mv_coords) {
 			case 'm':
@@ -1385,11 +1385,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			    break;
 		    }
 
-		    if (STATE == ST_S_EDIT) {
+		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
-		    } else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
+		    } else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
@@ -1421,9 +1421,9 @@ dials_event_handler(XDeviceMotionEvent *dmep)
     Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 
     if (save_edflag != -1) {
-	if (STATE == ST_S_EDIT)
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
-	else if (STATE == ST_O_EDIT)
+	else if (GEOM_EDIT_STATE == ST_O_EDIT)
 	    edobj = save_edflag;
     }
 

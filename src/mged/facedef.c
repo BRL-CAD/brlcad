@@ -110,7 +110,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     BU_VLS_INIT(&error_msg);
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (STATE != ST_S_EDIT) {
+    if (GEOM_EDIT_STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;

@@ -629,13 +629,13 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
     s->gedp->ged_destroy_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
-    if (STATE != ST_VIEW) {
+    if (GEOM_EDIT_STATE != ST_VIEW) {
 	button(s, BE_REJECT);
     }
 
     ged_exec_zap(s->gedp, 1, (const char **)av);
 
-    (void)chg_state(s, STATE, STATE, "zap");
+    (void)chg_state(s, GEOM_EDIT_STATE, GEOM_EDIT_STATE, "zap");
     solid_list_callback(s);
 
     s->gedp->ged_destroy_vlist_callback = tmp_callback;
@@ -663,7 +663,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     if (argc == 1) {
-	bu_vls_printf(&vls, "STATE=%s, ", state_str[STATE]);
+	bu_vls_printf(&vls, "GEOM_EDIT_STATE=%s, ", state_str[GEOM_EDIT_STATE]);
 	bu_vls_printf(&vls, "Viewscale=%f (%f mm)\n",
 		      view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local, view_state->vs_gvp->gv_scale);
 	bu_vls_printf(&vls, "s->dbip->dbi_base2local=%f\n", s->dbip->dbi_base2local);
@@ -675,7 +675,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	tclcad_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
 	tclcad_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 
-	if (STATE != ST_VIEW) {
+	if (GEOM_EDIT_STATE != ST_VIEW) {
 	    tclcad_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
 	    tclcad_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	}
@@ -684,7 +684,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     if (BU_STR_EQUAL(argv[1], "state")) {
-	Tcl_AppendResult(interp, state_str[STATE], (char *)NULL);
+	Tcl_AppendResult(interp, state_str[GEOM_EDIT_STATE], (char *)NULL);
 	return TCL_OK;
     }
 
@@ -876,7 +876,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (STATE != ST_S_PICK && STATE != ST_O_PICK) {
+    if (GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK) {
 	state_err(s, "keyboard illuminate pick");
 	goto bail_out;
     }
@@ -979,7 +979,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     illump->s_iflag = UP;
 
     if (!illum_only) {
-	if (STATE == ST_O_PICK) {
+	if (GEOM_EDIT_STATE == ST_O_PICK) {
 	    ipathpos = 0;
 	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
@@ -1006,7 +1006,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 bail_out:
 
-    if (STATE != ST_VIEW) {
+    if (GEOM_EDIT_STATE != ST_VIEW) {
 	bu_vls_printf(&vls, "%s", Tcl_GetStringResult(interp));
 	button(s, BE_REJECT);
 	Tcl_ResetResult(interp);
@@ -2277,7 +2277,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
 				edit_absolute_scale += f;
 
-				if (STATE == ST_S_EDIT) {
+				if (GEOM_EDIT_STATE == ST_S_EDIT) {
 				    sedit_abs_scale(s);
 				} else {
 				    oedit_abs_scale(s);
@@ -2290,7 +2290,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
 				edit_absolute_scale = f;
 
-				if (STATE == ST_S_EDIT) {
+				if (GEOM_EDIT_STATE == ST_S_EDIT) {
 				    sedit_abs_scale(s);
 				} else {
 				    oedit_abs_scale(s);
@@ -3268,7 +3268,7 @@ mged_erot(struct mged_state *s,
 	    break;
     }
 
-    if (STATE == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	char save_rotate_about;
 
 	save_rotate_about = mged_variables->mv_rotate_about;
@@ -3349,7 +3349,7 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_OK;
     }
 
-    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord; /* dummy argument for ged_rot_args */
 	mat_t rmat;
@@ -3411,10 +3411,10 @@ mged_vrot(char origin, fastf_t *newrot)
 	if (origin == 'e') {
 	    /* "VR driver" method: rotate around "eye" point (0, 0, 1) viewspace */
 	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
-	} else if (origin == 'k' && STATE == ST_S_EDIT) {
+	} else if (origin == 'k' && GEOM_EDIT_STATE == ST_S_EDIT) {
 	    /* rotate around keypoint */
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-	} else if (origin == 'k' && STATE == ST_O_EDIT) {
+	} else if (origin == 'k' && GEOM_EDIT_STATE == ST_O_EDIT) {
 	    point_t kpWmc;
 
 	    MAT4X3PNT(kpWmc, modelchanges, es_keypoint);
@@ -3469,7 +3469,7 @@ mged_vrot_xyz(char origin,
 	bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
 	bn_mat_mul(temp2, view_state->vs_gvp->gv_rotation, newrot);
 	bn_mat_mul(newrot, temp2, temp1);
-    } else if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) && coords == 'o') {
+    } else if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) && coords == 'o') {
 	/* first, transform object rotations into model rotations */
 	bn_mat_inv(temp1, acc_rot_sol);
 	bn_mat_mul(temp2, acc_rot_sol, newrot);
@@ -3527,7 +3527,7 @@ cmd_rot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord;
 	mat_t rmat;
@@ -3574,7 +3574,7 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_OK;
     }
 
-    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	mat_t rmat;
 
@@ -3638,7 +3638,7 @@ mged_etran(struct mged_state *s,
 	    break;
     }
 
-    if (STATE == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	es_keyfixed = 0;
 	get_solid_keypoint(s, es_keypoint, &es_keytag,
 			   &es_int, es_mat);
@@ -3671,7 +3671,7 @@ mged_otran(struct mged_state *s, const vect_t tvec)
 {
     vect_t work = VINIT_ZERO;
 
-    if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) {
 	/* apply acc_rot_sol to tvec */
 	MAT4X3PNT(work, acc_rot_sol, tvec);
     }
@@ -3735,7 +3735,7 @@ cmd_tra(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord;
 	vect_t tvec;
@@ -3778,7 +3778,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	return TCL_OK;
     }
 
-    if (STATE == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	int save_edflag;
 
 	save_edflag = es_edflag;
@@ -3917,7 +3917,7 @@ cmd_sca(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) && mged_variables->mv_transform == 'e') {
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) && mged_variables->mv_transform == 'e') {
 	fastf_t sf1 = 0.0; /* combined xyz scale or x scale */
 	fastf_t sf2 = 0.0; /* y scale */
 	fastf_t sf3 = 0.0; /* z scale */
@@ -3951,7 +3951,7 @@ cmd_sca(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		return TCL_OK;
 	    }
 
-	    if (STATE == ST_O_EDIT) {
+	    if (GEOM_EDIT_STATE == ST_O_EDIT) {
 		save_edobj = edobj;
 		edobj = BE_O_XSCALE;
 

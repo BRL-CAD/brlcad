@@ -802,7 +802,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    if (STATE == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	/* Accept a solid edit */
 	edsol = 0;
 
@@ -817,7 +817,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	illump = NULL;
 	mged_color_soltab(s);
 	(void)chg_state(s, ST_S_EDIT, ST_VIEW, "Edit Accept");
-    }  else if (STATE == ST_O_EDIT) {
+    }  else if (GEOM_EDIT_STATE == ST_O_EDIT) {
 	/* Accept an object edit */
 	edobj = 0;
 	movedir = 0;	/* No edit modes set */
@@ -865,7 +865,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 
     /* Reject edit */
 
-    switch (STATE) {
+    switch (GEOM_EDIT_STATE) {
 	default:
 	    state_err(s, "Edit Reject");
 	    return TCL_ERROR;
@@ -903,7 +903,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     dl_set_iflag(s->gedp->ged_gdp->gd_headDisplay, DOWN);
 
     mged_color_soltab(s);
-    (void)chg_state(s, STATE, ST_VIEW, "Edit Reject");
+    (void)chg_state(s, GEOM_EDIT_STATE, ST_VIEW, "Edit Reject");
 
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
@@ -1008,8 +1008,8 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 int
 not_state(struct mged_state *s, int desired, char *str)
 {
-    if (STATE != desired) {
-	Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[STATE], " state.\n", (char *)NULL);
+    if (GEOM_EDIT_STATE != desired) {
+	Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[GEOM_EDIT_STATE], " state.\n", (char *)NULL);
 	Tcl_AppendResult(s->interp, "Expecting ", state_str[desired], " state.\n", (char *)NULL);
 	return -1;
     }
@@ -1061,12 +1061,12 @@ chg_state(struct mged_state *s, int from, int to, char *str)
     struct mged_dm *save_dm_list;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (STATE != from) {
+    if (GEOM_EDIT_STATE != from) {
 	bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
 	return 1;	/* BAD */
     }
 
-    STATE = to;
+    GEOM_EDIT_STATE = to;
 
     stateChange(from, to);
 
@@ -1081,7 +1081,7 @@ chg_state(struct mged_state *s, int from, int to, char *str)
     set_curr_dm(s, save_dm_list);
 
     bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(s->interp, bu_vls_addr(&vls), state_str[STATE], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&vls), state_str[GEOM_EDIT_STATE], TCL_GLOBAL_ONLY);
     bu_vls_free(&vls);
 
     return 0;		/* GOOD */
@@ -1091,7 +1091,7 @@ chg_state(struct mged_state *s, int from, int to, char *str)
 void
 state_err(struct mged_state *s, char *str)
 {
-    Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[STATE],
+    Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[GEOM_EDIT_STATE],
 		     " state.\n", (char *)NULL);
 }
 

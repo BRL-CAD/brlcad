@@ -185,7 +185,7 @@ dozoom(struct mged_state *s, int which_eye)
      * Draw all solids involved in editing.
      * They may be getting transformed away from the other solids.
      */
-    if (STATE == ST_VIEW)
+    if (GEOM_EDIT_STATE == ST_VIEW)
 	return;
 
     if (view_state->vs_gvp->gv_perspective <= 0) {

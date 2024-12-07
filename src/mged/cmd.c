@@ -321,7 +321,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	(void)(*ctp->ged_func)(s->gedp, argc, (const char **)argv);
 	GED_OUTPUT;
     } else {
-	if ((argc == 1) && (STATE == ST_S_EDIT)) {
+	if ((argc == 1) && (GEOM_EDIT_STATE == ST_S_EDIT)) {
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
@@ -562,7 +562,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (STATE == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	/* solid edit mode */
 	/* apply es_mat editing to parameters */
 	struct directory *outdp = RT_DIR_NULL;
@@ -584,7 +584,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	} else {
 	    ret = TCL_ERROR;
 	}
-    }  else if (STATE == ST_O_EDIT) {
+    }  else if (GEOM_EDIT_STATE == ST_O_EDIT) {
 	mat_t newmat;
 	struct directory *outdp = RT_DIR_NULL;
 
@@ -1368,7 +1368,7 @@ f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (STATE != ST_VIEW)
+    if (GEOM_EDIT_STATE != ST_VIEW)
 	button(s, BE_REJECT);
 
     quit(s);			/* Exiting time */

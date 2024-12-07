@@ -125,7 +125,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	(void)cmd_draw(clientData, interp, 2, av);
     }
 
-    if (STATE == ST_VIEW) {
+    if (GEOM_EDIT_STATE == ST_VIEW) {
 	struct bu_vls sed_cmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&sed_cmd, "sed %s", argv[2]);
 

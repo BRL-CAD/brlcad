@@ -760,7 +760,7 @@ set_e_axes_pos(int both)
     dm_set_dirty(DMP, 1);
     switch (es_int.idb_type) {
 	case ID_ARB8:
-	    if (STATE == ST_O_EDIT) {
+	    if (GEOM_EDIT_STATE == ST_O_EDIT) {
 		i = 0;
 	    } else {
 		switch (es_edflag) {
@@ -2496,7 +2496,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    if (STATE == ST_VIEW || STATE == ST_S_PICK || STATE == ST_O_PICK)
+    if (GEOM_EDIT_STATE == ST_VIEW || GEOM_EDIT_STATE == ST_S_PICK || GEOM_EDIT_STATE == ST_O_PICK)
 	return TCL_OK;
 
     get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
@@ -7630,7 +7630,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (STATE != ST_S_EDIT) {
+    if (GEOM_EDIT_STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Eqn: must be in solid edit\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -8708,7 +8708,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    if ((STATE != ST_S_EDIT) && (STATE != ST_O_EDIT)) {
+    if ((GEOM_EDIT_STATE != ST_S_EDIT) && (GEOM_EDIT_STATE != ST_O_EDIT)) {
 	state_err(s, "keypoint assignment");
 	return TCL_ERROR;
     }
@@ -8759,7 +8759,7 @@ f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(
     struct menu_item *mip = (struct menu_item *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (STATE != ST_S_EDIT)
+    if (GEOM_EDIT_STATE != ST_S_EDIT)
 	return TCL_ERROR;
 
     switch (es_int.idb_type) {
@@ -8936,7 +8936,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (STATE != ST_S_EDIT || !illump) {
+    if (GEOM_EDIT_STATE != ST_S_EDIT || !illump) {
 	Tcl_AppendResult(interp, "get_sed: must be in solid edit state", (char *)0);
 	return TCL_ERROR;
     }
@@ -9029,7 +9029,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (STATE != ST_S_EDIT) {
+    if (GEOM_EDIT_STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "put_sed: must be in solid edit state", (char *)0);
 	return TCL_ERROR;
     }
@@ -9106,7 +9106,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     struct mged_state *s = ctp->s;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (STATE != ST_S_EDIT || !illump)
+    if (GEOM_EDIT_STATE != ST_S_EDIT || !illump)
 	return TCL_ERROR;
 
     if (argc != 1) {
@@ -9220,7 +9220,7 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (STATE != ST_O_EDIT)
+    if (GEOM_EDIT_STATE != ST_O_EDIT)
 	return TCL_ERROR;
 
     if (argc != 1) {
