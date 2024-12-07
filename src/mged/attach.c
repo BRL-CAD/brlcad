@@ -667,19 +667,6 @@ f_dm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     return cmd_hook(argc-1, argv+1, (void *)s);
 }
 
-
-/**
- * Returns -
- *  0  If the display manager goes to a real screen.
- * !0  If the null display manager is attached.
- */
-int
-is_dm_null(void)
-{
-    return mged_curr_dm == mged_dm_init_state;
-}
-
-
 void
 dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
 {

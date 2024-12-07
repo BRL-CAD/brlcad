@@ -56,10 +56,12 @@ void usejoy(double xangle, double yangle, double zangle);
 
 int knob_rot(struct mged_state *s, vect_t rvec, char origin, int mf, int vf, int ef);
 int knob_tran(struct mged_state *s, vect_t tvec, int model_flag, int view_flag, int edit_flag);
+int mged_erot_xyz(struct mged_state *s, char origin, vect_t rvec);
 int mged_etran(struct mged_state *s, char coords, vect_t tvec);
 int mged_mtran(struct mged_state *s, const vect_t tvec);
 int mged_otran(struct mged_state *s, const vect_t tvec);
 int mged_vtran(struct mged_state *s, const vect_t tvec);
+int mged_vrot_xyz(char origin, char coords, vect_t rvec);
 
 
 extern vect_t curr_e_axes_pos;

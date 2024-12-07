@@ -325,7 +325,6 @@ extern struct run_rt head_run_rt;
 
 
 /* attach.c */
-int is_dm_null(void);
 int mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *argv[]);
 void mged_link_vars(struct mged_dm *p);
 void mged_slider_free_vls(struct mged_dm *p);
@@ -336,19 +335,8 @@ int gui_setup(struct mged_state *s, const char *dstr);
 void btn_head_menu(struct mged_state *s, int i, int menu, int item);
 void chg_l2menu(struct mged_state *s, int i);
 
-/* chgmodel.c */
-int extract_mater_from_line(
-    char *line,
-    char *name,
-    char *shader,
-    int *r, int *g, int *b,
-    int *override,
-    int *inherit);
-
 /* chgview.c */
-int mged_erot_xyz(struct mged_state *s, char origin, vect_t rvec);
 int mged_svbase(void);
-int mged_vrot_xyz(char origin, char coords, vect_t rvec);
 void size_reset(struct mged_state *s);
 void solid_list_callback(struct mged_state *s);
 
@@ -361,35 +349,11 @@ void mged_print_result(struct mged_state *s, int status);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
 
-/* color_scheme.c */
-void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *);
-void cs_update(const struct bu_structparse *, const char *, void *, const char *, void *);
-void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
-
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);
 
-/* dir.c */
-void dir_summary(int flag);
-int cmd_killall(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    const char *argv[]);
-int cmd_killrefs(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    const char *argv[]);
-int cmd_killtree(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    const char *argv[]);
-
 /* dodraw.c */
-int drawtrees(int argc, const char *argv[], int kind);
 int replot_modified_solid(struct mged_state *s, struct bv_scene_obj *sp, struct rt_db_internal *ip, const mat_t mat);
 int replot_original_solid(struct mged_state *s, struct bv_scene_obj *sp);
 void add_solid_path_to_result(Tcl_Interp *interpreter, struct bv_scene_obj *sp);

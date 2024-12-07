@@ -29,6 +29,9 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
+void cs_update(const struct bu_structparse *, const char *, void *, const char *, void *);
+void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
+
 struct _color_scheme default_color_scheme = {
     /* cs_rc */			1,
     /* cs_mode */		0,

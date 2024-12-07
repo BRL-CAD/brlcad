@@ -1157,7 +1157,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		/* global dbip */
 		dps[j] = copy_object(s->dbip, &rt_uniresource, &state);
 
-		if (!no_draw || !is_dm_null()) {
+		if (!no_draw || mged_curr_dm != mged_dm_init_state) {
 		    redraw_visible_objects(s);
 		    size_reset(s);
 		    new_mats();
