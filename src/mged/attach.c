@@ -175,7 +175,7 @@ mged_slider_free_vls(struct mged_dm *p)
 }
 
 
-int
+static int
 release(struct mged_state *s, char *name, int need_close)
 {
     struct mged_dm *save_dm_list = MGED_DM_NULL;

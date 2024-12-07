@@ -209,8 +209,6 @@ extern void (*cur_sigint)(int);	/* Current SIGINT status */
 extern void sig2(int);
 extern void sig3(int);
 
-extern int release(struct mged_state *s, char *name, int need_close);
-
 /* mged.c */
 extern void mged_view_callback(struct bview *gvp, void *clientData);
 
