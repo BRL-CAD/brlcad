@@ -54,15 +54,6 @@ extern int edit_com(struct mged_state *s, int argc, const char *argv[]);
 /* defined in buttons.c */
 extern int be_s_trans(ClientData, Tcl_Interp *, int, char **);
 
-
-/* tell him it already exists */
-void
-aexists(struct mged_state *s, const char *name)
-{
-    Tcl_AppendResult(s->interp, name, ":  already exists\n", (char *)NULL);
-}
-
-
 /*
  * Create a new solid of a given type
  * (Generic, or explicit)

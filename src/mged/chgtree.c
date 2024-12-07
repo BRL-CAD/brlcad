@@ -79,7 +79,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
 
     if (db_lookup(s->dbip,  argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
-	aexists(s, argv[2]);
+	Tcl_AppendResult(s->interp, argv[2], ":  already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
 

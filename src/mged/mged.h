@@ -209,7 +209,6 @@ extern void (*cur_sigint)(int);	/* Current SIGINT status */
 extern void sig2(int);
 extern void sig3(int);
 
-extern void aexists(struct mged_state *s, const char *name);
 extern int release(struct mged_state *s, char *name, int need_close);
 
 /* mged.c */
