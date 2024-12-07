@@ -152,18 +152,6 @@ extern int mged_db_warn;
 #define cur_title (s->dbip->dbi_title)      /* current model title */
 
 
-/* Some useful constants, if they haven't been defined elsewhere. */
-
-#ifndef FALSE
-#  define FALSE 0
-#endif
-
-#ifndef TRUE
-#  define TRUE 1
-#endif
-
-
-
 /* default region codes defined in mover.c */
 extern int item_default;
 extern int air_default;

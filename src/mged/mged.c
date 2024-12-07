@@ -614,7 +614,7 @@ mged_process_char(struct mged_state *s, char ch)
 
 		reset_Tty(fileno(stdin)); /* Backwards compatibility */
 		(void)signal(SIGINT, SIG_IGN);
-		if (cmdline(s, &s->input_str_prefix, TRUE) == CMD_MORE) {
+		if (cmdline(s, &s->input_str_prefix, 1) == CMD_MORE) {
 		    /* Remove newline */
 		    bu_vls_trunc(&s->input_str_prefix,
 				 bu_vls_strlen(&s->input_str_prefix)-1);
@@ -1374,7 +1374,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    if (curr_cmd_list->cl_tie)
 		set_curr_dm(s, curr_cmd_list->cl_tie);
 
-	    if (cmdline(s, &s->input_str_prefix, TRUE) == CMD_MORE) {
+	    if (cmdline(s, &s->input_str_prefix, 1) == CMD_MORE) {
 		/* Remove newline */
 		bu_vls_trunc(&s->input_str_prefix,
 			     bu_vls_strlen(&s->input_str_prefix)-1);
@@ -2342,7 +2342,7 @@ main(int argc, char *argv[])
 	for (argc -= 1, argv += 1; argc; --argc, ++argv)
 	    bu_vls_printf(&s->input_str, "%s ", *argv);
 
-	cmdline(s, &s->input_str, TRUE);
+	cmdline(s, &s->input_str, 1);
 	bu_vls_free(&s->input_str);
 
 	// If we launched subcommands, we need to process their
@@ -2441,7 +2441,7 @@ main(int argc, char *argv[])
 	    SECURITY_ATTRIBUTES saAttr;
 
 	    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-	    saAttr.bInheritHandle = FALSE;
+	    saAttr.bInheritHandle = 0;
 	    saAttr.lpSecurityDescriptor = NULL;
 
 	    Tcl_Channel chan;
