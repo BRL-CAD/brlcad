@@ -148,7 +148,6 @@ extern int mged_db_warn;
  */
 #define base2local (s->dbip->dbi_base2local)
 #define local2base (s->dbip->dbi_local2base)
-#define cur_title (s->dbip->dbi_title)      /* current model title */
 
 /**
  * Definitions.
