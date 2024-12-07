@@ -163,12 +163,6 @@ int old_mged_gui=1;
  */
 int mged_db_warn = 0;
 
-/*
- * 0 - no upgrade
- * 1 - upgrade
- */
-int mged_db_upgrade = 0;
-
 /* force creation of specific database versions */
 int mged_db_version = BRLCAD_DB_FORMAT_LATEST;
 
@@ -1852,6 +1846,7 @@ main(int argc, char *argv[])
 
     // Start out in an initialization state
     mged_global_db_ctx.init_flag = 1;
+    mged_global_db_ctx.db_upgrade = 0; // no upgrade
 
     char *attach = (char *)NULL;
 

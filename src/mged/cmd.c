@@ -79,7 +79,6 @@ struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
 extern int mged_db_warn;
-extern int mged_db_upgrade;
 extern int mged_db_version;
 
 static int glob_compat_mode = 1;
@@ -1646,7 +1645,7 @@ mged_global_variable_setup(struct mged_state *s)
 {
     Tcl_LinkVar(s->interp, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_warn)", (char *)&mged_db_warn, TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_db_upgrade, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_global_db_ctx.db_upgrade, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_db_version, TCL_LINK_INT);
 
     Tcl_LinkVar(s->interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);

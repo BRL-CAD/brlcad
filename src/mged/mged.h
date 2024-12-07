@@ -139,7 +139,6 @@ struct cmdtab {
 #include "./menu.h"
 
 /* initialization states */
-extern int mged_db_upgrade;
 extern int mged_db_version;
 extern int mged_db_warn;
 
@@ -443,6 +442,7 @@ struct mged_opendb_ctx {
     int post_open_cnt;
     struct mged_state *s;
     int init_flag; /* >0 means in initialization stage */
+    int db_upgrade; /* 0 (default) no upgrade, 1 upgrade */
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
 
