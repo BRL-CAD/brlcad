@@ -114,7 +114,12 @@ which_path(const char *cmd, const char *path, char *result)
     return NULL;
 }
 
-
+// TODO - can/should we extend bu_which to also check C:/Program
+// Files/<stuff>/<stuff> and /Applications/<stuff>.app/Contents/MacOS/<stuff>
+// type paths, so we could put (say) notepad++.exe or TextEdit into bu_which
+// and have it find their full paths?  May also be OS mechanisms to do
+// lookups (registry, etc.) that could be useful, such as SearchPath on
+// Windows...
 const char *
 bu_which(const char *cmd)
 {
