@@ -104,11 +104,7 @@ brlcad_addexec(cad_parea cad_parea.c libbu)
 set(
   mged_ignore_files
   CMakeLists.txt
-  bool_rewrite.c
   cmd.h
-  comb_bool.h
-  comb_bool_parse.y
-  comb_bool_scan.l
   f_cmd.h
   menu.h
   mged.h
