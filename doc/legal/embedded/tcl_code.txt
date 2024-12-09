@@ -63,6 +63,3 @@ file:/src/libtclcad/tkImgFmtPIX.c
 file:/src/tclscripts/cad_clrpick.tcl
 file:/src/tclscripts/html_library.tcl
 
-TODO - need to double check:
-file:/src/mged/htmlLibraryUi.h
-
