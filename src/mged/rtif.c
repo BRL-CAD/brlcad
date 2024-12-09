@@ -46,7 +46,6 @@
 #include "./sedit.h"
 #include "./mged.h"
 #include "./mged_dm.h"
-#include "./qray.h"
 #include "./cmd.h"
 
 

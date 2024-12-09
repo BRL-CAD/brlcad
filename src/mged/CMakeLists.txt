@@ -109,7 +109,6 @@ set(
   menu.h
   mged.h
   mged_dm.h
-  qray.h
   red.c
   scroll.h
   sedit.h
