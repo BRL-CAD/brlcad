@@ -109,7 +109,6 @@ set(
   comb_bool.h
   comb_bool_parse.y
   comb_bool_scan.l
-  htmlLibraryUi.h
   f_cmd.h
   menu.h
   mged.h
