@@ -53,8 +53,11 @@
 #  include <mach/mach_host.h>
 #endif
 
+#include "bu/app.h"
 #include "bu/env.h"
+#include "bu/file.h"
 #include "bu/malloc.h"
+#include "bu/str.h"
 
 /* strict c89 doesn't declare setenv() */
 #ifndef HAVE_DECL_SETENV
@@ -320,6 +323,129 @@ bu_mem(int type, size_t *sz)
 
     /* error if the above didn't work */
     return -1;
+}
+
+/* editors to test, in order of discovery preference (EDITOR overrides) */
+#define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
+#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
+#define EMACS_EDITOR "emacs"
+#define GVIM_EDITOR "gvim"
+#define KATE_EDITOR "kate"
+#define GEDIT_EDITOR "gedit"
+#define VIM_EDITOR "vim"
+#define VI_EDITOR "vi"
+#define NANO_EDITOR "nano"
+#define MICRO_EDITOR "micro"
+
+// TODO - long ago, BRL-CAD bundled jove to always guarantee basic text editing
+// capabilities.  We haven't done that for a while (jove didn't end up getting
+// much development momentum), but maybe bext's availability would make it
+// worth considering including a last-resort fallback again.  Particular
+// motivation this time around is the lack on Windows of a built-in console
+// editor - all the solutions seem to involved requiring the user be able to
+// install a 3rd party solution themselves with something like winget.
+// Apparently this can be a real nuisance for people doing remote ssh into to
+// Windows servers.  Microsoft seems to be considering proving a default CLI
+// editor again, similar to what the used to provide with edit.exe, but that
+// doesn't seem to have materialized yet.  See discussion at
+// https://github.com/microsoft/terminal/discussions/16440
+//
+// https://github.com/malxau/yori does already implement a modern MIT licensed
+// clone of the old edit.exe editor which would have been a fallback on older
+// Windows systems - even if it doesn't ultimately get included in newer
+// Windows systems, we may be able to build the necessary pieces in bext to
+// provide yedit.exe ourselves...  As far as I know every other environment we
+// target has at least vi available by default - Windows is the outlier.
+
+const char *
+bu_editor(const char **editor_opt, int no_gui, int check_for_cnt, const char **check_for_editors)
+{
+    int i;
+    static char bu_editor[MAXPATHLEN] = {0};
+    static char bu_editor_opt[MAXPATHLEN] = {0};
+    static char bu_editor_tmp[MAXPATHLEN] = {0};
+    const char *which_str = NULL;
+    const char *e_str = NULL;
+    const char *gui_editor_list[] = {
+	WIN_EDITOR, MAC_EDITOR, EMACS_EDITOR, GVIM_EDITOR, GEDIT_EDITOR, KATE_EDITOR, NULL
+    };
+    const char *nongui_editor_list[] = {
+	EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, NANO_EDITOR, MICRO_EDITOR, NULL
+    };
+    const char **editor_list = (no_gui) ? nongui_editor_list : gui_editor_list;
+
+
+    // EDITOR environment variable takes precedence, if set
+    const char *env_editor = getenv("EDITOR");
+    if (env_editor && env_editor[0] != '\0') {
+	// If EDITOR is a full, valid path we are done
+	if (bu_file_exists(env_editor, NULL)) {
+	    bu_strlcpy(bu_editor, env_editor, MAXPATHLEN);
+	    goto do_opt;
+	}
+	// Doesn't exist as-is - try bu_which
+	which_str = bu_which(env_editor);
+	if (which_str) {
+	    bu_strlcpy(bu_editor, which_str, MAXPATHLEN);
+	    goto do_opt;
+	}
+	// Neither of the above worked - just pass through $EDITOR as-is
+	bu_strlcpy(bu_editor, env_editor, MAXPATHLEN);
+	goto do_opt;
+    }
+
+    // The app wants us to check some things, before investigating our default
+    // set - handle them first.
+    if (check_for_cnt && check_for_editors) {
+	for (i = 0; i < check_for_cnt; i++) {
+	    // If it exists as-is, go with that.
+	    if (bu_file_exists(check_for_editors[i], NULL)) {
+		bu_strlcpy(bu_editor, check_for_editors[i], MAXPATHLEN);
+		goto do_opt;
+	    }
+	    // Doesn't exist as-is - try bu_which
+	    which_str = bu_which(env_editor);
+	    if (which_str) {
+		bu_strlcpy(bu_editor, which_str, MAXPATHLEN);
+		goto do_opt;
+	    }
+	}
+    }
+
+    // No environment variable and no application-provided list - use
+    // our internal list
+    i = 0;
+    e_str = editor_list[i];
+    while (e_str) {
+	which_str = bu_which(e_str);
+	if (which_str) {
+	    bu_strlcpy(bu_editor, which_str, MAXPATHLEN);
+	    goto do_opt;
+	}
+	e_str = editor_list[i++];
+    }
+
+    // If we have nothing after all that, we're done
+    if (editor_opt)
+	*editor_opt = NULL;
+    return NULL;
+
+do_opt:
+    // If the caller didn't supply an option pointer, just return the editor
+    // string
+    if (!editor_opt)
+	return (const char *)bu_editor;
+
+    // Supply any options needed (normally graphical editor needing to be
+    // non-graphical due to no_gui being set, for example.)
+
+    snprintf(bu_editor_tmp, MAXPATHLEN, bu_which("emacs"));
+    if (BU_STR_EQUAL(bu_editor, bu_editor_tmp) && no_gui) {
+	// Non-graphical emacs requires an option
+	sprintf(bu_editor_opt, "-nw");
+    }
+
+    return (const char *)bu_editor;
 }
 
 /*

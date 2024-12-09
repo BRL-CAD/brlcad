@@ -54,6 +54,51 @@ BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrit
  */
 BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
 
+
+/**
+ * Select an editor.
+ *
+ * Returns a string naming an editor to be used.  If an option is needed for
+ * invoking the editor, it is supplied via the editor_opt output.
+ *
+ * By default editors requiring a graphical environment will be considered - to
+ * avoid this, supply 1 to the no_gui input parameter.
+ *
+ * If the EDITOR environment variable is set, that takes priority.  If EDITOR
+ * holds a full, valid path it will be used as-is.  If not, bu_which will
+ * attempt to find the full path to $EDITOR.  If that fails, $EDITOR will be
+ * used as-is without modification and it will be up to the user's environment
+ * to make it succeed at runtime.  If EDITOR is unset, then libbu will attempt
+ * to find a viable editor option by looking for various common editors.
+ *
+ * If the optional check_for_editors array is provided, libbu will first
+ * attempt to use the contents of that array to find an editor.  Unlike EDITOR,
+ * the list contents WILL be checked.  The main purpose of check_for_editors is
+ * to allow applications to define their own preferred precedence order in case
+ * there are specific advantages to using some editors over others.  It is also
+ * useful if an app wishes to list some specialized editor not part of the
+ * normal listings.  If an application wishes to use ONLY a check_for_editors
+ * list and not fall back on libbu's internal list if it fails, they should
+ * assign the last entry of check_for_editors to be NULL to signal libbu to
+ * stop looking for an editor there:
+ *
+ *  int check_for_cnt = 3; const char *check_for_editors[3] = {"editor1", "editor2", NULL};
+ *
+ * We are deliberately NOT documenting the libbu's own internal editor list as
+ * public API, nor do we make any guarantees about the presence of any editor
+ * that is on the list will take relative to other editors.  What editors are
+ * popular in various environments can change over time, and the purpose of
+ * this function is to provide *some* editor, rather than locking in any
+ * particular precedence.  check_for_editors should be used if an app needs
+ * more guaranteed stability in lookup behaviors.
+ *
+ * Caller should NOT free either the main string return from bu_editor or the
+ * pointer assigned to editor_opt.  They may both change contents from one
+ * call to the next, so caller should duplicate the string outputs if they
+ * wish to preserve them beyond the next bu_editor call.
+ */
+BU_EXPORT const char *bu_editor(const char **editor_opt, int no_gui, int check_for_cnt, const char **check_for_editors);
+
 /** @} */
 
 __END_DECLS
