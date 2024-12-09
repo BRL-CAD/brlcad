@@ -325,29 +325,31 @@ bu_mem(int type, size_t *sz)
     return -1;
 }
 
-/* editors to test, in order of discovery preference (EDITOR overrides) */
-#define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
-#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
+/* editors to test */
 #define EMACS_EDITOR "emacs"
+#define GEDIT_EDITOR "gedit"
 #define GVIM_EDITOR "gvim"
 #define KATE_EDITOR "kate"
-#define GEDIT_EDITOR "gedit"
+#define MICRO_EDITOR "micro"
+#define NANO_EDITOR "nano"
+#define NOTEPADPP_EDITOR "\"c:/Program Files/Notepad++/notepad++.exe\""
+#define TEXTEDIT_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define VIM_EDITOR "vim"
 #define VI_EDITOR "vi"
-#define NANO_EDITOR "nano"
-#define MICRO_EDITOR "micro"
+#define WORDPAD_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
 
 // TODO - long ago, BRL-CAD bundled jove to always guarantee basic text editing
 // capabilities.  We haven't done that for a while (jove didn't end up getting
-// much development momentum), but maybe bext's availability would make it
-// worth considering including a last-resort fallback again.  Particular
-// motivation this time around is the lack on Windows of a built-in console
-// editor - all the solutions seem to involved requiring the user be able to
-// install a 3rd party solution themselves with something like winget.
-// Apparently this can be a real nuisance for people doing remote ssh into to
-// Windows servers.  Microsoft seems to be considering proving a default CLI
-// editor again, similar to what the used to provide with edit.exe, but that
-// doesn't seem to have materialized yet.  See discussion at
+// much development momentum), but bext's availability makes that a somewhat
+// less painful possibly to consider now.
+//
+// The specific motivation for thinking about this is the lack on Windows of a
+// built-in console editor - all the solutions seem to involve requiring the
+// user be able to install a 3rd party solution themselves with something like
+// winget.  Apparently this can be a real nuisance for people doing remote ssh
+// into to Windows servers.  Microsoft seems to be considering proving a
+// default CLI editor again, similar to what the used to provide with edit.exe,
+// but that doesn't seem to have materialized yet.  See discussion at
 // https://github.com/microsoft/terminal/discussions/16440
 //
 // https://github.com/malxau/yori does already implement a modern MIT licensed
@@ -356,6 +358,10 @@ bu_mem(int type, size_t *sz)
 // Windows systems, we may be able to build the necessary pieces in bext to
 // provide yedit.exe ourselves...  As far as I know every other environment we
 // target has at least vi available by default - Windows is the outlier.
+//
+// Main argument against it is if Microsoft really does use the above work to
+// restore a default EDIT.exe in newer Windows versions, then a bext version
+// would (eventually) become moot.
 
 const char *
 bu_editor(const char **editor_opt, int no_gui, int check_for_cnt, const char **check_for_editors)
@@ -366,11 +372,14 @@ bu_editor(const char **editor_opt, int no_gui, int check_for_cnt, const char **c
     static char bu_editor_tmp[MAXPATHLEN] = {0};
     const char *which_str = NULL;
     const char *e_str = NULL;
+    // Arrays for internal editor checking, in priority order.
+    // Note that this order may be changed arbitrarily and is
+    // explicitly NOT guaranteed by the API.
     const char *gui_editor_list[] = {
-	WIN_EDITOR, MAC_EDITOR, EMACS_EDITOR, GVIM_EDITOR, GEDIT_EDITOR, KATE_EDITOR, NULL
+	NOTEPADPP_EDITOR, WORDPAD_EDITOR, TEXTEDIT_EDITOR, GEDIT_EDITOR, KATE_EDITOR, GVIM_EDITOR, EMACS_EDITOR, NULL
     };
     const char *nongui_editor_list[] = {
-	EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, NANO_EDITOR, MICRO_EDITOR, NULL
+	MICRO_EDITOR, NANO_EDITOR, EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, NULL
     };
     const char **editor_list = (no_gui) ? nongui_editor_list : gui_editor_list;
 
