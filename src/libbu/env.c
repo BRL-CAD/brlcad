@@ -448,7 +448,7 @@ do_opt:
     // Supply any options needed (normally graphical editor needing to be
     // non-graphical due to no_gui being set, for example.)
 
-    snprintf(bu_editor_tmp, MAXPATHLEN, bu_which("emacs"));
+    snprintf(bu_editor_tmp, MAXPATHLEN, "%s", bu_which("emacs"));
     if (BU_STR_EQUAL(bu_editor, bu_editor_tmp) && no_gui) {
 	// Non-graphical emacs requires an option
 	sprintf(bu_editor_opt, "-nw");
