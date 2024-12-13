@@ -45,6 +45,7 @@
 
 #include "bu/app.h"
 #include "bu/cmd.h"
+#include "bu/env.h"
 #include "bu/file.h"
 #include "bu/opt.h"
 #include "bu/path.h"
@@ -1260,13 +1261,6 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char 
     }
 }
 
-#define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad.exe"
-#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
-#define EMACS_EDITOR "emacs"
-#define NANO_EDITOR "nano"
-#define VIM_EDITOR "vim"
-#define VI_EDITOR "vi"
-
 int
 _ged_editit(const char *editstring, const char *filename)
 {
@@ -1297,7 +1291,8 @@ _ged_editit(const char *editstring, const char *filename)
     /* convert the edit string into pieces suitable for arguments to execlp */
 
     if (editstring != NULL) {
-	editstring_cpy = bu_strdup(editstring);
+	editstring_cpy = (char *)bu_calloc(2*strlen(editstring), sizeof(char), "editstring_cpy");
+	bu_str_escape(editstring, "\\", editstring_cpy, 2*strlen(editstring));
 	avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
 	bu_argv_from_string(avtmp, 4, editstring_cpy);
 
@@ -1310,45 +1305,7 @@ _ged_editit(const char *editstring, const char *filename)
 	if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
 	    editor_opt = avtmp[3];
     } else {
-	editor = getenv("EDITOR");
-
-	/* still unset? try windows */
-	if (!editor || editor[0] == '\0') {
-	    if (bu_file_exists(WIN_EDITOR, NULL)) {
-		editor = WIN_EDITOR;
-	    }
-	}
-
-	/* still unset? try mac os x */
-	if (!editor || editor[0] == '\0') {
-	    if (bu_file_exists(MAC_EDITOR, NULL)) {
-		editor = MAC_EDITOR;
-	    }
-	}
-
-	/* still unset? try emacs */
-	if (!editor || editor[0] == '\0') {
-	    editor = bu_which(EMACS_EDITOR);
-	}
-
-	/* still unset? try nano */
-	if (!editor || editor[0] == '\0') {
-	    editor = bu_which(NANO_EDITOR);
-	}
-
-	/* still unset? try vim */
-	if (!editor || editor[0] == '\0') {
-	    editor = bu_which(VIM_EDITOR);
-	}
-
-	/* still unset? As a last resort, go with vi -
-	 * vi is part of the POSIX standard, which is as
-	 * close as we can get currently to an editor
-	 * that should always be present:
-	 * http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html */
-	if (!editor || editor[0] == '\0') {
-	    editor = bu_which(VI_EDITOR);
-	}
+	editor = bu_editor(&editor_opt, 0, 0, NULL);
     }
 
     if (!editor) {
