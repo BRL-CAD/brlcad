@@ -231,7 +231,11 @@ brlcad_add_test(NAME bu_path_dirname__sp__sp__sp_ COMMAND bu_test dirname "   ")
 brlcad_add_test(NAME bu_path_dirname_empty COMMAND bu_test dirname "")
 brlcad_add_test(NAME bu_path_dirname_null COMMAND bu_test dirname)
 
-#
+#  ************ env.c tests *************
+
+brlcad_add_test(NAME bu_editor COMMAND bu_test env -e)
+
+
 #  ************ escape.c tests *************
 #
 # Note - because of the quoting needed in these tests, it is simpler

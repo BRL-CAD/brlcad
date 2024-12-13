@@ -61,15 +61,19 @@ BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
  * Returns a string naming an editor to be used.  If an option is needed for
  * invoking the editor, it is supplied via the editor_opt output.
  *
- * By default editors requiring a graphical environment will be considered - to
- * avoid this, supply 1 to the no_gui input parameter.
+ * When 0 is supplied to the etype parameter, all editors will be considered
+ * when using libbu's internal editors list.  To restrict the set searched to
+ * console editors, set etype to 1.  For only GUI editors, set etype to 2. The
+ * etype parameter has no effect when the EDITOR environment variable or a user
+ * supplied list of candidate editors is supplied.
  *
- * If the EDITOR environment variable is set, that takes priority.  If EDITOR
- * holds a full, valid path it will be used as-is.  If not, bu_which will
- * attempt to find the full path to $EDITOR.  If that fails, $EDITOR will be
- * used as-is without modification and it will be up to the user's environment
- * to make it succeed at runtime.  If EDITOR is unset, then libbu will attempt
- * to find a viable editor option by looking for various common editors.
+ * If the EDITOR environment variable is set, that takes priority over both
+ * libbu's internal list and a user supplied list.  If EDITOR holds a full,
+ * valid path it will be used as-is.  If not, bu_which will attempt to find the
+ * full path to $EDITOR.  If that fails, the contents of EDITOR will be used
+ * as-is without modification and it will be up to the user's environment to
+ * make it succeed at runtime.  If EDITOR is unset, then libbu will attempt to
+ * find a viable editor option by looking for various common editors.
  *
  * If the optional check_for_editors array is provided, libbu will first
  * attempt to use the contents of that array to find an editor.  Unlike EDITOR,
@@ -97,7 +101,7 @@ BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
  * call to the next, so caller should duplicate the string outputs if they
  * wish to preserve them beyond the next bu_editor call.
  */
-BU_EXPORT const char *bu_editor(const char **editor_opt, int no_gui, int check_for_cnt, const char **check_for_editors);
+BU_EXPORT const char *bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **check_for_editors);
 
 /** @} */
 
