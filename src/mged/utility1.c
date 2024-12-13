@@ -86,7 +86,8 @@ editit(struct mged_state *s, const char *command, const char *tempfile) {
 
     CHECK_DBI_NULL;
 
-    get_editor_string(s, &editstring);
+    if (!get_editor_string(s, &editstring))
+	return TCL_ERROR;
 
     av[0] = command;
     av[1] = "-e";
@@ -119,7 +120,8 @@ f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 
     CHECK_DBI_NULL;
 
-    get_editor_string(s, &editstring);
+    if (!get_editor_string(s, &editstring))
+	return TCL_ERROR;
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
     av[0] = argv[0];
@@ -160,7 +162,8 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    get_editor_string(s, &editstring);
+    if (!get_editor_string(s, &editstring))
+	return TCL_ERROR;
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcodes: av");
     av[0] = argv[0];
@@ -202,7 +205,8 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    get_editor_string(s, &editstring);
+    if (!get_editor_string(s, &editstring))
+	return TCL_ERROR;
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
     av[0] = (const char *)argv[0];

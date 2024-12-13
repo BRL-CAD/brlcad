@@ -32,6 +32,7 @@
 #include "bresource.h"
 
 #include "bu/app.h"
+#include "bu/env.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -915,194 +916,51 @@ readsolid(struct mged_state *s)
 int
 get_editor_string(struct mged_state *s, struct bu_vls *editstring)
 {
-    char buffer[RT_MAXLINE] = {0};
-    int count = 0;
-    const char *os = (char *)NULL;
-    const char *terminal = (char *)NULL;
-    const char *terminal_opt = (char *)NULL;
-    const char *editor = (char *)NULL;
-    const char *editor_opt = (char *)NULL;
-
-    os = Tcl_GetVar(s->interp, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
-    editor = Tcl_GetVar(s->interp, "editor", TCL_GLOBAL_ONLY);
-    if (!editor || editor[0] == '\0')
-	editor = Tcl_GetVar(s->interp, "EDITOR", TCL_GLOBAL_ONLY);
-
-    if (!editor || editor[0] == '\0')
-	editor = getenv("EDITOR");
-
-    /* still unset? try windows */
-    if (!editor || editor[0] == '\0') {
-	if (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT")) {
-	    editor = WIN_EDITOR;
-	} else {
-	    editor = (char *)NULL;
-	}
-    }
-
-    /* still unset? try mac os x */
-    if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(MAC_EDITOR, NULL)) {
-	    editor = MAC_EDITOR;
-	}
-    }
-
-    /* still unset? try emacs */
-    if (!editor || editor[0] == '\0') {
-	editor = bu_which(EMACS_EDITOR);
-    }
-
-    /* still unset? try vim */
-    if (!editor) {
-	editor = bu_which(VIM_EDITOR);
-    }
-
-    /* still unset? try nano */
-    if (!editor) {
-	editor = bu_which(NANO_EDITOR);
-    }
-
-    /* still unset? try ed */
-    if (!editor) {
-	editor = bu_which(ED_EDITOR);
-    }
-
-    /* still unset? as a last resort, try vi */
-    if (!editor) {
-	editor = bu_which(VI_EDITOR);
-    }
-
     /* There are two possible situations for MGED - in classic mode
      * the assumption is made that the command window is a controlling
      * terminal, and an editor should be launched that will utilize
-     * that controlling window. Otherwise, some editor settings will
-     * need a terminal supplied via an xterm and some will not. */
-
-
-    /* If we're in classic mode on Windows, we have a problem -
-     * 64 bit versions of Windows no longer ship EDIT, so there isn't
-     * a standard console editor to fire up.  Best we can do is try for EDIT,
-     * and if not found hope one of the unix console editors is available.*/
-    if (s->classic_mged && (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT"))) {
-	const char *editpath = bu_which("edit");
-	editor = "EDIT";
-	if (editpath) {
-	    snprintf(buffer, RT_MAXLINE, "%s", editpath);
-	    editor = buffer;
-	}
-    }
+     * that controlling window.  In GUI mode, the editor will be launched
+     * either as a separate GUI application or in a separate terminal. */
+    int need_terminal = 0;
+    const char *editor = (char *)NULL;
+    const char *editor_opt = (char *)NULL;
 
     if (s->classic_mged) {
-	const char *which = NULL;
-
-	/* In this situation, make sure we're using an editor that will
-	 * work within the mged terminal (i.e. no launching a separate
-	 * gui, regardless of EDITOR settings. In this situation, emacs
-	 * will be invoked with the -nw option.
-	 *
-	 * Standard:  emacs, vim, vi, ed
-	 * Windows: EDIT, if available
-	 *
-	 * terminal and terminal_opt remain unset
-	 */
-
-	/* Test for any of the editor conditions that will require intervention.
-	 * Unfortunately, because we can't be certain that a user supplied EDITOR
-	 * will work in console mode, if it's not one of the known good cases
-	 * we have to attempt to set one of the known working editor configs.
-	 * Hence, check for known working AND known not-working up front - need
-	 * to satisfy both that there IS a working config already and that one
-	 * of the non-working configs isn't set.*/
-	which = bu_which(EMACS_EDITOR);
-	if (which)
-	    count += (BU_STR_EQUAL(editor, which) && (!editor_opt || editor_opt[0] == '\0'));
-	which = bu_which(VIM_EDITOR);
-	if (which)
-	    count += BU_STR_EQUAL(editor, which);
-	which = bu_which(VI_EDITOR);
-	if (which)
-	    count += BU_STR_EQUAL(editor, which);
-	which = bu_which(NANO_EDITOR);
-	if (which)
-	    count += BU_STR_EQUAL(editor, which);
-	which = bu_which(ED_EDITOR);
-	if (which)
-	    count += BU_STR_EQUAL(editor, which);
-	count += BU_STR_EQUAL(editor, MAC_EDITOR);
-	if (count > 0) {
-	    /* start with emacs... */
-	    editor = bu_which(EMACS_EDITOR);
-	    /* if emacs is found, set editor_opt */
-	    if (editor) {
-		editor_opt = "-nw";
-	    }
-	    if (!editor) {
-		editor = bu_which(VIM_EDITOR);
-	    }
-	    if (!editor) {
-		editor = bu_which(VI_EDITOR);
-	    }
-	    if (!editor) {
-		editor = bu_which(NANO_EDITOR);
-	    }
-	    if (!editor) {
-		editor = bu_which(ED_EDITOR);
-	    }
-	}
+	// Console editors only
+	editor = bu_editor(&editor_opt, 1, 0, NULL);
     } else {
-	/* Spell out in which situations we need a terminal.
-	 */
-	if (BU_STR_EQUAL(os, "Darwin")) {
-	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
-	     * we figure out how to use Mac terminal, use X11 xterm */
-	    if (!BU_STR_EQUAL(editor, MAC_EDITOR)) {
-		terminal = bu_which(XTERM_COMMAND);
-
-		/* look a little harder if we found nothing */
-		if (!terminal) {
-		    terminal = bu_which("/usr/X11R6/bin/" XTERM_COMMAND);
-		}
-		if (!terminal) {
-		    terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
-		}
-
-		if (terminal)
-		    terminal_opt = "-e";
-	    }
+	// First try GUI editors only
+	editor = bu_editor(&editor_opt, 2, 0, NULL);
+	if (!editor) {
+	    // Falling back to console, will need terminal
+	    need_terminal = 1;
+	    editor = bu_editor(&editor_opt, 1, 0, NULL);
 	}
-
-	/* For now, assume there aren't any situations where Windows will use a terminal */
-
-	/* If it's not mac, and it's not Windows, we need a controlling terminal */
-	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
-	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
-		terminal = bu_which(XTERM_COMMAND);
-		if (terminal)
-		    terminal_opt = "-e";
-	    }
-	    if (BU_STR_EQUAL(editor, VIM_EDITOR)) {
-		terminal = bu_which(XTERM_COMMAND);
-		if (terminal)
-		    terminal_opt = "-e";
-	    }
-	    if (BU_STR_EQUAL(editor, VI_EDITOR)) {
-		terminal = bu_which(XTERM_COMMAND);
-		if (terminal)
-		    terminal_opt = "-e";
-	    }
-	    if (BU_STR_EQUAL(editor, NANO_EDITOR)) {
-		    terminal = bu_which(XTERM_COMMAND);
-		if (terminal)
-		    terminal_opt = "-e";
-	    }
-	    if (BU_STR_EQUAL(editor, ED_EDITOR)) {
-		terminal = bu_which(XTERM_COMMAND);
-		if (terminal)
-		    terminal_opt = "-e";
-	    }
-	}
-	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
     }
+
+    if (!editor) {
+	// No suitable editor found
+	return 0;
+    }
+
+    if (!need_terminal) {
+	bu_vls_sprintf(editstring, "(null) (null) %s %s", editor, editor_opt?editor_opt:"(null)");
+	return 1;
+    }
+
+    // If we do need a terminal, try to find one
+    const char *terminal = bu_which(XTERM_COMMAND);
+    /* look a little harder if we found nothing */
+    if (!terminal) {
+	terminal = bu_which("/usr/X11R6/bin/" XTERM_COMMAND);
+    }
+    if (!terminal) {
+	terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
+    }
+
+    const char *terminal_opt = (char *)NULL;
+    if (terminal)
+	terminal_opt = "-e";
 
     bu_vls_sprintf(editstring, "%s %s %s %s", terminal?terminal:"(null)", terminal_opt?terminal_opt:"(null)", editor, editor_opt?editor_opt:"(null)");
 
