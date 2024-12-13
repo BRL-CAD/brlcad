@@ -67,7 +67,11 @@ editor_tests(void)
     if (!bu_file_exists(btest_path, NULL))
 	bu_dir(btest_path, MAXPATHLEN, btest_exec, BU_DIR_EXT, NULL);
     if (!bu_file_exists(btest_path, NULL))
+	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, btest_exec, NULL);
+    if (!bu_file_exists(btest_path, NULL))
 	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, btest_exec, BU_DIR_EXT, NULL);
+    if (!bu_file_exists(btest_path, NULL))
+	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, "..", "src", "libbu", "tests", btest_exec, NULL);
     if (!bu_file_exists(btest_path, NULL))
 	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, "..", "src", "libbu", "tests", btest_exec, BU_DIR_EXT, NULL);
     if (!bu_file_exists(btest_path, NULL)) {

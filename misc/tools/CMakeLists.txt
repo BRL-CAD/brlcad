@@ -19,6 +19,10 @@ add_subdirectory(debug2c)
 settargetfolder(debug2c "Compilation Utilities")
 distclean(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
+# yedit - console editor for Windows to be used as a fallback if
+# there are no other console options present in the environment
+add_subdirectory(yori)
+
 # inactvhdrs - utility that tries to find local headers unused by other
 # source code in a file hierarchy
 if(BUILD_TESTING)

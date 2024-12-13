@@ -1,0 +1,32 @@
+#include <windows.h>
+
+#define VS_VERSION_INFO 1
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION YORI_BIN_VER_MAJOR, YORI_BIN_VER_MINOR, 0, 0
+ PRODUCTVERSION YORI_VER_MAJOR, YORI_VER_MINOR, 0, 0
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+END
+
+//
+// We can build the manifest using old resource compilers,
+// but need to ensure the definitions are in place.
+//
+
+#ifndef CREATEPROCESS_MANIFEST_RESOURCE_ID
+#define CREATEPROCESS_MANIFEST_RESOURCE_ID 1
+#endif
+
+#ifndef RT_MANIFEST
+#define RT_MANIFEST 24
+#endif
+
+#ifndef YORI_CUSTOM_MANIFEST
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "..\\lib\\yori.man"
+#endif
+

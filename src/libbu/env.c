@@ -392,7 +392,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 	NOTEPADPP_EDITOR, WORDPAD_EDITOR, TEXTEDIT_EDITOR, GEDIT_EDITOR, KATE_EDITOR, GTKEMACS_EDITOR, GVIM_EDITOR, NULL
     };
     const char *nongui_editor_list[] = {
-	MICRO_EDITOR, NANO_EDITOR, EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, NULL
+	MICRO_EDITOR, NANO_EDITOR, EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, YEDIT_EDITOR, NULL
     };
 
     // EDITOR environment variable takes precedence, if set
