@@ -57,6 +57,7 @@
 #include "bu/env.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/str.h"
 
 /* strict c89 doesn't declare setenv() */
@@ -326,8 +327,46 @@ bu_mem(int type, size_t *sz)
 }
 
 static int
-editor_file_check(char *bu_editor, const char *estr)
+editor_found(const char **elist, const char *candidate)
 {
+    int i = 0;
+    const char *e_str = elist[i];
+    char tstr[MAXPATHLEN];
+    struct bu_vls component=BU_VLS_INIT_ZERO;
+    while (e_str) {
+
+	if (BU_STR_EQUAL(e_str, candidate))
+	    return 1;
+
+	bu_dir(tstr, MAXPATHLEN, candidate, BU_DIR_EXT, NULL);
+	if (BU_STR_EQUAL(e_str, tstr))
+	    return 1;
+
+	bu_path_component(&component, candidate, BU_PATH_BASENAME_EXTLESS);
+	if (BU_STR_EQUAL(e_str, bu_vls_cstr(&component))) {
+	    bu_vls_free(&component);
+	    return 1;
+	}
+
+	bu_path_component(&component, candidate, BU_PATH_EXTLESS);
+	if (BU_STR_EQUAL(e_str, bu_vls_cstr(&component))) {
+	    bu_vls_free(&component);
+	    return 1;
+	}
+
+	e_str = elist[i++];
+    }
+    bu_vls_free(&component);
+    return 0;
+}
+
+static int
+editor_file_check(char *bu_editor, const char *estr, const char **elist)
+{
+    // First check if we have a mode issue
+    if (elist && !editor_found(elist, estr))
+	return 0;
+
     // If the input is a full, valid path go with that.
     if (bu_file_exists(estr, NULL)) {
 	bu_strlcpy(bu_editor, estr, MAXPATHLEN);
@@ -361,7 +400,6 @@ editor_file_check(char *bu_editor, const char *estr)
     return 0;
 }
 
-
 /* editors to test for */
 #define EMACS_EDITOR "emacs"
 #define GEDIT_EDITOR "gedit"
@@ -385,6 +423,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
     static char bu_editor_opt[MAXPATHLEN] = {0};
     static char bu_editor_tmp[MAXPATHLEN] = {0};
     const char *e_str = NULL;
+    const char **elist = NULL;
     // Arrays for internal editor checking, in priority order.
     // Note that this order may be changed arbitrarily and is
     // explicitly NOT guaranteed by the API.
@@ -394,17 +433,16 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
     const char *nongui_editor_list[] = {
 	MICRO_EDITOR, NANO_EDITOR, EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, YEDIT_EDITOR, NULL
     };
+    if (etype == 1)
+	elist = nongui_editor_list;
+    if (etype == 2)
+	elist = gui_editor_list;
 
     // EDITOR environment variable takes precedence, if set
     const char *env_editor = getenv("EDITOR");
     if (env_editor && env_editor[0] != '\0') {
-	if (editor_file_check(bu_editor, env_editor))
+	if (editor_file_check(bu_editor, env_editor, elist))
 	    goto do_opt;
-	// None of the standard processing produced a valid editor, but since
-	// EDITOR was set just pass through the $EDITOR contents as-is anyway
-	// and let the user's environment work with it.
-	bu_strlcpy(bu_editor, env_editor, MAXPATHLEN);
-	goto do_opt;
     }
 
     // If the app wants us to check some candidates it has specified, handle
@@ -420,7 +458,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 		    *editor_opt = NULL;
 		return NULL;
 	    }
-	    if (editor_file_check(bu_editor, check_for_editors[i]))
+	    if (editor_file_check(bu_editor, check_for_editors[i], elist))
 		goto do_opt;
 	}
     }
@@ -433,7 +471,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 	i = 0;
 	e_str = gui_editor_list[i];
 	while (e_str) {
-	    if (editor_file_check(bu_editor, e_str))
+	    if (editor_file_check(bu_editor, e_str, elist))
 		goto do_opt;
 	    e_str = gui_editor_list[i++];
 	}
@@ -444,7 +482,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 	i = 0;
 	e_str = nongui_editor_list[i];
 	while (e_str) {
-	    if (editor_file_check(bu_editor, e_str))
+	    if (editor_file_check(bu_editor, e_str, elist))
 		goto do_opt;
 	    e_str = nongui_editor_list[i++];
 	}

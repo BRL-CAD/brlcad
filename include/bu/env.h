@@ -63,42 +63,62 @@ BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
  *
  * When 0 is supplied to the etype parameter, all editors will be considered
  * when using libbu's internal editors list.  To restrict the set searched to
- * console editors, set etype to 1.  For only GUI editors, set etype to 2. The
- * etype parameter has no effect when the EDITOR environment variable or a user
- * supplied list of candidate editors is supplied.
+ * console editors, set etype to 1.  For only GUI editors, set etype to 2.
  *
- * If the EDITOR environment variable is set, that takes priority over both
- * libbu's internal list and a user supplied list.  If EDITOR holds a full,
- * valid path it will be used as-is.  If not, bu_which will attempt to find the
- * full path to $EDITOR.  If that fails, the contents of EDITOR will be used
- * as-is without modification and it will be up to the user's environment to
- * make it succeed at runtime.  If EDITOR is unset, then libbu will attempt to
- * find a viable editor option by looking for various common editors.
+ * The general pattern for trying to locate an editor using inputs (either
+ * internal or user supplied is:
+ *
+ * 1.  If the input is a full, valid path it will be used as-is.
+ * 2.  Otherwise, the BRL-CAD's binaries will be checked for a bundled copy.
+ * 3.  Otherwise, bu_which will attempt to find the full path.
+ *
+ * If the EDITOR environment variable is set, the contents of
+ * EDITOR take priority over both libbu's internal list and a user supplied
+ * list.
+ *
+ * If EDITOR is unset, the next priority is any user supplied options via the
+ * check_for_editors array.  As with the EDITOR variable, an attempt will be
+ * made to respect the etype setting.
  *
  * If the optional check_for_editors array is provided, libbu will first
- * attempt to use the contents of that array to find an editor.  Unlike EDITOR,
- * the list contents WILL be checked.  The main purpose of check_for_editors is
- * to allow applications to define their own preferred precedence order in case
- * there are specific advantages to using some editors over others.  It is also
- * useful if an app wishes to list some specialized editor not part of the
- * normal listings.  If an application wishes to use ONLY a check_for_editors
- * list and not fall back on libbu's internal list if it fails, they should
- * assign the last entry of check_for_editors to be NULL to signal libbu to
- * stop looking for an editor there:
+ * attempt to use the contents of that array to find an editor.  The main
+ * purpose of check_for_editors is to allow applications to define their own
+ * preferred precedence order in case there are specific advantages to using
+ * some editors over others.  It is also useful if an app wishes to list some
+ * specialized editor not part of the normal listings, although users should
+ * note that the etype modal checks will not be useful when such editors are
+ * supplied.  If an application wishes to use ONLY a check_for_editors list and
+ * not fall back on libbu's internal list if it fails, they should assign the
+ * last entry of check_for_editors to be NULL to signal libbu to stop looking
+ * for an editor there:
  *
  *  int check_for_cnt = 3; const char *check_for_editors[3] = {"editor1", "editor2", NULL};
  *
- * We are deliberately NOT documenting the libbu's own internal editor list as
- * public API, nor do we make any guarantees about the presence of any editor
- * that is on the list will take relative to other editors.  What editors are
- * popular in various environments can change over time, and the purpose of
- * this function is to provide *some* editor, rather than locking in any
- * particular precedence.  check_for_editors should be used if an app needs
- * more guaranteed stability in lookup behaviors.
+ * If none of those inputs result in an editor being returned, libbu will
+ * attempt to use its own internal lists to search.  We are deliberately NOT
+ * documenting the libbu's internal editor list as public API, nor do we make
+ * any guarantees about the presence of any editor that is on the list will
+ * take relative to other editors.  What editors are popular in various
+ * environments can change over time, and the purpose of this function is to
+ * provide *some* editor, rather than locking in any particular precedence.
+ * check_for_editors should be used if an app needs more guaranteed stability
+ * in lookup behaviors.
+ *
+ * If etype != 0, bu_editor will attempt to validate any candidate returns
+ * against its own internal list of GUI and console editors to avoid returning
+ * an editor that is incompatible with the specified environment.  There are no
+ * strong guarantees offered for this checking - libbu's knowledge of editors
+ * is not comprehensive and specification strings for editors may break the
+ * matching being used internally. In a case where libbu CAN'T make a definite
+ * categorization (a user supplied custom editor, for example) the default
+ * behavior will be to pass through the result as successful.  This is
+ * obviously not foolproof, but in various common cases libbu will avoid
+ * returning (for example) nano from an EDITOR setting when a GUI editor type
+ * was requested.
  *
  * Caller should NOT free either the main string return from bu_editor or the
- * pointer assigned to editor_opt.  They may both change contents from one
- * call to the next, so caller should duplicate the string outputs if they
+ * pointer assigned to editor_opt.  Both outputs may both change contents from
+ * one call to the next, so caller should duplicate the string outputs if they
  * wish to preserve them beyond the next bu_editor call.
  */
 BU_EXPORT const char *bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **check_for_editors);
