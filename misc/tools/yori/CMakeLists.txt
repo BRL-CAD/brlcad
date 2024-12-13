@@ -9,7 +9,7 @@ if (MSVC)
   include(ExternalProject)
   ExternalProject_Add(YEDIT_BLD
     URL ${CMAKE_CURRENT_SOURCE_DIR}/yori
-    BUILD_ALWAYS ON
+    BUILD_ALWAYS OFF
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${CMAKE_COMMAND} -DYORI_SRC_DIR=${YORI_SRC_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/yedit_build.cmake
     INSTALL_COMMAND ""
