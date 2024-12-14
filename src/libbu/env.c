@@ -326,9 +326,15 @@ bu_mem(int type, size_t *sz)
     return -1;
 }
 
+// If we've been asked for a non-graphical editor and we know we have a
+// graphical one, or vice versa, flag as incompatible.  Otherwise, assume it
+// will work since we have no way of knowing otherwise.
 static int
-editor_found(const char **elist, const char *candidate)
+editor_not_compatible(const char **elist, const char *candidate)
 {
+    if (!elist)
+	return 0;
+
     int i = 0;
     const char *e_str = elist[i];
     char tstr[MAXPATHLEN];
@@ -356,7 +362,9 @@ editor_found(const char **elist, const char *candidate)
 
 	e_str = elist[i++];
     }
+
     bu_vls_free(&component);
+
     return 0;
 }
 
@@ -364,7 +372,7 @@ static int
 editor_file_check(char *bu_editor, const char *estr, const char **elist)
 {
     // First check if we have a mode issue
-    if (elist && !editor_found(elist, estr))
+    if (editor_not_compatible(elist, estr))
 	return 0;
 
     // If the input is a full, valid path go with that.
@@ -423,7 +431,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
     static char bu_editor_opt[MAXPATHLEN] = {0};
     static char bu_editor_tmp[MAXPATHLEN] = {0};
     const char *e_str = NULL;
-    const char **elist = NULL;
+    const char **ncompat_list = NULL;
     // Arrays for internal editor checking, in priority order.
     // Note that this order may be changed arbitrarily and is
     // explicitly NOT guaranteed by the API.
@@ -434,14 +442,14 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 	MICRO_EDITOR, NANO_EDITOR, EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, YEDIT_EDITOR, NULL
     };
     if (etype == 1)
-	elist = nongui_editor_list;
+	ncompat_list = gui_editor_list;
     if (etype == 2)
-	elist = gui_editor_list;
+	ncompat_list = nongui_editor_list;
 
     // EDITOR environment variable takes precedence, if set
     const char *env_editor = getenv("EDITOR");
     if (env_editor && env_editor[0] != '\0') {
-	if (editor_file_check(bu_editor, env_editor, elist))
+	if (editor_file_check(bu_editor, env_editor, ncompat_list))
 	    goto do_opt;
     }
 
@@ -458,7 +466,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 		    *editor_opt = NULL;
 		return NULL;
 	    }
-	    if (editor_file_check(bu_editor, check_for_editors[i], elist))
+	    if (editor_file_check(bu_editor, check_for_editors[i], ncompat_list))
 		goto do_opt;
 	}
     }
@@ -471,7 +479,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 	i = 0;
 	e_str = gui_editor_list[i];
 	while (e_str) {
-	    if (editor_file_check(bu_editor, e_str, elist))
+	    if (editor_file_check(bu_editor, e_str, ncompat_list))
 		goto do_opt;
 	    e_str = gui_editor_list[i++];
 	}
@@ -482,7 +490,7 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 	i = 0;
 	e_str = nongui_editor_list[i];
 	while (e_str) {
-	    if (editor_file_check(bu_editor, e_str, elist))
+	    if (editor_file_check(bu_editor, e_str, ncompat_list))
 		goto do_opt;
 	    e_str = nongui_editor_list[i++];
 	}
