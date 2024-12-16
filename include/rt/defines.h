@@ -141,6 +141,12 @@
 #define ID_SCRIPT       45      /**< @brief Script */
 #define ID_MAXIMUM      47      /**< @brief Maximum defined ID_xxx value */
 
+
+/* Used when instructing whether lower nodes in trees override higher nodes
+ * or vice versa. */
+#define DB_INH_LOWER	0	/* Lower nodes override */
+#define DB_INH_HIGHER   1	/* Higher nodes override */
+
 /**
  * DEPRECATED: external applications should use other LIBRT API to
  * access database objects.

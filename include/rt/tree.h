@@ -95,6 +95,35 @@ struct db_tree_state {
 /* from mged_initial_tree_state */
 #define RT_DBTS_INIT_IDN { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 100, RT_MATER_INFO_INIT_IDN, MAT_INIT_IDN, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
+/* Used to replace old rt_initial_tree_state global */
+#define RT_DBTS_INIT(_p) do {			\
+    (_p)->magic = RT_DBTS_MAGIC;		\
+    (_p)->ts_dbip = NULL;			\
+    (_p)->ts_sofar = 0;				\
+    (_p)->ts_regionid = 0;			\
+    (_p)->ts_aircode = 0;			\
+    (_p)->ts_gmater = 0;			\
+    (_p)->ts_los = 0;				\
+    VSETALL((_p)->ts_mater.ma_color, 1.0);	\
+    (_p)->ts_mater.ma_temperature = -1.0;  	\
+    (_p)->ts_mater.ma_color_valid = 0;		\
+    (_p)->ts_mater.ma_cinherit = DB_INH_LOWER;	\
+    (_p)->ts_mater.ma_minherit = DB_INH_LOWER;	\
+    (_p)->ts_mater.ma_shader = NULL;		\
+    MAT_IDN((_p)->ts_mat);			\
+    (_p)->ts_is_fastgen = 0;			\
+    BU_AVS_INIT(&(_p)->ts_attrs);		\
+    (_p)->ts_stop_at_regions = 0;		\
+    (_p)->ts_region_start_func = NULL;		\
+    (_p)->ts_region_end_func = NULL;		\
+    (_p)->ts_leaf_func = NULL;			\
+    (_p)->ts_ttol = NULL;			\
+    (_p)->ts_tol = NULL;			\
+    (_p)->ts_m = NULL;				\
+    (_p)->ts_rtip = NULL;			\
+    (_p)->ts_resp = NULL;			\
+} while (0)
+
 #define TS_SOFAR_MINUS  1       /**< @brief  Subtraction encountered above */
 #define TS_SOFAR_INTER  2       /**< @brief  Intersection encountered above */
 #define TS_SOFAR_REGION 4       /**< @brief  Region encountered above */

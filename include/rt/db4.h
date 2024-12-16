@@ -212,8 +212,6 @@ struct combination {
     char	c_matname[32];		/* Reference: Material name */
     char	c_matparm[60];		/* String Material parms */
     char	c_inherit;		/* Inheritance property */
-#define DB_INH_LOWER	0			/* Lower nodes override */
-#define DB_INH_HIGHER	1			/* Higher nodes override */
 }; /* struct combination */
 
 struct member {
