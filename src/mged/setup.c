@@ -578,11 +578,11 @@ mged_setup(struct mged_state *s)
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "set mged_display(.topid_0.ur,ang) {ang=(0.00 0.00 0.00)};\
-set mged_display(.topid_0.ur,aet) {az=35.00  el=25.00  tw=0.00};\
-set mged_display(.topid_0.ur,size) sz=1000.000;\
-set mged_display(.topid_0.ur,center) {cent=(0.000 0.000 0.000)};\
-set mged_display(units) mm");
+    bu_vls_printf(&str, "set %s(.topid_0.ur,ang) {ang=(0.00 0.00 0.00)};", MGED_DISPLAY_VAR);
+    bu_vls_printf(&str, "set %s(.topid_0.ur,aet) {az=35.00  el=25.00  tw=0.00};", MGED_DISPLAY_VAR);
+    bu_vls_printf(&str, "set %s(.topid_0.ur,size) sz=1000.000;", MGED_DISPLAY_VAR);
+    bu_vls_printf(&str, "set %s(.topid_0.ur,center) {cent=(0.000 0.000 0.000)};", MGED_DISPLAY_VAR);
+    bu_vls_printf(&str, "set %s(units) mm", MGED_DISPLAY_VAR);
     Tcl_Eval(s->interp, bu_vls_addr(&str));
 
     Tcl_ResetResult(s->interp);
