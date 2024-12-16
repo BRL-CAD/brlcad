@@ -77,16 +77,6 @@ struct scroll_item {
 #define AMM_CON_ANG2 20
 #define AMM_CON_DIST 21
 
-#define IS_CONSTRAINED_ROT(_mode) (\
-	(_mode) == AMM_CON_ROT_X || \
-	(_mode) == AMM_CON_ROT_Y || \
-	(_mode) == AMM_CON_ROT_Z)
-
-#define IS_CONSTRAINED_TRAN(_mode) (\
-	(_mode) == AMM_CON_TRAN_X || \
-	(_mode) == AMM_CON_TRAN_Y || \
-	(_mode) == AMM_CON_TRAN_Z)
-
 struct view_ring {
     struct bu_list	l;
     mat_t			vr_rot_mat;
