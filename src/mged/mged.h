@@ -135,10 +135,6 @@ struct cmdtab {
     struct mged_state *s;
 };
 
-/* initialization states */
-extern int mged_db_version;
-extern int mged_db_warn;
-
 /* Menu structures and defines
  *
  * Each active menu is installed by having a non-null entry in
@@ -419,6 +415,8 @@ struct mged_opendb_ctx {
     struct mged_state *s;
     int init_flag; /* >0 means in initialization stage */
     int db_upgrade; /* 0 (default) no upgrade, 1 upgrade */
+    int db_version; /* force creation of specific database version (default = BRLCAD_DB_FORMAT_LATEST) */
+    int db_warn; /* 0 (default) no warn, 1 warn */
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
 

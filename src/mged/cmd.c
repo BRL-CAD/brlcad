@@ -66,9 +66,6 @@ extern int mged_default_dlist;			/* in attach.c */
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
-extern int mged_db_warn;
-extern int mged_db_version;
-
 static int glob_compat_mode = 1;
 static int output_as_return = 1;
 
@@ -1632,9 +1629,9 @@ void
 mged_global_variable_setup(struct mged_state *s)
 {
     Tcl_LinkVar(s->interp, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "mged_default(db_warn)", (char *)&mged_db_warn, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "mged_default(db_warn)", (char *)&mged_global_db_ctx.db_warn, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_global_db_ctx.db_upgrade, TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_db_version, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_global_db_ctx.db_version, TCL_LINK_INT);
 
     Tcl_LinkVar(s->interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
@@ -1650,9 +1647,9 @@ void
 mged_global_variable_teardown(struct mged_state *s)
 {
     Tcl_UnlinkVar(s->interp, "mged_default(dlist)");
-    Tcl_UnlinkVar(s->interp, "mged_default(mged_db_warn)");
-    Tcl_UnlinkVar(s->interp, "mged_default(mged_db_upgrade)");
-    Tcl_UnlinkVar(s->interp, "mged_default(mged_db_version)");
+    Tcl_UnlinkVar(s->interp, "mged_default(db_warn)");
+    Tcl_UnlinkVar(s->interp, "mged_default(db_upgrade)");
+    Tcl_UnlinkVar(s->interp, "mged_default(db_version)");
 
     Tcl_UnlinkVar(s->interp, "edit_class");
     Tcl_UnlinkVar(s->interp, "edit_solid_flag");

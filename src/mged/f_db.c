@@ -268,12 +268,12 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
      */
     if (db_version(s->dbip) < 5 && !mctx->created_new_db) {
 	if (mctx->db_upgrade) {
-	    if (mged_db_warn)
+	    if (mctx->db_warn)
 		bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");
 
 	    (void)Tcl_Eval(mctx->interpreter, "after idle dbupgrade -f y");
 	} else {
-	    if (mged_db_warn) {
+	    if (mctx->db_warn) {
 		if (s->classic_mged)
 		    bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tSee the dbupgrade command.");
 		else

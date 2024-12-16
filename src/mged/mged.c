@@ -152,15 +152,6 @@ int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
 
-/*
- * 0 - no warn
- * 1 - warn
- */
-int mged_db_warn = 0;
-
-/* force creation of specific database versions */
-int mged_db_version = BRLCAD_DB_FORMAT_LATEST;
-
 struct bn_tol mged_tol;	/* calculation tolerance */
 struct bg_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
@@ -1845,6 +1836,8 @@ main(int argc, char *argv[])
     // Start out in an initialization state
     mged_global_db_ctx.init_flag = 1;
     mged_global_db_ctx.db_upgrade = 0; // no upgrade
+    mged_global_db_ctx.db_warn = 0; // no warn
+    mged_global_db_ctx.db_version = BRLCAD_DB_FORMAT_LATEST;
 
     char *attach = (char *)NULL;
 
