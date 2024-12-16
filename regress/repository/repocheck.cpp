@@ -64,7 +64,7 @@ extern "C" char *
 bu_strnstr(const char *h, const char *n, size_t hlen);
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 242
+#define EXPECTED_PLATFORM_SYMBOLS 170
 
 class repo_info_t {
     public:
@@ -886,27 +886,25 @@ main(int argc, const char *argv[])
 	// Build a set of filters that will cull out files which would otherwise
 	// be matches for items of interest
 	const char *reject_filters[] {
-	    ".log",
-		".svn",
-		"/bullet/",
+	    ".git",
+		".log",
+		"/detria.hpp",
 		"/doc/",
 		"/fontstash/",
-		"/qtads/",
-		"/shapelib/",
-		"gltf/",
-		"/concurrentqueue.h",
-		"/detria.hpp",
 		"/json.hpp",
+		"/linenoise.hpp",
+		"/shapelib/",
+		"/spsr/",
+		"/whereami.c",
 		"/xxhash.h",
 		"misc/CMake/Find",
 		"misc/debian",
-		"misc/repoconv",
-		"misc/repowork",
+		"misc/opencl-raytracer-tests",
 		"misc/tools",
 		"pkg.h",
-		"subprocess.h",
 		"src/libdm/wgl/wintk/",
 		"src/libpkg",
+		"subprocess.h",
 		"~",
 		NULL
 	};
