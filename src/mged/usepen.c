@@ -31,7 +31,6 @@
 #include "bn.h"
 
 #include "./mged.h"
-#include "./titles.h"
 #include "./mged_dm.h"
 
 #include "./sedit.h"

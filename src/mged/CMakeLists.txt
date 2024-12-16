@@ -109,7 +109,6 @@ set(
   mged.h
   mged_dm.h
   sedit.h
-  titles.h
   mged.ico
   mged.rc
 )

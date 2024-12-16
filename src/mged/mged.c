@@ -77,7 +77,6 @@
 
 /* private */
 #include "./mged.h"
-#include "./titles.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./cmd.h"

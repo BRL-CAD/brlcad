@@ -48,7 +48,6 @@
 #include "tclcad.h"
 
 #include "./mged.h"
-#include "./titles.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 

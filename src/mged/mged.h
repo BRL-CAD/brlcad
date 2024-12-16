@@ -157,6 +157,20 @@ struct menu_item {
 #define MENU_L2 1 /* second-level menu */
 #define MENU_GEN 2 /* general features (mouse buttons) */
 
+#define MENUXLIM        (-1250)         /* Value to set X lim to for menu */
+#define MENUX           (-2048+115)     /* pixel position for menu, X */
+#define MENUY           1780            /* pixel position for menu, Y */
+#define SCROLLY         (2047)          /* starting Y pos for scroll area */
+#define MENU_DY         (-104)          /* Distance between menu items */
+#define SCROLL_DY       (-100)          /* Distance between scrollers */
+
+#define TITLE_XBASE     (-2048)         /* pixel X of title line start pos */
+#define TITLE_YBASE     (-1920)         /* pixel pos of last title line */
+#define SOLID_XBASE     MENUXLIM        /* X to start display text */
+#define SOLID_YBASE     (1920)          /* pixel pos of first solid line */
+#define TEXT0_DY        (-60)           /* #pixels per line, Size 0 */
+#define TEXT1_DY        (-90)           /* #pixels per line, Size 1 */
+
 
 #include "./mged_dm.h" /* _view_state */
 
