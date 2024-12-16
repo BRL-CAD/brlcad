@@ -39,6 +39,12 @@
 #include "dm.h"
 #include "tclcad.h"
 
+/* We need to use different Tcl I/O mechanisms on different
+ * platforms.  Make a define for that. */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define USE_TCL_CHAN
+#endif
+
 /*
  * Communication error.  An error occurred on the PKG link.
  */
@@ -48,7 +54,7 @@ comm_error(const char *str)
     bu_log("%s", str);
 }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
 /* Per SVN commit r29234, this function is needed because Windows uses
  * Tcl_OpenTcpServer rather than pkg_permserver to set up communication
  * on Windows (Tcl_OpenTcpServer's output is saved on fbsl_chan rather
@@ -97,7 +103,7 @@ fbs_makeconn(int fd, const struct pkg_switch *switchp)
  * Accept any new client connections.
  */
 static void
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
 new_client_handler(ClientData clientData, Tcl_Channel chan, char *UNUSED(host), int UNUSED(port))
 #else
 new_client_handler(ClientData clientData, int UNUSED(port))
@@ -110,7 +116,7 @@ new_client_handler(ClientData clientData, int UNUSED(port))
     void *cdata = NULL;
     struct pkg_conn *pcp = NULL;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     uintptr_t pfd = (uintptr_t)fbslp->fbsl_fd;
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&pfd) != TCL_OK)
 	return;
@@ -131,7 +137,7 @@ new_client_handler(ClientData clientData, int UNUSED(port))
 int
 tclcad_is_listening(struct fbserv_obj *fbsp)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     if (fbsp->fbs_listener.fbsl_chan != NULL) {
 #else
     if (fbsp->fbs_listener.fbsl_fd >= 0) {
@@ -148,7 +154,7 @@ tclcad_listen_on_port(struct fbserv_obj *fbsp, int available_port)
     /* XXX hardwired for now */
     sprintf(hostname, "localhost");
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer((Tcl_Interp *)fbsp->fbs_interp, available_port, hostname, new_client_handler, (ClientData)&fbsp->fbs_listener);
     if (fbsp->fbs_listener.fbsl_chan == NULL) {
 	/* This clobbers the result string which probably has junk
@@ -174,7 +180,7 @@ tclcad_listen_on_port(struct fbserv_obj *fbsp, int available_port)
 void
 tclcad_open_server_handler(struct fbserv_obj *fbsp)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (ClientData *)&fbsp->fbs_listener.fbsl_fd);
 #else
     Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
@@ -184,7 +190,7 @@ tclcad_open_server_handler(struct fbserv_obj *fbsp)
 void
 tclcad_close_server_handler(struct fbserv_obj *fbsp)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     if (fbsp->fbs_listener.fbsl_chan != NULL) {
 	Tcl_ChannelProc *callback = (Tcl_ChannelProc *)new_client_handler;
 	Tcl_DeleteChannelHandler(fbsp->fbs_listener.fbsl_chan, callback, (ClientData)fbsp->fbs_listener.fbsl_fd);
@@ -197,13 +203,13 @@ tclcad_close_server_handler(struct fbserv_obj *fbsp)
 }
 
 void
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
 tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 #else
 tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
 #endif
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     fbsp->fbs_clients[i].fbsc_chan = (Tcl_Channel)data;
     fbsp->fbs_clients[i].fbsc_handler = fbs_existing_client_handler;
     Tcl_CreateChannelHandler(fbsp->fbs_clients[i].fbsc_chan, TCL_READABLE,
@@ -217,7 +223,7 @@ tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
 void
 tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     Tcl_DeleteChannelHandler(fbsp->fbs_clients[sub].fbsc_chan, fbsp->fbs_clients[sub].fbsc_handler, (ClientData)fbsp->fbs_clients[sub].fbsc_fd);
 
     Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, fbsp->fbs_clients[sub].fbsc_chan);
