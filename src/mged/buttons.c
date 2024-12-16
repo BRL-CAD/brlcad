@@ -289,7 +289,7 @@ f_press(ClientData clientData,
 	}
 
 	for (menu = 0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
-	    if (*m == MENU_NULL) continue;
+	    if (*m == NULL) continue;
 	    for (item = 0, mptr = *m;
 		 mptr->menu_string[0] != '\0';
 		 mptr++, item++) {
@@ -808,8 +808,8 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 
 	sedit_accept(s);		/* zeros "edsol" var */
 
-	mmenu_set_all(s, MENU_L1, MENU_NULL);
-	mmenu_set_all(s, MENU_L2, MENU_NULL);
+	mmenu_set_all(s, MENU_L1, NULL);
+	mmenu_set_all(s, MENU_L2, NULL);
 
 	dl_set_iflag(s->gedp->ged_gdp->gd_headDisplay, DOWN);
 
@@ -824,7 +824,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 
 	oedit_accept(s);
 
-	mmenu_set_all(s, MENU_L2, MENU_NULL);
+	mmenu_set_all(s, MENU_L2, NULL);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = NULL;
@@ -872,14 +872,14 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 
 	case ST_S_EDIT:
 	    /* Reject a solid edit */
-	    mmenu_set_all(s, MENU_L1, MENU_NULL);
-	    mmenu_set_all(s, MENU_L2, MENU_NULL);
+	    mmenu_set_all(s, MENU_L1, NULL);
+	    mmenu_set_all(s, MENU_L2, NULL);
 
 	    sedit_reject(s);
 	    break;
 
 	case ST_O_EDIT:
-	    mmenu_set_all(s, MENU_L2, MENU_NULL);
+	    mmenu_set_all(s, MENU_L2, NULL);
 
 	    oedit_reject();
 	    break;
@@ -952,7 +952,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     es_edflag = SROT;
     edsol = BE_S_ROTATE;
-    mmenu_set(s, MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, NULL);
 
     set_e_axes_pos(1);
     return TCL_OK;
@@ -973,7 +973,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     edsol = BE_S_TRANS;
     es_edflag = STRANS;
     movedir = UARROW | RARROW;
-    mmenu_set(s, MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, NULL);
 
     set_e_axes_pos(1);
     return TCL_OK;
@@ -993,7 +993,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 
     edsol = BE_S_SCALE;
     es_edflag = SSCALE;
-    mmenu_set(s, MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, NULL);
     acc_sc_sol = 1.0;
 
     set_e_axes_pos(1);
@@ -1146,7 +1146,7 @@ chg_l2menu(struct mged_state *s, int i) {
 	    mmenu_set_all(s, MENU_L2, sed_menu);
 	    break;
 	case ST_S_NO_EDIT:
-	    mmenu_set_all(s, MENU_L2, MENU_NULL);
+	    mmenu_set_all(s, MENU_L2, NULL);
 	    break;
 	case ST_O_EDIT:
 	    mmenu_set_all(s, MENU_L2, oed_menu);

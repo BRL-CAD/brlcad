@@ -106,7 +106,6 @@ set(
   CMakeLists.txt
   cmd.h
   f_cmd.h
-  menu.h
   mged.h
   mged_dm.h
   scroll.h

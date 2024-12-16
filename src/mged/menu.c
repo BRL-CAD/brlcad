@@ -60,7 +60,7 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 	}
 
 	m = menu_state->ms_menus+index;
-	if (*m == MENU_NULL)
+	if (*m == NULL)
 	    return TCL_OK;
 
 	for (mptr = *m; mptr->menu_string[0] != '\0'; mptr++)
@@ -91,9 +91,9 @@ void
 mmenu_init(void)
 {
     menu_state->ms_flag = 0;
-    menu_state->ms_menus[MENU_L1] = MENU_NULL;
-    menu_state->ms_menus[MENU_L2] = MENU_NULL;
-    menu_state->ms_menus[MENU_GEN] = MENU_NULL;
+    menu_state->ms_menus[MENU_L1] = NULL;
+    menu_state->ms_menus[MENU_L2] = NULL;
+    menu_state->ms_menus[MENU_GEN] = NULL;
 }
 
 
@@ -213,7 +213,7 @@ mmenu_display(int y_top)
 		    GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
 
     for (menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
-	if (*m == MENU_NULL) continue;
+	if (*m == NULL) continue;
 	for (item=0, mptr = *m; mptr->menu_string[0] != '\0' && y > TITLE_YBASE; mptr++, y += MENU_DY, item++) {
 	    if ((*m == (struct menu_item *)second_menu
 		 && (mptr->menu_arg == BV_RATE_TOGGLE
@@ -295,7 +295,7 @@ mmenu_select(struct mged_state *s, int pen_y, int do_func)
     yy = menu_state->ms_top;
 
     for (menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
-	if (*m == MENU_NULL) continue;
+	if (*m == NULL) continue;
 	for (item=0, mptr = *m;
 	     mptr->menu_string[0] != '\0';
 	     mptr++, item++) {

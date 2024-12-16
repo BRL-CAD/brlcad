@@ -135,13 +135,30 @@ struct cmdtab {
     struct mged_state *s;
 };
 
-#include "./mged_dm.h" /* _view_state */
-/* Needed to define struct menu_item */
-#include "./menu.h"
-
 /* initialization states */
 extern int mged_db_version;
 extern int mged_db_warn;
+
+/* Menu structures and defines
+ *
+ * Each active menu is installed by having a non-null entry in
+ * menu_array[] which is a pointer
+ * to an array of menu items.  The first ([0]) menu item is the title
+ * for the menu, and the remaining items are individual menu entries.
+ */
+struct menu_item {
+    char *menu_string;
+    void (*menu_func)(struct mged_state *, int, int, int);
+    int menu_arg;
+};
+
+#define NMENU 3
+#define MENU_L1 0 /* top-level solid-edit menu */
+#define MENU_L2 1 /* second-level menu */
+#define MENU_GEN 2 /* general features (mouse buttons) */
+
+
+#include "./mged_dm.h" /* _view_state */
 
 /**
  * Definitions.

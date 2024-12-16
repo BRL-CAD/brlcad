@@ -2710,7 +2710,7 @@ sedit_menu(struct mged_state *s) {
 
     menu_state->ms_flag = 0;		/* No menu item selected yet */
 
-    mmenu_set_all(s, MENU_L1, MENU_NULL);
+    mmenu_set_all(s, MENU_L1, NULL);
     chg_l2menu(s, ST_S_EDIT);
 
     switch (es_int.idb_type) {

@@ -33,7 +33,6 @@
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-#include "./menu.h" /* struct menu_item */
 #include "./scroll.h" /* struct scroll_item */
 
 
