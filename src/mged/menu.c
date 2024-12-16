@@ -210,7 +210,7 @@ mmenu_display(int y_top)
 
     dm_draw_line_2d(DMP,
 		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
-		    GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
+		    GED2PM1((int)GED_MIN), GED2PM1(menu_state->ms_top));
 
     for (menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
 	if (*m == NULL) continue;
@@ -240,7 +240,7 @@ mmenu_display(int y_top)
 			   color_scheme->cs_menu_line[2], 1, 1.0);
 	    dm_draw_line_2d(DMP,
 			    GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
-			    GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
+			    GED2PM1((int)GED_MIN), GED2PM1(y+(MENU_DY/2)));
 	    if (menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag) {
 		/* prefix item selected with "==>" */
 		dm_set_fg(DMP,
@@ -248,7 +248,7 @@ mmenu_display(int y_top)
 			       color_scheme->cs_menu_arrow[1],
 			       color_scheme->cs_menu_arrow[2], 1, 1.0);
 		dm_draw_string_2d(DMP, "==>",
-				  GED2PM1(XMIN), GED2PM1(y-15), 0, 0);
+				  GED2PM1((int)GED_MIN), GED2PM1(y-15), 0, 0);
 	    }
 	}
     }

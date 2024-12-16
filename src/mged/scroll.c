@@ -677,7 +677,7 @@ scroll_display(struct mged_state *s, int y_top)
 			   color_scheme->cs_slider_line[1],
 			   color_scheme->cs_slider_line[2], 1, 1.0);
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMAX), GED2PM1(y),
+			    GED2PM1((int)GED_MAX), GED2PM1(y),
 			    GED2PM1(MENUXLIM), GED2PM1(y));
 	}
     }

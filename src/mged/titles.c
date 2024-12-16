@@ -383,23 +383,23 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 		       color_scheme->cs_other_line[1],
 		       color_scheme->cs_other_line[2], 1, 1.0);
 	dm_draw_line_2d(DMP,
-			GED2PM1(XMIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
-			GED2PM1(XMAX), GED2PM1(TITLE_YBASE-TEXT1_DY));
+			GED2PM1((int)GED_MIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
+			GED2PM1((int)GED_MAX), GED2PM1(TITLE_YBASE-TEXT1_DY));
 
 	if (mged_variables->mv_orig_gui) {
 	    /* Enclose window in decorative box.  Mostly for alignment. */
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMIN), GED2PM1(YMIN),
-			    GED2PM1(XMAX), GED2PM1(YMIN));
+			    GED2PM1((int)GED_MIN), GED2PM1((int)GED_MIN),
+			    GED2PM1((int)GED_MAX), GED2PM1((int)GED_MIN));
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMAX), GED2PM1(YMIN),
-			    GED2PM1(XMAX), GED2PM1(YMAX));
+			    GED2PM1((int)GED_MAX), GED2PM1((int)GED_MIN),
+			    GED2PM1((int)GED_MAX), GED2PM1((int)GED_MAX));
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMAX), GED2PM1(YMAX),
-			    GED2PM1(XMIN), GED2PM1(YMAX));
+			    GED2PM1((int)GED_MAX), GED2PM1((int)GED_MAX),
+			    GED2PM1((int)GED_MIN), GED2PM1((int)GED_MAX));
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMIN), GED2PM1(YMAX),
-			    GED2PM1(XMIN), GED2PM1(YMIN));
+			    GED2PM1((int)GED_MIN), GED2PM1((int)GED_MAX),
+			    GED2PM1((int)GED_MIN), GED2PM1((int)GED_MIN));
 
 	    /* Display scroll bars */
 	    scroll_ybot = scroll_display(s, SCROLLY);
@@ -415,8 +415,8 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 			      GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0);
 	} else {
 	    scroll_ybot = SCROLLY;
-	    x = XMIN + 20;
-	    y = YMAX+TEXT0_DY;
+	    x = (int)GED_MIN + 20;
+	    y = (int)GED_MAX+TEXT0_DY;
 	}
 
 	/*
@@ -455,7 +455,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 			   color_scheme->cs_other_line[2], 1, 1.0);
 	    dm_draw_line_2d(DMP,
 			    GED2PM1(MENUXLIM), GED2PM1(y),
-			    GED2PM1(MENUXLIM), GED2PM1(YMAX));	/* vert. */
+			    GED2PM1(MENUXLIM), GED2PM1((int)GED_MAX));	/* vert. */
 	    /*
 	     * The top of the menu (if any) begins at the Y value specified.
 	     */

@@ -26,10 +26,6 @@
 #ifndef MGED_TITLES_H
 #define MGED_TITLES_H
 
-#define XMIN		(-2048)
-#define XMAX		(2047)
-#define YMIN		(-2048)
-#define YMAX		(2047)
 #define	MENUXLIM	(-1250)		/* Value to set X lim to for menu */
 #define	MENUX		(-2048+115)	/* pixel position for menu, X */
 #define	MENUY		1780		/* pixel position for menu, Y */
