@@ -40,13 +40,6 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
-// As maddening as this may be, we have to use different I/O
-// mechanisms based on which platform we're on.  Make a
-// define to key off of
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#define USE_TCL_CHAN
-#endif
-
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 extern const struct pkg_switch pkg_switch[];

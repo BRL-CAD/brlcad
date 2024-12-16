@@ -582,7 +582,7 @@ mged_process_char(struct mged_state *s, char ch)
 	     * parser is concerned) then execute it.
 	     */
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
 	    /*XXX Nothing yet */
 	    bu_log("WARNING: not running cmdline(%s)\n", bu_vls_cstr(&s->input_str_prefix));
 #else
@@ -1308,7 +1308,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 
     if (!cbreak_mode) {
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
 	Tcl_DString ds;
 	Tcl_DStringInit(&ds);
 	count = Tcl_Gets(sd->chan, &ds);
@@ -1384,7 +1384,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
     {
 	char buf[BU_PAGE_SIZE];
 	int idx;
-#  ifdef _WIN32
+#  ifdef USE_TCL_CHAN
 	count = Tcl_Read(sd->chan, buf, BU_PAGE_SIZE);
 #  else
 	count = read((int)sd->fd, (void *)buf, BU_PAGE_SIZE);
@@ -1431,11 +1431,11 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
     // state global.
     struct mged_state *s = MGED_STATE;
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-#else
+#ifdef USE_TCL_CHAN
     Tcl_Channel chan = (Tcl_Channel)clientData;
     Tcl_DString ds;
+#else
+    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 #endif
     int count;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1444,12 +1444,12 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 
     /* Get data from stdout or stderr */
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
-    count = read((int)fd, line, RT_MAXLINE);
-#else
+#ifdef USE_TCL_CHAN
     Tcl_DStringInit(&ds);
     count = Tcl_Gets(chan, &ds);
     bu_strlcpy(line, Tcl_DStringValue(&ds), RT_MAXLINE);
+#else
+    count = read((int)fd, line, RT_MAXLINE);
 #endif
 
     if (count <= 0) {
@@ -1776,7 +1776,7 @@ mged_finish(struct mged_state *s, int exitcode)
     /* 8.5 seems to have some bugs in their reference counting */
     /* Tcl_DeleteInterp(INTERP); */
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
+#ifndef USE_TCL_CHAN
     if (cbreak_mode > 0) {
 	reset_Tty(fileno(stdin));
     }
@@ -1814,7 +1814,7 @@ main(int argc, char *argv[])
     int use_pipe = 0;
     int run_in_foreground=1;
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
+#ifndef USE_TCL_CHAN
     fd_set read_set;
     int result;
 #endif
@@ -2124,7 +2124,7 @@ main(int argc, char *argv[])
 
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
+#ifndef USE_TCL_CHAN
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 		/* Set up for character-at-a-time terminal IO. */
 		cbreak_mode = COMMAND_LINE_EDITING;
@@ -2268,7 +2268,7 @@ main(int argc, char *argv[])
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(s->interp));
 		s->classic_mged = 1;
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
+#ifndef USE_TCL_CHAN
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
@@ -2349,12 +2349,12 @@ main(int argc, char *argv[])
 	BU_GET(sd, struct stdio_data);
 	sd->s = s;
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
-	sd->fd = STDIN_FILENO;
-	sd->chan = Tcl_MakeFileChannel(STDIN_FILENO, TCL_READABLE);
+#ifdef USE_TCL_CHAN
+	sd->chan = Tcl_MakeFileChannel(GetStdHandle(STD_INPUT_HANDLE), TCL_READABLE);
 	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
 #else
-	sd->chan = Tcl_MakeFileChannel(GetStdHandle(STD_INPUT_HANDLE), TCL_READABLE);
+	sd->fd = STDIN_FILENO;
+	sd->chan = Tcl_MakeFileChannel(STDIN_FILENO, TCL_READABLE);
 	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
 #endif
 
@@ -2365,7 +2365,7 @@ main(int argc, char *argv[])
 	bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
 	pr_prompt(s);
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
+#ifndef USE_TCL_CHAN
 	if (cbreak_mode) {
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
@@ -2391,7 +2391,7 @@ main(int argc, char *argv[])
 	bu_vls_free(&vls);
 
 /* FIXME: windows has dup() and dup2(), so this should work there too */
-#if !defined(_WIN32) || defined(__CYGWIN__)
+#ifndef USE_TCL_CHAN
 	{
 	    ClientData outpipe, errpipe;
 

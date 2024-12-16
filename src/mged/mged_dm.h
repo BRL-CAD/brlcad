@@ -99,9 +99,18 @@ struct trail {
 #	define MAX_CLIENTS 32
 #endif
 
+
+
+// We have to use different I/O mechanisms based on which
+// platform we're on.  Make a define to key off of.
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define USE_TCL_CHAN
+#endif
+
+
 struct client {
     int			c_fd;
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     Tcl_Channel         c_chan;
     Tcl_FileProc        *c_handler;
 #endif
@@ -374,7 +383,7 @@ struct mged_dm {
     struct dm		*dm_dmp;
     struct fb		*dm_fbp;
     int			dm_netfd;			/* socket used to listen for connections */
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     Tcl_Channel		dm_netchan;
 #endif
     struct client	dm_clients[MAX_CLIENTS];
