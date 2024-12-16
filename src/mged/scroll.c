@@ -34,8 +34,13 @@
 
 #include "./sedit.h"
 
+
 extern int mged_svbase(void);   /* defined in chgview.c */
 extern void set_scroll(void);   /* defined in set.c */
+
+
+#define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
+
 
 /************************************************************************
  *									*
