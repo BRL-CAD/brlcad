@@ -33,8 +33,12 @@
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-#include "./scroll.h" /* struct scroll_item */
-
+struct scroll_item {
+    char *scroll_string;
+    void (*scroll_func)(struct scroll_item *, double);
+    int scroll_val;
+    char *scroll_cmd;
+};
 
 #ifndef COMMA
 #  define COMMA ','

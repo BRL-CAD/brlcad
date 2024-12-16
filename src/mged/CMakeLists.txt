@@ -108,7 +108,6 @@ set(
   f_cmd.h
   mged.h
   mged_dm.h
-  scroll.h
   sedit.h
   titles.h
   mged.ico

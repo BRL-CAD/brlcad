@@ -107,11 +107,11 @@ set_scroll(void)
 	if (adc_state->adc_draw)
 	    scroll_array[1] = sl_adc_menu;
 	else
-	    scroll_array[1] = SCROLL_NULL;
+	    scroll_array[1] = NULL;
 
     } else {
-	scroll_array[0] = SCROLL_NULL;
-	scroll_array[1] = SCROLL_NULL;
+	scroll_array[0] = NULL;
+	scroll_array[1] = NULL;
     }
 }
 
@@ -305,7 +305,7 @@ scroll_display(struct mged_state *s, int y_top)
 
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
-    for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
+    for (m = &scroll_array[0]; *m != NULL; m++) {
 	++second_menu;
 	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
 	    y += SCROLL_DY;		/* y is now bottom line pos */
@@ -721,7 +721,7 @@ scroll_select(struct mged_state *UNUSED(s), int pen_x, int pen_y, int do_func)
      * above here.
      */
     yy = scroll_top;
-    for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
+    for (m = &scroll_array[0]; *m != NULL; m++) {
 	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
 	    fastf_t val;
 	    yy += SCROLL_DY;	/* bottom line pos */
