@@ -491,7 +491,7 @@ main(int argc, char **argv)
 
     rt_debug = 0;
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;

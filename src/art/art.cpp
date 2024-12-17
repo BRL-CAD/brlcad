@@ -696,7 +696,8 @@ build_project(const char* file, const char* UNUSED(objects))
     //------------------------------------------------------------------------
 
     // walk the db to register all regions
-    struct db_tree_state state = rt_initial_tree_state;
+    struct db_tree_state state;
+    RT_DBTS_INIT(&state);
     struct db_i* dbip = db_open(file, DB_OPEN_READONLY);
     state.ts_dbip = dbip;
     state.ts_resp = resources;

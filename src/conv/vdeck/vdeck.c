@@ -1470,8 +1470,10 @@ deck(char *prefix)
 
     /*  Build the whole card deck.	*/
     /*  '1' indicates one CPU.  This code isn't ready for parallelism */
+    struct db_tree_state tree_state;
+    RT_DBTS_INIT(&tree_state);
     if (db_walk_tree(dbip, curr_ct, (const char **)curr_list,
-		     1, &rt_initial_tree_state,
+		     1, &tree_state,
 		     0, region_end, gettree_leaf, (void *)NULL) < 0) {
 	fprintf(stderr, "Unable to treewalk any trees!\n");
 	bu_exit(11, NULL);

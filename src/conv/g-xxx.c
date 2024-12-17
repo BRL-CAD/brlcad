@@ -425,7 +425,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "g-xxx: rt_dirbuild failure\n");
     }
 
-    init_state = rt_initial_tree_state;
+    RT_DBTS_INIT(&init_state);
 
     bu_optind++;
 

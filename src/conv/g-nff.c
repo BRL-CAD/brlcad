@@ -369,7 +369,7 @@ main(int argc, char *argv[])
     VSETALL(model_min, INFINITY);
     VSETALL(model_max, -INFINITY);
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;

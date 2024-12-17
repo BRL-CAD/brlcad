@@ -685,7 +685,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     /* BU_LIST_INIT(vhead); */
 
-    state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&state);
     state.ts_ttol = ttol;
     state.ts_tol = tol;
     MAT_COPY(state.ts_mat, sip->root2leaf);

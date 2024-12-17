@@ -1819,7 +1819,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 	BU_ALLOC(tree_state, struct db_tree_state);
 
-	*tree_state = rt_initial_tree_state;	/* struct copy */
+	RT_DBTS_INIT(tree_state);
 	tree_state->ts_dbip = rtip->rti_dbip;
 	tree_state->ts_resp = resp;
 	tree_state->ts_rtip = rtip;

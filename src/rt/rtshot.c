@@ -140,7 +140,7 @@ attr_calc_inv(struct rt_i *rtip, struct attr_data *adata, int ac, const char **a
     if (!rtip || !adata || !adata->key)
 	return 0;
     struct db_tree_state tree_state;
-    tree_state = rt_initial_tree_state;     /* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_dbip = rtip->rti_dbip;
     tree_state.ts_rtip = rtip;
     tree_state.ts_resp = NULL;

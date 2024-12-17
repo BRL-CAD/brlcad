@@ -157,7 +157,8 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 
     {
 	char * const str_path = db_path_to_string(path);
-	struct db_tree_state initial_tree_state = rt_initial_tree_state;
+	struct db_tree_state initial_tree_state;
+	RT_DBTS_INIT(&initial_tree_state);
 	initial_tree_state.ts_tol = tol;
 	initial_tree_state.ts_ttol = tess_tol;
 	initial_tree_state.ts_m = &nmg_model;

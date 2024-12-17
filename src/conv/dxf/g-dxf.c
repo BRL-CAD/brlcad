@@ -388,7 +388,7 @@ main(int argc, char *argv[])
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
@@ -520,7 +520,7 @@ main(int argc, char *argv[])
     fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");
 
     /* Walk indicated tree(s).  Each region will be output separately */
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     /* make empty NMG model */

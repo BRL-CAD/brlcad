@@ -518,7 +518,8 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 union tree *
 gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct bg_tess_tol *ttol)
 {
-    struct db_tree_state tree_state = rt_initial_tree_state;
+    struct db_tree_state tree_state;
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_ttol = ttol;
 
     if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, rt_booltree_leaf_tess, NULL) < 0)

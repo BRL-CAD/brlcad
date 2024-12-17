@@ -715,7 +715,7 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 	struct gettree_data data;
 	struct db_tree_state tree_state;
 
-	tree_state = rt_initial_tree_state;	/* struct copy */
+	RT_DBTS_INIT(&tree_state);
 	tree_state.ts_dbip = rtip->rti_dbip;
 	tree_state.ts_rtip = rtip;
 	tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */

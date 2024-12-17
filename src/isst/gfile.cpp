@@ -241,7 +241,7 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     struct db_tree_state tree_state;	/* includes tol & model */
     struct isst_nmg_data d;
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;

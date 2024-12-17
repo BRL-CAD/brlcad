@@ -404,7 +404,7 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     state.scene = new aiScene();
     state.scene->mRootNode = new aiNode();
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &state.gcv_options->calculational_tolerance;
     tree_state.ts_ttol = &state.gcv_options->tessellation_tolerance;
     tree_state.ts_m = &state.the_model;

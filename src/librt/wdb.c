@@ -330,7 +330,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     bu_vls_init(&wdbp->wdb_prestr);
 
     /* initialize tree state */
-    wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
+    RT_DBTS_INIT(&wdbp->wdb_initial_tree_state);
     wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
     wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
 

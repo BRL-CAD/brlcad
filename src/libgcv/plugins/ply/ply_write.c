@@ -625,7 +625,7 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     state.dbip = context->dbip;
     state.color_info = 0;
 
-    tree_state = rt_initial_tree_state; /* struct copy */
+    RT_DBTS_INIT(&tree_state);
     struct bn_tol tol = state.gcv_options->calculational_tolerance;             // init tol with gcv_options defaults
     struct bg_tess_tol ttol = state.gcv_options->tessellation_tolerance;        // init ttol with gcv_options defaults
     tree_state.ts_tol = &tol;   // point tree_state at modifiable tol

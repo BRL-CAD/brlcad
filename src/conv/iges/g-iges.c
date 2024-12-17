@@ -204,7 +204,7 @@ main(int argc, char *argv[])
     bu_log("%s", brlcad_ident("BRL-CAD to IGES Translator"));
     bu_log("Please direct bug reports to <bugs@brlcad.org>\n\n");
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;

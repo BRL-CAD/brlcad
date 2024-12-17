@@ -1358,7 +1358,8 @@ get_region_path(const db_full_path &path)
 static bool
 path_is_subtracted(db_i &db, const db_full_path &path)
 {
-    db_tree_state tree_state = rt_initial_tree_state;
+    db_tree_state tree_state;
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_resp = &rt_uniresource;
     tree_state.ts_dbip = &db;
 
@@ -2449,7 +2450,8 @@ do_conversion(db_i &db, const struct gcv_opts &gcv_options,
 		  std::set<const directory *>())
 {
     AutoPtr<model, nmg_km> nmg_model;
-    db_tree_state initial_tree_state = rt_initial_tree_state;
+    db_tree_state initial_tree_state;
+    RT_DBTS_INIT(&initial_tree_state);
     initial_tree_state.ts_tol = &gcv_options.calculational_tolerance;
     initial_tree_state.ts_ttol = &gcv_options.tessellation_tolerance;;
     initial_tree_state.ts_m = &nmg_model.ptr;

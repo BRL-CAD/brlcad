@@ -430,7 +430,7 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
-    jack_tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&jack_tree_state);
     jack_tree_state.ts_tol = &tol;
     jack_tree_state.ts_ttol = &ttol;
     jack_tree_state.ts_m = &the_model;
