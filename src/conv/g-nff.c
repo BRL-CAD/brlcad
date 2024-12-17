@@ -78,7 +78,7 @@ print_usage(const char *progname)
 
 
 static void
-nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
+nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), struct bu_list *vlfree)
 {
     struct model *m;
     struct shell *s;
@@ -91,7 +91,7 @@ nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, vlfree, &tol);
 
     /* output triangles */
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
@@ -136,13 +136,13 @@ nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 
 static void
-process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bu_list *vlfree)
 {
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the region to the NFF file */
-	nmg_to_nff(r, pathp, tsp->ts_regionid, tsp->ts_gmater);
+	nmg_to_nff(r, pathp, tsp->ts_regionid, tsp->ts_gmater, vlfree);
 
     } else {
 	/* catch */
@@ -175,7 +175,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 
 
 static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
@@ -183,8 +183,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -226,12 +226,13 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *ret_tree;
     struct bu_list vhead;
     struct nmgregion *r;
     char *region_name;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
@@ -258,7 +259,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     printf("Attempting to process region %s\n", db_path_to_string(pathp));
     fflush(stdout);
 
-    ret_tree = process_boolean(curtree, tsp, pathp);
+    ret_tree = process_boolean(curtree, tsp, pathp, vlfree);
 
     if (ret_tree)
 	r = ret_tree->tr_d.td_r;
@@ -310,7 +311,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	    fprintf(fp, "f %g %g %g 0.5 0.5 4.81884 0 0\n",
 		    V3ARGS(tsp->ts_mater.ma_color));
 
-	    process_triangulation(r, pathp, tsp);
+	    process_triangulation(r, pathp, tsp, vlfree);
 
 	    regions_written++;
 	}
@@ -388,7 +389,8 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:X:e:ih?")) != -1) {
@@ -487,7 +489,7 @@ main(int argc, char *argv[])
 			0,			/* take all regions */
 			do_region_end,
 			rt_booltree_leaf_tess,
-			(void *)NULL);	/* in librt/nmg_bool.c */
+			(void *)vlfree);	/* in librt/nmg_bool.c */
 
     if (regions_tried > 0) {
 	percent = ((double)regions_converted * 100) / regions_tried;

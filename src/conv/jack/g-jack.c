@@ -191,7 +191,7 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
  *	data is called.
  */
 void
-nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
+nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf, struct bu_list *vlfree)
     /* NMG region to be converted. */
     /* Jack format file to write vertex list to. */
 {
@@ -202,7 +202,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int), "Jack vert map");
 
     /* Built list of vertex structs */
-    nmg_vertex_tabulate(&vtab, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&vtab, &r->l.magic, vlfree);
 
     /* FIXME: What to do if 0 vertices?  */
 
@@ -230,7 +230,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 
 
 static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
@@ -238,8 +238,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
 	/* catch */
@@ -280,8 +280,9 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
+    struct bu_list *vlfree = (struct bu_list *)client_data;
     union tree		*ret_tree;
     struct nmgregion	*r;
 
@@ -308,7 +309,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     regions_tried++;
 
-    ret_tree = process_boolean(curtree, tsp, pathp);
+    ret_tree = process_boolean(curtree, tsp, pathp, vlfree);
 
     if (ret_tree)
 	r = ret_tree->tr_d.td_r;
@@ -369,7 +370,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	if ((fp_psurf = fopen(bu_vls_addr(&file), "wb")) == NULL)
 	    perror(bu_vls_addr(&file));
 	else {
-	    nmg_to_psurf(r, fp_psurf);
+	    nmg_to_psurf(r, fp_psurf, vlfree);
 	    fclose(fp_psurf);
 	    if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 	}
@@ -390,10 +391,10 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[1] * 255),
 			  (int)(tsp->ts_mater.ma_color[2] * 255));
 		BU_LIST_INIT(&vhead);
-		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
+		nmg_r_to_vlist(&vhead, r, 0, vlfree);
 		bv_vlist_to_uplot(fp, &vhead);
 		fclose(fp);
-		BV_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
+		BV_FREE_VLIST(vlfree, &vhead);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 	    }
 	    bu_vls_free(&file);
@@ -456,7 +457,8 @@ main(int argc, char **argv)
     }
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, optstring)) != -1) {
@@ -557,7 +559,7 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			rt_booltree_leaf_tess,
-			(void *)NULL);	/* in librt/nmg_bool.c */
+			(void *)vlfree);	/* in librt/nmg_bool.c */
 
     fprintf(fp_fig, "\troot=%s_seg.base;\n", bu_vls_addr(&base_seg));
     fprintf(fp_fig, "}\n");

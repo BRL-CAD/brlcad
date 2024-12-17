@@ -40,7 +40,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name);
+static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, struct bu_list *vlfree);
 static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
 void
@@ -59,6 +59,8 @@ main(int argc, char **argv)
     char		*bfile = "nmg.g";
     FILE		*fpin;
     struct rt_wdb	*fpout;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
 	usage();
@@ -98,7 +100,7 @@ main(int argc, char **argv)
     }
     bu_log("%s: will be creating file %s\n",argv[0],bfile);
 
-    ascii_to_brlcad(fpin, fpout, "nmg", NULL);
+    ascii_to_brlcad(fpin, fpout, "nmg", NULL, vlfree);
     fclose(fpin);
     db_close(fpout->dbip);
     return 0;
@@ -131,7 +133,7 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
  *	Convert an ascii nmg description into a BRL-CAD data base.
  */
 static int
-ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name)
+ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, struct bu_list *vlfree)
 {
     struct model	*m;
     struct nmgregion	*r;
@@ -163,11 +165,11 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 	nmg_face_g( fu, pl );
 
     if (!NEAR_ZERO(MAGNITUDE(Ext), 0.001))
-	nmg_extrude_face(BU_LIST_FIRST(faceuse, &s->fu_hd), Ext, &RTG.rtg_vlfree, &tol);
+	nmg_extrude_face(BU_LIST_FIRST(faceuse, &s->fu_hd), Ext, vlfree, &tol);
 
     nmg_region_a(r, &tol);	/* Calculate geometry for region and shell. */
 
-    nmg_fix_normals( s, &RTG.rtg_vlfree, &tol ); /* insure that faces have outward pointing normals */
+    nmg_fix_normals( s, vlfree, &tol ); /* insure that faces have outward pointing normals */
 
     create_brlcad_db(fpout, m, reg_name, grp_name);
 

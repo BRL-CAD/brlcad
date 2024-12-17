@@ -1243,7 +1243,8 @@ populate_triangle_indexes(struct ga_t *ga,
 			  size_t face_idx,
 			  int texture_mode,  /* PROC_TEX, IGNR_TEX */
 			  int normal_mode,   /* PROC_NORM, IGNR_NORM */
-			  struct bn_tol *tol)
+			  struct bn_tol *tol,
+			  struct bu_list *vlfree)
 {
     size_t vert_idx = 0;                 /* index into vertices within for-loop */
     size_t idx = 0;                      /* sub index */
@@ -1355,7 +1356,7 @@ populate_triangle_indexes(struct ga_t *ga,
     if (fu != NULL) {
 
 	/* do simple or robust triangulation based on whether face is concave or convex */
-	if (nmg_lu_is_convex(BU_LIST_FIRST(loopuse, &fu->lu_hd), &RTG.rtg_vlfree, tol)) {
+	if (nmg_lu_is_convex(BU_LIST_FIRST(loopuse, &fu->lu_hd), vlfree, tol)) {
 
 	    /* compute number of new triangles to create */
 	    if (gfi->num_vertices_arr[face_idx] > 3) {
@@ -2540,7 +2541,8 @@ output_to_bot(struct ga_t *ga,
 	      int normal_mode,               /* PROC_NORM, IGNR_NORM */
 	      unsigned char bot_output_mode, /* RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID, RT_BOT_SURFACE */
 	      char bot_orientation,
-	      int face_test_type)
+	      int face_test_type,
+	      struct bu_list *vlfree)
 {
     struct ti_t ti;              /* triangle indices structure */
     size_t num_faces_killed = 0; /* number of degenerate faces killed in the current bot */
@@ -2594,7 +2596,7 @@ output_to_bot(struct ga_t *ga,
 	     * necessary, allocates additional memory for the triangle
 	     * indexes array. if necessary, triangulates the face.
 	     */
-	    populate_triangle_indexes(ga, gfi, &ti, face_idx, texture_mode, normal_mode, tol);
+	    populate_triangle_indexes(ga, gfi, &ti, face_idx, texture_mode, normal_mode, tol, vlfree);
 	}
     } /* loop exits when all polygons within the current grouping have
        * been triangulated (if necessary) and the vertex, normal and
@@ -2698,7 +2700,8 @@ output_to_nmg(struct ga_t *ga,
 	      struct bn_tol *tol,
 	      int normal_mode,      /* PROC_NORM, IGNR_NORM */
 	      int output_mode,      /* OUT_NMG, OUT_VBOT */
-	      int face_test_type)
+	      int face_test_type,
+	      struct bu_list *vlfree)
 {
     struct model *m = (struct model *)NULL;
     struct nmgregion *r = (struct nmgregion *)NULL;
@@ -2868,7 +2871,7 @@ output_to_nmg(struct ga_t *ga,
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_model_fuse on (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
-	num_entities_fused = nmg_model_fuse(m, &RTG.rtg_vlfree, tol);
+	num_entities_fused = nmg_model_fuse(m, vlfree, tol);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_model_fuse for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    bu_log("Fused (%d) entities in obj file face grouping name (%s), obj file face grouping index (%zu)\n",
@@ -2879,7 +2882,7 @@ output_to_nmg(struct ga_t *ga,
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_gluefaces on (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
-	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), (int)BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
+	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), (int)BU_PTBL_LEN(&faces), vlfree, tol);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_gluefaces for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
@@ -2888,7 +2891,7 @@ output_to_nmg(struct ga_t *ga,
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_mark_edges_real with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
-	(void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+	(void)nmg_mark_edges_real(&s->l.magic, vlfree);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_mark_edges_real for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
@@ -2931,7 +2934,7 @@ output_to_nmg(struct ga_t *ga,
 		if ((verbose > 1) || debug) {
 		    bu_log("Running nmg_fix_normals with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		}
-		nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
+		nmg_fix_normals(s, vlfree, tol);
 		if ((verbose > 1) || debug) {
 		    bu_log("Completed nmg_fix_normals for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		}
@@ -3056,7 +3059,8 @@ process_b_mode_option(struct ga_t *ga,
 		      /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
 		      unsigned char open_bot_output_mode,
 		      char bot_orientation,
-		      int face_test_type)    /* TEST_ALL, TEST_NUM_VERT */
+		      int face_test_type,    /* TEST_ALL, TEST_NUM_VERT */
+		      struct bu_list *vlfree)
 {
     if (fuse_vertices) {
         (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
@@ -3066,11 +3070,11 @@ process_b_mode_option(struct ga_t *ga,
     if (!test_closure(ga, gfi, conv_factor, plot_mode, face_test_type, tol)) {
 	(void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
 			    IGNR_TEX, normal_mode, RT_BOT_SOLID,
-			    bot_orientation, face_test_type);
+			    bot_orientation, face_test_type, vlfree);
     } else {
 	(void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
 			    IGNR_TEX, normal_mode, open_bot_output_mode,
-			    bot_orientation, face_test_type);
+			    bot_orientation, face_test_type, vlfree);
     }
 }
 
@@ -3108,11 +3112,12 @@ process_nv_mode_option(struct ga_t *ga,
 			* TEST_ALL, TEST_NUM_VERT
 			*/
 		       int native_face_test_type,
-		       int cont_on_nmg_bomb_flag)
+		       int cont_on_nmg_bomb_flag,
+		       struct bu_list *vlfree)
 {
     int ret = 0;
     ret = output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM,
-			nmg_output_mode, nmg_face_test_type);
+			nmg_output_mode, nmg_face_test_type, vlfree);
 
     if ((ret == 1) || ((ret == 2) && cont_on_nmg_bomb_flag)) {
 	(void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
@@ -3123,12 +3128,12 @@ process_nv_mode_option(struct ga_t *ga,
 	{
 	    (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
 				IGNR_TEX, IGNR_NORM, RT_BOT_SOLID, bot_orientation,
-				native_face_test_type);
+				native_face_test_type, vlfree);
 	} else {
 	    (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
 				IGNR_TEX, IGNR_NORM, open_bot_output_mode,
 				bot_orientation,
-				native_face_test_type);
+				native_face_test_type, vlfree);
 	}
     }
 
@@ -3188,6 +3193,8 @@ main(int argc, char **argv)
     struct tm *timep;
     char bot_orientation = RT_BOT_UNORIENTED;
     int fuse_vertices = 0;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     bu_setprogname(argv[0]);
 
@@ -3575,7 +3582,7 @@ main(int argc, char **argv)
 			    process_b_mode_option(&ga, gfi, fd_out, conv_factor,
 						  tol, fuse_vertices, bot_thickness, normal_mode, plot_mode,
 						  open_bot_output_mode, bot_orientation,
-						  native_face_test_type);
+						  native_face_test_type, vlfree);
 			    break;
 			case 'n':
 			case 'v':
@@ -3585,7 +3592,7 @@ main(int argc, char **argv)
 									  open_bot_output_mode, bot_orientation,
 									  nmg_face_test_type,
 									  native_face_test_type,
-									  cont_on_nmg_bomb_flag);
+									  cont_on_nmg_bomb_flag, vlfree);
 			    break;
 		    }
 
@@ -3632,14 +3639,14 @@ main(int argc, char **argv)
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
-						      native_face_test_type);
+						      native_face_test_type, vlfree);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
 									      bot_orientation, nmg_face_test_type, native_face_test_type,
-									      cont_on_nmg_bomb_flag);
+									      cont_on_nmg_bomb_flag, vlfree);
 				break;
 			}
 
@@ -3679,14 +3686,14 @@ main(int argc, char **argv)
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
-						      native_face_test_type);
+						      native_face_test_type, vlfree);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
 									      bot_orientation, nmg_face_test_type, native_face_test_type,
-									      cont_on_nmg_bomb_flag);
+									      cont_on_nmg_bomb_flag, vlfree);
 				break;
 			}
 
@@ -3726,14 +3733,14 @@ main(int argc, char **argv)
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
-						      native_face_test_type);
+						      native_face_test_type, vlfree);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
 									      bot_orientation,
-									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
+									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag, vlfree);
 				break;
 			}
 
@@ -3773,14 +3780,14 @@ main(int argc, char **argv)
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
-						      native_face_test_type);
+						      native_face_test_type, vlfree);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
 									      bot_orientation,
-									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
+									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag, vlfree);
 				break;
 			}
 

@@ -164,7 +164,7 @@ static int bot=0;
 	    nmg_vertex_gv(*_v[1], _ep1->pt); \
 	if (!(*_v[2])->vg_p) \
 	    nmg_vertex_gv(*_v[2], _ep2->pt); \
-	if (nmg_calc_face_g(_fu,&RTG.rtg_vlfree)) { \
+	if (nmg_calc_face_g(_fu, vlfree)) { \
 	    if (debug > 3) \
 		bu_log("Killing degenerate face\n"); \
 	    (void)nmg_kfu(_fu); \
@@ -199,7 +199,7 @@ static int bot=0;
 	    nmg_vertex_gv(*_v[2], _ep2->pt); \
 	if (!(*_v[3])->vg_p) \
 	    nmg_vertex_gv(*_v[3], _ep3->pt); \
-	if (nmg_calc_face_g(_fu,&RTG.rtg_vlfree)) { \
+	if (nmg_calc_face_g(_fu, vlfree)) { \
 	    if (debug > 3) \
 		bu_log("Killing degenerate face\n"); \
 	    (void)nmg_kfu(_fu); \
@@ -272,7 +272,7 @@ pr_part(struct local_part *ptr)
 
 
 static void
-Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
+Make_simple_faces(struct shell *s, int status, struct local_part **lpart, struct bu_list *vlfree)
 {
     fastf_t ave_y;
     fastf_t diff[4];
@@ -401,7 +401,7 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 
 static int
 Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
-	     char *manifolds, fastf_t *hit1, fastf_t *hit2)
+	     char *manifolds, fastf_t *hit1, fastf_t *hit2, struct bu_list *vlfree)
 {
     struct model *m;
     struct ray_data rd;
@@ -431,7 +431,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
     VINVDIR(rd.rd_invdir, rp->r_dir);
     rd.magic = NMG_RAY_DATA_MAGIC;
 
-    nmg_isect_ray_model((struct nmg_ray_data *)&rd,&RTG.rtg_vlfree);
+    nmg_isect_ray_model((struct nmg_ray_data *)&rd, vlfree);
 
     if (BU_LIST_IS_EMPTY(&rd.rd_hit))
 	ret = 0;
@@ -473,6 +473,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     struct model *m;
     struct nmg_shot_data *sd;
     size_t i;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     sd = (struct nmg_shot_data *)ap->a_uptr;
     s = sd->s;
@@ -528,7 +529,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	vect_t diff1, diff2;
 	fastf_t len1_sq, len2_sq;
 
-	(void)Get_extremes(s, &ap2, sd->hitmiss, sd->manifolds, hit1, hit2);
+	(void)Get_extremes(s, &ap2, sd->hitmiss, sd->manifolds, hit1, hit2, vlfree);
 
 	if (debug && hit1_v && hit2_v) {
 	    bu_log("shrink_hit:\n\thit1_v=(%g %g %g), hit2_v=(%g %g %g)\n",
@@ -675,7 +676,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	    if (fu->orientation != OT_SAME)
 		continue;
 
-	    nmg_calc_face_g(fu,&RTG.rtg_vlfree);
+	    nmg_calc_face_g(fu, vlfree);
 	    f = fu->f_p;
 	    nmg_face_bb(f, &tol);
 
@@ -720,7 +721,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	    if (fu->orientation != OT_SAME)
 		continue;
 
-	    nmg_calc_face_g(fu,&RTG.rtg_vlfree);
+	    nmg_calc_face_g(fu, vlfree);
 	    f = fu->f_p;
 	    nmg_face_bb(f, &tol);
 
@@ -739,7 +740,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 
 static void
-Split_side_faces(struct shell *s, struct bu_ptbl *tab)
+Split_side_faces(struct shell *s, struct bu_ptbl *tab, struct bu_list *vlfree)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -937,7 +938,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		if (vu1_cut->v_p == eu1->eumate_p->vu_p->v_p)
 		    eu1 = BU_LIST_PNEXT_CIRC(edgeuse, &eu1->l);
 		/* cut loop */
-		new_lu = nmg_cut_loop(vu1_cut, vu2_cut, &RTG.rtg_vlfree);
+		new_lu = nmg_cut_loop(vu1_cut, vu2_cut, vlfree);
 		lu->orientation = OT_SAME;
 		lu->lumate_p->orientation = OT_SAME;
 		new_lu->orientation = OT_SAME;
@@ -951,7 +952,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 
 
 static void
-shrink_wrap(struct shell *s)
+shrink_wrap(struct shell *s, struct bu_list *vlfree)
 {
     struct faceuse *fu;
     struct application ap;
@@ -969,11 +970,11 @@ shrink_wrap(struct shell *s)
     bu_ptbl_init(&extra_verts, 64, "extra verts");
 
     bu_ptbl_init(&verts, 128, "verts");
-    Split_side_faces(s, &verts);
+    Split_side_faces(s, &verts, vlfree);
 
-    nmg_triangulate_shell(s, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_shell(s, vlfree, &tol);
 
-    nmg_split_loops_into_faces(&s->l.magic, &RTG.rtg_vlfree, &tol);
+    nmg_split_loops_into_faces(&s->l.magic, vlfree, &tol);
 
     sd.s = s;
     sd.manifolds = nmg_manifolds(m);
@@ -1086,6 +1087,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     fastf_t dist;
     fastf_t use_tolerance=edge_tol;
     struct refine_rpp *rpp;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     if (debug)
 	bu_log("hit\n");
@@ -1164,8 +1166,8 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     }
     if (!new_vu2)
 	bu_exit(1, "ERROR: Cannot find VU in lu2\n");
-    new_lu1 = nmg_cut_loop(new_vu1, vu1, &RTG.rtg_vlfree);
-    new_lu2 = nmg_cut_loop(new_vu2, vu2, &RTG.rtg_vlfree);
+    new_lu1 = nmg_cut_loop(new_vu1, vu1, vlfree);
+    new_lu2 = nmg_cut_loop(new_vu2, vu2, vlfree);
     ref_data->lu1->orientation = OT_SAME;
     ref_data->lu2->orientation = OT_SAME;
     new_lu1->orientation = OT_SAME;
@@ -1208,8 +1210,8 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	}
     }
 
-    (void)nmg_split_loops_into_faces(&ref_data->fu1->l.magic, &RTG.rtg_vlfree, &tol);
-    (void)nmg_split_loops_into_faces(&ref_data->fu2->l.magic, &RTG.rtg_vlfree, &tol);
+    (void)nmg_split_loops_into_faces(&ref_data->fu1->l.magic, vlfree, &tol);
+    (void)nmg_split_loops_into_faces(&ref_data->fu2->l.magic, vlfree, &tol);
 
     for (BU_LIST_FOR(vu, vertexuse, &new_vu->v_p->vu_hd)) {
 	struct faceuse *fu;
@@ -1228,7 +1230,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 	bu_ptbl_ins(ref_data->new_edges, (long *)eu->e_p);
 
-	nmg_calc_face_g(fu,&RTG.rtg_vlfree);
+	nmg_calc_face_g(fu, vlfree);
     }
 
     return 1;
@@ -1236,7 +1238,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 
 static int
-refine_edges(struct shell *s)
+refine_edges(struct shell *s, struct bu_list *vlfree)
 {
     struct bu_ptbl edges_1;
     struct bu_ptbl edges_2;
@@ -1251,7 +1253,7 @@ refine_edges(struct shell *s)
 
     m = nmg_find_model(&s->l.magic);
 
-    nmg_edge_tabulate(&edges_1, &s->l.magic, &RTG.rtg_vlfree);
+    nmg_edge_tabulate(&edges_1, &s->l.magic, vlfree);
     cur = &edges_1;
     bu_ptbl_init(&edges_2, 64, "edges_2");
     next = &edges_2;
@@ -1400,7 +1402,7 @@ refine_edges(struct shell *s)
 
 
 static void
-Make_shell(void)
+Make_shell(struct bu_list *vlfree)
 {
     int i;
     size_t x_index, y_index, z_index;
@@ -1449,7 +1451,7 @@ Make_shell(void)
 			}
 		    }
 
-		    Make_simple_faces(s, status, lpart);
+		    Make_simple_faces(s, status, lpart, vlfree);
 		}
 	    }
 	    break;
@@ -1483,7 +1485,7 @@ Make_shell(void)
 			}
 		    }
 
-		    Make_simple_faces(s, status, lpart);
+		    Make_simple_faces(s, status, lpart, vlfree);
 		}
 	    }
 	    break;
@@ -1517,7 +1519,7 @@ Make_shell(void)
 			}
 		    }
 
-		    Make_simple_faces(s, status, lpart);
+		    Make_simple_faces(s, status, lpart, vlfree);
 		}
 	    }
 	    break;
@@ -1526,7 +1528,7 @@ Make_shell(void)
     nmg_rebound(m, &tol);
 
     if (do_extra_rays)
-	shrink_wrap(s);
+	shrink_wrap(s, vlfree);
 
     if (edge_tol > 0.0) {
 	if (debug) {
@@ -1535,12 +1537,12 @@ Make_shell(void)
 	}
 
 	bu_log("Shooting rays at edge mid points...\n");
-	refine_edges(s);
+	refine_edges(s, vlfree);
     }
 
     if (decimation_tol > 0.0) {
 	bu_log("%d edges eliminated by decimation to tolerance of %gmm\n",
-	       nmg_edge_collapse(m, &tol, decimation_tol, min_angle, &RTG.rtg_vlfree), decimation_tol);
+	       nmg_edge_collapse(m, &tol, decimation_tol, min_angle, vlfree), decimation_tol);
     }
 
     if (do_extra_rays || edge_tol > 0.0 || decimation_tol > 0.0)
@@ -1635,6 +1637,8 @@ main(int argc, char **argv)
     int c;
     fastf_t x_start, y_start, z_start;
     fastf_t bb_area[3];
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     bu_setprogname(argv[0]);
 
@@ -1922,7 +1926,7 @@ main(int argc, char **argv)
 	    break;
     }
 
-    Make_shell();
+    Make_shell(vlfree);
     db_close(fd_out->dbip);
     return 0;
 }

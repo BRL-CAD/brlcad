@@ -61,9 +61,9 @@ static struct bn_tol	tol;
 
 static const char *usage = "[-r region] [-g group] [jack_db] [brlcad_db]\n";
 
-int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
+int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile, struct bu_list *vlfree);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
-void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile);
+void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile, struct bu_list *vlfree);
 
 static void
 print_usage(const char *progname)
@@ -79,6 +79,7 @@ main(int argc, char **argv)
     struct rt_wdb	*fpout = NULL;
     size_t doti;
     int	c;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     bu_setprogname(argv[0]);
 
@@ -147,7 +148,7 @@ main(int argc, char **argv)
 	}
     }
 
-    jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile);
+    jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile, vlfree);
     fclose(fpin);
     db_close(fpout->dbip);
     return 0;
@@ -157,12 +158,12 @@ main(int argc, char **argv)
  *	Convert a UPenn Jack data base into a BRL-CAD data base.
  */
 void
-jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile)
+jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile, struct bu_list *vlfree)
 {
     struct model	*m;
 
     m = nmg_mm();			/* Make nmg model. */
-    psurf_to_nmg(m, fpin, jfile);	/* Convert psurf model to nmg. */
+    psurf_to_nmg(m, fpin, jfile, vlfree);	/* Convert psurf model to nmg. */
     create_brlcad_db(fpout, m, reg_name, grp_name);	/* Put in db. */
     nmg_km(m);			/* Destroy the nmg model. */
 }
@@ -229,7 +230,7 @@ read_psurf_face(FILE *fp, int *lst)
 }
 
 int
-psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
+psurf_to_nmg(struct model *m, FILE *fp, char *jfile, struct bu_list *vlfree)
 /* Input/output, nmg model. */
 /* Input, pointer to psurf data file. */
 /* Name of Jack data base file. */
@@ -280,7 +281,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 			jfile, i+1);
     }
 
-    nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
+    nmg_vertex_fuse(&m->magic, vlfree, &tol);
 
     /* Associate the face geometry. */
     for (i = 0, fail = 0; i < face; i++)
@@ -309,11 +310,11 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	  /* Compute "geometry" for region and shell */
 	  nmg_region_a(r, &tol);
 
-	  nmg_break_e_on_v(&m->magic, &RTG.rtg_vlfree, &tol);
+	  nmg_break_e_on_v(&m->magic, vlfree, &tol);
 	  empty_model = nmg_kill_zero_length_edgeuses(m);
 
 	  /* Glue edges of outward pointing face uses together. */
-	  if (!empty_model) nmg_edge_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
+	  if (!empty_model) nmg_edge_fuse(&m->magic, vlfree, &tol);
 	}
     }
 

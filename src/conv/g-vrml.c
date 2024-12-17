@@ -54,6 +54,7 @@ struct plate_mode {
     int num_nonbots;
     int array_size;
     struct rt_bot_internal **bots;
+    struct bu_list *vlfree;
 };
 
 
@@ -628,7 +629,9 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
+    pm.vlfree = vlfree;
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:h?")) != -1) {
@@ -751,7 +754,7 @@ main(int argc, char **argv)
 			   0,
 			   nmg_region_end,
 			   rt_booltree_leaf_tess,
-			   (void *)&pm);	/* in librt/nmg_bool.c */
+			   (void *)vlfree);	/* in librt/nmg_bool.c */
 	goto out;
     }
 
@@ -830,7 +833,7 @@ out:
 
 
 void
-nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m)
+nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m, struct bu_list *vlfree)
 {
     struct mater_info *mater = &tsp->ts_mater;
     const struct bn_tol *tol2 = tsp->ts_tol;
@@ -1029,14 +1032,14 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, &RTG.rtg_vlfree, tol2);
+	nmg_triangulate_model(m, vlfree, tol2);
 	fprintf(fp_out, "\t\t\t}\n");
 	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &m->magic, vlfree);
     if (!is_light) {
 	fprintf(fp_out, "\t\t\t\t\tpoint [");
     } else {
@@ -1244,7 +1247,7 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	regions_converted++;
 	return (union tree *)NULL;
     } else {
-	return nmg_region_end(tsp, pathp, curtree, client_data);
+	return nmg_region_end(tsp, pathp, curtree, pmp->vlfree);
     }
 }
 
@@ -1282,14 +1285,14 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
 
 static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -1314,12 +1317,13 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct nmgregion *r;
     struct bu_list vhead;
     union tree *ret_tree;
     char *name;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -1341,7 +1345,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     bu_log("Attempting %s\n", name);
 
     regions_tried++;
-    ret_tree = process_boolean(curtree, tsp, pathp);
+    ret_tree = process_boolean(curtree, tsp, pathp, vlfree);
 
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
@@ -1373,7 +1377,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
 	if (!empty_region) {
 	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml(tsp, pathp, r->m_p);
+	    nmg_2_vrml(tsp, pathp, r->m_p, vlfree);
 	    regions_converted++;
 	} else {
 	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n",

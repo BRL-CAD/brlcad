@@ -106,6 +106,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     char *region_name;
     int region_polys=0;
     int ret;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -177,7 +178,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 	fprintf(fp, "solid %s\n", (region_name+1));
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, vlfree, &tol);
 
     /* Check triangles */
     for (BU_LIST_FOR (s, shell, &r->s_hd))
@@ -340,7 +341,8 @@ main(int argc, char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:X:ih?")) != -1) {

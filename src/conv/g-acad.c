@@ -81,7 +81,7 @@ usage(const char *argv0)
 
 
 static void
-nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id)
+nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id, struct bu_list *vlfree)
 {
     struct model *m;
     struct shell *s;
@@ -102,11 +102,11 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, vlfree, &tol);
 
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, vlfree);
 
     /* Get number of vertices */
 
@@ -274,7 +274,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
 
 static union tree *
-process_region(const struct db_full_path *pathp, union tree *curtree, struct db_tree_state *tsp)
+process_region(const struct db_full_path *pathp, union tree *curtree, struct db_tree_state *tsp, struct bu_list *vlfree)
 {
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -284,7 +284,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 
 	printf("Attempting to process region %s\n", db_path_to_string(pathp));
 	fflush(stdout);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 	if (ret_tree != curtree) {
 	    db_free_tree(curtree, &rt_uniresource);
 	}
@@ -336,12 +336,13 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *ret_tree = NULL;
     struct bu_list vhead;
     /* static due to longjmp */
     static struct nmgregion *r = NULL;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
@@ -366,7 +367,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     regions_tried++;
 
     /* do the deed */
-    ret_tree = process_region(pathp, curtree, tsp);
+    ret_tree = process_region(pathp, curtree, tsp, vlfree);
 
     if (ret_tree)
 	r = ret_tree->tr_d.td_r;
@@ -413,7 +414,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 		/* try */
 
 		/* Write the region to the TANKILL file */
-		nmg_to_acad(r, pathp, tsp->ts_regionid);
+		nmg_to_acad(r, pathp, tsp->ts_regionid, vlfree);
 		regions_written++;
 
 	    } else {
@@ -510,7 +511,8 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:ih?")) != -1) {

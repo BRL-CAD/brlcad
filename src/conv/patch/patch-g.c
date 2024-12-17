@@ -259,7 +259,7 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
  * leaving all the geometric calculations to the code in nmg_fuse.c ?
  */
 static void
-nmg_patch_coplanar_face_merge(struct shell *s, size_t *face_count, struct patch_faces *p_faces, struct bn_tol *tol, int simplify)
+nmg_patch_coplanar_face_merge(struct shell *s, size_t *face_count, struct patch_faces *p_faces, struct bn_tol *tol, int simplify, struct bu_list *vlfree)
 {
     struct model *m;
     int len;
@@ -392,7 +392,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, size_t *face_count, struct patch_
 		struct loopuse *lu;
 
 		for (BU_LIST_FOR (lu, loopuse, &fu1->lu_hd))
-		    nmg_simplify_loop(lu, &RTG.rtg_vlfree);
+		    nmg_simplify_loop(lu, vlfree);
 	    }
 	}
     }
@@ -407,7 +407,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, size_t *face_count, struct patch_
 
 
 static int
-Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *centroid, fastf_t thickness, fastf_t *pl1, struct bn_tol *tol)
+Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *centroid, fastf_t thickness, fastf_t *pl1, struct bn_tol *tol, struct bu_list *vlfree)
 {
     struct model *m;
     struct nmgregion *r;
@@ -640,29 +640,29 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
     bu_free((char *)verts, "build_solid: verts");
 
     /* fuse vertices */
-    (void)nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, tol);
+    (void)nmg_vertex_fuse(&m->magic, vlfree, tol);
 
     /* FASTGEN targets may have vertices that should be part of an
      * adjoining edge. Use nmg_break_long_edges to fix this
      */
-    i = nmg_break_edges(&m->magic, &RTG.rtg_vlfree, tol);
+    i = nmg_break_edges(&m->magic, vlfree, tol);
     if (debug > 2)
 	bu_log("nmg_break_edges broke %zu edges\n", i);
 
     /* glue all the faces together */
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), vlfree, tol);
 
     for (BU_LIST_FOR (s, shell, &r->s_hd))
-	nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, tol);
+	nmg_make_faces_within_tol(s, vlfree, tol);
 
     if (!plate_mode) {
 	/* make sure the normals are correct */
 	for (BU_LIST_FOR (s, shell, &r->s_hd))
-	    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
+	    nmg_fix_normals(s, vlfree, tol);
 
 	/* make sure we are dealing with closed shells */
 	for (BU_LIST_FOR (s, shell, &r->s_hd))
-	    nmg_close_shell(s, &RTG.rtg_vlfree, tol);
+	    nmg_close_shell(s, vlfree, tol);
 
 	/* free the memory for the face list */
 	bu_ptbl_free(&faces);
@@ -679,8 +679,8 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	if (polysolid) {
 	    mk_bot_from_nmg(outfp, name, s);
 	} else {
-	    nmg_shell_coplanar_face_merge(s, tol, 0, &RTG.rtg_vlfree);
-	    if (!nmg_simplify_shell(s, &RTG.rtg_vlfree)) {
+	    nmg_shell_coplanar_face_merge(s, tol, 0, vlfree);
+	    if (!nmg_simplify_shell(s, vlfree)) {
 		struct model *m_copy = nmg_clone_model(m);
 		mk_nmg(outfp, name, m_copy); /* frees m_copy */
 	    }
@@ -688,7 +688,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 
 	/* if this solid is mirrored, don't go through the entire process again */
 	if (mirror_name[0]) {
-	    nmg_mirror_model(m, &RTG.rtg_vlfree);
+	    nmg_mirror_model(m, vlfree);
 
 	    if (polysolid) {
 		mk_bot_from_nmg(outfp, mirror_name, s);
@@ -804,9 +804,9 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	}
     }
 
-    nmg_patch_coplanar_face_merge(s, &face_count, p_faces, tol, 0);
+    nmg_patch_coplanar_face_merge(s, &face_count, p_faces, tol, 0, vlfree);
 
-    if (nmg_simplify_shell(s, &RTG.rtg_vlfree))
+    if (nmg_simplify_shell(s, vlfree))
 	return 1;
 
     /* Calculate bounding boxes */
@@ -821,7 +821,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
     }
 
     /* Duplicate shell */
-    is = nmg_dup_shell(s, &copy_tbl, &RTG.rtg_vlfree, tol);
+    is = nmg_dup_shell(s, &copy_tbl, vlfree, tol);
 
     /* make a new flags array */
     bu_free((char *)flags, "build_solid: flags");
@@ -870,10 +870,10 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	if (fu->orientation == OT_SAME)
 	    bu_ptbl_ins(&faces, (long *)fu);
     }
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), vlfree, tol);
     bu_ptbl_reset(&faces);
 
-    nmg_shell_coplanar_face_merge(is, tol, 0, &RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(is, tol, 0, vlfree);
     nmg_shell_a(is, tol);
 
     /* make yet another version of the flags array */
@@ -921,7 +921,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	/* Adjust the vertices of new_v */
 	if (debug > 2)
 	    bu_log("Moving (%f %f %f)", V3ARGS(new_v->vg_p->coord));
-	if (nmg_in_vert(new_v, 1, &RTG.rtg_vlfree, tol)) {
+	if (nmg_in_vert(new_v, 1, vlfree, tol)) {
 	    /* FAILURE, kill the model and shell and return a failure notification */
 	    bu_log("nmg_in_vert failed on %s!\n", name);
 	    if (!nmg_ks(is)) {
@@ -955,12 +955,12 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	mk_nmg(outfp, tmp_name, m_copy); /* frees m_copy */
     }
 
-    nmg_make_faces_within_tol(is, &RTG.rtg_vlfree, tol);
+    nmg_make_faces_within_tol(is, vlfree, tol);
 
     /* Close shell */
     if (debug)
 	bu_log("Close shell\n");
-    if (nmg_open_shells_connect(s, is, (const long **)copy_tbl, &RTG.rtg_vlfree, tol)) {
+    if (nmg_open_shells_connect(s, is, (const long **)copy_tbl, vlfree, tol)) {
 	/* debugging: write an NMG of the outer shell named "name.BAD" */
 	char bad[NAMESIZE+5];
 
@@ -986,7 +986,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
     }
     if (debug)
 	bu_log("Re-glue faces\n");
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), vlfree, tol);
     bu_ptbl_free(&faces);
 
     /* Calculate bounding boxes */
@@ -1003,8 +1003,8 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
     if (polysolid) {
 	mk_bot_from_nmg(outfp, name, s);
     } else {
-	nmg_shell_coplanar_face_merge(s, tol, 0, &RTG.rtg_vlfree);
-	if (!nmg_simplify_shell(s, &RTG.rtg_vlfree)) {
+	nmg_shell_coplanar_face_merge(s, tol, 0, vlfree);
+	if (!nmg_simplify_shell(s, vlfree)) {
 	    struct model *m_copy = nmg_clone_model(m);
 	    mk_nmg(outfp, name, m_copy); /* frees m_copy */
 	}
@@ -1014,7 +1014,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
     if (mirror_name[0]) {
 	if (debug)
 	    bu_log("Mirror model\n");
-	nmg_mirror_model(m, &RTG.rtg_vlfree);
+	nmg_mirror_model(m, vlfree);
 
 	if (debug)
 	    bu_log("writing  %s (mirrored) to BRL-CAD DB\n", mirror_name);
@@ -1103,7 +1103,7 @@ proc_region(char *name1)
  * Process Volume Mode triangular facetted solids
  */
 static void
-proc_triangle(size_t cnt)
+proc_triangle(size_t cnt, struct bu_list *vlfree)
 {
     int idx;
     int cpts;
@@ -1204,7 +1204,7 @@ proc_triangle(size_t cnt)
 	mirror_name[0] = '\0';
     }
 
-    if ((BU_SETJUMP) || Build_solid(l, name, mirror_name, 0, centroid, 0.0, pl, &TOL)) {
+    if ((BU_SETJUMP) || Build_solid(l, name, mirror_name, 0, centroid, 0.0, pl, &TOL, vlfree)) {
 	if (mirror_name[0])
 	    bu_log("Failed to build solids %s and %s\n", name, mirror_name);
 	else
@@ -1355,7 +1355,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
  * Process Plate Mode triangular surfaces
  */
 static void
-proc_plate(size_t cnt)
+proc_plate(size_t cnt, struct bu_list *vlfree)
 {
     int idx;
     static int count=0;
@@ -1499,7 +1499,7 @@ proc_plate(size_t cnt)
 	    } else
 		mirror_name[0] = '\0';
 
-	    if ((BU_SETJUMP) || Build_solid(l, name, mirror_name, 1, centroid, thicks[thick_no], pl, &TOL)) {
+	    if ((BU_SETJUMP) || Build_solid(l, name, mirror_name, 1, centroid, thicks[thick_no], pl, &TOL, vlfree)) {
 		if (mirror_name[0])
 		    bu_log("Failed to build solids %s and %s\n", name, mirror_name);
 		else
@@ -3378,6 +3378,8 @@ main(int argc, char **argv)
     int done;
     int stop, num;
     char name[NAMESIZE+1];
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     /* This size is dictated by the specific format output by the
      * 'rpatch' tool and expected material file.  They are
@@ -3744,11 +3746,11 @@ main(int argc, char **argv)
 		case 3:  	/* triangle approximation (thickness + 3") */
 
 		    if ((nflg > 0)&&(in[i-1].surf_mode== '+')) {
-			proc_triangle(i);
+			proc_triangle(i, vlfree);
 		    } else if ((in[i-1].surf_mode == '-') && (ZERO(in[i-1].rsurf_thick))) {
-			proc_triangle(i);
+			proc_triangle(i, vlfree);
 		    } else {
-			proc_plate(i);
+			proc_plate(i, vlfree);
 		    }
 		    break;
 
