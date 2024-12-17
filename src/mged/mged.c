@@ -1722,7 +1722,7 @@ mged_finish(struct mged_state *s, int exitcode)
 
 	if (p && p->dm_dmp) {
 	    dm_close(p->dm_dmp);
-	    BV_FREE_VLIST(&RTG.rtg_vlfree, &p->dm_p_vlist);
+	    BV_FREE_VLIST(s->vlfree, &p->dm_p_vlist);
 	    mged_slider_free_vls(p);
 	    bu_free(p, "release: mged_curr_dm");
 	}
@@ -1835,6 +1835,11 @@ main(int argc, char *argv[])
     bu_vls_init(&s->scratchline);
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
+
+    /* Set up linked lists */
+    s->vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(s->vlfree);
+    BU_LIST_INIT(&rtg_headwdb.l);
 
     // Start out in an initialization state
     mged_global_db_ctx.init_flag = 1;
@@ -2006,10 +2011,6 @@ main(int argc, char *argv[])
 	}
     }
 #endif /* HAVE_PIPE */
-
-    /* Set up linked lists */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
-    BU_LIST_INIT(&rtg_headwdb.l);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);

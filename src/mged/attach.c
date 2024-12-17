@@ -239,7 +239,7 @@ release(struct mged_state *s, char *name, int need_close)
     if (need_close)
 	dm_close(DMP);
 
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist);
+    BV_FREE_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist);
     bu_ptbl_rm(&active_dm_set, (long *)s->mged_curr_dm);
     mged_slider_free_vls(s->mged_curr_dm);
     bu_free((void *)s->mged_curr_dm, "release: s->mged_curr_dm");

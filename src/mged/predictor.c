@@ -70,7 +70,7 @@ push_trail(struct trail *tp, fastf_t *pt)
  * t1 should be below (lower screen Y) t2.
  */
 static void
-poly_trail(struct bu_list *vhead, struct trail *t1, struct trail *t2)
+poly_trail(struct mged_state *s, struct bu_list *vhead, struct trail *t1, struct trail *t2)
 {
     int i1, i2;
     int todo = t1->t_nused;
@@ -99,12 +99,12 @@ poly_trail(struct bu_list *vhead, struct trail *t1, struct trail *t2)
 	VSUB2(right, t1->t_pt[i1], s1);
 	VCROSS(norm, right, up);
 
-	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, norm, BV_VLIST_POLY_START);
-	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, s1, BV_VLIST_POLY_MOVE);
-	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, s2, BV_VLIST_POLY_DRAW);
-	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, t2->t_pt[i2], BV_VLIST_POLY_DRAW);
-	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, t1->t_pt[i1], BV_VLIST_POLY_DRAW);
-	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, s1, BV_VLIST_POLY_END);
+	BV_ADD_VLIST(s->vlfree, vhead, norm, BV_VLIST_POLY_START);
+	BV_ADD_VLIST(s->vlfree, vhead, s1, BV_VLIST_POLY_MOVE);
+	BV_ADD_VLIST(s->vlfree, vhead, s2, BV_VLIST_POLY_DRAW);
+	BV_ADD_VLIST(s->vlfree, vhead, t2->t_pt[i2], BV_VLIST_POLY_DRAW);
+	BV_ADD_VLIST(s->vlfree, vhead, t1->t_pt[i1], BV_VLIST_POLY_DRAW);
+	BV_ADD_VLIST(s->vlfree, vhead, s1, BV_VLIST_POLY_END);
 
 	s1 = t1->t_pt[i1];
 	s2 = t2->t_pt[i2];
@@ -128,7 +128,7 @@ predictor_init(struct mged_state *s)
 void
 predictor_kill(struct mged_state *s)
 {
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist);
+    BV_FREE_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist);
     predictor_init(s);
 }
 
@@ -181,7 +181,7 @@ predictor_frame(struct mged_state *s)
 	return;
     }
 
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist);
+    BV_FREE_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist);
 
     /* Advance into the future */
     nframes = (int)(mged_variables->mv_predictor_advance / frametime);
@@ -204,8 +204,8 @@ predictor_frame(struct mged_state *s)
     /* Centering dot */
     VSETALL(delta_v, 0.0);
     TF_VL(m, delta_v);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, m, BV_VLIST_LINE_MOVE);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, m, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, m, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, m, BV_VLIST_LINE_DRAW);
 
     /* The exterior rectangle */
     VSET(delta_v, -TF_X, -TF_Y, 0.0);
@@ -251,33 +251,33 @@ predictor_frame(struct mged_state *s)
     VCROSS(norm, right, up);
     VUNITIZE(norm);
 
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, norm, BV_VLIST_POLY_START);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mA, BV_VLIST_POLY_MOVE);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mB, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mF, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mE, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mA, BV_VLIST_POLY_END);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, norm, BV_VLIST_POLY_START);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mA, BV_VLIST_POLY_MOVE);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mB, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mF, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mE, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mA, BV_VLIST_POLY_END);
 
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, norm, BV_VLIST_POLY_START);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mE, BV_VLIST_POLY_MOVE);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mI, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mL, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mH, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mE, BV_VLIST_POLY_END);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, norm, BV_VLIST_POLY_START);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mE, BV_VLIST_POLY_MOVE);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mI, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mL, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mH, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mE, BV_VLIST_POLY_END);
 
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, norm, BV_VLIST_POLY_START);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mH, BV_VLIST_POLY_MOVE);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mG, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mC, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mD, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mH, BV_VLIST_POLY_END);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, norm, BV_VLIST_POLY_START);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mH, BV_VLIST_POLY_MOVE);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mG, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mC, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mD, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mH, BV_VLIST_POLY_END);
 
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, norm, BV_VLIST_POLY_START);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mJ, BV_VLIST_POLY_MOVE);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mF, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mG, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mK, BV_VLIST_POLY_DRAW);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist, mJ, BV_VLIST_POLY_END);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, norm, BV_VLIST_POLY_START);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mJ, BV_VLIST_POLY_MOVE);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mF, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mG, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mK, BV_VLIST_POLY_DRAW);
+    BV_ADD_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist, mJ, BV_VLIST_POLY_END);
 
     push_trail(&s->mged_curr_dm->dm_trails[0], mA);
     push_trail(&s->mged_curr_dm->dm_trails[1], mB);
@@ -290,13 +290,13 @@ predictor_frame(struct mged_state *s)
     push_trail(&s->mged_curr_dm->dm_trails[7], mH);
 
     /* Draw the trails */
-    poly_trail(&trail, &s->mged_curr_dm->dm_trails[0], &s->mged_curr_dm->dm_trails[4]);
+    poly_trail(s, &trail, &s->mged_curr_dm->dm_trails[0], &s->mged_curr_dm->dm_trails[4]);
     BU_LIST_APPEND_LIST(&s->mged_curr_dm->dm_p_vlist, &trail);
-    poly_trail(&trail, &s->mged_curr_dm->dm_trails[1], &s->mged_curr_dm->dm_trails[5]);
+    poly_trail(s, &trail, &s->mged_curr_dm->dm_trails[1], &s->mged_curr_dm->dm_trails[5]);
     BU_LIST_APPEND_LIST(&s->mged_curr_dm->dm_p_vlist, &trail);
-    poly_trail(&trail, &s->mged_curr_dm->dm_trails[6], &s->mged_curr_dm->dm_trails[2]);
+    poly_trail(s, &trail, &s->mged_curr_dm->dm_trails[6], &s->mged_curr_dm->dm_trails[2]);
     BU_LIST_APPEND_LIST(&s->mged_curr_dm->dm_p_vlist, &trail);
-    poly_trail(&trail, &s->mged_curr_dm->dm_trails[7], &s->mged_curr_dm->dm_trails[3]);
+    poly_trail(s, &trail, &s->mged_curr_dm->dm_trails[7], &s->mged_curr_dm->dm_trails[3]);
     BU_LIST_APPEND_LIST(&s->mged_curr_dm->dm_p_vlist, &trail);
 
     /* Done */

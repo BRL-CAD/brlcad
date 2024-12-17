@@ -169,6 +169,7 @@ struct mged_state {
     /* Display related */
     struct mged_dm *mged_curr_dm;
     char *dpy_string;
+    struct bu_list *vlfree;
 };
 extern struct mged_state *MGED_STATE;
 

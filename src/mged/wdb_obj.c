@@ -737,6 +737,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     char count_str[32];
     fastf_t tol_coll;
     fastf_t min_angle;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -801,7 +802,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     NMG_CK_MODEL(m);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic, &RTG.rtg_vlfree);
+    nmg_face_tabulate(&faces, &m->magic, vlfree);
     for (BU_PTBL_FOR (fp, (struct face *), &faces)) {
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
@@ -813,9 +814,9 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     bu_ptbl_free(&faces);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+    nmg_triangulate_model(m, vlfree, &wdbp->wdb_tol);
 
-    count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
+    count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, vlfree);
 
     dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
