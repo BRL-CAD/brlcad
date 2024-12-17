@@ -123,6 +123,7 @@ extern "C" int
 rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(v), fastf_t UNUSED(s_size))
 {
     struct rt_bot_internal *bot;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     RT_CK_DB_INTERNAL(ip);
     BU_CK_LIST_HEAD(vhead);
     bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -298,16 +299,16 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     for (unsigned int j = 0; j < bot->num_faces; j++) {
 	if (vert_edge_status[bot->faces[j*3+0]] &&  vert_edge_status[bot->faces[j*3+1]]) {
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_DRAW);
 	}
         if (vert_edge_status[bot->faces[j*3+1]] &&  vert_edge_status[bot->faces[j*3+2]]) {
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_DRAW);
 	}
 	if (vert_edge_status[bot->faces[j*3+2]] &&  vert_edge_status[bot->faces[j*3+0]]) {
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_DRAW);
 	}
     }
 

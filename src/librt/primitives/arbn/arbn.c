@@ -602,6 +602,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     size_t max_edge_count; /* maximum number of edges for any face */
     struct vertex **verts;	/* Array of pointers to vertex structs */
     struct vertex ***loop_verts;	/* Array of pointers to vertex structs to pass to nmg_cmface */
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
@@ -811,9 +812,9 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     bu_free((char *)fu, "rt_arbn_tess: fu");
 
-    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
+    nmg_fix_normals(s, vlfree, tol);
 
-    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&s->l.magic, vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);

@@ -1121,6 +1121,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **vfront, **vback, **vtemp, *vertlist[4];
     vect_t *norms;
     fastf_t r_sq_over_b;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
@@ -1219,12 +1220,12 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Front face topology.  Verts are considered to go CCW */
     outfaceuses[0] = nmg_cface(s, vfront, n);
 
-    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic,&RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, vlfree);
 
     /* Back face topology.  Verts must go in opposite dir (CW) */
     outfaceuses[1] = nmg_cface(s, vtemp, n);
 
-    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic,&RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic, vlfree);
 
     for (i=0; i<n; i++) vback[i] = vtemp[n-1-i];
 
@@ -1244,7 +1245,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	outfaceuses[2+i] = nmg_cface(s, vertlist, 4);
     }
 
-    (void)nmg_mark_edges_real(&outfaceuses[n+1]->l.magic,&RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&outfaceuses[n+1]->l.magic, vlfree);
 
     for (i=0; i<n; i++) {
 	NMG_CK_VERTEX(vfront[i]);
@@ -1318,7 +1319,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, n+2, &RTG.rtg_vlfree, tol);
+    nmg_gluefaces(outfaceuses, n+2, vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);

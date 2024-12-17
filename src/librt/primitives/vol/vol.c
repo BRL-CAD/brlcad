@@ -1274,6 +1274,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu;
     struct model *m_tmp;
     struct nmgregion *r_tmp;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
@@ -1473,10 +1474,10 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(r_tmp, tol);
 
     /* fuse model */
-    nmg_model_fuse(m_tmp, &RTG.rtg_vlfree, tol);
+    nmg_model_fuse(m_tmp, vlfree, tol);
 
     /* simplify shell */
-    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     /* kill snakes */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -1488,12 +1489,12 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    continue;
 
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
-	    (void)nmg_kill_snakes(lu,&RTG.rtg_vlfree);
+	    (void)nmg_kill_snakes(lu, vlfree);
     }
 
-    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l),&RTG.rtg_vlfree);
+    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l), vlfree);
 
-    (void)nmg_mark_edges_real((uint32_t *)&s->l,&RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real((uint32_t *)&s->l, vlfree);
 
     nmg_merge_models(m, m_tmp);
     *r = r_tmp;

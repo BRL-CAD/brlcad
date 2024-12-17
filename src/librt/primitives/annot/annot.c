@@ -142,7 +142,7 @@ ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
 
 
 static void
-ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* height)
+ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* height, struct bu_list *vlfree)
 {
     point_t bmin, bmax;
     struct bu_list vhead;
@@ -151,7 +151,7 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
-    bv_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], tsg->txt_size, tsg->txt_rot_angle);
+    bv_vlist_2string(&vhead, vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], tsg->txt_size, tsg->txt_rot_angle);
     bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL);
 
     *length = bmax[0] - ref_pt[0];
@@ -160,13 +160,13 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
 
 
 static int
-ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
+ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip, struct bu_list *vlfree)
 {
     point2d_t pt = V2INIT_ZERO;
     fastf_t length = 0;
     fastf_t height = 0;
 
-    ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height);
+    ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height, vlfree);
 
     if (tsg->rel_pos == RT_TXT_POS_BL) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
@@ -451,9 +451,9 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		ret++;
 		break;
 	    }
-	    ant_pos_adjs(tsg, annot_ip);
+	    ant_pos_adjs(tsg, annot_ip, vlfree);
 	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
-	    bv_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], tsg->txt_size, tsg->txt_rot_angle);
+	    bv_vlist_2string(vhead, vlfree, tsg->label.vls_str, pt[0], pt[1], tsg->txt_size, tsg->txt_rot_angle);
 	    break;
 	case CURVE_CARC_MAGIC:
 	    {

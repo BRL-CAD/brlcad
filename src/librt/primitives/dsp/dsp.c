@@ -3480,6 +3480,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     int base_vert_no1;
     int base_vert_no2;
     int has_holes = 0;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     if (RT_G_DEBUG & RT_DEBUG_HF)
 	bu_log("rt_dsp_tess()\n");
@@ -3945,13 +3946,13 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&s->l.magic, vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* sanity check */
-    nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, tol);
+    nmg_make_faces_within_tol(s, vlfree, tol);
 
     return 0;
 }

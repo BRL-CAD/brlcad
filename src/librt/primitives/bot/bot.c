@@ -1850,6 +1850,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct shell *s;
     struct vertex **verts;
     size_t i;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -1942,7 +1943,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if (!(*corners[2])->vg_p)
 	    nmg_vertex_gv(*(corners[2]), pt[2]);
 
-	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree))
+	if (nmg_calc_face_g(fu, vlfree))
 	    nmg_kfu(fu);
 	else if (bot_ip->mode == RT_BOT_SURFACE) {
 	    struct vertex **tmp;
@@ -1953,18 +1954,18 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL)
 		bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
 	    else
-		nmg_calc_face_g(fu,&RTG.rtg_vlfree);
+		nmg_calc_face_g(fu, vlfree);
 	}
     }
 
     bu_free(verts, "rt_bot_tess *verts[]");
 
-    nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    nmg_mark_edges_real(&s->l.magic, vlfree);
 
     nmg_region_a(*r, tol);
 
     if (bot_ip->mode == RT_BOT_SOLID && bot_ip->orientation == RT_BOT_UNORIENTED)
-	nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
+	nmg_fix_normals(s, vlfree, tol);
 
     return 0;
 }

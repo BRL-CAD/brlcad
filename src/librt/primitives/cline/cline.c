@@ -540,6 +540,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     struct rt_cline_internal *cline_ip;
     struct shell *s;
     vect_t v1, v2;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
@@ -781,7 +782,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
-	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	if (nmg_calc_face_g(fu,vlfree)) {
 	    bu_log("rt_tess_cline: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
 	    return -1;

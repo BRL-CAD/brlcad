@@ -3029,6 +3029,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct directory *dp, struct 
     if (!vhead || dp == RT_DIR_NULL || !ip || !ttol || !tol)
 	return -1;
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     struct rt_brep_internal* bi;
     const char *solid_name =  dp->d_namep;
     ON_wString wstr;
@@ -3041,7 +3042,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct directory *dp, struct 
 
     ON_Brep* brep = bi->brep;
 
-    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, &RTG.rtg_vlfree, -1, 0, -1)) {
+    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, vlfree, -1, 0, -1)) {
 	return -1;
     }
     return 0;

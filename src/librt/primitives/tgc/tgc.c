@@ -1892,6 +1892,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct bu_ptbl verts;		/* table of vertices used for top and bottom faces */
     struct bu_ptbl faces;		/* table of faceuses for nmg_gluefaces */
     struct vertex **v[3];		/* array for making triangular faces */
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     size_t i;
 
@@ -2388,7 +2389,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
-	if (nmg_calc_face_g(fu, &RTG.rtg_vlfree)) {
+	if (nmg_calc_face_g(fu, vlfree)) {
 	    bu_log("rt_tess_tgc: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
 	    return -1;
@@ -2505,7 +2506,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(*r, tol);
 
     /* glue faces together */
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), vlfree, tol);
     bu_ptbl_free(&faces);
 
     return 0;
