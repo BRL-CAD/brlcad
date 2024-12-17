@@ -249,7 +249,6 @@ build_rtip(long int test_num, const char *gfile, const char *objname, int stage_
 	}
 	rt_prep(rtip);
     } else {
-	RTG.rtg_parallel =  (ncpus > 1) ? 1 : 0;
 	if (rt_gettrees(rtip, 1, (const char **)&objname, ncpus) < 0) {
 	    bu_exit(1, "Test %ld: rt_getrees in stage %d failed\n", test_num, stage_num);
 	}

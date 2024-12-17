@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
 	    npsw = avail_cpus;
 	}
 
-	RTG.rtg_parallel = (npsw == 1) ? 0 : 1;
+	rtg_parallel = (npsw == 1) ? 0 : 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
 	    fprintf(stderr, "Planning to run with %zd processor(s)\n", npsw);
     }

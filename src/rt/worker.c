@@ -591,7 +591,7 @@ do_run(int a, int b)
     cur_pixel = a;
     last_pixel = b;
 
-    if (!RTG.rtg_parallel) {
+    if (!rtg_parallel) {
 	/*
 	 * SERIAL case -- one CPU does all the work.
 	 */

@@ -142,6 +142,8 @@ int use_air = 0;                        /* whether librt should handle air */
 
 int save_overlaps = 0;                  /* flag for setting rti_save_overlaps */
 
+int rtg_parallel = 0;
+
 /***** end variables shared with do.c *****/
 
 

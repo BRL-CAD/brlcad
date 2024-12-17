@@ -80,9 +80,9 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	 * XXX this hack-around causes a need for more careful
 	 * semaphore acquisition since it may block
 	 */
-	if (RTG.rtg_parallel)
+	if (rtg_parallel)
 	{
-		RTG.rtg_parallel = 0;
+		rtg_parallel = 0;
 		bu_log("rtdepth: Can't do parallel yet, using one CPU\n");
 	}
 
@@ -127,7 +127,7 @@ view_eol(struct application *ap)
 	}
 	else if (outfp != NULL)
 	{
-		if (RTG.rtg_parallel)
+		if (rtg_parallel)
 		{
 			bu_semaphore_acquire(BU_SEM_SYSCALL);
 		}
@@ -136,19 +136,19 @@ view_eol(struct application *ap)
 		{
 			perror("fwrite");
 		}
-		if (RTG.rtg_parallel)
+		if (rtg_parallel)
 		{
 			bu_semaphore_release(BU_SEM_SYSCALL);
 		}
 	}
 	if (fbp != FB_NULL)
 	{
-		if (RTG.rtg_parallel)
+		if (rtg_parallel)
 		{
 			bu_semaphore_acquire(BU_SEM_SYSCALL);
 		}
 		fb_write(fbp, 0, ap->a_y, scanbuf, width);
-		if (RTG.rtg_parallel)
+		if (rtg_parallel)
 		{
 			bu_semaphore_release(BU_SEM_SYSCALL);
 		}

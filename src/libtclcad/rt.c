@@ -712,10 +712,6 @@ Rt_Init(Tcl_Interp *interp)
 {
     /*XXX how much will this break? */
     if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
-	if (bu_avail_cpus() > 1) {
-	    RTG.rtg_parallel = 1;
-	}
-
 	/* initialize RT's global state */
 	BU_LIST_INIT(&RTG.rtg_vlfree);
 	if (rt_uniresource.re_magic != RESOURCE_MAGIC) {

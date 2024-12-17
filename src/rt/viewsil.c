@@ -70,8 +70,8 @@ int	raymiss(register struct application *ap);
 int
 view_init(register struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
-    if (RTG.rtg_parallel) {
-	RTG.rtg_parallel = 0;
+    if (rtg_parallel) {
+	rtg_parallel = 0;
 	bu_log("rtsil: Can't do parallel yet, using one CPU\n");
     }
     scanline = (unsigned char *)bu_malloc( width, "scanline buffer" );

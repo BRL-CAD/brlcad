@@ -102,6 +102,7 @@ extern int report_progress;		/* !0 = user wants progress report */
 extern int save_overlaps;		/* flag for setting rti_save_overlaps */
 extern struct application APP;
 extern struct icv_image *bif;
+extern int rtg_parallel;		/* flag for parallel raytracing */
 
 /***** variables shared with worker() ******/
 extern unsigned char *scanbuf;		/* pixels for REMRT */

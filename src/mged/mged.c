@@ -1851,14 +1851,6 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
-    /* If multiple processors might be used, initialize for it.
-     * Do not run any commands before here.
-     * Do not use bu_log() or bu_malloc() before here.
-     */
-    if (bu_avail_cpus() > 1) {
-	RTG.rtg_parallel = 1;
-    }
-
 #if defined(HAVE_TK)
     if (dm_have_graphics()) {
 	s->classic_mged = 0;
