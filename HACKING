@@ -397,14 +397,17 @@ should be POSIX-compliant Bourne Shell Script.  The build system uses
 the CMake build tool.  An initial implementation of a BRL-CAD Geometry
 Server is written in PHP.
 
-With release 7.28, BRL-CAD intends to conform strictly with the 2011
-ANSI/ISO standards for C and C++ language compilation
-(ISO/IEC 9899:2011, i.e. C11 and ISO/IEC 14882:2011, i.e. C++11).
+With release 7.38, BRL-CAD intends to conform strictly with the
+following ANSI/ISO standards for C and C++ language compilation:
+
+C  : ISO/IEC  9899:2011, i.e. C11
+C++: ISO/IEC 14882:2017, i.e. C++17
+
 Support for use of necessary non-standard system facilities is
 handled by build system declarations and preprocessor defines driven
 by build configuration tests.  The working feature set for normal
-development should be widely supported C++11 features and the subset
-of C11 that is also valid (and widely supported) C++11.
+development should be widely supported C++17 features and the subset
+of C11 that is also valid (and widely supported) C++17.
 
 C++ is used as an implementation language within libraries, but there
 are no public C++ APIs in use outside of OpenNURBS.  For new work,
