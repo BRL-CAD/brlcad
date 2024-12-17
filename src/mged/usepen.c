@@ -54,11 +54,11 @@ illuminate(struct mged_state *s, int y) {
     struct bv_scene_obj *sp;
 
     /*
-     * Divide the mouse into 'mged_curr_dm->dm_ndrawn' VERTICAL
+     * Divide the mouse into 's->mged_curr_dm->dm_ndrawn' VERTICAL
      * zones, and use the zone number as a sequential position among
      * solids which are drawn.
      */
-    count = ((fastf_t)y + GED_MAX) * mged_curr_dm->dm_ndrawn / GED_RANGE;
+    count = ((fastf_t)y + GED_MAX) * s->mged_curr_dm->dm_ndrawn / GED_RANGE;
 
     gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
@@ -109,7 +109,7 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (!(mged_curr_dm->dm_ndrawn)) {
+    if (!(s->mged_curr_dm->dm_ndrawn)) {
 	return TCL_OK;
     } else if (GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK  && GEOM_EDIT_STATE != ST_O_PATH) {
 	return TCL_OK;
@@ -181,7 +181,7 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
  * which applies the change with-respect-to the view center.
  */
 void
-wrt_view(mat_t out, const mat_t change, const mat_t in)
+wrt_view(struct mged_state *s, mat_t out, const mat_t change, const mat_t in)
 {
     static mat_t t1, t2;
 

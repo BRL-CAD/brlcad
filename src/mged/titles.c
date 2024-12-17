@@ -176,9 +176,10 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
  */
 void
 screen_vls(
-    int xbase,
-    int ybase,
-    struct bu_vls *vp)
+	struct mged_state *s,
+	int xbase,
+	int ybase,
+	struct bu_vls *vp)
 {
     char *start;
     char *end;
@@ -306,7 +307,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     }
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
-    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_center_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_center_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     tmp_val = view_state->vs_gvp->gv_size*s->dbip->dbi_base2local;
@@ -315,7 +316,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     } else {
 	sprintf(size, "sz=%.3g", tmp_val);
     }
-    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_size_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_size_name),
 	       size, TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
@@ -325,7 +326,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f", V3ARGS(view_state->vs_gvp->gv_aet));
-    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_aet_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_aet_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     sprintf(ang_x, "%.2f", view_state->vs_rate_rotate[X]);
@@ -334,7 +335,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "ang=(%s %s %s)", ang_x, ang_y, ang_z);
-    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_ang_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_ang_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
@@ -458,7 +459,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    /*
 	     * The top of the menu (if any) begins at the Y value specified.
 	     */
-	    mmenu_display(y);
+	    mmenu_display(s, y);
 
 	    /* print parameter locations on screen */
 	    if (GEOM_EDIT_STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
@@ -496,9 +497,9 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	 */
 	/* create_text_overlay(s, &vls); */
 	if (mged_variables->mv_orig_gui) {
-	    screen_vls(SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls);
+	    screen_vls(s, SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls);
 	} else {
-	    screen_vls(x, y, overlay_vls);
+	    screen_vls(s, x, y, overlay_vls);
 	}
 
 	/*
@@ -550,11 +551,11 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    dm_draw_string_2d(DMP, bu_vls_addr(&vls),
 			      GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
 	}
-	Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_adc_name),
+	Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_adc_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	ss_line_not_drawn = 0;
     } else {
-	Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
     if (GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) {
@@ -625,7 +626,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	dm_draw_string_2d(DMP, bu_vls_addr(&vls),
 			  GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
     }
-    Tcl_SetVar(s->interp, bu_vls_addr(&mged_curr_dm->dm_fps_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_fps_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     bu_vls_free(&vls);

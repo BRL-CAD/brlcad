@@ -812,7 +812,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     if (ret)
 	return TCL_ERROR;
 
-    (void)mged_svbase();
+    (void)mged_svbase(s);
     view_state->vs_flag = 1;
 
     return TCL_OK;
@@ -837,7 +837,7 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
     if (!s->gedp->ged_gvp)
 	s->gedp->ged_gvp = view_state->vs_gvp;
-    s->gedp->ged_gvp->dmp = (void *)mged_curr_dm->dm_dmp;
+    s->gedp->ged_gvp->dmp = (void *)s->mged_curr_dm->dm_dmp;
 
     ret = (*ctp->ged_func)(s->gedp, argc, (const char **)argv);
     GED_OUTPUT;
@@ -1546,7 +1546,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     if (s->gedp == GED_NULL)
 	return TCL_OK;
 
-    dml = mged_curr_dm;
+    dml = s->mged_curr_dm;
     s->gedp->ged_gvp = view_state->vs_gvp;
     status = mged_attach(s, "postscript", argc, argv);
     if (status == TCL_ERROR)
@@ -1607,8 +1607,8 @@ f_winset(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	if (pn && BU_STR_EQUAL(argv[1], bu_vls_cstr(pn))) {
 	    set_curr_dm(s, p);
 
-	    if (mged_curr_dm->dm_tie)
-		curr_cmd_list = mged_curr_dm->dm_tie;
+	    if (s->mged_curr_dm->dm_tie)
+		curr_cmd_list = s->mged_curr_dm->dm_tie;
 	    else
 		curr_cmd_list = &head_cmd_list;
 
@@ -1957,7 +1957,7 @@ cmd_blast(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 	return TCL_ERROR;
 
     /* update and resize the views */
-    struct mged_dm *save_m_dmp = mged_curr_dm;
+    struct mged_dm *save_m_dmp = s->mged_curr_dm;
     struct cmd_list *save_cmd_list = curr_cmd_list;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -1967,8 +1967,8 @@ cmd_blast(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 
 	set_curr_dm(s, m_dmp);
 
-	if (mged_curr_dm->dm_tie) {
-	    curr_cmd_list = mged_curr_dm->dm_tie;
+	if (s->mged_curr_dm->dm_tie) {
+	    curr_cmd_list = s->mged_curr_dm->dm_tie;
 	} else {
 	    curr_cmd_list = &head_cmd_list;
 	}
@@ -1993,7 +1993,7 @@ cmd_blast(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 	    const char *av[1] = {"autoview"};
 	    ged_exec_autoview(s->gedp, 1, (const char **)av);
 
-	    (void)mged_svbase();
+	    (void)mged_svbase(s);
 
 	    for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l)) {
 		vrp->vr_scale = view_state->vs_gvp->gv_scale;

@@ -125,11 +125,11 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     // The set_curr_dm logic here appears to be important for Multipane mode -
     // it doesn't do much if only one dm is up, but if the set_curr_dm calls
     // are removed MGED doesn't update the multipane views correctly.
-    save_dm_list = mged_curr_dm;
-    GET_MGED_DM(mged_curr_dm, (unsigned long)eventPtr->xany.window);
+    save_dm_list = s->mged_curr_dm;
+    GET_MGED_DM(s->mged_curr_dm, (unsigned long)eventPtr->xany.window);
 
     /* it's an event for a window that I'm not handling */
-    if (mged_curr_dm == MGED_DM_NULL) {
+    if (s->mged_curr_dm == MGED_DM_NULL) {
 	if (save_dm_list)
 	    MGED_CK_STATE(s);
 	set_curr_dm(s, save_dm_list);
@@ -154,7 +154,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
 	dm_configure_win(DMP, 0);
-	rect_image2view();
+	rect_image2view(s);
 	DMP_dirty = 1;
 	dm_set_dirty(DMP, 1);
 
@@ -279,12 +279,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		rubber_band->rb_width = x - rubber_band->rb_x;
 		rubber_band->rb_height = y - rubber_band->rb_y;
 
-		rect_view2image();
+		rect_view2image(s);
 		/*
 		 * Now go back the other way to reconcile
 		 * differences caused by floating point fuzz.
 		 */
-		rect_image2view();
+		rect_image2view(s);
 
 		{
 		    /* need dummy values for func signature--they are unused in the func */

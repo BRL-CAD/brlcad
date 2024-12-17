@@ -74,9 +74,10 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		    const char *UNUSED(name),
 		    void *UNUSED(base),
 		    const char *UNUSED(value),
-		    void *UNUSED(data))
+		    void *data)
 {
-
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_grid_state == grid_state) {
@@ -126,6 +127,9 @@ set_grid_res(const struct bu_structparse *sdp,
 	     const char *value,
 	     void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
+
     grid_set_dirty_flag(sdp, name, base, value, data);
 
     if (!grid_auto_size)
@@ -342,7 +346,7 @@ snap_view_center_to_grid(struct mged_state *s)
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
-    new_mats();
+    new_mats(s);
 
     VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 
@@ -421,7 +425,7 @@ snap_view_to_grid(struct mged_state *s, fastf_t view_dx, fastf_t view_dy)
 
     VSCALE(model_pt, model_pt, s->dbip->dbi_local2base);
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
-    new_mats();
+    new_mats(s);
 }
 
 

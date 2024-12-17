@@ -59,11 +59,11 @@ dozoom(struct mged_state *s, int which_eye)
 
     /*
      * The vectorThreshold stuff in libdm may turn the
-     * Tcl-crank causing mged_curr_dm to change.
+     * Tcl-crank causing s->mged_curr_dm to change.
      */
-    struct mged_dm *save_dm_list = mged_curr_dm;
+    struct mged_dm *save_dm_list = s->mged_curr_dm;
 
-    mged_curr_dm->dm_ndrawn = 0;
+    s->mged_curr_dm->dm_ndrawn = 0;
     inv_viewsize = view_state->vs_gvp->gv_isize;
 
     /*
@@ -141,10 +141,10 @@ dozoom(struct mged_state *s, int which_eye)
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
-	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-	if (mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
+	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing s->mged_curr_dm to change. */
+	if (s->mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 
-	mged_curr_dm->dm_ndrawn += ndrawn;
+	s->mged_curr_dm->dm_ndrawn += ndrawn;
 
 	/* disable write to depth buffer */
 	dm_set_depth_mask(DMP, 0);
@@ -166,10 +166,10 @@ dozoom(struct mged_state *s, int which_eye)
 
     }
 
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-    if (mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing s->mged_curr_dm to change. */
+    if (s->mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 
-    mged_curr_dm->dm_ndrawn += ndrawn;
+    s->mged_curr_dm->dm_ndrawn += ndrawn;
 
 
     /* draw predictor vlist */
@@ -178,7 +178,7 @@ dozoom(struct mged_state *s, int which_eye)
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	dm_draw_vlist(DMP, (struct bv_vlist *)&mged_curr_dm->dm_p_vlist);
+	dm_draw_vlist(DMP, (struct bv_vlist *)&s->mged_curr_dm->dm_p_vlist);
     }
 
     /*
@@ -206,18 +206,20 @@ dozoom(struct mged_state *s, int which_eye)
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 
-    mged_curr_dm->dm_ndrawn += ndrawn;
+    s->mged_curr_dm->dm_ndrawn += ndrawn;
 
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-    if (mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing s->mged_curr_dm to change. */
+    if (s->mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 }
 
 /*
  * Create Display Lists
  */
 void
-createDLists(struct bu_list *hdlp)
+createDLists(void *data, struct bu_list *hdlp)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct display_list *gdlp;
     struct display_list *next_gdlp;
 
@@ -247,7 +249,7 @@ createDListSolid(void *vlist_ctx, struct bv_scene_obj *sp)
     MGED_CK_STATE(s);
     struct mged_dm *save_dlp;
 
-    save_dlp = mged_curr_dm;
+    save_dlp = s->mged_curr_dm;
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -303,8 +305,10 @@ createDListAll(void *vlist_ctx, struct display_list *gdlp)
  * that support display lists and have them activated.
  */
 void
-freeDListsAll(unsigned int dlist, int range)
+freeDListsAll(void *data, unsigned int dlist, int range)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (dm_get_displaylist(dlp->dm_dmp) &&

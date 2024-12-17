@@ -530,7 +530,7 @@ ged_destroy_vlist_cb(struct ged *gedp, unsigned int i, int j)
 	if (gedp->ged_cbs->ged_destroy_vlist_callback_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_destroy_vlist_callback!\n");
 	}
-	(*gedp->ged_destroy_vlist_callback)(i, j);
+	(*gedp->ged_destroy_vlist_callback)(gedp->vlist_ctx, i, j);
 	gedp->ged_cbs->ged_destroy_vlist_callback_cnt--;
     }
 }

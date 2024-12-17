@@ -192,10 +192,10 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 			if (dlp1->dm_mged_variables->mv_dlist) {
 			    struct mged_dm *save_dlp;
 
-			    save_dlp = mged_curr_dm;
+			    save_dlp = s->mged_curr_dm;
 
 			    set_curr_dm(s, dlp1);
-			    createDLists(s->gedp->ged_gdp->gd_headDisplay);
+			    createDLists(s, s->gedp->ged_gdp->gd_headDisplay);
 
 			    /* restore */
 			    set_curr_dm(s, save_dlp);
@@ -406,7 +406,7 @@ usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2)
 
     /* it doesn't make sense to save display list info */
     if (!--dlp2->dm_dlist_state->dl_rc)
-	bu_free((void *)mged_curr_dm->dm_dlist_state, "usurp_all_resources: _dlist_state");
+	bu_free((void *)MGED_STATE->mged_curr_dm->dm_dlist_state, "usurp_all_resources: _dlist_state");
 }
 
 

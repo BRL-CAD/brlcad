@@ -258,18 +258,18 @@ work:
 		view_state->vs_gvp->gv_scale = scale;
 		MAT_COPY(view_state->vs_gvp->gv_rotation, rot);
 		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
-		new_mats();
+		new_mats(s);
 		/* Second step:  put eye in front */
 		VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
 		MAT4X3PNT(eye_model, view_state->vs_gvp->gv_view2model, xlate);
 		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
-		new_mats();
+		new_mats(s);
 		break;
 	    case 0:
 		view_state->vs_gvp->gv_scale = scale;
 		MAT_IDN(view_state->vs_gvp->gv_rotation);	/* top view */
 		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
-		new_mats();
+		new_mats(s);
 		break;
 	    case 1:
 		/* Adjust center for displaylist devices */
@@ -344,7 +344,7 @@ work:
     }
 
     fclose(fp);
-    (void)mged_svbase();
+    (void)mged_svbase(s);
 
     (void)signal(SIGINT, SIG_IGN);
     return TCL_OK;

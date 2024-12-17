@@ -41,18 +41,14 @@
 
 
 extern void mged_color_soltab(struct mged_state *s);
-extern void set_absolute_tran(void); /* defined in set.c */
-extern void set_absolute_view_tran(void); /* defined in set.c */
-extern void set_absolute_model_tran(void); /* defined in set.c */
 
 void solid_list_callback(struct mged_state *s);
-void knob_update_rate_vars(void);
-int mged_svbase(void);
-int mged_vrot(char origin, fastf_t *newrot);
+void knob_update_rate_vars(struct mged_state *s);
+int mged_vrot(struct mged_state *s, char origin, fastf_t *newrot);
 int mged_zoom(struct mged_state *s, double val);
 void mged_center(struct mged_state *s, point_t center);
 static void abs_zoom(struct mged_state *s);
-void usejoy(double xangle, double yangle, double zangle);
+void usejoy(struct mged_state *s, double xangle, double yangle, double zangle);
 
 int knob_rot(struct mged_state *s, vect_t rvec, char origin, int mf, int vf, int ef);
 int knob_tran(struct mged_state *s, vect_t tvec, int model_flag, int view_flag, int edit_flag);
@@ -61,7 +57,7 @@ int mged_etran(struct mged_state *s, char coords, vect_t tvec);
 int mged_mtran(struct mged_state *s, const vect_t tvec);
 int mged_otran(struct mged_state *s, const vect_t tvec);
 int mged_vtran(struct mged_state *s, const vect_t tvec);
-int mged_vrot_xyz(char origin, char coords, vect_t rvec);
+int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
 
 
 extern vect_t curr_e_axes_pos;
@@ -142,7 +138,7 @@ cmd_center(ClientData clientData,
     }
 
     if (argc > 1) {
-	(void)mged_svbase();
+	(void)mged_svbase(s);
 	view_state->vs_flag = 1;
     }
 
@@ -172,7 +168,7 @@ mged_center(struct mged_state *s, point_t center)
     av[3] = zbuf;
     av[4] = (char *)0;
     ged_exec_center(s->gedp, 4, (const char **)av);
-    (void)mged_svbase();
+    (void)mged_svbase(s);
     view_state->vs_flag = 1;
 }
 
@@ -208,7 +204,7 @@ cmd_size(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    || !ZERO(view_state->vs_absolute_tran[Y])
 	    || !ZERO(view_state->vs_absolute_tran[Z]))
 	{
-	    set_absolute_tran();
+	    set_absolute_tran(s);
 	}
 
 	if (argc > 1) {
@@ -225,7 +221,7 @@ cmd_size(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 /*
  * Reset view size and view center so that all solids in the solid table
  * are in view.
- * Caller is responsible for calling new_mats().
+ * Caller is responsible for calling new_mats(s).
  */
 void
 size_reset(struct mged_state *s)
@@ -435,7 +431,7 @@ edit_com(struct mged_state *s,
 
     /* update and resize the views */
 
-    save_m_dmp = mged_curr_dm;
+    save_m_dmp = s->mged_curr_dm;
     save_cmd_list = curr_cmd_list;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -443,8 +439,8 @@ edit_com(struct mged_state *s,
 
 	set_curr_dm(s, m_dmp);
 
-	if (mged_curr_dm->dm_tie) {
-	    curr_cmd_list = mged_curr_dm->dm_tie;
+	if (s->mged_curr_dm->dm_tie) {
+	    curr_cmd_list = s->mged_curr_dm->dm_tie;
 	} else {
 	    curr_cmd_list = &head_cmd_list;
 	}
@@ -473,7 +469,7 @@ edit_com(struct mged_state *s,
 	    av[1] = (char *)0;
 	    ged_exec_autoview(s->gedp, 1, (const char **)av);
 
-	    (void)mged_svbase();
+	    (void)mged_svbase(s);
 
 	    for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l)) {
 		vrp->vr_scale = view_state->vs_gvp->gv_scale;
@@ -512,7 +508,7 @@ cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *ar
 	return TCL_OK;
     }
 
-    save_m_dmp = mged_curr_dm;
+    save_m_dmp = s->mged_curr_dm;
     save_cmd_list = curr_cmd_list;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -520,8 +516,8 @@ cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *ar
 
 	set_curr_dm(s, m_dmp);
 
-	if (mged_curr_dm->dm_tie) {
-	    curr_cmd_list = mged_curr_dm->dm_tie;
+	if (s->mged_curr_dm->dm_tie) {
+	    curr_cmd_list = s->mged_curr_dm->dm_tie;
 	} else {
 	    curr_cmd_list = &head_cmd_list;
 	}
@@ -544,7 +540,7 @@ cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *ar
 	    ged_exec_autoview(s->gedp, ac, (const char **)av);
 	    view_state->vs_flag = 1;
 	}
-	(void)mged_svbase();
+	(void)mged_svbase(s);
 
 	for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l)) {
 	    vrp->vr_scale = view_state->vs_gvp->gv_scale;
@@ -582,8 +578,11 @@ solid_list_callback(struct mged_state *s)
  * Display-manager specific "hardware register" debugging.
  */
 int
-f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     static int regdebug = 0;
     static char debug_str[10];
 
@@ -621,7 +620,7 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
-    void (*tmp_callback)(unsigned int, int) = s->gedp->ged_destroy_vlist_callback;
+    void (*tmp_callback)(void *, unsigned int, int) = s->gedp->ged_destroy_vlist_callback;
     const char *av[1] = {"zap"};
 
     CHECK_DBI_NULL;
@@ -754,8 +753,11 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 int
-f_refresh(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
+f_refresh(ClientData clientData, Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1103,7 +1105,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 
 static void
-check_nonzero_rates(void)
+check_nonzero_rates(struct mged_state *s)
 {
     if (!ZERO(view_state->vs_rate_model_rotate[X])
 	|| !ZERO(view_state->vs_rate_model_rotate[Y])
@@ -1203,7 +1205,7 @@ check_nonzero_rates(void)
 
 
 void
-knob_update_rate_vars(void)
+knob_update_rate_vars(struct mged_state *s)
 {
     if (!mged_variables->mv_rateknobs) {
 	return;
@@ -1212,7 +1214,7 @@ knob_update_rate_vars(void)
 
 
 int
-mged_print_knobvals(Tcl_Interp *interp)
+mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1356,7 +1358,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* print the current values */
     if (argc == 1) {
-	return mged_print_knobvals(interp);
+	return mged_print_knobvals(s, interp);
     }
 
     VSETALL(tvec, 0.0);
@@ -1378,11 +1380,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    VSETALL(edit_rate_model_tran, 0.0);
 	    VSETALL(edit_rate_view_tran, 0.0);
 	    edit_rate_scale = 0.0;
-	    knob_update_rate_vars();
+	    knob_update_rate_vars(s);
 
 	    Tcl_Eval(interp, "adc reset");
 
-	    (void)mged_svbase();
+	    (void)mged_svbase(s);
 	} else if (BU_STR_EQUAL(cmd, "calibrate")) {
 	    VSETALL(view_state->vs_absolute_tran, 0.0);
 	} else {
@@ -1406,20 +1408,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					edit_rate_model_rotate[X] += f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = mged_curr_dm;
+					edit_rate_mr_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					edit_rate_object_rotate[X] += f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = mged_curr_dm;
+					edit_rate_or_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_rotate[X] += f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = mged_curr_dm;
+					edit_rate_vr_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1440,20 +1442,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					edit_rate_model_rotate[X] = f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = mged_curr_dm;
+					edit_rate_mr_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					edit_rate_object_rotate[X] = f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = mged_curr_dm;
+					edit_rate_or_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_rotate[X] = f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = mged_curr_dm;
+					edit_rate_vr_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1478,20 +1480,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					edit_rate_model_rotate[Y] += f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = mged_curr_dm;
+					edit_rate_mr_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					edit_rate_object_rotate[Y] += f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = mged_curr_dm;
+					edit_rate_or_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_rotate[Y] += f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = mged_curr_dm;
+					edit_rate_vr_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1511,20 +1513,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					edit_rate_model_rotate[Y] = f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = mged_curr_dm;
+					edit_rate_mr_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					edit_rate_object_rotate[Y] = f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = mged_curr_dm;
+					edit_rate_or_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_rotate[Y] = f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = mged_curr_dm;
+					edit_rate_vr_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1548,20 +1550,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					edit_rate_model_rotate[Z] += f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = mged_curr_dm;
+					edit_rate_mr_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					edit_rate_object_rotate[Z] += f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = mged_curr_dm;
+					edit_rate_or_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_rotate[Z] += f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = mged_curr_dm;
+					edit_rate_vr_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1581,20 +1583,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					edit_rate_model_rotate[Z] = f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = mged_curr_dm;
+					edit_rate_mr_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					edit_rate_object_rotate[Z] = f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = mged_curr_dm;
+					edit_rate_or_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_rotate[Z] = f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = mged_curr_dm;
+					edit_rate_vr_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1618,13 +1620,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					edit_rate_model_tran[X] += f;
-					edit_rate_mt_dm_list = mged_curr_dm;
+					edit_rate_mt_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_tran[X] += f;
-					edit_rate_vt_dm_list = mged_curr_dm;
+					edit_rate_vt_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1642,13 +1644,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					edit_rate_model_tran[X] = f;
-					edit_rate_mt_dm_list = mged_curr_dm;
+					edit_rate_mt_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_tran[X] = f;
-					edit_rate_vt_dm_list = mged_curr_dm;
+					edit_rate_vt_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1670,13 +1672,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					edit_rate_model_tran[Y] += f;
-					edit_rate_mt_dm_list = mged_curr_dm;
+					edit_rate_mt_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_tran[Y] += f;
-					edit_rate_vt_dm_list = mged_curr_dm;
+					edit_rate_vt_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1694,13 +1696,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					edit_rate_model_tran[Y] = f;
-					edit_rate_mt_dm_list = mged_curr_dm;
+					edit_rate_mt_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_tran[Y] = f;
-					edit_rate_vt_dm_list = mged_curr_dm;
+					edit_rate_vt_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1722,13 +1724,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					edit_rate_model_tran[Z] += f;
-					edit_rate_mt_dm_list = mged_curr_dm;
+					edit_rate_mt_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_tran[Z] += f;
-					edit_rate_vt_dm_list = mged_curr_dm;
+					edit_rate_vt_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -1746,13 +1748,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					edit_rate_model_tran[Z] = f;
-					edit_rate_mt_dm_list = mged_curr_dm;
+					edit_rate_mt_dm_list = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					edit_rate_view_tran[Z] = f;
-					edit_rate_vt_dm_list = mged_curr_dm;
+					edit_rate_vt_dm_list = s->mged_curr_dm;
 
 					break;
 				}
@@ -2386,7 +2388,7 @@ usage:
 	(void)knob_rot(s, rvec, origin, model_flag, view_flag, edit_flag);
     }
 
-    check_nonzero_rates();
+    check_nonzero_rates(s);
     return TCL_OK;
 }
 
@@ -2425,11 +2427,11 @@ knob_rot(struct mged_state *s,
 			 !view_flag && !model_flag) || edit_flag)) {
 	mged_erot_xyz(s, origin, rvec);
     } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	mged_vrot_xyz(origin, 'm', rvec);
+	mged_vrot_xyz(s, origin, 'm', rvec);
     } else if (mged_variables->mv_coords == 'o') {
-	mged_vrot_xyz(origin, 'o', rvec);
+	mged_vrot_xyz(s, origin, 'o', rvec);
     } else {
-	mged_vrot_xyz(origin, 'v', rvec);
+	mged_vrot_xyz(s, origin, 'v', rvec);
     }
 
     return TCL_OK;
@@ -2469,7 +2471,7 @@ abs_zoom(struct mged_state *s)
 	|| !ZERO(view_state->vs_absolute_tran[Y])
 	|| !ZERO(view_state->vs_absolute_tran[Z]))
     {
-	set_absolute_tran();
+	set_absolute_tran(s);
     }
 }
 
@@ -2513,7 +2515,7 @@ mged_zoom(struct mged_state *s, double val)
 	|| !ZERO(view_state->vs_absolute_tran[Y])
 	|| !ZERO(view_state->vs_absolute_tran[Z]))
     {
-	set_absolute_tran();
+	set_absolute_tran(s);
     }
 
     ret = TCL_OK;
@@ -2640,7 +2642,7 @@ cmd_setview(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	|| !ZERO(view_state->vs_absolute_tran[Y])
 	|| !ZERO(view_state->vs_absolute_tran[Z]))
     {
-	set_absolute_tran();
+	set_absolute_tran(s);
     }
 
     view_state->vs_flag = 1;
@@ -2688,14 +2690,14 @@ f_slewview(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     MAT_DELTAS_VEC(delta, diff);
     bn_mat_mul2(delta, view_state->vs_ModelDelta);	/* updates ModelDelta */
 
-    set_absolute_tran();
+    set_absolute_tran(s);
     return TCL_OK;
 }
 
 
 /* set view reference base */
 int
-mged_svbase(void)
+mged_svbase(struct mged_state *s)
 {
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
     view_state->vs_gvp->gv_i_scale = view_state->vs_gvp->gv_scale;
@@ -2712,7 +2714,7 @@ mged_svbase(void)
     view_state->vs_gvp->gv_a_scale = 0.0;
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
-	mged_curr_dm->dm_dirty = 1;
+	s->mged_curr_dm->dm_dirty = 1;
 	dm_set_dirty(DMP, 1);
     }
 
@@ -2721,8 +2723,11 @@ mged_svbase(void)
 
 
 int
-f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     int status;
 
     if (argc < 1 || 1 < argc) {
@@ -2739,7 +2744,7 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    status = mged_svbase();
+    status = mged_svbase(s);
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -2763,7 +2768,7 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
  * Angles are in radians.
  */
 void
-usejoy(double xangle, double yangle, double zangle)
+usejoy(struct mged_state *s, double xangle, double yangle, double zangle)
 {
     mat_t newrot;		/* NEW rot matrix, from joystick */
 
@@ -2778,9 +2783,9 @@ usejoy(double xangle, double yangle, double zangle)
     {
 	mat_t newinv;
 	bn_mat_inv(newinv, newrot);
-	wrt_view(view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);	/* Updates ModelDelta */
+	wrt_view(s, view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);	/* Updates ModelDelta */
     }
-    new_mats();
+    new_mats(s);
 }
 
 
@@ -2821,7 +2826,7 @@ setview(struct mged_state *s,
 	|| !ZERO(view_state->vs_absolute_tran[Y])
 	|| !ZERO(view_state->vs_absolute_tran[Z]))
     {
-	set_absolute_tran();
+	set_absolute_tran(s);
     }
 
     view_state->vs_flag = 1;
@@ -2869,7 +2874,7 @@ slewview(struct mged_state *s, vect_t view_pos)
     MAT_DELTAS_VEC(delta, diff);
     bn_mat_mul2(delta, view_state->vs_ModelDelta);	/* updates ModelDelta */
 
-    set_absolute_tran();
+    set_absolute_tran(s);
 
     view_state->vs_flag = 1;
 }
@@ -2948,8 +2953,11 @@ view_ring_destroy(struct mged_dm *dlp)
  *
  */
 int
-f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     int n;
     struct view_ring *vrp;
     struct view_ring *lv;
@@ -2989,7 +2997,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
 	view_state->vs_last_view = view_state->vs_current_view;
 	view_state->vs_current_view = vrp;
-	(void)mged_svbase();
+	(void)mged_svbase(s);
 
 	return TCL_OK;
     }
@@ -3028,8 +3036,8 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	MAT_COPY(view_state->vs_gvp->gv_center, view_state->vs_current_view->vr_tvc_mat);
 	view_state->vs_gvp->gv_scale = view_state->vs_current_view->vr_scale;
 
-	new_mats();
-	(void)mged_svbase();
+	new_mats(s);
+	(void)mged_svbase(s);
 
 	return TCL_OK;
     }
@@ -3068,8 +3076,8 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	MAT_COPY(view_state->vs_gvp->gv_center, view_state->vs_current_view->vr_tvc_mat);
 	view_state->vs_gvp->gv_scale = view_state->vs_current_view->vr_scale;
 
-	new_mats();
-	(void)mged_svbase();
+	new_mats(s);
+	(void)mged_svbase(s);
 
 	return TCL_OK;
     }
@@ -3100,8 +3108,8 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	MAT_COPY(view_state->vs_gvp->gv_center, view_state->vs_current_view->vr_tvc_mat);
 	view_state->vs_gvp->gv_scale = view_state->vs_current_view->vr_scale;
 
-	new_mats();
-	(void)mged_svbase();
+	new_mats(s);
+	(void)mged_svbase(s);
 
 	return TCL_OK;
     }
@@ -3147,8 +3155,8 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	    MAT_COPY(view_state->vs_gvp->gv_rotation, view_state->vs_current_view->vr_rot_mat);
 	    MAT_COPY(view_state->vs_gvp->gv_center, view_state->vs_current_view->vr_tvc_mat);
 	    view_state->vs_gvp->gv_scale = view_state->vs_current_view->vr_scale;
-	    new_mats();
-	    (void)mged_svbase();
+	    new_mats(s);
+	    (void)mged_svbase(s);
 	} else if (vrp == view_state->vs_last_view) {
 	    view_state->vs_last_view = view_state->vs_current_view;
 	}
@@ -3202,8 +3210,8 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	MAT_COPY(view_state->vs_gvp->gv_center, view_state->vs_current_view->vr_tvc_mat);
 	view_state->vs_gvp->gv_scale = view_state->vs_current_view->vr_scale;
 
-	new_mats();
-	(void)mged_svbase();
+	new_mats(s);
+	(void)mged_svbase(s);
 
 	return TCL_OK;
     }
@@ -3397,7 +3405,7 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 int
-mged_vrot(char origin, fastf_t *newrot)
+mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
 {
     mat_t newinv;
 
@@ -3438,25 +3446,26 @@ mged_vrot(char origin, fastf_t *newrot)
 
 	/* XXX This should probably capture the translation too */
 	/* XXX I think the only consumer of ModelDelta is the predictor frame */
-	wrt_view(view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);		/* pure rotation */
+	wrt_view(s, view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);		/* pure rotation */
     } else
 	/* Traditional method:  rotate around view center (0, 0, 0) viewspace */
     {
-	wrt_view(view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);
+	wrt_view(s, view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);
     }
 
     /* Update the rotation component of the model2view matrix */
     bn_mat_mul2(newrot, view_state->vs_gvp->gv_rotation); /* pure rotation */
-    new_mats();
+    new_mats(s);
 
-    set_absolute_tran();
+    set_absolute_tran(s);
 
     return TCL_OK;
 }
 
 
 int
-mged_vrot_xyz(char origin,
+mged_vrot_xyz(struct mged_state *s,
+	      char origin,
 	      char coords,
 	      vect_t rvec)
 {
@@ -3483,7 +3492,7 @@ mged_vrot_xyz(char origin,
 	bn_mat_mul(newrot, temp2, temp1);
     } /* else assume already view rotations */
 
-    return mged_vrot(origin, newrot);
+    return mged_vrot(s, origin, newrot);
 }
 
 
@@ -3511,7 +3520,7 @@ cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     view_state->vs_flag = 1;
-    set_absolute_tran();
+    set_absolute_tran(s);
 
     return TCL_OK;
 }
@@ -3692,10 +3701,10 @@ mged_mtran(struct mged_state *s, const vect_t tvec)
     MAT_DELTAS_GET_NEG(vc, view_state->vs_gvp->gv_center);
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, nvc);
-    new_mats();
+    new_mats(s);
 
     /* calculate absolute_tran */
-    set_absolute_view_tran();
+    set_absolute_view_tran(s);
 
     return TCL_OK;
 }
@@ -3716,10 +3725,10 @@ mged_vtran(struct mged_state *s, const vect_t tvec)
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, nvc);
 
-    new_mats();
+    new_mats(s);
 
     /* calculate absolute_model_tran */
-    set_absolute_model_tran();
+    set_absolute_model_tran(s);
 
     return TCL_OK;
 }
@@ -3880,7 +3889,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
 
 int
-mged_vscale(fastf_t sfactor)
+mged_vscale(struct mged_state *s, fastf_t sfactor)
 {
     fastf_t f;
 
@@ -3902,7 +3911,7 @@ mged_vscale(fastf_t sfactor)
 	view_state->vs_gvp->gv_a_scale = 1.0 - f;
     }
 
-    new_mats();
+    new_mats(s);
     return TCL_OK;
 }
 

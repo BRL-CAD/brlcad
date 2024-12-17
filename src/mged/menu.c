@@ -34,8 +34,11 @@
 extern struct menu_item second_menu[], sed_menu[];
 
 int
-cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     int index;
 
     if (argc > 2) {
@@ -87,7 +90,7 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
  * Clear global data
  */
 void
-mmenu_init(void)
+mmenu_init(struct mged_state *s)
 {
     menu_state->ms_flag = 0;
     menu_state->ms_menus[MENU_L1] = NULL;
@@ -132,7 +135,7 @@ mmenu_set_all(struct mged_state *s, int index, struct menu_item *value)
     struct mged_dm *save_dm_list;
 
     save_cmd_list = curr_cmd_list;
-    save_dm_list = mged_curr_dm;
+    save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (p->dm_tie)
@@ -148,7 +151,7 @@ mmenu_set_all(struct mged_state *s, int index, struct menu_item *value)
 
 
 void
-mged_highlight_menu_item(struct menu_item *mptr, int y)
+mged_highlight_menu_item(struct mged_state *s, struct menu_item *mptr, int y)
 {
     switch (mptr->menu_arg) {
 	case BV_RATE_TOGGLE:
@@ -192,7 +195,7 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
  * menu item will be indicated with an arrow.
  */
 void
-mmenu_display(int y_top)
+mmenu_display(struct mged_state *s, int y_top)
 {
     static int menu, item;
     struct menu_item **m;
@@ -218,7 +221,7 @@ mmenu_display(int y_top)
 		 && (mptr->menu_arg == BV_RATE_TOGGLE
 		     || mptr->menu_arg == BV_EDIT_TOGGLE
 		     || mptr->menu_arg == BV_EYEROT_TOGGLE)))
-		mged_highlight_menu_item(mptr, y);
+		mged_highlight_menu_item(s, mptr, y);
 	    else {
 		if (mptr == *m)
 		    dm_set_fg(DMP,

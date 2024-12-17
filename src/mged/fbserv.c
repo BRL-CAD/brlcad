@@ -91,6 +91,7 @@ fbserv_setup_socket(int fd)
 static void
 fbserv_drop_client(int sub)
 {
+    struct mged_state *s = MGED_STATE;
     if (clients[sub].c_pkg != PKC_NULL) {
 	pkg_close(clients[sub].c_pkg);
 #ifdef USE_TCL_CHAN
@@ -116,6 +117,7 @@ fbserv_drop_client(int sub)
 static void
 fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
+    struct mged_state *s = MGED_STATE;
     int i;
 
     /* NOTE: assumes fd's will be small */
@@ -138,7 +140,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 
 found:
     /* save */
-    scdlp = mged_curr_dm;
+    scdlp = s->mged_curr_dm;
 
     set_curr_dm(MGED_STATE, dlp);
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
@@ -223,6 +225,7 @@ static void
 fbserv_new_client(struct pkg_conn *pcp)
 #endif
 {
+    struct mged_state *s = MGED_STATE;
     int i;
 
     if (pcp == PKC_ERROR)
@@ -266,6 +269,7 @@ static void
 fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 #endif
 {
+    struct mged_state *s = MGED_STATE;
     struct mged_dm *scdlp;  /* save current dm_list pointer */
 
 #ifdef USE_TCL_CHAN
@@ -286,7 +290,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 	return;
 
     /* save */
-    scdlp = mged_curr_dm;
+    scdlp = s->mged_curr_dm;
 
     set_curr_dm(MGED_STATE, dlp);
 
@@ -305,6 +309,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 void
 fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
+    struct mged_state *s = MGED_STATE;
     int i;
     int save_port;
 
@@ -312,31 +317,31 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 
     /* Check to see if previously active --- if so then deactivate */
 #ifdef USE_TCL_CHAN
-    if (mged_curr_dm->dm_netchan != NULL) {
+    if (s->mged_curr_dm->dm_netchan != NULL) {
 	/* first drop all clients */
 	for (i = 0; i < MAX_CLIENTS; ++i)
 	    fbserv_drop_client(i);
 
-	ClientData fd = (ClientData)mged_curr_dm->dm_netfd;
-	Tcl_DeleteChannelHandler(mged_curr_dm->dm_netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
+	ClientData fd = (ClientData)s->mged_curr_dm->dm_netfd;
+	Tcl_DeleteChannelHandler(s->mged_curr_dm->dm_netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
 
 	if (dm_interp(DMP) != NULL)
-	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), mged_curr_dm->dm_netchan);
+	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), s->mged_curr_dm->dm_netchan);
 
-	mged_curr_dm->dm_netchan = NULL;
+	s->mged_curr_dm->dm_netchan = NULL;
 
-	closesocket(mged_curr_dm->dm_netfd);
-	mged_curr_dm->dm_netfd = -1;
+	closesocket(s->mged_curr_dm->dm_netfd);
+	s->mged_curr_dm->dm_netfd = -1;
     }
 #else
-    if (mged_curr_dm->dm_netfd >= 0) {
+    if (s->mged_curr_dm->dm_netfd >= 0) {
 	/* first drop all clients */
 	for (i = 0; i < MAX_CLIENTS; ++i)
 	    fbserv_drop_client(i);
 
-	Tcl_DeleteFileHandler(mged_curr_dm->dm_netfd);
-	close(mged_curr_dm->dm_netfd);
-	mged_curr_dm->dm_netfd = -1;
+	Tcl_DeleteFileHandler(s->mged_curr_dm->dm_netfd);
+	close(s->mged_curr_dm->dm_netfd);
+	s->mged_curr_dm->dm_netfd = -1;
     }
 #endif
 
@@ -378,9 +383,9 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	sprintf(hostname, "localhost");
 
 	if (dm_interp(DMP) != NULL)
-	    mged_curr_dm->dm_netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)mged_curr_dm);
+	    s->mged_curr_dm->dm_netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)s->mged_curr_dm);
 
-	if (mged_curr_dm->dm_netchan == NULL)
+	if (s->mged_curr_dm->dm_netchan == NULL)
 	    ++port;
 	else
 	    break;
@@ -391,7 +396,7 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	else
 	    sprintf(portname, "%d", mged_variables->mv_port);
 
-	if ((mged_curr_dm->dm_netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
+	if ((s->mged_curr_dm->dm_netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
 	    ++mged_variables->mv_port;
 	else
 	    break;
@@ -399,17 +404,17 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
     }
 
 #ifdef USE_TCL_CHAN
-    if (mged_curr_dm->dm_netchan == NULL) {
+    if (s->mged_curr_dm->dm_netchan == NULL) {
 	mged_variables->mv_port = save_port;
 	mged_variables->mv_listen = 0;
 	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
 		mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
     } else {
 	mged_variables->mv_port = port;
-	Tcl_GetChannelHandle(mged_curr_dm->dm_netchan, TCL_READABLE, (ClientData *)&mged_curr_dm->dm_netfd);
+	Tcl_GetChannelHandle(s->mged_curr_dm->dm_netchan, TCL_READABLE, (ClientData *)&s->mged_curr_dm->dm_netfd);
     }
 #else
-    if (mged_curr_dm->dm_netfd < 0) {
+    if (s->mged_curr_dm->dm_netfd < 0) {
 	mged_variables->mv_port = save_port;
 	mged_variables->mv_listen = 0;
 	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
@@ -418,8 +423,8 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	// Need to pass a few things to fbserv_new_client_handler. ncdata's
 	// lifetime is governed by the needs of the Tcl file handlers, so it
 	// has to be freed once fbserv_new_client_handler is done.
-	Tcl_CreateFileHandler(mged_curr_dm->dm_netfd, TCL_READABLE,
-		fbserv_new_client_handler, (ClientData)(size_t)mged_curr_dm->dm_netfd);
+	Tcl_CreateFileHandler(s->mged_curr_dm->dm_netfd, TCL_READABLE,
+		fbserv_new_client_handler, (ClientData)(size_t)s->mged_curr_dm->dm_netfd);
     }
 #endif
 }
@@ -445,6 +450,7 @@ fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     char rbuf[5*NET_LONG_LEN+1] = {0};
     int want;
 
@@ -471,6 +477,7 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     char rbuf[NET_LONG_LEN+1] = {0};
 
     /*
@@ -507,6 +514,7 @@ fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -530,6 +538,7 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     size_t num;
     int ret;
@@ -572,6 +581,7 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y, num;
     char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
@@ -600,6 +610,7 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int xmin, ymin;
     int width, height;
     size_t num;
@@ -645,6 +656,7 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     int width, height;
     char rbuf[NET_LONG_LEN+1] = {0};
@@ -677,6 +689,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int xmin, ymin;
     int width, height;
     int num;
@@ -723,6 +736,7 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     int width, height;
     char rbuf[NET_LONG_LEN+1] = {0};
@@ -755,6 +769,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -777,6 +792,7 @@ fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int ret;
     int mode, x, y;
     char rbuf[4*NET_LONG_LEN+1];
@@ -795,6 +811,7 @@ fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int xbits, ybits;
@@ -828,6 +845,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -852,6 +870,7 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -876,6 +895,7 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -897,6 +917,7 @@ fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_view(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1] = {0};
@@ -922,6 +943,7 @@ fb_server_fb_view(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[5*NET_LONG_LEN+1];
@@ -941,6 +963,7 @@ fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int i;
     char rbuf[NET_LONG_LEN+1] = {0};
     ColorMap map;
@@ -968,6 +991,7 @@ fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int i;
     char rbuf[NET_LONG_LEN+1] = {0};
     long ret;
@@ -998,6 +1022,7 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int ret;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -1016,6 +1041,7 @@ fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_poll(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     if (!pcp) return;
     (void)fb_poll(fbp);
     if (buf) (void)free(buf);
@@ -1029,6 +1055,7 @@ fb_server_fb_poll(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     long ret;
     char rbuf[NET_LONG_LEN+1] = {0};
 

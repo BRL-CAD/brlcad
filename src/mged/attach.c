@@ -53,7 +53,6 @@
 
 /* Geometry display instances used by MGED */
 struct bu_ptbl active_dm_set = BU_PTBL_INIT_ZERO;  /* set of active display managers */
-struct mged_dm *mged_curr_dm = NULL;
 struct mged_dm *mged_dm_init_state = NULL;
 
 
@@ -83,7 +82,7 @@ void set_curr_dm(struct mged_state *s, struct mged_dm *nc)
 	return;
     }
 
-    mged_curr_dm = nc;
+    s->mged_curr_dm = nc;
     if (nc != MGED_DM_NULL && nc->dm_view_state) {
 	s->gedp->ged_gvp = nc->dm_view_state->vs_gvp;
 	s->gedp->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
@@ -142,7 +141,7 @@ mged_dm_init(
 
 
 void
-mged_fb_open(void)
+mged_fb_open(struct mged_state *s)
 {
     fbp = dm_get_fb(DMP);
 }
@@ -196,8 +195,8 @@ release(struct mged_state *s, char *name, int need_close)
 		continue;
 
 	    /* found it */
-	    if (p != mged_curr_dm) {
-		save_dm_list = mged_curr_dm;
+	    if (p != s->mged_curr_dm) {
+		save_dm_list = s->mged_curr_dm;
 		p = m_dmp;
 		set_curr_dm(s, p);
 	    }
@@ -229,21 +228,21 @@ release(struct mged_state *s, char *name, int need_close)
      * manager. So when another display manager is opened, it looks
      * like the last one the user had open.
      */
-    usurp_all_resources(mged_dm_init_state, mged_curr_dm);
+    usurp_all_resources(mged_dm_init_state, s->mged_curr_dm);
 
     /* If this display is being referenced by a command window, then
      * remove the reference.
      */
-    if (mged_curr_dm->dm_tie != NULL)
-	mged_curr_dm->dm_tie->cl_tie = (struct mged_dm *)NULL;
+    if (s->mged_curr_dm->dm_tie != NULL)
+	s->mged_curr_dm->dm_tie->cl_tie = (struct mged_dm *)NULL;
 
     if (need_close)
 	dm_close(DMP);
 
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &mged_curr_dm->dm_p_vlist);
-    bu_ptbl_rm(&active_dm_set, (long *)mged_curr_dm);
-    mged_slider_free_vls(mged_curr_dm);
-    bu_free((void *)mged_curr_dm, "release: mged_curr_dm");
+    BV_FREE_VLIST(&RTG.rtg_vlfree, &s->mged_curr_dm->dm_p_vlist);
+    bu_ptbl_rm(&active_dm_set, (long *)s->mged_curr_dm);
+    mged_slider_free_vls(s->mged_curr_dm);
+    bu_free((void *)s->mged_curr_dm, "release: s->mged_curr_dm");
 
     if (save_dm_list != MGED_DM_NULL)
 	set_curr_dm(s, save_dm_list);
@@ -432,12 +431,12 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    o_dm = mged_curr_dm;
-    BU_ALLOC(mged_curr_dm, struct mged_dm);
+    o_dm = s->mged_curr_dm;
+    BU_ALLOC(s->mged_curr_dm, struct mged_dm);
 
     /* initialize predictor stuff */
-    BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
-    predictor_init();
+    BU_LIST_INIT(&s->mged_curr_dm->dm_p_vlist);
+    predictor_init(s);
 
     /* Only need to do this once */
     if (tkwin == NULL && BU_STR_EQUIV(dm_graphics_system(wp_name), "Tk")) {
@@ -455,14 +454,14 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
 	struct bu_vls *dname = dm_get_dname(tmp_dmp);
 	if (dname && bu_vls_strlen(dname)) {
 	    if (gui_setup(s, bu_vls_cstr(dname)) == TCL_ERROR) {
-		bu_free((void *)mged_curr_dm, "f_attach: dm_list");
+		bu_free((void *)s->mged_curr_dm, "f_attach: dm_list");
 		set_curr_dm(s, o_dm);
 		bu_vls_free(&tmp_vls);
 		dm_close(tmp_dmp);
 		return TCL_ERROR;
 	    }
 	} else if (gui_setup(s, (char *)NULL) == TCL_ERROR) {
-	    bu_free((void *)mged_curr_dm, "f_attach: dm_list");
+	    bu_free((void *)s->mged_curr_dm, "f_attach: dm_list");
 	    set_curr_dm(s, o_dm);
 	    bu_vls_free(&tmp_vls);
 	    dm_close(tmp_dmp);
@@ -473,7 +472,7 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
 	dm_close(tmp_dmp);
     }
 
-    bu_ptbl_ins(&active_dm_set, (long *)mged_curr_dm);
+    bu_ptbl_ins(&active_dm_set, (long *)s->mged_curr_dm);
 
     if (!wp_name) {
 	return TCL_ERROR;
@@ -493,7 +492,7 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
 	cs_set_bg(sdp, name, base, value, s);
     }
 
-    mged_link_vars(mged_curr_dm);
+    mged_link_vars(s->mged_curr_dm);
 
     Tcl_ResetResult(s->interp);
     const char *dm_name = dm_get_dm_name(DMP);
@@ -502,19 +501,19 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
 	Tcl_AppendResult(s->interp, "ATTACHING ", dm_name, " (", dm_lname,	")\n", (char *)NULL);
     }
 
-    share_dlist(mged_curr_dm);
+    share_dlist(s->mged_curr_dm);
 
     if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(s->gedp->ged_gdp->gd_headDisplay);
+	createDLists(s, s->gedp->ged_gdp->gd_headDisplay);
 	dlist_state->dl_active = 1;
     }
 
     (void)dm_make_current(DMP);
     (void)dm_set_win_bounds(DMP, windowbounds);
-    mged_fb_open();
+    mged_fb_open(s);
 
-    s->gedp->ged_gvp = mged_curr_dm->dm_view_state->vs_gvp;
-    s->gedp->ged_gvp->gv_s->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
+    s->gedp->ged_gvp = s->mged_curr_dm->dm_view_state->vs_gvp;
+    s->gedp->ged_gvp->gv_s->gv_grid = *s->mged_curr_dm->dm_grid_state; /* struct copy */
 
     return TCL_OK;
 
@@ -732,14 +731,14 @@ dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
     view_state->vs_gvp->gv_s->point_scale = 1.0;
     view_state->vs_gvp->gv_s->curve_scale = 1.0;
     view_state->vs_rc = 1;
-    view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
+    view_ring_init(s->mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
 
     DMP_dirty = 1;
     if (target_dm->dm_dmp) {
 	dm_set_dirty(target_dm->dm_dmp, 1);
     }
     mapped = 1;
-    mged_curr_dm->dm_netfd = -1;
+    s->mged_curr_dm->dm_netfd = -1;
     owner = 1;
     am_mode = AMM_IDLE;
     adc_auto = 1;

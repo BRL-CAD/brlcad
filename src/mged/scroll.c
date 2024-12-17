@@ -34,13 +34,7 @@
 
 #include "./sedit.h"
 
-
-extern int mged_svbase(void);   /* defined in chgview.c */
-extern void set_scroll(void);   /* defined in set.c */
-
-
 #define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
-
 
 /************************************************************************
  *									*
@@ -100,7 +94,7 @@ struct scroll_item sl_adc_menu[] = {
  * Set scroll_array.
  */
 void
-set_scroll(void)
+set_scroll(struct mged_state *s)
 {
     if (mged_variables->mv_sliders) {
 	if (mged_variables->mv_rateknobs)
@@ -709,7 +703,7 @@ scroll_display(struct mged_state *s, int y_top)
  * -1 if pen is ABOVE scroll (error)
  */
 int
-scroll_select(struct mged_state *UNUSED(s), int pen_x, int pen_y, int do_func)
+scroll_select(struct mged_state *s, int pen_x, int pen_y, int do_func)
 {
     int yy;
     struct scroll_item **m;

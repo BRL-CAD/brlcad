@@ -267,7 +267,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     (void)chg_state(s, ST_VIEW, ST_O_PICK, "internal change of state");
     /* reset accumulation local scale factors */
     acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
-    new_mats();
+    new_mats(s);
 
     /* Find the one solid, set s_iflag UP, point illump at it */
     illump = find_solid_with_path(s, &both);

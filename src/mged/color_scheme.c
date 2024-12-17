@@ -244,8 +244,10 @@ cs_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(name),
 		  void *UNUSED(base),
 		  const char *UNUSED(value),
-		  void *UNUSED(data))
+		  void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_color_scheme == color_scheme) {
@@ -264,6 +266,7 @@ cs_update(const struct bu_structparse *sdp,
 	  void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct bu_structparse *sp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int offset;
@@ -294,7 +297,7 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
 {
     struct mged_state *s = (struct mged_state *)data;
     MGED_CK_STATE(s);
-    struct mged_dm *save_curr_m_dmp = mged_curr_dm;
+    struct mged_dm *save_curr_m_dmp = s->mged_curr_dm;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&vls, "dm bg %d %d %d",

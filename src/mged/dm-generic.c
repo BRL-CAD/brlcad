@@ -170,7 +170,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    rubber_band->rb_y = fy;
 	    rubber_band->rb_width = 0.0;
 	    rubber_band->rb_height = 0.0;
-	    rect_view2image();
+	    rect_view2image(s);
 	    {
 		/* need dummy values for func signature--they are unused in the func */
 		const struct bu_structparse *sdp = 0;
@@ -628,7 +628,7 @@ zclip_hook(const struct bu_structparse *sdp,
 }
 
 void *
-set_hook_data(struct mged_view_hook_state *hs) {
+set_hook_data(struct mged_state *s, struct mged_view_hook_state *hs) {
     hs->hs_dmp = DMP;
     hs->vs = view_state;
     hs->dirty_global = &(DMP_dirty);
@@ -676,7 +676,7 @@ dm_commands(int argc, const char *argv[], void *data)
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		int ret;
 		struct mged_view_hook_state global_hs;
-		void *hdata = set_hook_data(&global_hs);
+		void *hdata = set_hook_data(s, &global_hs);
 
 		ret = dm_set_hook(vparse_map, argv[1], hdata, &mged_dm_hook);
 		if (ret < 0) {

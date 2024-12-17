@@ -34,10 +34,8 @@
 /* external sp_hook function */
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);	/* defined in set.c */
 
-extern int mged_svbase(void);
-extern void set_e_axes_pos(int both);
+extern void set_e_axes_pos(struct mged_state *s, int both);
 extern int mged_zoom(struct mged_state *s, double val);
-extern void set_absolute_tran(void);	/* defined in set.c */
 extern void adc_set_scroll(struct mged_state *s);	/* defined in adc.c */
 
 /* forward declarations for the buttons table */
@@ -463,16 +461,19 @@ bv_rear(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), cha
 
 
 int
-bv_vrestore(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_vrestore(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    /* restore to saved view */
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+     /* restore to saved view */
     if (vsaved) {
 	view_state->vs_gvp->gv_scale = sav_vscale;
 	MAT_COPY(view_state->vs_gvp->gv_rotation, sav_viewrot);
 	MAT_COPY(view_state->vs_gvp->gv_center, sav_toviewcenter);
-	new_mats();
+	new_mats(s);
 
-	(void)mged_svbase();
+	(void)mged_svbase(s);
     }
 
     return TCL_OK;
@@ -480,9 +481,12 @@ bv_vrestore(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSE
 
 
 int
-bv_vsave(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_vsave(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    /* save current view */
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+     /* save current view */
     sav_vscale = view_state->vs_gvp->gv_scale;
     MAT_COPY(sav_viewrot, view_state->vs_gvp->gv_rotation);
     MAT_COPY(sav_toviewcenter, view_state->vs_gvp->gv_center);
@@ -525,7 +529,7 @@ bv_reset(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), ch
     /* Reset view such that all solids can be seen */
     size_reset(s);
     setview(s, 0.0, 0.0, 0.0);
-    (void)mged_svbase();
+    (void)mged_svbase(s);
     return TCL_OK;
 }
 
@@ -641,7 +645,7 @@ be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
     edit_absolute_scale = acc_sc_obj - 1.0;
     if (edit_absolute_scale > 0.0)
@@ -664,7 +668,7 @@ be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
     edit_absolute_scale = acc_sc[0] - 1.0;
     if (edit_absolute_scale > 0.0)
@@ -687,7 +691,7 @@ be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
     edit_absolute_scale = acc_sc[1] - 1.0;
     if (edit_absolute_scale > 0.0)
@@ -710,7 +714,7 @@ be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
     edit_absolute_scale = acc_sc[2] - 1.0;
     if (edit_absolute_scale > 0.0)
@@ -733,7 +737,7 @@ be_o_x(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
     movedir = RARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -752,7 +756,7 @@ be_o_y(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
     movedir = UARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -771,7 +775,7 @@ be_o_xy(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), cha
     movedir = UARROW | RARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -790,7 +794,7 @@ be_o_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     movedir = ROTARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -954,7 +958,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -975,7 +979,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -996,7 +1000,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     mmenu_set(s, MENU_L1, NULL);
     acc_sc_sol = 1.0;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -1070,12 +1074,12 @@ chg_state(struct mged_state *s, int from, int to, char *str)
 
     stateChange(from, to);
 
-    save_dm_list = mged_curr_dm;
+    save_dm_list = s->mged_curr_dm;
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
 	set_curr_dm(s, p);
 
-	new_mats();
+	new_mats(s);
     }
 
     set_curr_dm(s, save_dm_list);

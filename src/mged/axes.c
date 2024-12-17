@@ -83,8 +83,10 @@ ax_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(name),
 		  void *UNUSED(base),
 		  const char *UNUSED(value),
-		  void *UNUSED(data))
+		  void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
 	if (m_dmp->dm_axes_state == axes_state) {
@@ -96,7 +98,7 @@ ax_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 
 
 void
-draw_e_axes(void)
+draw_e_axes(struct mged_state *s)
 {
     point_t v_ap1;                 /* axes position in view coordinates */
     point_t v_ap2;                 /* axes position in view coordinates */
@@ -161,7 +163,7 @@ draw_m_axes(struct mged_state *s)
 
 
 void
-draw_v_axes(void)
+draw_v_axes(struct mged_state *s)
 {
     point_t v_ap;			/* axes position in view coordinates */
     struct bv_axes gas;

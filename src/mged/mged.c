@@ -90,9 +90,9 @@
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
 
-extern void draw_e_axes(void);
+extern void draw_e_axes(struct mged_state *);
 extern void draw_m_axes(struct mged_state *);
-extern void draw_v_axes(void);
+extern void draw_v_axes(struct mged_state *);
 
 /* defined in chgmodel.c */
 extern void set_localunit_TclVar(void);
@@ -302,7 +302,7 @@ new_edit_mats(struct mged_state *s)
 {
     struct mged_dm *save_dm_list;
 
-    save_dm_list = mged_curr_dm;
+    save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_owner)
@@ -322,6 +322,7 @@ void
 mged_view_callback(struct bview *gvp,
 		   void *clientData)
 {
+    struct mged_state *s = MGED_STATE;
     struct _view_state *vsp = (struct _view_state *)clientData;
 
     if (!gvp)
@@ -332,7 +333,7 @@ mged_view_callback(struct bview *gvp,
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
-    dm_set_dirty(mged_curr_dm->dm_dmp, 1);
+    dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
 }
 
 
@@ -341,7 +342,7 @@ mged_view_callback(struct bview *gvp,
  * here to simplify things.
  */
 void
-new_mats(void)
+new_mats(struct mged_state *s)
 {
     bv_update(view_state->vs_gvp);
 }
@@ -1008,7 +1009,7 @@ event_check(struct mged_state *s, int non_blocking)
     /*********************************
      * Handle rate-based processing *
      *********************************/
-    save_dm_list = mged_curr_dm;
+    save_dm_list = s->mged_curr_dm;
     if (edit_rateflag_model_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
@@ -1526,7 +1527,7 @@ refresh(struct mged_state *s)
 
     update_views = 0;
 
-    save_dm_list = mged_curr_dm;
+    save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	/*
@@ -1560,7 +1561,7 @@ refresh(struct mged_state *s)
 	    }
 
 	    if (mged_variables->mv_predictor)
-		predictor_frame();
+		predictor_frame(s);
 
 	    if (dm_get_dirty(DMP)) {
 
@@ -1572,7 +1573,7 @@ refresh(struct mged_state *s)
 			if (mged_variables->mv_fb_all)
 			    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
 			else if (mged_variables->mv_mouse_behavior != 'z')
-			    paint_rect_area();
+			    paint_rect_area(s);
 		    }
 
 		    /* do framebuffer overlay for entire window */
@@ -1607,7 +1608,7 @@ refresh(struct mged_state *s)
 			if (mged_variables->mv_fb &&
 				mged_variables->mv_fb_overlay &&
 				mged_variables->mv_mouse_behavior != 'z')
-			    paint_rect_area();
+			    paint_rect_area(s);
 		    }
 
 
@@ -1618,24 +1619,24 @@ refresh(struct mged_state *s)
 		    if (!mged_variables->mv_fb ||
 			    mged_variables->mv_fb_overlay != 2) {
 			if (rubber_band->rb_active || rubber_band->rb_draw)
-			    draw_rect();
+			    draw_rect(s);
 
 			if (grid_state->draw)
 			    draw_grid(s);
 
 			/* Compute and display angle/distance cursor */
 			if (adc_state->adc_draw)
-			    adcursor();
+			    adcursor(s);
 
 			if (axes_state->ax_view_draw)
-			    draw_v_axes();
+			    draw_v_axes(s);
 
 			if (axes_state->ax_model_draw)
 			    draw_m_axes(s);
 
 			if (axes_state->ax_edit_draw &&
 				(GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT))
-			    draw_e_axes();
+			    draw_e_axes(s);
 
 			/* Display titles, etc., if desired */
 			bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
@@ -1842,6 +1843,11 @@ main(int argc, char *argv[])
     mged_global_db_ctx.db_version = BRLCAD_DB_FORMAT_LATEST;
 
     char *attach = (char *)NULL;
+    BU_ALLOC(s->mged_curr_dm, struct mged_dm);
+    bu_ptbl_init(&active_dm_set, 8, "dm set");
+    bu_ptbl_ins(&active_dm_set, (long *)s->mged_curr_dm);
+    mged_dm_init_state = s->mged_curr_dm;
+    s->mged_curr_dm->dm_netfd = -1;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -2012,15 +2018,9 @@ main(int argc, char *argv[])
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    BU_ALLOC(mged_curr_dm, struct mged_dm);
-    bu_ptbl_init(&active_dm_set, 8, "dm set");
-    bu_ptbl_ins(&active_dm_set, (long *)mged_curr_dm);
-    mged_dm_init_state = mged_curr_dm;
-    mged_curr_dm->dm_netfd = -1;
-
     /* initialize predictor stuff */
-    BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
-    predictor_init();
+    BU_LIST_INIT(&s->mged_curr_dm->dm_p_vlist);
+    predictor_init(s);
 
     /* register application provided routines */
 
@@ -2032,9 +2032,9 @@ main(int argc, char *argv[])
 
     /* If we're only doing the 'nu' dm we don't need most of mged_dm_init, but
      * we do still need to register the dm_commands */
-    mged_curr_dm->dm_cmd_hook = dm_commands;
+    s->mged_curr_dm->dm_cmd_hook = dm_commands;
 
-    struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dm_dmp);
+    struct bu_vls *tnvp = dm_get_tkname(s->mged_curr_dm->dm_dmp);
     if (tnvp) {
 	bu_vls_init(tnvp); /* this may leak */
 	bu_vls_strcpy(tnvp, "nu");
@@ -2067,7 +2067,7 @@ main(int argc, char *argv[])
 
     BU_ALLOC(view_state, struct _view_state);
     view_state->vs_rc = 1;
-    view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
+    view_ring_init(s->mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
     MAT_IDN(view_state->vs_ModelDelta);
 
     am_mode = AMM_IDLE;
@@ -2096,11 +2096,11 @@ main(int argc, char *argv[])
     /* prepare mged, adjust our path, get set up to use Tcl */
 
     mged_setup(s);
-    new_mats();
+    new_mats(s);
 
-    mmenu_init();
+    mmenu_init(s);
     btn_head_menu(s, 0, 0, 0);
-    mged_link_vars(mged_curr_dm);
+    mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
     (void)Tcl_Eval(s->interp, bu_vls_addr(&s->input_str));

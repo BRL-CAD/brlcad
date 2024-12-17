@@ -531,7 +531,7 @@ static int to_zclip(struct ged *gedp,
 
 static void to_create_vlist_callback_solid(void *, struct bv_scene_obj *gdlp);
 static void to_create_vlist_callback(void *, struct display_list *gdlp);
-static void to_destroy_vlist_callback(unsigned int dlist, int range);
+static void to_destroy_vlist_callback(void *, unsigned int dlist, int range);
 static void to_rt_end_callback_internal(int aborted);
 
 static void to_output_handler(struct ged *gedp, char *line);
@@ -6435,7 +6435,7 @@ to_create_vlist_callback(void *ctx, struct display_list *gdlp)
 
 
 static void
-to_destroy_vlist_callback(unsigned int dlist, int range)
+to_destroy_vlist_callback(void *UNUSED(ctx), unsigned int dlist, int range)
 {
     struct bview *gdvp;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;

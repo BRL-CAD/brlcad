@@ -34,9 +34,9 @@
 #include "./mged_dm.h"
 
 extern void mged_center(struct mged_state *s, fastf_t *center); /* from chgview.c */
-extern int mged_vscale(fastf_t sfactor);
+extern int mged_vscale(struct mged_state *s, fastf_t sfactor);
 
-static void adjust_rect_for_zoom(void);
+static void adjust_rect_for_zoom(struct mged_state *);
 
 struct _rubber_band default_rubber_band = {
     /* rb_rc */		1,
@@ -69,8 +69,10 @@ rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(name),
 		  void *UNUSED(base),
 		  const char *UNUSED(value),
-		  void *UNUSED(data))
+		  void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_rubber_band == rubber_band) {
@@ -86,7 +88,7 @@ rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
  * position and dimensions in image coordinates.
  */
 void
-rect_view2image(void)
+rect_view2image(struct mged_state *s)
 {
     int width;
     width = dm_get_width(DMP);
@@ -102,7 +104,7 @@ rect_view2image(void)
  * position and dimensions in normalized view coordinates.
  */
 void
-rect_image2view(void)
+rect_image2view(struct mged_state *s)
 {
     int width = dm_get_width(DMP);
     rubber_band->rb_x = dm_Xx2Normal(DMP, rubber_band->rb_pos[X]);
@@ -119,7 +121,9 @@ set_rect(const struct bu_structparse *sdp,
 	 const char *value,
 	 void *data)
 {
-    rect_image2view();
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
+    rect_image2view(s);
     rb_set_dirty_flag(sdp, name, base, value, data);
 }
 
@@ -128,7 +132,7 @@ set_rect(const struct bu_structparse *sdp,
  * Adjust the rubber band to have the same aspect ratio as the window.
  */
 static void
-adjust_rect_for_zoom(void)
+adjust_rect_for_zoom(struct mged_state *s)
 {
     fastf_t width, height;
 
@@ -157,7 +161,7 @@ adjust_rect_for_zoom(void)
 
 
 void
-draw_rect(void)
+draw_rect(struct mged_state *s)
 {
     int line_style;
 
@@ -171,7 +175,7 @@ draw_rect(void)
 	line_style = 0; /* solid lines */
 
     if (rubber_band->rb_active && mged_variables->mv_mouse_behavior == 'z')
-	adjust_rect_for_zoom();
+	adjust_rect_for_zoom(s);
 
     /* draw rectangle */
     dm_set_fg(DMP,
@@ -204,7 +208,7 @@ draw_rect(void)
 
 
 void
-paint_rect_area(void)
+paint_rect_area(struct mged_state *s)
 {
     if (!fbp)
 	return;
@@ -277,7 +281,7 @@ zoom_rect_area(struct mged_state *s)
 	ZERO(rubber_band->rb_height))
 	return;
 
-    adjust_rect_for_zoom();
+    adjust_rect_for_zoom(s);
 
     /* find old view center */
     MAT_DELTAS_GET_NEG(old_model_center, view_state->vs_gvp->gv_center);
@@ -309,14 +313,14 @@ zoom_rect_area(struct mged_state *s)
     else
 	sf = height / 2.0 * dm_get_aspect(DMP);
 
-    mged_vscale(sf);
+    mged_vscale(s, sf);
 
     rubber_band->rb_x = -1.0;
     rubber_band->rb_y = -1.0 / dm_get_aspect(DMP);
     rubber_band->rb_width = 2.0;
     rubber_band->rb_height = 2.0 / dm_get_aspect(DMP);
 
-    rect_view2image();
+    rect_view2image(s);
 
     {
 	/* need dummy values for func signature--they are unused in the func */

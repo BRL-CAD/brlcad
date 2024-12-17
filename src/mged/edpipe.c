@@ -279,7 +279,7 @@ pipe_scale_radius(struct mged_state *s, struct rt_db_internal *db_int, fastf_t s
 
 
 struct wdb_pipe_pnt *
-find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t pt)
+find_pipe_pnt_nearest_pnt(struct mged_state *s, const struct bu_list *pipe_hd, const point_t pt)
 {
     struct wdb_pipe_pnt *ps;
     struct wdb_pipe_pnt *nearest=(struct wdb_pipe_pnt *)NULL;

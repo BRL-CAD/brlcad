@@ -45,7 +45,6 @@
 #include "./mged_dm.h"
 
 
-extern struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
 extern void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
 extern struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
@@ -58,7 +57,7 @@ static void arb7_edge(struct mged_state *, int, int, int), arb6_edge(struct mged
 static void arb8_mv_face(struct mged_state *, int, int, int), arb7_mv_face(struct mged_state *, int, int, int), arb6_mv_face(struct mged_state *, int, int, int);
 static void arb5_mv_face(struct mged_state *, int, int, int), arb4_mv_face(struct mged_state *, int, int, int), arb8_rot_face(struct mged_state *, int, int, int), arb7_rot_face(struct mged_state *, int, int, int);
 static void arb6_rot_face(struct mged_state *, int, int, int), arb5_rot_face(struct mged_state *, int, int, int), arb4_rot_face(struct mged_state *, int, int, int), arb_control(struct mged_state *, int, int, int);
-static void init_sedit_vars(void), init_oedit_vars(void), init_oedit_guts(struct mged_state *);
+static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
 int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
 
@@ -747,7 +746,7 @@ short int arb_vertices[5][24] = {
 
 
 void
-set_e_axes_pos(int both)
+set_e_axes_pos(struct mged_state *s, int both)
     /* if (!both) then set only curr_e_axes_pos, otherwise
        set e_axes_pos and curr_e_axes_pos */
 {
@@ -940,7 +939,7 @@ arb8_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -959,7 +958,7 @@ arb7_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -983,7 +982,7 @@ arb6_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1002,7 +1001,7 @@ arb5_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1016,7 +1015,7 @@ arb4_point(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1027,7 +1026,7 @@ bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     es_edflag = arg;
 
     sedit(s);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1049,7 +1048,7 @@ ebm_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     }
 
     sedit(s);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1076,7 +1075,7 @@ dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
     }
     sedit(s);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1112,7 +1111,7 @@ vol_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     }
 
     sedit(s);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1205,12 +1204,12 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    sedit(s);
 	    break;
     }
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-tgc_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     es_edflag = PSCALE;
@@ -1223,22 +1222,22 @@ tgc_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
     if (arg == MENU_TGC_MV_HH)
 	es_edflag = ECMD_TGC_MV_HH;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-tor_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+tor_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     es_edflag = PSCALE;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-eto_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     if (arg == MENU_ETO_ROT_C)
@@ -1246,62 +1245,62 @@ eto_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
     else
 	es_edflag = PSCALE;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-rpc_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     es_edflag = PSCALE;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-part_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+part_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     es_edflag = PSCALE;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-rhc_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+rhc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     es_edflag = PSCALE;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-epa_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+epa_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     es_edflag = PSCALE;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-ehy_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+ehy_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     es_edflag = PSCALE;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
 static void
-hyp_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     switch (arg) {
@@ -1312,18 +1311,18 @@ hyp_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
 	    es_edflag = PSCALE;
 	    break;
     }
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return;
 }
 
 
 static void
-ell_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b))
+ell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     es_edflag = PSCALE;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1337,7 +1336,7 @@ arb8_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1351,7 +1350,7 @@ arb7_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1365,7 +1364,7 @@ arb6_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1379,7 +1378,7 @@ arb5_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1393,7 +1392,7 @@ arb4_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	sedit(s);
     }
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -1485,10 +1484,10 @@ extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
 
 static void
-superell_ed(struct mged_state *UNUSED(s), int arg, int UNUSED(a), int UNUSED(b)) {
+superell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b)) {
     es_menu = arg;
     es_edflag = PSCALE;
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return;
 }
 
@@ -1579,7 +1578,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_edflag = ECMD_METABALL_PT_ADD;
 	    break;
     }
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return;
 }
 
@@ -1598,7 +1597,7 @@ spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     es_edflag = arg;
     sedit(s);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 /*
  * Handler for events in the NMG menu.
@@ -2607,7 +2606,7 @@ init_sedit(struct mged_state *s)
     es_edflag = IDLE;
 
     button(s, BE_S_EDIT);	/* Drop into edit menu right away */
-    init_sedit_vars();
+    init_sedit_vars(s);
 
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2621,7 +2620,7 @@ init_sedit(struct mged_state *s)
 
 
 static void
-init_sedit_vars(void)
+init_sedit_vars(struct mged_state *s)
 {
     MAT_IDN(acc_rot_sol);
     MAT_IDN(incr_change);
@@ -2645,7 +2644,7 @@ init_sedit_vars(void)
     VSETALL(edit_rate_model_tran, 0.0);
     VSETALL(edit_rate_view_tran, 0.0);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -2811,7 +2810,7 @@ get_rotation_vertex(struct mged_state *s)
     }
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
-    const struct bu_vls *dnvp = dm_get_dname(mged_curr_dm->dm_dmp);
+    const struct bu_vls *dnvp = dm_get_dname(s->mged_curr_dm->dm_dmp);
 
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
@@ -4735,7 +4734,7 @@ sedit(struct mged_state *s)
 	    fixv--;
 	    es_edflag = ECMD_ARB_ROTATE_FACE;
 	    view_state->vs_flag = 1;	/* draw arrow, etc. */
-	    set_e_axes_pos(1);
+	    set_e_axes_pos(s, 1);
 	    break;
 
 	case ECMD_ARB_ROTATE_FACE:
@@ -5801,7 +5800,7 @@ sedit(struct mged_state *s)
 		} else if (!es_mvalid && !inpara)
 		    break;
 
-		es_pipe_pnt = find_pipe_pnt_nearest_pnt(&pipeip->pipe_segs_head, new_pt);
+		es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
 		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(s->interp, "No PIPE segment selected\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
@@ -6698,7 +6697,7 @@ sedit(struct mged_state *s)
     if (!es_keyfixed)
 	get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
 
-    set_e_axes_pos(0);
+    set_e_axes_pos(s, 0);
     replot_editing_solid(s);
 
     if (update_views) {
@@ -6716,7 +6715,7 @@ sedit(struct mged_state *s)
 
 
 void
-update_edit_absolute_tran(vect_t view_pos)
+update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
 {
     vect_t model_pos;
     vect_t ea_view_pos;
@@ -7122,7 +7121,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    return;
     }
 
-    update_edit_absolute_tran(pos_view);
+    update_edit_absolute_tran(s, pos_view);
     sedit(s);
 }
 
@@ -7248,7 +7247,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	MAT_IDN(incr_change);
 	new_edit_mats(s);
 
-	update_edit_absolute_tran(pos_view);
+	update_edit_absolute_tran(s, pos_view);
     } else {
 	Tcl_AppendResult(s->interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
 	return;
@@ -7429,14 +7428,14 @@ init_oedit_guts(struct mged_state *s)
     bn_mat_inv(es_invmat, es_mat);
 
     get_solid_keypoint(s, es_keypoint, &strp, &es_int, es_mat);
-    init_oedit_vars();
+    init_oedit_vars(s);
 }
 
 
 static void
-init_oedit_vars(void)
+init_oedit_vars(struct mged_state *s)
 {
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
     VSETALL(edit_absolute_model_rotate, 0.0);
     VSETALL(edit_absolute_object_rotate, 0.0);
@@ -9093,7 +9092,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     if (!es_keyfixed)
 	get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
 
-    set_e_axes_pos(0);
+    set_e_axes_pos(s, 0);
     replot_editing_solid(s);
 
     return TCL_OK;
@@ -9170,7 +9169,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     VSETALL(edit_rate_model_tran, 0.0);
     VSETALL(edit_rate_view_tran, 0.0);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -9201,7 +9200,7 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     if (sedraw > 0)
 	sedit(s);
 
-    init_sedit_vars();
+    init_sedit_vars(s);
     (void)sedit_apply(s, 0);
 
     /* active edit callback */
@@ -9273,7 +9272,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     bn_mat_inv(es_invmat, es_mat);
 
     get_solid_keypoint(s, es_keypoint, &strp, &es_int, es_mat);
-    init_oedit_vars();
+    init_oedit_vars(s);
     new_edit_mats(s);
     update_views = 1;
     dm_set_dirty(DMP, 1);

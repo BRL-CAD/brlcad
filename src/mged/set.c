@@ -52,10 +52,6 @@ static char *read_var(ClientData clientData, Tcl_Interp *interp, const char *nam
 static char *write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
 static char *unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
 
-void set_absolute_tran(void);
-void set_absolute_view_tran(void);
-void set_absolute_model_tran(void);
-
 static int perspective_table[] = { 90, 30, 45, 60 };
 
 struct _mged_variables default_mged_variables = {
@@ -137,8 +133,10 @@ set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 	       const char *UNUSED(name),
 	       void *UNUSED(base),
 	       const char *UNUSED(value),
-	       void *UNUSED(data))
+	       void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_mged_variables == mged_variables) {
@@ -181,6 +179,7 @@ read_var(ClientData clientData, Tcl_Interp *interp, const char *UNUSED(name1), c
 
 
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
@@ -208,6 +207,7 @@ read_var(ClientData clientData, Tcl_Interp *interp, const char *UNUSED(name1), c
 static char *
 write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     const char *newvalue;
@@ -320,7 +320,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
     MGED_CK_STATE(s);
     struct mged_dm *save_m_dmp;
 
-    save_m_dmp = mged_curr_dm;
+    save_m_dmp = s->mged_curr_dm;
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -329,9 +329,9 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 
 	    if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 		if (mged_variables->mv_sliders)	/* zero slider variables */
-		    mged_svbase();
+		    mged_svbase(s);
 
-		set_scroll();		/* set scroll_array for drawing the scroll bars */
+		set_scroll(s);		/* set scroll_array for drawing the scroll bars */
 		DMP_dirty = 1;
 		dm_set_dirty(DMP, 1);
 	    }
@@ -343,18 +343,18 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 
 
 void
-set_absolute_tran(void)
+set_absolute_tran(struct mged_state *s)
 {
     /* calculate absolute_tran */
-    set_absolute_view_tran();
+    set_absolute_view_tran(s);
 
     /* calculate absolute_model_tran */
-    set_absolute_model_tran();
+    set_absolute_model_tran(s);
 }
 
 
 void
-set_absolute_view_tran(void)
+set_absolute_view_tran(struct mged_state *s)
 {
     /* calculate absolute_tran */
     MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_gvp->gv_model2view, view_state->vs_orig_pos);
@@ -364,7 +364,7 @@ set_absolute_view_tran(void)
 
 
 void
-set_absolute_model_tran(void)
+set_absolute_model_tran(struct mged_state *s)
 {
     point_t new_pos;
     point_t diff;
@@ -390,7 +390,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
     struct mged_dm *save_dlp;
 
     /* save current display manager */
-    save_dlp = mged_curr_dm;
+    save_dlp = s->mged_curr_dm;
 
     if (mged_variables->mv_dlist) {
 	/* create display lists */
@@ -407,7 +407,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	    if (dm_get_displaylist(dlp1->dm_dmp) &&
 		dlp1->dm_dlist_state->dl_active == 0) {
 		set_curr_dm(s, dlp1);
-		createDLists(s->gedp->ged_gdp->gd_headDisplay);
+		createDLists((void *)s, s->gedp->ged_gdp->gd_headDisplay);
 		dlp1->dm_dlist_state->dl_active = 1;
 		dlp1->dm_dirty = 1;
 		dm_set_dirty(dlp1->dm_dmp, 1);
@@ -479,6 +479,8 @@ set_perspective(const struct bu_structparse *sdp,
 		const char *value,
 		void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     /* if perspective is set to something greater than 0, turn perspective mode on */
     if (mged_variables->mv_perspective > 0)
 	mged_variables->mv_perspective_mode = 1;
@@ -502,6 +504,8 @@ establish_perspective(const struct bu_structparse *sdp,
 		      const char *value,
 		      void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
 	perspective_table[perspective_angle] : -1;
 
@@ -527,7 +531,9 @@ toggle_perspective(const struct bu_structparse *sdp,
 		   const char *value,
 		   void *data)
 {
-    /* set perspective matrix */
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
+     /* set perspective matrix */
     if (mged_variables->mv_toggle_perspective > 0)
 	perspective_angle = mged_variables->mv_toggle_perspective <= 4 ?
 	    mged_variables->mv_toggle_perspective - 1: 3;
@@ -560,8 +566,10 @@ set_coords(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *UNUSED(base),
 	   const char *UNUSED(value),
-	   void *UNUSED(data))
+	   void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     view_state->vs_gvp->gv_coord = mged_variables->mv_coords;
 }
 
@@ -571,8 +579,10 @@ set_rotate_about(const struct bu_structparse *UNUSED(sdp),
 		 const char *UNUSED(name),
 		 void *UNUSED(base),
 		 const char *UNUSED(value),
-		 void *UNUSED(data))
+		 void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     view_state->vs_gvp->gv_rotate_about = mged_variables->mv_rotate_about;
 }
 
