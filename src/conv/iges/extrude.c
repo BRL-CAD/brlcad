@@ -23,7 +23,7 @@
 
 
 int
-extrude(size_t entityno)
+extrude(size_t entityno, struct bu_list *vlfree)
 {
 
     fastf_t length = 0.0;		/* extrusion length */
@@ -118,14 +118,14 @@ extrude(size_t entityno)
 		pt_ptr = pt_ptr->next;
 	    }
 
-	    if (nmg_calc_face_g(fu, &RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("Extrude: Failed to calculate face geometry\n");
 		nmg_km(m);
 		bu_free((char *)curv_pts, "curve_pts");
 		return 0;
 	    }
 
-	    if (nmg_extrude_face(fu, evect, &RTG.rtg_vlfree, &tol)) {
+	    if (nmg_extrude_face(fu, evect, vlfree, &tol)) {
 		bu_log("Extrude: extrusion failed\n");
 		nmg_km(m);
 		bu_free((char *)curv_pts, "curve_pts");

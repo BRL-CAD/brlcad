@@ -35,7 +35,7 @@ struct loop_list
 static struct loop_list *loop_root;
 
 void
-Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
+Find_inner_loops(struct faceuse *fu, struct loop_list *lptr, struct bu_list *vlfree)
 {
     struct loop_list *inner;
     struct loopuse *lu;
@@ -45,7 +45,7 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 	if (lu == lptr->lu)
 	    continue;
 
-	if (nmg_classify_lu_lu(lu, lptr->lu, &RTG.rtg_vlfree, &tol) == NMG_CLASS_AinB) {
+	if (nmg_classify_lu_lu(lu, lptr->lu, vlfree, &tol) == NMG_CLASS_AinB) {
 
 	    if (lptr->inner_loops == (struct loop_list *)NULL) {
 		BU_ALLOC(lptr->inner_loops, struct loop_list);
@@ -74,7 +74,7 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 	prev = (struct loop_list *)NULL;
 	while (inner1) {
 	    if (inner->lu != inner1->lu) {
-		if (nmg_classify_lu_lu(inner1->lu, inner->lu, &RTG.rtg_vlfree, &tol) == NMG_CLASS_AinB) {
+		if (nmg_classify_lu_lu(inner1->lu, inner->lu, vlfree, &tol) == NMG_CLASS_AinB) {
 		    struct loop_list *tmp;
 
 		    /* inner1->lu is inside inner->lu,
@@ -102,14 +102,14 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
     /* Now find inner loops for all these inner loops */
     inner = lptr->inner_loops;
     while (inner) {
-	Find_inner_loops(fu, inner);
+	Find_inner_loops(fu, inner, vlfree);
 	inner = inner->next;
     }
 }
 
 
 void
-Orient_face_loops(struct faceuse *fu)
+Orient_face_loops(struct faceuse *fu, struct bu_list *vlfree)
 {
     struct loopuse *lu;
     struct loopuse *lu_outer = NULL;
@@ -138,7 +138,7 @@ Orient_face_loops(struct faceuse *fu)
 	for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
 	    if (lu1 == lu)
 		continue;
-	    if (nmg_classify_lu_lu(lu, lu1, &RTG.rtg_vlfree, &tol) == NMG_CLASS_AinB) {
+	    if (nmg_classify_lu_lu(lu, lu1, vlfree, &tol) == NMG_CLASS_AinB) {
 		outer = 0;
 		break;
 	    }
@@ -160,7 +160,7 @@ Orient_face_loops(struct faceuse *fu)
     loop_root->inner_loops = (struct loop_list *)NULL;
 
     /* now look for loops contained in other loops */
-    Find_inner_loops(fu, loop_root);
+    Find_inner_loops(fu, loop_root, vlfree);
 
     /* All the loops in the face are now in the loop_list
      * structure from outermost working inward.
@@ -249,7 +249,7 @@ Orient_nurb_face_loops(struct faceuse *fu)
 
 
 void
-Orient_loops(struct nmgregion *r)
+Orient_loops(struct nmgregion *r, struct bu_list *vlfree)
 {
     struct shell *s;
 
@@ -275,7 +275,7 @@ Orient_loops(struct nmgregion *r)
 		bu_exit(1, "Face has no geometry!\n");
 
 	    if (*f->g.magic_p == NMG_FACE_G_PLANE_MAGIC)
-		Orient_face_loops(fu);
+		Orient_face_loops(fu, vlfree);
 	    else if (*f->g.magic_p == NMG_FACE_G_SNURB_MAGIC)
 		Orient_nurb_face_loops(fu);
 	    else

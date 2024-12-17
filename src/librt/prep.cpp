@@ -74,11 +74,12 @@ rt_new_rti(struct db_i *dbip)
 {
     struct rt_i *rtip;
     int i;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     RT_CK_DBI(dbip);
 
     /* XXX Move to rt_global_init() ? */
-    if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0) {
+    if (BU_LIST_FIRST(bu_list, vlfree) == 0) {
 	char *debug_flags;
 	debug_flags = getenv("LIBRT_DEBUG");
 	if (debug_flags) {
@@ -89,7 +90,7 @@ rt_new_rti(struct db_i *dbip)
 	    }
 	}
 
-	BU_LIST_INIT(&RTG.rtg_vlfree);
+	BU_LIST_INIT(vlfree);
     }
 
     BU_ALLOC(rtip, struct rt_i);
@@ -796,6 +797,7 @@ rt_plot_solid(
 {
     struct bu_list vhead;
     struct region *regp;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     RT_CK_RTI(rtip);
     RT_CK_SOLTAB(stp);
@@ -823,7 +825,7 @@ rt_plot_solid(
 
     bv_vlist_to_uplot(fp, &vhead);
 
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
+    BV_FREE_VLIST(vlfree, &vhead);
     return 0;			/* OK */
 }
 

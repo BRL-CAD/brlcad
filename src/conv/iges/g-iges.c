@@ -223,7 +223,8 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);	/* for vlist macros */
 
     prog_name = argv[0];
 
@@ -346,7 +347,7 @@ main(int argc, char *argv[])
 			   0,			/* take all regions */
 			   do_nmg_region_end,
 			   rt_booltree_leaf_tess,
-			   (void *)NULL);	/* in librt/nmg_bool.c */
+			   (void *)vlfree);	/* in librt/nmg_bool.c */
 
 	if (ret)
 	    bu_exit(1, "g-iges: Could not facetize anything!");
@@ -443,7 +444,7 @@ main(int argc, char *argv[])
 
 
 static union tree *
-process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp)
+process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *result = NULL;
 
@@ -452,7 +453,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 	/* try */
 
 	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	result = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	result = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -491,7 +492,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *result;
     struct nmgregion *r;
@@ -499,6 +500,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     struct directory *dp;
     int dependent;
     size_t i;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -524,7 +526,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	bu_log("\ndoing boolean tree evaluate...\n");
 
     /* evaluate the boolean */
-    result = process_boolean(tsp, curtree, pathp);
+    result = process_boolean(tsp, curtree, pathp, vlfree);
 
     if (result)
 	r = result->tr_d.td_r;

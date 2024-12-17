@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-brep(size_t entityno)
+brep(size_t entityno, struct bu_list *vlfree)
 {
 
     int sol_num = 0;			/* IGES solid type number */
@@ -75,30 +75,30 @@ brep(size_t entityno)
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 
     /* Put outer shell in region */
-    if ((s_outer = Get_outer_shell(r, (shell_de - 1)/2)) == (struct shell *)NULL)
+    if ((s_outer = Get_outer_shell(r, (shell_de - 1)/2, vlfree)) == (struct shell *)NULL)
 	goto err;
 
     /* Put voids in */
     for (i = 0; i < num_of_voids; i++) {
-	if ((void_shells[i] = Add_inner_shell(r, (void_shell_de[i] - 1)/2))
+	if ((void_shells[i] = Add_inner_shell(r, (void_shell_de[i] - 1)/2, vlfree))
 	    == (struct shell *)NULL)
 	    goto err;
     }
 
     /* orient loops */
-    Orient_loops(r);
+    Orient_loops(r, vlfree);
 
     /* orient shells */
-    nmg_fix_normals(s_outer, &RTG.rtg_vlfree, &tol);
+    nmg_fix_normals(s_outer, vlfree, &tol);
     for (i = 0; i < num_of_voids; i++) {
-	nmg_fix_normals(void_shells[i], &RTG.rtg_vlfree, &tol);
+	nmg_fix_normals(void_shells[i], vlfree, &tol);
 	nmg_invert_shell(void_shells[i]);
     }
 
     if (do_bots) {
 	/* Merge all shells into one */
 	for (i = 0; i < num_of_voids; i++)
-	    nmg_js(s_outer, void_shells[i], &RTG.rtg_vlfree, &tol);
+	    nmg_js(s_outer, void_shells[i], vlfree, &tol);
 
 	/* write out BOT */
 	if (mk_bot_from_nmg(fdout, dir[entityno]->name, s_outer))

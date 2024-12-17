@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 struct faceuse *
-Add_face_to_shell(struct shell *s, size_t entityno, int face_orient)
+Add_face_to_shell(struct shell *s, size_t entityno, int face_orient, struct bu_list *vlfree)
 {
 
     int sol_num = 0;		/* IGES solid type number */
@@ -56,11 +56,11 @@ Add_face_to_shell(struct shell *s, size_t entityno, int face_orient)
 	planar = 1;
 
     if (planar) {
-	fu = Make_planar_face(s, (loop_de[0]-1)/2, face_orient);
+	fu = Make_planar_face(s, (loop_de[0]-1)/2, face_orient, vlfree);
 	if (!fu)
 	    goto err;
 	for (loop = 1; loop < no_of_loops; loop++) {
-	    if (!Add_loop_to_face(s, fu, ((loop_de[loop]-1)/2), face_orient))
+	    if (!Add_loop_to_face(s, fu, ((loop_de[loop]-1)/2), face_orient, vlfree))
 		goto err;
 	}
     } else if (dir[(surf_de-1)/2]->type == 128) {

@@ -145,6 +145,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     int tri_count=0;
     int color_num;
     int do_triangulate=0;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -192,7 +193,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
  triangulate:
     if (do_triangulate) {
 	/* triangulate model */
-	nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+	nmg_triangulate_model(m, vlfree, &tol);
 
 	/* Count triangles */
 	tri_count = 0;
@@ -215,7 +216,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 	}
     }
 
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, vlfree);
 
     color_num = find_closest_color(tsp->ts_mater.ma_color);
 

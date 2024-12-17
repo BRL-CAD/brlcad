@@ -209,6 +209,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, stru
 {
     struct model *m;
     struct adrt_mesh_s *mesh;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -217,7 +218,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, stru
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, vlfree, &tol);
 
     /* FIXME: where is this released? */
     BU_ALLOC(mesh, struct adrt_mesh_s);

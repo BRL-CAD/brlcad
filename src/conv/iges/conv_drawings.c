@@ -219,7 +219,7 @@ Get_plane(plane_t pl, size_t entno)
 
 
 void
-Curve_to_vlist(struct bu_list *vhead, struct ptlist *ptlist)
+Curve_to_vlist(struct bu_list *vhead, struct ptlist *ptlist, struct bu_list *vlfree)
 {
     struct ptlist *ptr;
 
@@ -231,18 +231,18 @@ Curve_to_vlist(struct bu_list *vhead, struct ptlist *ptlist)
 
     ptr = ptlist;
 
-    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, ptr->pt, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, ptr->pt, BV_VLIST_LINE_MOVE);
 
     ptr = ptr->next;
     while (ptr != NULL) {
-	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, ptr->pt, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, ptr->pt, BV_VLIST_LINE_DRAW);
 	ptr = ptr->next;
     }
 }
 
 
 void
-Leader_to_vlist(size_t entno, struct bu_list *vhead)
+Leader_to_vlist(size_t entno, struct bu_list *vhead, struct bu_list *vlfree)
 {
     int entity_type;
     int npts, i;
@@ -276,15 +276,15 @@ Leader_to_vlist(size_t entno, struct bu_list *vhead)
 	VJOIN1(v1, v1, a, v3);
     }
     MAT4X3PNT(tmp2, *dir[entno]->rot, v1);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
     MAT4X3PNT(tmp, *dir[entno]->rot, v2);
-    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
 
     for (i = 1; i < npts; i++) {
 	Readcnv(&v3[0], "");
 	Readcnv(&v3[1], "");
 	MAT4X3PNT(tmp, *dir[entno]->rot, v3);
-	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
     }
     switch (dir[entno]->form) {
 	default:
@@ -299,19 +299,19 @@ Leader_to_vlist(size_t entno, struct bu_list *vhead)
 	    VUNITIZE(v3);
 
 	    /* Draw one side of arrow head */
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
 	    v2[0] = v1[0] + a*v3[0] - b*v3[1];
 	    v2[1] = v1[1] + a*v3[1] + b*v3[0];
 	    v2[2] = v1[2];
 	    MAT4X3PNT(tmp, *dir[entno]->rot, v2);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
 
 	    /* Now draw other side of arrow head */
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
 	    v2[0] = v1[0] + a*v3[0] + b*v3[1];
 	    v2[1] = v1[1] + a*v3[1] - b*v3[0];
 	    MAT4X3PNT(tmp, *dir[entno]->rot, v2);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
 	    break;
 	case 4:
 	    break;
@@ -322,7 +322,7 @@ Leader_to_vlist(size_t entno, struct bu_list *vhead)
 	    delta = M_PI/10.0;
 	    cosdel = cos(delta);
 	    sindel = sin(delta);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
 	    VMOVE(tmp, v1);
 	    for (i = 0; i < 20; i++) {
 		rx = tmp[X] - center[X];
@@ -330,7 +330,7 @@ Leader_to_vlist(size_t entno, struct bu_list *vhead)
 		tmp[X] = center[X] + rx*cosdel - ry*sindel;
 		tmp[Y] = center[Y] + rx*sindel + ry*cosdel;
 		MAT4X3PNT(tmp2, *dir[entno]->rot, tmp);
-		BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, tmp2, BV_VLIST_LINE_DRAW);
 	    }
 	}
 	    break;
@@ -346,25 +346,25 @@ Leader_to_vlist(size_t entno, struct bu_list *vhead)
 	    /* Create unit vector perp. to leader */
 	    v2[0] = v3[1];
 	    v2[1] = (-v3[0]);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
 	    tmp[0] = v1[0] + v2[0]*b/2.0;
 	    tmp[1] = v1[1] + v2[1]*b/2.0;
 	    tmp[2] = v1[2];
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
 	    tmp[0] += v3[0]*a;
 	    tmp[1] += v3[1]*a;
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
 	    tmp[0] -= v2[0]*b;
 	    tmp[1] -= v2[1]*b;
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
 	    tmp[0] -= v3[0]*a;
 	    tmp[1] -= v3[1]*a;
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tmp2, BV_VLIST_LINE_DRAW);
 	    break;
 	case 9:
 	case 10:
@@ -382,18 +382,18 @@ Leader_to_vlist(size_t entno, struct bu_list *vhead)
 	    tmp[1] = v1[1] + (v2[1]*b + v3[1]*a)/2.0;
 	    tmp[2] = v1[2];
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, tmp3, BV_VLIST_LINE_MOVE);
 	    tmp[0] -= v3[0]*a + v2[0]*b;
 	    tmp[1] -= v3[1]*a + v2[1]*b;
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
 	    break;
     }
 }
 
 
 void
-Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform)
+Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform, struct bu_list *vlfree)
 {
     struct bu_list vhead;
     struct bv_vlist *vp;
@@ -411,7 +411,7 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     BU_LIST_INIT(&vhead);
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(vlfree);
 
     sina = sin(ang);
     cosa = cos(ang);
@@ -446,12 +446,12 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 		Note_to_vlist(entno, &vhead);
 		break;
 	    case 214:	/* leader (arrow) */
-		Leader_to_vlist(entno, &vhead);
+		Leader_to_vlist(entno, &vhead, vlfree);
 		break;
 	    default:
 		npts = Getcurve(entno, &pts);
 		if (npts > 1)
-		    Curve_to_vlist(&vhead, pts);
+		    Curve_to_vlist(&vhead, pts, vlfree);
 
 		/* free list of points */
 		ptr = pts;
@@ -502,7 +502,7 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 
 	/* Convert to BRL-CAD wire edges */
 	nmg_vlist_to_wire_edges(s, &vhead);
-	BV_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
+	BV_FREE_VLIST(vlfree, &vhead);
     }
 }
 
@@ -552,7 +552,7 @@ Get_views_visible(size_t entno)
 
 void
 Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
-	fastf_t x, fastf_t y, fastf_t ang)
+	fastf_t x, fastf_t y, fastf_t ang, struct bu_list *vlfree)
 {
     int view_de;
     int entity_type = 0;
@@ -645,14 +645,14 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
 	}
     }
 
-    Draw_entities(m, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, xform);
+    Draw_entities(m, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, xform, vlfree);
 
     bu_free((char *)de_list, "Do_view: de_list");
 }
 
 
 static void
-Get_drawing(size_t entno, struct bu_ptbl *view_vis_list)
+Get_drawing(size_t entno, struct bu_ptbl *view_vis_list, struct bu_list *vlfree)
 {
     int entity_type = 0;
     int no_of_views;
@@ -692,7 +692,7 @@ Get_drawing(size_t entno, struct bu_ptbl *view_vis_list)
 
 	m = nmg_mm();
 
-	Do_view(m, view_vis_list, view_entno[i], (fastf_t)x[i], (fastf_t)y[i], (fastf_t)ang[i]);
+	Do_view(m, view_vis_list, view_entno[i], (fastf_t)x[i], (fastf_t)y[i], (fastf_t)ang[i], vlfree);
 
 	/* write the view to the BRL-CAD file if the model is not empty */
 	NMG_CK_MODEL(m);
@@ -722,7 +722,7 @@ Get_drawing(size_t entno, struct bu_ptbl *view_vis_list)
 	}
 
 void
-Conv_drawings(void)
+Conv_drawings(struct bu_list *vlfree)
 {
     size_t i;
     int tot_drawings = 0;
@@ -759,7 +759,7 @@ Conv_drawings(void)
 	/* Convert each drawing */
 	for (i = 0; i < totentities; i++) {
 	    if (dir[i]->type == 404)
-		Get_drawing(i, &view_vis_list);
+		Get_drawing(i, &view_vis_list, vlfree);
 	}
 
 	/* free views visible list */
@@ -788,7 +788,7 @@ Conv_drawings(void)
 	    if (dir[i]->type == 410) {
 		m = nmg_mm();
 
-		Do_view(m, &view_vis_list, i, 0.0, 0.0, 0.0);
+		Do_view(m, &view_vis_list, i, 0.0, 0.0, 0.0, vlfree);
 
 		/* write the drawing to the BRL-CAD file if the model is not empty */
 		r = BU_LIST_FIRST(nmgregion, &m->r_hd);
@@ -822,7 +822,7 @@ Conv_drawings(void)
     /* no drawings or views, just convert all independent lines, arcs, etc. */
     m = nmg_mm();
 
-    Draw_entities(m, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (mat_t *)NULL);
+    Draw_entities(m, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (mat_t *)NULL, vlfree);
 
     /* write the drawing to the BRL-CAD file if the model is not empty */
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);

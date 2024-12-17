@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 struct shell *
-Add_inner_shell(struct nmgregion *r, size_t entityno)
+Add_inner_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
 {
 
     int sol_num = 0;		/* IGES solid type number */
@@ -57,12 +57,12 @@ Add_inner_shell(struct nmgregion *r, size_t entityno)
 
     s = nmg_msv(r);
     for (face = 0; face < no_of_faces; face++) {
-	fu[face_count] = Add_face_to_shell(s, (face_de[face]-1)/2, 1);
+	fu[face_count] = Add_face_to_shell(s, (face_de[face]-1)/2, 1, vlfree);
 	if (fu[face_count] != (struct faceuse *)NULL)
 	    face_count++;
     }
 
-    nmg_gluefaces(fu, face_count, &RTG.rtg_vlfree, &tol);
+    nmg_gluefaces(fu, face_count, vlfree, &tol);
 
     bu_free((char *)fu, "Add_inner_shell: faceuse list");
     bu_free((char *)face_de, "Add_inner_shell: face DE's");

@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-Add_loop_to_face(struct shell *s, struct faceuse *fu, size_t entityno, int face_orient)
+Add_loop_to_face(struct shell *s, struct faceuse *fu, size_t entityno, int face_orient, struct bu_list *vlfree)
 {
     struct faceuse *fu_tmp;
     plane_t pl_fu, pl_fu_tmp;
@@ -40,7 +40,7 @@ Add_loop_to_face(struct shell *s, struct faceuse *fu, size_t entityno, int face_
     }
 
     /* first make a new face from the loop */
-    fu_tmp = Make_planar_face(s, entityno, face_orient);
+    fu_tmp = Make_planar_face(s, entityno, face_orient, vlfree);
 
     if (!fu_tmp)
 	return 0;

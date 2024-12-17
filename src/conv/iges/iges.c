@@ -79,14 +79,14 @@ extern int do_nurbs;
 extern int mode;
 
 extern int write_dir_entry(FILE *fp, int entry[]);
-extern int write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-extern int write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree);
+extern int write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree);
 extern int write_shell_face_loop(char *name, struct nmgregion *r, int dependent, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern int write_solid_assembly(char *name, int de_list[], size_t length, int dependent, FILE *fp_dir, FILE *fp_param);
 extern int write_planar_nurb(struct faceuse *fu, vect_t u_dir, vect_t v_dir, fastf_t *u_max, fastf_t *v_max, point_t base_pt, FILE *fp_dir, FILE *fp_param);
 extern int write_name_entity(char *name, FILE *fp_dir, FILE *fp_param);
 extern int write_att_entity(struct iges_properties *props, FILE *fp_dir, FILE *fp_param);
-extern int nmg_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
+extern int nmg_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree);
 
 #define NO_OF_TYPES 31
 static int type_count[NO_OF_TYPES][2] = {
@@ -722,7 +722,7 @@ int
 nmgregion_to_iges(char *name,
 		  struct nmgregion *r,
 		  int dependent,
-		  FILE *fp_dir, FILE *fp_param)
+		  FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
 {
     struct nmgregion *new_r;		/* temporary nmgregion */
     struct shell *s_new;		/* shell made by nmg_mrsv */
@@ -774,7 +774,7 @@ nmgregion_to_iges(char *name,
 	return 0;
 
     /* Find outer shells and void shells and their associations */
-    outer_shell_count = nmg_find_outer_and_void_shells(r, &shells, &RTG.rtg_vlfree, &tol);
+    outer_shell_count = nmg_find_outer_and_void_shells(r, &shells, vlfree, &tol);
 
     brep_de = (int *)bu_calloc(outer_shell_count, sizeof(int), "nmgregion_to_iges: brep_de");
 
@@ -804,10 +804,10 @@ nmgregion_to_iges(char *name,
 
 
 	/* Make the vertex list entity */
-	vert_de = write_vertex_list(new_r, &vtab, fp_dir, fp_param);
+	vert_de = write_vertex_list(new_r, &vtab, fp_dir, fp_param, vlfree);
 
 	/* Make the edge list entity */
-	edge_de = write_edge_list(new_r, vert_de, &etab, &vtab, fp_dir, fp_param);
+	edge_de = write_edge_list(new_r, vert_de, &etab, &vtab, fp_dir, fp_param, vlfree);
 
 	/* Make the face, loop, shell entities */
 	brep_de[i] = write_shell_face_loop(tmp_name, new_r, tmp_dependent, edge_de, &etab, vert_de, &vtab, fp_dir, fp_param);
@@ -1081,7 +1081,7 @@ int nmgregion_to_tsurf(char *UNUSED(name), struct nmgregion *r, FILE *fp_dir, FI
 int
 write_vertex_list(struct nmgregion *r,
 		  struct bu_ptbl *vtab,   /* vertex table */
-		  FILE *fp_dir, FILE *fp_param)
+		  FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
@@ -1094,7 +1094,7 @@ write_vertex_list(struct nmgregion *r,
 	dir_entry[i] = DEFAULT;
 
     /* Built list of vertex structs */
-    nmg_vertex_tabulate(vtab, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(vtab, &r->l.magic, vlfree);
 
     /* write parameter data for vertex list entity */
     bu_vls_printf(&str, "502,%ld", (long int)BU_PTBL_LEN(vtab));
@@ -1231,7 +1231,8 @@ write_edge_list(struct nmgregion *r,
 		int vert_de,		/* DE# for vertex list */
 		struct bu_ptbl *etab,	/* edge table */
 		struct bu_ptbl *vtab,	/* vertex table (already filled in) */
-		FILE *fp_dir, FILE *fp_param)
+		FILE *fp_dir, FILE *fp_param,
+		struct bu_list *vlfree)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
@@ -1244,7 +1245,7 @@ write_edge_list(struct nmgregion *r,
 	dir_entry[i] = DEFAULT;
 
     /* Build list of edge structures */
-    nmg_edge_tabulate(etab, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_edge_tabulate(etab, &r->l.magic, vlfree);
 
     bu_vls_printf(&str, "504,%ld", (long int)BU_PTBL_LEN(etab));
 
@@ -2173,7 +2174,7 @@ rpp_to_iges(struct rt_db_internal *ip,
 int
 arb_to_iges(struct rt_db_internal *ip,
 	    char *name,
-	    FILE *fp_dir, FILE *fp_param)
+	    FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
 {
     struct rt_arb_internal *arb;
 
@@ -2189,14 +2190,14 @@ arb_to_iges(struct rt_db_internal *ip,
     if (arb_is_rpp(arb))
 	return rpp_to_iges(ip, name, fp_dir, fp_param);
     else
-	return nmg_to_iges(ip, name, fp_dir, fp_param);
+	return nmg_to_iges(ip, name, fp_dir, fp_param, vlfree);
 }
 
 
 int
 tgc_to_iges(struct rt_db_internal *ip,
 	    char *name,
-	    FILE *fp_dir, FILE *fp_param)
+	    FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
 {
     struct rt_tgc_internal *tgc;
     fastf_t h_len, a_len, b_len, c_len, d_len;
@@ -2237,7 +2238,7 @@ tgc_to_iges(struct rt_db_internal *ip,
     if (!BN_VECT_ARE_PERP(VDOT(h_dir, a_dir), &tol) ||
 	!BN_VECT_ARE_PERP(VDOT(h_dir, b_dir), &tol)) {
 	/* this is not an rcc or a trc */
-	return nmg_to_iges(ip, name, fp_dir, fp_param);
+	return nmg_to_iges(ip, name, fp_dir, fp_param, vlfree);
     }
 
     if (NEAR_EQUAL(a_len, b_len, tol.dist) &&
@@ -2299,7 +2300,7 @@ tgc_to_iges(struct rt_db_internal *ip,
 
 	return write_dir_entry(fp_dir, dir_entry);
     } else
-	return nmg_to_iges(ip, name, fp_dir, fp_param);
+	return nmg_to_iges(ip, name, fp_dir, fp_param, vlfree);
 }
 
 
@@ -2454,7 +2455,7 @@ write_solid_assembly(char *name,
 int
 nmg_to_iges(struct rt_db_internal *ip,
 	    char *name,
-	    FILE *fp_dir, FILE *fp_param)
+	    FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
 {
     struct model *model;
     struct nmgregion *r;
@@ -2491,7 +2492,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 	    return 0;
 	else if (region_count == 1)
 	    return (nmgregion_to_iges(name, BU_LIST_FIRST(nmgregion, &model->r_hd) ,
-				     dependent, fp_dir, fp_param));
+				     dependent, fp_dir, fp_param, vlfree));
 	else {
 	    /* make a boolean tree unioning all the regions */
 
@@ -2502,7 +2503,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 	    region_count = 0;
 	    for (BU_LIST_FOR(r, nmgregion, &model->r_hd))
 		region_de[region_count++] = nmgregion_to_iges((char *)NULL, r, 1 ,
-							      fp_dir, fp_param);
+							      fp_dir, fp_param, vlfree);
 
 	    /* now make the boolean tree */
 	    brep_de = write_tree_of_unions(name, region_de, region_count, dependent, fp_dir, fp_param);
@@ -2524,7 +2525,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 	    return 0;
 	} else {
 	    solids_to_nmg++;
-	    brep_de =  nmgregion_to_iges(name, r, dependent, fp_dir, fp_param);
+	    brep_de =  nmgregion_to_iges(name, r, dependent, fp_dir, fp_param, vlfree);
 	    nmg_km(model);
 	    return brep_de;
 	}

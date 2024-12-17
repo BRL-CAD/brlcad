@@ -1344,7 +1344,7 @@ Find_pt_in_fu(struct faceuse *fu, point_t pt, vect_t norm)
 
 
 void
-Convtrimsurfs(void)
+Convtrimsurfs(struct bu_list *vlfree)
 {
 
     size_t i;
@@ -1420,7 +1420,7 @@ Convtrimsurfs(void)
     bu_log("Converted %zu Trimmed Surfaces successfully out of %zu total Trimmed Surfaces\n", convsurf, totsurfs);
 
     if (convsurf) {
-	(void)nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
+	(void)nmg_vertex_fuse(&m->magic, vlfree, &tol);
 
 	if (!BU_STR_EMPTY(curr_file->obj_name))
 	    mk_nmg(fdout, curr_file->obj_name, m);
