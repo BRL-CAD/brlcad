@@ -129,12 +129,6 @@ struct ray_data {
 #define NMG_PCA_EDGE_VERTEX 2
 #define NMG_PCA_VERTEX 3
 
-/**
- * global nmg animation plot callback
- */
-RT_EXPORT extern void (*nmg_plot_anim_upcall)(void);
-
-
 /* From nmg_rt_isect.c */
 RT_EXPORT extern void rt_nmg_print_hitlist(struct bu_list *hd);
 RT_EXPORT extern void rt_nmg_print_hitmiss(struct hitmiss *a_hit);

@@ -42,9 +42,6 @@ struct rt_g RTG = RT_G_INIT_ZERO;
 
 struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;
 
-void (*nmg_plot_anim_upcall)(void);
-
-
 /* see table.c for primitive object function table definition */
 extern const struct rt_functab OBJ[];
 
