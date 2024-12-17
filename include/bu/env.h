@@ -94,15 +94,20 @@ BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
  *
  *  int check_for_cnt = 3; const char *check_for_editors[3] = {"editor1", "editor2", NULL};
  *
- * If none of those inputs result in an editor being returned, libbu will
- * attempt to use its own internal lists to search.  We are deliberately NOT
- * documenting the libbu's internal editor list as public API, nor do we make
- * any guarantees about the presence of any editor that is on the list will
- * take relative to other editors.  What editors are popular in various
- * environments can change over time, and the purpose of this function is to
- * provide *some* editor, rather than locking in any particular precedence.
- * check_for_editors should be used if an app needs more guaranteed stability
- * in lookup behaviors.
+ * To allow libbu to continue on if all check_for_editors entries fail,
+ * don't terminate with a NULL:
+ *
+ *  int check_for_cnt = 2; const char *check_for_editors[3] = {"editor1", "editor2"};
+ *
+ * In the latter case, if none of those inputs result in an editor being
+ * returned, libbu will attempt to use its own internal lists to search.  We
+ * are deliberately NOT documenting the libbu's internal editor list as public
+ * API, nor do we make any guarantees about what precedence any editor that IS
+ * on the list will take relative to other editors.  What editors are popular
+ * in various environments can change over time, and the purpose of this
+ * function is to provide *some* editor, rather than locking in any particular
+ * precedence.  check_for_editors should be used if an app needs more
+ * guaranteed stability in lookup behaviors.
  *
  * If etype != 0, bu_editor will attempt to validate any candidate returns
  * against its own internal list of GUI and console editors to avoid returning
