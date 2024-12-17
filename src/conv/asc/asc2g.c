@@ -1583,7 +1583,6 @@ main(int argc, char *argv[])
 
 	rewind(ifp);
 	bu_vls_trunc(&line, 0);
-	BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
 	interp = Tcl_CreateInterp();
 	tret = tclcad_init(interp, 0, &msg);

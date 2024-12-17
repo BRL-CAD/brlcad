@@ -144,6 +144,8 @@ int update_views = 0;
 jmp_buf jmp_env;	/* For non-local gotos */
 double frametime;	/* time needed to draw last frame */
 
+struct rt_wdb rtg_headwdb;  /* head of database object list */
+
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
@@ -2009,7 +2011,7 @@ main(int argc, char *argv[])
 
     /* Set up linked lists */
     BU_LIST_INIT(&RTG.rtg_vlfree);
-    BU_LIST_INIT(&RTG.rtg_headwdb.l);
+    BU_LIST_INIT(&rtg_headwdb.l);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);

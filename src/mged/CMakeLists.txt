@@ -108,6 +108,7 @@ set(
   f_cmd.h
   mged.h
   mged_dm.h
+  mged_wdb.h
   sedit.h
   mged.ico
   mged.rc

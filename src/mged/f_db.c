@@ -205,7 +205,7 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
     s->wdbp->wdb_interp = mctx->interpreter;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &s->wdbp->l);
+    BU_LIST_APPEND(&rtg_headwdb.l, &s->wdbp->l);
 
     /* This creates a "db" command object */
 

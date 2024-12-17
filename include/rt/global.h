@@ -40,9 +40,8 @@ struct rt_g {
     /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
     int8_t              rtg_parallel;   /**< @brief  !0 = trying to use multi CPUs */
     struct bu_list      rtg_vlfree;     /**< @brief  head of bv_vlist freelist */
-    struct rt_wdb       rtg_headwdb;    /**< @brief  head of database object list */
 };
-#define RT_G_INIT_ZERO { 0, BU_LIST_INIT_ZERO, RT_WDB_INIT_ZERO }
+#define RT_G_INIT_ZERO { 0, BU_LIST_INIT_ZERO }
 
 /**
  * global ray-trace geometry state

@@ -54,6 +54,7 @@
 #include "wdb.h"
 #include "raytrace.h"
 #include "tclcad.h"
+#include "./mged_wdb.h"
 
 #define ERROR_RECOVERY_SUGGESTION "\
   The in-memory table of contents may not match the status of the on-disk\n\
@@ -69,7 +70,6 @@
     } else { \
 	bu_log("Sorry, this database is READ-ONLY\n"); \
     }
-
 
 static int
 wdb_decode_dbip(const char *dbip_string, struct db_i **dbipp)
@@ -2041,7 +2041,7 @@ wdb_init_obj(Tcl_Interp *interp,
     wdbp->wdb_interp = (void *)interp;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
+    BU_LIST_APPEND(&rtg_headwdb.l, &wdbp->l);
 
     return TCL_OK;
 }
@@ -2079,7 +2079,7 @@ wdb_open_tcl(ClientData UNUSED(clientData),
 
     if (argc == 1) {
 	/* get list of database objects */
-	for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l))
+	for (BU_LIST_FOR (wdbp, rt_wdb, &rtg_headwdb.l))
 	    Tcl_AppendResult(interp, bu_vls_addr(&wdbp->wdb_name), " ", (char *)NULL);
 
 	return TCL_OK;

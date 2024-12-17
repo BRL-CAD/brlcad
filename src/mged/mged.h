@@ -211,6 +211,8 @@ extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 /* defined in mged.c */
 extern jmp_buf jmp_env;
 
+#include "./mged_wdb.h"
+
 /*
  * GED functions referenced in more than one source file:
  */
