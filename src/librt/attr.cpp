@@ -44,6 +44,7 @@
 #include "bu/sort.h"
 #include "bu/str.h"
 #include "rt/cmd.h"
+#include "rt/binunif.h"
 #include "rt/db_attr.h"
 #include "rt/db_internal.h"
 #include "rt/db_io.h"
@@ -130,8 +131,7 @@ attr_pretty_print(struct bu_vls *msg, struct db_i *dbip, struct directory *dp, c
 		bu_vls_printf(msg, "%s binary(mime):\n", name);
 		break;
 	    case DB5_MAJORTYPE_BINARY_UNIF:
-		bu_vls_printf(msg, "%s %s:\n", name,
-			      binu_types[dp->d_minor_type]);
+		bu_vls_printf(msg, "%s %s:\n", name, rt_binunif_typestr(dp));
 		break;
 	}
     }

@@ -175,6 +175,7 @@ extern RT_EXPORT long db5_size(struct db_i *dbip, struct directory *dp, int flag
 /* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
 extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
 
+extern const char *rt_binunif_type_to_string(int type);
 
 /* primitive_util.c */
 

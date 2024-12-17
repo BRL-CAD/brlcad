@@ -175,7 +175,8 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BRLCAD_SCRIPT     45
 #define DB5_MINORTYPE_BRLCAD_MATERIAL   46
 
-/* Uniform-array binary */
+/* Uniform-array binary. rt_binunif_typestr depends on
+ * the values of these definitions. */
 #define DB5_MINORTYPE_BINU_WID_MASK		0x30
 #define DB5_MINORTYPE_BINU_SGN_MASK		0x08
 #define DB5_MINORTYPE_BINU_ATM_MASK		0x07
@@ -189,9 +190,6 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BINU_16BITINT		0x0d
 #define DB5_MINORTYPE_BINU_32BITINT		0x0e
 #define DB5_MINORTYPE_BINU_64BITINT		0x0f
-
-/* this array depends on the values of the above definitions and is defined in db5_bin.c */
-RT_EXPORT extern const char *binu_types[];
 
 /**
  *  The "raw internal" form of one database object.

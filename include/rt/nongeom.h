@@ -120,7 +120,6 @@ struct rt_binunif_internal {
 #define RT_CHECK_BINUNIF(_p) BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")
 #define RT_CK_BINUNIF(_p) RT_CHECK_BINUNIF(_p)
 
-
 /**
  * In-memory format for database "constraint" record
  */

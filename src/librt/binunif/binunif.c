@@ -165,6 +165,46 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     return 0;
 }
 
+const char *
+rt_binunif_type_to_string(int type)
+{
+    if (type < 0 || type > 15)
+	return NULL;
+
+    /**
+     * this array depends on the values of the definitions of the
+     * DB5_MINORTYPE_BINU_* in db5.h
+     */
+    static const char *binu_types[] = {
+	NULL,
+	NULL,
+	"binary(float)",
+	"binary(double)",
+	"binary(u_8bit_int)",
+	"binary(u_16bit_int)",
+	"binary(u_32bit_int)",
+	"binary(u_64bit_int)",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"binary(8bit_int)",
+	"binary(16bit_int)",
+	"binary(32bit_int)",
+	"binary(64bit_int)"
+    };
+
+    return binu_types[type];
+}
+
+const char *
+rt_binunif_typestr(const struct directory *dp)
+{
+    if (!dp || dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF)
+	return NULL;
+
+    return rt_binunif_type_to_string(dp->d_minor_type);
+}
 
 /*
  * Local Variables:

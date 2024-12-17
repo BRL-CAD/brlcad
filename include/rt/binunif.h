@@ -28,6 +28,7 @@
 #include "vmath.h"
 #include "bu/vls.h"
 #include "rt/defines.h"
+#include "rt/directory.h"
 
 __BEGIN_DECLS
 
@@ -51,6 +52,10 @@ RT_EXPORT extern void rt_binunif_free(struct rt_binunif_internal *bip);
  */
 RT_EXPORT extern void rt_binunif_dump(struct rt_binunif_internal *bip);
 
+/**
+ * Decode binunif type into string.
+ */
+RT_EXPORT extern const char * rt_binunif_typestr(const struct directory *dp);
 
 __END_DECLS
 
