@@ -1268,7 +1268,7 @@ rt_clean(struct rt_i *rtip)
 	 * before this rtip is done with all its treewalking.
 	 *
 	 * This must be done for each 'clean' to keep
-	 * rt_find_identical_solid() working properly as d_uses goes
+	 * rt_find_or_create_identical_solid() working properly as d_uses goes
 	 * up.
 	 */
 	for (i=0; i < RT_DBNHASH; i++) {

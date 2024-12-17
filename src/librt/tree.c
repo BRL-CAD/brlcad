@@ -286,8 +286,8 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
  * will be using the same hash, and will thus wait for the proper
  * semaphore.
  */
-struct soltab *
-rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rtip)
+static struct soltab *
+rt_find_or_create_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rtip)
 {
     struct soltab *stp = RT_SOLTAB_NULL;
     int hash;
@@ -416,6 +416,65 @@ rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rti
     return stp;
 }
 
+struct soltab *
+rt_find_identical_solid(const matp_t mat, const struct directory *dp, const struct rt_i *rtip)
+{
+    struct bu_list *mid;
+    struct soltab *stp = RT_SOLTAB_NULL;
+
+    RT_CK_DIR(dp);
+    RT_CK_RTI(rtip);
+
+    /* Search dp->d_use_hd list for other instances */
+    for (BU_LIST_FOR(mid, bu_list, &dp->d_use_hd)) {
+
+	stp = BU_LIST_MAIN_PTR(soltab, mid, l2);
+	RT_CK_SOLTAB(stp);
+
+	if (stp->st_matp == (matp_t)0) {
+	    if (mat == (matp_t)0) {
+		/* Both have identity matrix */
+		goto more_checks;
+	    }
+	    continue;
+	}
+	if (mat == (matp_t)0) continue;	/* doesn't match */
+
+	if (!bn_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol))
+	    continue;
+
+more_checks:
+	/* Don't instance this solid from some other model
+	 * instance.  As this is nearly always equal, check it
+	 * last
+	 */
+	if (stp->st_rtip != rtip) continue;
+
+	/*
+	 * stp now points to re-referenced solid.  stp->st_id is
+	 * non-zero, indicating pre-existing solid.
+	 */
+	RT_CK_SOLTAB(stp);		/* sanity */
+
+	/* Only increment use counter for non-dead solids. */
+	if (!(stp->st_aradius <= -1))
+	    stp->st_uses++;
+	/* dp->d_uses is NOT incremented, because number of
+	 * soltab's using it has not gone up.
+	 */
+	if (RT_G_DEBUG & RT_DEBUG_SOLIDS) {
+	    bu_log(mat ?
+		    "%s re-referenced %ld\n" :
+		    "%s re-referenced %ld (identity mat)\n",
+		    dp->d_namep, stp->st_uses);
+	}
+
+	return stp;
+    }
+
+    return NULL;
+}
+
 
 /**
  * This routine must be prepared to run in parallel.
@@ -469,7 +528,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
      * become a dead solid, so by testing against -1 (instead of <= 0,
      * like before, oops), it isn't a problem.
      */
-    stp = rt_find_identical_solid(mat, dp, rtip);
+    stp = rt_find_or_create_identical_solid(mat, dp, rtip);
     if (stp->st_id != 0) {
 	/* stp is an instance of a pre-existing solid */
 	if (stp->st_aradius <= -1) {
