@@ -1369,7 +1369,6 @@ static const struct nirt_cmd_desc nirt_descs[] = {
     { "overlap_claims", "set/query overlap rebuilding/retention",        "<0|1|2|3>" },
     { "fmt",            "set/query output formats",                      "{rhpfmog} format item item ..." },
     { "print",          "query an output item",                          "item" },
-    { "bot_minpieces",  "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
     { "debug",          "set/query nirt debug flags",                    "[-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib [flag]]" },
     { "q",              "quit",                                          NULL },
     { "?",              "display this help menu",                        NULL },
@@ -2037,51 +2036,6 @@ _nirt_cmd_print_item(void *ns, int argc, const char **argv)
 }
 
 extern "C" int
-_nirt_cmd_bot_minpieces(void *ns, int argc, const char **argv)
-{
-    /* Ew - rt_bot_minpieces is a librt global.  Why isn't it
-     * a part of the specific rtip? */
-    int ret = 0;
-    long minpieces = 0;
-    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
-    struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-
-    if (argc == 1) {
-	nout(nss, "rt_bot_minpieces = %d\n", (unsigned int)rt_bot_minpieces);
-	return 0;
-    }
-
-    argc--; argv++;
-
-    if (argc > 1) {
-	nerr(nss, "Usage:  bot_minpieces %s\n", _nirt_get_desc_args("bot_minpieces"));
-	return -1;
-    }
-
-    if ((ret = bu_opt_long(&opt_msg, 1, argv, (void *)&minpieces)) == -1) {
-	nerr(nss, "Error: bu_opt value read failure reading minpieces value: %s\n", bu_vls_cstr(&opt_msg));
-	goto bot_minpieces_done;
-    }
-
-    if (minpieces < 0) {
-	nerr(nss, "Error: rt_bot_minpieces cannot be less than 0\n");
-	ret = -1;
-	goto bot_minpieces_done;
-    }
-
-    if (rt_bot_minpieces != (size_t)minpieces) {
-	rt_bot_minpieces = minpieces;
-	bu_vls_free(&opt_msg);
-	nss->i->need_reprep = 1;
-    }
-
-bot_minpieces_done:
-    bu_vls_free(&opt_msg);
-    return ret;
-}
-
-extern "C" int
 _nirt_cmd_debug(void *ns, int argc, const char **argv)
 {
     int ret = 0;
@@ -2363,7 +2317,6 @@ const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
     { "overlap_claims", _nirt_cmd_do_overlap_claims},
     { "fmt",            _nirt_cmd_format_output},
     { "print",          _nirt_cmd_print_item},
-    { "bot_minpieces",  _nirt_cmd_bot_minpieces},
     { "debug",          _nirt_cmd_debug},
     { "q",              _nirt_cmd_quit},
     { "?",              _nirt_cmd_show_menu},

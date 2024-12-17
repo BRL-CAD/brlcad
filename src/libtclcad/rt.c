@@ -696,17 +696,6 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
     return TCL_OK;
 }
 
-
-void
-tclcad_rt_setup(Tcl_Interp *interp)
-{
-    Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_WIDE_INT);
-
-    Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
-		(char *)&rt_bot_tri_per_piece, TCL_LINK_WIDE_INT);
-}
-
-
 int
 Rt_Init(Tcl_Interp *interp)
 {
@@ -718,8 +707,6 @@ Rt_Init(Tcl_Interp *interp)
 	    rt_init_resource(&rt_uniresource, 0, NULL);
 	}
     }
-
-    tclcad_rt_setup(interp);
 
     Tcl_PkgProvide(interp,  "Rt", brlcad_version());
 

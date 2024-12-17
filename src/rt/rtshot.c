@@ -169,8 +169,6 @@ usage(const char *argv0)
     bu_log(" -x #		Set librt debug flags\n");
     bu_log(" -X #		Set rt program debug flags\n");
     bu_log(" -N #		Set NMG debug flags\n");
-    bu_log(" -t #		Set number of triangles per piece for BOT's (default is 4)\n");
-    bu_log(" -b #		Set threshold number of triangles to use pieces (default is 32)\n");
     bu_log(" -O #		Set overlap-claimant handling\n");
     bu_log(" -o #		Set onehit flag\n");
     bu_log(" -r #		Set ray length\n");
@@ -303,16 +301,6 @@ main(int argc, char **argv)
 		    ptr = strtok((char *)NULL, "\t ");
 		    i++;
 		}
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 't':
-		rt_bot_tri_per_piece = atoi(argv[1]);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'b':
-		rt_bot_minpieces = atoi(argv[1]);
 		argc -= 2;
 		argv += 2;
 		break;

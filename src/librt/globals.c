@@ -45,18 +45,15 @@ struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;
 /* see table.c for primitive object function table definition */
 extern const struct rt_functab OBJ[];
 
-
+/* This one is REALLY nasty.  If I'm interpreting its use in cline correctly,
+ * it allows an application to change the geometric interpretation of the
+ * primitive itself at *run time* (either prep or shot??).  I'm not aware
+ * of any other feature like this, and it's not clear to me how to implement
+ * something like this in a proper general sense... for a general mechanism
+ * of some sort we'd need a way for primitives to communicate back to apps
+ * a list of per type, per-primitive (and maybe even per instance) parameters
+ * and a way for them to set them on the actual prepped internal objects. */
 fastf_t rt_cline_radius = (fastf_t)-1.0;
-
-/**
- * minimum number of bot pieces
- */
-size_t rt_bot_minpieces = RT_DEFAULT_MINPIECES;
-
-/**
- * minimum triangles per piece
- */
-size_t rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
 
 /*
  * Local Variables:

@@ -44,24 +44,6 @@ TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
 
 /**
- * Add all the supported Tcl interfaces to LIBRT routines to the list
- * of commands known by the given interpreter.
- *
- * wdb_open creates database "objects" which appear as Tcl procs,
- * which respond to many operations.
- *
- * The "db rt_gettrees" operation in turn creates a ray-traceable
- * object as yet another Tcl proc, which responds to additional
- * operations.
- *
- * Note that the MGED mainline C code automatically runs "wdb_open db"
- * and "wdb_open .inmem" on behalf of the MGED user, which exposes all
- * of this power.
- */
-TCLCAD_EXPORT extern void tclcad_rt_setup(Tcl_Interp *interp);
-
-
-/**
  * Allows LIBRT to be dynamically loaded to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libbu.so"
  * "load /usr/brlcad/lib/libbn.so"
