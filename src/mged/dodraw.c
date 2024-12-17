@@ -239,7 +239,7 @@ replot_modified_solid(
     }
 
     /* Release existing vlist of this solid */
-    RT_FREE_VLIST(&(sp->s_vlist));
+    BV_FREE_VLIST(&RTG.rtg_vlfree, &(sp->s_vlist));
 
     /* Draw (plot) a normal solid */
     RT_CK_DB_INTERNAL(ip);

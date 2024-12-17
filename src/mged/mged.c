@@ -1721,7 +1721,7 @@ mged_finish(struct mged_state *s, int exitcode)
 
 	if (p && p->dm_dmp) {
 	    dm_close(p->dm_dmp);
-	    RT_FREE_VLIST(&p->dm_p_vlist);
+	    BV_FREE_VLIST(&RTG.rtg_vlfree, &p->dm_p_vlist);
 	    mged_slider_free_vls(p);
 	    bu_free(p, "release: mged_curr_dm");
 	}

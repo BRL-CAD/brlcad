@@ -1745,3 +1745,10 @@ s/bv_mesh_lod_custom_key/bu_data_hash/g
 s/x/solid_report/g
 s/db_search\(/db_search_old\(/g
 s/Orca_hash_tbl/rti_udata/g
+s/RT_GET_VLIST\(/BV_GET_VLIST\(&RTG.rtg_vlfree, /g
+s/RT_FREE_VLIST\(/BV_FREE_VLIST\(&RTG.rtg_vlfree, /g
+s/RT_ADD_VLIST\(/BV_ADD_VLIST\(&RTG.rtg_vlfree, /ga
+s/RT_VLIST_SET_DISP_MAT\(/BV_VLIST_SET_DISP_MAT\(&RTG.rtg_vlfree, /g
+s/RT_VLIST_SET_MODEL_MAT\(/BV_VLIST_SET_MODEL_MAT\(&RTG.rtg_vlfree, /g
+s/RT_VLIST_SET_POINT_SIZE\(/BV_VLIST_SET_POINT_SIZE\(&RTG.rtg_vlfree, /g
+s/RT_VLIST_SET_LINE_WIDTH\(/BV_VLIST_SET_LINE_WIDTH\(&RTG.rtg_vlfree, /g

@@ -393,7 +393,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
 		bv_vlist_to_uplot(fp, &vhead);
 		fclose(fp);
-		RT_FREE_VLIST(&vhead);
+		BV_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 	    }
 	    bu_vls_free(&file);

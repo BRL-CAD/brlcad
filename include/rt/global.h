@@ -36,6 +36,15 @@ __BEGIN_DECLS
  * Definitions for librt.a which are global to the library regardless
  * of how many different models are being worked on
  */
+
+
+/**
+ * Applications that are going to use rtg_vlfree
+ * are required to execute this macro once, first:
+ *
+ * BU_LIST_INIT(&RTG.rtg_vlfree);
+ */
+
 struct rt_g {
     struct bu_list      rtg_vlfree;     /**< @brief  head of bv_vlist freelist */
 };
@@ -45,34 +54,6 @@ struct rt_g {
  * global ray-trace geometry state
  */
 RT_EXPORT extern struct rt_g RTG;
-
-/**
- * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
- * are required to execute this macro once, first:
- *
- * BU_LIST_INIT(&RTG.rtg_vlfree);
- *
- * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
- */
-#define RT_GET_VLIST(p) BV_GET_VLIST(&RTG.rtg_vlfree, p)
-
-/** Place an entire chain of bv_vlist structs on the freelist */
-#define RT_FREE_VLIST(hd) BV_FREE_VLIST(&RTG.rtg_vlfree, hd)
-
-#define RT_ADD_VLIST(hd, pnt, draw) BV_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
-
-/** set the transformation matrix to display matrix */
-#define RT_VLIST_SET_DISP_MAT(_dest_hd, _ref_pt) BV_VLIST_SET_DISP_MAT(&RTG.rtg_vlfree, _dest_hd, _ref_pt)
-
-/** set the transformation matrix to model matrix */
-#define RT_VLIST_SET_MODEL_MAT(_dest_hd) BV_VLIST_SET_MODEL_MAT(&RTG.rtg_vlfree, _dest_hd)
-
-/** Set a point size to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_POINT_SIZE(hd, size) BV_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
-
-/** Set a line width to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_LINE_WIDTH(hd, width) BV_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
-
 
 __END_DECLS
 
