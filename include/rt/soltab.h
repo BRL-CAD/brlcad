@@ -105,7 +105,11 @@ RT_EXPORT extern void rt_pr_soltab(const struct soltab *stp);
 
 /* See if solid "dp" as transformed by "mat" already exists in the soltab list.
  * If it does, return the matching stp, otherwise, create a new soltab
- * structure, enroll it in the list, and return a pointer to that. */
+ * structure, enroll it in the list, and return a pointer to that.
+ *
+ * TODO - need a different version of this for the public API use case. This
+ * should be a read-only search of rtip that doesn't create new soltabs for
+ * what we want publicly here... */
 RT_EXPORT extern struct soltab *
 rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rtip);
 
