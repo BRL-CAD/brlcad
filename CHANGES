@@ -146,6 +146,10 @@ include/ged/commands.h
 	current ged_cmd_valid functionality will be replaced by
 	ged_cmd_exists and ged_cmd_same.
 
+include/bg/plane.h
+	removing tri_specific structure - only used internally in
+	one place in BRL-CAD code as of v7.40.2.
+
 7.40
 ----
 include/bu/process.h

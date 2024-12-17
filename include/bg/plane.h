@@ -61,6 +61,8 @@ struct plane_specific  {
 
 /**
  * Describe the tri_specific structure.
+ *
+ * DEPRECATED - removing this as public API.  (marked 7.42.0)
  */
 struct tri_specific  {
     point_t tri_A;			/**< triangle vertex (A) */
