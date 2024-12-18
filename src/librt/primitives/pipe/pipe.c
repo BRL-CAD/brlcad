@@ -3742,9 +3742,9 @@ rt_pipe_tess(
     struct model *m,
     struct rt_db_internal *ip,
     const struct bg_tess_tol *ttol,
-    const struct bn_tol *tol,
-    struct bu_list *vlfree)
+    const struct bn_tol *tol)
 {
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     struct wdb_pipe_pnt *pp1;
     struct wdb_pipe_pnt *pp2;
     struct wdb_pipe_pnt *pp3;
