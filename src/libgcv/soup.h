@@ -62,7 +62,6 @@ GCV_EXPORT int split_face_single(struct soup_s *s, unsigned long int fid, point_
 GCV_EXPORT int split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol);
 GCV_EXPORT union tree *compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int face_status2, unsigned long int face_status3);
 union tree *invert(union tree *tree);
-union tree *evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 __END_DECLS
 

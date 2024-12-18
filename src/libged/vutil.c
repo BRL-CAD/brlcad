@@ -184,7 +184,7 @@ ged_dl_hash(struct display_list *dl)
 }
 
 void
-nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, struct bn_tol *tol)
+nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, struct bn_tol *tol, struct bu_list *vlfree)
 {
     if (!gedp || !es_eu || !tol)
 	return;
@@ -199,7 +199,7 @@ nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, struct bn_tol *tol)
     long *tab = (long *)bu_calloc(m->maxindex+1, sizeof(long), "nmg_ed tab[]");
     struct bv_vlblock *vbp = rt_vlblock_init();
 
-    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, tol);
+    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, vlfree, tol);
     _ged_cvt_vlblock_to_solids(gedp, vbp, "_EU_", 0);      /* swipe vlist */
 
     bv_vlblock_free(vbp);

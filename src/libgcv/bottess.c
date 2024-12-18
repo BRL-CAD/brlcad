@@ -401,7 +401,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int UNUSED(
 
 
 union tree *
-evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *tol, struct bu_list *vlfree)
 {
     RT_CK_TREE(tr);
 
@@ -417,7 +417,7 @@ evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *to
 		struct nmgregion *nmgr = BU_LIST_FIRST(nmgregion, &tr->tr_d.td_r->m_p->r_hd);
 		/* the bot temporary format may be unnecessary if we can walk
 		 * the nmg shells and generate soup from them directly. */
-		struct rt_bot_internal *bot = nmg_bot(BU_LIST_FIRST(shell, &nmgr->s_hd), &RTG.rtg_vlfree, tol);
+		struct rt_bot_internal *bot = nmg_bot(BU_LIST_FIRST(shell, &nmgr->s_hd), vlfree, tol);
 
 		/* causes a crash.
 		   nmg_kr(nmgr);
@@ -441,8 +441,8 @@ evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *to
 	case OP_SUBTRACT:
 	    RT_CK_TREE(tr->tr_b.tb_left);
 	    RT_CK_TREE(tr->tr_b.tb_right);
-	    tr->tr_b.tb_left = evaluate(tr->tr_b.tb_left, ttol, tol);
-	    tr->tr_b.tb_right = evaluate(tr->tr_b.tb_right, ttol, tol);
+	    tr->tr_b.tb_left = evaluate(tr->tr_b.tb_left, ttol, tol, vlfree);
+	    tr->tr_b.tb_right = evaluate(tr->tr_b.tb_right, ttol, tol, vlfree);
 	    RT_CK_TREE(tr->tr_b.tb_left);
 	    RT_CK_TREE(tr->tr_b.tb_right);
 	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
@@ -476,9 +476,10 @@ long int lsplitz=0;
 long int lsplitty=0;
 
 union tree *
-gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *ret_tree = TREE_NULL;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
 
     if (!tsp || !curtree || !pathp) {
 	bu_log("INTERNAL ERROR: gcv_region_end missing parameters\n");
@@ -503,7 +504,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
-    ret_tree = evaluate(curtree, tsp->ts_ttol, tsp->ts_tol);
+    ret_tree = evaluate(curtree, tsp->ts_ttol, tsp->ts_tol, vlfree);
 
     lsplitz+=splitz;
     lsplitz+=splitz;
@@ -516,13 +517,13 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
 
 union tree *
-gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct bg_tess_tol *ttol)
+gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct bg_tess_tol *ttol, struct bu_list *vlfree)
 {
     struct db_tree_state tree_state;
     RT_DBTS_INIT(&tree_state);
     tree_state.ts_ttol = ttol;
 
-    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, rt_booltree_leaf_tess, NULL) < 0)
+    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, rt_booltree_leaf_tess, vlfree) < 0)
 	bu_log("gcv_bottess: db_walk_tree failure\n");
 
     return NULL;

@@ -39,7 +39,7 @@
 
 __BEGIN_DECLS
 
-GED_EXPORT extern void nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, struct bn_tol *tol);
+GED_EXPORT extern void nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, struct bn_tol *tol, struct bu_list *vlfree);
 
 __END_DECLS
 

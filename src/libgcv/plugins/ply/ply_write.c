@@ -411,7 +411,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* try */
 
 	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);

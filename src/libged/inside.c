@@ -144,7 +144,8 @@ arbin(struct ged *gedp,
       fastf_t thick[6],
       size_t nface,
       int cgtype,		/* # of points, 4..8 */
-      plane_t planes[6])
+      plane_t planes[6],
+      struct bu_list *vlfree)
 {
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     point_t center_pt = VINIT_ZERO;
@@ -328,14 +329,14 @@ arbin(struct ged *gedp,
 	 * This does all the vertices
 	 */
 	bu_ptbl_init(&vert_tab, 64, "vert_tab");
-	nmg_vertex_tabulate(&vert_tab, &m->magic, &RTG.rtg_vlfree);
+	nmg_vertex_tabulate(&vert_tab, &m->magic, vlfree);
 	for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	    struct vertex *v;
 
 	    v = (struct vertex *)BU_PTBL_GET(&vert_tab, i);
 	    NMG_CK_VERTEX(v);
 
-	    if (nmg_in_vert(v, 0, &RTG.rtg_vlfree, &wdbp->wdb_tol)) {
+	    if (nmg_in_vert(v, 0, vlfree, &wdbp->wdb_tol)) {
 		bu_vls_printf(gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
 		nmg_km(m);
 		bu_ptbl_free(&vert_tab);
@@ -351,10 +352,10 @@ arbin(struct ged *gedp,
 	rt_db_free_internal(ip);
 
 	/* convert the NMG to a BOT */
-	bot = (struct rt_bot_internal *)nmg_bot(s, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	bot = (struct rt_bot_internal *)nmg_bot(s, vlfree, &wdbp->wdb_tol);
 	nmg_km(m);
 
-	nmg_extrude_cleanup(s, 0, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	nmg_extrude_cleanup(s, 0, vlfree, &wdbp->wdb_tol);
 
 	/* put new solid in "ip" */
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -846,7 +847,7 @@ etoin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[1])
 
 /* find inside for NMG */
 static int
-nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
+nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick, struct bu_list *vlfree)
 {
     struct model *m;
     struct nmgregion *r;
@@ -873,9 +874,9 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
 
-	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1, &RTG.rtg_vlfree);
+	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1, vlfree);
 	    if (!nmg_kill_cracks(s))
-		(void)nmg_extrude_shell(s, thick, 0, 0, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+		(void)nmg_extrude_shell(s, thick, 0, 0, vlfree, &wdbp->wdb_tol);
 
 	    s = next_s;
 	}
@@ -906,6 +907,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     plane_t planes[6];
     char *newname;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -994,7 +996,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 		++arg;
 	    }
 
-	    if (arbin(gedp, ip, thick, nface, cgtype, planes))
+	    if (arbin(gedp, ip, thick, nface, cgtype, planes, vlfree))
 		return BRLCAD_ERROR;
 	    break;
 	}
@@ -1128,7 +1130,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 	    ++arg;
-	    if (nmgin(gedp,  ip, thick[0]))
+	    if (nmgin(gedp,  ip, thick[0], vlfree))
 		return BRLCAD_ERROR;
 	    break;
 

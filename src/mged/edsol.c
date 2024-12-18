@@ -1625,7 +1625,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
 	    nmg_pr_fu_around_eu(es_eu, &s->tol.tol);
 
-	    nmg_plot_eu(s->gedp, es_eu, &s->tol.tol);
+	    nmg_plot_eu(s->gedp, es_eu, &s->tol.tol, s->vlfree);
 
 	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
