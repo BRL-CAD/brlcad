@@ -1919,7 +1919,7 @@ write_name_entity(char *name,
 int
 tor_to_iges(struct rt_db_internal *ip,
 	    char *name,
-	    FILE *fp_dir, FILE *fp_param)
+	    FILE *fp_dir, FILE *fp_param, struct bu_list *UNUSED(vlfree))
 {
     struct rt_tor_internal *tor;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -1970,7 +1970,7 @@ tor_to_iges(struct rt_db_internal *ip,
 int
 sph_to_iges(struct rt_db_internal *ip,
 	    char *name,
-	    FILE *fp_dir, FILE *fp_param)
+	    FILE *fp_dir, FILE *fp_param, struct bu_list *UNUSED(vlfree))
 {
     struct rt_ell_internal *sph;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -2022,7 +2022,7 @@ sph_to_iges(struct rt_db_internal *ip,
 int
 ell_to_iges(struct rt_db_internal *ip,
 	    char *name,
-	    FILE *fp_dir, FILE *fp_param)
+	    FILE *fp_dir, FILE *fp_param, struct bu_list *UNUSED(vlfree))
 {
     struct rt_ell_internal *ell;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -2534,7 +2534,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 
 
 int
-sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param)
+sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param, struct bu_list *UNUSED(vlfree))
 {
     struct rt_sketch_internal *sketch;
 
@@ -2556,7 +2556,7 @@ sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_par
 
 
 int
-null_to_iges(struct rt_db_internal *UNUSED(ip), char *UNUSED(name), FILE *UNUSED(fp_dir), FILE *UNUSED(fp_param))
+null_to_iges(struct rt_db_internal *UNUSED(ip), char *UNUSED(name), FILE *UNUSED(fp_dir), FILE *UNUSED(fp_param), struct bu_list *UNUSED(vlfree))
 {
     return 0;
 }

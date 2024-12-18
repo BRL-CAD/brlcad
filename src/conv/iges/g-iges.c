@@ -71,7 +71,7 @@ extern void w_terminate(FILE *fp);
 extern void write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
-extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
+extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree);
 extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern void csg_comb_func(struct db_i *dbip, struct directory *dp, void *ptr);
 extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, void *ptr);
@@ -127,20 +127,20 @@ struct db_i *DBIP;
 static struct db_tree_state tree_state;	/* includes tol & model */
 
 /* function table for converting solids to iges */
-extern int null_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int arb_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int ell_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int sph_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int tor_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int null_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int arb_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int ell_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int sph_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int tor_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern void iges_init(struct bn_tol *, struct bg_tess_tol *, int, struct db_i *);
 extern void Print_stats(FILE *);
 
 struct iges_functab
 {
-    int (*do_iges_write)(struct rt_db_internal *, char *, FILE *, FILE *);
+    int (*do_iges_write)(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 };
 
 
@@ -612,7 +612,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		}
 	    }
 
-	    dp->d_uses = (-nmgregion_to_iges(dp->d_namep, r, dependent, fp_dir, fp_param));
+	    dp->d_uses = (-nmgregion_to_iges(dp->d_namep, r, dependent, fp_dir, fp_param, vlfree));
 	} else if (mode == TRIMMED_SURF_MODE)
 	    dp->d_uses = (-nmgregion_to_tsurf(dp->d_namep, r, fp_dir, fp_param));
 
@@ -797,6 +797,7 @@ void
 csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal ip;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     /* if this solid has already been output, don't do it again */
     if (dp->d_uses < 0)
@@ -809,7 +810,7 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 	bu_log("Error in import");
 
     solid_is_brep = 0;
-    dp->d_uses = (-iges_write[ip.idb_type].do_iges_write(&ip, dp->d_namep, fp_dir, fp_param));
+    dp->d_uses = (-iges_write[ip.idb_type].do_iges_write(&ip, dp->d_namep, fp_dir, fp_param, vlfree));
 
     if (!dp->d_uses) {
 	bu_log("g-iges: failed to translate %s to IGES format\n", dp->d_namep);
