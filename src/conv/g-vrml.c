@@ -629,9 +629,7 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
-    pm.vlfree = vlfree;
+    pm.vlfree = &RTG.rtg_vlfree;
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:h?")) != -1) {
@@ -754,7 +752,7 @@ main(int argc, char **argv)
 			   0,
 			   nmg_region_end,
 			   rt_booltree_leaf_tess,
-			   (void *)vlfree);	/* in librt/nmg_bool.c */
+			   (void *)pm.vlfree);	/* in librt/nmg_bool.c */
 	goto out;
     }
 

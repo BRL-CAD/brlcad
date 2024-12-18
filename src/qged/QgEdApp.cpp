@@ -167,7 +167,6 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
     mdl = new QgModel();
-    BU_LIST_INIT(&RTG.rtg_vlfree);
 
     // Install a filter to handle the top level key bindings and other
     // interactive event management requiring global application knowledge.

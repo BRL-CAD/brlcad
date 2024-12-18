@@ -1638,7 +1638,6 @@ main(int argc, char **argv)
     fastf_t x_start, y_start, z_start;
     fastf_t bb_area[3];
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     bu_setprogname(argv[0]);
 

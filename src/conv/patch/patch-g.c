@@ -3379,7 +3379,6 @@ main(int argc, char **argv)
     int stop, num;
     char name[NAMESIZE+1];
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     /* This size is dictated by the specific format output by the
      * 'rpatch' tool and expected material file.  They are

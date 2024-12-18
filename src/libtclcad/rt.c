@@ -699,15 +699,6 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
 int
 Rt_Init(Tcl_Interp *interp)
 {
-    /*XXX how much will this break? */
-    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
-	/* initialize RT's global state */
-	BU_LIST_INIT(&RTG.rtg_vlfree);
-	if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
-	    rt_init_resource(&rt_uniresource, 0, NULL);
-	}
-    }
-
     Tcl_PkgProvide(interp,  "Rt", brlcad_version());
 
     return TCL_OK;

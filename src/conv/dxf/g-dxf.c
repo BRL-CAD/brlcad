@@ -409,8 +409,6 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
-
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:ih?")) != -1) {
 	switch (c) {

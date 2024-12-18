@@ -1258,7 +1258,6 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
     }
 
     region_end_data.vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(region_end_data.vlfree);	/* for vlist macros */
 
     fprintf(state.fp_out, "#VRML V2.0 utf8\n");
     fprintf(state.fp_out, "#Units are %s\n", vrml_write_make_units_str(gcv_options->scale_factor));

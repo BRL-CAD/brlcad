@@ -380,7 +380,6 @@ main(int argc, char **argv)
     }
 
     pm.vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(pm.vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:h?")) != -1) {

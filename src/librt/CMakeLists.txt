@@ -214,6 +214,7 @@ set(
   reduce_db.cpp
   regionfix.c
   roots.c
+  rt_init.cpp
   search.cpp
   search_old.cpp
   shoot.c

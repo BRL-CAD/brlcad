@@ -74,24 +74,8 @@ rt_new_rti(struct db_i *dbip)
 {
     struct rt_i *rtip;
     int i;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     RT_CK_DBI(dbip);
-
-    /* XXX Move to rt_global_init() ? */
-    if (BU_LIST_FIRST(bu_list, vlfree) == 0) {
-	char *debug_flags;
-	debug_flags = getenv("LIBRT_DEBUG");
-	if (debug_flags) {
-	    if (rt_debug) {
-		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application-specified flags\n");
-	    } else {
-		rt_debug = strtol(debug_flags, NULL, 0x10);
-	    }
-	}
-
-	BU_LIST_INIT(vlfree);
-    }
 
     BU_ALLOC(rtip, struct rt_i);
     rtip->rti_magic = RTI_MAGIC;

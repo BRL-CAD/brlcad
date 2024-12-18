@@ -215,7 +215,6 @@ main(int argc, const char **argv)
 
     the_model = nmg_mm();
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     ++argv; --argc;

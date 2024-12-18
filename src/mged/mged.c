@@ -1838,7 +1838,6 @@ main(int argc, char *argv[])
 
     /* Set up linked lists */
     s->vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(s->vlfree);
     BU_LIST_INIT(&rtg_headwdb.l);
 
     // Start out in an initialization state

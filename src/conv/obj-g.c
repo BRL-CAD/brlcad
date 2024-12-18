@@ -3194,7 +3194,6 @@ main(int argc, char **argv)
     char bot_orientation = RT_BOT_UNORIENTED;
     int fuse_vertices = 0;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     bu_setprogname(argv[0]);
 

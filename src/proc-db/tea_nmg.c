@@ -189,7 +189,6 @@ main(int argc, char **argv)
     bu_log("Writing out geometry to file [tea_nmg.g] ...");
 
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);
 
     outfp = wdb_fopen("tea_nmg.g");
 

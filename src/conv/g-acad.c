@@ -512,7 +512,6 @@ main(int argc, char **argv)
 
     the_model = nmg_mm();
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:ih?")) != -1) {
@@ -639,7 +638,7 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			rt_booltree_leaf_tess,
-			(void *)NULL);	/* in librt/nmg_bool.c */
+			(void *)vlfree);	/* in librt/nmg_bool.c */
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;

@@ -60,7 +60,6 @@ main(int argc, char **argv)
     FILE		*fpin;
     struct rt_wdb	*fpout;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
 	usage();

@@ -650,7 +650,6 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     state.the_model = nmg_mm();
 
     state.vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(state.vlfree);      /* for vlist macros */
 
     if (!state.ply_write_options->separate) {
         /* open outputfile using specified type */

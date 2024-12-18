@@ -528,7 +528,6 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     the_model = nmg_mm();
     state.vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(state.vlfree);	/* for vlist macros */
 
     /* Write out header */
     if (NEAR_EQUAL(state.gcv_options->scale_factor, 1.0 / 25.4, RT_LEN_TOL))

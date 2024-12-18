@@ -166,9 +166,6 @@ main(int ac, char *av[]) {
 	return 2;
     }
 
-    /* FIXME: To draw, we need to init this LIBRT global */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
-
     /* make a temporary copy of moss */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
     std::ifstream orig(bu_vls_cstr(&fname), std::ios::binary);

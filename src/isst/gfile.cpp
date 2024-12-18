@@ -268,7 +268,6 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     /* make empty NMG model */
     the_model = nmg_mm();
     d.vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(d.vlfree);	/* for vlist macros */
 
     /*
      * these should probably encode so the result can be passed back to client

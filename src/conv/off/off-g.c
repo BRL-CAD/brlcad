@@ -228,7 +228,6 @@ int main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     tol.magic = BN_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
     tol.dist = 0.01;

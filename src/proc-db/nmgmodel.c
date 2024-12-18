@@ -519,7 +519,6 @@ main(int ac, char *av[])
     struct bn_tol tol;
     FILE *fdplot;
     struct rt_wdb *fdmodel;
-    BU_LIST_INIT(&RTG.rtg_vlfree);
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     bu_setprogname(av[0]);

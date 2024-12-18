@@ -153,7 +153,6 @@ main(int argc, char *argv [])
     int c;
     int file_count = 0;
     char *output_file = (char *)NULL;
-    BU_LIST_INIT(&RTG.rtg_vlfree);
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     bu_setprogname(argv[0]);

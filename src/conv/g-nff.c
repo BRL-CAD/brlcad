@@ -390,7 +390,6 @@ main(int argc, char *argv[])
 
     the_model = nmg_mm();
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:X:e:ih?")) != -1) {

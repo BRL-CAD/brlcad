@@ -225,7 +225,6 @@ main(int argc, char *argv[])
     /* make empty NMG model */
     the_model = nmg_mm();
     conv_data.vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(conv_data.vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((i = bu_getopt(argc, argv, "a:89n:o:r:vx:D:P:X:h?")) != -1) {

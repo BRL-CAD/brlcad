@@ -754,9 +754,6 @@ main(int argc, const char **argv)
 	fprintf(stderr, "%s", ged_init_str);
     }
 
-    /* FIXME: To draw, we need to init this LIBRT global */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
-
     // Use a C++ class to manage info we will need
     std::shared_ptr<GshState> gs = std::make_shared<GshState>();
 

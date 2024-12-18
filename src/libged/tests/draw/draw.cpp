@@ -233,9 +233,6 @@ main(int ac, char *av[]) {
     bu_mkdir(lcache);
     bu_setenv("BU_DIR_CACHE", lcache, 1);
 
-    /* FIXME: To draw, we need to init this LIBRT global */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
-
     /* We are going to generate geometry from the basic moss data,
      * so we make a temporary copy */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);

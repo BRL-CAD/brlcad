@@ -1113,7 +1113,6 @@ main(int argc, char **argv)
     char *nastran_file = "Converted from NASTRAN file (stdin)";
 
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(vlfree);      /* for vlist macros */
 
     bu_setprogname(argv[0]);
     fpin = stdin;

@@ -418,7 +418,6 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     /* make empty NMG model */
     state.the_model = nmg_mm();
     state.vlfree = &RTG.rtg_vlfree;
-    BU_LIST_INIT(state.vlfree);	/* for vlist macros */
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(state.dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
