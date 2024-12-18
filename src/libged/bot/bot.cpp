@@ -596,7 +596,7 @@ _bot_cmd_plot(void *bs, int argc, const char **argv)
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
     struct bu_color *color = gb->color;
     struct bv_vlblock *vbp = gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = gb->vlfree;
 
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
@@ -1004,6 +1004,7 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     gb.cmds = _bot_cmds;
     gb.verbosity = 0;
     gb.visualize = 0;
+    gb.vlfree = &RTG.rtg_vlfree;
     struct bu_color *color = NULL;
 
     // Sanity
@@ -1081,7 +1082,7 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     if (gb.visualize || BU_STR_EQUAL(argv[cmd_pos], "plot")) {
 	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-	gb.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	gb.vbp = bv_vlblock_init(gb.vlfree, 32);
     }
     gb.color = color;
 

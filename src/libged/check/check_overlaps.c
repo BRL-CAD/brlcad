@@ -284,6 +284,7 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
     callbackdata.gedp = gedp;
     struct overlap_list overlapList;
     struct overlap_list *op;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     FILE *plot_overlaps = NULL;
     char *name = "overlaps.plot3";
@@ -305,7 +306,7 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
     }
 
     if (options->overlaps_overlay_flag) {
-	check_plot.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	check_plot.vbp = bv_vlblock_init(vlfree, 32);
 	check_plot.vhead = bv_vlblock_find(check_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 

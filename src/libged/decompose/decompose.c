@@ -47,6 +47,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal nmg_intern;
     static const char *usage = "nmg [prefix]";
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -114,14 +115,14 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 	    long **trans_tbl;
 
 	    /* duplicate shell */
-	    tmp_s = (struct shell *)nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	    tmp_s = (struct shell *)nmg_dup_shell(s, &trans_tbl, vlfree, &wdbp->wdb_tol);
 	    bu_free((char *)trans_tbl, "trans_tbl");
 
 	    /* move duplicate to temp region */
 	    (void) nmg_mv_shell_to_region(tmp_s, tmp_r);
 
 	    /* decompose this shell */
-	    (void) nmg_decompose_shell(tmp_s, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	    (void) nmg_decompose_shell(tmp_s, vlfree, &wdbp->wdb_tol);
 
 	    /* move each decomposed shell to yet another region */
 	    decomp_s = BU_LIST_FIRST(shell, &tmp_r->s_hd);
@@ -140,11 +141,11 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 		kill_s = BU_LIST_FIRST(shell, &decomp_r->s_hd);
 		(void)nmg_ks(kill_s);
 		nmg_shell_a(decomp_s, &wdbp->wdb_tol);
-		new_s = (struct shell *)nmg_dup_shell(decomp_s, &trans_tbl, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+		new_s = (struct shell *)nmg_dup_shell(decomp_s, &trans_tbl, vlfree, &wdbp->wdb_tol);
 		(void)nmg_mv_shell_to_region(new_s, decomp_r);
 
 		/* move this region to a different model */
-		new_m = (struct model *)nmg_mk_model_from_region(decomp_r, 1, &RTG.rtg_vlfree);
+		new_m = (struct model *)nmg_mk_model_from_region(decomp_r, 1, vlfree);
 		(void)nmg_rebound(new_m, &wdbp->wdb_tol);
 
 		/* create name for this shell */

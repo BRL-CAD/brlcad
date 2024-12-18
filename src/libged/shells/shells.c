@@ -44,6 +44,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls shell_name = BU_VLS_INIT_ZERO;
     long **trans_tbl;
     static const char *usage = "nmg_model";
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -82,7 +83,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    s_tmp = nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	    s_tmp = nmg_dup_shell(s, &trans_tbl, vlfree, &wdbp->wdb_tol);
 	    bu_free((void *)trans_tbl, "trans_tbl");
 
 	    m_tmp = nmg_mmr();

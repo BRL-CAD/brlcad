@@ -38,7 +38,7 @@
 
 
 static size_t
-show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name, int out_type)
+show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name, int out_type, struct bu_list *vlfree)
 {
     FILE *plotfp = NULL;
     const char *manifolds = NULL;
@@ -63,12 +63,12 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
     }
 
     if (out_type == 1) {
-	vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	vbp = bv_vlblock_init(vlfree, 32);
 	vhead = bv_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
     }
 
     bu_ptbl_init(&faces, 64, "faces buffer");
-    nmg_face_tabulate(&faces, magic_p, &RTG.rtg_vlfree);
+    nmg_face_tabulate(&faces, magic_p, vlfree);
 
     cnt = 0;
     for (i = 0; i < (size_t)BU_PTBL_LEN(&faces) ; i++) {
@@ -160,6 +160,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     struct rt_bot_internal *bot;
     int count=0;
     static const char *usage = "new_bot old_bot";
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     struct model *m;
     struct nmgregion *r;
@@ -245,13 +246,13 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
     /* Step 1 -- the vertices. */
     bu_log("%s: running nmg_vertex_fuse\n", argv[0]);
-    count = nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, tol);
+    count = nmg_vertex_fuse(&m->magic, vlfree, tol);
     total += count;
     bu_log("%s: %s, %d vertex fused\n", argv[0], argv[i+1], count);
 
     /* Step 1.5 -- break edges on vertices, before fusing edges */
     bu_log("%s: running nmg_break_e_on_v\n", argv[0]);
-    count = nmg_break_e_on_v(&m->magic, &RTG.rtg_vlfree, tol);
+    count = nmg_break_e_on_v(&m->magic, vlfree, tol);
     total += count;
     bu_log("%s: %s, %d broke 'e' on 'v'\n", argv[0], argv[i+1], count);
 
@@ -267,19 +268,19 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
 	for (BU_LIST_FOR(r2, nmgregion, &m->r_hd)) {
 	    for (BU_LIST_FOR(s, shell, &r2->s_hd))
-		nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, tol);
+		nmg_make_faces_within_tol(s, vlfree, tol);
 	}
     }
 
     /* Step 2 -- the face geometry */
     bu_log("%s: running nmg_model_face_fuse\n", argv[0]);
-    count = nmg_model_face_fuse(m, &RTG.rtg_vlfree, tol);
+    count = nmg_model_face_fuse(m, vlfree, tol);
     total += count;
     bu_log("%s: %s, %d faces fused\n", argv[0], argv[i+1], count);
 
     /* Step 3 -- edges */
     bu_log("%s: running nmg_edge_fuse\n", argv[0]);
-    count = nmg_edge_fuse(&m->magic, &RTG.rtg_vlfree, tol);
+    count = nmg_edge_fuse(&m->magic, vlfree, tol);
     total += count;
 
     bu_log("%s: %s, %d edges fused\n", argv[0], argv[i+1], count);
@@ -290,11 +291,11 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	/* try */
 
 	/* convert the nmg model back into a bot */
-	bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), &RTG.rtg_vlfree, tol);
+	bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), vlfree, tol);
 
 	bu_vls_sprintf(&name_prefix, "open_edges.%s", argv[i]);
 	bu_log("%s: running show_dangling_edges\n", argv[0]);
-	open_cnt = show_dangling_edges(gedp, &m->magic, bu_vls_addr(&name_prefix), out_type);
+	open_cnt = show_dangling_edges(gedp, &m->magic, bu_vls_addr(&name_prefix), out_type, vlfree);
 	bu_log("%s: WARNING %zu open edges, new BOT may be invalid!!!\n", argv[0], open_cnt);
 	bu_vls_free(&name_prefix);
 

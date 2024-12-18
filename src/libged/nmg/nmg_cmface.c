@@ -53,6 +53,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
     struct bn_tol tol;
     struct vertex ***face_verts;
     int idx, num_verts;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     static const char *usage = "nmg_name cmface x0 y0 z0 ... xn yn zn";
 
@@ -132,7 +133,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
 	    if (fu->orientation != OT_SAME) {
 		continue;
 	    }
-	    nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+	    nmg_calc_face_g(fu, vlfree);
 	}
     }
 

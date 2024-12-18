@@ -292,6 +292,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls extension = BU_VLS_INIT_ZERO;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     char *dot;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     vect_t *ged_eye_model = &gedp->i->i->ged_eye_model;
     mat_t *ged_viewrot = &gedp->i->i->ged_viewrot;
 
@@ -379,7 +380,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    preview_vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    preview_vbp = bv_vlblock_init(vlfree, 32);
 
     bu_vls_printf(gedp->ged_result_str, "eyepoint at (0, 0, 1) viewspace\n");
 

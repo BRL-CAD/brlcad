@@ -51,6 +51,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 {
     int ret = BRLCAD_OK;
     struct db_i *dbip = s->dbip;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     /* Used the libged tolerances */
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -327,7 +328,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    // Need wdbp in the next two stages for tolerances
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	    char *obj_name = bu_strdup(dpw[0]->d_namep);
-	    bret = _ged_facetize_booleval_tri(s, wdbip, wwdbp, 1, (const char **)&obj_name, bu_vls_cstr(&bname), 1);
+	    bret = _ged_facetize_booleval_tri(s, wdbip, wwdbp, 1, (const char **)&obj_name, bu_vls_cstr(&bname), vlfree, 1);
 	    bu_free(obj_name, "obj_name");
 	    db_close(wdbip);
 	}

@@ -954,7 +954,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 }
 
 int
-_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname, bool output_to_working)
+_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname, struct bu_list *vlfree, bool output_to_working)
 {
     union tree *ftree;
     if (!dbip || !wdbp || !argv || !oname)
@@ -1058,7 +1058,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     }
 
     // Third stage is to execute the boolean operations
-    ftree = rt_booltree_evaluate(s->facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &manifold_do_bool, 0, (void *)s);
+    ftree = rt_booltree_evaluate(s->facetize_tree, vlfree, &wdbp->wdb_tol, &rt_uniresource, &manifold_do_bool, 0, (void *)s);
     if (!ftree) {
 	return BRLCAD_ERROR;
     }
@@ -1146,6 +1146,7 @@ int
 _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *oname, bool output_to_working, bool cleanup)
 {
     int ret = BRLCAD_OK;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     if (!s)
 	return BRLCAD_ERROR;
@@ -1198,7 +1199,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	av[i] = dpa[i]->d_namep;
     }
 
-    if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, oname, output_to_working) != BRLCAD_OK) {
+    if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, oname, vlfree, output_to_working) != BRLCAD_OK) {
 	if (s->verbosity >= 0) {
 	    bu_log("FACETIZE: failed to generate %s\n", oname);
 	}

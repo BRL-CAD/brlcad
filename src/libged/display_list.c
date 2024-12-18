@@ -39,9 +39,9 @@
 #include "./ged_private.h"
 
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
-#define FREE_BV_SCENE_OBJ(p, fp) { \
+#define FREE_BV_SCENE_OBJ(p, fp, vlf) { \
         BU_LIST_APPEND(fp, &((p)->l)); \
-        BV_FREE_VLIST(&RTG.rtg_vlfree, &((p)->s_vlist)); }
+        BV_FREE_VLIST(vlf, &((p)->s_vlist)); }
 
 
 /* defined in draw_calc.cpp */
@@ -233,6 +233,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
     struct db_full_path subpath;
     int found_subpath;
     struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     if (db_string_to_path(&subpath, dbip, path) == 0)
 	found_subpath = 1;
@@ -266,7 +267,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 		    }
 
 		    BU_LIST_DEQUEUE(&sp->l);
-		    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+		    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l, vlfree);
 		}
 	    }
 
@@ -291,7 +292,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 		    ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 
 		    BU_LIST_DEQUEUE(&sp->l);
-		    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+		    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l, vlfree);
 		    need_split = 1;
 		}
 
@@ -329,7 +330,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 static void
 eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 			      struct db_full_path *subpath,
-			      const int skip_first)
+			      const int skip_first, struct bu_list *vlfree)
 {
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
@@ -344,7 +345,7 @@ eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 	if (db_full_path_subset(&bdata->s_fullpath, subpath, skip_first)) {
 	    ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l, vlfree);
 	}
 	sp = nsp;
     }
@@ -365,6 +366,7 @@ _dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip
     struct db_i *dbip = gedp->dbip;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
@@ -402,7 +404,7 @@ _dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip
 	    struct db_full_path subpath;
 
 	    if (db_string_to_path(&subpath, dbip, name) == 0) {
-		eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
+		eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first, vlfree);
 		db_free_full_path(&subpath);
 	    }
 	}
@@ -425,6 +427,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
     struct db_full_path dup_path;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     db_full_path_init(&dup_path);
 
@@ -445,7 +448,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 	    db_dup_full_path(&dup_path, &bdata->s_fullpath);
 	    bdata->s_fullpath.fp_len = full_len;
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l, vlfree);
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
 
@@ -528,6 +531,7 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
     struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
     struct bv_scene_obj *sp;
     struct directory *dp;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
 
@@ -550,7 +554,7 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 	    }
 
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l, vlfree);
 	}
     }
 
@@ -642,10 +646,10 @@ solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 }
 
 static void
-solid_copy_vlist(struct db_i *UNUSED(dbip), struct bv_scene_obj *sp, struct bv_vlist *vlist)
+solid_copy_vlist(struct db_i *UNUSED(dbip), struct bv_scene_obj *sp, struct bv_vlist *vlist, struct bu_list *vlfree)
 {
     BU_LIST_INIT(&(sp->s_vlist));
-    bv_vlist_copy(&RTG.rtg_vlfree, &(sp->s_vlist), (struct bu_list *)vlist);
+    bv_vlist_copy(vlfree, &(sp->s_vlist), (struct bu_list *)vlist);
     sp->s_vlen = bv_vlist_cmd_cnt((struct bv_vlist *)(&(sp->s_vlist)));
 }
 
@@ -662,6 +666,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     struct bv_scene_obj *sp;
     struct display_list *gdlp;
     unsigned char type='0';
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     if (dbip == DBI_NULL)
 	return 0;
@@ -696,7 +701,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
 
     if (copy) {
-	solid_copy_vlist(dbip, sp, (struct bv_vlist *)vhead);
+	solid_copy_vlist(dbip, sp, (struct bv_vlist *)vhead, vlfree);
     } else {
 	solid_append_vlist(sp, (struct bv_vlist *)vhead);
 	BU_LIST_INIT(vhead);

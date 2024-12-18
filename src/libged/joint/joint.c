@@ -275,7 +275,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
      * Now we draw the overlays.  We do this by building a mesh from
      * each grip to every other grip in that list.
      */
-    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    vbp = bv_vlblock_init(vlfree, 32);
     vhead = bv_vlblock_find(vbp, 0x00, 0xff, 0xff);
 
     for (BU_LIST_FOR(jp, artic_joints, &artic_head)) {

@@ -166,7 +166,7 @@ facetize_region_end(struct db_tree_state *tsp,
 
 
 static struct model *
-_try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
+_try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int argc, const char **argv)
 {
     struct db_i *dbip = s->dbip;
     int i;
@@ -236,7 +236,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol, &rt_uniresource);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -346,7 +346,8 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
     struct db_i *dbip = s->dbip;
     struct rt_wdb *wdbp;
     struct rt_bot_internal *bot = NULL;
-    struct model *nmg_model = _try_nmg_facetize(s, argc, argv);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct model *nmg_model = _try_nmg_facetize(s, vlfree, argc, argv);
 
     if (nmg_model == NULL) {
 	if (s->verbosity > 1) {
@@ -361,7 +362,7 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
 	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
 	if (!BU_SETJUMP) {
 	    /* try */
-	    bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	    bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, vlfree, &wdbp->wdb_tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;

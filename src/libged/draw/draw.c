@@ -206,12 +206,12 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
 }
 
 static int
-redraw_solid(struct bv_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp)
+redraw_solid(struct bv_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, struct bu_list *vlfree)
 {
     if (sp->s_os->s_dmode == _GED_WIREFRAME) {
 	/* replot wireframe */
 	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
-	    BV_FREE_VLIST(&RTG.rtg_vlfree, &sp->s_vlist);
+	    BV_FREE_VLIST(vlfree, &sp->s_vlist);
 	}
 	return draw_solid_wireframe(sp, gvp, dbip, tsp->ts_tol, tsp->ts_ttol);
     }
@@ -227,9 +227,10 @@ dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
     struct bview *gvp = gedp->ged_gvp;
     int ret = 0;
     struct bv_scene_obj *sp;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	if (!skip_subtractions || (skip_subtractions && !sp->s_soldash)) {
-	    ret += redraw_solid(sp, dbip, tsp, gvp);
+	    ret += redraw_solid(sp, dbip, tsp, gvp, vlfree);
 	}
     }
     ged_create_vlist_display_list_cb(gedp, gdlp);
@@ -786,7 +787,7 @@ out:
 
 
 static int
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp, struct bu_list *vlfree)
 {
     static int result; /* static due to jumping */
 
@@ -795,7 +796,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol, tsp->ts_resp);
+	result = nmg_boolean(curtree, *tsp->ts_m, vlfree, tsp->ts_tol, tsp->ts_resp);
 
     } else {
 	/* catch */
@@ -810,7 +811,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 static int
-process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
+process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp, struct bu_list *vlfree)
 {
     static int result; /* static due to jumping */
 
@@ -819,7 +820,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
     if (!BU_SETJUMP) {
 	/* try */
 
-	nmg_triangulate_model(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	nmg_triangulate_model(*tsp->ts_m, vlfree, tsp->ts_tol);
 	result = 0;
 
     } else {
@@ -844,8 +845,9 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 {
     struct nmgregion *r;
     struct bu_list vhead;
-    int failed = 1;
+    int failed;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -870,7 +872,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
     if (!dgcdp->draw_nmg_only) {
 
-	failed = process_boolean(curtree, tsp, pathp, dgcdp);
+	failed = process_boolean(curtree, tsp, pathp, dgcdp, vlfree);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
@@ -890,7 +892,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     }
 
     if (dgcdp->nmg_triangulate) {
-	failed = process_triangulation(tsp, pathp, dgcdp);
+	failed = process_triangulation(tsp, pathp, dgcdp, vlfree);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
@@ -918,12 +920,12 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	if (dgcdp->draw_no_surfaces) {
 	    style |= NMG_VLIST_STYLE_NO_SURFACES;
 	}
-	nmg_r_to_vlist(&vhead, r, style, &RTG.rtg_vlfree);
+	nmg_r_to_vlist(&vhead, r, style, vlfree);
 
 	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 
 	if (dgcdp->draw_edge_uses) {
-	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, &RTG.rtg_vlfree);
+	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, vlfree);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
 	db_free_tree(curtree, tsp->ts_resp);
@@ -959,6 +961,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int bot_threshold = 0;
     int threshold_cached = 0;
     int shaded_mode_override = _GED_SHADED_MODE_UNSET;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     RT_CHECK_DBI(gedp->dbip);
 
@@ -1330,7 +1333,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
 		if (dgcdp.draw_edge_uses) {
 		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
-		    dgcdp.draw_edge_uses_vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+		    dgcdp.draw_edge_uses_vbp = bv_vlblock_init(vlfree, 32);
 		}
 
 		for (i = 0; i < argc; ++i) {

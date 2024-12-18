@@ -246,36 +246,6 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
     return BRLCAD_OK;
 }
 
-
-
-void
-ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp)
-{
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &(sp->s_vlist));
-    if (sp->s_u_data) {
-	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-	bdata->s_fullpath.fp_len = 0; // Don't free memory, but implicitly clear contents
-    }
-    bu_ptbl_ins(&gedp->free_solids, (long *)sp);
-}
-
-struct bv_scene_obj *
-ged_pop_scene_obj(struct ged *gedp)
-{
-    struct bv_scene_obj *sp = NULL;
-    if (BU_PTBL_LEN(&gedp->free_solids)) {
-	sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
-	bu_ptbl_rm(&gedp->free_solids, (long *)sp);
-    } else {
-	BU_ALLOC(sp, struct bv_scene_obj); // from GET_BV_SCENE_OBJ in bv/defines.h
-	struct ged_bv_data *bdata;
-	BU_GET(bdata, struct ged_bv_data);
-	db_full_path_init(&bdata->s_fullpath);
-	sp->s_u_data = (void *)bdata;
-    }
-    return sp;
-}
-
 /* NOTE - caller must initialize vmin and vmax to INFINITY and -INFINITY
  * respectively (we don't do it here so callers may run this routine
  * repeatedly over different tables to accumulate bounds. */

@@ -554,7 +554,7 @@ facetize_region_end(struct db_tree_state *tsp,
 
 
 static struct model *
-_try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs, struct _old_ged_facetize_opts *o)
+_try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs, struct bu_list *vlfree, struct _old_ged_facetize_opts *o)
 {
     int i;
     int failed = 0;
@@ -603,7 +603,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol, &rt_uniresource);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -630,14 +630,14 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
 
 static int
-_try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _old_ged_facetize_opts *o)
+_try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct bu_list *vlfree, struct _old_ged_facetize_opts *o)
 {
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     _old_ged_facetize_log_nmg(o);
 
     if (!BU_SETJUMP) {
 	/* try */
-	nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	nmg_triangulate_model(nmg_model, vlfree, &wdbp->wdb_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -651,14 +651,14 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _old_ged_
 
 
 static struct rt_bot_internal *
-_try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _old_ged_facetize_opts *o)
+_try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct bu_list *vlfree, struct _old_ged_facetize_opts *o)
 {
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct rt_bot_internal *bot = NULL;
     _old_ged_facetize_log_nmg(o);
     if (!BU_SETJUMP) {
 	/* try */
-	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, vlfree, &wdbp->wdb_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -1473,13 +1473,13 @@ ged_facetize_continuation_memfree:
 
 
 static int
-_ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct _old_ged_facetize_opts *opts)
+_ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct bu_list *vlfree, struct _old_ged_facetize_opts *opts)
 {
     int ret = FACETIZE_SUCCESS;
     struct model *nmg_model = NULL;
     struct rt_bot_internal *bot = NULL;
 
-    nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs, opts);
+    nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs, vlfree, opts);
     if (nmg_model == NULL) {
 	if (opts->verbosity > 1) {
 	    bu_log("NMG(%s):  no resulting region, aborting\n", newname);
@@ -1490,7 +1490,7 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
 
     /* Triangulate model, if requested */
     if (opts->triangulate && opts->make_nmg) {
-	if (_try_nmg_triangulate(gedp, nmg_model, opts) != BRLCAD_OK) {
+	if (_try_nmg_triangulate(gedp, nmg_model, vlfree, opts) != BRLCAD_OK) {
 	    if (opts->verbosity > 1) {
 		bu_log("NMG(%s):  triangulation failed, aborting\n", newname);
 	    }
@@ -1502,7 +1502,7 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
     if (!opts->make_nmg) {
 
 	/* Make and write out the bot */
-	bot = _try_nmg_to_bot(gedp, nmg_model, opts);
+	bot = _try_nmg_to_bot(gedp, nmg_model, vlfree, opts);
 
 	if (!bot) {
 	    if (opts->verbosity > 1) {
@@ -1655,7 +1655,7 @@ bool_meshes(
 }
 
 static struct manifold_mesh *
-do_mesh(union tree *tree, const struct bn_tol *tol)
+do_mesh(union tree *tree, const struct bn_tol *tol, struct bu_list *vlfree)
 {
     struct rt_bot_internal *bot = NULL;
 
@@ -1665,7 +1665,7 @@ do_mesh(union tree *tree, const struct bn_tol *tol)
 
     if (!BU_SETJUMP) {
 	/* try */
-	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(tree->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
+	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(tree->tr_d.td_r->m_p, vlfree, tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -1691,7 +1691,7 @@ static int
 _manifold_do_bool(
     union tree *tp, union tree *tl, union tree *tr,
     //int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *data)
-    int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *UNUSED(data))
+    int op, struct bu_list *vlfree, const struct bn_tol *tol, void *UNUSED(data))
 {
     struct manifold_mesh *lmesh = NULL;
     struct manifold_mesh *rmesh = NULL;
@@ -1701,8 +1701,8 @@ _manifold_do_bool(
     // or we have prior manifold_mesh results - figure out which.
     // If it's the NMG results, we need to make manifold_meshes for
     // processing.
-    lmesh = do_mesh(tl, tol);
-    rmesh = do_mesh(tr, tol);
+    lmesh = do_mesh(tl, tol, vlfree);
+    rmesh = do_mesh(tr, tol, vlfree);
 
     int failed = 0;
     if (!lmesh || !rmesh) {
@@ -1786,7 +1786,7 @@ _manifold_do_bool(
 
 
 static struct manifold_mesh *
-_try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _old_ged_facetize_opts *o)
+_try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct bu_list *vlfree, struct _old_ged_facetize_opts *o)
 {
     int i;
     union tree *ftree = NULL;
@@ -1826,7 +1826,7 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
     }
 
     if (facetize_tree) {
-	ftree = rt_booltree_evaluate(facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_manifold_do_bool, 0, (void *)o);
+	ftree = rt_booltree_evaluate(facetize_tree, vlfree, &wdbp->wdb_tol, &rt_uniresource, &_manifold_do_bool, 0, (void *)o);
 	if (!ftree) {
 	    _old_ged_facetize_log_default(o);
 	    return NULL;
@@ -1840,7 +1840,7 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
 	    struct rt_bot_internal *bot = NULL;
 	    if (!BU_SETJUMP) {
 		/* try */
-		bot = (struct rt_bot_internal *)nmg_mdl_to_bot(ftree->tr_d.td_r->m_p, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+		bot = (struct rt_bot_internal *)nmg_mdl_to_bot(ftree->tr_d.td_r->m_p, vlfree, &wdbp->wdb_tol);
 	    } else {
 		/* catch */
 		BU_UNSETJUMP;
@@ -1873,14 +1873,14 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
 // main difference being that the external code is actually doing the mesh
 // boolean processing rather than libnmg.
 static int
-_ged_manifold_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct _old_ged_facetize_opts *opts)
+_ged_manifold_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct bu_list *vlfree, struct _old_ged_facetize_opts *opts)
 {
     int ret = BRLCAD_ERROR;
     struct manifold_mesh *mesh = NULL;
     if (!gedp || !argc || !argv || !opts)
 	goto ged_manifold_obj_memfree;
 
-    mesh = _try_manifold_facetize(gedp, argc, argv, opts);
+    mesh = _try_manifold_facetize(gedp, argc, argv, vlfree, opts);
 
     if (mesh && mesh->num_faces > 0) {
 	struct rt_bot_internal *bot;
@@ -1928,7 +1928,7 @@ ged_manifold_obj_memfree:
 
 
 static int
-_ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _old_ged_facetize_opts *opts)
+_ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct bu_list *vlfree, struct _old_ged_facetize_opts *opts)
 {
     int ret = BRLCAD_ERROR;
     int done_trying = 0;
@@ -1998,7 +1998,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _old
 		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	    }
 
-	    if (_ged_manifold_obj(gedp, argc, argv, newname, opts) == BRLCAD_OK) {
+	    if (_ged_manifold_obj(gedp, argc, argv, newname, vlfree, opts) == BRLCAD_OK) {
 		ret = BRLCAD_OK;
 		break;
 	    } else {
@@ -2019,7 +2019,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _old
 		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	    }
 
-	    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) == BRLCAD_OK) {
+	    if (_ged_nmg_obj(gedp, argc, argv, newname, vlfree, opts) == BRLCAD_OK) {
 		ret = BRLCAD_OK;
 		break;
 	    } else {
@@ -2290,7 +2290,7 @@ _ged_methodattr_set(struct ged *gedp, struct _old_ged_facetize_opts *opts, const
 
 
 static int
-_ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname, struct _old_ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod, struct _ged_facetize_report_info *cinfo)
+_ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname, struct _old_ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod, struct bu_list *vlfree, struct _ged_facetize_report_info *cinfo)
 {
     int ret = FACETIZE_FAILURE;
     struct directory *dp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
@@ -2312,7 +2312,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	}
 
-	ret = _ged_manifold_obj(gedp, 1, (const char **)&oname, sname, opts);
+	ret = _ged_manifold_obj(gedp, 1, (const char **)&oname, sname, vlfree, opts);
 
 	if (ret != FACETIZE_FAILURE) {
 	    if (_ged_methodcomb_add(gedp, opts, sname, FACETIZE_MANIFOLD) != BRLCAD_OK && opts->verbosity > 1) {
@@ -2336,7 +2336,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	}
 
-	ret = _ged_nmg_obj(gedp, 1, (const char **)&oname, sname, opts);
+	ret = _ged_nmg_obj(gedp, 1, (const char **)&oname, sname, vlfree, opts);
 
 	if (ret != FACETIZE_FAILURE) {
 	    if (_ged_methodcomb_add(gedp, opts, sname, FACETIZE_NMGBOOL) != BRLCAD_OK && opts->verbosity > 1) {
@@ -2402,7 +2402,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 
 
 static int
-_ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, struct _old_ged_facetize_opts *opts)
+_ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, struct bu_list *vlfree, struct _old_ged_facetize_opts *opts)
 {
     int to_convert = 0;
     int methods = opts->method_flags;
@@ -2531,7 +2531,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 			continue;
 		    }
 
-		    if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod, &cinfo) == FACETIZE_FAILURE) {
+		    if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod, vlfree, &cinfo) == FACETIZE_FAILURE) {
 			bu_ptbl_ins(ar, (long *)n);
 
 			avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
@@ -2700,7 +2700,7 @@ ged_facetize_add_children_memfree:
 
 
 static int
-_ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _old_ged_facetize_opts *opts)
+_ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct bu_list *vlfree, struct _old_ged_facetize_opts *opts)
 {
     int to_convert = 0;
     int methods = opts->method_flags;
@@ -2761,7 +2761,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _old
 	    }
 	    opts->nmg_log_print_header = 1;
 
-	    if (_ged_nmg_obj(gedp, 1, (const char **)&argv[i], bu_avs_get(opts->s_map, argv[i]), opts) != BRLCAD_OK) {
+	    if (_ged_nmg_obj(gedp, 1, (const char **)&argv[i], bu_avs_get(opts->s_map, argv[i]), vlfree, opts) != BRLCAD_OK) {
 		return BRLCAD_ERROR;
 	    }
 	}
@@ -2964,7 +2964,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _old
 		    continue;
 		}
 
-		if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod, &cinfo) == FACETIZE_FAILURE) {
+		if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod, vlfree, &cinfo) == FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar2, (long *)n);
 
 		    avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
@@ -3325,6 +3325,7 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     int nonovlp_brep = 0;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     struct _old_ged_facetize_opts *opts = _old_ged_facetize_opts_create();
     struct bu_opt_desc d[22];
     struct bu_opt_desc pd[4];
@@ -3478,12 +3479,12 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     /* Multi-region mode has a different processing logic */
     if (opts->regions) {
 	if (opts->resume) {
-	    ret = _ged_facetize_regions_resume(gedp, argc, argv, opts);
+	    ret = _ged_facetize_regions_resume(gedp, argc, argv, vlfree, opts);
 	} else {
-	    ret = _ged_facetize_regions(gedp, argc, argv, opts);
+	    ret = _ged_facetize_regions(gedp, argc, argv, vlfree, opts);
 	}
     } else {
-	ret = _ged_facetize_objlist(gedp, argc, argv, opts);
+	ret = _ged_facetize_objlist(gedp, argc, argv, vlfree, opts);
     }
 
 ged_facetize_memfree:

@@ -106,6 +106,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     int gd_rt_cmd_len = 0;
     int skip_drawn = 0;
     int64_t start = 0;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     const char *nirt = NULL;
     char nirtcmd[MAXPATHLEN] = {0};
@@ -386,7 +387,7 @@ print:
 	    }
 	}
 
-	vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	vbp = bv_vlblock_init(vlfree, 32);
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
 	bu_list_free(&HeadQRayData.l);
 
@@ -424,7 +425,7 @@ print:
 	    }
 	}
 
-	vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	vbp = bv_vlblock_init(vlfree, 32);
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);

@@ -127,6 +127,7 @@ vdraw_write(void *data, int argc, const char *argv[])
     unsigned long uind = 0;
     struct bv_vlist *vp, *cp;
     static const char *usage = "i|next c x y z";
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -153,14 +154,14 @@ vdraw_write(void *data, int argc, const char *argv[])
 	    /* we went all the way through */
 	    vp = BU_LIST_PNEXT(bv_vlist, vp);
 	    if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-		BV_GET_VLIST(&RTG.rtg_vlfree, vp);
+		BV_GET_VLIST(vlfree, vp);
 		BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	    }
 	}
 	if (vp->nused >= BV_VLIST_CHUNK) {
 	    vp = BU_LIST_PNEXT(bv_vlist, vp);
 	    if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-		BV_GET_VLIST(&RTG.rtg_vlfree, vp);
+		BV_GET_VLIST(vlfree, vp);
 		BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	    }
 	}
@@ -189,7 +190,7 @@ vdraw_write(void *data, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "vdraw: write out of range\n");
 		return BRLCAD_ERROR;
 	    }
-	    BV_GET_VLIST(&RTG.rtg_vlfree, vp);
+	    BV_GET_VLIST(vlfree, vp);
 	    BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	}
 	if ((size_t)uind > vp->nused) {
@@ -242,6 +243,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
     size_t idx;
     unsigned long uind = 0;
     static const char *usage = "i c x y z";
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -279,7 +281,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "vdraw: insert out of range\n");
 	    return BRLCAD_ERROR;
 	}
-	BV_GET_VLIST(&RTG.rtg_vlfree, vp);
+	BV_GET_VLIST(vlfree, vp);
 	BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
     }
     if ((size_t)uind > vp->nused) {
@@ -611,6 +613,7 @@ vdraw_open(void *data, int argc, const char *argv[])
     struct bv_vlist *vp;
     char temp_name[RT_VDRW_MAXNAME+1];
     static const char *usage = "[name]";
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     if (argc == 2) {
 	if (gedp->ged_gdp->gd_currVHead) {
@@ -646,7 +649,7 @@ vdraw_open(void *data, int argc, const char *argv[])
 
 	rcp->vdc_rgb = RT_VDRW_DEF_COLOR;
 	BU_LIST_INIT(&(rcp->vdc_vhd));
-	BV_GET_VLIST(&RTG.rtg_vlfree, vp);
+	BV_GET_VLIST(vlfree, vp);
 	BU_LIST_APPEND(&(rcp->vdc_vhd), &(vp->l));
 	gedp->ged_gdp->gd_currVHead = rcp;
 	/* 1 means new entry */
@@ -655,7 +658,7 @@ vdraw_open(void *data, int argc, const char *argv[])
     } else {
 	/* entry already existed */
 	if (BU_LIST_IS_EMPTY(&(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    BV_GET_VLIST(&RTG.rtg_vlfree, vp);
+	    BV_GET_VLIST(vlfree, vp);
 	    BU_LIST_APPEND(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	}
 	gedp->ged_gdp->gd_currVHead->vdc_name[RT_VDRW_MAXNAME] = '\0'; /*safety*/
@@ -677,6 +680,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     /* must be needing help */
     if (argc < 3 || argc > 4) {
@@ -712,7 +716,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 		    gedp->ged_gdp->gd_currVHead = BU_LIST_LAST(vd_curve, gedp->ged_gdp->gd_headVDraw);
 		}
 	    }
-	    BV_FREE_VLIST(&RTG.rtg_vlfree, &(rcp2->vdc_vhd));
+	    BV_FREE_VLIST(vlfree, &(rcp2->vdc_vhd));
 	    BU_PUT(rcp2, struct vd_curve);
 	    return BRLCAD_OK;
 	default:

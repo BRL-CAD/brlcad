@@ -46,6 +46,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     fastf_t tol_coll;
     fastf_t min_angle;
     static const char *usage = "nmg_prim new_prim max_err_dist [min_angle]";
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -117,7 +118,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     NMG_CK_MODEL(m);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic, &RTG.rtg_vlfree);
+    nmg_face_tabulate(&faces, &m->magic, vlfree);
     for (BU_PTBL_FOR(fp, (struct face *), &faces)) {
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_log("\tnot planar\n");
@@ -130,9 +131,9 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     bu_ptbl_free(&faces);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+    nmg_triangulate_model(m, vlfree, &wdbp->wdb_tol);
 
-    count = (size_t)nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
+    count = (size_t)nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, vlfree);
 
     dp = db_diradd(gedp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {

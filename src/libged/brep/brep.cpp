@@ -1459,6 +1459,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     int help = 0;
     struct bu_color *color = NULL;
     int plotres = 100;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     struct _ged_brep_info gb;
     gb.verbosity = 0;
     gb.gedp = gedp;
@@ -1561,7 +1562,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
 
-    gb.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    gb.vbp = bv_vlblock_init(vlfree, 32);
     gb.color = color;
     gb.plotres = plotres;
 

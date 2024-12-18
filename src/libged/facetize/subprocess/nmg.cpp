@@ -39,6 +39,7 @@ int
 _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, tess_opts *s)
 {
     int status = -1;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     if (!nbot || !intern || !intern->idb_meth || !s)
 	return BRLCAD_ERROR;
@@ -69,7 +70,7 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, te
 
     // NMG reports success, now get a BoT
     if (!BU_SETJUMP) {
-	(*nbot) = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, &s->nmg_options.tol);
+	(*nbot) = (struct rt_bot_internal *)nmg_mdl_to_bot(m, vlfree, &s->nmg_options.tol);
     } else {
 	BU_UNSETJUMP;
 	(*nbot) = NULL;

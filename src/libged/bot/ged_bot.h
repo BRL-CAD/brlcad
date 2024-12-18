@@ -56,6 +56,7 @@ struct _ged_bot_info {
     std::string solid_name;
     const struct bu_cmdtab *cmds = NULL;
     struct bu_opt_desc *gopts = NULL;
+    struct bu_list *vlfree = NULL;
 };
 
 int _bot_obj_setup(struct _ged_bot_info *gb, const char *name);
