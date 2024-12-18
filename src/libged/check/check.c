@@ -94,7 +94,7 @@ check_show_help(struct ged *gedp)
  * 0 Success
  */
 static int
-read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
+read_units_double(struct ged *gedp, double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
 #define UNITS_STRING_SZ 256
@@ -120,20 +120,20 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 		cvt++;
 	    }
 	}
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Bad units specifier \"%s\" on value \"%s\"\n", units_string, buf);
+	bu_vls_printf(gedp->ged_result_str, "Bad units specifier \"%s\" on value \"%s\"\n", units_string, buf);
 	return 1;
 
     found_units:
 	*val = a * cvt->val;
 	return 0;
     }
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s sscanf problem on \"%s\" got %d\n", CPP_FILELINE, buf, i);
+    bu_vls_printf(gedp->ged_result_str, "%s sscanf problem on \"%s\" got %d\n", CPP_FILELINE, buf, i);
     return 1;
 }
 
 
 static int
-parse_check_args(int ac, char *av[], struct check_parameters* options, struct current_state *state)
+parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* options, struct current_state *state)
 {
     int c;
     double a;
@@ -150,7 +150,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 	switch (c) {
 	    case 'a':
 		if (bn_decode_angle(&(options->azimuth_deg), bu_optarg) == 0) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		analyze_set_azimuth(state, options->azimuth_deg);
@@ -163,7 +163,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		break;
 	    case 'e':
 		if (bn_decode_angle(&(options->elevation_deg), bu_optarg) == 0) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		analyze_set_elevation(state, options->elevation_deg);
@@ -192,8 +192,8 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    }
 
 
-		    if (read_units_double(&value1, bu_optarg, units_tab[0])) {
-			bu_vls_printf(_ged_current_gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
+		    if (read_units_double(gedp, &value1, bu_optarg, units_tab[0])) {
+			bu_vls_printf(gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
 			return -1;
 		    }
 
@@ -201,8 +201,8 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 			/* we've got 2 values, they are upper limit
 			 * and lower limit.
 			 */
-			if (read_units_double(&value2, p, units_tab[0])) {
-			    bu_vls_printf(_ged_current_gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
+			if (read_units_double(gedp, &value2, p, units_tab[0])) {
+			    bu_vls_printf(gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
 			    return -1;
 			}
 
@@ -228,7 +228,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    width = atoi(bu_optarg);
 
 		    if (width < 1 || width > MAX_WIDTH) {
-			bu_vls_printf(_ged_current_gedp->ged_result_str,"mentioned grid size is out of range\n");
+			bu_vls_printf(gedp->ged_result_str,"mentioned grid size is out of range\n");
 			return -1;
 		    }
 
@@ -236,7 +236,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 			/* width and height mentioned */
 			height = atoi(p);
 			if (height < 1 || height > MAX_WIDTH) {
-			    bu_vls_printf(_ged_current_gedp->ged_result_str,"mentioned grid size is out of range\n");
+			    bu_vls_printf(gedp->ged_result_str,"mentioned grid size is out of range\n");
 			    return -1;
 			}
 			analyze_set_grid_size(state, width, height);
@@ -250,15 +250,15 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		options->getfromview = 1;
 		break;
 	    case 'M':
-		if (read_units_double(&(options->mass_tolerance), bu_optarg, units_tab[2])) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in mass tolerance \"%s\"\n", bu_optarg);
+		if (read_units_double(gedp, &(options->mass_tolerance), bu_optarg, units_tab[2])) {
+		    bu_vls_printf(gedp->ged_result_str, "error in mass tolerance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		analyze_set_mass_tolerance(state, options->mass_tolerance);
 		break;
 	    case 'n':
 		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		options->require_num_hits = (size_t) c;
@@ -296,15 +296,15 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		break;
 	    case 'S':
 		if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
 		    break;
 		}
 		options->samples_per_model_axis = a + 1;
 		analyze_set_samples_per_model_axis(state, options->samples_per_model_axis);
 		break;
 	    case 't':
-		if (read_units_double(&(options->overlap_tolerance), bu_optarg, units_tab[0])) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
+		if (read_units_double(gedp, &(options->overlap_tolerance), bu_optarg, units_tab[0])) {
+		    bu_vls_printf(gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		analyze_set_overlap_tolerance(state, options->overlap_tolerance);
@@ -315,8 +315,8 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		analyze_enable_verbose(state, options->verbose_str);
 		break;
 	    case 'V':
-		if (read_units_double(&(options->volume_tolerance), bu_optarg, units_tab[1])) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
+		if (read_units_double(gedp, &(options->volume_tolerance), bu_optarg, units_tab[1])) {
+		    bu_vls_printf(gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		analyze_set_volume_tolerance(state, options->volume_tolerance);
@@ -325,7 +325,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		errno = 0;
 		options->use_air = strtol(bu_optarg, (char **)NULL, 10);
 		if (errno == ERANGE || errno == EINVAL) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
 		    return -1;
 		}
 		analyze_set_use_air(state, options->use_air);
@@ -367,18 +367,18 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 			}
 
 			if (!found_unit) {
-			    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units \"%s\" not found in conversion table\n", units_name[i]);
+			    bu_vls_printf(gedp->ged_result_str, "Units \"%s\" not found in conversion table\n", units_name[i]);
 			    return -1;
 			}
 
 			++units_ap;
 		    }
 
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units: ");
+		    bu_vls_printf(gedp->ged_result_str, "Units: ");
 		    for (i = 0; i < 3; i++) {
-			bu_vls_printf(_ged_current_gedp->ged_result_str, " %s: %s", dim[i], options->units[i]->name);
+			bu_vls_printf(gedp->ged_result_str, " %s: %s", dim[i], options->units[i]->name);
 		    }
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "\n");
+		    bu_vls_printf(gedp->ged_result_str, "\n");
 		}
 		break;
 
@@ -445,24 +445,24 @@ add_to_list(struct regions_list *list,
 
 
 void
-print_list(struct regions_list *list, const struct cvt_tab *units[3], char* name)
+print_list(struct ged *gedp, struct regions_list *list, const struct cvt_tab *units[3], char* name)
 {
     struct regions_list *rp;
 
     if (BU_LIST_IS_EMPTY(&list->l)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "No %s\n", name);
+	bu_vls_printf(gedp->ged_result_str, "No %s\n", name);
 	return;
     }
 
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "list %s:\n", name);
+    bu_vls_printf(gedp->ged_result_str, "list %s:\n", name);
 
     for (BU_LIST_FOR (rp, regions_list, &(list->l))) {
 	if (rp->region2) {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %s count: %lu dist: %g%s @ (%g %g %g)\n",
+	    bu_vls_printf(gedp->ged_result_str, "\t%s %s count: %lu dist: %g%s @ (%g %g %g)\n",
 			  rp->region1, rp->region2 ,rp->count,
 			  rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
 	} else {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s count: %lu dist: %g%s @ (%g %g %g)\n",
+	    bu_vls_printf(gedp->ged_result_str, "\t%s count: %lu dist: %g%s @ (%g %g %g)\n",
 			  rp->region1, rp->count,
 			  rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
 	}
@@ -484,10 +484,10 @@ clear_list(struct regions_list *list)
 
 
 void
-print_verbose_debug(struct check_parameters *options)
+print_verbose_debug(struct ged *gedp, struct check_parameters *options)
 {
-    if (options->verbose) bu_vls_vlscat(_ged_current_gedp->ged_result_str, options->verbose_str);
-    if (options->debug) bu_vls_vlscat(_ged_current_gedp->ged_result_str, options->debug_str);
+    if (options->verbose) bu_vls_vlscat(gedp->ged_result_str, options->verbose_str);
+    if (options->debug) bu_vls_vlscat(gedp->ged_result_str, options->debug_str);
 }
 
 
@@ -524,8 +524,6 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    _ged_current_gedp = gedp;
 
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -566,7 +564,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     argc -= opt_argc;
     argv = &argv[opt_argc];
 
-    arg_count = parse_check_args(argc, (char **)argv, &options, state);
+    arg_count = parse_check_args(gedp, argc, (char **)argv, &options, state);
 
     if (arg_count < 0 ) {
 	check_show_help(gedp);
@@ -613,32 +611,32 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     sub = argv[0];
     len = strlen(sub);
     if (bu_strncmp(sub, "adj_air", len) == 0) {
-	if (check_adj_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_adj_air(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "centroid", len) == 0) {
-	if (check_centroid(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_centroid(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "exp_air", len) == 0) {
-	if (check_exp_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_exp_air(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "gap", len) == 0) {
-	if (check_gap(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_gap(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "mass", len) == 0) {
-	if (check_mass(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_mass(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "moments", len) == 0) {
-	if (check_moments(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_moments(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
@@ -650,22 +648,22 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 	    _ged_rt_set_eye_model(gedp, eye_model);
 	    analyze_set_view_information(state, gedp->ged_gvp->gv_size, &eye_model, &quat);
 	}
-	if (check_overlaps(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_overlaps(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "surf_area", len) == 0) {
-	if (check_surf_area(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_surf_area(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "unconf_air", len) == 0) {
-	if (check_unconf_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_unconf_air(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "volume", len) == 0) {
-	if (check_volume(state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_volume(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}

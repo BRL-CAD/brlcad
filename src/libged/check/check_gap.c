@@ -56,7 +56,7 @@ gaps(const struct xray* ray, const struct partition *pp, double gap_dist, point_
 }
 
 
-int check_gap(struct current_state *state,
+int check_gap(struct ged *gedp, struct current_state *state,
 	      struct db_i *dbip,
 	      char **tobjtab,
 	      int tnobjs,
@@ -73,7 +73,7 @@ int check_gap(struct current_state *state,
     if (options->plot_files) {
 	plot_gaps = fopen(name, "wb");
 	if (plot_gaps == (FILE *)NULL) {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+	    bu_vls_printf(gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }
 
@@ -88,13 +88,13 @@ int check_gap(struct current_state *state,
 	return BRLCAD_ERROR;
     }
 
-    print_verbose_debug(options);
-    print_list(&gapList, options->units, "Gaps");
+    print_verbose_debug(gedp, options);
+    print_list(gedp, &gapList, options->units, "Gaps");
     clear_list(&gapList);
 
     if (plot_gaps) {
 	fclose(plot_gaps);
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
     return BRLCAD_OK;

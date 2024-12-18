@@ -211,19 +211,20 @@ add_to_list(struct regions_list *list,
 	    point_t pt);
 
 extern void
-print_list(struct regions_list *list, const struct cvt_tab *units[3], char* name);
+print_list(struct ged *gedp, struct regions_list *list, const struct cvt_tab *units[3], char* name);
 
 extern void
 clear_list(struct regions_list *list);
 
 extern void
-print_verbose_debug(struct check_parameters *options);
+print_verbose_debug(struct ged *gedp, struct check_parameters *options);
 
-typedef int check_functions_t(struct current_state *state,
-			      struct db_i *dbip,
-			      char **tobjtab,
-			      int tnobjs,
-			      struct check_parameters *options);
+typedef int check_functions_t(struct ged *gedp,
+	struct current_state *state,
+	struct db_i *dbip,
+	char **tobjtab,
+	int tnobjs,
+	struct check_parameters *options);
 
 extern check_functions_t check_adj_air;
 

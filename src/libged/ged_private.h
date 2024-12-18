@@ -62,6 +62,11 @@ class Ged_Internal {
 	std::stack<std::string> exec_stack;
 
 	std::map<std::string, void *> dm_map;
+
+	// Persisting state between loadview and preview
+	// commands and subcommands.
+	vect_t ged_eye_model = VINIT_ZERO;
+	mat_t ged_viewrot = MAT_INIT_ZERO;
 };
 
 #else
@@ -244,15 +249,6 @@ GED_EXPORT extern struct directory **_ged_build_dpp(struct ged *gedp,
 GED_EXPORT extern void _ged_do_list(struct ged *gedp,
 			 struct directory *dp,
 			 int verbose);
-
-/* defined in loadview.c
- *
- * TODO - I'm thinking these shouldn't exist... need to figure out how they're
- * being used and make them go away.
- **/
-GED_EXPORT extern vect_t _ged_eye_model;
-GED_EXPORT extern mat_t _ged_viewrot;
-GED_EXPORT extern struct ged *_ged_current_gedp;
 
 /* defined in rt.c */
 GED_EXPORT extern void

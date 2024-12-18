@@ -69,7 +69,7 @@ unconf_air(const struct xray *ray,
 }
 
 
-int check_unconf_air(struct current_state *state,
+int check_unconf_air(struct ged *gedp, struct current_state *state,
 		  struct db_i *dbip,
 		  char **tobjtab,
 		  int tnobjs,
@@ -86,7 +86,7 @@ int check_unconf_air(struct current_state *state,
     if (options->plot_files) {
 	plot_unconf_air = fopen(name, "wb");
 	if (plot_unconf_air == (FILE *)NULL) {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+	    bu_vls_printf(gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }
 
@@ -101,13 +101,13 @@ int check_unconf_air(struct current_state *state,
 	return BRLCAD_ERROR;
     }
 
-    print_verbose_debug(options);
-    print_list(&unconfAirList, options->units, "Unconfined Air");
+    print_verbose_debug(gedp, options);
+    print_list(gedp, &unconfAirList, options->units, "Unconfined Air");
     clear_list(&unconfAirList);
 
     if (plot_unconf_air) {
 	fclose(plot_unconf_air);
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
     return BRLCAD_OK;

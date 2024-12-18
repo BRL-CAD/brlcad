@@ -58,7 +58,7 @@ exposed_air(const struct partition *pp,
 }
 
 
-int check_exp_air(struct current_state *state,
+int check_exp_air(struct ged *gedp, struct current_state *state,
 		  struct db_i *dbip,
 		  char **tobjtab,
 		  int tnobjs,
@@ -75,7 +75,7 @@ int check_exp_air(struct current_state *state,
     if (options->plot_files) {
 	plot_exp_air = fopen(name, "wb");
 	if (plot_exp_air == (FILE *)NULL) {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+	    bu_vls_printf(gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }
 
@@ -90,13 +90,13 @@ int check_exp_air(struct current_state *state,
 	return BRLCAD_ERROR;
     }
 
-    print_verbose_debug(options);
-    print_list(&exposedAirList, options->units, "Exposed Air");
+    print_verbose_debug(gedp, options);
+    print_list(gedp, &exposedAirList, options->units, "Exposed Air");
     clear_list(&exposedAirList);
 
     if (plot_exp_air) {
 	fclose(plot_exp_air);
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
     return BRLCAD_OK;

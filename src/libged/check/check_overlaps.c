@@ -54,11 +54,12 @@ struct overlaps_context {
     struct ged_check_plot *overlaps_overlay_plot;
     int sem_stats;
     int sem_lists;
+    struct ged *gedp;
 };
 
 
 static void
-check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect_t ohit, void *context)
+check_log_overlaps(struct ged *gedp, const char *reg1, const char *reg2, double depth, vect_t ihit, vect_t ohit, void *context)
 {
     struct overlaps_context *callbackdata = (struct overlaps_context*)context;
     struct overlap_list *olist= (struct overlap_list *)callbackdata->overlapList;
@@ -70,7 +71,7 @@ check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit
     bu_semaphore_release(callbackdata->sem_stats);
 
     if (!callbackdata->rpt_overlap_flag) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "OVERLAP %zu: %s\nOVERLAP %zu: %s\nOVERLAP %zu: depth %gmm\nOVERLAP %zu: in_hit_point (%g, %g, %g) mm\nOVERLAP %zu: out_hit_point (%g, %g, %g) mm\n------------------------------------------------------------\n",
 		      callbackdata->noverlaps, reg1,
 		      callbackdata->noverlaps, reg2,
@@ -119,7 +120,7 @@ check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit
 
 
 static void
-printOverlaps(void *context, struct check_parameters *options)
+printOverlaps(struct ged *gedp, void *context, struct check_parameters *options)
 {
     struct overlaps_context *overlapData = (struct overlaps_context*)context;
     struct overlap_list *olist= (struct overlap_list *)overlapData->overlapList;
@@ -230,7 +231,7 @@ printOverlaps(void *context, struct check_parameters *options)
 		bu_vls_printf(&str, "%zu overlap%s detected\n\n",
 			      overlapData->noverlaps, (overlapData->noverlaps==1)?"":"s");
 	}
-	bu_vls_vlscat(_ged_current_gedp->ged_result_str, &str);
+	bu_vls_vlscat(gedp->ged_result_str, &str);
 	bu_vls_free(&str);
     }
 }
@@ -245,6 +246,7 @@ overlap(const struct xray *ray,
 	void* callback_data)
 {
     struct overlaps_context *context = (struct overlaps_context*) callback_data;
+    struct ged *gedp = context->gedp;
     struct hit *ihitp = pp->pt_inhit;
     struct hit *ohitp = pp->pt_outhit;
     vect_t ihit;
@@ -261,7 +263,7 @@ overlap(const struct xray *ray,
     }
 
     bu_semaphore_acquire(context->sem_lists);
-    check_log_overlaps(reg1->reg_name, reg2->reg_name, depth, ihit, ohit, context);
+    check_log_overlaps(gedp, reg1->reg_name, reg2->reg_name, depth, ihit, ohit, context);
     bu_semaphore_release(context->sem_lists);
 
     if (context->plot_overlaps) {
@@ -271,7 +273,7 @@ overlap(const struct xray *ray,
 }
 
 
-int check_overlaps(struct current_state *state,
+int check_overlaps(struct ged *gedp, struct current_state *state,
 		   struct db_i *dbip,
 		   char **tobjtab,
 		   int tnobjs,
@@ -279,6 +281,7 @@ int check_overlaps(struct current_state *state,
 {
     struct ged_check_plot check_plot;
     struct overlaps_context callbackdata;
+    callbackdata.gedp = gedp;
     struct overlap_list overlapList;
     struct overlap_list *op;
 
@@ -296,7 +299,7 @@ int check_overlaps(struct current_state *state,
     if (options->plot_files) {
 	plot_overlaps = fopen(name, "wb");
 	if (plot_overlaps == (FILE *)NULL) {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+	    bu_vls_printf(gedp->ged_result_str, "cannot open plot file %s\n", name);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -332,24 +335,24 @@ int check_overlaps(struct current_state *state,
 	return BRLCAD_ERROR;
     }
 
-    print_verbose_debug(options);
+    print_verbose_debug(gedp, options);
 
-    printOverlaps(&callbackdata, options);
+    printOverlaps(gedp, &callbackdata, options);
 
     if (options->overlaps_overlay_flag) {
 	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
 	if (BU_STR_EQUAL(nview, "1")) {
-	    struct bview *view = _ged_current_gedp->ged_gvp;
+	    struct bview *view = gedp->ged_gvp;
 	    bv_vlblock_obj(check_plot.vbp, view, "check::overlaps");
 	} else {
-	    _ged_cvt_vlblock_to_solids(_ged_current_gedp, check_plot.vbp, "OVERLAPS", 0);
+	    _ged_cvt_vlblock_to_solids(gedp, check_plot.vbp, "OVERLAPS", 0);
 	}
 	bv_vlblock_free(check_plot.vbp);
     }
 
     if (plot_overlaps) {
 	fclose(plot_overlaps);
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
     while (BU_LIST_WHILE(op, overlap_list, &(overlapList.l))) {

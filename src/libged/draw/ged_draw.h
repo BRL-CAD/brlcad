@@ -78,14 +78,26 @@ struct _ged_client_data {
     struct bv_obj_settings vs;
 };
 
-extern int _ged_cm_vsize(const int argc, const char **argv);
-extern int _ged_cm_eyept(const int argc, const char **argv);
-extern int _ged_cm_lookat_pt(const int argc, const char **argv);
-extern int _ged_cm_vrot(const int argc, const char **argv);
-extern int _ged_cm_orientation(const int argc, const char **argv);
-extern int _ged_cm_set(const int argc, const char **argv);
-extern int _ged_cm_end(const int argc, const char **argv);
-extern int _ged_cm_null(const int argc, const char **argv);
+struct ged_command_tab {
+    const char *ct_cmd;
+    const char *ct_parms;
+    const char *ct_comment;
+    int (*ct_func)(struct ged *gedp, vect_t *, mat_t *, const int, const char **);
+    int ct_min;         /**< @brief  min number of words in cmd */
+    int ct_max;         /**< @brief  max number of words in cmd */
+};
+
+extern int
+ged_do_cmd(struct ged *gedp, vect_t *v, mat_t *m, const char *ilp, const struct ged_command_tab *tp);
+
+extern int _ged_cm_vsize(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
+extern int _ged_cm_eyept(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
+extern int _ged_cm_lookat_pt(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
+extern int _ged_cm_vrot(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
+extern int _ged_cm_orientation(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
+extern int _ged_cm_set(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
+extern int _ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
+extern int _ged_cm_null(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
 
 extern void _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp);
 
@@ -96,6 +108,9 @@ extern int _ged_drawtrees(struct ged *gedp,
 			  struct _ged_client_data *_dgcdp);
 
 extern int ged_E_core(struct ged *gedp, int argc, const char *argv[]);
+
+extern int ged_loadview_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
 
 __END_DECLS
 

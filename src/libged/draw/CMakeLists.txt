@@ -6,7 +6,7 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-set(DRAW_SRCS bigE.c draw.c draw2.cpp loadview.c preview.c)
+set(DRAW_SRCS bigE.c draw.c draw2.cpp loadview.cpp preview.cpp)
 
 ged_plugin_library(ged-draw ${DRAW_SRCS})
 target_link_libraries(ged-draw libged libbu)

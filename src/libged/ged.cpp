@@ -58,10 +58,6 @@ extern "C" {
 #include "./qray.h"
 }
 
-/* TODO:  Ew.  Globals. Make this go away... */
-struct ged *_ged_current_gedp;
-vect_t _ged_eye_model;
-mat_t _ged_viewrot;
 
 void
 ged_close(struct ged *gedp)

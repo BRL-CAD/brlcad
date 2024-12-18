@@ -25,7 +25,7 @@
 #include "../ged_private.h"
 #include "./check_private.h"
 
-int check_moments(struct current_state *state,
+int check_moments(struct ged *gedp, struct current_state *state,
 		  struct db_i *dbip,
 		  char **tobjtab,
 		  int tnobjs,
@@ -36,17 +36,17 @@ int check_moments(struct current_state *state,
 
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS|ANALYSIS_MOMENTS)) return BRLCAD_ERROR;
 
-    print_verbose_debug(options);
+    print_verbose_debug(gedp, options);
 
     for (i=0; i < tnobjs; i++){
 	struct bu_vls title = BU_VLS_INIT_ZERO;
 	analyze_moments(state, tobjtab[i], moments);
 	bu_vls_printf(&title, "Moments and Products of Inertia For %s", tobjtab[i]);
-	bn_mat_print_vls(bu_vls_addr(&title), moments, _ged_current_gedp->ged_result_str);
+	bn_mat_print_vls(bu_vls_addr(&title), moments, gedp->ged_result_str);
     }
     analyze_moments_total(state, moments);
     bn_mat_print_vls("For the Moments and Products of Inertia For\n\tAll Specified Objects",
-		     moments, _ged_current_gedp->ged_result_str);
+		     moments, gedp->ged_result_str);
     return BRLCAD_OK;
 }
 
