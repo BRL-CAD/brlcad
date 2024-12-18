@@ -576,9 +576,6 @@ main(int ac, char *av[])
 	}
     }
 
-    /* Just get this done up front - all tests need it */
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     switch (test_num) {
 	case 1:
 	    /* Serial prep API, 1 object */

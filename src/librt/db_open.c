@@ -272,10 +272,6 @@ db_open(const char *name, const char *mode)
 
     /* Initialize tolerances */
 
-    /* Set up the four possible wdb containers. */
-    if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	rt_init_resource(&rt_uniresource, 0, NULL);
-
     BU_ALLOC(dbip->dbi_wdbp, struct rt_wdb);
     wdb_init(dbip->dbi_wdbp, dbip, RT_WDB_TYPE_DB_DISK);
     dbip->dbi_wdbp->wdb_resp = &rt_uniresource;

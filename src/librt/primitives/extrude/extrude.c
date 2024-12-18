@@ -2408,10 +2408,6 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name, rp->extr.ex_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	/* initialize before our first use */
-	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	    rt_init_resource(&rt_uniresource, 0, NULL);
-
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 		   sketch_name, rp->extr.ex_name);
@@ -2574,10 +2570,6 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	/* initialize before our first use */
-	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	    rt_init_resource(&rt_uniresource, 0, NULL);
-
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);

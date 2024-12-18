@@ -673,21 +673,11 @@ rt_shootray(register struct application *ap)
     } else {
 	ap->a_ray.magic = RT_RAY_MAGIC;
     }
-#if 0
-    /* FIXME: resolve the rt_uniresource initialization dilemma, wrap
-     * in a function so we can call rt_init_resource().
-     */
-    if (!ap->a_resource) {
-	ap->a_resource = &rt_uniresource;
-    }
-    RT_CK_RESOURCE(ap->a_resource);
-#endif
+
     if (ap->a_resource == RESOURCE_NULL) {
 	ap->a_resource = &rt_uniresource;
 	if (RT_G_DEBUG)
 	    bu_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
-	if (rt_uniresource.re_magic == 0)
-	    rt_init_resource(&rt_uniresource, 0, ap->a_rt_i);
     }
     ss.ap = ap;
     rtip = ap->a_rt_i;
@@ -1350,8 +1340,6 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     if (ap->a_resource == RESOURCE_NULL) {
 	ap->a_resource = &rt_uniresource;
 	if (RT_G_DEBUG)bu_log("rt_cell_n_on_ray:  defaulting a_resource to &rt_uniresource\n");
-	if (rt_uniresource.re_magic == 0)
-	    rt_init_resource(&rt_uniresource, 0, ap->a_rt_i);
     }
     ss.ap = ap;
     rtip = ap->a_rt_i;

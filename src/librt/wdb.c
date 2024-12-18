@@ -41,10 +41,6 @@ wdb_fopen_v(const char *filename, int version)
 
     if ( filename == NULL ) return RT_WDB_NULL;
 
-    if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
-	rt_init_resource(&rt_uniresource, 0, NULL);
-    }
-
     if ((dbip = db_create(filename, version)) == DBI_NULL)
 	return RT_WDB_NULL;
 
@@ -65,9 +61,6 @@ struct rt_wdb *
 wdb_dbopen(struct db_i *dbip, int mode)
 {
     RT_CK_DBI(dbip);
-
-    if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	rt_init_resource(&rt_uniresource, 0, NULL);
 
     switch(mode) {
 	case RT_WDB_TYPE_DB_DEFAULT:
