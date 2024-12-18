@@ -1350,7 +1350,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	VMOVE(&facePoints[i * ELEMENTS_PER_POINT], tmp_v);
     }
 
-    fu = make_faceuse_from_face(facePoints, numFacePoints);
+    fu = make_faceuse_from_face(facePoints, numFacePoints, vlfree);
 
     /* only try triangulation if face is well-formed enough to yield a faceuse */
     if (fu != NULL) {
@@ -1376,7 +1376,7 @@ populate_triangle_indexes(struct ga_t *ga,
 
 	    nmg_km(fu->s_p->r_p->m_p);
 	} else {
-	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
+	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol, vlfree);
 	}
     } else {
 	num_new_tri = 0;

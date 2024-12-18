@@ -56,6 +56,7 @@ struct plate_mode {
     int num_nonbots;
     int array_size;
     struct rt_bot_internal **bots;
+    struct bu_list *vlfree;
 };
 
 
@@ -96,7 +97,7 @@ struct bu_structparse vrml_mat_parse[]={
 
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, struct bu_list *vlfree);
 
 static const char *usage =
     "[-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_cpus] [-o out_file] [-u units] brlcad_db.g object(s)\n"
@@ -378,7 +379,8 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    pm.vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(pm.vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:h?")) != -1) {
@@ -506,7 +508,7 @@ main(int argc, char **argv)
 
 
 void
-process_non_light(struct model *m) {
+process_non_light(struct model *m, struct bu_list *vlfree) {
     /* static due to bu exception handling */
     static struct shell *s;
     static struct shell *next_s;
@@ -551,7 +553,7 @@ process_non_light(struct model *m) {
 			 */
 			if (!BU_SETJUMP) {
 			    /* try */
-			    if (nmg_triangulate_fu(fu, &RTG.rtg_vlfree, &tol)) {
+			    if (nmg_triangulate_fu(fu, vlfree, &tol)) {
 				if (nmg_kfu(fu)) {
 				    (void) nmg_ks(s);
 				    shell_is_dead = 1;
@@ -583,7 +585,7 @@ process_non_light(struct model *m) {
 
 
 void
-nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct mater_info *mater)
+nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct mater_info *mater, struct bu_list *vlfree)
 {
     struct nmgregion *reg;
     struct bu_ptbl verts;
@@ -707,14 +709,14 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
     if (!is_light)
     {
-	process_non_light(m);
+	process_non_light(m, vlfree);
 	fprintf(fp, "\t\t</Appearance>\n");
     }
 
     /* FIXME: need code to handle light */
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &m->magic, vlfree);
 
     fprintf(fp, "\t\t<IndexedFaceSet coordIndex=\"\n");
     first = 1;
@@ -895,13 +897,13 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     if (tsp->ts_is_fastgen != REGION_FASTGEN_PLATE) {
 	clean_pmp(pmp);
-	return nmg_region_end(tsp, pathp, curtree, client_data);
+	return nmg_region_end(tsp, pathp, curtree, pmp->vlfree);
     }
 
     /* FASTGEN plate mode region, just spew the bot triangles */
     if (pmp->num_bots < 1 || pmp->num_nonbots > 0) {
 	clean_pmp(pmp);
-	return nmg_region_end(tsp, pathp, curtree, client_data);
+	return nmg_region_end(tsp, pathp, curtree, pmp->vlfree);
     }
 
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
@@ -922,7 +924,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 
 static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
@@ -930,7 +932,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -967,7 +969,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, struct bu_list *vlfree)
 {
     struct nmgregion *r;
     struct bu_list vhead;
@@ -994,7 +996,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     regions_tried++;
 
-    ret_tree = process_boolean(curtree, tsp, pathp);
+    ret_tree = process_boolean(curtree, tsp, pathp, vlfree);
 
     if (ret_tree)
 	r = ret_tree->tr_d.td_r;
@@ -1036,7 +1038,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	if (!empty_region && !empty_model)
 	{
 	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml(outfp, pathp, r->m_p, &tsp->ts_mater);
+	    nmg_2_vrml(outfp, pathp, r->m_p, &tsp->ts_mater, vlfree);
 	}
 
 	/* NMG region is no longer necessary */

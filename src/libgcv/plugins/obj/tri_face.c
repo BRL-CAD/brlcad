@@ -107,7 +107,7 @@ attach_face_g_plane(struct model *model, struct face *f)
  * specified in points[]
  */
 static struct model*
-make_model_from_face(const double points[], size_t numPoints)
+make_model_from_face(const double points[], size_t numPoints, struct bu_list *vlfree)
 {
     size_t i;
     struct model *model;
@@ -137,7 +137,7 @@ make_model_from_face(const double points[], size_t numPoints)
     /* add geometry to face */
     fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
     attach_face_g_plane(model, fu->f_p);
-    if (nmg_calc_face_plane(fu, fu->f_p->g.plane_p->N, &RTG.rtg_vlfree)) {
+    if (nmg_calc_face_plane(fu, fu->f_p->g.plane_p->N, vlfree)) {
 	nmg_km(model);
 	model = NULL;
     } else {
@@ -149,13 +149,13 @@ make_model_from_face(const double points[], size_t numPoints)
 
 
 struct faceuse*
-make_faceuse_from_face(const double points[], size_t numPoints)
+make_faceuse_from_face(const double points[], size_t numPoints, struct bu_list *vlfree)
 {
     struct model *model;
     struct shell *shell;
     struct faceuse *fu = NULL;
 
-    model = make_model_from_face(points, numPoints);
+    model = make_model_from_face(points, numPoints, vlfree);
 
     if (model != NULL) {
 	shell = get_first_shell(model);
@@ -209,7 +209,8 @@ triangulateFace(
     size_t *numFaces,
     const double points[],
     size_t numPoints,
-    struct bn_tol tol)
+    struct bn_tol tol,
+    struct bu_list *vlfree)
 {
     struct model *model;
     struct faceuse *fu;
@@ -221,7 +222,7 @@ triangulateFace(
     double point[3];
 
     /* get nmg faceuse that represents the face specified by points */
-    fu = make_faceuse_from_face(points, numPoints);
+    fu = make_faceuse_from_face(points, numPoints, vlfree);
 
     if (fu == NULL) {
 	*faces = NULL;
@@ -230,7 +231,7 @@ triangulateFace(
     }
 
     /* triangulate face */
-    if (nmg_triangulate_fu(fu, &RTG.rtg_vlfree, &tol)) {
+    if (nmg_triangulate_fu(fu, vlfree, &tol)) {
 	*faces = NULL;
 	*numFaces = 0;
 	return;

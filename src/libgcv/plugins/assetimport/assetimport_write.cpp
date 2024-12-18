@@ -48,6 +48,7 @@ typedef struct assetimport_write_state {
 
     struct db_i *dbip;
     struct model *the_model;
+    struct bu_list *vlfree;
 
     aiScene* scene;                     /* generated scene to be exported */
     std::vector<aiNode*> children;      /* dynamically keeps track of children while walking */
@@ -59,6 +60,7 @@ typedef struct assetimport_write_state {
 	assetimport_write_options = NULL;
 	dbip = NULL;
 	the_model = NULL;
+	vlfree = NULL;
 	scene = NULL;
 	children = {};
 	meshes = {};
@@ -98,16 +100,16 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
+    nmg_triangulate_model(m, pstate->vlfree, &pstate->gcv_options->calculational_tolerance);
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, pstate->vlfree);
 
     /* Get number of vertices */
     numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
-    nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, pstate->vlfree);
 
     /* Prelim check all vertices */
     for (i = 0; i < numverts; i++) {
@@ -411,7 +413,8 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
 
     /* make empty NMG model */
     state.the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    state.vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(state.vlfree);	/* for vlist macros */
 
     /* Walk indicated tree(s).  Each region will be output separately */
     if (state.assetimport_write_options->model_workaround) {

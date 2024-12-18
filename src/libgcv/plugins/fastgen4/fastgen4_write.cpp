@@ -1879,6 +1879,7 @@ public:
     const bn_tol m_tol;
     std::set<const directory *> m_failed_regions;
 
+    struct bu_list *vlfree;
 
 private:
     FastgenConversion(const FastgenConversion &source);
@@ -2349,7 +2350,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     for (BU_LIST_FOR(current_shell, shell, &nmg_region->s_hd)) {
 	NMG_CK_SHELL(current_shell);
 
-	rt_bot_internal * const bot = nmg_bot(current_shell, &RTG.rtg_vlfree,
+	rt_bot_internal * const bot = nmg_bot(current_shell, data.vlfree,
 					      &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
@@ -2459,6 +2460,10 @@ do_conversion(db_i &db, const struct gcv_opts &gcv_options,
     nmg_model.ptr = nmg_mm();
     FastgenConversion data(db, gcv_options.calculational_tolerance,
 			   facetize_regions);
+
+    data.vlfree = &RTG.rtg_vlfree;
+    //BU_LIST_INIT(data.vlfree); /* for vlist macros */
+
     const int ret = db_walk_tree(&db,
 				 static_cast<int>(gcv_options.num_objects),
 				 const_cast<const char **>(gcv_options.object_names),

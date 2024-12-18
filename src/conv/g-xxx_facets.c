@@ -118,6 +118,9 @@ main(int argc, char **argv)
     /* make empty NMG model */
     the_model = nmg_mm();
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
+
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "r:a:n:o:vx:D:X:h?")) != -1) {
 	switch (c) {
@@ -194,7 +197,7 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			rt_booltree_leaf_tess,
-			(void *)NULL);	/* in librt/nmg_bool.c */
+			(void *)vlfree);	/* in librt/nmg_bool.c */
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
@@ -227,7 +230,7 @@ main(int argc, char **argv)
 
 /* routine to output the faceted NMG representation of a BRL-CAD region */
 static void
-output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
+output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), struct bu_list *vlfree)
 {
     struct model *m;
     struct shell *s;
@@ -243,7 +246,7 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, vlfree, &tol);
 
     /* Output triangles */
     if (verbose) {
@@ -297,13 +300,13 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 
 static void
-process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bu_list *vlfree)
 {
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the facetized region to the output file */
-	output_nmg(r, pathp, tsp->ts_regionid, tsp->ts_gmater);
+	output_nmg(r, pathp, tsp->ts_regionid, tsp->ts_gmater, vlfree);
 
     } else {
 	/* catch */
@@ -336,7 +339,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 
 
 static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
@@ -344,8 +347,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -386,11 +389,12 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  *
  * This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *ret_tree;
     struct bu_list vhead;
     struct nmgregion *r;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
@@ -417,7 +421,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (verbose)
 	bu_log("Attempting to process region %s\n", db_path_to_string(pathp));
 
-    ret_tree= process_boolean(curtree, tsp, pathp);
+    ret_tree= process_boolean(curtree, tsp, pathp, vlfree);
 
     if (ret_tree)
 	r = ret_tree->tr_d.td_r;
@@ -461,7 +465,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	}
 
 	if (!empty_region && !empty_model) {
-	    process_triangulation(r, pathp, tsp);
+	    process_triangulation(r, pathp, tsp, vlfree);
 
 	    regions_written++;
 	}

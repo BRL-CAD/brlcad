@@ -53,6 +53,7 @@ struct egg_conv_data {
     FILE *fp;
     unsigned long tot_polygons;
     struct bn_tol tol;
+    struct bu_list *vlfree;
 };
 
 
@@ -85,7 +86,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &conv_data->tol);
+    nmg_triangulate_model(m, conv_data->vlfree, &conv_data->tol);
 
     /* Write pertinent info for this region */
     fprintf(conv_data->fp, "  <VertexPool> %s {\n", (region_name+1));
@@ -223,7 +224,8 @@ main(int argc, char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    conv_data.vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(conv_data.vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((i = bu_getopt(argc, argv, "a:89n:o:r:vx:D:P:X:h?")) != -1) {

@@ -58,6 +58,8 @@ struct conversion_state
     const struct obj_write_options *obj_write_options;
     FILE *fp;
 
+    struct bu_list *vlfree;
+
     b_off_t vert_offset;
     b_off_t norm_offset;
     size_t regions_tried;
@@ -68,7 +70,7 @@ struct conversion_state
 
 
 static void
-nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id)
+nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id, struct bu_list *vlfree)
 {
     struct model *m;
     struct shell *s;
@@ -88,17 +90,17 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
+    nmg_triangulate_model(m, vlfree, &pstate->gcv_options->calculational_tolerance);
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, vlfree);
 
     /* Get number of vertices */
     numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
     if (pstate->obj_write_options->do_normals)
-	nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, &RTG.rtg_vlfree);
+	nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, vlfree);
 
     /* BEGIN CHECK SECTION */
     /* Check vertices */
@@ -289,7 +291,7 @@ process_triangulation(struct conversion_state *pstate, struct nmgregion *r, cons
 	/* try */
 
 	/* Write the region to the TANKILL file */
-	nmg_to_obj(pstate, r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater);
+	nmg_to_obj(pstate, r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater, pstate->vlfree);
 
     } else {
 	/* catch */
@@ -322,7 +324,7 @@ process_triangulation(struct conversion_state *pstate, struct nmgregion *r, cons
 
 
 static union tree *
-obj_write_process_boolean(const struct conversion_state *pstate, union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+obj_write_process_boolean(const struct conversion_state *pstate, union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
@@ -330,8 +332,8 @@ obj_write_process_boolean(const struct conversion_state *pstate, union tree *cur
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -402,7 +404,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     pstate->regions_tried++;
 
-    ret_tree = obj_write_process_boolean(pstate, curtree, tsp, pathp);
+    ret_tree = obj_write_process_boolean(pstate, curtree, tsp, pathp, pstate->vlfree);
 
     if (ret_tree)
 	r = ret_tree->tr_d.td_r;
@@ -525,7 +527,8 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     tree_state.ts_m = &the_model;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    state.vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(state.vlfree);	/* for vlist macros */
 
     /* Write out header */
     if (NEAR_EQUAL(state.gcv_options->scale_factor, 1.0 / 25.4, RT_LEN_TOL))

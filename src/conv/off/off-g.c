@@ -49,7 +49,7 @@ static struct bn_tol tol;
  *  vertices and faces.
  */
 
-int read_faces(struct model *m, FILE *fgeom)
+int read_faces(struct model *m, FILE *fgeom, struct bu_list *vlfree)
 {
     int nverts = -1, nfaces = -1, nedges = -1;
     int i, j, fail=0;
@@ -148,7 +148,7 @@ int read_faces(struct model *m, FILE *fgeom)
 
     if (fail) return -1;
 
-    nmg_gluefaces(outfaceuses, nfaces, &RTG.rtg_vlfree, &tol);
+    nmg_gluefaces(outfaceuses, nfaces, vlfree, &tol);
     nmg_region_a(r, &tol);
 
     bu_free((char *)pts, "points list");
@@ -156,7 +156,7 @@ int read_faces(struct model *m, FILE *fgeom)
 }
 
 
-int off2nmg(FILE *fpin, struct rt_wdb *fpout)
+int off2nmg(FILE *fpin, struct rt_wdb *fpout, struct bu_list *vlfree)
 {
 #define SZ 63
     char title[SZ+1] = {0};
@@ -202,7 +202,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
     }
 
     m = nmg_mm();
-    read_faces(m, fgeom);
+    read_faces(m, fgeom, vlfree);
     fclose(fgeom);
 
     bu_vls_printf(&sname, "s.%s", title);
@@ -227,6 +227,9 @@ int main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(vlfree);      /* for vlist macros */
+
     tol.magic = BN_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
     tol.dist = 0.01;
     tol.dist_sq = 0.01 * 0.01;
@@ -247,7 +250,7 @@ int main(int argc, char **argv)
     }
 
 
-    off2nmg(fpin, fpout);
+    off2nmg(fpin, fpout, vlfree);
 
     fclose(fpin);
     db_close(fpout->dbip);

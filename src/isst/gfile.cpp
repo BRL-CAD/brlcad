@@ -41,6 +41,7 @@ struct isst_nmg_data {
     struct tie_s *cur_tie;
     struct db_i *dbip;
     struct bn_tol *tol;
+    struct bu_list *vlfree;
 };
 
 struct gcv_data {
@@ -213,7 +214,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, stru
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, d->tol);
+    nmg_triangulate_model(m, d->vlfree, d->tol);
 
     /* FIXME: where is this released? */
     BU_ALLOC(mesh, struct adrt_mesh_s);
@@ -266,7 +267,8 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    d.vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(d.vlfree);	/* for vlist macros */
 
     /*
      * these should probably encode so the result can be passed back to client

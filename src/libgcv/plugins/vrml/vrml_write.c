@@ -208,6 +208,7 @@ struct region_end_data
 {
     struct conversion_state *pstate;
     struct plate_mode *pmp;
+    struct bu_list *vlfree;
 };
 
 
@@ -592,7 +593,7 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 
 
 static void
-nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m)
+nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m, struct bu_list *vlfree)
 {
     struct mater_info *mater = &tsp->ts_mater;
     const struct bn_tol *tol2 = tsp->ts_tol;
@@ -789,14 +790,14 @@ nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, con
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, &RTG.rtg_vlfree, tol2);
+	nmg_triangulate_model(m, vlfree, tol2);
 	fprintf(pstate->fp_out, "\t\t\t}\n");
 	fprintf(pstate->fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(pstate->fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &m->magic, vlfree);
     if (!is_light) {
 	fprintf(pstate->fp_out, "\t\t\t\t\tpoint [");
     } else {
@@ -1048,14 +1049,14 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
 
 static union tree *
-vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -1111,7 +1112,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	bu_log("Attempting %s\n", name);
 
     data->pstate->regions_tried++;
-    ret_tree = vrml_write_process_boolean(data->pstate, curtree, tsp, pathp);
+    ret_tree = vrml_write_process_boolean(data->pstate, curtree, tsp, pathp, data->vlfree);
 
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
@@ -1142,7 +1143,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
 	if (!empty_region) {
 	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml(data->pstate, tsp, pathp, r->m_p);
+	    nmg_2_vrml(data->pstate, tsp, pathp, r->m_p, data->vlfree);
 	    data->pstate->regions_converted++;
 	} else {
 	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n", name);
@@ -1256,7 +1257,8 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
 	nmg_eue_dist = 2.0;
     }
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    region_end_data.vlfree = &RTG.rtg_vlfree;
+    BU_LIST_INIT(region_end_data.vlfree);	/* for vlist macros */
 
     fprintf(state.fp_out, "#VRML V2.0 utf8\n");
     fprintf(state.fp_out, "#Units are %s\n", vrml_write_make_units_str(gcv_options->scale_factor));
