@@ -52,7 +52,11 @@
 #  endif
 #endif
 
-/* The internals of the dm structure are hidden using the PImpl pattern*/
+/* The internals of the dm structure are hidden using the PImpl pattern.
+ *
+ * TODO - see how much of mged_dm could be folded into the generic libdm
+ * display manager.  If it has abilities not found in the vanilla DMs that
+ * aren't Tcl specific, seems like they should be generally available... */
 struct dm_impl;
 struct dm {
     uint32_t magic;
