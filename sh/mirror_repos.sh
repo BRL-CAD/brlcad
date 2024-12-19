@@ -101,7 +101,6 @@
 #
 # [protocol "file"]
 #         allow = always
-#
 # [url "file:///home/user/github/BRL-CAD/"]
 #         insteadOf = https://github.com/BRL-CAD
 #
@@ -171,32 +170,41 @@ ALL_REPOS+=$ADD_REPOS
 # repositories.  Keep going until we have everything
 while [ ! -z "${ADD_REPOS}" ]
 do
-	((CURR_PAGE++))
-	# Append repos (curl)
-	ADD_REPOS=$(curl -s ${ROOT_URL}$CURR_PAGE | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
-	# Append repos (gh)
-	#ADD_REPOS=$(gh api --method GET ${API_ROOT_URL}$CURR_PAGE | jq | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
-	ALL_REPOS+=$ADD_REPOS
+    ((CURR_PAGE++))
+    # Append repos (curl)
+    ADD_REPOS=$(curl -s ${ROOT_URL}$CURR_PAGE | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
+    # Append repos (gh)
+    #ADD_REPOS=$(gh api --method GET ${API_ROOT_URL}$CURR_PAGE | jq | grep html_url | awk 'NR%2 == 0' | cut -d ':' -f 2-3 | tr -d '",');
+    ALL_REPOS+=$ADD_REPOS
 done
 
 # Report how many were found.
 repo_cnt=0
 for ORG_REPO in ${ALL_REPOS}; do
-	repo_cnt=$((repo_cnt + 1))
+    repo_cnt=$((repo_cnt + 1))
 done
 echo "Found $repo_cnt repositories"
 
 # Clone all the repositories, or update them if they've been cloned previously.
 # Specify --mirror so all upstream data (tags, etc.) is also preserved
 for ORG_REPO in ${ALL_REPOS}; do
-	dirname=${ORG_REPO/https:\/\/github.com\/BRL-CAD\//}
-	if [ -e ./${dirname}.git ]; then
-		echo "Updating ${dirname}.git"
-		# https://stackoverflow.com/a/6151419/2037687
-		cd ${dirname}.git && git remote update --prune && cd ..
-	else
-		echo "Mirror cloning ${ORG_REPO}.git"
-		git clone --mirror ${ORG_REPO}.git;
-	fi
+    dirname=${ORG_REPO/https:\/\/github.com\/BRL-CAD\//}
+    if [ -e ./${dirname}.git ]; then
+	echo "Updating ${dirname}.git"
+	# https://stackoverflow.com/a/6151419/2037687
+	cd ${dirname}.git && git remote update --prune && cd ..
+    else
+	echo "Mirror cloning ${ORG_REPO}.git"
+	git clone --mirror ${ORG_REPO}.git;
+    fi
 done
 
+
+# Local Variables:
+# tab-width: 8
+# mode: sh
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8 cino=N-s
