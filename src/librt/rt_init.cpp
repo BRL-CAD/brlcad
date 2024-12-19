@@ -36,7 +36,7 @@
 static void
 librt_init(void)
 {
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rt_vlfree);
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     // NOTE - rt_new_rti used to do this, checking if the rtg_vlfree list was

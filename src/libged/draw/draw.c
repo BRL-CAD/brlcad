@@ -227,7 +227,7 @@ dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
     struct bview *gvp = gedp->ged_gvp;
     int ret = 0;
     struct bv_scene_obj *sp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	if (!skip_subtractions || (skip_subtractions && !sp->s_soldash)) {
 	    ret += redraw_solid(sp, dbip, tsp, gvp, vlfree);
@@ -847,7 +847,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     struct bu_list vhead;
     int failed;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -961,7 +961,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int bot_threshold = 0;
     int threshold_cached = 0;
     int shaded_mode_override = _GED_SHADED_MODE_UNSET;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CHECK_DBI(gedp->dbip);
 

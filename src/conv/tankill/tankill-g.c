@@ -157,7 +157,7 @@ main(int argc, char **argv)
     int polysolids;					/* flag indicating polysolid output */
     int group_len[100];
     int all_len=0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);
 

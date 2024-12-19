@@ -209,7 +209,7 @@ ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_process *p = NULL;
     char ** gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     vect_t eye_model;
 

@@ -1320,7 +1320,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 /* intersection w/ ray */
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     struct ray_data rd;
     int status;
     struct nmg_specific *nmg =
@@ -1463,7 +1463,7 @@ rt_nmg_free(struct soltab *stp)
 int
 rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     struct model *m;
 
     BU_CK_LIST_HEAD(vhead);
@@ -1737,7 +1737,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     struct vertex *v;
     struct vertex_g *vg;
     size_t i;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     NMG_CK_MODEL(m);
 
@@ -1849,7 +1849,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     struct tmp_v *verts;
     fastf_t *tmp;
     struct bn_tol tol;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(intern);
     m = (struct model *)intern->idb_ptr;
@@ -2058,7 +2058,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct model *m;
     struct nmgregion* r;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /*Iterate through all regions and shells */
     m = (struct model *)ip->idb_ptr;
@@ -2104,7 +2104,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     point_t arbit_point = VINIT_ZERO;
     size_t num_faces = 0;
     size_t i = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     *cent[0] = 0.0;
     *cent[1] = 0.0;
@@ -2167,7 +2167,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct model *m;
     struct nmgregion* r;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /*Iterate through all regions and shells */
     m = (struct model *)ip->idb_ptr;
@@ -2756,7 +2756,7 @@ nmg_to_arb(const struct model *m, struct rt_arb_internal *arb_int)
     int i, j;
     int found;
     int ret_val = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     NMG_CK_MODEL(m);
 

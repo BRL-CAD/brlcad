@@ -151,7 +151,7 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     datum_ip = (struct rt_datum_internal *)ip->idb_ptr;
     RT_DATUM_CK_MAGIC(datum_ip);
 

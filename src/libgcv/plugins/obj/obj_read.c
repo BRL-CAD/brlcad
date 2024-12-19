@@ -3513,7 +3513,7 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     const struct obj_read_options * const obj_read_options = (struct obj_read_options *)options_data;
     struct ga_t ga;
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (obj_read_options->open_bot_output_mode == RT_BOT_PLATE || obj_read_options->open_bot_output_mode == RT_BOT_PLATE_NOCOS) {
 	if (!obj_read_options->user_bot_thickness_flag) {

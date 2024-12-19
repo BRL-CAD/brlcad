@@ -127,7 +127,7 @@ vdraw_write(void *data, int argc, const char *argv[])
     unsigned long uind = 0;
     struct bv_vlist *vp, *cp;
     static const char *usage = "i|next c x y z";
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -243,7 +243,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
     size_t idx;
     unsigned long uind = 0;
     static const char *usage = "i c x y z";
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -613,7 +613,7 @@ vdraw_open(void *data, int argc, const char *argv[])
     struct bv_vlist *vp;
     char temp_name[RT_VDRW_MAXNAME+1];
     static const char *usage = "[name]";
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (argc == 2) {
 	if (gedp->ged_gdp->gd_currVHead) {
@@ -680,7 +680,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* must be needing help */
     if (argc < 3 || argc > 4) {

@@ -102,7 +102,7 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     struct shell *s;
     struct vertex *v;
     char *region_name;
-    struct bu_list *vlfree = (struct bu_list *)&RTG.rtg_vlfree;
+    struct bu_list *vlfree = (struct bu_list *)&rt_vlfree;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
 
     bu_setlinebuf(stderr);
 
-    gcvwriter.vlfree = &RTG.rtg_vlfree;
+    gcvwriter.vlfree = &rt_vlfree;
 
     RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;

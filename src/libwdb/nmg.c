@@ -55,7 +55,7 @@ int
 mk_bot_from_nmg(struct rt_wdb *ofp, const char *name, struct shell *s)
 {
     struct rt_bot_internal *botp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     botp = nmg_bot(s, vlfree, &ofp->wdb_tol);
 

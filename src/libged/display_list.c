@@ -233,7 +233,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
     struct db_full_path subpath;
     int found_subpath;
     struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (db_string_to_path(&subpath, dbip, path) == 0)
 	found_subpath = 1;
@@ -366,7 +366,7 @@ _dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip
     struct db_i *dbip = gedp->dbip;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
@@ -427,7 +427,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
     struct db_full_path dup_path;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     db_full_path_init(&dup_path);
 
@@ -531,7 +531,7 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
     struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
     struct bv_scene_obj *sp;
     struct directory *dp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
 
@@ -666,7 +666,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     struct bv_scene_obj *sp;
     struct display_list *gdlp;
     unsigned char type='0';
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (dbip == DBI_NULL)
 	return 0;

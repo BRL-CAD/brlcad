@@ -214,7 +214,7 @@ main(int argc, const char **argv)
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* Get command line arguments. */
     ++argv; --argc;

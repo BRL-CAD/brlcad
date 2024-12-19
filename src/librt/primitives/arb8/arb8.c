@@ -1254,7 +1254,7 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 {
     point_t *pts;
     struct rt_arb_internal *aip;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1587,7 +1587,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu[6];
     struct vertex *verts[8];
     struct vertex **vertp[4];
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
@@ -1695,7 +1695,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     struct vertex **vertp[4];
     struct edgeuse *eu;
     struct loopuse *lu;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;

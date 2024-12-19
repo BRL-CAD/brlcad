@@ -958,7 +958,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     rhc = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(rhc)) {
 	return -2;
@@ -1030,7 +1030,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(xip)) {
 	return -2;
@@ -1240,7 +1240,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vect_t *norms;
     fastf_t bb_plus_2bc, b_plus_c, r_sq;
     int failure = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);

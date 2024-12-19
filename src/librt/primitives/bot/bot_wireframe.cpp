@@ -123,7 +123,7 @@ extern "C" int
 rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(v), fastf_t UNUSED(s_size))
 {
     struct rt_bot_internal *bot;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     RT_CK_DB_INTERNAL(ip);
     BU_CK_LIST_HEAD(vhead);
     bot = (struct rt_bot_internal *)ip->idb_ptr;

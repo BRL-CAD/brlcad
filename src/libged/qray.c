@@ -111,7 +111,7 @@ qray_data_to_vlist(struct ged *gedp,
     struct qray_dataList *ndlp;
     vect_t in_pt, out_pt;
     vect_t last_out_pt = { 0, 0, 0 };
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
 	if (do_overlaps)

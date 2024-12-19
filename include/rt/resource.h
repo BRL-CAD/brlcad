@@ -32,6 +32,7 @@
 #include "bu/list.h"
 #include "bu/ptbl.h"
 #include "rt/defines.h"
+#include "rt/global.h" // for rt_uniresource
 #include "rt/tree.h"
 #include "rt/directory.h"
 
@@ -103,10 +104,6 @@ struct resource {
     struct bu_ptbl      re_directory_blocks;    /**< @brief  Table of malloc'ed blocks */
 };
 
-/**
- * Resources for uniprocessor
- */
-RT_EXPORT extern struct resource rt_uniresource;        /**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL   ((struct resource *)0)
 #define RT_CK_RESOURCE(_p) BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 #define RT_RESOURCE_INIT_ZERO { RESOURCE_MAGIC, 0, BU_LIST_INIT_ZERO, BU_PTBL_INIT_ZERO, 0, 0, 0, BU_LIST_INIT_ZERO, 0, 0, 0, BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, 0, NULL, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, BU_PTBL_INIT_ZERO, NULL, 0, 0, 0, NULL, BU_PTBL_INIT_ZERO }

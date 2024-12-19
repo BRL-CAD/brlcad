@@ -2461,7 +2461,7 @@ do_conversion(db_i &db, const struct gcv_opts &gcv_options,
     FastgenConversion data(db, gcv_options.calculational_tolerance,
 			   facetize_regions);
 
-    data.vlfree = &RTG.rtg_vlfree;
+    data.vlfree = &rt_vlfree;
 
     const int ret = db_walk_tree(&db,
 				 static_cast<int>(gcv_options.num_objects),

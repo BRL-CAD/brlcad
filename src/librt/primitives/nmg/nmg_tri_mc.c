@@ -398,7 +398,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
     int *vi, fo, valids = 0;
     struct faceuse *fu;
     struct vertex *vertl[3], **f_vertl[3];
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     f_vertl[0] = &vertl[0];
     f_vertl[1] = &vertl[2];

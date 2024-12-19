@@ -3095,7 +3095,7 @@ rt_dsp_free(register struct soltab *stp)
 int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     point_t m_pt;
@@ -3480,7 +3480,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     int base_vert_no1;
     int base_vert_no2;
     int has_holes = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (RT_G_DEBUG & RT_DEBUG_HF)
 	bu_log("rt_dsp_tess()\n");

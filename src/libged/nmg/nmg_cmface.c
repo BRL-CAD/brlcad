@@ -53,7 +53,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
     struct bn_tol tol;
     struct vertex ***face_verts;
     int idx, num_verts;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     static const char *usage = "nmg_name cmface x0 y0 z0 ... xn yn zn";
 

@@ -118,7 +118,7 @@ main(int argc, char **argv)
     /* make empty NMG model */
     the_model = nmg_mm();
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "r:a:n:o:vx:D:X:h?")) != -1) {

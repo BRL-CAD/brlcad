@@ -106,7 +106,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     int gd_rt_cmd_len = 0;
     int skip_drawn = 0;
     int64_t start = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     const char *nirt = NULL;
     char nirtcmd[MAXPATHLEN] = {0};

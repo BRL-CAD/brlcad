@@ -346,7 +346,7 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
     struct db_i *dbip = s->dbip;
     struct rt_wdb *wdbp;
     struct rt_bot_internal *bot = NULL;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     struct model *nmg_model = _try_nmg_facetize(s, vlfree, argc, argv);
 
     if (nmg_model == NULL) {

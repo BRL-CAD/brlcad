@@ -19,6 +19,24 @@
  */
 /** @file rt/global.h
  *
+ * TODO - rather than completely eliminating the rt_vlfree global, a better
+ * approach might be to make it optional - i.e., have our code fall back on it
+ * automatically if a user doesn't supply their own vlfree.  That would allow
+ * user code to "just work" in all cases, but allow applications to manage
+ * their vlfree containers if they so choose (right now, once vlist memory is
+ * allocated, it generally gets added to rt_vlfree and memory usage grows until
+ * the app is shut down.  This may be fine, but if an app wants to discard
+ * their vlfree memory for a particular use case to reduce memory footprint, or
+ * use different vlfree lists for multithreading situations, they should be
+ * able to manage their own vlfree to do so:
+ *
+ * struct bu_list usr_vlfree;
+ * BU_LIST_INIT(&usr_vlfree);
+ *
+ *
+ * rt_uniresource is a similar case in point - the convenience is very useful,
+ * but there are situations where applications want/need to manage their own
+ * resources for more demanding scenarios.
  */
 
 #ifndef RT_GLOBAL_H
@@ -26,34 +44,33 @@
 
 #include "common.h"
 
-#include "rt/wdb.h"
 #include "vmath.h"
 
 __BEGIN_DECLS
-
 
 /**
  * Definitions for librt.a which are global to the library regardless
  * of how many different models are being worked on
  */
 
+/**
+ * Global container for holding reusable vlist elements.  This is an
+ * acceleration mechanism for things like GED drawing, which would otherwise
+ * need to (re)allocate massive numbers of individual vlists. */
+RT_EXPORT extern struct bu_list rt_vlfree;
 
 /**
- * Applications that are going to use rtg_vlfree
- * are required to execute this macro once, first:
+ * Default librt-supplied resource structure for uniprocessor cases.  Can be
+ * used by applications as a convenient way to supply a resource to functions
+ * requiring it without requiring them to create and manage their own
+ * resources.  For more demanding scenarios such as multithreaded raytracing,
+ * applications will want to manage their own per-CPU resources.
  *
- * BU_LIST_INIT(&RTG.rtg_vlfree);
+ * Unlike user-declared struct resource instances, rt_uniresource does not need
+ * to be initialized with rt_init_resource - that is handled by LIBRT.
  */
-
-struct rt_g {
-    struct bu_list      rtg_vlfree;     /**< @brief  head of bv_vlist freelist */
-};
-#define RT_G_INIT_ZERO { BU_LIST_INIT_ZERO }
-
-/**
- * global ray-trace geometry state
- */
-RT_EXPORT extern struct rt_g RTG;
+struct resource;
+RT_EXPORT extern struct resource rt_uniresource;
 
 __END_DECLS
 

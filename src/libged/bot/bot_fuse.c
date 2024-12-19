@@ -160,7 +160,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     struct rt_bot_internal *bot;
     int count=0;
     static const char *usage = "new_bot old_bot";
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     struct model *m;
     struct nmgregion *r;

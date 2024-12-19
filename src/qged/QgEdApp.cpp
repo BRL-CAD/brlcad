@@ -310,7 +310,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 
 QgEdApp::~QgEdApp() {
     delete mdl;
-    // TODO - free RTG.rtg_vlfree?
+    // TODO - free rt_vlfree?
 }
 
 void

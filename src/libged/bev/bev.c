@@ -91,7 +91,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     const char *opstr;
     int failed;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* static due to longjmp */
     static int triangulate = 0;

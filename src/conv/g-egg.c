@@ -195,7 +195,7 @@ main(int argc, char *argv[])
     struct egg_conv_data conv_data;
     struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL, NULL};
 
-    gcvwriter.vlfree = &RTG.rtg_vlfree;
+    gcvwriter.vlfree = &rt_vlfree;
     gcvwriter.client_data = (void *)&conv_data;
 
     bu_setprogname(argv[0]);
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    conv_data.vlfree = &RTG.rtg_vlfree;
+    conv_data.vlfree = &rt_vlfree;
 
     /* Get command line arguments. */
     while ((i = bu_getopt(argc, argv, "a:89n:o:r:vx:D:P:X:h?")) != -1) {

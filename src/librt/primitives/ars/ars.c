@@ -460,7 +460,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu;
     struct bu_ptbl kill_fus;
     int bad_ars = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     arip = (struct rt_ars_internal *)ip->idb_ptr;
@@ -676,7 +676,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct nmgregion *r;
     struct shell *s;
     int ret;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /*point_t min, max;*/
     /*if (rt_ars_bbox(ip, &min, &max, &rtip->rti_tol)) return -1;*/
@@ -724,7 +724,7 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     register size_t i;
     register size_t j;
     struct rt_ars_internal *arip;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);

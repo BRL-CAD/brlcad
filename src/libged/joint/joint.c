@@ -252,7 +252,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     if (gedp->dbip == DBI_NULL)
 	return BRLCAD_OK;
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (argc <= 2) {
 	name = "_ANIM_";

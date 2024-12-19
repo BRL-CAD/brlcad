@@ -1459,7 +1459,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     int help = 0;
     struct bu_color *color = NULL;
     int plotres = 100;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     struct _ged_brep_info gb;
     gb.verbosity = 0;
     gb.gedp = gedp;

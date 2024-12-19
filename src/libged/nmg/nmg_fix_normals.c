@@ -44,7 +44,7 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
     struct shell *s;
     const char *nmg_name;
     struct bn_tol tol;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     static const char *usage = "nmg_prim";
 

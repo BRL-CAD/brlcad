@@ -3325,7 +3325,7 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     int nonovlp_brep = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     struct _old_ged_facetize_opts *opts = _old_ged_facetize_opts_create();
     struct bu_opt_desc d[22];
     struct bu_opt_desc pd[4];

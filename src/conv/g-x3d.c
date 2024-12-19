@@ -379,7 +379,7 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
-    pm.vlfree = &RTG.rtg_vlfree;
+    pm.vlfree = &rt_vlfree;
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:h?")) != -1) {

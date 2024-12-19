@@ -36,11 +36,15 @@
 #include "rt/db4.h"
 #include "rt/debug.h"
 
-unsigned int rt_debug = 0;
+/* container holding reusable vlists */
+struct bu_list rt_vlfree = BU_LIST_INIT_ZERO;
 
-struct rt_g RTG = RT_G_INIT_ZERO;
-
+/* uniprocessor pre-prepared resource */
 struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;
+
+
+/* Debug flags */
+unsigned int rt_debug = 0;
 
 /* see table.c for primitive object function table definition */
 extern const struct rt_functab OBJ[];
@@ -54,6 +58,7 @@ extern const struct rt_functab OBJ[];
  * a list of per type, per-primitive (and maybe even per instance) parameters
  * and a way for them to set them on the actual prepped internal objects. */
 fastf_t rt_cline_radius = (fastf_t)-1.0;
+
 
 /*
  * Local Variables:

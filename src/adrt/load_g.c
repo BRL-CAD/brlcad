@@ -209,7 +209,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, stru
 {
     struct model *m;
     struct adrt_mesh_s *mesh;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -294,7 +294,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     BU_ALLOC(*meshes, struct adrt_mesh_s);
     BU_LIST_INIT(&((*meshes)->l));
 
-    gcvwriter.region_end_data.vlfree = &RTG.rtg_vlfree;
+    gcvwriter.region_end_data.vlfree = &rt_vlfree;
     gcvwriter.meshes = meshes;
 
     tribuf = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 3, "triangle tribuffer tribuffer");

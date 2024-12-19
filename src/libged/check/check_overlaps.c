@@ -284,7 +284,7 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
     callbackdata.gedp = gedp;
     struct overlap_list overlapList;
     struct overlap_list *op;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     FILE *plot_overlaps = NULL;
     char *name = "overlaps.plot3";

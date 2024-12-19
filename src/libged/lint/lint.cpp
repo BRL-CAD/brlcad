@@ -40,7 +40,7 @@ extern "C" {
 lint_data::lint_data()
 {
     color = NULL;
-    vlfree = &RTG.rtg_vlfree;
+    vlfree = &rt_vlfree;
     vbp = bv_vlblock_init(vlfree, 32);
 }
 

@@ -45,7 +45,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     vect_t mirror_dir;
     point_t mirror_pt;
     fastf_t ang;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     size_t i;
     struct nmgregion *r;

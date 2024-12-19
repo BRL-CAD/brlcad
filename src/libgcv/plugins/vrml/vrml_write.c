@@ -1257,7 +1257,7 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
 	nmg_eue_dist = 2.0;
     }
 
-    region_end_data.vlfree = &RTG.rtg_vlfree;
+    region_end_data.vlfree = &rt_vlfree;
 
     fprintf(state.fp_out, "#VRML V2.0 utf8\n");
     fprintf(state.fp_out, "#Units are %s\n", vrml_write_make_units_str(gcv_options->scale_factor));

@@ -781,7 +781,7 @@ rt_plot_solid(
 {
     struct bu_list vhead;
     struct region *regp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_RTI(rtip);
     RT_CK_SOLTAB(stp);

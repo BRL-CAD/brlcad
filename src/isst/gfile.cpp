@@ -267,7 +267,7 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    d.vlfree = &RTG.rtg_vlfree;
+    d.vlfree = &rt_vlfree;
 
     /*
      * these should probably encode so the result can be passed back to client
@@ -295,7 +295,7 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     BU_LIST_INIT(&((this->meshes)->l));
 
     gcvwriter.meshes = &this->meshes;
-    gcvwriter.region_end_data.vlfree = &RTG.rtg_vlfree;
+    gcvwriter.region_end_data.vlfree = &rt_vlfree;
     gcvwriter.region_end_data.client_data = &d;
 
     tribuf = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 3, "triangle tribuffer tribuffer");

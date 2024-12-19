@@ -473,7 +473,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     struct model *m;
     struct nmg_shot_data *sd;
     size_t i;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     sd = (struct nmg_shot_data *)ap->a_uptr;
     s = sd->s;
@@ -1087,7 +1087,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     fastf_t dist;
     fastf_t use_tolerance=edge_tol;
     struct refine_rpp *rpp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (debug)
 	bu_log("hit\n");
@@ -1637,7 +1637,7 @@ main(int argc, char **argv)
     int c;
     fastf_t x_start, y_start, z_start;
     fastf_t bb_area[3];
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);
 

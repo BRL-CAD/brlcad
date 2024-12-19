@@ -38,7 +38,7 @@ __BEGIN_DECLS
 
 /**
  * TODO - replace these with the appropriate libbn calls specifically
- * passing &RTG.rtg_vlfree
+ * passing &rt_vlfree
  */
 RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
 				    const struct bu_list *src);

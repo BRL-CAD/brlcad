@@ -1146,7 +1146,7 @@ int
 _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *oname, bool output_to_working, bool cleanup)
 {
     int ret = BRLCAD_OK;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (!s)
 	return BRLCAD_ERROR;

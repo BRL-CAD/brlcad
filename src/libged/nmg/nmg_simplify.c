@@ -54,7 +54,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
     int shell_count=0;
     int ret = BRLCAD_ERROR;
     size_t i;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     static const char *usage = "[arb|tgc|poly] new_prim nmg_prim";
 

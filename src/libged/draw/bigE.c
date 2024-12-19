@@ -115,7 +115,7 @@ add_solid(const struct directory *dp,
     struct rt_db_internal intern;
     int id;
     int solid_is_plate_mode_bot=0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
@@ -1318,7 +1318,7 @@ Eplot(union E_tree *eptr,
     struct bn_tol *tol;
 
     tol = &dgcdp->wdbp->wdb_tol;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     CK_ETREE(eptr);
 
@@ -1707,7 +1707,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     size_t i;
     size_t count=0;
     struct bn_tol *tol;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     tol = &dgcdp->wdbp->wdb_tol;
 

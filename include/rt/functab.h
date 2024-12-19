@@ -282,7 +282,10 @@ struct rt_functab {
 
 };
 
-
+/**
+ * Function table defining per-primitive methods for plotting, tessellation,
+ * etc.  In essence this is a way to do "object oriented" coding strictly
+ * in C. */
 RT_EXPORT extern const struct rt_functab OBJ[];
 
 #define RT_CK_FUNCTAB(_p) BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");

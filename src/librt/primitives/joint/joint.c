@@ -236,7 +236,7 @@ rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     jip = (struct rt_joint_internal *)ip->idb_ptr;
     RT_JOINT_CK_MAGIC(jip);
 

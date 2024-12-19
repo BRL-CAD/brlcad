@@ -882,7 +882,7 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg
     RT_CK_DB_INTERNAL(ip);
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     ret=curve_to_vlist(vlfree, vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->curve);
     if (ret) {

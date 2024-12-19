@@ -1004,7 +1004,7 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     gb.cmds = _bot_cmds;
     gb.verbosity = 0;
     gb.visualize = 0;
-    gb.vlfree = &RTG.rtg_vlfree;
+    gb.vlfree = &rt_vlfree;
     struct bu_color *color = NULL;
 
     // Sanity

@@ -47,7 +47,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal nmg_intern;
     static const char *usage = "nmg [prefix]";
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);

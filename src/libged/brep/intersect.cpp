@@ -229,7 +229,7 @@ brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_inte
     bi2 = (struct rt_brep_internal *)intern2->idb_ptr;
     RT_BREP_CK_MAGIC(bi1);
     RT_BREP_CK_MAGIC(bi2);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     const ON_Brep *brep1 = bi1->brep;
     const ON_Brep *brep2 = bi2->brep;

@@ -48,7 +48,7 @@ dl_zap(struct ged *gedp)
     struct directory *dp = RT_DIR_NULL;
     size_t i = 0;
     struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
 

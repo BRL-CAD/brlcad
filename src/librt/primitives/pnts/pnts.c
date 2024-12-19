@@ -878,7 +878,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(internal);
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     pnts = (struct rt_pnts_internal *)internal->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 

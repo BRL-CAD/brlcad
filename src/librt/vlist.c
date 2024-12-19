@@ -39,14 +39,14 @@
 struct bv_vlblock *
 rt_vlblock_init(void)
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     return bv_vlblock_init(vlfree, 32);
 }
 
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     bv_vlist_copy(vlfree, dest, src);
 }
 
@@ -54,14 +54,14 @@ rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 void
 rt_vlist_cleanup(void)
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     bv_vlist_cleanup(vlfree);
 }
 
 void
 rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     bv_vlist_import(vlfree, hp, namevls, buf);
 }
 

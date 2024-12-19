@@ -511,7 +511,7 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:ih?")) != -1) {

@@ -566,7 +566,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
     RT_NURB_CK_MAGIC(sip);
 
 #ifdef OLD_WIREFRAME
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     for (s=0; s < sip->nsrf; s++) {
 	struct face_g_snurb * n, *r, *c;
 	int coords;

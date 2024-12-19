@@ -228,7 +228,7 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
     g->dbip = wdbp->dbip;
 
     /* FIXME: To draw, we need to init this LIBRT global */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rt_vlfree);
 
     /* Need a view for commands that expect a view */
     struct bview *gvp;

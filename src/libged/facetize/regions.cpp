@@ -51,7 +51,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 {
     int ret = BRLCAD_OK;
     struct db_i *dbip = s->dbip;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* Used the libged tolerances */
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);

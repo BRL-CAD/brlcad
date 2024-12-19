@@ -71,7 +71,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     struct wdb_metaball_pnt *mbpt;
     struct shell *s;
     int numtri = 0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (r == NULL || m == NULL)
 	return -1;

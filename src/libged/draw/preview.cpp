@@ -99,7 +99,7 @@ ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int UNUSED(argc), const 
     vect_t xv, yv;			/* view x, y */
     vect_t xm, ym;			/* model x, y */
     struct bu_list *vhead = &preview_vbp->head[0];
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* Only display the frames the user is interested in */
     if (preview_currentframe < preview_desiredframe) return 0;
@@ -292,7 +292,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls extension = BU_VLS_INIT_ZERO;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     char *dot;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     vect_t *ged_eye_model = &gedp->i->i->ged_eye_model;
     mat_t *ged_viewrot = &gedp->i->i->ged_viewrot;
 

@@ -371,7 +371,7 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     int ret = 1;
 
     gcvwriter.write_region = nmg_to_assetimport;
-    gcvwriter.vlfree = &RTG.rtg_vlfree;
+    gcvwriter.vlfree = &rt_vlfree;
     gcvwriter.client_data = &state;
 
     state.gcv_options = gcv_options;
@@ -414,7 +414,7 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
 
     /* make empty NMG model */
     state.the_model = nmg_mm();
-    state.vlfree = &RTG.rtg_vlfree;
+    state.vlfree = &rt_vlfree;
 
     /* Walk indicated tree(s).  Each region will be output separately */
     if (state.assetimport_write_options->model_workaround) {

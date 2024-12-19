@@ -737,7 +737,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     char count_str[32];
     fastf_t tol_coll;
     fastf_t min_angle;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     WDB_TCL_CHECK_READ_ONLY;
 
