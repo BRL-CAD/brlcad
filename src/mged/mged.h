@@ -176,6 +176,15 @@ struct mged_edit_state {
     int edit_rateflag_scale;
 
 
+    // DM pointers - used by the editing code to stash current dm pointers for
+    // later restoration when editing.  Not 100% sure yet what the purpose is -
+    // seems to be allowing for the possibility of a change of mged_curr_dm
+    // mid-edit?
+    struct mged_dm *edit_rate_mr_dm;
+    struct mged_dm *edit_rate_or_dm;
+    struct mged_dm *edit_rate_vr_dm;
+    struct mged_dm *edit_rate_mt_dm;
+    struct mged_dm *edit_rate_vt_dm;
 };
 
 /* global application state */

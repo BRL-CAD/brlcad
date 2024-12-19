@@ -1014,7 +1014,7 @@ event_check(struct mged_state *s, int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, edit_rate_mr_dm_list);
+	set_curr_dm(s, s->edit_state.edit_rate_mr_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
@@ -1048,7 +1048,7 @@ event_check(struct mged_state *s, int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, edit_rate_or_dm_list);
+	set_curr_dm(s, s->edit_state.edit_rate_or_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'o';
 
@@ -1082,7 +1082,7 @@ event_check(struct mged_state *s, int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, edit_rate_vr_dm_list);
+	set_curr_dm(s, s->edit_state.edit_rate_vr_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
@@ -1116,7 +1116,7 @@ event_check(struct mged_state *s, int non_blocking)
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, edit_rate_mt_dm_list);
+	set_curr_dm(s, s->edit_state.edit_rate_mt_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
@@ -1149,7 +1149,7 @@ event_check(struct mged_state *s, int non_blocking)
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, edit_rate_vt_dm_list);
+	set_curr_dm(s, s->edit_state.edit_rate_vt_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 

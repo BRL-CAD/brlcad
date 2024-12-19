@@ -72,11 +72,6 @@ fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
 char edit_rate_model_origin;
 char edit_rate_object_origin;
 char edit_rate_view_origin;
-struct mged_dm *edit_rate_mr_dm_list;
-struct mged_dm *edit_rate_or_dm_list;
-struct mged_dm *edit_rate_vr_dm_list;
-struct mged_dm *edit_rate_mt_dm_list;
-struct mged_dm *edit_rate_vt_dm_list;
 
 double mged_abs_tol;
 double mged_rel_tol = 0.01;		/* 1%, by default */
@@ -1381,20 +1376,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[X] += f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[X] += f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[X] += f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1415,20 +1410,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[X] = f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[X] = f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[X] = f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1453,20 +1448,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Y] += f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[Y] += f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[Y] += f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1486,20 +1481,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Y] = f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[Y] = f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[Y] = f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1523,20 +1518,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Z] += f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[Z] += f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[Z] += f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1556,20 +1551,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Z] = f;
 					edit_rate_model_origin = origin;
-					edit_rate_mr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[Z] = f;
 					edit_rate_object_origin = origin;
-					edit_rate_or_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[Z] = f;
 					edit_rate_view_origin = origin;
-					edit_rate_vr_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1593,13 +1588,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					s->edit_state.edit_rate_model_tran[X] += f;
-					edit_rate_mt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_tran[X] += f;
-					edit_rate_vt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1617,13 +1612,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					s->edit_state.edit_rate_model_tran[X] = f;
-					edit_rate_mt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_tran[X] = f;
-					edit_rate_vt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1645,13 +1640,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					s->edit_state.edit_rate_model_tran[Y] += f;
-					edit_rate_mt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_tran[Y] += f;
-					edit_rate_vt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1669,13 +1664,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					s->edit_state.edit_rate_model_tran[Y] = f;
-					edit_rate_mt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_tran[Y] = f;
-					edit_rate_vt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1697,13 +1692,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					s->edit_state.edit_rate_model_tran[Z] += f;
-					edit_rate_mt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_tran[Z] += f;
-					edit_rate_vt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
 				}
@@ -1721,13 +1716,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    case 'm':
 				    case 'o':
 					s->edit_state.edit_rate_model_tran[Z] = f;
-					edit_rate_mt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_tran[Z] = f;
-					edit_rate_vt_dm_list = s->mged_curr_dm;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
 				}
