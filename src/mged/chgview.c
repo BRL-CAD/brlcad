@@ -3762,7 +3762,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    es_edflag = SSCALE;
 	}
 
-	es_scale = sfactor;
+	s->edit_state.es_scale = sfactor;
 	old_scale = acc_sc_sol;
 	acc_sc_sol *= sfactor;
 

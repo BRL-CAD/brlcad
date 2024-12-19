@@ -75,7 +75,6 @@ struct rt_db_internal es_int_orig;
 int es_type;		/* COMGEOM solid type */
 int es_edflag;		/* type of editing for this solid */
 int es_edclass;		/* type of editing class for this solid */
-fastf_t es_scale;		/* scale factor */
 fastf_t es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t es_m[3];		/* edge(line) slope */
 mat_t es_mat;			/* accumulated matrix of path */
@@ -2880,7 +2879,7 @@ get_file_name(struct mged_state *s, char *str)
 
 
 static void
-dsp_scale(struct rt_dsp_internal *dsp, int idx)
+dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 {
     mat_t m, scalemat;
 
@@ -2895,10 +2894,10 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
     if (inpara > 0) {
 	m[idx] = es_para[0];
 	bu_log("Keyboard %g\n", es_para[0]);
-    } else if (!ZERO(es_scale)) {
-	m[idx] *= es_scale;
-	bu_log("es_scale %g\n", es_scale);
-	es_scale = 0.0;
+    } else if (!ZERO(s->edit_state.es_scale)) {
+	m[idx] *= s->edit_state.es_scale;
+	bu_log("s->edit_state.es_scale %g\n", s->edit_state.es_scale);
+	s->edit_state.es_scale = 0.0;
     }
 
     bn_mat_xform_about_pnt(scalemat, m, es_keypoint);
@@ -2924,7 +2923,7 @@ pscale(struct mged_state *s)
 
 	case MENU_VOL_CSIZE:	/* scale voxel size */
 	    {
-		bu_log("es_scale = %g\n", es_scale);
+		bu_log("s->edit_state.es_scale = %g\n", s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -2936,9 +2935,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->h);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
 		}
-		VSCALE(tgc->h, tgc->h, es_scale);
+		VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -2952,10 +2951,10 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->h);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
 		}
 		VADD2(old_top, tgc->v, tgc->h);
-		VSCALE(tgc->h, tgc->h, es_scale);
+		VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 		VSUB2(tgc->v, old_top, tgc->h);
 	    }
 	    break;
@@ -2972,17 +2971,17 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->h);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
 		}
 
 		/* calculate new c */
 		VSUB2(vec1, tgc->a, tgc->c);
-		VSCALE(vec2, vec1, 1-es_scale);
+		VSCALE(vec2, vec1, 1-s->edit_state.es_scale);
 		VADD2(c, tgc->c, vec2);
 
 		/* calculate new d */
 		VSUB2(vec1, tgc->b, tgc->d);
-		VSCALE(vec2, vec1, 1-es_scale);
+		VSCALE(vec2, vec1, 1-s->edit_state.es_scale);
 		VADD2(d, tgc->d, vec2);
 
 		if (0 <= VDOT(tgc->c, c) &&
@@ -2992,7 +2991,7 @@ pscale(struct mged_state *s)
 		    /* adjust c, d and h */
 		    VMOVE(tgc->c, c);
 		    VMOVE(tgc->d, d);
-		    VSCALE(tgc->h, tgc->h, es_scale);
+		    VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 		}
 	    }
 	    break;
@@ -3010,17 +3009,17 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->h);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
 		}
 
 		/* calculate new a */
 		VSUB2(vec1, tgc->c, tgc->a);
-		VSCALE(vec2, vec1, 1-es_scale);
+		VSCALE(vec2, vec1, 1-s->edit_state.es_scale);
 		VADD2(a, tgc->a, vec2);
 
 		/* calculate new b */
 		VSUB2(vec1, tgc->d, tgc->b);
-		VSCALE(vec2, vec1, 1-es_scale);
+		VSCALE(vec2, vec1, 1-s->edit_state.es_scale);
 		VADD2(b, tgc->b, vec2);
 
 		if (0 <= VDOT(tgc->a, a) &&
@@ -3031,7 +3030,7 @@ pscale(struct mged_state *s)
 		    VMOVE(tgc->a, a);
 		    VMOVE(tgc->b, b);
 		    VADD2(old_top, tgc->v, tgc->h);
-		    VSCALE(tgc->h, tgc->h, es_scale);
+		    VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 		    VSUB2(tgc->v, old_top, tgc->h);
 		}
 	    }
@@ -3049,7 +3048,7 @@ pscale(struct mged_state *s)
 		    es_para[0] *= es_mat[15];
 		    newrad = es_para[0];
 		} else {
-		    newrad = tor->r_a * es_scale;
+		    newrad = tor->r_a * s->edit_state.es_scale;
 		}
 		if (newrad < SMALL) newrad = 4*SMALL;
 		if (tor->r_h <= newrad)
@@ -3069,7 +3068,7 @@ pscale(struct mged_state *s)
 		    es_para[0] *= es_mat[15];
 		    newrad = es_para[0];
 		} else {
-		    newrad = tor->r_h * es_scale;
+		    newrad = tor->r_h * s->edit_state.es_scale;
 		}
 		if (newrad < SMALL) newrad = 4*SMALL;
 		if (newrad <= tor->r_a)
@@ -3091,7 +3090,7 @@ pscale(struct mged_state *s)
 		    es_para[0] *= es_mat[15];
 		    newrad = es_para[0];
 		} else {
-		    newrad = eto->eto_r * es_scale;
+		    newrad = eto->eto_r * s->edit_state.es_scale;
 		}
 		if (newrad < SMALL) newrad = 4*SMALL;
 		VMOVE(Nu, eto->eto_N);
@@ -3121,7 +3120,7 @@ pscale(struct mged_state *s)
 		    es_para[0] *= es_mat[15];
 		    newrad = es_para[0];
 		} else {
-		    newrad = eto->eto_rd * es_scale;
+		    newrad = eto->eto_rd * s->edit_state.es_scale;
 		}
 		if (newrad < SMALL) newrad = 4*SMALL;
 		work = MAGNITUDE(eto->eto_C);
@@ -3148,12 +3147,12 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(eto->eto_C);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(eto->eto_C);
 		}
-		if (es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
+		if (s->edit_state.es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
 		    VMOVE(Nu, eto->eto_N);
 		    VUNITIZE(Nu);
-		    VSCALE(Work, eto->eto_C, es_scale);
+		    VSCALE(Work, eto->eto_C, s->edit_state.es_scale);
 		    /* get horiz and vert comps of C and Rd */
 		    cv = VDOT(Work, Nu);
 		    ch = sqrt(VDOT(Work, Work) - cv * cv);
@@ -3173,9 +3172,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(rpc->rpc_B);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(rpc->rpc_B);
 		}
-		VSCALE(rpc->rpc_B, rpc->rpc_B, es_scale);
+		VSCALE(rpc->rpc_B, rpc->rpc_B, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3189,9 +3188,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(rpc->rpc_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(rpc->rpc_H);
 		}
-		VSCALE(rpc->rpc_H, rpc->rpc_H, es_scale);
+		VSCALE(rpc->rpc_H, rpc->rpc_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3205,9 +3204,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / rpc->rpc_r;
+		    s->edit_state.es_scale = es_para[0] / rpc->rpc_r;
 		}
-		rpc->rpc_r *= es_scale;
+		rpc->rpc_r *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3221,9 +3220,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(rhc->rhc_B);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(rhc->rhc_B);
 		}
-		VSCALE(rhc->rhc_B, rhc->rhc_B, es_scale);
+		VSCALE(rhc->rhc_B, rhc->rhc_B, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3237,9 +3236,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(rhc->rhc_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(rhc->rhc_H);
 		}
-		VSCALE(rhc->rhc_H, rhc->rhc_H, es_scale);
+		VSCALE(rhc->rhc_H, rhc->rhc_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3253,9 +3252,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / rhc->rhc_r;
+		    s->edit_state.es_scale = es_para[0] / rhc->rhc_r;
 		}
-		rhc->rhc_r *= es_scale;
+		rhc->rhc_r *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3269,9 +3268,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / rhc->rhc_c;
+		    s->edit_state.es_scale = es_para[0] / rhc->rhc_c;
 		}
-		rhc->rhc_c *= es_scale;
+		rhc->rhc_c *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3285,9 +3284,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(epa->epa_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(epa->epa_H);
 		}
-		VSCALE(epa->epa_H, epa->epa_H, es_scale);
+		VSCALE(epa->epa_H, epa->epa_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3301,10 +3300,10 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / epa->epa_r1;
+		    s->edit_state.es_scale = es_para[0] / epa->epa_r1;
 		}
-		if (epa->epa_r1 * es_scale >= epa->epa_r2)
-		    epa->epa_r1 *= es_scale;
+		if (epa->epa_r1 * s->edit_state.es_scale >= epa->epa_r2)
+		    epa->epa_r1 *= s->edit_state.es_scale;
 		else
 		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 	    }
@@ -3320,10 +3319,10 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / epa->epa_r2;
+		    s->edit_state.es_scale = es_para[0] / epa->epa_r2;
 		}
-		if (epa->epa_r2 * es_scale <= epa->epa_r1)
-		    epa->epa_r2 *= es_scale;
+		if (epa->epa_r2 * s->edit_state.es_scale <= epa->epa_r1)
+		    epa->epa_r2 *= s->edit_state.es_scale;
 		else
 		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 	    }
@@ -3339,9 +3338,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(ehy->ehy_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(ehy->ehy_H);
 		}
-		VSCALE(ehy->ehy_H, ehy->ehy_H, es_scale);
+		VSCALE(ehy->ehy_H, ehy->ehy_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3355,10 +3354,10 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / ehy->ehy_r1;
+		    s->edit_state.es_scale = es_para[0] / ehy->ehy_r1;
 		}
-		if (ehy->ehy_r1 * es_scale >= ehy->ehy_r2)
-		    ehy->ehy_r1 *= es_scale;
+		if (ehy->ehy_r1 * s->edit_state.es_scale >= ehy->ehy_r2)
+		    ehy->ehy_r1 *= s->edit_state.es_scale;
 		else
 		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 	    }
@@ -3374,10 +3373,10 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / ehy->ehy_r2;
+		    s->edit_state.es_scale = es_para[0] / ehy->ehy_r2;
 		}
-		if (ehy->ehy_r2 * es_scale <= ehy->ehy_r1)
-		    ehy->ehy_r2 *= es_scale;
+		if (ehy->ehy_r2 * s->edit_state.es_scale <= ehy->ehy_r1)
+		    ehy->ehy_r2 *= s->edit_state.es_scale;
 		else
 		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 	    }
@@ -3393,9 +3392,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / ehy->ehy_c;
+		    s->edit_state.es_scale = es_para[0] / ehy->ehy_c;
 		}
-		ehy->ehy_c *= es_scale;
+		ehy->ehy_c *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3409,9 +3408,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0];
+		    s->edit_state.es_scale = es_para[0];
 		}
-		VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, es_scale);
+		VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3425,9 +3424,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0];
+		    s->edit_state.es_scale = es_para[0];
 		}
-		VSCALE(hyp->hyp_A, hyp->hyp_A, es_scale);
+		VSCALE(hyp->hyp_A, hyp->hyp_A, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3441,9 +3440,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0];
+		    s->edit_state.es_scale = es_para[0];
 		}
-		hyp->hyp_b = hyp->hyp_b * es_scale;
+		hyp->hyp_b = hyp->hyp_b * s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3458,10 +3457,10 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0];
+		    s->edit_state.es_scale = es_para[0];
 		}
-		if (hyp->hyp_bnr * es_scale <= 1.0) {
-		    hyp->hyp_bnr = hyp->hyp_bnr * es_scale;
+		if (hyp->hyp_bnr * s->edit_state.es_scale <= 1.0) {
+		    hyp->hyp_bnr = hyp->hyp_bnr * s->edit_state.es_scale;
 		}
 	    }
 	    break;
@@ -3477,9 +3476,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->a);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
 		}
-		VSCALE(tgc->a, tgc->a, es_scale);
+		VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3493,9 +3492,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->b);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->b);
 		}
-		VSCALE(tgc->b, tgc->b, es_scale);
+		VSCALE(tgc->b, tgc->b, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3507,10 +3506,10 @@ pscale(struct mged_state *s)
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(ell->a);
 		}
-		VSCALE(ell->a, ell->a, es_scale);
+		VSCALE(ell->a, ell->a, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3522,10 +3521,10 @@ pscale(struct mged_state *s)
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(ell->b);
 		}
-		VSCALE(ell->b, ell->b, es_scale);
+		VSCALE(ell->b, ell->b, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3537,10 +3536,10 @@ pscale(struct mged_state *s)
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(ell->c);
 		}
-		VSCALE(ell->c, ell->c, es_scale);
+		VSCALE(ell->c, ell->c, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3554,9 +3553,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->c);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->c);
 		}
-		VSCALE(tgc->c, tgc->c, es_scale);
+		VSCALE(tgc->c, tgc->c, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3569,9 +3568,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->d);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->d);
 		}
-		VSCALE(tgc->d, tgc->d, es_scale);
+		VSCALE(tgc->d, tgc->d, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3584,9 +3583,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->a);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
 		}
-		VSCALE(tgc->a, tgc->a, es_scale);
+		VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
 		ma = MAGNITUDE(tgc->a);
 		mb = MAGNITUDE(tgc->b);
 		VSCALE(tgc->b, tgc->b, ma/mb);
@@ -3602,9 +3601,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->c);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->c);
 		}
-		VSCALE(tgc->c, tgc->c, es_scale);
+		VSCALE(tgc->c, tgc->c, s->edit_state.es_scale);
 		ma = MAGNITUDE(tgc->c);
 		mb = MAGNITUDE(tgc->d);
 		VSCALE(tgc->d, tgc->d, ma/mb);
@@ -3620,9 +3619,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->a);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
 		}
-		VSCALE(tgc->a, tgc->a, es_scale);
+		VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
 		ma = MAGNITUDE(tgc->a);
 		mb = MAGNITUDE(tgc->b);
 		VSCALE(tgc->b, tgc->b, ma/mb);
@@ -3640,10 +3639,10 @@ pscale(struct mged_state *s)
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(ell->a);
 		}
-		VSCALE(ell->a, ell->a, es_scale);
+		VSCALE(ell->a, ell->a, s->edit_state.es_scale);
 		ma = MAGNITUDE(ell->a);
 		mb = MAGNITUDE(ell->b);
 		VSCALE(ell->b, ell->b, ma/mb);
@@ -3661,10 +3660,10 @@ pscale(struct mged_state *s)
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(superell->a);
 		}
-		VSCALE(superell->a, superell->a, es_scale);
+		VSCALE(superell->a, superell->a, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3676,10 +3675,10 @@ pscale(struct mged_state *s)
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(superell->b);
 		}
-		VSCALE(superell->b, superell->b, es_scale);
+		VSCALE(superell->b, superell->b, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3691,10 +3690,10 @@ pscale(struct mged_state *s)
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(superell->c);
 		}
-		VSCALE(superell->c, superell->c, es_scale);
+		VSCALE(superell->c, superell->c, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3705,10 +3704,10 @@ pscale(struct mged_state *s)
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(superell->a);
 		}
-		VSCALE(superell->a, superell->a, es_scale);
+		VSCALE(superell->a, superell->a, s->edit_state.es_scale);
 		ma = MAGNITUDE(superell->a);
 		mb = MAGNITUDE(superell->b);
 		VSCALE(superell->b, superell->b, ma/mb);
@@ -3728,11 +3727,11 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    if (es_pipe_pnt->pp_od > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_od;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_od;
 		    else
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_od(s, es_pipe_pnt, es_scale);
+		pipe_seg_scale_od(s, es_pipe_pnt, s->edit_state.es_scale);
 	    }
 	    break;
 	case MENU_PIPE_PT_ID:	/* scale ID of one pipe segment */
@@ -3745,11 +3744,11 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    if (es_pipe_pnt->pp_id > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_id;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_id;
 		    else
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_id(s, es_pipe_pnt, es_scale);
+		pipe_seg_scale_id(s, es_pipe_pnt, s->edit_state.es_scale);
 	    }
 	    break;
 	case MENU_PIPE_PT_RADIUS:	/* scale bend radius at selected point */
@@ -3762,11 +3761,11 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    if (es_pipe_pnt->pp_id > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_bendradius;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_bendradius;
 		    else
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_radius(s, es_pipe_pnt, es_scale);
+		pipe_seg_scale_radius(s, es_pipe_pnt, s->edit_state.es_scale);
 	    }
 	    break;
 	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
@@ -3781,7 +3780,7 @@ pscale(struct mged_state *s)
 		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_od > 0.0) {
-		    es_scale = es_para[0] * es_mat[15]/ps->pp_od;
+		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0)
 			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
@@ -3791,10 +3790,10 @@ pscale(struct mged_state *s)
 			return;
 		    }
 
-		    es_scale = es_para[0] * es_mat[15]/ps->pp_od;
+		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 		}
 	    }
-	    pipe_scale_od(s, &es_int, es_scale);
+	    pipe_scale_od(s, &es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PIPE_SCALE_ID:	/* scale entire pipe ID */
 	    if (inpara) {
@@ -3808,19 +3807,19 @@ pscale(struct mged_state *s)
 		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_id > 0.0) {
-		    es_scale = es_para[0] * es_mat[15]/ps->pp_id;
+		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0)
 			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    /* Check if entire pipe has zero ID */
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		    else
-			es_scale = es_para[0] * es_mat[15]/ps->pp_id;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 		}
 	    }
-	    pipe_scale_id(s, &es_int, es_scale);
+	    pipe_scale_id(s, &es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PIPE_SCALE_RADIUS:	/* scale entire pipr bend radius */
 	    if (inpara) {
@@ -3834,19 +3833,19 @@ pscale(struct mged_state *s)
 		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_bendradius > 0.0) {
-		    es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
+		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0)
 			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    /* Check if entire pipe has zero ID */
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		    else
-			es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 		}
 	    }
-	    pipe_scale_radius(s, &es_int, es_scale);
+	    pipe_scale_radius(s, &es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PART_H:
 	    /* scale vector H */
@@ -3858,9 +3857,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(part->part_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(part->part_H);
 		}
-		VSCALE(part->part_H, part->part_H, es_scale);
+		VSCALE(part->part_H, part->part_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3874,9 +3873,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / part->part_vrad;
+		    s->edit_state.es_scale = es_para[0] / part->part_vrad;
 		}
-		part->part_vrad *= es_scale;
+		part->part_vrad *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3890,9 +3889,9 @@ pscale(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / part->part_hrad;
+		    s->edit_state.es_scale = es_para[0] / part->part_hrad;
 		}
-		part->part_hrad *= es_scale;
+		part->part_hrad *= s->edit_state.es_scale;
 	    }
 	    break;
 	case MENU_METABALL_SET_THRESHOLD:
@@ -3917,7 +3916,7 @@ pscale(struct mged_state *s)
 		    Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
 		    return;
 		}
-		es_metaball_pnt->sweat *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
+		es_metaball_pnt->sweat *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
 	    }
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
@@ -3926,7 +3925,7 @@ pscale(struct mged_state *s)
 		    Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
 		    return;
 		}
-		es_metaball_pnt->fldstr *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
+		es_metaball_pnt->fldstr *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
 	    }
 	    break;
     }
@@ -3972,13 +3971,13 @@ sedit(struct mged_state *s)
 	    break;
 
 	case ECMD_DSP_SCALE_X:
-	    dsp_scale((struct rt_dsp_internal *)es_int.idb_ptr, MSX);
+	    dsp_scale(s, (struct rt_dsp_internal *)es_int.idb_ptr, MSX);
 	    break;
 	case ECMD_DSP_SCALE_Y:
-	    dsp_scale((struct rt_dsp_internal *)es_int.idb_ptr, MSY);
+	    dsp_scale(s, (struct rt_dsp_internal *)es_int.idb_ptr, MSY);
 	    break;
 	case ECMD_DSP_SCALE_ALT:
-	    dsp_scale((struct rt_dsp_internal *)es_int.idb_ptr, MSZ);
+	    dsp_scale(s, (struct rt_dsp_internal *)es_int.idb_ptr, MSZ);
 	    break;
 	case ECMD_DSP_FNAME:
 	    {
@@ -4098,9 +4097,9 @@ sedit(struct mged_state *s)
 				     (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
-		} else if (es_scale > 0.0) {
-		    ebm->tallness *= es_scale;
-		    es_scale = 0.0;
+		} else if (s->edit_state.es_scale > 0.0) {
+		    ebm->tallness *= s->edit_state.es_scale;
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4118,9 +4117,9 @@ sedit(struct mged_state *s)
 		    Tcl_AppendResult(s->interp, "x, y, and z cell sizes are required\n", (char *)NULL);
 		    mged_print_result(s, TCL_ERROR);
 		    return;
-		} else if (es_scale > 0.0) {
-		    VSCALE(vol->cellsize, vol->cellsize, es_scale);
-		    es_scale = 0.0;
+		} else if (s->edit_state.es_scale > 0.0) {
+		    VSCALE(vol->cellsize, vol->cellsize, s->edit_state.es_scale);
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4168,11 +4167,11 @@ sedit(struct mged_state *s)
 		i = vol->lo;
 		if (inpara) {
 		    i = es_para[0];
-		} else if (es_scale > 0.0) {
-		    i = vol->lo * es_scale;
-		    if (i == vol->lo && es_scale > 1.0) {
+		} else if (s->edit_state.es_scale > 0.0) {
+		    i = vol->lo * s->edit_state.es_scale;
+		    if (i == vol->lo && s->edit_state.es_scale > 1.0) {
 			i++;
-		    } else if (i == vol->lo && es_scale < 1.0) {
+		    } else if (i == vol->lo && s->edit_state.es_scale < 1.0) {
 			i--;
 		    }
 		}
@@ -4194,11 +4193,11 @@ sedit(struct mged_state *s)
 		i = vol->hi;
 		if (inpara) {
 		    i = es_para[0];
-		} else if (es_scale > 0.0) {
-		    i = vol->hi * es_scale;
-		    if (i == vol->hi && es_scale > 1.0) {
+		} else if (s->edit_state.es_scale > 0.0) {
+		    i = vol->hi * s->edit_state.es_scale;
+		    if (i == vol->hi && s->edit_state.es_scale > 1.0) {
 			i++;
-		    } else if (i == vol->hi && es_scale < 1.0) {
+		    } else if (i == vol->hi && s->edit_state.es_scale < 1.0) {
 			i--;
 		    }
 		}
@@ -4656,11 +4655,11 @@ sedit(struct mged_state *s)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(extr->h);
-		    VSCALE(extr->h, extr->h, es_scale);
-		} else if (es_scale > 0.0) {
-		    VSCALE(extr->h, extr->h, es_scale);
-		    es_scale = 0.0;
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(extr->h);
+		    VSCALE(extr->h, extr->h, s->edit_state.es_scale);
+		} else if (s->edit_state.es_scale > 0.0) {
+		    VSCALE(extr->h, extr->h, s->edit_state.es_scale);
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4852,17 +4851,17 @@ sedit(struct mged_state *s)
 		bot_verts[2] = -1;
 		if (inpara) {
 		    /* accumulate the scale factor */
-		    es_scale = es_para[0] / acc_sc_sol;
+		    s->edit_state.es_scale = es_para[0] / acc_sc_sol;
 		    acc_sc_sol = es_para[0];
 		}
 
-		bn_mat_scale_about_pnt(scalemat, es_keypoint, es_scale);
+		bn_mat_scale_about_pnt(scalemat, es_keypoint, s->edit_state.es_scale);
 		bn_mat_mul(mat1, scalemat, es_mat);
 		bn_mat_mul(mat, es_invmat, mat1);
 		transform_editing_solid(s, &es_int, mat, &es_int, 1);
 
 		/* reset solid scale factor */
-		es_scale = 1.0;
+		s->edit_state.es_scale = 1.0;
 	    }
 	    break;
 
@@ -4950,11 +4949,11 @@ sedit(struct mged_state *s)
 
 		if (inpara) {
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(cli->h);
-		    VSCALE(cli->h, cli->h, es_scale);
-		} else if (es_scale > 0.0) {
-		    VSCALE(cli->h, cli->h, es_scale);
-		    es_scale = 0.0;
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(cli->h);
+		    VSCALE(cli->h, cli->h, s->edit_state.es_scale);
+		} else if (s->edit_state.es_scale > 0.0) {
+		    VSCALE(cli->h, cli->h, s->edit_state.es_scale);
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4971,9 +4970,9 @@ sedit(struct mged_state *s)
 
 		if (inpara)
 		    cli->radius = es_para[0];
-		else if (es_scale > 0.0) {
-		    cli->radius *= es_scale;
-		    es_scale = 0.0;
+		else if (s->edit_state.es_scale > 0.0) {
+		    cli->radius *= s->edit_state.es_scale;
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4990,9 +4989,9 @@ sedit(struct mged_state *s)
 
 		if (inpara)
 		    cli->thickness = es_para[0];
-		else if (es_scale > 0.0) {
-		    cli->thickness *= es_scale;
-		    es_scale = 0.0;
+		else if (s->edit_state.es_scale > 0.0) {
+		    cli->thickness *= s->edit_state.es_scale;
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -6773,13 +6772,13 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	case ECMD_CLINE_SCALE_T:
 	case ECMD_CLINE_SCALE_R:
 	    /* use mouse to get a scale factor */
-	    es_scale = 1.0 + 0.25 * ((fastf_t)
+	    s->edit_state.es_scale = 1.0 + 0.25 * ((fastf_t)
 				     (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
 	    if (mousevec[Y] <= 0)
-		es_scale = 1.0 / es_scale;
+		s->edit_state.es_scale = 1.0 / s->edit_state.es_scale;
 
 	    /* accumulate scale factor */
-	    acc_sc_sol *= es_scale;
+	    acc_sc_sol *= s->edit_state.es_scale;
 
 	    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
 	    if (s->edit_state.edit_absolute_scale > 0)
@@ -7147,7 +7146,7 @@ sedit_abs_scale(struct mged_state *s)
 	acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale;
     }
 
-    es_scale = acc_sc_sol / old_acc_sc_sol;
+    s->edit_state.es_scale = acc_sc_sol / old_acc_sc_sol;
     sedit(s);
 }
 

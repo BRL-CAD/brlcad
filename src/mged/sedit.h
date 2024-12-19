@@ -217,7 +217,6 @@
 		     es_edflag == ECMD_METABALL_PT_PICK))
 
 
-extern fastf_t es_scale;	/* scale factor */
 extern fastf_t es_para[3];	/* keyboard input parameter changes */
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 extern int es_menu;		/* item/edit_mode selected from menu */
