@@ -1178,7 +1178,7 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (edit_rateflag_scale) {
+    if (s->edit_state.edit_rateflag_scale) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT) {
@@ -1192,7 +1192,7 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
+	bu_vls_printf(&vls, "knob -i -e aS %f\n", s->edit_state.edit_rate_scale * 0.01);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

@@ -471,9 +471,9 @@ scroll_display(struct mged_state *s, int y_top)
 		    } else {
 			if (EDIT_SCALE && mged_variables->mv_transform == 'e') {
 			    if (mged_variables->mv_rateknobs)
-				f = edit_rate_scale;
+				f = s->edit_state.edit_rate_scale;
 			    else
-				f = edit_absolute_scale;
+				f = s->edit_state.edit_absolute_scale;
 
 			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],

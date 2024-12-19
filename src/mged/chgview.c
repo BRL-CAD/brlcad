@@ -69,10 +69,6 @@ fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;
 fastf_t rr_scale_factor = GED_MAX / RATE_ROT_FACTOR;
 fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
 
-fastf_t edit_absolute_scale;
-fastf_t edit_rate_scale;
-int edit_rateflag_scale;
-
 char edit_rate_model_origin;
 char edit_rate_object_origin;
 char edit_rate_view_origin;
@@ -1172,10 +1168,10 @@ check_nonzero_rates(struct mged_state *s)
 	s->edit_state.edit_rateflag_view_rotate = 0;
     }
 
-    if (edit_rate_scale > SMALL_FASTF) {
-	edit_rateflag_scale = 1;
+    if (s->edit_state.edit_rate_scale > SMALL_FASTF) {
+	s->edit_state.edit_rateflag_scale = 1;
     } else {
-	edit_rateflag_scale = 0;
+	s->edit_state.edit_rateflag_scale = 0;
     }
 
     view_state->vs_flag = 1;	/* values changed so update faceplate */
@@ -1208,7 +1204,7 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	}
 
 	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "S = %f\n", edit_rate_scale);
+	    bu_vls_printf(&vls, "S = %f\n", s->edit_state.edit_rate_scale);
 	} else {
 	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_rate_scale);
 	}
@@ -1234,7 +1230,7 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	}
 
 	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aS = %f\n", edit_absolute_scale);
+	    bu_vls_printf(&vls, "aS = %f\n", s->edit_state.edit_absolute_scale);
 	} else {
 	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_gvp->gv_a_scale);
 	}
@@ -1357,7 +1353,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
 	    VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
 	    VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
-	    edit_rate_scale = 0.0;
+	    s->edit_state.edit_rate_scale = 0.0;
 	    knob_update_rate_vars(s);
 
 	    Tcl_Eval(interp, "adc reset");
@@ -1749,13 +1745,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		    case 'S':
 			if (incr_flag) {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				edit_rate_scale += f;
+				s->edit_state.edit_rate_scale += f;
 			    } else {
 				view_state->vs_rate_scale += f;
 			    }
 			} else {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				edit_rate_scale = f;
+				s->edit_state.edit_rate_scale = f;
 			    } else {
 				view_state->vs_rate_scale = f;
 			    }
@@ -2257,7 +2253,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		    case 'S':
 			if (incr_flag) {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				edit_absolute_scale += f;
+				s->edit_state.edit_absolute_scale += f;
 
 				if (GEOM_EDIT_STATE == ST_S_EDIT) {
 				    sedit_abs_scale(s);
@@ -2270,7 +2266,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			    }
 			} else {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				edit_absolute_scale = f;
+				s->edit_state.edit_absolute_scale = f;
 
 				if (GEOM_EDIT_STATE == ST_S_EDIT) {
 				    sedit_abs_scale(s);
@@ -3787,9 +3783,9 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	}
 
 	if (acc_sc_sol >= 1.0) {
-	    edit_absolute_scale = (acc_sc_sol - 1.0) / 3.0;
+	    s->edit_state.edit_absolute_scale = (acc_sc_sol - 1.0) / 3.0;
 	} else {
-	    edit_absolute_scale = acc_sc_sol - 1.0;
+	    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
 	}
 
 	sedit(s);

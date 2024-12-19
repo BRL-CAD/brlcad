@@ -170,6 +170,11 @@ struct mged_edit_state {
     int edit_rateflag_model_tran;
     int edit_rateflag_view_tran;
 
+    // Scale
+    fastf_t edit_absolute_scale;
+    fastf_t edit_rate_scale;
+    int edit_rateflag_scale;
+
 
 };
 

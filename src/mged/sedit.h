@@ -217,10 +217,6 @@
 		     es_edflag == ECMD_METABALL_PT_PICK))
 
 
-extern fastf_t edit_absolute_scale;
-extern fastf_t edit_rate_scale;
-extern int edit_rateflag_scale;
-
 extern char edit_rate_model_origin;
 extern char edit_rate_object_origin;
 extern char edit_rate_view_origin;
