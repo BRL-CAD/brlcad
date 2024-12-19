@@ -57,7 +57,7 @@ struct gcv_data {
     struct gcv_region_end_data region_end_data;
     struct adrt_mesh_s **meshes;
 };
-static struct gcv_data gcvwriter = {{nmg_to_adrt_gcvwrite, NULL}, NULL};
+static struct gcv_data gcvwriter = {{nmg_to_adrt_gcvwrite, NULL, NULL}, NULL};
 
 
 /* load the region into the tie image */
@@ -294,6 +294,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     BU_ALLOC(*meshes, struct adrt_mesh_s);
     BU_LIST_INIT(&((*meshes)->l));
 
+    gcvwriter.region_end_data.vlfree = &RTG.rtg_vlfree;
     gcvwriter.meshes = meshes;
 
     tribuf = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 3, "triangle tribuffer tribuffer");

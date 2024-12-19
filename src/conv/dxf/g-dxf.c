@@ -365,7 +365,7 @@ union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *path
 }
 
 
-static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL};
+static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL, NULL};
 
 
 /**
@@ -388,6 +388,8 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
+
+    gcvwriter.vlfree = &RTG.rtg_vlfree;
 
     RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;

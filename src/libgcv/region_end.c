@@ -74,6 +74,8 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	return TREE_NULL;
     }
 
+    struct bu_list *vlfree = data->vlfree;
+
     if (!data->write_region) {
 	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
 	return TREE_NULL;
@@ -112,7 +114,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	 * curtree to an evaluated result and returns it if the evaluation
 	 * is successful.
 	 */
-	ret_tree = nmg_booltree_evaluate(tp, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(tp, vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	/* Error, bail out */

@@ -366,11 +366,12 @@ static int
 assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     assetimport_write_state_t state;
-    struct gcv_region_end_data gcvwriter { NULL, NULL };
+    struct gcv_region_end_data gcvwriter { NULL, NULL, NULL };
     struct db_tree_state tree_state;
     int ret = 1;
 
     gcvwriter.write_region = nmg_to_assetimport;
+    gcvwriter.vlfree = &RTG.rtg_vlfree;
     gcvwriter.client_data = &state;
 
     state.gcv_options = gcv_options;

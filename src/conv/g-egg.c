@@ -193,8 +193,9 @@ main(int argc, char *argv[])
 
     int i, use_mc = 0, use_bottess = 0;
     struct egg_conv_data conv_data;
-    struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL};
+    struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL, NULL};
 
+    gcvwriter.vlfree = &RTG.rtg_vlfree;
     gcvwriter.client_data = (void *)&conv_data;
 
     bu_setprogname(argv[0]);

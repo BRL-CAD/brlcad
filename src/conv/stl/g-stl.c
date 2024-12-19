@@ -302,7 +302,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 }
 
 
-static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
+static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL, NULL};
 
 
 int
@@ -318,6 +318,8 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
+
+    gcvwriter.vlfree = &RTG.rtg_vlfree;
 
     RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;

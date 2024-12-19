@@ -66,6 +66,7 @@ GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
 struct gcv_region_end_data
 {
     void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
+    struct bu_list *vlfree;
     void *client_data;
 };
 
