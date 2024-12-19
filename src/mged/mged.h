@@ -175,6 +175,11 @@ struct mged_edit_state {
     fastf_t edit_rate_scale;
     int edit_rateflag_scale;
 
+    // Origin
+    char edit_rate_model_origin;
+    char edit_rate_object_origin;
+    char edit_rate_view_origin;
+
 
     // DM pointers - used by the editing code to stash current dm pointers for
     // later restoration when editing.  Not 100% sure yet what the purpose is -

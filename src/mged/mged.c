@@ -1029,7 +1029,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      edit_rate_model_origin,
+		      s->edit_state.edit_rate_model_origin,
 		      s->edit_state.edit_rate_model_rotate[X],
 		      s->edit_state.edit_rate_model_rotate[Y],
 		      s->edit_state.edit_rate_model_rotate[Z]);
@@ -1063,7 +1063,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      edit_rate_object_origin,
+		      s->edit_state.edit_rate_object_origin,
 		      s->edit_state.edit_rate_object_rotate[X],
 		      s->edit_state.edit_rate_object_rotate[Y],
 		      s->edit_state.edit_rate_object_rotate[Z]);
@@ -1097,7 +1097,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      edit_rate_view_origin,
+		      s->edit_state.edit_rate_view_origin,
 		      s->edit_state.edit_rate_view_rotate[X],
 		      s->edit_state.edit_rate_view_rotate[Y],
 		      s->edit_state.edit_rate_view_rotate[Z]);

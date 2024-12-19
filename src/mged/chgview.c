@@ -69,10 +69,6 @@ fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;
 fastf_t rr_scale_factor = GED_MAX / RATE_ROT_FACTOR;
 fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
 
-char edit_rate_model_origin;
-char edit_rate_object_origin;
-char edit_rate_view_origin;
-
 double mged_abs_tol;
 double mged_rel_tol = 0.01;		/* 1%, by default */
 double mged_nrm_tol;			/* normal ang tol, radians */
@@ -1375,20 +1371,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[X] += f;
-					edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_model_origin = origin;
 					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[X] += f;
-					edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_object_origin = origin;
 					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[X] += f;
-					edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_view_origin = origin;
 					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1409,20 +1405,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[X] = f;
-					edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_model_origin = origin;
 					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[X] = f;
-					edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_object_origin = origin;
 					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[X] = f;
-					edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_view_origin = origin;
 					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1447,20 +1443,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Y] += f;
-					edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_model_origin = origin;
 					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[Y] += f;
-					edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_object_origin = origin;
 					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[Y] += f;
-					edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_view_origin = origin;
 					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1480,20 +1476,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Y] = f;
-					edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_model_origin = origin;
 					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[Y] = f;
-					edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_object_origin = origin;
 					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[Y] = f;
-					edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_view_origin = origin;
 					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1517,20 +1513,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Z] += f;
-					edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_model_origin = origin;
 					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[Z] += f;
-					edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_object_origin = origin;
 					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[Z] += f;
-					edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_view_origin = origin;
 					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1550,20 +1546,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Z] = f;
-					edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_model_origin = origin;
 					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
 					s->edit_state.edit_rate_object_rotate[Z] = f;
-					edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_object_origin = origin;
 					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
 					s->edit_state.edit_rate_view_rotate[Z] = f;
-					edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_view_origin = origin;
 					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
