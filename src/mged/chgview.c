@@ -72,7 +72,6 @@ fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
 char edit_rate_model_origin;
 char edit_rate_object_origin;
 char edit_rate_view_origin;
-char edit_rate_coords;
 struct mged_dm *edit_rate_mr_dm_list;
 struct mged_dm *edit_rate_or_dm_list;
 struct mged_dm *edit_rate_vr_dm_list;

@@ -220,7 +220,6 @@
 extern char edit_rate_model_origin;
 extern char edit_rate_object_origin;
 extern char edit_rate_view_origin;
-extern char edit_rate_coords;
 extern struct mged_dm *edit_rate_mr_dm_list;
 extern struct mged_dm *edit_rate_or_dm_list;
 extern struct mged_dm *edit_rate_vr_dm_list;
