@@ -1010,7 +1010,7 @@ event_check(struct mged_state *s, int non_blocking)
      * Handle rate-based processing *
      *********************************/
     save_dm_list = s->mged_curr_dm;
-    if (edit_rateflag_model_rotate) {
+    if (s->edit_state.edit_rateflag_model_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1030,9 +1030,9 @@ event_check(struct mged_state *s, int non_blocking)
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
 		      edit_rate_model_origin,
-		      edit_rate_model_rotate[X],
-		      edit_rate_model_rotate[Y],
-		      edit_rate_model_rotate[Z]);
+		      s->edit_state.edit_rate_model_rotate[X],
+		      s->edit_state.edit_rate_model_rotate[Y],
+		      s->edit_state.edit_rate_model_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1044,7 +1044,7 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (edit_rateflag_object_rotate) {
+    if (s->edit_state.edit_rateflag_object_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1064,9 +1064,9 @@ event_check(struct mged_state *s, int non_blocking)
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
 		      edit_rate_object_origin,
-		      edit_rate_object_rotate[X],
-		      edit_rate_object_rotate[Y],
-		      edit_rate_object_rotate[Z]);
+		      s->edit_state.edit_rate_object_rotate[X],
+		      s->edit_state.edit_rate_object_rotate[Y],
+		      s->edit_state.edit_rate_object_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1078,7 +1078,7 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (edit_rateflag_view_rotate) {
+    if (s->edit_state.edit_rateflag_view_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1098,9 +1098,9 @@ event_check(struct mged_state *s, int non_blocking)
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
 		      edit_rate_view_origin,
-		      edit_rate_view_rotate[X],
-		      edit_rate_view_rotate[Y],
-		      edit_rate_view_rotate[Z]);
+		      s->edit_state.edit_rate_view_rotate[X],
+		      s->edit_state.edit_rate_view_rotate[Y],
+		      s->edit_state.edit_rate_view_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

@@ -216,18 +216,6 @@
 		     es_edflag == ECMD_BOT_PICKT || \
 		     es_edflag == ECMD_METABALL_PT_PICK))
 
-extern vect_t edit_absolute_model_rotate;
-extern vect_t edit_absolute_object_rotate;
-extern vect_t edit_absolute_view_rotate;
-extern vect_t last_edit_absolute_model_rotate;
-extern vect_t last_edit_absolute_object_rotate;
-extern vect_t last_edit_absolute_view_rotate;
-extern vect_t edit_rate_model_rotate;
-extern vect_t edit_rate_object_rotate;
-extern vect_t edit_rate_view_rotate;
-extern int edit_rateflag_model_rotate;
-extern int edit_rateflag_object_rotate;
-extern int edit_rateflag_view_rotate;
 
 extern vect_t edit_absolute_model_tran;
 extern vect_t edit_absolute_view_tran;

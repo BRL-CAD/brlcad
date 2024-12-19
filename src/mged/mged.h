@@ -145,6 +145,23 @@ struct menu_item {
 
 #include "./mged_dm.h" /* _view_state */
 
+struct mged_edit_state {
+    // Rotate
+    vect_t edit_absolute_model_rotate;
+    vect_t edit_absolute_object_rotate;
+    vect_t edit_absolute_view_rotate;
+    vect_t last_edit_absolute_model_rotate;
+    vect_t last_edit_absolute_object_rotate;
+    vect_t last_edit_absolute_view_rotate;
+    vect_t edit_rate_model_rotate;
+    vect_t edit_rate_object_rotate;
+    vect_t edit_rate_view_rotate;
+    int edit_rateflag_model_rotate;
+    int edit_rateflag_object_rotate;
+    int edit_rateflag_view_rotate;
+
+};
+
 /* global application state */
 struct mged_state {
     uint32_t magic;
@@ -170,6 +187,9 @@ struct mged_state {
     struct mged_dm *mged_curr_dm;
     char *dpy_string;
     struct bu_list *vlfree;
+
+    /* Editing related */
+    struct mged_edit_state edit_state;
 };
 extern struct mged_state *MGED_STATE;
 
