@@ -885,7 +885,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	case ST_O_EDIT:
 	    mmenu_set_all(s, MENU_L2, NULL);
 
-	    oedit_reject();
+	    oedit_reject(s);
 	    break;
 	case ST_O_PICK:
 	    break;

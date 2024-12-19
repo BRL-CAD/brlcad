@@ -191,6 +191,10 @@ struct mged_edit_state {
     struct mged_dm *edit_rate_vr_dm;
     struct mged_dm *edit_rate_mt_dm;
     struct mged_dm *edit_rate_vt_dm;
+
+    // Container to hold the intermediate state
+    // of the object being edited (I think?)
+    struct rt_db_internal es_int;
 };
 
 /* global application state */
@@ -537,9 +541,9 @@ void sedit_reject(struct mged_state *s);
 void sedit_vpick(struct mged_state *s, point_t v_pos);
 void oedit_abs_scale(struct mged_state *s);
 void oedit_accept(struct mged_state *s);
-void oedit_reject(void);
+void oedit_reject(struct mged_state *s);
 void objedit_mouse(struct mged_state *s, const vect_t mousevec);
-void label_edited_solid(int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
+void label_edited_solid(struct mged_state *s, int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
 void init_oedit(struct mged_state *s);
 void init_sedit(struct mged_state *s);
 

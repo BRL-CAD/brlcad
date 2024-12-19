@@ -534,9 +534,6 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
     return TCL_OK;
 }
 
-
-extern struct rt_db_internal es_int;
-
 int
 cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
@@ -563,7 +560,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	/* solid edit mode */
 	/* apply es_mat editing to parameters */
 	struct directory *outdp = RT_DIR_NULL;
-	transform_editing_solid(s, &intern, es_mat, &es_int, 0);
+	transform_editing_solid(s, &intern, es_mat, &s->edit_state.es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -595,7 +592,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	/* use the solid at bottom of path (key solid) */
 	/* apply es_mat and modelchanges editing to parameters */
 	bn_mat_mul(newmat, modelchanges, es_mat);
-	transform_editing_solid(s, &intern, newmat, &es_int, 0);
+	transform_editing_solid(s, &intern, newmat, &s->edit_state.es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);

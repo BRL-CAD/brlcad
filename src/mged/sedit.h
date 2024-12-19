@@ -224,7 +224,6 @@ extern int es_edflag;		/* type of editing for this solid */
 extern int es_edclass;		/* type of editing class for this solid */
 extern int es_type;		/* COMGEOM solid type */
 extern int es_keyfixed;		/* keypoint specified by user */
-extern struct rt_db_internal es_int;
 
 extern mat_t es_mat;		/* accumulated matrix of path */
 extern mat_t es_invmat;		/* inverse of es_mat KAA */

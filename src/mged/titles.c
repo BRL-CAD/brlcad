@@ -54,7 +54,6 @@ char *state_str[] = {
 
 
 extern mat_t perspective_mat;  /* defined in dozoom.c */
-extern struct rt_db_internal es_int;
 
 /*
  * Prepare the numerical display of the currently edited solid/object.
@@ -85,7 +84,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	bu_vls_strcat(vp, dp->d_namep);
 	bu_vls_strcat(vp, ": ");
 
-	vls_solid(s, vp, &es_int, bn_mat_identity);
+	vls_solid(s, vp, &s->edit_state.es_int, bn_mat_identity);
 
 	if (bdata->s_fullpath.fp_len > 1) {
 	    bu_vls_strcat(vp, "\n** PATH --  ");
@@ -93,7 +92,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
-	    vls_solid(s, vp, &es_int, es_mat);
+	    vls_solid(s, vp, &s->edit_state.es_int, es_mat);
 	}
     }
 
@@ -112,7 +111,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    /* object edit option selected */
 	    bn_mat_mul(new_mat, modelchanges, es_mat);
 
-	    vls_solid(s, vp, &es_int, new_mat);
+	    vls_solid(s, vp, &s->edit_state.es_int, new_mat);
 	}
     }
 
@@ -356,7 +355,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    bn_mat_mul(xform, perspective_mat, tmat);
 	}
 
-	label_edited_solid(&num_lines, lines,  pl, 8+1, xform, &es_int);
+	label_edited_solid(s, &num_lines, lines,  pl, 8+1, xform, &s->edit_state.es_int);
 
 	dm_set_fg(DMP,
 		       color_scheme->cs_geo_label[0],
@@ -563,7 +562,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 
 	bu_vls_printf(&kp_vls,
 		      " Keypoint: %s %s: (%g, %g, %g)",
-		      OBJ[es_int.idb_type].ft_name+3,	/* Skip ID_ */
+		      OBJ[s->edit_state.es_int.idb_type].ft_name+3,	/* Skip ID_ */
 		      es_keytag,
 		      es_keypoint[X] * s->dbip->dbi_base2local,
 		      es_keypoint[Y] * s->dbip->dbi_base2local,

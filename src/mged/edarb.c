@@ -39,11 +39,7 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-extern struct rt_db_internal es_int;
-extern struct rt_db_internal es_int_orig;
-
 int newedge;
-
 
 /*
  * An ARB edge is moved by finding the direction of the line
@@ -59,7 +55,7 @@ editarb(struct mged_state *s, vect_t pos_model)
 {
     int ret = 0;
     struct rt_arb_internal *arb;
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 
     ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &s->tol.tol);
 
@@ -102,7 +98,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Extrude"))
 	return TCL_ERROR;
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Extrude: solid type must be ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -125,7 +121,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     /* convert from the local unit (as input) to the base unit */
     dist = dist * es_mat[15] * s->dbip->dbi_local2base;
 
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     if (arb_extrude(arb, face, dist, &s->tol.tol, es_peqn)) {
@@ -167,12 +163,12 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Mirface"))
 	return TCL_ERROR;
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Mirface: solid type must be ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     face = atoi(argv[1]);
@@ -222,7 +218,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Edgedir: solid type must be an ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -299,12 +295,12 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Permute"))
 	return TCL_ERROR;
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Permute: solid type must be an ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     if (arb_permute(arb, argv[1], &s->tol.tol)) {

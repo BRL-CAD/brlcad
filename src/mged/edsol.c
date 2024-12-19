@@ -69,9 +69,6 @@ short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
 
-struct rt_db_internal es_int;
-struct rt_db_internal es_int_orig;
-
 int es_type;		/* COMGEOM solid type */
 int es_edflag;		/* type of editing for this solid */
 int es_edclass;		/* type of editing class for this solid */
@@ -758,7 +755,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    switch (es_int.idb_type) {
+    switch (s->edit_state.es_int.idb_type) {
 	case ID_ARB8:
 	    if (GEOM_EDIT_STATE == ST_O_EDIT) {
 		i = 0;
@@ -834,13 +831,13 @@ set_e_axes_pos(struct mged_state *s, int both)
 		}
 	    }
 	    MAT4X3PNT(curr_e_axes_pos, es_mat,
-		      ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+		      ((struct rt_arb_internal *)s->edit_state.es_int.idb_ptr)->pt[i]);
 	    break;
 	case ID_TGC:
 	case ID_REC:
 	    if (es_edflag == ECMD_TGC_MV_H ||
 		es_edflag == ECMD_TGC_MV_HH) {
-		struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
+		struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		point_t tgc_v;
 		vect_t tgc_h;
 
@@ -854,7 +851,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 	    break;
 	case ID_EXTRUDE:
 	    if (es_edflag == ECMD_EXTR_MOV_H) {
-		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)es_int.idb_ptr;
+		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 		point_t extr_v;
 		vect_t extr_h;
 
@@ -871,7 +868,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 	case ID_CLINE:
 	    if (es_edflag == ECMD_CLINE_MOVE_H) {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 		point_t cli_v;
 		vect_t cli_h;
 
@@ -1702,7 +1699,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		fastf_t area;
 		int wire_loop_count = 0;
 
-		m = (struct model *)es_int.idb_ptr;
+		m = (struct model *)s->edit_state.es_int.idb_ptr;
 		NMG_CK_MODEL(m);
 
 		/* look for wire loops */
@@ -2205,7 +2202,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 	case ID_BSPLINE:
 	    {
 		struct rt_nurb_internal *sip =
-		    (struct rt_nurb_internal *) es_int.idb_ptr;
+		    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
 		struct face_g_snurb *surf;
 		fastf_t *fp;
 
@@ -2231,7 +2228,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 	case ID_ARS:
 	    {
 		struct rt_ars_internal *ars =
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ARS_CK_MAGIC(ars);
 
 		if (es_ars_crv < 0 || es_ars_col < 0) {
@@ -2370,7 +2367,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 		struct shell *nmg_s;
 		struct nmgregion *r;
 		struct model *m =
-		    (struct model *) es_int.idb_ptr;
+		    (struct model *) s->edit_state.es_int.idb_ptr;
 		NMG_CK_MODEL(m);
 		/* XXX Fall through, for now (How about first vertex?? - JRA) */
 
@@ -2499,7 +2496,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     if (GEOM_EDIT_STATE == ST_VIEW || GEOM_EDIT_STATE == ST_S_PICK || GEOM_EDIT_STATE == ST_O_PICK)
 	return TCL_OK;
 
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
     return TCL_OK;
 }
 
@@ -2527,11 +2524,11 @@ init_sedit(struct mged_state *s)
 	return;
     }
 
-    /* Read solid description into es_int */
+    /* Read solid description into s->edit_state.es_int */
     if (!illump->s_u_data)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
+    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
 			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_sedit(",
@@ -2540,35 +2537,35 @@ init_sedit(struct mged_state *s)
 	} else {
 	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
 	}
-	rt_db_free_internal(&es_int);
+	rt_db_free_internal(&s->edit_state.es_int);
 	return;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&es_int);
-    id = es_int.idb_type;
+    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
+    id = s->edit_state.es_int.idb_type;
 
     es_menu = 0;
     if (id == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	type = rt_arb_std_type(&es_int, &s->tol.tol);
+	type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
 	es_type = type;
 
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol)) {
 	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
-	    rt_db_free_internal(&es_int);
+	    rt_db_free_internal(&s->edit_state.es_int);
 	    bu_vls_free(&error_msg);
 	    return;
 	}
 	bu_vls_free(&error_msg);
     } else if (id == ID_BSPLINE) {
 	struct rt_nurb_internal *sip =
-	    (struct rt_nurb_internal *) es_int.idb_ptr;
+	    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
 	struct face_g_snurb *surf;
 	RT_NURB_CK_MAGIC(sip);
 	spl_surfno = sip->nsrf/2;
@@ -2586,7 +2583,7 @@ init_sedit(struct mged_state *s)
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -2677,7 +2674,7 @@ replot_editing_solid(struct mged_state *s)
 		bdata = (struct ged_bv_data *)sp->s_u_data;
 		if (LAST_SOLID(bdata) == illdp) {
 		    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
-		    (void)replot_modified_solid(s, sp, &es_int, mat);
+		    (void)replot_modified_solid(s, sp, &s->edit_state.es_int, mat);
 		}
 	    }
 	}
@@ -2711,7 +2708,7 @@ sedit_menu(struct mged_state *s) {
     mmenu_set_all(s, MENU_L1, NULL);
     chg_l2menu(s, ST_S_EDIT);
 
-    switch (es_int.idb_type) {
+    switch (s->edit_state.es_int.idb_type) {
 
 	case ID_ARB8:
 	    mmenu_set_all(s, MENU_L1, cntrl_menu);
@@ -2930,7 +2927,7 @@ pscale(struct mged_state *s)
 	case MENU_TGC_SCALE_H:	/* scale height vector */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -2946,7 +2943,7 @@ pscale(struct mged_state *s)
 		point_t old_top;
 
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -2964,7 +2961,7 @@ pscale(struct mged_state *s)
 		vect_t vec1, vec2;
 		vect_t c, d;
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 
@@ -3002,7 +2999,7 @@ pscale(struct mged_state *s)
 		vect_t a, b;
 		point_t old_top;
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 
@@ -3040,7 +3037,7 @@ pscale(struct mged_state *s)
 	    /* scale radius 1 of TOR */
 	    {
 		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t newrad;
 		RT_TOR_CK_MAGIC(tor);
 		if (inpara) {
@@ -3060,7 +3057,7 @@ pscale(struct mged_state *s)
 	    /* scale radius 2 of TOR */
 	    {
 		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t newrad;
 		RT_TOR_CK_MAGIC(tor);
 		if (inpara) {
@@ -3080,7 +3077,7 @@ pscale(struct mged_state *s)
 	    /* scale radius 1 (r) of ETO */
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t ch, cv, dh, newrad;
 		vect_t Nu;
 
@@ -3110,7 +3107,7 @@ pscale(struct mged_state *s)
 	    /* scale Rd, ellipse semi-minor axis length, of ETO */
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t dh, newrad, work;
 		vect_t Nu;
 
@@ -3139,7 +3136,7 @@ pscale(struct mged_state *s)
 	    /* scale vector C */
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t ch, cv;
 		vect_t Nu, Work;
 
@@ -3166,7 +3163,7 @@ pscale(struct mged_state *s)
 	    /* scale vector B */
 	    {
 		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)es_int.idb_ptr;
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_RPC_CK_MAGIC(rpc);
 
 		if (inpara) {
@@ -3182,7 +3179,7 @@ pscale(struct mged_state *s)
 	    /* scale vector H */
 	    {
 		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)es_int.idb_ptr;
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_RPC_CK_MAGIC(rpc);
 		if (inpara) {
@@ -3198,7 +3195,7 @@ pscale(struct mged_state *s)
 	    /* scale rectangular half-width of RPC */
 	    {
 		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)es_int.idb_ptr;
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_RPC_CK_MAGIC(rpc);
 		if (inpara) {
@@ -3214,7 +3211,7 @@ pscale(struct mged_state *s)
 	    /* scale vector B */
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_RHC_CK_MAGIC(rhc);
 
 		if (inpara) {
@@ -3230,7 +3227,7 @@ pscale(struct mged_state *s)
 	    /* scale vector H */
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_RHC_CK_MAGIC(rhc);
 
 		if (inpara) {
@@ -3246,7 +3243,7 @@ pscale(struct mged_state *s)
 	    /* scale rectangular half-width of RHC */
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_RHC_CK_MAGIC(rhc);
 		if (inpara) {
@@ -3262,7 +3259,7 @@ pscale(struct mged_state *s)
 	    /* scale rectangular half-width of RHC */
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_RHC_CK_MAGIC(rhc);
 		if (inpara) {
@@ -3278,7 +3275,7 @@ pscale(struct mged_state *s)
 	    /* scale height vector H */
 	    {
 		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)es_int.idb_ptr;
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EPA_CK_MAGIC(epa);
 		if (inpara) {
@@ -3294,7 +3291,7 @@ pscale(struct mged_state *s)
 	    /* scale semimajor axis of EPA */
 	    {
 		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)es_int.idb_ptr;
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EPA_CK_MAGIC(epa);
 		if (inpara) {
@@ -3313,7 +3310,7 @@ pscale(struct mged_state *s)
 	    /* scale semiminor axis of EPA */
 	    {
 		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)es_int.idb_ptr;
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EPA_CK_MAGIC(epa);
 		if (inpara) {
@@ -3332,7 +3329,7 @@ pscale(struct mged_state *s)
 	    /* scale height vector H */
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EHY_CK_MAGIC(ehy);
 		if (inpara) {
@@ -3348,7 +3345,7 @@ pscale(struct mged_state *s)
 	    /* scale semimajor axis of EHY */
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EHY_CK_MAGIC(ehy);
 		if (inpara) {
@@ -3367,7 +3364,7 @@ pscale(struct mged_state *s)
 	    /* scale semiminor axis of EHY */
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EHY_CK_MAGIC(ehy);
 		if (inpara) {
@@ -3386,7 +3383,7 @@ pscale(struct mged_state *s)
 	    /* scale distance between apex of EHY & asymptotic cone */
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EHY_CK_MAGIC(ehy);
 		if (inpara) {
@@ -3402,7 +3399,7 @@ pscale(struct mged_state *s)
 	    /* scale height of HYP */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
@@ -3418,7 +3415,7 @@ pscale(struct mged_state *s)
 	    /* scale A vector of HYP */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
@@ -3434,7 +3431,7 @@ pscale(struct mged_state *s)
 	    /* scale B vector of HYP */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
@@ -3451,7 +3448,7 @@ pscale(struct mged_state *s)
 	    /* scale Neck to Base ratio of HYP */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
@@ -3470,7 +3467,7 @@ pscale(struct mged_state *s)
 	    /* scale vector A */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
@@ -3486,7 +3483,7 @@ pscale(struct mged_state *s)
 	    /* scale vector B */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
@@ -3502,7 +3499,7 @@ pscale(struct mged_state *s)
 	    /* scale vector A */
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -3517,7 +3514,7 @@ pscale(struct mged_state *s)
 	    /* scale vector B */
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -3532,7 +3529,7 @@ pscale(struct mged_state *s)
 	    /* scale vector C */
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -3547,7 +3544,7 @@ pscale(struct mged_state *s)
 	    /* TGC: scale ratio "c" */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
@@ -3562,7 +3559,7 @@ pscale(struct mged_state *s)
 	case MENU_TGC_SCALE_D:   /* scale d for tgc */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
@@ -3577,7 +3574,7 @@ pscale(struct mged_state *s)
 	case MENU_TGC_SCALE_AB:
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
@@ -3595,7 +3592,7 @@ pscale(struct mged_state *s)
 	case MENU_TGC_SCALE_CD:	/* scale C and D of tgc */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
@@ -3613,7 +3610,7 @@ pscale(struct mged_state *s)
 	case MENU_TGC_SCALE_ABCD: 		/* scale A, B, C, and D of tgc */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
@@ -3635,7 +3632,7 @@ pscale(struct mged_state *s)
 	case MENU_ELL_SCALE_ABC:	/* set A, B, and C length the same */
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -3656,7 +3653,7 @@ pscale(struct mged_state *s)
 	    /* scale vector A */
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -3671,7 +3668,7 @@ pscale(struct mged_state *s)
 	    /* scale vector B */
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -3686,7 +3683,7 @@ pscale(struct mged_state *s)
 	    /* scale vector C */
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -3700,7 +3697,7 @@ pscale(struct mged_state *s)
 	case MENU_SUPERELL_SCALE_ABC:	/* set A, B, and C length the same */
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
@@ -3771,7 +3768,7 @@ pscale(struct mged_state *s)
 	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -3793,12 +3790,12 @@ pscale(struct mged_state *s)
 		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 		}
 	    }
-	    pipe_scale_od(s, &es_int, s->edit_state.es_scale);
+	    pipe_scale_od(s, &s->edit_state.es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PIPE_SCALE_ID:	/* scale entire pipe ID */
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -3819,12 +3816,12 @@ pscale(struct mged_state *s)
 			s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 		}
 	    }
-	    pipe_scale_id(s, &es_int, s->edit_state.es_scale);
+	    pipe_scale_id(s, &s->edit_state.es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PIPE_SCALE_RADIUS:	/* scale entire pipr bend radius */
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -3845,13 +3842,13 @@ pscale(struct mged_state *s)
 			s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 		}
 	    }
-	    pipe_scale_radius(s, &es_int, s->edit_state.es_scale);
+	    pipe_scale_radius(s, &s->edit_state.es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PART_H:
 	    /* scale vector H */
 	    {
 		struct rt_part_internal *part =
-		    (struct rt_part_internal *)es_int.idb_ptr;
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_PART_CK_MAGIC(part);
 		if (inpara) {
@@ -3867,7 +3864,7 @@ pscale(struct mged_state *s)
 	    /* scale v end radius */
 	    {
 		struct rt_part_internal *part =
-		    (struct rt_part_internal *)es_int.idb_ptr;
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_PART_CK_MAGIC(part);
 		if (inpara) {
@@ -3883,7 +3880,7 @@ pscale(struct mged_state *s)
 	    /* scale h end radius */
 	    {
 		struct rt_part_internal *part =
-		    (struct rt_part_internal *)es_int.idb_ptr;
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_PART_CK_MAGIC(part);
 		if (inpara) {
@@ -3897,7 +3894,7 @@ pscale(struct mged_state *s)
 	case MENU_METABALL_SET_THRESHOLD:
 	    {
 		struct rt_metaball_internal *ball =
-		    (struct rt_metaball_internal *)es_int.idb_ptr;
+		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 		RT_METABALL_CK_MAGIC(ball);
 		ball->threshold = es_para[0];
 	    }
@@ -3905,7 +3902,7 @@ pscale(struct mged_state *s)
 	case MENU_METABALL_SET_METHOD:
 	    {
 		struct rt_metaball_internal *ball =
-		    (struct rt_metaball_internal *)es_int.idb_ptr;
+		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 		RT_METABALL_CK_MAGIC(ball);
 		ball->method = es_para[0];
 	    }
@@ -3971,18 +3968,18 @@ sedit(struct mged_state *s)
 	    break;
 
 	case ECMD_DSP_SCALE_X:
-	    dsp_scale(s, (struct rt_dsp_internal *)es_int.idb_ptr, MSX);
+	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSX);
 	    break;
 	case ECMD_DSP_SCALE_Y:
-	    dsp_scale(s, (struct rt_dsp_internal *)es_int.idb_ptr, MSY);
+	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSY);
 	    break;
 	case ECMD_DSP_SCALE_ALT:
-	    dsp_scale(s, (struct rt_dsp_internal *)es_int.idb_ptr, MSZ);
+	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSZ);
 	    break;
 	case ECMD_DSP_FNAME:
 	    {
 		struct rt_dsp_internal *dsp =
-		    (struct rt_dsp_internal *)es_int.idb_ptr;
+		    (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
 		b_off_t need_size;
@@ -4018,7 +4015,7 @@ sedit(struct mged_state *s)
 	case ECMD_EBM_FSIZE:	/* set file size */
 	    {
 		struct rt_ebm_internal *ebm =
-		    (struct rt_ebm_internal *)es_int.idb_ptr;
+		    (struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 		struct stat stat_buf;
 		b_off_t need_size;
 
@@ -4050,7 +4047,7 @@ sedit(struct mged_state *s)
 	case ECMD_EBM_FNAME:
 	    {
 		struct rt_ebm_internal *ebm =
-		    (struct rt_ebm_internal *)es_int.idb_ptr;
+		    (struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
 		b_off_t need_size;
@@ -4085,7 +4082,7 @@ sedit(struct mged_state *s)
 	case ECMD_EBM_HEIGHT:	/* set extrusion depth */
 	    {
 		struct rt_ebm_internal *ebm =
-		    (struct rt_ebm_internal *)es_int.idb_ptr;
+		    (struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EBM_CK_MAGIC(ebm);
 
@@ -4107,7 +4104,7 @@ sedit(struct mged_state *s)
 	case ECMD_VOL_CSIZE:	/* set voxel size */
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_VOL_CK_MAGIC(vol);
 
@@ -4127,7 +4124,7 @@ sedit(struct mged_state *s)
 	case ECMD_VOL_FSIZE:	/* set file size */
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 		struct stat stat_buf;
 		b_off_t need_size;
 
@@ -4160,7 +4157,7 @@ sedit(struct mged_state *s)
 	case ECMD_VOL_THRESH_LO:
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_VOL_CK_MAGIC(vol);
 
@@ -4186,7 +4183,7 @@ sedit(struct mged_state *s)
 	case ECMD_VOL_THRESH_HI:
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_VOL_CK_MAGIC(vol);
 
@@ -4212,7 +4209,7 @@ sedit(struct mged_state *s)
 	case ECMD_VOL_FNAME:
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
 		b_off_t need_size;
@@ -4247,7 +4244,7 @@ sedit(struct mged_state *s)
 	case ECMD_BOT_MODE:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		const char *radio_result;
 		char mode[10];
 		int ret_tcl = TCL_ERROR;
@@ -4289,7 +4286,7 @@ sedit(struct mged_state *s)
 	case ECMD_BOT_ORIENT:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		const char *radio_result;
 		char orient[10];
 		int ret_tcl = TCL_ERROR;
@@ -4314,7 +4311,7 @@ sedit(struct mged_state *s)
 	case ECMD_BOT_THICK:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		size_t face_no = 0;
 		int face_state = 0;
 
@@ -4376,7 +4373,7 @@ sedit(struct mged_state *s)
 		const char *dialog_result;
 		char cur_settings[11];
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -4423,7 +4420,7 @@ sedit(struct mged_state *s)
 	case ECMD_BOT_FMODE:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		char fmode[10];
 		const char *radio_result;
 		size_t face_no = 0;
@@ -4505,7 +4502,7 @@ sedit(struct mged_state *s)
 	case ECMD_BOT_FDEL:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 
 		int j, face_no;
 
@@ -4564,7 +4561,7 @@ sedit(struct mged_state *s)
 	case ECMD_EXTR_SKT_NAME:
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 		const char *sketch_name;
 		int ret_tcl;
 		struct directory *dp;
@@ -4622,7 +4619,7 @@ sedit(struct mged_state *s)
 	case ECMD_EXTR_MOV_H:
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EXTRUDE_CK_MAGIC(extr);
 		if (inpara) {
@@ -4648,7 +4645,7 @@ sedit(struct mged_state *s)
 	case ECMD_EXTR_SCALE_H:
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EXTRUDE_CK_MAGIC(extr);
 
@@ -4694,7 +4691,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARB_MOVE_FACE:
 	    /* move face through definite point */
 	    if (inpara) {
-		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ARB_CK_MAGIC(arb);
 
 		if (mged_variables->mv_context) {
@@ -4711,7 +4708,7 @@ sedit(struct mged_state *s)
 	    }
 	    break;
 	case ECMD_ARB_SETUP_ROTFACE:
-	    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	    RT_ARB_CK_MAGIC(arb);
 
 	    /* check if point 5 is in the face */
@@ -4739,7 +4736,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARB_ROTATE_FACE:
 	    /* rotate a GENARB8 defining plane through a fixed vertex */
 
-	    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	    RT_ARB_CK_MAGIC(arb);
 
 	    if (inpara) {
@@ -4858,7 +4855,7 @@ sedit(struct mged_state *s)
 		bn_mat_scale_about_pnt(scalemat, es_keypoint, s->edit_state.es_scale);
 		bn_mat_mul(mat1, scalemat, es_mat);
 		bn_mat_mul(mat, es_invmat, mat1);
-		transform_editing_solid(s, &es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
 
 		/* reset solid scale factor */
 		s->edit_state.es_scale = 1.0;
@@ -4897,7 +4894,7 @@ sedit(struct mged_state *s)
 			MAT_IDN(mat);
 			MAT_DELTAS_VEC_NEG(mat, delta);
 		    }
-		    transform_editing_solid(s, &es_int, mat, &es_int, 1);
+		    transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
 		}
 	    }
 	    break;
@@ -4920,7 +4917,7 @@ sedit(struct mged_state *s)
 		/* Keyboard parameter:  new position in model space.
 		 * XXX for now, splines only here */
 		struct rt_nurb_internal *sip =
-		    (struct rt_nurb_internal *) es_int.idb_ptr;
+		    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
 		struct face_g_snurb *surf;
 		fastf_t *fp;
 
@@ -4943,7 +4940,7 @@ sedit(struct mged_state *s)
 	     */
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
@@ -4964,7 +4961,7 @@ sedit(struct mged_state *s)
 	     */
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
@@ -4983,7 +4980,7 @@ sedit(struct mged_state *s)
 	     */
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
@@ -5002,7 +4999,7 @@ sedit(struct mged_state *s)
 	     */
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
@@ -5031,7 +5028,7 @@ sedit(struct mged_state *s)
 	     */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
@@ -5079,7 +5076,7 @@ sedit(struct mged_state *s)
 	    /* Move end of H of tgc - leave ends alone */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
@@ -5193,7 +5190,7 @@ sedit(struct mged_state *s)
 		    MAT4X3PNT(work, es_invmat, rot_point);
 		    bn_mat_xform_about_pnt(mat, incr_change, work);
 		}
-		transform_editing_solid(s, &es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
 
 		MAT_IDN(incr_change);
 	    }
@@ -5203,7 +5200,7 @@ sedit(struct mged_state *s)
 	    /* rotate height vector */
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EXTRUDE_CK_MAGIC(extr);
 		if (inpara) {
@@ -5256,7 +5253,7 @@ sedit(struct mged_state *s)
 	    /* rotate height vector */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
@@ -5309,7 +5306,7 @@ sedit(struct mged_state *s)
 	    /* rotate surfaces AxB and CxD (tgc) */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
@@ -5367,7 +5364,7 @@ sedit(struct mged_state *s)
 	    /* rotate hyperboloid height vector */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
@@ -5420,7 +5417,7 @@ sedit(struct mged_state *s)
 	    /* rotate ellipse semi-major axis vector */
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ETO_CK_MAGIC(eto);
 		if (inpara) {
@@ -5778,7 +5775,7 @@ sedit(struct mged_state *s)
 	case ECMD_PIPE_PICK:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5810,7 +5807,7 @@ sedit(struct mged_state *s)
 	case ECMD_PIPE_SPLIT:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5843,7 +5840,7 @@ sedit(struct mged_state *s)
 	case ECMD_PIPE_PT_MOVE:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5876,7 +5873,7 @@ sedit(struct mged_state *s)
 	case ECMD_PIPE_PT_ADD:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5903,7 +5900,7 @@ sedit(struct mged_state *s)
 	case ECMD_PIPE_PT_INS:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5952,7 +5949,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_PICK:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		point_t pick_pt;
 		vect_t view_dir;
 		vect_t z_dir;
@@ -5995,7 +5992,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_NEXT_PT:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
@@ -6020,7 +6017,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_PREV_PT:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
@@ -6045,7 +6042,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_NEXT_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
@@ -6070,7 +6067,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_PREV_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
@@ -6095,7 +6092,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_DUP_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t **curves;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6134,7 +6131,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_DUP_COL:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t **curves;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6176,7 +6173,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_DEL_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t **curves;
 		int k;
 
@@ -6225,7 +6222,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_DEL_COL:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t **curves;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6281,7 +6278,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_MOVE_COL:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
 
@@ -6334,7 +6331,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_MOVE_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
 
@@ -6387,7 +6384,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_MOVE_PT:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt = VINIT_ZERO;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6433,7 +6430,7 @@ sedit(struct mged_state *s)
 	    break;
 	case ECMD_BOT_MOVEV:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int vert;
 		point_t new_pt = VINIT_ZERO;
 
@@ -6477,7 +6474,7 @@ sedit(struct mged_state *s)
 	    break;
 	case ECMD_BOT_MOVEE:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int v1, v2;
 		vect_t diff;
 		point_t new_pt = VINIT_ZERO;
@@ -6521,7 +6518,7 @@ sedit(struct mged_state *s)
 	    break;
 	case ECMD_BOT_MOVET:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int v1, v2, v3;
 		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
@@ -6568,7 +6565,7 @@ sedit(struct mged_state *s)
 	case ECMD_METABALL_PT_PICK:
 	    {
 		struct rt_metaball_internal *metaball=
-		    (struct rt_metaball_internal *)es_int.idb_ptr;
+		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 		struct wdb_metaball_pnt *ps;
 		struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
@@ -6651,7 +6648,7 @@ sedit(struct mged_state *s)
 	    break;
 	case ECMD_METABALL_PT_ADD:
 	    {
-		struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)es_int.idb_ptr;
+		struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 		struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 
 		if (inpara != 3) {
@@ -6681,10 +6678,10 @@ sedit(struct mged_state *s)
     }
 
     /* must re-calculate the face plane equations for arbs */
-    if (es_int.idb_type == ID_ARB8) {
+    if (s->edit_state.es_int.idb_type == ID_ARB8) {
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
@@ -6694,7 +6691,7 @@ sedit(struct mged_state *s)
 
     /* If the keypoint changed location, find about it here */
     if (!es_keyfixed)
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -6812,7 +6809,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		VSUB2(delta, raw_kp, raw_mp);
 		MAT_IDN(mat);
 		MAT_DELTAS_VEC_NEG(mat, delta);
-		transform_editing_solid(s, &es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
 	    }
 
 	    break;
@@ -6839,7 +6836,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    /* Use mouse to change location of point V+H */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
@@ -6856,7 +6853,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    /* Use mouse to change location of point V+H */
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 		RT_EXTRUDE_CK_MAGIC(extr);
 
 		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
@@ -6872,7 +6869,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	case ECMD_CLINE_MOVE_H:
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
@@ -6917,7 +6914,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    /* calculate new vertices, put in record as vectors */
 	    {
 		struct rt_arb_internal *arb=
-		    (struct rt_arb_internal *)es_int.idb_ptr;
+		    (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ARB_CK_MAGIC(arb);
 
@@ -6927,7 +6924,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    break;
 	case ECMD_BOT_PICKV:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int tmp_vert;
 		char tmp_msg[256];
 		point_t selected_pt;
@@ -6956,7 +6953,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    break;
 	case ECMD_BOT_PICKE:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int vert1, vert2;
 		char tmp_msg[256];
 		point_t from_pt, to_pt;
@@ -6985,7 +6982,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    break;
 	case ECMD_BOT_PICKT:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		point_t start_pt, tmp;
 		vect_t dir;
 		size_t i;
@@ -7048,7 +7045,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    /* XXX Should just leave desired location in es_mparam for sedit(s) */
 	    {
 		struct model *m =
-		    (struct model *)es_int.idb_ptr;
+		    (struct model *)s->edit_state.es_int.idb_ptr;
 		struct edge *e;
 		struct bn_tol tmp_tol;
 		NMG_CK_MODEL(m);
@@ -7395,7 +7392,7 @@ init_oedit_guts(struct mged_state *s)
     if (!illump->s_u_data)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
+    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
 			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_oedit(",
@@ -7404,20 +7401,20 @@ init_oedit_guts(struct mged_state *s)
 	} else {
 	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
 	}
-	rt_db_free_internal(&es_int);
+	rt_db_free_internal(&s->edit_state.es_int);
 	button(s, BE_REJECT);
 	return;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&es_int);
-    id = es_int.idb_type;
+    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
+    id = s->edit_state.es_int.idb_type;
 
     if (id == ID_ARB8) {
 	struct rt_arb_internal *arb;
 
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	es_type = rt_arb_std_type(&es_int, &s->tol.tol);
+	es_type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
     }
 
     /* Save aggregate path matrix */
@@ -7426,7 +7423,7 @@ init_oedit_guts(struct mged_state *s)
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(s, es_keypoint, &strp, &es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &strp, &s->edit_state.es_int, es_mat);
     init_oedit_vars(s);
 }
 
@@ -7479,7 +7476,7 @@ init_oedit(struct mged_state *s)
 }
 
 
-void oedit_reject(void);
+void oedit_reject(struct mged_state *s);
 
 static void
 oedit_apply(struct mged_state *s, int continue_editing)
@@ -7567,7 +7564,7 @@ oedit_accept(struct mged_state *s)
 	return;
 
     if (s->dbip->dbi_read_only) {
-	oedit_reject();
+	oedit_reject(s);
 
 	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
@@ -7590,14 +7587,14 @@ oedit_accept(struct mged_state *s)
     }
 
     oedit_apply(s, DOWN); /* finished editing */
-    oedit_reject();
+    oedit_reject(s);
 }
 
 
 void
-oedit_reject(void)
+oedit_reject(struct mged_state *s)
 {
-    rt_db_free_internal(&es_int);
+    rt_db_free_internal(&s->edit_state.es_int);
 }
 
 
@@ -7635,7 +7632,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Eqn: type must be GENARB8\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -7645,7 +7642,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     /* get the A, B, C from the command line */
@@ -7711,8 +7708,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* make sure that any BOT solid is minimally legal */
-    if (es_int.idb_type == ID_BOT) {
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+    if (s->edit_state.es_int.idb_type == ID_BOT) {
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode == RT_BOT_SURFACE || bot->mode == RT_BOT_SOLID) {
@@ -7736,11 +7733,11 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* Scale change on export is 1.0 -- no change */
-    if (rt_db_put_internal(dp, s->dbip, &es_int, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, s->dbip, &s->edit_state.es_int, &rt_uniresource) < 0) {
 	Tcl_AppendResult(s->interp, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
-	    rt_db_free_internal(&es_int);
+	    rt_db_free_internal(&s->edit_state.es_int);
 	}
 	return TCL_ERROR;				/* FAIL */
     }
@@ -7751,16 +7748,16 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	es_edflag = -1;
 	es_edclass = EDIT_CLASS_NULL;
 
-	rt_db_free_internal(&es_int);
+	rt_db_free_internal(&s->edit_state.es_int);
     } else {
-	/* XXX hack to restore es_int after rt_db_put_internal blows it away */
-	/* Read solid description into es_int again! Gaak! */
-	if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
+	/* XXX hack to restore s->edit_state.es_int after rt_db_put_internal blows it away */
+	/* Read solid description into s->edit_state.es_int again! Gaak! */
+	if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
 			       s->dbip, NULL, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(s->interp, "sedit_apply(",
 			     LAST_SOLID(bdata)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
-	    rt_db_free_internal(&es_int);
+	    rt_db_free_internal(&s->edit_state.es_int);
 	    return TCL_ERROR;
 	}
     }
@@ -7849,7 +7846,7 @@ sedit_reject(struct mged_state *s)
     es_edflag = -1;
     es_edclass = EDIT_CLASS_NULL;
 
-    rt_db_free_internal(&es_int);
+    rt_db_free_internal(&s->edit_state.es_int);
 }
 
 
@@ -8027,6 +8024,7 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
  */
 void
 label_edited_solid(
+    struct mged_state *s,
     int *num_lines,
     point_t *lines,
     struct rt_point_labels pl[],
@@ -8055,7 +8053,7 @@ label_edited_solid(
 	case ID_ARB8:
 	    {
 		struct rt_arb_internal *arb=
-		    (struct rt_arb_internal *)es_int.idb_ptr;
+		    (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ARB_CK_MAGIC(arb);
 		switch (es_type)
 		{
@@ -8099,7 +8097,7 @@ label_edited_solid(
 	case ID_TGC:
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 		MAT4X3PNT(pos_view, xform, tgc->v);
 		POINT_LABEL(pos_view, 'V');
@@ -8125,7 +8123,7 @@ label_edited_solid(
 	case ID_ELL:
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 
 		MAT4X3PNT(pos_view, xform, ell->v);
@@ -8148,7 +8146,7 @@ label_edited_solid(
 	case ID_SUPERELL:
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 
 		MAT4X3PNT(pos_view, xform, superell->v);
@@ -8171,7 +8169,7 @@ label_edited_solid(
 	case ID_TOR:
 	    {
 		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t r3, r4;
 		vect_t adir;
 		RT_TOR_CK_MAGIC(tor);
@@ -8201,7 +8199,7 @@ label_edited_solid(
 	case ID_RPC:
 	    {
 		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)es_int.idb_ptr;
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t Ru;
 
 		RT_RPC_CK_MAGIC(rpc);
@@ -8228,7 +8226,7 @@ label_edited_solid(
 	case ID_PARTICLE:
 	    {
 		struct rt_part_internal *part =
-		    (struct rt_part_internal *)es_int.idb_ptr;
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t Ru, ortho;
 
 		RT_PART_CK_MAGIC(part);
@@ -8257,7 +8255,7 @@ label_edited_solid(
 	case ID_RHC:
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t Ru;
 
 		RT_RHC_CK_MAGIC(rhc);
@@ -8292,7 +8290,7 @@ label_edited_solid(
 	case ID_EPA:
 	    {
 		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)es_int.idb_ptr;
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t A, B;
 
 		RT_EPA_CK_MAGIC(epa);
@@ -8320,7 +8318,7 @@ label_edited_solid(
 	case ID_EHY:
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t A, B;
 
 		RT_EHY_CK_MAGIC(ehy);
@@ -8356,7 +8354,7 @@ label_edited_solid(
 	case ID_HYP:
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t vB;
 
 		RT_HYP_CK_MAGIC(hyp);
@@ -8384,7 +8382,7 @@ label_edited_solid(
 	case ID_ETO:
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t ch, cv, dh, dv, cmag, phi;
 		vect_t Au, Nu;
 
@@ -8424,7 +8422,7 @@ label_edited_solid(
 	case ID_ARS:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ARS_CK_MAGIC(ars);
 
@@ -8444,7 +8442,7 @@ label_edited_solid(
 	case ID_BSPLINE:
 	    {
 		struct rt_nurb_internal *sip =
-		    (struct rt_nurb_internal *) es_int.idb_ptr;
+		    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
 		struct face_g_snurb *surf;
 		fastf_t *fp;
 
@@ -8474,7 +8472,7 @@ label_edited_solid(
 	    {
 #ifndef NO_MAGIC_CHECKING
 		struct model *m =
-		    (struct model *) es_int.idb_ptr;
+		    (struct model *) s->edit_state.es_int.idb_ptr;
 		NMG_CK_MODEL(m);
 #endif
 
@@ -8494,7 +8492,7 @@ label_edited_solid(
 	    {
 #ifndef NO_MAGIC_CHECKING
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 #endif
@@ -8510,7 +8508,7 @@ label_edited_solid(
 	case ID_CLINE:
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 		point_t work1;
 
 		RT_CLINE_CK_MAGIC(cli);
@@ -8526,7 +8524,7 @@ label_edited_solid(
 	case ID_BOT:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -8574,7 +8572,7 @@ label_edited_solid(
 	    {
 #ifndef NO_MAGIC_CHECKING
 		struct rt_metaball_internal *metaball =
-		    (struct rt_metaball_internal *)es_int.idb_ptr;
+		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_METABALL_CK_MAGIC(metaball);
 #endif
@@ -8604,12 +8602,12 @@ sedit_vpick(struct mged_state *s, point_t v_pos)
     MAT4X3PNT(m_pos, view_state->vs_objview2model, v_pos);
 
     if (nurb_closest2d(&surfno, &u, &v,
-		       (struct rt_nurb_internal *)es_int.idb_ptr,
+		       (struct rt_nurb_internal *)s->edit_state.es_int.idb_ptr,
 		       m_pos, view_state->vs_model2objview) >= 0) {
 	spl_surfno = surfno;
 	spl_ui = u;
 	spl_vi = v;
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
     view_state->vs_flag = 1;
@@ -8739,7 +8737,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 		es_keytag = "";
 		es_keyfixed = 0;
 		get_solid_keypoint(s, es_keypoint, &es_keytag,
-				   &es_int, es_mat);
+				   &s->edit_state.es_int, es_mat);
 		break;
 	    }
 	    /* fall through */
@@ -8754,15 +8752,19 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 
 
 int
-f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
+f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct menu_item *mip = (struct menu_item *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (GEOM_EDIT_STATE != ST_S_EDIT)
 	return TCL_ERROR;
 
-    switch (es_int.idb_type) {
+    switch (s->edit_state.es_int.idb_type) {
 	case ID_ARB8:
 	    {
 		struct bu_vls vls2 = BU_VLS_INIT_ZERO;
@@ -8830,7 +8832,7 @@ f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(
 
 	    break;
 	default:
-	    switch (es_int.idb_type) {
+	    switch (s->edit_state.es_int.idb_type) {
 		case ID_TGC:
 		    mip = tgc_menu;
 		    break;
@@ -8949,9 +8951,9 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
 	/* get solid type and parameters */
-	RT_CK_DB_INTERNAL(&es_int);
-	RT_CK_FUNCTAB(es_int.idb_meth);
-	status = es_int.idb_meth->ft_get(&logstr, &es_int, (char *)0);
+	RT_CK_DB_INTERNAL(&s->edit_state.es_int);
+	RT_CK_FUNCTAB(s->edit_state.es_int.idb_meth);
+	status = s->edit_state.es_int.idb_meth->ft_get(&logstr, &s->edit_state.es_int, (char *)0);
 	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
 	pto = Tcl_GetObjResult(interp);
 
@@ -8973,7 +8975,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     /* apply matrices along the path */
     RT_DB_INTERNAL_INIT(&ces_int);
-    transform_editing_solid(s, &ces_int, es_mat, &es_int, 0);
+    transform_editing_solid(s, &ces_int, es_mat, &s->edit_state.es_int, 0);
 
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&ces_int);
@@ -9051,36 +9053,36 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    RT_CK_FUNCTAB(es_int.idb_meth);
-    if (es_int.idb_meth != ftp) {
+    RT_CK_FUNCTAB(s->edit_state.es_int.idb_meth);
+    if (s->edit_state.es_int.idb_meth != ftp) {
 	Tcl_AppendResult(interp,
 			 "put_sed: idb_meth type mismatch",
 			 (char *)0);
     }
 
-    save_magic = *((uint32_t *)es_int.idb_ptr);
-    *((uint32_t *)es_int.idb_ptr) = ftp->ft_internal_magic;
+    save_magic = *((uint32_t *)s->edit_state.es_int.idb_ptr);
+    *((uint32_t *)s->edit_state.es_int.idb_ptr) = ftp->ft_internal_magic;
     {
 	int ret;
 	struct bu_vls vlog = BU_VLS_INIT_ZERO;
 
-	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)es_int.idb_ptr, NULL);
+	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)s->edit_state.es_int.idb_ptr, NULL);
 	Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
 	bu_vls_free(&vlog);
 	if (ret != BRLCAD_OK)
 	    return TCL_ERROR;
     }
-    *((uint32_t *)es_int.idb_ptr) = save_magic;
+    *((uint32_t *)s->edit_state.es_int.idb_ptr) = save_magic;
 
     if (context)
-	transform_editing_solid(s, &es_int, es_invmat, &es_int, 1);
+	transform_editing_solid(s, &s->edit_state.es_int, es_invmat, &s->edit_state.es_int, 1);
 
     /* must re-calculate the face plane equations for arbs */
-    if (es_int.idb_type == ID_ARB8) {
+    if (s->edit_state.es_int.idb_type == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
@@ -9089,7 +9091,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     }
 
     if (!es_keyfixed)
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -9117,7 +9119,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     }
 
     /* free old copy */
-    rt_db_free_internal(&es_int);
+    rt_db_free_internal(&s->edit_state.es_int);
 
     /* reset */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL;
@@ -9129,7 +9131,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     if (!illump || !illump->s_u_data)
 	return TCL_ERROR;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
+    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
 			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(interp, "sedit_reset(",
@@ -9141,12 +9143,12 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	}
 	return TCL_ERROR;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&es_int);
+    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
     replot_editing_solid(s);
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     /* Reset relevant variables */
     MAT_IDN(acc_rot_sol);
@@ -9230,7 +9232,7 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	return TCL_ERROR;
     }
 
-    oedit_reject();
+    oedit_reject(s);
     init_oedit_guts(s);
 
     new_edit_mats(s);
@@ -9270,7 +9272,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(s, es_keypoint, &strp, &es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &strp, &s->edit_state.es_int, es_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
     update_views = 1;
