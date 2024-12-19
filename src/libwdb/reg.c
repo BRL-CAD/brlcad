@@ -319,7 +319,7 @@ mk_comb(
 		struct bu_vls old = BU_VLS_INIT_ZERO;
 
 		bu_vls_vlscatzap(&old, &comb->shader);
-		if (bu_shader_to_list(bu_vls_addr(&old), &comb->shader))
+		if (rt_shader_to_list(bu_vls_addr(&old), &comb->shader))
 		    bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);
 		bu_vls_free(&old);
 	    }

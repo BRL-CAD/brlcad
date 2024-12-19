@@ -36,6 +36,7 @@
 
 #include "common.h"
 
+#include <ctype.h>
 #include <limits.h>
 #include <math.h>
 #include <string.h>
@@ -54,6 +55,443 @@
 #define STAT_XLATE 2
 #define STAT_PERSP 4
 #define STAT_SCALE 8
+
+int
+rt_shader_to_list(const char *in, struct bu_vls *vls)
+{
+    size_t len;
+    size_t shader_name_len = 0;
+    char *iptr;
+    const char *shader;
+    char *copy;
+    char *next;
+
+    if (UNLIKELY(in == NULL))
+	in = "";
+
+    copy = bu_strdup(in);
+    next = copy;
+
+    BU_CK_VLS(vls);
+
+    while (next) {
+	iptr = next;
+
+	/* find start of shader name */
+	while (isspace((int)(*iptr)))
+	    iptr++;
+
+	shader = iptr;
+
+	/* find end of shader name */
+	while (*iptr && !isspace((int)(*iptr)) && *iptr != ';')
+	    iptr++;
+
+	shader_name_len = iptr - shader;
+
+	if (shader_name_len == 5 && !bu_strncasecmp(shader, "stack", 5)) {
+
+	    /* stack shader, loop through all shaders in stack */
+	    int done = 0;
+
+	    bu_vls_strcat(vls, "stack {");
+
+	    while (!done) {
+		const char *shade1;
+
+		/* find start of shader */
+		while (isspace((int)(*iptr)))
+		    iptr++;
+
+		if (*iptr == '\0')
+		    break;
+
+		shade1 = iptr;
+
+		/* find end of shader */
+		while (*iptr && *iptr != ';')
+		    iptr++;
+
+		if (*iptr == '\0')
+		    done = 1;
+
+		*iptr = '\0';
+
+		bu_vls_putc(vls, '{');
+
+		if (rt_shader_to_list(shade1, vls)) {
+		    bu_free(copy, CPP_FILELINE);
+		    return 1;
+		}
+
+		bu_vls_strcat(vls, "} ");
+
+		if (!done)
+		    iptr++;
+	    }
+	    bu_vls_putc(vls, '}');
+	    bu_free(copy, CPP_FILELINE);
+	    return 0;
+	}
+
+	if (shader_name_len == 6 && !bu_strncasecmp(shader, "envmap", 6)) {
+	    bu_vls_strcat(vls, "envmap {");
+	    if (rt_shader_to_list(iptr, vls)) {
+		bu_free(copy, CPP_FILELINE);
+		return 1;
+	    }
+	    bu_vls_putc(vls, '}');
+	    bu_free(copy, CPP_FILELINE);
+	    return 0;
+	}
+
+	bu_vls_strncat(vls, shader, shader_name_len);
+
+	/* skip more white space */
+	while (*iptr && isspace((int)(*iptr)))
+	    iptr++;
+
+	/* iptr now points at start of parameters, if any */
+	if (*iptr && *iptr != ';') {
+	    int needClosingBrace = 0;
+
+	    bu_vls_strcat(vls, " {");
+
+	    if (*iptr == '{') {
+		/* if parameter set begins with open brace then
+		 * it should already have a closing brace
+		 */
+		iptr++;
+	    } else {
+		/* otherwise we'll need to add it */
+		needClosingBrace = 1;
+	    }
+
+	    /* append next set of parameters (if any) to vls */
+	    len = bu_vls_strlen(vls);
+	    if (bu_key_eq_to_key_val(iptr, (const char **)&next, vls)) {
+		bu_free(copy, CPP_FILELINE);
+		return 1;
+	    }
+
+	    if (needClosingBrace) {
+		/* Add closing brace unless we didn't actually append any
+		 * parameters, in which case we need to delete the " {"
+		 * appended earlier.
+		 */
+		if (bu_vls_strlen(vls) > len) {
+		    bu_vls_putc(vls, '}');
+		} else {
+		    bu_vls_trunc(vls, (int)len - 2);
+		}
+	    }
+	} else if (*iptr && *iptr == ';') {
+	    next = ++iptr;
+	} else {
+	    next = (char *)NULL;
+	}
+    }
+
+    bu_free(copy, CPP_FILELINE);
+    return 0;
+}
+
+
+/**
+ * Given a list in "{1}, {2}, {3}" form, return a copy of the
+ * 'index'th entry, which may itself be a list.
+ *
+ * Note: caller is responsible for freeing the returned string.
+ */
+static char *
+parse_list_elem(const char *in, int idx)
+{
+    int depth = 0;
+    int count = 0;
+    int len = 0;
+    const char *ptr = in;
+    const char *prev = NULL;
+    const char *start = NULL;
+    const char *end = NULL;
+
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    char *ret = NULL;
+
+    while (ptr && *ptr) {
+	/* skip leading white space */
+	while (*ptr && isspace((int)(*ptr))) {
+	    prev = ptr;
+	    ptr++;
+	}
+
+	if (!*ptr)
+	    break;
+
+	if (depth == 0 && count == idx)
+	    start = ptr;
+
+	if (*ptr == '{') {
+	    depth++;
+	    prev = ptr;
+	    ptr++;
+	} else if (*ptr == '}') {
+	    depth--;
+	    if (depth == 0)
+		count++;
+	    if (start && depth == 0) {
+		end = ptr;
+		break;
+	    }
+	    prev = ptr;
+	    ptr++;
+	} else {
+	    while (*ptr &&
+		   (!isspace((int)(*ptr)) || (prev && *prev == '\\')) &&
+		   (*ptr != '}' || (prev && *prev == '\\')) &&
+		   (*ptr != '{' || (prev && *prev == '\\')))
+	    {
+		prev = ptr;
+		ptr++;
+	    }
+	    if (depth == 0)
+		count++;
+
+	    if (start && depth == 0) {
+		end = ptr-1;
+		break;
+	    }
+	}
+    }
+
+    if (!start)
+	return (char *)NULL;
+
+    if (*start == '{') {
+	if (!end || *end != '}') {
+	    bu_log("Error in list (uneven braces?): %s\n", in);
+	    return (char *)NULL;
+	}
+
+	/* remove enclosing braces */
+	start++;
+	while (start < end && isspace((int)(*start)))
+	    start++;
+
+	end--;
+	while (end > start && isspace((int)(*end)) && *(end-1) != '\\')
+	    end--;
+
+	if (start == end)
+	    return (char *)NULL;
+    }
+
+    len = end - start + 1;
+    bu_vls_strncpy(&out, start, len);
+
+    ret = bu_vls_strdup(&out);
+    bu_vls_free(&out);
+
+    return ret;
+}
+
+/**
+ * Return number of items in a string, interpreted as a Tcl list.
+ */
+static int
+parse_list_length(const char *in)
+{
+    int count = 0;
+    int depth = 0;
+    const char *ptr = in;
+    const char *prev = NULL;
+
+    if (UNLIKELY(in == NULL))
+	return 0;
+
+    while (ptr && *ptr) {
+	/* skip leading white space */
+	while (*ptr && isspace((int)(*ptr))) {
+	    prev = ptr;
+	    ptr++;
+	}
+
+	if (!*ptr)
+	    break;
+
+	if (*ptr == '{') {
+	    if (depth == 0)
+		count++;
+	    depth++;
+	    prev = ptr;
+	    ptr++;
+	} else if (*ptr == '}') {
+	    depth--;
+	    prev = ptr;
+	    ptr++;
+	} else {
+	    if (depth == 0)
+		count++;
+
+	    while (*ptr &&
+		   (!isspace((int)(*ptr)) || (prev && *prev == '\\')) &&
+		   (*ptr != '}' || (prev && *prev == '\\')) &&
+		   (*ptr != '{' || (prev && *prev == '\\')))
+	    {
+		prev = ptr;
+		ptr++;
+	    }
+	}
+    }
+
+    return count;
+}
+
+
+static int
+parse_key_val_to_vls(struct bu_vls *vls, char *params)
+{
+    int len;
+    int j;
+
+    if (UNLIKELY(!params || strlen(params) == 0))
+	return 0;
+
+    len = parse_list_length(params);
+
+    if (len == 0) {
+	return 0;
+    } else if (len == 1) {
+	bu_vls_putc(vls, ' ');
+	bu_vls_strcat(vls, params);
+	return 0;
+    } else if (len%2) {
+	bu_log("ERROR: shader parameters must be even numbered! (key value pairings)\n\t%s\n", params);
+	return 1;
+    }
+
+    for (j = 0; j < len; j += 2) {
+	char *keyword;
+	char *value;
+
+	keyword = parse_list_elem(params, j);
+	if (!keyword)
+	    continue;
+	value = parse_list_elem(params, j+1);
+	if (!value) {
+	    bu_free(keyword, "parse_key_val_to_vls() keyword");
+	    continue;
+	}
+
+	bu_vls_putc(vls, ' ');
+	bu_vls_strcat(vls, keyword);
+	bu_vls_putc(vls, '=');
+	if (parse_list_length(value) > 1) {
+	    bu_vls_putc(vls, '"');
+	    bu_vls_strcat(vls, value);
+	    bu_vls_putc(vls, '"');
+	} else {
+	    bu_vls_strcat(vls, value);
+	}
+
+	bu_free(keyword, "parse_key_val_to_vls() keyword");
+	bu_free(value, "parse_key_val_to_vls() value");
+
+    }
+    return 0;
+}
+
+
+
+
+int
+rt_shader_to_key_eq(const char *in, struct bu_vls *vls)
+{
+    int len;
+    int ret = 0;
+    char *shader;
+    char *params;
+
+    BU_CK_VLS(vls);
+
+    if (UNLIKELY(in == NULL))
+	return 0;
+
+    len = parse_list_length(in);
+
+    if (len == 0) {
+	return 0;
+    } else if (len == 1) {
+	/* shader with no parameters */
+	if (bu_vls_strlen(vls))
+	    bu_vls_putc(vls, ' ');
+	bu_vls_strcat(vls, in);
+	return 0;
+    } else if (len != 2) {
+	bu_log("ERROR: expecting exactly two shader parameters (not %d)!!\n\t%s\n", len, in);
+	return 1;
+    }
+
+    shader = parse_list_elem(in, 0);
+    if (!shader) {
+	bu_log("ERROR: failed to parse valid shader name\n");
+	return 1;
+    }
+    params = parse_list_elem(in, 1);
+    if (!params) {
+	bu_free(shader, "shader");
+	bu_log("ERROR: failed to parse valid shader parameters\n");
+	return 1;
+    }
+
+    /* FIXME: should not be aware of specific shader names here.
+     * breaks encapsulation and just sucks.
+     */
+    if (BU_STR_EQUAL(shader, "envmap")) {
+	/* environment map */
+
+	if (bu_vls_strlen(vls))
+	    bu_vls_putc(vls, ' ');
+	bu_vls_strcat(vls, "envmap");
+
+	rt_shader_to_key_eq(params, vls);
+    } else if (BU_STR_EQUAL(shader, "stack")) {
+	/* stacked shaders */
+
+	int i;
+
+	if (bu_vls_strlen(vls))
+	    bu_vls_putc(vls, ' ');
+	bu_vls_strcat(vls, "stack");
+
+	/* get number of shaders in the stack */
+	len = parse_list_length(params);
+
+	/* process each shader in the stack */
+	for (i = 0; i < len; i++) {
+	    char *shader1;
+
+	    /* each parameter must be a shader specification in itself */
+	    shader1 = parse_list_elem(params, i);
+
+	    if (i > 0)
+		bu_vls_putc(vls, ';');
+	    rt_shader_to_key_eq(shader1, vls);
+	    bu_free(shader1, "shader1");
+	}
+    } else {
+	if (bu_vls_strlen(vls))
+	    bu_vls_putc(vls, ' ');
+	bu_vls_strcat(vls, shader);
+	ret = parse_key_val_to_vls(vls, params);
+    }
+
+    bu_free(shader, "shader");
+    bu_free(params, "params");
+
+    return ret;
+}
+
+
 
 
 /**
@@ -373,7 +811,7 @@ rt_comb_import4(
 	memcpy(shader_str+strlen(shader_str), rp[0].c.c_matparm, sizeof(rp[0].c.c_matparm));
 
 	/* convert to TCL format and place into comb->shader */
-	if (bu_shader_to_list(shader_str, &comb->shader)) {
+	if (rt_shader_to_list(shader_str, &comb->shader)) {
 	    bu_log("rt_comb_import4: Error: Cannot convert following shader to TCL format:\n");
 	    bu_log("\t%s\n", shader_str);
 	    bu_vls_free(&comb->shader);
@@ -512,7 +950,7 @@ rt_comb_export4(
     }
 
     /* convert TCL list format shader to keyword=value format */
-    if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
+    if (rt_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
 
 	bu_log("rt_comb_export4: Cannot convert following shader string to keyword=value format:\n");
 	bu_log("\t%s\n", bu_vls_addr(&comb->shader));

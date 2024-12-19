@@ -142,7 +142,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     } else {
 	if (!BU_STR_EQUAL(bu_vls_addr(&vls), ".")) {
 	    bu_vls_trunc(&comb->shader, 0);
-	    if (bu_shader_to_list(bu_vls_addr(&vls), &comb->shader)) {
+	    if (rt_shader_to_list(bu_vls_addr(&vls), &comb->shader)) {
 		bu_vls_printf(gedp->ged_result_str, "Problem with shader string [%s]", argv[2]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&vls);

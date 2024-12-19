@@ -264,7 +264,7 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	    if (tsp->ts_mater.ma_shader)
 		bu_free((void *)tsp->ts_mater.ma_shader, "ma_shader");
 
-	    if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
+	    if (rt_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
 		char *sofar = db_path_to_string(pathp);
 
 		bu_log("db_apply_state_from_comb: Warning: bad shader in %s (ignored):\n", sofar);
