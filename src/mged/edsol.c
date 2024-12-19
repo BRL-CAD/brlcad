@@ -731,16 +731,6 @@ struct menu_item *which_menu[] = {
     rot8_menu
 };
 
-
-short int arb_vertices[5][24] = {
-    { 1, 2, 3, 0, 1, 2, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* arb4 */
-    { 1, 2, 3, 4, 1, 2, 5, 0, 2, 3, 5, 0, 3, 4, 5, 0, 1, 4, 5, 0, 0, 0, 0, 0 },	/* arb5 */
-    { 1, 2, 3, 4, 2, 3, 6, 5, 1, 5, 6, 4, 1, 2, 5, 0, 3, 4, 6, 0, 0, 0, 0, 0 },	/* arb6 */
-    { 1, 2, 3, 4, 5, 6, 7, 0, 1, 4, 5, 0, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 5 },	/* arb7 */
-    { 1, 2, 3, 4, 5, 6, 7, 8, 1, 5, 8, 4, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 8 }	/* arb8 */
-};
-
-
 void
 set_e_axes_pos(struct mged_state *s, int both)
     /* if (!both) then set only curr_e_axes_pos, otherwise
@@ -2801,27 +2791,27 @@ get_rotation_vertex(struct mged_state *s)
 
     bu_vls_printf(&str, "Enter fixed vertex number(");
     for (i=0; i<4; i++) {
-	if (arb_vertices[type][loc+i])
-	    bu_vls_printf(&str, "%d ", arb_vertices[type][loc+i]);
+	if (rt_arb_vertices[type][loc+i])
+	    bu_vls_printf(&str, "%d ", rt_arb_vertices[type][loc+i]);
     }
-    bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
+    bu_vls_printf(&str, ") [%d]: ", rt_arb_vertices[type][loc]);
 
     const struct bu_vls *dnvp = dm_get_dname(s->mged_curr_dm->dm_dmp);
 
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), arb_vertices[type][loc]);
+		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), rt_arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(s->interp, bu_vls_addr(&cmd)) != TCL_OK) {
 	    Tcl_AppendResult(s->interp, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
 	    /* Using default */
-	    return arb_vertices[type][loc];
+	    return rt_arb_vertices[type][loc];
 	}
 
 	vertex = atoi(Tcl_GetVar(s->interp, "vertex_num", TCL_GLOBAL_ONLY));
 	for (j=0; j<4; j++) {
-	    if (vertex==arb_vertices[type][loc+j])
+	    if (vertex==rt_arb_vertices[type][loc+j])
 		valid = 1;
 	}
     }
@@ -4714,7 +4704,7 @@ sedit(struct mged_state *s)
 	    /* check if point 5 is in the face */
 	    pnt5 = 0;
 	    for (i=0; i<4; i++) {
-		if (arb_vertices[es_type-4][es_menu*4+i]==5)
+		if (rt_arb_vertices[es_type-4][es_menu*4+i]==5)
 		    pnt5=1;
 	    }
 

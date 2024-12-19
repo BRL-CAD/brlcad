@@ -34,6 +34,8 @@
 
 __BEGIN_DECLS
 
+RT_EXPORT extern const short int rt_arb_vertices[5][24];
+
 /* arb8.c */
 RT_EXPORT extern int rt_arb_get_cgtype(
     int *cgtype,
