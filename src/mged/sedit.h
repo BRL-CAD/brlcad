@@ -217,15 +217,6 @@
 		     es_edflag == ECMD_METABALL_PT_PICK))
 
 
-extern vect_t edit_absolute_model_tran;
-extern vect_t edit_absolute_view_tran;
-extern vect_t last_edit_absolute_model_tran;
-extern vect_t last_edit_absolute_view_tran;
-extern vect_t edit_rate_model_tran;
-extern vect_t edit_rate_view_tran;
-extern int edit_rateflag_model_tran;
-extern int edit_rateflag_view_tran;
-
 extern fastf_t edit_absolute_scale;
 extern fastf_t edit_rate_scale;
 extern int edit_rateflag_scale;

@@ -1112,7 +1112,7 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (edit_rateflag_model_tran) {
+    if (s->edit_state.edit_rateflag_model_tran) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1131,9 +1131,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      s->edit_state.edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->edit_state.edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->edit_state.edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1145,7 +1145,7 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (edit_rateflag_view_tran) {
+    if (s->edit_state.edit_rateflag_view_tran) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1164,9 +1164,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      s->edit_state.edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->edit_state.edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->edit_state.edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

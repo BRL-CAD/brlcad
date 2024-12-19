@@ -323,16 +323,16 @@ scroll_display(struct mged_state *s, int y_top)
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_tran[X];
+					f = s->edit_state.edit_rate_model_tran[X];
 				    else
-					f = edit_absolute_model_tran[X];
+					f = s->edit_state.edit_absolute_model_tran[X];
 				    break;
 				case 'v':
 				default:
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_tran[X];
+					f = s->edit_state.edit_rate_view_tran[X];
 				    else
-					f = edit_absolute_view_tran[X];
+					f = s->edit_state.edit_absolute_view_tran[X];
 				    break;
 			    }
 
@@ -374,15 +374,15 @@ scroll_display(struct mged_state *s, int y_top)
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_tran[Y];
+					f = s->edit_state.edit_rate_model_tran[Y];
 				    else
-					f = edit_absolute_model_tran[Y];
+					f = s->edit_state.edit_absolute_model_tran[Y];
 				    break;
 				case 'v':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_tran[Y];
+					f = s->edit_state.edit_rate_view_tran[Y];
 				    else
-					f = edit_absolute_view_tran[Y];
+					f = s->edit_state.edit_absolute_view_tran[Y];
 				    break;
 			    }
 
@@ -424,15 +424,15 @@ scroll_display(struct mged_state *s, int y_top)
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_tran[Z];
+					f = s->edit_state.edit_rate_model_tran[Z];
 				    else
-					f = edit_absolute_model_tran[Z];
+					f = s->edit_state.edit_absolute_model_tran[Z];
 				    break;
 				case 'v':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_tran[Z];
+					f = s->edit_state.edit_rate_view_tran[Z];
 				    else
-					f = edit_absolute_view_tran[Z];
+					f = s->edit_state.edit_absolute_view_tran[Z];
 				    break;
 			    }
 

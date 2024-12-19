@@ -160,6 +160,17 @@ struct mged_edit_state {
     int edit_rateflag_object_rotate;
     int edit_rateflag_view_rotate;
 
+    // Translate
+    vect_t edit_absolute_model_tran;
+    vect_t edit_absolute_view_tran;
+    vect_t last_edit_absolute_model_tran;
+    vect_t last_edit_absolute_view_tran;
+    vect_t edit_rate_model_tran;
+    vect_t edit_rate_view_tran;
+    int edit_rateflag_model_tran;
+    int edit_rateflag_view_tran;
+
+
 };
 
 /* global application state */
