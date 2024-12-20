@@ -2784,6 +2784,46 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     return BRLCAD_OK;
 }
 
+const char *
+rt_arb_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    static const char *default_keystr = "V1";
+    const char *k = (keystr) ? keystr : default_keystr;
+    const char *w = (keystr) ? keystr : default_keystr;
+
+    // Allow V# style specification of vertex numbers
+    if (*w == 'V') {
+	const char *ptr = w + 1;
+	int vertex_number = (*ptr) - '0';
+	if (vertex_number < 1 || vertex_number > 8) {
+	    // Overriding (TODO - this matches MGED behavior, but probably
+	    // isn't really what we should be doing - this indicates an invalid
+	    // V# specifier.)
+	    vertex_number = 1;
+	    k = default_keystr;
+	}
+	VMOVE(mpt, arb->pt[vertex_number-1]);
+	goto arb_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+arb_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
+
 /** @} */
 
 /*

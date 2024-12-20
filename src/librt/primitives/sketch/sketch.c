@@ -2709,6 +2709,34 @@ rt_curve_order_segments(struct rt_curve *crv)
     }
 }
 
+const char *
+rt_sketch_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_sketch_internal *sketch = (struct rt_sketch_internal *)ip->idb_ptr;
+    RT_SKETCH_CK_MAGIC(sketch);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, sketch->V);
+	goto sketch_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+sketch_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
 
 /*
  * Local Variables:

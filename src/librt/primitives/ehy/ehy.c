@@ -2127,6 +2127,34 @@ rt_ehy_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
+const char *
+rt_ehy_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, ehy->ehy_V);
+	goto ehy_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+ehy_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
 /** @} */
 /*
  * Local Variables:

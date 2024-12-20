@@ -1729,6 +1729,35 @@ rt_eto_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
+const char *
+rt_eto_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, eto->eto_V);
+	goto eto_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+eto_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
+
 /** @} */
 /*
  * Local Variables:

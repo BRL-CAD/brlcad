@@ -2003,6 +2003,47 @@ rt_ell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
+const char *
+rt_ell_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, ell->v);
+	goto ell_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "A")) {
+	VADD2(mpt, ell->v, ell->a);
+	goto ell_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "B")) {
+	VADD2(mpt, ell->v, ell->b);
+	goto ell_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "C")) {
+	VADD2(mpt, ell->v, ell->c);
+	goto ell_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+ell_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
+
 /** @} */
 /*
  * Local Variables:

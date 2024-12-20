@@ -4953,6 +4953,34 @@ dsp_pos(point_t out, /* return value */
     return 0;
 }
 
+const char *
+rt_dsp_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	point_t pnt = VINIT_ZERO;
+	MAT4X3PNT(mpt, dsp->dsp_stom, pnt);
+	goto dsp_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+dsp_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
 
 /* Important when concatenating source files together */
 #undef dlog

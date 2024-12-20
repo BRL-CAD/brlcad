@@ -71,7 +71,7 @@ mat_t es_invmat;		/* inverse of es_mat KAA */
 int bot_verts[3];		/* vertices for the BOT solid */
 
 point_t es_keypoint;		/* center of editing xforms */
-char *es_keytag;		/* string identifying the keypoint */
+const char *es_keytag;		/* string identifying the keypoint */
 int es_keyfixed;		/* keypoint specified by user? */
 
 vect_t es_para;	/* keyboard input param. Only when inpara set.  */
@@ -312,9 +312,10 @@ set_e_axes_pos(struct mged_state *s, int both)
  * processed as well?
  */
 void
-get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat)
+get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
-    char *cp = *strp;
+    static const char *vert_str = "V";
+    const char *cp = *strp;
     point_t mpt = VINIT_ZERO;
     static char buf[BUFSIZ];
 
@@ -322,45 +323,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
     memset(buf, 0, BUFSIZ);
 
     switch (ip->idb_type) {
-	case ID_CLINE:
-	    {
-		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)ip->idb_ptr;
-
-		RT_CLINE_CK_MAGIC(cli);
-
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, cli->v);
-		    *strp = "V";
-		} else if (BU_STR_EQUAL(cp, "H")) {
-		    VADD2(mpt, cli->v, cli->h);
-		    *strp = "H";
-		} else {
-		    VMOVE(mpt, cli->v);
-		    *strp = "V";
-		}
-		break;
-	    }
-	case ID_PARTICLE:
-	    {
-		struct rt_part_internal *part =
-		    (struct rt_part_internal *)ip->idb_ptr;
-
-		RT_PART_CK_MAGIC(part);
-
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, part->part_V);
-		    *strp = "V";
-		} else if (BU_STR_EQUAL(cp, "H")) {
-		    VADD2(mpt, part->part_V, part->part_H);
-		    *strp = "H";
-		} else {
-		    /* default */
-		    VMOVE(mpt, part->part_V);
-		    *strp = "V";
-		}
-		break;
-	    }
+	
 	case ID_PIPE:
 	    {
 		struct rt_pipe_internal *pipeip =
@@ -376,7 +339,8 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 		    VMOVE(mpt, es_pipe_pnt->pp_coord);
 		}
 		*strp = "V";
-		break;
+		MAT4X3PNT(pt, mat, mpt);
+		return;
 	    }
 	case ID_METABALL:
 	    {
@@ -392,267 +356,29 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 		    snprintf(buf, BUFSIZ, "V %f", es_metaball_pnt->fldstr);
 		}
 		*strp = buf;
-		break;
-	    }
-	case ID_ARBN:
-	    {
-		struct rt_arbn_internal *arbn =
-		    (struct rt_arbn_internal *)ip->idb_ptr;
-		size_t i, j, k;
-		int good_vert = 0;
-
-		RT_ARBN_CK_MAGIC(arbn);
-		for (i=0; i<arbn->neqn; i++) {
-		    for (j=i+1; j<arbn->neqn; j++) {
-			for (k=j+1; k<arbn->neqn; k++) {
-			    if (!bg_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
-				size_t l;
-
-				good_vert = 1;
-				for (l=0; l<arbn->neqn; l++) {
-				    if (l == i || l == j || l == k)
-					continue;
-
-				    if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > s->tol.tol.dist) {
-					good_vert = 0;
-					break;
-				    }
-				}
-
-				if (good_vert)
-				    break;
-			    }
-			}
-			if (good_vert)
-			    break;
-		    }
-		    if (good_vert)
-			break;
-		}
-
-		*strp = "V";
-		break;
-	    }
-	case ID_EBM:
-	    {
-		struct rt_ebm_internal *ebm =
-		    (struct rt_ebm_internal *)ip->idb_ptr;
-		point_t pnt;
-
-		RT_EBM_CK_MAGIC(ebm);
-
-		VSETALL(pnt, 0.0);
-		MAT4X3PNT(mpt, ebm->mat, pnt);
-		*strp = "V";
-		break;
+		MAT4X3PNT(pt, mat, mpt);
+		return;
 	    }
 	case ID_BOT:
 	    {
-		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)ip->idb_ptr;
-
+		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, cp, mat, ip, &s->tol.tol);
+		// If we're editing, use that position instead
 		if (bot_verts[0] > -1) {
+		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+		    RT_BOT_CK_MAGIC(bot);
 		    VMOVE(mpt, &bot->vertices[bot_verts[0]*3]);
-		} else {
-		    VMOVE(mpt, bot->vertices);
+		    MAT4X3PNT(pt, mat, mpt);
 		}
-
-		break;
-	    }
-	case ID_DSP:
-	    {
-		struct rt_dsp_internal *dsp =
-		    (struct rt_dsp_internal *)ip->idb_ptr;
-		point_t pnt;
-
-		RT_DSP_CK_MAGIC(dsp);
-
-		VSETALL(pnt, 0.0);
-		MAT4X3PNT(mpt, dsp->dsp_stom, pnt);
-		*strp = "V";
-		break;
-	    }
-	case ID_HF:
-	    {
-		struct rt_hf_internal *hf =
-		    (struct rt_hf_internal *)ip->idb_ptr;
-
-		RT_HF_CK_MAGIC(hf);
-
-		VMOVE(mpt, hf->v);
-		*strp = "V";
-		break;
-	    }
-	case ID_VOL:
-	    {
-		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)ip->idb_ptr;
-		point_t pnt;
-
-		RT_VOL_CK_MAGIC(vol);
-
-		VSETALL(pnt, 0.0);
-		MAT4X3PNT(mpt, vol->mat, pnt);
-		*strp = "V";
-		break;
-	    }
-	case ID_HALF:
-	    {
-		struct rt_half_internal *haf =
-		    (struct rt_half_internal *)ip->idb_ptr;
-		RT_HALF_CK_MAGIC(haf);
-
-		VSCALE(mpt, haf->eqn, haf->eqn[H]);
-		*strp = "V";
-		break;
+		return;
 	    }
 	case ID_ARB8:
-	    {
-		struct rt_arb_internal *arb =
-		    (struct rt_arb_internal *)ip->idb_ptr;
-		RT_ARB_CK_MAGIC(arb);
-
-		if (*cp == 'V') {
-		    int vertex_number;
-		    char *ptr;
-
-		    ptr = cp + 1;
-		    vertex_number = (*ptr) - '0';
-		    if (vertex_number < 1 || vertex_number > 8)
-			vertex_number = 1;
-		    VMOVE(mpt, arb->pt[vertex_number-1]);
-		    sprintf(buf, "V%d", vertex_number);
-		    *strp = buf;
-		    break;
-		}
-
-		/* Default */
-		VMOVE(mpt, arb->pt[0]);
-		*strp = "V1";
-
-		break;
+	    if (*cp == 'V') {
+		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, cp, mat, ip, &s->tol.tol);
+	    } else {
+		static const char *vstr = "V1";
+		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, vstr, mat, ip, &s->tol.tol);
 	    }
-	case ID_ELL:
-	case ID_SPH:
-	    {
-		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)ip->idb_ptr;
-		RT_ELL_CK_MAGIC(ell);
-
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, ell->v);
-		    *strp = "V";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "A")) {
-		    VADD2(mpt, ell->v, ell->a);
-		    *strp = "A";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "B")) {
-		    VADD2(mpt, ell->v, ell->b);
-		    *strp = "B";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "C")) {
-		    VADD2(mpt, ell->v, ell->c);
-		    *strp = "C";
-		    break;
-		}
-		/* Default */
-		VMOVE(mpt, ell->v);
-		*strp = "V";
-		break;
-	    }
-	case ID_SUPERELL:
-	    {
-		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)ip->idb_ptr;
-		RT_SUPERELL_CK_MAGIC(superell);
-
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, superell->v);
-		    *strp = "V";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "A")) {
-		    VADD2(mpt, superell->v, superell->a);
-		    *strp = "A";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "B")) {
-		    VADD2(mpt, superell->v, superell->b);
-		    *strp = "B";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "C")) {
-		    VADD2(mpt, superell->v, superell->c);
-		    *strp = "C";
-		    break;
-		}
-		/* Default */
-		VMOVE(mpt, superell->v);
-		*strp = "V";
-		break;
-	    }
-	case ID_TOR:
-	    {
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)ip->idb_ptr;
-		RT_TOR_CK_MAGIC(tor);
-
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, tor->v);
-		    *strp = "V";
-		    break;
-		}
-		/* Default */
-		VMOVE(mpt, tor->v);
-		*strp = "V";
-		break;
-	    }
-	case ID_TGC:
-	case ID_REC:
-	    {
-		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)ip->idb_ptr;
-		RT_TGC_CK_MAGIC(tgc);
-
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, tgc->v);
-		    *strp = "V";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "H")) {
-		    VMOVE(mpt, tgc->h);
-		    *strp = "H";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "A")) {
-		    VMOVE(mpt, tgc->a);
-		    *strp = "A";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "B")) {
-		    VMOVE(mpt, tgc->b);
-		    *strp = "B";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "C")) {
-		    VMOVE(mpt, tgc->c);
-		    *strp = "C";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "D")) {
-		    VMOVE(mpt, tgc->d);
-		    *strp = "D";
-		    break;
-		}
-		/* Default */
-		VMOVE(mpt, tgc->v);
-		*strp = "V";
-		break;
-	    }
+	    return;
 	case ID_BSPLINE:
 	    {
 		struct rt_nurb_internal *sip =
@@ -668,16 +394,17 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 		sprintf(buf, "Surf %d, index %d,%d",
 			spl_surfno, spl_ui, spl_vi);
 		*strp = buf;
-		break;
+		MAT4X3PNT(pt, mat, mpt);
+		return;
 	    }
 	case ID_GRIP:
 	    {
-		struct rt_grip_internal *gip =
-		    (struct rt_grip_internal *)ip->idb_ptr;
-		RT_GRIP_CK_MAGIC(gip);
-		VMOVE(mpt, gip->center);
-		*strp = "C";
-		break;
+		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, cp, mat, ip, &s->tol.tol);
+		if (!*strp) {
+		    static const char *c_str = "C";
+		    *strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, c_str, mat, ip, &s->tol.tol);
+		}
+		return;
 	    }
 	case ID_ARS:
 	    {
@@ -691,125 +418,21 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 		    VMOVE(mpt, &ars->curves[es_ars_crv][es_ars_col*3]);
 		}
 
+		MAT4X3PNT(pt, mat, mpt);
 		*strp = "V";
-		break;
-	    }
-	case ID_RPC:
-	    {
-		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)ip->idb_ptr;
-		RT_RPC_CK_MAGIC(rpc);
-
-		VMOVE(mpt, rpc->rpc_V);
-		*strp = "V";
-		break;
-	    }
-	case ID_RHC:
-	    {
-		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)ip->idb_ptr;
-		RT_RHC_CK_MAGIC(rhc);
-
-		VMOVE(mpt, rhc->rhc_V);
-		*strp = "V";
-		break;
-	    }
-	case ID_EPA:
-	    {
-		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)ip->idb_ptr;
-		RT_EPA_CK_MAGIC(epa);
-
-		VMOVE(mpt, epa->epa_V);
-		*strp = "V";
-		break;
-	    }
-	case ID_EHY:
-	    {
-		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)ip->idb_ptr;
-		RT_EHY_CK_MAGIC(ehy);
-
-		VMOVE(mpt, ehy->ehy_V);
-		*strp = "V";
-		break;
-	    }
-	case ID_HYP:
-	    {
-		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)ip->idb_ptr;
-		RT_HYP_CK_MAGIC(hyp);
-
-		VMOVE(mpt, hyp->hyp_Vi);
-		*strp = "V";
-		break;
-	    }
-	case ID_ETO:
-	    {
-		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)ip->idb_ptr;
-		RT_ETO_CK_MAGIC(eto);
-
-		VMOVE(mpt, eto->eto_V);
-		*strp = "V";
-		break;
-	    }
-	case ID_POLY:
-	    {
-		struct rt_pg_face_internal *_poly;
-		struct rt_pg_internal *pg =
-		    (struct rt_pg_internal *)ip->idb_ptr;
-		RT_PG_CK_MAGIC(pg);
-
-		_poly = pg->poly;
-		VMOVE(mpt, _poly->verts);
-		*strp = "V";
-		break;
-	    }
-	case ID_SKETCH:
-	    {
-		struct rt_sketch_internal *skt =
-		    (struct rt_sketch_internal *)ip->idb_ptr;
-		RT_SKETCH_CK_MAGIC(skt);
-
-		VMOVE(mpt, skt->V);
-		*strp = "V";
-		break;
-	    }
-	case ID_ANNOT:
-	    {
-		struct rt_annot_internal *ann =
-		    (struct rt_annot_internal *)ip->idb_ptr;
-		RT_ANNOT_CK_MAGIC(ann);
-
-		VMOVE(mpt, ann->V);
-		*strp = "V";
-		break;
+		return;
 	    }
 	case ID_EXTRUDE:
 	    {
-		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)ip->idb_ptr;
+		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)ip->idb_ptr;
 		RT_EXTRUDE_CK_MAGIC(extr);
-
 		if (extr->skt && extr->skt->verts) {
-		    VJOIN2(mpt, extr->V, extr->skt->verts[0][0], extr->u_vec, extr->skt->verts[0][1], extr->v_vec);
-		    *strp = "V1";
+		    static const char *vstr = "V1";
+		    *strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, vstr, mat, ip, &s->tol.tol);
 		} else {
-		    VMOVE(mpt, extr->V);
-		    *strp = "V";
+		    *strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, NULL, mat, ip, &s->tol.tol);
 		}
-		break;
-	    }
-	case ID_DATUM:
-	    {
-		struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
-		RT_DATUM_CK_MAGIC(datum);
-
-		/* Default */
-		VMOVE(mpt, datum->pnt);
-		*strp = "V";
-		break;
+		return;
 	    }
 	case ID_NMG:
 	    {
@@ -928,7 +551,36 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 		    *strp = "V";
 		    break;
 		}
+		break;
 	    }
+	case ID_CLINE:
+	case ID_PARTICLE:
+	case ID_ARBN:
+	case ID_EBM:
+	case ID_DSP:
+	case ID_HF:
+	case ID_VOL:
+	case ID_HALF:
+	case ID_ELL:
+	case ID_SPH:
+	case ID_SUPERELL:
+	case ID_TOR:
+	case ID_TGC:
+	case ID_REC:
+	case ID_RPC:
+	case ID_RHC:
+	case ID_EPA:
+	case ID_EHY:
+	case ID_HYP:
+	case ID_ETO:
+	case ID_POLY:
+	case ID_SKETCH:
+	case ID_ANNOT:
+	case ID_DATUM:
+	    *strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, cp, mat, ip, &s->tol.tol);
+	    if (!*strp)
+		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, vert_str, mat, ip, &s->tol.tol);
+	    return;
 	    /* fall through */
 	default:
 	    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
@@ -936,6 +588,8 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_
 	    *strp = "(origin)";
 	    break;
     }
+
+    // Most of the time this is handled, but if it hasn't been yet do the mat calculation
     MAT4X3PNT(pt, mat, mpt);
 }
 
@@ -5819,7 +5473,7 @@ static void
 init_oedit_guts(struct mged_state *s)
 {
     int id;
-    char *strp="";
+    const char *strp="";
 
     /* for safety sake */
     es_menu = 0;
@@ -7334,7 +6988,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     struct mged_state *s = ctp->s;
 
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    char *strp="";
+    const char *strp = "";
 
     CHECK_DBI_NULL;
     oedit_apply(s, UP); /* apply changes, but continue editing */

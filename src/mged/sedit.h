@@ -239,11 +239,11 @@ extern mat_t es_mat;		/* accumulated matrix of path */
 extern mat_t es_invmat;		/* inverse of es_mat KAA */
 
 extern point_t es_keypoint;	/* center of editing xforms */
-extern char *es_keytag;		/* string identifying the keypoint */
+extern const char *es_keytag;		/* string identifying the keypoint */
 extern point_t curr_e_axes_pos;	/* center of editing xforms */
 
 extern void get_solid_keypoint(struct mged_state *s, fastf_t *pt,
-			       char **strp,
+			       const char **strp,
 			       struct rt_db_internal *ip,
 			       fastf_t *mat);
 

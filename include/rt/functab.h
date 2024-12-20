@@ -274,13 +274,25 @@ struct rt_functab {
     int (*ft_labels)(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((int (*)(struct rt_point_labels *, int, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
+    /** Return keypoint information.  If keystr is non-NULL, that string will
+     * be used as a lookup - otherwise, a primitive-defined default will be
+     * used.  If the internal default was used for the lookup a pointer to a
+     * static copy of the default keystr is returned. Otherwise, if the
+     * keypoint lookup was successful, keystr is returned. If NULL is returned,
+     * no keypoint was determined.
+     *
+     * TODO - The format of keystr may be specific to individual primitives.
+     * In principle something complex like "F10E2V1" (for example) might be
+     * desirable to select a particular brep face/edge/vertex - right now the
+     * valid inputs aren't yet documented. */
+    const char *(*ft_keypoint)(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define RTFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
     /** perturb geometry parameters of primitive.  NOTE:  the oip primitive
      * returned is NOT guaranteed to be the same type as that of ip - for example,
      * ARB8 perturbations will return an ARBN primitive. */
     int (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor);
 #define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
-
-
 };
 
 /**

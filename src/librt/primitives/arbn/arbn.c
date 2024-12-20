@@ -1486,6 +1486,54 @@ rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
     bu_free((char *)faces, "rt_arbn_volume: faces");
 }
 
+const char *
+rt_arbn_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(arbn);
+
+    static const char *default_keystr = "V";
+    const char *kr = (keystr) ? keystr : default_keystr;
+
+    int good_vert = 0;
+    for (size_t i=0; i<arbn->neqn; i++) {
+	for (size_t j=i+1; j<arbn->neqn; j++) {
+	    for (size_t k=j+1; k<arbn->neqn; k++) {
+		if (!bg_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
+		    size_t l;
+
+		    good_vert = 1;
+		    for (l=0; l<arbn->neqn; l++) {
+			if (l == i || l == j || l == k)
+			    continue;
+
+			if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > tol->dist) {
+			    good_vert = 0;
+			    break;
+			}
+		    }
+
+		    if (good_vert)
+			break;
+		}
+	    }
+	    if (good_vert)
+		break;
+	}
+	if (good_vert)
+	    break;
+    }
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return kr;
+}
+
+
 int
 rt_arbn_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
 {

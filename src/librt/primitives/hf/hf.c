@@ -2208,6 +2208,34 @@ rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+const char *
+rt_hf_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_hf_internal *hf = (struct rt_hf_internal *)ip->idb_ptr;
+    RT_HF_CK_MAGIC(hf);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, hf->v);
+	goto hf_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+hf_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
 
 /** @} */
 /*

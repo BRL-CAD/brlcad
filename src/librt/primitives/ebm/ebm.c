@@ -2029,6 +2029,30 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
+const char *
+rt_ebm_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(ebm);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (!BU_STR_EQUAL(k, default_keystr))
+	return NULL;
+
+    point_t pnt = VINIT_ZERO;
+    MAT4X3PNT(mpt, ebm->mat, pnt);
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
+
 /** @} */
 /*
  * Local Variables:

@@ -2002,6 +2002,35 @@ rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
+const char *
+rt_rhc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rhc);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, rhc->rhc_V);
+	goto rhc_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+rhc_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
+
 /*
  * Local Variables:
  * mode: C

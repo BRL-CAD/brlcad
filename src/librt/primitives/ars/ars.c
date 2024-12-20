@@ -992,7 +992,6 @@ rt_ars_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-
 /** @} */
 /*
  * Local Variables:

@@ -6077,6 +6077,32 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
     return result;
 }
 
+const char *
+rt_bot_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, bot->vertices);
+	goto bot_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+bot_kpt_end:
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
 
 /** @} */
 /*

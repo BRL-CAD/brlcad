@@ -2062,6 +2062,34 @@ rt_epa_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
+const char *
+rt_epa_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_epa_internal *epa = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(epa);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, epa->epa_V);
+	goto epa_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+epa_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
 
 /** @} */
 /*

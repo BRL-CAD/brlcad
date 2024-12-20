@@ -3530,6 +3530,55 @@ rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     return BRLCAD_OK;
 }
 
+const char *
+rt_tgc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tgc);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, tgc->v);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "H")) {
+	VMOVE(mpt, tgc->h);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "A")) {
+	VMOVE(mpt, tgc->a);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "B")) {
+	VMOVE(mpt, tgc->b);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "C")) {
+	VMOVE(mpt, tgc->c);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "D")) {
+	VMOVE(mpt, tgc->d);
+	goto tgc_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+tgc_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
+
 /*
  * Local Variables:
  * mode: C
