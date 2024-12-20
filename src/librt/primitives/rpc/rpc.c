@@ -1735,7 +1735,7 @@ int
 rt_rpc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
-    if (!pl || pl_max < lcnt)
+    if (!pl || pl_max < lcnt || !ip)
 	return 0;
 
     struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;

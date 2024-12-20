@@ -1297,7 +1297,7 @@ int
 rt_superell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
-    if (!pl || pl_max < lcnt)
+    if (!pl || pl_max < lcnt || !ip)
 	return 0;
 
     struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;

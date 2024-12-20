@@ -1148,7 +1148,7 @@ int
 rt_cline_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 2;
-    if (!pl || pl_max < lcnt)
+    if (!pl || pl_max < lcnt || !ip)
 	return 0;
 
     struct rt_cline_internal *cline = (struct rt_cline_internal *)ip->idb_ptr;

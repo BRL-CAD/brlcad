@@ -2629,7 +2629,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 int
 rt_arb_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *utol)
 {
-    if (!pl || pl_max < 8)
+    if (!pl || pl_max < 8 || !ip)
 	return 0;
 
     const struct bn_tol ltol = BN_TOL_INIT_TOL;

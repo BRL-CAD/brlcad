@@ -1816,7 +1816,7 @@ int
 rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
-    if (!pl || pl_max < 4)
+    if (!pl || pl_max < 4 || !ip)
 	return 0;
 
     struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
