@@ -281,7 +281,6 @@ extern void mged_global_variable_teardown(struct mged_state *s); /* cmd.c */
 extern void dozoom(struct mged_state *s, int which_eye);
 extern void mged_finish(struct mged_state *s, int exitcode);
 extern void slewview(struct mged_state *s, vect_t view_pos);
-extern void mmenu_init(struct mged_state *s);
 extern void moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp, matp_t xlate);
 extern void moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate);
 extern void quit(struct mged_state *s);
@@ -289,10 +288,6 @@ extern void refresh(struct mged_state *s);
 extern void sedit(struct mged_state *s);
 extern void setview(struct mged_state *s, double a1, double a2, double a3);
 extern void adcursor(struct mged_state *s);
-extern void mmenu_display(struct mged_state *s, int y_top);
-extern void mmenu_set(struct mged_state *s, int idx, struct menu_item *value);
-extern void mmenu_set_all(struct mged_state *s, int idx, struct menu_item *value);
-extern void sedit_menu(struct mged_state *s);
 extern void get_attached(struct mged_state *s);
 extern void (*cur_sigint)(int);	/* Current SIGINT status */
 extern void sig2(int);
@@ -495,9 +490,6 @@ extern void snap_view_center_to_grid(struct mged_state *s);
 extern void snap_to_grid(struct mged_state *s, fastf_t *mx, fastf_t *my);
 extern void snap_view_to_grid(struct mged_state *s, fastf_t view_dx, fastf_t view_dy);
 extern void draw_grid(struct mged_state *s);
-
-/* menu.c */
-int mmenu_select(struct mged_state *s, int pen_y, int do_func);
 
 /* predictor.c */
 extern void predictor_frame(struct mged_state *s);

@@ -78,6 +78,7 @@
 /* private */
 #include "./mged.h"
 #include "./sedit.h"
+#include "./menu.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
 #include "./f_cmd.h" // for f_opendb

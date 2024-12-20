@@ -30,6 +30,7 @@
 
 #include "./mged.h"
 #include "./sedit.h"
+#include "./menu.h"
 
 /* external sp_hook function */
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);	/* defined in set.c */

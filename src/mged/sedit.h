@@ -225,6 +225,16 @@ extern int es_edclass;		/* type of editing class for this solid */
 extern int es_type;		/* COMGEOM solid type */
 extern int es_keyfixed;		/* keypoint specified by user */
 
+// NMG editing vars
+extern struct edgeuse *es_eu;
+extern struct loopuse *lu_copy;
+extern point_t lu_keypoint;
+extern plane_t lu_pl;
+extern struct shell *es_s;
+
+extern struct wdb_pipe_pnt *es_pipe_pnt;
+extern struct wdb_metaball_pnt *es_metaball_pnt;
+
 extern mat_t es_mat;		/* accumulated matrix of path */
 extern mat_t es_invmat;		/* inverse of es_mat KAA */
 
@@ -236,6 +246,9 @@ extern void get_solid_keypoint(struct mged_state *s, fastf_t *pt,
 			       char **strp,
 			       struct rt_db_internal *ip,
 			       fastf_t *mat);
+
+extern void set_e_axes_pos(struct mged_state *s, int both);
+
 
 #endif /* MGED_SEDIT_H */
 

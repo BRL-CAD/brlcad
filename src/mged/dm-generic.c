@@ -46,6 +46,7 @@
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+#include "./menu.h"
 
 
 extern point_t e_axes_pos;

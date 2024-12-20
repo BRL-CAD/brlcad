@@ -34,6 +34,7 @@
 #include "./mged_dm.h"
 
 #include "./sedit.h"
+#include "./menu.h"
 
 
 struct display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
