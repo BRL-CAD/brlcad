@@ -6503,114 +6503,6 @@ label_edited_solid(
 	VMOVE(pl[npl].pt, _pt); \
 	bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
-	case ID_ARB8:
-	    {
-		struct rt_arb_internal *arb=
-		    (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ARB_CK_MAGIC(arb);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-	case ID_TGC:
-	    {
-		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
-		RT_TGC_CK_MAGIC(tgc);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_ELL:
-	    {
-		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ELL_CK_MAGIC(ell);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_SUPERELL:
-	    {
-		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_SUPERELL_CK_MAGIC(superell);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_TOR:
-	    {
-
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
-		RT_TOR_CK_MAGIC(tor);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_RPC:
-	    {
-		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
-		RT_RPC_CK_MAGIC(rpc);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_PARTICLE:
-	    {
-		struct rt_part_internal *part =
-		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
-		RT_PART_CK_MAGIC(part);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_RHC:
-	    {
-		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
-		RT_RHC_CK_MAGIC(rhc);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_EPA:
-	    {
-		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
-		RT_EPA_CK_MAGIC(epa);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_EHY:
-	    {
-		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
-		RT_EHY_CK_MAGIC(ehy);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_HYP:
-	    {
-		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
-		RT_HYP_CK_MAGIC(hyp);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
-	case ID_ETO:
-	    {
-		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ETO_CK_MAGIC(eto);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
-
 	case ID_ARS:
 	    {
 		struct rt_ars_internal *ars=
@@ -6700,14 +6592,6 @@ label_edited_solid(
 		}
 	    }
 	    break;
-	case ID_CLINE:
-	    {
-		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
-		RT_CLINE_CK_MAGIC(cli);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    }
-	    break;
 	case ID_BOT:
 	    {
 		struct rt_bot_internal *bot =
@@ -6774,6 +6658,12 @@ label_edited_solid(
 	    }
 
 	    break;
+
+	default:
+	    if (OBJ[ip->idb_type].ft_labels)
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
+	    break;
+
     }
 
     pl[npl].str[0] = '\0';	/* Mark ending */
