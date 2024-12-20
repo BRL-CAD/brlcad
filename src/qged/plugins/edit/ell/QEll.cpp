@@ -207,9 +207,29 @@ QEll::update_obj_wireframe()
     bu_opt_color(NULL, 1, (const char **)&av[0], (void *)&cval);
     bu_color_to_rgb_chars(&cval, p->s_color);
 
-    // When editing, we show the labels
+    // When editing, we show the labels (if any)
+    struct rt_point_labels pl[8+1];
+    int lcnt = 0;
+    mat_t idn_mat;
+    MAT_IDN(idn_mat);
     if (intern.idb_meth->ft_labels)
-	intern.idb_meth->ft_labels(p, &intern);
+	lcnt = intern.idb_meth->ft_labels(pl, 8, idn_mat, &intern, tol);
+
+    for (int i = 0; i < lcnt; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(p);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	bu_vls_sprintf(&la->label, "%s", pl[i].str);
+	VMOVE(la->p, pl[i].pt);
+    }
 
     p->s_flag = UP;
     // TODO - we should be able to set UP or DOWN on the various labels

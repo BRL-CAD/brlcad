@@ -1144,42 +1144,33 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     return 0;
 }
 
-void
-rt_cline_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_cline_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 2;
+    if (!pl || pl_max < lcnt)
+	return 0;
 
     struct rt_cline_internal *cline = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline);
 
-    // Set up the containers
-    struct bv_label *l[2];
-    for (int i = 0; i < 2; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work1, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
+    MAT4X3PNT(pos_view, xform, cline->v);
+    POINT_LABEL(pos_view, 'V');
 
-    // Do the specific data assignments for each label
+    VADD2(work1, cline->v, cline->h);
+    MAT4X3PNT(pos_view, xform, work1);
+    POINT_LABEL(pos_view, 'H');
 
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, cline->v);
-
-    bu_vls_sprintf(&l[0]->label, "H");
-    VADD2(l[1]->p, cline->v, cline->h);
-
+    return lcnt;
 }
-
 
 /** @} */
 /*

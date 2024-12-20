@@ -968,39 +968,30 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-void
-rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_ars_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
-
-    /*XXX Needs work - doesn't really represent the ARS data well... */
+    int lcnt = 1;
+    if (!pl || pl_max < lcnt)
+	return 0;
 
     struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(ars);
 
-    // Set up the containers
-    struct bv_label *l[2];
-    int lcnt = 1;
-    for (int i = 0; i < lcnt; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
+    MAT4X3PNT(pos_view, xform, ars->curves[0]);
+    POINT_LABEL(pos_view, 'V');
 
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, ars->curves[0]);
-
+    return lcnt;
 }
+
 
 /** @} */
 /*

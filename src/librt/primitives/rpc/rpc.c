@@ -1731,50 +1731,45 @@ rpc_is_valid(struct rt_rpc_internal *rpc)
     return 1;
 }
 
-void
-rt_rpc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_rpc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt)
+	return 0;
 
     struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(rpc);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
-
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, rpc->rpc_V);
-
-    bu_vls_sprintf(&l[1]->label, "B");
-    VADD2(l[1]->p, rpc->rpc_V, rpc->rpc_B);
-
-    bu_vls_sprintf(&l[2]->label, "H");
-    VADD2(l[2]->p, rpc->rpc_V, rpc->rpc_H);
-
-    bu_vls_sprintf(&l[3]->label, "r");
     vect_t Ru;
+    point_t work, pos_view;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
+
+    MAT4X3PNT(pos_view, xform, rpc->rpc_V);
+    POINT_LABEL(pos_view, 'V');
+
+    VADD2(work, rpc->rpc_V, rpc->rpc_B);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
+
+    VADD2(work, rpc->rpc_V, rpc->rpc_H);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
+
     VCROSS(Ru, rpc->rpc_B, rpc->rpc_H);
     VUNITIZE(Ru);
     VSCALE(Ru, Ru, rpc->rpc_r);
-    VADD2(l[3]->p, rpc->rpc_V, Ru);
-}
+    VADD2(work, rpc->rpc_V, Ru);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'r');
 
+    return lcnt;
+}
 
 /*
  * Local Variables:

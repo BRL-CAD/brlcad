@@ -2077,59 +2077,55 @@ rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
     VJOIN1(*cent, apex, dist_C, unit_vec);
 }
 
-void
-rt_ehy_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_ehy_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 5;
+    if (!pl || pl_max < lcnt)
+	return 0;
 
     struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(ehy);
 
-    // Set up the containers
-    struct bv_label *l[5];
-    for (int i = 0; i < 5; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
+    vect_t A, B;
 
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, ehy->ehy_V);
+    MAT4X3PNT(pos_view, xform, ehy->ehy_V);
+    POINT_LABEL(pos_view, 'V');
 
-    bu_vls_sprintf(&l[1]->label, "H");
-    VADD2(l[1]->p, ehy->ehy_V, ehy->ehy_H);
+    VADD2(work, ehy->ehy_V, ehy->ehy_H);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
 
-    bu_vls_sprintf(&l[2]->label, "A");
-    vect_t A;
     VSCALE(A, ehy->ehy_Au, ehy->ehy_r1);
-    VADD2(l[2]->p, ehy->ehy_V, A);
+    VADD2(work, ehy->ehy_V, A);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
 
-    bu_vls_sprintf(&l[3]->label, "B");
-    vect_t B;
     VCROSS(B, ehy->ehy_Au, ehy->ehy_H);
     VUNITIZE(B);
     VSCALE(B, B, ehy->ehy_r2);
-    VADD2(l[3]->p, ehy->ehy_V, B);
+    VADD2(work, ehy->ehy_V, B);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
 
-    bu_vls_sprintf(&l[4]->label, "c");
-    VMOVE(l[4]->p, ehy->ehy_H);
-    VUNITIZE(l[4]->p);
-    VSCALE(l[4]->p, l[4]->p, MAGNITUDE(ehy->ehy_H) + ehy->ehy_c);
-    VADD2(l[4]->p, ehy->ehy_V, l[4]->p);
+    VMOVE(work, ehy->ehy_H);
+    VUNITIZE(work);
+    VSCALE(work, work,
+	    MAGNITUDE(ehy->ehy_H) + ehy->ehy_c);
+    VADD2(work, ehy->ehy_V, work);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'c');
 
+    return lcnt;
 }
-
 
 /** @} */
 /*

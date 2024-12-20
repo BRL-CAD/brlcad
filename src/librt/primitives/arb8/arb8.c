@@ -2626,75 +2626,65 @@ rt_arb_find_e_nearest_pt2(int *edge,
     return 0;
 }
 
-void
-rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_arb_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *utol)
 {
-    int i;
+    if (!pl || pl_max < 8)
+	return 0;
 
-    if (!ps || !ip)
-	return;
-
-    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    const struct bn_tol ltol = BN_TOL_INIT_TOL;
+    const struct bn_tol *tol = (utol) ? utol : &ltol;
+    struct rt_arb_internal *arb= (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
+    int es_type = rt_arb_std_type(ip, tol);
 
-    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
-    int arbType = rt_arb_std_type(ip, &arb_tol);
+    point_t pos_view;
+    int npl = 0;
 
-    // Set up the containers
-    struct bv_label *l[8];
-    for (i = 0; i < arbType; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
-    switch (arbType) {
+    switch (es_type)
+    {
 	case ARB8:
-	    for (i=0; i<8; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
+	    for (int i=0; i<8; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
 	    }
-	    break;
+	    return 8;
 	case ARB7:
-	    for (i=0; i<7; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
+	    for (int i=0; i<7; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
 	    }
-	    break;
+	    return 7;
 	case ARB6:
-	    for (i=0; i<5; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
+	    for (int i=0; i<5; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
 	    }
-	    bu_vls_sprintf(&l[5]->label, "6");
-	    VMOVE(l[5]->p, arb->pt[6]);
-	    break;
+	    MAT4X3PNT(pos_view, xform, arb->pt[6]);
+	    POINT_LABEL(pos_view, '6');
+	    return 6;
 	case ARB5:
-	    for (i=0; i<5; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
+	    for (int i=0; i<5; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
 	    }
-	    break;
+	    return 5;
 	case ARB4:
-	    for (i=0; i<3; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
+	    for (int i=0; i<3; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
 	    }
-	    bu_vls_sprintf(&l[3]->label, "4");
-	    VMOVE(l[3]->p, arb->pt[4]);
-	    break;
+	    MAT4X3PNT(pos_view, xform, arb->pt[4]);
+	    POINT_LABEL(pos_view, '4');
+	    return 4;
+	default:
+	    return 0;
     }
-
 }
 
 int

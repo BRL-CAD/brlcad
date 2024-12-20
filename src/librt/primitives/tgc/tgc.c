@@ -3419,47 +3419,43 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 }
 
-void
-rt_tgc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_tgc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 5;
+    if (!pl || pl_max < lcnt)
+	return 0;
+
+    point_t work, pos_view;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
     struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
+    MAT4X3PNT(pos_view, xform, tgc->v);
+    POINT_LABEL(pos_view, 'V');
 
-    // Set up the containers
-    struct bv_label *l[5];
-    for (int i = 0; i < 5; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    VADD2(work, tgc->v, tgc->a);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+    VADD2(work, tgc->v, tgc->b);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
 
-	l[i] = la;
-    }
+    VADD3(work, tgc->v, tgc->h, tgc->c);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'C');
 
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, tgc->v);
+    VADD3(work, tgc->v, tgc->h, tgc->d);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'D');
 
-    bu_vls_sprintf(&l[1]->label, "A");
-    VADD2(l[1]->p, tgc->v, tgc->a);
-
-    bu_vls_sprintf(&l[2]->label, "B");
-    VADD2(l[2]->p, tgc->v, tgc->b);
-
-    bu_vls_sprintf(&l[3]->label, "C");
-    VADD3(l[3]->p, tgc->v, tgc->h, tgc->c);
-
-    bu_vls_sprintf(&l[4]->label, "D");
-    VADD3(l[4]->p, tgc->v, tgc->h, tgc->d);
+    return lcnt;
 }
 
 int

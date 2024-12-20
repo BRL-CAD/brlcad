@@ -1439,62 +1439,6 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
     return 0;			/* OK */
 }
 
-extern "C" void
-rt_nurb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
-{
-    if (!ps || !ip)
-	return;
-
-    struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)ip->idb_ptr;
-    RT_NURB_CK_MAGIC(nurb);
-
-    // Set up the containers
-    struct bv_label *l[5];
-    for (int i = 0; i < 5; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
-
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
-    /*XXX Needs work */
-
-    struct face_g_snurb *surf;
-    fastf_t *fp;
-    surf = nurb->srfs[0];
-    NMG_CK_SNURB(surf);
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, 0);
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, fp);
-
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, 0);
-    bu_vls_sprintf(&l[1]->label, "  0, 0");
-    VMOVE(l[1]->p, fp);
-
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, surf->s_size[1]-1);
-    bu_vls_sprintf(&l[2]->label, "u, 0");
-    VMOVE(l[2]->p, fp);
-
-
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, 0);
-    bu_vls_sprintf(&l[3]->label, "0, v");
-    VMOVE(l[3]->p, fp);
-
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, surf->s_size[1]-1);
-    bu_vls_sprintf(&l[4]->label, "u, v");
-    VMOVE(l[4]->p, fp);
-
-}
-
 #ifdef __cplusplus
 }
 #endif

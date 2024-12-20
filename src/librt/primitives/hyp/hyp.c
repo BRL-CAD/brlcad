@@ -1434,48 +1434,45 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
     }
 }
 
-void
-rt_hyp_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_hyp_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt)
+	return 0;
 
     struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
-
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, hyp->hyp_Vi);
-
-    bu_vls_sprintf(&l[1]->label, "H");
-    VADD2(l[1]->p, hyp->hyp_Vi, hyp->hyp_Hi);
-
-    bu_vls_sprintf(&l[2]->label, "A");
-    VADD2(l[2]->p, hyp->hyp_Vi, hyp->hyp_A);
-
-    bu_vls_sprintf(&l[3]->label, "B");
     vect_t vB;
+
+    MAT4X3PNT(pos_view, xform, hyp->hyp_Vi);
+    POINT_LABEL(pos_view, 'V');
+
+    VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
+
+    VADD2(work, hyp->hyp_Vi, hyp->hyp_A);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
+
     VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
     VUNITIZE(vB);
     VSCALE(vB, vB, hyp->hyp_b);
-    VADD2(l[3]->p, hyp->hyp_Vi, vB);
+    VADD2(work, hyp->hyp_Vi, vB);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
 
+    return lcnt;
 }
 
 /*

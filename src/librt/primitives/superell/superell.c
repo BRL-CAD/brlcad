@@ -1293,6 +1293,42 @@ rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 }
 
+int
+rt_superell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt)
+	return 0;
+
+    struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+
+    point_t work, pos_view;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
+
+    MAT4X3PNT(pos_view, xform, superell->v);
+    POINT_LABEL(pos_view, 'V');
+
+    VADD2(work, superell->v, superell->a);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
+
+    VADD2(work, superell->v, superell->b);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
+
+    VADD2(work, superell->v, superell->c);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'C');
+
+    return lcnt;
+}
+
 
 /*
  * Local Variables:

@@ -2020,51 +2020,46 @@ epa_is_valid(struct rt_epa_internal *epa)
     return 1;
 }
 
-void
-rt_epa_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_epa_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt)
+	return 0;
 
     struct rt_epa_internal *epa = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(epa);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
+    vect_t A, B;
 
+    MAT4X3PNT(pos_view, xform, epa->epa_V);
+    POINT_LABEL(pos_view, 'V');
 
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, epa->epa_V);
+    VADD2(work, epa->epa_V, epa->epa_H);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
 
-    bu_vls_sprintf(&l[1]->label, "H");
-    VADD2(l[1]->p, epa->epa_V, epa->epa_H);
-
-    bu_vls_sprintf(&l[2]->label, "A");
-    vect_t A;
     VSCALE(A, epa->epa_Au, epa->epa_r1);
-    VADD2(l[2]->p, epa->epa_V, A);
+    VADD2(work, epa->epa_V, A);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
 
-    bu_vls_sprintf(&l[3]->label, "B");
-    vect_t B;
     VCROSS(B, epa->epa_Au, epa->epa_H);
     VUNITIZE(B);
     VSCALE(B, B, epa->epa_r2);
-    VADD2(l[3]->p, epa->epa_V, B);
+    VADD2(work, epa->epa_V, B);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
 
+    return lcnt;
 }
 
 

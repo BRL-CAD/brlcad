@@ -44,6 +44,7 @@
 #include "rt/db_internal.h"
 #include "rt/db_instance.h"
 #include "rt/hit.h"
+#include "rt/misc.h"
 #include "rt/resource.h"
 #include "rt/rt_instance.h"
 #include "rt/seg.h"
@@ -269,9 +270,9 @@ struct rt_functab {
     int (*ft_prep_serialize)(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #define RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(_func) ((int (*)(struct soltab *, const struct rt_db_internal *, struct bu_external *, size_t *))((void (*)(void))_func))
 
-    /** generate struct bv_scene_obj labels for the primitive */
-    void (*ft_labels)(struct bv_scene_obj *ps, const struct rt_db_internal *ip);
-#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(struct bv_scene_obj *, const struct rt_db_internal *))((void (*)(void))_func))
+    /** generate labels for the primitive.  Returns the number of labels populated in pl */
+    int (*ft_labels)(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((int (*)(struct rt_point_labels *, int, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
     /** perturb geometry parameters of primitive.  NOTE:  the oip primitive
      * returned is NOT guaranteed to be the same type as that of ip - for example,

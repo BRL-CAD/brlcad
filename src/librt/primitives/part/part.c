@@ -1878,50 +1878,47 @@ rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
     VADD3(*cent, fcent, hhcent, cvcent);
 }
 
-void
-rt_part_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_part_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt)
+	return 0;
 
     struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(part);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, part->part_V);
-
-    bu_vls_sprintf(&l[1]->label, "H");
-    VADD2(l[1]->p, part->part_V, part->part_H);
-
-    bu_vls_sprintf(&l[2]->label, "v");
     vect_t Ru, ortho;
+
+    MAT4X3PNT(pos_view, xform, part->part_V);
+    POINT_LABEL(pos_view, 'V');
+
+    VADD2(work, part->part_V, part->part_H);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
+
     VMOVE(Ru, part->part_H);
     VUNITIZE(Ru);
     bn_vec_ortho(ortho, Ru);
-    VSCALE(l[2]->p, ortho, part->part_vrad);
-    VADD2(l[2]->p, part->part_V, l[2]->p);
+    VSCALE(work, ortho, part->part_vrad);
+    VADD2(work, part->part_V, work);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'v');
 
-    bu_vls_sprintf(&l[3]->label, "h");
-    VSCALE(l[3]->p, ortho, part->part_hrad);
-    VADD3(l[3]->p, part->part_V, part->part_H, l[3]->p);
+    VSCALE(work, ortho, part->part_hrad);
+    VADD3(work, part->part_V, part->part_H, work);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'h');
+
+    return lcnt;
 }
 
 /*

@@ -80,7 +80,7 @@ extern "C" {
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
     extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op); \
     extern int rt_##name##_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version); \
-    extern void rt_##name##_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip); \
+    extern int rt_##name##_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *utol); \
     extern int rt_##name##_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor)
 
 RT_DECLARE_INTERFACE(tor);
@@ -640,7 +640,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_nurb_labels), /* label */
+	NULL, /* label */
 	NULL  /* perturb */
     },
 
@@ -688,7 +688,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_sph_labels), /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels), /* label */
 	NULL  /* perturb */
     },
 
@@ -1168,7 +1168,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_ehy_labels), /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_epa_labels), /* label */
 	NULL  /* perturb */
     },
 
@@ -1937,7 +1937,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL, /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_superell_labels), /* label */
 	NULL  /* perturb */
     },
 

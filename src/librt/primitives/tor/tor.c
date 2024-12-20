@@ -1812,53 +1812,48 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
     VMOVE(*cent,tip->v);
 }
 
-void
-rt_tor_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < 4)
+	return 0;
 
     struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
-
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
+    point_t work, pos_view;
     fastf_t r3, r4;
     vect_t adir;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
+
     bn_vec_ortho(adir, tor->h);
+
+    MAT4X3PNT(pos_view, xform, tor->v);
+    POINT_LABEL(pos_view, 'V');
+
     r3 = tor->r_a - tor->r_h;
+    VJOIN1(work, tor->v, r3, adir);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'I');
+
     r4 = tor->r_a + tor->r_h;
+    VJOIN1(work, tor->v, r4, adir);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'O');
 
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, tor->v);
+    VJOIN1(work, tor->v, tor->r_a, adir);
+    VADD2(work, work, tor->h);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
 
-    bu_vls_sprintf(&l[1]->label, "I");
-    VJOIN1(l[1]->p, tor->v, r3, adir);
-
-    bu_vls_sprintf(&l[2]->label, "O");
-    VJOIN1(l[2]->p, tor->v, r4, adir);
-
-    bu_vls_sprintf(&l[3]->label, "H");
-    VJOIN1(l[3]->p, tor->v, tor->r_a, adir);
-    VADD2(l[3]->p, l[3]->p, tor->h);
+    return lcnt;
 }
-
 
 /*
  * Local Variables:

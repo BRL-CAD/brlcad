@@ -6479,14 +6479,13 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 void
 label_edited_solid(
     struct mged_state *s,
-    int *num_lines,
-    point_t *lines,
+    int *num_lines, // NOTE - used only for BOTs
+    point_t *lines, // NOTE - used only for BOTs
     struct rt_point_labels pl[],
-    int UNUSED(max_pl),
+    int max_pl,
     const mat_t xform,
     struct rt_db_internal *ip)
 {
-    int i;
     point_t work;
     point_t pos_view;
     int npl = 0;
@@ -6509,43 +6508,7 @@ label_edited_solid(
 		struct rt_arb_internal *arb=
 		    (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ARB_CK_MAGIC(arb);
-		switch (es_type)
-		{
-		    case ARB8:
-			for (i=0; i<8; i++) {
-			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			    POINT_LABEL(pos_view, i+'1');
-			}
-			break;
-		    case ARB7:
-			for (i=0; i<7; i++) {
-			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			    POINT_LABEL(pos_view, i+'1');
-			}
-			break;
-		    case ARB6:
-			for (i=0; i<5; i++) {
-			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			    POINT_LABEL(pos_view, i+'1');
-			}
-			MAT4X3PNT(pos_view, xform, arb->pt[6]);
-			POINT_LABEL(pos_view, '6');
-			break;
-		    case ARB5:
-			for (i=0; i<5; i++) {
-			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			    POINT_LABEL(pos_view, i+'1');
-			}
-			break;
-		    case ARB4:
-			for (i=0; i<3; i++) {
-			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			    POINT_LABEL(pos_view, i+'1');
-			}
-			MAT4X3PNT(pos_view, xform, arb->pt[4]);
-			POINT_LABEL(pos_view, '4');
-			break;
-		}
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 	case ID_TGC:
@@ -6553,24 +6516,7 @@ label_edited_solid(
 		struct rt_tgc_internal *tgc =
 		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
-		MAT4X3PNT(pos_view, xform, tgc->v);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, tgc->v, tgc->a);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'A');
-
-		VADD2(work, tgc->v, tgc->b);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'B');
-
-		VADD3(work, tgc->v, tgc->h, tgc->c);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'C');
-
-		VADD3(work, tgc->v, tgc->h, tgc->d);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'D');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6579,21 +6525,7 @@ label_edited_solid(
 		struct rt_ell_internal *ell =
 		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
-
-		MAT4X3PNT(pos_view, xform, ell->v);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, ell->v, ell->a);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'A');
-
-		VADD2(work, ell->v, ell->b);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'B');
-
-		VADD2(work, ell->v, ell->c);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'C');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6602,51 +6534,17 @@ label_edited_solid(
 		struct rt_superell_internal *superell =
 		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
-
-		MAT4X3PNT(pos_view, xform, superell->v);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, superell->v, superell->a);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'A');
-
-		VADD2(work, superell->v, superell->b);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'B');
-
-		VADD2(work, superell->v, superell->c);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'C');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
 	case ID_TOR:
 	    {
+
 		struct rt_tor_internal *tor =
 		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
-		fastf_t r3, r4;
-		vect_t adir;
 		RT_TOR_CK_MAGIC(tor);
-
-		bn_vec_ortho(adir, tor->h);
-
-		MAT4X3PNT(pos_view, xform, tor->v);
-		POINT_LABEL(pos_view, 'V');
-
-		r3 = tor->r_a - tor->r_h;
-		VJOIN1(work, tor->v, r3, adir);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'I');
-
-		r4 = tor->r_a + tor->r_h;
-		VJOIN1(work, tor->v, r4, adir);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'O');
-
-		VJOIN1(work, tor->v, tor->r_a, adir);
-		VADD2(work, work, tor->h);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'H');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6654,26 +6552,8 @@ label_edited_solid(
 	    {
 		struct rt_rpc_internal *rpc =
 		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
-		vect_t Ru;
-
 		RT_RPC_CK_MAGIC(rpc);
-		MAT4X3PNT(pos_view, xform, rpc->rpc_V);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, rpc->rpc_V, rpc->rpc_B);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'B');
-
-		VADD2(work, rpc->rpc_V, rpc->rpc_H);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'H');
-
-		VCROSS(Ru, rpc->rpc_B, rpc->rpc_H);
-		VUNITIZE(Ru);
-		VSCALE(Ru, Ru, rpc->rpc_r);
-		VADD2(work, rpc->rpc_V, Ru);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'r');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6681,28 +6561,8 @@ label_edited_solid(
 	    {
 		struct rt_part_internal *part =
 		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
-		vect_t Ru, ortho;
-
 		RT_PART_CK_MAGIC(part);
-		MAT4X3PNT(pos_view, xform, part->part_V);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, part->part_V, part->part_H);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'H');
-
-		VMOVE(Ru, part->part_H);
-		VUNITIZE(Ru);
-		bn_vec_ortho(ortho, Ru);
-		VSCALE(work, ortho, part->part_vrad);
-		VADD2(work, part->part_V, work);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'v');
-
-		VSCALE(work, ortho, part->part_hrad);
-		VADD3(work, part->part_V, part->part_H, work);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'h');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6710,34 +6570,8 @@ label_edited_solid(
 	    {
 		struct rt_rhc_internal *rhc =
 		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
-		vect_t Ru;
-
 		RT_RHC_CK_MAGIC(rhc);
-		MAT4X3PNT(pos_view, xform, rhc->rhc_V);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, rhc->rhc_V, rhc->rhc_B);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'B');
-
-		VADD2(work, rhc->rhc_V, rhc->rhc_H);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'H');
-
-		VCROSS(Ru, rhc->rhc_B, rhc->rhc_H);
-		VUNITIZE(Ru);
-		VSCALE(Ru, Ru, rhc->rhc_r);
-		VADD2(work, rhc->rhc_V, Ru);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'r');
-
-		VMOVE(work, rhc->rhc_B);
-		VUNITIZE(work);
-		VSCALE(work, work,
-		       MAGNITUDE(rhc->rhc_B) + rhc->rhc_c);
-		VADD2(work, work, rhc->rhc_V);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'c');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6745,27 +6579,8 @@ label_edited_solid(
 	    {
 		struct rt_epa_internal *epa =
 		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
-		vect_t A, B;
-
 		RT_EPA_CK_MAGIC(epa);
-		MAT4X3PNT(pos_view, xform, epa->epa_V);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, epa->epa_V, epa->epa_H);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'H');
-
-		VSCALE(A, epa->epa_Au, epa->epa_r1);
-		VADD2(work, epa->epa_V, A);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'A');
-
-		VCROSS(B, epa->epa_Au, epa->epa_H);
-		VUNITIZE(B);
-		VSCALE(B, B, epa->epa_r2);
-		VADD2(work, epa->epa_V, B);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'B');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6773,35 +6588,8 @@ label_edited_solid(
 	    {
 		struct rt_ehy_internal *ehy =
 		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
-		vect_t A, B;
-
 		RT_EHY_CK_MAGIC(ehy);
-		MAT4X3PNT(pos_view, xform, ehy->ehy_V);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, ehy->ehy_V, ehy->ehy_H);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'H');
-
-		VSCALE(A, ehy->ehy_Au, ehy->ehy_r1);
-		VADD2(work, ehy->ehy_V, A);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'A');
-
-		VCROSS(B, ehy->ehy_Au, ehy->ehy_H);
-		VUNITIZE(B);
-		VSCALE(B, B, ehy->ehy_r2);
-		VADD2(work, ehy->ehy_V, B);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'B');
-
-		VMOVE(work, ehy->ehy_H);
-		VUNITIZE(work);
-		VSCALE(work, work,
-		       MAGNITUDE(ehy->ehy_H) + ehy->ehy_c);
-		VADD2(work, ehy->ehy_V, work);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'c');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6809,27 +6597,8 @@ label_edited_solid(
 	    {
 		struct rt_hyp_internal *hyp =
 		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
-		vect_t vB;
-
 		RT_HYP_CK_MAGIC(hyp);
-
-		MAT4X3PNT(pos_view, xform, hyp->hyp_Vi);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'H');
-
-		VADD2(work, hyp->hyp_Vi, hyp->hyp_A);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'A');
-
-		VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
-		VUNITIZE(vB);
-		VSCALE(vB, vB, hyp->hyp_b);
-		VADD2(work, hyp->hyp_Vi, vB);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'B');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6837,39 +6606,8 @@ label_edited_solid(
 	    {
 		struct rt_eto_internal *eto =
 		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
-		fastf_t ch, cv, dh, dv, cmag, phi;
-		vect_t Au, Nu;
-
 		RT_ETO_CK_MAGIC(eto);
-
-		MAT4X3PNT(pos_view, xform, eto->eto_V);
-		POINT_LABEL(pos_view, 'V');
-
-		VMOVE(Nu, eto->eto_N);
-		VUNITIZE(Nu);
-		bn_vec_ortho(Au, Nu);
-		VUNITIZE(Au);
-
-		cmag = MAGNITUDE(eto->eto_C);
-		/* get horizontal and vertical components of C and Rd */
-		cv = VDOT(eto->eto_C, Nu);
-		ch = sqrt(cmag*cmag - cv*cv);
-		/* angle between C and Nu */
-		phi = acos(cv / cmag);
-		dv = -eto->eto_rd * sin(phi);
-		dh = eto->eto_rd * cos(phi);
-
-		VJOIN2(work, eto->eto_V, eto->eto_r+ch, Au, cv, Nu);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'C');
-
-		VJOIN2(work, eto->eto_V, eto->eto_r+dh, Au, dv, Nu);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'D');
-
-		VJOIN1(work, eto->eto_V, eto->eto_r, Au);
-		MAT4X3PNT(pos_view, xform, work);
-		POINT_LABEL(pos_view, 'r');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 
@@ -6879,9 +6617,9 @@ label_edited_solid(
 		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ARS_CK_MAGIC(ars);
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 
-		MAT4X3PNT(pos_view, xform, ars->curves[0]);
-
+		// Conditional additional labeling
 		if (es_ars_crv >= 0 && es_ars_col >= 0) {
 		    point_t ars_pt;
 
@@ -6890,17 +6628,17 @@ label_edited_solid(
 		    POINT_LABEL_STR(ars_pt, "pt");
 		}
 	    }
-	    POINT_LABEL(pos_view, 'V');
 	    break;
 
 	case ID_BSPLINE:
 	    {
 		struct rt_nurb_internal *sip =
 		    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
+		RT_NURB_CK_MAGIC(sip);
+
+		// Conditional labeling
 		struct face_g_snurb *surf;
 		fastf_t *fp;
-
-		RT_NURB_CK_MAGIC(sip);
 		surf = sip->srfs[spl_surfno];
 		NMG_CK_SNURB(surf);
 		fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
@@ -6919,6 +6657,7 @@ label_edited_solid(
 		fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, surf->s_size[1]-1);
 		MAT4X3PNT(pos_view, xform, fp);
 		POINT_LABEL_STR(pos_view, " u,v");
+
 	    }
 	    break;
 	case ID_NMG:
@@ -6930,6 +6669,7 @@ label_edited_solid(
 		NMG_CK_MODEL(m);
 #endif
 
+		// Conditional labeling
 		if (es_eu) {
 		    point_t cent;
 		    NMG_CK_EDGEUSE(es_eu);
@@ -6951,6 +6691,7 @@ label_edited_solid(
 		RT_PIPE_CK_MAGIC(pipeip);
 #endif
 
+		// Conditional labeling
 		if (es_pipe_pnt) {
 		    BU_CKMAG(es_pipe_pnt, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
@@ -6963,16 +6704,8 @@ label_edited_solid(
 	    {
 		struct rt_cline_internal *cli =
 		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
-		point_t work1;
-
 		RT_CLINE_CK_MAGIC(cli);
-
-		MAT4X3PNT(pos_view, xform, cli->v);
-		POINT_LABEL(pos_view, 'V');
-
-		VADD2(work1, cli->v, cli->h);
-		MAT4X3PNT(pos_view, xform, work1);
-		POINT_LABEL(pos_view, 'H');
+		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    }
 	    break;
 	case ID_BOT:
@@ -6982,6 +6715,7 @@ label_edited_solid(
 
 		RT_BOT_CK_MAGIC(bot);
 
+		// Conditional labeling
 		if (bot_verts[2] > -1 &&
 		    bot_verts[1] > -1 &&
 		    bot_verts[0] > -1)
