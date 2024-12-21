@@ -155,8 +155,6 @@ int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
 
-struct bg_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
-
 static int
 mged_bomb_hook(void *clientData, void *data)
 {
