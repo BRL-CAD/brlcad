@@ -6163,7 +6163,7 @@ label_edited_solid(
 		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ARS_CK_MAGIC(ars);
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
+		npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 
 		// Conditional additional labeling
 		if (es_ars_crv >= 0 && es_ars_col >= 0) {
@@ -6315,7 +6315,7 @@ label_edited_solid(
 
 	default:
 	    if (OBJ[ip->idb_type].ft_labels)
-		OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
+		npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	    break;
 
     }
