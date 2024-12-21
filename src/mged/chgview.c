@@ -3615,7 +3615,7 @@ mged_etran(struct mged_state *s,
 
     if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	es_keyfixed = 0;
-	get_solid_keypoint(s, es_keypoint, &es_keytag,
+	get_solid_keypoint(s, &es_keypoint, &es_keytag,
 			   &s->edit_state.es_int, es_mat);
 	save_edflag = es_edflag;
 

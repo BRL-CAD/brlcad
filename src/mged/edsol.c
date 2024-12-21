@@ -312,7 +312,7 @@ set_e_axes_pos(struct mged_state *s, int both)
  * processed as well?
  */
 void
-get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
     static const char *vert_str = "V";
     const char *cp = *strp;
@@ -339,7 +339,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct 
 		    VMOVE(mpt, es_pipe_pnt->pp_coord);
 		}
 		*strp = "V";
-		MAT4X3PNT(pt, mat, mpt);
+		MAT4X3PNT(*pt, mat, mpt);
 		return;
 	    }
 	case ID_METABALL:
@@ -356,27 +356,27 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct 
 		    snprintf(buf, BUFSIZ, "V %f", es_metaball_pnt->fldstr);
 		}
 		*strp = buf;
-		MAT4X3PNT(pt, mat, mpt);
+		MAT4X3PNT(*pt, mat, mpt);
 		return;
 	    }
 	case ID_BOT:
 	    {
-		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, cp, mat, ip, &s->tol.tol);
+		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
 		// If we're editing, use that position instead
 		if (bot_verts[0] > -1) {
 		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 		    RT_BOT_CK_MAGIC(bot);
 		    VMOVE(mpt, &bot->vertices[bot_verts[0]*3]);
-		    MAT4X3PNT(pt, mat, mpt);
+		    MAT4X3PNT(*pt, mat, mpt);
 		}
 		return;
 	    }
 	case ID_ARB8:
 	    if (*cp == 'V') {
-		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, cp, mat, ip, &s->tol.tol);
+		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
 	    } else {
 		static const char *vstr = "V1";
-		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, vstr, mat, ip, &s->tol.tol);
+		*strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, &s->tol.tol);
 	    }
 	    return;
 	case ID_BSPLINE:
@@ -394,15 +394,15 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct 
 		sprintf(buf, "Surf %d, index %d,%d",
 			spl_surfno, spl_ui, spl_vi);
 		*strp = buf;
-		MAT4X3PNT(pt, mat, mpt);
+		MAT4X3PNT(*pt, mat, mpt);
 		return;
 	    }
 	case ID_GRIP:
 	    {
-		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, cp, mat, ip, &s->tol.tol);
+		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
 		if (!*strp) {
 		    static const char *c_str = "C";
-		    *strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, c_str, mat, ip, &s->tol.tol);
+		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, c_str, mat, ip, &s->tol.tol);
 		}
 		return;
 	    }
@@ -418,7 +418,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct 
 		    VMOVE(mpt, &ars->curves[es_ars_crv][es_ars_col*3]);
 		}
 
-		MAT4X3PNT(pt, mat, mpt);
+		MAT4X3PNT(*pt, mat, mpt);
 		*strp = "V";
 		return;
 	    }
@@ -428,9 +428,9 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct 
 		RT_EXTRUDE_CK_MAGIC(extr);
 		if (extr->skt && extr->skt->verts) {
 		    static const char *vstr = "V1";
-		    *strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, vstr, mat, ip, &s->tol.tol);
+		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, &s->tol.tol);
 		} else {
-		    *strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, NULL, mat, ip, &s->tol.tol);
+		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, NULL, mat, ip, &s->tol.tol);
 		}
 		return;
 	    }
@@ -577,9 +577,9 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct 
 	case ID_SKETCH:
 	case ID_ANNOT:
 	case ID_DATUM:
-	    *strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, cp, mat, ip, &s->tol.tol);
+	    *strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
 	    if (!*strp)
-		*strp = OBJ[ip->idb_type].ft_keypoint((point_t *)&pt, vert_str, mat, ip, &s->tol.tol);
+		*strp = OBJ[ip->idb_type].ft_keypoint(pt, vert_str, mat, ip, &s->tol.tol);
 	    return;
 	    /* fall through */
 	default:
@@ -590,7 +590,7 @@ get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct 
     }
 
     // Most of the time this is handled, but if it hasn't been yet do the mat calculation
-    MAT4X3PNT(pt, mat, mpt);
+    MAT4X3PNT(*pt, mat, mpt);
 }
 
 
@@ -604,7 +604,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     if (GEOM_EDIT_STATE == ST_VIEW || GEOM_EDIT_STATE == ST_S_PICK || GEOM_EDIT_STATE == ST_O_PICK)
 	return TCL_OK;
 
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
     return TCL_OK;
 }
 
@@ -691,7 +691,7 @@ init_sedit(struct mged_state *s)
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -4799,7 +4799,7 @@ sedit(struct mged_state *s)
 
     /* If the keypoint changed location, find about it here */
     if (!es_keyfixed)
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -5531,7 +5531,7 @@ init_oedit_guts(struct mged_state *s)
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(s, es_keypoint, &strp, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, &es_keypoint, &strp, &s->edit_state.es_int, es_mat);
     init_oedit_vars(s);
 }
 
@@ -6339,7 +6339,7 @@ sedit_vpick(struct mged_state *s, point_t v_pos)
 	spl_surfno = surfno;
 	spl_ui = u;
 	spl_vi = v;
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
     view_state->vs_flag = 1;
@@ -6468,7 +6468,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	    if (BU_STR_EQUAL(argv[1], "reset")) {
 		es_keytag = "";
 		es_keyfixed = 0;
-		get_solid_keypoint(s, es_keypoint, &es_keytag,
+		get_solid_keypoint(s, &es_keypoint, &es_keytag,
 				   &s->edit_state.es_int, es_mat);
 		break;
 	    }
@@ -6823,7 +6823,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     }
 
     if (!es_keyfixed)
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -6880,7 +6880,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     /* Reset relevant variables */
     MAT_IDN(acc_rot_sol);
@@ -7004,7 +7004,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(s, es_keypoint, &strp, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, &es_keypoint, &strp, &s->edit_state.es_int, es_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
     update_views = 1;
