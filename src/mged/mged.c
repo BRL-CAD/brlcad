@@ -155,7 +155,6 @@ int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
 
-struct bn_tol mged_tol;	/* calculation tolerance */
 struct bg_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
 static int
@@ -2084,11 +2083,11 @@ main(int argc, char *argv[])
     inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
-    mged_tol.magic = BN_TOL_MAGIC;
-    mged_tol.dist = 0.0005;
-    mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
-    mged_tol.perp = 1e-6;
-    mged_tol.para = 1 - mged_tol.perp;
+    s->tol.tol.magic = BN_TOL_MAGIC;
+    s->tol.tol.dist = 0.0005;
+    s->tol.tol.dist_sq = s->tol.tol.dist * s->tol.tol.dist;
+    s->tol.tol.perp = 1e-6;
+    s->tol.tol.para = 1 - s->tol.tol.perp;
 
     rt_prep_timer();		/* Initialize timer */
 
