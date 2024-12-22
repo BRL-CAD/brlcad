@@ -446,8 +446,13 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
     if (etype == 2)
 	ncompat_list = nongui_editor_list;
 
-    // EDITOR environment variable takes precedence, if set
-    const char *env_editor = getenv("EDITOR");
+    // VISUAL/EDITOR environment variables takes precedence, if set
+    const char *env_editor = getenv("VISUAL");
+    if (env_editor && env_editor[0] != '\0') {
+	if (editor_file_check(bu_editor, env_editor, ncompat_list))
+	    goto do_opt;
+    }
+    env_editor = getenv("EDITOR");
     if (env_editor && env_editor[0] != '\0') {
 	if (editor_file_check(bu_editor, env_editor, ncompat_list))
 	    goto do_opt;

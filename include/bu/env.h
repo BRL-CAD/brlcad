@@ -72,13 +72,13 @@ BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
  * 2.  Otherwise, the BRL-CAD's binaries will be checked for a bundled copy.
  * 3.  Otherwise, bu_which will attempt to find the full path.
  *
- * If the EDITOR environment variable is set, the contents of
- * EDITOR take priority over both libbu's internal list and a user supplied
- * list.
+ * If the VISUAL (1st priority) or EDITOR (2nd priority) environment variables
+ * are set, the contents take priority over both libbu's internal list and a
+ * user supplied list.
  *
- * If EDITOR is unset, the next priority is any user supplied options via the
- * check_for_editors array.  As with the EDITOR variable, an attempt will be
- * made to respect the etype setting.
+ * If VISUAL and EDITOR are unset, the next priority is any user supplied
+ * options via the check_for_editors array.  As with the env variables, an
+ * attempt will be made to respect the etype setting.
  *
  * If the optional check_for_editors array is provided, libbu will first
  * attempt to use the contents of that array to find an editor.  The main
