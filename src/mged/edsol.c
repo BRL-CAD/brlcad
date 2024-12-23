@@ -299,6 +299,133 @@ set_e_axes_pos(struct mged_state *s, int both)
     }
 }
 
+static void
+get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+{
+    point_t mpt = VINIT_ZERO;
+    if (ip->idb_type != ID_NMG)
+	return;
+
+    struct vertex *v;
+    struct vertexuse *vu;
+    struct edgeuse *eu;
+    struct loopuse *lu;
+    struct faceuse *fu;
+    struct shell *nmg_s;
+    struct nmgregion *r;
+    struct model *m =
+	(struct model *) s->edit_state.es_int.idb_ptr;
+    NMG_CK_MODEL(m);
+    /* XXX Fall through, for now (How about first vertex?? - JRA) */
+
+    /* set default first */
+    VSETALL(mpt, 0.0);
+    *strp = "(origin)";
+
+    /* XXX Try to use the first point of the selected edge */
+    if (es_eu != (struct edgeuse *)NULL &&
+	    es_eu->vu_p != (struct vertexuse *)NULL &&
+	    es_eu->vu_p->v_p != (struct vertex *)NULL &&
+	    es_eu->vu_p->v_p->vg_p != (struct vertex_g *)NULL) {
+	VMOVE(mpt, es_eu->vu_p->v_p->vg_p->coord);
+	goto nmg_keypoint_finalize;
+    }
+
+    if (BU_LIST_IS_EMPTY(&m->r_hd))
+	goto nmg_keypoint_finalize;
+
+    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    if (!r)
+	goto nmg_keypoint_finalize;
+    NMG_CK_REGION(r);
+
+    if (BU_LIST_IS_EMPTY(&r->s_hd))
+	goto nmg_keypoint_finalize;
+
+    nmg_s = BU_LIST_FIRST(shell, &r->s_hd);
+    if (!s)
+	goto nmg_keypoint_finalize;
+    NMG_CK_SHELL(nmg_s);
+
+    if (BU_LIST_IS_EMPTY(&nmg_s->fu_hd))
+	fu = (struct faceuse *)NULL;
+    else
+	fu = BU_LIST_FIRST(faceuse, &nmg_s->fu_hd);
+    if (fu) {
+	NMG_CK_FACEUSE(fu);
+	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	NMG_CK_LOOPUSE(lu);
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+	    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+	    NMG_CK_EDGEUSE(eu);
+	    NMG_CK_VERTEXUSE(eu->vu_p);
+	    v = eu->vu_p->v_p;
+	} else {
+	    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
+	    NMG_CK_VERTEXUSE(vu);
+	    v = vu->v_p;
+	}
+	NMG_CK_VERTEX(v);
+	if (!v->vg_p)
+	    goto nmg_keypoint_finalize;
+	VMOVE(mpt, v->vg_p->coord);
+	*strp = "V";
+	goto nmg_keypoint_finalize;
+    }
+    if (BU_LIST_IS_EMPTY(&nmg_s->lu_hd))
+	lu = (struct loopuse *)NULL;
+    else
+	lu = BU_LIST_FIRST(loopuse, &nmg_s->lu_hd);
+    if (lu) {
+	NMG_CK_LOOPUSE(lu);
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+	    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+	    NMG_CK_EDGEUSE(eu);
+	    NMG_CK_VERTEXUSE(eu->vu_p);
+	    v = eu->vu_p->v_p;
+	} else {
+	    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
+	    NMG_CK_VERTEXUSE(vu);
+	    v = vu->v_p;
+	}
+	NMG_CK_VERTEX(v);
+	if (!v->vg_p)
+	    goto nmg_keypoint_finalize;
+	VMOVE(mpt, v->vg_p->coord);
+	*strp = "V";
+	goto nmg_keypoint_finalize;
+    }
+    if (BU_LIST_IS_EMPTY(&nmg_s->eu_hd))
+	eu = (struct edgeuse *)NULL;
+    else
+	eu = BU_LIST_FIRST(edgeuse, &nmg_s->eu_hd);
+    if (eu) {
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_VERTEXUSE(eu->vu_p);
+	v = eu->vu_p->v_p;
+	NMG_CK_VERTEX(v);
+	if (!v->vg_p)
+	    goto nmg_keypoint_finalize;
+	VMOVE(mpt, v->vg_p->coord);
+	*strp = "V";
+	goto nmg_keypoint_finalize;
+    }
+    vu = nmg_s->vu_p;
+    if (vu) {
+	NMG_CK_VERTEXUSE(vu);
+	v = vu->v_p;
+	NMG_CK_VERTEX(v);
+	if (!v->vg_p)
+	    goto nmg_keypoint_finalize;
+	VMOVE(mpt, v->vg_p->coord);
+	*strp = "V";
+	goto nmg_keypoint_finalize;
+    }
+
+nmg_keypoint_finalize:
+    MAT4X3PNT(*pt, mat, mpt);
+}
+
 /*
  * Keypoint in model space is established in "pt".
  * If "str" is set, then that point is used, else default
@@ -435,124 +562,8 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 		return;
 	    }
 	case ID_NMG:
-	    {
-		struct vertex *v;
-		struct vertexuse *vu;
-		struct edgeuse *eu;
-		struct loopuse *lu;
-		struct faceuse *fu;
-		struct shell *nmg_s;
-		struct nmgregion *r;
-		struct model *m =
-		    (struct model *) s->edit_state.es_int.idb_ptr;
-		NMG_CK_MODEL(m);
-		/* XXX Fall through, for now (How about first vertex?? - JRA) */
-
-		/* set default first */
-		VSETALL(mpt, 0.0);
-		*strp = "(origin)";
-
-		/* XXX Try to use the first point of the selected edge */
-		if (es_eu != (struct edgeuse *)NULL &&
-		    es_eu->vu_p != (struct vertexuse *)NULL &&
-		    es_eu->vu_p->v_p != (struct vertex *)NULL &&
-		    es_eu->vu_p->v_p->vg_p != (struct vertex_g *)NULL) {
-		    VMOVE(mpt, es_eu->vu_p->v_p->vg_p->coord);
-		    break;
-		}
-
-		if (BU_LIST_IS_EMPTY(&m->r_hd))
-		    break;
-
-		r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-		if (!r)
-		    break;
-		NMG_CK_REGION(r);
-
-		if (BU_LIST_IS_EMPTY(&r->s_hd))
-		    break;
-
-		nmg_s = BU_LIST_FIRST(shell, &r->s_hd);
-		if (!s)
-		    break;
-		NMG_CK_SHELL(nmg_s);
-
-		if (BU_LIST_IS_EMPTY(&nmg_s->fu_hd))
-		    fu = (struct faceuse *)NULL;
-		else
-		    fu = BU_LIST_FIRST(faceuse, &nmg_s->fu_hd);
-		if (fu) {
-		    NMG_CK_FACEUSE(fu);
-		    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-		    NMG_CK_LOOPUSE(lu);
-		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-			eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-			NMG_CK_EDGEUSE(eu);
-			NMG_CK_VERTEXUSE(eu->vu_p);
-			v = eu->vu_p->v_p;
-		    } else {
-			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-			NMG_CK_VERTEXUSE(vu);
-			v = vu->v_p;
-		    }
-		    NMG_CK_VERTEX(v);
-		    if (!v->vg_p)
-			break;
-		    VMOVE(mpt, v->vg_p->coord);
-		    *strp = "V";
-		    break;
-		}
-		if (BU_LIST_IS_EMPTY(&nmg_s->lu_hd))
-		    lu = (struct loopuse *)NULL;
-		else
-		    lu = BU_LIST_FIRST(loopuse, &nmg_s->lu_hd);
-		if (lu) {
-		    NMG_CK_LOOPUSE(lu);
-		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-			eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-			NMG_CK_EDGEUSE(eu);
-			NMG_CK_VERTEXUSE(eu->vu_p);
-			v = eu->vu_p->v_p;
-		    } else {
-			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-			NMG_CK_VERTEXUSE(vu);
-			v = vu->v_p;
-		    }
-		    NMG_CK_VERTEX(v);
-		    if (!v->vg_p)
-			break;
-		    VMOVE(mpt, v->vg_p->coord);
-		    *strp = "V";
-		    break;
-		}
-		if (BU_LIST_IS_EMPTY(&nmg_s->eu_hd))
-		    eu = (struct edgeuse *)NULL;
-		else
-		    eu = BU_LIST_FIRST(edgeuse, &nmg_s->eu_hd);
-		if (eu) {
-		    NMG_CK_EDGEUSE(eu);
-		    NMG_CK_VERTEXUSE(eu->vu_p);
-		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX(v);
-		    if (!v->vg_p)
-			break;
-		    VMOVE(mpt, v->vg_p->coord);
-		    *strp = "V";
-		    break;
-		}
-		vu = nmg_s->vu_p;
-		if (vu) {
-		    NMG_CK_VERTEXUSE(vu);
-		    v = vu->v_p;
-		    NMG_CK_VERTEX(v);
-		    if (!v->vg_p)
-			break;
-		    VMOVE(mpt, v->vg_p->coord);
-		    *strp = "V";
-		    break;
-		}
-		break;
-	    }
+	    get_nmg_keypoint(s, pt, strp, ip, mat);
+	    return;
 	case ID_CLINE:
 	case ID_PARTICLE:
 	case ID_ARBN:
@@ -581,18 +592,13 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 	    if (!*strp)
 		*strp = OBJ[ip->idb_type].ft_keypoint(pt, vert_str, mat, ip, &s->tol.tol);
 	    return;
-	    /* fall through */
 	default:
 	    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
 	    VSETALL(mpt, 0.0);
 	    *strp = "(origin)";
 	    break;
     }
-
-    // Most of the time this is handled, but if it hasn't been yet do the mat calculation
-    MAT4X3PNT(*pt, mat, mpt);
 }
-
 
 int
 f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
