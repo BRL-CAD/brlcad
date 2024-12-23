@@ -61,15 +61,7 @@
 #define ECMD_ETO_ROT_C		16
 
 #define ECMD_VTRANS		17	/* vertex translate */
-#define ECMD_NMG_EPICK		19	/* edge pick */
-#define ECMD_NMG_EMOVE		20	/* edge move */
-#define ECMD_NMG_EDEBUG		21	/* edge debug */
-#define ECMD_NMG_FORW		22	/* next eu */
-#define ECMD_NMG_BACK		23	/* prev eu */
-#define ECMD_NMG_RADIAL		24	/* radial+mate eu */
-#define ECMD_NMG_ESPLIT		25	/* split current edge */
-#define ECMD_NMG_EKILL		26	/* kill current edge */
-#define ECMD_NMG_LEXTRU		27	/* Extrude loop */
+#include "mged_nmg.h" //for NMG defines
 
 #define ECMD_PIPE_PICK		28	/* Pick pipe point */
 #define ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
@@ -224,13 +216,6 @@ extern int es_edflag;		/* type of editing for this solid */
 extern int es_edclass;		/* type of editing class for this solid */
 extern int es_type;		/* COMGEOM solid type */
 extern int es_keyfixed;		/* keypoint specified by user */
-
-// NMG editing vars
-extern struct edgeuse *es_eu;
-extern struct loopuse *lu_copy;
-extern point_t lu_keypoint;
-extern plane_t lu_pl;
-extern struct shell *es_s;
 
 extern struct wdb_pipe_pnt *es_pipe_pnt;
 extern struct wdb_metaball_pnt *es_metaball_pnt;
