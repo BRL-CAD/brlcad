@@ -288,7 +288,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	VMOVE(v, &bot->vertices[3**v_it]);
 
 	manifold::Manifold sph = manifold::Manifold::Sphere(r, 8);
-	manifold::Manifold right = sph.Translate(glm::vec3(v[0], v[1], v[2]));
+	manifold::Manifold right = sph.Translate(la::vec3(v[0], v[1], v[2]));
 
 	try {
 	    c += right;
@@ -328,11 +328,17 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	if (edge_cyl(&vertices, &faces, &vert_cnt, &face_cnt, base, v, r))
 	    continue;
 
-	manifold::Mesh rcc_m;
-	for (int j = 0; j < vert_cnt; j++)
-	    rcc_m.vertPos.push_back(glm::vec3(vertices[j][X], vertices[j][Y], vertices[j][Z]));
-	for (int j = 0; j < face_cnt; j++)
-	    rcc_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
+	manifold::MeshGL64 rcc_m;
+	for (int j = 0; j < vert_cnt; j++) {
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][X]);
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][Y]);
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][Z]);
+	}
+	for (int j = 0; j < face_cnt; j++) {
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j]);
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j+1]);
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j+2]);
+	}
 
 	if (vertices)
 	    bu_free(vertices, "verts");
@@ -414,9 +420,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 
 	manifold::Mesh arb_m;
 	for (size_t j = 0; j < 6; j++)
-	    arb_m.vertPos.push_back(glm::vec3(pts[3*j], pts[3*j+1], pts[3*j+2]));
+	    arb_m.vertPos.push_back(la::vec3(pts[3*j], pts[3*j+1], pts[3*j+2]));
 	for (size_t j = 0; j < 8; j++)
-	    arb_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
+	    arb_m.triVerts.push_back(la::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
 
 	manifold::Manifold right(arb_m);
 
@@ -443,7 +449,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     if (!quiet_mode)
 	bu_log("Processing %zd faces... done.\n" , bot->num_faces);
 
-    manifold::Mesh rmesh = c.GetMesh();
+    manifold::MeshGL64 rmesh = c.GetMeshGL64();
     struct rt_bot_internal *rbot;
     BU_GET(rbot, struct rt_bot_internal);
     rbot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -452,20 +458,14 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     rbot->thickness = NULL;
     rbot->face_mode = (struct bu_bitv *)NULL;
     rbot->bot_flags = 0;
-    rbot->num_vertices = (int)rmesh.vertPos.size();
-    rbot->num_faces = (int)rmesh.triVerts.size();
-    rbot->vertices = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));;
-    rbot->faces = (int *)calloc(rmesh.triVerts.size()*3, sizeof(int));
-    for (size_t j = 0; j < rmesh.vertPos.size(); j++) {
-	rbot->vertices[3*j] = rmesh.vertPos[j].x;
-	rbot->vertices[3*j+1] = rmesh.vertPos[j].y;
-	rbot->vertices[3*j+2] = rmesh.vertPos[j].z;
-    }
-    for (size_t j = 0; j < rmesh.triVerts.size(); j++) {
-	rbot->faces[3*j] = rmesh.triVerts[j].x;
-	rbot->faces[3*j+1] = rmesh.triVerts[j].y;
-	rbot->faces[3*j+2] = rmesh.triVerts[j].z;
-    }
+    rbot->num_vertices = (int)rmesh.vertProperties.size()/3;
+    rbot->num_faces = (int)rmesh.triVerts.size()/3;
+    rbot->vertices = (double *)calloc(rmesh.vertProperties.size(), sizeof(double));;
+    rbot->faces = (int *)calloc(rmesh.triVerts.size(), sizeof(int));
+    for (size_t j = 0; j < rmesh.vertProperties.size(); j++)
+	rbot->vertices[j] = rmesh.vertProperties[j];
+    for (size_t j = 0; j < rmesh.triVerts.size(); j++)
+	rbot->faces[j] = rmesh.triVerts[j];
     *obot = rbot;
     return 0;
 }

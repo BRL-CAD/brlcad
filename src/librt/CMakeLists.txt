@@ -1,4 +1,4 @@
-brlcad_find_package(MANIFOLD REQUIRED)
+brlcad_find_package(manifold REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
@@ -361,13 +361,13 @@ set(
   ${OPENCL_LIBS}
   ${librt_deps}
   ${OPENNURBS_LIBRARIES}
-  ${MANIFOLD_LIBRARIES}
   ${GEOGRAM_LIBRARY}
   ${MMESH_LIBRARY}
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
+  manifold::manifold
 )
 
 # Include directories needed by librt users
@@ -381,7 +381,6 @@ set(
   ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
   ${REGEX_INCLUDE_DIRS}
   ${GEOGRAM_INCLUDE_DIR}
-  ${MANIFOLD_INCLUDE_DIRS}
   ${MMESH_INCLUDE_DIR}
 )
 # FIXME: needs materialX
