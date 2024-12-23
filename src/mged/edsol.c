@@ -52,9 +52,7 @@
 #include "./menu.h"
 
 #include "./ednmg.h"
-
-extern void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
-extern struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
+#include "./edpipe.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
@@ -96,7 +94,6 @@ static int es_ars_crv;	/* curve and column identifying selected ARS point */
 static int es_ars_col;
 static point_t es_pt;		/* coordinates of selected ARS point */
 
-struct wdb_pipe_pnt *es_pipe_pnt=(struct wdb_pipe_pnt *)NULL; /* Currently selected PIPE segment */
 struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
 
 /* These values end up in es_menu, as do ARB vertex numbers */
@@ -325,25 +322,9 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
     memset(buf, 0, BUFSIZ);
 
     switch (ip->idb_type) {
-	
 	case ID_PIPE:
-	    {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)ip->idb_ptr;
-		struct wdb_pipe_pnt *pipe_seg;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		if (es_pipe_pnt == (struct wdb_pipe_pnt *)NULL) {
-		    pipe_seg = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-		    VMOVE(mpt, pipe_seg->pp_coord);
-		} else {
-		    VMOVE(mpt, es_pipe_pnt->pp_coord);
-		}
-		*strp = "V";
-		MAT4X3PNT(*pt, mat, mpt);
-		return;
-	    }
+	    get_pipe_keypoint(s, pt, strp, ip, mat);
+	    return;
 	case ID_METABALL:
 	    {
 		struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
@@ -1704,134 +1685,22 @@ pscale(struct mged_state *s)
 
 
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
-	    {
-		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
-		    return;
-		}
-
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    if (es_pipe_pnt->pp_od > 0.0)
-			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_od;
-		    else
-			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
-		}
-		pipe_seg_scale_od(s, es_pipe_pnt, s->edit_state.es_scale);
-	    }
+	    menu_pipe_pt_od(s);
 	    break;
 	case MENU_PIPE_PT_ID:	/* scale ID of one pipe segment */
-	    {
-		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
-		    return;
-		}
-
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    if (es_pipe_pnt->pp_id > 0.0)
-			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_id;
-		    else
-			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
-		}
-		pipe_seg_scale_id(s, es_pipe_pnt, s->edit_state.es_scale);
-	    }
+	    menu_pipe_pt_od(s);
 	    break;
 	case MENU_PIPE_PT_RADIUS:	/* scale bend radius at selected point */
-	    {
-		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
-		    return;
-		}
-
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    if (es_pipe_pnt->pp_id > 0.0)
-			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_bendradius;
-		    else
-			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
-		}
-		pipe_seg_scale_radius(s, es_pipe_pnt, s->edit_state.es_scale);
-	    }
+	    menu_pipe_pt_radius(s);
 	    break;
 	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
-	    if (inpara) {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-		struct wdb_pipe_pnt *ps;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
-
-		if (ps->pp_od > 0.0) {
-		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_od;
-		} else {
-		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0)
-			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
-
-		    if (ps->l.magic == BU_LIST_HEAD_MAGIC) {
-			Tcl_AppendResult(s->interp, "Entire pipe solid has zero OD!\n", (char *)NULL);
-			return;
-		    }
-
-		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_od;
-		}
-	    }
-	    pipe_scale_od(s, &s->edit_state.es_int, s->edit_state.es_scale);
+	    menu_pipe_scale_od(s);
 	    break;
 	case MENU_PIPE_SCALE_ID:	/* scale entire pipe ID */
-	    if (inpara) {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-		struct wdb_pipe_pnt *ps;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
-
-		if (ps->pp_id > 0.0) {
-		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_id;
-		} else {
-		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0)
-			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
-
-		    /* Check if entire pipe has zero ID */
-		    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
-		    else
-			s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_id;
-		}
-	    }
-	    pipe_scale_id(s, &s->edit_state.es_int, s->edit_state.es_scale);
+	    menu_pipe_scale_id(s);
 	    break;
 	case MENU_PIPE_SCALE_RADIUS:	/* scale entire pipr bend radius */
-	    if (inpara) {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-		struct wdb_pipe_pnt *ps;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
-
-		if (ps->pp_bendradius > 0.0) {
-		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
-		} else {
-		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0)
-			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
-
-		    /* Check if entire pipe has zero ID */
-		    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
-		    else
-			s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
-		}
-	    }
-	    pipe_scale_radius(s, &s->edit_state.es_int, s->edit_state.es_scale);
+	    menu_pipe_scale_radius(s);
 	    break;
 	case MENU_PART_H:
 	    /* scale vector H */
@@ -3471,166 +3340,22 @@ sedit(struct mged_state *s)
 	    ecmd_nmg_lextru(s);
 	    break;
 	case ECMD_PIPE_PICK:
-	    {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-		point_t new_pt;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		if (es_mvalid) {
-		    VMOVE(new_pt, es_mparam);
-		} else if (inpara == 3) {
-		    if (mged_variables->mv_context) {
-			/* apply es_invmat to convert to real model space */
-			MAT4X3PNT(new_pt, es_invmat, es_para);
-		    } else {
-			VMOVE(new_pt, es_para);
-		    }
-		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment selection\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		} else if (!es_mvalid && !inpara)
-		    break;
-
-		es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
-		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(s->interp, "No PIPE segment selected\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		} else
-		    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
-	    }
+	    ecmd_pipe_pick(s);
 	    break;
 	case ECMD_PIPE_SPLIT:
-	    {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-		point_t new_pt;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		if (es_mvalid) {
-		    VMOVE(new_pt, es_mparam);
-		} else if (inpara == 3) {
-		    if (mged_variables->mv_context) {
-			/* apply es_invmat to convert to real model space */
-			MAT4X3PNT(new_pt, es_invmat, es_para);
-		    } else {
-			VMOVE(new_pt, es_para);
-		    }
-		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment split\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		} else if (!es_mvalid && !inpara)
-		    break;
-
-		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		}
-
-		pipe_split_pnt(&pipeip->pipe_segs_head, es_pipe_pnt, new_pt);
-	    }
+	    ecmd_pipe_split(s);
 	    break;
 	case ECMD_PIPE_PT_MOVE:
-	    {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-		point_t new_pt;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		if (es_mvalid) {
-		    VMOVE(new_pt, es_mparam);
-		} else if (inpara == 3) {
-		    if (mged_variables->mv_context) {
-			/* apply es_invmat to convert to real model space */
-			MAT4X3PNT(new_pt, es_invmat, es_para);
-		    } else {
-			VMOVE(new_pt, es_para);
-		    }
-		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment movement\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		} else if (!es_mvalid && !inpara)
-		    break;
-
-		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		}
-
-		pipe_move_pnt(s, pipeip, es_pipe_pnt, new_pt);
-	    }
+	    ecmd_pipe_pt_move(s);
 	    break;
 	case ECMD_PIPE_PT_ADD:
-	    {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-		point_t new_pt;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		if (es_mvalid) {
-		    VMOVE(new_pt, es_mparam);
-		} else if (inpara == 3) {
-		    if (mged_variables->mv_context) {
-			/* apply es_invmat to convert to real model space */
-			MAT4X3PNT(new_pt, es_invmat, es_para);
-		    } else {
-			VMOVE(new_pt, es_para);
-		    }
-		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(s->interp, "x y z coordinates required for 'append segment'\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		} else if (!es_mvalid && !inpara)
-		    break;
-
-		es_pipe_pnt = pipe_add_pnt(pipeip, es_pipe_pnt, new_pt);
-	    }
+	    ecmd_pipe_pt_add(s);
 	    break;
 	case ECMD_PIPE_PT_INS:
-	    {
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-		point_t new_pt;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-
-		if (es_mvalid) {
-		    VMOVE(new_pt, es_mparam);
-		} else if (inpara == 3) {
-		    if (mged_variables->mv_context) {
-			/* apply es_invmat to convert to real model space */
-			MAT4X3PNT(new_pt, es_invmat, es_para);
-		    } else {
-			VMOVE(new_pt, es_para);
-		    }
-		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(s->interp, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		} else if (!es_mvalid && !inpara)
-		    break;
-
-		pipe_ins_pnt(pipeip, es_pipe_pnt, new_pt);
-	    }
+	    ecmd_pipe_pt_ins(s);
 	    break;
 	case ECMD_PIPE_PT_DEL:
-	    {
-		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		}
-		es_pipe_pnt = pipe_del_pnt(s, es_pipe_pnt);
-	    }
+	    ecmd_pipe_pt_del(s);
 	    break;
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
@@ -5759,25 +5484,10 @@ label_edited_solid(
 	    break;
 	case ID_NMG:
 	    nmg_label_solid(s, pl, xform, ip);
-	    break;
+	    return;
 	case ID_PIPE:
-	    {
-#ifndef NO_MAGIC_CHECKING
-		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_PIPE_CK_MAGIC(pipeip);
-#endif
-
-		// Conditional labeling
-		if (es_pipe_pnt) {
-		    BU_CKMAG(es_pipe_pnt, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
-
-		    MAT4X3PNT(pos_view, xform, es_pipe_pnt->pp_coord);
-		    POINT_LABEL_STR(pos_view, "pt");
-		}
-	    }
-	    break;
+	    pipe_label_solid(s, pl, xform, ip);
+	    return;
 	case ID_BOT:
 	    {
 		struct rt_bot_internal *bot =

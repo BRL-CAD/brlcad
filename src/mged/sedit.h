@@ -62,13 +62,7 @@
 
 #define ECMD_VTRANS		17	/* vertex translate */
 #include "ednmg.h"   //for NMG defines
-
-#define ECMD_PIPE_PICK		28	/* Pick pipe point */
-#define ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
-#define ECMD_PIPE_PT_ADD	30	/* Add a pipe point to end of pipe */
-#define ECMD_PIPE_PT_INS	31	/* Add a pipe point to start of pipe */
-#define ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
-#define ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
+#include "edpipe.h"  //for PIPE defines
 
 #define ECMD_ARS_PICK		34	/* select an ARS point */
 #define ECMD_ARS_NEXT_PT	35	/* select next ARS point in same curve */

@@ -67,20 +67,7 @@
 #define MENU_ETO_RD		58
 #define MENU_ETO_SCALE_C	59
 #define MENU_ETO_ROT_C		60
-#define MENU_PIPE_SELECT	61
-#define MENU_PIPE_NEXT_PT	62
-#define MENU_PIPE_PREV_PT	63
-#define MENU_PIPE_SPLIT		64
-#define MENU_PIPE_PT_OD		65
-#define MENU_PIPE_PT_ID		66
-#define MENU_PIPE_SCALE_OD	67
-#define MENU_PIPE_SCALE_ID	68
-#define MENU_PIPE_ADD_PT	69
-#define MENU_PIPE_INS_PT	70
-#define MENU_PIPE_DEL_PT	71
-#define MENU_PIPE_MOV_PT	72
-#define MENU_PIPE_PT_RADIUS	73
-#define MENU_PIPE_SCALE_RADIUS	74
+
 #define MENU_VOL_FNAME		75
 #define MENU_VOL_FSIZE		76
 #define MENU_VOL_CSIZE		77
@@ -155,7 +142,6 @@ extern struct menu_item hyp_menu[];
 extern struct menu_item metaball_menu[];
 extern struct menu_item nmg_menu[];
 extern struct menu_item part_menu[];
-extern struct menu_item pipe_menu[];
 extern struct menu_item rhc_menu[];
 extern struct menu_item rpc_menu[];
 extern struct menu_item spline_menu[];

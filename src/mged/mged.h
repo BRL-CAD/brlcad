@@ -555,19 +555,6 @@ void set_scroll(struct mged_state *);
 int scroll_select(struct mged_state *s, int pen_x, int pen_y, int do_func);
 int scroll_display(struct mged_state *s, int y_top);
 
-/* edpipe.c */
-void pipe_scale_od(struct mged_state *s, struct rt_db_internal *, fastf_t);
-void pipe_scale_id(struct mged_state *s, struct rt_db_internal *, fastf_t);
-void pipe_seg_scale_od(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
-void pipe_seg_scale_id(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
-void pipe_seg_scale_radius(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
-void pipe_scale_radius(struct mged_state *s, struct rt_db_internal *, fastf_t);
-struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(struct mged_state *s, const struct bu_list *, const point_t);
-struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
-void pipe_ins_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
-struct wdb_pipe_pnt *pipe_del_pnt(struct mged_state *s, struct wdb_pipe_pnt *);
-void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
-
 /* vparse.c */
 extern void mged_vls_struct_parse(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */
 extern void mged_vls_struct_parse_old(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, char *structp, int argc, const char *argv[]);

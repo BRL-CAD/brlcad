@@ -107,6 +107,7 @@ set(
   CMakeLists.txt
   cmd.h
   ednmg.h
+  edpipe.h
   f_cmd.h
   menu.h
   mged.h
