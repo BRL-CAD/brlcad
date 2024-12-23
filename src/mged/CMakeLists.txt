@@ -24,6 +24,7 @@ set(
   dozoom.c
   edarb.c
   edars.c
+  ednmg.c
   edpipe.c
   edsol.c
   f_db.c
@@ -34,7 +35,6 @@ set(
   mater.c
   menu.c
   mged.c
-  mged_nmg.c
   mover.c
   overlay.c
   plot.c
@@ -106,11 +106,11 @@ set(
   mged_ignore_files
   CMakeLists.txt
   cmd.h
+  ednmg.h
   f_cmd.h
   menu.h
   mged.h
   mged_dm.h
-  mged_nmg.h
   mged_wdb.h
   sedit.h
   mged.ico

@@ -61,7 +61,7 @@
 #define ECMD_ETO_ROT_C		16
 
 #define ECMD_VTRANS		17	/* vertex translate */
-#include "mged_nmg.h" //for NMG defines
+#include "ednmg.h"   //for NMG defines
 
 #define ECMD_PIPE_PICK		28	/* Pick pipe point */
 #define ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */

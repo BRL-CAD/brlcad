@@ -1,4 +1,4 @@
-/*                      M G E D _ N M G . H
+/*                      E D N M G . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/mged_nmg.h
+/** @file mged/ednmg.h
  */
 
-#ifndef MGED_NMG_H
-#define MGED_NMG_H
+#ifndef EDNMG_H
+#define EDNMG_H
 
 #include "common.h"
 #include "vmath.h"
@@ -62,7 +62,7 @@ extern void ecmd_nmg_esplit(struct mged_state *s);
 extern void ecmd_nmg_lextru(struct mged_state *s);
 extern void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec);
 
-#endif  /* MGED_NMG_H */
+#endif  /* EDNMG_H */
 
 /*
  * Local Variables:

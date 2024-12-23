@@ -1,4 +1,4 @@
-/*                     M G E D _ N M G . C
+/*                        E D N M G . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged_nmg.c
+/** @file ednmg.c
  *
  * Attempt to collect all the MGED logic specific to dealing with
  * NMG primitives here.
@@ -39,7 +39,7 @@
 #include "raytrace.h"
 #include "ged/view/ged_view_tmp.h"
 #include "./sedit.h"
-#include "./mged_nmg.h"
+#include "./ednmg.h"
 
 extern int es_edflag;		/* type of editing for this solid */
 extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */

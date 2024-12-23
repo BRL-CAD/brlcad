@@ -51,7 +51,7 @@
 #include "./mged_dm.h"
 #include "./menu.h"
 
-#include "./mged_nmg.h"
+#include "./ednmg.h"
 
 extern void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
 extern struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
