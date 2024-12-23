@@ -123,6 +123,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+// TODO - on Windows, gsh doesn't seem to be working correcty when run in Git's
+// MINGW64 command prompt.  Maybe that isn't too surprising, but it would be
+// nice if we could handle environment as well...
+//
+// Also, see if any of the https://github.com/dathpo/linenoise-cpp changes are
+// of potential interest.
+
 #ifndef LINENOISE_HPP
 #define LINENOISE_HPP
 
