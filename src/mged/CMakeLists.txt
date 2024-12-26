@@ -106,9 +106,18 @@ set(
   mged_ignore_files
   CMakeLists.txt
   cmd.h
+  edarb.h
   edars.h
+  edbot.h
+  edcline.h
+  eddsp.h
+  edell.h
+  edeto.h
+  edmetaball.h
   ednmg.h
   edpipe.h
+  edtgc.h
+  edvol.h
   f_cmd.h
   menu.h
   mged.h
