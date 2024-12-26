@@ -45,22 +45,31 @@
 #define SROT		3	/* buttons.c */
 #define PSCALE		4	/* Scale one solid parameter by scalar */
 
-#include "edtgc.h"      //for TGC defines
-#include "edarb.h"      //for ARB defines
-#include "edeto.h"      //for ETO defines
-
 #define ECMD_VTRANS		17	/* vertex translate */
-#include "ednmg.h"      //for NMG defines
-#include "edpipe.h"     //for PIPE defines
-#include "edars.h"      //for ARS defines
-#include "edvol.h"      //for VOL defines
-#include "edebm.h"      //for EBM defines
-#include "eddsp.h"      //for DSP defines
-#include "edbot.h"      //for BOT defines
-#include "edcline.h"    //for CLINE defines
-#include "edextrude.h"  //for EXTR defines
-#include "edmetaball.h" //for METABALL defines
-#include "edhyp.h"      //for HYP defines
+#include "primitives/edarb.h"
+#include "primitives/edars.h"
+#include "primitives/edbot.h"
+#include "primitives/edbspline.h"
+#include "primitives/edcline.h"
+#include "primitives/eddsp.h"
+#include "primitives/edebm.h"
+#include "primitives/edehy.h"
+#include "primitives/edell.h"
+#include "primitives/edepa.h"
+#include "primitives/edeto.h"
+#include "primitives/edextrude.h"
+#include "primitives/edhyp.h"
+#include "primitives/edmetaball.h"
+#include "primitives/ednmg.h"
+#include "primitives/edpart.h"
+#include "primitives/edpipe.h"
+#include "primitives/edrhc.h"
+#include "primitives/edrpc.h"
+#include "primitives/edsuperell.h"
+#include "primitives/edtgc.h"
+#include "primitives/edtor.h"
+#include "primitives/edvol.h"
+
 
 #define SEDIT_ROTATE (GEOM_EDIT_STATE == ST_S_EDIT && \
 		      (es_edflag == SROT || \
@@ -140,8 +149,6 @@ extern int es_edclass;		/* type of editing class for this solid */
 extern int es_type;		/* COMGEOM solid type */
 extern int es_keyfixed;		/* keypoint specified by user */
 
-extern struct wdb_pipe_pnt *es_pipe_pnt;
-extern struct wdb_metaball_pnt *es_metaball_pnt;
 
 extern mat_t es_mat;		/* accumulated matrix of path */
 extern mat_t es_invmat;		/* inverse of es_mat KAA */

@@ -1,7 +1,7 @@
-/*                      E D C L I N E . H
+/*                      E D M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1996-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,23 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edcline.h
+/** @file mged/primitives/edmetaball.c
+ *
  */
 
-#ifndef EDCLINE_H
-#define EDCLINE_H
-
 #include "common.h"
+
+#include <math.h>
+#include <string.h>
+
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "mged.h"
+#include "rt/geom.h"
+#include "wdb.h"
 
-#define ECMD_CLINE_SCALE_H	77	/* scale height vector */
-#define ECMD_CLINE_MOVE_H	78	/* move end of height vector */
-#define ECMD_CLINE_SCALE_R	79	/* scale radius */
-#define ECMD_CLINE_SCALE_T	80	/* scale thickness */
+#include "../mged.h"
+#include "../sedit.h"
+#include "../mged_dm.h"
+#include "./edmetaball.h"
 
-#endif  /* EDCLINE_H */
 
 /*
  * Local Variables:

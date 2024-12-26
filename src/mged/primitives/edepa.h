@@ -1,4 +1,4 @@
-/*                          E D E B M . H
+/*                      E D E P A . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,22 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edebm.h
+/** @file mged/edepa.h
  */
 
-#ifndef EDEBM_H
-#define EDEBM_H
+#ifndef EDEPA_H
+#define EDEPA_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_EBM_FNAME		53	/* set EBM file name */
-#define ECMD_EBM_FSIZE		54	/* set EBM file size */
-#define ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
+#define MENU_EPA_H		50
+#define MENU_EPA_R1		51
+#define MENU_EPA_R2		52
 
-#endif  /* EDEBM_H */
+extern struct menu_item epa_menu[];
+
+#endif  /* EDEPA_H */
 
 /*
  * Local Variables:

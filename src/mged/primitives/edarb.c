@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edarb.c
+/** @file mged/primitives/edarb.c
  *
  */
 
@@ -34,12 +34,12 @@
 #include "ged.h"
 #include "rt/db4.h"
 
-#include "./sedit.h"
-#include "./mged.h"
-#include "./mged_dm.h"
-#include "./cmd.h"
+#include "../sedit.h"
+#include "../mged.h"
+#include "../mged_dm.h"
+#include "../cmd.h"
+#include "../menu.h"
 #include "./edarb.h"
-#include "./menu.h"
 
 int newedge;
 

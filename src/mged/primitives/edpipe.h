@@ -28,6 +28,8 @@
 #include "raytrace.h"
 #include "mged.h"
 
+extern struct wdb_pipe_pnt *es_pipe_pnt;
+
 #define ECMD_PIPE_PICK		28	/* Pick pipe point */
 #define ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
 #define ECMD_PIPE_PT_ADD	30	/* Add a pipe point to end of pipe */

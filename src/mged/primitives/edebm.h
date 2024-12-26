@@ -1,4 +1,4 @@
-/*                      E D M E T A B A L L . H
+/*                          E D E B M . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,27 +17,28 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edmetaball.h
+/** @file mged/edebm.h
  */
 
-#ifndef EDMETABALL_H
-#define EDMETABALL_H
+#ifndef EDEBM_H
+#define EDEBM_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_METABALL_SET_THRESHOLD	83	/* overall metaball threshold value */
-#define ECMD_METABALL_SET_METHOD	84	/* set the rendering method */
-#define ECMD_METABALL_PT_PICK	85	/* pick a metaball control point */
-#define ECMD_METABALL_PT_MOV	86	/* move a metaball control point */
-#define ECMD_METABALL_PT_FLDSTR	87	/* set a metaball control point field strength */
-#define ECMD_METABALL_PT_DEL	88	/* delete a metaball control point */
-#define ECMD_METABALL_PT_ADD	89	/* add a metaball control point */
-#define ECMD_METABALL_RMET	90	/* set the metaball render method */
+#define ECMD_EBM_FNAME		53	/* set EBM file name */
+#define ECMD_EBM_FSIZE		54	/* set EBM file size */
+#define ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
 
-#endif  /* EDMETABALL_H */
+#define MENU_EBM_FNAME		80
+#define MENU_EBM_FSIZE		81
+#define MENU_EBM_HEIGHT		82
+
+extern struct menu_item ebm_menu[];
+
+#endif  /* EDEBM_H */
 
 /*
  * Local Variables:

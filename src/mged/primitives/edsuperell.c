@@ -1,7 +1,7 @@
-/*                      E D E L L . H
+/*                         E D S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1996-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,18 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edell.h
+/** @file mged/primitives/edsuperell.c
+ *
  */
 
-#ifndef EDELL_H
-#define EDELL_H
-
 #include "common.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "mged.h"
 
-#endif  /* EDELL_H */
+#include <math.h>
+#include <string.h>
+
+#include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
+#include "rt/geom.h"
+#include "wdb.h"
+
+#include "../mged.h"
+#include "../sedit.h"
+#include "../mged_dm.h"
+#include "./edsuperell.h"
+
 
 /*
  * Local Variables:

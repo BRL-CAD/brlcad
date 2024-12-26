@@ -1,4 +1,4 @@
-/*                      E D T G C . H
+/*                      E D D S P . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,26 +17,32 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edtgc.h
+/** @file mged/eddsp.h
  */
 
-#ifndef EDTGC_H
-#define EDTGC_H
+#ifndef EDDSP_H
+#define EDDSP_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_TGC_MV_H	5
-#define ECMD_TGC_MV_HH	6
-#define ECMD_TGC_ROT_H	7
-#define ECMD_TGC_ROT_AB	8
-#define ECMD_TGC_MV_H_CD	81	/* move end of tgc, while scaling CD */
-#define ECMD_TGC_MV_H_V_AB	82	/* move vertex end of tgc, while scaling AB */
+#define ECMD_DSP_FNAME		56	/* set DSP file name */
+#define ECMD_DSP_FSIZE		57	/* set DSP file size */
+#define ECMD_DSP_SCALE_X        58	/* Scale DSP x size */
+#define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
+#define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
 
+#define MENU_DSP_FNAME		83
+#define MENU_DSP_FSIZE		84	/* Not implemented yet */
+#define MENU_DSP_SCALE_X	85
+#define MENU_DSP_SCALE_Y	86
+#define MENU_DSP_SCALE_ALT	87
 
-#endif  /* EDTGC_H */
+extern struct menu_item dsp_menu[];
+
+#endif  /* EDDSP_H */
 
 /*
  * Local Variables:

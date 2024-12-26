@@ -47,6 +47,9 @@ extern int es_ars_crv;	/* curve and column identifying selected ARS point */
 extern int es_ars_col;
 extern point_t es_pt;		/* coordinates of selected ARS point */
 
+extern struct menu_item ars_menu[];
+extern struct menu_item ars_pick_menu[];
+
 void
 ars_label_solid(
     struct mged_state *s,

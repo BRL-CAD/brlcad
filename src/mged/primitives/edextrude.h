@@ -1,4 +1,4 @@
-/*                      E D V O L . H
+/*                      E D E X T R U D E . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,24 +17,30 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edvol.h
+/** @file mged/edextrude.h
  */
 
-#ifndef EDVOL_H
-#define EDVOL_H
+#ifndef EDEXTRUDE_H
+#define EDEXTRUDE_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_VOL_CSIZE		48	/* set voxel size */
-#define ECMD_VOL_FSIZE		49	/* set VOL file dimensions */
-#define ECMD_VOL_THRESH_LO	50	/* set VOL threshold (lo) */
-#define ECMD_VOL_THRESH_HI	51	/* set VOL threshold (hi) */
-#define ECMD_VOL_FNAME		52	/* set VOL file name */
+#define ECMD_EXTR_SCALE_H	73	/* scale extrusion vector */
+#define ECMD_EXTR_MOV_H		74	/* move end of extrusion vector */
+#define ECMD_EXTR_ROT_H		75	/* rotate extrusion vector */
+#define ECMD_EXTR_SKT_NAME	76	/* set sketch that the extrusion uses */
 
-#endif  /* EDVOL_H */
+#define MENU_EXTR_SCALE_H	103
+#define MENU_EXTR_MOV_H		104
+#define MENU_EXTR_ROT_H		105
+#define MENU_EXTR_SKT_NAME	106
+
+extern struct menu_item extr_menu[];
+
+#endif  /* EDEXTRUDE_H */
 
 /*
  * Local Variables:

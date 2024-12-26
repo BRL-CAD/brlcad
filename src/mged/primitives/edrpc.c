@@ -1,7 +1,7 @@
-/*                          E D H Y P . H
+/*                         E D R P C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1996-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,21 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edhyp.h
+/** @file mged/primitives/edrpc.c
+ *
  */
 
-#ifndef EDHYP_H
-#define EDHYP_H
-
 #include "common.h"
+
+#include <math.h>
+#include <string.h>
+
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "mged.h"
+#include "rt/geom.h"
+#include "wdb.h"
 
-#define ECMD_HYP_ROT_H		91
-#define ECMD_HYP_ROT_A		92
+#include "../mged.h"
+#include "../sedit.h"
+#include "../mged_dm.h"
+#include "./edrpc.h"
 
-#endif  /* EDHYP_H */
 
 /*
  * Local Variables:

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edpipe.c
+/** @file mged/primitives/edpipe.c
  *
  * Functions -
  *
@@ -39,9 +39,9 @@
 #include "ged.h"
 #include "wdb.h"
 
-#include "./mged.h"
-#include "./sedit.h"
-#include "./mged_dm.h"
+#include "../mged.h"
+#include "../sedit.h"
+#include "../mged_dm.h"
 #include "./edpipe.h"
 
 extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */

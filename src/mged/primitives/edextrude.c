@@ -1,7 +1,7 @@
-/*                      E D E X T R U D E . H
+/*                      E D E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1996-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,24 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edextrude.h
+/** @file mged/primitives/edextrude.c
+ *
  */
 
-#ifndef EDEXTRUDE_H
-#define EDEXTRUDE_H
-
 #include "common.h"
+
+#include <math.h>
+#include <string.h>
+
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "mged.h"
+#include "rt/geom.h"
+#include "wdb.h"
 
-#define ECMD_EXTR_SCALE_H	73	/* scale extrusion vector */
-#define ECMD_EXTR_MOV_H		74	/* move end of extrusion vector */
-#define ECMD_EXTR_ROT_H		75	/* rotate extrusion vector */
-#define ECMD_EXTR_SKT_NAME	76	/* set sketch that the extrusion uses */
+#include "../mged.h"
+#include "../sedit.h"
+#include "../mged_dm.h"
+#include "./edextrude.h"
 
-
-#endif  /* EDEXTRUDE_H */
 
 /*
  * Local Variables:

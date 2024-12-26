@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edars.c
+/** @file mged/primitives/edars.c
  *
  */
 
@@ -32,9 +32,9 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./mged.h"
-#include "./sedit.h"
-#include "./mged_dm.h"
+#include "../mged.h"
+#include "../sedit.h"
+#include "../mged_dm.h"
 #include "./edars.h"
 
 extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */

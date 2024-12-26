@@ -40,6 +40,23 @@
 #define MENU_ARB_MV_FACE	37
 #define MENU_ARB_ROT_FACE	38
 
+extern struct menu_item cntrl_menu[];
+extern struct menu_item point4_menu[];
+extern struct menu_item edge5_menu[];
+extern struct menu_item edge6_menu[];
+extern struct menu_item edge7_menu[];
+extern struct menu_item edge8_menu[];
+extern struct menu_item mv4_menu[];
+extern struct menu_item mv5_menu[];
+extern struct menu_item mv6_menu[];
+extern struct menu_item mv7_menu[];
+extern struct menu_item mv8_menu[];
+extern struct menu_item rot4_menu[];
+extern struct menu_item rot5_menu[];
+extern struct menu_item rot6_menu[];
+extern struct menu_item rot7_menu[];
+extern struct menu_item rot8_menu[];
+
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 
 int editarb(struct mged_state *s, vect_t pos_model);

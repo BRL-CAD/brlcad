@@ -1,4 +1,4 @@
-/*                      E D D S P . H
+/*                          E D H Y P . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,24 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/eddsp.h
+/** @file mged/edhyp.h
  */
 
-#ifndef EDDSP_H
-#define EDDSP_H
+#ifndef EDHYP_H
+#define EDHYP_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_DSP_FNAME		56	/* set DSP file name */
-#define ECMD_DSP_FSIZE		57	/* set DSP file size */
-#define ECMD_DSP_SCALE_X        58	/* Scale DSP x size */
-#define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
-#define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
+#define ECMD_HYP_ROT_H		91
+#define ECMD_HYP_ROT_A		92
 
-#endif  /* EDDSP_H */
+#define MENU_HYP_H              127
+#define MENU_HYP_SCALE_A        128
+#define MENU_HYP_SCALE_B	129
+#define MENU_HYP_C		130
+#define MENU_HYP_ROT_H		131
+
+extern struct menu_item hyp_menu[];
+
+#endif  /* EDHYP_H */
 
 /*
  * Local Variables:

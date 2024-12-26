@@ -1,4 +1,4 @@
-/*                      E D E T O . H
+/*                      E D C L I N E . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,20 +17,30 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edeto.h
+/** @file mged/edcline.h
  */
 
-#ifndef EDETO_H
-#define EDETO_H
+#ifndef EDCLINE_H
+#define EDCLINE_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_ETO_ROT_C		16
+#define ECMD_CLINE_SCALE_H	77	/* scale height vector */
+#define ECMD_CLINE_MOVE_H	78	/* move end of height vector */
+#define ECMD_CLINE_SCALE_R	79	/* scale radius */
+#define ECMD_CLINE_SCALE_T	80	/* scale thickness */
 
-#endif  /* EDETO_H */
+#define MENU_CLINE_SCALE_H	107
+#define MENU_CLINE_MOVE_H	108
+#define MENU_CLINE_SCALE_R	109
+#define MENU_CLINE_SCALE_T	110
+
+extern struct menu_item cline_menu[];
+
+#endif  /* EDCLINE_H */
 
 /*
  * Local Variables:

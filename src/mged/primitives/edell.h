@@ -1,4 +1,4 @@
-/*                      E D B O T . H
+/*                      E D E L L . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,33 +17,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edbot.h
+/** @file mged/edell.h
  */
 
-#ifndef EDBOT_H
-#define EDBOT_H
+#ifndef EDELL_H
+#define EDELL_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_BOT_PICKV		61	/* pick a BOT vertex */
-#define ECMD_BOT_PICKE		62	/* pick a BOT edge */
-#define ECMD_BOT_PICKT		63	/* pick a BOT triangle */
-#define ECMD_BOT_MOVEV		64	/* move a BOT vertex */
-#define ECMD_BOT_MOVEE		65	/* move a BOT edge */
-#define ECMD_BOT_MOVET		66	/* move a BOT triangle */
-#define ECMD_BOT_MODE		67	/* set BOT mode */
-#define ECMD_BOT_ORIENT		68	/* set BOT face orientation */
-#define ECMD_BOT_THICK		69	/* set face thickness (one or all) */
-#define ECMD_BOT_FMODE		70	/* set face mode (one or all) */
-#define ECMD_BOT_FDEL		71	/* delete current face */
-#define ECMD_BOT_FLAGS		72	/* set BOT flags */
+#define MENU_ELL_SCALE_A	39
+#define MENU_ELL_SCALE_B	40
+#define MENU_ELL_SCALE_C	41
+#define MENU_ELL_SCALE_ABC	42
 
+extern struct menu_item ell_menu[];
 
-
-#endif  /* EDBOT_H */
+#endif  /* EDELL_H */
 
 /*
  * Local Variables:
