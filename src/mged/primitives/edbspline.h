@@ -30,6 +30,23 @@
 
 extern struct menu_item spline_menu[];
 
+int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
+
+void bspline_init_sedit(struct mged_state *s);
+void sedit_vpick(struct mged_state *s, point_t v_pos);
+
+void
+bspline_label_solid(
+    struct mged_state *s,
+    struct rt_point_labels pl[],
+    const mat_t xform,
+    struct rt_db_internal *ip);
+
+void
+bspline_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
+
+void ecmd_vtrans(struct mged_state *s);
+
 #endif  /* EDBSPLINE_H */
 
 /*
