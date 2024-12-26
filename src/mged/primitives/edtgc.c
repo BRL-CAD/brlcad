@@ -37,6 +37,44 @@
 #include "../mged_dm.h"
 #include "./edtgc.h"
 
+static void
+tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    es_edflag = PSCALE;
+    if (arg == MENU_TGC_ROT_H)
+	es_edflag = ECMD_TGC_ROT_H;
+    if (arg == MENU_TGC_ROT_AB)
+	es_edflag = ECMD_TGC_ROT_AB;
+    if (arg == MENU_TGC_MV_H)
+	es_edflag = ECMD_TGC_MV_H;
+    if (arg == MENU_TGC_MV_HH)
+	es_edflag = ECMD_TGC_MV_HH;
+
+    set_e_axes_pos(s, 1);
+}
+
+struct menu_item tgc_menu[] = {
+    { "TGC MENU", NULL, 0 },
+    { "Set H",	tgc_ed, MENU_TGC_SCALE_H },
+    { "Set H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
+    { "Set H (adj C,D)",	tgc_ed, MENU_TGC_SCALE_H_CD },
+    { "Set H (move V, adj A,B)", tgc_ed, MENU_TGC_SCALE_H_V_AB },
+    { "Set A",	tgc_ed, MENU_TGC_SCALE_A },
+    { "Set B",	tgc_ed, MENU_TGC_SCALE_B },
+    { "Set C",	tgc_ed, MENU_TGC_SCALE_C },
+    { "Set D",	tgc_ed, MENU_TGC_SCALE_D },
+    { "Set A,B",	tgc_ed, MENU_TGC_SCALE_AB },
+    { "Set C,D",	tgc_ed, MENU_TGC_SCALE_CD },
+    { "Set A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
+    { "Rotate H",	tgc_ed, MENU_TGC_ROT_H },
+    { "Rotate AxB",	tgc_ed, MENU_TGC_ROT_AB },
+    { "Move End H(rt)", tgc_ed, MENU_TGC_MV_H },
+    { "Move End H", tgc_ed, MENU_TGC_MV_HH },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

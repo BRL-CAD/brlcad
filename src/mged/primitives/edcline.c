@@ -37,6 +37,23 @@
 #include "../mged_dm.h"
 #include "./edcline.h"
 
+static void
+cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_edflag = arg;
+    sedit(s);
+}
+
+struct menu_item cline_menu[] = {
+    { "CLINE MENU",		NULL, 0 },
+    { "Set H",		cline_ed, ECMD_CLINE_SCALE_H },
+    { "Move End H",		cline_ed, ECMD_CLINE_MOVE_H },
+    { "Set R",		cline_ed, ECMD_CLINE_SCALE_R },
+    { "Set plate thickness", cline_ed, ECMD_CLINE_SCALE_T },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

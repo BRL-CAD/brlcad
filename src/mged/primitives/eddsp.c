@@ -37,6 +37,40 @@
 #include "../mged_dm.h"
 #include "./edcline.h"
 
+static void
+dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+
+    switch (arg) {
+	case MENU_DSP_FNAME:
+	    es_edflag = ECMD_DSP_FNAME;
+	    break;
+	case MENU_DSP_FSIZE:
+	    es_edflag = ECMD_DSP_FSIZE;
+	    break;
+	case MENU_DSP_SCALE_X:
+	    es_edflag = ECMD_DSP_SCALE_X;
+	    break;
+	case MENU_DSP_SCALE_Y:
+	    es_edflag = ECMD_DSP_SCALE_Y;
+	    break;
+	case MENU_DSP_SCALE_ALT:
+	    es_edflag = ECMD_DSP_SCALE_ALT;
+	    break;
+    }
+    sedit(s);
+    set_e_axes_pos(s, 1);
+}
+struct menu_item dsp_menu[] = {
+    {"DSP MENU", NULL, 0 },
+    {"Name", dsp_ed, MENU_DSP_FNAME },
+    {"Set X", dsp_ed, MENU_DSP_SCALE_X },
+    {"Set Y", dsp_ed, MENU_DSP_SCALE_Y },
+    {"Set ALT", dsp_ed, MENU_DSP_SCALE_ALT },
+    { "", NULL, 0 }
+};
+
 
 /*
  * Local Variables:

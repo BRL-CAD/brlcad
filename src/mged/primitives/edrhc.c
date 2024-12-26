@@ -37,6 +37,24 @@
 #include "../mged_dm.h"
 #include "./edrhc.h"
 
+static void
+rhc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    es_edflag = PSCALE;
+
+    set_e_axes_pos(s, 1);
+}
+struct menu_item rhc_menu[] = {
+    { "RHC MENU", NULL, 0 },
+    { "Set B", rhc_ed, MENU_RHC_B },
+    { "Set H", rhc_ed, MENU_RHC_H },
+    { "Set r", rhc_ed, MENU_RHC_R },
+    { "Set c", rhc_ed, MENU_RHC_C },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

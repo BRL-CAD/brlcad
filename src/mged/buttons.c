@@ -148,60 +148,6 @@ static fastf_t sav_vscale;
 static int vsaved = 0;	/* set if view saved */
 
 extern void mged_color_soltab(struct mged_state *s);
-extern void sl_halt_scroll(struct mged_state *s, int, int, int);	/* in scroll.c */
-extern void sl_toggle_scroll(struct mged_state *s, int, int, int);
-
-void btn_head_menu(struct mged_state *s, int i, int menu, int item);
-void btn_item_hit(struct mged_state *s, int arg, int menu, int item);
-
-static struct menu_item first_menu[] = {
-    { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
-    { "", NULL, 0 }
-};
-struct menu_item second_menu[] = {
-    { "BUTTON MENU", btn_head_menu, 0 },	/* chg to 1st menu */
-    { "REJECT Edit", btn_item_hit, BE_REJECT },
-    { "ACCEPT Edit", btn_item_hit, BE_ACCEPT },
-    { "35,25", btn_item_hit, BV_35_25 },
-    { "Top", btn_item_hit, BV_TOP },
-    { "Right", btn_item_hit, BV_RIGHT },
-    { "Front", btn_item_hit, BV_FRONT },
-    { "45,45", btn_item_hit, BV_45_45 },
-    { "Restore View", btn_item_hit, BV_VRESTORE },
-    { "Save View", btn_item_hit, BV_VSAVE },
-    { "Ang/Dist Curs", btn_item_hit, BV_ADCURSOR },
-    { "Reset Viewsize", btn_item_hit, BV_RESET },
-    { "Zero Sliders", sl_halt_scroll, 0 },
-    { "Sliders", sl_toggle_scroll, 0 },
-    { "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
-    { "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
-    { "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
-    { "Primitive Illum", btn_item_hit, BE_S_ILLUMINATE },
-    { "Matrix Illum", btn_item_hit, BE_O_ILLUMINATE },
-    { "", NULL, 0 }
-};
-struct menu_item sed_menu[] = {
-    { "*PRIMITIVE EDIT*", btn_head_menu, 2 },
-    { "Edit Menu", btn_item_hit, BE_S_EDIT },
-    { "Rotate", btn_item_hit, BE_S_ROTATE },
-    { "Translate", btn_item_hit, BE_S_TRANS },
-    { "Scale", btn_item_hit, BE_S_SCALE },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item oed_menu[] = {
-    { "*MATRIX EDIT*", btn_head_menu, 2 },
-    { "Scale", btn_item_hit, BE_O_SCALE },
-    { "X Move", btn_item_hit, BE_O_X },
-    { "Y Move", btn_item_hit, BE_O_Y },
-    { "XY Move", btn_item_hit, BE_O_XY },
-    { "Rotate", btn_item_hit, BE_O_ROTATE },
-    { "Scale X", btn_item_hit, BE_O_XSCALE },
-    { "Scale Y", btn_item_hit, BE_O_YSCALE },
-    { "Scale Z", btn_item_hit, BE_O_ZSCALE },
-    { "", NULL, 0 }
-};
 
 
 void
@@ -1100,74 +1046,6 @@ state_err(struct mged_state *s, char *str)
 		     " state.\n", (char *)NULL);
 }
 
-
-/*
- * Called when a menu item is hit
- */
-void
-btn_item_hit(struct mged_state *s, int arg, int menu, int UNUSED(item))
-{
-    button(s, arg);
-    if (menu == MENU_GEN &&
-	(arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE))
-	menu_state->ms_flag = 0;
-}
-
-
-/*
- * Called to handle hits on menu heads.
- * Also called from main() with arg 0 in init.
- */
-void
-btn_head_menu(struct mged_state *s, int i, int UNUSED(menu), int UNUSED(item)) {
-    switch (i) {
-	case 0:
-	    mmenu_set(s, MENU_GEN, first_menu);
-	    break;
-	case 1:
-	    mmenu_set(s, MENU_GEN, second_menu);
-	    break;
-	case 2:
-	    /* nothing happens */
-	    break;
-	default:
-	    {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-		bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
-		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-	    }
-
-	    break;
-    }
-}
-
-
-void
-chg_l2menu(struct mged_state *s, int i) {
-    switch (i) {
-	case ST_S_EDIT:
-	    mmenu_set_all(s, MENU_L2, sed_menu);
-	    break;
-	case ST_S_NO_EDIT:
-	    mmenu_set_all(s, MENU_L2, NULL);
-	    break;
-	case ST_O_EDIT:
-	    mmenu_set_all(s, MENU_L2, oed_menu);
-	    break;
-	default:
-	    {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-		bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
-		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-	    }
-
-	    break;
-    }
-}
 
 
 /* TODO: below are functions not yet migrated to libged, still

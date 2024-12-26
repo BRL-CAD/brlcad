@@ -34,526 +34,131 @@
 
 #include "ged.h"
 
-static void
-cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_edflag = arg;
-    sedit(s);
-}
 
-struct menu_item cline_menu[] = {
-    { "CLINE MENU",		NULL, 0 },
-    { "Set H",		cline_ed, ECMD_CLINE_SCALE_H },
-    { "Move End H",		cline_ed, ECMD_CLINE_MOVE_H },
-    { "Set R",		cline_ed, ECMD_CLINE_SCALE_R },
-    { "Set plate thickness", cline_ed, ECMD_CLINE_SCALE_T },
+extern void sl_halt_scroll(struct mged_state *s, int, int, int);	/* in scroll.c */
+
+extern void sl_toggle_scroll(struct mged_state *s, int, int, int);
+
+void btn_head_menu(struct mged_state *s, int i, int menu, int item);
+void btn_item_hit(struct mged_state *s, int arg, int menu, int item);
+
+struct menu_item first_menu[] = {
+    { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
+    { "", NULL, 0 }
+};
+struct menu_item second_menu[] = {
+    { "BUTTON MENU", btn_head_menu, 0 },	/* chg to 1st menu */
+    { "REJECT Edit", btn_item_hit, BE_REJECT },
+    { "ACCEPT Edit", btn_item_hit, BE_ACCEPT },
+    { "35,25", btn_item_hit, BV_35_25 },
+    { "Top", btn_item_hit, BV_TOP },
+    { "Right", btn_item_hit, BV_RIGHT },
+    { "Front", btn_item_hit, BV_FRONT },
+    { "45,45", btn_item_hit, BV_45_45 },
+    { "Restore View", btn_item_hit, BV_VRESTORE },
+    { "Save View", btn_item_hit, BV_VSAVE },
+    { "Ang/Dist Curs", btn_item_hit, BV_ADCURSOR },
+    { "Reset Viewsize", btn_item_hit, BV_RESET },
+    { "Zero Sliders", sl_halt_scroll, 0 },
+    { "Sliders", sl_toggle_scroll, 0 },
+    { "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
+    { "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
+    { "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
+    { "Primitive Illum", btn_item_hit, BE_S_ILLUMINATE },
+    { "Matrix Illum", btn_item_hit, BE_O_ILLUMINATE },
+    { "", NULL, 0 }
+};
+struct menu_item sed_menu[] = {
+    { "*PRIMITIVE EDIT*", btn_head_menu, 2 },
+    { "Edit Menu", btn_item_hit, BE_S_EDIT },
+    { "Rotate", btn_item_hit, BE_S_ROTATE },
+    { "Translate", btn_item_hit, BE_S_TRANS },
+    { "Scale", btn_item_hit, BE_S_SCALE },
     { "", NULL, 0 }
 };
 
-/*ARGSUSED*/
-static void
-extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_edflag = arg;
-    sedit(s);
-}
-struct menu_item extr_menu[] = {
-    { "EXTRUSION MENU",	NULL, 0 },
-    { "Set H",		extr_ed, ECMD_EXTR_SCALE_H },
-    { "Move End H",		extr_ed, ECMD_EXTR_MOV_H },
-    { "Rotate H",		extr_ed, ECMD_EXTR_ROT_H },
-    { "Referenced Sketch",	extr_ed, ECMD_EXTR_SKT_NAME },
+
+struct menu_item oed_menu[] = {
+    { "*MATRIX EDIT*", btn_head_menu, 2 },
+    { "Scale", btn_item_hit, BE_O_SCALE },
+    { "X Move", btn_item_hit, BE_O_X },
+    { "Y Move", btn_item_hit, BE_O_Y },
+    { "XY Move", btn_item_hit, BE_O_XY },
+    { "Rotate", btn_item_hit, BE_O_ROTATE },
+    { "Scale X", btn_item_hit, BE_O_XSCALE },
+    { "Scale Y", btn_item_hit, BE_O_YSCALE },
+    { "Scale Z", btn_item_hit, BE_O_ZSCALE },
     { "", NULL, 0 }
 };
 
 
-static void
-tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+/*
+ * Called when a menu item is hit
+ */
+void
+btn_item_hit(struct mged_state *s, int arg, int menu, int UNUSED(item))
 {
-    es_menu = arg;
-    es_edflag = PSCALE;
-    if (arg == MENU_TGC_ROT_H)
-	es_edflag = ECMD_TGC_ROT_H;
-    if (arg == MENU_TGC_ROT_AB)
-	es_edflag = ECMD_TGC_ROT_AB;
-    if (arg == MENU_TGC_MV_H)
-	es_edflag = ECMD_TGC_MV_H;
-    if (arg == MENU_TGC_MV_HH)
-	es_edflag = ECMD_TGC_MV_HH;
-
-    set_e_axes_pos(s, 1);
+    button(s, arg);
+    if (menu == MENU_GEN &&
+	(arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE))
+	menu_state->ms_flag = 0;
 }
 
-struct menu_item tgc_menu[] = {
-    { "TGC MENU", NULL, 0 },
-    { "Set H",	tgc_ed, MENU_TGC_SCALE_H },
-    { "Set H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
-    { "Set H (adj C,D)",	tgc_ed, MENU_TGC_SCALE_H_CD },
-    { "Set H (move V, adj A,B)", tgc_ed, MENU_TGC_SCALE_H_V_AB },
-    { "Set A",	tgc_ed, MENU_TGC_SCALE_A },
-    { "Set B",	tgc_ed, MENU_TGC_SCALE_B },
-    { "Set C",	tgc_ed, MENU_TGC_SCALE_C },
-    { "Set D",	tgc_ed, MENU_TGC_SCALE_D },
-    { "Set A,B",	tgc_ed, MENU_TGC_SCALE_AB },
-    { "Set C,D",	tgc_ed, MENU_TGC_SCALE_CD },
-    { "Set A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
-    { "Rotate H",	tgc_ed, MENU_TGC_ROT_H },
-    { "Rotate AxB",	tgc_ed, MENU_TGC_ROT_AB },
-    { "Move End H(rt)", tgc_ed, MENU_TGC_MV_H },
-    { "Move End H", tgc_ed, MENU_TGC_MV_HH },
-    { "", NULL, 0 }
-};
-
-static void
-tor_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(s, 1);
-}
-
-
-struct menu_item tor_menu[] = {
-    { "TORUS MENU", NULL, 0 },
-    { "Set Radius 1", tor_ed, MENU_TOR_R1 },
-    { "Set Radius 2", tor_ed, MENU_TOR_R2 },
-    { "", NULL, 0 }
-};
-
-static void
-eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    if (arg == MENU_ETO_ROT_C)
-	es_edflag = ECMD_ETO_ROT_C;
-    else
-	es_edflag = PSCALE;
-
-    set_e_axes_pos(s, 1);
-}
-struct menu_item eto_menu[] = {
-    { "ELL-TORUS MENU", NULL, 0 },
-    { "Set r", eto_ed, MENU_ETO_R },
-    { "Set D", eto_ed, MENU_ETO_RD },
-    { "Set C", eto_ed, MENU_ETO_SCALE_C },
-    { "Rotate C", eto_ed, MENU_ETO_ROT_C },
-    { "", NULL, 0 }
-};
-
-static void
-ell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(s, 1);
-}
-struct menu_item ell_menu[] = {
-    { "ELLIPSOID MENU", NULL, 0 },
-    { "Set A", ell_ed, MENU_ELL_SCALE_A },
-    { "Set B", ell_ed, MENU_ELL_SCALE_B },
-    { "Set C", ell_ed, MENU_ELL_SCALE_C },
-    { "Set A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
-    { "", NULL, 0 }
-};
-
-/*ARGSUSED*/
-static void
-spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    /* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
-    if (arg < 0) {
-	/* Enter picking state */
-	chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
-	return;
-    }
-    /* For example, this will set es_edflag = ECMD_VTRANS */
-    es_edflag = arg;
-    sedit(s);
-
-    set_e_axes_pos(s, 1);
-}
-struct menu_item spline_menu[] = {
-    { "SPLINE MENU", NULL, 0 },
-    { "Pick Vertex", spline_ed, -1 },
-    { "Move Vertex", spline_ed, ECMD_VTRANS },
-    { "", NULL, 0 }
-};
-
-static void
-part_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(s, 1);
-}
-struct menu_item part_menu[] = {
-    { "Particle MENU", NULL, 0 },
-    { "Set H", part_ed, MENU_PART_H },
-    { "Set v", part_ed, MENU_PART_v },
-    { "Set h", part_ed, MENU_PART_h },
-    { "", NULL, 0 }
-};
-
-static void
-rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(s, 1);
-}
-struct menu_item rpc_menu[] = {
-    { "RPC MENU", NULL, 0 },
-    { "Set B", rpc_ed, MENU_RPC_B },
-    { "Set H", rpc_ed, MENU_RPC_H },
-    { "Set r", rpc_ed, MENU_RPC_R },
-    { "", NULL, 0 }
-};
-
-static void
-rhc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(s, 1);
-}
-struct menu_item rhc_menu[] = {
-    { "RHC MENU", NULL, 0 },
-    { "Set B", rhc_ed, MENU_RHC_B },
-    { "Set H", rhc_ed, MENU_RHC_H },
-    { "Set r", rhc_ed, MENU_RHC_R },
-    { "Set c", rhc_ed, MENU_RHC_C },
-    { "", NULL, 0 }
-};
-
-static void
-epa_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(s, 1);
-}
-struct menu_item epa_menu[] = {
-    { "EPA MENU", NULL, 0 },
-    { "Set H", epa_ed, MENU_EPA_H },
-    { "Set A", epa_ed, MENU_EPA_R1 },
-    { "Set B", epa_ed, MENU_EPA_R2 },
-    { "", NULL, 0 }
-};
-
-static void
-ehy_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(s, 1);
-}
-struct menu_item ehy_menu[] = {
-    { "EHY MENU", NULL, 0 },
-    { "Set H", ehy_ed, MENU_EHY_H },
-    { "Set A", ehy_ed, MENU_EHY_R1 },
-    { "Set B", ehy_ed, MENU_EHY_R2 },
-    { "Set c", ehy_ed, MENU_EHY_C },
-    { "", NULL, 0 }
-};
-
-static void
-hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    switch (arg) {
-	case MENU_HYP_ROT_H:
-	    es_edflag = ECMD_HYP_ROT_H;
+/*
+ * Called to handle hits on menu heads.
+ * Also called from main() with arg 0 in init.
+ */
+void
+btn_head_menu(struct mged_state *s, int i, int UNUSED(menu), int UNUSED(item)) {
+    switch (i) {
+	case 0:
+	    mmenu_set(s, MENU_GEN, first_menu);
+	    break;
+	case 1:
+	    mmenu_set(s, MENU_GEN, second_menu);
+	    break;
+	case 2:
+	    /* nothing happens */
 	    break;
 	default:
-	    es_edflag = PSCALE;
+	    {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
+		bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	    }
+
 	    break;
     }
-    set_e_axes_pos(s, 1);
-    return;
 }
-struct menu_item  hyp_menu[] = {
-    { "HYP MENU", NULL, 0 },
-    { "Set H", hyp_ed, MENU_HYP_H },
-    { "Set A", hyp_ed, MENU_HYP_SCALE_A },
-    { "Set B", hyp_ed, MENU_HYP_SCALE_B },
-    { "Set c", hyp_ed, MENU_HYP_C },
-    { "Rotate H", hyp_ed, MENU_HYP_ROT_H },
-    { "", NULL, 0 }
-};
 
-static void
-vol_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
+void
+chg_l2menu(struct mged_state *s, int i) {
+    switch (i) {
+	case ST_S_EDIT:
+	    mmenu_set_all(s, MENU_L2, sed_menu);
+	    break;
+	case ST_S_NO_EDIT:
+	    mmenu_set_all(s, MENU_L2, NULL);
+	    break;
+	case ST_O_EDIT:
+	    mmenu_set_all(s, MENU_L2, oed_menu);
+	    break;
+	default:
+	    {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-    switch (arg) {
-	case MENU_VOL_FNAME:
-	    es_edflag = ECMD_VOL_FNAME;
-	    break;
-	case MENU_VOL_FSIZE:
-	    es_edflag = ECMD_VOL_FSIZE;
-	    break;
-	case MENU_VOL_CSIZE:
-	    es_edflag = ECMD_VOL_CSIZE;
-	    break;
-	case MENU_VOL_THRESH_LO:
-	    es_edflag = ECMD_VOL_THRESH_LO;
-	    break;
-	case MENU_VOL_THRESH_HI:
-	    es_edflag = ECMD_VOL_THRESH_HI;
+		bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	    }
+
 	    break;
     }
-
-    sedit(s);
-    set_e_axes_pos(s, 1);
 }
 
-struct menu_item vol_menu[] = {
-    {"VOL MENU", NULL, 0 },
-    {"File Name", vol_ed, MENU_VOL_FNAME },
-    {"File Size (X Y Z)", vol_ed, MENU_VOL_FSIZE },
-    {"Voxel Size (X Y Z)", vol_ed, MENU_VOL_CSIZE },
-    {"Threshold (low)", vol_ed, MENU_VOL_THRESH_LO },
-    {"Threshold (hi)", vol_ed, MENU_VOL_THRESH_HI },
-    { "", NULL, 0 }
-};
 
-static void
-ebm_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-
-    switch (arg) {
-	case MENU_EBM_FNAME:
-	    es_edflag = ECMD_EBM_FNAME;
-	    break;
-	case MENU_EBM_FSIZE:
-	    es_edflag = ECMD_EBM_FSIZE;
-	    break;
-	case MENU_EBM_HEIGHT:
-	    es_edflag = ECMD_EBM_HEIGHT;
-	    break;
-    }
-
-    sedit(s);
-    set_e_axes_pos(s, 1);
-}
-struct menu_item ebm_menu[] = {
-    {"EBM MENU", NULL, 0 },
-    {"File Name", ebm_ed, MENU_EBM_FNAME },
-    {"File Size (W N)", ebm_ed, MENU_EBM_FSIZE },
-    {"Extrude Depth", ebm_ed, MENU_EBM_HEIGHT },
-    { "", NULL, 0 }
-};
-
-static void
-dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-
-    switch (arg) {
-	case MENU_DSP_FNAME:
-	    es_edflag = ECMD_DSP_FNAME;
-	    break;
-	case MENU_DSP_FSIZE:
-	    es_edflag = ECMD_DSP_FSIZE;
-	    break;
-	case MENU_DSP_SCALE_X:
-	    es_edflag = ECMD_DSP_SCALE_X;
-	    break;
-	case MENU_DSP_SCALE_Y:
-	    es_edflag = ECMD_DSP_SCALE_Y;
-	    break;
-	case MENU_DSP_SCALE_ALT:
-	    es_edflag = ECMD_DSP_SCALE_ALT;
-	    break;
-    }
-    sedit(s);
-    set_e_axes_pos(s, 1);
-}
-struct menu_item dsp_menu[] = {
-    {"DSP MENU", NULL, 0 },
-    {"Name", dsp_ed, MENU_DSP_FNAME },
-    {"Set X", dsp_ed, MENU_DSP_SCALE_X },
-    {"Set Y", dsp_ed, MENU_DSP_SCALE_Y },
-    {"Set ALT", dsp_ed, MENU_DSP_SCALE_ALT },
-    { "", NULL, 0 }
-};
-
-static void
-bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = arg;
-
-    sedit(s);
-    set_e_axes_pos(s, 1);
-}
-struct menu_item bot_menu[] = {
-    { "BOT MENU", NULL, 0 },
-    { "Pick Vertex", bot_ed, ECMD_BOT_PICKV },
-    { "Pick Edge", bot_ed, ECMD_BOT_PICKE },
-    { "Pick Triangle", bot_ed, ECMD_BOT_PICKT },
-    { "Move Vertex", bot_ed, ECMD_BOT_MOVEV },
-    { "Move Edge", bot_ed, ECMD_BOT_MOVEE },
-    { "Move Triangle", bot_ed, ECMD_BOT_MOVET },
-    { "Delete Triangle", bot_ed, ECMD_BOT_FDEL },
-    { "Select Mode", bot_ed, ECMD_BOT_MODE },
-    { "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
-    { "Set flags", bot_ed, ECMD_BOT_FLAGS },
-    { "Set Face Thickness", bot_ed, ECMD_BOT_THICK },
-    { "Set Face Mode", bot_ed, ECMD_BOT_FMODE },
-    { "", NULL, 0 }
-};
-
-static void
-superell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b)) {
-    es_menu = arg;
-    es_edflag = PSCALE;
-    set_e_axes_pos(s, 1);
-    return;
-}
-struct menu_item superell_menu[] = {
-    { "SUPERELLIPSOID MENU", NULL, 0 },
-    { "Set A", superell_ed, MENU_SUPERELL_SCALE_A },
-    { "Set B", superell_ed, MENU_SUPERELL_SCALE_B },
-    { "Set C", superell_ed, MENU_SUPERELL_SCALE_C },
-    { "Set A,B,C", superell_ed, MENU_SUPERELL_SCALE_ABC },
-    { "", NULL, 0 }
-};
-
-static void
-metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    struct wdb_metaball_pnt *next, *prev;
-
-    if (s->dbip == DBI_NULL)
-	return;
-
-    switch (arg) {
-	case MENU_METABALL_SET_THRESHOLD:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_METABALL_SET_METHOD:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_METABALL_PT_SET_GOO:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_METABALL_SELECT:
-	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_PICK;
-	    break;
-	case MENU_METABALL_NEXT_PT:
-	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		return;
-	    }
-	    next = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
-	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(s->interp, "Current point is the last\n", (char *)NULL);
-		return;
-	    }
-	    es_metaball_pnt = next;
-	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
-	    es_menu = arg;
-	    es_edflag = IDLE;
-	    sedit(s);
-	    break;
-	case MENU_METABALL_PREV_PT:
-	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		return;
-	    }
-	    prev = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
-	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(s->interp, "Current point is the first\n", (char *)NULL);
-		return;
-	    }
-	    es_metaball_pnt = prev;
-	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
-	    es_menu = arg;
-	    es_edflag = IDLE;
-	    sedit(s);
-	    break;
-	case MENU_METABALL_MOV_PT:
-	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		es_edflag = IDLE;
-		return;
-	    }
-	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_MOV;
-	    sedit(s);
-	    break;
-	case MENU_METABALL_PT_FLDSTR:
-	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		es_edflag = IDLE;
-		return;
-	    }
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_METABALL_DEL_PT:
-	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_DEL;
-	    sedit(s);
-	    break;
-	case MENU_METABALL_ADD_PT:
-	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_ADD;
-	    break;
-    }
-    set_e_axes_pos(s, 1);
-    return;
-}
-struct menu_item metaball_menu[] = {
-    { "METABALL MENU", NULL, 0 },
-    { "Set Threshold", metaball_ed, MENU_METABALL_SET_THRESHOLD },
-    { "Set Render Method", metaball_ed, MENU_METABALL_SET_METHOD },
-    { "Select Point", metaball_ed, MENU_METABALL_SELECT },
-    { "Next Point", metaball_ed, MENU_METABALL_NEXT_PT },
-    { "Previous Point", metaball_ed, MENU_METABALL_PREV_PT },
-    { "Move Point", metaball_ed, MENU_METABALL_MOV_PT },
-    { "Scale Point fldstr", metaball_ed, MENU_METABALL_PT_FLDSTR },
-    { "Scale Point \"goo\" value", metaball_ed, MENU_METABALL_PT_SET_GOO },
-    { "Delete Point", metaball_ed, MENU_METABALL_DEL_PT },
-    { "Add Point", metaball_ed, MENU_METABALL_ADD_PT },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item *which_menu[] = {
-    point4_menu,
-    edge5_menu,
-    edge6_menu,
-    edge7_menu,
-    edge8_menu,
-    mv4_menu,
-    mv5_menu,
-    mv6_menu,
-    mv7_menu,
-    mv8_menu,
-    rot4_menu,
-    rot5_menu,
-    rot6_menu,
-    rot7_menu,
-    rot8_menu
-};
-
-
-extern struct menu_item second_menu[], sed_menu[];
 
 int
 cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])

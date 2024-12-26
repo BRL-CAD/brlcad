@@ -56,6 +56,7 @@ extern struct menu_item rot5_menu[];
 extern struct menu_item rot6_menu[];
 extern struct menu_item rot7_menu[];
 extern struct menu_item rot8_menu[];
+extern struct menu_item *which_menu[];
 
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 

@@ -37,6 +37,24 @@
 #include "../mged_dm.h"
 #include "./edehy.h"
 
+static void
+ehy_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    es_edflag = PSCALE;
+
+    set_e_axes_pos(s, 1);
+}
+struct menu_item ehy_menu[] = {
+    { "EHY MENU", NULL, 0 },
+    { "Set H", ehy_ed, MENU_EHY_H },
+    { "Set A", ehy_ed, MENU_EHY_R1 },
+    { "Set B", ehy_ed, MENU_EHY_R2 },
+    { "Set c", ehy_ed, MENU_EHY_C },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

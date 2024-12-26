@@ -37,6 +37,43 @@
 #include "../mged_dm.h"
 #include "./edvol.h"
 
+static void
+vol_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+
+    switch (arg) {
+	case MENU_VOL_FNAME:
+	    es_edflag = ECMD_VOL_FNAME;
+	    break;
+	case MENU_VOL_FSIZE:
+	    es_edflag = ECMD_VOL_FSIZE;
+	    break;
+	case MENU_VOL_CSIZE:
+	    es_edflag = ECMD_VOL_CSIZE;
+	    break;
+	case MENU_VOL_THRESH_LO:
+	    es_edflag = ECMD_VOL_THRESH_LO;
+	    break;
+	case MENU_VOL_THRESH_HI:
+	    es_edflag = ECMD_VOL_THRESH_HI;
+	    break;
+    }
+
+    sedit(s);
+    set_e_axes_pos(s, 1);
+}
+
+struct menu_item vol_menu[] = {
+    {"VOL MENU", NULL, 0 },
+    {"File Name", vol_ed, MENU_VOL_FNAME },
+    {"File Size (X Y Z)", vol_ed, MENU_VOL_FSIZE },
+    {"Voxel Size (X Y Z)", vol_ed, MENU_VOL_CSIZE },
+    {"Threshold (low)", vol_ed, MENU_VOL_THRESH_LO },
+    {"Threshold (hi)", vol_ed, MENU_VOL_THRESH_HI },
+    { "", NULL, 0 }
+};
+
 
 /*
  * Local Variables:

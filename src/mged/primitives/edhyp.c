@@ -37,6 +37,31 @@
 #include "../mged_dm.h"
 #include "./edhyp.h"
 
+static void
+hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    switch (arg) {
+	case MENU_HYP_ROT_H:
+	    es_edflag = ECMD_HYP_ROT_H;
+	    break;
+	default:
+	    es_edflag = PSCALE;
+	    break;
+    }
+    set_e_axes_pos(s, 1);
+    return;
+}
+struct menu_item  hyp_menu[] = {
+    { "HYP MENU", NULL, 0 },
+    { "Set H", hyp_ed, MENU_HYP_H },
+    { "Set A", hyp_ed, MENU_HYP_SCALE_A },
+    { "Set B", hyp_ed, MENU_HYP_SCALE_B },
+    { "Set c", hyp_ed, MENU_HYP_C },
+    { "Rotate H", hyp_ed, MENU_HYP_ROT_H },
+    { "", NULL, 0 }
+};
+
 
 /*
  * Local Variables:

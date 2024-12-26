@@ -37,6 +37,23 @@
 #include "../mged_dm.h"
 #include "./edpart.h"
 
+static void
+part_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    es_edflag = PSCALE;
+
+    set_e_axes_pos(s, 1);
+}
+struct menu_item part_menu[] = {
+    { "Particle MENU", NULL, 0 },
+    { "Set H", part_ed, MENU_PART_H },
+    { "Set v", part_ed, MENU_PART_v },
+    { "Set h", part_ed, MENU_PART_h },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

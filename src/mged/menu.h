@@ -52,7 +52,11 @@
 #include "primitives/edtor.h"
 #include "primitives/edvol.h"
 
-extern struct menu_item *which_menu[];
+extern struct menu_item sed_menu[];
+extern struct menu_item oed_menu[];
+
+void btn_head_menu(struct mged_state *s, int i, int menu, int item);
+void chg_l2menu(struct mged_state *s, int i);
 
 extern void mmenu_init(struct mged_state *s);
 extern void mmenu_display(struct mged_state *s, int y_top);

@@ -37,6 +37,23 @@
 #include "../mged_dm.h"
 #include "./edrpc.h"
 
+static void
+rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    es_edflag = PSCALE;
+
+    set_e_axes_pos(s, 1);
+}
+struct menu_item rpc_menu[] = {
+    { "RPC MENU", NULL, 0 },
+    { "Set B", rpc_ed, MENU_RPC_B },
+    { "Set H", rpc_ed, MENU_RPC_H },
+    { "Set r", rpc_ed, MENU_RPC_R },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

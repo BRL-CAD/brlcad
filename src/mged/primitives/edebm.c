@@ -37,6 +37,34 @@
 #include "../mged_dm.h"
 #include "./edebm.h"
 
+static void
+ebm_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+
+    switch (arg) {
+	case MENU_EBM_FNAME:
+	    es_edflag = ECMD_EBM_FNAME;
+	    break;
+	case MENU_EBM_FSIZE:
+	    es_edflag = ECMD_EBM_FSIZE;
+	    break;
+	case MENU_EBM_HEIGHT:
+	    es_edflag = ECMD_EBM_HEIGHT;
+	    break;
+    }
+
+    sedit(s);
+    set_e_axes_pos(s, 1);
+}
+struct menu_item ebm_menu[] = {
+    {"EBM MENU", NULL, 0 },
+    {"File Name", ebm_ed, MENU_EBM_FNAME },
+    {"File Size (W N)", ebm_ed, MENU_EBM_FSIZE },
+    {"Extrude Depth", ebm_ed, MENU_EBM_HEIGHT },
+    { "", NULL, 0 }
+};
+
 
 /*
  * Local Variables:

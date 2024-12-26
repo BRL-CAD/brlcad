@@ -415,10 +415,6 @@ void mged_slider_free_vls(struct mged_dm *p);
 int gui_setup(struct mged_state *s, const char *dstr);
 
 
-/* buttons.c */
-void btn_head_menu(struct mged_state *s, int i, int menu, int item);
-void chg_l2menu(struct mged_state *s, int i);
-
 /* chgview.c */
 int mged_svbase(struct mged_state *s);
 void size_reset(struct mged_state *s);

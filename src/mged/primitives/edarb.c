@@ -437,7 +437,23 @@ struct menu_item cntrl_menu[] = {
     { "", NULL, 0 }
 };
 
-
+struct menu_item *which_menu[] = {
+    point4_menu,
+    edge5_menu,
+    edge6_menu,
+    edge7_menu,
+    edge8_menu,
+    mv4_menu,
+    mv5_menu,
+    mv6_menu,
+    mv7_menu,
+    mv8_menu,
+    rot4_menu,
+    rot5_menu,
+    rot6_menu,
+    rot7_menu,
+    rot8_menu
+};
 
 /*
  * An ARB edge is moved by finding the direction of the line

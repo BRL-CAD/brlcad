@@ -37,6 +37,23 @@
 #include "../mged_dm.h"
 #include "./edepa.h"
 
+static void
+epa_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    es_edflag = PSCALE;
+
+    set_e_axes_pos(s, 1);
+}
+struct menu_item epa_menu[] = {
+    { "EPA MENU", NULL, 0 },
+    { "Set H", epa_ed, MENU_EPA_H },
+    { "Set A", epa_ed, MENU_EPA_R1 },
+    { "Set B", epa_ed, MENU_EPA_R2 },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

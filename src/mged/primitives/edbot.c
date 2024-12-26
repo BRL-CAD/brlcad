@@ -37,6 +37,33 @@
 #include "../mged_dm.h"
 #include "./edbot.h"
 
+static void
+bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    es_edflag = arg;
+
+    sedit(s);
+    set_e_axes_pos(s, 1);
+}
+struct menu_item bot_menu[] = {
+    { "BOT MENU", NULL, 0 },
+    { "Pick Vertex", bot_ed, ECMD_BOT_PICKV },
+    { "Pick Edge", bot_ed, ECMD_BOT_PICKE },
+    { "Pick Triangle", bot_ed, ECMD_BOT_PICKT },
+    { "Move Vertex", bot_ed, ECMD_BOT_MOVEV },
+    { "Move Edge", bot_ed, ECMD_BOT_MOVEE },
+    { "Move Triangle", bot_ed, ECMD_BOT_MOVET },
+    { "Delete Triangle", bot_ed, ECMD_BOT_FDEL },
+    { "Select Mode", bot_ed, ECMD_BOT_MODE },
+    { "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
+    { "Set flags", bot_ed, ECMD_BOT_FLAGS },
+    { "Set Face Thickness", bot_ed, ECMD_BOT_THICK },
+    { "Set Face Mode", bot_ed, ECMD_BOT_FMODE },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

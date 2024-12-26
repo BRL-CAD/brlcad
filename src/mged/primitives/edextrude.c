@@ -37,6 +37,22 @@
 #include "../mged_dm.h"
 #include "./edextrude.h"
 
+/*ARGSUSED*/
+static void
+extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_edflag = arg;
+    sedit(s);
+}
+struct menu_item extr_menu[] = {
+    { "EXTRUSION MENU",	NULL, 0 },
+    { "Set H",		extr_ed, ECMD_EXTR_SCALE_H },
+    { "Move End H",		extr_ed, ECMD_EXTR_MOV_H },
+    { "Rotate H",		extr_ed, ECMD_EXTR_ROT_H },
+    { "Referenced Sketch",	extr_ed, ECMD_EXTR_SKT_NAME },
+    { "", NULL, 0 }
+};
+
 
 /*
  * Local Variables:

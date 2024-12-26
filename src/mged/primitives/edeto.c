@@ -37,6 +37,27 @@
 #include "../mged_dm.h"
 #include "./edeto.h"
 
+static void
+eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    if (arg == MENU_ETO_ROT_C)
+	es_edflag = ECMD_ETO_ROT_C;
+    else
+	es_edflag = PSCALE;
+
+    set_e_axes_pos(s, 1);
+}
+struct menu_item eto_menu[] = {
+    { "ELL-TORUS MENU", NULL, 0 },
+    { "Set r", eto_ed, MENU_ETO_R },
+    { "Set D", eto_ed, MENU_ETO_RD },
+    { "Set C", eto_ed, MENU_ETO_SCALE_C },
+    { "Rotate C", eto_ed, MENU_ETO_ROT_C },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

@@ -37,6 +37,23 @@
 #include "../mged_dm.h"
 #include "./edsuperell.h"
 
+static void
+superell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b)) {
+    es_menu = arg;
+    es_edflag = PSCALE;
+    set_e_axes_pos(s, 1);
+    return;
+}
+struct menu_item superell_menu[] = {
+    { "SUPERELLIPSOID MENU", NULL, 0 },
+    { "Set A", superell_ed, MENU_SUPERELL_SCALE_A },
+    { "Set B", superell_ed, MENU_SUPERELL_SCALE_B },
+    { "Set C", superell_ed, MENU_SUPERELL_SCALE_C },
+    { "Set A,B,C", superell_ed, MENU_SUPERELL_SCALE_ABC },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:

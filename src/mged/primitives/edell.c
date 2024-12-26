@@ -37,6 +37,24 @@
 #include "../mged_dm.h"
 #include "./edell.h"
 
+static void
+ell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+{
+    es_menu = arg;
+    es_edflag = PSCALE;
+
+    set_e_axes_pos(s, 1);
+}
+struct menu_item ell_menu[] = {
+    { "ELLIPSOID MENU", NULL, 0 },
+    { "Set A", ell_ed, MENU_ELL_SCALE_A },
+    { "Set B", ell_ed, MENU_ELL_SCALE_B },
+    { "Set C", ell_ed, MENU_ELL_SCALE_C },
+    { "Set A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
+    { "", NULL, 0 }
+};
+
+
 
 /*
  * Local Variables:
