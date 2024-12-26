@@ -1,4 +1,4 @@
-/*                      E D E T O . H
+/*                      E D E X T R U D E . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,20 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edeto.h
+/** @file mged/edextrude.h
  */
 
-#ifndef EDETO_H
-#define EDETO_H
+#ifndef EDEXTRUDE_H
+#define EDEXTRUDE_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_ETO_ROT_C		16
+#define ECMD_EXTR_SCALE_H	73	/* scale extrusion vector */
+#define ECMD_EXTR_MOV_H		74	/* move end of extrusion vector */
+#define ECMD_EXTR_ROT_H		75	/* rotate extrusion vector */
+#define ECMD_EXTR_SKT_NAME	76	/* set sketch that the extrusion uses */
 
-#endif  /* EDETO_H */
+
+#endif  /* EDEXTRUDE_H */
 
 /*
  * Local Variables:

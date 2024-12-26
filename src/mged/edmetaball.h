@@ -28,6 +28,15 @@
 #include "raytrace.h"
 #include "mged.h"
 
+#define ECMD_METABALL_SET_THRESHOLD	83	/* overall metaball threshold value */
+#define ECMD_METABALL_SET_METHOD	84	/* set the rendering method */
+#define ECMD_METABALL_PT_PICK	85	/* pick a metaball control point */
+#define ECMD_METABALL_PT_MOV	86	/* move a metaball control point */
+#define ECMD_METABALL_PT_FLDSTR	87	/* set a metaball control point field strength */
+#define ECMD_METABALL_PT_DEL	88	/* delete a metaball control point */
+#define ECMD_METABALL_PT_ADD	89	/* add a metaball control point */
+#define ECMD_METABALL_RMET	90	/* set the metaball render method */
+
 #endif  /* EDMETABALL_H */
 
 /*

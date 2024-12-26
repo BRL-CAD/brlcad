@@ -111,8 +111,11 @@ set(
   edbot.h
   edcline.h
   eddsp.h
+  edebm.h
   edell.h
   edeto.h
+  edextrude.h
+  edhyp.h
   edmetaball.h
   ednmg.h
   edpipe.h

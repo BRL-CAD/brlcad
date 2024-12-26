@@ -28,6 +28,12 @@
 #include "raytrace.h"
 #include "mged.h"
 
+#define ECMD_DSP_FNAME		56	/* set DSP file name */
+#define ECMD_DSP_FSIZE		57	/* set DSP file size */
+#define ECMD_DSP_SCALE_X        58	/* Scale DSP x size */
+#define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
+#define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
+
 #endif  /* EDDSP_H */
 
 /*

@@ -28,6 +28,14 @@
 #include "raytrace.h"
 #include "mged.h"
 
+#define ECMD_TGC_MV_H	5
+#define ECMD_TGC_MV_HH	6
+#define ECMD_TGC_ROT_H	7
+#define ECMD_TGC_ROT_AB	8
+#define ECMD_TGC_MV_H_CD	81	/* move end of tgc, while scaling CD */
+#define ECMD_TGC_MV_H_V_AB	82	/* move vertex end of tgc, while scaling AB */
+
+
 #endif  /* EDTGC_H */
 
 /*

@@ -28,6 +28,11 @@
 #include "raytrace.h"
 #include "mged.h"
 
+#define ECMD_CLINE_SCALE_H	77	/* scale height vector */
+#define ECMD_CLINE_MOVE_H	78	/* move end of height vector */
+#define ECMD_CLINE_SCALE_R	79	/* scale radius */
+#define ECMD_CLINE_SCALE_T	80	/* scale thickness */
+
 #endif  /* EDCLINE_H */
 
 /*

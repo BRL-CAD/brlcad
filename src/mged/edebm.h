@@ -1,4 +1,4 @@
-/*                      E D E T O . H
+/*                          E D E B M . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,20 +17,22 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edeto.h
+/** @file mged/edebm.h
  */
 
-#ifndef EDETO_H
-#define EDETO_H
+#ifndef EDEBM_H
+#define EDEBM_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_ETO_ROT_C		16
+#define ECMD_EBM_FNAME		53	/* set EBM file name */
+#define ECMD_EBM_FSIZE		54	/* set EBM file size */
+#define ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
 
-#endif  /* EDETO_H */
+#endif  /* EDEBM_H */
 
 /*
  * Local Variables:

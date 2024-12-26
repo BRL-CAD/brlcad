@@ -45,72 +45,22 @@
 #define SROT		3	/* buttons.c */
 #define PSCALE		4	/* Scale one solid parameter by scalar */
 
-#define ECMD_TGC_MV_H	5
-#define ECMD_TGC_MV_HH	6
-#define ECMD_TGC_ROT_H	7
-#define ECMD_TGC_ROT_AB	8
-
-#include "edarb.h" //for ARB defines
-
-#define ECMD_ETO_ROT_C		16
+#include "edtgc.h"      //for TGC defines
+#include "edarb.h"      //for ARB defines
+#include "edeto.h"      //for ETO defines
 
 #define ECMD_VTRANS		17	/* vertex translate */
-#include "ednmg.h"   //for NMG defines
-#include "edpipe.h"  //for PIPE defines
-#include "edars.h"  //for ARS defines
-
-#define ECMD_VOL_CSIZE		48	/* set voxel size */
-#define ECMD_VOL_FSIZE		49	/* set VOL file dimensions */
-#define ECMD_VOL_THRESH_LO	50	/* set VOL threshold (lo) */
-#define ECMD_VOL_THRESH_HI	51	/* set VOL threshold (hi) */
-#define ECMD_VOL_FNAME		52	/* set VOL file name */
-
-#define ECMD_EBM_FNAME		53	/* set EBM file name */
-#define ECMD_EBM_FSIZE		54	/* set EBM file size */
-#define ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
-
-#define ECMD_DSP_FNAME		56	/* set DSP file name */
-#define ECMD_DSP_FSIZE		57	/* set DSP file size */
-#define ECMD_DSP_SCALE_X        58	/* Scale DSP x size */
-#define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
-#define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
-
-#define ECMD_BOT_PICKV		61	/* pick a BOT vertex */
-#define ECMD_BOT_PICKE		62	/* pick a BOT edge */
-#define ECMD_BOT_PICKT		63	/* pick a BOT triangle */
-#define ECMD_BOT_MOVEV		64	/* move a BOT vertex */
-#define ECMD_BOT_MOVEE		65	/* move a BOT edge */
-#define ECMD_BOT_MOVET		66	/* move a BOT triangle */
-#define ECMD_BOT_MODE		67	/* set BOT mode */
-#define ECMD_BOT_ORIENT		68	/* set BOT face orientation */
-#define ECMD_BOT_THICK		69	/* set face thickness (one or all) */
-#define ECMD_BOT_FMODE		70	/* set face mode (one or all) */
-#define ECMD_BOT_FDEL		71	/* delete current face */
-#define ECMD_BOT_FLAGS		72	/* set BOT flags */
-
-#define ECMD_EXTR_SCALE_H	73	/* scale extrusion vector */
-#define ECMD_EXTR_MOV_H		74	/* move end of extrusion vector */
-#define ECMD_EXTR_ROT_H		75	/* rotate extrusion vector */
-#define ECMD_EXTR_SKT_NAME	76	/* set sketch that the extrusion uses */
-
-#define ECMD_CLINE_SCALE_H	77	/* scale height vector */
-#define ECMD_CLINE_MOVE_H	78	/* move end of height vector */
-#define ECMD_CLINE_SCALE_R	79	/* scale radius */
-#define ECMD_CLINE_SCALE_T	80	/* scale thickness */
-#define ECMD_TGC_MV_H_CD	81	/* move end of tgc, while scaling CD */
-#define ECMD_TGC_MV_H_V_AB	82	/* move vertex end of tgc, while scaling AB */
-
-#define ECMD_METABALL_SET_THRESHOLD	83	/* overall metaball threshold value */
-#define ECMD_METABALL_SET_METHOD	84	/* set the rendering method */
-#define ECMD_METABALL_PT_PICK	85	/* pick a metaball control point */
-#define ECMD_METABALL_PT_MOV	86	/* move a metaball control point */
-#define ECMD_METABALL_PT_FLDSTR	87	/* set a metaball control point field strength */
-#define ECMD_METABALL_PT_DEL	88	/* delete a metaball control point */
-#define ECMD_METABALL_PT_ADD	89	/* add a metaball control point */
-#define ECMD_METABALL_RMET	90	/* set the metaball render method */
-
-#define ECMD_HYP_ROT_H		91
-#define ECMD_HYP_ROT_A		92
+#include "ednmg.h"      //for NMG defines
+#include "edpipe.h"     //for PIPE defines
+#include "edars.h"      //for ARS defines
+#include "edvol.h"      //for VOL defines
+#include "edebm.h"      //for EBM defines
+#include "eddsp.h"      //for DSP defines
+#include "edbot.h"      //for BOT defines
+#include "edcline.h"    //for CLINE defines
+#include "edextrude.h"  //for EXTR defines
+#include "edmetaball.h" //for METABALL defines
+#include "edhyp.h"      //for HYP defines
 
 #define SEDIT_ROTATE (GEOM_EDIT_STATE == ST_S_EDIT && \
 		      (es_edflag == SROT || \

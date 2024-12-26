@@ -28,6 +28,12 @@
 #include "raytrace.h"
 #include "mged.h"
 
+#define ECMD_VOL_CSIZE		48	/* set voxel size */
+#define ECMD_VOL_FSIZE		49	/* set VOL file dimensions */
+#define ECMD_VOL_THRESH_LO	50	/* set VOL threshold (lo) */
+#define ECMD_VOL_THRESH_HI	51	/* set VOL threshold (hi) */
+#define ECMD_VOL_FNAME		52	/* set VOL file name */
+
 #endif  /* EDVOL_H */
 
 /*
