@@ -28,6 +28,31 @@
 #include "raytrace.h"
 #include "mged.h"
 
+#define EARB		9	/* chgmodel.c, edarb.c */
+#define PTARB		10	/* edarb.c */
+#define ECMD_ARB_MAIN_MENU	11
+#define ECMD_ARB_SPECIFIC_MENU	12
+#define ECMD_ARB_MOVE_FACE	13
+#define ECMD_ARB_SETUP_ROTFACE	14
+#define ECMD_ARB_ROTATE_FACE	15
+
+#define MENU_ARB_MV_EDGE	36
+#define MENU_ARB_MV_FACE	37
+#define MENU_ARB_ROT_FACE	38
+
+extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
+
+int editarb(struct mged_state *s, vect_t pos_model);
+void ecmd_arb_main_menu(struct mged_state *s);
+int ecmd_arb_specific_menu(struct mged_state *s);
+void ecmd_arb_move_face(struct mged_state *s);
+void ecmd_arb_setup_rotface(struct mged_state *s);
+void ecmd_arb_rotate_face(struct mged_state *s);
+void edit_arb_element(struct mged_state *s);
+void arb_mv_pnt_to(struct mged_state *s, const vect_t mousevec);
+void edarb_mousevec(struct mged_state *s, const vect_t mousevec);
+void edarb_move_face_mousevec(struct mged_state *s, const vect_t mousevec);
+
 #endif  /* EDARB_H */
 
 /*

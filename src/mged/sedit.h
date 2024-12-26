@@ -50,13 +50,7 @@
 #define ECMD_TGC_ROT_H	7
 #define ECMD_TGC_ROT_AB	8
 
-#define EARB		9	/* chgmodel.c, edarb.c */
-#define PTARB		10	/* edarb.c */
-#define ECMD_ARB_MAIN_MENU	11
-#define ECMD_ARB_SPECIFIC_MENU	12
-#define ECMD_ARB_MOVE_FACE	13
-#define ECMD_ARB_SETUP_ROTFACE	14
-#define ECMD_ARB_ROTATE_FACE	15
+#include "edarb.h" //for ARB defines
 
 #define ECMD_ETO_ROT_C		16
 
@@ -190,7 +184,6 @@
 
 
 extern fastf_t es_para[3];	/* keyboard input parameter changes */
-extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 extern int es_menu;		/* item/edit_mode selected from menu */
 extern int es_edflag;		/* type of editing for this solid */
 extern int es_edclass;		/* type of editing class for this solid */

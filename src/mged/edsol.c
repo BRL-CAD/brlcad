@@ -51,16 +51,13 @@
 #include "./mged_dm.h"
 #include "./menu.h"
 
-#include "./ednmg.h"
-#include "./edpipe.h"
-
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
 int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
 
 point_t e_axes_pos;
 point_t curr_e_axes_pos;
-short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
+extern short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 
 
 /* data for solid editing */
@@ -749,53 +746,6 @@ sedit_menu(struct mged_state *s) {
     es_edflag = IDLE;	/* Drop out of previous edit mode */
     es_menu = 0;
 }
-
-
-int
-get_rotation_vertex(struct mged_state *s)
-{
-    int i, j;
-    int type, loc, valid;
-    int vertex = -1;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-
-    type = es_type - 4;
-
-    loc = es_menu*4;
-    valid = 0;
-
-    bu_vls_printf(&str, "Enter fixed vertex number(");
-    for (i=0; i<4; i++) {
-	if (rt_arb_vertices[type][loc+i])
-	    bu_vls_printf(&str, "%d ", rt_arb_vertices[type][loc+i]);
-    }
-    bu_vls_printf(&str, ") [%d]: ", rt_arb_vertices[type][loc]);
-
-    const struct bu_vls *dnvp = dm_get_dname(s->mged_curr_dm->dm_dmp);
-
-    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
- {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), rt_arb_vertices[type][loc]);
-
-    while (!valid) {
-	if (Tcl_Eval(s->interp, bu_vls_addr(&cmd)) != TCL_OK) {
-	    Tcl_AppendResult(s->interp, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
-	    /* Using default */
-	    return rt_arb_vertices[type][loc];
-	}
-
-	vertex = atoi(Tcl_GetVar(s->interp, "vertex_num", TCL_GLOBAL_ONLY));
-	for (j=0; j<4; j++) {
-	    if (vertex==rt_arb_vertices[type][loc+j])
-		valid = 1;
-	}
-    }
-
-    bu_vls_free(&str);
-    return vertex;
-}
-
 
 const char *
 get_file_name(struct mged_state *s, char *str)
@@ -1798,10 +1748,8 @@ void
 sedit(struct mged_state *s)
 {
     struct rt_arb_internal *arb;
-    fastf_t *eqp;
     static vect_t work;
     size_t i;
-    static int pnt5;		/* ECMD_ARB_SETUP_ROTFACE, special arb7 case */
     static float la, lb, lc, ld;	/* TGC: length of vectors */
     mat_t mat;
     mat_t mat1;
@@ -2515,180 +2463,21 @@ sedit(struct mged_state *s)
 	    }
 	    break;
 	case ECMD_ARB_MAIN_MENU:
-	    /* put up control (main) menu for GENARB8s */
-	    menu_state->ms_flag = 0;
-	    es_edflag = IDLE;
-	    mmenu_set(s, MENU_L1, cntrl_menu);
+	    ecmd_arb_main_menu(s);
 	    break;
-
 	case ECMD_ARB_SPECIFIC_MENU:
-	    /* put up specific arb edit menus */
-	    menu_state->ms_flag = 0;
-	    es_edflag = IDLE;
-	    switch (es_menu) {
-		case MENU_ARB_MV_EDGE:
-		    mmenu_set(s, MENU_L1, which_menu[es_type-4]);
-		    break;
-		case MENU_ARB_MV_FACE:
-		    mmenu_set(s, MENU_L1, which_menu[es_type+1]);
-		    break;
-		case MENU_ARB_ROT_FACE:
-		    mmenu_set(s, MENU_L1, which_menu[es_type+6]);
-		    break;
-		default:
-		    Tcl_AppendResult(s->interp, "Bad menu item.\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    return;
-	    }
+	    if (ecmd_arb_specific_menu(s) != BRLCAD_OK)
+		return;
 	    break;
-
 	case ECMD_ARB_MOVE_FACE:
-	    /* move face through definite point */
-	    if (inpara) {
-		arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ARB_CK_MAGIC(arb);
-
-		if (mged_variables->mv_context) {
-		    /* apply es_invmat to convert to real model space */
-		    MAT4X3PNT(work, es_invmat, es_para);
-		} else {
-		    VMOVE(work, es_para);
-		}
-		/* change D of planar equation */
-		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
-		/* find new vertices, put in record in vector notation */
-
-		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
-	    }
+	    ecmd_arb_move_face(s);
 	    break;
 	case ECMD_ARB_SETUP_ROTFACE:
-	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
-	    RT_ARB_CK_MAGIC(arb);
-
-	    /* check if point 5 is in the face */
-	    pnt5 = 0;
-	    for (i=0; i<4; i++) {
-		if (rt_arb_vertices[es_type-4][es_menu*4+i]==5)
-		    pnt5=1;
-	    }
-
-	    /* special case for arb7 */
-	    if (es_type == ARB7  && pnt5) {
-		Tcl_AppendResult(s->interp, "\nFixed vertex is point 5.\n", (char *)NULL);
-		fixv = 5;
-	    } else {
-		fixv = get_rotation_vertex(s);
-	    }
-
-	    pr_prompt(s);
-	    fixv--;
-	    es_edflag = ECMD_ARB_ROTATE_FACE;
-	    view_state->vs_flag = 1;	/* draw arrow, etc. */
-	    set_e_axes_pos(s, 1);
+	    ecmd_arb_setup_rotface(s);
 	    break;
-
 	case ECMD_ARB_ROTATE_FACE:
-	    /* rotate a GENARB8 defining plane through a fixed vertex */
-
-	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
-	    RT_ARB_CK_MAGIC(arb);
-
-	    if (inpara) {
-		static mat_t invsolr;
-		static vect_t tempvec;
-		static float rota, fb_a;
-
-		/*
-		 * Keyboard parameters in degrees.
-		 * First, cancel any existing rotations,
-		 * then perform new rotation
-		 */
-		bn_mat_inv(invsolr, acc_rot_sol);
-		eqp = &es_peqn[es_menu][0];	/* es_menu==plane of interest */
-		VMOVE(work, eqp);
-		MAT4X3VEC(eqp, invsolr, work);
-
-		if (inpara == 3) {
-		    /* 3 params:  absolute X, Y, Z rotations */
-		    /* Build completely new rotation change */
-		    MAT_IDN(modelchanges);
-		    bn_mat_angles(modelchanges,
-				  es_para[0],
-				  es_para[1],
-				  es_para[2]);
-		    MAT_COPY(acc_rot_sol, modelchanges);
-
-		    /* Borrow incr_change matrix here */
-		    bn_mat_mul(incr_change, modelchanges, invsolr);
-		    if (mged_variables->mv_context) {
-			/* calculate rotations about keypoint */
-			bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
-
-			/* We want our final matrix (mat) to xform the original solid
-			 * to the position of this instance of the solid, perform the
-			 * current edit operations, then xform back.
-			 * mat = es_invmat * edit * es_mat
-			 */
-			bn_mat_mul(mat1, edit, es_mat);
-			bn_mat_mul(mat, es_invmat, mat1);
-			MAT_IDN(incr_change);
-			/* work contains original es_peqn[es_menu][0] */
-			MAT4X3VEC(eqp, mat, work);
-		    } else {
-			VMOVE(work, eqp);
-			MAT4X3VEC(eqp, modelchanges, work);
-		    }
-		} else if (inpara == 2) {
-		    /* 2 parameters:  rot, fb were given */
-		    rota= es_para[0] * DEG2RAD;
-		    fb_a  = es_para[1] * DEG2RAD;
-
-		    /* calculate normal vector (length = 1) from rot, struct fb */
-		    es_peqn[es_menu][0] = cos(fb_a) * cos(rota);
-		    es_peqn[es_menu][1] = cos(fb_a) * sin(rota);
-		    es_peqn[es_menu][2] = sin(fb_a);
-		} else {
-		    Tcl_AppendResult(s->interp, "Must be < rot fb | xdeg ydeg zdeg >\n",
-				     (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    return;
-		}
-
-		/* point notation of fixed vertex */
-		VMOVE(tempvec, arb->pt[fixv]);
-
-		/* set D of planar equation to anchor at fixed vertex */
-		/* es_menu == plane of interest */
-		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
-
-		/* Clear out solid rotation */
-		MAT_IDN(modelchanges);
-
-	    } else {
-		/* Apply incremental changes */
-		static vect_t tempvec;
-
-		eqp = &es_peqn[es_menu][0];
-		VMOVE(work, eqp);
-		MAT4X3VEC(eqp, incr_change, work);
-
-		/* point notation of fixed vertex */
-		VMOVE(tempvec, arb->pt[fixv]);
-
-		/* set D of planar equation to anchor at fixed vertex */
-		/* es_menu == plane of interest */
-		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
-	    }
-
-	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
-	    MAT_IDN(incr_change);
-
-	    /* no need to calc_planes again */
-	    replot_editing_solid(s);
-
-	    inpara = 0;
+	    ecmd_arb_rotate_face(s);    
 	    return;
-
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    {
@@ -2963,18 +2752,9 @@ sedit(struct mged_state *s)
 	    break;
 
 	case PTARB:	/* move an ARB point */
-	case EARB:   /* edit an ARB edge */
-	    if (inpara) {
-		if (mged_variables->mv_context) {
-		    /* apply es_invmat to convert to real model space */
-		    MAT4X3PNT(work, es_invmat, es_para);
-		} else {
-		    VMOVE(work, es_para);
-		}
-		editarb(s, work);
-	    }
+	case EARB:      /* edit an ARB edge */
+	    edit_arb_element(s);	
 	    break;
-
 	case SROT:
 	    /* rot solid about vertex */
 	    {
@@ -3717,7 +3497,6 @@ void
 sedit_mouse(struct mged_state *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
-    vect_t pos_model = VINIT_ZERO;	/* Rotated screen space pos */
     vect_t tr_temp = VINIT_ZERO;	/* temp translation vector */
     vect_t temp = VINIT_ZERO;
     vect_t raw_kp = VINIT_ZERO;        	/* es_keypoint with es_invmat applied */
@@ -3857,43 +3636,13 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 	    break;
 	case PTARB:
-	    /* move an arb point to indicated point */
-	    /* point is located at es_values[es_menu*3] */
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-	    pos_view[X] = mousevec[X];
-	    pos_view[Y] = mousevec[Y];
-	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(pos_model, es_invmat, temp);
-	    editarb(s, pos_model);
-
+	    arb_mv_pnt_to(s, mousevec);
 	    break;
 	case EARB:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-	    pos_view[X] = mousevec[X];
-	    pos_view[Y] = mousevec[Y];
-	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(pos_model, es_invmat, temp);
-	    editarb(s, pos_model);
-
+	    edarb_mousevec(s, mousevec);
 	    break;
 	case ECMD_ARB_MOVE_FACE:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-	    pos_view[X] = mousevec[X];
-	    pos_view[Y] = mousevec[Y];
-	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(pos_model, es_invmat, temp);
-	    /* change D of planar equation */
-	    es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], pos_model);
-	    /* calculate new vertices, put in record as vectors */
-	    {
-		struct rt_arb_internal *arb=
-		    (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_ARB_CK_MAGIC(arb);
-
-		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
-	    }
-
+	    edarb_move_face_mousevec(s, mousevec);
 	    break;
 	case ECMD_BOT_PICKV:
 	    {
