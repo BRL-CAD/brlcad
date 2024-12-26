@@ -4966,7 +4966,6 @@ label_edited_solid(
     const mat_t xform,
     struct rt_db_internal *ip)
 {
-    point_t work;
     point_t pos_view;
     int npl = 0;
 

@@ -118,7 +118,6 @@ ars_label_solid(
     struct rt_db_internal *ip)
 {
     point_t work;
-    point_t pos_view;
     int npl = 0;
 
 #define POINT_LABEL_STR(_pt, _str) { \
