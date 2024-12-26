@@ -137,6 +137,8 @@ ars_label_solid(
 	MAT4X3PNT(ars_pt, xform, work);
 	POINT_LABEL_STR(ars_pt, "pt");
     }
+
+    pl[npl].str[0] = '\0';      /* Mark ending */
 }
 
 void

@@ -56,6 +56,30 @@
 
 extern struct menu_item bot_menu[];
 
+extern int bot_verts[3];
+
+void
+bot_label_solid(
+    struct mged_state *s,
+    int *num_lines,
+    point_t *lines,
+    struct rt_point_labels pl[],
+    const mat_t xform,
+    struct rt_db_internal *ip);
+
+void ecmd_bot_mode(struct mged_state *s);
+void ecmd_bot_orient(struct mged_state *s);
+void ecmd_bot_thick(struct mged_state *s);
+void ecmd_bot_flags(struct mged_state *s);
+void ecmd_bot_fmode(struct mged_state *s);
+int ecmd_bot_fdel(struct mged_state *s);
+void ecmd_bot_movev(struct mged_state *s);
+void ecmd_bot_movee(struct mged_state *s);
+void ecmd_bot_movet(struct mged_state *s);
+int ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec);
+int ecmd_bot_picke(struct mged_state *s, const vect_t mousevec);
+void ecmd_bot_pickt(struct mged_state *s, const vect_t mousevec);
+
 #endif  /* EDBOT_H */
 
 /*

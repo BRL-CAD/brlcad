@@ -470,7 +470,7 @@ nmg_label_solid(struct mged_state *UNUSED(s),
 	MAT4X3PNT(pos_view, xform, cent);
 	POINT_LABEL_STR(pos_view, " eu");
     }
-    
+
     pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
