@@ -66,36 +66,6 @@ struct menu_item extr_menu[] = {
     { "", NULL, 0 }
 };
 
-/*ARGSUSED*/
-static void
-ars_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_edflag = arg;
-    sedit(s);
-}
-struct menu_item ars_pick_menu[] = {
-    { "ARS PICK MENU", NULL, 0 },
-    { "Pick Vertex", ars_ed, ECMD_ARS_PICK },
-    { "Next Vertex", ars_ed, ECMD_ARS_NEXT_PT },
-    { "Prev Vertex", ars_ed, ECMD_ARS_PREV_PT },
-    { "Next Curve", ars_ed, ECMD_ARS_NEXT_CRV },
-    { "Prev Curve", ars_ed, ECMD_ARS_PREV_CRV },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item ars_menu[] = {
-    { "ARS MENU", NULL, 0 },
-    { "Pick Vertex", ars_ed, ECMD_ARS_PICK_MENU },
-    { "Move Point", ars_ed, ECMD_ARS_MOVE_PT },
-    { "Delete Curve", ars_ed, ECMD_ARS_DEL_CRV },
-    { "Delete Column", ars_ed, ECMD_ARS_DEL_COL },
-    { "Dup Curve", ars_ed, ECMD_ARS_DUP_CRV },
-    { "Dup Column", ars_ed, ECMD_ARS_DUP_COL },
-    { "Move Curve", ars_ed, ECMD_ARS_MOVE_CRV },
-    { "Move Column", ars_ed, ECMD_ARS_MOVE_COL },
-    { "", NULL, 0 }
-};
 
 static void
 arb8_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

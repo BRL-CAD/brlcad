@@ -106,6 +106,7 @@ set(
   mged_ignore_files
   CMakeLists.txt
   cmd.h
+  edars.h
   ednmg.h
   edpipe.h
   f_cmd.h
