@@ -40,6 +40,12 @@
 
 extern struct menu_item cline_menu[];
 
+void ecmd_cline_scale_h(struct mged_state *s);
+void ecmd_cline_scale_r(struct mged_state *s);
+void ecmd_cline_scale_t(struct mged_state *s);
+void ecmd_cline_move_h(struct mged_state *s);
+void ecmd_cline_move_h_mousevec(struct mged_state *s, const vect_t mousevec);
+
 #endif  /* EDCLINE_H */
 
 /*

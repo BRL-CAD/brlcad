@@ -2219,94 +2219,18 @@ sedit(struct mged_state *s)
 	    // I think this is bspline only??
 	    ecmd_vtrans(s);
 	    break;
-
 	case ECMD_CLINE_SCALE_H:
-	    /*
-	     * Scale height vector
-	     */
-	    {
-		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_CLINE_CK_MAGIC(cli);
-
-		if (inpara) {
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(cli->h);
-		    VSCALE(cli->h, cli->h, s->edit_state.es_scale);
-		} else if (s->edit_state.es_scale > 0.0) {
-		    VSCALE(cli->h, cli->h, s->edit_state.es_scale);
-		    s->edit_state.es_scale = 0.0;
-		}
-	    }
+	    ecmd_cline_scale_h(s);
 	    break;
-
 	case ECMD_CLINE_SCALE_R:
-	    /*
-	     * Scale radius
-	     */
-	    {
-		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_CLINE_CK_MAGIC(cli);
-
-		if (inpara)
-		    cli->radius = es_para[0];
-		else if (s->edit_state.es_scale > 0.0) {
-		    cli->radius *= s->edit_state.es_scale;
-		    s->edit_state.es_scale = 0.0;
-		}
-	    }
+	    ecmd_cline_scale_r(s);
 	    break;
-
 	case ECMD_CLINE_SCALE_T:
-	    /*
-	     * Scale plate thickness
-	     */
-	    {
-		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_CLINE_CK_MAGIC(cli);
-
-		if (inpara)
-		    cli->thickness = es_para[0];
-		else if (s->edit_state.es_scale > 0.0) {
-		    cli->thickness *= s->edit_state.es_scale;
-		    s->edit_state.es_scale = 0.0;
-		}
-	    }
+	    ecmd_cline_scale_t(s);
 	    break;
-
 	case ECMD_CLINE_MOVE_H:
-	    /*
-	     * Move end of height vector
-	     */
-	    {
-		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_CLINE_CK_MAGIC(cli);
-
-		if (inpara) {
-		    if (mged_variables->mv_context) {
-			MAT4X3PNT(work, es_invmat, es_para);
-			VSUB2(cli->h, work, cli->v);
-		    } else
-			VSUB2(cli->h, es_para, cli->v);
-		}
-		/* check for zero H vector */
-		if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
-				     (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    VSET(cli->h, 0.0, 0.0, 1.0);
-		    break;
-		}
-	    }
+	    ecmd_cline_move_h(s);
 	    break;
-
 	case ECMD_TGC_MV_H:
 	    /*
 	     * Move end of H of tgc, keeping plates perpendicular
@@ -3142,21 +3066,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 	    break;
 	case ECMD_CLINE_MOVE_H:
-	    {
-		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_CLINE_CK_MAGIC(cli);
-
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-		pos_view[X] = mousevec[X];
-		pos_view[Y] = mousevec[Y];
-		/* Do NOT change pos_view[Z] ! */
-		MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-		MAT4X3PNT(tr_temp, es_invmat, temp);
-		VSUB2(cli->h, tr_temp, cli->v);
-	    }
-
+	    ecmd_cline_move_h_mousevec(s, mousevec);
 	    break;
 	case PTARB:
 	    arb_mv_pnt_to(s, mousevec);
