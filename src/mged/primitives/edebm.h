@@ -38,6 +38,10 @@
 
 extern struct menu_item ebm_menu[];
 
+int ecmd_ebm_fsize(struct mged_state *s);
+int ecmd_ebm_fname(struct mged_state *s);
+int ecmd_ebm_height(struct mged_state *s);
+
 #endif  /* EDEBM_H */
 
 /*
