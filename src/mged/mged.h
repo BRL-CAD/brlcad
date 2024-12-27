@@ -228,7 +228,6 @@ struct mged_state {
 };
 extern struct mged_state *MGED_STATE;
 
-
 /**
  * Definitions.
  *

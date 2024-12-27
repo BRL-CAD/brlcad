@@ -58,6 +58,7 @@ set(
   primitives/edtgc.c
   primitives/edtor.c
   primitives/edvol.c
+  primitives/table.cpp
   rect.c
   rtif.c
   scroll.c
@@ -159,6 +160,7 @@ set(
   primitives/edtgc.h
   primitives/edtor.h
   primitives/edvol.h
+  primitives/mged_functab.h
   sedit.h
 )
 cmakefiles(${mged_ignore_files})

@@ -50,6 +50,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"
+#include "./primitives/mged_functab.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
@@ -945,7 +946,6 @@ sedit(struct mged_state *s)
 {
     struct rt_arb_internal *arb;
     static vect_t work;
-    //static float la, lb, lc, ld;	/* TGC: length of vectors */
     mat_t mat;
     mat_t mat1;
     mat_t edit;
@@ -1145,7 +1145,7 @@ sedit(struct mged_state *s)
 
 	case PTARB:	/* move an ARB point */
 	case EARB:      /* edit an ARB edge */
-	    edit_arb_element(s);	
+	    edit_arb_element(s);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
@@ -1514,7 +1514,6 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    break;
 	case ECMD_EXTR_MOV_H:
 	    ecmd_extr_mov_h_mousevec(s, mousevec);
-
 	    break;
 	case ECMD_CLINE_MOVE_H:
 	    ecmd_cline_move_h_mousevec(s, mousevec);
@@ -2494,6 +2493,11 @@ label_edited_solid(
     int npl = 0;
 
     RT_CK_DB_INTERNAL(ip);
+
+    if (MGED_OBJ[ip->idb_type].ft_labels) {
+	(*MGED_OBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, ip);
+	return;
+    }
 
     switch (ip->idb_type) {
 

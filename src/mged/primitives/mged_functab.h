@@ -1,0 +1,56 @@
+/*                    M G E D _ F U N C T A B . H
+ * BRL-CAD
+ *
+ * Copyright (c) 1985-2024 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file mged/primitives/mged_functab.h
+  */
+
+#ifndef MGED_FUNCTAB_H
+#define MGED_FUNCTAB_H
+
+#include "common.h"
+
+#include "raytrace.h"
+
+struct mged_functab {
+    uint32_t magic;
+    char ft_name[17]; /* current longest name is 16 chars, need one element for terminating NULL */
+    char ft_label[9]; /* current longest label is 8 chars, need one element for terminating NULL */
+
+    void (*ft_labels)(int *num_lines,
+	    point_t *lines,
+	    struct rt_point_labels *pl,
+	    int max_pl,
+	    const mat_t xform,
+	    struct rt_db_internal *ip);
+#define MGEDFUNCTAB_FUNC_LABEL_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_db_internal *))((void (*)(void))_func))
+
+};
+extern const struct mged_functab MGED_OBJ[];
+
+#endif  /* MGED_FUNCTAB_H */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
