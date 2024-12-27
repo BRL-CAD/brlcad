@@ -34,6 +34,10 @@
 
 extern struct menu_item rpc_menu[];
 
+void menu_rpc_b(struct mged_state *s);
+void menu_rpc_h(struct mged_state *s);
+void menu_rpc_r(struct mged_state *s);
+
 #endif  /* EDRPC_H */
 
 /*
