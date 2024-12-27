@@ -34,6 +34,10 @@
 
 extern struct menu_item epa_menu[];
 
+void menu_epa_h(struct mged_state *s);
+void menu_epa_r1(struct mged_state *s);
+void menu_epa_r2(struct mged_state *s);
+
 #endif  /* EDEPA_H */
 
 /*

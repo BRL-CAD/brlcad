@@ -1029,61 +1029,15 @@ pscale(struct mged_state *s)
 		rhc->rhc_c *= s->edit_state.es_scale;
 	    }
 	    break;
-
 	case MENU_EPA_H:
-	    /* scale height vector H */
-	    {
-		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_EPA_CK_MAGIC(epa);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(epa->epa_H);
-		}
-		VSCALE(epa->epa_H, epa->epa_H, s->edit_state.es_scale);
-	    }
+	    menu_epa_h(s);
 	    break;
-
 	case MENU_EPA_R1:
-	    /* scale semimajor axis of EPA */
-	    {
-		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_EPA_CK_MAGIC(epa);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / epa->epa_r1;
-		}
-		if (epa->epa_r1 * s->edit_state.es_scale >= epa->epa_r2)
-		    epa->epa_r1 *= s->edit_state.es_scale;
-		else
-		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
-	    }
+	    menu_epa_r1(s);
 	    break;
-
 	case MENU_EPA_R2:
-	    /* scale semiminor axis of EPA */
-	    {
-		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_EPA_CK_MAGIC(epa);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / epa->epa_r2;
-		}
-		if (epa->epa_r2 * s->edit_state.es_scale <= epa->epa_r1)
-		    epa->epa_r2 *= s->edit_state.es_scale;
-		else
-		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
-	    }
+	    menu_epa_r2(s);
 	    break;
-
 	case MENU_EHY_H:
 	    menu_ehy_h(s);
 	    break;
