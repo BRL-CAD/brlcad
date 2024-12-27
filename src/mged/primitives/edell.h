@@ -35,6 +35,11 @@
 
 extern struct menu_item ell_menu[];
 
+void menu_ell_scale_a(struct mged_state *s);
+void menu_ell_scale_b(struct mged_state *s);
+void menu_ell_scale_c(struct mged_state *s);
+void menu_ell_scale_abc(struct mged_state *s);
+
 #endif  /* EDELL_H */
 
 /*

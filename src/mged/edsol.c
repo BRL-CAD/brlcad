@@ -1294,48 +1294,13 @@ pscale(struct mged_state *s)
 	    break;
 
 	case MENU_ELL_SCALE_A:
-	    /* scale vector A */
-	    {
-		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ELL_CK_MAGIC(ell);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
-			MAGNITUDE(ell->a);
-		}
-		VSCALE(ell->a, ell->a, s->edit_state.es_scale);
-	    }
+	    menu_ell_scale_a(s);
 	    break;
-
 	case MENU_ELL_SCALE_B:
-	    /* scale vector B */
-	    {
-		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ELL_CK_MAGIC(ell);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
-			MAGNITUDE(ell->b);
-		}
-		VSCALE(ell->b, ell->b, s->edit_state.es_scale);
-	    }
+	    menu_ell_scale_b(s);
 	    break;
-
 	case MENU_ELL_SCALE_C:
-	    /* scale vector C */
-	    {
-		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ELL_CK_MAGIC(ell);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
-			MAGNITUDE(ell->c);
-		}
-		VSCALE(ell->c, ell->c, s->edit_state.es_scale);
-	    }
+	    menu_ell_scale_c(s);
 	    break;
 
 	case MENU_TGC_SCALE_C:
@@ -1427,23 +1392,8 @@ pscale(struct mged_state *s)
 	    }
 	    break;
 
-	case MENU_ELL_SCALE_ABC:	/* set A, B, and C length the same */
-	    {
-		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ELL_CK_MAGIC(ell);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
-			MAGNITUDE(ell->a);
-		}
-		VSCALE(ell->a, ell->a, s->edit_state.es_scale);
-		ma = MAGNITUDE(ell->a);
-		mb = MAGNITUDE(ell->b);
-		VSCALE(ell->b, ell->b, ma/mb);
-		mb = MAGNITUDE(ell->c);
-		VSCALE(ell->c, ell->c, ma/mb);
-	    }
+	case MENU_ELL_SCALE_ABC:
+	    menu_ell_scale_abc(s);
 	    break;
 
 	    /* begin super ellipse menu options */

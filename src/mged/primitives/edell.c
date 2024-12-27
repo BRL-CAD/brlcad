@@ -54,7 +54,71 @@ struct menu_item ell_menu[] = {
     { "", NULL, 0 }
 };
 
+/* scale vector A */
+void
+menu_ell_scale_a(struct mged_state *s)
+{
+    struct rt_ell_internal *ell =
+	(struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	s->edit_state.es_scale = es_para[0] * es_mat[15] /
+	    MAGNITUDE(ell->a);
+    }
+    VSCALE(ell->a, ell->a, s->edit_state.es_scale);
+}
 
+/* scale vector B */
+void
+menu_ell_scale_b(struct mged_state *s)
+{
+    struct rt_ell_internal *ell =
+	(struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	s->edit_state.es_scale = es_para[0] * es_mat[15] /
+	    MAGNITUDE(ell->b);
+    }
+    VSCALE(ell->b, ell->b, s->edit_state.es_scale);
+}
+
+/* scale vector C */
+void
+menu_ell_scale_c(struct mged_state *s)
+{
+    struct rt_ell_internal *ell =
+	(struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	s->edit_state.es_scale = es_para[0] * es_mat[15] /
+	    MAGNITUDE(ell->c);
+    }
+    VSCALE(ell->c, ell->c, s->edit_state.es_scale);
+}
+
+/* set A, B, and C length the same */
+void
+menu_ell_scale_abc(struct mged_state *s)
+{
+    fastf_t ma, mb;
+    struct rt_ell_internal *ell =
+	(struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	s->edit_state.es_scale = es_para[0] * es_mat[15] /
+	    MAGNITUDE(ell->a);
+    }
+    VSCALE(ell->a, ell->a, s->edit_state.es_scale);
+    ma = MAGNITUDE(ell->a);
+    mb = MAGNITUDE(ell->b);
+    VSCALE(ell->b, ell->b, ma/mb);
+    mb = MAGNITUDE(ell->c);
+    VSCALE(ell->c, ell->c, ma/mb);
+}
 
 /*
  * Local Variables:
