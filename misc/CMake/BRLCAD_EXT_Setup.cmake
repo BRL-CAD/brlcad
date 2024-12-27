@@ -235,7 +235,9 @@ function(setup_bext_dir)
   # If we don't have a pre-populated src/bext, it's time to clone.
   if (NOT BRLCAD_EXT_SOURCE_DIR)
 
-    # Get the current src/bext SHA1.  This will be the version used for cloning
+    # Get the current src/bext SHA1, if available.  This will be the version we
+    # want to use for building, since it is the verion associated with this
+    # BRL-CAD version.
     bext_sha1(LOCAL_SHA1)
 
     # With a pre-populated bext source directory we could build even without
@@ -244,29 +246,34 @@ function(setup_bext_dir)
     if (NOT GIT_EXEC)
       message(FATAL_ERROR "No bext sources present in src/bext, and git executable not found.")
     endif()
-    # We need a target SHA1 hash, or we can't proceed
+    # Warn if we can't get a target SHA1 hash, since there's a good chance
+    # we'll wind up with a bext that doesn't match the BRL-CAD checkout.
     if (NOT LOCAL_SHA1)
-      message(FATAL_ERROR "Unable to retrieve SHA1 hash from src/bext")
+      message(WARNING "Unable to retrieve SHA1 hash from src/bext - will attempt to use latest main.  If you are building a release or older version of BRL-CAD this may not work, in which case you will need to manually retrieve the appropriate bext checkout.")
     endif()
 
     # src/bext wasn't populated, so we're cloning into the build dir
     set(BRLCAD_EXT_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/bext")
 
     # Write current SHA1 for subsequent processing
-    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/bext.sha1" "${LOCAL_SHA1}")
-    distclean("${CMAKE_CURRENT_BINARY_DIR}/bext.sha1")
+    if (LOCAL_SHA1)
+      file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/bext.sha1" "${LOCAL_SHA1}")
+      distclean("${CMAKE_CURRENT_BINARY_DIR}/bext.sha1")
+    endif()
 
     # Clone
     message("BRL-CAD bext clone command: ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git")
     execute_process(
       COMMAND ${GIT_EXEC} clone https://github.com/BRL-CAD/bext.git
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    if (LOCAL_SHA1)
+      message("BRL-CAD bext checkout command: ${GIT_EXEC} -c advice.detachedHead=false checkout ${LOCAL_SHA1}")
+      execute_process(
+	COMMAND ${GIT_EXEC} -c advice.detachedHead=false checkout ${LOCAL_SHA1}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bext
       )
-    message("BRL-CAD bext checkout command: ${GIT_EXEC} -c advice.detachedHead=false checkout ${LOCAL_SHA1}")
-    execute_process(
-      COMMAND ${GIT_EXEC} -c advice.detachedHead=false checkout ${LOCAL_SHA1}
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bext
-      )
+    endif()
 
     # Configure process will need to clean up bext
     set(BEXT_SRC_CLEANUP TRUE PARENT_SCOPE)
