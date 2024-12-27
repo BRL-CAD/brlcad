@@ -756,12 +756,9 @@ pscale(struct mged_state *s)
 {
     switch (es_menu) {
 
-	case MENU_VOL_CSIZE:	/* scale voxel size */
-	    {
-		bu_log("s->edit_state.es_scale = %g\n", s->edit_state.es_scale);
-	    }
+	case MENU_VOL_CSIZE:
+	    menu_vol_csize(s);
 	    break;
-
 	case MENU_TGC_SCALE_H:
 	    menu_tgc_scale_h(s);
 	    break;
@@ -948,7 +945,6 @@ sedit(struct mged_state *s)
 {
     struct rt_arb_internal *arb;
     static vect_t work;
-    size_t i;
     //static float la, lb, lc, ld;	/* TGC: length of vectors */
     mat_t mat;
     mat_t mat1;
@@ -994,146 +990,21 @@ sedit(struct mged_state *s)
 	     if (ecmd_ebm_height(s) != BRLCAD_OK)
 		return;
 	    break;
-	case ECMD_VOL_CSIZE:	/* set voxel size */
-	    {
-		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_VOL_CK_MAGIC(vol);
-
-		if (inpara == 3) {
-		    VMOVE(vol->cellsize, es_para);
-		} else if (inpara > 0 && inpara != 3) {
-		    Tcl_AppendResult(s->interp, "x, y, and z cell sizes are required\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    return;
-		} else if (s->edit_state.es_scale > 0.0) {
-		    VSCALE(vol->cellsize, vol->cellsize, s->edit_state.es_scale);
-		    s->edit_state.es_scale = 0.0;
-		}
-	    }
+	case ECMD_VOL_CSIZE:
+    	    ecmd_vol_csize(s);
 	    break;
-
-	case ECMD_VOL_FSIZE:	/* set file size */
-	    {
-		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
-		struct stat stat_buf;
-		b_off_t need_size;
-
-		RT_VOL_CK_MAGIC(vol);
-
-		if (inpara == 3) {
-		    if (stat(vol->name, &stat_buf)) {
-			Tcl_AppendResult(s->interp, "Cannot get status of file ", vol->name, (char *)NULL);
-			mged_print_result(s, TCL_ERROR);
-			return;
-		    }
-		    need_size = es_para[0] * es_para[1] * es_para[2] * sizeof(unsigned char);
-		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(s->interp, "File (", vol->name,
-					 ") is too small, set file name first", (char *)NULL);
-			mged_print_result(s, TCL_ERROR);
-			return;
-		    }
-		    vol->xdim = es_para[0];
-		    vol->ydim = es_para[1];
-		    vol->zdim = es_para[2];
-		} else if (inpara > 0) {
-		    Tcl_AppendResult(s->interp, "x, y, and z file sizes are required\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    return;
-		}
-	    }
+	case ECMD_VOL_FSIZE:
+    	    ecmd_vol_fsize(s);
 	    break;
-
 	case ECMD_VOL_THRESH_LO:
-	    {
-		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_VOL_CK_MAGIC(vol);
-
-		i = vol->lo;
-		if (inpara) {
-		    i = es_para[0];
-		} else if (s->edit_state.es_scale > 0.0) {
-		    i = vol->lo * s->edit_state.es_scale;
-		    if (i == vol->lo && s->edit_state.es_scale > 1.0) {
-			i++;
-		    } else if (i == vol->lo && s->edit_state.es_scale < 1.0) {
-			i--;
-		    }
-		}
-
-		if (i > 255)
-		    i = 255;
-
-		vol->lo = i;
-		break;
-	    }
-
+	    ecmd_vol_thresh_lo(s);
+	    break;
 	case ECMD_VOL_THRESH_HI:
-	    {
-		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_VOL_CK_MAGIC(vol);
-
-		i = vol->hi;
-		if (inpara) {
-		    i = es_para[0];
-		} else if (s->edit_state.es_scale > 0.0) {
-		    i = vol->hi * s->edit_state.es_scale;
-		    if (i == vol->hi && s->edit_state.es_scale > 1.0) {
-			i++;
-		    } else if (i == vol->hi && s->edit_state.es_scale < 1.0) {
-			i--;
-		    }
-		}
-
-		if (i > 255)
-		    i = 255;
-
-		vol->hi = i;
-		break;
-	    }
-
+	    ecmd_vol_thresh_hi(s);
+	    break;
 	case ECMD_VOL_FNAME:
-	    {
-		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
-		const char *fname;
-		struct stat stat_buf;
-		b_off_t need_size;
-
-		RT_VOL_CK_MAGIC(vol);
-
-		fname = get_file_name(s, vol->name);
-		if (fname) {
-		    struct bu_vls message = BU_VLS_INIT_ZERO;
-
-		    if (stat(fname, &stat_buf)) {
-			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
-			bu_vls_free(&message);
-			mged_print_result(s, TCL_ERROR);
-			return;
-		    }
-		    need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
-		    if (stat_buf.st_size < need_size) {
-			bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
-			bu_vls_free(&message);
-			mged_print_result(s, TCL_ERROR);
-			return;
-		    }
-		    bu_strlcpy(vol->name, fname, RT_VOL_NAME_LEN);
-		}
-
-		break;
-	    }
-
+	    ecmd_vol_fname(s);
+	    break;
 	case ECMD_BOT_MODE:
 	    ecmd_bot_mode(s);
 	    break;

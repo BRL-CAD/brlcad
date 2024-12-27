@@ -42,6 +42,13 @@
 
 extern struct menu_item vol_menu[];
 
+void menu_vol_csize(struct mged_state *s);
+void ecmd_vol_csize(struct mged_state *s);
+void ecmd_vol_fsize(struct mged_state *s);
+void ecmd_vol_thresh_lo(struct mged_state *s);
+void ecmd_vol_thresh_hi(struct mged_state *s);
+void ecmd_vol_fname(struct mged_state *s);
+
 #endif  /* EDVOL_H */
 
 /*

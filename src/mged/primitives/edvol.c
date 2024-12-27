@@ -25,6 +25,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "vmath.h"
 #include "nmg.h"
@@ -36,6 +37,8 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./edvol.h"
+
+extern const char * get_file_name(struct mged_state *s, char *str);
 
 static void
 vol_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
@@ -74,6 +77,153 @@ struct menu_item vol_menu[] = {
     { "", NULL, 0 }
 };
 
+/* scale voxel size */
+void
+menu_vol_csize(struct mged_state *s)
+{
+    bu_log("s->edit_state.es_scale = %g\n", s->edit_state.es_scale);
+}
+
+/* set voxel size */
+void
+ecmd_vol_csize(struct mged_state *s)
+{
+    struct rt_vol_internal *vol =
+	(struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
+
+    RT_VOL_CK_MAGIC(vol);
+
+    if (inpara == 3) {
+	VMOVE(vol->cellsize, es_para);
+    } else if (inpara > 0 && inpara != 3) {
+	Tcl_AppendResult(s->interp, "x, y, and z cell sizes are required\n", (char *)NULL);
+	mged_print_result(s, TCL_ERROR);
+	return;
+    } else if (s->edit_state.es_scale > 0.0) {
+	VSCALE(vol->cellsize, vol->cellsize, s->edit_state.es_scale);
+	s->edit_state.es_scale = 0.0;
+    }
+}
+
+/* set file size */
+void
+ecmd_vol_fsize(struct mged_state *s)
+{
+    struct rt_vol_internal *vol =
+	(struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
+    struct stat stat_buf;
+    b_off_t need_size;
+
+    RT_VOL_CK_MAGIC(vol);
+
+    if (inpara == 3) {
+	if (stat(vol->name, &stat_buf)) {
+	    Tcl_AppendResult(s->interp, "Cannot get status of file ", vol->name, (char *)NULL);
+	    mged_print_result(s, TCL_ERROR);
+	    return;
+	}
+	need_size = es_para[0] * es_para[1] * es_para[2] * sizeof(unsigned char);
+	if (stat_buf.st_size < need_size) {
+	    Tcl_AppendResult(s->interp, "File (", vol->name,
+		    ") is too small, set file name first", (char *)NULL);
+	    mged_print_result(s, TCL_ERROR);
+	    return;
+	}
+	vol->xdim = es_para[0];
+	vol->ydim = es_para[1];
+	vol->zdim = es_para[2];
+    } else if (inpara > 0) {
+	Tcl_AppendResult(s->interp, "x, y, and z file sizes are required\n", (char *)NULL);
+	mged_print_result(s, TCL_ERROR);
+	return;
+    }
+}
+
+void
+ecmd_vol_thresh_lo(struct mged_state *s)
+{
+    struct rt_vol_internal *vol =
+	(struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
+
+    RT_VOL_CK_MAGIC(vol);
+
+    size_t i = vol->lo;
+    if (inpara) {
+	i = es_para[0];
+    } else if (s->edit_state.es_scale > 0.0) {
+	i = vol->lo * s->edit_state.es_scale;
+	if (i == vol->lo && s->edit_state.es_scale > 1.0) {
+	    i++;
+	} else if (i == vol->lo && s->edit_state.es_scale < 1.0) {
+	    i--;
+	}
+    }
+
+    if (i > 255)
+	i = 255;
+
+    vol->lo = i;
+}
+
+void
+ecmd_vol_thresh_hi(struct mged_state *s)
+{
+    struct rt_vol_internal *vol =
+	(struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
+
+    RT_VOL_CK_MAGIC(vol);
+
+    size_t i = vol->hi;
+    if (inpara) {
+	i = es_para[0];
+    } else if (s->edit_state.es_scale > 0.0) {
+	i = vol->hi * s->edit_state.es_scale;
+	if (i == vol->hi && s->edit_state.es_scale > 1.0) {
+	    i++;
+	} else if (i == vol->hi && s->edit_state.es_scale < 1.0) {
+	    i--;
+	}
+    }
+
+    if (i > 255)
+	i = 255;
+
+    vol->hi = i;
+}
+
+void
+ecmd_vol_fname(struct mged_state *s)
+{
+    struct rt_vol_internal *vol =
+	(struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
+    const char *fname;
+    struct stat stat_buf;
+    b_off_t need_size;
+
+    RT_VOL_CK_MAGIC(vol);
+
+    fname = get_file_name(s, vol->name);
+    if (fname) {
+	struct bu_vls message = BU_VLS_INIT_ZERO;
+
+	if (stat(fname, &stat_buf)) {
+	    bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
+	    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
+	    bu_vls_free(&message);
+	    mged_print_result(s, TCL_ERROR);
+	    return;
+	}
+	need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
+	if (stat_buf.st_size < need_size) {
+	    bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
+	    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
+	    bu_vls_free(&message);
+	    mged_print_result(s, TCL_ERROR);
+	    return;
+	}
+	bu_strlcpy(vol->name, fname, RT_VOL_NAME_LEN);
+    }
+}
 
 /*
  * Local Variables:
