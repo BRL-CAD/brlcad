@@ -248,7 +248,7 @@ ecmd_bot_thick(struct mged_state *s)
 	    {
 		face_no = i;
 		face_state = 0;
-		return;
+		break;
 	    }
 	}
 	if (face_state > -1) {
@@ -352,7 +352,7 @@ ecmd_bot_fmode(struct mged_state *s)
 	    {
 		face_no = i;
 		face_state = 0;
-		return;
+		break;
 	    }
 	}
 	if (face_state < 0) {
@@ -417,7 +417,7 @@ ecmd_bot_fdel(struct mged_state *s)
 		bot_verts[2] == bot->faces[i*3+2])
 	{
 	    face_no = i;
-	    return BRLCAD_OK;
+	    break;
 	}
     }
     if (face_no < 0) {
