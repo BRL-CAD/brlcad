@@ -42,6 +42,11 @@
 
 extern struct menu_item dsp_menu[];
 
+void ecmd_dsp_scale_x(struct mged_state *s);
+void ecmd_dsp_scale_y(struct mged_state *s);
+void ecmd_dsp_scale_alt(struct mged_state *s);
+int ecmd_dsp_fname(struct mged_state *s);
+
 #endif  /* EDDSP_H */
 
 /*

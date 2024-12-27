@@ -763,38 +763,6 @@ get_file_name(struct mged_state *s, char *str)
 }
 
 
-static void
-dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
-{
-    mat_t m, scalemat;
-
-    RT_DSP_CK_MAGIC(dsp);
-
-    MAT_IDN(m);
-
-    if (es_mvalid) {
-	bu_log("es_mvalid %g %g %g\n", V3ARGS(es_mparam));
-    }
-
-    if (inpara > 0) {
-	m[idx] = es_para[0];
-	bu_log("Keyboard %g\n", es_para[0]);
-    } else if (!ZERO(s->edit_state.es_scale)) {
-	m[idx] *= s->edit_state.es_scale;
-	bu_log("s->edit_state.es_scale %g\n", s->edit_state.es_scale);
-	s->edit_state.es_scale = 0.0;
-    }
-
-    bn_mat_xform_about_pnt(scalemat, m, es_keypoint);
-
-    bn_mat_mul(m, dsp->dsp_stom, scalemat);
-    MAT_COPY(dsp->dsp_stom, m);
-
-    bn_mat_mul(m, scalemat, dsp->dsp_mtos);
-    MAT_COPY(dsp->dsp_mtos, m);
-
-}
-
 
 /*
  * Partial scaling of a solid.
@@ -1742,50 +1710,18 @@ sedit(struct mged_state *s)
 	    break;
 
 	case ECMD_DSP_SCALE_X:
-	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSX);
+	    ecmd_dsp_scale_x(s);
 	    break;
 	case ECMD_DSP_SCALE_Y:
-	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSY);
+	    ecmd_dsp_scale_y(s);
 	    break;
 	case ECMD_DSP_SCALE_ALT:
-	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSZ);
+	    ecmd_dsp_scale_alt(s);
 	    break;
 	case ECMD_DSP_FNAME:
-	    {
-		struct rt_dsp_internal *dsp =
-		    (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr;
-		const char *fname;
-		struct stat stat_buf;
-		b_off_t need_size;
-		struct bu_vls message = BU_VLS_INIT_ZERO;
-
-		RT_DSP_CK_MAGIC(dsp);
-
-		/* Pop-up the Tk file browser */
-		fname = get_file_name(s, bu_vls_addr(&dsp->dsp_name));
-		if (! fname) break;
-
-		if (stat(fname, &stat_buf)) {
-		    bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-		    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
-		    bu_vls_free(&message);
-		    mged_print_result(s, TCL_ERROR);
-		    return;
-		}
-
-		need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
-		if (stat_buf.st_size < need_size) {
-		    bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-		    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
-		    bu_vls_free(&message);
-		    mged_print_result(s, TCL_ERROR);
-		    return;
-		}
-		bu_vls_strcpy(&dsp->dsp_name, fname);
-
-		break;
-	    }
-
+	    if (ecmd_dsp_fname(s) != BRLCAD_OK)
+		return;
+	    break;
 	case ECMD_EBM_FSIZE:	/* set file size */
 	    {
 		struct rt_ebm_internal *ebm =
