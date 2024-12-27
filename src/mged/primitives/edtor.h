@@ -33,6 +33,9 @@
 
 extern struct menu_item tor_menu[];
 
+void menu_tor_r1(struct mged_state *s);
+void menu_tor_r2(struct mged_state *s);
+
 #endif  /* EDTOR_H */
 
 /*

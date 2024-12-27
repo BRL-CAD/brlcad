@@ -775,45 +775,11 @@ pscale(struct mged_state *s)
 	    menu_tgc_scale_h_v_ab(s);
 	    break;
 	case MENU_TOR_R1:
-	    /* scale radius 1 of TOR */
-	    {
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
-		fastf_t newrad;
-		RT_TOR_CK_MAGIC(tor);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    newrad = es_para[0];
-		} else {
-		    newrad = tor->r_a * s->edit_state.es_scale;
-		}
-		if (newrad < SMALL) newrad = 4*SMALL;
-		if (tor->r_h <= newrad)
-		    tor->r_a = newrad;
-	    }
+	    menu_tor_r1(s);
 	    break;
-
 	case MENU_TOR_R2:
-	    /* scale radius 2 of TOR */
-	    {
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
-		fastf_t newrad;
-		RT_TOR_CK_MAGIC(tor);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    newrad = es_para[0];
-		} else {
-		    newrad = tor->r_h * s->edit_state.es_scale;
-		}
-		if (newrad < SMALL) newrad = 4*SMALL;
-		if (newrad <= tor->r_a)
-		    tor->r_h = newrad;
-	    }
+	    menu_tor_r2(s);
 	    break;
-
 	case MENU_ETO_R:
 	    menu_eto_r(s);
 	    break;

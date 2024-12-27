@@ -54,6 +54,48 @@ struct menu_item tor_menu[] = {
     { "", NULL, 0 }
 };
 
+/* scale radius 1 of TOR */
+void
+menu_tor_r1(struct mged_state *s)
+{
+    struct rt_tor_internal *tor =
+	(struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
+    fastf_t newrad;
+    RT_TOR_CK_MAGIC(tor);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	newrad = es_para[0];
+    } else {
+	newrad = tor->r_a * s->edit_state.es_scale;
+    }
+    if (newrad < SMALL) newrad = 4*SMALL;
+    if (tor->r_h <= newrad)
+	tor->r_a = newrad;
+}
+
+/* scale radius 2 of TOR */
+void
+menu_tor_r2(struct mged_state *s)
+{
+    struct rt_tor_internal *tor =
+	(struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
+    fastf_t newrad;
+    RT_TOR_CK_MAGIC(tor);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	newrad = es_para[0];
+    } else {
+	newrad = tor->r_h * s->edit_state.es_scale;
+    }
+    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad <= tor->r_a)
+	tor->r_h = newrad;
+}
+
+
+
 /*
  * Local Variables:
  * mode: C
