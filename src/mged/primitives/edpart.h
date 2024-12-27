@@ -34,6 +34,11 @@
 
 extern struct menu_item part_menu[];
 
+void menu_part_h(struct mged_state *s);
+void menu_part_v(struct mged_state *s);
+void menu_part_h_end_r(struct mged_state *s);
+
+
 #endif  /* EDPART_H */
 
 /*

@@ -1087,51 +1087,13 @@ pscale(struct mged_state *s)
 	    menu_pipe_scale_radius(s);
 	    break;
 	case MENU_PART_H:
-	    /* scale vector H */
-	    {
-		struct rt_part_internal *part =
-		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_PART_CK_MAGIC(part);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(part->part_H);
-		}
-		VSCALE(part->part_H, part->part_H, s->edit_state.es_scale);
-	    }
+	    menu_part_h(s);
 	    break;
-
 	case MENU_PART_v:
-	    /* scale v end radius */
-	    {
-		struct rt_part_internal *part =
-		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_PART_CK_MAGIC(part);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / part->part_vrad;
-		}
-		part->part_vrad *= s->edit_state.es_scale;
-	    }
+	    menu_part_v(s);
 	    break;
-
 	case MENU_PART_h:
-	    /* scale h end radius */
-	    {
-		struct rt_part_internal *part =
-		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_PART_CK_MAGIC(part);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / part->part_hrad;
-		}
-		part->part_hrad *= s->edit_state.es_scale;
-	    }
+	    menu_part_h_end_r(s);
 	    break;
 	case MENU_METABALL_SET_THRESHOLD:
 	    menu_metaball_set_threshold(s);

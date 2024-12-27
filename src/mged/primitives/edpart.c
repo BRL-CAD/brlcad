@@ -53,7 +53,53 @@ struct menu_item part_menu[] = {
     { "", NULL, 0 }
 };
 
+/* scale vector H */
+void
+menu_part_h(struct mged_state *s)
+{
+    struct rt_part_internal *part =
+	(struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 
+    RT_PART_CK_MAGIC(part);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	s->edit_state.es_scale = es_para[0] / MAGNITUDE(part->part_H);
+    }
+    VSCALE(part->part_H, part->part_H, s->edit_state.es_scale);
+}
+
+/* scale v end radius */
+void
+menu_part_v(struct mged_state *s)
+{
+    struct rt_part_internal *part =
+	(struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
+
+    RT_PART_CK_MAGIC(part);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	s->edit_state.es_scale = es_para[0] / part->part_vrad;
+    }
+    part->part_vrad *= s->edit_state.es_scale;
+}
+
+/* scale h end radius */
+void
+menu_part_h_end_r(struct mged_state *s)
+{
+    struct rt_part_internal *part =
+	(struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
+
+    RT_PART_CK_MAGIC(part);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	s->edit_state.es_scale = es_para[0] / part->part_hrad;
+    }
+    part->part_hrad *= s->edit_state.es_scale;
+}
 
 /*
  * Local Variables:
