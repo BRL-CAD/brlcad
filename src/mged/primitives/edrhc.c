@@ -54,7 +54,69 @@ struct menu_item rhc_menu[] = {
     { "", NULL, 0 }
 };
 
+/* scale vector B */
+void
+menu_rhc_b(struct mged_state *s)
+{
+    struct rt_rhc_internal *rhc =
+	(struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+    RT_RHC_CK_MAGIC(rhc);
 
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	s->edit_state.es_scale = es_para[0] / MAGNITUDE(rhc->rhc_B);
+    }
+    VSCALE(rhc->rhc_B, rhc->rhc_B, s->edit_state.es_scale);
+}
+
+/* scale vector H */
+void
+menu_rhc_h(struct mged_state *s)
+{
+    struct rt_rhc_internal *rhc =
+	(struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+    RT_RHC_CK_MAGIC(rhc);
+
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	s->edit_state.es_scale = es_para[0] / MAGNITUDE(rhc->rhc_H);
+    }
+    VSCALE(rhc->rhc_H, rhc->rhc_H, s->edit_state.es_scale);
+}
+
+/* scale rectangular half-width of RHC */
+void
+menu_rhc_r(struct mged_state *s)
+{
+    struct rt_rhc_internal *rhc =
+	(struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+
+    RT_RHC_CK_MAGIC(rhc);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	s->edit_state.es_scale = es_para[0] / rhc->rhc_r;
+    }
+    rhc->rhc_r *= s->edit_state.es_scale;
+}
+
+/* scale rectangular half-width of RHC */
+void
+menu_rhc_c(struct mged_state *s)
+{
+    struct rt_rhc_internal *rhc =
+	(struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+
+    RT_RHC_CK_MAGIC(rhc);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	es_para[0] *= es_mat[15];
+	s->edit_state.es_scale = es_para[0] / rhc->rhc_c;
+    }
+    rhc->rhc_c *= s->edit_state.es_scale;
+}
 
 /*
  * Local Variables:
