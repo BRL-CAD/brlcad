@@ -53,7 +53,71 @@ struct menu_item superell_menu[] = {
     { "", NULL, 0 }
 };
 
+/* scale vector A */
+void
+menu_superell_scale_a(struct mged_state *s)
+{
+    struct rt_superell_internal *superell =
+	(struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	s->edit_state.es_scale = es_para[0] * es_mat[15] /
+	    MAGNITUDE(superell->a);
+    }
+    VSCALE(superell->a, superell->a, s->edit_state.es_scale);
+}
 
+/* scale vector B */
+void
+menu_superell_scale_b(struct mged_state *s)
+{
+    struct rt_superell_internal *superell =
+	(struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	s->edit_state.es_scale = es_para[0] * es_mat[15] /
+	    MAGNITUDE(superell->b);
+    }
+    VSCALE(superell->b, superell->b, s->edit_state.es_scale);
+}
+
+/* scale vector C */
+void
+menu_superell_scale_c(struct mged_state *s)
+{
+    struct rt_superell_internal *superell =
+	(struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	s->edit_state.es_scale = es_para[0] * es_mat[15] /
+	    MAGNITUDE(superell->c);
+    }
+    VSCALE(superell->c, superell->c, s->edit_state.es_scale);
+}
+
+/* set A, B, and C length the same */
+void
+menu_superell_scale_abc(struct mged_state *s)
+{
+    fastf_t ma, mb;
+    struct rt_superell_internal *superell =
+	(struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+    if (inpara) {
+	/* take es_mat[15] (path scaling) into account */
+	s->edit_state.es_scale = es_para[0] * es_mat[15] /
+	    MAGNITUDE(superell->a);
+    }
+    VSCALE(superell->a, superell->a, s->edit_state.es_scale);
+    ma = MAGNITUDE(superell->a);
+    mb = MAGNITUDE(superell->b);
+    VSCALE(superell->b, superell->b, ma/mb);
+    mb = MAGNITUDE(superell->c);
+    VSCALE(superell->c, superell->c, ma/mb);
+}
 
 /*
  * Local Variables:

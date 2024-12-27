@@ -754,8 +754,6 @@ get_file_name(struct mged_state *s, char *str)
 void
 pscale(struct mged_state *s)
 {
-    static fastf_t ma, mb;
-
     switch (es_menu) {
 
 	case MENU_VOL_CSIZE:	/* scale voxel size */
@@ -914,70 +912,17 @@ pscale(struct mged_state *s)
 	    break;
 	    /* begin super ellipse menu options */
 	case MENU_SUPERELL_SCALE_A:
-	    /* scale vector A */
-	    {
-		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_SUPERELL_CK_MAGIC(superell);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
-			MAGNITUDE(superell->a);
-		}
-		VSCALE(superell->a, superell->a, s->edit_state.es_scale);
-	    }
+	    menu_superell_scale_a(s);
 	    break;
-
 	case MENU_SUPERELL_SCALE_B:
-	    /* scale vector B */
-	    {
-		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_SUPERELL_CK_MAGIC(superell);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
-			MAGNITUDE(superell->b);
-		}
-		VSCALE(superell->b, superell->b, s->edit_state.es_scale);
-	    }
+	    menu_superell_scale_b(s);
 	    break;
-
 	case MENU_SUPERELL_SCALE_C:
-	    /* scale vector C */
-	    {
-		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_SUPERELL_CK_MAGIC(superell);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
-			MAGNITUDE(superell->c);
-		}
-		VSCALE(superell->c, superell->c, s->edit_state.es_scale);
-	    }
+	    menu_superell_scale_c(s);
 	    break;
-
-	case MENU_SUPERELL_SCALE_ABC:	/* set A, B, and C length the same */
-	    {
-		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
-		RT_SUPERELL_CK_MAGIC(superell);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
-			MAGNITUDE(superell->a);
-		}
-		VSCALE(superell->a, superell->a, s->edit_state.es_scale);
-		ma = MAGNITUDE(superell->a);
-		mb = MAGNITUDE(superell->b);
-		VSCALE(superell->b, superell->b, ma/mb);
-		mb = MAGNITUDE(superell->c);
-		VSCALE(superell->c, superell->c, ma/mb);
-	    }
+	case MENU_SUPERELL_SCALE_ABC:
+    	    menu_superell_scale_abc(s);
 	    break;
-
-
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
 	    menu_pipe_pt_od(s);
 	    break;

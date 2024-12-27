@@ -35,6 +35,11 @@
 
 extern struct menu_item superell_menu[];
 
+void menu_superell_scale_a(struct mged_state *s);
+void menu_superell_scale_b(struct mged_state *s);
+void menu_superell_scale_c(struct mged_state *s);
+void menu_superell_scale_abc(struct mged_state *s);
+
 #endif  /* EDSUPERELL_H */
 
 /*
