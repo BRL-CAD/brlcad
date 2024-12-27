@@ -59,11 +59,10 @@ extern struct menu_item bot_menu[];
 extern int bot_verts[3];
 
 void
-bot_label_solid(
-    struct mged_state *s,
+mged_bot_labels(
     int *num_lines,
     point_t *lines,
-    struct rt_point_labels pl[],
+    struct rt_point_labels *pl,
     const mat_t xform,
     struct rt_db_internal *ip);
 

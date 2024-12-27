@@ -69,13 +69,12 @@ struct menu_item bot_menu[] = {
 };
 
 void
-bot_label_solid(
-	struct mged_state *s,
+mged_bot_labels(
 	int *num_lines,
 	point_t *lines,
-	struct rt_point_labels pl[],
+	struct rt_point_labels *pl,
 	const mat_t xform,
-	struct rt_db_internal *UNUSED(ip))
+	struct rt_db_internal *ip)
 {
     point_t pos_view;
     int npl = 0;
@@ -85,7 +84,7 @@ bot_label_solid(
     bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
     struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_bot_internal *)ip->idb_ptr;
 
     RT_BOT_CK_MAGIC(bot);
 

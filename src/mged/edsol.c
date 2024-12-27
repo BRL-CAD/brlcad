@@ -2523,7 +2523,8 @@ label_edited_solid(
 	    pipe_label_solid(s, pl, xform, ip);
 	    return;
 	case ID_BOT:
-	    bot_label_solid(s, num_lines, lines, pl, xform, ip);
+	    // TODO - is es_int the same as ip here?  If not, why not?
+	    mged_bot_labels(num_lines, lines, pl, xform, &s->edit_state.es_int);
 	    return;
 	case ID_METABALL:
 	    metaball_label_solid(s, pl, xform, ip);
