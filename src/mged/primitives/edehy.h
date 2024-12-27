@@ -35,6 +35,11 @@
 
 extern struct menu_item ehy_menu[];
 
+void menu_ehy_h(struct mged_state *s);
+void menu_ehy_r1(struct mged_state *s);
+void menu_ehy_r2(struct mged_state *s);
+void menu_ehy_c(struct mged_state *s);
+
 #endif  /* EDEHY_H */
 
 /*

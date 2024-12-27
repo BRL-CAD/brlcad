@@ -1182,75 +1182,17 @@ pscale(struct mged_state *s)
 	    break;
 
 	case MENU_EHY_H:
-	    /* scale height vector H */
-	    {
-		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_EHY_CK_MAGIC(ehy);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(ehy->ehy_H);
-		}
-		VSCALE(ehy->ehy_H, ehy->ehy_H, s->edit_state.es_scale);
-	    }
+	    menu_ehy_h(s);
 	    break;
-
 	case MENU_EHY_R1:
-	    /* scale semimajor axis of EHY */
-	    {
-		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_EHY_CK_MAGIC(ehy);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / ehy->ehy_r1;
-		}
-		if (ehy->ehy_r1 * s->edit_state.es_scale >= ehy->ehy_r2)
-		    ehy->ehy_r1 *= s->edit_state.es_scale;
-		else
-		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
-	    }
+	    menu_ehy_r1(s);
 	    break;
-
 	case MENU_EHY_R2:
-	    /* scale semiminor axis of EHY */
-	    {
-		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_EHY_CK_MAGIC(ehy);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / ehy->ehy_r2;
-		}
-		if (ehy->ehy_r2 * s->edit_state.es_scale <= ehy->ehy_r1)
-		    ehy->ehy_r2 *= s->edit_state.es_scale;
-		else
-		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
-	    }
+	    menu_ehy_r2(s);
 	    break;
-
 	case MENU_EHY_C:
-	    /* scale distance between apex of EHY & asymptotic cone */
-	    {
-		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_EHY_CK_MAGIC(ehy);
-		if (inpara) {
-		    /* take es_mat[15] (path scaling) into account */
-		    es_para[0] *= es_mat[15];
-		    s->edit_state.es_scale = es_para[0] / ehy->ehy_c;
-		}
-		ehy->ehy_c *= s->edit_state.es_scale;
-	    }
+	    menu_ehy_c(s);
 	    break;
-
 	case MENU_HYP_H:
 	    /* scale height of HYP */
 	    {
