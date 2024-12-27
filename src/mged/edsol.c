@@ -82,8 +82,6 @@ int inpara;		/* es_para valid.  es_mvalid must = 0 */
 vect_t es_mparam;	/* mouse input param.  Only when es_mvalid set */
 int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
 
-struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
-
 /* These values end up in es_menu, as do ARB vertex numbers */
 int es_menu;		/* item selected from menu */
 
@@ -314,22 +312,8 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 	    get_pipe_keypoint(s, pt, strp, ip, mat);
 	    return;
 	case ID_METABALL:
-	    {
-		struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
-
-		RT_METABALL_CK_MAGIC(metaball);
-
-		VSETALL(mpt, 0.0);
-		if (es_metaball_pnt==NULL) {
-		    snprintf(buf, BUFSIZ, "no point selected");
-		} else {
-		    VMOVE(mpt, es_metaball_pnt->coord);
-		    snprintf(buf, BUFSIZ, "V %f", es_metaball_pnt->fldstr);
-		}
-		*strp = buf;
-		MAT4X3PNT(*pt, mat, mpt);
-		return;
-	    }
+	    get_metaball_keypoint(s, pt, strp, ip, mat);
+	    return;
 	case ID_BOT:
 	    {
 		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
@@ -1150,38 +1134,16 @@ pscale(struct mged_state *s)
 	    }
 	    break;
 	case MENU_METABALL_SET_THRESHOLD:
-	    {
-		struct rt_metaball_internal *ball =
-		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
-		RT_METABALL_CK_MAGIC(ball);
-		ball->threshold = es_para[0];
-	    }
+	    menu_metaball_set_threshold(s);
 	    break;
 	case MENU_METABALL_SET_METHOD:
-	    {
-		struct rt_metaball_internal *ball =
-		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
-		RT_METABALL_CK_MAGIC(ball);
-		ball->method = es_para[0];
-	    }
+	    menu_metaball_set_method(s);
 	    break;
 	case MENU_METABALL_PT_SET_GOO:
-	    {
-		if (!es_metaball_pnt || !inpara) {
-		    Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
-		    return;
-		}
-		es_metaball_pnt->sweat *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
-	    }
+	    menu_metaball_pt_set_goo(s);
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
-	    {
-		if (!es_metaball_pnt || !inpara) {
-		    Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
-		    return;
-		}
-		es_metaball_pnt->fldstr *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
-	    }
+	    menu_metaball_pt_fldstr(s);
 	    break;
     }
 }
@@ -1717,107 +1679,16 @@ sedit(struct mged_state *s)
 	    break;
 
 	case ECMD_METABALL_PT_PICK:
-	    {
-		struct rt_metaball_internal *metaball=
-		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
-		point_t new_pt;
-		struct wdb_metaball_pnt *ps;
-		struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
-		struct bn_tol tmp_tol;
-		fastf_t min_dist = MAX_FASTF;
-		vect_t dir;
-
-		RT_METABALL_CK_MAGIC(metaball);
-
-		if (es_mvalid) {
-		    VMOVE(new_pt, es_mparam);
-		} else if (inpara == 3) {
-		    VMOVE(new_pt, es_para);
-		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(s->interp, "x y z coordinates required for control point selection\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		    break;
-		} else if (!es_mvalid && !inpara) {
-		    break;
-		}
-
-		tmp_tol.magic = BN_TOL_MAGIC;
-		tmp_tol.dist = 0.0;
-		tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
-		tmp_tol.perp = 0.0;
-		tmp_tol.para = 1.0 - tmp_tol.perp;
-
-		/* get a direction vector in model space corresponding to z-direction in view */
-		VSET(work, 0.0, 0.0, 1.0);
-		MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work);
-
-		for (BU_LIST_FOR(ps, wdb_metaball_pnt, &metaball->metaball_ctrl_head)) {
-		    fastf_t dist;
-
-		    dist = bg_dist_line3_pnt3(new_pt, dir, ps->coord);
-		    if (dist < min_dist) {
-			min_dist = dist;
-			nearest = ps;
-		    }
-		}
-
-		es_metaball_pnt = nearest;
-
-		if (!es_metaball_pnt) {
-		    Tcl_AppendResult(s->interp, "No METABALL control point selected\n", (char *)NULL);
-		    mged_print_result(s, TCL_ERROR);
-		} else {
-		    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
-		}
-	    }
+	    ecmd_metaball_pt_pick(s);
 	    break;
 	case ECMD_METABALL_PT_MOV:
-	    if (!es_metaball_pnt) {
-		bu_log("Must select a point to move"); break; }
-	    if (inpara != 3) {
-		bu_log("Must provide dx dy dz"); break; }
-	    VADD2(es_metaball_pnt->coord, es_metaball_pnt->coord, es_para);
+	    ecmd_metaball_pt_mov(s);
 	    break;
 	case ECMD_METABALL_PT_DEL:
-	    {
-		struct wdb_metaball_pnt *tmp = es_metaball_pnt, *p;
-
-		if (es_metaball_pnt == NULL) {
-		    bu_log("No point selected");
-		    break;
-		}
-		p = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
-		if (p->l.magic == BU_LIST_HEAD_MAGIC) {
-		    es_metaball_pnt = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
-		    /* 0 point metaball... allow it for now. */
-		    if (es_metaball_pnt->l.magic == BU_LIST_HEAD_MAGIC)
-			es_metaball_pnt = NULL;
-		} else
-		    es_metaball_pnt = p;
-		BU_LIST_DQ(&tmp->l);
-		free(tmp);
-		if (!es_metaball_pnt)
-		    bu_log("WARNING: Last point of this metaball has been deleted.");
-	    }
+	    ecmd_metaball_pt_del(s);
 	    break;
 	case ECMD_METABALL_PT_ADD:
-	    {
-		struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
-		struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
-
-		if (inpara != 3) {
-		    bu_log("Must provide x y z");
-		    bu_free(n, "wdb_metaball_pnt n");
-		    break;
-		}
-
-		es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
-		VMOVE(n->coord, es_para);
-		n->l.magic = WDB_METABALLPT_MAGIC;
-		n->fldstr = 1.0;
-		BU_LIST_APPEND(&es_metaball_pnt->l, &n->l);
-		es_metaball_pnt = n;
-	    }
+	    ecmd_metaball_pt_add(s);
 	    break;
 
 	default:
@@ -2966,7 +2837,6 @@ label_edited_solid(
     const mat_t xform,
     struct rt_db_internal *ip)
 {
-    point_t pos_view;
     int npl = 0;
 
     RT_CK_DB_INTERNAL(ip);
@@ -2998,23 +2868,8 @@ label_edited_solid(
 	    bot_label_solid(s, num_lines, lines, pl, xform, ip);
 	    return;
 	case ID_METABALL:
-	    {
-#ifndef NO_MAGIC_CHECKING
-		struct rt_metaball_internal *metaball =
-		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
-
-		RT_METABALL_CK_MAGIC(metaball);
-#endif
-
-		if (es_metaball_pnt) {
-		    BU_CKMAG(es_metaball_pnt, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-
-		    MAT4X3PNT(pos_view, xform, es_metaball_pnt->coord);
-		    POINT_LABEL_STR(pos_view, "pt");
-		}
-	    }
-
-	    break;
+	    metaball_label_solid(s, pl, xform, ip);
+	    return;
 
 	default:
 	    if (OBJ[ip->idb_type].ft_labels)

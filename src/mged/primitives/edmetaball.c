@@ -37,6 +37,11 @@
 #include "../mged_dm.h"
 #include "./edmetaball.h"
 
+struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
+
+extern vect_t es_mparam;	/* mouse input param.  Only when es_mvalid set */
+extern int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
+
 static void
 metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
@@ -142,7 +147,206 @@ struct menu_item metaball_menu[] = {
     { "", NULL, 0 }
 };
 
+void
+metaball_label_solid(
+    struct mged_state *s,
+    struct rt_point_labels pl[],
+    const mat_t xform,
+    struct rt_db_internal *ip)
+{
+    point_t pos_view;
+    int npl = 0;
 
+    RT_CK_DB_INTERNAL(ip);
+
+#define POINT_LABEL_STR(_pt, _str) { \
+    VMOVE(pl[npl].pt, _pt); \
+    bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
+
+    struct rt_metaball_internal *metaball =
+	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
+
+    RT_METABALL_CK_MAGIC(metaball);
+
+    if (es_metaball_pnt) {
+	BU_CKMAG(es_metaball_pnt, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
+
+	MAT4X3PNT(pos_view, xform, es_metaball_pnt->coord);
+	POINT_LABEL_STR(pos_view, "pt");
+    }
+
+    pl[npl].str[0] = '\0';	/* Mark ending */
+}
+
+void
+get_metaball_keypoint(struct mged_state *UNUSED(s), point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+{
+    RT_CK_DB_INTERNAL(ip);
+    point_t mpt = VINIT_ZERO;
+    VSETALL(mpt, 0.0);
+    static char buf[BUFSIZ];
+    memset(buf, 0, BUFSIZ);
+
+    struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
+    RT_METABALL_CK_MAGIC(metaball);
+
+    if (es_metaball_pnt==NULL) {
+	snprintf(buf, BUFSIZ, "no point selected");
+    } else {
+	VMOVE(mpt, es_metaball_pnt->coord);
+	snprintf(buf, BUFSIZ, "V %f", es_metaball_pnt->fldstr);
+    }
+
+    *strp = buf;
+    MAT4X3PNT(*pt, mat, mpt);
+}
+
+void
+menu_metaball_set_threshold(struct mged_state *s)
+{
+    struct rt_metaball_internal *ball =
+	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
+    RT_METABALL_CK_MAGIC(ball);
+    ball->threshold = es_para[0];
+}
+
+void
+menu_metaball_set_method(struct mged_state *s)
+{
+    struct rt_metaball_internal *ball =
+	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
+    RT_METABALL_CK_MAGIC(ball);
+    ball->method = es_para[0];
+}
+
+void
+menu_metaball_pt_set_goo(struct mged_state *s)
+{
+    if (!es_metaball_pnt || !inpara) {
+	Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
+	return;
+    }
+    es_metaball_pnt->sweat *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
+}
+
+void
+menu_metaball_pt_fldstr(struct mged_state *s)
+{
+    if (!es_metaball_pnt || !inpara) {
+	Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
+	return;
+    }
+    es_metaball_pnt->fldstr *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
+}
+
+void
+ecmd_metaball_pt_pick(struct mged_state *s)
+{
+    struct rt_metaball_internal *metaball=
+	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
+    point_t new_pt;
+    struct wdb_metaball_pnt *ps;
+    struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
+    struct bn_tol tmp_tol;
+    fastf_t min_dist = MAX_FASTF;
+    vect_t dir, work;
+
+    RT_METABALL_CK_MAGIC(metaball);
+
+    if (es_mvalid) {
+	VMOVE(new_pt, es_mparam);
+    } else if (inpara == 3) {
+	VMOVE(new_pt, es_para);
+    } else if (inpara && inpara != 3) {
+	Tcl_AppendResult(s->interp, "x y z coordinates required for control point selection\n", (char *)NULL);
+	mged_print_result(s, TCL_ERROR);
+	return;
+    } else if (!es_mvalid && !inpara) {
+	return;
+    }
+
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = 0.0;
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+    tmp_tol.perp = 0.0;
+    tmp_tol.para = 1.0 - tmp_tol.perp;
+
+    /* get a direction vector in model space corresponding to z-direction in view */
+    VSET(work, 0.0, 0.0, 1.0);
+    MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work);
+
+    for (BU_LIST_FOR(ps, wdb_metaball_pnt, &metaball->metaball_ctrl_head)) {
+	fastf_t dist;
+
+	dist = bg_dist_line3_pnt3(new_pt, dir, ps->coord);
+	if (dist < min_dist) {
+	    min_dist = dist;
+	    nearest = ps;
+	}
+    }
+
+    es_metaball_pnt = nearest;
+
+    if (!es_metaball_pnt) {
+	Tcl_AppendResult(s->interp, "No METABALL control point selected\n", (char *)NULL);
+	mged_print_result(s, TCL_ERROR);
+    } else {
+	rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
+    }
+}
+
+void
+ecmd_metaball_pt_mov(struct mged_state *UNUSED(s))
+{
+    if (!es_metaball_pnt) {
+	bu_log("Must select a point to move"); return; }
+    if (inpara != 3) {
+	bu_log("Must provide dx dy dz"); return; }
+    VADD2(es_metaball_pnt->coord, es_metaball_pnt->coord, es_para);
+}
+
+void
+ecmd_metaball_pt_del(struct mged_state *UNUSED(s))
+{
+    struct wdb_metaball_pnt *tmp = es_metaball_pnt, *p;
+
+    if (es_metaball_pnt == NULL) {
+	bu_log("No point selected");
+	return;
+    }
+    p = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
+    if (p->l.magic == BU_LIST_HEAD_MAGIC) {
+	es_metaball_pnt = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
+	/* 0 point metaball... allow it for now. */
+	if (es_metaball_pnt->l.magic == BU_LIST_HEAD_MAGIC)
+	    es_metaball_pnt = NULL;
+    } else
+	es_metaball_pnt = p;
+    BU_LIST_DQ(&tmp->l);
+    free(tmp);
+    if (!es_metaball_pnt)
+	bu_log("WARNING: Last point of this metaball has been deleted.");
+}
+
+void
+ecmd_metaball_pt_add(struct mged_state *s)
+{
+    struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
+    struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
+
+    if (inpara != 3) {
+	bu_log("Must provide x y z");
+	bu_free(n, "wdb_metaball_pnt n");
+	return;
+    }
+
+    es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
+    VMOVE(n->coord, es_para);
+    n->l.magic = WDB_METABALLPT_MAGIC;
+    n->fldstr = 1.0;
+    BU_LIST_APPEND(&es_metaball_pnt->l, &n->l);
+    es_metaball_pnt = n;
+}
 
 /*
  * Local Variables:

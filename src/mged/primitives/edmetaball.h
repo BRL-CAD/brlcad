@@ -52,6 +52,26 @@ extern struct wdb_metaball_pnt *es_metaball_pnt;
 
 extern struct menu_item metaball_menu[];
 
+void
+metaball_label_solid(
+    struct mged_state *s,
+    struct rt_point_labels pl[],
+    const mat_t xform,
+    struct rt_db_internal *ip);
+
+void
+get_metaball_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
+
+void menu_metaball_set_threshold(struct mged_state *s);
+void menu_metaball_set_method(struct mged_state *s);
+void menu_metaball_pt_set_goo(struct mged_state *s);
+void menu_metaball_pt_fldstr(struct mged_state *s);
+void ecmd_metaball_pt_pick(struct mged_state *s);
+void ecmd_metaball_pt_mov(struct mged_state *s);
+void ecmd_metaball_pt_del(struct mged_state *s);
+void ecmd_metaball_pt_add(struct mged_state *s);
+
+
 #endif  /* EDMETABALL_H */
 
 /*
