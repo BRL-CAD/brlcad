@@ -37,6 +37,11 @@
 
 extern struct menu_item eto_menu[];
 
+void menu_eto_r(struct mged_state *s);
+void menu_eto_rd(struct mged_state *s);
+void menu_eto_scale_c(struct mged_state *s);
+void ecmd_eto_rot_c(struct mged_state *s);
+
 #endif  /* EDETO_H */
 
 /*
