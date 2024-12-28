@@ -38,7 +38,7 @@ struct mged_functab {
 	    int max_pl,
 	    const mat_t xform,
 	    struct rt_db_internal *ip);
-#define MGEDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_db_internal *))((void (*)(void))_func))
+#define MGEDFUNCTAB_FUNC_LABEL_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_db_internal *))((void (*)(void))_func))
 
 };
 extern const struct mged_functab MGED_OBJ[];

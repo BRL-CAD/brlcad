@@ -262,7 +262,7 @@ const struct mged_functab MGED_OBJ[] = {
     {
 	/* 30 Bag o' Triangles */
 	RT_FUNCTAB_MAGIC, "ID_BOT", "bot",
-	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_bot_labels), /* label */
+	NULL  /* label */
     },
 
     {
