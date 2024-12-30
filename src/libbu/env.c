@@ -446,7 +446,25 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
     if (etype == 2)
 	ncompat_list = nongui_editor_list;
 
-    // VISUAL/EDITOR environment variables takes precedence, if set
+    // BRLCAD_EDITOR_GUI takes precedence, if set and GUI is an option
+    if (!etype || etype == 2) {
+	const char *env_editor = getenv("BRLCAD_EDITOR_GUI");
+	if (env_editor && env_editor[0] != '\0') {
+	    if (editor_file_check(bu_editor, env_editor, ncompat_list))
+		goto do_opt;
+	}
+    }
+
+    // BRLCAD_EDITOR_CONSOLE takes precedence, if set and CONSOLE is an option
+    if (!etype || etype == 1) {
+	const char *env_editor = getenv("BRLCAD_EDITOR_CONSOLE");
+	if (env_editor && env_editor[0] != '\0') {
+	    if (editor_file_check(bu_editor, env_editor, ncompat_list))
+		goto do_opt;
+	}
+    }
+
+    // VISUAL/EDITOR environment variables take precedence, if set
     const char *env_editor = getenv("VISUAL");
     if (env_editor && env_editor[0] != '\0') {
 	if (editor_file_check(bu_editor, env_editor, ncompat_list))
