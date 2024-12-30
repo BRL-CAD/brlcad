@@ -33,6 +33,8 @@ extern "C" {
 
 #define MGED_DECLARE_INTERFACE(name) \
     extern void mged_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels *pl, int max_pl, const mat_t xform, struct rt_db_internal *ip, struct bn_tol *); \
+    extern const char *(*ft_keypoint)(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol); \
+
 
 MGED_DECLARE_INTERFACE(tor);
 MGED_DECLARE_INTERFACE(tgc);
@@ -82,193 +84,225 @@ const struct mged_functab MGED_OBJ[] = {
     {
 	/* 0: unused, for sanity checking. */
 	RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
+	NULL,
 	NULL
     },
 
     {
 	/* 1 */
 	RT_FUNCTAB_MAGIC, "ID_TOR", "tor",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 2 */
 	RT_FUNCTAB_MAGIC, "ID_TGC", "tgc",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 3 */
 	RT_FUNCTAB_MAGIC, "ID_ELL", "ell",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 4 */
 	RT_FUNCTAB_MAGIC, "ID_ARB8", "arb8",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 5 */
 	RT_FUNCTAB_MAGIC, "ID_ARS", "ars",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_ars_labels), /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 6 */
 	RT_FUNCTAB_MAGIC, "ID_HALF", "half",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 7 */
 	RT_FUNCTAB_MAGIC, "ID_REC", "rec",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 8 */
 	RT_FUNCTAB_MAGIC, "ID_POLY", "poly",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 9 */
 	RT_FUNCTAB_MAGIC, "ID_BSPLINE", "bspline",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_bspline_labels), /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 10 */
 	RT_FUNCTAB_MAGIC, "ID_SPH", "sph",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 11 */
 	RT_FUNCTAB_MAGIC, "ID_NMG", "nmg",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_nmg_labels), /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 12 */
 	RT_FUNCTAB_MAGIC, "ID_EBM", "ebm",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 13 */
 	RT_FUNCTAB_MAGIC, "ID_VOL", "vol",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 14 */
 	RT_FUNCTAB_MAGIC, "ID_ARBN", "arbn",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 15 */
 	RT_FUNCTAB_MAGIC, "ID_PIPE", "pipe",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_pipe_labels), /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 16 */
 	RT_FUNCTAB_MAGIC, "ID_PARTICLE", "part",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 17 */
 	RT_FUNCTAB_MAGIC, "ID_RPC", "rpc",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 18 */
 	RT_FUNCTAB_MAGIC, "ID_RHC", "rhc",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 19 */
 	RT_FUNCTAB_MAGIC, "ID_EPA", "epa",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 20 */
 	RT_FUNCTAB_MAGIC, "ID_EHY", "ehy",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 21 */
 	RT_FUNCTAB_MAGIC, "ID_ETO", "eto",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 22 */
 	RT_FUNCTAB_MAGIC, "ID_GRIP", "grip",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 23 -- XXX unimplemented */
 	RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 24 */
 	RT_FUNCTAB_MAGIC, "ID_HF", "hf",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 25 Displacement Map (alt. height field) */
 	RT_FUNCTAB_MAGIC, "ID_DSP", "dsp",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 26 2D sketch */
 	RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 27 Solid of extrusion */
 	RT_FUNCTAB_MAGIC, "ID_EXTRUDE", "extrude",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 28 Instanced submodel */
 	RT_FUNCTAB_MAGIC, "ID_SUBMODEL", "submodel",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 29 Fastgen cline solid */
 	RT_FUNCTAB_MAGIC, "ID_CLINE", "cline",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 30 Bag o' Triangles */
 	RT_FUNCTAB_MAGIC, "ID_BOT", "bot",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_bot_labels), /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 31 combination objects (should not be in this table) */
 	RT_FUNCTAB_MAGIC, "ID_COMBINATION", "comb",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
@@ -276,13 +310,15 @@ const struct mged_functab MGED_OBJ[] = {
 	 * (was ID_BINEXPM)
 	 */
 	RT_FUNCTAB_MAGIC, "ID_UNUSED1", "UNUSED1",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 33 */
 	RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
@@ -290,87 +326,101 @@ const struct mged_functab MGED_OBJ[] = {
 	 * (was ID_BINMIME)
 	 */
 	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "UNUSED2",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 35 (but "should" be 31) Superquadratic Ellipsoid */
 	RT_FUNCTAB_MAGIC, "ID_SUPERELL", "superell",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 36 (but "should" be 32) Metaball */
 	RT_FUNCTAB_MAGIC, "ID_METABALL", "metaball",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_metaball_labels), /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 37 */
 	RT_FUNCTAB_MAGIC, "ID_BREP", "brep",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 38 (but "should" be 34) Hyperboloid */
 	RT_FUNCTAB_MAGIC, "ID_HYP", "hyp",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 39 */
 	RT_FUNCTAB_MAGIC, "ID_CONSTRAINT", "constrnt",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 40 */
 	RT_FUNCTAB_MAGIC, "ID_REVOLVE", "revolve",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 41 */
 	RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 42 */
 	RT_FUNCTAB_MAGIC, "ID_ANNOT", "annot",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 43 */
 	RT_FUNCTAB_MAGIC, "ID_HRT", "hrt",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
 
     {
 	/* 44 */
 	RT_FUNCTAB_MAGIC, "ID_DATUM", "datum",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
 
     {
     /* 45 */
     RT_FUNCTAB_MAGIC, "ID_SCRIPT", "script",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* 46 */
 	RT_FUNCTAB_MAGIC, "ID_MATERIAL", "material",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     },
 
     {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
-	NULL  /* label */
+	NULL,  /* label */
+	NULL   /* keypoint */
     }
 };
 

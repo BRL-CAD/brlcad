@@ -42,6 +42,9 @@ struct mged_functab {
 	    struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_db_internal *, struct bn_tol *))((void (*)(void))_func))
 
+    const char *(*ft_keypoint)(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define MGEDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
 };
 extern const struct mged_functab MGED_OBJ[];
 
