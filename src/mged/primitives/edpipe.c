@@ -611,22 +611,27 @@ get_pipe_keypoint(struct mged_state *UNUSED(s), point_t *pt, const char **strp, 
 }
 
 void
-pipe_label_solid(
-    struct mged_state *UNUSED(s),
-    struct rt_point_labels pl[],
-    const mat_t xform,
-    struct rt_db_internal *ip)
+mged_pipe_labels(
+	int *UNUSED(num_lines),
+	point_t *UNUSED(lines),
+	struct rt_point_labels *pl,
+	int UNUSED(max_pl),
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *UNUSED(tol))
 {
     point_t pos_view;
     int npl = 0;
 
-    RT_CK_DB_INTERNAL(ip);
+
 #define POINT_LABEL_STR(_pt, _str) { \
     VMOVE(pl[npl].pt, _pt); \
     bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
-    struct rt_pipe_internal *pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
-    RT_PIPE_CK_MAGIC(pipeip);
+    RT_CK_DB_INTERNAL(ip);
+    //struct rt_pipe_internal *pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
+    //RT_PIPE_CK_MAGIC(pipeip);
+
     // Conditional labeling
     if (es_pipe_pnt) {
 	BU_CKMAG(es_pipe_pnt, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");

@@ -178,14 +178,16 @@ sedit_vpick(struct mged_state *s, point_t v_pos)
     view_state->vs_flag = 1;
 }
 
-
-
 void
-bspline_label_solid(
-	struct mged_state *s,
-    struct rt_point_labels pl[],
-    const mat_t xform,
-    struct rt_db_internal *UNUSED(ip))
+mged_bspline_labels(
+  	int *UNUSED(num_lines),
+	point_t *UNUSED(lines),
+	struct rt_point_labels *pl,
+	int UNUSED(max_pl),
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *UNUSED(tol)
+    )
 {
     point_t pos_view;
     int npl = 0;
@@ -199,9 +201,7 @@ bspline_label_solid(
     VMOVE(pl[npl].pt, _pt); \
     bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
-
-    struct rt_nurb_internal *sip =
-	(struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
+    struct rt_nurb_internal *sip = (struct rt_nurb_internal *)ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
 
     // Conditional labeling

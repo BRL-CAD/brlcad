@@ -52,12 +52,16 @@ extern struct wdb_metaball_pnt *es_metaball_pnt;
 
 extern struct menu_item metaball_menu[];
 
+
 void
-metaball_label_solid(
-    struct mged_state *s,
-    struct rt_point_labels pl[],
-    const mat_t xform,
-    struct rt_db_internal *ip);
+mged_metaball_labels(
+	int *num_lines,
+	point_t *lines,
+	struct rt_point_labels *pl,
+	int max_pl,
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *tol);
 
 void
 get_metaball_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);

@@ -51,12 +51,14 @@ extern struct menu_item ars_menu[];
 extern struct menu_item ars_pick_menu[];
 
 void
-ars_label_solid(
-    struct mged_state *s,
-    struct rt_point_labels pl[],
-    int max_pl,
-    const mat_t xform,
-    struct rt_db_internal *ip);
+mged_ars_labels(
+	int *num_lines,
+	point_t *lines,
+	struct rt_point_labels *pl,
+	int max_pl,
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *tol);
 
 void ecmd_ars_pick(struct mged_state *s);
 void ecmd_ars_next_pt(struct mged_state *s);

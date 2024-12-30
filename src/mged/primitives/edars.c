@@ -110,12 +110,14 @@ struct menu_item ars_menu[] = {
 };
 
 void
-ars_label_solid(
-    struct mged_state *s,
-    struct rt_point_labels pl[],
-    int max_pl,
-    const mat_t xform,
-    struct rt_db_internal *ip)
+mged_ars_labels(
+	int *UNUSED(num_lines),
+	point_t *UNUSED(lines),
+	struct rt_point_labels *pl,
+	int max_pl,
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *tol)
 {
     point_t work;
     int npl = 0;
@@ -124,10 +126,10 @@ ars_label_solid(
     VMOVE(pl[npl].pt, _pt); \
     bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
-    struct rt_ars_internal *ars = (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
+    struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
 
     RT_ARS_CK_MAGIC(ars);
-    npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
+    npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, ip, tol);
 
     // Conditional additional labeling
     if (es_ars_crv >= 0 && es_ars_col >= 0) {

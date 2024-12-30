@@ -446,11 +446,16 @@ nmg_keypoint_finalize:
     MAT4X3PNT(*pt, mat, mpt);
 }
 
+
 void
-nmg_label_solid(struct mged_state *UNUSED(s),
-    struct rt_point_labels pl[],
-    const mat_t xform,
-    struct rt_db_internal *ip)
+mged_nmg_labels(
+	int *UNUSED(num_lines),
+	point_t *UNUSED(lines),
+	struct rt_point_labels *pl,
+	int UNUSED(max_pl),
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *UNUSED(tol))
 {
     point_t pos_view;
     int npl = 0;

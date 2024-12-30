@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include "bn.h"
 #include "raytrace.h"
 
 struct mged_functab {
@@ -37,8 +38,9 @@ struct mged_functab {
 	    struct rt_point_labels *pl,
 	    int max_pl,
 	    const mat_t xform,
-	    struct rt_db_internal *ip);
-#define MGEDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_db_internal *))((void (*)(void))_func))
+	    struct rt_db_internal *ip,
+	    struct bn_tol *tol);
+#define MGEDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_db_internal *, struct bn_tol *))((void (*)(void))_func))
 
 };
 extern const struct mged_functab MGED_OBJ[];

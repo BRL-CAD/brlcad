@@ -2483,8 +2483,8 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 void
 label_edited_solid(
     struct mged_state *s,
-    int *num_lines, // NOTE - used only for BOTs
-    point_t *lines, // NOTE - used only for BOTs
+    int *num_lines, // NOTE - currently used only for BOTs
+    point_t *lines, // NOTE - currently used only for BOTs
     struct rt_point_labels pl[],
     int max_pl,
     const mat_t xform,
@@ -2492,52 +2492,22 @@ label_edited_solid(
 {
     int npl = 0;
 
+    // TODO - is es_int the same as ip here?  If not, why not?
     RT_CK_DB_INTERNAL(ip);
 
+    // First, see if we have an edit-aware labeling method.  If we do, use it.
     if (MGED_OBJ[ip->idb_type].ft_labels) {
-	(*MGED_OBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, ip);
+	(*MGED_OBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
+	return;
+    }
+    // If there is no editing-aware labeling, use standard librt labels
+    if (OBJ[ip->idb_type].ft_labels) {
+	npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 	return;
     }
 
-    switch (ip->idb_type) {
-
-#define POINT_LABEL(_pt, _char) { \
-	VMOVE(pl[npl].pt, _pt); \
-	pl[npl].str[0] = _char; \
-	pl[npl++].str[1] = '\0'; }
-
-#define POINT_LABEL_STR(_pt, _str) { \
-	VMOVE(pl[npl].pt, _pt); \
-	bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
-
-	case ID_ARS:
-	    ars_label_solid(s, pl, max_pl, xform, ip);
-	    return;
-	case ID_BSPLINE:
-	    bspline_label_solid(s, pl, xform, ip);
-	    return;
-	case ID_NMG:
-	    nmg_label_solid(s, pl, xform, ip);
-	    return;
-	case ID_PIPE:
-	    pipe_label_solid(s, pl, xform, ip);
-	    return;
-	case ID_BOT:
-	    // TODO - is es_int the same as ip here?  If not, why not?
-	    mged_bot_labels(num_lines, lines, pl, xform, &s->edit_state.es_int);
-	    return;
-	case ID_METABALL:
-	    metaball_label_solid(s, pl, xform, ip);
-	    return;
-
-	default:
-	    if (OBJ[ip->idb_type].ft_labels)
-		npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    break;
-
-    }
-
-    pl[npl].str[0] = '\0';	/* Mark ending */
+    // If we have nothing, NULL the string
+    pl[npl].str[0] = '\0';
 }
 
 

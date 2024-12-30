@@ -147,12 +147,16 @@ struct menu_item metaball_menu[] = {
     { "", NULL, 0 }
 };
 
+
 void
-metaball_label_solid(
-    struct mged_state *s,
-    struct rt_point_labels pl[],
-    const mat_t xform,
-    struct rt_db_internal *ip)
+mged_metaball_labels(
+	int *UNUSED(num_lines),
+	point_t *UNUSED(lines),
+	struct rt_point_labels *pl,
+	int UNUSED(max_pl),
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *UNUSED(tol))
 {
     point_t pos_view;
     int npl = 0;
@@ -164,7 +168,7 @@ metaball_label_solid(
     bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
     struct rt_metaball_internal *metaball =
-	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_metaball_internal *)ip->idb_ptr;
 
     RT_METABALL_CK_MAGIC(metaball);
 

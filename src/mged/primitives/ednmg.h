@@ -51,10 +51,14 @@ extern void
 get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
 
 extern void
-nmg_label_solid(struct mged_state *s,
-    struct rt_point_labels pl[],
-    const mat_t xform,
-    struct rt_db_internal *ip);
+mged_nmg_labels(
+	int *num_lines,
+	point_t *lines,
+	struct rt_point_labels *pl,
+	int max_pl,
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *tol);
 
 extern void ecmd_nmg_emove(struct mged_state *s);
 extern void ecmd_nmg_ekill(struct mged_state *s);

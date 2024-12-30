@@ -32,7 +32,7 @@ extern "C" {
 #include "./mged_functab.h"
 
 #define MGED_DECLARE_INTERFACE(name) \
-    extern void mged_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip); \
+    extern void mged_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels *pl, int max_pl, const mat_t xform, struct rt_db_internal *ip, struct bn_tol *); \
 
 MGED_DECLARE_INTERFACE(tor);
 MGED_DECLARE_INTERFACE(tgc);
@@ -42,7 +42,7 @@ MGED_DECLARE_INTERFACE(ars);
 MGED_DECLARE_INTERFACE(hlf);
 MGED_DECLARE_INTERFACE(rec);
 MGED_DECLARE_INTERFACE(pg);
-MGED_DECLARE_INTERFACE(nurb);
+MGED_DECLARE_INTERFACE(bspline);
 MGED_DECLARE_INTERFACE(sph);
 MGED_DECLARE_INTERFACE(ebm);
 MGED_DECLARE_INTERFACE(vol);
@@ -112,7 +112,7 @@ const struct mged_functab MGED_OBJ[] = {
     {
 	/* 5 */
 	RT_FUNCTAB_MAGIC, "ID_ARS", "ars",
-	NULL  /* label */
+	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_ars_labels), /* label */
     },
 
     {
@@ -136,7 +136,7 @@ const struct mged_functab MGED_OBJ[] = {
     {
 	/* 9 */
 	RT_FUNCTAB_MAGIC, "ID_BSPLINE", "bspline",
-	NULL  /* label */
+	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_bspline_labels), /* label */
     },
 
     {
@@ -148,7 +148,7 @@ const struct mged_functab MGED_OBJ[] = {
     {
 	/* 11 */
 	RT_FUNCTAB_MAGIC, "ID_NMG", "nmg",
-	NULL  /* label */
+	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_nmg_labels), /* label */
     },
 
     {
@@ -172,7 +172,7 @@ const struct mged_functab MGED_OBJ[] = {
     {
 	/* 15 */
 	RT_FUNCTAB_MAGIC, "ID_PIPE", "pipe",
-	NULL  /* label */
+	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_pipe_labels), /* label */
     },
 
     {
@@ -302,7 +302,7 @@ const struct mged_functab MGED_OBJ[] = {
     {
 	/* 36 (but "should" be 32) Metaball */
 	RT_FUNCTAB_MAGIC, "ID_METABALL", "metaball",
-	NULL  /* label */
+	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_metaball_labels), /* label */
     },
 
     {

@@ -36,11 +36,14 @@ void bspline_init_sedit(struct mged_state *s);
 void sedit_vpick(struct mged_state *s, point_t v_pos);
 
 void
-bspline_label_solid(
-    struct mged_state *s,
-    struct rt_point_labels pl[],
-    const mat_t xform,
-    struct rt_db_internal *ip);
+mged_bspline_labels(
+	int *num_lines,
+	point_t *lines,
+	struct rt_point_labels *pl,
+	int max_pl,
+	const mat_t xform,
+	struct rt_db_internal *ip,
+	struct bn_tol *tol);
 
 void
 bspline_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);

@@ -63,8 +63,10 @@ mged_bot_labels(
     int *num_lines,
     point_t *lines,
     struct rt_point_labels *pl,
+    int max_pl,
     const mat_t xform,
-    struct rt_db_internal *ip);
+    struct rt_db_internal *ip,
+    struct bn_tol *tol);
 
 void ecmd_bot_mode(struct mged_state *s);
 void ecmd_bot_orient(struct mged_state *s);
