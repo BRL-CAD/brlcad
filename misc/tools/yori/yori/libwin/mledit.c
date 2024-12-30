@@ -360,15 +360,8 @@ typedef struct _YORI_WIN_CTRL_MULTILINE_EDIT {
     BOOLEAN AutoIndentApplied;
 
     /**
-     When AutoIndentApplied is TRUE, specifies the line used to supply the
-     auto indent.  When backspace is pressed, earlier lines are examined to
-     find the previous indent.
-     */
-    YORI_ALLOC_SIZE_T AutoIndentSourceLine;
-
-    /**
      When AutoIndentApplied is TRUE, specifies the number of characters to
-     obtain from the AutoIndentSourceLine.  This can be less than the total
+     obtain from the previous indented line.  This can be less than the total
      number of indentation characters if the lines contain different
      white space characters (eg. if the first line contains a space and tab,
      and a later line contains two spaces, the first space is considered a
@@ -547,12 +540,12 @@ YoriWinMultilineEditFindCursorCharFromDisplayChar(
     __out_opt PYORI_ALLOC_SIZE_T Remainder
     )
 {
-    YORI_ALLOC_SIZE_T CharIndex;
-    YORI_ALLOC_SIZE_T CurrentDisplayIndex;
-    YORI_ALLOC_SIZE_T DesiredCursorChar;
     PYORI_STRING Line;
-    TCHAR Char;
-    BOOLEAN DoubleWideCharSupported;
+    PYORI_WIN_WINDOW TopLevelWindow;
+    PYORI_WIN_WINDOW_MANAGER_HANDLE WinMgrHandle;
+
+    TopLevelWindow = YoriWinGetTopLevelWindow(&MultilineEdit->Ctrl);
+    WinMgrHandle = YoriWinGetWindowManagerHandle(TopLevelWindow);
 
     if (LineIndex >= MultilineEdit->LinesPopulated) {
         *CursorChar = DisplayChar;
@@ -562,47 +555,15 @@ YoriWinMultilineEditFindCursorCharFromDisplayChar(
         return;
     }
 
-    DoubleWideCharSupported = YoriWinMultilineEditIsDoubleWideCharSupported(MultilineEdit);
-
     Line = &MultilineEdit->LineArray[LineIndex];
 
-    CurrentDisplayIndex = 0;
-    for (CharIndex = 0; CharIndex < Line->LengthInChars; CharIndex++) {
-        if (CurrentDisplayIndex >= DisplayChar) {
-            if (Remainder != NULL) {
-                *Remainder = (CurrentDisplayIndex - DisplayChar);
-            }
-            *CursorChar = CharIndex;
-            return;
-        }
-
-        Char = Line->StartOfString[CharIndex];
-
-        if (Char == '\t') {
-            CurrentDisplayIndex = CurrentDisplayIndex + MultilineEdit->TabWidth;
-        } else if (DoubleWideCharSupported && YoriLibIsDoubleWideChar(Char)) {
-            CurrentDisplayIndex = CurrentDisplayIndex + 2;
-        } else {
-            CurrentDisplayIndex++;
-        }
-    }
-
-    //
-    //  In a modern control, the cursor can't be beyond the end of the text,
-    //  so cap it here.
-    //
-
-    DesiredCursorChar = DisplayChar - (CurrentDisplayIndex - CharIndex);
-    if (!MultilineEdit->TraditionalEditNavigation) {
-        if (DesiredCursorChar > Line->LengthInChars) {
-            DesiredCursorChar = Line->LengthInChars;
-        }
-    }
-
-    if (Remainder != NULL) {
-        *Remainder = 0;
-    }
-    *CursorChar = DesiredCursorChar;
+    YoriWinTextBufferOffsetFromDisplayCellOffset(WinMgrHandle,
+                                                 Line,
+                                                 MultilineEdit->TabWidth,
+                                                 DisplayChar,
+                                                 MultilineEdit->TraditionalEditNavigation,
+                                                 CursorChar,
+                                                 Remainder);
 }
 
 /**
@@ -627,40 +588,25 @@ YoriWinMultilineEditFindDisplayCharFromCursorChar(
     __out PYORI_ALLOC_SIZE_T DisplayChar
     )
 {
-    YORI_ALLOC_SIZE_T CharIndex;
-    YORI_ALLOC_SIZE_T CurrentDisplayIndex;
     PYORI_STRING Line;
-    TCHAR Char;
-    BOOLEAN DoubleWideCharSupported;
+    PYORI_WIN_WINDOW TopLevelWindow;
+    PYORI_WIN_WINDOW_MANAGER_HANDLE WinMgrHandle;
+
+    TopLevelWindow = YoriWinGetTopLevelWindow(&MultilineEdit->Ctrl);
+    WinMgrHandle = YoriWinGetWindowManagerHandle(TopLevelWindow);
 
     if (LineIndex >= MultilineEdit->LinesPopulated) {
         *DisplayChar = CursorChar;
         return;
     }
 
-    DoubleWideCharSupported = YoriWinMultilineEditIsDoubleWideCharSupported(MultilineEdit);
-
     Line = &MultilineEdit->LineArray[LineIndex];
 
-    CurrentDisplayIndex = 0;
-    for (CharIndex = 0; CharIndex < Line->LengthInChars; CharIndex++) {
-        if (CharIndex >= CursorChar) {
-            *DisplayChar = CurrentDisplayIndex;
-            return;
-        }
-
-        Char = Line->StartOfString[CharIndex];
-
-        if (Char == '\t') {
-            CurrentDisplayIndex = CurrentDisplayIndex + MultilineEdit->TabWidth;
-        } else if (DoubleWideCharSupported && YoriLibIsDoubleWideChar(Char)) {
-            CurrentDisplayIndex = CurrentDisplayIndex + 2;
-        } else {
-            CurrentDisplayIndex++;
-        }
-    }
-
-    *DisplayChar = CursorChar + (CurrentDisplayIndex - CharIndex);
+    YoriWinTextDisplayCellOffsetFromBufferOffset(WinMgrHandle,
+                                                 Line,
+                                                 MultilineEdit->TabWidth,
+                                                 CursorChar,
+                                                 DisplayChar);
 }
 
 /**
@@ -894,27 +840,22 @@ YoriWinMultilineEditGenerateDisplayLine(
     __out PYORI_STRING DisplayLine
     )
 {
-    YORI_ALLOC_SIZE_T BufferChar;
-    YORI_ALLOC_SIZE_T CharIndex;
     PYORI_STRING SourceLine;
+    YORI_STRING SourceString;
+    PYORI_WIN_WINDOW TopLevelWindow;
+    PYORI_WIN_WINDOW_MANAGER_HANDLE WinMgrHandle;
+    YORI_ALLOC_SIZE_T BufferChar;
     YORI_ALLOC_SIZE_T Remainder;
-    YORI_ALLOC_SIZE_T CellsDisplayed;
-    TCHAR Char;
-    BOOLEAN NeedDoubleBuffer;
-    BOOLEAN DoubleWideCharSupported;
-    BOOLEAN IsNanoServer;
-
-    DoubleWideCharSupported = YoriWinMultilineEditIsDoubleWideCharSupported(MultilineEdit);
-    IsNanoServer = YoriLibIsNanoServer();
 
     ASSERT(LineIndex < MultilineEdit->LinesPopulated);
 
+    TopLevelWindow = YoriWinGetTopLevelWindow(&MultilineEdit->Ctrl);
+    WinMgrHandle = YoriWinGetWindowManagerHandle(TopLevelWindow);
     SourceLine = &MultilineEdit->LineArray[LineIndex];
 
     //
-    //  MSFIX This needs to return a "remainder" to say the number of
-    //  display cells not describable before this buffer char.  If
-    //  this is nonzero, NeedDoubleBuffer = TRUE
+    //  Create a string that corresponds to the current position in the
+    //  viewport.
     //
 
     YoriWinMultilineEditFindCursorCharFromDisplayChar(MultilineEdit,
@@ -932,90 +873,21 @@ YoriWinMultilineEditGenerateDisplayLine(
         return TRUE;
     }
 
-    CellsDisplayed = 0;
-    NeedDoubleBuffer = FALSE;
+    YoriLibInitEmptyString(DisplayLine);
+    YoriLibInitEmptyString(&SourceString);
+    SourceString.StartOfString = &SourceLine->StartOfString[BufferChar];
+    SourceString.LengthInChars = SourceLine->LengthInChars - BufferChar;
 
     //
-    //  Count how many chars are required to fill the viewport.  If the
-    //  chars are all single width and not tab, the line buffer can be
-    //  used directly.  Otherwise, count the size of the buffer needed.
-    //  Note this sizing can be pessimistic (assume wide chars fit, tabs
-    //  are fully expanded.)
+    //  Generate display cells for the text.
     //
 
-    if (Remainder > 0) {
-        NeedDoubleBuffer = TRUE;
-        CellsDisplayed = Remainder;
-    }
-
-    for (CharIndex = BufferChar;
-         CharIndex < SourceLine->LengthInChars && CellsDisplayed < ClientWidth;
-         CharIndex++) {
-
-        Char = SourceLine->StartOfString[CharIndex];
-
-        if (Char == '\t') {
-            NeedDoubleBuffer = TRUE;
-            CellsDisplayed = CellsDisplayed + MultilineEdit->TabWidth;
-        } else if (DoubleWideCharSupported && YoriLibIsDoubleWideChar(Char)) {
-            NeedDoubleBuffer = TRUE;
-            CellsDisplayed = CellsDisplayed + 2;
-        } else if (IsNanoServer && Char == '\0') {
-            NeedDoubleBuffer = TRUE;
-            CellsDisplayed++;
-        } else {
-            CellsDisplayed++;
-        }
-    }
-
-    if (!NeedDoubleBuffer) {
-        YoriLibInitEmptyString(DisplayLine);
-        DisplayLine->StartOfString = &SourceLine->StartOfString[BufferChar];
-        DisplayLine->LengthInChars = SourceLine->LengthInChars - BufferChar;
-        return TRUE;
-    }
-
-    if (!YoriLibAllocateString(DisplayLine, CellsDisplayed)) {
-        return FALSE;
-    }
-
-    for (CellsDisplayed = 0; CellsDisplayed < Remainder; CellsDisplayed++) {
-        DisplayLine->StartOfString[CellsDisplayed] = ' ';
-    }
-
-    for (CharIndex = BufferChar;
-         CharIndex < SourceLine->LengthInChars && CellsDisplayed < ClientWidth;
-         CharIndex++) {
-
-        Char = SourceLine->StartOfString[CharIndex];
-
-        if (Char == '\t') {
-            YORI_ALLOC_SIZE_T TabIndex;
-            for (TabIndex = 0; TabIndex < MultilineEdit->TabWidth && CellsDisplayed < ClientWidth; TabIndex++) {
-                DisplayLine->StartOfString[CellsDisplayed] = ' ';
-                CellsDisplayed++;
-            }
-        } else if (DoubleWideCharSupported && YoriLibIsDoubleWideChar(Char)) {
-            if (CellsDisplayed + 1 < ClientWidth) {
-                DisplayLine->StartOfString[CellsDisplayed] = Char;
-                CellsDisplayed++;
-                DisplayLine->StartOfString[CellsDisplayed] = ' ';
-                CellsDisplayed++;
-            } else {
-                DisplayLine->StartOfString[CellsDisplayed] = ' ';
-                CellsDisplayed++;
-            }
-        } else if (IsNanoServer && Char == '\0') {
-            DisplayLine->StartOfString[CellsDisplayed] = ' ';
-            CellsDisplayed++;
-        } else {
-            DisplayLine->StartOfString[CellsDisplayed] = Char;
-            CellsDisplayed++;
-        }
-    }
-
-    DisplayLine->LengthInChars = CellsDisplayed;
-    return TRUE;
+    return YoriWinTextStringToDisplayCells(WinMgrHandle,
+                                           &SourceString,
+                                           Remainder,
+                                           MultilineEdit->TabWidth,
+                                           ClientWidth,
+                                           DisplayLine);
 }
 
 /**
@@ -2317,6 +2189,38 @@ YoriWinMultilineEditGetTextRangeLength(
  Count the leading whitespace characters in a line and return a substring
  that can be used to apply an indentation to a later line.
 
+ @param Line Specifies the contents of the line that contains the indentation
+        string to return.
+
+ @param Indent On successful completion, updated to point to the substring
+        within the line that consists of initial white space characters.
+ */
+VOID
+YoriWinMultilineEditGetIndentationOnString(
+    __in PCYORI_STRING Line,
+    __out PYORI_STRING Indent
+    )
+{
+    YORI_ALLOC_SIZE_T Index;
+
+    YoriLibInitEmptyString(Indent);
+    for (Index = 0; Index < Line->LengthInChars; Index++) {
+        if (Line->StartOfString[Index] != ' ' &&
+            Line->StartOfString[Index] != '\t') {
+
+            break;
+        }
+    }
+    if (Index > 0) {
+        Indent->StartOfString = Line->StartOfString;
+        Indent->LengthInChars = Index;
+    }
+}
+
+/**
+ Count the leading whitespace characters in a line and return a substring
+ that can be used to apply an indentation to a later line.
+
  @param MultilineEdit Pointer to the multiline edit control containing the
         contents of the buffer.
 
@@ -2333,22 +2237,10 @@ YoriWinMultilineEditGetIndentationOnLine(
     __out PYORI_STRING Indent
     )
 {
-    PYORI_STRING Line;
-    YORI_ALLOC_SIZE_T Index;
+    PCYORI_STRING Line;
 
-    YoriLibInitEmptyString(Indent);
     Line = &MultilineEdit->LineArray[LineIndex];
-    for (Index = 0; Index < Line->LengthInChars; Index++) {
-        if (Line->StartOfString[Index] != ' ' &&
-            Line->StartOfString[Index] != '\t') {
-
-            break;
-        }
-    }
-    if (Index > 0) {
-        Indent->StartOfString = Line->StartOfString;
-        Indent->LengthInChars = Index;
-    }
+    YoriWinMultilineEditGetIndentationOnString(Line, Indent);
 }
 
 /**
@@ -2376,12 +2268,14 @@ YoriWinMultilineEditFindPreviousIndentLine(
     )
 {
     YORI_ALLOC_SIZE_T ProbeLine;
+    PCYORI_STRING ProbeLineString;
     YORI_STRING ProbeIndent;
     YORI_STRING CurrentIndent;
     YORI_ALLOC_SIZE_T MatchingLength;
 
     ASSERT(MultilineEdit->AutoIndentApplied);
-    YoriWinMultilineEditGetIndentationOnLine(MultilineEdit, MultilineEdit->AutoIndentSourceLine, &CurrentIndent);
+    YoriWinMultilineEditGetIndentationOnLine(MultilineEdit, MultilineEdit->AutoIndentAppliedLine, &CurrentIndent);
+    ASSERT(CurrentIndent.LengthInChars >= MultilineEdit->AutoIndentSourceLength);
     CurrentIndent.LengthInChars = MultilineEdit->AutoIndentSourceLength;
 
     //
@@ -2389,14 +2283,17 @@ YoriWinMultilineEditFindPreviousIndentLine(
     //  to the first
     //
 
-    for (ProbeLine = MultilineEdit->AutoIndentSourceLine; ProbeLine > 0; ProbeLine--) {
-        YoriWinMultilineEditGetIndentationOnLine(MultilineEdit, ProbeLine - 1, &ProbeIndent);
-        MatchingLength = YoriLibCountStringMatchingChars(&CurrentIndent, &ProbeIndent);
-        if (MatchingLength < CurrentIndent.LengthInChars) {
-            *NewLine = ProbeLine - 1;
-            ProbeIndent.LengthInChars = MatchingLength;
-            memcpy(NewIndent, &ProbeIndent, sizeof(YORI_STRING));
-            return;
+    for (ProbeLine = MultilineEdit->AutoIndentAppliedLine; ProbeLine > 0; ProbeLine--) {
+        ProbeLineString = &MultilineEdit->LineArray[ProbeLine - 1];
+        if (ProbeLineString->LengthInChars > 0) {
+            YoriWinMultilineEditGetIndentationOnString(ProbeLineString, &ProbeIndent);
+            MatchingLength = YoriLibCntStringMatchChars(&CurrentIndent, &ProbeIndent);
+            if (MatchingLength < CurrentIndent.LengthInChars) {
+                *NewLine = ProbeLine - 1;
+                ProbeIndent.LengthInChars = MatchingLength;
+                memcpy(NewIndent, &ProbeIndent, sizeof(YORI_STRING));
+                return;
+            }
         }
     }
 
@@ -3291,7 +3188,6 @@ YoriWinMultilineEditInsertTextRange(
                                AutoIndentLeadingString.LengthInChars * sizeof(TCHAR));
                         Line->LengthInChars = AutoIndentLeadingString.LengthInChars;
                         MultilineEdit->AutoIndentApplied = TRUE;
-                        MultilineEdit->AutoIndentSourceLine = FirstLine;
                         MultilineEdit->AutoIndentSourceLength = AutoIndentLeadingString.LengthInChars;
                         MultilineEdit->AutoIndentAppliedLine = LocalLastLine;
                     }
@@ -3372,7 +3268,7 @@ YoriWinMultilineEditInsertTextRange(
 
     Line = &MultilineEdit->LineArray[FirstLine];
     if (FirstCharOffset + CharsFirstLine + TrailingPortionOfFirstLine.LengthInChars > Line->LengthAllocated) {
-        if (!YoriLibReallocateString(Line, FirstCharOffset + CharsFirstLine + TrailingPortionOfFirstLine.LengthInChars + YORI_WIN_MULTILINE_EDIT_LINE_PADDING)) {
+        if (!YoriLibReallocString(Line, FirstCharOffset + CharsFirstLine + TrailingPortionOfFirstLine.LengthInChars + YORI_WIN_MULTILINE_EDIT_LINE_PADDING)) {
             YoriLibFreeStringContents(&TrailingPortionOfFirstLine);
             return FALSE;
         }
@@ -5129,7 +5025,6 @@ YoriWinMultilineEditBackspace(
         if (NewIndent.LengthInChars == 0) {
             MultilineEdit->AutoIndentApplied = FALSE;
         } else {
-            MultilineEdit->AutoIndentSourceLine = NewIndentSourceLine;
             MultilineEdit->AutoIndentSourceLength = NewIndent.LengthInChars;
         }
 
