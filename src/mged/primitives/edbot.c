@@ -83,16 +83,16 @@ mged_bot_labels(
     VMOVE(pl[npl].pt, _pt); \
     bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
-    struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)ip->idb_ptr;
-
-    RT_BOT_CK_MAGIC(bot);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 
     // Conditional labeling
     if (bot_verts[2] > -1 &&
 	    bot_verts[1] > -1 &&
 	    bot_verts[0] > -1)
     {
+
+	RT_BOT_CK_MAGIC(bot);
+
 	/* editing a face */
 	point_t mid_pt;
 	point_t p1, p2, p3;
@@ -112,7 +112,11 @@ mged_bot_labels(
 	VMOVE(lines[3], p2);
 	VMOVE(lines[4], mid_pt);
 	VMOVE(lines[5], p3);
+
     } else if (bot_verts[1] > -1 && bot_verts[0] > -1) {
+
+	RT_BOT_CK_MAGIC(bot);
+
 	/* editing an edge */
 	point_t mid_pt;
 
@@ -121,14 +125,19 @@ mged_bot_labels(
 
 	MAT4X3PNT(pos_view, xform, mid_pt);
 	POINT_LABEL_STR(pos_view, "edge");
+
     }
     if (bot_verts[0] > -1) {
+
+	RT_BOT_CK_MAGIC(bot);
+
 	/* editing something, always label the vertex (this is the keypoint) */
 	MAT4X3PNT(pos_view, xform, &bot->vertices[bot_verts[0]*3]);
 	POINT_LABEL_STR(pos_view, "pt");
     }
 
     pl[npl].str[0] = '\0';	/* Mark ending */
+
 }
 
 void
