@@ -74,13 +74,6 @@ process_file(env_outputs &env_t)
     std::regex inc_regex(".*[\\/]include[\\/].*");
     std::regex ep_regex(".*[\\/]src[\\/]([A-Za-z0-9_-]+)[\\/].*");
     std::regex bench_regex(".*[\\/](bench)[\\/].*");
-    std::regex bullet_regex(".*[\\/](bullet)[\\/].*");
-
-    // TODO - these are obsolete.  For a similar result, we'll need to
-    // get a list from bext
-    std::regex o_regex(".*[\\/]other[\\/].*");
-    std::regex sp_regex(".*[\\/]other[\\/]([A-Za-z0-9_-]+).*");
-
     std::regex srcfile_regex(".*[.](cxx|c|cpp|h|hpp|hxx)(\\.in)*$");
     if (!std::regex_match(env.f, srcfile_regex)) {
 	return;
@@ -102,30 +95,10 @@ process_file(env_outputs &env_t)
 	    continue;
 	}
 
-#if 0
-	// TODO - need to figure out how to scan the bext sources, if present...
-	if (std::regex_match(env.f, o_regex) || std::regex_match(env.f, bullet_regex)) {
-	    std::smatch sp_match;
-	    if (std::regex_search(env.f, sp_match, sp_regex)) {
-		if (env.verbose) {
-		    std::cout << sp_match[1] << "[SYSTEM]: " << envvar[1] << "\n";
-		}
-		env.o_vars.insert(std::make_pair(std::string(sp_match[1]), std::string(envvar[1])));
-		env.c_vars[std::string(sp_match[1])].insert(std::string(envvar[1]));
-		continue;
-	    }
-	    if (std::regex_match(env.f, bullet_regex)) {
-		if (env.verbose) {
-		    std::cout << "bullet[SYSTEM]: " << envvar[1] << "\n";
-		}
-		env.o_vars.insert(std::make_pair(std::string("bullet"), std::string(envvar[1])));
-		env.c_vars[std::string("bullet")].insert(std::string(envvar[1]));
-		continue;
-	    }
-	    std::cout << env.f << "[SYSTEM]: " << envvar[1] << "\n";
-	    continue;
-	}
-#endif
+	// TODO - maybe figure out how to scan the bext sources, if present...
+	// Kinda of two minds about that, since there isn't actually a
+	// guarantee the sources are available or that a scan will correctly
+	// identify the parts of the source we use...
 
 	{
 	    std::smatch lp_match;
@@ -216,8 +189,8 @@ main(int argc, const char *argv[])
 	/*************************************************************/
 	/*     Filter files down to the set we want to process       */
 	/*************************************************************/
-	std::regex skip_regex(".*/(tests|tools|bullet|docbook)/.*");
-	//std::regex skip_regex(".*/(other|tests|tools|bullet|docbook)/.*");
+	std::regex skip_regex(".*/(tests|tools|docbook)/.*");
+	//std::regex skip_regex(".*/(other|tests|tools|docbook)/.*");
 	std::string sfile;
 	std::ifstream fs;
 	fs.open(argv[1]);
