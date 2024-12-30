@@ -142,6 +142,26 @@ mged_bot_labels(
 
 }
 
+const char *
+mged_bot_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol)
+{
+    const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
+    // If we're editing, use that position instead
+    if (bot_verts[0] > -1) {
+	point_t mpt = VINIT_ZERO;
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	RT_BOT_CK_MAGIC(bot);
+	VMOVE(mpt, &bot->vertices[bot_verts[0]*3]);
+	MAT4X3PNT(*pt, mat, mpt);
+    }
+    return strp;
+}
+
 void
 ecmd_bot_mode(struct mged_state *s)
 {

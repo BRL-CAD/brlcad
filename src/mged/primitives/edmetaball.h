@@ -63,8 +63,13 @@ mged_metaball_labels(
 	struct rt_db_internal *ip,
 	struct bn_tol *tol);
 
-void
-get_metaball_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
+const char *
+mged_metaball_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol);
 
 void menu_metaball_set_threshold(struct mged_state *s);
 void menu_metaball_set_method(struct mged_state *s);

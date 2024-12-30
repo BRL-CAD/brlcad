@@ -68,6 +68,15 @@ mged_bot_labels(
     struct rt_db_internal *ip,
     struct bn_tol *tol);
 
+
+const char *
+mged_bot_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol);
+
 void ecmd_bot_mode(struct mged_state *s);
 void ecmd_bot_orient(struct mged_state *s);
 void ecmd_bot_thick(struct mged_state *s);

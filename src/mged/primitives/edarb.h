@@ -60,6 +60,15 @@ extern struct menu_item *which_menu[];
 
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 
+const char *
+mged_arb_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol);
+
+
 int editarb(struct mged_state *s, vect_t pos_model);
 void ecmd_arb_main_menu(struct mged_state *s);
 int ecmd_arb_specific_menu(struct mged_state *s);

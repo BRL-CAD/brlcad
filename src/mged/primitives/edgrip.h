@@ -1,4 +1,4 @@
-/*                     E D B S P L I N E . H
+/*                      E D G R I P . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,45 +17,27 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edbspline.h
+/** @file mged/edgrip.h
  */
 
-#ifndef EDBSPLINE_H
-#define EDBSPLINE_H
+#ifndef EDGRIP_H
+#define EDGRIP_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-extern struct menu_item spline_menu[];
-
-int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
-
-void bspline_init_sedit(struct mged_state *s);
-void sedit_vpick(struct mged_state *s, point_t v_pos);
-
-void
-mged_bspline_labels(
-	int *num_lines,
-	point_t *lines,
-	struct rt_point_labels *pl,
-	int max_pl,
-	const mat_t xform,
-	struct rt_db_internal *ip,
-	struct bn_tol *tol);
-
 const char *
-mged_bspline_keypoint(
+mged_grp_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
 
-void ecmd_vtrans(struct mged_state *s);
 
-#endif  /* EDBSPLINE_H */
+#endif  /* EDGRIP_H */
 
 /*
  * Local Variables:

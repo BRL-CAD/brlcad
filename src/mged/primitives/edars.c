@@ -143,6 +143,29 @@ mged_ars_labels(
     pl[npl].str[0] = '\0';      /* Mark ending */
 }
 
+const char *
+mged_ars_keypoint(
+	point_t *pt,
+	const char *UNUSED(keystr),
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *UNUSED(tol))
+{
+    point_t mpt = VINIT_ZERO;
+    static const char *strp = "V";
+    struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
+    RT_ARS_CK_MAGIC(ars);
+
+    if (es_ars_crv < 0 || es_ars_col < 0) {
+	VMOVE(mpt, es_pt);
+    } else {
+	VMOVE(mpt, &ars->curves[es_ars_crv][es_ars_col*3]);
+    }
+
+    MAT4X3PNT(*pt, mat, mpt);
+    return strp;
+}
+
 void
 ecmd_ars_pick(struct mged_state *s)
 {

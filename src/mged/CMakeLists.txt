@@ -47,6 +47,7 @@ set(
   primitives/edepa.c
   primitives/edeto.c
   primitives/edextrude.c
+  primitives/edgrip.c
   primitives/edhyp.c
   primitives/edmetaball.c
   primitives/ednmg.c
@@ -58,6 +59,7 @@ set(
   primitives/edtgc.c
   primitives/edtor.c
   primitives/edvol.c
+  primitives/generic.c
   primitives/table.cpp
   rect.c
   rtif.c
@@ -149,6 +151,7 @@ set(
   primitives/edepa.h
   primitives/edeto.h
   primitives/edextrude.h
+  primitives/edgrip.h
   primitives/edhyp.h
   primitives/edmetaball.h
   primitives/ednmg.h

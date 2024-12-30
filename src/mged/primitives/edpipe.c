@@ -591,9 +591,15 @@ pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *pipeip, struct wdb_
     }
 }
 
-void
-get_pipe_keypoint(struct mged_state *UNUSED(s), point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+const char *
+mged_pipe_keypoint(
+	point_t *pt,
+	const char *UNUSED(keystr),
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *UNUSED(tol))
 {
+    static const char *strp = "V";
     point_t mpt = VINIT_ZERO;
     RT_CK_DB_INTERNAL(ip);
     struct rt_pipe_internal *pipeip =(struct rt_pipe_internal *)ip->idb_ptr;
@@ -605,9 +611,8 @@ get_pipe_keypoint(struct mged_state *UNUSED(s), point_t *pt, const char **strp, 
     } else {
 	VMOVE(mpt, es_pipe_pnt->pp_coord);
     }
-    *strp = "V";
     MAT4X3PNT(*pt, mat, mpt);
-    return;
+    return strp;
 }
 
 void

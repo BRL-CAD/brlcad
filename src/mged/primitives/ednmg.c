@@ -319,12 +319,18 @@ struct menu_item nmg_menu[] = {
 
 
 
-void
-get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+const char *
+mged_nmg_keypoint(
+	point_t *pt,
+	const char *UNUSED(keystr),
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *UNUSED(tol))
 {
+    const char *strp = NULL;
     point_t mpt = VINIT_ZERO;
     if (ip->idb_type != ID_NMG)
-	return;
+	return strp;
 
     struct vertex *v;
     struct vertexuse *vu;
@@ -333,14 +339,13 @@ get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt
     struct faceuse *fu;
     struct shell *nmg_s;
     struct nmgregion *r;
-    struct model *m =
-	(struct model *) s->edit_state.es_int.idb_ptr;
+    struct model *m = (struct model *) ip->idb_ptr;
     NMG_CK_MODEL(m);
     /* XXX Fall through, for now (How about first vertex?? - JRA) */
 
     /* set default first */
     VSETALL(mpt, 0.0);
-    *strp = "(origin)";
+    strp = "(origin)";
 
     /* XXX Try to use the first point of the selected edge */
     if (es_eu != (struct edgeuse *)NULL &&
@@ -363,7 +368,7 @@ get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt
 	goto nmg_keypoint_finalize;
 
     nmg_s = BU_LIST_FIRST(shell, &r->s_hd);
-    if (!s)
+    if (!nmg_s)
 	goto nmg_keypoint_finalize;
     NMG_CK_SHELL(nmg_s);
 
@@ -389,7 +394,7 @@ get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt
 	if (!v->vg_p)
 	    goto nmg_keypoint_finalize;
 	VMOVE(mpt, v->vg_p->coord);
-	*strp = "V";
+	strp = "V";
 	goto nmg_keypoint_finalize;
     }
     if (BU_LIST_IS_EMPTY(&nmg_s->lu_hd))
@@ -412,7 +417,7 @@ get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt
 	if (!v->vg_p)
 	    goto nmg_keypoint_finalize;
 	VMOVE(mpt, v->vg_p->coord);
-	*strp = "V";
+	strp = "V";
 	goto nmg_keypoint_finalize;
     }
     if (BU_LIST_IS_EMPTY(&nmg_s->eu_hd))
@@ -427,7 +432,7 @@ get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt
 	if (!v->vg_p)
 	    goto nmg_keypoint_finalize;
 	VMOVE(mpt, v->vg_p->coord);
-	*strp = "V";
+	strp = "V";
 	goto nmg_keypoint_finalize;
     }
     vu = nmg_s->vu_p;
@@ -438,12 +443,13 @@ get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt
 	if (!v->vg_p)
 	    goto nmg_keypoint_finalize;
 	VMOVE(mpt, v->vg_p->coord);
-	*strp = "V";
+	strp = "V";
 	goto nmg_keypoint_finalize;
     }
 
 nmg_keypoint_finalize:
     MAT4X3PNT(*pt, mat, mpt);
+    return strp;
 }
 
 

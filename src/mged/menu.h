@@ -40,6 +40,7 @@
 #include "primitives/edepa.h"
 #include "primitives/edeto.h"
 #include "primitives/edextrude.h"
+#include "primitives/edgrip.h"
 #include "primitives/edhyp.h"
 #include "primitives/edmetaball.h"
 #include "primitives/ednmg.h"

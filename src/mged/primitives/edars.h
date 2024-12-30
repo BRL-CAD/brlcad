@@ -60,6 +60,14 @@ mged_ars_labels(
 	struct rt_db_internal *ip,
 	struct bn_tol *tol);
 
+const char *
+mged_ars_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol);
+
 void ecmd_ars_pick(struct mged_state *s);
 void ecmd_ars_next_pt(struct mged_state *s);
 void ecmd_ars_prev_pt(struct mged_state *s);

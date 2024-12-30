@@ -1,7 +1,7 @@
-/*                     E D B S P L I N E . H
+/*                         E D G R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1996-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,45 +17,41 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edbspline.h
+/** @file mged/primitives/edgrip.c
+ *
  */
 
-#ifndef EDBSPLINE_H
-#define EDBSPLINE_H
-
 #include "common.h"
+
+#include <math.h>
+#include <string.h>
+
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "mged.h"
+#include "rt/geom.h"
+#include "wdb.h"
 
-extern struct menu_item spline_menu[];
-
-int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
-
-void bspline_init_sedit(struct mged_state *s);
-void sedit_vpick(struct mged_state *s, point_t v_pos);
-
-void
-mged_bspline_labels(
-	int *num_lines,
-	point_t *lines,
-	struct rt_point_labels *pl,
-	int max_pl,
-	const mat_t xform,
-	struct rt_db_internal *ip,
-	struct bn_tol *tol);
+#include "../mged.h"
+#include "../sedit.h"
+#include "../mged_dm.h"
+#include "./edgrip.h"
 
 const char *
-mged_bspline_keypoint(
+mged_grp_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
 	const struct rt_db_internal *ip,
-	const struct bn_tol *tol);
-
-void ecmd_vtrans(struct mged_state *s);
-
-#endif  /* EDBSPLINE_H */
+	const struct bn_tol *tol)
+{
+    const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
+    if (!strp) {
+	static const char *c_str = "C";
+	strp = OBJ[ip->idb_type].ft_keypoint(pt, c_str, mat, ip, tol);
+    }
+    return strp;
+}
 
 /*
  * Local Variables:

@@ -455,6 +455,23 @@ struct menu_item *which_menu[] = {
     rot8_menu
 };
 
+const char *
+mged_arb_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol)
+{
+    if (*keystr == 'V') {
+	const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
+	return strp;
+    }
+    static const char *vstr = "V1";
+    const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, tol);
+    return strp;
+}
+
 /*
  * An ARB edge is moved by finding the direction of the line
  * containing the edge and the 2 "bounding" planes.  The new edge is

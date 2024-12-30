@@ -69,7 +69,13 @@ void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_p
 void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
 struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
-void get_pipe_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
+const char *
+mged_pipe_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol);
 
 void
 mged_pipe_labels(

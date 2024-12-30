@@ -47,8 +47,13 @@ extern struct shell *es_s;
 
 extern struct menu_item nmg_menu[];
 
-extern void
-get_nmg_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
+extern const char *
+mged_nmg_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol);
 
 extern void
 mged_nmg_labels(

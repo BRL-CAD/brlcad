@@ -53,6 +53,26 @@ struct menu_item extr_menu[] = {
     { "", NULL, 0 }
 };
 
+const char *
+mged_extrude_keypoint(
+	point_t *pt,
+	const char *UNUSED(keystr),
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol)
+{
+    const char *strp = NULL;
+    struct rt_extrude_internal *extr = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(extr);
+    if (extr->skt && extr->skt->verts) {
+	static const char *vstr = "V1";
+	strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, tol);
+    } else {
+	strp = OBJ[ip->idb_type].ft_keypoint(pt, NULL, mat, ip, tol);
+    }
+    return strp;
+}
+
 void
 ecmd_extr_skt_name(struct mged_state *s)
 {

@@ -182,8 +182,13 @@ mged_metaball_labels(
     pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
-void
-get_metaball_keypoint(struct mged_state *UNUSED(s), point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+const char *
+mged_metaball_keypoint(
+	point_t *pt,
+	const char *UNUSED(keystr),
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *UNUSED(tol))
 {
     RT_CK_DB_INTERNAL(ip);
     point_t mpt = VINIT_ZERO;
@@ -201,8 +206,8 @@ get_metaball_keypoint(struct mged_state *UNUSED(s), point_t *pt, const char **st
 	snprintf(buf, BUFSIZ, "V %f", es_metaball_pnt->fldstr);
     }
 
-    *strp = buf;
     MAT4X3PNT(*pt, mat, mpt);
+    return (const char *)buf;
 }
 
 void

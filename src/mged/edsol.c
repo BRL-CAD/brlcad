@@ -300,118 +300,19 @@ set_e_axes_pos(struct mged_state *s, int both)
 void
 get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
-    static const char *vert_str = "V";
-    const char *cp = *strp;
-    point_t mpt = VINIT_ZERO;
-    static char buf[BUFSIZ];
+    if (!strp)
+	return;
 
     RT_CK_DB_INTERNAL(ip);
-    memset(buf, 0, BUFSIZ);
 
-    switch (ip->idb_type) {
-	case ID_PIPE:
-	    get_pipe_keypoint(s, pt, strp, ip, mat);
-	    return;
-	case ID_METABALL:
-	    get_metaball_keypoint(s, pt, strp, ip, mat);
-	    return;
-	case ID_BOT:
-	    {
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
-		// If we're editing, use that position instead
-		if (bot_verts[0] > -1) {
-		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-		    RT_BOT_CK_MAGIC(bot);
-		    VMOVE(mpt, &bot->vertices[bot_verts[0]*3]);
-		    MAT4X3PNT(*pt, mat, mpt);
-		}
-		return;
-	    }
-	case ID_ARB8:
-	    if (*cp == 'V') {
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
-	    } else {
-		static const char *vstr = "V1";
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, &s->tol.tol);
-	    }
-	    return;
-	case ID_BSPLINE:
-	    bspline_solid_keypoint(s, pt, strp, ip, mat);
-	    return;
-	case ID_GRIP:
-	    {
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
-		if (!*strp) {
-		    static const char *c_str = "C";
-		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, c_str, mat, ip, &s->tol.tol);
-		}
-		return;
-	    }
-	case ID_ARS:
-	    {
-		struct rt_ars_internal *ars =
-		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
-		RT_ARS_CK_MAGIC(ars);
-
-		if (es_ars_crv < 0 || es_ars_col < 0) {
-		    VMOVE(mpt, es_pt);
-		} else {
-		    VMOVE(mpt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		}
-
-		MAT4X3PNT(*pt, mat, mpt);
-		*strp = "V";
-		return;
-	    }
-	case ID_EXTRUDE:
-	    {
-		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)ip->idb_ptr;
-		RT_EXTRUDE_CK_MAGIC(extr);
-		if (extr->skt && extr->skt->verts) {
-		    static const char *vstr = "V1";
-		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, &s->tol.tol);
-		} else {
-		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, NULL, mat, ip, &s->tol.tol);
-		}
-		return;
-	    }
-	case ID_NMG:
-	    get_nmg_keypoint(s, pt, strp, ip, mat);
-	    return;
-	case ID_CLINE:
-	case ID_PARTICLE:
-	case ID_ARBN:
-	case ID_EBM:
-	case ID_DSP:
-	case ID_HF:
-	case ID_VOL:
-	case ID_HALF:
-	case ID_ELL:
-	case ID_SPH:
-	case ID_SUPERELL:
-	case ID_TOR:
-	case ID_TGC:
-	case ID_REC:
-	case ID_RPC:
-	case ID_RHC:
-	case ID_EPA:
-	case ID_EHY:
-	case ID_HYP:
-	case ID_ETO:
-	case ID_POLY:
-	case ID_SKETCH:
-	case ID_ANNOT:
-	case ID_DATUM:
-	    *strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
-	    if (!*strp)
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, vert_str, mat, ip, &s->tol.tol);
-	    return;
-	default:
-	    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
-	    VSETALL(mpt, 0.0);
-	    *strp = "(origin)";
-	    break;
+    if (MGED_OBJ[ip->idb_type].ft_keypoint) {
+	*strp = (*MGED_OBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, ip, &s->tol.tol);
+	return;
     }
+
+    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
+    VSETALL(*pt, 0.0);
+    *strp = "(origin)";
 }
 
 int

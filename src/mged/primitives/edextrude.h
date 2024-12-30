@@ -40,6 +40,14 @@
 
 extern struct menu_item extr_menu[];
 
+const char *
+mged_extrude_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *tol);
+
 void ecmd_extr_skt_name(struct mged_state *s);
 void ecmd_extr_mov_h(struct mged_state *s);
 void ecmd_extr_scale_h(struct mged_state *s);

@@ -229,8 +229,13 @@ mged_bspline_labels(
     pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
-void
-bspline_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+const char *
+mged_bspline_keypoint(
+	point_t *pt,
+	const char *UNUSED(keystr),
+	const mat_t mat,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *UNUSED(tol))
 {
     point_t mpt = VINIT_ZERO;
     static char buf[BUFSIZ];
@@ -238,8 +243,7 @@ bspline_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, str
     RT_CK_DB_INTERNAL(ip);
     memset(buf, 0, BUFSIZ);
 
-    struct rt_nurb_internal *sip =
-	(struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
+    struct rt_nurb_internal *sip = (struct rt_nurb_internal *)ip->idb_ptr;
     struct face_g_snurb *surf;
     fastf_t *fp;
 
@@ -250,8 +254,8 @@ bspline_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, str
     VMOVE(mpt, fp);
     sprintf(buf, "Surf %d, index %d,%d",
 	    spl_surfno, spl_ui, spl_vi);
-    *strp = buf;
     MAT4X3PNT(*pt, mat, mpt);
+    return (const char *)buf;
 }
 
 // I think this is bspline only??
