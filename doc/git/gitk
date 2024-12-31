@@ -11,7 +11,7 @@ set wrapcomment word
 # Generally, this file will be located at one of the following locations:
 # ~/.config/git/gitk
 # ~/.gitk
-# %USERPROFILE%/.gitk  (Windows)
+# %USERPROFILE%/.gitk or %USERPROFILE%/.config/git/gitk  (Windows)
 #
 # (See https://stackoverflow.com/a/37648244)
 
