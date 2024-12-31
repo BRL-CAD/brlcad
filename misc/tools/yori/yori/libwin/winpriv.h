@@ -588,6 +588,11 @@ YoriWinCreateControl(
     );
 
 VOID
+YoriWinCloseControl(
+    __in PYORI_WIN_CTRL Ctrl
+    );
+
+VOID
 YoriWinDestroyControl(
     __in PYORI_WIN_CTRL Ctrl
     );
@@ -765,6 +770,38 @@ BOOLEAN
 YoriWinScrollBarReposition(
     __in PYORI_WIN_CTRL_HANDLE CtrlHandle,
     __in PSMALL_RECT CtrlRect
+    );
+
+// TEXT.C
+
+VOID
+YoriWinTextBufferOffsetFromDisplayCellOffset(
+    __in PYORI_WIN_WINDOW_MANAGER_HANDLE WinMgrHandle,
+    __in PYORI_STRING String,
+    __in YORI_ALLOC_SIZE_T TabWidth,
+    __in YORI_ALLOC_SIZE_T CellOffset,
+    __in BOOLEAN AllowOffsetBeyondString,
+    __out PYORI_ALLOC_SIZE_T BufferOffset,
+    __out_opt PYORI_ALLOC_SIZE_T Remainder
+    );
+
+VOID
+YoriWinTextDisplayCellOffsetFromBufferOffset(
+    __in PYORI_WIN_WINDOW_MANAGER_HANDLE WinMgrHandle,
+    __in PYORI_STRING String,
+    __in YORI_ALLOC_SIZE_T TabWidth,
+    __in YORI_ALLOC_SIZE_T BufferOffset,
+    __out PYORI_ALLOC_SIZE_T CellOffset
+    );
+
+BOOLEAN
+YoriWinTextStringToDisplayCells(
+    __in PYORI_WIN_WINDOW_MANAGER_HANDLE WinMgrHandle,
+    __in PYORI_STRING String,
+    __in YORI_ALLOC_SIZE_T LeftPadding,
+    __in YORI_ALLOC_SIZE_T TabWidth,
+    __in YORI_ALLOC_SIZE_T MaxCells,
+    __inout PYORI_STRING CellsString
     );
 
 // WINDOW.C

@@ -576,6 +576,7 @@ YoriWinLabelParseAccelerator(
 
 YORI_ALLOC_SIZE_T
 YoriWinLabelCountLinesRequiredForText(
+    __in PYORI_WIN_WINDOW_MANAGER_HANDLE WinMgrHandle,
     __in PYORI_STRING Text,
     __in YORI_ALLOC_SIZE_T CtrlWidth,
     __out_opt PYORI_ALLOC_SIZE_T MaximumWidth
@@ -599,12 +600,12 @@ YoriWinLabelReposition(
 /**
  The list should display a vertical scroll bar.
  */
-#define YORI_WIN_LIST_STYLE_VSCROLLBAR  (0x0001)
+#define YORI_WIN_LIST_STYLE_VSCROLLBAR       (0x0001)
 
 /**
  The list should support selection per row, not one per list
  */
-#define YORI_WIN_LIST_STYLE_MULTISELECT (0x0002)
+#define YORI_WIN_LIST_STYLE_MULTISELECT      (0x0002)
 
 /**
  The list should clear selection when losing focus
@@ -614,12 +615,23 @@ YoriWinLabelReposition(
 /**
  The list should display multiple items on one line
  */
-#define YORI_WIN_LIST_STYLE_HORIZONTAL  (0x0008)
+#define YORI_WIN_LIST_STYLE_HORIZONTAL       (0x0008)
 
 /**
  The list should not have a border around the control
  */
-#define YORI_WIN_LIST_STYLE_NO_BORDER   (0x0010)
+#define YORI_WIN_LIST_STYLE_NO_BORDER        (0x0010)
+
+/**
+ The list should display a horizontal scroll bar.
+ */
+#define YORI_WIN_LIST_STYLE_HSCROLLBAR       (0x0020)
+
+/**
+ The list should display a horizontal scroll bar but only when horizontal
+ scrolling is possible.
+ */
+#define YORI_WIN_LIST_STYLE_AUTO_HSCROLLBAR  (0x0040)
 
 PYORI_WIN_CTRL_HANDLE
 YoriWinListCreate(
