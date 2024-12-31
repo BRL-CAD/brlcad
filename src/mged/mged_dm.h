@@ -32,6 +32,7 @@
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
+#include "menu.h"
 
 struct scroll_item {
     char *scroll_string;

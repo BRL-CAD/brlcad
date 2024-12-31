@@ -24,7 +24,40 @@
 #define MGED_MENU_H
 
 #include "common.h"
-#include "mged.h"
+
+__BEGIN_DECLS
+
+/* Menu structures and defines
+ *
+ * Each active menu is installed by having a non-null entry in
+ * menu_array[] which is a pointer
+ * to an array of menu items.  The first ([0]) menu item is the title
+ * for the menu, and the remaining items are individual menu entries.
+ */
+struct menu_item {
+    char *menu_string;
+    void (*menu_func)(struct mged_state *, int, int, int);
+    int menu_arg;
+};
+
+#define NMENU 3
+#define MENU_L1 0 /* top-level solid-edit menu */
+#define MENU_L2 1 /* second-level menu */
+#define MENU_GEN 2 /* general features (mouse buttons) */
+
+#define MENUXLIM        (-1250)         /* Value to set X lim to for menu */
+#define MENUX           (-2048+115)     /* pixel position for menu, X */
+#define MENUY           1780            /* pixel position for menu, Y */
+#define SCROLLY         (2047)          /* starting Y pos for scroll area */
+#define MENU_DY         (-104)          /* Distance between menu items */
+#define SCROLL_DY       (-100)          /* Distance between scrollers */
+
+#define TITLE_XBASE     (-2048)         /* pixel X of title line start pos */
+#define TITLE_YBASE     (-1920)         /* pixel pos of last title line */
+#define SOLID_XBASE     MENUXLIM        /* X to start display text */
+#define SOLID_YBASE     (1920)          /* pixel pos of first solid line */
+#define TEXT0_DY        (-60)           /* #pixels per line, Size 0 */
+#define TEXT1_DY        (-90)           /* #pixels per line, Size 1 */
 
 /* The MENU_* values in these headers end up in es_menu,
  * as do ARB vertex numbers */
@@ -65,6 +98,8 @@ extern void mmenu_set(struct mged_state *s, int idx, struct menu_item *value);
 extern void mmenu_set_all(struct mged_state *s, int idx, struct menu_item *value);
 extern void sedit_menu(struct mged_state *s);
 extern int mmenu_select(struct mged_state *s, int pen_y, int do_func);
+
+__END_DECLS
 
 #endif  /* MGED_MGED_H */
 

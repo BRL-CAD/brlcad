@@ -28,6 +28,9 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "../mged.h"
+
+__BEGIN_DECLS
 
 const char *
 mged_generic_keypoint(
@@ -67,6 +70,8 @@ struct mged_functab {
 
 };
 extern const struct mged_functab MGED_OBJ[];
+
+__END_DECLS
 
 #endif  /* MGED_FUNCTAB_H */
 

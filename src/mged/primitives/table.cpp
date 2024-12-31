@@ -26,10 +26,10 @@
 
 #include "common.h"
 
-extern "C" {
-
 #include "vmath.h"
 #include "./mged_functab.h"
+
+extern "C" {
 
 #define MGED_DECLARE_INTERFACE(name) \
     extern void mged_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels *pl, int max_pl, const mat_t xform, struct rt_db_internal *ip, struct bn_tol *); \
