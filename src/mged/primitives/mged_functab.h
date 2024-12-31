@@ -68,6 +68,13 @@ struct mged_functab {
 	    const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
+    void(*ft_write_params)(
+	    struct bu_vls *p,
+	    const struct rt_db_internal *ip,
+	    const struct bn_tol *tol,
+	    fastf_t base2local);
+#define MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(_func) ((void(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
+
     struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 

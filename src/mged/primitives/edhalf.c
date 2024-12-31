@@ -1,7 +1,7 @@
-/*                      E D E T O . H
+/*                         E D H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1996-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,40 +17,41 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edeto.h
+/** @file mged/primitives/edhalf.c
+ *
  */
 
-#ifndef EDETO_H
-#define EDETO_H
-
 #include "common.h"
+
+#include <math.h>
+#include <string.h>
+
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "mged.h"
+#include "rt/geom.h"
+#include "wdb.h"
 
-#define ECMD_ETO_ROT_C		16
+#include "../mged.h"
+#include "../sedit.h"
+#include "../mged_dm.h"
+#include "./edhalf.h"
 
-#define MENU_ETO_R		57
-#define MENU_ETO_RD		58
-#define MENU_ETO_SCALE_C	59
-#define MENU_ETO_ROT_C		60
-
-struct menu_item *
-mged_eto_menu_item(const struct bn_tol *tol);
+#define V4BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local, (_pt)[W]*base2local
 
 void
-mged_eto_write_params(
+mged_hlf_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
-       	const struct bn_tol *tol,
-	fastf_t base2local);
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_half_internal *half = (struct rt_half_internal *)ip->idb_ptr;
+    RT_HALF_CK_MAGIC(half);
 
-void menu_eto_r(struct mged_state *s);
-void menu_eto_rd(struct mged_state *s);
-void menu_eto_scale_c(struct mged_state *s);
-void ecmd_eto_rot_c(struct mged_state *s);
+    bu_vls_printf(p, "Plane: %.9f %.9f %.9f %.9f\n", V4BASE2LOCAL(half->eqn));
+}
 
-#endif  /* EDETO_H */
 
 /*
  * Local Variables:

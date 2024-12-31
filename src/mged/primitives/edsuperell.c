@@ -59,6 +59,25 @@ mged_superell_menu_item(const struct bn_tol *UNUSED(tol))
     return superell_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_superell_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(superell->v));
+    bu_vls_printf(p, "A: %.9f %.9f %.9f\n", V3BASE2LOCAL(superell->a));
+    bu_vls_printf(p, "B: %.9f %.9f %.9f\n", V3BASE2LOCAL(superell->b));
+    bu_vls_printf(p, "C: %.9f %.9f %.9f\n", V3BASE2LOCAL(superell->c));
+    bu_vls_printf(p, "<n, e>: <%.9f, %.9f>\n", superell->n, superell->e);
+}
+
 /* scale vector A */
 void
 menu_superell_scale_a(struct mged_state *s)

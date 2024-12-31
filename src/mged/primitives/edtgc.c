@@ -99,6 +99,26 @@ mged_tgc_e_axes_pos(
     }
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_tgc_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tgc);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(tgc->v));
+    bu_vls_printf(p, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL(tgc->h));
+    bu_vls_printf(p, "A: %.9f %.9f %.9f\n", V3BASE2LOCAL(tgc->a));
+    bu_vls_printf(p, "B: %.9f %.9f %.9f\n", V3BASE2LOCAL(tgc->b));
+    bu_vls_printf(p, "C: %.9f %.9f %.9f\n", V3BASE2LOCAL(tgc->c));
+    bu_vls_printf(p, "D: %.9f %.9f %.9f\n", V3BASE2LOCAL(tgc->d));
+}
+
 /* scale height vector */
 void
 menu_tgc_scale_h(struct mged_state *s)

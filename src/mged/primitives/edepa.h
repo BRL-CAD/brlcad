@@ -35,6 +35,13 @@
 struct menu_item *
 mged_epa_menu_item(const struct bn_tol *tol);
 
+void
+mged_epa_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol,
+	fastf_t base2local);
+
 void menu_epa_h(struct mged_state *s);
 void menu_epa_r1(struct mged_state *s);
 void menu_epa_r2(struct mged_state *s);

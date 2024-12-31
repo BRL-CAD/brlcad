@@ -59,6 +59,25 @@ mged_epa_menu_item(const struct bn_tol *UNUSED(tol))
     return epa_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_epa_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_epa_internal *epa = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(epa);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(epa->epa_V));
+    bu_vls_printf(p, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL(epa->epa_H));
+    bu_vls_printf(p, "Semi-major axis: %.9f %.9f %.9f\n", V3ARGS(epa->epa_Au));
+    bu_vls_printf(p, "Semi-major length: %.9f\n", epa->epa_r1 * base2local);
+    bu_vls_printf(p, "Semi-minor length: %.9f\n", epa->epa_r2 * base2local);
+}
+
 /* scale height vector H */
 void
 menu_epa_h(struct mged_state *s)

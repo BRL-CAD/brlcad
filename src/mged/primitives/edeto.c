@@ -63,6 +63,25 @@ mged_eto_menu_item(const struct bn_tol *UNUSED(tol))
     return eto_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_eto_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_V));
+    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_N));
+    bu_vls_printf(p, "Semi-major axis: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_C));
+    bu_vls_printf(p, "Semi-minor length: %.9f\n", eto->eto_rd * base2local);
+    bu_vls_printf(p, "Radius of rotation: %.9f\n", eto->eto_r * base2local);
+}
+
 /* scale radius 1 (r) of ETO */
 void
 menu_eto_r(struct mged_state *s)

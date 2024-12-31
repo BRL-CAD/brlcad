@@ -40,6 +40,7 @@ set(
   primitives/edbot.c
   primitives/edbspline.c
   primitives/edcline.c
+  primitives/eddatum.c
   primitives/eddsp.c
   primitives/edebm.c
   primitives/edehy.c
@@ -48,6 +49,7 @@ set(
   primitives/edeto.c
   primitives/edextrude.c
   primitives/edgrip.c
+  primitives/edhalf.c
   primitives/edhyp.c
   primitives/edmetaball.c
   primitives/ednmg.c
@@ -144,6 +146,7 @@ set(
   primitives/edbot.h
   primitives/edbspline.h
   primitives/edcline.h
+  primitives/eddatum.h
   primitives/eddsp.h
   primitives/edebm.h
   primitives/edehy.h
@@ -152,6 +155,7 @@ set(
   primitives/edeto.h
   primitives/edextrude.h
   primitives/edgrip.h
+  primitives/edhalf.h
   primitives/edhyp.h
   primitives/edmetaball.h
   primitives/ednmg.h

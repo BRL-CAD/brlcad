@@ -59,6 +59,24 @@ mged_part_menu_item(const struct bn_tol *UNUSED(tol))
     return part_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_part_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(part);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(part->part_V));
+    bu_vls_printf(p, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL(part->part_H));
+    bu_vls_printf(p, "v radius: %.9f\n", part->part_vrad * base2local);
+    bu_vls_printf(p, "h radius: %.9f\n", part->part_hrad * base2local);
+}
+
 /* scale vector H */
 void
 menu_part_h(struct mged_state *s)

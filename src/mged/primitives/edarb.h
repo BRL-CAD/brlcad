@@ -73,6 +73,13 @@ mged_arb_e_axes_pos(
 	const struct rt_db_internal *ip,
        	const struct bn_tol *tol);
 
+void
+mged_arb_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol,
+	fastf_t base2local);
+
 struct menu_item *
 mged_arb_menu_item(const struct bn_tol *tol);
 

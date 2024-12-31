@@ -1,4 +1,4 @@
-/*                         E D G R I P . C
+/*                         E D D A T U M . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2024 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/primitives/edgrip.c
+/** @file mged/primitives/eddatum.c
  *
  */
 
@@ -35,39 +35,29 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
-#include "./edgrip.h"
+#include "./eddatum.h"
 
-const char *
-mged_grp_keypoint(
-	point_t *pt,
-	const char *keystr,
-	const mat_t mat,
-	const struct rt_db_internal *ip,
-	const struct bn_tol *tol)
-{
-    const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
-    if (!strp) {
-	static const char *c_str = "C";
-	strp = OBJ[ip->idb_type].ft_keypoint(pt, c_str, mat, ip, tol);
-    }
-    return strp;
-}
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-mged_grip_write_params(
+mged_datum_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
-       	const struct bn_tol *UNUSED(tol),
+	const struct bn_tol *UNUSED(tol),
 	fastf_t base2local)
 {
-    struct rt_grip_internal *grip = (struct rt_grip_internal *)ip->idb_ptr;
-    RT_GRIP_CK_MAGIC(grip);
+    struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
+    RT_DATUM_CK_MAGIC(datum);
 
-    bu_vls_printf(p, "Center: %.9f %.9f %.9f\n", V3BASE2LOCAL(grip->center));
-    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL(grip->normal));
-    bu_vls_printf(p, "Magnitude: %.9f\n", grip->mag*base2local);
+    do {
+	if (!ZERO(datum->w))
+	    bu_vls_printf(p, "Plane: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir) %.9f (scale)\n", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir), datum->w);
+	else if (!ZERO(MAGNITUDE(datum->dir)))
+	    bu_vls_printf(p, "Line: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir)\n", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir));
+	else
+	    bu_vls_printf(p, "Point: %.9f %.9f %.9f\n", V3BASE2LOCAL(datum->pnt));
+    } while ((datum = datum->next));
 }
 
 /*

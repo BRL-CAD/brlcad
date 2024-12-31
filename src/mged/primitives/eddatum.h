@@ -1,4 +1,4 @@
-/*                      E D E T O . H
+/*                      E D D A T U M . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2024 United States Government as represented by
@@ -17,40 +17,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edeto.h
+/** @file mged/primitives/eddatum.h
  */
 
-#ifndef EDETO_H
-#define EDETO_H
+#ifndef EDDATUM_H
+#define EDDATUM_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "mged.h"
 
-#define ECMD_ETO_ROT_C		16
-
-#define MENU_ETO_R		57
-#define MENU_ETO_RD		58
-#define MENU_ETO_SCALE_C	59
-#define MENU_ETO_ROT_C		60
-
-struct menu_item *
-mged_eto_menu_item(const struct bn_tol *tol);
-
 void
-mged_eto_write_params(
+mged_datum_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *tol,
 	fastf_t base2local);
 
-void menu_eto_r(struct mged_state *s);
-void menu_eto_rd(struct mged_state *s);
-void menu_eto_scale_c(struct mged_state *s);
-void ecmd_eto_rot_c(struct mged_state *s);
-
-#endif  /* EDETO_H */
+#endif  /* EDDATUM_H */
 
 /*
  * Local Variables:

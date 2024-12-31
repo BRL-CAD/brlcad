@@ -35,6 +35,13 @@
 struct menu_item *
 mged_rpc_menu_item(const struct bn_tol *tol);
 
+void
+mged_rpc_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol,
+	fastf_t base2local);
+
 void menu_rpc_b(struct mged_state *s);
 void menu_rpc_h(struct mged_state *s);
 void menu_rpc_r(struct mged_state *s);

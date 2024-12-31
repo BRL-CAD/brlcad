@@ -60,6 +60,26 @@ mged_ehy_menu_item(const struct bn_tol *UNUSED(tol))
     return ehy_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_ehy_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(ehy->ehy_V));
+    bu_vls_printf(p, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL(ehy->ehy_H));
+    bu_vls_printf(p, "Semi-major axis: %.9f %.9f %.9f\n", V3ARGS(ehy->ehy_Au));
+    bu_vls_printf(p, "Semi-major length: %.9f\n", ehy->ehy_r1 * base2local);
+    bu_vls_printf(p, "Semi-minor length: %.9f\n", ehy->ehy_r2 * base2local);
+    bu_vls_printf(p, "Dist to asymptotes: %.9f\n", ehy->ehy_c * base2local);
+}
+
 /* scale height vector H */
 void
 menu_ehy_h(struct mged_state *s)

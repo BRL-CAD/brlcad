@@ -59,6 +59,24 @@ mged_rpc_menu_item(const struct bn_tol *UNUSED(tol))
     return rpc_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_rpc_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(rpc);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(rpc->rpc_V));
+    bu_vls_printf(p, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL(rpc->rpc_H));
+    bu_vls_printf(p, "Breadth: %.9f %.9f %.9f\n", V3BASE2LOCAL(rpc->rpc_B));
+    bu_vls_printf(p, "Half-width: %.9f\n", rpc->rpc_r * base2local);
+}
+
 /* scale vector B */
 void
 menu_rpc_b(struct mged_state *s)

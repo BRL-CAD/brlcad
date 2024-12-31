@@ -572,6 +572,54 @@ mged_arb_e_axes_pos(
     MAT4X3PNT(curr_e_axes_pos, es_mat, arb->pt[i]);
 }
 
+/*          
+ * given the index of a vertex of the arb currently being edited,
+ * return 1 if this vertex should appear in the editor
+ * return 0 if this vertex is a duplicate of one of the above
+ */
+static int      
+useThisVertex(int idx, int *uvec, int *svec)
+{                   
+    int i;              
+                        
+    for (i=0; i<8 && uvec[i] != -1; i++) {
+        if (uvec[i] == idx) return 1;
+    }       
+                    
+    if (svec[0] != 0 && idx == svec[2]) return 1;
+   
+    if (svec[1] != 0 && idx == svec[2+svec[0]]) return 1;
+
+    return 0;
+}
+
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_arb_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol,
+	fastf_t base2local)
+{
+    // TODO - these really should be stashed in a private arb editing struct so
+    // they can persist until the read_params call...
+    static int uvec[8];
+    static int svec[11];
+    static int cgtype = 8;
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    for (int i=0; i<8; i++) uvec[i] = -1;
+    rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec);
+    int j = 0;
+    for (int i=0; i<8; i++) {
+	if (useThisVertex(i, uvec, svec)) {
+	    j++;
+	    bu_vls_printf(p, "pt[%d]: %.9f %.9f %.9f\n", j, V3BASE2LOCAL(arb->pt[i]));
+	}
+    }
+}
 
 /*
  * An ARB edge is moved by finding the direction of the line

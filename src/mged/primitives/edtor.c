@@ -61,6 +61,23 @@ mged_tor_menu_item(const struct bn_tol *UNUSED(tol))
     return tor_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_tor_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(tor->v));
+    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL(tor->h));
+    bu_vls_printf(p, "radius_1: %.9f\n", tor->r_a*base2local);
+    bu_vls_printf(p, "radius_2: %.9f\n", tor->r_h*base2local);
+}
 
 /* scale radius 1 of TOR */
 void

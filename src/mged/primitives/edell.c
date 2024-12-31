@@ -60,6 +60,24 @@ mged_ell_menu_item(const struct bn_tol *UNUSED(tol))
     return ell_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_ell_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(ell->v));
+    bu_vls_printf(p, "A: %.9f %.9f %.9f\n", V3BASE2LOCAL(ell->a));
+    bu_vls_printf(p, "B: %.9f %.9f %.9f\n", V3BASE2LOCAL(ell->b));
+    bu_vls_printf(p, "C: %.9f %.9f %.9f\n", V3BASE2LOCAL(ell->c));
+}
+
 /* scale vector A */
 void
 menu_ell_scale_a(struct mged_state *s)

@@ -36,6 +36,13 @@
 struct menu_item *
 mged_rhc_menu_item(const struct bn_tol *tol);
 
+void
+mged_rhc_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol,
+	fastf_t base2local);
+
 void menu_rhc_b(struct mged_state *s);
 void menu_rhc_h(struct mged_state *s);
 void menu_rhc_r(struct mged_state *s);

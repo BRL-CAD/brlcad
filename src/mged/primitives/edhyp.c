@@ -68,6 +68,25 @@ mged_hyp_menu_item(const struct bn_tol *UNUSED(tol))
     return hyp_menu;
 }
 
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+mged_hyp_write_params(
+	struct bu_vls *p,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hyp);
+
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(hyp->hyp_Vi));
+    bu_vls_printf(p, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL(hyp->hyp_Hi));
+    bu_vls_printf(p, "Semi-major axis: %.9f %.9f %.9f\n", V3BASE2LOCAL(hyp->hyp_A));
+    bu_vls_printf(p, "Semi-minor length: %.9f\n", hyp->hyp_b * base2local);
+    bu_vls_printf(p, "Ratio of Neck to Base: %.9f\n", hyp->hyp_bnr);
+}
+
 /* scale height of HYP */
 void
 menu_hyp_h(struct mged_state *s)
