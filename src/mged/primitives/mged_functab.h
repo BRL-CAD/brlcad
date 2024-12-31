@@ -75,6 +75,12 @@ struct mged_functab {
 	    fastf_t base2local);
 #define MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(_func) ((void(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
 
+    int(*ft_read_params)(
+	    struct rt_db_internal *ip,
+	    const char *fc,
+	    fastf_t local2base);
+#define MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(_func) ((int(*)(struct rt_db_internal *, const char *, fastf_t))((void (*)(void))_func))
+
     struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 

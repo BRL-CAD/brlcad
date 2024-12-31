@@ -79,6 +79,70 @@ mged_tor_write_params(
     bu_vls_printf(p, "radius_2: %.9f\n", tor->r_h*base2local);
 }
 
+#define read_params_line_incr \
+    lc = (ln) ? (ln + lcj) : NULL; \
+    if (!lc) { \
+	bu_free(wc, "wc"); \
+	return BRLCAD_ERROR; \
+    } \
+    ln = strchr(lc, tc); \
+    if (ln) *ln = '\0';
+
+int
+mged_tor_read_params(
+	struct rt_db_internal *ip,
+	const char *fc,
+	fastf_t local2base
+	)
+{
+    double a, b, c;
+    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
+
+    if (!fc)
+	return BRLCAD_ERROR;
+
+    // We're getting the file contents as a string, so we need to split it up
+    // to process lines. See https://stackoverflow.com/a/17983619
+
+    // Figure out if we need to deal with Windows line endings
+    const char *crpos = strchr(fc, '\r');
+    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
+    char tc = (crlf) ? '\r' : '\n';
+    // If we're CRLF jump ahead another character.
+    int lcj = (crlf) ? 2 : 1;
+
+    char *ln = NULL;
+    char *wc = bu_strdup(fc);
+    char *lc = wc;
+
+    ln = strchr(lc, tc);
+    if (ln) *ln = '\0';
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(tor->v, a, b, c);
+    VSCALE(tor->v, tor->v, local2base);
+
+    read_params_line_incr
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(tor->h, a, b, c);
+    VUNITIZE(tor->h);
+
+    read_params_line_incr
+
+    sscanf(lc, "%lf", &a);
+    tor->r_a = a * local2base;
+
+    read_params_line_incr
+
+    sscanf(lc, "%lf", &a);
+    tor->r_h = a * local2base;
+
+    bu_free(wc, "wc");
+    return BRLCAD_OK;
+}
+
 /* scale radius 1 of TOR */
 void
 menu_tor_r1(struct mged_state *s)

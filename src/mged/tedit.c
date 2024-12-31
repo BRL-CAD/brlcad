@@ -203,6 +203,17 @@ readsolid(struct mged_state *s)
 
     CHECK_DBI_NULL;
 
+#if 0
+    struct bu_vls solid_in = BU_VLS_INIT_ZERO;
+    struct bu_mapped_file *mf = bu_open_mapped_file(tmpfil, (char *)NULL);
+    if (!mf) {
+	bu_log("cannot read temporary file \"%s\"\n", tmpfil);
+	return 1;	/* FAIL */
+    }
+    bu_vls_strncpy(&solid_in, (char *)mf->buf, mf->buflen);
+    bu_close_mapped_file(mf);
+#endif
+
     fp = fopen(tmpfil, "r");
     if (fp == NULL) {
 	perror(tmpfil);
