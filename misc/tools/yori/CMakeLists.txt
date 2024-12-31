@@ -52,14 +52,18 @@ set(YORI_FILES
   yori/edit/edit.h
   yori/edit/options.c
   yori/lib/Makefile
+  yori/lib/airplane.c
+  yori/lib/bargraph.c
   yori/lib/builtin.c
   yori/lib/bytebuf.c
+  yori/lib/cabinet.c
   yori/lib/call.c
   yori/lib/cancel.c
   yori/lib/clip.c
   yori/lib/cmdline.c
   yori/lib/color.c
   yori/lib/condrv.c
+  yori/lib/cpuinfo.c
   yori/lib/cshot.c
   yori/lib/curdir.c
   yori/lib/cvtcons.c
@@ -82,26 +86,49 @@ set(YORI_FILES
   yori/lib/group.c
   yori/lib/hash.c
   yori/lib/hexdump.c
+  yori/lib/http.c
   yori/lib/iconv.c
+  yori/lib/jobobj.c
   yori/lib/license.c
   yori/lib/lineread.c
   yori/lib/list.c
   yori/lib/malloc.c
+  yori/lib/movefile.c
   yori/lib/numkey.c
+  yori/lib/obenum.c
   yori/lib/osver.c
   yori/lib/path.c
   yori/lib/printf.c
   yori/lib/printf.inc
   yori/lib/printfa.c
+  yori/lib/priv.c
   yori/lib/process.c
+  yori/lib/progman.c
+  yori/lib/recycle.c
+  yori/lib/rsrc.c
+  yori/lib/scheme.c
   yori/lib/scut.c
   yori/lib/select.c
   yori/lib/strarray.c
   yori/lib/string.c
   yori/lib/strmenum.c
   yori/lib/temp.c
+  yori/lib/update.c
   yori/lib/util.c
   yori/lib/vt.c
+  yori/lib/ylhomedr.c
+  yori/lib/ylstralc.c
+  yori/lib/ylstrcat.c
+  yori/lib/ylstrcmp.c
+  yori/lib/ylstrcnt.c
+  yori/lib/ylstrcnv.c
+  yori/lib/ylstrfnd.c
+  yori/lib/ylstrhex.c
+  yori/lib/ylstrnum.c
+  yori/lib/ylstrsrt.c
+  yori/lib/ylstrtrm.c
+  yori/lib/ylvolpth.c
+  yori/lib/ylvtdbg.c
   yori/lib/yori.man
   yori/lib/yoricall.h
   yori/lib/yoricmpt.h

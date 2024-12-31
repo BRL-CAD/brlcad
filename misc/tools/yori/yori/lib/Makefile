@@ -4,14 +4,18 @@ compile: yorilib.lib yoriver.obj
 !INCLUDE "..\config\common.mk"
 
 OBJS=\
+	 airplane.obj \
+	 bargraph.obj \
 	 builtin.obj  \
 	 bytebuf.obj  \
+	 cabinet.obj  \
 	 call.obj     \
 	 cancel.obj   \
 	 clip.obj     \
 	 cmdline.obj  \
 	 color.obj    \
 	 condrv.obj   \
+	 cpuinfo.obj  \
 	 cshot.obj    \
 	 curdir.obj   \
 	 cvtcons.obj  \
@@ -34,25 +38,47 @@ OBJS=\
 	 group.obj    \
 	 hash.obj     \
 	 hexdump.obj  \
+	 http.obj     \
 	 iconv.obj    \
+	 jobobj.obj   \
 	 license.obj  \
 	 lineread.obj \
 	 list.obj     \
 	 malloc.obj   \
+	 movefile.obj \
 	 numkey.obj   \
+	 obenum.obj   \
 	 osver.obj    \
 	 path.obj     \
 	 printf.obj   \
 	 printfa.obj  \
+	 priv.obj     \
 	 process.obj  \
+	 progman.obj  \
+	 recycle.obj  \
+	 rsrc.obj     \
 	 scut.obj     \
+	 scheme.obj   \
 	 select.obj   \
 	 strarray.obj \
-	 string.obj   \
 	 strmenum.obj \
 	 temp.obj     \
+	 update.obj   \
 	 util.obj     \
 	 vt.obj       \
+	 ylhomedr.obj \
+	 ylstralc.obj \
+	 ylstrcat.obj \
+	 ylstrcmp.obj \
+	 ylstrcnt.obj \
+	 ylstrcnv.obj \
+	 ylstrfnd.obj \
+	 ylstrhex.obj \
+	 ylstrnum.obj \
+	 ylstrsrt.obj \
+	 ylstrtrm.obj \
+	 ylvolpth.obj \
+	 ylvtdbg.obj  \
 
 all: yorilib.lib yoriver.obj
 

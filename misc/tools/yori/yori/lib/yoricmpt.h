@@ -4,7 +4,7 @@
  * Yori shell header file to define OS things that the compilation environment
  * doesn't support.
  *
- * Copyright (c) 2017-2021 Malcolm J. Smith
+ * Copyright (c) 2017-2024 Malcolm J. Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -2816,6 +2816,41 @@ typedef struct RETRIEVAL_POINTERS_BUFFER {
     } Extents[1];
 
 } RETRIEVAL_POINTERS_BUFFER, *PRETRIEVAL_POINTERS_BUFFER;
+#endif
+
+#ifndef FSCTL_MOVE_FILE
+/**
+ Specifies the FSCTL_MOVE_FILE numerical representation if the compilation
+ environment doesn't provide it.
+ */
+#define FSCTL_MOVE_FILE    CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 29,  METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+/**
+ Specifies information required to move a file to a different cluster.
+ */
+typedef struct _MOVE_FILE_DATA {
+
+    /**
+     A handle to the file.  This FSCTL is sent to the volume.
+     */
+    HANDLE FileHandle;
+
+    /**
+     The file offset to move.
+     */
+    LARGE_INTEGER StartingVcn;
+
+    /**
+     The target cluster on the volume to move to.
+     */
+    LARGE_INTEGER StartingLcn;
+
+    /**
+     The number of clusters to move.
+     */
+    DWORD ClusterCount;
+
+} MOVE_FILE_DATA, *PMOVE_FILE_DATA;
 #endif
 
 #ifndef FSCTL_QUERY_ALLOCATED_RANGES
@@ -8719,18 +8754,6 @@ ALLOCATE_AND_INITIALIZE_SID(PSID_IDENTIFIER_AUTHORITY, BYTE, DWORD, DWORD, DWORD
 typedef ALLOCATE_AND_INITIALIZE_SID *PALLOCATE_AND_INITIALIZE_SID;
 
 /**
- Prototype for the CheckTokenMembership function.
- */
-typedef
-BOOL WINAPI
-CHECK_TOKEN_MEMBERSHIP(HANDLE, PSID, PBOOL);
-
-/**
- Prototype for a pointer to the CheckTokenMembership function.
- */
-typedef CHECK_TOKEN_MEMBERSHIP *PCHECK_TOKEN_MEMBERSHIP;
-
-/**
  Prototype for the CommandLineFromMsiDescriptor function.
  */
 typedef
@@ -8815,6 +8838,18 @@ CRYPT_RELEASE_CONTEXT(DWORD_PTR, DWORD);
 typedef CRYPT_RELEASE_CONTEXT *PCRYPT_RELEASE_CONTEXT;
 
 /**
+ Prototype for the EqualSid function.
+ */
+typedef
+BOOL WINAPI
+EQUAL_SID(PSID, PSID);
+
+/**
+ Prototype for a pointer to the EqualSid function.
+ */
+typedef EQUAL_SID *PEQUAL_SID;
+
+/**
  Prototype for the FreeSid function.
  */
 typedef
@@ -8861,6 +8896,18 @@ GET_SECURITY_DESCRIPTOR_OWNER(PSECURITY_DESCRIPTOR, PSID, LPBOOL);
  Prototype for a pointer to the GetSecurityDescriptorOwner function.
  */
 typedef GET_SECURITY_DESCRIPTOR_OWNER *PGET_SECURITY_DESCRIPTOR_OWNER;
+
+/**
+ A prototype for the GetTokenInformation function.
+ */
+typedef
+BOOL WINAPI
+GET_TOKEN_INFORMATION(HANDLE, TOKEN_INFORMATION_CLASS, LPVOID, DWORD, PDWORD);
+
+/**
+ Prototype for a pointer to the GetTokenInformation function.
+ */
+typedef GET_TOKEN_INFORMATION *PGET_TOKEN_INFORMATION;
 
 /**
  A prototype for the ImpersonateSelf function.
@@ -9205,11 +9252,6 @@ typedef struct _YORI_ADVAPI32_FUNCTIONS {
     PALLOCATE_AND_INITIALIZE_SID pAllocateAndInitializeSid;
 
     /**
-     If it's available on the current system, a pointer to CheckTokenMembership.
-     */
-    PCHECK_TOKEN_MEMBERSHIP pCheckTokenMembership;
-
-    /**
      If it's available on the current system, a pointer to CommandLineFromMsiDescriptor.
      */
     PCOMMAND_LINE_FROM_MSI_DESCRIPTOR pCommandLineFromMsiDescriptor;
@@ -9245,6 +9287,11 @@ typedef struct _YORI_ADVAPI32_FUNCTIONS {
     PCRYPT_RELEASE_CONTEXT pCryptReleaseContext;
 
     /**
+     If it's available on the current system, a pointer to EqualSid.
+     */
+    PEQUAL_SID pEqualSid;
+
+    /**
      If it's available on the current system, a pointer to FreeSid.
      */
     PFREE_SID pFreeSid;
@@ -9263,6 +9310,11 @@ typedef struct _YORI_ADVAPI32_FUNCTIONS {
      If it's available on the current system, a pointer to GetSecurityDescriptorOwner.
      */
     PGET_SECURITY_DESCRIPTOR_OWNER pGetSecurityDescriptorOwner;
+
+    /**
+     If it's available on the current system, a pointer to GetTokenInformation.
+     */
+    PGET_TOKEN_INFORMATION pGetTokenInformation;
 
     /**
      If it's available on the current system, a pointer to ImpersonateSelf.
@@ -10896,6 +10948,56 @@ typedef struct _YORI_USER32_FUNCTIONS {
 } YORI_USER32_FUNCTIONS, *PYORI_USER32_FUNCTIONS;
 
 extern YORI_USER32_FUNCTIONS DllUser32;
+
+/**
+ A prototype for the CreateEnvironmentBlock function.
+ */
+typedef
+BOOL WINAPI
+CREATE_ENVIRONMENT_BLOCK(LPVOID *, HANDLE, BOOL);
+
+/**
+ A prototype for a pointer to the CreateEnvironmentBlock function.
+ */
+typedef CREATE_ENVIRONMENT_BLOCK *PCREATE_ENVIRONMENT_BLOCK;
+
+/**
+ A prototype for the DestroyEnvironmentBlock function.
+ */
+typedef
+BOOL WINAPI
+DESTROY_ENVIRONMENT_BLOCK(LPVOID);
+
+/**
+ A prototype for a pointer to the DestroyEnvironmentBlock function.
+ */
+typedef DESTROY_ENVIRONMENT_BLOCK *PDESTROY_ENVIRONMENT_BLOCK;
+
+/**
+ A structure containing optional function pointers to userenv.dll exported
+ functions which programs can operate without having hard dependencies on.
+ */
+typedef struct _YORI_USERENV_FUNCTIONS {
+    /**
+     A handle to the Dll module.
+     */
+    HINSTANCE hDll;
+
+    /**
+     If it's available on the current system, a pointer to
+     CreateEnvironmentBlock.
+     */
+    PCREATE_ENVIRONMENT_BLOCK pCreateEnvironmentBlock;
+
+    /**
+     If it's available on the current system, a pointer to
+     DestroyEnvironmentBlock.
+     */
+    PDESTROY_ENVIRONMENT_BLOCK pDestroyEnvironmentBlock;
+
+} YORI_USERENV_FUNCTIONS, *PYORI_USERENV_FUNCTIONS;
+
+extern YORI_USERENV_FUNCTIONS DllUserEnv;
 
 /**
  A prototype for the GetFileVersionInfoSizeW function.

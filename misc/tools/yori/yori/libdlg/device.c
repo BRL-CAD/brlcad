@@ -320,9 +320,9 @@ YoriDlgDevObjectFoundCallback(
     //  If it's any other object type, exit now.
     //
 
-    if (YoriLibCompareStringWithLiteral(ObjectType, _T("SymbolicLink")) == 0) {
+    if (YoriLibCompareStringLit(ObjectType, _T("SymbolicLink")) == 0) {
         IsLink = TRUE;
-    } else if (YoriLibCompareStringWithLiteral(ObjectType, _T("Device")) != 0) {
+    } else if (YoriLibCompareStringLit(ObjectType, _T("Device")) != 0) {
         return TRUE;
     }
 
@@ -337,7 +337,7 @@ YoriDlgDevObjectFoundCallback(
         YoriLibConstantString(&MatchArray[1], _T("HardDisk"));
         YoriLibConstantString(&MatchArray[2], _T("CDROM"));
 
-        if (YoriLibFindFirstMatchingSubstringInsensitive(NameOnly, sizeof(MatchArray)/sizeof(MatchArray[0]), MatchArray, &MatchOffset) != NULL &&
+        if (YoriLibFindFirstMatchSubstrIns(NameOnly, sizeof(MatchArray)/sizeof(MatchArray[0]), MatchArray, &MatchOffset) != NULL &&
             MatchOffset == 0) {
 
             IncludeObject = TRUE;
@@ -625,7 +625,7 @@ YoriDlgDevice(
     Area.Bottom = (WORD)(WindowSize.Y - OptionCount - 6);
     Area.Right = (WORD)(WindowSize.X - 2);
 
-    Ctrl = YoriWinListCreate(Parent, &Area, YORI_WIN_LIST_STYLE_VSCROLLBAR | YORI_WIN_LIST_STYLE_DESELECT_ON_LOSE_FOCUS);
+    Ctrl = YoriWinListCreate(Parent, &Area, YORI_WIN_LIST_STYLE_VSCROLLBAR | YORI_WIN_LIST_STYLE_DESELECT_ON_LOSE_FOCUS | YORI_WIN_LIST_STYLE_AUTO_HSCROLLBAR);
     if (Ctrl == NULL) {
         YoriWinDestroyWindow(Parent);
         return FALSE;
