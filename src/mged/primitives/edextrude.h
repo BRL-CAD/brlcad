@@ -48,6 +48,11 @@ mged_extrude_keypoint(
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
 
+void
+mged_extrude_e_axes_pos(
+	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol);
+
 void ecmd_extr_skt_name(struct mged_state *s);
 void ecmd_extr_mov_h(struct mged_state *s);
 void ecmd_extr_scale_h(struct mged_state *s);

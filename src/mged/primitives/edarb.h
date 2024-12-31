@@ -68,6 +68,10 @@ mged_arb_keypoint(
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
 
+void
+mged_arb_e_axes_pos(
+	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol);
 
 int editarb(struct mged_state *s, vect_t pos_model);
 void ecmd_arb_main_menu(struct mged_state *s);

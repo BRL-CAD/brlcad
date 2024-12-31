@@ -34,6 +34,7 @@ extern "C" {
 #define MGED_DECLARE_INTERFACE(name) \
     extern void mged_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels *pl, int max_pl, const mat_t xform, struct rt_db_internal *ip, struct bn_tol *); \
     extern const char *mged_##name##_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol); \
+    extern void mged_##name##_e_axes_pos(const struct rt_db_internal *ip, const struct bn_tol *tol); \
 
 
 MGED_DECLARE_INTERFACE(tor);
@@ -85,6 +86,7 @@ const struct mged_functab MGED_OBJ[] = {
 	/* 0: unused, for sanity checking. */
 	RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -92,217 +94,248 @@ const struct mged_functab MGED_OBJ[] = {
 	/* 1 */
 	RT_FUNCTAB_MAGIC, "ID_TOR", "tor",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 2 */
 	RT_FUNCTAB_MAGIC, "ID_TGC", "tgc",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos)  /* e_axes_pos */
     },
 
     {
 	/* 3 */
 	RT_FUNCTAB_MAGIC, "ID_ELL", "ell",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 4 */
 	RT_FUNCTAB_MAGIC, "ID_ARB8", "arb8",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_arb_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_arb_keypoint),     /* keypoint */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_arb_e_axes_pos)  /* e_axes_pos */
     },
 
     {
 	/* 5 */
 	RT_FUNCTAB_MAGIC, "ID_ARS", "ars",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_ars_labels),    /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_ars_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_ars_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 6 */
 	RT_FUNCTAB_MAGIC, "ID_HALF", "half",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 7 */
 	RT_FUNCTAB_MAGIC, "ID_REC", "rec",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos)  /* e_axes_pos */
     },
 
     {
 	/* 8 */
 	RT_FUNCTAB_MAGIC, "ID_POLY", "poly",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 9 */
 	RT_FUNCTAB_MAGIC, "ID_BSPLINE", "bspline",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_bspline_labels), /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_bspline_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_bspline_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 10 */
 	RT_FUNCTAB_MAGIC, "ID_SPH", "sph",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 11 */
 	RT_FUNCTAB_MAGIC, "ID_NMG", "nmg",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_nmg_labels),    /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_nmg_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_nmg_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 12 */
 	RT_FUNCTAB_MAGIC, "ID_EBM", "ebm",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 13 */
 	RT_FUNCTAB_MAGIC, "ID_VOL", "vol",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 14 */
 	RT_FUNCTAB_MAGIC, "ID_ARBN", "arbn",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 15 */
 	RT_FUNCTAB_MAGIC, "ID_PIPE", "pipe",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_pipe_labels), /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_pipe_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_pipe_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 16 */
 	RT_FUNCTAB_MAGIC, "ID_PARTICLE", "part",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 17 */
 	RT_FUNCTAB_MAGIC, "ID_RPC", "rpc",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 18 */
 	RT_FUNCTAB_MAGIC, "ID_RHC", "rhc",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 19 */
 	RT_FUNCTAB_MAGIC, "ID_EPA", "epa",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 20 */
 	RT_FUNCTAB_MAGIC, "ID_EHY", "ehy",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 21 */
 	RT_FUNCTAB_MAGIC, "ID_ETO", "eto",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 22 */
 	RT_FUNCTAB_MAGIC, "ID_GRIP", "grip",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_grp_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_grp_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 23 -- XXX unimplemented */
 	RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 24 */
 	RT_FUNCTAB_MAGIC, "ID_HF", "hf",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 25 Displacement Map (alt. height field) */
 	RT_FUNCTAB_MAGIC, "ID_DSP", "dsp",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 26 2D sketch */
 	RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 27 Solid of extrusion */
 	RT_FUNCTAB_MAGIC, "ID_EXTRUDE", "extrude",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_extrude_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_extrude_keypoint),     /* keypoint */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_extrude_e_axes_pos)  /* e_axes_pos */
     },
 
     {
 	/* 28 Instanced submodel */
 	RT_FUNCTAB_MAGIC, "ID_SUBMODEL", "submodel",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 29 Fastgen cline solid */
 	RT_FUNCTAB_MAGIC, "ID_CLINE", "cline",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint),   /* keypoint */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_cline_e_axes_pos)  /* e_axes_pos */
     },
 
     {
 	/* 30 Bag o' Triangles */
 	RT_FUNCTAB_MAGIC, "ID_BOT", "bot",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_bot_labels),    /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_bot_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_bot_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 31 combination objects (should not be in this table) */
 	RT_FUNCTAB_MAGIC, "ID_COMBINATION", "comb",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
@@ -311,14 +344,16 @@ const struct mged_functab MGED_OBJ[] = {
 	 */
 	RT_FUNCTAB_MAGIC, "ID_UNUSED1", "UNUSED1",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 33 */
 	RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
@@ -327,70 +362,80 @@ const struct mged_functab MGED_OBJ[] = {
 	 */
 	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "UNUSED2",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 35 (but "should" be 31) Superquadratic Ellipsoid */
 	RT_FUNCTAB_MAGIC, "ID_SUPERELL", "superell",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 36 (but "should" be 32) Metaball */
 	RT_FUNCTAB_MAGIC, "ID_METABALL", "metaball",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_metaball_labels),    /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_metaball_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_metaball_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 37 */
 	RT_FUNCTAB_MAGIC, "ID_BREP", "brep",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 38 (but "should" be 34) Hyperboloid */
 	RT_FUNCTAB_MAGIC, "ID_HYP", "hyp",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 39 */
 	RT_FUNCTAB_MAGIC, "ID_CONSTRAINT", "constrnt",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 40 */
 	RT_FUNCTAB_MAGIC, "ID_REVOLVE", "revolve",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 41 */
 	RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 42 */
 	RT_FUNCTAB_MAGIC, "ID_ANNOT", "annot",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 43 */
 	RT_FUNCTAB_MAGIC, "ID_HRT", "hrt",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
 
@@ -398,7 +443,8 @@ const struct mged_functab MGED_OBJ[] = {
 	/* 44 */
 	RT_FUNCTAB_MAGIC, "ID_DATUM", "datum",
 	NULL,  /* label */
-	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint) /* keypoint */
+	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
 
@@ -406,21 +452,24 @@ const struct mged_functab MGED_OBJ[] = {
     /* 45 */
     RT_FUNCTAB_MAGIC, "ID_SCRIPT", "script",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* 46 */
 	RT_FUNCTAB_MAGIC, "ID_MATERIAL", "material",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     },
 
     {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
 	NULL,  /* label */
-	NULL   /* keypoint */
+	NULL,  /* keypoint */
+	NULL   /* e_axes_pos */
     }
 };
 

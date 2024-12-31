@@ -74,6 +74,26 @@ mged_extrude_keypoint(
 }
 
 void
+mged_extrude_e_axes_pos(
+	const struct rt_db_internal *ip,
+	const struct bn_tol *UNUSED(tol))
+{
+    if (es_edflag == ECMD_EXTR_MOV_H) {
+	struct rt_extrude_internal *extr = (struct rt_extrude_internal *)ip->idb_ptr;
+	point_t extr_v;
+	vect_t extr_h;
+
+	RT_EXTRUDE_CK_MAGIC(extr);
+
+	MAT4X3PNT(extr_v, es_mat, extr->V);
+	MAT4X3VEC(extr_h, es_mat, extr->h);
+	VADD2(curr_e_axes_pos, extr_h, extr_v);
+    } else {
+	VMOVE(curr_e_axes_pos, es_keypoint);
+    }
+}
+
+void
 ecmd_extr_skt_name(struct mged_state *s)
 {
     struct rt_extrude_internal *extr =

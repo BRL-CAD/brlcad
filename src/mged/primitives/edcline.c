@@ -53,6 +53,26 @@ struct menu_item cline_menu[] = {
     { "", NULL, 0 }
 };
 
+void
+mged_cline_e_axes_pos(
+	const struct rt_db_internal *ip,
+       	const struct bn_tol *UNUSED(tol))
+{
+    if (es_edflag == ECMD_CLINE_MOVE_H) {
+	struct rt_cline_internal *cli =(struct rt_cline_internal *)ip->idb_ptr;
+	point_t cli_v;
+	vect_t cli_h;
+
+	RT_CLINE_CK_MAGIC(cli);
+
+	MAT4X3PNT(cli_v, es_mat, cli->v);
+	MAT4X3VEC(cli_h, es_mat, cli->h);
+	VADD2(curr_e_axes_pos, cli_h, cli_v);
+    } else {
+	VMOVE(curr_e_axes_pos, es_keypoint);
+    }
+}
+
 /*
  * Scale height vector
  */

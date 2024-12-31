@@ -107,145 +107,16 @@ set_e_axes_pos(struct mged_state *s, int both)
     /* if (!both) then set only curr_e_axes_pos, otherwise
        set e_axes_pos and curr_e_axes_pos */
 {
-    int i;
-    const short earb8[12][18] = earb8_edit_array;
-    const short earb7[12][18] = earb7_edit_array;
-    const short earb6[10][18] = earb6_edit_array;
-    const short earb5[9][18] = earb5_edit_array;
-    const int local_arb_faces[5][24] = rt_arb_faces;
-
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    switch (s->edit_state.es_int.idb_type) {
-	case ID_ARB8:
-	    if (GEOM_EDIT_STATE == ST_O_EDIT) {
-		i = 0;
-	    } else {
-		switch (es_edflag) {
-		    case STRANS:
-			i = 0;
-			break;
-		    case EARB:
-			switch (es_type) {
-			    case ARB5:
-				i = earb5[es_menu][0];
-				break;
-			    case ARB6:
-				i = earb6[es_menu][0];
-				break;
-			    case ARB7:
-				i = earb7[es_menu][0];
-				break;
-			    case ARB8:
-				i = earb8[es_menu][0];
-				break;
-			    default:
-				i = 0;
-				break;
-			}
-			break;
-		    case PTARB:
-			switch (es_type) {
-			    case ARB4:
-				i = es_menu;	/* index for point 1, 2, 3 or 4 */
-				break;
-			    case ARB5:
-			    case ARB7:
-				i = 4;	/* index for point 5 */
-				break;
-			    case ARB6:
-				i = es_menu;	/* index for point 5 or 6 */
-				break;
-			    default:
-				i = 0;
-				break;
-			}
-			break;
-		    case ECMD_ARB_MOVE_FACE:
-			switch (es_type) {
-			    case ARB4:
-				i = local_arb_faces[0][es_menu * 4];
-				break;
-			    case ARB5:
-				i = local_arb_faces[1][es_menu * 4];
-				break;
-			    case ARB6:
-				i = local_arb_faces[2][es_menu * 4];
-				break;
-			    case ARB7:
-				i = local_arb_faces[3][es_menu * 4];
-				break;
-			    case ARB8:
-				i = local_arb_faces[4][es_menu * 4];
-				break;
-			    default:
-				i = 0;
-				break;
-			}
-			break;
-		    case ECMD_ARB_ROTATE_FACE:
-			i = fixv;
-			break;
-		    default:
-			i = 0;
-			break;
-		}
-	    }
-	    MAT4X3PNT(curr_e_axes_pos, es_mat,
-		      ((struct rt_arb_internal *)s->edit_state.es_int.idb_ptr)->pt[i]);
-	    break;
-	case ID_TGC:
-	case ID_REC:
-	    if (es_edflag == ECMD_TGC_MV_H ||
-		es_edflag == ECMD_TGC_MV_HH) {
-		struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
-		point_t tgc_v;
-		vect_t tgc_h;
 
-		MAT4X3PNT(tgc_v, es_mat, tgc->v);
-		MAT4X3VEC(tgc_h, es_mat, tgc->h);
-		VADD2(curr_e_axes_pos, tgc_h, tgc_v);
-	    } else {
-		VMOVE(curr_e_axes_pos, es_keypoint);
-	    }
+    struct rt_db_internal *ip = &s->edit_state.es_int;
 
-	    break;
-	case ID_EXTRUDE:
-	    if (es_edflag == ECMD_EXTR_MOV_H) {
-		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
-		point_t extr_v;
-		vect_t extr_h;
-
-		RT_EXTRUDE_CK_MAGIC(extr);
-
-		MAT4X3PNT(extr_v, es_mat, extr->V);
-		MAT4X3VEC(extr_h, es_mat, extr->h);
-		VADD2(curr_e_axes_pos, extr_h, extr_v);
-	    } else {
-		VMOVE(curr_e_axes_pos, es_keypoint);
-	    }
-
-	    break;
-	case ID_CLINE:
-	    if (es_edflag == ECMD_CLINE_MOVE_H) {
-		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
-		point_t cli_v;
-		vect_t cli_h;
-
-		RT_CLINE_CK_MAGIC(cli);
-
-		MAT4X3PNT(cli_v, es_mat, cli->v);
-		MAT4X3VEC(cli_h, es_mat, cli->h);
-		VADD2(curr_e_axes_pos, cli_h, cli_v);
-	    } else {
-		VMOVE(curr_e_axes_pos, es_keypoint);
-	    }
-
-	    break;
-	default:
-	    VMOVE(curr_e_axes_pos, es_keypoint);
-	    break;
+    if (MGED_OBJ[ip->idb_type].ft_e_axes_pos) {
+	(*MGED_OBJ[ip->idb_type].ft_e_axes_pos)(ip, &s->tol.tol);
+	return;
+    } else {
+	VMOVE(curr_e_axes_pos, es_keypoint);
     }
 
     if (both) {

@@ -74,6 +74,25 @@ struct menu_item tgc_menu[] = {
     { "", NULL, 0 }
 };
 
+void
+mged_tgc_e_axes_pos(
+	const struct rt_db_internal *ip,
+	const struct bn_tol *UNUSED(tol))
+{
+    if (es_edflag == ECMD_TGC_MV_H ||
+	    es_edflag == ECMD_TGC_MV_HH) {
+	struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+	point_t tgc_v;
+	vect_t tgc_h;
+
+	MAT4X3PNT(tgc_v, es_mat, tgc->v);
+	MAT4X3VEC(tgc_h, es_mat, tgc->h);
+	VADD2(curr_e_axes_pos, tgc_h, tgc_v);
+    } else {
+	VMOVE(curr_e_axes_pos, es_keypoint);
+    }
+}
+
 /* scale height vector */
 void
 menu_tgc_scale_h(struct mged_state *s)

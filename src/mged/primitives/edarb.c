@@ -472,6 +472,101 @@ mged_arb_keypoint(
     return strp;
 }
 
+void
+mged_arb_e_axes_pos(
+	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol
+       	)
+{
+    int i;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const int local_arb_faces[5][24] = rt_arb_faces;
+
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    int arb_type = rt_arb_std_type(ip, tol);
+
+    if (GEOM_EDIT_STATE == ST_O_EDIT) {
+	i = 0;
+    } else {
+	switch (es_edflag) {
+	    case STRANS:
+		i = 0;
+		break;
+	    case EARB:
+		switch (arb_type) {
+		    case ARB5:
+			i = earb5[es_menu][0];
+			break;
+		    case ARB6:
+			i = earb6[es_menu][0];
+			break;
+		    case ARB7:
+			i = earb7[es_menu][0];
+			break;
+		    case ARB8:
+			i = earb8[es_menu][0];
+			break;
+		    default:
+			i = 0;
+			break;
+		}
+		break;
+	    case PTARB:
+		switch (arb_type) {
+		    case ARB4:
+			i = es_menu;	/* index for point 1, 2, 3 or 4 */
+			break;
+		    case ARB5:
+		    case ARB7:
+			i = 4;	/* index for point 5 */
+			break;
+		    case ARB6:
+			i = es_menu;	/* index for point 5 or 6 */
+			break;
+		    default:
+			i = 0;
+			break;
+		}
+		break;
+	    case ECMD_ARB_MOVE_FACE:
+		switch (arb_type) {
+		    case ARB4:
+			i = local_arb_faces[0][es_menu * 4];
+			break;
+		    case ARB5:
+			i = local_arb_faces[1][es_menu * 4];
+			break;
+		    case ARB6:
+			i = local_arb_faces[2][es_menu * 4];
+			break;
+		    case ARB7:
+			i = local_arb_faces[3][es_menu * 4];
+			break;
+		    case ARB8:
+			i = local_arb_faces[4][es_menu * 4];
+			break;
+		    default:
+			i = 0;
+			break;
+		}
+		break;
+	    case ECMD_ARB_ROTATE_FACE:
+		i = fixv;
+		break;
+	    default:
+		i = 0;
+		break;
+	}
+    }
+    MAT4X3PNT(curr_e_axes_pos, es_mat, arb->pt[i]);
+}
+
+
 /*
  * An ARB edge is moved by finding the direction of the line
  * containing the edge and the 2 "bounding" planes.  The new edge is
