@@ -256,9 +256,8 @@ class GshState {
 
 };
 
-/* For gsh these are mostly no-op, but define placeholder
- * functions in case we need to pre or post actions for
- * database opening in the future. */
+/* For gsh these are mostly no-op, but define placeholder functions in case we
+ * need pre or post actions for database ops in the future. */
 extern "C" int
 gsh_pre_opendb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(gedp), void *UNUSED(ctx))
 {
@@ -291,8 +290,8 @@ gsh_post_closedb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(
  * specific logic necessary for their environments.  Even the minimalist
  * command line environment has some basic requirements that must be met.
  *
- * May also end up finding a use for nod signals/slots if libuv doesn't do
- * it for us by itself:  https://github.com/fr00b0/nod
+ * May also end up finding a use for nod signals/slots:
+ * https://github.com/fr00b0/nod
  */
 extern "C" void
 gsh_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
@@ -392,7 +391,7 @@ GshState::eval(int argc, const char **argv)
     }
 
     // We've got a valid GED command Before any BRL-CAD logic is executed;
-    // stash the state of the view info so we can recognize changes. */
+    // stash the state of the view info so we can recognize changes.
     view_checkpoint();
 
     int gret = ged_exec(gedp, argc, argv);
@@ -512,7 +511,7 @@ GshState::subprocess_output()
 
     // If we did clear the prompt, we MAY need to restore it.  If the linenoise
     // thread indicates it is doing its own processing (i.e. it is not
-    // currently handling user input with a prmopt) we don't want to inject a
+    // currently handling user input with a prompt) we don't want to inject a
     // spurious prompt ourselves and mess up its output.  The linenoise thread
     // will take care of restoration when it resets after its own work is done.
     if (prompt_cleared && io_working) {
