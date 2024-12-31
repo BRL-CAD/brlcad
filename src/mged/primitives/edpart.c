@@ -53,6 +53,12 @@ struct menu_item part_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_part_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return part_menu;
+}
+
 /* scale vector H */
 void
 menu_part_h(struct mged_state *s)

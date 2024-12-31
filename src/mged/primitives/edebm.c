@@ -73,6 +73,12 @@ struct menu_item ebm_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_ebm_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return ebm_menu;
+}
+
 int
 ecmd_ebm_fsize(struct mged_state *s)
 {

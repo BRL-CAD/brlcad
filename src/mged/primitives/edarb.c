@@ -455,6 +455,12 @@ struct menu_item *which_menu[] = {
     rot8_menu
 };
 
+struct menu_item *
+mged_arb_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return cntrl_menu;
+}
+
 const char *
 mged_arb_keypoint(
 	point_t *pt,

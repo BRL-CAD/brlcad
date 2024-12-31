@@ -68,6 +68,13 @@ struct menu_item spline_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_bspline_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return spline_menu;
+}
+
+
 // TODO - either use vmath.h versions or merge these into it...
 #define DIST2D(P0, P1) sqrt(((P1)[X] - (P0)[X])*((P1)[X] - (P0)[X]) + \
 				((P1)[Y] - (P0)[Y])*((P1)[Y] - (P0)[Y]))

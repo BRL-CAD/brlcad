@@ -74,6 +74,12 @@ struct menu_item tgc_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_tgc_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return tgc_menu;
+}
+
 void
 mged_tgc_e_axes_pos(
 	const struct rt_db_internal *ip,

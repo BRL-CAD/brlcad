@@ -68,6 +68,9 @@ struct mged_functab {
 	    const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
+    struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
+#define MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
+
 };
 extern const struct mged_functab MGED_OBJ[];
 

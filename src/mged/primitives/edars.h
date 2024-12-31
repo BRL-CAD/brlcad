@@ -68,6 +68,9 @@ mged_ars_keypoint(
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
 
+struct menu_item *
+mged_ars_menu_item(const struct bn_tol *tol);
+
 void ecmd_ars_pick(struct mged_state *s);
 void ecmd_ars_next_pt(struct mged_state *s);
 void ecmd_ars_prev_pt(struct mged_state *s);

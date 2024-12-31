@@ -54,6 +54,14 @@ struct menu_item tor_menu[] = {
     { "", NULL, 0 }
 };
 
+
+struct menu_item *
+mged_tor_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return tor_menu;
+}
+
+
 /* scale radius 1 of TOR */
 void
 menu_tor_r1(struct mged_state *s)

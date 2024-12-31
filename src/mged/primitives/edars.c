@@ -166,6 +166,12 @@ mged_ars_keypoint(
     return strp;
 }
 
+struct menu_item *
+mged_ars_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return ars_menu;
+}
+
 void
 ecmd_ars_pick(struct mged_state *s)
 {

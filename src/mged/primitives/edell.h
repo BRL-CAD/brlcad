@@ -33,7 +33,8 @@
 #define MENU_ELL_SCALE_C	41
 #define MENU_ELL_SCALE_ABC	42
 
-extern struct menu_item ell_menu[];
+struct menu_item *
+mged_ell_menu_item(const struct bn_tol *tol);
 
 void menu_ell_scale_a(struct mged_state *s);
 void menu_ell_scale_b(struct mged_state *s);

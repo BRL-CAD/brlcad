@@ -33,7 +33,8 @@
 #define MENU_SUPERELL_SCALE_C	115
 #define MENU_SUPERELL_SCALE_ABC	116
 
-extern struct menu_item superell_menu[];
+struct menu_item *
+mged_superell_menu_item(const struct bn_tol *tol);
 
 void menu_superell_scale_a(struct mged_state *s);
 void menu_superell_scale_b(struct mged_state *s);

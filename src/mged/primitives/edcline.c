@@ -53,6 +53,12 @@ struct menu_item cline_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_cline_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return cline_menu;
+}
+
 void
 mged_cline_e_axes_pos(
 	const struct rt_db_internal *ip,

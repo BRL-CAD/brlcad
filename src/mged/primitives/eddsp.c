@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/primitives/edcline.c
+/** @file mged/primitives/eddsp.c
  *
  */
 
@@ -36,7 +36,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
-#include "./edcline.h"
+#include "./eddsp.h"
 
 extern const char * get_file_name(struct mged_state *s, char *str);
 
@@ -76,6 +76,12 @@ struct menu_item dsp_menu[] = {
     {"Set ALT", dsp_ed, MENU_DSP_SCALE_ALT },
     { "", NULL, 0 }
 };
+
+struct menu_item *
+mged_dsp_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return dsp_menu;
+}
 
 static void
 dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)

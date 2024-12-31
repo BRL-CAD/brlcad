@@ -35,7 +35,8 @@
 #define MENU_ETO_SCALE_C	59
 #define MENU_ETO_ROT_C		60
 
-extern struct menu_item eto_menu[];
+struct menu_item *
+mged_eto_menu_item(const struct bn_tol *tol);
 
 void menu_eto_r(struct mged_state *s);
 void menu_eto_rd(struct mged_state *s);

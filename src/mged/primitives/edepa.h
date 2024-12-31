@@ -32,7 +32,8 @@
 #define MENU_EPA_R1		51
 #define MENU_EPA_R2		52
 
-extern struct menu_item epa_menu[];
+struct menu_item *
+mged_epa_menu_item(const struct bn_tol *tol);
 
 void menu_epa_h(struct mged_state *s);
 void menu_epa_r1(struct mged_state *s);

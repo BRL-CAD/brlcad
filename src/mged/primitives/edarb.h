@@ -73,6 +73,9 @@ mged_arb_e_axes_pos(
 	const struct rt_db_internal *ip,
        	const struct bn_tol *tol);
 
+struct menu_item *
+mged_arb_menu_item(const struct bn_tol *tol);
+
 int editarb(struct mged_state *s, vect_t pos_model);
 void ecmd_arb_main_menu(struct mged_state *s);
 int ecmd_arb_specific_menu(struct mged_state *s);

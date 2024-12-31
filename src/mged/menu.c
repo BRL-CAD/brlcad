@@ -229,6 +229,9 @@ mmenu_init(struct mged_state *s)
 void
 mmenu_set(struct mged_state *s, int index, struct menu_item *value)
 {
+    if (!value)
+	return;
+
     Tcl_DString ds_menu;
     struct bu_vls menu_string = BU_VLS_INIT_ZERO;
 

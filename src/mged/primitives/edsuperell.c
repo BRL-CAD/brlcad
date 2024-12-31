@@ -53,6 +53,12 @@ struct menu_item superell_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_superell_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return superell_menu;
+}
+
 /* scale vector A */
 void
 menu_superell_scale_a(struct mged_state *s)

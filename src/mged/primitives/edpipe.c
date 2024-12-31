@@ -160,6 +160,12 @@ struct menu_item pipe_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_pipe_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return pipe_menu;
+}
+
 
 void
 pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps), point_t UNUSED(new_pt))

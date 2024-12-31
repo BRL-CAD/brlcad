@@ -50,9 +50,6 @@ extern struct wdb_metaball_pnt *es_metaball_pnt;
 #define MENU_METABALL_DEL_PT	125
 #define MENU_METABALL_ADD_PT	126
 
-extern struct menu_item metaball_menu[];
-
-
 void
 mged_metaball_labels(
 	int *num_lines,
@@ -70,6 +67,9 @@ mged_metaball_keypoint(
 	const mat_t mat,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
+
+struct menu_item *
+mged_metaball_menu_item(const struct bn_tol *tol);
 
 void menu_metaball_set_threshold(struct mged_state *s);
 void menu_metaball_set_method(struct mged_state *s);

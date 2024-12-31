@@ -38,12 +38,13 @@
 #define MENU_CLINE_SCALE_R	109
 #define MENU_CLINE_SCALE_T	110
 
-extern struct menu_item cline_menu[];
-
 void
 mged_cline_e_axes_pos(
 	const struct rt_db_internal *ip,
        	const struct bn_tol *tol);
+
+struct menu_item *
+mged_cline_menu_item(const struct bn_tol *tol);
 
 void ecmd_cline_scale_h(struct mged_state *s);
 void ecmd_cline_scale_r(struct mged_state *s);

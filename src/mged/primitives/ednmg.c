@@ -317,6 +317,11 @@ struct menu_item nmg_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_nmg_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return nmg_menu;
+}
 
 
 const char *

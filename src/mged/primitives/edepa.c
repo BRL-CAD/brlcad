@@ -53,6 +53,12 @@ struct menu_item epa_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_epa_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return epa_menu;
+}
+
 /* scale height vector H */
 void
 menu_epa_h(struct mged_state *s)

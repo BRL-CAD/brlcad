@@ -28,8 +28,6 @@
 #include "raytrace.h"
 #include "mged.h"
 
-extern struct menu_item spline_menu[];
-
 int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
 
 void bspline_init_sedit(struct mged_state *s);
@@ -52,6 +50,9 @@ mged_bspline_keypoint(
 	const mat_t mat,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
+
+struct menu_item *
+mged_bspline_menu_item(const struct bn_tol *tol);
 
 void ecmd_vtrans(struct mged_state *s);
 

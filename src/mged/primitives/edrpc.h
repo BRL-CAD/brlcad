@@ -32,7 +32,8 @@
 #define MENU_RPC_H		44
 #define MENU_RPC_R		45
 
-extern struct menu_item rpc_menu[];
+struct menu_item *
+mged_rpc_menu_item(const struct bn_tol *tol);
 
 void menu_rpc_b(struct mged_state *s);
 void menu_rpc_h(struct mged_state *s);

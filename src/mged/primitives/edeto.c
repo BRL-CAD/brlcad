@@ -57,6 +57,12 @@ struct menu_item eto_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_eto_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return eto_menu;
+}
+
 /* scale radius 1 (r) of ETO */
 void
 menu_eto_r(struct mged_state *s)

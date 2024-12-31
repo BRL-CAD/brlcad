@@ -62,6 +62,12 @@ struct menu_item  hyp_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_hyp_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return hyp_menu;
+}
+
 /* scale height of HYP */
 void
 menu_hyp_h(struct mged_state *s)

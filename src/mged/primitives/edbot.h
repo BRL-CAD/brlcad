@@ -54,8 +54,6 @@
 #define MENU_BOT_DELETE_TRI	101
 #define MENU_BOT_FLAGS		102
 
-extern struct menu_item bot_menu[];
-
 extern int bot_verts[3];
 
 void
@@ -76,6 +74,9 @@ mged_bot_keypoint(
 	const mat_t mat,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
+
+struct menu_item *
+mged_bot_menu_item(const struct bn_tol *tol);
 
 void ecmd_bot_mode(struct mged_state *s);
 void ecmd_bot_orient(struct mged_state *s);

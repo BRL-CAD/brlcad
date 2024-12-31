@@ -33,7 +33,8 @@
 #define MENU_RHC_R		48
 #define MENU_RHC_C		49
 
-extern struct menu_item rhc_menu[];
+struct menu_item *
+mged_rhc_menu_item(const struct bn_tol *tol);
 
 void menu_rhc_b(struct mged_state *s);
 void menu_rhc_h(struct mged_state *s);

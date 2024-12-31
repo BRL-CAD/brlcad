@@ -32,7 +32,8 @@
 #define MENU_PART_v		89
 #define MENU_PART_h		90
 
-extern struct menu_item part_menu[];
+struct menu_item *
+mged_part_menu_item(const struct bn_tol *tol);
 
 void menu_part_h(struct mged_state *s);
 void menu_part_v(struct mged_state *s);

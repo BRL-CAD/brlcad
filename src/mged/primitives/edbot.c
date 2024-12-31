@@ -68,6 +68,12 @@ struct menu_item bot_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_bot_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return bot_menu;
+}
+
 void
 mged_bot_labels(
 	int *num_lines,

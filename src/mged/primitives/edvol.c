@@ -77,6 +77,12 @@ struct menu_item vol_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_vol_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return vol_menu;
+}
+
 /* scale voxel size */
 void
 menu_vol_csize(struct mged_state *s)

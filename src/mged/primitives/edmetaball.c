@@ -147,6 +147,12 @@ struct menu_item metaball_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_metaball_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return metaball_menu;
+}
+
 
 void
 mged_metaball_labels(

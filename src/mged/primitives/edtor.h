@@ -31,7 +31,8 @@
 #define MENU_TOR_R1		21
 #define MENU_TOR_R2		22
 
-extern struct menu_item tor_menu[];
+struct menu_item *
+mged_tor_menu_item(const struct bn_tol *tol);
 
 void menu_tor_r1(struct mged_state *s);
 void menu_tor_r2(struct mged_state *s);

@@ -400,78 +400,12 @@ sedit_menu(struct mged_state *s) {
     mmenu_set_all(s, MENU_L1, NULL);
     chg_l2menu(s, ST_S_EDIT);
 
-    switch (s->edit_state.es_int.idb_type) {
-
-	case ID_ARB8:
-	    mmenu_set_all(s, MENU_L1, cntrl_menu);
-	    break;
-	case ID_TGC:
-	    mmenu_set_all(s, MENU_L1, tgc_menu);
-	    break;
-	case ID_TOR:
-	    mmenu_set_all(s, MENU_L1, tor_menu);
-	    break;
-	case ID_ELL:
-	    mmenu_set_all(s, MENU_L1, ell_menu);
-	    break;
-	case ID_SUPERELL:
-	    mmenu_set_all(s, MENU_L1, superell_menu);
-	    break;
-	case ID_ARS:
-	    mmenu_set_all(s, MENU_L1, ars_menu);
-	    break;
-	case ID_BSPLINE:
-	    mmenu_set_all(s, MENU_L1, spline_menu);
-	    break;
-	case ID_RPC:
-	    mmenu_set_all(s, MENU_L1, rpc_menu);
-	    break;
-	case ID_RHC:
-	    mmenu_set_all(s, MENU_L1, rhc_menu);
-	    break;
-	case ID_EPA:
-	    mmenu_set_all(s, MENU_L1, epa_menu);
-	    break;
-	case ID_EHY:
-	    mmenu_set_all(s, MENU_L1, ehy_menu);
-	    break;
-	case ID_HYP:
-	    mmenu_set_all(s, MENU_L1, hyp_menu);
-	    break;
-	case ID_ETO:
-	    mmenu_set_all(s, MENU_L1, eto_menu);
-	    break;
-	case ID_NMG:
-	    mmenu_set_all(s, MENU_L1, nmg_menu);
-	    break;
-	case ID_PIPE:
-	    mmenu_set_all(s, MENU_L1, pipe_menu);
-	    break;
-	case ID_METABALL:
-	    mmenu_set_all(s, MENU_L1, metaball_menu);
-	    break;
-	case ID_VOL:
-	    mmenu_set_all(s, MENU_L1, vol_menu);
-	    break;
-	case ID_EBM:
-	    mmenu_set_all(s, MENU_L1, ebm_menu);
-	    break;
-	case ID_DSP:
-	    mmenu_set_all(s, MENU_L1, dsp_menu);
-	    break;
-	case ID_PARTICLE:
-	    mmenu_set_all(s, MENU_L1, part_menu);
-	    break;
-	case ID_BOT:
-	    mmenu_set_all(s, MENU_L1, bot_menu);
-	    break;
-	case ID_EXTRUDE:
-	    mmenu_set_all(s, MENU_L1, extr_menu);
-	    break;
-	case ID_CLINE:
-	    mmenu_set_all(s, MENU_L1, cline_menu);
-	    break;
+    struct rt_db_internal *ip = &s->edit_state.es_int; 
+    if (MGED_OBJ[ip->idb_type].ft_menu_item) {
+	struct menu_item *mi = (*MGED_OBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
+	mmenu_set_all(s, MENU_L1, mi);
     }
+
     es_edflag = IDLE;	/* Drop out of previous edit mode */
     es_menu = 0;
 }
@@ -2354,6 +2288,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
+    struct rt_db_internal *ip = &s->edit_state.es_int;
 
     struct menu_item *mip = (struct menu_item *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2429,71 +2364,8 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 
 	    break;
 	default:
-	    switch (s->edit_state.es_int.idb_type) {
-		case ID_TGC:
-		    mip = tgc_menu;
-		    break;
-		case ID_TOR:
-		    mip = tor_menu;
-		    break;
-		case ID_ELL:
-		    mip = ell_menu;
-		    break;
-		case ID_SUPERELL:
-		    mip = superell_menu;
-		    break;
-		case ID_BSPLINE:
-		    mip = spline_menu;
-		    break;
-		case ID_RPC:
-		    mip = rpc_menu;
-		    break;
-		case ID_RHC:
-		    mip = rhc_menu;
-		    break;
-		case ID_EPA:
-		    mip = epa_menu;
-		    break;
-		case ID_EHY:
-		    mip = ehy_menu;
-		    break;
-		case ID_HYP:
-		    mip = hyp_menu;
-		    break;
-		case ID_ETO:
-		    mip = eto_menu;
-		    break;
-		case ID_NMG:
-		    mip = nmg_menu;
-		    break;
-		case ID_PIPE:
-		    mip = pipe_menu;
-		    break;
-		case ID_METABALL:
-		    mip = metaball_menu;
-		    break;
-		case ID_VOL:
-		    mip = vol_menu;
-		    break;
-		case ID_EBM:
-		    mip = ebm_menu;
-		    break;
-		case ID_DSP:
-		    mip = dsp_menu;
-		    break;
-		case ID_PARTICLE:
-		    mip = part_menu;
-		    break;
-		case ID_BOT:
-		    mip = bot_menu;
-		    break;
-		case ID_EXTRUDE:
-		    mip = extr_menu;
-		    break;
-		case ID_CLINE:
-		    mip = cline_menu;
-		    break;
-	    }
+	    if (MGED_OBJ[ip->idb_type].ft_menu_item)
+		mip = (*MGED_OBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
 
 	    if (mip == (struct menu_item *)NULL)
 		break;

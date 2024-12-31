@@ -53,6 +53,12 @@ struct menu_item rpc_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_rpc_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return rpc_menu;
+}
+
 /* scale vector B */
 void
 menu_rpc_b(struct mged_state *s)

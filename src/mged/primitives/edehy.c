@@ -54,6 +54,12 @@ struct menu_item ehy_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_ehy_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return ehy_menu;
+}
+
 /* scale height vector H */
 void
 menu_ehy_h(struct mged_state *s)

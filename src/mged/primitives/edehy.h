@@ -33,7 +33,8 @@
 #define MENU_EHY_R2		55
 #define MENU_EHY_C		56
 
-extern struct menu_item ehy_menu[];
+struct menu_item *
+mged_ehy_menu_item(const struct bn_tol *tol);
 
 void menu_ehy_h(struct mged_state *s);
 void menu_ehy_r1(struct mged_state *s);

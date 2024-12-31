@@ -37,7 +37,8 @@
 #define MENU_HYP_C		130
 #define MENU_HYP_ROT_H		131
 
-extern struct menu_item hyp_menu[];
+struct menu_item *
+mged_hyp_menu_item(const struct bn_tol *tol);
 
 void menu_hyp_h(struct mged_state *s);
 void menu_hyp_scale_a(struct mged_state *s);

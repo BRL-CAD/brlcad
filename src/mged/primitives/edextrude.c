@@ -53,6 +53,12 @@ struct menu_item extr_menu[] = {
     { "", NULL, 0 }
 };
 
+struct menu_item *
+mged_extrude_menu_item(const struct bn_tol *UNUSED(tol))
+{
+    return extr_menu;
+}
+
 const char *
 mged_extrude_keypoint(
 	point_t *pt,

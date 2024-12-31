@@ -52,8 +52,6 @@ extern struct wdb_pipe_pnt *es_pipe_pnt;
 #define MENU_PIPE_PT_RADIUS	73
 #define MENU_PIPE_SCALE_RADIUS	74
 
-extern struct menu_item pipe_menu[];
-
 void pipe_scale_od(struct mged_state *s, struct rt_db_internal *, fastf_t);
 void pipe_scale_id(struct mged_state *s, struct rt_db_internal *, fastf_t);
 void pipe_seg_scale_od(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
@@ -86,6 +84,9 @@ mged_pipe_labels(
 	const mat_t xform,
 	struct rt_db_internal *ip,
 	struct bn_tol *tol);
+
+struct menu_item *
+mged_pipe_menu_item(const struct bn_tol *tol);
 
 void menu_pipe_pt_od(struct mged_state *s);
 void menu_pipe_pt_id(struct mged_state *s);
