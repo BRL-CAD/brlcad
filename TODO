@@ -56,6 +56,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * combine solid_report with the "who" command (subcommand options)
 
+* explore c++ fastf_t class.  compile-time support for using GMP or CLN
+  for arbitrary exact precision arithmetic computation support
+
 * Update find_package uses to take advantage of EXPORT targets when
   upstream packages have them available.  This should let us reduce
   the number of Find*.cmake files we need to include.  Ultimately,
@@ -1217,9 +1220,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (instead of one conglomerate BoT)
 
 * review and merge in the rest of the GSI modifications
-
-* Optional compile-time support for using GMP or CLN for arbitrary
-  exact precision arithmetic computation support
 
 * inside/outside point and voxel testing capability in librt
 
