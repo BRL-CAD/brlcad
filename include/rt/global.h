@@ -45,6 +45,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 

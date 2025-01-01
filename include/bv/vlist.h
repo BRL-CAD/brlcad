@@ -54,6 +54,7 @@
 #include "vmath.h"
 #include "bu/magic.h"
 #include "bu/list.h"
+#include "bu/malloc.h"
 #include "bu/vls.h"
 #include "bv/defines.h"
 
