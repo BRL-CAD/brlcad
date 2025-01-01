@@ -51,6 +51,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* convert non-planar arb's to brep objects for ray-tracing.  see how
+  well it works to see if we can remove an arb limitation.
+
 * combine solid_report with the "who" command (subcommand options)
 
 * Update find_package uses to take advantage of EXPORT targets when
@@ -1065,9 +1068,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add a force option to the tracers to support overwriting the current
   output file (so long as we're going to make it read-only by default).
 
-* convert non-planar arb's to brep objects for ray-tracing.  see how
-  well it works to see if we can remove an arb limitation.
-
 * clean up new rt -l8 heat graph lighting model so that it works in
   parallel and with no "splotches"
 
@@ -1211,9 +1211,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * Implement an optical shader for the new "pixelated" military
   camouflage style
-
-* preserve an arb8 as an arb8 (instead of writing as arb6 or arb5) and
-  similarly for the other arb# sizes
 
 * enhance dxf-g to create more than just one combination per layer,
   creating multiple objects for the individual objects in the dxf file
