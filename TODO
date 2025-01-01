@@ -2138,6 +2138,7 @@ NEW OBJECTS
   but would then allow automatic implicit blending, chamfer/bevel,
   rounding, and filleting.
 
+
 WINDOWS
 -------
 
@@ -2158,8 +2159,6 @@ CONVERTERS
 
 * add obj cstype/bezier/surf/curv/param/trim/etc import for nurbs
   import/export support
-
-* improve glTF importer
 
 * add glTF exporter (.gltf and .glb file formats)
 
