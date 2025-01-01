@@ -2130,9 +2130,6 @@ NEW OBJECTS
 
 * lemon (quartic) - elliptical nose cap (requested shape) shape.
 
-* box-spline blend - blending object that is defined by an arb8
-  volume, blending any entities within that volume that intersect
-
 * lipschitz blend - means to procedurally blend surface edges based on
   a blend function and sphere tracing. see "Combining CSG modeling
   with soft blending using Lipschitz-based implicit surfaces".
