@@ -2134,6 +2134,9 @@ NEW OBJECTS
   a blend function and sphere tracing. see "Combining CSG modeling
   with soft blending using Lipschitz-based implicit surfaces".
 
+* SDF blending - likely requires defining per-prim distance functions,
+  but would then allow automatic implicit blending, chamfer/bevel,
+  rounding, and filleting.
 
 WINDOWS
 -------
