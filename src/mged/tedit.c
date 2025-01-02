@@ -71,8 +71,38 @@ static int cgtype = 8;
 
 int writesolid(struct mged_state *), readsolid(struct mged_state *);
 
+/*
+ *
+ * No-frills edit - opens an editor on the supplied
+ * file name.
+ *
+ */
 int
-f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+editit(struct mged_state *s, const char *tempfile) {
+    int argc = 5;
+    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
+
+    CHECK_DBI_NULL;
+
+    if (!get_editor_string(s, &editstring))
+	return TCL_ERROR;
+
+    av[0] = "editit";
+    av[1] = "-e";
+    av[2] = bu_vls_addr(&editstring);
+    av[3] = "-f";
+    av[4] = tempfile;
+    av[5] = NULL;
+
+    ged_exec(s->gedp, argc, (const char **)av);
+
+    bu_vls_free(&editstring);
+    return TCL_OK;
+}
+
+int
+f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char **UNUSED(argv))
 {
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
@@ -108,7 +138,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (editit(s, argv[0], tmpfil) == TCL_OK) {
+    if (editit(s, tmpfil) == TCL_OK) {
 	if (readsolid(s)) {
 	    bu_file_delete(tmpfil);
 	    return TCL_ERROR;
