@@ -52,6 +52,34 @@ mged_hlf_write_params(
     bu_vls_printf(p, "Plane: %.9f %.9f %.9f %.9f\n", V4BASE2LOCAL(half->eqn));
 }
 
+int
+mged_hlf_read_params(
+	struct rt_db_internal *ip,
+	const char *fc,
+	const struct bn_tol *UNUSED(tol),
+	fastf_t local2base
+	)
+{
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
+    double d = 0.0;
+    struct rt_half_internal *haf = (struct rt_half_internal *)ip->idb_ptr;
+    RT_HALF_CK_MAGIC(haf);
+
+    if (!fc)
+	return BRLCAD_ERROR;
+
+    const char *lc = fc;
+    while (lc && strchr(lc, ':')) lc++;
+
+    sscanf(lc, "%lf %lf %lf %lf", &a, &b, &c, &d);
+    VSET(haf->eqn, a, b, c);
+    haf->eqn[W] = d * local2base;
+
+    // Cleanup
+    return BRLCAD_OK;
+}
 
 /*
  * Local Variables:

@@ -233,7 +233,6 @@ readsolid(struct mged_state *s)
     }
 
     switch (s->edit_state.es_int.idb_type) {
-	struct rt_half_internal *haf;
 	struct rt_grip_internal *grip;
 	struct rt_rpc_internal *rpc;
 	struct rt_rhc_internal *rhc;
@@ -251,16 +250,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_HALF:
-	    haf = (struct rt_half_internal *)s->edit_state.es_int.idb_ptr;
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf %lf", &a, &b, &c, &d);
-	    VSET(haf->eqn, a, b, c);
-	    haf->eqn[W] = d * s->dbip->dbi_local2base;
 	    break;
 	case ID_GRIP:
 	    grip = (struct rt_grip_internal *)s->edit_state.es_int.idb_ptr;
