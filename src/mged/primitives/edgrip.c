@@ -92,7 +92,7 @@ mged_grp_read_params(
     double b = 0.0;
     double c = 0.0;
     struct rt_grip_internal *grip = (struct rt_grip_internal *)ip->idb_ptr;
-    RT_TOR_CK_MAGIC(grip);
+    RT_GRIP_CK_MAGIC(grip);
 
     if (!fc)
 	return BRLCAD_ERROR;
