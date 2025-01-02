@@ -125,23 +125,30 @@ mged_part_read_params(
     // Trim off prefixes, if user left them in
     while (lc && strchr(lc, ':')) lc++;
 
+    // Read the numbers
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(part->part_V, a, b, c);
     VSCALE(part->part_V, part->part_V, local2base);
 
+    // Set up Height line
     read_params_line_incr;
 
+    // Read the numbers
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(part->part_H, a, b, c);
     VSCALE(part->part_H, part->part_H, local2base);
 
+    // Set up v radius line
     read_params_line_incr;
 
+    // Read the numbers
     sscanf(lc, "%lf", &a);
     part->part_vrad = a * local2base;
 
+    // Set up h radius line
     read_params_line_incr;
 
+    // Read the numbers
     sscanf(lc, "%lf", &a);
     part->part_hrad = a * local2base;
 

@@ -173,192 +173,35 @@ writesolid(struct mged_state *s)
     return 0;
 }
 
-
-static char *
-Get_next_line(FILE *fp)
-{
-    static char line[RT_MAXLINE];
-    size_t i;
-    size_t len;
-
-    if (bu_fgets(line, sizeof(line), fp) == NULL)
-	return (char *)NULL;
-
-    len = strlen(line);
-
-    i = 0;
-    while (i<len && line[i++] != ':');
-
-    if (i == len || line[i] == '\0')
-	return (char *)NULL;
-
-    return &line[i];
-}
-
-
 /* Read numerical parameters of solid from file */
 int
 readsolid(struct mged_state *s)
 {
-    FILE *fp;
-    int ret_val=0;
-
     CHECK_DBI_NULL;
 
     struct rt_db_internal *ip = &s->edit_state.es_int;
 
-    if (MGED_OBJ[ip->idb_type].ft_read_params) {
-	struct bu_vls solid_in = BU_VLS_INIT_ZERO;
-	struct bu_mapped_file *mf = bu_open_mapped_file(tmpfil, (char *)NULL);
-	if (!mf) {
-	    bu_log("cannot read temporary file \"%s\"\n", tmpfil);
-	    return 1;	/* FAIL */
-	}
-	bu_vls_strncpy(&solid_in, (char *)mf->buf, mf->buflen);
-	bu_close_mapped_file(mf);
-
-	if ((*MGED_OBJ[ip->idb_type].ft_read_params)(ip, bu_vls_cstr(&solid_in), &s->tol.tol, s->dbip->dbi_local2base) == BRLCAD_ERROR) {
-	    bu_vls_free(&solid_in);
-	    return 1;   /* FAIL */
-	}
-
-	bu_vls_free(&solid_in);
-	return 0;
+    if (!MGED_OBJ[ip->idb_type].ft_read_params) {
+	Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
+	return 1;
     }
 
-    fp = fopen(tmpfil, "r");
-    if (fp == NULL) {
-	perror(tmpfil);
+    struct bu_vls solid_in = BU_VLS_INIT_ZERO;
+    struct bu_mapped_file *mf = bu_open_mapped_file(tmpfil, (char *)NULL);
+    if (!mf) {
+	bu_log("cannot read temporary file \"%s\"\n", tmpfil);
 	return 1;	/* FAIL */
     }
+    bu_vls_strncpy(&solid_in, (char *)mf->buf, mf->buflen);
+    bu_close_mapped_file(mf);
 
-    switch (s->edit_state.es_int.idb_type) {
-	struct rt_eto_internal *eto;
-	struct rt_superell_internal *superell;
-	struct rt_datum_internal *datum;
-
-	char *str;
-	double a, b, c, d, e, f, g;
-
-	default:
-	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
-	    ret_val = 1;
-	    break;
-	case ID_ETO:
-	    eto = (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(eto->eto_V, a, b, c);
-	    VSCALE(eto->eto_V, eto->eto_V, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(eto->eto_N, a, b, c);
-	    VUNITIZE(eto->eto_N);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(eto->eto_C, a, b, c);
-	    VSCALE(eto->eto_C, eto->eto_C, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    eto->eto_rd = a * s->dbip->dbi_local2base;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    eto->eto_r = a * s->dbip->dbi_local2base;
-	    break;
-	case ID_SUPERELL:
-	    superell = (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
-
-	    fprintf(stderr, "ID_SUPERELL\n");
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(superell->v, a, b, c);
-	    VSCALE(superell->v, superell->v, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(superell->a, a, b, c);
-	    VSCALE(superell->a, superell->a, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(superell->b, a, b, c);
-	    VSCALE(superell->b, superell->b, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(superell->c, a, b, c);
-	    VSCALE(superell->c, superell->c, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    (void) sscanf(str, "%lf %lf", &superell->n, &superell->e);
-	    break;
-	case ID_DATUM:
-	    datum = (struct rt_datum_internal *)s->edit_state.es_int.idb_ptr;
-	    do {
-		if ((str=Get_next_line(fp)) == NULL) {
-		    ret_val = 1;
-		    break;
-		}
-		if (bu_strncasecmp(str, "point", strlen("point")) == 0) {
-		    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-		    VSET(datum->pnt, a, b, c);
-		    VSCALE(datum->pnt, datum->pnt, s->dbip->dbi_local2base);
-		} else if (bu_strncasecmp(str, "line", strlen("line")) == 0) {
-		    sscanf(str, "%lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f);
-		    VSET(datum->pnt, a, b, c);
-		    VSET(datum->dir, d, e, f);
-		    VSCALE(datum->pnt, datum->pnt, s->dbip->dbi_local2base);
-		    VSCALE(datum->dir, datum->dir, s->dbip->dbi_local2base);
-		} else if (bu_strncasecmp(str, "plane", strlen("plane")) == 0) {
-		    sscanf(str, "%lf %lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f, &g);
-		    VSET(datum->pnt, a, b, c);
-		    VSET(datum->dir, d, e, f);
-		    VSCALE(datum->pnt, datum->pnt, s->dbip->dbi_local2base);
-		    VSCALE(datum->dir, datum->dir, s->dbip->dbi_local2base);
-		    datum->w = g;
-		}
-	    } while ((datum = datum->next));
-
-	    break;
+    if ((*MGED_OBJ[ip->idb_type].ft_read_params)(ip, bu_vls_cstr(&solid_in), &s->tol.tol, s->dbip->dbi_local2base) == BRLCAD_ERROR) {
+	bu_vls_free(&solid_in);
+	return 1;   /* FAIL */
     }
 
-    (void)fclose(fp);
-    return ret_val;
+    bu_vls_free(&solid_in);
+    return 0;
 }
 
 

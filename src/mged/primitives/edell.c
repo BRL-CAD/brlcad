@@ -130,18 +130,21 @@ mged_ell_read_params(
     VSET(ell->v, a, b, c);
     VSCALE(ell->v, ell->v, local2base);
 
+    // Set up A line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(ell->a, a, b, c);
     VSCALE(ell->a, ell->a, local2base);
 
+    // Set up B line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(ell->b, a, b, c);
     VSCALE(ell->b, ell->b, local2base);
 
+    // Set up C line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);

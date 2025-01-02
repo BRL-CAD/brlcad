@@ -131,23 +131,27 @@ mged_rhc_read_params(
     VSET(rhc->rhc_V, a, b, c);
     VSCALE(rhc->rhc_V, rhc->rhc_V, local2base);
 
+    // Set up Height line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(rhc->rhc_H, a, b, c);
     VSCALE(rhc->rhc_H, rhc->rhc_H, local2base);
 
+    // Set up Breadth line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(rhc->rhc_B, a, b, c);
     VSCALE(rhc->rhc_B, rhc->rhc_B, local2base);
 
+    // Set up Half-width line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);
     rhc->rhc_r = a * local2base;
 
+    // Set up distance to asymptotes line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);

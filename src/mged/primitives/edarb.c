@@ -572,23 +572,25 @@ mged_arb_e_axes_pos(
     MAT4X3PNT(curr_e_axes_pos, es_mat, arb->pt[i]);
 }
 
-/*          
+/*
  * given the index of a vertex of the arb currently being edited,
  * return 1 if this vertex should appear in the editor
  * return 0 if this vertex is a duplicate of one of the above
  */
-static int      
+static int
 useThisVertex(int idx, int *uvec, int *svec)
-{                   
-    int i;              
-                        
-    for (i=0; i<8 && uvec[i] != -1; i++) {
-        if (uvec[i] == idx) return 1;
-    }       
-                    
-    if (svec[0] != 0 && idx == svec[2]) return 1;
-   
-    if (svec[1] != 0 && idx == svec[2+svec[0]]) return 1;
+{
+    int i;
+
+    for (i=0; i<8 && uvec[i] != -1; i++)
+	if (uvec[i] == idx)
+	    return 1;
+
+    if (svec[0] != 0 && idx == svec[2])
+       	return 1;
+
+    if (svec[1] != 0 && idx == svec[2+svec[0]])
+       	return 1;
 
     return 0;
 }
@@ -666,7 +668,7 @@ mged_arb_read_params(
     char *wc = bu_strdup(fc);
     char *lc = wc;
 
-    // Set up initial line (Vertex)
+    // Set up initial line (pt[0])
     ln = strchr(lc, tc);
     if (ln) *ln = '\0';
 

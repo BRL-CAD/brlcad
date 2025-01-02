@@ -130,18 +130,21 @@ mged_rpc_read_params(
     VSET(rpc->rpc_V, a, b, c);
     VSCALE(rpc->rpc_V, rpc->rpc_V, local2base);
 
+    // Set up Height line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(rpc->rpc_H, a, b, c);
     VSCALE(rpc->rpc_H, rpc->rpc_H, local2base);
 
+    // Set up Breadth line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(rpc->rpc_B, a, b, c);
     VSCALE(rpc->rpc_B, rpc->rpc_B, local2base);
 
+    // Set up Half-width line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);

@@ -171,30 +171,35 @@ mged_tgc_read_params(
     VSET(tgc->v, a, b, c);
     VSCALE(tgc->v, tgc->v, local2base);
 
+    // Set up Height line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(tgc->h, a, b, c);
     VSCALE(tgc->h, tgc->h, local2base);
 
+    // Set up A line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(tgc->a, a, b, c);
     VSCALE(tgc->a, tgc->a, local2base);
 
+    // Set up B line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(tgc->b, a, b, c);
     VSCALE(tgc->b, tgc->b, local2base);
 
+    // Set up C line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(tgc->c, a, b, c);
     VSCALE(tgc->c, tgc->c, local2base);
 
+    // Set up D line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);

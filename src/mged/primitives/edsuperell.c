@@ -78,6 +78,89 @@ mged_superell_write_params(
     bu_vls_printf(p, "<n, e>: <%.9f, %.9f>\n", superell->n, superell->e);
 }
 
+#define read_params_line_incr \
+    lc = (ln) ? (ln + lcj) : NULL; \
+    if (!lc) { \
+	bu_free(wc, "wc"); \
+	return BRLCAD_ERROR; \
+    } \
+    ln = strchr(lc, tc); \
+    if (ln) *ln = '\0'; \
+    while (lc && strchr(lc, ':')) lc++
+
+int
+mged_superell_read_params(
+	struct rt_db_internal *ip,
+	const char *fc,
+	const struct bn_tol *UNUSED(tol),
+	fastf_t local2base
+	)
+{
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
+    struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+
+    if (!fc)
+	return BRLCAD_ERROR;
+
+    // We're getting the file contents as a string, so we need to split it up
+    // to process lines. See https://stackoverflow.com/a/17983619
+
+    // Figure out if we need to deal with Windows line endings
+    const char *crpos = strchr(fc, '\r');
+    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
+    char tc = (crlf) ? '\r' : '\n';
+    // If we're CRLF jump ahead another character.
+    int lcj = (crlf) ? 2 : 1;
+
+    char *ln = NULL;
+    char *wc = bu_strdup(fc);
+    char *lc = wc;
+
+    // Set up initial line (Vertex)
+    ln = strchr(lc, tc);
+    if (ln) *ln = '\0';
+
+    // Trim off prefixes, if user left them in
+    while (lc && strchr(lc, ':')) lc++;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(superell->v, a, b, c);
+    VSCALE(superell->v, superell->v, local2base);
+
+    // Set up A line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(superell->a, a, b, c);
+    VSCALE(superell->a, superell->a, local2base);
+
+    // Set up B line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(superell->b, a, b, c);
+    VSCALE(superell->b, superell->b, local2base);
+
+    // Set up C line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(superell->c, a, b, c);
+    VSCALE(superell->c, superell->c, local2base);
+
+    // Set up n, e line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf", &superell->n, &superell->e);
+
+    // Cleanup
+    bu_free(wc, "wc");
+    return BRLCAD_OK;
+}
+
 /* scale vector A */
 void
 menu_superell_scale_a(struct mged_state *s)

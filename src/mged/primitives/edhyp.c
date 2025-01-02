@@ -139,23 +139,27 @@ mged_hyp_read_params(
     VSET(hyp->hyp_Vi, a, b, c);
     VSCALE(hyp->hyp_Vi, hyp->hyp_Vi, local2base);
 
+    // Set up Height line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(hyp->hyp_Hi, a, b, c);
     VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, local2base);
 
+    // Set up Semi-major axis line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(hyp->hyp_A, a, b, c);
     VSCALE(hyp->hyp_A, hyp->hyp_A, local2base);
 
+    // Set up Semi-minor length line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);
     hyp->hyp_b = a * local2base;
 
+    // Set up Ratio of Neck to Base line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);

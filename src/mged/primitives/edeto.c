@@ -82,6 +82,89 @@ mged_eto_write_params(
     bu_vls_printf(p, "Radius of rotation: %.9f\n", eto->eto_r * base2local);
 }
 
+#define read_params_line_incr \
+    lc = (ln) ? (ln + lcj) : NULL; \
+    if (!lc) { \
+	bu_free(wc, "wc"); \
+	return BRLCAD_ERROR; \
+    } \
+    ln = strchr(lc, tc); \
+    if (ln) *ln = '\0'; \
+    while (lc && strchr(lc, ':')) lc++
+
+int
+mged_eto_read_params(
+	struct rt_db_internal *ip,
+	const char *fc,
+	const struct bn_tol *UNUSED(tol),
+	fastf_t local2base
+	)
+{
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
+    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    if (!fc)
+	return BRLCAD_ERROR;
+
+    // We're getting the file contents as a string, so we need to split it up
+    // to process lines. See https://stackoverflow.com/a/17983619
+
+    // Figure out if we need to deal with Windows line endings
+    const char *crpos = strchr(fc, '\r');
+    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
+    char tc = (crlf) ? '\r' : '\n';
+    // If we're CRLF jump ahead another character.
+    int lcj = (crlf) ? 2 : 1;
+
+    char *ln = NULL;
+    char *wc = bu_strdup(fc);
+    char *lc = wc;
+
+    // Set up initial line (Vertex)
+    ln = strchr(lc, tc);
+    if (ln) *ln = '\0';
+
+    // Trim off prefixes, if user left them in
+    while (lc && strchr(lc, ':')) lc++;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(eto->eto_V, a, b, c);
+    VSCALE(eto->eto_V, eto->eto_V, local2base);
+
+    // Set up Normal line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(eto->eto_N, a, b, c);
+    VUNITIZE(eto->eto_N);
+
+    // Set up Semi-major axis line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(eto->eto_C, a, b, c);
+    VSCALE(eto->eto_C, eto->eto_C, local2base);
+
+    // Set up Semi-minor length line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf", &a);
+    eto->eto_rd = a * local2base;
+
+    // Set up Radius of rotation line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf", &a);
+    eto->eto_r = a * local2base;
+
+    // Cleanup
+    bu_free(wc, "wc");
+    return BRLCAD_OK;
+}
+
 /* scale radius 1 (r) of ETO */
 void
 menu_eto_r(struct mged_state *s)

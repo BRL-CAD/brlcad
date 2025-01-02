@@ -323,7 +323,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_eto_write_params), /* write_params */
-	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_eto_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_eto_menu_item)    /* menu_item */
     },
 
@@ -481,7 +481,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_superell_write_params), /* write_params */
-	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_superell_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_superell_menu_item)    /* menu_item */
     },
 
@@ -581,7 +581,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_datum_write_params), /* write_params */
-	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_datum_read_params), /* read_params */
         NULL   /* menu_item */
     },
 

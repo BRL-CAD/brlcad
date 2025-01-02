@@ -132,28 +132,33 @@ mged_ehy_read_params(
     VSET(ehy->ehy_V, a, b, c);
     VSCALE(ehy->ehy_V, ehy->ehy_V, local2base);
 
+    // Set up Height line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(ehy->ehy_H, a, b, c);
     VSCALE(ehy->ehy_H, ehy->ehy_H, local2base);
 
+    // Set up Semi-major axis line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(ehy->ehy_Au, a, b, c);
     VUNITIZE(ehy->ehy_Au);
 
+    // Set up Semi-major length line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);
     ehy->ehy_r1 = a * local2base;
 
+    // Set up Semi-minor length line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);
     ehy->ehy_r2 = a * local2base;
 
+    // Set up distance to asymptotes line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);

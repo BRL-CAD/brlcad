@@ -130,25 +130,29 @@ mged_epa_read_params(
     VSET(epa->epa_V, a, b, c);
     VSCALE(epa->epa_V, epa->epa_V, local2base);
 
+    // Set up Height line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(epa->epa_H, a, b, c);
     VSCALE(epa->epa_H, epa->epa_H, local2base);
 
+    // Set up Semi-major axis line
     read_params_line_incr;
-    
+
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(epa->epa_Au, a, b, c);
     VUNITIZE(epa->epa_Au);
 
+    // Set up Semi-major length line
     read_params_line_incr;
-    
+
     sscanf(lc, "%lf", &a);
     epa->epa_r1 = a * local2base;
 
+    // Set up Semi-minor length line
     read_params_line_incr;
-    
+
     sscanf(lc, "%lf", &a);
     epa->epa_r2 = a * local2base;
 

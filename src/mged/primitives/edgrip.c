@@ -111,7 +111,7 @@ mged_grp_read_params(
     char *wc = bu_strdup(fc);
     char *lc = wc;
 
-    // Set up initial line (Vertex)
+    // Set up initial line (Center)
     ln = strchr(lc, tc);
     if (ln) *ln = '\0';
 
@@ -122,10 +122,17 @@ mged_grp_read_params(
     VSET(grip->center, a, b, c);
     VSCALE(grip->center, grip->center, local2base);
 
+    // Set up Normal line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(grip->normal, a, b, c);
+
+    // Set up Magnitude line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf", &a);
+    grip->mag = a * local2base;
 
     // Cleanup
     bu_free(wc, "wc");
