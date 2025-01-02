@@ -119,6 +119,92 @@ mged_tgc_write_params(
     bu_vls_printf(p, "D: %.9f %.9f %.9f\n", V3BASE2LOCAL(tgc->d));
 }
 
+#define read_params_line_incr \
+    lc = (ln) ? (ln + lcj) : NULL; \
+    if (!lc) { \
+	bu_free(wc, "wc"); \
+	return BRLCAD_ERROR; \
+    } \
+    ln = strchr(lc, tc); \
+    if (ln) *ln = '\0'; \
+    while (lc && strchr(lc, ':')) lc++
+
+int
+mged_tgc_read_params(
+	struct rt_db_internal *ip,
+	const char *fc,
+	fastf_t local2base
+	)
+{
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
+    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tgc);
+
+    if (!fc)
+	return BRLCAD_ERROR;
+
+    // We're getting the file contents as a string, so we need to split it up
+    // to process lines. See https://stackoverflow.com/a/17983619
+
+    // Figure out if we need to deal with Windows line endings
+    const char *crpos = strchr(fc, '\r');
+    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
+    char tc = (crlf) ? '\r' : '\n';
+    // If we're CRLF jump ahead another character.
+    int lcj = (crlf) ? 2 : 1;
+
+    char *ln = NULL;
+    char *wc = bu_strdup(fc);
+    char *lc = wc;
+
+    // Set up initial line (Vertex)
+    ln = strchr(lc, tc);
+    if (ln) *ln = '\0';
+
+    // Trim off prefixes, if user left them in
+    while (lc && strchr(lc, ':')) lc++;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(tgc->v, a, b, c);
+    VSCALE(tgc->v, tgc->v, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(tgc->h, a, b, c);
+    VSCALE(tgc->h, tgc->h, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(tgc->a, a, b, c);
+    VSCALE(tgc->a, tgc->a, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(tgc->b, a, b, c);
+    VSCALE(tgc->b, tgc->b, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(tgc->c, a, b, c);
+    VSCALE(tgc->c, tgc->c, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(tgc->d, a, b, c);
+    VSCALE(tgc->d, tgc->d, local2base);
+
+    // Cleanup
+    bu_free(wc, "wc");
+    return BRLCAD_OK;
+}
+
 /* scale height vector */
 void
 menu_tgc_scale_h(struct mged_state *s)

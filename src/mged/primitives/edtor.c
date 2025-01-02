@@ -87,7 +87,7 @@ mged_tor_write_params(
     } \
     ln = strchr(lc, tc); \
     if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++;
+    while (lc && strchr(lc, ':')) lc++
 
 int
 mged_tor_read_params(
@@ -132,7 +132,7 @@ mged_tor_read_params(
     VSCALE(tor->v, tor->v, local2base);
 
     // Set up Normal line
-    read_params_line_incr
+    read_params_line_incr;
 
     // Read the numbers
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
@@ -140,14 +140,14 @@ mged_tor_read_params(
     VUNITIZE(tor->h);
 
     // Set up radius_1 line
-    read_params_line_incr
+    read_params_line_incr;
 
     // Read the numbers
     sscanf(lc, "%lf", &a);
     tor->r_a = a * local2base;
 
     // Set up radius_2 line
-    read_params_line_incr
+    read_params_line_incr;
 
     // Read the numbers
     sscanf(lc, "%lf", &a);
