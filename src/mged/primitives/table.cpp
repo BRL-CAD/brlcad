@@ -103,7 +103,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tor_write_params), /* write_params */
-	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tor_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tor_menu_item)    /* menu_item */
     },
 

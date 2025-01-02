@@ -233,16 +233,26 @@ readsolid(struct mged_state *s)
 
     CHECK_DBI_NULL;
 
-#if 0
-    struct bu_vls solid_in = BU_VLS_INIT_ZERO;
-    struct bu_mapped_file *mf = bu_open_mapped_file(tmpfil, (char *)NULL);
-    if (!mf) {
-	bu_log("cannot read temporary file \"%s\"\n", tmpfil);
-	return 1;	/* FAIL */
+    struct rt_db_internal *ip = &s->edit_state.es_int;
+
+    if (MGED_OBJ[ip->idb_type].ft_read_params) {
+	struct bu_vls solid_in = BU_VLS_INIT_ZERO;
+	struct bu_mapped_file *mf = bu_open_mapped_file(tmpfil, (char *)NULL);
+	if (!mf) {
+	    bu_log("cannot read temporary file \"%s\"\n", tmpfil);
+	    return 1;	/* FAIL */
+	}
+	bu_vls_strncpy(&solid_in, (char *)mf->buf, mf->buflen);
+	bu_close_mapped_file(mf);
+
+	if ((*MGED_OBJ[ip->idb_type].ft_read_params)(ip, bu_vls_cstr(&solid_in), s->dbip->dbi_local2base) == BRLCAD_ERROR) {
+	    bu_vls_free(&solid_in);
+	    return 1;   /* FAIL */
+	}
+
+	bu_vls_free(&solid_in);
+	return 0;
     }
-    bu_vls_strncpy(&solid_in, (char *)mf->buf, mf->buflen);
-    bu_close_mapped_file(mf);
-#endif
 
     fp = fopen(tmpfil, "r");
     if (fp == NULL) {
@@ -251,7 +261,6 @@ readsolid(struct mged_state *s)
     }
 
     switch (s->edit_state.es_int.idb_type) {
-	struct rt_tor_internal *tor;
 	struct rt_tgc_internal *tgc;
 	struct rt_ell_internal *ell;
 	struct rt_arb_internal *arb;
@@ -273,38 +282,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_TOR:
-	    tor = (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(tor->v, a, b, c);
-	    VSCALE(tor->v, tor->v, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(tor->h, a, b, c);
-	    VUNITIZE(tor->h);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    tor->r_a = a * s->dbip->dbi_local2base;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    tor->r_h = a * s->dbip->dbi_local2base;
 	    break;
 	case ID_TGC:
 	case ID_REC:

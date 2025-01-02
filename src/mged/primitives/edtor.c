@@ -86,7 +86,8 @@ mged_tor_write_params(
 	return BRLCAD_ERROR; \
     } \
     ln = strchr(lc, tc); \
-    if (ln) *ln = '\0';
+    if (ln) *ln = '\0'; \
+    while (lc && strchr(lc, ':')) lc++;
 
 int
 mged_tor_read_params(
@@ -95,7 +96,9 @@ mged_tor_read_params(
 	fastf_t local2base
 	)
 {
-    double a, b, c;
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
     struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
@@ -116,29 +119,41 @@ mged_tor_read_params(
     char *wc = bu_strdup(fc);
     char *lc = wc;
 
+    // Set up initial line (Vertex)
     ln = strchr(lc, tc);
     if (ln) *ln = '\0';
 
+    // Trim off prefixes, if user left them in
+    while (lc && strchr(lc, ':')) lc++;
+
+    // Read the numbers
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(tor->v, a, b, c);
     VSCALE(tor->v, tor->v, local2base);
 
+    // Set up Normal line
     read_params_line_incr
 
+    // Read the numbers
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
     VSET(tor->h, a, b, c);
     VUNITIZE(tor->h);
 
+    // Set up radius_1 line
     read_params_line_incr
 
+    // Read the numbers
     sscanf(lc, "%lf", &a);
     tor->r_a = a * local2base;
 
+    // Set up radius_2 line
     read_params_line_incr
 
+    // Read the numbers
     sscanf(lc, "%lf", &a);
     tor->r_h = a * local2base;
 
+    // Cleanup
     bu_free(wc, "wc");
     return BRLCAD_OK;
 }
