@@ -239,7 +239,6 @@ readsolid(struct mged_state *s)
 	struct rt_ehy_internal *ehy;
 	struct rt_hyp_internal *hyp;
 	struct rt_eto_internal *eto;
-	struct rt_part_internal *part;
 	struct rt_superell_internal *superell;
 	struct rt_datum_internal *datum;
 
@@ -249,40 +248,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_PARTICLE:
-	    part = (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(part->part_V, a, b, c);
-	    VSCALE(part->part_V, part->part_V, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(part->part_H, a, b, c);
-	    VSCALE(part->part_H, part->part_H, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    part->part_vrad = a * s->dbip->dbi_local2base;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    part->part_hrad = a * s->dbip->dbi_local2base;
-
 	    break;
 	case ID_RPC:
 	    rpc = (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
