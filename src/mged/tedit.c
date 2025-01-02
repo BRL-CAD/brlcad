@@ -233,7 +233,6 @@ readsolid(struct mged_state *s)
     }
 
     switch (s->edit_state.es_int.idb_type) {
-	struct rt_rhc_internal *rhc;
 	struct rt_epa_internal *epa;
 	struct rt_ehy_internal *ehy;
 	struct rt_hyp_internal *hyp;
@@ -247,46 +246,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_RHC:
-	    rhc = (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(rhc->rhc_V, a, b, c);
-	    VSCALE(rhc->rhc_V, rhc->rhc_V, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(rhc->rhc_H, a, b, c);
-	    VSCALE(rhc->rhc_H, rhc->rhc_H, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(rhc->rhc_B, a, b, c);
-	    VSCALE(rhc->rhc_B, rhc->rhc_B, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    rhc->rhc_r = a * s->dbip->dbi_local2base;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    rhc->rhc_c = a * s->dbip->dbi_local2base;
 	    break;
 	case ID_EPA:
 	    epa = (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;

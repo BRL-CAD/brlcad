@@ -79,6 +79,85 @@ mged_rhc_write_params(
     bu_vls_printf(p, "Dist_to_asymptotes: %.9f\n", rhc->rhc_c * base2local); 
 }
 
+#define read_params_line_incr \
+    lc = (ln) ? (ln + lcj) : NULL; \
+    if (!lc) { \
+	bu_free(wc, "wc"); \
+	return BRLCAD_ERROR; \
+    } \
+    ln = strchr(lc, tc); \
+    if (ln) *ln = '\0'; \
+    while (lc && strchr(lc, ':')) lc++
+
+int
+mged_rhc_read_params(
+	struct rt_db_internal *ip,
+	const char *fc,
+	const struct bn_tol *UNUSED(tol),
+	fastf_t local2base
+	)
+{
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
+    struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rhc);
+
+    if (!fc)
+	return BRLCAD_ERROR;
+
+    // We're getting the file contents as a string, so we need to split it up
+    // to process lines. See https://stackoverflow.com/a/17983619
+
+    // Figure out if we need to deal with Windows line endings
+    const char *crpos = strchr(fc, '\r');
+    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
+    char tc = (crlf) ? '\r' : '\n';
+    // If we're CRLF jump ahead another character.
+    int lcj = (crlf) ? 2 : 1;
+
+    char *ln = NULL;
+    char *wc = bu_strdup(fc);
+    char *lc = wc;
+
+    // Set up initial line (Vertex)
+    ln = strchr(lc, tc);
+    if (ln) *ln = '\0';
+
+    // Trim off prefixes, if user left them in
+    while (lc && strchr(lc, ':')) lc++;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(rhc->rhc_V, a, b, c);
+    VSCALE(rhc->rhc_V, rhc->rhc_V, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(rhc->rhc_H, a, b, c);
+    VSCALE(rhc->rhc_H, rhc->rhc_H, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(rhc->rhc_B, a, b, c);
+    VSCALE(rhc->rhc_B, rhc->rhc_B, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf", &a);
+    rhc->rhc_r = a * local2base;
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf", &a);
+    rhc->rhc_c = a * local2base;
+
+    // Cleanup
+    bu_free(wc, "wc");
+    return BRLCAD_OK;
+}
+
 /* scale vector B */
 void
 menu_rhc_b(struct mged_state *s)
