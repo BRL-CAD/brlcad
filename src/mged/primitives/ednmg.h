@@ -45,27 +45,6 @@ extern struct shell *es_s;
 #define ECMD_NMG_EKILL		26	/* kill current edge */
 #define ECMD_NMG_LEXTRU		27	/* Extrude loop */
 
-extern const char *
-mged_nmg_keypoint(
-	point_t *pt,
-	const char *keystr,
-	const mat_t mat,
-	const struct rt_db_internal *ip,
-	const struct bn_tol *tol);
-
-extern void
-mged_nmg_labels(
-	int *num_lines,
-	point_t *lines,
-	struct rt_point_labels *pl,
-	int max_pl,
-	const mat_t xform,
-	struct rt_db_internal *ip,
-	struct bn_tol *tol);
-
-struct menu_item *
-mged_nmg_menu_item(const struct bn_tol *tol);
-
 extern void ecmd_nmg_emove(struct mged_state *s);
 extern void ecmd_nmg_ekill(struct mged_state *s);
 extern void ecmd_nmg_esplit(struct mged_state *s);

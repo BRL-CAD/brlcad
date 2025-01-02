@@ -28,14 +28,6 @@
 #include "raytrace.h"
 #include "mged.h"
 
-const char *
-mged_grp_keypoint(
-	point_t *pt,
-	const char *keystr,
-	const mat_t mat,
-	const struct rt_db_internal *ip,
-	const struct bn_tol *tol);
-
 #endif  /* EDGRIP_H */
 
 /*

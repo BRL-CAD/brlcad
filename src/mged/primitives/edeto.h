@@ -35,16 +35,6 @@
 #define MENU_ETO_SCALE_C	59
 #define MENU_ETO_ROT_C		60
 
-struct menu_item *
-mged_eto_menu_item(const struct bn_tol *tol);
-
-void
-mged_eto_write_params(
-	struct bu_vls *p,
-       	const struct rt_db_internal *ip,
-       	const struct bn_tol *tol,
-	fastf_t base2local);
-
 void menu_eto_r(struct mged_state *s);
 void menu_eto_rd(struct mged_state *s);
 void menu_eto_scale_c(struct mged_state *s);

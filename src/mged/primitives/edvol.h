@@ -40,9 +40,6 @@
 #define MENU_VOL_THRESH_LO	78
 #define MENU_VOL_THRESH_HI	79
 
-struct menu_item *
-mged_vol_menu_item(const struct bn_tol *tol);
-
 void menu_vol_csize(struct mged_state *s);
 void ecmd_vol_csize(struct mged_state *s);
 void ecmd_vol_fsize(struct mged_state *s);

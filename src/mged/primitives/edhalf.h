@@ -28,13 +28,6 @@
 #include "raytrace.h"
 #include "mged.h"
 
-void
-mged_hlf_write_params(
-	struct bu_vls *p,
-       	const struct rt_db_internal *ip,
-       	const struct bn_tol *tol,
-	fastf_t base2local);
-
 #endif  /* EDHALF_H */
 
 /*

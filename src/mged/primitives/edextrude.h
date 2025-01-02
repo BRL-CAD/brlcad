@@ -38,22 +38,6 @@
 #define MENU_EXTR_ROT_H		105
 #define MENU_EXTR_SKT_NAME	106
 
-const char *
-mged_extrude_keypoint(
-	point_t *pt,
-	const char *keystr,
-	const mat_t mat,
-	const struct rt_db_internal *ip,
-	const struct bn_tol *tol);
-
-void
-mged_extrude_e_axes_pos(
-	const struct rt_db_internal *ip,
-       	const struct bn_tol *tol);
-
-struct menu_item *
-mged_extrude_menu_item(const struct bn_tol *tol);
-
 void ecmd_extr_skt_name(struct mged_state *s);
 void ecmd_extr_mov_h(struct mged_state *s);
 void ecmd_extr_scale_h(struct mged_state *s);

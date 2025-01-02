@@ -67,27 +67,6 @@ void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_p
 void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
 struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
-const char *
-mged_pipe_keypoint(
-	point_t *pt,
-	const char *keystr,
-	const mat_t mat,
-	const struct rt_db_internal *ip,
-	const struct bn_tol *tol);
-
-void
-mged_pipe_labels(
-	int *num_lines,
-	point_t *lines,
-	struct rt_point_labels *pl,
-	int max_pl,
-	const mat_t xform,
-	struct rt_db_internal *ip,
-	struct bn_tol *tol);
-
-struct menu_item *
-mged_pipe_menu_item(const struct bn_tol *tol);
-
 void menu_pipe_pt_od(struct mged_state *s);
 void menu_pipe_pt_id(struct mged_state *s);
 void menu_pipe_pt_radius(struct mged_state *s);

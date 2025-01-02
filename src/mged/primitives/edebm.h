@@ -36,9 +36,6 @@
 #define MENU_EBM_FSIZE		81
 #define MENU_EBM_HEIGHT		82
 
-struct menu_item *
-mged_ebm_menu_item(const struct bn_tol *tol);
-
 int ecmd_ebm_fsize(struct mged_state *s);
 int ecmd_ebm_fname(struct mged_state *s);
 int ecmd_ebm_height(struct mged_state *s);

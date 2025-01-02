@@ -50,27 +50,6 @@ extern struct wdb_metaball_pnt *es_metaball_pnt;
 #define MENU_METABALL_DEL_PT	125
 #define MENU_METABALL_ADD_PT	126
 
-void
-mged_metaball_labels(
-	int *num_lines,
-	point_t *lines,
-	struct rt_point_labels *pl,
-	int max_pl,
-	const mat_t xform,
-	struct rt_db_internal *ip,
-	struct bn_tol *tol);
-
-const char *
-mged_metaball_keypoint(
-	point_t *pt,
-	const char *keystr,
-	const mat_t mat,
-	const struct rt_db_internal *ip,
-	const struct bn_tol *tol);
-
-struct menu_item *
-mged_metaball_menu_item(const struct bn_tol *tol);
-
 void menu_metaball_set_threshold(struct mged_state *s);
 void menu_metaball_set_method(struct mged_state *s);
 void menu_metaball_pt_set_goo(struct mged_state *s);

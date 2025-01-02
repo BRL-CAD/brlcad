@@ -33,16 +33,6 @@
 #define MENU_SUPERELL_SCALE_C	115
 #define MENU_SUPERELL_SCALE_ABC	116
 
-struct menu_item *
-mged_superell_menu_item(const struct bn_tol *tol);
-
-void
-mged_superell_write_params(
-	struct bu_vls *p,
-       	const struct rt_db_internal *ip,
-       	const struct bn_tol *tol,
-	fastf_t base2local);
-
 void menu_superell_scale_a(struct mged_state *s);
 void menu_superell_scale_b(struct mged_state *s);
 void menu_superell_scale_c(struct mged_state *s);

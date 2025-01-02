@@ -40,9 +40,6 @@
 #define MENU_DSP_SCALE_Y	86
 #define MENU_DSP_SCALE_ALT	87
 
-struct menu_item *
-mged_dsp_menu_item(const struct bn_tol *tol);
-
 void ecmd_dsp_scale_x(struct mged_state *s);
 void ecmd_dsp_scale_y(struct mged_state *s);
 void ecmd_dsp_scale_alt(struct mged_state *s);
