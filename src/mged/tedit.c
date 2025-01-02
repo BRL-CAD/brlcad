@@ -233,7 +233,6 @@ readsolid(struct mged_state *s)
     }
 
     switch (s->edit_state.es_int.idb_type) {
-	struct rt_hyp_internal *hyp;
 	struct rt_eto_internal *eto;
 	struct rt_superell_internal *superell;
 	struct rt_datum_internal *datum;
@@ -244,47 +243,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_HYP:
-	    hyp = (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(hyp->hyp_Vi, a, b, c);
-	    VSCALE(hyp->hyp_Vi, hyp->hyp_Vi, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(hyp->hyp_Hi, a, b, c);
-	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(hyp->hyp_A, a, b, c);
-	    VSCALE(hyp->hyp_A, hyp->hyp_A, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    hyp->hyp_b = a * s->dbip->dbi_local2base;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    hyp->hyp_bnr = a;
-
 	    break;
 	case ID_ETO:
 	    eto = (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
