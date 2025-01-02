@@ -261,7 +261,6 @@ readsolid(struct mged_state *s)
     }
 
     switch (s->edit_state.es_int.idb_type) {
-	struct rt_ell_internal *ell;
 	struct rt_arb_internal *arb;
 	struct rt_half_internal *haf;
 	struct rt_grip_internal *grip;
@@ -281,44 +280,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_ELL:
-	case ID_SPH:
-	    ell = (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
-
-	    fprintf(stderr, "ID_SPH\n");
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(ell->v, a, b, c);
-	    VSCALE(ell->v, ell->v, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(ell->a, a, b, c);
-	    VSCALE(ell->a, ell->a, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(ell->b, a, b, c);
-	    VSCALE(ell->b, ell->b, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(ell->c, a, b, c);
-	    VSCALE(ell->c, ell->c, s->dbip->dbi_local2base);
 	    break;
 	case ID_ARB8:
 	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
