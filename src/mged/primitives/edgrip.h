@@ -35,12 +35,6 @@ mged_grp_keypoint(
 	const mat_t mat,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
-void
-mged_grip_write_params(
-	struct bu_vls *p,
-       	const struct rt_db_internal *ip,
-       	const struct bn_tol *tol,
-	fastf_t base2local);
 
 #endif  /* EDGRIP_H */
 

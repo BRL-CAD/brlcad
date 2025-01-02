@@ -233,7 +233,6 @@ readsolid(struct mged_state *s)
     }
 
     switch (s->edit_state.es_int.idb_type) {
-	struct rt_grip_internal *grip;
 	struct rt_rpc_internal *rpc;
 	struct rt_rhc_internal *rhc;
 	struct rt_epa_internal *epa;
@@ -250,23 +249,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_GRIP:
-	    grip = (struct rt_grip_internal *)s->edit_state.es_int.idb_ptr;
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(grip->center, a, b, c);
-	    VSCALE(grip->center, grip->center, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(grip->normal, a, b, c);
 	    break;
 	case ID_PARTICLE:
 	    part = (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;

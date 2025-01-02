@@ -333,8 +333,8 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_grp_keypoint), /* keypoint */
 	NULL,  /* e_axes_pos */
-	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_grip_write_params), /* write_params */
-	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_grp_write_params), /* write_params */
+	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_grp_read_params), /* read_params */
         NULL   /* menu_item */
     },
 
