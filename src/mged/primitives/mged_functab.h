@@ -68,6 +68,12 @@ struct mged_functab {
 	    const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
+    // Written format is intended to be human editable text that will be parsed
+    // by ft_read_params.  There are no guarantees of formatting consistency by
+    // this API, so external apps should not rely on this format being
+    // consistent release-to-release.  The only API guarantee is that
+    // ft_write_params output for a given BRL-CAD version is readable by
+    // ft_read_params.
     void(*ft_write_params)(
 	    struct bu_vls *p,
 	    const struct rt_db_internal *ip,
@@ -75,6 +81,7 @@ struct mged_functab {
 	    fastf_t base2local);
 #define MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(_func) ((void(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
 
+    // Parse ft_write_params output and assign numerical values to ip.
     int(*ft_read_params)(
 	    struct rt_db_internal *ip,
 	    const char *fc,
