@@ -233,8 +233,6 @@ readsolid(struct mged_state *s)
     }
 
     switch (s->edit_state.es_int.idb_type) {
-	struct rt_epa_internal *epa;
-	struct rt_ehy_internal *ehy;
 	struct rt_hyp_internal *hyp;
 	struct rt_eto_internal *eto;
 	struct rt_superell_internal *superell;
@@ -246,93 +244,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_EPA:
-	    epa = (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(epa->epa_V, a, b, c);
-	    VSCALE(epa->epa_V, epa->epa_V, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(epa->epa_H, a, b, c);
-	    VSCALE(epa->epa_H, epa->epa_H, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(epa->epa_Au, a, b, c);
-	    VUNITIZE(epa->epa_Au);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    epa->epa_r1 = a * s->dbip->dbi_local2base;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    epa->epa_r2 = a * s->dbip->dbi_local2base;
-	    break;
-	case ID_EHY:
-	    ehy = (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(ehy->ehy_V, a, b, c);
-	    VSCALE(ehy->ehy_V, ehy->ehy_V, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(ehy->ehy_H, a, b, c);
-	    VSCALE(ehy->ehy_H, ehy->ehy_H, s->dbip->dbi_local2base);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-	    VSET(ehy->ehy_Au, a, b, c);
-	    VUNITIZE(ehy->ehy_Au);
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    ehy->ehy_r1 = a * s->dbip->dbi_local2base;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    ehy->ehy_r2 = a * s->dbip->dbi_local2base;
-
-	    if ((str=Get_next_line(fp)) == NULL) {
-		ret_val = 1;
-		break;
-	    }
-	    sscanf(str, "%lf", &a);
-	    ehy->ehy_c = a * s->dbip->dbi_local2base;
 	    break;
 	case ID_HYP:
 	    hyp = (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
