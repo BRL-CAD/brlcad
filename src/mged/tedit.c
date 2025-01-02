@@ -64,11 +64,6 @@
 
 static char tmpfil[MAXPATHLEN] = {0};
 
-/* used in handling different arb types */
-static int uvec[8];
-static int svec[11];
-static int cgtype = 8;
-
 int writesolid(struct mged_state *), readsolid(struct mged_state *);
 
 /*
@@ -156,28 +151,6 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char **UNUSED
 }
 
 
-/*
- * given the index of a vertex of the arb currently being edited,
- * return 1 if this vertex should appear in the editor
- * return 0 if this vertex is a duplicate of one of the above
- */
-static int
-useThisVertex(int idx)
-{
-    int i;
-
-    for (i=0; i<8 && uvec[i] != -1; i++) {
-	if (uvec[i] == idx) return 1;
-    }
-
-    if (svec[0] != 0 && idx == svec[2]) return 1;
-
-    if (svec[1] != 0 && idx == svec[2+svec[0]]) return 1;
-
-    return 0;
-}
-
-
 /* Write numerical parameters of a solid into a file */
 int
 writesolid(struct mged_state *s)
@@ -227,7 +200,6 @@ Get_next_line(FILE *fp)
 int
 readsolid(struct mged_state *s)
 {
-    int i;
     FILE *fp;
     int ret_val=0;
 
@@ -245,7 +217,7 @@ readsolid(struct mged_state *s)
 	bu_vls_strncpy(&solid_in, (char *)mf->buf, mf->buflen);
 	bu_close_mapped_file(mf);
 
-	if ((*MGED_OBJ[ip->idb_type].ft_read_params)(ip, bu_vls_cstr(&solid_in), s->dbip->dbi_local2base) == BRLCAD_ERROR) {
+	if ((*MGED_OBJ[ip->idb_type].ft_read_params)(ip, bu_vls_cstr(&solid_in), &s->tol.tol, s->dbip->dbi_local2base) == BRLCAD_ERROR) {
 	    bu_vls_free(&solid_in);
 	    return 1;   /* FAIL */
 	}
@@ -261,7 +233,6 @@ readsolid(struct mged_state *s)
     }
 
     switch (s->edit_state.es_int.idb_type) {
-	struct rt_arb_internal *arb;
 	struct rt_half_internal *haf;
 	struct rt_grip_internal *grip;
 	struct rt_rpc_internal *rpc;
@@ -280,37 +251,6 @@ readsolid(struct mged_state *s)
 	default:
 	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
-	    break;
-	case ID_ARB8:
-	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
-	    rt_arb_get_cgtype(&cgtype, arb, &s->tol.tol, uvec, svec);
-	    for (i=0; i<8; i++) {
-		/* only read vertices that we wrote */
-		if (useThisVertex(i)) {
-		    if ((str=Get_next_line(fp)) == NULL) {
-			ret_val = 1;
-			break;
-		    }
-		    sscanf(str, "%lf %lf %lf", &a, &b, &c);
-		    VSET(arb->pt[i], a, b, c);
-		    VSCALE(arb->pt[i], arb->pt[i], s->dbip->dbi_local2base);
-		}
-	    }
-	    /* fill in the duplicate vertices
-	     * (based on rt_arb_get_cgtype called in writesolid)
-	     */
-	    if (svec[0] != -1) {
-		for (i=1; i<svec[0]; i++) {
-		    int start = 2;
-		    VMOVE(arb->pt[svec[start+i]], arb->pt[svec[start]]);
-		}
-	    }
-	    if (svec[1] != -1) {
-		int start = 2 + svec[0];
-		for (i=1; i<svec[1]; i++) {
-		    VMOVE(arb->pt[svec[start+i]], arb->pt[svec[start]]);
-		}
-	    }
 	    break;
 	case ID_HALF:
 	    haf = (struct rt_half_internal *)s->edit_state.es_int.idb_ptr;

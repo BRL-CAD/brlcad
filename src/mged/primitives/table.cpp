@@ -36,7 +36,7 @@ extern "C" {
     extern const char *mged_##name##_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void mged_##name##_e_axes_pos(const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void mged_##name##_write_params(struct bu_vls *p, const struct rt_db_internal *ip, const struct bn_tol *tol, fastf_t base2local); \
-    extern void mged_##name##_read_params(struct rt_db_internal *ip, const char *fc, fastf_t local2base); \
+    extern void mged_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
     extern struct menu_item *mged_##name##_menu_item(const struct bn_tol *tol); \
 
 
@@ -136,7 +136,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_arb_keypoint),     /* keypoint */
 	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_arb_e_axes_pos), /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_arb_write_params), /* write_params */
-	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_arb_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_arb_menu_item)    /* menu_item */
     },
 

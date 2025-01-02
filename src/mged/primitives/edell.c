@@ -92,6 +92,7 @@ int
 mged_ell_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
+	const struct bn_tol *UNUSED(tol),
 	fastf_t local2base
 	)
 {
