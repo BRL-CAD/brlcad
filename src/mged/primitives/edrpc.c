@@ -77,6 +77,81 @@ mged_rpc_write_params(
     bu_vls_printf(p, "Half-width: %.9f\n", rpc->rpc_r * base2local);
 }
 
+
+#define read_params_line_incr \
+    lc = (ln) ? (ln + lcj) : NULL; \
+    if (!lc) { \
+	bu_free(wc, "wc"); \
+	return BRLCAD_ERROR; \
+    } \
+    ln = strchr(lc, tc); \
+    if (ln) *ln = '\0'; \
+    while (lc && strchr(lc, ':')) lc++
+
+int
+mged_rpc_read_params(
+	struct rt_db_internal *ip,
+	const char *fc,
+	const struct bn_tol *UNUSED(tol),
+	fastf_t local2base
+	)
+{
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
+    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(rpc);
+
+    if (!fc)
+	return BRLCAD_ERROR;
+
+    // We're getting the file contents as a string, so we need to split it up
+    // to process lines. See https://stackoverflow.com/a/17983619
+
+    // Figure out if we need to deal with Windows line endings
+    const char *crpos = strchr(fc, '\r');
+    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
+    char tc = (crlf) ? '\r' : '\n';
+    // If we're CRLF jump ahead another character.
+    int lcj = (crlf) ? 2 : 1;
+
+    char *ln = NULL;
+    char *wc = bu_strdup(fc);
+    char *lc = wc;
+
+    // Set up initial line (Vertex)
+    ln = strchr(lc, tc);
+    if (ln) *ln = '\0';
+
+    // Trim off prefixes, if user left them in
+    while (lc && strchr(lc, ':')) lc++;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(rpc->rpc_V, a, b, c);
+    VSCALE(rpc->rpc_V, rpc->rpc_V, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(rpc->rpc_H, a, b, c);
+    VSCALE(rpc->rpc_H, rpc->rpc_H, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(rpc->rpc_B, a, b, c);
+    VSCALE(rpc->rpc_B, rpc->rpc_B, local2base);
+
+    read_params_line_incr;
+
+    sscanf(lc, "%lf", &a);
+    rpc->rpc_r = a * local2base;
+
+    // Cleanup
+    bu_free(wc, "wc");
+    return BRLCAD_OK;
+}
+
 /* scale vector B */
 void
 menu_rpc_b(struct mged_state *s)
