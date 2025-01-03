@@ -45,10 +45,6 @@ extern struct shell *es_s;
 #define ECMD_NMG_EKILL		26	/* kill current edge */
 #define ECMD_NMG_LEXTRU		27	/* Extrude loop */
 
-extern void ecmd_nmg_emove(struct mged_state *s);
-extern void ecmd_nmg_ekill(struct mged_state *s);
-extern void ecmd_nmg_esplit(struct mged_state *s);
-extern void ecmd_nmg_lextru(struct mged_state *s);
 extern void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec);
 
 #endif  /* EDNMG_H */

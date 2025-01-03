@@ -753,6 +753,47 @@ ecmd_bot_pickt(struct mged_state *s, const vect_t mousevec)
     }
 }
 
+int
+mged_bot_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_BOT_MODE:
+	    ecmd_bot_mode(s);
+	    break;
+	case ECMD_BOT_ORIENT:
+	    ecmd_bot_orient(s);
+	    break;
+	case ECMD_BOT_THICK:
+	    ecmd_bot_thick(s);
+	    break;
+	case ECMD_BOT_FLAGS:
+	    ecmd_bot_flags(s);
+	    break;
+	case ECMD_BOT_FMODE:
+	    ecmd_bot_fmode(s);
+	    break;
+	case ECMD_BOT_FDEL:
+	    if (ecmd_bot_fdel(s) != BRLCAD_OK)
+		return -1;
+	    break;
+	case ECMD_BOT_MOVEV:
+	    ecmd_bot_movev(s);
+	    break;
+	case ECMD_BOT_MOVEE:
+	    ecmd_bot_movee(s);
+	    break;
+	case ECMD_BOT_MOVET:
+	    ecmd_bot_movet(s);
+	    break;
+	case ECMD_BOT_PICKV:
+	case ECMD_BOT_PICKE:
+	case ECMD_BOT_PICKT:
+	    break;
+    }
+
+    return 0;
+}
+
 
 /*
  * Local Variables:

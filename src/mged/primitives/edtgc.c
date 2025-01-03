@@ -670,6 +670,27 @@ ecmd_tgc_mv_h_mousevec(struct mged_state *s, const vect_t mousevec)
     VSUB2(tgc->h, tr_temp, tgc->v);
 }
 
+int
+mged_tgc_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_TGC_MV_H:
+	    ecmd_tgc_mv_h(s);
+	    break;
+	case ECMD_TGC_MV_HH:
+	    ecmd_tgc_mv_hh(s);
+	    break;
+	case ECMD_TGC_ROT_H:
+	    ecmd_tgc_rot_h(s);
+	    break;
+	case ECMD_TGC_ROT_AB:
+	    ecmd_tgc_rot_ab(s);
+	    break;
+    }
+
+    return 0;
+}
+
 
 /*
  * Local Variables:

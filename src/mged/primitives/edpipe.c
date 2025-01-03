@@ -958,6 +958,33 @@ void ecmd_pipe_pt_del(struct mged_state *s)
     es_pipe_pnt = pipe_del_pnt(s, es_pipe_pnt);
 }
 
+int
+mged_pipe_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_PIPE_PICK:
+	    ecmd_pipe_pick(s);
+	    break;
+	case ECMD_PIPE_SPLIT:
+	    ecmd_pipe_split(s);
+	    break;
+	case ECMD_PIPE_PT_MOVE:
+	    ecmd_pipe_pt_move(s);
+	    break;
+	case ECMD_PIPE_PT_ADD:
+	    ecmd_pipe_pt_add(s);
+	    break;
+	case ECMD_PIPE_PT_INS:
+	    ecmd_pipe_pt_ins(s);
+	    break;
+	case ECMD_PIPE_PT_DEL:
+	    ecmd_pipe_pt_del(s);
+	    break;
+    }
+
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

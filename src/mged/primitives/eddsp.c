@@ -170,6 +170,27 @@ ecmd_dsp_fname(struct mged_state *s)
     return BRLCAD_OK;
 }
 
+int
+mged_dsp_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_DSP_SCALE_X:
+	    ecmd_dsp_scale_x(s);
+	    break;
+	case ECMD_DSP_SCALE_Y:
+	    ecmd_dsp_scale_y(s);
+	    break;
+	case ECMD_DSP_SCALE_ALT:
+	    ecmd_dsp_scale_alt(s);
+	    break;
+	case ECMD_DSP_FNAME:
+	    if (ecmd_dsp_fname(s) != BRLCAD_OK)
+		return -1;
+	    break;
+    };
+
+    return 0;
+}
 
 /*
  * Local Variables:

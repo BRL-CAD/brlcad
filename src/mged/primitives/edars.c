@@ -666,6 +666,63 @@ ecmd_ars_move_pt(struct mged_state *s)
     VMOVE(&ars->curves[es_ars_crv][es_ars_col*3], new_pt);
 }
 
+int
+mged_ars_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_ARS_PICK_MENU:
+	    /* put up point pick menu for ARS solid */
+	    menu_state->ms_flag = 0;
+	    es_edflag = ECMD_ARS_PICK;
+	    mmenu_set(s, MENU_L1, ars_pick_menu);
+	    break;
+	case ECMD_ARS_EDIT_MENU:
+	    /* put up main ARS edit menu */
+	    menu_state->ms_flag = 0;
+	    es_edflag = IDLE;
+	    mmenu_set(s, MENU_L1, ars_menu);
+	    break;
+	case ECMD_ARS_PICK:
+	    ecmd_ars_pick(s);
+	    break;
+	case ECMD_ARS_NEXT_PT:
+	    ecmd_ars_next_pt(s);
+	    break;
+	case ECMD_ARS_PREV_PT:
+	    ecmd_ars_prev_pt(s);
+	    break;
+	case ECMD_ARS_NEXT_CRV:
+	    ecmd_ars_next_crv(s);
+	    break;
+	case ECMD_ARS_PREV_CRV:
+	    ecmd_ars_prev_crv(s);
+	    break;
+	case ECMD_ARS_DUP_CRV:
+	    ecmd_ars_dup_crv(s);
+	    break;
+	case ECMD_ARS_DUP_COL:
+	    ecmd_ars_dup_col(s);
+	    break;
+	case ECMD_ARS_DEL_CRV:
+	    ecmd_ars_del_crv(s);
+	    break;
+	case ECMD_ARS_DEL_COL:
+	    ecmd_ars_del_col(s);
+	    break;
+	case ECMD_ARS_MOVE_COL:
+	    ecmd_ars_move_col(s);
+	    break;
+	case ECMD_ARS_MOVE_CRV:
+	    ecmd_ars_move_crv(s);
+	    break;
+	case ECMD_ARS_MOVE_PT:
+	    ecmd_ars_move_pt(s);
+	    break;
+    }
+
+    return 0;
+}
+
 
 /*
  * Local Variables:

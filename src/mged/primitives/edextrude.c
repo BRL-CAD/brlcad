@@ -281,6 +281,27 @@ ecmd_extr_mov_h_mousevec(struct mged_state *s, const vect_t mousevec)
     VSUB2(extr->h, tr_temp, extr->V);
 }
 
+int
+mged_extrude_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_EXTR_SKT_NAME:
+	    ecmd_extr_skt_name(s);
+	    break;
+	case ECMD_EXTR_MOV_H:
+	    ecmd_extr_mov_h(s);
+	    break;
+	case ECMD_EXTR_SCALE_H:
+	    ecmd_extr_scale_h(s);
+	    break;
+	case ECMD_EXTR_ROT_H:
+	    ecmd_extr_rot_h(s);
+	    break;
+    }
+
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

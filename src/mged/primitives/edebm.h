@@ -36,10 +36,6 @@
 #define MENU_EBM_FSIZE		81
 #define MENU_EBM_HEIGHT		82
 
-int ecmd_ebm_fsize(struct mged_state *s);
-int ecmd_ebm_fname(struct mged_state *s);
-int ecmd_ebm_height(struct mged_state *s);
-
 #endif  /* EDEBM_H */
 
 /*

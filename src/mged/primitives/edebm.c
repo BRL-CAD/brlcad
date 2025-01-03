@@ -173,6 +173,27 @@ ecmd_ebm_height(struct mged_state *s)
     return BRLCAD_OK;
 }
 
+int
+mged_ebm_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_EBM_FSIZE:    /* set file size */
+	    if (ecmd_ebm_fsize(s) != BRLCAD_OK)
+		return -1;
+	    break;
+
+	case ECMD_EBM_FNAME:
+	    if (ecmd_ebm_fname(s) != BRLCAD_OK)
+		return -1;
+	    break;
+	case ECMD_EBM_HEIGHT:   /* set extrusion depth */
+	    if (ecmd_ebm_height(s) != BRLCAD_OK)
+		return -1;
+	    break;
+    }
+
+    return 0;
+}
 
 /*
  * Local Variables:

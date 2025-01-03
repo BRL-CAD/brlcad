@@ -231,6 +231,30 @@ ecmd_vol_fname(struct mged_state *s)
     }
 }
 
+int
+mged_vol_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_VOL_CSIZE:
+	    ecmd_vol_csize(s);
+	    break;
+	case ECMD_VOL_FSIZE:
+	    ecmd_vol_fsize(s);
+	    break;
+	case ECMD_VOL_THRESH_LO:
+	    ecmd_vol_thresh_lo(s);
+	    break;
+	case ECMD_VOL_THRESH_HI:
+	    ecmd_vol_thresh_hi(s);
+	    break;
+	case ECMD_VOL_FNAME:
+	    ecmd_vol_fname(s);
+	    break;
+    }
+
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

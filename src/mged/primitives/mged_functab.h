@@ -89,6 +89,9 @@ struct mged_functab {
 	    fastf_t local2base);
 #define MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(_func) ((int(*)(struct rt_db_internal *, const char *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
 
+    int(*ft_edit)(struct mged_state *s, int edflag);
+#define MGEDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct mged_state *, int))((void (*)(void))_func))
+
     struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 

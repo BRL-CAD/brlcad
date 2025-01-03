@@ -187,6 +187,27 @@ ecmd_cline_move_h_mousevec(struct mged_state *s, const vect_t mousevec)
     VSUB2(cli->h, tr_temp, cli->v);
 }
 
+int
+mged_cline_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_CLINE_SCALE_H:
+	    ecmd_cline_scale_h(s);
+	    break;
+	case ECMD_CLINE_SCALE_R:
+	    ecmd_cline_scale_r(s);
+	    break;
+	case ECMD_CLINE_SCALE_T:
+	    ecmd_cline_scale_t(s);
+	    break;
+	case ECMD_CLINE_MOVE_H:
+	    ecmd_cline_move_h(s);
+	    break;
+    }
+
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

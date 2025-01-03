@@ -50,20 +50,6 @@ extern point_t es_pt;		/* coordinates of selected ARS point */
 extern struct menu_item ars_menu[];
 extern struct menu_item ars_pick_menu[];
 
-void ecmd_ars_pick(struct mged_state *s);
-void ecmd_ars_next_pt(struct mged_state *s);
-void ecmd_ars_prev_pt(struct mged_state *s);
-void ecmd_ars_next_crv(struct mged_state *s);
-void ecmd_ars_prev_crv(struct mged_state *s);
-void ecmd_ars_dup_crv(struct mged_state *s);
-void ecmd_ars_dup_col(struct mged_state *s);
-void ecmd_ars_del_crv(struct mged_state *s);
-void ecmd_ars_del_col(struct mged_state *s);
-void ecmd_ars_move_col(struct mged_state *s);
-void ecmd_ars_move_crv(struct mged_state *s);
-void ecmd_ars_move_pt(struct mged_state *s);
-
-
 #endif  /* EDARS_H */
 
 /*

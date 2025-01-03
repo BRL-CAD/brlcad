@@ -38,10 +38,6 @@
 #define MENU_EXTR_ROT_H		105
 #define MENU_EXTR_SKT_NAME	106
 
-void ecmd_extr_skt_name(struct mged_state *s);
-void ecmd_extr_mov_h(struct mged_state *s);
-void ecmd_extr_scale_h(struct mged_state *s);
-void ecmd_extr_rot_h(struct mged_state *s);
 void ecmd_extr_mov_h_mousevec(struct mged_state *s, const vect_t mousevec);
 
 #endif  /* EDEXTRUDE_H */

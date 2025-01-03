@@ -1287,6 +1287,36 @@ edarb_move_face_mousevec(struct mged_state *s, const vect_t mousevec)
     }
 }
 
+int
+mged_arb_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_ARB_MAIN_MENU:
+	    ecmd_arb_main_menu(s);
+	    break;
+	case ECMD_ARB_SPECIFIC_MENU:
+	    if (ecmd_arb_specific_menu(s) != BRLCAD_OK)
+		return -1;
+	    break;
+	case ECMD_ARB_MOVE_FACE:
+	    ecmd_arb_move_face(s);
+	    break;
+	case ECMD_ARB_SETUP_ROTFACE:
+	    ecmd_arb_setup_rotface(s);
+	    break;
+	case ECMD_ARB_ROTATE_FACE:
+	    ecmd_arb_rotate_face(s);
+	    return 1; // TODO - why is this a return rather than a break (skips sedit finalization)
+	case PTARB:     /* move an ARB point */
+	case EARB:      /* edit an ARB edge */
+	    edit_arb_element(s);
+	    break;
+    }
+
+    return 0;
+}
+
+
 /*
  * Local Variables:
  * mode: C

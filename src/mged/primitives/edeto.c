@@ -308,6 +308,17 @@ ecmd_eto_rot_c(struct mged_state *s)
     MAT_IDN(incr_change);
 }
 
+int
+mged_eto_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_ETO_ROT_C:
+	    ecmd_eto_rot_c(s);
+	    break;
+    }
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

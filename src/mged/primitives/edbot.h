@@ -56,15 +56,6 @@
 
 extern int bot_verts[3];
 
-void ecmd_bot_mode(struct mged_state *s);
-void ecmd_bot_orient(struct mged_state *s);
-void ecmd_bot_thick(struct mged_state *s);
-void ecmd_bot_flags(struct mged_state *s);
-void ecmd_bot_fmode(struct mged_state *s);
-int ecmd_bot_fdel(struct mged_state *s);
-void ecmd_bot_movev(struct mged_state *s);
-void ecmd_bot_movee(struct mged_state *s);
-void ecmd_bot_movet(struct mged_state *s);
 int ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec);
 int ecmd_bot_picke(struct mged_state *s, const vect_t mousevec);
 void ecmd_bot_pickt(struct mged_state *s, const vect_t mousevec);

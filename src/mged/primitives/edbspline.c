@@ -304,6 +304,21 @@ ecmd_vtrans(struct mged_state *s)
     }
 }
 
+
+int
+mged_bspline_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_VTRANS:
+	    // I think this is bspline only??
+	    ecmd_vtrans(s);
+	    break;
+    }
+
+    return 0;
+}
+
+
 /*
  * Local Variables:
  * mode: C

@@ -363,6 +363,25 @@ ecmd_metaball_pt_add(struct mged_state *s)
     es_metaball_pnt = n;
 }
 
+void
+mged_metaball_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_METABALL_PT_PICK:
+	    ecmd_metaball_pt_pick(s);
+	    break;
+	case ECMD_METABALL_PT_MOV:
+	    ecmd_metaball_pt_mov(s);
+	    break;
+	case ECMD_METABALL_PT_DEL:
+	    ecmd_metaball_pt_del(s);
+	    break;
+	case ECMD_METABALL_PT_ADD:
+	    ecmd_metaball_pt_add(s);
+	    break;
+    }
+}
+
 /*
  * Local Variables:
  * mode: C

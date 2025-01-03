@@ -33,8 +33,6 @@ int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_inte
 void bspline_init_sedit(struct mged_state *s);
 void sedit_vpick(struct mged_state *s, point_t v_pos);
 
-void ecmd_vtrans(struct mged_state *s);
-
 #endif  /* EDBSPLINE_H */
 
 /*

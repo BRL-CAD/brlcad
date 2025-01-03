@@ -294,6 +294,17 @@ ecmd_hyp_rot_h(struct mged_state *s)
     MAT_IDN(incr_change);
 }
 
+int
+mged_hyp_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_HYP_ROT_H:
+	    ecmd_hyp_rot_h(s);
+	    break;
+    }
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

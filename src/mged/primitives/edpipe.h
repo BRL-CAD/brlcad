@@ -74,13 +74,6 @@ void menu_pipe_scale_od(struct mged_state *s);
 void menu_pipe_scale_id(struct mged_state *s);
 void menu_pipe_scale_radius(struct mged_state *s);
 
-void ecmd_pipe_pick(struct mged_state *s);
-void ecmd_pipe_split(struct mged_state *s);
-void ecmd_pipe_pt_move(struct mged_state *s);
-void ecmd_pipe_pt_add(struct mged_state *s);
-void ecmd_pipe_pt_ins(struct mged_state *s);
-void ecmd_pipe_pt_del(struct mged_state *s);
-
 #endif  /* EDPIPE_H */
 
 /*

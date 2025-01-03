@@ -40,11 +40,6 @@
 #define MENU_DSP_SCALE_Y	86
 #define MENU_DSP_SCALE_ALT	87
 
-void ecmd_dsp_scale_x(struct mged_state *s);
-void ecmd_dsp_scale_y(struct mged_state *s);
-void ecmd_dsp_scale_alt(struct mged_state *s);
-int ecmd_dsp_fname(struct mged_state *s);
-
 #endif  /* EDDSP_H */
 
 /*

@@ -63,10 +63,6 @@ void menu_tgc_scale_d(struct mged_state *s);
 void menu_tgc_scale_ab(struct mged_state *s);
 void menu_tgc_scale_cd(struct mged_state *s);
 void menu_tgc_scale_abcd(struct mged_state *s);
-void ecmd_tgc_mv_h(struct mged_state *s);
-void ecmd_tgc_mv_hh(struct mged_state *s);
-void ecmd_tgc_rot_h(struct mged_state *s);
-void ecmd_tgc_rot_ab(struct mged_state *s);
 void ecmd_tgc_mv_h_mousevec(struct mged_state *s, const vect_t mousevec);
 
 #endif  /* EDTGC_H */

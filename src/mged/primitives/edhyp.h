@@ -41,7 +41,6 @@ void menu_hyp_h(struct mged_state *s);
 void menu_hyp_scale_a(struct mged_state *s);
 void menu_hyp_scale_b(struct mged_state *s);
 void menu_hyp_c(struct mged_state *s);
-void ecmd_hyp_rot_h(struct mged_state *s);
 
 #endif  /* EDHYP_H */
 

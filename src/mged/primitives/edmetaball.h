@@ -54,11 +54,6 @@ void menu_metaball_set_threshold(struct mged_state *s);
 void menu_metaball_set_method(struct mged_state *s);
 void menu_metaball_pt_set_goo(struct mged_state *s);
 void menu_metaball_pt_fldstr(struct mged_state *s);
-void ecmd_metaball_pt_pick(struct mged_state *s);
-void ecmd_metaball_pt_mov(struct mged_state *s);
-void ecmd_metaball_pt_del(struct mged_state *s);
-void ecmd_metaball_pt_add(struct mged_state *s);
-
 
 #endif  /* EDMETABALL_H */
 

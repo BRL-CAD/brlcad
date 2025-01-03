@@ -37,6 +37,7 @@ extern "C" {
     extern void mged_##name##_e_axes_pos(const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void mged_##name##_write_params(struct bu_vls *p, const struct rt_db_internal *ip, const struct bn_tol *tol, fastf_t base2local); \
     extern void mged_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
+    extern int mged_##name##_edit(struct mged_state *s, int edflag); \
     extern struct menu_item *mged_##name##_menu_item(const struct bn_tol *tol); \
 
 
@@ -93,6 +94,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -104,6 +106,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tor_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tor_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tor_menu_item)    /* menu_item */
     },
 
@@ -115,6 +118,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos), /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tgc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tgc_read_params), /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_tgc_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tgc_menu_item)    /* menu_item */
     },
 
@@ -126,6 +130,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ell_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ell_menu_item)    /* menu_item */
     },
 
@@ -137,6 +142,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_arb_e_axes_pos), /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_arb_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_arb_read_params), /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_arb_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_arb_menu_item)    /* menu_item */
     },
 
@@ -148,6 +154,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_ars_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ars_menu_item)    /* menu_item */
     },
 
@@ -159,6 +166,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_hlf_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_hlf_read_params), /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -170,6 +178,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos), /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tgc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tgc_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tgc_menu_item)    /* menu_item */
     },
 
@@ -181,6 +190,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -192,6 +202,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_bspline_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_bspline_menu_item)    /* menu_item */
     },
 
@@ -203,6 +214,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ell_read_params), /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -214,6 +226,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_nmg_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_nmg_menu_item)    /* menu_item */
     },
 
@@ -225,6 +238,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_ebm_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ebm_menu_item)    /* menu_item */
     },
 
@@ -236,6 +250,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_vol_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_vol_menu_item)    /* menu_item */
     },
 
@@ -247,6 +262,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -258,6 +274,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_pipe_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_pipe_menu_item)    /* menu_item */
     },
 
@@ -269,6 +286,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_part_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_part_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_part_menu_item)    /* menu_item */
     },
 
@@ -280,6 +298,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_rpc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_rpc_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_rpc_menu_item)    /* menu_item */
     },
 
@@ -291,6 +310,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_rhc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_rhc_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_rhc_menu_item)    /* menu_item */
     },
 
@@ -302,6 +322,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_epa_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_epa_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_epa_menu_item)    /* menu_item */
     },
 
@@ -313,6 +334,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ehy_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ehy_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ehy_menu_item)    /* menu_item */
     },
 
@@ -324,6 +346,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_eto_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_eto_read_params), /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_eto_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_eto_menu_item)    /* menu_item */
     },
 
@@ -335,6 +358,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_grp_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_grp_read_params), /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -346,6 +370,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -357,6 +382,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -368,6 +394,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_dsp_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_dsp_menu_item)    /* menu_item */
     },
 
@@ -379,6 +406,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -390,6 +418,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_extrude_e_axes_pos), /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_extrude_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_extrude_menu_item)    /* menu_item */
     },
 
@@ -401,6 +430,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -412,6 +442,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_cline_e_axes_pos), /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_cline_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_cline_menu_item)    /* menu_item */
     },
 
@@ -423,6 +454,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_bot_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_bot_menu_item)    /* menu_item */
     },
 
@@ -434,6 +466,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -447,6 +480,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -458,6 +492,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -471,6 +506,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -482,6 +518,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_superell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_superell_read_params), /* read_params */
+	NULL,  /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_superell_menu_item)    /* menu_item */
     },
 
@@ -493,6 +530,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_metaball_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_metaball_menu_item)    /* menu_item */
     },
 
@@ -504,6 +542,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -515,6 +554,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_hyp_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_hyp_read_params), /* read_params */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_hyp_edit),    /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_hyp_menu_item)    /* menu_item */
     },
 
@@ -526,6 +566,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -537,6 +578,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -548,6 +590,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -559,6 +602,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -570,6 +614,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -582,6 +627,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_datum_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_datum_read_params), /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -594,6 +640,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -605,6 +652,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     },
 
@@ -616,6 +664,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
+	NULL,  /* edit */
         NULL   /* menu_item */
     }
 };

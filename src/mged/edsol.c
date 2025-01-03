@@ -663,6 +663,22 @@ sedit(struct mged_state *s)
     sedraw = 0;
     ++update_views;
 
+    // Handle any primitive specific flags TODO - will have to reserve integer
+    // values for the generic operations so primitive specific methods don't
+    // conflict with them.  Maybe something simple like all primitive specific
+    // edflag vals need to be >RT_EDIT_OP_GENERIC_MAX?  Primitives could then
+    // define with:
+    // #define PRIM_OP_1 RT_EDIT_OP_GENERIC_MAX+1,
+    // #define PRIM_OP_2 PRIM_OP_1+1
+    // ...
+    int had_method = 0;
+    struct rt_db_internal *ip = &s->edit_state.es_int;
+    if (MGED_OBJ[ip->idb_type].ft_edit) {
+	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, es_edflag))
+	    return;
+	had_method = 1;
+    }
+
     switch (es_edflag) {
 
 	case IDLE:
@@ -670,91 +686,6 @@ sedit(struct mged_state *s)
 	    --update_views;
 	    break;
 
-	case ECMD_DSP_SCALE_X:
-	    ecmd_dsp_scale_x(s);
-	    break;
-	case ECMD_DSP_SCALE_Y:
-	    ecmd_dsp_scale_y(s);
-	    break;
-	case ECMD_DSP_SCALE_ALT:
-	    ecmd_dsp_scale_alt(s);
-	    break;
-	case ECMD_DSP_FNAME:
-	    if (ecmd_dsp_fname(s) != BRLCAD_OK)
-		return;
-	    break;
-	case ECMD_EBM_FSIZE:	/* set file size */
-	    if (ecmd_ebm_fsize(s) != BRLCAD_OK)
-		return;
-	    break;
-
-	case ECMD_EBM_FNAME:
-	    if (ecmd_ebm_fname(s) != BRLCAD_OK)
-		return;
-	    break;
-	case ECMD_EBM_HEIGHT:	/* set extrusion depth */
-	     if (ecmd_ebm_height(s) != BRLCAD_OK)
-		return;
-	    break;
-	case ECMD_VOL_CSIZE:
-    	    ecmd_vol_csize(s);
-	    break;
-	case ECMD_VOL_FSIZE:
-    	    ecmd_vol_fsize(s);
-	    break;
-	case ECMD_VOL_THRESH_LO:
-	    ecmd_vol_thresh_lo(s);
-	    break;
-	case ECMD_VOL_THRESH_HI:
-	    ecmd_vol_thresh_hi(s);
-	    break;
-	case ECMD_VOL_FNAME:
-	    ecmd_vol_fname(s);
-	    break;
-	case ECMD_BOT_MODE:
-	    ecmd_bot_mode(s);
-	    break;
-	case ECMD_BOT_ORIENT:
-	    ecmd_bot_orient(s);
-	    break;
-	case ECMD_BOT_THICK:
-	    ecmd_bot_thick(s);
-	    break;
-	case ECMD_BOT_FLAGS:
-	    ecmd_bot_flags(s);
-	    break;
-	case ECMD_BOT_FMODE:
-	    ecmd_bot_fmode(s);
-	    break;
-	case ECMD_BOT_FDEL:
-	    if (ecmd_bot_fdel(s) != BRLCAD_OK)
-		return;
-	    break;
-	case ECMD_EXTR_SKT_NAME:
-	    ecmd_extr_skt_name(s);
-	    break;
-	case ECMD_EXTR_MOV_H:
-	    ecmd_extr_mov_h(s);
-	    break;
-	case ECMD_EXTR_SCALE_H:
-	    ecmd_extr_scale_h(s);
-	    break;
-	case ECMD_ARB_MAIN_MENU:
-	    ecmd_arb_main_menu(s);
-	    break;
-	case ECMD_ARB_SPECIFIC_MENU:
-	    if (ecmd_arb_specific_menu(s) != BRLCAD_OK)
-		return;
-	    break;
-	case ECMD_ARB_MOVE_FACE:
-	    ecmd_arb_move_face(s);
-	    break;
-	case ECMD_ARB_SETUP_ROTFACE:
-	    ecmd_arb_setup_rotface(s);
-	    break;
-	case ECMD_ARB_ROTATE_FACE:
-	    ecmd_arb_rotate_face(s);
-	    return;
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    {
@@ -818,40 +749,12 @@ sedit(struct mged_state *s)
 		}
 	    }
 	    break;
-	case ECMD_VTRANS:
-	    // I think this is bspline only??
-	    ecmd_vtrans(s);
-	    break;
-	case ECMD_CLINE_SCALE_H:
-	    ecmd_cline_scale_h(s);
-	    break;
-	case ECMD_CLINE_SCALE_R:
-	    ecmd_cline_scale_r(s);
-	    break;
-	case ECMD_CLINE_SCALE_T:
-	    ecmd_cline_scale_t(s);
-	    break;
-	case ECMD_CLINE_MOVE_H:
-	    ecmd_cline_move_h(s);
-	    break;
-	case ECMD_TGC_MV_H:
-	    ecmd_tgc_mv_h(s);
-	    break;
-
-	case ECMD_TGC_MV_HH:
-	    ecmd_tgc_mv_hh(s);
-	    break;
 	case PSCALE:
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
 	    pscale(s);
-	    break;
-
-	case PTARB:	/* move an ARB point */
-	case EARB:      /* edit an ARB edge */
-	    edit_arb_element(s);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
@@ -928,131 +831,10 @@ sedit(struct mged_state *s)
 	    }
 	    break;
 
-	case ECMD_EXTR_ROT_H:
-	    ecmd_extr_rot_h(s);
-	    break;
-	case ECMD_TGC_ROT_H:
-	    ecmd_tgc_rot_h(s);
-	    break;
-	case ECMD_TGC_ROT_AB:
-	    ecmd_tgc_rot_ab(s);
-	    break;
-	case ECMD_HYP_ROT_H:
-	    ecmd_hyp_rot_h(s);
-	    break;
-	case ECMD_ETO_ROT_C:
-	    ecmd_eto_rot_c(s);
-	    break;
-	case ECMD_NMG_EPICK:
-	    /* XXX Nothing to do here (yet), all done in mouse routine. */
-	    break;
-	case ECMD_NMG_EMOVE:
-	    ecmd_nmg_emove(s);
-	    break;
-	case ECMD_NMG_EKILL:
-	    ecmd_nmg_ekill(s);
-	    /* fall through */
-	case ECMD_NMG_ESPLIT:
-	    ecmd_nmg_esplit(s);
-	    break;
-	case ECMD_NMG_LEXTRU:
-	    ecmd_nmg_lextru(s);
-	    break;
-	case ECMD_PIPE_PICK:
-	    ecmd_pipe_pick(s);
-	    break;
-	case ECMD_PIPE_SPLIT:
-	    ecmd_pipe_split(s);
-	    break;
-	case ECMD_PIPE_PT_MOVE:
-	    ecmd_pipe_pt_move(s);
-	    break;
-	case ECMD_PIPE_PT_ADD:
-	    ecmd_pipe_pt_add(s);
-	    break;
-	case ECMD_PIPE_PT_INS:
-	    ecmd_pipe_pt_ins(s);
-	    break;
-	case ECMD_PIPE_PT_DEL:
-	    ecmd_pipe_pt_del(s);
-	    break;
-	case ECMD_ARS_PICK_MENU:
-	    /* put up point pick menu for ARS solid */
-	    menu_state->ms_flag = 0;
-	    es_edflag = ECMD_ARS_PICK;
-	    mmenu_set(s, MENU_L1, ars_pick_menu);
-	    break;
-	case ECMD_ARS_EDIT_MENU:
-	    /* put up main ARS edit menu */
-	    menu_state->ms_flag = 0;
-	    es_edflag = IDLE;
-	    mmenu_set(s, MENU_L1, ars_menu);
-	    break;
-	case ECMD_ARS_PICK:
-	    ecmd_ars_pick(s);
-	    break;
-	case ECMD_ARS_NEXT_PT:
-	    ecmd_ars_next_pt(s);
-	    break;
-	case ECMD_ARS_PREV_PT:
-	    ecmd_ars_prev_pt(s);
-	    break;
-	case ECMD_ARS_NEXT_CRV:
-	    ecmd_ars_next_crv(s);
-	    break;
-	case ECMD_ARS_PREV_CRV:
-	    ecmd_ars_prev_crv(s);
-	    break;
-	case ECMD_ARS_DUP_CRV:
-	    ecmd_ars_dup_crv(s);
-	    break;
-	case ECMD_ARS_DUP_COL:
-	    ecmd_ars_dup_col(s);
-	    break;
-	case ECMD_ARS_DEL_CRV:
-	    ecmd_ars_del_crv(s);
-	    break;
-	case ECMD_ARS_DEL_COL:
-	    ecmd_ars_del_col(s);
-	    break;
-	case ECMD_ARS_MOVE_COL:
-	    ecmd_ars_move_col(s);
-	    break;
-	case ECMD_ARS_MOVE_CRV:
-	    ecmd_ars_move_crv(s);
-	    break;
-	case ECMD_ARS_MOVE_PT:
-	    ecmd_ars_move_pt(s);
-	    break;
-	case ECMD_BOT_MOVEV:
-	    ecmd_bot_movev(s);
-	    break;
-	case ECMD_BOT_MOVEE:
-	    ecmd_bot_movee(s);
-	    break;
-	case ECMD_BOT_MOVET:
-	    ecmd_bot_movet(s);
-	    break;
-	case ECMD_BOT_PICKV:
-	case ECMD_BOT_PICKE:
-	case ECMD_BOT_PICKT:
-	    break;
-
-	case ECMD_METABALL_PT_PICK:
-	    ecmd_metaball_pt_pick(s);
-	    break;
-	case ECMD_METABALL_PT_MOV:
-	    ecmd_metaball_pt_mov(s);
-	    break;
-	case ECMD_METABALL_PT_DEL:
-	    ecmd_metaball_pt_del(s);
-	    break;
-	case ECMD_METABALL_PT_ADD:
-	    ecmd_metaball_pt_add(s);
-	    break;
-
 	default:
 	    {
+		if (had_method)
+		    break;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", es_edflag);

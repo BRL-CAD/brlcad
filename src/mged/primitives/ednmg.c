@@ -836,6 +836,30 @@ void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec)
     }
 }
 
+int
+mged_nmg_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case ECMD_NMG_EPICK:
+	    /* XXX Nothing to do here (yet), all done in mouse routine. */
+	    break;
+	case ECMD_NMG_EMOVE:
+	    ecmd_nmg_emove(s);
+	    break;
+	case ECMD_NMG_EKILL:
+	    ecmd_nmg_ekill(s);
+	    /* fall through */
+	case ECMD_NMG_ESPLIT:
+	    ecmd_nmg_esplit(s);
+	    break;
+	case ECMD_NMG_LEXTRU:
+	    ecmd_nmg_lextru(s);
+	    break;
+    }
+
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C
