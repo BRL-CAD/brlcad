@@ -136,7 +136,7 @@ size_t
 clt_hyp_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct hyp_specific *hyp =
-        (struct hyp_specific *)stp->st_specific;
+	(struct hyp_specific *)stp->st_specific;
     struct clt_hyp_specific *args;
 
     const size_t size = sizeof(*args);

@@ -168,7 +168,7 @@ size_t
 clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct tor_specific *tor =
-        (struct tor_specific *)stp->st_specific;
+	(struct tor_specific *)stp->st_specific;
     struct clt_tor_specific *args;
 
     const size_t size = sizeof(*args);
@@ -349,10 +349,9 @@ rt_tor_print(register const struct soltab *stp)
 }
 
 
-
 void matXvec(double result[3], const mat_t mat, const double vec[3]) {
     for (int i = 0; i < 3; i++) {
-        result[i] = mat[i] * vec[0] + mat[i + 4] * vec[1] + mat[i + 8] * vec[2];
+	result[i] = mat[i] * vec[0] + mat[i + 4] * vec[1] + mat[i + 8] * vec[2];
     }
 }
 
@@ -365,7 +364,7 @@ inside_overlapping_region(struct tor_specific *tor, point_t hp)
 
     /* inside overlapping region's bounding sphere? */
     if (sq_dist < sq_overlap_size) {
-        return 1;
+	return 1;
     }
 
     return 0;

@@ -65,8 +65,8 @@ edge_mappings(struct rt_bot_internal *bot, unsigned int **edges_ptr, unsigned in
 	} else {
 	    // rows are faces, columns are the 1st, 2nd and 3rd edges
 	    faces[3 * i + 0] = edge_cnt;
-            edges[2 * edge_cnt + 0] = bot->faces[i*3+0];
-            edges[2 * edge_cnt + 1] = bot->faces[i*3+1];
+	    edges[2 * edge_cnt + 0] = bot->faces[i*3+0];
+	    edges[2 * edge_cnt + 1] = bot->faces[i*3+1];
 	    edge_cnt++;
 	}
 	ret = edge_to_int.insert(std::pair<std::pair<unsigned int, unsigned int>, unsigned int>(mk_edge(bot->faces[i*3+1], bot->faces[i*3+2]), edge_cnt));
@@ -76,8 +76,8 @@ edge_mappings(struct rt_bot_internal *bot, unsigned int **edges_ptr, unsigned in
 	} else {
 	    // rows are faces, columns are the 1st, 2nd and 3rd edges
 	    faces[3 * i + 1] = edge_cnt;
-            edges[2 * edge_cnt + 0] = bot->faces[i*3+1];
-            edges[2 * edge_cnt + 1] = bot->faces[i*3+2];
+	    edges[2 * edge_cnt + 0] = bot->faces[i*3+1];
+	    edges[2 * edge_cnt + 1] = bot->faces[i*3+2];
 	    edge_cnt++;
 	}
 	ret = edge_to_int.insert(std::pair<std::pair<unsigned int, unsigned int>, unsigned int>(mk_edge(bot->faces[i*3+2], bot->faces[i*3+0]), edge_cnt));
@@ -87,8 +87,8 @@ edge_mappings(struct rt_bot_internal *bot, unsigned int **edges_ptr, unsigned in
 	} else {
 	    // rows are faces, columns are the 1st, 2nd and 3rd edges
 	    faces[3 * i + 2] = edge_cnt;
-            edges[2 * edge_cnt + 0] = bot->faces[i*3+2];
-            edges[2 * edge_cnt + 1] = bot->faces[i*3+0];
+	    edges[2 * edge_cnt + 0] = bot->faces[i*3+2];
+	    edges[2 * edge_cnt + 1] = bot->faces[i*3+0];
 	    edge_cnt++;
 	}
     }
@@ -137,7 +137,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     VSET(gvects[5], 0,0,1);
 
     if (bot->num_vertices <= 0 || !bot->vertices || bot->num_faces <= 0 || !bot->faces)
-        return 0;
+	return 0;
 
     /* Declare key containers */
     double *face_normals= (double *)bu_calloc(bot->num_faces * 3, sizeof(double), "normals");
@@ -152,9 +152,9 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     /* Sanity check vertex indices in face definitions */
     for (unsigned int i = 0; i < bot->num_faces; ++i) {
-        if ((unsigned int)bot->faces[i*3+0] > (unsigned int)(bot->num_vertices)) return 0;
-        if ((unsigned int)bot->faces[i*3+1] > (unsigned int)(bot->num_vertices)) return 0;
-        if ((unsigned int)bot->faces[i*3+2] > (unsigned int)(bot->num_vertices)) return 0;
+	if ((unsigned int)bot->faces[i*3+0] > (unsigned int)(bot->num_vertices)) return 0;
+	if ((unsigned int)bot->faces[i*3+1] > (unsigned int)(bot->num_vertices)) return 0;
+	if ((unsigned int)bot->faces[i*3+2] > (unsigned int)(bot->num_vertices)) return 0;
     }
 
     /* Pre-compute face normals once */
@@ -184,16 +184,16 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 		result = vdot;
 	    }
 	}
-        groups[i] = result_max;
+	groups[i] = result_max;
     }
     bu_free(face_normals, "face_normals");
 
     /* Determine the maximum number of faces associated with any one vertex */
     unsigned int *vert_face_cnt = (unsigned int *)bu_calloc(bot->num_vertices, sizeof(unsigned int), "vert face cnt");
     for (unsigned int i = 0; i < bot->num_faces; i++) {
-        vert_face_cnt[bot->faces[i*3+0]]++;
-        vert_face_cnt[bot->faces[i*3+1]]++;
-        vert_face_cnt[bot->faces[i*3+2]]++;
+	vert_face_cnt[bot->faces[i*3+0]]++;
+	vert_face_cnt[bot->faces[i*3+1]]++;
+	vert_face_cnt[bot->faces[i*3+2]]++;
     }
     unsigned int max_face_cnt = 0;
     for (unsigned int i = 0; i < bot->num_vertices; i++) {
@@ -207,13 +207,13 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     for (unsigned int i = 0; i < bot->num_faces; i++) {
 	for (unsigned int j = 0; j < 3; j++) {
 	    unsigned int vert = bot->faces[i*3+j];
-            unsigned int k = vert_sizes[vert];
-            /* rows are vertex indexes, columns hold the faces */
-            /* Need to increment face index by one so we can reference
+	    unsigned int k = vert_sizes[vert];
+	    /* rows are vertex indexes, columns hold the faces */
+	    /* Need to increment face index by one so we can reference
 	     * the first face and still use the true/false test that 0 allows */
 	    vert_to_face[max_face_cnt * vert + k] = i + 1;
-            vert_sizes[vert]++;
-            //bu_log("vert_to_face(%d,%d)[%d] = %d\n", vert, k, max_face_cnt * vert + k, i + 1);
+	    vert_sizes[vert]++;
+	    //bu_log("vert_to_face(%d,%d)[%d] = %d\n", vert, k, max_face_cnt * vert + k, i + 1);
 	}
     }
 
@@ -223,14 +223,14 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 //    unsigned int group_cnt[6] = {0};
     unsigned int ordered_groups[6] = {0,1,2,3,4,5};
 /*    for (unsigned int i = 0; i < bot->num_faces; i++) {
-        group_cnt[groups[i]]++;
+	group_cnt[groups[i]]++;
     }
     for (unsigned int i = 0; i < 6; i++) {
-        unsigned int more = 0;
+	unsigned int more = 0;
 	for (unsigned int j = 0; j < 6; j++) {
-            if (group_cnt[j] > group_cnt[i]) more++;
+	    if (group_cnt[j] > group_cnt[i]) more++;
 	}
-        ordered_groups[more] = i;
+	ordered_groups[more] = i;
     }
 */
 
@@ -240,17 +240,17 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     for (unsigned int i = 0; i < 6; i++) {
 	int unused = 0;
 	while (unused != -1) {
-            unsigned int face_stp = 0;
+	    unsigned int face_stp = 0;
 	    // Start a new patch
 	    unused = -1;
 	    patch_cnt++;
 	    // Find remaining face in group
 	    while (unused == -1 && face_stp < bot->num_faces) {
 		if (ordered_groups[i] == groups[face_stp] && !patches[face_stp]) {
-                   unused = face_stp;
+		   unused = face_stp;
 		}
-                face_stp++;
-            }
+		face_stp++;
+	    }
 	    if (unused != -1) {
 		std::queue<unsigned int> face_queue;
 		face_queue.push(unused);
@@ -279,7 +279,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     memset(patch_vert_cnt, 0, bot->num_vertices * sizeof(unsigned int));
     unsigned int *vert_edge_status = (unsigned int *)bu_calloc(bot->num_vertices, sizeof(unsigned int), "vert status");
     for (unsigned int i = 0; i < patch_cnt; i++) {
-        memset(patch_vert_cnt, 0, bot->num_vertices * sizeof(unsigned int));
+	memset(patch_vert_cnt, 0, bot->num_vertices * sizeof(unsigned int));
 	for (unsigned int j = 0; j < bot->num_faces; j++) {
 	    if (patches[j] == i+1) {
 		patch_vert_cnt[bot->faces[j*3+0]]++;
@@ -302,7 +302,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_MOVE);
 	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_DRAW);
 	}
-        if (vert_edge_status[bot->faces[j*3+1]] &&  vert_edge_status[bot->faces[j*3+2]]) {
+	if (vert_edge_status[bot->faces[j*3+1]] &&  vert_edge_status[bot->faces[j*3+2]]) {
 	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_MOVE);
 	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_DRAW);
 	}

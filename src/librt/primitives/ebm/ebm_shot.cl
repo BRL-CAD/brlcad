@@ -334,4 +334,3 @@ void ebm_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global 
 	default: hitp->hit_normal = (double3)(0.0); break;
     }
 }
-

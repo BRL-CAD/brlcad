@@ -167,7 +167,7 @@ size_t
 clt_eto_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct eto_specific *eto =
-        (struct eto_specific *)stp->st_specific;
+	(struct eto_specific *)stp->st_specific;
     struct clt_eto_specific *args;
 
     const size_t size = sizeof(*args);

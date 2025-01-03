@@ -86,12 +86,12 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
     bot->clt_header.offsets[0] = sizeof(bot->clt_header);
 
     if (bip->num_faces != 0) {
-        bot->clt_header.offsets[2] = sizeof(struct clt_tri_specific)*bip->num_faces;
-        bot->clt_triangles = (struct clt_tri_specific*)bu_calloc(1, bot->clt_header.offsets[2],
+	bot->clt_header.offsets[2] = sizeof(struct clt_tri_specific)*bip->num_faces;
+	bot->clt_triangles = (struct clt_tri_specific*)bu_calloc(1, bot->clt_header.offsets[2],
 		"bot triangles");
 
-        for (idx=0; idx<bip->num_faces; idx++) {
-            size_t i0, i1, i2;
+	for (idx=0; idx<bip->num_faces; idx++) {
+	    size_t i0, i1, i2;
 
 	    i0 = i1 = i2 = bip->num_vertices;
 
@@ -109,34 +109,34 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
 		break;
 	    }
 
-            if (i0 >= bip->num_vertices
-                || i1 >= bip->num_vertices
-                || i2 >= bip->num_vertices)
-            {
+	    if (i0 >= bip->num_vertices
+		|| i1 >= bip->num_vertices
+		|| i2 >= bip->num_vertices)
+	    {
 		bu_log("face number %zu of bot(%s) references a non-existent vertex\n",
 			idx, stp->st_name);
-                bu_free(bot->clt_triangles, "bot triangles");
-                bot->clt_triangles = NULL;
-                return -1;
-            } else {
+		bu_free(bot->clt_triangles, "bot triangles");
+		bot->clt_triangles = NULL;
+		return -1;
+	    } else {
 		VMOVE(bot->clt_triangles[idx].v0, &bip->vertices[i0*3]);
 		VMOVE(bot->clt_triangles[idx].v1, &bip->vertices[i1*3]);
 		VMOVE(bot->clt_triangles[idx].v2, &bip->vertices[i2*3]);
 		bot->clt_triangles[idx].surfno = idx;
 	    }
-        }
+	}
     } else {
-        bot->clt_triangles = NULL;
+	bot->clt_triangles = NULL;
     }
 
     if (bip->num_face_normals != 0) {
 	BU_ASSERT(bip->num_face_normals == bip->num_faces);
 
-        bot->clt_header.offsets[3] = sizeof(cl_double)*9*bip->num_face_normals;
-        bot->clt_normals = (cl_double*)bu_calloc(1, bot->clt_header.offsets[3], "bot normals");
+	bot->clt_header.offsets[3] = sizeof(cl_double)*9*bip->num_face_normals;
+	bot->clt_normals = (cl_double*)bu_calloc(1, bot->clt_header.offsets[3], "bot normals");
 
-        for (idx=0; idx<bip->num_face_normals; idx++) {
-            size_t i0, i1, i2;
+	for (idx=0; idx<bip->num_face_normals; idx++) {
+	    size_t i0, i1, i2;
 
 	    i0 = i1 = i2 = bip->num_normals;
 
@@ -154,23 +154,23 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
 		break;
 	    }
 
-            if (i0 >= bip->num_normals
-                || i1 >= bip->num_normals
-                || i2 >= bip->num_normals)
-            {
-                bu_log("face normal number %zu of bot(%s) references a non-existent vertex\n",
-                       idx, stp->st_name);
-                bu_free(bot->clt_normals, "bot normals");
-                bot->clt_normals = NULL;
-                return -1;
-            } else {
+	    if (i0 >= bip->num_normals
+		|| i1 >= bip->num_normals
+		|| i2 >= bip->num_normals)
+	    {
+		bu_log("face normal number %zu of bot(%s) references a non-existent vertex\n",
+		       idx, stp->st_name);
+		bu_free(bot->clt_normals, "bot normals");
+		bot->clt_normals = NULL;
+		return -1;
+	    } else {
 		VMOVE(&bot->clt_normals[idx*9+0], &bip->normals[i0*3]);
 		VMOVE(&bot->clt_normals[idx*9+3], &bip->normals[i1*3]);
 		VMOVE(&bot->clt_normals[idx*9+6], &bip->normals[i2*3]);
 	    }
-        }
+	}
     } else {
-    	bot->clt_normals = NULL;
+	bot->clt_normals = NULL;
     }
     return 0;
 }
@@ -179,11 +179,11 @@ void
 clt_bot_free(struct bot_specific *bot)
 {
     if (bot->clt_triangles) {
-        bu_free(bot->clt_triangles, "bot triangles");
+	bu_free(bot->clt_triangles, "bot triangles");
 	bot->clt_triangles = NULL;
     }
     if (bot->clt_normals) {
-        bu_free(bot->clt_normals, "bot normals");
+	bu_free(bot->clt_normals, "bot normals");
 	bot->clt_normals = NULL;
     }
 }
@@ -203,52 +203,52 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
 
     nodes = NULL;
     if (bot->clt_triangles) {
-        struct clt_tri_specific *ordered_triangles;
-        cl_double *ordered_normals;
-        long *ordered_prims;
-        cl_int total_nodes = 0;
-        fastf_t *centroids;
-        fastf_t *bounds;
+	struct clt_tri_specific *ordered_triangles;
+	cl_double *ordered_normals;
+	long *ordered_prims;
+	cl_int total_nodes = 0;
+	fastf_t *centroids;
+	fastf_t *bounds;
 
-        ordered_prims = NULL;
+	ordered_prims = NULL;
 
-        /* Build BVH for bot. */
-        centroids = (fastf_t*)bu_calloc(ntri, sizeof(fastf_t)*3, "bot centroids");
-        for (i=0; i<ntri; i++) {
-            const struct clt_tri_specific *trip = &bot->clt_triangles[i];
+	/* Build BVH for bot. */
+	centroids = (fastf_t*)bu_calloc(ntri, sizeof(fastf_t)*3, "bot centroids");
+	for (i=0; i<ntri; i++) {
+	    const struct clt_tri_specific *trip = &bot->clt_triangles[i];
 
-            VADD3(&centroids[i*3], trip->v0, trip->v1, trip->v2);
-            VSCALE(&centroids[i*3], &centroids[i*3], 1.0/3.0);
-        }
-        bounds = (fastf_t*)bu_calloc(ntri, sizeof(fastf_t)*6, "bot bounds");
-        for (i=0; i<ntri; i++) {
-            const struct clt_tri_specific *trip = &bot->clt_triangles[i];
+	    VADD3(&centroids[i*3], trip->v0, trip->v1, trip->v2);
+	    VSCALE(&centroids[i*3], &centroids[i*3], 1.0/3.0);
+	}
+	bounds = (fastf_t*)bu_calloc(ntri, sizeof(fastf_t)*6, "bot bounds");
+	for (i=0; i<ntri; i++) {
+	    const struct clt_tri_specific *trip = &bot->clt_triangles[i];
 
-            VMOVE(&bounds[i*6+0], trip->v0);
-            VMOVE(&bounds[i*6+3], trip->v0);
-            VMINMAX(&bounds[i*6+0], &bounds[i*6+3], trip->v1);
-            VMINMAX(&bounds[i*6+0], &bounds[i*6+3], trip->v2);
+	    VMOVE(&bounds[i*6+0], trip->v0);
+	    VMOVE(&bounds[i*6+3], trip->v0);
+	    VMINMAX(&bounds[i*6+0], &bounds[i*6+3], trip->v1);
+	    VMINMAX(&bounds[i*6+0], &bounds[i*6+3], trip->v2);
 
-            /* Prevent the RPP from being 0 thickness */
-            if (NEAR_EQUAL(bounds[i*6+X], bounds[i*6+3+X], SMALL_FASTF)) {
-                bounds[i*6+X] -= SMALL_FASTF;
-                bounds[i*6+3+X] += SMALL_FASTF;
-            }
-            if (NEAR_EQUAL(bounds[i*6+Y], bounds[i*6+3+Y], SMALL_FASTF)) {
-                bounds[i*6+Y] -= SMALL_FASTF;
-                bounds[i*6+3+Y] += SMALL_FASTF;
-            }
-            if (NEAR_EQUAL(bounds[i*6+Z], bounds[i*6+3+Z], SMALL_FASTF)) {
-                bounds[i*6+Z] -= SMALL_FASTF;
-                bounds[i*6+3+Z] += SMALL_FASTF;
-            }
-        }
-        nodes = NULL;
-        clt_linear_bvh_create(ntri, &nodes, &ordered_prims, centroids, bounds,
-                              &total_nodes);
-        bu_free(centroids, "bot centroids");
-        bu_free(bounds, "bot bounds");
-        bot->clt_header.offsets[1] = sizeof(struct clt_linear_bvh_node)*total_nodes;
+	    /* Prevent the RPP from being 0 thickness */
+	    if (NEAR_EQUAL(bounds[i*6+X], bounds[i*6+3+X], SMALL_FASTF)) {
+		bounds[i*6+X] -= SMALL_FASTF;
+		bounds[i*6+3+X] += SMALL_FASTF;
+	    }
+	    if (NEAR_EQUAL(bounds[i*6+Y], bounds[i*6+3+Y], SMALL_FASTF)) {
+		bounds[i*6+Y] -= SMALL_FASTF;
+		bounds[i*6+3+Y] += SMALL_FASTF;
+	    }
+	    if (NEAR_EQUAL(bounds[i*6+Z], bounds[i*6+3+Z], SMALL_FASTF)) {
+		bounds[i*6+Z] -= SMALL_FASTF;
+		bounds[i*6+3+Z] += SMALL_FASTF;
+	    }
+	}
+	nodes = NULL;
+	clt_linear_bvh_create(ntri, &nodes, &ordered_prims, centroids, bounds,
+			      &total_nodes);
+	bu_free(centroids, "bot centroids");
+	bu_free(bounds, "bot bounds");
+	bot->clt_header.offsets[1] = sizeof(struct clt_linear_bvh_node)*total_nodes;
 
 	/* reorder the triangles spatially */
 	if (bot->clt_triangles) {
@@ -277,24 +277,23 @@ clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
 
     header.offsets[0] = 0;
     for (i=1; i <= 4; i++) {
-        header.offsets[i] = header.offsets[i-1] + bot->clt_header.offsets[i-1];
+	header.offsets[i] = header.offsets[i-1] + bot->clt_header.offsets[i-1];
     }
     data = (uint8_t*)bu_pool_alloc(pool, 1, header.offsets[4]);
 
     memcpy(data+header.offsets[0], &header, bot->clt_header.offsets[0]);
     if (nodes)
-        memcpy(data+header.offsets[1], nodes, bot->clt_header.offsets[1]);
+	memcpy(data+header.offsets[1], nodes, bot->clt_header.offsets[1]);
     if (bot->clt_triangles)
-        memcpy(data+header.offsets[2], bot->clt_triangles, bot->clt_header.offsets[2]);
+	memcpy(data+header.offsets[2], bot->clt_triangles, bot->clt_header.offsets[2]);
     if (bot->clt_normals)
-        memcpy(data+header.offsets[3], bot->clt_normals, bot->clt_header.offsets[3]);
+	memcpy(data+header.offsets[3], bot->clt_normals, bot->clt_header.offsets[3]);
 
     if (nodes) bu_free(nodes, "bot nodes");
 
     return header.offsets[4];
 }
 #endif
-
 
 
 /**
@@ -329,7 +328,7 @@ const struct hit zeroed_hit_s = {0};
 
 // Append one item to a dynamic array
 // It may be tempting to make this a specialization of
-// DA_APPEND_MANY, however this supports the use case 
+// DA_APPEND_MANY, however this supports the use case
 // of appending a compile time value to a dynamic array
 // Ex. DA_APPEND(da_ints, 42, int)
 #define DA_APPEND(da, item, itemtype)							\
@@ -392,7 +391,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CK_DB_INTERNAL(ip);
     struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
-    
+
     // Copy settings over to bot, because we won't have access to
     // bot_ip in the shot function
     struct bot_specific *bot;
@@ -402,7 +401,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
     bot->bot_ntri = bot_ip->num_faces;
-	
+
     // set up thickness if requested
     if (bot_ip->thickness) {
 	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
@@ -425,16 +424,16 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     const char *bmintie = getenv("LIBRT_BOT_MINTIE");
     if (bmintie)
 	rt_bot_mintie = atoi(bmintie);
-    
+
     // set up centroids and bounds for hlbvh call
     fastf_t *centroids = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*3, "bot centroids");
     fastf_t *bounds    = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*6, "bot bounds");
-    
+
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
 	fastf_t* v0 = (bot_ip->vertices+3*bot_ip->faces[i*3+0]);
 	fastf_t* v1 = (bot_ip->vertices+3*bot_ip->faces[i*3+1]);
 	fastf_t* v2 = (bot_ip->vertices+3*bot_ip->faces[i*3+2]);
-	
+
 	VADD3(&centroids[i*3], v0, v1, v2);
 	VSCALE(&centroids[i*3], &centroids[i*3], 1.0/3.0);
 
@@ -452,7 +451,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     long *ordered_faces = NULL;
     struct bvh_build_node *build_root = hlbvh_create(rt_bot_mintie, pool, centroids, bounds, &nodes_created,
 					       bot_ip->num_faces, &ordered_faces);
-    
+
     bu_free(centroids, "bot centroids");
     bu_free(bounds, "bot bounds");
 
@@ -570,13 +569,12 @@ rt_bot_print(const struct soltab *stp)
 
 /* Forward declare for rt_bot_shot */
 int
-rt_bot_makesegs(hit_da *hits, 
-		struct soltab *stp, 
-		struct xray *rp, 
-		struct application *ap, 
-		struct seg *seghead, 
+rt_bot_makesegs(hit_da *hits,
+		struct soltab *stp,
+		struct xray *rp,
+		struct application *ap,
+		struct seg *seghead,
 		struct rt_piecestate *psp);
-
 
 
 void
@@ -589,7 +587,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
     stack_child_index[stack_ind] = 0;
     vect_t inverse_r_dir;
     VINVDIR(inverse_r_dir, rp->r_dir);
-	
+
     while (stack_ind >= 0) {
 	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
 	    // This should only ever happen if the BVH tree that was
@@ -615,14 +613,14 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 
 	    VSUB2( lows_t, &node->bounds[0], rp->r_pt);
 	    VSUB2(highs_t, &node->bounds[3], rp->r_pt);
-	    
+
 	    VELMUL( lows_t,  lows_t, inverse_r_dir);
 	    VELMUL(highs_t, highs_t, inverse_r_dir);
-	
+
 	    VMOVE( low_ts, lows_t);
 	    VMOVE(high_ts, lows_t);
 	    VMINMAX(low_ts, high_ts, highs_t);
-	
+
 	    fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
 	    fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
 	    if ((high_t < -1.0) | (low_t > high_t)) {
@@ -666,7 +664,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 	}
 	// we hit the bounds and are not in a leaf
 	// so we do the next child of this node
-	
+
 	// stack_child_index[stack_ind] either == 0 or == 1
 	// because of the guard at the top of the loop
 	stack_node[stack_ind+1] = (stack_child_index[stack_ind]) ? (node->data.other_child) : (node +1);
@@ -682,7 +680,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
  * seg will be acquired and filled in.
  *
  * Notes for rt_bot_norm(): hit_private contains pointer to the
- * triangle_s structure.  
+ * triangle_s structure.
  * hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific.
  * hit_vpriv[Y] contains the barycentric coordinate associated with point B of the triangle.
  * hit_vpriv[Z] contains the barycentric coordinate associated with point C of the triangle.
@@ -733,7 +731,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    hits[j+1] = swap;
 	}
     }
-    
+
     return rt_bot_makesegs(hits_da, stp, rp, ap, seghead, NULL);
 }
 
@@ -889,7 +887,6 @@ rt_bot_free(struct soltab *stp)
 }
 
 
-
 static int
 rt_bot_plate_segs(struct hit *hits,
 		  size_t nhits,
@@ -972,7 +969,7 @@ rt_bot_plate_segs(struct hit *hits,
 }
 
 
-int 
+int
 rt_bot_surface_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct application *ap, struct seg *seghead)
 {
     register struct seg *segp;
@@ -982,7 +979,7 @@ rt_bot_surface_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct a
     /* TODO: review the use of a signed tmp var. Var i was changed to be signed in
      * r44239 as a bug in another project was segfaulting. */
     ssize_t snhits = (ssize_t)nhits;
-    
+
     for (i = 0; i < snhits; i++) {
 	triangle_s *trip=(triangle_s *)hits[i].hit_private;
 
@@ -1500,20 +1497,19 @@ rt_bot_makesegs(hit_da *hits, struct soltab *stp, struct xray *rp, struct applic
 	bot->bot_mode == RT_BOT_PLATE_NOCOS) {
 	return rt_bot_plate_segs(hits->items, hits->count, stp, rp, ap, seghead, bot);
     }
-	
+
     if (bot->bot_mode == RT_BOT_SURFACE) {
 	return rt_bot_surface_segs(hits->items, hits->count, stp, ap, seghead);
     }
-	
+
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
-	
+
     if (bot->bot_orientation == RT_BOT_UNORIENTED) {
 	return rt_bot_unoriented_segs(hits->items, hits->count, stp, rp, ap, seghead);
     }
 
     return rt_bot_oriented_segs(hits, stp, ap, seghead, psp);
 }
-
 
 
 static vdsNode *
@@ -1696,20 +1692,20 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     BV_ADD_VLIST(vlfree, vhead, valp[d], BV_VLIST_LINE_DRAW);
 
 #define BOT_BB_PLOT_VLIST(_min, _max) {             \
-            fastf_t pt[8][3];                       \
-            VSET(pt[0], _max[X], _min[Y], _min[Z]); \
-            VSET(pt[1], _max[X], _max[Y], _min[Z]); \
-            VSET(pt[2], _max[X], _max[Y], _max[Z]); \
-            VSET(pt[3], _max[X], _min[Y], _max[Z]); \
-            VSET(pt[4], _min[X], _min[Y], _min[Z]); \
-            VSET(pt[5], _min[X], _max[Y], _min[Z]); \
-            VSET(pt[6], _min[X], _max[Y], _max[Z]); \
-            VSET(pt[7], _min[X], _min[Y], _max[Z]); \
-            BOT_BBOX_ARB_FACE(pt, 0, 1, 2, 3);      \
-            BOT_BBOX_ARB_FACE(pt, 4, 0, 3, 7);      \
-            BOT_BBOX_ARB_FACE(pt, 5, 4, 7, 6);      \
-            BOT_BBOX_ARB_FACE(pt, 1, 5, 6, 2);      \
-        }
+	    fastf_t pt[8][3];                       \
+	    VSET(pt[0], _max[X], _min[Y], _min[Z]); \
+	    VSET(pt[1], _max[X], _max[Y], _min[Z]); \
+	    VSET(pt[2], _max[X], _max[Y], _max[Z]); \
+	    VSET(pt[3], _max[X], _min[Y], _max[Z]); \
+	    VSET(pt[4], _min[X], _min[Y], _min[Z]); \
+	    VSET(pt[5], _min[X], _max[Y], _min[Z]); \
+	    VSET(pt[6], _min[X], _max[Y], _max[Z]); \
+	    VSET(pt[7], _min[X], _min[Y], _max[Z]); \
+	    BOT_BBOX_ARB_FACE(pt, 0, 1, 2, 3);      \
+	    BOT_BBOX_ARB_FACE(pt, 4, 0, 3, 7);      \
+	    BOT_BBOX_ARB_FACE(pt, 5, 4, 7, 6);      \
+	    BOT_BBOX_ARB_FACE(pt, 1, 5, 6, 2);      \
+	}
 
 // TODO - while this routine makes the vlists per the standard librt API, BoTs
 // are a case where we probably should be passing the data directly to the
@@ -5808,9 +5804,9 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
 	    /* bot->normals array already exists, use those instead */
 	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-	} else if (UNLIKELY(bg_make_plane_3pnts(face.plane_eqn, 
-						(&bot->vertices[(a) * ELEMENTS_PER_POINT]), 
-						(&bot->vertices[(b) * ELEMENTS_PER_POINT]), 
+	} else if (UNLIKELY(bg_make_plane_3pnts(face.plane_eqn,
+						(&bot->vertices[(a) * ELEMENTS_PER_POINT]),
+						(&bot->vertices[(b) * ELEMENTS_PER_POINT]),
 						(&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
 	    continue;
 	}

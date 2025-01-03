@@ -59,7 +59,7 @@ size_t
 clt_arbn_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rt_arbn_internal *arb =
-        (struct rt_arbn_internal *)stp->st_specific;
+	(struct rt_arbn_internal *)stp->st_specific;
     struct clt_arbn_specific *args;
 
     cl_int j;
@@ -1361,16 +1361,16 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
     plane_t *eqs = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "rt_arbn_faces_area: eqs");
 
     for (i = 0; i < aip->neqn; i++) {
-    	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
-    	VUNITIZE(faces[i].plane_eqn);
+	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
+	VUNITIZE(faces[i].plane_eqn);
 	tmp_pts[i] = faces[i].pts;
-    	HMOVE(eqs[i], faces[i].plane_eqn);
+	HMOVE(eqs[i], faces[i].plane_eqn);
     }
     bg_3d_polygon_make_pnts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
     for (i = 0; i < aip->neqn; i++) {
 	faces[i].npts = npts[i];
-    	bg_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
-    	bg_3d_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
+	bg_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
+	bg_3d_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
     bu_free((char *)tmp_pts, "rt_arbn_faces_area: tmp_pts");
     bu_free((char *)npts, "rt_arbn_faces_area: npts");

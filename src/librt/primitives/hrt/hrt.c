@@ -158,7 +158,7 @@ size_t
 clt_hrt_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct hrt_specific *hrt =
-        (struct hrt_specific *)stp->st_specific;
+	(struct hrt_specific *)stp->st_specific;
     struct clt_hrt_specific *args;
 
     const size_t size = sizeof(*args);
@@ -418,7 +418,7 @@ int
 rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct hrt_specific *hrt =
-        (struct hrt_specific *)stp->st_specific;
+	(struct hrt_specific *)stp->st_specific;
     register struct seg *segp;
     vect_t dprime;              /* D' : The new shot direction */
     vect_t pprime;              /* P' : The new shot point */
@@ -526,20 +526,20 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      * root finder returns other than 6 roots, return an error.
      */
     if ((i = rt_poly_roots(&S, complex, stp->st_dp->d_namep)) != 6) {
-        if (i > 0) {
-            bu_log("hrt:  rt_poly_roots() 6!=%d\n", i);
-            bn_pr_roots(stp->st_name, complex, i);
-        } else if (i < 0) {
-            static int reported = 0;
-            bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
-            if (!reported) {
-                VPRINT("while shooting from:\t", rp->r_pt);
-                VPRINT("while shooting at:\t", rp->r_dir);
-                bu_log("Additional heart convergence failure details will be suppressed.\n");
-                reported = 1;
-            }
-        }
-        return 0;               /* MISS */
+	if (i > 0) {
+	    bu_log("hrt:  rt_poly_roots() 6!=%d\n", i);
+	    bn_pr_roots(stp->st_name, complex, i);
+	} else if (i < 0) {
+	    static int reported = 0;
+	    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	    if (!reported) {
+		VPRINT("while shooting from:\t", rp->r_pt);
+		VPRINT("while shooting at:\t", rp->r_dir);
+		bu_log("Additional heart convergence failure details will be suppressed.\n");
+		reported = 1;
+	    }
+	}
+	return 0;               /* MISS */
     }
 
     /* Only real roots indicate an intersection in real space.
@@ -549,66 +549,66 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      * for the intersections
      */
     for (j = 0, i = 0; j < 6; j++) {
-        if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
-            real[i++] = complex[j].re;
+	if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
+	    real[i++] = complex[j].re;
     }
     /* Here, 'i' is number of points found */
     switch (i) {
-        case 0:
-            return 0;           /* No hit */
+	case 0:
+	    return 0;           /* No hit */
 
-        default:
-            bu_log("rt_hrt_shot: reduced 6 to %d roots\n", i);
-            bn_pr_roots(stp->st_name, complex, 6);
-            return 0;           /* No hit */
+	default:
+	    bu_log("rt_hrt_shot: reduced 6 to %d roots\n", i);
+	    bn_pr_roots(stp->st_name, complex, 6);
+	    return 0;           /* No hit */
 
-        case 2:
-            {
-                /* Sort most distant to least distant. */
-                fastf_t u;
-                if ((u=real[0]) < real[1]) {
-                    /* bubble larger towards [0] */
-                    real[0] = real[1];
-                    real[1] = u;
-                }
-            }
-            break;
-        case 4:
-            {
-                short n;
-                short lim;
+	case 2:
+	    {
+		/* Sort most distant to least distant. */
+		fastf_t u;
+		if ((u=real[0]) < real[1]) {
+		    /* bubble larger towards [0] */
+		    real[0] = real[1];
+		    real[1] = u;
+		}
+	    }
+	    break;
+	case 4:
+	    {
+		short n;
+		short lim;
 
-                /* Inline rt_pnt_sort().  Sorts real[] into descending order. */
-                for (lim = i-1; lim > 0; lim--) {
-                    for (n = 0; n < lim; n++) {
-                        fastf_t u;
-                        if ((u=real[n]) < real[n+1]) {
-                            /* bubble larger towards [0] */
-                            real[n] = real[n+1];
-                            real[n+1] = u;
-                        }
-                    }
-                }
-            }
-            break;
-        case 6:
-            {
-                short num;
-                short limit;
+		/* Inline rt_pnt_sort().  Sorts real[] into descending order. */
+		for (lim = i-1; lim > 0; lim--) {
+		    for (n = 0; n < lim; n++) {
+			fastf_t u;
+			if ((u=real[n]) < real[n+1]) {
+			    /* bubble larger towards [0] */
+			    real[n] = real[n+1];
+			    real[n+1] = u;
+			}
+		    }
+		}
+	    }
+	    break;
+	case 6:
+	    {
+		short num;
+		short limit;
 
-                /* Inline rt_pnt_sort().  Sorts real[] into descending order. */
-                for (limit = i-1; limit > 0; limit--) {
-                    for (num = 0; num < limit; num++) {
-                        fastf_t u;
-                        if ((u=real[num]) < real[num+1]) {
-                            /* bubble larger towards [0] */
-                            real[num] = real[num+1];
-                            real[num+1] = u;
-                        }
-                    }
-                }
-            }
-            break;
+		/* Inline rt_pnt_sort().  Sorts real[] into descending order. */
+		for (limit = i-1; limit > 0; limit--) {
+		    for (num = 0; num < limit; num++) {
+			fastf_t u;
+			if ((u=real[num]) < real[num+1]) {
+			    /* bubble larger towards [0] */
+			    real[num] = real[num+1];
+			    real[num+1] = u;
+			}
+		    }
+		}
+	    }
+	    break;
     }
 
     /* Now, t[0] > t[npts-1] */
@@ -624,7 +624,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
     if (i == 2)
-        return 2;                       /* HIT */
+	return 2;                       /* HIT */
 
     /* 4 points */
     /* real[3] is entry point, and real[2] is exit point */
@@ -639,7 +639,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
     if (i == 4)
-        return 4;                       /* HIT */
+	return 4;                       /* HIT */
 
     /* 6 points */
     /* real[5] is entry point, and real[4] is exit point */
@@ -721,68 +721,68 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* X**2 */
 	Xsqr.dgr = 2;
 	Xsqr.cf[0] = dprime[X] * dprime[X];
-        Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
-        Xsqr.cf[2] = pprime[X] * pprime[X];
+	Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
+	Xsqr.cf[2] = pprime[X] * pprime[X];
 
-        /* 9/4 * Y**2*/
-        Ysqr.dgr = 2;
-        Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
-        Ysqr.cf[1] = 9/2 * dprime[Y] * pprime[Y];
-        Ysqr.cf[2] = 9/4 * (pprime[Y] * pprime[Y]);
+	/* 9/4 * Y**2*/
+	Ysqr.dgr = 2;
+	Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
+	Ysqr.cf[1] = 9/2 * dprime[Y] * pprime[Y];
+	Ysqr.cf[2] = 9/4 * (pprime[Y] * pprime[Y]);
 
-        /* Z**2 - 1 */
-        Zsqr.dgr = 2;
-        Zsqr.cf[0] = dprime[Z] * dprime[Z];
-        Zsqr.cf[1] = 2 * dprime[Z] * pprime[Z];
-        Zsqr.cf[2] = pprime[Z] * pprime[Z] - 1.0 ;
+	/* Z**2 - 1 */
+	Zsqr.dgr = 2;
+	Zsqr.cf[0] = dprime[Z] * dprime[Z];
+	Zsqr.cf[1] = 2 * dprime[Z] * pprime[Z];
+	Zsqr.cf[2] = pprime[Z] * pprime[Z] - 1.0 ;
 
-        /* A = X^2 + 9/4 * Y^2 + Z^2 - 1 */
-        A.dgr = 2;
-        A.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] + Zsqr.cf[0];
-        A.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] + Zsqr.cf[1];
-        A.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] + Zsqr.cf[2];
+	/* A = X^2 + 9/4 * Y^2 + Z^2 - 1 */
+	A.dgr = 2;
+	A.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] + Zsqr.cf[0];
+	A.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] + Zsqr.cf[1];
+	A.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] + Zsqr.cf[2];
 
-        /* Z**3 */
-        Zcube.dgr = 3;
-        Zcube.cf[0] = dprime[Z] * Zsqr.cf[0];
-        Zcube.cf[1] = 1.5 * dprime[Z] * Zsqr.cf[1];
-        Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
-        Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
+	/* Z**3 */
+	Zcube.dgr = 3;
+	Zcube.cf[0] = dprime[Z] * Zsqr.cf[0];
+	Zcube.cf[1] = 1.5 * dprime[Z] * Zsqr.cf[1];
+	Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
+	Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
 
 	/* A**3 */
-        Acube.dgr = 6;
-        Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
-        Acube.cf[1] = 3.0 * A.cf[0] * A.cf[0] * A.cf[1];
-        Acube.cf[2] = 3.0 * (A.cf[0] * A.cf[0] * A.cf[2] + A.cf[0] * A.cf[1] * A.cf[1]);
-        Acube.cf[3] = 6.0 * A.cf[0] * A.cf[1] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[1];
-        Acube.cf[4] = 3.0 * (A.cf[0] * A.cf[2] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[2]);
-        Acube.cf[5] = 3.0 * A.cf[1] * A.cf[2] * A.cf[2];
-        Acube.cf[6] = A.cf[2] * A.cf[2] * A.cf[2];
+	Acube.dgr = 6;
+	Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
+	Acube.cf[1] = 3.0 * A.cf[0] * A.cf[0] * A.cf[1];
+	Acube.cf[2] = 3.0 * (A.cf[0] * A.cf[0] * A.cf[2] + A.cf[0] * A.cf[1] * A.cf[1]);
+	Acube.cf[3] = 6.0 * A.cf[0] * A.cf[1] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[1];
+	Acube.cf[4] = 3.0 * (A.cf[0] * A.cf[2] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[2]);
+	Acube.cf[5] = 3.0 * A.cf[1] * A.cf[2] * A.cf[2];
+	Acube.cf[6] = A.cf[2] * A.cf[2] * A.cf[2];
 
-        /* X**2 + 9/80 Y**2 */
-        X2_Y2.dgr = 2;
-        X2_Y2.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] / 20 ;
-        X2_Y2.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] / 20 ;
-        X2_Y2.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] / 20 ;
+	/* X**2 + 9/80 Y**2 */
+	X2_Y2.dgr = 2;
+	X2_Y2.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] / 20 ;
+	X2_Y2.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] / 20 ;
+	X2_Y2.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] / 20 ;
 
-        /* Z**3 * (X**2 + 9/80 * Y**2) */
-        Z3_X2_Y2.dgr = 5;
-        Z3_X2_Y2.cf[0] = Zcube.cf[0] * X2_Y2.cf[0];
-        Z3_X2_Y2.cf[1] = X2_Y2.cf[0] * Zcube.cf[1];
-        Z3_X2_Y2.cf[2] = X2_Y2.cf[0] * Zcube.cf[2] + X2_Y2.cf[1] * Zcube.cf[0] + X2_Y2.cf[1] * Zcube.cf[1] + X2_Y2.cf[2] * Zcube.cf[0];
-        Z3_X2_Y2.cf[3] = X2_Y2.cf[0] * Zcube.cf[3] + X2_Y2.cf[1] * Zcube.cf[2] + X2_Y2.cf[2] * Zcube.cf[1];
-        Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
-        Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
+	/* Z**3 * (X**2 + 9/80 * Y**2) */
+	Z3_X2_Y2.dgr = 5;
+	Z3_X2_Y2.cf[0] = Zcube.cf[0] * X2_Y2.cf[0];
+	Z3_X2_Y2.cf[1] = X2_Y2.cf[0] * Zcube.cf[1];
+	Z3_X2_Y2.cf[2] = X2_Y2.cf[0] * Zcube.cf[2] + X2_Y2.cf[1] * Zcube.cf[0] + X2_Y2.cf[1] * Zcube.cf[1] + X2_Y2.cf[2] * Zcube.cf[0];
+	Z3_X2_Y2.cf[3] = X2_Y2.cf[0] * Zcube.cf[3] + X2_Y2.cf[1] * Zcube.cf[2] + X2_Y2.cf[2] * Zcube.cf[1];
+	Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
+	Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
 
 	/* S(t) = 0 */
-        S[i].dgr = 6;
-        S[i].cf[0] = Acube.cf[0];
-        S[i].cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
-        S[i].cf[2] = Acube.cf[2] - Z3_X2_Y2.cf[1];
-        S[i].cf[3] = Acube.cf[3] - Z3_X2_Y2.cf[2];
-        S[i].cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
-        S[i].cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
-        S[i].cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
+	S[i].dgr = 6;
+	S[i].cf[0] = Acube.cf[0];
+	S[i].cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
+	S[i].cf[2] = Acube.cf[2] - Z3_X2_Y2.cf[1];
+	S[i].cf[3] = Acube.cf[3] - Z3_X2_Y2.cf[2];
+	S[i].cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
+	S[i].cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
+	S[i].cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
 
     }
     for (i = 0; i < n; i++) {
@@ -973,8 +973,8 @@ rt_hrt_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *rp)
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     w = hitp->hit_vpriv[X] * hitp->hit_vpriv[X]
-        + 9.0/4.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
-        + hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] - 1.0;
+	+ 9.0/4.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
+	+ hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] - 1.0;
     fx = (w * w - 1/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]) * hitp->hit_vpriv[X];
     fy = hitp->hit_vpriv[Y] * (12/27 * w * w - 80/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
     fz = (w * w - 0.5 * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
@@ -1122,7 +1122,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 
     VSET(upper_cusp, (top3_center_left[X] + top3_center_right[X]) * 0.70,
 		     (top3_center_left[Y] + top3_center_right[Y]) * 0.50,
-    		     hip->zdir[Z] * 0.64);
+		     hip->zdir[Z] * 0.64);
     VSET(highest_point_left, hip->xdir[X] * -0.50 , 0 , hip->zdir[Z] );
     VSET(highest_point_right, hip->xdir[X] * 0.50 , 0 , hip->zdir[Z] );
 
@@ -1240,12 +1240,12 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 
     for (k = 1; k < 24; k++) {
 	BV_ADD_VLIST(vlfree, vhead,
-	             &top01[k*ELEMENTS_PER_VECT],
-	             BV_VLIST_LINE_MOVE);
+		     &top01[k*ELEMENTS_PER_VECT],
+		     BV_VLIST_LINE_MOVE);
 	BV_ADD_VLIST(vlfree, vhead,
 		     &top02[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_DRAW);
-        BV_ADD_VLIST(vlfree, vhead,
+	BV_ADD_VLIST(vlfree, vhead,
 		     &top02[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_MOVE);
 	BV_ADD_VLIST(vlfree, vhead,
@@ -1255,13 +1255,13 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 		     &top1_left_lobe[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_MOVE);
 	BV_ADD_VLIST(vlfree, vhead,
-	             &top2_left_lobe[k*ELEMENTS_PER_VECT],
+		     &top2_left_lobe[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_DRAW);
 	BV_ADD_VLIST(vlfree, vhead,
-	             &top1_right_lobe[k*ELEMENTS_PER_VECT],
-	             BV_VLIST_LINE_MOVE);
+		     &top1_right_lobe[k*ELEMENTS_PER_VECT],
+		     BV_VLIST_LINE_MOVE);
 	BV_ADD_VLIST(vlfree, vhead,
-	             &top2_right_lobe[k*ELEMENTS_PER_VECT],
+		     &top2_right_lobe[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_DRAW);
 	BV_ADD_VLIST(vlfree, vhead,
 		     &top2_left_lobe[k*ELEMENTS_PER_VECT],
@@ -1273,16 +1273,16 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 		     &top2_right_lobe[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_MOVE);
 	BV_ADD_VLIST(vlfree, vhead,
-	             &top3_right_lobe[k*ELEMENTS_PER_VECT],
+		     &top3_right_lobe[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_DRAW);
 	BV_ADD_VLIST(vlfree, vhead,
-	             &top3_left_lobe[k*ELEMENTS_PER_VECT],
+		     &top3_left_lobe[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_MOVE);
 	BV_ADD_VLIST(vlfree, vhead,
 		     &top4_left_lobe[k*ELEMENTS_PER_VECT],
-	             BV_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
 	BV_ADD_VLIST(vlfree, vhead,
-	             &top3_right_lobe[k*ELEMENTS_PER_VECT],
+		     &top3_right_lobe[k*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_MOVE);
 	BV_ADD_VLIST(vlfree, vhead,
 		     &top4_right_lobe[k*ELEMENTS_PER_VECT],

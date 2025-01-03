@@ -81,7 +81,7 @@ size_t
 clt_sph_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct sph_specific *sph =
-        (struct sph_specific *)stp->st_specific;
+	(struct sph_specific *)stp->st_specific;
     struct clt_sph_specific *args;
 
     const size_t size = sizeof(*args);

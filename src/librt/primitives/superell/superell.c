@@ -188,7 +188,7 @@ size_t
 clt_superell_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct superell_specific *superell =
-        (struct superell_specific *)stp->st_specific;
+	(struct superell_specific *)stp->st_specific;
     struct clt_superell_specific *args;
 
     const size_t size = sizeof(*args);

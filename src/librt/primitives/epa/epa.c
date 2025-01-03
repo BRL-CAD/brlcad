@@ -198,7 +198,7 @@ size_t
 clt_epa_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct epa_specific *epa =
-        (struct epa_specific *)stp->st_specific;
+	(struct epa_specific *)stp->st_specific;
     struct clt_epa_specific *args;
 
     const size_t size = sizeof(*args);

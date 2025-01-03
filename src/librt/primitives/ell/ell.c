@@ -176,7 +176,7 @@ size_t
 clt_ell_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct ell_specific *ell =
-        (struct ell_specific *)stp->st_specific;
+	(struct ell_specific *)stp->st_specific;
     struct clt_ell_specific *args;
 
     const size_t size = sizeof(*args);

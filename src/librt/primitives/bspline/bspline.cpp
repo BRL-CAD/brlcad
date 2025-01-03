@@ -701,7 +701,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     int s;
 
     if (dbip)
-       	RT_CK_DBI(dbip);
+	RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -1451,4 +1451,3 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

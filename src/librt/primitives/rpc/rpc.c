@@ -200,24 +200,24 @@ struct clt_rpc_specific {
     cl_double rpc_SoR[16];	/* Scale(Rot(vect)) */
     cl_double rpc_invRoS[16];	/* invRot(Scale(vect)) */
 };
- 
+
 size_t
 clt_rpc_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rpc_specific *rpc =
     (struct rpc_specific *)stp->st_specific;
     struct clt_rpc_specific *args;
-    
+
     const size_t size = sizeof(*args);
     args = (struct clt_rpc_specific*)bu_pool_alloc(pool, 1, size);
-    
+
     VMOVE(args->rpc_V, rpc->rpc_V);
     VMOVE(args->rpc_Bunit, rpc->rpc_Bunit);
     VMOVE(args->rpc_Hunit, rpc->rpc_Hunit);
     VMOVE(args->rpc_Runit, rpc->rpc_Runit);
     MAT_COPY(args->rpc_SoR, rpc->rpc_SoR);
     MAT_COPY(args->rpc_invRoS, rpc->rpc_invRoS);
-    
+
     return size;
 }
 

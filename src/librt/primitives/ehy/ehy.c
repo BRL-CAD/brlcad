@@ -202,7 +202,7 @@ size_t
 clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct ehy_specific *ehy =
-        (struct ehy_specific *)stp->st_specific;
+	(struct ehy_specific *)stp->st_specific;
     struct clt_ehy_specific *args;
 
     const size_t size = sizeof(*args);

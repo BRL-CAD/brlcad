@@ -74,7 +74,6 @@ segs_error(const char *str) {
 }
 
 
-
 /* This is the solid information specific to an nmg solid */
 struct nmg_specific {
     uint32_t nmg_smagic;	/* STRUCT START magic number */
@@ -343,9 +342,6 @@ pl_ray(struct ray_data *rd)
 }
 
 
-
-
-
 static void
 unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl, struct bu_list *hd, struct ray_data *rd)
 {
@@ -497,7 +493,6 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 }
 
 /* nmg_rt_segs.c contents */
-
 
 
 static void
@@ -1229,7 +1224,6 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 
     return seg_count;
 }
-
 
 
 /**
@@ -2334,59 +2328,59 @@ int nmg_bool_eval_silent=0;
  */
 int
 rt_nmg_do_bool(
-        union tree *tp, union tree *tl, union tree *tr,
-        int op, struct bu_list *vlfree, const struct bn_tol *tol, void *UNUSED(data))
+	union tree *tp, union tree *tl, union tree *tr,
+	int op, struct bu_list *vlfree, const struct bn_tol *tol, void *UNUSED(data))
 {
     int nmg_op = NMG_BOOL_ADD;
     switch (op) {
-        case OP_UNION:
-            nmg_op = NMG_BOOL_ADD;
-            break;
-        case OP_INTERSECT:
-            nmg_op = NMG_BOOL_ISECT;
-            break;
-        case OP_SUBTRACT:
-            nmg_op = NMG_BOOL_SUB;
-            break;
-        default:
-            nmg_op = NMG_BOOL_ADD;
+	case OP_UNION:
+	    nmg_op = NMG_BOOL_ADD;
+	    break;
+	case OP_INTERSECT:
+	    nmg_op = NMG_BOOL_ISECT;
+	    break;
+	case OP_SUBTRACT:
+	    nmg_op = NMG_BOOL_SUB;
+	    break;
+	default:
+	    nmg_op = NMG_BOOL_ADD;
     }
 
     NMG_CK_REGION(tr->tr_d.td_r);
     NMG_CK_REGION(tl->tr_d.td_r);
 
     if (nmg_ck_closed_region(tr->tr_d.td_r, tol))
-        bu_bomb("rt_nmg_do_bool(): ERROR, non-closed shell (r)\n");
+	bu_bomb("rt_nmg_do_bool(): ERROR, non-closed shell (r)\n");
 
     if (tl->tr_d.td_r && nmg_ck_closed_region(tl->tr_d.td_r, tol))
-        bu_bomb("rt_nmg_do_bool(): ERROR, non-closed shell (l)\n");
+	bu_bomb("rt_nmg_do_bool(): ERROR, non-closed shell (l)\n");
 
     nmg_r_radial_check(tr->tr_d.td_r, vlfree, tol);
     nmg_r_radial_check(tl->tr_d.td_r, vlfree, tol);
 
     if (nmg_debug & NMG_DEBUG_BOOL) {
-        bu_log("Before model fuse\nShell A:\n");
-        nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), "");
-        bu_log("Shell B:\n");
-        nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tr->tr_d.td_r->s_hd), "");
+	bu_log("Before model fuse\nShell A:\n");
+	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), "");
+	bu_log("Shell B:\n");
+	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tr->tr_d.td_r->s_hd), "");
     }
 
     /* move operands into the same model */
     if (tr->tr_d.td_r->m_p != tl->tr_d.td_r->m_p)
-        nmg_merge_models(tl->tr_d.td_r->m_p, tr->tr_d.td_r->m_p);
+	nmg_merge_models(tl->tr_d.td_r->m_p, tr->tr_d.td_r->m_p);
 
     /* input r1 and r2 are destroyed, output is new region */
     struct nmgregion *reg = nmg_do_bool(tl->tr_d.td_r, tr->tr_d.td_r, nmg_op, vlfree, tol);
     if (reg) {
-        /* convert argument binary node into a result node */
-        NMG_CK_REGION(reg);
-        nmg_r_radial_check(reg, vlfree, tol);
-        tp->tr_op = OP_TESS;
-        tp->tr_d.td_r = reg;
-        if (nmg_debug & NMG_DEBUG_VERIFY) {
-            nmg_vshell(&reg->s_hd, reg);
-        }
-        return 0;
+	/* convert argument binary node into a result node */
+	NMG_CK_REGION(reg);
+	nmg_r_radial_check(reg, vlfree, tol);
+	tp->tr_op = OP_TESS;
+	tp->tr_d.td_r = reg;
+	if (nmg_debug & NMG_DEBUG_VERIFY) {
+	    nmg_vshell(&reg->s_hd, reg);
+	}
+	return 0;
     }
 
     /* resulting region was null */
@@ -2479,7 +2473,6 @@ nmg_perturb_tree(union tree *tp)
     }
 }
 #endif
-
 
 
 /**
@@ -2726,7 +2719,6 @@ not_arb:
     bu_ptbl_free(tab);
     return 0;
 }
-
 
 
 /**
@@ -3637,7 +3629,6 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
     bu_ptbl_free(&face_arrays);
     return bot;
 }
-
 
 
 void

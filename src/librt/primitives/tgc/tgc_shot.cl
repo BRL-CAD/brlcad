@@ -331,7 +331,7 @@ int tgc_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
     }
 
     for (i=npts-1; i>0; i -= 2) {
-        struct hit hits[2];
+	struct hit hits[2];
 
 	hits[0].hit_dist = k[i] * t_scale;
 	hits[0].hit_surfno = hit_type[i];

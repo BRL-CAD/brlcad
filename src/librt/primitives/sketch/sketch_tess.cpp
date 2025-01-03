@@ -351,4 +351,3 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

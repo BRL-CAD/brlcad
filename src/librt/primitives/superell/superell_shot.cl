@@ -83,7 +83,7 @@ int superell_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, con
 	    break;
 	case 4:
 	    {
-	        short n;
+		short n;
 		short lim;
 
 		/* Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
@@ -115,7 +115,7 @@ int superell_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, con
 
     if (i == 2)
 	return 2;	/* HIT */
-    
+
     /* 4 points */
     /* realRoot[3] is entry point, and realRoot[2] is exit point */
     hits[0].hit_dist = realRoot[3] * superell->superell_e;

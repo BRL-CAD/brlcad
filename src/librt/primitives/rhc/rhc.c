@@ -202,12 +202,12 @@ struct clt_rhc_specific {
     cl_double rhc_invRoS[16];	/* invRot(Scale(vect)) */
     cl_double rhc_cprime;	/* c / |B| */
 };
- 
+
 size_t
 clt_rhc_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rhc_specific *rhc =
-        (struct rhc_specific *)stp->st_specific;
+	(struct rhc_specific *)stp->st_specific;
     struct clt_rhc_specific *args;
 
     const size_t size = sizeof(*args);

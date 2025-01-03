@@ -244,7 +244,7 @@ size_t
 clt_part_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct part_specific *part =
-        (struct part_specific *)stp->st_specific;
+	(struct part_specific *)stp->st_specific;
     struct clt_part_specific *args;
 
     const size_t size = sizeof(*args);
@@ -1870,9 +1870,9 @@ rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     /* find frustum and hemisphere centroids separately, weight points */
     for (idx=0; idx < 3; idx++) {
-        fcent[idx]  = (hvec_n[idx] * c_frst + vpt[idx]) / 3.0;
-        hhcent[idx] = (hvec_n[idx] * ch_hem + vpt[idx]) / 3.0;
-        cvcent[idx] = (hvec_n[idx] * cv_hem + vpt[idx] + hvec[idx]) / 3.0;
+	fcent[idx]  = (hvec_n[idx] * c_frst + vpt[idx]) / 3.0;
+	hhcent[idx] = (hvec_n[idx] * ch_hem + vpt[idx]) / 3.0;
+	cvcent[idx] = (hvec_n[idx] * cv_hem + vpt[idx] + hvec[idx]) / 3.0;
     }
 
     VADD3(*cent, fcent, hhcent, cvcent);

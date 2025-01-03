@@ -61,7 +61,7 @@ int
 rt_script_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     if (!stp)
-        return -1;
+	return -1;
     RT_CK_SOLTAB(stp);
     if (ip) RT_CK_DB_INTERNAL(ip);
     if (rtip) RT_CK_RTI(rtip);
@@ -90,7 +90,7 @@ int
 rt_script_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     if (!stp || !rp || !ap || !seghead)
-        return 0;
+	return 0;
 
     RT_CK_SOLTAB(stp);
     RT_CK_RAY(rp);
@@ -110,7 +110,7 @@ void
 rt_script_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !rp)
-        return;
+	return;
 
     RT_CK_HIT(hitp);
     if (stp) RT_CK_SOLTAB(stp);
@@ -127,7 +127,7 @@ void
 rt_script_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
-        return;
+	return;
 
     RT_CK_HIT(hitp);
     if (stp) RT_CK_SOLTAB(stp);
@@ -145,7 +145,7 @@ rt_script_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struc
     if (stp) RT_CK_SOLTAB(stp);
     if (hitp) RT_CK_HIT(hitp);
     if (!uvp)
-        return;
+	return;
 }
 
 
@@ -227,7 +227,7 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 
     bu_vls_init(&script_ip->s_type);
     bu_vls_strncpy(&script_ip->s_type, (char *)ptr,
-           ep->ext_nbytes - (ptr - (unsigned char *)ep->ext_buf));
+	   ep->ext_nbytes - (ptr - (unsigned char *)ep->ext_buf));
 
     return 0;			/* OK */
 }
@@ -265,7 +265,7 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     cp += SIZEOF_NETWORK_LONG;
 
     bu_strlcpy((char *)cp, bu_vls_addr(&script_ip->s_type), rem);
- 
+
     return 0;
 }
 
@@ -280,7 +280,7 @@ rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUS
 {
     char buf[256];
     struct rt_script_internal *script_ip =
-        (struct rt_script_internal *)ip->idb_ptr;
+	(struct rt_script_internal *)ip->idb_ptr;
 
     RT_SCRIPT_CK_MAGIC(script_ip);
     bu_vls_strcat(str, "Script \n");
@@ -339,11 +339,11 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
     RT_SCRIPT_CK_MAGIC(script_ip);
 
     if (attr == (char *)NULL) {
-        bu_vls_strcpy(logstr, "script");
+	bu_vls_strcpy(logstr, "script");
     } else {
-        /* unrecognized attribute */
-        bu_vls_printf(logstr, "ERROR: Unknown attribute\n");
-        return BRLCAD_ERROR;
+	/* unrecognized attribute */
+	bu_vls_printf(logstr, "ERROR: Unknown attribute\n");
+	return BRLCAD_ERROR;
     }
 
     return BRLCAD_OK;

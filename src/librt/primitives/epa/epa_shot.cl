@@ -112,7 +112,7 @@ void epa_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global 
 	    can_normal = (double3){
 		hitp->hit_vpriv.x,
 		hitp->hit_vpriv.y,
-	        -0.5};
+		-0.5};
 	    hitp->hit_normal = MAT4X3VEC(epa->epa_invRoS, can_normal);
 	    scale = 1.0 / length(hitp->hit_normal);
 	    hitp->hit_normal = hitp->hit_normal * scale;

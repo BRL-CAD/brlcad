@@ -446,4 +446,3 @@ rt_bot_dup(const struct rt_bot_internal *obot)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

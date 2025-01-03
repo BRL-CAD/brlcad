@@ -941,7 +941,7 @@ sketch_centroid_check_precision(const struct rt_sketch_internal *skt,
 		V2SUB2(size, skt->verts[csg->end], skt->verts[csg->start]);
 		V_MIN(min_size, MAGNITUDE2(size));
 		break;
- 	    case CURVE_NURB_MAGIC:
+	    case CURVE_NURB_MAGIC:
 		nsg = (struct nurb_seg *)lng;
 		for (j = 0; j < nsg->c_size; j++) {
 		    V2MINMAX(min_pt, max_pt, skt->verts[nsg->ctl_points[j]]);
@@ -949,7 +949,7 @@ sketch_centroid_check_precision(const struct rt_sketch_internal *skt,
 		V2SUB2(size, max_pt, min_pt);
 		V_MIN(min_size, MAGNITUDE2(size));
 		break;
-     	    case CURVE_BEZIER_MAGIC:
+	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		for (j = 0; j <= bsg->degree; j++) {
 		    V2MINMAX(min_pt, max_pt, skt->verts[bsg->ctl_points[j]]);

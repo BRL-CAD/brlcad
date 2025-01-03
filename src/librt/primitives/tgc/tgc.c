@@ -138,7 +138,7 @@ size_t
 clt_tgc_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct tgc_specific *tgc =
-        (struct tgc_specific *)stp->st_specific;
+	(struct tgc_specific *)stp->st_specific;
     struct clt_tgc_specific *args;
 
     const size_t size = sizeof(*args);
@@ -3070,7 +3070,6 @@ tgc_connecting_lines(
     curve_spacing /= curve_scale;
     return avg_circumference / curve_spacing;
 }
-
 
 
 int

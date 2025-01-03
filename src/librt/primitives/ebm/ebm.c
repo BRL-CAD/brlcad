@@ -118,7 +118,7 @@ bit(struct rt_ebm_internal *eip, size_t x, size_t y)
 	case RT_EBM_SRC_OBJ:
 	    ret = &((eip->buf)[(y+BIT_YWIDEN)*(eip->xdim+BIT_XWIDEN*2)+x+BIT_XWIDEN]);
 	    break;
-        default:
+	default:
 	    bu_log("Unrecognized EBM data source (datasrc='%d')\n", eip->datasrc);
 	    bu_bomb("Internal Error, exiting.\n");
     }
@@ -598,7 +598,7 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 {
     struct bu_mapped_file *mp;
     int nbytes;
-    
+
     /* get file */
     mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->name, "ebm");
     if (!mp) {
@@ -612,14 +612,14 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 	       (long unsigned int) mp->buflen, eip->xdim*eip->ydim);
 	return -1;
     }
-  
+
     nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
-   
+
     /* If first use of this file, prepare in-memory buffer */
     if (!mp->apbuf) {
 	size_t y;
 	unsigned char* cp;
-	
+
 	/* Prevent a multi-processor race */
 	bu_semaphore_acquire(RT_SEM_MODEL);
 	if (mp->apbuf) {

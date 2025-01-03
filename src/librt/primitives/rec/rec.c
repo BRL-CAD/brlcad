@@ -171,7 +171,7 @@ size_t
 clt_rec_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rec_specific *rec =
-        (struct rec_specific *)stp->st_specific;
+	(struct rec_specific *)stp->st_specific;
     struct clt_rec_specific *args;
 
     const size_t size = sizeof(*args);

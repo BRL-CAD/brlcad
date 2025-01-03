@@ -102,7 +102,7 @@ int hrt_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
      * root finder returns other than 6 roots, return an error.
      */
     if ((i = rt_poly_roots(S, 6, val)) != 6) {
-        return 0;               /* MISS */
+	return 0;               /* MISS */
     }
 
     /* Only real roots indicate an intersection in real space.
@@ -112,8 +112,8 @@ int hrt_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
      * for the intersections
      */
     for (j=0, npts=0; j < i; j++) {
-        if (NEAR_ZERO(val[j].im, RT_PCOEF_TOL))
-            k[npts++] = val[j].re;
+	if (NEAR_ZERO(val[j].im, RT_PCOEF_TOL))
+	    k[npts++] = val[j].re;
     }
     /* Here, 'npts' is number of points found */
     if (npts != 2 && npts != 4 && npts != 6) {
@@ -164,8 +164,8 @@ void hrt_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global 
 
     hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
     w = hitp->hit_vpriv.x * hitp->hit_vpriv.x
-        + 9.0/4.0 * hitp->hit_vpriv.y * hitp->hit_vpriv.y
-        + hitp->hit_vpriv.z * hitp->hit_vpriv.z - 1.0;
+	+ 9.0/4.0 * hitp->hit_vpriv.y * hitp->hit_vpriv.y
+	+ hitp->hit_vpriv.z * hitp->hit_vpriv.z - 1.0;
     fx = (w * w - 1/3 * hitp->hit_vpriv.z * hitp->hit_vpriv.z * hitp->hit_vpriv.z) * hitp->hit_vpriv.x;
     fy = hitp->hit_vpriv.y * (12/27 * w * w - 80/3 * hitp->hit_vpriv.z * hitp->hit_vpriv.z * hitp->hit_vpriv.z);
     fz = (w * w - 0.5 * hitp->hit_vpriv.z * (hitp->hit_vpriv.x * hitp->hit_vpriv.x + 9/80 * hitp->hit_vpriv.y * hitp->hit_vpriv.y)) * hitp->hit_vpriv.z;

@@ -629,10 +629,10 @@ vol_file_data(struct rt_vol_internal *vip)
    size_t nbytes;
 
    size_t bytes = vip->xdim * vip->ydim * vip->zdim;
- 	nbytes = vol_from_file(vip->name, vip->xdim, vip->ydim, vip->zdim, &vip->map);
- 	if (nbytes != bytes) {
- 	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->name);
- 	}
+	nbytes = vol_from_file(vip->name, vip->xdim, vip->ydim, vip->zdim, &vip->map);
+	if (nbytes != bytes) {
+	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->name);
+	}
 
    return 0;
 }
@@ -899,9 +899,9 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
 		  V3INTCLAMPARGS(local));
     } else {
       bu_vls_printf(&substr, "\tobject name=\"%s\"\n\tw=%u n=%u d=%u\n\tlo=%u hi=%u\n\tsize=%g,%g,%g\n",
-  		  vip->name,
-  		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
-  		  V3INTCLAMPARGS(local));
+		  vip->name,
+		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
+		  V3INTCLAMPARGS(local));
     }
 
     bu_vls_vlscat(str, &substr);
