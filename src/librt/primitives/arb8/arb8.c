@@ -212,7 +212,7 @@ size_t
 clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct arb_specific *arb =
-        (struct arb_specific *)stp->st_specific;
+	(struct arb_specific *)stp->st_specific;
     struct clt_arb_specific *args;
 
     const struct aface *afp;
@@ -222,7 +222,7 @@ clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
     args = (struct clt_arb_specific*)bu_pool_alloc(pool, 1, size);
 
     for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
-        HMOVE(args->arb_peqns+4*j, afp->peqn);
+	HMOVE(args->arb_peqns+4*j, afp->peqn);
     }
     args->arb_nmfaces = arb->arb_nmfaces;
     return size;
@@ -731,22 +731,22 @@ arb_is_concave(const struct arb_specific *arbp, const struct bn_tol *tol)
 {
     /* iterate over all plane equation face pairings */
     for (int i = 0; i < arbp->arb_nmfaces; i++) {
-        for (int j = i + 1; j < arbp->arb_nmfaces; j++) {
-            /* check whether any vertices are in front of a given face */
-            for (int k = 0; k < arbp->arb_nmfaces; k++) {
-                if (k != i && k != j) {
+	for (int j = i + 1; j < arbp->arb_nmfaces; j++) {
+	    /* check whether any vertices are in front of a given face */
+	    for (int k = 0; k < arbp->arb_nmfaces; k++) {
+		if (k != i && k != j) {
 		    /* positive means point is in front of the face */
 		    fastf_t dist = DIST_PNT_PLANE(arbp->arb_face[k].A, arbp->arb_face[i].peqn);
 		    // bu_log("dist = %lf\n", dist);
-                    if (dist > tol->dist) {
+		    if (dist > tol->dist) {
 			// bu_log("DIST > %.16lf = %.16lf\n", tol->dist, dist);
 
 			/* concave */
 			return true;
-                    }
-                }
-            }
-        }
+		    }
+		}
+	    }
+	}
     }
 
     /* convex */
