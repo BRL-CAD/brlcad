@@ -508,17 +508,6 @@ sedit(struct mged_state *s)
 	    }
     }
 
-    /* must re-calculate the face plane equations for arbs */
-    if (s->edit_state.es_int.idb_type == ID_ARB8) {
-	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-	struct rt_arb_internal *arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
-	RT_ARB_CK_MAGIC(arb);
-
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
-	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg), (char *)0);
-	bu_vls_free(&error_msg);
-    }
-
     /* If the keypoint changed location, find about it here */
     if (!es_keyfixed)
 	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
