@@ -32,10 +32,6 @@
 #define MENU_EPA_R1		51
 #define MENU_EPA_R2		52
 
-void menu_epa_h(struct mged_state *s);
-void menu_epa_r1(struct mged_state *s);
-void menu_epa_r2(struct mged_state *s);
-
 #endif  /* EDEPA_H */
 
 /*

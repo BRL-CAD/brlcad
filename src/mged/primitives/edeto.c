@@ -309,6 +309,22 @@ ecmd_eto_rot_c(struct mged_state *s)
     MAT_IDN(incr_change);
 }
 
+static void
+mged_eto_pscale(struct mged_state *s, int mode)
+{
+    switch (mode) {
+	case MENU_ETO_R:
+	    menu_eto_r(s);
+	    break;
+	case MENU_ETO_RD:
+	    menu_eto_rd(s);
+	    break;
+	case MENU_ETO_SCALE_C:
+	    menu_eto_scale_c(s);
+	    break;
+    };
+}
+
 int
 mged_eto_edit(struct mged_state *s, int edflag)
 {
@@ -324,6 +340,9 @@ mged_eto_edit(struct mged_state *s, int edflag)
 	case SROT:
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
+	case PSCALE:
+	    mged_eto_pscale(s, es_menu);
 	    break;
 	case ECMD_ETO_ROT_C:
 	    ecmd_eto_rot_c(s);

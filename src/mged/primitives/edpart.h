@@ -32,11 +32,6 @@
 #define MENU_PART_v		89
 #define MENU_PART_h		90
 
-void menu_part_h(struct mged_state *s);
-void menu_part_v(struct mged_state *s);
-void menu_part_h_end_r(struct mged_state *s);
-
-
 #endif  /* EDPART_H */
 
 /*

@@ -33,11 +33,6 @@
 #define MENU_ELL_SCALE_C	41
 #define MENU_ELL_SCALE_ABC	42
 
-void menu_ell_scale_a(struct mged_state *s);
-void menu_ell_scale_b(struct mged_state *s);
-void menu_ell_scale_c(struct mged_state *s);
-void menu_ell_scale_abc(struct mged_state *s);
-
 #endif  /* EDELL_H */
 
 /*

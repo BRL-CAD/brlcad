@@ -35,10 +35,6 @@
 #define MENU_ETO_SCALE_C	59
 #define MENU_ETO_ROT_C		60
 
-void menu_eto_r(struct mged_state *s);
-void menu_eto_rd(struct mged_state *s);
-void menu_eto_scale_c(struct mged_state *s);
-
 #endif  /* EDETO_H */
 
 /*

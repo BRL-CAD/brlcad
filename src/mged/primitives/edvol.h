@@ -40,8 +40,6 @@
 #define MENU_VOL_THRESH_LO	78
 #define MENU_VOL_THRESH_HI	79
 
-void menu_vol_csize(struct mged_state *s);
-
 #endif  /* EDVOL_H */
 
 /*

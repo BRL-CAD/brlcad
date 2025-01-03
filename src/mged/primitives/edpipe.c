@@ -959,6 +959,31 @@ void ecmd_pipe_pt_del(struct mged_state *s)
     es_pipe_pnt = pipe_del_pnt(s, es_pipe_pnt);
 }
 
+static void
+mged_pipe_pscale(struct mged_state *s, int mode)
+{
+    switch (mode) {
+	case MENU_PIPE_PT_OD:   /* scale OD of one pipe segment */
+	    menu_pipe_pt_od(s);
+	    break;
+	case MENU_PIPE_PT_ID:   /* scale ID of one pipe segment */
+	    menu_pipe_pt_od(s);
+	    break;
+	case MENU_PIPE_PT_RADIUS:       /* scale bend radius at selected point */
+	    menu_pipe_pt_radius(s);
+	    break;
+	case MENU_PIPE_SCALE_OD:        /* scale entire pipe OD */
+	    menu_pipe_scale_od(s);
+	    break;
+	case MENU_PIPE_SCALE_ID:        /* scale entire pipe ID */
+	    menu_pipe_scale_id(s);
+	    break;
+	case MENU_PIPE_SCALE_RADIUS:    /* scale entire pipr bend radius */
+	    menu_pipe_scale_radius(s);
+	    break;
+    };
+}
+
 int
 mged_pipe_edit(struct mged_state *s, int edflag)
 {
@@ -977,6 +1002,9 @@ mged_pipe_edit(struct mged_state *s, int edflag)
 	    /* rot solid about vertex */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
 	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
+	case PSCALE:
+	    mged_pipe_pscale(s, es_menu);
 	    break;
 	case ECMD_PIPE_PICK:
 	    ecmd_pipe_pick(s);

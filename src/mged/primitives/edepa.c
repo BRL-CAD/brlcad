@@ -216,6 +216,45 @@ menu_epa_r2(struct mged_state *s)
 	bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 }
 
+static void
+mged_epa_pscale(struct mged_state *s, int mode)
+{
+    switch (mode) {
+	case MENU_EPA_H:
+	    menu_epa_h(s);
+	    break;
+	case MENU_EPA_R1:
+	    menu_epa_r1(s);
+	    break;
+	case MENU_EPA_R2:
+	    menu_epa_r2(s);
+	    break;
+    };
+}
+
+int
+mged_epa_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case SSCALE:
+	    /* scale the solid uniformly about its vertex point */
+	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    break;
+	case STRANS:
+	    /* translate solid */
+	    mged_generic_strans(s, &s->edit_state.es_int);
+	    break;
+	case SROT:
+	    /* rot solid about vertex */
+	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
+	case PSCALE:
+	    mged_epa_pscale(s, es_menu);
+	    break;
+    }
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

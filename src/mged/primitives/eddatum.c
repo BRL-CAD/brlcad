@@ -120,7 +120,7 @@ mged_datum_read_params(
 	} else {
 	    first_line = 0;
 	}
-	
+
 	if (bu_strncasecmp(lc, "point", strlen("point")) == 0) {
 	    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
 	    VSET(datum->pnt, a, b, c);

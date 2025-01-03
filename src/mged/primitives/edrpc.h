@@ -32,10 +32,6 @@
 #define MENU_RPC_H		44
 #define MENU_RPC_R		45
 
-void menu_rpc_b(struct mged_state *s);
-void menu_rpc_h(struct mged_state *s);
-void menu_rpc_r(struct mged_state *s);
-
 #endif  /* EDRPC_H */
 
 /*

@@ -223,6 +223,48 @@ menu_ell_scale_abc(struct mged_state *s)
     VSCALE(ell->c, ell->c, ma/mb);
 }
 
+static void
+mged_ell_pscale(struct mged_state *s, int mode)
+{
+    switch (mode) {
+	case MENU_ELL_SCALE_A:
+	    menu_ell_scale_a(s);
+	    break;
+	case MENU_ELL_SCALE_B:
+	    menu_ell_scale_b(s);
+	    break;
+	case MENU_ELL_SCALE_C:
+	    menu_ell_scale_c(s);
+	    break;
+	case MENU_ELL_SCALE_ABC:
+	    menu_ell_scale_abc(s);
+	    break;
+    };
+}
+
+int
+mged_ell_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case SSCALE:
+	    /* scale the solid uniformly about its vertex point */
+	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    break;
+	case STRANS:
+	    /* translate solid */
+	    mged_generic_strans(s, &s->edit_state.es_int);
+	    break;
+	case SROT:
+	    /* rot solid about vertex */
+	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
+	case PSCALE:
+	    mged_ell_pscale(s, es_menu);
+	    break;
+    }
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

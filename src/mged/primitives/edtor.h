@@ -31,9 +31,6 @@
 #define MENU_TOR_R1		21
 #define MENU_TOR_R2		22
 
-void menu_tor_r1(struct mged_state *s);
-void menu_tor_r2(struct mged_state *s);
-
 #endif  /* EDTOR_H */
 
 /*

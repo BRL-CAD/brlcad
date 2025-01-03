@@ -227,6 +227,48 @@ menu_rhc_c(struct mged_state *s)
     rhc->rhc_c *= s->edit_state.es_scale;
 }
 
+static void
+mged_rhc_pscale(struct mged_state *s, int mode)
+{
+    switch (mode) {
+	case MENU_RHC_B:
+	    menu_rhc_b(s);
+	    break;
+	case MENU_RHC_H:
+	    menu_rhc_h(s);
+	    break;
+	case MENU_RHC_R:
+	    menu_rhc_r(s);
+	    break;
+	case MENU_RHC_C:
+	    menu_rhc_c(s);
+	    break;
+    };
+}
+
+int
+mged_rhc_edit(struct mged_state *s, int edflag)
+{
+    switch (edflag) {
+	case SSCALE:
+	    /* scale the solid uniformly about its vertex point */
+	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    break;
+	case STRANS:
+	    /* translate solid */
+	    mged_generic_strans(s, &s->edit_state.es_int);
+	    break;
+	case SROT:
+	    /* rot solid about vertex */
+	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
+	case PSCALE:
+	    mged_rhc_pscale(s, es_menu);
+	    break;
+    }
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

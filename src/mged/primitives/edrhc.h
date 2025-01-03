@@ -33,11 +33,6 @@
 #define MENU_RHC_R		48
 #define MENU_RHC_C		49
 
-void menu_rhc_b(struct mged_state *s);
-void menu_rhc_h(struct mged_state *s);
-void menu_rhc_r(struct mged_state *s);
-void menu_rhc_c(struct mged_state *s);
-
 #endif  /* EDRHC_H */
 
 /*

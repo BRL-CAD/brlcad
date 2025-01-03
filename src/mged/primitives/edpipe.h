@@ -67,13 +67,6 @@ void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_p
 void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
 struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
-void menu_pipe_pt_od(struct mged_state *s);
-void menu_pipe_pt_id(struct mged_state *s);
-void menu_pipe_pt_radius(struct mged_state *s);
-void menu_pipe_scale_od(struct mged_state *s);
-void menu_pipe_scale_id(struct mged_state *s);
-void menu_pipe_scale_radius(struct mged_state *s);
-
 #endif  /* EDPIPE_H */
 
 /*

@@ -50,11 +50,6 @@ extern struct wdb_metaball_pnt *es_metaball_pnt;
 #define MENU_METABALL_DEL_PT	125
 #define MENU_METABALL_ADD_PT	126
 
-void menu_metaball_set_threshold(struct mged_state *s);
-void menu_metaball_set_method(struct mged_state *s);
-void menu_metaball_pt_set_goo(struct mged_state *s);
-void menu_metaball_pt_fldstr(struct mged_state *s);
-
 #endif  /* EDMETABALL_H */
 
 /*

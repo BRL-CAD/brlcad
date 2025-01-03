@@ -295,6 +295,25 @@ ecmd_hyp_rot_h(struct mged_state *s)
     MAT_IDN(incr_change);
 }
 
+static void
+mged_hyp_pscale(struct mged_state *s, int mode)
+{
+    switch (mode) {
+	case MENU_HYP_H:
+	    menu_hyp_h(s);
+	    break;
+	case MENU_HYP_SCALE_A:
+	    menu_hyp_scale_a(s);
+	    break;
+	case MENU_HYP_SCALE_B:
+	    menu_hyp_scale_b(s);
+	    break;
+	case MENU_HYP_C:
+	    menu_hyp_c(s);
+	    break;
+    };
+}
+
 int
 mged_hyp_edit(struct mged_state *s, int edflag)
 {
@@ -310,6 +329,9 @@ mged_hyp_edit(struct mged_state *s, int edflag)
 	case SROT:
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
+	case PSCALE:
+	    mged_hyp_pscale(s, es_menu);
 	    break;
 	case ECMD_HYP_ROT_H:
 	    ecmd_hyp_rot_h(s);

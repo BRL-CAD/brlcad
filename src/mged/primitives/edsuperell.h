@@ -33,11 +33,6 @@
 #define MENU_SUPERELL_SCALE_C	115
 #define MENU_SUPERELL_SCALE_ABC	116
 
-void menu_superell_scale_a(struct mged_state *s);
-void menu_superell_scale_b(struct mged_state *s);
-void menu_superell_scale_c(struct mged_state *s);
-void menu_superell_scale_abc(struct mged_state *s);
-
 #endif  /* EDSUPERELL_H */
 
 /*

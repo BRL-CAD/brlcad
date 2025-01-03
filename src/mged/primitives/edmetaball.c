@@ -364,6 +364,25 @@ ecmd_metaball_pt_add(struct mged_state *s)
     es_metaball_pnt = n;
 }
 
+static void
+mged_metaball_pscale(struct mged_state *s, int mode)
+{
+    switch (mode) {
+	case MENU_METABALL_SET_THRESHOLD:
+	    menu_metaball_set_threshold(s);
+	    break;
+	case MENU_METABALL_SET_METHOD:
+	    menu_metaball_set_method(s);
+	    break;
+	case MENU_METABALL_PT_SET_GOO:
+	    menu_metaball_pt_set_goo(s);
+	    break;
+	case MENU_METABALL_PT_FLDSTR:
+	    menu_metaball_pt_fldstr(s);
+	    break;
+    };
+}
+
 void
 mged_metaball_edit(struct mged_state *s, int edflag)
 {
@@ -382,6 +401,9 @@ mged_metaball_edit(struct mged_state *s, int edflag)
 	    /* rot solid about vertex */
 	    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
+	case PSCALE:
+	    mged_metaball_pscale(s, es_menu);
 	    break;
 	case ECMD_METABALL_PT_PICK:
 	    ecmd_metaball_pt_pick(s);

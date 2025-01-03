@@ -671,6 +671,46 @@ ecmd_tgc_mv_h_mousevec(struct mged_state *s, const vect_t mousevec)
     VSUB2(tgc->h, tr_temp, tgc->v);
 }
 
+static void
+mged_tgc_pscale(struct mged_state *s, int mode)
+{
+    switch (mode) {
+	case MENU_TGC_SCALE_H:
+	    menu_tgc_scale_h(s);
+	    break;
+	case MENU_TGC_SCALE_H_V:
+	    menu_tgc_scale_h_v(s);
+	    break;
+	case MENU_TGC_SCALE_H_CD:
+	    menu_tgc_scale_h_cd(s);
+	    break;
+	case MENU_TGC_SCALE_H_V_AB:
+	    menu_tgc_scale_h_v_ab(s);
+	    break;
+	case MENU_TGC_SCALE_A:
+	    menu_tgc_scale_a(s);
+	    break;
+	case MENU_TGC_SCALE_B:
+	    menu_tgc_scale_b(s);
+	    break;
+	case MENU_TGC_SCALE_C:
+	    menu_tgc_scale_c(s);
+	    break;
+	case MENU_TGC_SCALE_D:
+	    menu_tgc_scale_d(s);
+	    break;
+	case MENU_TGC_SCALE_AB:
+	    menu_tgc_scale_ab(s);
+	    break;
+	case MENU_TGC_SCALE_CD:
+	    menu_tgc_scale_cd(s);
+	    break;
+	case MENU_TGC_SCALE_ABCD:
+	    menu_tgc_scale_abcd(s);
+	    break;
+    };
+}
+
 int
 mged_tgc_edit(struct mged_state *s, int edflag)
 {
@@ -686,6 +726,9 @@ mged_tgc_edit(struct mged_state *s, int edflag)
 	case SROT:
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
+	case PSCALE:
+	    mged_tgc_pscale(s, es_menu);
 	    break;
 	case ECMD_TGC_MV_H:
 	    ecmd_tgc_mv_h(s);
