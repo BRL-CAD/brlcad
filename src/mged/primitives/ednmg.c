@@ -843,14 +843,17 @@ mged_nmg_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
+	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	    mged_generic_sscale(s, &s->edit_state.es_int);
 	    break;
 	case STRANS:
 	    /* translate solid */
+	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	    mged_generic_strans(s, &s->edit_state.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
+	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case ECMD_NMG_EPICK:

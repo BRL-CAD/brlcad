@@ -760,14 +760,23 @@ mged_bot_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
+	    bot_verts[0] = -1;
+	    bot_verts[1] = -1;
+	    bot_verts[2] = -1;
 	    mged_generic_sscale(s, &s->edit_state.es_int);
 	    break;
 	case STRANS:
 	    /* translate solid */
+	    bot_verts[0] = -1;
+	    bot_verts[1] = -1;
+	    bot_verts[2] = -1;
 	    mged_generic_strans(s, &s->edit_state.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
+	    bot_verts[0] = -1;
+	    bot_verts[1] = -1;
+	    bot_verts[2] = -1;
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case ECMD_BOT_MODE:

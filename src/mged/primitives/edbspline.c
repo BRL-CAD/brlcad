@@ -271,12 +271,6 @@ void
 ecmd_vtrans(struct mged_state *s)
 {
     /* translate a vertex */
-    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-    bot_verts[0] = -1;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
     if (es_mvalid) {
 	/* Mouse parameter:  new position in model space */
 	VMOVE(es_para, es_mparam);

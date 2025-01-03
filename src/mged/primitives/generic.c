@@ -61,12 +61,6 @@ mged_generic_sscale(
 {
     mat_t mat, mat1, scalemat;
 
-    es_eu = (struct edgeuse *)NULL; /* Reset es_eu */
-    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-    bot_verts[0] = -1;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
     if (inpara) {
 	/* accumulate the scale factor */
 	s->edit_state.es_scale = es_para[0] / acc_sc_sol;
@@ -92,12 +86,6 @@ mged_generic_strans(
     static vect_t work;
     vect_t delta;
 
-    es_eu = (struct edgeuse *)NULL; /* Reset es_eu */
-    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-    bot_verts[0] = -1;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
     if (inpara) {
 	/* Need vector from current vertex/keypoint
 	 * to desired new location.
@@ -133,12 +121,6 @@ mged_generic_srot(
     point_t rot_point;
     mat_t mat, mat1, edit;
 
-    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-    bot_verts[0] = -1;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
     if (inpara) {
 	static mat_t invsolr;
 	/*

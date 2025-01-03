@@ -965,14 +965,17 @@ mged_pipe_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
+	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
 	    mged_generic_sscale(s, &s->edit_state.es_int);
 	    break;
 	case STRANS:
 	    /* translate solid */
+	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
 	    mged_generic_strans(s, &s->edit_state.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
+	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case ECMD_PIPE_PICK:
