@@ -35,6 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
+#include "./mged_functab.h"
 #include "./eddatum.h"
 
 

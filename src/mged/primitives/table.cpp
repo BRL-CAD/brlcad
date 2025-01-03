@@ -106,7 +106,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tor_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tor_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tor_menu_item)    /* menu_item */
     },
 
@@ -130,7 +130,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ell_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ell_menu_item)    /* menu_item */
     },
 
@@ -166,7 +166,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_hlf_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_hlf_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -178,7 +178,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos), /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tgc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tgc_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tgc_menu_item)    /* menu_item */
     },
 
@@ -190,7 +190,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -214,7 +214,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ell_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -262,7 +262,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -286,7 +286,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_part_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_part_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_part_menu_item)    /* menu_item */
     },
 
@@ -298,7 +298,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_rpc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_rpc_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_rpc_menu_item)    /* menu_item */
     },
 
@@ -310,7 +310,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_rhc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_rhc_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_rhc_menu_item)    /* menu_item */
     },
 
@@ -322,7 +322,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_epa_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_epa_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_epa_menu_item)    /* menu_item */
     },
 
@@ -334,7 +334,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ehy_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ehy_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ehy_menu_item)    /* menu_item */
     },
 
@@ -358,7 +358,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_grp_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_grp_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -370,7 +370,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -382,7 +382,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -406,7 +406,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -430,7 +430,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -518,7 +518,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_superell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_superell_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_superell_menu_item)    /* menu_item */
     },
 
@@ -542,7 +542,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -566,7 +566,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -578,7 +578,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -590,7 +590,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -602,7 +602,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -614,7 +614,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 
@@ -627,7 +627,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_datum_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_datum_read_params), /* read_params */
-	NULL,  /* edit */
+	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
         NULL   /* menu_item */
     },
 

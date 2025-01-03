@@ -40,7 +40,29 @@ mged_generic_keypoint(
 	const struct rt_db_internal *ip,
 	const struct bn_tol *tol);
 
+/* scale the solid uniformly about its vertex point */
+void
+mged_generic_sscale(
+	struct mged_state *s,
+	struct rt_db_internal *ip
+	);
 
+/* translate solid */
+void
+mged_generic_strans(
+	struct mged_state *s,
+	struct rt_db_internal *ip
+	);
+
+/* rot solid about vertex */
+void
+mged_generic_srot(
+	struct mged_state *s,
+	struct rt_db_internal *ip
+	);
+
+/* Applies only the universally supported operations */
+int mged_generic_edit(struct mged_state *s, int edflag);
 
 struct mged_functab {
     uint32_t magic;

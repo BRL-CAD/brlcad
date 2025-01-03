@@ -35,6 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
+#include "./mged_functab.h"
 #include "./edeto.h"
 
 static void
@@ -312,6 +313,18 @@ int
 mged_eto_edit(struct mged_state *s, int edflag)
 {
     switch (edflag) {
+	case SSCALE:
+	    /* scale the solid uniformly about its vertex point */
+	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    break;
+	case STRANS:
+	    /* translate solid */
+	    mged_generic_strans(s, &s->edit_state.es_int);
+	    break;
+	case SROT:
+	    /* rot solid about vertex */
+	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
 	case ECMD_ETO_ROT_C:
 	    ecmd_eto_rot_c(s);
 	    break;

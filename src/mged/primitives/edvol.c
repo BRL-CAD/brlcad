@@ -36,6 +36,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
+#include "./mged_functab.h"
 #include "./edvol.h"
 
 extern const char * get_file_name(struct mged_state *s, char *str);
@@ -235,6 +236,18 @@ int
 mged_vol_edit(struct mged_state *s, int edflag)
 {
     switch (edflag) {
+	case SSCALE:
+	    /* scale the solid uniformly about its vertex point */
+	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    break;
+	case STRANS:
+	    /* translate solid */
+	    mged_generic_strans(s, &s->edit_state.es_int);
+	    break;
+	case SROT:
+	    /* rot solid about vertex */
+	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
 	case ECMD_VOL_CSIZE:
 	    ecmd_vol_csize(s);
 	    break;

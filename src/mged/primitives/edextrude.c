@@ -35,6 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
+#include "./mged_functab.h"
 #include "./edextrude.h"
 
 /*ARGSUSED*/
@@ -285,6 +286,18 @@ int
 mged_extrude_edit(struct mged_state *s, int edflag)
 {
     switch (edflag) {
+	case SSCALE:
+	    /* scale the solid uniformly about its vertex point */
+	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    break;
+	case STRANS:
+	    /* translate solid */
+	    mged_generic_strans(s, &s->edit_state.es_int);
+	    break;
+	case SROT:
+	    /* rot solid about vertex */
+	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
 	case ECMD_EXTR_SKT_NAME:
 	    ecmd_extr_skt_name(s);
 	    break;

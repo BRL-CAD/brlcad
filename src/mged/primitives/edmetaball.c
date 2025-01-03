@@ -35,6 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
+#include "./mged_functab.h"
 #include "./edmetaball.h"
 
 struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
@@ -367,6 +368,18 @@ void
 mged_metaball_edit(struct mged_state *s, int edflag)
 {
     switch (edflag) {
+	case SSCALE:
+	    /* scale the solid uniformly about its vertex point */
+	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    break;
+	case STRANS:
+	    /* translate solid */
+	    mged_generic_strans(s, &s->edit_state.es_int);
+	    break;
+	case SROT:
+	    /* rot solid about vertex */
+	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
 	case ECMD_METABALL_PT_PICK:
 	    ecmd_metaball_pt_pick(s);
 	    break;

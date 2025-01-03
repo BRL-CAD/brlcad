@@ -40,6 +40,7 @@
 #include "ged/view/ged_view_tmp.h"
 #include "../mged.h"
 #include "../sedit.h"
+#include "./mged_functab.h"
 #include "./ednmg.h"
 
 extern int es_edflag;		/* type of editing for this solid */
@@ -840,6 +841,18 @@ int
 mged_nmg_edit(struct mged_state *s, int edflag)
 {
     switch (edflag) {
+	case SSCALE:
+	    /* scale the solid uniformly about its vertex point */
+	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    break;
+	case STRANS:
+	    /* translate solid */
+	    mged_generic_strans(s, &s->edit_state.es_int);
+	    break;
+	case SROT:
+	    /* rot solid about vertex */
+	    mged_generic_srot(s, &s->edit_state.es_int);
+	    break;
 	case ECMD_NMG_EPICK:
 	    /* XXX Nothing to do here (yet), all done in mouse routine. */
 	    break;
