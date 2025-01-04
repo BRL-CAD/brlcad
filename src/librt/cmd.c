@@ -179,22 +179,22 @@ _rt_color_putrec(struct bu_vls *msg, struct db_i *dbip, struct mater *mp)
     dir.d_flags = 0;
 
     if (mp->mt_daddr == MATER_NO_ADDR) {
-        /* Need to allocate new database space */
-        if (db_alloc(dbip, &dir, 1)) {
+	/* Need to allocate new database space */
+	if (db_alloc(dbip, &dir, 1)) {
 	    if (msg)
 		bu_vls_printf(msg, "_rt_color_putrec: database alloc error, aborting");
-            return;
-        }
-        mp->mt_daddr = dir.d_addr;
+	    return;
+	}
+	mp->mt_daddr = dir.d_addr;
     } else {
-        dir.d_addr = mp->mt_daddr;
-        dir.d_len = 1;
+	dir.d_addr = mp->mt_daddr;
+	dir.d_len = 1;
     }
 
     if (db_put(dbip, &dir, &rec, 0, 1)) {
 	if (msg)
 	    bu_vls_printf(msg, "_rt_color_putrec: database write error, aborting");
-        return;
+	return;
     }
 }
 
@@ -209,7 +209,7 @@ _rt_color_zaprec(struct bu_vls *msg, struct db_i *dbip, struct mater *mp)
 
     /* we get here only if database is NOT read-only */
     if (mp->mt_daddr == MATER_NO_ADDR)
-        return;
+	return;
 
     dir.d_magic = RT_DIR_MAGIC;
     RT_DIR_SET_NAMEP(&dir, "color_zaprec");
@@ -220,7 +220,7 @@ _rt_color_zaprec(struct bu_vls *msg, struct db_i *dbip, struct mater *mp)
     if (db_delete(dbip, &dir) != 0) {
 	if (msg)
 	    bu_vls_printf(msg, "_rt_color_zaprec: database delete error, aborting");
-        return;
+	return;
     }
     mp->mt_daddr = MATER_NO_ADDR;
 }
@@ -252,70 +252,70 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
      * the -e (edcolor) option at a higher level.
      */
     if (argc == 2) {
-        if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
+	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
 	    if (msg)
 		bu_vls_printf(msg, "rt_cmd_color: -e option is unsupported\n");
 	    return BRLCAD_ERROR;
 	} else {
 	    if (msg)
 		bu_vls_printf(msg, "rt_cmd_color: unknown option: %s\n", argv[1]);
-            return BRLCAD_ERROR;
-        }
+	    return BRLCAD_ERROR;
+	}
     }
 
     if (db_version(dbip) < 5) {
-        /* Delete all color records from the database */
-        struct mater *mp = rt_material_head();
+	/* Delete all color records from the database */
+	struct mater *mp = rt_material_head();
 	struct mater *newp;
 	struct mater *next_mater;
-        while (mp != MATER_NULL) {
-            next_mater = mp->mt_forw;
-            _rt_color_zaprec(msg, dbip, mp);
-            mp = next_mater;
-        }
+	while (mp != MATER_NULL) {
+	    next_mater = mp->mt_forw;
+	    _rt_color_zaprec(msg, dbip, mp);
+	    mp = next_mater;
+	}
 
-        /* construct the new color record */
-        BU_ALLOC(newp, struct mater);
-        newp->mt_low = atoi(argv[1]);
-        newp->mt_high = atoi(argv[2]);
-        newp->mt_r = atoi(argv[3]);
-        newp->mt_g = atoi(argv[4]);
-        newp->mt_b = atoi(argv[5]);
-        newp->mt_daddr = MATER_NO_ADDR;         /* not in database yet */
+	/* construct the new color record */
+	BU_ALLOC(newp, struct mater);
+	newp->mt_low = atoi(argv[1]);
+	newp->mt_high = atoi(argv[2]);
+	newp->mt_r = atoi(argv[3]);
+	newp->mt_g = atoi(argv[4]);
+	newp->mt_b = atoi(argv[5]);
+	newp->mt_daddr = MATER_NO_ADDR;         /* not in database yet */
 
-        /* Insert new color record in the in-memory list */
-        rt_insert_color(newp);
+	/* Insert new color record in the in-memory list */
+	rt_insert_color(newp);
 
-        /* Write new color records for all colors in the list */
-        mp = rt_material_head();
-        while (mp != MATER_NULL) {
-            next_mater = mp->mt_forw;
-            _rt_color_putrec(msg, dbip, mp);
-            mp = next_mater;
-        }
+	/* Write new color records for all colors in the list */
+	mp = rt_material_head();
+	while (mp != MATER_NULL) {
+	    next_mater = mp->mt_forw;
+	    _rt_color_putrec(msg, dbip, mp);
+	    mp = next_mater;
+	}
     } else {
-        struct bu_vls colors = BU_VLS_INIT_ZERO;
+	struct bu_vls colors = BU_VLS_INIT_ZERO;
 
-        /* construct the new color record */
+	/* construct the new color record */
 	struct mater *newp;
-        BU_ALLOC(newp, struct mater);
-        newp->mt_low = atoi(argv[1]);
-        newp->mt_high = atoi(argv[2]);
-        newp->mt_r = atoi(argv[3]);
-        newp->mt_g = atoi(argv[4]);
-        newp->mt_b = atoi(argv[5]);
-        newp->mt_daddr = MATER_NO_ADDR;         /* not in database yet */
+	BU_ALLOC(newp, struct mater);
+	newp->mt_low = atoi(argv[1]);
+	newp->mt_high = atoi(argv[2]);
+	newp->mt_r = atoi(argv[3]);
+	newp->mt_g = atoi(argv[4]);
+	newp->mt_b = atoi(argv[5]);
+	newp->mt_daddr = MATER_NO_ADDR;         /* not in database yet */
 
-        /* Insert new color record in the in-memory list */
-        rt_insert_color(newp);
-        /*
-         * Gather color records from the in-memory list to build
-         * the _GLOBAL objects regionid_colortable attribute.
-         */
-        rt_vls_color_map(&colors);
+	/* Insert new color record in the in-memory list */
+	rt_insert_color(newp);
+	/*
+	 * Gather color records from the in-memory list to build
+	 * the _GLOBAL objects regionid_colortable attribute.
+	 */
+	rt_vls_color_map(&colors);
 
-        db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), dbip);
-        bu_vls_free(&colors);
+	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), dbip);
+	bu_vls_free(&colors);
     }
 
     return BRLCAD_OK;
@@ -436,10 +436,10 @@ rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     struct bu_vls title = BU_VLS_INIT_ZERO;
     bu_vls_from_argv(&title, argc-1, (const char **)argv+1);
     if (db_update_ident(dbip, bu_vls_addr(&title), dbip->dbi_local2base) < 0) {
-        bu_vls_free(&title);
+	bu_vls_free(&title);
 	if (msg)
 	    bu_vls_printf(msg, "rt_cmd_title: unable to change database title");
-        return BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&title);
 
@@ -462,21 +462,21 @@ rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     }
 
     if (argc == 2) {
-        if (BU_STR_EQUAL(argv[1], "-s")) {
-            --argc;
-            ++argv;
+	if (BU_STR_EQUAL(argv[1], "-s")) {
+	    --argc;
+	    ++argv;
 
-            sflag = 1;
-        } else if (BU_STR_EQUAL(argv[1], "-t")) {
-            struct bu_vls *vlsp = bu_units_strings_vls();
+	    sflag = 1;
+	} else if (BU_STR_EQUAL(argv[1], "-t")) {
+	    struct bu_vls *vlsp = bu_units_strings_vls();
 
 	    if (msg)
 		bu_vls_printf(msg, "%s", bu_vls_cstr(vlsp));
-            bu_vls_free(vlsp);
-            bu_free(vlsp, "rt_cmd_units: vlsp");
+	    bu_vls_free(vlsp);
+	    bu_free(vlsp, "rt_cmd_units: vlsp");
 
-            return BRLCAD_OK;
-        }
+	    return BRLCAD_OK;
+	}
     }
 
     /* Get units */

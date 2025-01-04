@@ -582,7 +582,7 @@ hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centro
 
 
 struct bvh_flat_node *
-flatten_bvh_tree_recursive(int *next_unused, struct bvh_flat_node *flat_nodes, long total_nodes, 
+flatten_bvh_tree_recursive(int *next_unused, struct bvh_flat_node *flat_nodes, long total_nodes,
 	const struct bvh_build_node *node, long depth)
 {
     int my_offset = *next_unused;

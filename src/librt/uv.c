@@ -79,48 +79,48 @@ rt_texture_load(struct rt_texture *texture, const char *name, struct db_i *dbip)
     /* if the source is auto or object, we try to load the object */
     if ((texture->tx_datasrc==TXT_SRC_AUTO) || (texture->tx_datasrc==TXT_SRC_OBJECT)) {
 
-        /* see if the object exists */
-        if ((dirEntry=db_lookup(dbip, bu_vls_addr(&texture->tx_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
+	/* see if the object exists */
+	if ((dirEntry=db_lookup(dbip, bu_vls_addr(&texture->tx_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
 
-            /* unable to find the texture object */
-            if (texture->tx_datasrc!=TXT_SRC_AUTO) {
-                return -1;
-            }
-        } else {
-            struct rt_db_internal *dbip2;
+	    /* unable to find the texture object */
+	    if (texture->tx_datasrc!=TXT_SRC_AUTO) {
+		return -1;
+	    }
+	} else {
+	    struct rt_db_internal *dbip2;
 
-            BU_ALLOC(dbip2, struct rt_db_internal);
+	    BU_ALLOC(dbip2, struct rt_db_internal);
 
-            RT_DB_INTERNAL_INIT(dbip2);
-            RT_CK_DB_INTERNAL(dbip2);
-            RT_CK_DIR(dirEntry);
+	    RT_DB_INTERNAL_INIT(dbip2);
+	    RT_CK_DB_INTERNAL(dbip2);
+	    RT_CK_DIR(dirEntry);
 
-            /* the object was in the directory, so go get it */
-            if (rt_db_get_internal(dbip2, dirEntry, dbip, NULL, NULL) <= 0) {
-                /* unable to load/create the texture database record object */
-                return -1;
-            }
+	    /* the object was in the directory, so go get it */
+	    if (rt_db_get_internal(dbip2, dirEntry, dbip, NULL, NULL) <= 0) {
+		/* unable to load/create the texture database record object */
+		return -1;
+	    }
 
-            RT_CK_DB_INTERNAL(dbip2);
-            RT_CK_BINUNIF(dbip2->idb_ptr);
+	    RT_CK_DB_INTERNAL(dbip2);
+	    RT_CK_BINUNIF(dbip2->idb_ptr);
 
-            /* keep the binary object pointer */
-            texture->tx_binunifp = (struct rt_binunif_internal *)dbip2->idb_ptr; /* make it so */
+	    /* keep the binary object pointer */
+	    texture->tx_binunifp = (struct rt_binunif_internal *)dbip2->idb_ptr; /* make it so */
 
-            /* release the database instance pointer struct we created */
-            RT_DB_INTERNAL_INIT(dbip2);
-            bu_free(dbip2, "txt_load_datasource");
+	    /* release the database instance pointer struct we created */
+	    RT_DB_INTERNAL_INIT(dbip2);
+	    bu_free(dbip2, "txt_load_datasource");
 
-            /* check size of object */
-            if (texture->tx_binunifp->count < size) {
-                bu_log("\nWARNING: %s needs %zu bytes, binary object only has %zu\n", bu_vls_addr(&texture->tx_name), size, texture->tx_binunifp->count);
-            } else if (texture->tx_binunifp->count > size) {
-                bu_log("\nWARNING: Binary object is larger than specified texture size\n"
-                       "\tBinary Object: %zu pixels\n\tSpecified Texture Size: %zu pixels\n"
-                       "...continuing to load using image subsection...",
-                       texture->tx_binunifp->count, size);
-            }
-        }
+	    /* check size of object */
+	    if (texture->tx_binunifp->count < size) {
+		bu_log("\nWARNING: %s needs %zu bytes, binary object only has %zu\n", bu_vls_addr(&texture->tx_name), size, texture->tx_binunifp->count);
+	    } else if (texture->tx_binunifp->count > size) {
+		bu_log("\nWARNING: Binary object is larger than specified texture size\n"
+		       "\tBinary Object: %zu pixels\n\tSpecified Texture Size: %zu pixels\n"
+		       "...continuing to load using image subsection...",
+		       texture->tx_binunifp->count, size);
+	    }
+	}
     }
 
     /* if we are auto and we couldn't find a database object match, or
@@ -128,19 +128,19 @@ rt_texture_load(struct rt_texture *texture, const char *name, struct db_i *dbip)
      */
     if (((texture->tx_datasrc==TXT_SRC_AUTO) && (texture->tx_binunifp==NULL)) || (texture->tx_datasrc==TXT_SRC_FILE)) {
 
-        texture->tx_mp = bu_open_mapped_file_with_path(dbip->dbi_filepath,        bu_vls_addr(&texture->tx_name), NULL);
+	texture->tx_mp = bu_open_mapped_file_with_path(dbip->dbi_filepath,        bu_vls_addr(&texture->tx_name), NULL);
 
-        if (texture->tx_mp==NULL)
-            return -1; /* FAIL */
+	if (texture->tx_mp==NULL)
+	    return -1; /* FAIL */
 
 	if (texture->tx_mp->buflen < size) {
-            bu_log("\nWARNING: %s needs %zu bytes, file only has %zu\n", bu_vls_addr(&texture->tx_name), size, texture->tx_mp->buflen);
-        } else if (texture->tx_mp->buflen > size) {
-            bu_log("\nWARNING: Texture file size is larger than specified texture size\n"
-                   "\tInput File: %zu pixels\n\tSpecified Texture Size: %zu pixels\n"
-                   "...continuing to load using image subsection...",
-                   texture->tx_mp->buflen, size);
-        }
+	    bu_log("\nWARNING: %s needs %zu bytes, file only has %zu\n", bu_vls_addr(&texture->tx_name), size, texture->tx_mp->buflen);
+	} else if (texture->tx_mp->buflen > size) {
+	    bu_log("\nWARNING: Texture file size is larger than specified texture size\n"
+		   "\tInput File: %zu pixels\n\tSpecified Texture Size: %zu pixels\n"
+		   "...continuing to load using image subsection...",
+		   texture->tx_mp->buflen, size);
+	}
     }
 
     bu_log("done.\n");
@@ -301,7 +301,7 @@ rt_texture_lookup(fastf_t *data, const struct rt_texture *tp, const struct uvcoo
 	    } else if (tp->tx_binunifp) {
 		if (offset >= tp->tx_binunifp->count) {
 		    offset %= tp->tx_binunifp->count;
-                }
+		}
 		cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) + offset;
 	    } else {
 		/* not reachable */
