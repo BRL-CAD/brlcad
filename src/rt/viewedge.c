@@ -620,9 +620,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
     pixsize = 3;
 
     /*
-     * Set the hit distance difference necessary to trigger an edge.
-     * This algorithm was stolen from lgt, I may make it settable
-     * later.
+     * Set default hit distance difference necessary to trigger an edge.
      */
     if (max_dist < .00001)
 	max_dist = (cell_width*ARCTAN_87)+2;
