@@ -42,7 +42,6 @@ set(
   icreate.tcl
   illum.tcl
   lc.tcl
-  lgt_mat.tcl
   list.tcl
   lodconfig.tcl
   make_solid.tcl
