@@ -609,20 +609,21 @@
   <refsection xml:id="additional_options"><title>ADDITIONAL OPTIONS</title>
 
     <para>
-      <command>rtedge</command> replaces <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-      In addition to the simple white edges on a black background (or black on white)
-      provided by <command>lgt</command>, <command>rtedge</command>
-      allows arbitrary color combinations. It also allows rendering into an
-      existing framebuffer and occlusion detection between two pieces of geometry.
-      To configure its behavior, <command>rtedge</command> makes copious use of
-      the <option>-c</option> option.
+      In addition to rendering simple white edges on a black
+      background (or black on white), <command>rtedge</command> allows
+      arbitrary color combinations.  It also allows rendering into an
+      existing framebuffer and occlusion detection between two pieces
+      of geometry.  To configure behavior, <command>rtedge</command>
+      makes copious use of the <option>-c</option> option for
+      configuring settings.  <command>rtedge</command> replaced the
+      now obsolete <command>lgt</command> utility.
     </para>
 
     <para>
       Note that this approach is necessitated by the fact that
       <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-      has used up nearly the entire
-      alphabet. A transition to GNU-style long option names is planned.
+      has used up nearly the entire alphabet. A transition to
+      GNU-style long option names is planned.
     </para>
     <variablelist remap="TP">
       <varlistentry>
