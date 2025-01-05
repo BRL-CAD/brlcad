@@ -41,7 +41,6 @@ file(
 
 cmakefiles(
   CMakeLists.txt
-  lgt.sh
   run.sh
   try.sh
   viewdiff.sh
