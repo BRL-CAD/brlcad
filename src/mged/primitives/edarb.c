@@ -481,6 +481,7 @@ mged_arb_keypoint(
 
 void
 mged_arb_e_axes_pos(
+	struct mged_state *s,
 	const struct rt_db_internal *ip,
        	const struct bn_tol *tol
        	)
@@ -497,7 +498,7 @@ mged_arb_e_axes_pos(
 
     int arb_type = rt_arb_std_type(ip, tol);
 
-    if (GEOM_EDIT_STATE == ST_O_EDIT) {
+    if (s->edit_state.global_editing_state == ST_O_EDIT) {
 	i = 0;
     } else {
 	switch (es_edflag) {

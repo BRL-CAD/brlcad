@@ -112,14 +112,14 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     if (!(s->mged_curr_dm->dm_ndrawn)) {
 	return TCL_OK;
-    } else if (GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK  && GEOM_EDIT_STATE != ST_O_PATH) {
+    } else if (s->edit_state.global_editing_state != ST_S_PICK && s->edit_state.global_editing_state != ST_O_PICK  && s->edit_state.global_editing_state != ST_O_PATH) {
 	return TCL_OK;
     }
 
     if (illump != NULL && illump->s_u_data != NULL)
 	bdata = (struct ged_bv_data *)illump->s_u_data;
 
-    if (GEOM_EDIT_STATE == ST_O_PATH && bdata) {
+    if (s->edit_state.global_editing_state == ST_O_PATH && bdata) {
 	if (argc == 1 || *argv[1] == 'f') {
 	    ++ipathpos;
 	    if ((size_t)ipathpos >= bdata->s_fullpath.fp_len)
@@ -459,7 +459,7 @@ f_mouse(
      * the host being informed when the mouse changes position.
      * However, for now, illuminate mode makes this impossible.
      */
-    if (up == 0) switch (GEOM_EDIT_STATE) {
+    if (up == 0) switch (s->edit_state.global_editing_state) {
 
 	case ST_VIEW:
 	case ST_S_EDIT:
@@ -487,7 +487,7 @@ f_mouse(
 		view_state->vs_flag = 1;
 	    return TCL_OK;
 
-    } else switch (GEOM_EDIT_STATE) {
+    } else switch (s->edit_state.global_editing_state) {
 
 	case ST_VIEW:
 	    /*

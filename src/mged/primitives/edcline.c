@@ -62,6 +62,7 @@ mged_cline_menu_item(const struct bn_tol *UNUSED(tol))
 
 void
 mged_cline_e_axes_pos(
+	struct mged_state *UNUSED(s),
 	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol))
 {

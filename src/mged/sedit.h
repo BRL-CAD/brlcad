@@ -72,18 +72,18 @@
 #include "primitives/edvol.h"
 
 
-#define SEDIT_ROTATE (GEOM_EDIT_STATE == ST_S_EDIT && \
+#define SEDIT_ROTATE (s->edit_state.global_editing_state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
 		       es_edflag ==  ECMD_TGC_ROT_AB || \
 		       es_edflag == ECMD_ARB_ROTATE_FACE || \
 		       es_edflag == ECMD_EXTR_ROT_H || \
 		       es_edflag == ECMD_ETO_ROT_C))
-#define OEDIT_ROTATE (GEOM_EDIT_STATE == ST_O_EDIT && \
+#define OEDIT_ROTATE (s->edit_state.global_editing_state == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 
-#define SEDIT_SCALE (GEOM_EDIT_STATE == ST_S_EDIT && \
+#define SEDIT_SCALE (s->edit_state.global_editing_state == ST_S_EDIT && \
 		     (es_edflag == SSCALE || \
 		      es_edflag == PSCALE || \
 		      es_edflag == ECMD_VOL_THRESH_LO || \
@@ -97,14 +97,14 @@
 		      es_edflag == ECMD_CLINE_SCALE_R || \
 		      es_edflag == ECMD_CLINE_SCALE_T || \
 		      es_edflag == ECMD_EXTR_SCALE_H))
-#define OEDIT_SCALE (GEOM_EDIT_STATE == ST_O_EDIT && \
+#define OEDIT_SCALE (s->edit_state.global_editing_state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
 		      edobj == BE_O_ZSCALE || \
 		      edobj == BE_O_SCALE))
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 
-#define SEDIT_TRAN (GEOM_EDIT_STATE == ST_S_EDIT && \
+#define SEDIT_TRAN (s->edit_state.global_editing_state == ST_S_EDIT && \
 		    (es_edflag == STRANS || \
 		     es_edflag == ECMD_TGC_MV_H || \
 		     es_edflag == ECMD_TGC_MV_HH || \
@@ -127,13 +127,13 @@
 		     es_edflag == ECMD_BOT_MOVET || \
 		     es_edflag == ECMD_CLINE_MOVE_H || \
 		     es_edflag == ECMD_EXTR_MOV_H))
-#define OEDIT_TRAN (GEOM_EDIT_STATE == ST_O_EDIT && \
+#define OEDIT_TRAN (s->edit_state.global_editing_state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
 		     edobj == BE_O_XY))
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
 
-#define SEDIT_PICK (GEOM_EDIT_STATE == ST_S_EDIT && \
+#define SEDIT_PICK (s->edit_state.global_editing_state == ST_S_EDIT && \
 		    (es_edflag == ECMD_NMG_EPICK || \
 		     es_edflag == ECMD_PIPE_PICK || \
 		     es_edflag == ECMD_ARS_PICK || \

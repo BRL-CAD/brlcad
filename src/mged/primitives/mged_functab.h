@@ -108,9 +108,10 @@ struct mged_functab {
 #define MGEDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
     void(*ft_e_axes_pos)(
+	    struct mged_state *s,
 	    const struct rt_db_internal *ip,
 	    const struct bn_tol *tol);
-#define MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+#define MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(struct mged_state *s, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
     // Written format is intended to be human editable text that will be parsed
     // by ft_read_params.  There are no guarantees of formatting consistency by

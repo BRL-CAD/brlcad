@@ -83,6 +83,7 @@ mged_tgc_menu_item(const struct bn_tol *UNUSED(tol))
 
 void
 mged_tgc_e_axes_pos(
+	struct mged_state *UNUSED(s),
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
 {

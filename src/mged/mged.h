@@ -164,6 +164,9 @@ struct mged_edit_state {
     // Container to hold the intermediate state
     // of the object being edited (I think?)
     struct rt_db_internal es_int;
+
+    // main global editing state (ugh)
+    int global_editing_state;
 };
 
 /* global application state */
@@ -295,10 +298,6 @@ extern int edobj; /* object editing options */
 /* Flags for line type decisions */
 #define ROOT 0
 #define INNER 1
-
-/* FIXME: ugh, main global editing state */
-extern int ged_state;	  /* (defined in titles.c) */
-#define GEOM_EDIT_STATE ged_state
 
 /**
  * Editor States
