@@ -1109,7 +1109,6 @@ tp_getchar(const unsigned char *c)
 }
 
 
-
 /*
  * Local Variables:
  * mode: C

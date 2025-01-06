@@ -141,7 +141,6 @@ bv_set_fsos(struct bview_set *s)
 }
 
 
-
 // Local Variables:
 // tab-width: 8
 // mode: C++

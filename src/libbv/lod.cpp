@@ -206,7 +206,7 @@ obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_ex
 
 static void
 view_obb(struct bview *v,
-       	point_t sbbc, fastf_t radius,
+	point_t sbbc, fastf_t radius,
 	vect_t dir,
 	point_t ec, point_t ep1, point_t ep2)
 {
@@ -1036,7 +1036,7 @@ POPState::tri_process()
 
     // Beyond a certain depth, there is little benefit to the POP process.  If
     // we check the count of level_tris, we will find a level at which most of
-    // the triangles are active. 
+    // the triangles are active.
     // TODO: Not clear yet when the tradeoff between memory and the work of LoD
     // point snapping trades off - 0.66 is just a guess.  We also need to
     // calculate this maximum size ratio as a function of the overall database
