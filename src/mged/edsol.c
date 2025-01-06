@@ -55,8 +55,8 @@
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
 
-point_t e_axes_pos;
-point_t curr_e_axes_pos;
+extern point_t e_axes_pos;
+extern point_t curr_e_axes_pos;
 
 extern short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 
@@ -513,25 +513,6 @@ sedit(struct mged_state *s)
 }
 
 
-void
-update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
-{
-    vect_t model_pos;
-    vect_t ea_view_pos;
-    vect_t diff;
-    fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
-
-    MAT4X3PNT(model_pos, view_state->vs_gvp->gv_view2model, view_pos);
-    VSUB2(diff, model_pos, e_axes_pos);
-    VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
-    VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
-
-    MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, e_axes_pos);
-    VSUB2(s->edit_state.edit_absolute_view_tran, view_pos, ea_view_pos);
-    VMOVE(s->edit_state.last_edit_absolute_view_tran, s->edit_state.edit_absolute_view_tran);
-}
-
-
 /*
  * Mouse (pen) press in graphics area while doing Solid Edit.
  * mousevec [X] and [Y] are in the range -1.0...+1.0, corresponding
@@ -546,161 +527,12 @@ update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
 void
 sedit_mouse(struct mged_state *s, const vect_t mousevec)
 {
-    vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
-    vect_t temp = VINIT_ZERO;
-    vect_t raw_kp = VINIT_ZERO;        	/* es_keypoint with es_invmat applied */
-    vect_t raw_mp = VINIT_ZERO;        	/* raw model position */
-    mat_t mat;
-
     if (es_edflag <= 0)
 	return;
 
-    switch (es_edflag) {
-	case SSCALE:
-	case PSCALE:
-	case ECMD_DSP_SCALE_X:
-	case ECMD_DSP_SCALE_Y:
-	case ECMD_DSP_SCALE_ALT:
-	case ECMD_VOL_CSIZE:
-	case ECMD_VOL_THRESH_LO:
-	case ECMD_VOL_THRESH_HI:
-	case ECMD_EBM_HEIGHT:
-	case ECMD_EXTR_SCALE_H:
-	case ECMD_CLINE_SCALE_H:
-	case ECMD_CLINE_SCALE_T:
-	case ECMD_CLINE_SCALE_R:
-	    /* use mouse to get a scale factor */
-	    s->edit_state.es_scale = 1.0 + 0.25 * ((fastf_t)
-				     (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
-	    if (mousevec[Y] <= 0)
-		s->edit_state.es_scale = 1.0 / s->edit_state.es_scale;
-
-	    /* accumulate scale factor */
-	    acc_sc_sol *= s->edit_state.es_scale;
-
-	    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
-	    if (s->edit_state.edit_absolute_scale > 0)
-		s->edit_state.edit_absolute_scale /= 3.0;
-
-	    sedit(s);
-
-	    return;
-	case STRANS:
-	    /*
-	     * Use mouse to change solid's location.
-	     * Project solid's keypoint into view space,
-	     * replace X, Y (but NOT Z) components, and
-	     * project result back to model space.
-	     * Then move keypoint there.
-	     */
-	    {
-		point_t pt;
-		vect_t delta;
-
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-		pos_view[X] = mousevec[X];
-		pos_view[Y] = mousevec[Y];
-		MAT4X3PNT(pt, view_state->vs_gvp->gv_view2model, pos_view);
-
-		/* Need vector from current vertex/keypoint
-		 * to desired new location.
-		 */
-		MAT4X3PNT(raw_mp, es_invmat, pt);
-		MAT4X3PNT(raw_kp, es_invmat, curr_e_axes_pos);
-		VSUB2(delta, raw_kp, raw_mp);
-		MAT_IDN(mat);
-		MAT_DELTAS_VEC_NEG(mat, delta);
-		transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
-	    }
-
-	    break;
-	case ECMD_VTRANS:
-	    /*
-	     * Use mouse to change a vertex location.
-	     * Project vertex (in solid keypoint) into view space,
-	     * replace X, Y (but NOT Z) components, and
-	     * project result back to model space.
-	     * Leave desired location in es_mparam.
-	     */
-
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-	    pos_view[X] = mousevec[X];
-	    pos_view[Y] = mousevec[Y];
-	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(es_mparam, es_invmat, temp);
-	    es_mvalid = 1;	/* es_mparam is valid */
-	    /* Leave the rest to code in sedit(s) */
-
-	    break;
-	case ECMD_TGC_MV_H:
-	case ECMD_TGC_MV_HH:
-	    ecmd_tgc_mv_h_mousevec(s, mousevec);
-	    break;
-	case ECMD_EXTR_MOV_H:
-	    ecmd_extr_mov_h_mousevec(s, mousevec);
-	    break;
-	case ECMD_CLINE_MOVE_H:
-	    ecmd_cline_move_h_mousevec(s, mousevec);
-	    break;
-	case PTARB:
-	    arb_mv_pnt_to(s, mousevec);
-	    break;
-	case EARB:
-	    edarb_mousevec(s, mousevec);
-	    break;
-	case ECMD_ARB_MOVE_FACE:
-	    edarb_move_face_mousevec(s, mousevec);
-	    break;
-	case ECMD_BOT_PICKV:
-	    if (ecmd_bot_pickv(s, mousevec) != BRLCAD_OK)
-		return;
-	    break;
-	case ECMD_BOT_PICKE:
-	    if (ecmd_bot_picke(s, mousevec) != BRLCAD_OK)
-		return;
-	    break;
-	case ECMD_BOT_PICKT:
-	    ecmd_bot_pickt(s, mousevec);
-	    break;
-	case ECMD_NMG_EPICK:
-	    /* XXX Should just leave desired location in es_mparam for sedit(s) */
-	    ecmd_nmg_epick(s, mousevec);
-	    break;
-	case ECMD_NMG_LEXTRU:
-	case ECMD_NMG_EMOVE:
-	case ECMD_NMG_ESPLIT:
-	case ECMD_PIPE_PICK:
-	case ECMD_PIPE_SPLIT:
-	case ECMD_PIPE_PT_MOVE:
-	case ECMD_PIPE_PT_ADD:
-	case ECMD_PIPE_PT_INS:
-	case ECMD_ARS_PICK:
-	case ECMD_ARS_MOVE_PT:
-	case ECMD_ARS_MOVE_CRV:
-	case ECMD_ARS_MOVE_COL:
-	case ECMD_BOT_MOVEV:
-	case ECMD_BOT_MOVEE:
-	case ECMD_BOT_MOVET:
-	case ECMD_METABALL_PT_PICK:
-	case ECMD_METABALL_PT_MOV:
-	case ECMD_METABALL_PT_ADD:
-
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-	    pos_view[X] = mousevec[X];
-	    pos_view[Y] = mousevec[Y];
-	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(es_mparam, es_invmat, temp);
-	    es_mvalid = 1;
-
-	    break;
-	default:
-	    Tcl_AppendResult(s->interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
-	    mged_print_result(s, TCL_ERROR);
-	    return;
-    }
-
-    update_edit_absolute_tran(s, pos_view);
-    sedit(s);
+    const struct rt_db_internal *ip = &s->edit_state.es_int;
+    if (MGED_OBJ[ip->idb_type].ft_edit_xy)
+	 (*MGED_OBJ[ip->idb_type].ft_edit_xy)(s, es_edflag, mousevec);
 }
 
 

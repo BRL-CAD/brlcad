@@ -38,6 +38,9 @@
 
 #include "./mged_functab.h"
 
+point_t e_axes_pos;
+point_t curr_e_axes_pos;
+
 const char *
 mged_generic_keypoint(
 	point_t *pt,
@@ -220,6 +223,113 @@ mged_generic_edit(
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
     }
+    return 0;
+}
+
+void
+mged_generic_sscale_xy(
+	struct mged_state *s,
+	const vect_t mousevec
+	)
+{
+    /* use mouse to get a scale factor */
+    s->edit_state.es_scale = 1.0 + 0.25 * ((fastf_t)
+	    (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
+    if (mousevec[Y] <= 0)
+	s->edit_state.es_scale = 1.0 / s->edit_state.es_scale;
+
+    /* accumulate scale factor */
+    acc_sc_sol *= s->edit_state.es_scale;
+
+    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0)
+	s->edit_state.edit_absolute_scale /= 3.0;
+}
+
+/*
+ * Use mouse to change solid's location.
+ * Project solid's keypoint into view space,
+ * replace X, Y (but NOT Z) components, and
+ * project result back to model space.
+ * Then move keypoint there.
+ */
+void
+mged_generic_strans_xy(vect_t *pos_view,
+	struct mged_state *s,
+	const vect_t mousevec
+	)
+{
+    point_t pt;
+    vect_t delta;
+    vect_t raw_kp = VINIT_ZERO;         /* es_keypoint with es_invmat applied */
+    vect_t raw_mp = VINIT_ZERO;         /* raw model position */
+    mat_t mat;
+
+    MAT4X3PNT((*pos_view), view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+    (*pos_view)[X] = mousevec[X];
+    (*pos_view)[Y] = mousevec[Y];
+    MAT4X3PNT(pt, view_state->vs_gvp->gv_view2model, (*pos_view));
+
+    /* Need vector from current vertex/keypoint
+     * to desired new location.
+     */
+    MAT4X3PNT(raw_mp, es_invmat, pt);
+    MAT4X3PNT(raw_kp, es_invmat, curr_e_axes_pos);
+    VSUB2(delta, raw_kp, raw_mp);
+    MAT_IDN(mat);
+    MAT_DELTAS_VEC_NEG(mat, delta);
+    transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
+}
+
+void
+update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
+{
+    vect_t model_pos;
+    vect_t ea_view_pos;
+    vect_t diff;
+    fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
+
+    MAT4X3PNT(model_pos, view_state->vs_gvp->gv_view2model, view_pos);
+    VSUB2(diff, model_pos, e_axes_pos);
+    VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
+    VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
+
+    MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, e_axes_pos);
+    VSUB2(s->edit_state.edit_absolute_view_tran, view_pos, ea_view_pos);
+    VMOVE(s->edit_state.last_edit_absolute_view_tran, s->edit_state.edit_absolute_view_tran);
+}
+
+int
+mged_generic_edit_xy(
+	struct mged_state *s,
+	int edflag,
+	const vect_t mousevec
+	)
+{
+    vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
+    struct rt_db_internal *ip = &s->edit_state.es_int;
+
+    switch (edflag) {
+	case SSCALE:
+	case PSCALE:
+	    mged_generic_sscale_xy(s, mousevec);
+	    if (MGED_OBJ[ip->idb_type].ft_edit)
+		return (*MGED_OBJ[ip->idb_type].ft_edit)(s, edflag);
+	    return 0;
+	case STRANS:
+	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    break;
+	default:
+	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    mged_print_result(s, TCL_ERROR);
+	    return TCL_ERROR;
+    }
+
+    update_edit_absolute_tran(s, pos_view);
+
+    if (MGED_OBJ[ip->idb_type].ft_edit)
+	return (*MGED_OBJ[ip->idb_type].ft_edit)(s, edflag);
+
     return 0;
 }
 

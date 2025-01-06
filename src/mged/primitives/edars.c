@@ -755,6 +755,48 @@ mged_ars_edit(struct mged_state *s, int edflag)
     return 0;
 }
 
+int
+mged_ars_edit_xy(
+	struct mged_state *s,
+	int edflag,
+	const vect_t mousevec
+	)
+{
+    vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
+    vect_t temp = VINIT_ZERO;
+    struct rt_db_internal *ip = &s->edit_state.es_int;
+
+    switch (edflag) {
+	case SSCALE:
+	case PSCALE:
+	    mged_generic_sscale_xy(s, mousevec);
+	    mged_ars_edit(s, edflag);
+	    return 0;
+	case STRANS:
+	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    break;
+	case ECMD_ARS_PICK:
+	case ECMD_ARS_MOVE_PT:
+	case ECMD_ARS_MOVE_CRV:
+	case ECMD_ARS_MOVE_COL:
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    pos_view[X] = mousevec[X];
+	    pos_view[Y] = mousevec[Y];
+	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
+	    MAT4X3PNT(es_mparam, es_invmat, temp);
+	    es_mvalid = 1;
+	    break;
+	default:
+	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    mged_print_result(s, TCL_ERROR);
+	    return TCL_ERROR;
+    }
+
+    update_edit_absolute_tran(s, pos_view);
+    mged_ars_edit(s, edflag);
+
+    return 0;
+}
 
 /*
  * Local Variables:

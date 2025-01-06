@@ -61,8 +61,30 @@ mged_generic_srot(
 	struct rt_db_internal *ip
 	);
 
+void
+mged_generic_sscale_xy(
+	struct mged_state *s,
+	const vect_t mousevec
+	);
+void
+mged_generic_strans_xy(vect_t *pos_view,
+	struct mged_state *s,
+	const vect_t mousevec
+	);
+
+void
+update_edit_absolute_tran(struct mged_state *s, vect_t view_pos);
+
 /* Applies only the universally supported operations */
 int mged_generic_edit(struct mged_state *s, int edflag);
+
+int
+mged_generic_edit_xy(
+	struct mged_state *s,
+	int edflag,
+	const vect_t mousevec
+	);
+
 
 struct mged_functab {
     uint32_t magic;
@@ -120,8 +142,8 @@ struct mged_functab {
      * In order to allow command line commands to do the same things that a
      * mouse movements can, the preferred strategy is to store values and allow
      * ft_edit to actually do the work. */
-    int(*ft_edit_xy)(struct mged_state *s, int edflag, vect_t mousevec);
-#define MGEDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct mged_state *, int, vect_t))((void (*)(void))_func))
+    int(*ft_edit_xy)(struct mged_state *s, int edflag, const vect_t mousevec);
+#define MGEDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct mged_state *, int, const vect_t))((void (*)(void))_func))
 
     struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))

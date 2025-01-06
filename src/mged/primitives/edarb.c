@@ -1371,6 +1371,46 @@ arb_planecalc:
     return ret;
 }
 
+int
+mged_arb_edit_xy(
+	struct mged_state *s,
+	int edflag,
+	const vect_t mousevec
+	)
+{
+    vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
+    struct rt_db_internal *ip = &s->edit_state.es_int;
+
+    switch (edflag) {
+	case SSCALE:
+	case PSCALE:
+	    mged_generic_sscale_xy(s, mousevec);
+	    mged_arb_edit(s, edflag);
+	    return 0;
+	case STRANS:
+	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    break;
+	case PTARB:
+	    arb_mv_pnt_to(s, mousevec);
+	    break;
+	case EARB:
+	    edarb_mousevec(s, mousevec);
+	    break;
+	case ECMD_ARB_MOVE_FACE:
+	    edarb_move_face_mousevec(s, mousevec);
+	    break;
+	default:
+	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    mged_print_result(s, TCL_ERROR);
+	    return TCL_ERROR;
+    }
+
+    update_edit_absolute_tran(s, pos_view);
+    mged_arb_edit(s, edflag);
+
+    return 0;
+}
+
 
 /*
  * Local Variables:
