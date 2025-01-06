@@ -164,8 +164,13 @@ bu_semaphore_init(unsigned int nsemaphores)
 	sem_bomb(ret);
     }
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	pthread_mutexattr_t attr;
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
-	ret = pthread_mutex_init(&bu_semaphores[i].mu,  NULL);
+
+	pthread_mutexattr_init(&attr);
+	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+	ret = pthread_mutex_init(&bu_semaphores[i].mu, &attr);
+	pthread_mutexattr_destroy(&attr);
 	if (ret) {
 	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    sem_bomb(ret);
