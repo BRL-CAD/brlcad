@@ -85,8 +85,29 @@ struct bu_semaphores {
     pthread_mutex_t mu;
 };
 
-static pthread_mutex_t bu_init_lock = SEMAPHORE_INIT;
+static pthread_mutex_t bu_init_lock;
+static pthread_once_t bu_init_once = PTHREAD_ONCE_INIT;
 #  define DEFINED_BU_SEMAPHORES 1
+
+static void bu_init_lock_init(void)
+{
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+    int ret = pthread_mutex_init(&bu_init_lock, &attr);
+    pthread_mutexattr_destroy(&attr);
+    if (ret) {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_init() failed on init lock\n");
+        sem_bomb(ret);
+    }
+}
+
+static void ensure_bu_init_lock_initialized(void)
+{
+    /* help ensure thread-safe initialization */
+    pthread_once(&bu_init_once, bu_init_lock_init);
+}
+
 
 /*
  * multithread support based on the Windows kernel.
@@ -110,7 +131,6 @@ static LONG bu_init_lock = 0;
 static unsigned int bu_nsemaphores = 1;
 static struct bu_semaphores bu_semaphores[SEMAPHORE_MAX] = {{SEMAPHORE_MAGIC, SEMAPHORE_INIT}};
 #endif
-
 
 
 void
@@ -158,6 +178,8 @@ bu_semaphore_init(unsigned int nsemaphores)
     }
 
 #  elif defined(HAVE_PTHREAD_H)
+    ensure_bu_init_lock_initialized();
+
     int ret = pthread_mutex_lock(&bu_init_lock);
     if (ret) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on init lock\n");
