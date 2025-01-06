@@ -491,8 +491,6 @@ bu_data_hash_val(struct bu_data_hash_state *s)
 }
 
 
-
-
 /*
  * Local Variables:
  * mode: C

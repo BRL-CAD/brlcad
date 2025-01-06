@@ -1452,7 +1452,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		if (sdp->sp_count < 1)
 		    break;
 		if (sdp->sp_count == 1) {
- 		    if (*loc == '"') {
+		    if (*loc == '"') {
 			bu_vls_printf(vls, "%s%s=\"%s\"",
 				      (bu_vls_strlen(vls)?" ":""),
 				      sdp->sp_name, "\\\"");

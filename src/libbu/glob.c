@@ -33,8 +33,6 @@
 #include "bu/glob.h"
 
 
-
-
 int
 bu_glob(const char *pattern, int flags, struct bu_glob_context *gp)
 {

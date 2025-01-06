@@ -59,5 +59,3 @@ parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
-

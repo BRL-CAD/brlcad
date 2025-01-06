@@ -18,13 +18,13 @@ if(BUILD_TESTING)
     foreach(dt ${DIR_TYPES})
       set_property(TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib")
       if(CMAKE_CONFIGURATION_TYPES)
-        foreach(ct ${CMAKE_CONFIGURATION_TYPES})
-          string(TOUPPER "${ct}" ct)
-          set_property(
-            TARGET ${target_name}
-            PROPERTY ${dt}_OUTPUT_DIRECTORY_${ct} "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
-          )
-        endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
+	foreach(ct ${CMAKE_CONFIGURATION_TYPES})
+	  string(TOUPPER "${ct}" ct)
+	  set_property(
+	    TARGET ${target_name}
+	    PROPERTY ${dt}_OUTPUT_DIRECTORY_${ct} "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
+	  )
+	endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
       endif(CMAKE_CONFIGURATION_TYPES)
     endforeach(dt ${DIR_TYPES})
     set_target_properties(${target_name} PROPERTIES FOLDER "BRL-CAD Executables/Test Programs/dylib")

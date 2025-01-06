@@ -141,7 +141,6 @@ bu_dehumanize_number(const char *str, int64_t *size)
 }
 
 
-
 /*
  * Local Variables:
  * mode: C

@@ -209,4 +209,3 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

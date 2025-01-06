@@ -518,7 +518,6 @@ int bu_cnd_broadcast(bu_cnd_t *cond)
 }
 
 
-
 /*
  * Local Variables:
  * tab-width: 8

@@ -167,7 +167,7 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 	    if (!std::regex_match(key, last_match)) {
 		semaphore_names.insert(std::pair<long int, std::string>(semaphore_values[val], key));
 		max_val = (semaphore_values[val] > max_val) ? semaphore_values[val] : max_val;
-		val_names[semaphore_values[val]] = key; 
+		val_names[semaphore_values[val]] = key;
 	    }
 
 	} else {
@@ -339,4 +339,3 @@ main(int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

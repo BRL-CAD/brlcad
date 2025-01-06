@@ -4,4 +4,3 @@ to manage them and an executable to exercise the system.
 
 Due to the relatively high complexity of this setup, it is not
 integrated with the usual bu_test parent executable.
-

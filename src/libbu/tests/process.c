@@ -152,9 +152,9 @@ test_create_opts(const char* cmd)
     }
     char expected[19] = "Howdy from stderr!";   // intentionally ignore newline chars if any
     if (bu_strncmp(line, expected, 18)) {
-        fprintf(stderr,
-                "bu_process_test[\"create_opts\"] - OUT_EQ_ERR fail\n  Expected: %s\n  Got: %s\n",
-                expected, line);
+	fprintf(stderr,
+		"bu_process_test[\"create_opts\"] - OUT_EQ_ERR fail\n  Expected: %s\n  Got: %s\n",
+		expected, line);
 	return PROCESS_FAIL;
     }
 
@@ -191,7 +191,7 @@ test_create_timeout(const char* cmd)
     /* NOTE: this time is mostly arbitrary, as execution time is variable
      * but bu_subprocess 'timeout' sleep time is 10000ms */
     if ((bu_gettime() - start_time) > BU_SEC2USEC(.2)) {
-        fprintf(stderr, "bu_process_test[\"create_timeout\"] - took too long\n");
+	fprintf(stderr, "bu_process_test[\"create_timeout\"] - took too long\n");
 	return PROCESS_FAIL;
     }
 
@@ -341,7 +341,7 @@ test_abort(const char* cmd)
 
     int wait_status = bu_process_wait_n(&p, 0);
     if (wait_status != ERROR_PROCESS_ABORTED) {
-        fprintf(stderr, "bu_process_test[\"abort\"] - wait should have reported abort code\n");
+	fprintf(stderr, "bu_process_test[\"abort\"] - wait should have reported abort code\n");
 	return PROCESS_FAIL;
     }
 
@@ -386,7 +386,7 @@ test_all_args(const char* cmd)
     }
 
     if (bu_process_wait_n(&p, 0)) {
-        fprintf(stderr, "bu_process_test[\"args\"] - wait failed\n");
+	fprintf(stderr, "bu_process_test[\"args\"] - wait failed\n");
 	return PROCESS_FAIL;
     }
 

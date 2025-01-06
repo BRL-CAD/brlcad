@@ -335,11 +335,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	    (void)close(i);
 	}
 
-        // TODO / FIXME - parent does not know whether child successfully started or not
+	// TODO / FIXME - parent does not know whether child successfully started or not
 	(void)execvp(cmd, (char * const*)(*pinfo)->argv);
 	perror(cmd);
 
-        // close unnecessary fd's
+	// close unnecessary fd's
 	fflush(NULL);
 	close(d1);
 	close(d2);
@@ -429,7 +429,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	/* Quote all path names or arguments with spaces for CreateProcess
 	 * unless supplier has already supplied quotes
 	 */
-	if (!strstr(argv[i], "\"") && 
+	if (!strstr(argv[i], "\"") &&
 	    (strstr(argv[i], " ") || bu_file_exists(argv[i], NULL))) {
 	    bu_vls_printf(&cp_cmd, "\"%s\" ", argv[i]);
 	} else {
@@ -517,31 +517,31 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
     close((*pinfo)->fd_err);
 
     if (kill((pid_t)(*pinfo)->pid, 0) == 0) {      // make sure the process exists
-        /* wait for process to end, or timeout */
-        int64_t start_time = bu_gettime();
-        int rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
-        while (rpid != (*pinfo)->pid) {
-                if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
-                break;
-                rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
-        }
+	/* wait for process to end, or timeout */
+	int64_t start_time = bu_gettime();
+	int rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
+	while (rpid != (*pinfo)->pid) {
+		if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
+		break;
+		rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
+	}
 
-        /* check wait() status and filter retcode */
-        if (rpid == -1 || rpid == 0) {
-                /* timed-out */
-                bu_pid_terminate((*pinfo)->pid);
-                rc = 0;	// process concluded, albeit forcibly
-        } else {
-                if (WIFEXITED(retcode))		    // normal exit
-                rc = 0;
-                else if (WIFSIGNALED(retcode))	    // terminated
-                rc = ERROR_PROCESS_ABORTED;
-                else
-                rc = retcode;
-        }
+	/* check wait() status and filter retcode */
+	if (rpid == -1 || rpid == 0) {
+		/* timed-out */
+		bu_pid_terminate((*pinfo)->pid);
+		rc = 0;	// process concluded, albeit forcibly
+	} else {
+		if (WIFEXITED(retcode))		    // normal exit
+		rc = 0;
+		else if (WIFSIGNALED(retcode))	    // terminated
+		rc = ERROR_PROCESS_ABORTED;
+		else
+		rc = retcode;
+	}
     } else {
-        /* process doesn't exist or has already been waited on */
-        rc = 0;
+	/* process doesn't exist or has already been waited on */
+	rc = 0;
     }
 #else
     DWORD retcode = 0;

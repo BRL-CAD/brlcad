@@ -51,7 +51,7 @@ main(int argc, const char *argv[])
     bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "basic")) {
-        // just return
+	// just return
 	return 0;
     }
 
@@ -126,4 +126,3 @@ main(int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

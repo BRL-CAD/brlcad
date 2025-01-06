@@ -304,7 +304,6 @@ static struct {
     { 19, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0, 6 },
 
 
-
     /* Need to implement tests for GETSCALE */
     /*	{ ?, "", (int64_t)0L, BU_HN_DIVISOR_1000, BU_HN_GETSCALE, 6 },
 	...
@@ -633,4 +632,3 @@ main(int argc, char * const argv[])
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

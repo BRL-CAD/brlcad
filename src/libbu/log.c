@@ -66,8 +66,8 @@ bu_log_add_hook(bu_hook_t func, void *clientdata)
 
     if(LIKELY(log_call_hooks_semaphore == -1))
     {
-        /* initialize log_call_hooks_semaphore */
-        log_call_hooks_semaphore = bu_semaphore_register("log_call_hooks_semaphore");
+	/* initialize log_call_hooks_semaphore */
+	log_call_hooks_semaphore = bu_semaphore_register("log_call_hooks_semaphore");
     }
 }
 
@@ -83,12 +83,12 @@ static void
 log_call_hooks(void *buf)
 {
     if(LIKELY(log_call_hooks_semaphore != -1))
-        bu_semaphore_acquire(log_call_hooks_semaphore);
+	bu_semaphore_acquire(log_call_hooks_semaphore);
 
     bu_hook_call(&log_hook_list, buf);
 
     if(LIKELY(log_call_hooks_semaphore != -1))
-        bu_semaphore_release(log_call_hooks_semaphore);
+	bu_semaphore_release(log_call_hooks_semaphore);
 }
 
 

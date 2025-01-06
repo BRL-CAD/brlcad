@@ -103,7 +103,6 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 }
 
 
-
 /* FIXME: Need to document whether this function should
  * be returning wallclock or cpu time.
  */

@@ -158,7 +158,6 @@ bu_file_size(const char *path)
 }
 
 
-
 #ifdef HAVE_GETFULLPATHNAME
 static int
 file_compare_info(HANDLE handle1, HANDLE handle2)
@@ -620,4 +619,3 @@ bu_ftell(FILE *stream)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
