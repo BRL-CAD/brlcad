@@ -145,11 +145,11 @@ bu_semaphore_init(unsigned int nsemaphores)
     }
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
-	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	if (mutex_init(&bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
 	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
     }
     bu_nsemaphores = nsemaphores;
     if (mutex_unlock(&bu_init_lock)) {
@@ -165,12 +165,12 @@ bu_semaphore_init(unsigned int nsemaphores)
     }
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
-	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	ret = pthread_mutex_init(&bu_semaphores[i].mu,  NULL);
 	if (ret) {
 	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    sem_bomb(ret);
 	}
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
     }
     bu_nsemaphores = nsemaphores;
     ret = pthread_mutex_unlock(&bu_init_lock);
@@ -186,8 +186,8 @@ bu_semaphore_init(unsigned int nsemaphores)
     /* lock acquired */
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
-	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	InitializeCriticalSection(&bu_semaphores[i].mu);
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
     }
     bu_nsemaphores = nsemaphores;
     /* release lock */
