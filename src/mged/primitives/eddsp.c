@@ -116,22 +116,61 @@ dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 
 }
 
-void
+int
 ecmd_dsp_scale_x(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSX);
+
+    return 0;
 }
 
-void
+int
 ecmd_dsp_scale_y(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSY);
+
+    return 0;
 }
 
-void
+int
 ecmd_dsp_scale_alt(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSZ);
+
+    return 0;
 }
 
 int
@@ -177,8 +216,7 @@ mged_dsp_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->edit_state.es_int);
@@ -188,14 +226,11 @@ mged_dsp_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case ECMD_DSP_SCALE_X:
-	    ecmd_dsp_scale_x(s);
-	    break;
+	    return ecmd_dsp_scale_x(s);
 	case ECMD_DSP_SCALE_Y:
-	    ecmd_dsp_scale_y(s);
-	    break;
+	    return ecmd_dsp_scale_y(s);
 	case ECMD_DSP_SCALE_ALT:
-	    ecmd_dsp_scale_alt(s);
-	    break;
+	    return ecmd_dsp_scale_alt(s);
 	case ECMD_DSP_FNAME:
 	    if (ecmd_dsp_fname(s) != BRLCAD_OK)
 		return -1;

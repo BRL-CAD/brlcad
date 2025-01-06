@@ -242,8 +242,7 @@ mged_part_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->edit_state.es_int);

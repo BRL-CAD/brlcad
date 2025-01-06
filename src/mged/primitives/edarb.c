@@ -1291,11 +1291,16 @@ edarb_move_face_mousevec(struct mged_state *s, const vect_t mousevec)
 int
 mged_arb_edit(struct mged_state *s, int edflag)
 {
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+    int ret = 0;
+
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    ret = mged_generic_sscale(s, &s->edit_state.es_int);
+	    goto arb_planecalc;
 	case STRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->edit_state.es_int);
@@ -1326,16 +1331,14 @@ mged_arb_edit(struct mged_state *s, int edflag)
 	    break;
     }
 
-    /* must re-calculate the face plane equations for arbs */
-    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-    struct rt_arb_internal *arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
-    RT_ARB_CK_MAGIC(arb);
+arb_planecalc:
 
+    /* must re-calculate the face plane equations for arbs */
     if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
 	Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg), (char *)0);
     bu_vls_free(&error_msg);
 
-    return 0;
+    return ret;
 }
 
 

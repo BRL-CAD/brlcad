@@ -238,9 +238,22 @@ ecmd_bot_orient(struct mged_state *s)
     bot->orientation = atoi(radio_result) + 1;
 }
 
-void
+int
 ecmd_bot_thick(struct mged_state *s)
 {
+
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_bot_internal *bot =
 	(struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
     size_t face_no = 0;
@@ -255,27 +268,23 @@ ecmd_bot_thick(struct mged_state *s)
 	{
 	    bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(s->interp));
 	}
-	return;
+	return TCL_ERROR;
     }
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
 	/* setting thickness for all faces */
-	if (!inpara)
-	    return;
 
 	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 		"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
 		"{No face is selected, so this operation will modify all the faces in this BOT} ",
 		"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
 	if (atoi(Tcl_GetStringResult(s->interp)))
-	    return;
+	    return TCL_ERROR;
 
 	for (size_t i=0; i<bot->num_faces; i++)
 	    bot->thickness[i] = es_para[0];
     } else {
 	/* setting thickness for just one face */
-	if (!inpara)
-	    return;
 
 	face_state = -1;
 	for (size_t i=0; i < bot->num_faces; i++) {
@@ -291,11 +300,13 @@ ecmd_bot_thick(struct mged_state *s)
 	if (face_state > -1) {
 	    bu_log("Cannot find face with vertices %d %d %d!\n",
 		    V3ARGS(bot_verts));
-	    return;
+	    return TCL_ERROR;
 	}
 
 	bot->thickness[face_no] = es_para[0];
     }
+
+    return 0;
 }
 
 void
@@ -763,8 +774,7 @@ mged_bot_edit(struct mged_state *s, int edflag)
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    bot_verts[0] = -1;
@@ -786,8 +796,7 @@ mged_bot_edit(struct mged_state *s, int edflag)
 	    ecmd_bot_orient(s);
 	    break;
 	case ECMD_BOT_THICK:
-	    ecmd_bot_thick(s);
-	    break;
+	    return ecmd_bot_thick(s);
 	case ECMD_BOT_FLAGS:
 	    ecmd_bot_flags(s);
 	    break;

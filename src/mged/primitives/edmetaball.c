@@ -419,15 +419,14 @@ mged_metaball_pscale(struct mged_state *s, int mode)
     return 0;
 }
 
-void
+int
 mged_metaball_edit(struct mged_state *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
@@ -454,6 +453,8 @@ mged_metaball_edit(struct mged_state *s, int edflag)
 	    ecmd_metaball_pt_add(s);
 	    break;
     }
+
+    return 0;
 }
 
 /*

@@ -844,8 +844,7 @@ mged_nmg_edit(struct mged_state *s, int edflag)
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */

@@ -153,6 +153,17 @@ ecmd_ebm_fname(struct mged_state *s)
 int
 ecmd_ebm_height(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_ebm_internal *ebm =
 	(struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -180,8 +191,7 @@ mged_ebm_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->edit_state.es_int);

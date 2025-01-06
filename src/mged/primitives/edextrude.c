@@ -187,9 +187,21 @@ ecmd_extr_mov_h(struct mged_state *s)
     }
 }
 
-void
+int
 ecmd_extr_scale_h(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_extrude_internal *extr =
 	(struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -204,6 +216,8 @@ ecmd_extr_scale_h(struct mged_state *s)
 	VSCALE(extr->h, extr->h, s->edit_state.es_scale);
 	s->edit_state.es_scale = 0.0;
     }
+
+    return 0;
 }
 
 /* rotate height vector */
@@ -288,8 +302,7 @@ mged_extrude_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->edit_state.es_int);
@@ -305,8 +318,7 @@ mged_extrude_edit(struct mged_state *s, int edflag)
 	    ecmd_extr_mov_h(s);
 	    break;
 	case ECMD_EXTR_SCALE_H:
-	    ecmd_extr_scale_h(s);
-	    break;
+	    return ecmd_extr_scale_h(s);
 	case ECMD_EXTR_ROT_H:
 	    ecmd_extr_rot_h(s);
 	    break;

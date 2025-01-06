@@ -146,9 +146,21 @@ ecmd_vol_fsize(struct mged_state *s)
     }
 }
 
-void
+int
 ecmd_vol_thresh_lo(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_vol_internal *vol =
 	(struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -170,11 +182,25 @@ ecmd_vol_thresh_lo(struct mged_state *s)
 	i = 255;
 
     vol->lo = i;
+
+    return 0;
 }
 
-void
+int
 ecmd_vol_thresh_hi(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_vol_internal *vol =
 	(struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -196,6 +222,8 @@ ecmd_vol_thresh_hi(struct mged_state *s)
 	i = 255;
 
     vol->hi = i;
+
+    return 0;
 }
 
 void
@@ -262,8 +290,7 @@ mged_vol_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->edit_state.es_int);
@@ -282,11 +309,9 @@ mged_vol_edit(struct mged_state *s, int edflag)
 	    ecmd_vol_fsize(s);
 	    break;
 	case ECMD_VOL_THRESH_LO:
-	    ecmd_vol_thresh_lo(s);
-	    break;
+	    return ecmd_vol_thresh_lo(s);
 	case ECMD_VOL_THRESH_HI:
-	    ecmd_vol_thresh_hi(s);
-	    break;
+	    return ecmd_vol_thresh_hi(s);
 	case ECMD_VOL_FNAME:
 	    ecmd_vol_fname(s);
 	    break;

@@ -83,9 +83,21 @@ mged_cline_e_axes_pos(
 /*
  * Scale height vector
  */
-void
+int
 ecmd_cline_scale_h(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -99,14 +111,28 @@ ecmd_cline_scale_h(struct mged_state *s)
 	VSCALE(cli->h, cli->h, s->edit_state.es_scale);
 	s->edit_state.es_scale = 0.0;
     }
+
+    return 0;
 }
 
 /*
  * Scale radius
  */
-void
+int
 ecmd_cline_scale_r(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -118,14 +144,28 @@ ecmd_cline_scale_r(struct mged_state *s)
 	cli->radius *= s->edit_state.es_scale;
 	s->edit_state.es_scale = 0.0;
     }
+
+    return 0;
 }
 
 /*
  * Scale plate thickness
  */
-void
+int
 ecmd_cline_scale_t(struct mged_state *s)
 {
+    if (inpara != 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -137,6 +177,8 @@ ecmd_cline_scale_t(struct mged_state *s)
 	cli->thickness *= s->edit_state.es_scale;
 	s->edit_state.es_scale = 0.0;
     }
+
+    return 0;
 }
 
 /*
@@ -194,8 +236,7 @@ mged_cline_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
-	    break;
+	    return mged_generic_sscale(s, &s->edit_state.es_int);
 	case STRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->edit_state.es_int);
@@ -205,14 +246,11 @@ mged_cline_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case ECMD_CLINE_SCALE_H:
-	    ecmd_cline_scale_h(s);
-	    break;
+	    return ecmd_cline_scale_h(s);
 	case ECMD_CLINE_SCALE_R:
-	    ecmd_cline_scale_r(s);
-	    break;
+	    return ecmd_cline_scale_r(s);
 	case ECMD_CLINE_SCALE_T:
-	    ecmd_cline_scale_t(s);
-	    break;
+	    return ecmd_cline_scale_t(s);
 	case ECMD_CLINE_MOVE_H:
 	    ecmd_cline_move_h(s);
 	    break;
