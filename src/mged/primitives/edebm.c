@@ -180,6 +180,11 @@ ecmd_ebm_height(struct mged_state *s)
 	return TCL_ERROR;
     }
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     struct rt_ebm_internal *ebm =
 	(struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 

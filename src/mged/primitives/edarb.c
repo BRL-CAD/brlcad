@@ -1024,6 +1024,11 @@ ecmd_arb_move_face(struct mged_state *s)
 	    return TCL_ERROR;
 	}
 
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
+
 	vect_t work;
 	struct rt_arb_internal *arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
@@ -1240,6 +1245,11 @@ edit_arb_element(struct mged_state *s)
 	    inpara = 0;
 	    return TCL_ERROR;
 	}
+
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
 
 	vect_t work;
 	if (mged_variables->mv_context) {

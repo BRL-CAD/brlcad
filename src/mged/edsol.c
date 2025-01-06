@@ -1450,56 +1450,6 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	es_para[ inpara++ ] = argvect[i];
     }
 
-    /* check if need to convert input values to the base unit */
-    switch (es_edflag) {
-
-	case STRANS:
-	case ECMD_VTRANS:
-	case PSCALE:
-	case EARB:
-	case ECMD_ARB_MOVE_FACE:
-	case ECMD_TGC_MV_H:
-	case ECMD_TGC_MV_HH:
-	case PTARB:
-	case ECMD_NMG_ESPLIT:
-	case ECMD_NMG_EMOVE:
-	case ECMD_NMG_LEXTRU:
-	case ECMD_PIPE_PICK:
-	case ECMD_PIPE_SPLIT:
-	case ECMD_PIPE_PT_MOVE:
-	case ECMD_PIPE_PT_ADD:
-	case ECMD_PIPE_PT_INS:
-	case ECMD_ARS_PICK:
-	case ECMD_ARS_MOVE_PT:
-	case ECMD_ARS_MOVE_CRV:
-	case ECMD_ARS_MOVE_COL:
-	case ECMD_VOL_CSIZE:
-	case ECMD_DSP_SCALE_X:
-	case ECMD_DSP_SCALE_Y:
-	case ECMD_DSP_SCALE_ALT:
-	case ECMD_EBM_HEIGHT:
-	case ECMD_EXTR_SCALE_H:
-	case ECMD_CLINE_SCALE_H:
-	case ECMD_CLINE_SCALE_T:
-	case ECMD_CLINE_SCALE_R:
-	case ECMD_CLINE_MOVE_H:
-	case ECMD_EXTR_MOV_H:
-	case ECMD_BOT_THICK:
-	case ECMD_BOT_MOVET:
-	case ECMD_BOT_MOVEE:
-	case ECMD_BOT_MOVEV:
-	case ECMD_METABALL_PT_PICK:
-	case ECMD_METABALL_PT_MOV:
-	case ECMD_METABALL_PT_ADD:
-	    /* must convert to base units */
-	    es_para[0] *= s->dbip->dbi_local2base;
-	    es_para[1] *= s->dbip->dbi_local2base;
-	    es_para[2] *= s->dbip->dbi_local2base;
-	    /* fall through */
-	default:
-	    break;
-    }
-
     sedit(s);
 
     if (SEDIT_TRAN) {

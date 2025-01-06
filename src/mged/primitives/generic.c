@@ -98,6 +98,12 @@ mged_generic_strans(
 	/* Need vector from current vertex/keypoint
 	 * to desired new location.
 	 */
+
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
+
 	if (mged_variables->mv_context) {
 	    /* move solid so that es_keypoint is at position es_para */
 	    vect_t raw_para;

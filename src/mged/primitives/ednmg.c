@@ -496,6 +496,11 @@ void ecmd_nmg_emove(struct mged_state *s)
 {
     point_t new_pt;
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (!es_eu) {
 	Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
@@ -642,6 +647,11 @@ void ecmd_nmg_esplit(struct mged_state *s)
     fastf_t area;
     plane_t pl;
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (!es_eu) {
 	Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
@@ -721,6 +731,11 @@ void ecmd_nmg_lextru(struct mged_state *s)
     struct model *m;
     plane_t new_lu_pl;
     fastf_t area;
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     if (es_mvalid) {
 	VMOVE(to_pt, es_mparam);

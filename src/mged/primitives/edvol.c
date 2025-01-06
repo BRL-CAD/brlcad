@@ -100,6 +100,11 @@ ecmd_vol_csize(struct mged_state *s)
 
     RT_VOL_CK_MAGIC(vol);
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (inpara == 3) {
 	VMOVE(vol->cellsize, es_para);
     } else if (inpara > 0 && inpara != 3) {
@@ -274,6 +279,11 @@ mged_vol_pscale(struct mged_state *s, int mode)
 	inpara = 0;
 	return TCL_ERROR;
     }
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_VOL_CSIZE:

@@ -97,6 +97,11 @@ dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 	bu_log("es_mvalid %g %g %g\n", V3ARGS(es_mparam));
     }
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (inpara > 0) {
 	m[idx] = es_para[0];
 	bu_log("Keyboard %g\n", es_para[0]);

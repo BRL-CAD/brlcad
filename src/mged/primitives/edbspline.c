@@ -270,6 +270,11 @@ mged_bspline_keypoint(
 void
 ecmd_vtrans(struct mged_state *s)
 {
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     /* translate a vertex */
     if (es_mvalid) {
 	/* Mouse parameter:  new position in model space */

@@ -243,6 +243,11 @@ mged_superell_pscale(struct mged_state *s, int mode)
 	return TCL_ERROR;
     }
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     switch (mode) {
 	case MENU_SUPERELL_SCALE_A:
 	    menu_superell_scale_a(s);

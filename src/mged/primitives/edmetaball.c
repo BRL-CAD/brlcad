@@ -304,6 +304,10 @@ ecmd_metaball_pt_pick(struct mged_state *s)
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
     } else if (inpara == 3) {
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
 	VMOVE(new_pt, es_para);
     } else if (inpara) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for control point selection\n", (char *)NULL);
@@ -344,6 +348,10 @@ ecmd_metaball_pt_mov(struct mged_state *UNUSED(s))
 	bu_log("Must select a point to move"); return; }
     if (inpara != 3) {
 	bu_log("Must provide dx dy dz"); return; }
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
     VADD2(es_metaball_pnt->coord, es_metaball_pnt->coord, es_para);
 }
 
@@ -382,6 +390,11 @@ ecmd_metaball_pt_add(struct mged_state *s)
 	return;
     }
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
     VMOVE(n->coord, es_para);
     n->l.magic = WDB_METABALLPT_MAGIC;
@@ -404,6 +417,11 @@ mged_metaball_pscale(struct mged_state *s, int mode)
 	inpara = 0;
 	return TCL_ERROR;
     }
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_METABALL_SET_THRESHOLD:

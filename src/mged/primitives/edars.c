@@ -186,6 +186,11 @@ ecmd_ars_pick(struct mged_state *s)
 
     RT_ARS_CK_MAGIC(ars);
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (es_mvalid) {
 	VMOVE(pick_pt, es_mparam);
     } else if (inpara == 3) {
@@ -521,6 +526,11 @@ ecmd_ars_move_col(struct mged_state *s)
 
     RT_ARS_CK_MAGIC(ars);
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
@@ -575,6 +585,11 @@ ecmd_ars_move_crv(struct mged_state *s)
 
     RT_ARS_CK_MAGIC(ars);
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
@@ -627,6 +642,11 @@ ecmd_ars_move_pt(struct mged_state *s)
     point_t new_pt = VINIT_ZERO;
 
     RT_ARS_CK_MAGIC(ars);
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");

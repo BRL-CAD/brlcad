@@ -470,6 +470,11 @@ ecmd_tgc_mv_h(struct mged_state *s)
 	    return TCL_ERROR;
 	}
 
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
+
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model coordinates */
 	    MAT4X3PNT(work, es_invmat, es_para);
@@ -526,6 +531,11 @@ ecmd_tgc_mv_hh(struct mged_state *s)
 	    inpara = 0;
 	    return TCL_ERROR;
 	}
+
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model coordinates */
@@ -717,6 +727,11 @@ mged_tgc_pscale(struct mged_state *s, int mode)
 	inpara = 0;
 	return TCL_ERROR;
     }
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_TGC_SCALE_H:

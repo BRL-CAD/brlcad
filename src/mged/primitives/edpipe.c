@@ -864,6 +864,11 @@ void ecmd_pipe_pick(struct mged_state *s)
 
     RT_PIPE_CK_MAGIC(pipeip);
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
     } else if (inpara == 3) {
@@ -895,6 +900,11 @@ void ecmd_pipe_split(struct mged_state *s)
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
@@ -929,6 +939,11 @@ void ecmd_pipe_pt_move(struct mged_state *s)
 
     RT_PIPE_CK_MAGIC(pipeip);
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
     } else if (inpara == 3) {
@@ -962,6 +977,11 @@ void ecmd_pipe_pt_add(struct mged_state *s)
 
     RT_PIPE_CK_MAGIC(pipeip);
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
     } else if (inpara == 3) {
@@ -988,6 +1008,11 @@ void ecmd_pipe_pt_ins(struct mged_state *s)
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
@@ -1026,6 +1051,11 @@ mged_pipe_pscale(struct mged_state *s, int mode)
 	inpara = 0;
 	return TCL_ERROR;
     }
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_PIPE_PT_OD:   /* scale OD of one pipe segment */

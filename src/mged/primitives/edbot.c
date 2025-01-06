@@ -254,6 +254,9 @@ ecmd_bot_thick(struct mged_state *s)
 	return TCL_ERROR;
     }
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+
     struct rt_bot_internal *bot =
 	(struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
     size_t face_no = 0;
@@ -533,6 +536,11 @@ ecmd_bot_movev(struct mged_state *s)
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
     } else if (inpara == 3) {
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
+
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, es_invmat, es_para);
@@ -575,6 +583,11 @@ ecmd_bot_movee(struct mged_state *s)
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
     } else if (inpara == 3) {
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
+
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, es_invmat, es_para);
@@ -617,6 +630,11 @@ ecmd_bot_movet(struct mged_state *s)
     if (es_mvalid) {
 	VMOVE(new_pt, es_mparam);
     } else if (inpara == 3) {
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
+
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, es_invmat, es_para);

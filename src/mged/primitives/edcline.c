@@ -98,6 +98,11 @@ ecmd_cline_scale_h(struct mged_state *s)
 	return TCL_ERROR;
     }
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -126,6 +131,11 @@ ecmd_cline_scale_r(struct mged_state *s)
 	inpara = 0;
 	return TCL_ERROR;
     }
+
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
 
     if (es_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
@@ -166,6 +176,11 @@ ecmd_cline_scale_t(struct mged_state *s)
 	return TCL_ERROR;
     }
 
+    /* must convert to base units */
+    es_para[0] *= s->dbip->dbi_local2base;
+    es_para[1] *= s->dbip->dbi_local2base;
+    es_para[2] *= s->dbip->dbi_local2base;
+
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
@@ -199,6 +214,11 @@ ecmd_cline_move_h(struct mged_state *s)
 	    inpara = 0;
 	    return TCL_ERROR;
 	}
+
+	/* must convert to base units */
+	es_para[0] *= s->dbip->dbi_local2base;
+	es_para[1] *= s->dbip->dbi_local2base;
+	es_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
 	    MAT4X3PNT(work, es_invmat, es_para);
