@@ -97,9 +97,6 @@ DM_EXPORT extern int dm_Normal2Xy(struct dm *dmp,
 DM_EXPORT extern void dm_fogHint(struct dm *dmp,
 				 int fastfog);
 DM_EXPORT extern int dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, const char **argv);
-DM_EXPORT extern int dm_limit(int i);
-DM_EXPORT extern int dm_unlimit(int i);
-DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
 
 /* adc.c */
 DM_EXPORT extern void dm_draw_adc(struct dm *dmp,

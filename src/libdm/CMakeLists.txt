@@ -23,7 +23,6 @@ set(
   if_mem.c
   if_remote.c
   if_stack.c
-  knob.c
   labels.c
   options.c
   rect.c

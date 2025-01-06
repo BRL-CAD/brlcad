@@ -798,23 +798,6 @@ ogl_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 		for (cip = dev->classes, k = 0; k < dev->num_classes;
 		     ++k, ++cip) {
 		    switch (cip->input_class) {
-#ifdef IR_BUTTONS
-			case ButtonClass:
-			    DeviceButtonPress(dev, pubvars->devbuttonpress,
-					      e_class[nclass]);
-			    ++nclass;
-			    DeviceButtonRelease(dev, pubvars->devbuttonrelease,
-						e_class[nclass]);
-			    ++nclass;
-			    break;
-#endif
-#ifdef IR_KNOBS
-			case ValuatorClass:
-			    DeviceMotionNotify(dev, pubvars->devmotionnotify,
-					       e_class[nclass]);
-			    ++nclass;
-			    break;
-#endif
 			default:
 			    break;
 		    }

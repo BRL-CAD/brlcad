@@ -67,9 +67,6 @@ extern void *fb_backends;
 /* +-2048 to +-1 */
 #define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
 
-#ifdef IR_KNOBS
-#  define NOISE 16		/* Size of dead spot on knob */
-#endif
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
