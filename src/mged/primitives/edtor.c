@@ -243,8 +243,7 @@ mged_tor_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    mged_tor_pscale(s, es_menu);
-	    break;
+	    return mged_tor_pscale(s, es_menu);
     }
     return 0;
 }

@@ -1012,11 +1012,18 @@ ecmd_arb_specific_menu(struct mged_state *s)
     }
 }
 
-void
+int
 ecmd_arb_move_face(struct mged_state *s)
 {
     /* move face through definite point */
     if (inpara) {
+
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	vect_t work;
 	struct rt_arb_internal *arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
@@ -1033,6 +1040,8 @@ ecmd_arb_move_face(struct mged_state *s)
 
 	(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
     }
+
+    return 0;
 }
 
 static int
@@ -1108,7 +1117,7 @@ ecmd_arb_setup_rotface(struct mged_state *s)
     set_e_axes_pos(s, 1);
 }
 
-void
+int
 ecmd_arb_rotate_face(struct mged_state *s)
 {
     /* rotate a GENARB8 defining plane through a fixed vertex */
@@ -1118,6 +1127,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
     RT_ARB_CK_MAGIC(arb);
 
     if (inpara) {
+
 	vect_t work;
 	static mat_t invsolr;
 	static vect_t tempvec;
@@ -1178,7 +1188,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 	    Tcl_AppendResult(s->interp, "Must be < rot fb | xdeg ydeg zdeg >\n",
 		    (char *)NULL);
 	    mged_print_result(s, TCL_ERROR);
-	    return;
+	    return TCL_ERROR;
 	}
 
 	/* point notation of fixed vertex */
@@ -1216,13 +1226,21 @@ ecmd_arb_rotate_face(struct mged_state *s)
 
     inpara = 0;
 
+    return 0;
 }
 
-void
+int
 edit_arb_element(struct mged_state *s)
 {
 
     if (inpara) {
+
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	vect_t work;
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model space */
@@ -1232,6 +1250,8 @@ edit_arb_element(struct mged_state *s)
 	}
 	editarb(s, work);
     }
+
+    return 0;
 }
 
 void
@@ -1317,18 +1337,18 @@ mged_arb_edit(struct mged_state *s, int edflag)
 		return -1;
 	    break;
 	case ECMD_ARB_MOVE_FACE:
-	    ecmd_arb_move_face(s);
-	    break;
+	    return ecmd_arb_move_face(s);
 	case ECMD_ARB_SETUP_ROTFACE:
 	    ecmd_arb_setup_rotface(s);
 	    break;
 	case ECMD_ARB_ROTATE_FACE:
-	    ecmd_arb_rotate_face(s);
+	    ret = ecmd_arb_rotate_face(s);
+	    if (ret)
+		return ret;
 	    return 1; // TODO - why is this a return rather than a break (skips sedit finalization)
 	case PTARB:     /* move an ARB point */
 	case EARB:      /* edit an ARB edge */
-	    edit_arb_element(s);
-	    break;
+	    return edit_arb_element(s);
     }
 
 arb_planecalc:

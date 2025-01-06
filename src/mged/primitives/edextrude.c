@@ -159,7 +159,7 @@ ecmd_extr_skt_name(struct mged_state *s)
     }
 }
 
-void
+int
 ecmd_extr_mov_h(struct mged_state *s)
 {
     vect_t work;
@@ -168,6 +168,12 @@ ecmd_extr_mov_h(struct mged_state *s)
 
     RT_EXTRUDE_CK_MAGIC(extr);
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model coordinates */
 	    MAT4X3PNT(work, es_invmat, es_para);
@@ -183,8 +189,10 @@ ecmd_extr_mov_h(struct mged_state *s)
 		(char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	VSET(extr->h, 0.0, 0.0, 1.0);
-	return;
+	return TCL_ERROR;
     }
+
+    return 0;
 }
 
 int
@@ -221,7 +229,7 @@ ecmd_extr_scale_h(struct mged_state *s)
 }
 
 /* rotate height vector */
-void
+int
 ecmd_extr_rot_h(struct mged_state *s)
 {
     struct rt_extrude_internal *extr =
@@ -229,9 +237,15 @@ ecmd_extr_rot_h(struct mged_state *s)
     mat_t mat;
     mat_t mat1;
     mat_t edit;
- 
+
     RT_EXTRUDE_CK_MAGIC(extr);
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	static mat_t invsolr;
 	/*
 	 * Keyboard parameters:  absolute x, y, z rotations,
@@ -274,6 +288,8 @@ ecmd_extr_rot_h(struct mged_state *s)
     }
 
     MAT_IDN(incr_change);
+
+    return 0;
 }
 
 /* Use mouse to change location of point V+H */
@@ -315,13 +331,11 @@ mged_extrude_edit(struct mged_state *s, int edflag)
 	    ecmd_extr_skt_name(s);
 	    break;
 	case ECMD_EXTR_MOV_H:
-	    ecmd_extr_mov_h(s);
-	    break;
+	    return ecmd_extr_mov_h(s);
 	case ECMD_EXTR_SCALE_H:
 	    return ecmd_extr_scale_h(s);
 	case ECMD_EXTR_ROT_H:
-	    ecmd_extr_rot_h(s);
-	    break;
+	    return ecmd_extr_rot_h(s);
     }
 
     return 0;

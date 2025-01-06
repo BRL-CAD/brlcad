@@ -253,7 +253,7 @@ menu_eto_scale_c(struct mged_state *s)
 }
 
 /* rotate ellipse semi-major axis vector */
-void
+int
 ecmd_eto_rot_c(struct mged_state *s)
 {
     struct rt_eto_internal *eto =
@@ -261,9 +261,15 @@ ecmd_eto_rot_c(struct mged_state *s)
     mat_t mat;
     mat_t mat1;
     mat_t edit;
-    
+
     RT_ETO_CK_MAGIC(eto);
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	static mat_t invsolr;
 	/*
 	 * Keyboard parameters:  absolute x, y, z rotations,
@@ -307,6 +313,8 @@ ecmd_eto_rot_c(struct mged_state *s)
     }
 
     MAT_IDN(incr_change);
+
+    return 0;
 }
 
 static int
@@ -355,11 +363,9 @@ mged_eto_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    mged_eto_pscale(s, es_menu);
-	    break;
+	    return mged_eto_pscale(s, es_menu);
 	case ECMD_ETO_ROT_C:
-	    ecmd_eto_rot_c(s);
-	    break;
+	    return ecmd_eto_rot_c(s);
     }
     return 0;
 }

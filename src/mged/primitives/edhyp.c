@@ -238,7 +238,7 @@ menu_hyp_c(struct mged_state *s)
 }
 
 /* rotate hyperboloid height vector */
-void
+int
 ecmd_hyp_rot_h(struct mged_state *s)
 {
     struct rt_hyp_internal *hyp =
@@ -250,6 +250,12 @@ ecmd_hyp_rot_h(struct mged_state *s)
 
     RT_HYP_CK_MAGIC(hyp);
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	static mat_t invsolr;
 	/*
 	 * Keyboard parameters:  absolute x, y, z rotations,
@@ -293,6 +299,8 @@ ecmd_hyp_rot_h(struct mged_state *s)
     }
 
     MAT_IDN(incr_change);
+
+    return 0;
 }
 
 static int
@@ -344,11 +352,9 @@ mged_hyp_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    mged_hyp_pscale(s, es_menu);
-	    break;
+	    return mged_hyp_pscale(s, es_menu);
 	case ECMD_HYP_ROT_H:
-	    ecmd_hyp_rot_h(s);
-	    break;
+	    return ecmd_hyp_rot_h(s);
     }
     return 0;
 }

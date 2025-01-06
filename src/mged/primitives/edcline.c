@@ -184,7 +184,7 @@ ecmd_cline_scale_t(struct mged_state *s)
 /*
  * Move end of height vector
  */
-void
+int
 ecmd_cline_move_h(struct mged_state *s)
 {
     vect_t work;
@@ -194,6 +194,12 @@ ecmd_cline_move_h(struct mged_state *s)
     RT_CLINE_CK_MAGIC(cli);
 
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	if (mged_variables->mv_context) {
 	    MAT4X3PNT(work, es_invmat, es_para);
 	    VSUB2(cli->h, work, cli->v);
@@ -206,8 +212,10 @@ ecmd_cline_move_h(struct mged_state *s)
 		(char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	VSET(cli->h, 0.0, 0.0, 1.0);
-	return;
+	return TCL_ERROR;
     }
+
+    return 0;
 }
 
 void
@@ -252,8 +260,7 @@ mged_cline_edit(struct mged_state *s, int edflag)
 	case ECMD_CLINE_SCALE_T:
 	    return ecmd_cline_scale_t(s);
 	case ECMD_CLINE_MOVE_H:
-	    ecmd_cline_move_h(s);
-	    break;
+	    return ecmd_cline_move_h(s);
     }
 
     return 0;

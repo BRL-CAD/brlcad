@@ -454,7 +454,7 @@ menu_tgc_scale_abcd(struct mged_state *s)
  * Move end of H of tgc, keeping plates perpendicular
  * to H vector.
  */
-void
+int
 ecmd_tgc_mv_h(struct mged_state *s)
 {
     float la, lb, lc, ld;	/* TGC: length of vectors */
@@ -464,6 +464,12 @@ ecmd_tgc_mv_h(struct mged_state *s)
 
     RT_TGC_CK_MAGIC(tgc);
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model coordinates */
 	    MAT4X3PNT(work, es_invmat, es_para);
@@ -479,7 +485,7 @@ ecmd_tgc_mv_h(struct mged_state *s)
 		(char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	VSET(tgc->h, 0.0, 0.0, 1.0);
-	return;
+	return TCL_ERROR;
     }
 
     /* have new height vector -- redefine rest of tgc */
@@ -501,10 +507,12 @@ ecmd_tgc_mv_h(struct mged_state *s)
     /* Restore original vector lengths to A, B */
     VSCALE(tgc->a, tgc->a, la);
     VSCALE(tgc->b, tgc->b, lb);
+
+    return 0;
 }
 
 /* Move end of H of tgc - leave ends alone */
-void
+int
 ecmd_tgc_mv_hh(struct mged_state *s)
 {
     vect_t work;
@@ -513,6 +521,12 @@ ecmd_tgc_mv_hh(struct mged_state *s)
 
     RT_TGC_CK_MAGIC(tgc);
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	if (mged_variables->mv_context) {
 	    /* apply es_invmat to convert to real model coordinates */
 	    MAT4X3PNT(work, es_invmat, es_para);
@@ -528,12 +542,14 @@ ecmd_tgc_mv_hh(struct mged_state *s)
 		(char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	VSET(tgc->h, 0.0, 0.0, 1.0);
-	return;
+	return TCL_ERROR;
     }
+
+    return 0;
 }
 
 /* rotate height vector */
-void
+int
 ecmd_tgc_rot_h(struct mged_state *s)
 {
     struct rt_tgc_internal *tgc =
@@ -545,6 +561,12 @@ ecmd_tgc_rot_h(struct mged_state *s)
 
     RT_TGC_CK_MAGIC(tgc);
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	static mat_t invsolr;
 	/*
 	 * Keyboard parameters:  absolute x, y, z rotations,
@@ -587,10 +609,12 @@ ecmd_tgc_rot_h(struct mged_state *s)
     }
 
     MAT_IDN(incr_change);
+
+    return 0;
 }
 
 /* rotate surfaces AxB and CxD (tgc) */
-void
+int
 ecmd_tgc_rot_ab(struct mged_state *s)
 {
     struct rt_tgc_internal *tgc =
@@ -602,6 +626,12 @@ ecmd_tgc_rot_ab(struct mged_state *s)
 
     RT_TGC_CK_MAGIC(tgc);
     if (inpara) {
+	if (inpara != 3) {
+	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
 	static mat_t invsolr;
 	/*
 	 * Keyboard parameters:  absolute x, y, z rotations,
@@ -649,6 +679,8 @@ ecmd_tgc_rot_ab(struct mged_state *s)
 	MAT4X3VEC(tgc->d, incr_change, tgc->d);
     }
     MAT_IDN(incr_change);
+
+    return 0;
 }
 
 /* Use mouse to change location of point V+H */
@@ -741,20 +773,15 @@ mged_tgc_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    mged_tgc_pscale(s, es_menu);
-	    break;
+	    return mged_tgc_pscale(s, es_menu);
 	case ECMD_TGC_MV_H:
-	    ecmd_tgc_mv_h(s);
-	    break;
+	    return ecmd_tgc_mv_h(s);
 	case ECMD_TGC_MV_HH:
-	    ecmd_tgc_mv_hh(s);
-	    break;
+	    return ecmd_tgc_mv_hh(s);
 	case ECMD_TGC_ROT_H:
-	    ecmd_tgc_rot_h(s);
-	    break;
+	    return ecmd_tgc_rot_h(s);
 	case ECMD_TGC_ROT_AB:
-	    ecmd_tgc_rot_ab(s);
-	    break;
+	    return ecmd_tgc_rot_ab(s);
     }
 
     return 0;

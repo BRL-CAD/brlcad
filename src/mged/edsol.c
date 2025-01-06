@@ -1431,22 +1431,6 @@ sedit_reject(struct mged_state *s)
     rt_db_free_internal(&s->edit_state.es_int);
 }
 
-#define PARAM_1ARG (es_edflag == SSCALE || \
-		    es_edflag == PSCALE || \
-		    es_edflag == ECMD_BOT_THICK || \
-		    es_edflag == ECMD_VOL_THRESH_LO || \
-		    es_edflag == ECMD_VOL_THRESH_HI || \
-		    es_edflag == ECMD_DSP_SCALE_X || \
-		    es_edflag == ECMD_DSP_SCALE_Y || \
-		    es_edflag == ECMD_DSP_SCALE_ALT || \
-		    es_edflag == ECMD_EBM_HEIGHT || \
-		    es_edflag == ECMD_CLINE_SCALE_H || \
-		    es_edflag == ECMD_CLINE_SCALE_R || \
-		    es_edflag == ECMD_CLINE_SCALE_T || \
-		    es_edflag == ECMD_EXTR_SCALE_H)
-#define PARAM_2ARG (es_edflag == ECMD_DSP_FSIZE || \
-		    es_edflag == ECMD_EBM_FSIZE)
-
 int
 mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 {
@@ -1464,53 +1448,6 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
     inpara = 0;
     for (i = 0; i < argc; i++) {
 	es_para[ inpara++ ] = argvect[i];
-    }
-
-    if (PARAM_1ARG) {
-	if (inpara != 1) {
-	    Tcl_AppendResult(interp, "ERROR: only one argument needed\n", (char *)NULL);
-	    inpara = 0;
-	    return TCL_ERROR;
-	}
-
-	if (es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID
-	    || es_menu == MENU_METABALL_SET_THRESHOLD || es_menu == MENU_METABALL_SET_METHOD
-	    || es_menu == MENU_METABALL_PT_SET_GOO)
-	{
-	    if (es_para[0] < 0.0) {
-		Tcl_AppendResult(interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
-		inpara = 0;
-		return TCL_ERROR;
-	    }
-	} else {
-	    if (es_para[0] <= 0.0) {
-		Tcl_AppendResult(interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-		inpara = 0;
-		return TCL_ERROR;
-	    }
-	}
-    } else if (PARAM_2ARG) {
-	if (inpara != 2) {
-	    Tcl_AppendResult(interp, "ERROR: two arguments needed\n", (char *)NULL);
-	    inpara = 0;
-	    return TCL_ERROR;
-	}
-
-	if (es_para[0] <= 0.0) {
-	    Tcl_AppendResult(interp, "ERROR: X SIZE <= 0\n", (char *)NULL);
-	    inpara = 0;
-	    return TCL_ERROR;
-	} else if (es_para[1] <= 0.0) {
-	    Tcl_AppendResult(interp, "ERROR: Y SIZE <= 0\n", (char *)NULL);
-	    inpara = 0;
-	    return TCL_ERROR;
-	}
-    } else {
-	if (inpara != 3) {
-	    Tcl_AppendResult(interp, "ERROR: three arguments needed\n", (char *)NULL);
-	    inpara = 0;
-	    return TCL_ERROR;
-	}
     }
 
     /* check if need to convert input values to the base unit */

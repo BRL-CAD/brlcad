@@ -1064,8 +1064,7 @@ mged_pipe_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    mged_pipe_pscale(s, es_menu);
-	    break;
+	    return mged_pipe_pscale(s, es_menu);
 	case ECMD_PIPE_PICK:
 	    ecmd_pipe_pick(s);
 	    break;

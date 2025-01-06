@@ -438,8 +438,7 @@ mged_metaball_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    mged_metaball_pscale(s, es_menu);
-	    break;
+	    return mged_metaball_pscale(s, es_menu);
 	case ECMD_METABALL_PT_PICK:
 	    ecmd_metaball_pt_pick(s);
 	    break;
