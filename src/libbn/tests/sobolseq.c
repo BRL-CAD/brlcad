@@ -79,4 +79,3 @@ int sobolseq_main(int argc, char **argv)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

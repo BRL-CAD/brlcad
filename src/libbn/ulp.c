@@ -57,8 +57,8 @@ bn_dbl_epsilon(void)
     return DBL_EPSILON;
 #elif defined(HAVE_IEEE754)
     union {
-        double d;
-        long long ll;
+	double d;
+	long long ll;
     } val;
     val.d = 1.0;
     val.ll += 1LL;
@@ -68,12 +68,12 @@ bn_dbl_epsilon(void)
     static double tol = 0.0;
 
     if (tol == 0.0) {
-        /* volatile to avoid long registers and compiler optimizing away the loop */
-        volatile double temp_tol = 1.0;
-        while (1.0 + (temp_tol * 0.5) > 1.0) {
-            temp_tol *= 0.5;
-        }
-        tol = temp_tol;
+	/* volatile to avoid long registers and compiler optimizing away the loop */
+	volatile double temp_tol = 1.0;
+	while (1.0 + (temp_tol * 0.5) > 1.0) {
+	    temp_tol *= 0.5;
+	}
+	tol = temp_tol;
     }
 
     return tol;
@@ -88,8 +88,8 @@ bn_flt_epsilon(void)
     return FLT_EPSILON;
 #elif defined(HAVE_IEEE754)
     union {
-        float f;
-        long long ll;
+	float f;
+	long long ll;
     } val;
     val.f = 1.0;
     val.ll += 1LL;
@@ -99,12 +99,12 @@ bn_flt_epsilon(void)
     static float tol = 0.0;
 
     if (tol == 0.0) {
-        /* volatile to avoid long registers and compiler optimizing away the loop */
-        volatile float temp_tol = 1.0f;
-        while (1.0f + (temp_tol * 0.5f) > 1.0f) {
-            temp_tol *= 0.5f;
-        }
-        tol = temp_tol;
+	/* volatile to avoid long registers and compiler optimizing away the loop */
+	volatile float temp_tol = 1.0f;
+	while (1.0f + (temp_tol * 0.5f) > 1.0f) {
+	    temp_tol *= 0.5f;
+	}
+	tol = temp_tol;
     }
 
     return tol;
@@ -119,8 +119,8 @@ bn_dbl_min(void)
     return DBL_MIN;
 #else
     union {
-        double d;
-        unsigned long long ull;
+	double d;
+	unsigned long long ull;
     } minVal;
 
     /* set exponent to min non-subnormal value (i.e., 1) */
@@ -138,8 +138,8 @@ bn_dbl_max(void)
     return DBL_MAX;
 #elif defined(INFINITY)
     union {
-        double d;
-        long long ll;
+	double d;
+	long long ll;
     } val;
     val.d = INFINITY;
     val.ll -= 1LL;
@@ -148,16 +148,16 @@ bn_dbl_max(void)
     static double max_val = 0.0;
 
     if (max_val == 0.0) {
-        double val = 1.0;
-        double prev_val;
+	double val = 1.0;
+	double prev_val;
 
 	/* double until it no longer doubles */
-        do {
-            prev_val = val;
-            val *= 2.0;
-        } while (!isinf(val) && val > prev_val);
+	do {
+	    prev_val = val;
+	    val *= 2.0;
+	} while (!isinf(val) && val > prev_val);
 
-        max_val = prev_val;
+	max_val = prev_val;
     }
 
     return max_val;
@@ -172,8 +172,8 @@ bn_flt_min(void)
     return FLT_MIN;
 #else
     union {
-        float f;
-        long long ll;
+	float f;
+	long long ll;
     } minVal;
 
     // set exponent to min non-subnormal value (i.e., 1)

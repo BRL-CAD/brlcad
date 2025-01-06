@@ -176,7 +176,6 @@ bn_encode_hvect(struct bu_vls *vp, const hvect_t v, int clamp)
 }
 
 
-
 /** @} */
 /*
  * Local Variables:

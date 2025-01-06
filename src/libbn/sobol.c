@@ -351,4 +351,3 @@ bn_sobol_skip(struct bn_soboldata *s, unsigned n)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
