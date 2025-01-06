@@ -342,7 +342,7 @@ ecmd_metaball_pt_pick(struct mged_state *s)
 }
 
 void
-ecmd_metaball_pt_mov(struct mged_state *UNUSED(s))
+ecmd_metaball_pt_mov(struct mged_state *s)
 {
     if (!es_metaball_pnt) {
 	bu_log("Must select a point to move"); return; }

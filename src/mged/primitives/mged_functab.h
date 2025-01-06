@@ -114,6 +114,15 @@ struct mged_functab {
     int(*ft_edit)(struct mged_state *s, int edflag);
 #define MGEDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct mged_state *, int))((void (*)(void))_func))
 
+    /* Translate mouse info into edit ready info.  mousevec [X] and [Y] are in
+     * the range -1.0...+1.0, corresponding to viewspace.
+     *
+     * In order to allow command line commands to do the same things that a
+     * mouse movements can, the preferred strategy is to store values and allow
+     * ft_edit to actually do the work. */
+    int(*ft_edit_xy)(struct mged_state *s, int edflag, vect_t mousevec);
+#define MGEDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct mged_state *, int, vect_t))((void (*)(void))_func))
+
     struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 
