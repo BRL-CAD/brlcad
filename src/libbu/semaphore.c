@@ -107,8 +107,8 @@ static LONG bu_init_lock = 0;
 
 
 #if defined(PARALLEL) || defined(DEFINED_BU_SEMAPHORES)
-static unsigned int bu_nsemaphores = 0;
-static struct bu_semaphores bu_semaphores[SEMAPHORE_MAX] = {{0, SEMAPHORE_INIT}};
+static unsigned int bu_nsemaphores = 1;
+static struct bu_semaphores bu_semaphores[SEMAPHORE_MAX] = {{SEMAPHORE_MAGIC, SEMAPHORE_INIT}};
 #endif
 
 
