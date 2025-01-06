@@ -86,22 +86,6 @@ int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
 /* These values end up in es_menu, as do ARB vertex numbers */
 int es_menu;		/* item selected from menu */
 
-#define PARAM_1ARG (es_edflag == SSCALE || \
-		    es_edflag == PSCALE || \
-		    es_edflag == ECMD_BOT_THICK || \
-		    es_edflag == ECMD_VOL_THRESH_LO || \
-		    es_edflag == ECMD_VOL_THRESH_HI || \
-		    es_edflag == ECMD_DSP_SCALE_X || \
-		    es_edflag == ECMD_DSP_SCALE_Y || \
-		    es_edflag == ECMD_DSP_SCALE_ALT || \
-		    es_edflag == ECMD_EBM_HEIGHT || \
-		    es_edflag == ECMD_CLINE_SCALE_H || \
-		    es_edflag == ECMD_CLINE_SCALE_R || \
-		    es_edflag == ECMD_CLINE_SCALE_T || \
-		    es_edflag == ECMD_EXTR_SCALE_H)
-#define PARAM_2ARG (es_edflag == ECMD_DSP_FSIZE || \
-		    es_edflag == ECMD_EBM_FSIZE)
-
 void
 set_e_axes_pos(struct mged_state *s, int both)
     /* if (!both) then set only curr_e_axes_pos, otherwise
@@ -1447,6 +1431,21 @@ sedit_reject(struct mged_state *s)
     rt_db_free_internal(&s->edit_state.es_int);
 }
 
+#define PARAM_1ARG (es_edflag == SSCALE || \
+		    es_edflag == PSCALE || \
+		    es_edflag == ECMD_BOT_THICK || \
+		    es_edflag == ECMD_VOL_THRESH_LO || \
+		    es_edflag == ECMD_VOL_THRESH_HI || \
+		    es_edflag == ECMD_DSP_SCALE_X || \
+		    es_edflag == ECMD_DSP_SCALE_Y || \
+		    es_edflag == ECMD_DSP_SCALE_ALT || \
+		    es_edflag == ECMD_EBM_HEIGHT || \
+		    es_edflag == ECMD_CLINE_SCALE_H || \
+		    es_edflag == ECMD_CLINE_SCALE_R || \
+		    es_edflag == ECMD_CLINE_SCALE_T || \
+		    es_edflag == ECMD_EXTR_SCALE_H)
+#define PARAM_2ARG (es_edflag == ECMD_DSP_FSIZE || \
+		    es_edflag == ECMD_EBM_FSIZE)
 
 int
 mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)

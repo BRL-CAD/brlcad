@@ -656,11 +656,19 @@ mged_pipe_labels(
 }
 
 /* scale OD of one pipe segment */
-void menu_pipe_pt_od(struct mged_state *s)
+int
+menu_pipe_pt_od(struct mged_state *s)
 {
+
+    if (es_para[0] < 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     if (!es_pipe_pnt) {
 	Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
-	return;
+	return TCL_ERROR;
     }
 
     if (inpara) {
@@ -671,14 +679,23 @@ void menu_pipe_pt_od(struct mged_state *s)
 	    s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
     }
     pipe_seg_scale_od(s, es_pipe_pnt, s->edit_state.es_scale);
+
+    return 0;
 }
 
 /* scale ID of one pipe segment */
-void menu_pipe_pt_id(struct mged_state *s)
+int
+menu_pipe_pt_id(struct mged_state *s)
 {
+    if (es_para[0] < 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     if (!es_pipe_pnt) {
 	Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
-	return;
+	return TCL_ERROR;
     }
 
     if (inpara) {
@@ -688,15 +705,25 @@ void menu_pipe_pt_id(struct mged_state *s)
 	else
 	    s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
     }
+
     pipe_seg_scale_id(s, es_pipe_pnt, s->edit_state.es_scale);
+
+    return 0;
 }
 
 /* scale bend radius at selected point */
-void menu_pipe_pt_radius(struct mged_state *s)
+int
+menu_pipe_pt_radius(struct mged_state *s)
 {
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     if (!es_pipe_pnt) {
 	Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
-	return;
+	return TCL_ERROR;
     }
 
     if (inpara) {
@@ -706,12 +733,22 @@ void menu_pipe_pt_radius(struct mged_state *s)
 	else
 	    s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
     }
+
     pipe_seg_scale_radius(s, es_pipe_pnt, s->edit_state.es_scale);
+
+    return 0;
 }
 
 /* scale entire pipe OD */
-void menu_pipe_scale_od(struct mged_state *s)
+int
+menu_pipe_scale_od(struct mged_state *s)
 {
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     if (inpara) {
 	struct rt_pipe_internal *pipeip =
 	    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
@@ -730,18 +767,28 @@ void menu_pipe_scale_od(struct mged_state *s)
 
 	    if (ps->l.magic == BU_LIST_HEAD_MAGIC) {
 		Tcl_AppendResult(s->interp, "Entire pipe solid has zero OD!\n", (char *)NULL);
-		return;
+		return TCL_ERROR;
 	    }
 
 	    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 	}
     }
+
     pipe_scale_od(s, &s->edit_state.es_int, s->edit_state.es_scale);
+
+    return 0;
 }
 
 /* scale entire pipe ID */
-void menu_pipe_scale_id(struct mged_state *s)
+int
+menu_pipe_scale_id(struct mged_state *s)
 {
+    if (es_para[0] < 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     if (inpara) {
 	struct rt_pipe_internal *pipeip =
 	    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
@@ -766,11 +813,20 @@ void menu_pipe_scale_id(struct mged_state *s)
 	}
     }
     pipe_scale_id(s, &s->edit_state.es_int, s->edit_state.es_scale);
-} 
-    
-/* scale entire pipr bend radius */
-void menu_pipe_scale_radius(struct mged_state *s)
+
+    return 0;
+}
+
+/* scale entire pipe bend radius */
+int
+menu_pipe_scale_radius(struct mged_state *s)
 {
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     if (inpara) {
 	struct rt_pipe_internal *pipeip =
 	    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
@@ -794,7 +850,10 @@ void menu_pipe_scale_radius(struct mged_state *s)
 		s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 	}
     }
+
     pipe_scale_radius(s, &s->edit_state.es_int, s->edit_state.es_scale);
+
+    return 0;
 }
 
 void ecmd_pipe_pick(struct mged_state *s)
@@ -959,29 +1018,31 @@ void ecmd_pipe_pt_del(struct mged_state *s)
     es_pipe_pnt = pipe_del_pnt(s, es_pipe_pnt);
 }
 
-static void
+static int
 mged_pipe_pscale(struct mged_state *s, int mode)
 {
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     switch (mode) {
 	case MENU_PIPE_PT_OD:   /* scale OD of one pipe segment */
-	    menu_pipe_pt_od(s);
-	    break;
+	    return menu_pipe_pt_od(s);
 	case MENU_PIPE_PT_ID:   /* scale ID of one pipe segment */
-	    menu_pipe_pt_od(s);
-	    break;
+	    return menu_pipe_pt_id(s);
 	case MENU_PIPE_PT_RADIUS:       /* scale bend radius at selected point */
-	    menu_pipe_pt_radius(s);
-	    break;
+	    return menu_pipe_pt_radius(s);
 	case MENU_PIPE_SCALE_OD:        /* scale entire pipe OD */
-	    menu_pipe_scale_od(s);
-	    break;
+	    return menu_pipe_scale_od(s);
 	case MENU_PIPE_SCALE_ID:        /* scale entire pipe ID */
-	    menu_pipe_scale_id(s);
-	    break;
+	    return menu_pipe_scale_id(s);
 	case MENU_PIPE_SCALE_RADIUS:    /* scale entire pipr bend radius */
-	    menu_pipe_scale_radius(s);
-	    break;
+	    return menu_pipe_scale_radius(s);
     };
+
+    return 0;
 }
 
 int

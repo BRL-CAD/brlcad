@@ -671,9 +671,21 @@ ecmd_tgc_mv_h_mousevec(struct mged_state *s, const vect_t mousevec)
     VSUB2(tgc->h, tr_temp, tgc->v);
 }
 
-static void
+static int
 mged_tgc_pscale(struct mged_state *s, int mode)
 {
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     switch (mode) {
 	case MENU_TGC_SCALE_H:
 	    menu_tgc_scale_h(s);
@@ -709,6 +721,8 @@ mged_tgc_pscale(struct mged_state *s, int mode)
 	    menu_tgc_scale_abcd(s);
 	    break;
     };
+
+    return 0;
 }
 
 int

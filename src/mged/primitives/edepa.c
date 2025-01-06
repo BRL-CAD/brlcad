@@ -216,9 +216,21 @@ menu_epa_r2(struct mged_state *s)
 	bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 }
 
-static void
+static int
 mged_epa_pscale(struct mged_state *s, int mode)
 {
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     switch (mode) {
 	case MENU_EPA_H:
 	    menu_epa_h(s);
@@ -230,6 +242,8 @@ mged_epa_pscale(struct mged_state *s, int mode)
 	    menu_epa_r2(s);
 	    break;
     };
+
+    return 0;
 }
 
 int

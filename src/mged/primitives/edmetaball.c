@@ -217,42 +217,75 @@ mged_metaball_keypoint(
     return (const char *)buf;
 }
 
-void
+int
 menu_metaball_set_threshold(struct mged_state *s)
 {
+    if (es_para[0] < 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_metaball_internal *ball =
 	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
     RT_METABALL_CK_MAGIC(ball);
     ball->threshold = es_para[0];
+
+    return 0;
 }
 
-void
+int
 menu_metaball_set_method(struct mged_state *s)
 {
+    if (es_para[0] < 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_metaball_internal *ball =
 	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
     RT_METABALL_CK_MAGIC(ball);
     ball->method = es_para[0];
+
+    return 0;
 }
 
-void
+int
 menu_metaball_pt_set_goo(struct mged_state *s)
 {
+    if (es_para[0] < 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     if (!es_metaball_pnt || !inpara) {
 	Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
-	return;
+	return TCL_ERROR;
     }
     es_metaball_pnt->sweat *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
+
+    return 0;
 }
 
-void
+int
 menu_metaball_pt_fldstr(struct mged_state *s)
 {
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     if (!es_metaball_pnt || !inpara) {
 	Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
-	return;
+	return TCL_ERROR;
     }
+
     es_metaball_pnt->fldstr *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
+
+    return 0;
 }
 
 void
@@ -263,7 +296,6 @@ ecmd_metaball_pt_pick(struct mged_state *s)
     point_t new_pt;
     struct wdb_metaball_pnt *ps;
     struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
-    struct bn_tol tmp_tol;
     fastf_t min_dist = MAX_FASTF;
     vect_t dir, work;
 
@@ -273,19 +305,13 @@ ecmd_metaball_pt_pick(struct mged_state *s)
 	VMOVE(new_pt, es_mparam);
     } else if (inpara == 3) {
 	VMOVE(new_pt, es_para);
-    } else if (inpara && inpara != 3) {
+    } else if (inpara) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for control point selection\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara) {
+    } else {
 	return;
     }
-
-    tmp_tol.magic = BN_TOL_MAGIC;
-    tmp_tol.dist = 0.0;
-    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
-    tmp_tol.perp = 0.0;
-    tmp_tol.para = 1.0 - tmp_tol.perp;
 
     /* get a direction vector in model space corresponding to z-direction in view */
     VSET(work, 0.0, 0.0, 1.0);
@@ -364,23 +390,33 @@ ecmd_metaball_pt_add(struct mged_state *s)
     es_metaball_pnt = n;
 }
 
-static void
+static int
 mged_metaball_pscale(struct mged_state *s, int mode)
 {
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     switch (mode) {
 	case MENU_METABALL_SET_THRESHOLD:
-	    menu_metaball_set_threshold(s);
-	    break;
+	    return menu_metaball_set_threshold(s);
 	case MENU_METABALL_SET_METHOD:
-	    menu_metaball_set_method(s);
-	    break;
+	    return menu_metaball_set_method(s);
 	case MENU_METABALL_PT_SET_GOO:
-	    menu_metaball_pt_set_goo(s);
-	    break;
+	    return menu_metaball_pt_set_goo(s);
 	case MENU_METABALL_PT_FLDSTR:
-	    menu_metaball_pt_fldstr(s);
-	    break;
+	    return menu_metaball_pt_fldstr(s);
     };
+
+    return 0;
 }
 
 void

@@ -200,9 +200,21 @@ menu_tor_r2(struct mged_state *s)
 	tor->r_h = newrad;
 }
 
-static void
+static int
 mged_tor_pscale(struct mged_state *s, int mode)
 {
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     switch (mode) {
 	case MENU_TOR_R1:
 	    menu_tor_r1(s);
@@ -211,6 +223,8 @@ mged_tor_pscale(struct mged_state *s, int mode)
 	    menu_tor_r2(s);
 	    break;
     };
+
+    return 0;
 }
 
 int

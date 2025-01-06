@@ -227,9 +227,21 @@ menu_rhc_c(struct mged_state *s)
     rhc->rhc_c *= s->edit_state.es_scale;
 }
 
-static void
+static int
 mged_rhc_pscale(struct mged_state *s, int mode)
 {
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     switch (mode) {
 	case MENU_RHC_B:
 	    menu_rhc_b(s);
@@ -244,6 +256,8 @@ mged_rhc_pscale(struct mged_state *s, int mode)
 	    menu_rhc_c(s);
 	    break;
     };
+
+    return 0;
 }
 
 int

@@ -41,7 +41,7 @@ mged_generic_keypoint(
 	const struct bn_tol *tol);
 
 /* scale the solid uniformly about its vertex point */
-void
+int
 mged_generic_sscale(
 	struct mged_state *s,
 	struct rt_db_internal *ip

@@ -53,13 +53,19 @@ mged_generic_keypoint(
     return strp;
 }
 
-void
+int
 mged_generic_sscale(
 	struct mged_state *s,
 	struct rt_db_internal *ip
 	)
 {
     mat_t mat, mat1, scalemat;
+
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
 
     if (inpara) {
 	/* accumulate the scale factor */
@@ -74,6 +80,8 @@ mged_generic_sscale(
 
     /* reset solid scale factor */
     s->edit_state.es_scale = 1.0;
+
+    return 0;
 }
 
 void

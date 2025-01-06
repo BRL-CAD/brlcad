@@ -223,9 +223,21 @@ menu_ell_scale_abc(struct mged_state *s)
     VSCALE(ell->c, ell->c, ma/mb);
 }
 
-static void
+static int
 mged_ell_pscale(struct mged_state *s, int mode)
 {
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     switch (mode) {
 	case MENU_ELL_SCALE_A:
 	    menu_ell_scale_a(s);
@@ -240,6 +252,8 @@ mged_ell_pscale(struct mged_state *s, int mode)
 	    menu_ell_scale_abc(s);
 	    break;
     };
+
+    return 0;
 }
 
 int

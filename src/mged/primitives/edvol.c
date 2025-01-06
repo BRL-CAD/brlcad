@@ -232,14 +232,28 @@ ecmd_vol_fname(struct mged_state *s)
     }
 }
 
-static void
+static int
 mged_vol_pscale(struct mged_state *s, int mode)
 {
+    if (inpara > 1) {
+	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     switch (mode) {
 	case MENU_VOL_CSIZE:
 	    menu_vol_csize(s);
 	    break;
     };
+
+    return 0;
 }
 
 int
