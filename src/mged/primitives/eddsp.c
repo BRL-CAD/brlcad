@@ -54,7 +54,7 @@ dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_edflag = ECMD_DSP_FNAME;
 	    break;
 	case MENU_DSP_FSIZE:
-	    es_edflag = ECMD_DSP_FSIZE;
+	    es_edflag = ECMD_DSP_FSIZE;  // Unimplemented.  Expects 2 parameters
 	    break;
 	case MENU_DSP_SCALE_X:
 	    es_edflag = ECMD_DSP_SCALE_X;

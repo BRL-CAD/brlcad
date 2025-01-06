@@ -83,6 +83,22 @@ mged_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 int
 ecmd_ebm_fsize(struct mged_state *s)
 {
+    if (inpara != 2) {
+	Tcl_AppendResult(s->interp, "ERROR: two arguments needed\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
+    if (es_para[0] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: X SIZE <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    } else if (es_para[1] <= 0.0) {
+	Tcl_AppendResult(s->interp, "ERROR: Y SIZE <= 0\n", (char *)NULL);
+	inpara = 0;
+	return TCL_ERROR;
+    }
+
     struct rt_ebm_internal *ebm =
 	(struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
     struct stat stat_buf;
