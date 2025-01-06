@@ -88,4 +88,3 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

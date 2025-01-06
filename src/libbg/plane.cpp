@@ -2718,4 +2718,3 @@ bg_plane_pt_at(point_t *pt, plane_t *p, fastf_t u, fastf_t v)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -220,7 +220,6 @@ bg_trimesh_isect(
     plot_faces("m2.plot3", &m2_intersecting_faces, faces_2, vertices_2);
 
 
-
 #if 0
 
     /* From the set of intersecting faces in each face, characterize the vertices
@@ -252,4 +251,3 @@ bg_trimesh_isect(
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

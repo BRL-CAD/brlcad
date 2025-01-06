@@ -187,7 +187,6 @@ main(int argc, const char **argv)
     /* Note - clipper doesn't yet support Xor */
 
 
-
     /* Next, test a polygon full contained within another polygon. */
 
     /* Polygon 3 */

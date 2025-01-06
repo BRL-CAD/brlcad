@@ -647,7 +647,7 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
     int tri_ind = 0;
     tri.forEachTriangle([&](const detria::Triangle<int> triangle)
     {
-        // `triangle` contains the point indices
+	// `triangle` contains the point indices
 	nfaces[3*tri_ind] = det2pts[triangle.x];
 	nfaces[3*tri_ind+1] = det2pts[triangle.y];
 	nfaces[3*tri_ind+2] = det2pts[triangle.z];

@@ -227,7 +227,6 @@ main(int argc, const char **argv)
 	if (!retval) {return -1;} else {bu_log("Test #002-1 Passed!\n");}
 
 
-
     }
 
     /* Triangle input */

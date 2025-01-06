@@ -105,4 +105,3 @@ bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

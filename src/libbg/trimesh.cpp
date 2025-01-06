@@ -953,4 +953,3 @@ bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

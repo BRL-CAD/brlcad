@@ -268,4 +268,3 @@ bg_trimesh_sync(int *of, int *f, int fcnt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

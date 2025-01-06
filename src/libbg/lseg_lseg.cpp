@@ -56,7 +56,6 @@ bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
 }
 
 
-
 /*
  * Local Variables:
  * tab-width: 8

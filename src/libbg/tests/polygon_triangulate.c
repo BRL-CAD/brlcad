@@ -147,7 +147,6 @@ main(int argc, const char **argv)
 	}
 
 
-
     }
     {
 	size_t num_points = 0;

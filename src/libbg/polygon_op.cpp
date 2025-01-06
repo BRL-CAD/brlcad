@@ -49,20 +49,20 @@ bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, plane_t *vp, fastf_t 
     fastf_t area = 0.0;
 
     if (NEAR_ZERO(sf, SMALL_FASTF))
-        return 0.0;
+	return 0.0;
 
     for (j = 0; j < gpoly->num_contours; ++j) {
-        n = gpoly->contour[j].num_points;
-        poly.resize(n);
-        for (k = 0; k < n; k++) {
+	n = gpoly->contour[j].num_points;
+	poly.resize(n);
+	for (k = 0; k < n; k++) {
 	    fastf_t fx, fy;
 	    bg_plane_closest_pt(&fx, &fy, vp, &gpoly->contour[j].point[k]);
 
-            poly[k].X = (ClipperLib::long64)(fx * sf);
-            poly[k].Y = (ClipperLib::long64)(fy * sf);
-        }
+	    poly[k].X = (ClipperLib::long64)(fx * sf);
+	    poly[k].Y = (ClipperLib::long64)(fy * sf);
+	}
 
-        area += (fastf_t)ClipperLib::Area(poly);
+	area += (fastf_t)ClipperLib::Area(poly);
     }
 
     sf = 1.0/(sf*sf) * size * size;
@@ -212,7 +212,7 @@ bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, plane_t 
 	    }
 	}
     }
-  
+
     /* If there aren't any overlapping segments, then it boils down to whether
      * one of the polygons is fully inside the other but NOT fully inside a
      * hole.  Since we have ruled out segment intersections, we can simply
@@ -222,7 +222,7 @@ bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, plane_t 
      * nested contours, but that's not currently a use case of interest - in the
      * event that use case does come up, we'll have to sort out in the original
      * polygon which positive contours are fully inside holes and establish a
-     * hierarchy. */ 
+     * hierarchy. */
     for (size_t i = 0; i < polyA_2d.p_num_contours; ++i) {
 	bool in_hole = false;
 	// No points, no work to do
@@ -490,4 +490,3 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

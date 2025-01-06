@@ -208,4 +208,3 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
