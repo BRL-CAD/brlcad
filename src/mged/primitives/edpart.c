@@ -36,7 +36,10 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edpart.h"
+
+#define MENU_PART_H		88
+#define MENU_PART_v		89
+#define MENU_PART_h		90
 
 static void
 part_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

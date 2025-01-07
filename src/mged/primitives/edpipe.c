@@ -43,7 +43,28 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edpipe.h"
+
+#define ECMD_PIPE_PICK		28	/* Pick pipe point */
+#define ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
+#define ECMD_PIPE_PT_ADD	30	/* Add a pipe point to end of pipe */
+#define ECMD_PIPE_PT_INS	31	/* Add a pipe point to start of pipe */
+#define ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
+#define ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
+
+#define MENU_PIPE_SELECT	61
+#define MENU_PIPE_NEXT_PT	62
+#define MENU_PIPE_PREV_PT	63
+#define MENU_PIPE_SPLIT		64
+#define MENU_PIPE_PT_OD		65
+#define MENU_PIPE_PT_ID		66
+#define MENU_PIPE_SCALE_OD	67
+#define MENU_PIPE_SCALE_ID	68
+#define MENU_PIPE_ADD_PT	69
+#define MENU_PIPE_INS_PT	70
+#define MENU_PIPE_DEL_PT	71
+#define MENU_PIPE_MOV_PT	72
+#define MENU_PIPE_PT_RADIUS	73
+#define MENU_PIPE_SCALE_RADIUS	74
 
 extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */
 extern vect_t es_mparam;        /* mouse input param.  Only when es_mvalid set */

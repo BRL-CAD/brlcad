@@ -36,7 +36,11 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edehy.h"
+
+#define MENU_EHY_H		53
+#define MENU_EHY_R1		54
+#define MENU_EHY_R2		55
+#define MENU_EHY_C		56
 
 static void
 ehy_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

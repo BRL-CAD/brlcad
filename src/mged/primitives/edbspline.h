@@ -28,8 +28,6 @@
 #include "raytrace.h"
 #include "mged.h"
 
-int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
-
 void bspline_init_sedit(struct mged_state *s);
 void sedit_vpick(struct mged_state *s, point_t v_pos);
 

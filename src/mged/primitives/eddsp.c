@@ -37,7 +37,18 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./eddsp.h"
+
+#define ECMD_DSP_FNAME		56	/* set DSP file name */
+#define ECMD_DSP_FSIZE		57	/* set DSP file size */
+#define ECMD_DSP_SCALE_X        58	/* Scale DSP x size */
+#define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
+#define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
+
+#define MENU_DSP_FNAME		83
+#define MENU_DSP_FSIZE		84	/* Not implemented yet */
+#define MENU_DSP_SCALE_X	85
+#define MENU_DSP_SCALE_Y	86
+#define MENU_DSP_SCALE_ALT	87
 
 extern const char * get_file_name(struct mged_state *s, char *str);
 

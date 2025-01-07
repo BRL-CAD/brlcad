@@ -36,7 +36,11 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edell.h"
+
+#define MENU_ELL_SCALE_A	39
+#define MENU_ELL_SCALE_B	40
+#define MENU_ELL_SCALE_C	41
+#define MENU_ELL_SCALE_ABC	42
 
 static void
 ell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

@@ -36,7 +36,10 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edrpc.h"
+
+#define MENU_RPC_B		43
+#define MENU_RPC_H		44
+#define MENU_RPC_R		45
 
 static void
 rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

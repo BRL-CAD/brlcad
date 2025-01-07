@@ -36,7 +36,6 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edgrip.h"
 
 const char *
 mged_grp_keypoint(

@@ -41,7 +41,16 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "./mged_functab.h"
-#include "./ednmg.h"
+
+#define ECMD_NMG_EPICK		19	/* edge pick */
+#define ECMD_NMG_EMOVE		20	/* edge move */
+#define ECMD_NMG_EDEBUG		21	/* edge debug */
+#define ECMD_NMG_FORW		22	/* next eu */
+#define ECMD_NMG_BACK		23	/* prev eu */
+#define ECMD_NMG_RADIAL		24	/* radial+mate eu */
+#define ECMD_NMG_ESPLIT		25	/* split current edge */
+#define ECMD_NMG_EKILL		26	/* kill current edge */
+#define ECMD_NMG_LEXTRU		27	/* Extrude loop */
 
 extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */
 extern vect_t es_mparam;        /* mouse input param.  Only when es_mvalid set */

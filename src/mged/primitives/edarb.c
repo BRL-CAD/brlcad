@@ -42,6 +42,20 @@
 #include "./mged_functab.h"
 #include "./edarb.h"
 
+#define EARB		9	/* chgmodel.c, edarb.c */
+#define PTARB		10	/* edarb.c */
+#define ECMD_ARB_MAIN_MENU	11
+#define ECMD_ARB_SPECIFIC_MENU	12
+#define ECMD_ARB_MOVE_FACE	13
+#define ECMD_ARB_SETUP_ROTFACE	14
+#define ECMD_ARB_ROTATE_FACE	15
+
+#define MENU_ARB_MV_EDGE	36
+#define MENU_ARB_MV_FACE	37
+#define MENU_ARB_ROT_FACE	38
+
+fastf_t es_peqn[7][4]; /* ARBs defining plane equations */
+
 int newedge;
 
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */

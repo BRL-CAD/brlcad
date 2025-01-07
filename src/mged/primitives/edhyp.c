@@ -36,7 +36,15 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edhyp.h"
+
+#define ECMD_HYP_ROT_H		91
+#define ECMD_HYP_ROT_A		92
+
+#define MENU_HYP_H              127
+#define MENU_HYP_SCALE_A        128
+#define MENU_HYP_SCALE_B	129
+#define MENU_HYP_C		130
+#define MENU_HYP_ROT_H		131
 
 static void
 hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

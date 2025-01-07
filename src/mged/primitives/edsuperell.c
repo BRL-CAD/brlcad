@@ -36,7 +36,11 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edsuperell.h"
+
+#define MENU_SUPERELL_SCALE_A	113
+#define MENU_SUPERELL_SCALE_B	114
+#define MENU_SUPERELL_SCALE_C	115
+#define MENU_SUPERELL_SCALE_ABC	116
 
 static void
 superell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b)) {

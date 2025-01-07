@@ -142,31 +142,7 @@ set(
   mged_dm.h
   mged_wdb.h
   primitives/edarb.h
-  primitives/edars.h
-  primitives/edbot.h
   primitives/edbspline.h
-  primitives/edcline.h
-  primitives/eddatum.h
-  primitives/eddsp.h
-  primitives/edebm.h
-  primitives/edehy.h
-  primitives/edell.h
-  primitives/edepa.h
-  primitives/edeto.h
-  primitives/edextrude.h
-  primitives/edgrip.h
-  primitives/edhalf.h
-  primitives/edhyp.h
-  primitives/edmetaball.h
-  primitives/ednmg.h
-  primitives/edpart.h
-  primitives/edpipe.h
-  primitives/edrhc.h
-  primitives/edrpc.h
-  primitives/edsuperell.h
-  primitives/edtgc.h
-  primitives/edtor.h
-  primitives/edvol.h
   primitives/mged_functab.h
   sedit.h
 )

@@ -52,8 +52,25 @@
 #include "./menu.h"
 #include "./primitives/mged_functab.h"
 #include "./primitives/edarb.h"
+#include "./primitives/edbspline.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
+
+/* primitive specific externs.  Eventually these should all go away */
+extern int es_ars_crv;  /* curve and column identifying selected ARS point */
+extern int es_ars_col;
+extern struct menu_item ars_menu[];
+extern struct menu_item ars_pick_menu[];
+
+extern int bot_verts[3];
+
+extern struct wdb_metaball_pnt *es_metaball_pnt;
+
+extern struct edgeuse *es_eu;
+extern struct loopuse *lu_copy;
+extern struct shell *es_s;
+
+extern struct wdb_pipe_pnt *es_pipe_pnt;
 
 
 extern point_t e_axes_pos;
@@ -64,7 +81,6 @@ int sedraw;	/* apply solid editing changes */
 
 int es_type;		/* COMGEOM solid type */
 int es_edclass;		/* type of editing class for this solid */
-fastf_t es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t es_m[3];		/* edge(line) slope */
 mat_t es_mat;			/* accumulated matrix of path */
 mat_t es_invmat;		/* inverse of es_mat KAA */
@@ -225,6 +241,8 @@ init_sedit(struct mged_state *s)
     id = s->edit_state.es_int.idb_type;
 
     es_menu = 0;
+
+    // TODO - indicates we need per-primitive init of sedit state
     if (id == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
@@ -1654,7 +1672,8 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     if (context)
 	transform_editing_solid(s, &s->edit_state.es_int, es_invmat, &s->edit_state.es_int, 1);
 
-    /* must re-calculate the face plane equations for arbs */
+    /* must re-calculate the face plane equations for arbs
+     * TODO - why do we need to do this here, and not in edarb.c code somewhere? */
     if (s->edit_state.es_int.idb_type == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;

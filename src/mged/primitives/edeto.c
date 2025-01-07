@@ -36,7 +36,13 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edeto.h"
+
+#define ECMD_ETO_ROT_C		16
+
+#define MENU_ETO_R		57
+#define MENU_ETO_RD		58
+#define MENU_ETO_SCALE_C	59
+#define MENU_ETO_ROT_C		60
 
 static void
 eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

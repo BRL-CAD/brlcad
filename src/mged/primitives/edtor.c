@@ -36,7 +36,9 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edtor.h"
+
+#define MENU_TOR_R1		21
+#define MENU_TOR_R2		22
 
 static void
 tor_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

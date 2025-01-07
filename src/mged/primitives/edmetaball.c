@@ -36,7 +36,26 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edmetaball.h"
+
+#define ECMD_METABALL_SET_THRESHOLD	83	/* overall metaball threshold value */
+#define ECMD_METABALL_SET_METHOD	84	/* set the rendering method */
+#define ECMD_METABALL_PT_PICK	85	/* pick a metaball control point */
+#define ECMD_METABALL_PT_MOV	86	/* move a metaball control point */
+#define ECMD_METABALL_PT_FLDSTR	87	/* set a metaball control point field strength */
+#define ECMD_METABALL_PT_DEL	88	/* delete a metaball control point */
+#define ECMD_METABALL_PT_ADD	89	/* add a metaball control point */
+#define ECMD_METABALL_RMET	90	/* set the metaball render method */
+
+#define MENU_METABALL_SET_THRESHOLD	117
+#define MENU_METABALL_SET_METHOD	118
+#define MENU_METABALL_PT_SET_GOO	119
+#define MENU_METABALL_SELECT	120
+#define MENU_METABALL_NEXT_PT	121
+#define MENU_METABALL_PREV_PT	122
+#define MENU_METABALL_MOV_PT	123
+#define MENU_METABALL_PT_FLDSTR	124
+#define MENU_METABALL_DEL_PT	125
+#define MENU_METABALL_ADD_PT	126
 
 struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
 

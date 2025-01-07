@@ -59,33 +59,6 @@ struct menu_item {
 #define TEXT0_DY        (-60)           /* #pixels per line, Size 0 */
 #define TEXT1_DY        (-90)           /* #pixels per line, Size 1 */
 
-/* The MENU_* values in these headers end up in es_menu,
- * as do ARB vertex numbers */
-#include "primitives/edarb.h"
-#include "primitives/edars.h"
-#include "primitives/edbot.h"
-#include "primitives/edbspline.h"
-#include "primitives/edcline.h"
-#include "primitives/eddsp.h"
-#include "primitives/edebm.h"
-#include "primitives/edehy.h"
-#include "primitives/edell.h"
-#include "primitives/edepa.h"
-#include "primitives/edeto.h"
-#include "primitives/edextrude.h"
-#include "primitives/edgrip.h"
-#include "primitives/edhyp.h"
-#include "primitives/edmetaball.h"
-#include "primitives/ednmg.h"
-#include "primitives/edpart.h"
-#include "primitives/edpipe.h"
-#include "primitives/edrhc.h"
-#include "primitives/edrpc.h"
-#include "primitives/edsuperell.h"
-#include "primitives/edtgc.h"
-#include "primitives/edtor.h"
-#include "primitives/edvol.h"
-
 extern struct menu_item sed_menu[];
 extern struct menu_item oed_menu[];
 

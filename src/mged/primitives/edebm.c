@@ -37,7 +37,14 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 #include "./mged_functab.h"
-#include "./edebm.h"
+
+#define ECMD_EBM_FNAME		53	/* set EBM file name */
+#define ECMD_EBM_FSIZE		54	/* set EBM file size */
+#define ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
+
+#define MENU_EBM_FNAME		80
+#define MENU_EBM_FSIZE		81
+#define MENU_EBM_HEIGHT		82
 
 extern const char * get_file_name(struct mged_state *s, char *str);
 
