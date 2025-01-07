@@ -37,9 +37,9 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define MENU_PART_H		88
-#define MENU_PART_v		89
-#define MENU_PART_h		90
+#define MENU_PART_H		16088
+#define MENU_PART_v		16089
+#define MENU_PART_h		16090
 
 static void
 part_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

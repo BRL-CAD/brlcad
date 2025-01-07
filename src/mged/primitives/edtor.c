@@ -37,8 +37,8 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define MENU_TOR_R1		21
-#define MENU_TOR_R2		22
+#define MENU_TOR_R1		1021
+#define MENU_TOR_R2		1022
 
 static void
 tor_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

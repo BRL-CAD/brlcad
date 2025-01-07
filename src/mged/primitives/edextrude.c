@@ -37,15 +37,15 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define ECMD_EXTR_SCALE_H	73	/* scale extrusion vector */
-#define ECMD_EXTR_MOV_H		74	/* move end of extrusion vector */
-#define ECMD_EXTR_ROT_H		75	/* rotate extrusion vector */
-#define ECMD_EXTR_SKT_NAME	76	/* set sketch that the extrusion uses */
+#define ECMD_EXTR_SCALE_H	27073	/* scale extrusion vector */
+#define ECMD_EXTR_MOV_H		27074	/* move end of extrusion vector */
+#define ECMD_EXTR_ROT_H		27075	/* rotate extrusion vector */
+#define ECMD_EXTR_SKT_NAME	27076	/* set sketch that the extrusion uses */
 
-#define MENU_EXTR_SCALE_H	103
-#define MENU_EXTR_MOV_H		104
-#define MENU_EXTR_ROT_H		105
-#define MENU_EXTR_SKT_NAME	106
+#define MENU_EXTR_SCALE_H	27103
+#define MENU_EXTR_MOV_H		27104
+#define MENU_EXTR_ROT_H		27105
+#define MENU_EXTR_SKT_NAME	27106
 
 /*ARGSUSED*/
 static void

@@ -37,15 +37,15 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define ECMD_CLINE_SCALE_H	77	/* scale height vector */
-#define ECMD_CLINE_MOVE_H	78	/* move end of height vector */
-#define ECMD_CLINE_SCALE_R	79	/* scale radius */
-#define ECMD_CLINE_SCALE_T	80	/* scale thickness */
+#define ECMD_CLINE_SCALE_H	29077	/* scale height vector */
+#define ECMD_CLINE_MOVE_H	29078	/* move end of height vector */
+#define ECMD_CLINE_SCALE_R	29079	/* scale radius */
+#define ECMD_CLINE_SCALE_T	29080	/* scale thickness */
 
-#define MENU_CLINE_SCALE_H	107
-#define MENU_CLINE_MOVE_H	108
-#define MENU_CLINE_SCALE_R	109
-#define MENU_CLINE_SCALE_T	110
+#define MENU_CLINE_SCALE_H	29107
+#define MENU_CLINE_MOVE_H	29108
+#define MENU_CLINE_SCALE_R	29109
+#define MENU_CLINE_SCALE_T	29110
 
 static void
 cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

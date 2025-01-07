@@ -38,17 +38,17 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define ECMD_VOL_CSIZE		48	/* set voxel size */
-#define ECMD_VOL_FSIZE		49	/* set VOL file dimensions */
-#define ECMD_VOL_THRESH_LO	50	/* set VOL threshold (lo) */
-#define ECMD_VOL_THRESH_HI	51	/* set VOL threshold (hi) */
-#define ECMD_VOL_FNAME		52	/* set VOL file name */
+#define ECMD_VOL_CSIZE		13048	/* set voxel size */
+#define ECMD_VOL_FSIZE		13049	/* set VOL file dimensions */
+#define ECMD_VOL_THRESH_LO	13050	/* set VOL threshold (lo) */
+#define ECMD_VOL_THRESH_HI	13051	/* set VOL threshold (hi) */
+#define ECMD_VOL_FNAME		13052	/* set VOL file name */
 
-#define MENU_VOL_FNAME		75
-#define MENU_VOL_FSIZE		76
-#define MENU_VOL_CSIZE		77
-#define MENU_VOL_THRESH_LO	78
-#define MENU_VOL_THRESH_HI	79
+#define MENU_VOL_FNAME		13075
+#define MENU_VOL_FSIZE		13076
+#define MENU_VOL_CSIZE		13077
+#define MENU_VOL_THRESH_LO	13078
+#define MENU_VOL_THRESH_HI	13079
 
 extern const char * get_file_name(struct mged_state *s, char *str);
 

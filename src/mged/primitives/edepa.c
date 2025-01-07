@@ -37,9 +37,9 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define MENU_EPA_H		50
-#define MENU_EPA_R1		51
-#define MENU_EPA_R2		52
+#define MENU_EPA_H		19050
+#define MENU_EPA_R1		19051
+#define MENU_EPA_R2		19052
 
 static void
 epa_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))

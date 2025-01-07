@@ -44,27 +44,27 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define ECMD_PIPE_PICK		28	/* Pick pipe point */
-#define ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
-#define ECMD_PIPE_PT_ADD	30	/* Add a pipe point to end of pipe */
-#define ECMD_PIPE_PT_INS	31	/* Add a pipe point to start of pipe */
-#define ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
-#define ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
+#define ECMD_PIPE_PICK		15028	/* Pick pipe point */
+#define ECMD_PIPE_SPLIT		15029	/* Split a pipe segment into two */
+#define ECMD_PIPE_PT_ADD	15030	/* Add a pipe point to end of pipe */
+#define ECMD_PIPE_PT_INS	15031	/* Add a pipe point to start of pipe */
+#define ECMD_PIPE_PT_DEL	15032	/* Delete a pipe point */
+#define ECMD_PIPE_PT_MOVE	15033	/* Move a pipe point */
 
-#define MENU_PIPE_SELECT	61
-#define MENU_PIPE_NEXT_PT	62
-#define MENU_PIPE_PREV_PT	63
-#define MENU_PIPE_SPLIT		64
-#define MENU_PIPE_PT_OD		65
-#define MENU_PIPE_PT_ID		66
-#define MENU_PIPE_SCALE_OD	67
-#define MENU_PIPE_SCALE_ID	68
-#define MENU_PIPE_ADD_PT	69
-#define MENU_PIPE_INS_PT	70
-#define MENU_PIPE_DEL_PT	71
-#define MENU_PIPE_MOV_PT	72
-#define MENU_PIPE_PT_RADIUS	73
-#define MENU_PIPE_SCALE_RADIUS	74
+#define MENU_PIPE_SELECT	15061
+#define MENU_PIPE_NEXT_PT	15062
+#define MENU_PIPE_PREV_PT	15063
+#define MENU_PIPE_SPLIT		15064
+#define MENU_PIPE_PT_OD		15065
+#define MENU_PIPE_PT_ID		15066
+#define MENU_PIPE_SCALE_OD	15067
+#define MENU_PIPE_SCALE_ID	15068
+#define MENU_PIPE_ADD_PT	15069
+#define MENU_PIPE_INS_PT	15070
+#define MENU_PIPE_DEL_PT	15071
+#define MENU_PIPE_MOV_PT	15072
+#define MENU_PIPE_PT_RADIUS	15073
+#define MENU_PIPE_SCALE_RADIUS	15074
 
 extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */
 extern vect_t es_mparam;        /* mouse input param.  Only when es_mvalid set */

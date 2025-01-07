@@ -38,7 +38,7 @@
 #include "./mged_functab.h"
 #include "./edbspline.h"
 
-#define ECMD_VTRANS		17	/* vertex translate */
+#define ECMD_VTRANS		9017	/* vertex translate */
 
 static int spl_surfno;	/* What surf & ctl pt to edit on spline */
 static int spl_ui;

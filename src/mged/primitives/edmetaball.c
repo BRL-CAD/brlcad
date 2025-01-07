@@ -37,25 +37,25 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define ECMD_METABALL_SET_THRESHOLD	83	/* overall metaball threshold value */
-#define ECMD_METABALL_SET_METHOD	84	/* set the rendering method */
-#define ECMD_METABALL_PT_PICK	85	/* pick a metaball control point */
-#define ECMD_METABALL_PT_MOV	86	/* move a metaball control point */
-#define ECMD_METABALL_PT_FLDSTR	87	/* set a metaball control point field strength */
-#define ECMD_METABALL_PT_DEL	88	/* delete a metaball control point */
-#define ECMD_METABALL_PT_ADD	89	/* add a metaball control point */
-#define ECMD_METABALL_RMET	90	/* set the metaball render method */
+#define ECMD_METABALL_SET_THRESHOLD	36083	/* overall metaball threshold value */
+#define ECMD_METABALL_SET_METHOD	36084	/* set the rendering method */
+#define ECMD_METABALL_PT_PICK		36085	/* pick a metaball control point */
+#define ECMD_METABALL_PT_MOV		36086	/* move a metaball control point */
+#define ECMD_METABALL_PT_FLDSTR		36087	/* set a metaball control point field strength */
+#define ECMD_METABALL_PT_DEL		36088	/* delete a metaball control point */
+#define ECMD_METABALL_PT_ADD		36089	/* add a metaball control point */
+#define ECMD_METABALL_RMET		36090	/* set the metaball render method */
 
-#define MENU_METABALL_SET_THRESHOLD	117
-#define MENU_METABALL_SET_METHOD	118
-#define MENU_METABALL_PT_SET_GOO	119
-#define MENU_METABALL_SELECT	120
-#define MENU_METABALL_NEXT_PT	121
-#define MENU_METABALL_PREV_PT	122
-#define MENU_METABALL_MOV_PT	123
-#define MENU_METABALL_PT_FLDSTR	124
-#define MENU_METABALL_DEL_PT	125
-#define MENU_METABALL_ADD_PT	126
+#define MENU_METABALL_SET_THRESHOLD	30117
+#define MENU_METABALL_SET_METHOD	30118
+#define MENU_METABALL_PT_SET_GOO	30119
+#define MENU_METABALL_SELECT		30120
+#define MENU_METABALL_NEXT_PT		30121
+#define MENU_METABALL_PREV_PT		30122
+#define MENU_METABALL_MOV_PT		30123
+#define MENU_METABALL_PT_FLDSTR		30124
+#define MENU_METABALL_DEL_PT		30125
+#define MENU_METABALL_ADD_PT		30126
 
 struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
 

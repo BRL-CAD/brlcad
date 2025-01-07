@@ -38,13 +38,13 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define ECMD_EBM_FNAME		53	/* set EBM file name */
-#define ECMD_EBM_FSIZE		54	/* set EBM file size */
-#define ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
+#define ECMD_EBM_FNAME		12053	/* set EBM file name */
+#define ECMD_EBM_FSIZE		12054	/* set EBM file size */
+#define ECMD_EBM_HEIGHT		12055	/* set EBM extrusion depth */
 
-#define MENU_EBM_FNAME		80
-#define MENU_EBM_FSIZE		81
-#define MENU_EBM_HEIGHT		82
+#define MENU_EBM_FNAME		12080
+#define MENU_EBM_FSIZE		12081
+#define MENU_EBM_HEIGHT		12082
 
 extern const char * get_file_name(struct mged_state *s, char *str);
 

@@ -37,10 +37,10 @@
 #include "../mged_dm.h"
 #include "./mged_functab.h"
 
-#define MENU_RHC_B		46
-#define MENU_RHC_H		47
-#define MENU_RHC_R		48
-#define MENU_RHC_C		49
+#define MENU_RHC_B		18046
+#define MENU_RHC_H		18047
+#define MENU_RHC_R		18048
+#define MENU_RHC_C		18049
 
 static void
 rhc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
