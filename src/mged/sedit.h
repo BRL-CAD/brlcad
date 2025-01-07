@@ -45,7 +45,6 @@
 #define SROT		3	/* buttons.c */
 #define PSCALE		4	/* Scale one solid parameter by scalar */
 
-#define ECMD_VTRANS		17	/* vertex translate */
 #include "primitives/edarb.h"
 #include "primitives/edars.h"
 #include "primitives/edbot.h"

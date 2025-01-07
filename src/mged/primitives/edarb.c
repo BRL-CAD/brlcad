@@ -1456,6 +1456,57 @@ mged_arb_edit_xy(
     return 0;
 }
 
+int
+arb_f_eqn(struct mged_state *s, int argc, const char **argv)
+{
+    short int i;
+    vect_t tempvec;
+    struct rt_arb_internal *arb;
+
+    CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
+
+    if (argc < 4 || 4 < argc) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&vls, "help eqn");
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (s->edit_state.global_editing_state != ST_S_EDIT) {
+	Tcl_AppendResult(s->interp, "Eqn: must be in solid edit\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
+	Tcl_AppendResult(s->interp, "Eqn: type must be GENARB8\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (s->edit_state.edit_flag != ECMD_ARB_ROTATE_FACE) {
+	Tcl_AppendResult(s->interp, "Eqn: must be rotating a face\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    /* get the A, B, C from the command line */
+    for (i=0; i<3; i++)
+	es_peqn[es_menu][i]= atof(argv[i+1]);
+    VUNITIZE(&es_peqn[es_menu][0]);
+
+    VMOVE(tempvec, arb->pt[fixv]);
+    es_peqn[es_menu][W]=VDOT(es_peqn[es_menu], tempvec);
+
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol))
+	return CMD_BAD;
+
+    return TCL_OK;
+}
+
 
 /*
  * Local Variables:

@@ -48,6 +48,7 @@ extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 void arb_mv_pnt_to(struct mged_state *s, const vect_t mousevec);
 void edarb_mousevec(struct mged_state *s, const vect_t mousevec);
 void edarb_move_face_mousevec(struct mged_state *s, const vect_t mousevec);
+int arb_f_eqn(struct mged_state *s, int argc, const char **argv);
 
 #endif  /* EDARB_H */
 
