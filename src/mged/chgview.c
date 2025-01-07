@@ -38,6 +38,7 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
+#include "./primitives/mged_functab.h"
 
 
 extern void mged_color_soltab(struct mged_state *s);
@@ -3244,14 +3245,19 @@ mged_erot(struct mged_state *s,
 
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
 	char save_rotate_about;
+	int save_rot, save_tra, save_sca, save_pic;
 
 	save_rotate_about = mged_variables->mv_rotate_about;
 	mged_variables->mv_rotate_about = rotate_about;
 
-	save_edflag = es_edflag;
+	save_edflag = s->edit_state.edit_flag;
+	save_rot = s->edit_state.solid_edit_rotate;
+	save_tra = s->edit_state.solid_edit_translate;
+	save_sca = s->edit_state.solid_edit_scale;
+	save_pic = s->edit_state.solid_edit_pick;
 
 	if (!SEDIT_ROTATE) {
-	    es_edflag = SROT;
+	    mged_set_edflag(s, SROT);
 	}
 
 	inpara = 0;
@@ -3260,7 +3266,12 @@ mged_erot(struct mged_state *s,
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;
-	es_edflag = save_edflag;
+	s->edit_state.edit_flag = save_edflag;
+	s->edit_state.solid_edit_rotate = save_rot;
+	s->edit_state.solid_edit_translate = save_tra;
+	s->edit_state.solid_edit_scale = save_sca;
+	s->edit_state.solid_edit_pick = save_pic;
+
     } else {
 	point_t point;
 	vect_t work;
@@ -3614,19 +3625,29 @@ mged_etran(struct mged_state *s,
     }
 
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	int save_rot, save_tra, save_sca, save_pic;
 	es_keyfixed = 0;
 	get_solid_keypoint(s, &es_keypoint, &es_keytag,
 			   &s->edit_state.es_int, es_mat);
-	save_edflag = es_edflag;
+	save_edflag = s->edit_state.edit_flag;
+	save_rot = s->edit_state.solid_edit_rotate;
+	save_tra = s->edit_state.solid_edit_translate;
+	save_sca = s->edit_state.solid_edit_scale;
+	save_pic = s->edit_state.solid_edit_pick;
+
 
 	if (!SEDIT_TRAN) {
-	    es_edflag = STRANS;
+	    mged_set_edflag(s, STRANS);
 	}
 
 	VADD2(es_para, delta, curr_e_axes_pos);
 	inpara = 3;
 	sedit(s);
-	es_edflag = save_edflag;
+	s->edit_state.edit_flag = save_edflag;
+	s->edit_state.solid_edit_rotate = save_rot;
+	s->edit_state.solid_edit_translate = save_tra;
+	s->edit_state.solid_edit_scale = save_sca;
+	s->edit_state.solid_edit_pick = save_pic;
     } else {
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
@@ -3754,12 +3775,15 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
     }
 
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	int save_edflag;
-
-	save_edflag = es_edflag;
+	int save_edflag, save_rot, save_tra, save_sca, save_pic;
+	save_edflag = s->edit_state.edit_flag;
+	save_rot = s->edit_state.solid_edit_rotate;
+	save_tra = s->edit_state.solid_edit_translate;
+	save_sca = s->edit_state.solid_edit_scale;
+	save_pic = s->edit_state.solid_edit_pick;
 
 	if (!SEDIT_SCALE) {
-	    es_edflag = SSCALE;
+	    mged_set_edflag(s, SSCALE);
 	}
 
 	s->edit_state.es_scale = sfactor;
@@ -3768,7 +3792,11 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
 	if (acc_sc_sol < MGED_SMALL_SCALE) {
 	    acc_sc_sol = old_scale;
-	    es_edflag = save_edflag;
+	    s->edit_state.edit_flag = save_edflag;
+	    s->edit_state.solid_edit_rotate = save_rot;
+	    s->edit_state.solid_edit_translate = save_tra;
+	    s->edit_state.solid_edit_scale = save_sca;
+	    s->edit_state.solid_edit_pick = save_pic;
 	    return TCL_OK;
 	}
 
@@ -3780,7 +3808,12 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
 	sedit(s);
 
-	es_edflag = save_edflag;
+	s->edit_state.edit_flag = save_edflag;
+	s->edit_state.solid_edit_rotate = save_rot;
+	s->edit_state.solid_edit_translate = save_tra;
+	s->edit_state.solid_edit_scale = save_sca;
+	s->edit_state.solid_edit_pick = save_pic;
+
     } else {
 	point_t temp;
 	point_t pos_model;

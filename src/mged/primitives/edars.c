@@ -83,7 +83,28 @@ find_ars_nearest_pnt(
 static void
 ars_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_edflag = arg;
+    s->edit_state.edit_flag = arg;
+
+    switch (arg) {
+	case ECMD_ARS_MOVE_PT:
+	case ECMD_ARS_MOVE_CRV:
+	case ECMD_ARS_MOVE_COL:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
+	    break;
+	case ECMD_ARS_PICK:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 1;
+	    break;
+	default:
+	    mged_set_edflag(s, arg);
+	    break;
+    };
+
     sedit(s);
 }
 struct menu_item ars_pick_menu[] = {
@@ -705,13 +726,17 @@ mged_ars_edit(struct mged_state *s, int edflag)
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
 	    menu_state->ms_flag = 0;
-	    es_edflag = ECMD_ARS_PICK;
+	    s->edit_state.edit_flag = ECMD_ARS_PICK;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 1;
 	    mmenu_set(s, MENU_L1, ars_pick_menu);
 	    break;
 	case ECMD_ARS_EDIT_MENU:
 	    /* put up main ARS edit menu */
 	    menu_state->ms_flag = 0;
-	    es_edflag = IDLE;
+	    mged_set_edflag(s, IDLE);
 	    mmenu_set(s, MENU_L1, ars_menu);
 	    break;
 	case ECMD_ARS_PICK:

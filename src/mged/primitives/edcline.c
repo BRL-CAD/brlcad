@@ -41,7 +41,28 @@
 static void
 cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_edflag = arg;
+    s->edit_state.edit_flag = arg;
+
+    switch (arg) {
+	case ECMD_CLINE_MOVE_H:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
+	    break;
+	case ECMD_CLINE_SCALE_H:
+	case ECMD_CLINE_SCALE_R:
+	case ECMD_CLINE_SCALE_T:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 1;
+	    s->edit_state.solid_edit_pick = 0;
+	    break;
+	default:
+	    mged_set_edflag(s, arg);
+	    break;
+    };
+
     sedit(s);
 }
 
@@ -62,11 +83,11 @@ mged_cline_menu_item(const struct bn_tol *UNUSED(tol))
 
 void
 mged_cline_e_axes_pos(
-	struct mged_state *UNUSED(s),
+	struct mged_state *s,
 	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol))
 {
-    if (es_edflag == ECMD_CLINE_MOVE_H) {
+    if (s->edit_state.edit_flag == ECMD_CLINE_MOVE_H) {
 	struct rt_cline_internal *cli =(struct rt_cline_internal *)ip->idb_ptr;
 	point_t cli_v;
 	vect_t cli_h;

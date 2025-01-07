@@ -62,7 +62,11 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     switch (arg) {
 	case MENU_PIPE_SELECT:
 	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PICK;
+	    s->edit_state.edit_flag = ECMD_PIPE_PICK;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 1;
 	    break;
 	case MENU_PIPE_NEXT_PT:
 	    if (!es_pipe_pnt) {
@@ -77,7 +81,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_pipe_pnt = next;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    es_edflag = IDLE;
+	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
 	case MENU_PIPE_PREV_PT:
@@ -93,49 +97,68 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    es_edflag = IDLE;
+	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
 	case MENU_PIPE_SPLIT:
 	    /* not used */
+#if 0
+	    s->edit_state.edit_flag = ECMD_PIPE_SPLIT;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
+#endif
 	    break;
 	case MENU_PIPE_MOV_PT:
 	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
-		es_edflag = IDLE;
+		mged_set_edflag(s, IDLE);
 		return;
 	    }
 	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PT_MOVE;
+	    s->edit_state.edit_flag = ECMD_PIPE_PT_MOVE;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_PT_OD:
 	case MENU_PIPE_PT_ID:
 	case MENU_PIPE_PT_RADIUS:
 	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
-		es_edflag = IDLE;
+		mged_set_edflag(s, IDLE);
 		return;
 	    }
 	    es_menu = arg;
-	    es_edflag = PSCALE;
+	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_PIPE_SCALE_OD:
 	case MENU_PIPE_SCALE_ID:
 	case MENU_PIPE_SCALE_RADIUS:
 	    es_menu = arg;
-	    es_edflag = PSCALE;
+	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_PIPE_ADD_PT:
 	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PT_ADD;
+	    s->edit_state.edit_flag = ECMD_PIPE_PT_ADD;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_INS_PT:
 	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PT_INS;
+	    s->edit_state.edit_flag = ECMD_PIPE_PT_INS;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_DEL_PT:
 	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PT_DEL;
+	    mged_set_edflag(s, ECMD_PIPE_PT_DEL);
 	    sedit(s);
 	    break;
     }

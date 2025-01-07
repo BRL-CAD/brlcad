@@ -43,7 +43,6 @@
 #include "./mged_functab.h"
 #include "./ednmg.h"
 
-extern int es_edflag;		/* type of editing for this solid */
 extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */
 extern vect_t es_mparam;        /* mouse input param.  Only when es_mvalid set */
 extern vect_t es_para; /* keyboard input param. Only when inpara set.  */
@@ -86,7 +85,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
 	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
-	    /* no change of state or es_edflag */
+	    /* no change of state or edit_flag */
 	    view_state->vs_flag = 1;
 	    return;
 	case ECMD_NMG_FORW:
@@ -300,8 +299,29 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    }
 	    break;
     }
-    /* For example, this will set es_edflag = ECMD_NMG_EPICK */
-    es_edflag = arg;
+    /* For example, this will set edit_flagflag = ECMD_NMG_EPICK */
+    s->edit_state.edit_flag = arg;
+
+    switch (arg) {
+	case ECMD_NMG_EMOVE:
+	case ECMD_NMG_ESPLIT:
+	case ECMD_NMG_LEXTRU:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
+	    break;
+	case ECMD_NMG_EPICK:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 1;
+	    break;
+	default:
+	    mged_set_edflag(s, arg);
+	    break;
+    };
+
     sedit(s);
 }
 struct menu_item nmg_menu[] = {
@@ -588,7 +608,7 @@ void ecmd_nmg_ekill(struct mged_state *s)
 	    /* Currently can only kill wire edges or edges in wire loops */
 	    Tcl_AppendResult(s->interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
 	    mged_print_result(s, TCL_ERROR);
-	    es_edflag = IDLE;
+	    mged_set_edflag(s, IDLE);
 	    return;
 	}
 
@@ -686,7 +706,7 @@ void ecmd_nmg_esplit(struct mged_state *s)
 	/* Currently, can only split wire edges or edges in wire loops */
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 	    Tcl_AppendResult(s->interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
-	    es_edflag = IDLE;
+	    mged_set_edflag(s, IDLE);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
 	}

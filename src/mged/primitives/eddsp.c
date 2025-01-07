@@ -48,24 +48,29 @@ static void
 dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
+    mged_set_edflag(s, -1);
 
     switch (arg) {
 	case MENU_DSP_FNAME:
-	    es_edflag = ECMD_DSP_FNAME;
+	    s->edit_state.edit_flag = ECMD_DSP_FNAME;
 	    break;
 	case MENU_DSP_FSIZE:
-	    es_edflag = ECMD_DSP_FSIZE;  // Unimplemented.  Expects 2 parameters
+	    s->edit_state.edit_flag = ECMD_DSP_FSIZE;  // Unimplemented.  Expects 2 parameters
 	    break;
 	case MENU_DSP_SCALE_X:
-	    es_edflag = ECMD_DSP_SCALE_X;
+	    s->edit_state.edit_flag = ECMD_DSP_SCALE_X;
+	    s->edit_state.solid_edit_scale = 1;
 	    break;
 	case MENU_DSP_SCALE_Y:
-	    es_edflag = ECMD_DSP_SCALE_Y;
+	    s->edit_state.edit_flag = ECMD_DSP_SCALE_Y;
+	    s->edit_state.solid_edit_scale = 1;
 	    break;
 	case MENU_DSP_SCALE_ALT:
-	    es_edflag = ECMD_DSP_SCALE_ALT;
+	    s->edit_state.edit_flag = ECMD_DSP_SCALE_ALT;
+	    s->edit_state.solid_edit_scale = 1;
 	    break;
     }
+
     sedit(s);
     set_e_axes_pos(s, 1);
 }

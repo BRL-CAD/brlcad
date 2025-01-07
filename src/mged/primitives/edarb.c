@@ -50,9 +50,13 @@ static void
 arb8_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = EARB;
+    s->edit_state.edit_flag = EARB;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     if (arg == 12) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -81,14 +85,18 @@ static void
 arb7_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = EARB;
+    s->edit_state.edit_flag = EARB;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     if (arg == 11) {
 	/* move point 5 */
-	es_edflag = PTARB;
+	s->edit_state.edit_flag = PTARB;
 	es_menu = 4;	/* location of point */
     }
     if (arg == 12) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -116,19 +124,23 @@ static void
 arb6_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = EARB;
-    if (arg == 8) {
+    s->edit_state.edit_flag = EARB;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
+     if (arg == 8) {
 	/* move point 5, location = 4 */
-	es_edflag = PTARB;
+	s->edit_state.edit_flag = PTARB;
 	es_menu = 4;
     }
     if (arg == 9) {
 	/* move point 6, location = 6 */
-	es_edflag = PTARB;
+	s->edit_state.edit_flag = PTARB;
 	es_menu = 6;
     }
     if (arg == 10) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -154,14 +166,18 @@ static void
 arb5_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = EARB;
+    s->edit_state.edit_flag = EARB;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     if (arg == 8) {
 	/* move point 5 at location 4 */
-	es_edflag = PTARB;
+	s->edit_state.edit_flag = PTARB;
 	es_menu = 4;
     }
     if (arg == 9) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -186,9 +202,13 @@ static void
 arb4_point(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = PTARB;
+    s->edit_state.edit_flag = PTARB;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     if (arg == 5) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -208,9 +228,13 @@ static void
 arb8_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.edit_flag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     if (arg == 7) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -232,9 +256,13 @@ static void
 arb7_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.edit_flag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     if (arg == 7) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -252,9 +280,13 @@ static void
 arb6_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.edit_flag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     if (arg == 6) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -275,9 +307,13 @@ static void
 arb5_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
-    if (arg == 6) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+    s->edit_state.edit_flag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
+     if (arg == 6) {
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -298,9 +334,13 @@ static void
 arb4_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.edit_flag = ECMD_ARB_MOVE_FACE;
+    s->edit_state.solid_edit_rotate = 0;
+    s->edit_state.solid_edit_translate = 1;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     if (arg == 5) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
@@ -320,9 +360,9 @@ static void
 arb8_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
+    mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 7)
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
     sedit(s);
 }
@@ -342,9 +382,9 @@ static void
 arb7_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
+    mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 7)
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
     sedit(s);
 }
@@ -364,9 +404,9 @@ static void
 arb6_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
+    mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 6)
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
     sedit(s);
 }
@@ -385,9 +425,9 @@ static void
 arb5_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
+    mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 6)
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
     sedit(s);
 }
@@ -407,9 +447,9 @@ static void
 arb4_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
+    mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 5)
-	es_edflag = ECMD_ARB_MAIN_MENU;
+	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
     sedit(s);
 }
@@ -427,7 +467,7 @@ static void
 arb_control(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = ECMD_ARB_SPECIFIC_MENU;
+    mged_set_edflag(s, ECMD_ARB_SPECIFIC_MENU);
     sedit(s);
 }
 struct menu_item cntrl_menu[] = {
@@ -501,7 +541,7 @@ mged_arb_e_axes_pos(
     if (s->edit_state.global_editing_state == ST_O_EDIT) {
 	i = 0;
     } else {
-	switch (es_edflag) {
+	switch (s->edit_state.edit_flag) {
 	    case STRANS:
 		i = 0;
 		break;
@@ -733,7 +773,7 @@ editarb(struct mged_state *s, vect_t pos_model)
     newedge = 0;
 
     if (ret) {
-	es_edflag = IDLE;
+	mged_set_edflag(s, IDLE);
     }
 
     return ret;
@@ -880,7 +920,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
-    if (es_edflag != EARB) {
+    if (s->edit_state.edit_flag != EARB) {
 	Tcl_AppendResult(interp, "Not moving an ARB edge\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -986,7 +1026,7 @@ ecmd_arb_main_menu(struct mged_state *s)
 {
     /* put up control (main) menu for GENARB8s */
     menu_state->ms_flag = 0;
-    es_edflag = IDLE;
+    mged_set_edflag(s, IDLE);
     mmenu_set(s, MENU_L1, cntrl_menu);
 }
 
@@ -995,7 +1035,7 @@ ecmd_arb_specific_menu(struct mged_state *s)
 {
     /* put up specific arb edit menus */
     menu_state->ms_flag = 0;
-    es_edflag = IDLE;
+    mged_set_edflag(s, IDLE);
     switch (es_menu) {
 	case MENU_ARB_MV_EDGE:
 	    mmenu_set(s, MENU_L1, which_menu[es_type-4]);
@@ -1118,7 +1158,11 @@ ecmd_arb_setup_rotface(struct mged_state *s)
 
     pr_prompt(s);
     fixv--;
-    es_edflag = ECMD_ARB_ROTATE_FACE;
+    s->edit_state.edit_flag = ECMD_ARB_ROTATE_FACE;
+    s->edit_state.solid_edit_rotate = 1;
+    s->edit_state.solid_edit_translate = 0;
+    s->edit_state.solid_edit_scale = 0;
+    s->edit_state.solid_edit_pick = 0;
     view_state->vs_flag = 1;	/* draw arrow, etc. */
     set_e_axes_pos(s, 1);
 }

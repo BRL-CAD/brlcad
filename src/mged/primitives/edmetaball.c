@@ -51,22 +51,19 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     if (s->dbip == DBI_NULL)
 	return;
 
+    mged_set_edflag(s, -1);
+
     switch (arg) {
 	case MENU_METABALL_SET_THRESHOLD:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
 	case MENU_METABALL_SET_METHOD:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
 	case MENU_METABALL_PT_SET_GOO:
 	    es_menu = arg;
-	    es_edflag = PSCALE;
+	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_METABALL_SELECT:
 	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_PICK;
+	    s->edit_state.edit_flag = ECMD_METABALL_PT_PICK;
+	    s->edit_state.solid_edit_pick = 1;
 	    break;
 	case MENU_METABALL_NEXT_PT:
 	    if (!es_metaball_pnt) {
@@ -81,7 +78,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_metaball_pnt = next;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    es_edflag = IDLE;
+	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
 	case MENU_METABALL_PREV_PT:
@@ -97,36 +94,36 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    es_edflag = IDLE;
+	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
 	case MENU_METABALL_MOV_PT:
 	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		es_edflag = IDLE;
+		mged_set_edflag(s, IDLE);
 		return;
 	    }
 	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_MOV;
+	    s->edit_state.edit_flag = ECMD_METABALL_PT_MOV;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
 	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		es_edflag = IDLE;
+		mged_set_edflag(s, IDLE);
 		return;
 	    }
 	    es_menu = arg;
-	    es_edflag = PSCALE;
+	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_METABALL_DEL_PT:
 	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_DEL;
+	    s->edit_state.edit_flag = ECMD_METABALL_PT_DEL;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_ADD_PT:
 	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_ADD;
+	    s->edit_state.edit_flag = ECMD_METABALL_PT_ADD;
 	    break;
     }
     set_e_axes_pos(s, 1);

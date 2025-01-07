@@ -42,16 +42,29 @@ static void
 tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = PSCALE;
-    if (arg == MENU_TGC_ROT_H)
-	es_edflag = ECMD_TGC_ROT_H;
-    if (arg == MENU_TGC_ROT_AB)
-	es_edflag = ECMD_TGC_ROT_AB;
-    if (arg == MENU_TGC_MV_H)
-	es_edflag = ECMD_TGC_MV_H;
-    if (arg == MENU_TGC_MV_HH)
-	es_edflag = ECMD_TGC_MV_HH;
-
+    mged_set_edflag(s, PSCALE);
+    // PSCALE already reset most of the flags, so for the following we just
+    // need to zero scale and set the specific flag of interest.
+    if (arg == MENU_TGC_ROT_H) {
+	s->edit_state.edit_flag = ECMD_TGC_ROT_H;
+	s->edit_state.solid_edit_rotate = 1;
+	s->edit_state.solid_edit_scale = 0;
+    }
+    if (arg == MENU_TGC_ROT_AB) {
+	s->edit_state.edit_flag = ECMD_TGC_ROT_AB;
+    	s->edit_state.solid_edit_rotate = 1;
+	s->edit_state.solid_edit_scale = 0;
+    }
+    if (arg == MENU_TGC_MV_H) {
+	s->edit_state.edit_flag = ECMD_TGC_MV_H;
+	s->edit_state.solid_edit_translate = 1;
+	s->edit_state.solid_edit_scale = 0;
+    }
+    if (arg == MENU_TGC_MV_HH) {
+	s->edit_state.edit_flag = ECMD_TGC_MV_HH;
+	s->edit_state.solid_edit_translate = 1;
+	s->edit_state.solid_edit_scale = 0;
+    }
     set_e_axes_pos(s, 1);
 }
 
@@ -83,12 +96,12 @@ mged_tgc_menu_item(const struct bn_tol *UNUSED(tol))
 
 void
 mged_tgc_e_axes_pos(
-	struct mged_state *UNUSED(s),
+	struct mged_state *s,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
 {
-    if (es_edflag == ECMD_TGC_MV_H ||
-	    es_edflag == ECMD_TGC_MV_HH) {
+    if (s->edit_state.edit_flag == ECMD_TGC_MV_H ||
+	    s->edit_state.edit_flag == ECMD_TGC_MV_HH) {
 	struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 	point_t tgc_v;
 	vect_t tgc_h;

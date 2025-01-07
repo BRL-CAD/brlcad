@@ -48,19 +48,31 @@ vol_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
     switch (arg) {
 	case MENU_VOL_FNAME:
-	    es_edflag = ECMD_VOL_FNAME;
+	    mged_set_edflag(s, ECMD_VOL_FNAME);
 	    break;
 	case MENU_VOL_FSIZE:
-	    es_edflag = ECMD_VOL_FSIZE;
+	    mged_set_edflag(s, ECMD_VOL_FSIZE);
 	    break;
 	case MENU_VOL_CSIZE:
-	    es_edflag = ECMD_VOL_CSIZE;
+	    s->edit_state.edit_flag = ECMD_VOL_CSIZE;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 1;
+	    s->edit_state.solid_edit_pick = 0;
 	    break;
 	case MENU_VOL_THRESH_LO:
-	    es_edflag = ECMD_VOL_THRESH_LO;
+	    s->edit_state.edit_flag = ECMD_VOL_THRESH_LO;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 1;
+	    s->edit_state.solid_edit_pick = 0;
 	    break;
 	case MENU_VOL_THRESH_HI:
-	    es_edflag = ECMD_VOL_THRESH_HI;
+	    s->edit_state.edit_flag = ECMD_VOL_THRESH_HI;
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 1;
+	    s->edit_state.solid_edit_pick = 0;
 	    break;
     }
 

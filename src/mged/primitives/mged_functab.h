@@ -86,6 +86,9 @@ mged_generic_edit_xy(
 	);
 
 
+void
+mged_set_edflag(struct mged_state *s, int edflag);
+
 struct mged_functab {
     uint32_t magic;
     char ft_name[17]; /* current longest name is 16 chars, need one element for terminating NULL */

@@ -44,10 +44,14 @@ hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     es_menu = arg;
     switch (arg) {
 	case MENU_HYP_ROT_H:
-	    es_edflag = ECMD_HYP_ROT_H;
+	    s->edit_state.edit_flag = ECMD_HYP_ROT_H;
+	    s->edit_state.solid_edit_rotate = 1;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
 	    break;
 	default:
-	    es_edflag = PSCALE;
+	    mged_set_edflag(s, PSCALE);
 	    break;
     }
     set_e_axes_pos(s, 1);

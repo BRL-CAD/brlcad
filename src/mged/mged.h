@@ -167,6 +167,16 @@ struct mged_edit_state {
 
     // main global editing state (ugh)
     int global_editing_state;
+
+    // MGED wants to know if we're in solid rotate,
+    // translate or scale mode.  Rather than
+    // keying off of primitive specific edit op
+    // types, have the ops set flags:
+    int edit_flag;
+    int solid_edit_rotate;
+    int solid_edit_translate;
+    int solid_edit_scale;
+    int solid_edit_pick;
 };
 
 /* global application state */

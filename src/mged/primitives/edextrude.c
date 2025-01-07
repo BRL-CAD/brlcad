@@ -42,7 +42,32 @@
 static void
 extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_edflag = arg;
+    s->edit_state.edit_flag = arg;
+
+    switch (arg) {
+	case ECMD_EXTR_ROT_H:
+	    s->edit_state.solid_edit_rotate = 1;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
+	    break;
+	case ECMD_EXTR_SCALE_H:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 1;
+	    s->edit_state.solid_edit_pick = 0;
+	    break;
+	case ECMD_EXTR_MOV_H:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
+	    break;
+	default:
+	    mged_set_edflag(s, arg);
+	    break;
+    };
+
     sedit(s);
 }
 struct menu_item extr_menu[] = {
@@ -82,11 +107,11 @@ mged_extrude_keypoint(
 
 void
 mged_extrude_e_axes_pos(
-	struct mged_state *UNUSED(s),
+	struct mged_state *s,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
 {
-    if (es_edflag == ECMD_EXTR_MOV_H) {
+    if (s->edit_state.edit_flag == ECMD_EXTR_MOV_H) {
 	struct rt_extrude_internal *extr = (struct rt_extrude_internal *)ip->idb_ptr;
 	point_t extr_v;
 	vect_t extr_h;

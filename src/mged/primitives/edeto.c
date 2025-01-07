@@ -42,10 +42,14 @@ static void
 eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    if (arg == MENU_ETO_ROT_C)
-	es_edflag = ECMD_ETO_ROT_C;
-    else
-	es_edflag = PSCALE;
+    mged_set_edflag(s, PSCALE);
+    if (arg == MENU_ETO_ROT_C) {
+	s->edit_state.edit_flag = ECMD_ETO_ROT_C;
+	s->edit_state.solid_edit_rotate = 1;
+	s->edit_state.solid_edit_translate = 0;
+	s->edit_state.solid_edit_scale = 0;
+	s->edit_state.solid_edit_pick = 0;
+    }
 
     set_e_axes_pos(s, 1);
 }

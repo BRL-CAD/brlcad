@@ -73,7 +73,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
      * Check if the illuminated solid still exists or it has been killed
      * before Accept was clicked.
      */
-    if (es_edflag >= 0 && illump != NULL && illump->s_u_data != NULL) {
+    if (s->edit_state.edit_flag >= 0 && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	dp = LAST_SOLID(bdata);
@@ -338,7 +338,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (es_edflag >= 0 || (s->edit_state.global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
+    if (s->edit_state.edit_flag >= 0 || (s->edit_state.global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */

@@ -50,14 +50,23 @@ extern int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
 static void
 spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    /* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
+    /* XXX Why wasn't this done by setting edit_flag = ECMD_SPLINE_VPICK? */
     if (arg < 0) {
 	/* Enter picking state */
 	chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
 	return;
     }
-    /* For example, this will set es_edflag = ECMD_VTRANS */
-    es_edflag = arg;
+    /* For example, this will set edit_flag = ECMD_VTRANS */
+    if (arg == ECMD_VTRANS) {
+	s->edit_state.edit_flag = ECMD_VTRANS;
+	s->edit_state.solid_edit_rotate = 0;
+	s->edit_state.solid_edit_translate = 1;
+	s->edit_state.solid_edit_scale = 0;
+	s->edit_state.solid_edit_pick = 0;
+    } else {
+	mged_set_edflag(s, arg);
+    }
+
     sedit(s);
 
     set_e_axes_pos(s, 1);

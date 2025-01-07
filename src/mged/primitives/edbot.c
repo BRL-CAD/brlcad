@@ -47,7 +47,29 @@ static void
 bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = arg;
+    s->edit_state.edit_flag = arg;
+
+    switch (arg) {
+	case ECMD_BOT_MOVEV:
+	case ECMD_BOT_MOVEE:
+	case ECMD_BOT_MOVET:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 0;
+	    break;
+	case ECMD_BOT_PICKV:
+	case ECMD_BOT_PICKE:
+	case ECMD_BOT_PICKT:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    s->edit_state.solid_edit_pick = 1;
+	    break;
+	default:
+	    mged_set_edflag(s, arg);
+	    break;
+    };
 
     sedit(s);
     set_e_axes_pos(s, 1);

@@ -65,7 +65,6 @@ extern short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex *
 int sedraw;	/* apply solid editing changes */
 
 int es_type;		/* COMGEOM solid type */
-int es_edflag;		/* type of editing for this solid */
 int es_edclass;		/* type of editing class for this solid */
 fastf_t es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t es_m[3];		/* edge(line) slope */
@@ -275,7 +274,7 @@ init_sedit(struct mged_state *s)
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
     chg_l2menu(s, ST_S_EDIT);
-    es_edflag = IDLE;
+    mged_set_edflag(s, IDLE);
 
     button(s, BE_S_EDIT);	/* Drop into edit menu right away */
     init_sedit_vars(s);
@@ -384,13 +383,13 @@ sedit_menu(struct mged_state *s) {
     mmenu_set_all(s, MENU_L1, NULL);
     chg_l2menu(s, ST_S_EDIT);
 
-    struct rt_db_internal *ip = &s->edit_state.es_int; 
+    const struct rt_db_internal *ip = &s->edit_state.es_int;
     if (MGED_OBJ[ip->idb_type].ft_menu_item) {
 	struct menu_item *mi = (*MGED_OBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
 	mmenu_set_all(s, MENU_L1, mi);
     }
 
-    es_edflag = IDLE;	/* Drop out of previous edit mode */
+    mged_set_edflag(s, IDLE);	/* Drop out of previous edit mode */
     es_menu = 0;
 }
 
@@ -468,12 +467,12 @@ sedit(struct mged_state *s)
     int had_method = 0;
     const struct rt_db_internal *ip = &s->edit_state.es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit) {
-	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, es_edflag))
+	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, s->edit_state.edit_flag))
 	    return;
 	had_method = 1;
     }
 
-    switch (es_edflag) {
+    switch (s->edit_state.edit_flag) {
 
 	case IDLE:
 	    /* do nothing more */
@@ -485,7 +484,7 @@ sedit(struct mged_state *s)
 		    break;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", es_edflag);
+		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", s->edit_state.edit_flag);
 		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		mged_print_result(s, TCL_ERROR);
 		bu_vls_free(&tmp_vls);
@@ -527,12 +526,12 @@ sedit(struct mged_state *s)
 void
 sedit_mouse(struct mged_state *s, const vect_t mousevec)
 {
-    if (es_edflag <= 0)
+    if (s->edit_state.edit_flag <= 0)
 	return;
 
     const struct rt_db_internal *ip = &s->edit_state.es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit_xy)
-	 (*MGED_OBJ[ip->idb_type].ft_edit_xy)(s, es_edflag, mousevec);
+	 (*MGED_OBJ[ip->idb_type].ft_edit_xy)(s, s->edit_state.edit_flag, mousevec);
 }
 
 
@@ -541,7 +540,7 @@ sedit_abs_scale(struct mged_state *s)
 {
     fastf_t old_acc_sc_sol;
 
-    if (es_edflag != SSCALE && es_edflag != PSCALE)
+    if (s->edit_state.edit_flag != SSCALE && s->edit_state.edit_flag != PSCALE)
 	return;
 
     old_acc_sc_sol = acc_sc_sol;
@@ -783,7 +782,7 @@ init_oedit_guts(struct mged_state *s)
 
     /* for safety sake */
     es_menu = 0;
-    es_edflag = -1;
+    mged_set_edflag(s, -1);
     MAT_IDN(es_mat);
 
     if (s->dbip == DBI_NULL || !illump) {
@@ -1017,6 +1016,9 @@ oedit_reject(struct mged_state *s)
  * result into the array es_peqn[] at the position pointed to by the variable
  * 'es_menu' which is the plane being redefined. This function is only callable
  * when in solid edit and rotating the face of a GENARB8.
+ *
+ * TODO - this logic belongs in edarb.c, since it is arb specific and aware
+ * of arb editing states.
  */
 int
 f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -1051,7 +1053,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (es_edflag != ECMD_ARB_ROTATE_FACE) {
+    if (s->edit_state.edit_flag != ECMD_ARB_ROTATE_FACE) {
 	Tcl_AppendResult(interp, "Eqn: must be rotating a face\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1159,7 +1161,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (accept_flag) {
 	menu_state->ms_flag = 0;
 	movedir = 0;
-	es_edflag = -1;
+	mged_set_edflag(s, -1);
 	es_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&s->edit_state.es_int);
@@ -1257,7 +1259,7 @@ sedit_reject(struct mged_state *s)
 
     menu_state->ms_flag = 0;
     movedir = 0;
-    es_edflag = -1;
+    mged_set_edflag(s, -1);
     es_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->edit_state.es_int);
@@ -1270,7 +1272,7 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 
     CHECK_DBI_NULL;
 
-    if (es_edflag <= 0) {
+    if (s->edit_state.edit_flag <= 0) {
 	Tcl_AppendResult(interp,
 			 "A solid editor option not selected\n",
 			 (char *)NULL);

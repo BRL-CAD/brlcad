@@ -42,7 +42,7 @@ static void
 rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    es_edflag = PSCALE;
+    mged_set_edflag(s, PSCALE);
 
     set_e_axes_pos(s, 1);
 }

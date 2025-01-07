@@ -333,6 +333,39 @@ mged_generic_edit_xy(
     return 0;
 }
 
+
+
+void
+mged_set_edflag(struct mged_state *s, int edflag)
+{
+    s->edit_state.edit_flag = edflag;
+    s->edit_state.solid_edit_pick = 0;
+
+    switch (edflag) {
+	case SROT:
+	    s->edit_state.solid_edit_rotate = 1;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    break;
+	case STRANS:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 1;
+	    s->edit_state.solid_edit_scale = 0;
+	    break;
+	case SSCALE:
+	case PSCALE:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 1;
+	    break;
+	default:
+	    s->edit_state.solid_edit_rotate = 0;
+	    s->edit_state.solid_edit_translate = 0;
+	    s->edit_state.solid_edit_scale = 0;
+	    break;
+    }
+}
+
 /*
  * Local Variables:
  * mode: C

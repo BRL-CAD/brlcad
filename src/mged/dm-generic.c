@@ -47,6 +47,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"
+#include "./primitives/mged_functab.h"
 
 
 extern point_t e_axes_pos;
@@ -266,14 +267,18 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		am_mode = AMM_TRAN;
 
 		if (grid_state->snap) {
-		    int save_edflag;
+		    int save_edflag, save_rot, save_tra, save_sca, save_pic;
 
 		    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
 			if (s->edit_state.global_editing_state == ST_S_EDIT) {
-			    save_edflag = es_edflag;
+			    save_edflag = s->edit_state.edit_flag;
+			    save_rot = s->edit_state.solid_edit_rotate;
+			    save_tra = s->edit_state.solid_edit_translate;
+			    save_sca = s->edit_state.solid_edit_scale;
+			    save_pic = s->edit_state.solid_edit_pick;
 			    if (!SEDIT_TRAN)
-				es_edflag = STRANS;
+				mged_set_edflag(s, STRANS);
 			} else {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
@@ -281,10 +286,15 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 			snap_keypoint_to_grid(s);
 
-			if (s->edit_state.global_editing_state == ST_S_EDIT)
-			    es_edflag = save_edflag;
-			else
+			if (s->edit_state.global_editing_state == ST_S_EDIT) {
+			    s->edit_state.edit_flag = save_edflag;
+			    s->edit_state.solid_edit_rotate = save_rot;
+			    s->edit_state.solid_edit_translate = save_tra;
+			    s->edit_state.solid_edit_scale = save_sca;
+			    s->edit_state.solid_edit_pick = save_pic;
+			} else {
 			    edobj = save_edflag;
+			}
 		    } else
 			snap_view_center_to_grid(s);
 		}

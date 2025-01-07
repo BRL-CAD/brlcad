@@ -50,16 +50,18 @@ static void
 ebm_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
+    mged_set_edflag(s, -1);
 
     switch (arg) {
 	case MENU_EBM_FNAME:
-	    es_edflag = ECMD_EBM_FNAME;
+	    s->edit_state.edit_flag = ECMD_EBM_FNAME;
 	    break;
 	case MENU_EBM_FSIZE:
-	    es_edflag = ECMD_EBM_FSIZE;
+	    s->edit_state.edit_flag = ECMD_EBM_FSIZE;
 	    break;
 	case MENU_EBM_HEIGHT:
-	    es_edflag = ECMD_EBM_HEIGHT;
+	    s->edit_state.edit_flag = ECMD_EBM_HEIGHT;
+	    s->edit_state.solid_edit_scale = 1;
 	    break;
     }
 
