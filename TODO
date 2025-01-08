@@ -51,6 +51,16 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* re-enable regress-asc and regress-weight
+
+* material infrastructure has regressions due to attr sync code that
+  needs to be resolved.
+
+* eliminate the need for bu_semaphore_init().  allocate up to the
+  index requested on demand (so we can retain O(1) lookups) and
+  reserve the first N semaphores for BRL-CAD library use.  change
+  index to a uint8_t or uint16_t type.
+
 * convert non-planar arb's to brep objects for ray-tracing.  see how
   well it works to see if we can remove an arb limitation.
 
@@ -161,11 +171,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   another object.
 
 * race condition causing bus errors on exit
-
-* re-enable regress-asc and regress-weight
-
-* material infrastructure has regressions due to attr sync code that
-  needs to be resolved.
 
 * dbconcat corrupted database / failed. created a top-level comb with
   invalid "1_[subcomb]/" to be created that result in error messages
@@ -956,11 +961,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make libdm framebuffer parallel-safe.  use bu memory management.
   remove semaphore locks in src/rt/main.c and elsewhere.
-
-* eliminate the need for bu_semaphore_init().  allocate up to the
-  index requested on demand (so we can retain O(1) lookups) and
-  reserve the first N semaphores for BRL-CAD library use.  change
-  index to a uint8_t or uint16_t type.
 
 * make bv/plot3.h functions parallel-safe so callers do not have to
   manually wrap with bu_semaphore_acquire().
