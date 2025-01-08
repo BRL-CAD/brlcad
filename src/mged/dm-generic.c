@@ -263,10 +263,14 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		am_mode = AMM_TRAN;
 
 		if (grid_state->snap) {
-		    int save_edflag, save_rot, save_tra, save_sca, save_pic;
 
 		    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
+			int save_edflag = 0;
+			int save_rot = 0;
+			int save_tra = 0;
+			int save_sca = 0;
+			int save_pic = 0;
 			if (s->edit_state.global_editing_state == ST_S_EDIT) {
 			    save_edflag = s->edit_state.edit_flag;
 			    save_rot = s->edit_state.solid_edit_rotate;
