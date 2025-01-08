@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixcmp1'>
+  <refmeta>
+    <refentrytitle>PIXCMP</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>pixcmp</refname>
+    <refpurpose>compare two PIX(5) format files pixel by pixel</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv xml:id='synopsis'>
+    <cmdsynopsis>
+      <command>pixcmp</command>
+      <arg choice='opt'>-b</arg>
+      <arg choice='opt'>-s</arg>
+      <arg choice='opt'>-d</arg>
+      <arg choice='opt'>-q</arg>
+      <arg choice='opt'>-i <replaceable>SKIP</replaceable></arg>
+      <arg choice='opt'>-i <replaceable>SKIP1:SKIP2</replaceable></arg>
+      <arg choice='opt'>-n <replaceable>COUNT</replaceable></arg>
+      <arg choice='plain'><replaceable>FILE1</replaceable></arg>
+      <arg choice='opt'><replaceable>FILE2</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 xml:id='description'>
+    <title>DESCRIPTION</title>
+    <para><command>pixcmp</command> computes and reports differences
+    between two
+    <citerefentry><refentrytitle>PIX</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+    format files on a pixel-by-pixel basis. The utility can operate
+    either on individual pixels (default) or on bytes (with
+    <option>-b</option>).</para>
+
+    <para>The tool allows users to specify a number of pixels (or
+    bytes) to skip in each input file, a limit on the number of pixels
+    (or bytes) to compare, and options for detailed or suppressed
+    output. It detects matching pixels, pixels off by one channel,
+    pixels off by multiple channels, and missing pixels when the files
+    differ in size.</para>
+
+    <para>If either <replaceable>FILE</replaceable> is specified as
+    <literal>-</literal>, input is read from standard input. If both
+    inputs are standard input, interleaved data is expected.</para>
+  </refsect1>
+
+  <refsect1 xml:id='options'>
+    <title>OPTIONS</title>
+    <variablelist remap='TP'>
+      <varlistentry>
+        <term><option>-b</option></term>
+        <listitem><para>Operate on bytes instead of pixels.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-s</option></term>
+        <listitem><para>Print all pixels (or bytes) with matching values.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-d</option></term>
+        <listitem><para>Print all pixels (or bytes) with differing values.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-q</option></term>
+        <listitem><para>Quiet mode; suppresses header and summary output.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-i <replaceable>SKIP</replaceable></option></term>
+        <listitem><para>Skip the first <replaceable>SKIP</replaceable>
+        pixels (or bytes with <option>-b</option>) in both
+        files.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-i <replaceable>SKIP1:SKIP2</replaceable></option></term>
+        <listitem><para>Skip the first
+        <replaceable>SKIP1</replaceable> pixels (or bytes with
+        <option>-b</option>) in <replaceable>FILE1</replaceable> and
+        <replaceable>SKIP2</replaceable> in
+        <replaceable>FILE2</replaceable>.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-n <replaceable>COUNT</replaceable></option></term>
+        <listitem><para>Compare up to <replaceable>COUNT</replaceable>
+        pixels (or bytes with <option>-b</option>).</para></listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1 xml:id='exit_status'>
+    <title>EXIT STATUS</title>
+    <variablelist remap='TP'>
+      <varlistentry>
+        <term><constant>0</constant></term>
+        <listitem><para>No differences were found.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><constant>1</constant></term>
+        <listitem><para>Differences of one channel were found.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><constant>2</constant></term>
+        <listitem><para>Differences of multiple channels or missing pixels were found.</para></listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1 xml:id='see_also'>
+    <title>SEE ALSO</title>
+    <para><citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+  </refsect1>
+
+  <refsect1 xml:id='author'>
+    <title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsect1>
+
+  <refsect1 xml:id='copyright'>
+    <title>COPYRIGHT</title>
+    <para>This software is Copyright (c) 2004-2024 by the United
+    States Government as represented by the U.S. Army Research
+    Laboratory.</para>
+  </refsect1>
+
+  <refsect1 xml:id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>Reports of bugs or problems should be submitted via
+    electronic mail to <email>devs@brlcad.org</email></para>
+  </refsect1>
+</refentry>

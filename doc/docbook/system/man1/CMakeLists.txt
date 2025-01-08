@@ -112,6 +112,7 @@ set(
   pixborder.xml
   pixbustup.xml
   pixclump.xml
+  pixcmp.xml
   pixcolors.xml
   pixcrop.xml
   pixdiff.xml
