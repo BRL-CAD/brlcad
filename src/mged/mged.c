@@ -978,7 +978,11 @@ int
 event_check(struct mged_state *s, int non_blocking)
 {
     struct mged_dm *save_dm_list;
-    int save_edflag, save_rot, save_tra, save_sca, save_pic;
+    int save_edflag = 0;
+    int save_rot = 0;
+    int save_tra = 0;
+    int save_sca = 0;
+    int save_pic = 0;
 
     /* Let cool Tk event handler do most of the work */
 
