@@ -150,6 +150,11 @@ include/bg/plane.h
 	removing tri_specific structure - only used internally in
 	one place in BRL-CAD code as of v7.40.2.
 
+MGED features
+	predictor frame for velocity-based navigation will be removed.
+	Early idea in 3D space navigation that doesn't seemed to have
+	panned out in practice.
+
 7.40
 ----
 include/bu/process.h
