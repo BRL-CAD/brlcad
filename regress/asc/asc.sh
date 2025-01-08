@@ -73,66 +73,64 @@ if test ! -f "$DU" ; then
 fi
 
 # Start by converting v4 moss.asc to a v5 .g file
-log "... convert .asc file to v5 .g format"
+log "convert .asc file to v5 .g format"
 ASC1="$1/db/moss.asc"
 G1="moss_v5.g"
 rm -f $G1
-$A2G "$ASC1" $G1 2>&1 >> $LOGFILE
+log "$A2G $ASC1 $G1"
+$A2G "$ASC1" $G1 >> $LOGFILE 2>&1
 
 # Next convert v5 .g file to a v5 .asc file
 log "convert v5 .g file to v5 .asc format"
 ASC2="moss_v5.asc"
 rm -f $ASC2
 log "$G2A $G1 $ASC2"
-$G2A $G1 $ASC2 2>&1 >> $LOGFILE
+$G2A $G1 $ASC2 >> $LOGFILE 2>&1
 
 # convert v5 .asc file to a v5 .g file
 log "convert v5 .asc file to v5 .g format (simple round trip)"
 GRT="moss_v5_basic.g"
 rm -f $GRT
 log "$A2G $ASC2 $GRT"
-$A2G "$ASC2" $GRT 2>&1 >> $LOGFILE
+$A2G "$ASC2" $GRT >> $LOGFILE 2>&1
 
 # the original v5 .g file and the round-tripped v5 .g file
 # should be identical (apparently except for the color table)
-log "$GD -v $G1 $GRT -F \"! -attr regionid_colortable\""
-$GD -v -F "! -attr regionid_colortable" $G1 $GRT 2>&1 >> $LOGFILE
+log "$GD -v -F \"! -attr regionid_colortable\" $G1 $GRT"
+$GD -v -F "! -attr regionid_colortable" $G1 $GRT >> $LOGFILE 2>&1
 STATUS=$?
 
 # If that didn't work, don't bother going further - we've got a problem.
 if [ $STATUS -gt 0 ] ; then
-    log "-> basic v5 asc.sh round-trip FAILED, see $LOGFILE"
+    log "-> basic v5 asc-to-g-to-asc round-trip FAILED, see $LOGFILE"
     cat "$LOGFILE"
     exit $STATUS
 fi
 
-# If the basics work, check v4 and dbupgrade
+log "basic round-tripping works.  checking v4 and dbupgrade."
 
-# Use the undocumented dbupgrade -r to downgrade v5 .g file to a v4 .g file.
-# Not something the user should be doing, hence it remaining deliberately
-# undocumented, but we need it here to get a binary v4 file for testing.
-# asc2g can't write out a v4 asc file from a v5 database, so there's no
-# other way to exercise that code path.
+# To get a binary v4 for testing, we use the undocumented dbupgrade -r
+# switch to downgrade a v5 .g file to a v4 .g file.  Not something a
+# user should be doing, hence deliberately undocumented.
 log "convert v5 .g file to v4 .g format"
 G2="moss_v4.g"
 rm -f $G2
 log "$DU -r $G1 $G2"
-$DU -r $G1 $G2 2>&1 >> $LOGFILE
+$DU -r $G1 $G2 >> $LOGFILE 2>&1
 
-# convert v4 .g file to a v4 asc file
-log "convert v4 .g file to v4 asc format"
+# convert v4 .g file to a v4 .asc file
+log "convert v4 .g file to v4 .asc format"
 ASC3="moss_v4.asc"
 rm -f $ASC3
 log "$G2A $G2 $ASC3"
-$G2A $G2 $ASC3 2>&1 >> $LOGFILE
+$G2A $G2 $ASC3 >> $LOGFILE 2>&1
 
-# convert v4 asc to v5 .g file
-
-log "convert v4 asc file to v5 g format"
+# convert v4 .asc to v5 .g file
+log "convert v4 .asc file to v5 .g format"
 G3="moss_v4_asc_v5.g"
 rm -f $G3
 log "$A2G $ASC3 $G3"
-$A2G $ASC3 $G3 2>&1 >> $LOGFILE
+$A2G $ASC3 $G3 >> $LOGFILE 2>&1
 
 # Next, do the downgrade/upgrade cycle on the .g file to test dbupgrade's
 # behavior on a binary v4 .g.
@@ -140,17 +138,17 @@ G4="moss_v4_asc_v4.g"
 G5="moss_v4_asc_v4_v5.g"
 rm -f $G4 $G5
 log "$DU -r $G3 $G4"
-$DU -r $G3 $G4 2>&1 >> $LOGFILE
+$DU -r $G3 $G4 >> $LOGFILE 2>&1
 log "$DU $G4 $G5"
-$DU $G4 $G5 2>&1 >> $LOGFILE
+$DU $G4 $G5 >> $LOGFILE 2>&1
 
 # Rather surprisingly, all.g doesn't pass this comparison... not sure
 # why yet...
 #> 
 #log "$GD -v -t 0.0001 -F \"! -attr regionid_colortable\" $G3 $G5"
-#$GD -v -t 0.0001 -F "! -attr regionid_colortable" $G3 $G5 2>&1 >> $LOGFILE
+#$GD -v -t 0.0001 -F "! -attr regionid_colortable" $G3 $G5 >> $LOGFILE 2>&1
 #STATUS=$?
-# binary dbupdate shouldn't have significantly altered the file.
+# binary dbupgrade shouldn't have significantly altered the file.
 #if [ $STATUS -gt 0 ] ; then
 #    log "-> dbupgrade cycle FAILED, see $LOGFILE"
 #    cat "$LOGFILE"
@@ -164,7 +162,7 @@ $DU $G4 $G5 2>&1 >> $LOGFILE
 # numerical differences anyway... Accommodate data changes with gdiff
 # filtering.)
 log "$GD -v -t 0.0001 -F \"! -name _GLOBAL ! -attr region_id=-1\" $G1 $G5"
-$GD -v -t 0.0001 -F "! -name _GLOBAL ! -attr region_id=-1" $G1 $G5 2>&1 >> $LOGFILE
+$GD -v -t 0.0001 -F "! -name _GLOBAL ! -attr region_id=-1" $G1 $G5 >> $LOGFILE 2>&1
 STATUS=$?
 
 if [ $STATUS -gt 0 ] ; then
@@ -181,7 +179,7 @@ fi
 #
 G2ASC1="$1/regress/asc/v4.g"
 log "$G2A $G2ASC1 v4.asc"
-$G2A "$G2ASC1" v4.asc 2>&1 >> $LOGFILE
+$G2A "$G2ASC1" v4.asc >> $LOGFILE 2>&1
 STATUS=$?
 # If something went wrong, bail.
 if [ $STATUS -gt 0 ] ; then
