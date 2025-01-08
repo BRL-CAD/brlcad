@@ -160,7 +160,10 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 {
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;
-    int save_rot, save_tra, save_sca, save_pic;
+    int save_rot = 0;
+    int save_tra = 0;
+    int save_sca = 0;
+    int save_pic = 0;
     int mx, my;
     int dx, dy;
     int width, height;
