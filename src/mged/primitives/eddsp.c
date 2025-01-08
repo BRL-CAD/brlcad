@@ -52,13 +52,10 @@
 
 extern const char * get_file_name(struct mged_state *s, char *str);
 
-extern vect_t es_mparam;	/* mouse input param.  Only when es_mvalid set */
-extern int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
-
 static void
 dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_menu = arg;
+    s->edit_state.edit_menu = arg;
     mged_set_edflag(s, -1);
 
     switch (arg) {
@@ -109,25 +106,25 @@ dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 
     MAT_IDN(m);
 
-    if (es_mvalid) {
-	bu_log("es_mvalid %g %g %g\n", V3ARGS(es_mparam));
+    if (s->edit_state.e_mvalid) {
+	bu_log("s->edit_state.e_mvalid %g %g %g\n", V3ARGS(s->edit_state.e_mparam));
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (inpara > 0) {
-	m[idx] = es_para[0];
-	bu_log("Keyboard %g\n", es_para[0]);
+    if (s->edit_state.e_inpara > 0) {
+	m[idx] = s->edit_state.e_para[0];
+	bu_log("Keyboard %g\n", s->edit_state.e_para[0]);
     } else if (!ZERO(s->edit_state.es_scale)) {
 	m[idx] *= s->edit_state.es_scale;
 	bu_log("s->edit_state.es_scale %g\n", s->edit_state.es_scale);
 	s->edit_state.es_scale = 0.0;
     }
 
-    bn_mat_xform_about_pnt(scalemat, m, es_keypoint);
+    bn_mat_xform_about_pnt(scalemat, m, s->edit_state.e_keypoint);
 
     bn_mat_mul(m, dsp->dsp_stom, scalemat);
     MAT_COPY(dsp->dsp_stom, m);
@@ -140,14 +137,14 @@ dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 int
 ecmd_dsp_scale_x(struct mged_state *s)
 {
-    if (inpara != 1) {
+    if (s->edit_state.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
@@ -159,14 +156,14 @@ ecmd_dsp_scale_x(struct mged_state *s)
 int
 ecmd_dsp_scale_y(struct mged_state *s)
 {
-    if (inpara != 1) {
+    if (s->edit_state.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
@@ -178,14 +175,14 @@ ecmd_dsp_scale_y(struct mged_state *s)
 int
 ecmd_dsp_scale_alt(struct mged_state *s)
 {
-    if (inpara != 1) {
+    if (s->edit_state.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 

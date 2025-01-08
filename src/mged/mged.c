@@ -2132,8 +2132,8 @@ main(int argc, char *argv[])
 
     s->edit_state.global_editing_state = ST_VIEW;
     mged_set_edflag(s, -1); /* no solid editing just now */
-    es_edclass = EDIT_CLASS_NULL;
-    inpara = newedge = 0;
+    s->edit_state.e_edclass = EDIT_CLASS_NULL;
+    s->edit_state.e_inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;

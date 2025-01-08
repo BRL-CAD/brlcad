@@ -59,9 +59,6 @@
 
 struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
 
-extern vect_t es_mparam;	/* mouse input param.  Only when es_mvalid set */
-extern int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
-
 static void
 metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
@@ -76,11 +73,11 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	case MENU_METABALL_SET_THRESHOLD:
 	case MENU_METABALL_SET_METHOD:
 	case MENU_METABALL_PT_SET_GOO:
-	    es_menu = arg;
+	    s->edit_state.edit_menu = arg;
 	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_METABALL_SELECT:
-	    es_menu = arg;
+	    s->edit_state.edit_menu = arg;
 	    s->edit_state.edit_flag = ECMD_METABALL_PT_PICK;
 	    s->edit_state.solid_edit_pick = 1;
 	    break;
@@ -96,7 +93,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    }
 	    es_metaball_pnt = next;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
-	    es_menu = arg;
+	    s->edit_state.edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
@@ -112,7 +109,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    }
 	    es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
-	    es_menu = arg;
+	    s->edit_state.edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
@@ -122,7 +119,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		mged_set_edflag(s, IDLE);
 		return;
 	    }
-	    es_menu = arg;
+	    s->edit_state.edit_menu = arg;
 	    s->edit_state.edit_flag = ECMD_METABALL_PT_MOV;
 	    sedit(s);
 	    break;
@@ -132,16 +129,16 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		mged_set_edflag(s, IDLE);
 		return;
 	    }
-	    es_menu = arg;
+	    s->edit_state.edit_menu = arg;
 	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_METABALL_DEL_PT:
-	    es_menu = arg;
+	    s->edit_state.edit_menu = arg;
 	    s->edit_state.edit_flag = ECMD_METABALL_PT_DEL;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_ADD_PT:
-	    es_menu = arg;
+	    s->edit_state.edit_menu = arg;
 	    s->edit_state.edit_flag = ECMD_METABALL_PT_ADD;
 	    break;
     }
@@ -236,16 +233,16 @@ mged_metaball_keypoint(
 int
 menu_metaball_set_threshold(struct mged_state *s)
 {
-    if (es_para[0] < 0.0) {
+    if (s->edit_state.e_para[0] < 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     struct rt_metaball_internal *ball =
 	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
     RT_METABALL_CK_MAGIC(ball);
-    ball->threshold = es_para[0];
+    ball->threshold = s->edit_state.e_para[0];
 
     return 0;
 }
@@ -253,16 +250,16 @@ menu_metaball_set_threshold(struct mged_state *s)
 int
 menu_metaball_set_method(struct mged_state *s)
 {
-    if (es_para[0] < 0.0) {
+    if (s->edit_state.e_para[0] < 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     struct rt_metaball_internal *ball =
 	(struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
     RT_METABALL_CK_MAGIC(ball);
-    ball->method = es_para[0];
+    ball->method = s->edit_state.e_para[0];
 
     return 0;
 }
@@ -270,17 +267,17 @@ menu_metaball_set_method(struct mged_state *s)
 int
 menu_metaball_pt_set_goo(struct mged_state *s)
 {
-    if (es_para[0] < 0.0) {
+    if (s->edit_state.e_para[0] < 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (!es_metaball_pnt || !inpara) {
+    if (!es_metaball_pnt || !s->edit_state.e_inpara) {
 	Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
 	return TCL_ERROR;
     }
-    es_metaball_pnt->sweat *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
+    es_metaball_pnt->sweat *= *s->edit_state.e_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
 
     return 0;
 }
@@ -288,18 +285,18 @@ menu_metaball_pt_set_goo(struct mged_state *s)
 int
 menu_metaball_pt_fldstr(struct mged_state *s)
 {
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (!es_metaball_pnt || !inpara) {
+    if (!es_metaball_pnt || !s->edit_state.e_inpara) {
 	Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    es_metaball_pnt->fldstr *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
+    es_metaball_pnt->fldstr *= *s->edit_state.e_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
 
     return 0;
 }
@@ -317,15 +314,15 @@ ecmd_metaball_pt_pick(struct mged_state *s)
 
     RT_METABALL_CK_MAGIC(metaball);
 
-    if (es_mvalid) {
-	VMOVE(new_pt, es_mparam);
-    } else if (inpara == 3) {
+    if (s->edit_state.e_mvalid) {
+	VMOVE(new_pt, s->edit_state.e_mparam);
+    } else if (s->edit_state.e_inpara == 3) {
 	/* must convert to base units */
-	es_para[0] *= s->dbip->dbi_local2base;
-	es_para[1] *= s->dbip->dbi_local2base;
-	es_para[2] *= s->dbip->dbi_local2base;
-	VMOVE(new_pt, es_para);
-    } else if (inpara) {
+	s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+	VMOVE(new_pt, s->edit_state.e_para);
+    } else if (s->edit_state.e_inpara) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for control point selection\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
@@ -362,13 +359,13 @@ ecmd_metaball_pt_mov(struct mged_state *s)
 {
     if (!es_metaball_pnt) {
 	bu_log("Must select a point to move"); return; }
-    if (inpara != 3) {
+    if (s->edit_state.e_inpara != 3) {
 	bu_log("Must provide dx dy dz"); return; }
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
-    VADD2(es_metaball_pnt->coord, es_metaball_pnt->coord, es_para);
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    VADD2(es_metaball_pnt->coord, es_metaball_pnt->coord, s->edit_state.e_para);
 }
 
 void
@@ -400,19 +397,19 @@ ecmd_metaball_pt_add(struct mged_state *s)
     struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
     struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 
-    if (inpara != 3) {
+    if (s->edit_state.e_inpara != 3) {
 	bu_log("Must provide x y z");
 	bu_free(n, "wdb_metaball_pnt n");
 	return;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
-    VMOVE(n->coord, es_para);
+    VMOVE(n->coord, s->edit_state.e_para);
     n->l.magic = WDB_METABALLPT_MAGIC;
     n->fldstr = 1.0;
     BU_LIST_APPEND(&es_metaball_pnt->l, &n->l);
@@ -422,22 +419,22 @@ ecmd_metaball_pt_add(struct mged_state *s)
 static int
 mged_metaball_pscale(struct mged_state *s, int mode)
 {
-    if (inpara > 1) {
+    if (s->edit_state.e_inpara > 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_METABALL_SET_THRESHOLD:
@@ -472,7 +469,7 @@ mged_metaball_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    return mged_metaball_pscale(s, es_menu);
+	    return mged_metaball_pscale(s, s->edit_state.edit_menu);
 	case ECMD_METABALL_PT_PICK:
 	    ecmd_metaball_pt_pick(s);
 	    break;
@@ -513,12 +510,12 @@ mged_metaball_edit_xy(
 	case ECMD_METABALL_PT_PICK:
 	case ECMD_METABALL_PT_MOV:
 	case ECMD_METABALL_PT_ADD:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(es_mparam, es_invmat, temp);
-	    es_mvalid = 1;
+	    MAT4X3PNT(s->edit_state.e_mparam, s->edit_state.e_invmat, temp);
+	    s->edit_state.e_mvalid = 1;
 	    break;
 	default:
 	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);

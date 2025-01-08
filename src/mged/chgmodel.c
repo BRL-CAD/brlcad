@@ -132,7 +132,7 @@ mged_rot_obj(struct mged_state *s, int iflag, fastf_t *argvect)
     }
 
     /* find point for rotation to take place wrt */
-    VMOVE(model_pt, es_keypoint);
+    VMOVE(model_pt, s->edit_state.e_keypoint);
 
     MAT4X3PNT(point, modelchanges, model_pt);
 
@@ -279,7 +279,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     /* find point the scaling is to take place wrt */
-    VMOVE(temp, es_keypoint);
+    VMOVE(temp, s->edit_state.e_keypoint);
 
     MAT4X3PNT(point, modelchanges, temp);
 
@@ -347,7 +347,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	new_vertex[i] = atof(argv[i+1]) * s->dbip->dbi_local2base;
     }
 
-    VMOVE(model_sol_pt, es_keypoint);
+    VMOVE(model_sol_pt, s->edit_state.e_keypoint);
 
     MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
     VSUB2(model_incr, new_vertex, ed_sol_pt);

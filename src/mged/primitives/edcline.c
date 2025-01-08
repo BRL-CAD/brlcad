@@ -103,11 +103,11 @@ mged_cline_e_axes_pos(
 
 	RT_CLINE_CK_MAGIC(cli);
 
-	MAT4X3PNT(cli_v, es_mat, cli->v);
-	MAT4X3VEC(cli_h, es_mat, cli->h);
-	VADD2(curr_e_axes_pos, cli_h, cli_v);
+	MAT4X3PNT(cli_v, s->edit_state.e_mat, cli->v);
+	MAT4X3VEC(cli_h, s->edit_state.e_mat, cli->h);
+	VADD2(s->edit_state.curr_e_axes_pos, cli_h, cli_v);
     } else {
-	VMOVE(curr_e_axes_pos, es_keypoint);
+	VMOVE(s->edit_state.curr_e_axes_pos, s->edit_state.e_keypoint);
     }
 }
 
@@ -117,31 +117,31 @@ mged_cline_e_axes_pos(
 int
 ecmd_cline_scale_h(struct mged_state *s)
 {
-    if (inpara != 1) {
+    if (s->edit_state.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
     RT_CLINE_CK_MAGIC(cli);
 
-    if (inpara) {
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(cli->h);
+    if (s->edit_state.e_inpara) {
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(cli->h);
 	VSCALE(cli->h, cli->h, s->edit_state.es_scale);
     } else if (s->edit_state.es_scale > 0.0) {
 	VSCALE(cli->h, cli->h, s->edit_state.es_scale);
@@ -157,20 +157,20 @@ ecmd_cline_scale_h(struct mged_state *s)
 int
 ecmd_cline_scale_r(struct mged_state *s)
 {
-    if (inpara != 1) {
+    if (s->edit_state.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
@@ -179,8 +179,8 @@ ecmd_cline_scale_r(struct mged_state *s)
 
     RT_CLINE_CK_MAGIC(cli);
 
-    if (inpara)
-	cli->radius = es_para[0];
+    if (s->edit_state.e_inpara)
+	cli->radius = s->edit_state.e_para[0];
     else if (s->edit_state.es_scale > 0.0) {
 	cli->radius *= s->edit_state.es_scale;
 	s->edit_state.es_scale = 0.0;
@@ -195,30 +195,30 @@ ecmd_cline_scale_r(struct mged_state *s)
 int
 ecmd_cline_scale_t(struct mged_state *s)
 {
-    if (inpara != 1) {
+    if (s->edit_state.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
     RT_CLINE_CK_MAGIC(cli);
 
-    if (inpara)
-	cli->thickness = es_para[0];
+    if (s->edit_state.e_inpara)
+	cli->thickness = s->edit_state.e_para[0];
     else if (s->edit_state.es_scale > 0.0) {
 	cli->thickness *= s->edit_state.es_scale;
 	s->edit_state.es_scale = 0.0;
@@ -239,23 +239,23 @@ ecmd_cline_move_h(struct mged_state *s)
 
     RT_CLINE_CK_MAGIC(cli);
 
-    if (inpara) {
-	if (inpara != 3) {
+    if (s->edit_state.e_inpara) {
+	if (s->edit_state.e_inpara != 3) {
 	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
-	    inpara = 0;
+	    s->edit_state.e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
 	/* must convert to base units */
-	es_para[0] *= s->dbip->dbi_local2base;
-	es_para[1] *= s->dbip->dbi_local2base;
-	es_para[2] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
-	    MAT4X3PNT(work, es_invmat, es_para);
+	    MAT4X3PNT(work, s->edit_state.e_invmat, s->edit_state.e_para);
 	    VSUB2(cli->h, work, cli->v);
 	} else
-	    VSUB2(cli->h, es_para, cli->v);
+	    VSUB2(cli->h, s->edit_state.e_para, cli->v);
     }
     /* check for zero H vector */
     if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
@@ -280,12 +280,12 @@ ecmd_cline_move_h_mousevec(struct mged_state *s, const vect_t mousevec)
 
     RT_CLINE_CK_MAGIC(cli);
 
-    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     /* Do NOT change pos_view[Z] ! */
     MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-    MAT4X3PNT(tr_temp, es_invmat, temp);
+    MAT4X3PNT(tr_temp, s->edit_state.e_invmat, temp);
     VSUB2(cli->h, tr_temp, cli->v);
 }
 

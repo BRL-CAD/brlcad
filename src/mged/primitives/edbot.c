@@ -65,13 +65,10 @@
 
 int bot_verts[3];		/* vertices for the BOT solid */
 
-extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */
-extern vect_t es_mparam;        /* mouse input param.  Only when es_mvalid set */
-
 static void
 bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_menu = arg;
+    s->edit_state.edit_menu = arg;
     s->edit_state.edit_flag = arg;
 
     switch (arg) {
@@ -289,20 +286,20 @@ int
 ecmd_bot_thick(struct mged_state *s)
 {
 
-    if (inpara != 1) {
+    if (s->edit_state.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
 
     struct rt_bot_internal *bot =
 	(struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
@@ -332,7 +329,7 @@ ecmd_bot_thick(struct mged_state *s)
 	    return TCL_ERROR;
 
 	for (size_t i=0; i<bot->num_faces; i++)
-	    bot->thickness[i] = es_para[0];
+	    bot->thickness[i] = s->edit_state.e_para[0];
     } else {
 	/* setting thickness for just one face */
 
@@ -353,7 +350,7 @@ ecmd_bot_thick(struct mged_state *s)
 	    return TCL_ERROR;
 	}
 
-	bot->thickness[face_no] = es_para[0];
+	bot->thickness[face_no] = s->edit_state.e_para[0];
     }
 
     return 0;
@@ -580,25 +577,25 @@ ecmd_bot_movev(struct mged_state *s)
     }
 
     vert = bot_verts[0];
-    if (es_mvalid) {
-	VMOVE(new_pt, es_mparam);
-    } else if (inpara == 3) {
+    if (s->edit_state.e_mvalid) {
+	VMOVE(new_pt, s->edit_state.e_mparam);
+    } else if (s->edit_state.e_inpara == 3) {
 	/* must convert to base units */
-	es_para[0] *= s->dbip->dbi_local2base;
-	es_para[1] *= s->dbip->dbi_local2base;
-	es_para[2] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(new_pt, es_para);
+	    VMOVE(new_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara) {
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara) {
 	return;
     }
 
@@ -627,25 +624,25 @@ ecmd_bot_movee(struct mged_state *s)
     }
     v1 = bot_verts[0];
     v2 = bot_verts[1];
-    if (es_mvalid) {
-	VMOVE(new_pt, es_mparam);
-    } else if (inpara == 3) {
+    if (s->edit_state.e_mvalid) {
+	VMOVE(new_pt, s->edit_state.e_mparam);
+    } else if (s->edit_state.e_inpara == 3) {
 	/* must convert to base units */
-	es_para[0] *= s->dbip->dbi_local2base;
-	es_para[1] *= s->dbip->dbi_local2base;
-	es_para[2] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(new_pt, es_para);
+	    VMOVE(new_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara) {
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara) {
 	return;
     }
 
@@ -674,25 +671,25 @@ ecmd_bot_movet(struct mged_state *s)
     v2 = bot_verts[1];
     v3 = bot_verts[2];
 
-    if (es_mvalid) {
-	VMOVE(new_pt, es_mparam);
-    } else if (inpara == 3) {
+    if (s->edit_state.e_mvalid) {
+	VMOVE(new_pt, s->edit_state.e_mparam);
+    } else if (s->edit_state.e_inpara == 3) {
 	/* must convert to base units */
-	es_para[0] *= s->dbip->dbi_local2base;
-	es_para[1] *= s->dbip->dbi_local2base;
-	es_para[2] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(new_pt, es_para);
+	    VMOVE(new_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara) {
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara) {
 	return;
     }
 
@@ -713,7 +710,7 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
 
     RT_BOT_CK_MAGIC(bot);
 
-    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
 
@@ -746,7 +743,7 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
 
     RT_BOT_CK_MAGIC(bot);
 
-    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
 
@@ -924,12 +921,12 @@ mged_bot_edit_xy(
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(es_mparam, es_invmat, temp);
-	    es_mvalid = 1;
+	    MAT4X3PNT(s->edit_state.e_mparam, s->edit_state.e_invmat, temp);
+	    s->edit_state.e_mvalid = 1;
 	    break;
 	default:
 	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);

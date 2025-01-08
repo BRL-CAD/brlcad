@@ -173,10 +173,25 @@ struct mged_edit_state {
     // keying off of primitive specific edit op
     // types, have the ops set flags:
     int edit_flag;
+    int edit_menu;  /* item/edit_mode selected from menu */
     int solid_edit_rotate;
     int solid_edit_translate;
     int solid_edit_scale;
     int solid_edit_pick;
+
+    const char *e_keytag;	/* string identifying the keypoint */
+    int e_edclass;		/* type of editing class for this solid */
+    int e_keyfixed;		/* keypoint specified by user? */
+    int e_mvalid;		/* e_mparam valid.  e_inpara must = 0 */
+    int e_type;			/* COMGEOM solid type */
+    int e_inpara;		/* e_para valid.  e_mvalid must = 0 */
+    mat_t e_invmat;		/* inverse of e_mat KAA */
+    mat_t e_mat;		/* accumulated matrix of path */
+    point_t curr_e_axes_pos;	/* center of editing xforms */
+    point_t e_axes_pos;
+    point_t e_keypoint;		/* center of editing xforms */
+    vect_t e_mparam;		/* mouse input param.  Only when es_mvalid set */
+    vect_t e_para;		/* keyboard input parameter changes */
 };
 
 /* global application state */

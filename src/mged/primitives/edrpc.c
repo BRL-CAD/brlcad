@@ -44,7 +44,7 @@
 static void
 rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_menu = arg;
+    s->edit_state.edit_menu = arg;
     mged_set_edflag(s, PSCALE);
 
     set_e_axes_pos(s, 1);
@@ -167,10 +167,10 @@ menu_rpc_b(struct mged_state *s)
 	(struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
     RT_RPC_CK_MAGIC(rpc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(rpc->rpc_B);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(rpc->rpc_B);
     }
     VSCALE(rpc->rpc_B, rpc->rpc_B, s->edit_state.es_scale);
 }
@@ -183,10 +183,10 @@ menu_rpc_h(struct mged_state *s)
 	(struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 
     RT_RPC_CK_MAGIC(rpc);
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(rpc->rpc_H);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(rpc->rpc_H);
     }
     VSCALE(rpc->rpc_H, rpc->rpc_H, s->edit_state.es_scale);
 }
@@ -199,10 +199,10 @@ menu_rpc_r(struct mged_state *s)
 	(struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 
     RT_RPC_CK_MAGIC(rpc);
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / rpc->rpc_r;
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / rpc->rpc_r;
     }
     rpc->rpc_r *= s->edit_state.es_scale;
 }
@@ -210,22 +210,22 @@ menu_rpc_r(struct mged_state *s)
 static int
 mged_rpc_pscale(struct mged_state *s, int mode)
 {
-    if (inpara > 1) {
+    if (s->edit_state.e_inpara > 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_RPC_B:
@@ -258,7 +258,7 @@ mged_rpc_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    return mged_rpc_pscale(s, es_menu);
+	    return mged_rpc_pscale(s, s->edit_state.edit_menu);
     }
     return 0;
 }

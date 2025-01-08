@@ -48,15 +48,10 @@
 
 extern const char * get_file_name(struct mged_state *s, char *str);
 
-extern vect_t es_mparam;	/* mouse input param.  Only when es_mvalid set */
-extern int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
-
-
-
 static void
 ebm_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_menu = arg;
+    s->edit_state.edit_menu = arg;
     mged_set_edflag(s, -1);
 
     switch (arg) {
@@ -92,19 +87,19 @@ mged_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 int
 ecmd_ebm_fsize(struct mged_state *s)
 {
-    if (inpara != 2) {
+    if (s->edit_state.e_inpara != 2) {
 	Tcl_AppendResult(s->interp, "ERROR: two arguments needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: X SIZE <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
-    } else if (es_para[1] <= 0.0) {
+    } else if (s->edit_state.e_para[1] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: Y SIZE <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
@@ -115,22 +110,22 @@ ecmd_ebm_fsize(struct mged_state *s)
 
     RT_EBM_CK_MAGIC(ebm);
 
-    if (inpara == 2) {
+    if (s->edit_state.e_inpara == 2) {
 	if (stat(ebm->name, &stat_buf)) {
 	    Tcl_AppendResult(s->interp, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
 	    mged_print_result(s, TCL_ERROR);
 	    return BRLCAD_ERROR;
 	}
-	need_size = es_para[0] * es_para[1] * sizeof(unsigned char);
+	need_size = s->edit_state.e_para[0] * s->edit_state.e_para[1] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
 	    Tcl_AppendResult(s->interp, "File (", ebm->name,
 		    ") is too small, set data source name first", (char *)NULL);
 	    mged_print_result(s, TCL_ERROR);
 	    return BRLCAD_ERROR;
 	}
-	ebm->xdim = es_para[0];
-	ebm->ydim = es_para[1];
-    } else if (inpara > 0) {
+	ebm->xdim = s->edit_state.e_para[0];
+	ebm->ydim = s->edit_state.e_para[1];
+    } else if (s->edit_state.e_inpara > 0) {
 	Tcl_AppendResult(s->interp, "width and length of data source are required\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return BRLCAD_ERROR;
@@ -178,30 +173,30 @@ ecmd_ebm_fname(struct mged_state *s)
 int
 ecmd_ebm_height(struct mged_state *s)
 {
-    if (inpara != 1) {
+    if (s->edit_state.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     struct rt_ebm_internal *ebm =
 	(struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 
     RT_EBM_CK_MAGIC(ebm);
 
-    if (inpara == 1)
-	ebm->tallness = es_para[0];
-    else if (inpara > 0) {
+    if (s->edit_state.e_inpara == 1)
+	ebm->tallness = s->edit_state.e_para[0];
+    else if (s->edit_state.e_inpara > 0) {
 	Tcl_AppendResult(s->interp,
 		"extrusion depth required\n",
 		(char *)NULL);

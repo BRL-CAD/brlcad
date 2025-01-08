@@ -43,7 +43,7 @@
 static void
 tor_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_menu = arg;
+    s->edit_state.edit_menu = arg;
     mged_set_edflag(s, PSCALE);
 
     set_e_axes_pos(s, 1);
@@ -170,10 +170,10 @@ menu_tor_r1(struct mged_state *s)
 	(struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
     fastf_t newrad;
     RT_TOR_CK_MAGIC(tor);
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	newrad = es_para[0];
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	newrad = s->edit_state.e_para[0];
     } else {
 	newrad = tor->r_a * s->edit_state.es_scale;
     }
@@ -190,10 +190,10 @@ menu_tor_r2(struct mged_state *s)
 	(struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
     fastf_t newrad;
     RT_TOR_CK_MAGIC(tor);
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	newrad = es_para[0];
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	newrad = s->edit_state.e_para[0];
     } else {
 	newrad = tor->r_h * s->edit_state.es_scale;
     }
@@ -205,22 +205,22 @@ menu_tor_r2(struct mged_state *s)
 static int
 mged_tor_pscale(struct mged_state *s, int mode)
 {
-    if (inpara > 1) {
+    if (s->edit_state.e_inpara > 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_TOR_R1:
@@ -250,7 +250,7 @@ mged_tor_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    return mged_tor_pscale(s, es_menu);
+	    return mged_tor_pscale(s, s->edit_state.edit_menu);
     }
     return 0;
 }

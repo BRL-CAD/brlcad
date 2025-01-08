@@ -44,9 +44,6 @@ static int spl_surfno;	/* What surf & ctl pt to edit on spline */
 static int spl_ui;
 static int spl_vi;
 
-extern vect_t es_mparam;	/* mouse input param.  Only when es_mvalid set */
-extern int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
-
 /*ARGSUSED*/
 static void
 spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
@@ -190,7 +187,7 @@ sedit_vpick(struct mged_state *s, point_t v_pos)
 	spl_surfno = surfno;
 	spl_ui = u;
 	spl_vi = v;
-	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+	get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
     view_state->vs_flag = 1;
@@ -281,17 +278,17 @@ void
 ecmd_vtrans(struct mged_state *s)
 {
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     /* translate a vertex */
-    if (es_mvalid) {
+    if (s->edit_state.e_mvalid) {
 	/* Mouse parameter:  new position in model space */
-	VMOVE(es_para, es_mparam);
-	inpara = 1;
+	VMOVE(s->edit_state.e_para, s->edit_state.e_mparam);
+	s->edit_state.e_inpara = 1;
     }
-    if (inpara) {
+    if (s->edit_state.e_inpara) {
 
 
 	/* Keyboard parameter:  new position in model space.
@@ -306,10 +303,10 @@ ecmd_vtrans(struct mged_state *s)
 	NMG_CK_SNURB(surf);
 	fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(fp, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(fp, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(fp, es_para);
+	    VMOVE(fp, s->edit_state.e_para);
 	}
     }
 }
@@ -365,14 +362,14 @@ mged_bspline_edit_xy(
 	     * Project vertex (in solid keypoint) into view space,
 	     * replace X, Y (but NOT Z) components, and
 	     * project result back to model space.
-	     * Leave desired location in es_mparam.
+	     * Leave desired location in s->edit_state.e_mparam.
 	     */
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(es_mparam, es_invmat, temp);
-	    es_mvalid = 1;      /* es_mparam is valid */
+	    MAT4X3PNT(s->edit_state.e_mparam, s->edit_state.e_invmat, temp);
+	    s->edit_state.e_mvalid = 1;      /* s->edit_state.e_mparam is valid */
 	    /* Leave the rest to code in ft_edit */
 	    break;
 	default:

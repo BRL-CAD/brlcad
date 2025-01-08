@@ -61,10 +61,7 @@ int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
 
 
-extern vect_t curr_e_axes_pos;
 extern long nvectors;
-
-extern vect_t e_axes_pos;
 
 fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;
 fastf_t rr_scale_factor = GED_MAX / RATE_ROT_FACTOR;
@@ -1184,7 +1181,7 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (mged_variables->mv_rateknobs) {
-	if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	if (s->edit_state.e_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "x = %f\n", s->edit_state.edit_rate_model_rotate[X]);
 	    bu_vls_printf(&vls, "y = %f\n", s->edit_state.edit_rate_model_rotate[Y]);
 	    bu_vls_printf(&vls, "z = %f\n", s->edit_state.edit_rate_model_rotate[Z]);
@@ -1194,13 +1191,13 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "z = %f\n", view_state->vs_rate_rotate[Z]);
 	}
 
-	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	if (s->edit_state.e_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "S = %f\n", s->edit_state.edit_rate_scale);
 	} else {
 	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_rate_scale);
 	}
 
-	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	if (s->edit_state.e_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "X = %f\n", s->edit_state.edit_rate_model_tran[X]);
 	    bu_vls_printf(&vls, "Y = %f\n", s->edit_state.edit_rate_model_tran[Y]);
 	    bu_vls_printf(&vls, "Z = %f\n", s->edit_state.edit_rate_model_tran[Z]);
@@ -1210,7 +1207,7 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "Z = %f\n", view_state->vs_rate_tran[Z]);
 	}
     } else {
-	if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	if (s->edit_state.e_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "ax = %f\n", s->edit_state.edit_absolute_model_rotate[X]);
 	    bu_vls_printf(&vls, "ay = %f\n", s->edit_state.edit_absolute_model_rotate[Y]);
 	    bu_vls_printf(&vls, "az = %f\n", s->edit_state.edit_absolute_model_rotate[Z]);
@@ -1220,13 +1217,13 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "az = %f\n", view_state->vs_absolute_rotate[Z]);
 	}
 
-	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	if (s->edit_state.e_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "aS = %f\n", s->edit_state.edit_absolute_scale);
 	} else {
 	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_gvp->gv_a_scale);
 	}
 
-	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	if (s->edit_state.e_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "aX = %f\n", s->edit_state.edit_absolute_model_tran[X]);
 	    bu_vls_printf(&vls, "aY = %f\n", s->edit_state.edit_absolute_model_tran[Y]);
 	    bu_vls_printf(&vls, "aZ = %f\n", s->edit_state.edit_absolute_model_tran[Z]);
@@ -3260,7 +3257,7 @@ mged_erot(struct mged_state *s,
 	    mged_set_edflag(s, SROT);
 	}
 
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	MAT_COPY(incr_change, newrot);
 	bn_mat_mul2(incr_change, acc_rot_sol);
 	sedit(s);
@@ -3293,7 +3290,7 @@ mged_erot(struct mged_state *s,
 		break;
 	    case 'k':
 	    default:
-		MAT4X3PNT(point, modelchanges, es_keypoint);
+		MAT4X3PNT(point, modelchanges, s->edit_state.e_keypoint);
 	}
 
 	/*
@@ -3398,11 +3395,11 @@ mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
 	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
 	} else if (origin == 'k' && s->edit_state.global_editing_state == ST_S_EDIT) {
 	    /* rotate around keypoint */
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
 	} else if (origin == 'k' && s->edit_state.global_editing_state == ST_O_EDIT) {
 	    point_t kpWmc;
 
-	    MAT4X3PNT(kpWmc, modelchanges, es_keypoint);
+	    MAT4X3PNT(kpWmc, modelchanges, s->edit_state.e_keypoint);
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, kpWmc);
 	} else {
 	    /* rotate around model center (0, 0, 0) */
@@ -3626,9 +3623,9 @@ mged_etran(struct mged_state *s,
 
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
 	int save_rot, save_tra, save_sca, save_pic;
-	es_keyfixed = 0;
-	get_solid_keypoint(s, &es_keypoint, &es_keytag,
-			   &s->edit_state.es_int, es_mat);
+	s->edit_state.e_keyfixed = 0;
+	get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag,
+			   &s->edit_state.es_int, s->edit_state.e_mat);
 	save_edflag = s->edit_state.edit_flag;
 	save_rot = s->edit_state.solid_edit_rotate;
 	save_tra = s->edit_state.solid_edit_translate;
@@ -3640,8 +3637,8 @@ mged_etran(struct mged_state *s,
 	    mged_set_edflag(s, STRANS);
 	}
 
-	VADD2(es_para, delta, curr_e_axes_pos);
-	inpara = 3;
+	VADD2(s->edit_state.e_para, delta, s->edit_state.curr_e_axes_pos);
+	s->edit_state.e_inpara = 3;
 	sedit(s);
 	s->edit_state.edit_flag = save_edflag;
 	s->edit_state.solid_edit_rotate = save_rot;
@@ -3874,7 +3871,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
 	 */
-	VMOVE(temp, es_keypoint);
+	VMOVE(temp, s->edit_state.e_keypoint);
 	MAT4X3PNT(pos_model, modelchanges, temp);
 	wrt_point(modelchanges, smat, modelchanges, pos_model);
 

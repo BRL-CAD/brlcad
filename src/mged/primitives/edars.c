@@ -52,9 +52,6 @@
 #define ECMD_ARS_PICK_MENU	5046	/* display the ARS pick menu */
 #define ECMD_ARS_EDIT_MENU	5047	/* display the ARS edit menu */
 
-extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */
-extern vect_t es_mparam;        /* mouse input param.  Only when es_mvalid set */
-
 int es_ars_crv;	/* curve and column identifying selected ARS point */
 int es_ars_col;
 point_t es_pt;		/* coordinates of selected ARS point */
@@ -222,24 +219,24 @@ ecmd_ars_pick(struct mged_state *s)
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (es_mvalid) {
-	VMOVE(pick_pt, es_mparam);
-    } else if (inpara == 3) {
+    if (s->edit_state.e_mvalid) {
+	VMOVE(pick_pt, s->edit_state.e_mparam);
+    } else if (s->edit_state.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(pick_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(pick_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(pick_pt, es_para);
+	    VMOVE(pick_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for 'pick point'\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara)
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara)
 	return;
 
     /* Get view direction vector */
@@ -562,16 +559,16 @@ ecmd_ars_move_col(struct mged_state *s)
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
     }
 
-    if (es_mvalid) {
+    if (s->edit_state.e_mvalid) {
 	vect_t view_dir;
 	plane_t view_pl;
 	fastf_t dist;
@@ -584,21 +581,21 @@ ecmd_ars_move_col(struct mged_state *s)
 	VUNITIZE(view_pl);
 	view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
-	/* project es_mparam onto the plane */
-	dist = DIST_PNT_PLANE(es_mparam, view_pl);
-	VJOIN1(new_pt, es_mparam, -dist, view_pl);
-    } else if (inpara == 3) {
+	/* project s->edit_state.e_mparam onto the plane */
+	dist = DIST_PNT_PLANE(s->edit_state.e_mparam, view_pl);
+	VJOIN1(new_pt, s->edit_state.e_mparam, -dist, view_pl);
+    } else if (s->edit_state.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(new_pt, es_para);
+	    VMOVE(new_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara) {
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara) {
 	return;
     }
 
@@ -621,16 +618,16 @@ ecmd_ars_move_crv(struct mged_state *s)
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
     }
 
-    if (es_mvalid) {
+    if (s->edit_state.e_mvalid) {
 	vect_t view_dir;
 	plane_t view_pl;
 	fastf_t dist;
@@ -643,21 +640,21 @@ ecmd_ars_move_crv(struct mged_state *s)
 	VUNITIZE(view_pl);
 	view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
-	/* project es_mparam onto the plane */
-	dist = DIST_PNT_PLANE(es_mparam, view_pl);
-	VJOIN1(new_pt, es_mparam, -dist, view_pl);
-    } else if (inpara == 3) {
+	/* project s->edit_state.e_mparam onto the plane */
+	dist = DIST_PNT_PLANE(s->edit_state.e_mparam, view_pl);
+	VJOIN1(new_pt, s->edit_state.e_mparam, -dist, view_pl);
+    } else if (s->edit_state.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(new_pt, es_para);
+	    VMOVE(new_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara) {
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara) {
 	return;
     }
 
@@ -679,16 +676,16 @@ ecmd_ars_move_pt(struct mged_state *s)
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
     }
 
-    if (es_mvalid) {
+    if (s->edit_state.e_mvalid) {
 	vect_t view_dir;
 	plane_t view_pl;
 	fastf_t dist;
@@ -701,21 +698,21 @@ ecmd_ars_move_pt(struct mged_state *s)
 	VUNITIZE(view_pl);
 	view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
-	/* project es_mparam onto the plane */
-	dist = DIST_PNT_PLANE(es_mparam, view_pl);
-	VJOIN1(new_pt, es_mparam, -dist, view_pl);
-    } else if (inpara == 3) {
+	/* project s->edit_state.e_mparam onto the plane */
+	dist = DIST_PNT_PLANE(s->edit_state.e_mparam, view_pl);
+	VJOIN1(new_pt, s->edit_state.e_mparam, -dist, view_pl);
+    } else if (s->edit_state.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(new_pt, es_para);
+	    VMOVE(new_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara) {
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara) {
 	return;
     }
 
@@ -818,12 +815,12 @@ mged_ars_edit_xy(
 	case ECMD_ARS_MOVE_PT:
 	case ECMD_ARS_MOVE_CRV:
 	case ECMD_ARS_MOVE_COL:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(es_mparam, es_invmat, temp);
-	    es_mvalid = 1;
+	    MAT4X3PNT(s->edit_state.e_mparam, s->edit_state.e_invmat, temp);
+	    s->edit_state.e_mvalid = 1;
 	    break;
 	default:
 	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);

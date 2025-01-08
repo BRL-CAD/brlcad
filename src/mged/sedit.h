@@ -32,7 +32,7 @@
 
 #define MGED_SMALL_SCALE 1.0e-10
 
-/* These EDIT_CLASS_ values go in es_edclass. */
+/* These EDIT_CLASS_ values go in s->edit_state.e_edclass. */
 #define EDIT_CLASS_NULL 0
 #define EDIT_CLASS_TRAN 1
 #define EDIT_CLASS_ROTATE 2
@@ -44,9 +44,6 @@
 #define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
 #define SROT		3	/* buttons.c */
 #define PSCALE		4	/* Scale one solid parameter by scalar */
-
-//#include "primitives/edarb.h"
-//#include "primitives/edbspline.h"
 
 #define SEDIT_ROTATE (s->edit_state.global_editing_state == ST_S_EDIT && \
 	s->edit_state.solid_edit_rotate)
@@ -72,21 +69,6 @@
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
-
-
-extern fastf_t es_para[3];	/* keyboard input parameter changes */
-extern int es_menu;		/* item/edit_mode selected from menu */
-extern int es_edclass;		/* type of editing class for this solid */
-extern int es_type;		/* COMGEOM solid type */
-extern int es_keyfixed;		/* keypoint specified by user */
-
-
-extern mat_t es_mat;		/* accumulated matrix of path */
-extern mat_t es_invmat;		/* inverse of es_mat KAA */
-
-extern point_t es_keypoint;	/* center of editing xforms */
-extern const char *es_keytag;		/* string identifying the keypoint */
-extern point_t curr_e_axes_pos;	/* center of editing xforms */
 
 extern void get_solid_keypoint(struct mged_state *s, point_t *pt,
 			       const char **strp,

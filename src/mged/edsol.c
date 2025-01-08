@@ -72,37 +72,15 @@ extern struct shell *es_s;
 
 extern struct wdb_pipe_pnt *es_pipe_pnt;
 
-
-extern point_t e_axes_pos;
-extern point_t curr_e_axes_pos;
-
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
 
-int es_type;		/* COMGEOM solid type */
-int es_edclass;		/* type of editing class for this solid */
 fastf_t es_m[3];		/* edge(line) slope */
-mat_t es_mat;			/* accumulated matrix of path */
-mat_t es_invmat;		/* inverse of es_mat KAA */
-
-
-point_t es_keypoint;		/* center of editing xforms */
-const char *es_keytag;		/* string identifying the keypoint */
-int es_keyfixed;		/* keypoint specified by user? */
-
-vect_t es_para;	/* keyboard input param. Only when inpara set.  */
-int inpara;		/* es_para valid.  es_mvalid must = 0 */
-
-vect_t es_mparam;	/* mouse input param.  Only when es_mvalid set */
-int es_mvalid;	/* es_mparam valid.  inpara must = 0 */
-
-/* These values end up in es_menu, as do ARB vertex numbers */
-int es_menu;		/* item selected from menu */
 
 void
 set_e_axes_pos(struct mged_state *s, int both)
-    /* if (!both) then set only curr_e_axes_pos, otherwise
-       set e_axes_pos and curr_e_axes_pos */
+    /* if (!both) then set only s->edit_state.curr_e_axes_pos, otherwise
+       set s->edit_state.e_axes_pos and s->edit_state.curr_e_axes_pos */
 {
     update_views = 1;
     dm_set_dirty(DMP, 1);
@@ -113,14 +91,14 @@ set_e_axes_pos(struct mged_state *s, int both)
 	(*MGED_OBJ[ip->idb_type].ft_e_axes_pos)(s, ip, &s->tol.tol);
 	return;
     } else {
-	VMOVE(curr_e_axes_pos, es_keypoint);
+	VMOVE(s->edit_state.curr_e_axes_pos, s->edit_state.e_keypoint);
     }
 
     if (both) {
-	VMOVE(e_axes_pos, curr_e_axes_pos);
+	VMOVE(s->edit_state.e_axes_pos, s->edit_state.curr_e_axes_pos);
 
 	if (EDIT_ROTATE) {
-	    es_edclass = EDIT_CLASS_ROTATE;
+	    s->edit_state.e_edclass = EDIT_CLASS_ROTATE;
 	    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
 	    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
 	    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
@@ -128,20 +106,20 @@ set_e_axes_pos(struct mged_state *s, int both)
 	    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
 	    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
 	} else if (EDIT_TRAN) {
-	    es_edclass = EDIT_CLASS_TRAN;
+	    s->edit_state.e_edclass = EDIT_CLASS_TRAN;
 	    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
 	    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
 	    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
 	    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
 	} else if (EDIT_SCALE) {
-	    es_edclass = EDIT_CLASS_SCALE;
+	    s->edit_state.e_edclass = EDIT_CLASS_SCALE;
 
 	    if (SEDIT_SCALE) {
 		s->edit_state.edit_absolute_scale = 0.0;
 		acc_sc_sol = 1.0;
 	    }
 	} else {
-	    es_edclass = EDIT_CLASS_NULL;
+	    s->edit_state.e_edclass = EDIT_CLASS_NULL;
 	}
 
 	MAT_IDN(acc_rot_sol);
@@ -193,7 +171,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     if (s->edit_state.global_editing_state == ST_VIEW || s->edit_state.global_editing_state == ST_S_PICK || s->edit_state.global_editing_state == ST_O_PICK)
 	return TCL_OK;
 
-    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
     return TCL_OK;
 }
 
@@ -240,7 +218,7 @@ init_sedit(struct mged_state *s)
     RT_CK_DB_INTERNAL(&s->edit_state.es_int);
     id = s->edit_state.es_int.idb_type;
 
-    es_menu = 0;
+    s->edit_state.edit_menu = 0;
 
     // TODO - indicates we need per-primitive init of sedit state
     if (id == ID_ARB8) {
@@ -251,9 +229,9 @@ init_sedit(struct mged_state *s)
 	RT_ARB_CK_MAGIC(arb);
 
 	type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
-	es_type = type;
+	s->edit_state.e_type = type;
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol)) {
+	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol)) {
 	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
@@ -267,14 +245,14 @@ init_sedit(struct mged_state *s)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->edit_state.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
-    bn_mat_inv(es_invmat, es_mat);
+    bn_mat_inv(s->edit_state.e_invmat, s->edit_state.e_mat);
 
     /* Establish initial keypoint */
-    es_keytag = "";
-    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    s->edit_state.e_keytag = "";
+    get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -337,7 +315,7 @@ init_sedit_vars(struct mged_state *s)
 
 /*
  * All solid edit routines call this subroutine after
- * making a change to es_int or es_mat.
+ * making a change to es_int or s->edit_state.e_mat.
  */
 void
 replot_editing_solid(struct mged_state *s)
@@ -406,7 +384,7 @@ sedit_menu(struct mged_state *s) {
     }
 
     mged_set_edflag(s, IDLE);	/* Drop out of previous edit mode */
-    es_menu = 0;
+    s->edit_state.edit_menu = 0;
 }
 
 const char *
@@ -508,8 +486,8 @@ sedit(struct mged_state *s)
     }
 
     /* If the keypoint changed location, find about it here */
-    if (!es_keyfixed)
-	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    if (!s->edit_state.e_keyfixed)
+	get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -523,8 +501,8 @@ sedit(struct mged_state *s)
 	bu_vls_free(&vls);
     }
 
-    inpara = 0;
-    es_mvalid = 0;
+    s->edit_state.e_inpara = 0;
+    s->edit_state.e_mvalid = 0;
 }
 
 
@@ -535,8 +513,8 @@ sedit(struct mged_state *s)
  *
  * In order to allow the "p" command to do the same things that
  * a mouse event can, the preferred strategy is to store the value
- * corresponding to what the "p" command would give in es_mparam,
- * set es_mvalid = 1, set sedraw = 1, and return, allowing sedit(s)
+ * corresponding to what the "p" command would give in s->edit_state.e_mparam,
+ * set s->edit_state.e_mvalid = 1, set sedraw = 1, and return, allowing sedit(s)
  * to actually do the work.
  */
 void
@@ -644,7 +622,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
 	 */
-	VMOVE(temp, es_keypoint);
+	VMOVE(temp, s->edit_state.e_keypoint);
 	MAT4X3PNT(pos_model, modelchanges, temp);
 	wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
@@ -654,7 +632,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	mat_t oldchanges;	/* temporary matrix */
 
 	/* Vector from object keypoint to cursor */
-	VMOVE(temp, es_keypoint);
+	VMOVE(temp, s->edit_state.e_keypoint);
 	MAT4X3PNT(pos_view, view_state->vs_model2objview, temp);
 
 	if (movedir & RARROW)
@@ -735,7 +713,7 @@ oedit_abs_scale(struct mged_state *s)
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
-    VMOVE(temp, es_keypoint);
+    VMOVE(temp, s->edit_state.e_keypoint);
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
@@ -797,9 +775,9 @@ init_oedit_guts(struct mged_state *s)
     const char *strp="";
 
     /* for safety sake */
-    es_menu = 0;
+    s->edit_state.edit_menu = 0;
     mged_set_edflag(s, -1);
-    MAT_IDN(es_mat);
+    MAT_IDN(s->edit_state.e_mat);
 
     if (s->dbip == DBI_NULL || !illump) {
 	return;
@@ -812,9 +790,9 @@ init_oedit_guts(struct mged_state *s)
 	/* Have a processed (E'd) region - NO key solid.
 	 * Use the 'center' as the key
 	 */
-	VMOVE(es_keypoint, illump->s_center);
+	VMOVE(s->edit_state.e_keypoint, illump->s_center);
 
-	/* The s_center takes the es_mat into account already */
+	/* The s_center takes the s->edit_state.e_mat into account already */
     }
 
     /* Not an evaluated region - just a regular path ending in a solid */
@@ -843,16 +821,16 @@ init_oedit_guts(struct mged_state *s)
 	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	es_type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
+	s->edit_state.e_type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->edit_state.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
-    bn_mat_inv(es_invmat, es_mat);
+    bn_mat_inv(s->edit_state.e_invmat, s->edit_state.e_mat);
 
-    get_solid_keypoint(s, &es_keypoint, &strp, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, &s->edit_state.e_keypoint, &strp, &s->edit_state.es_int, s->edit_state.e_mat);
     init_oedit_vars(s);
 }
 
@@ -896,7 +874,7 @@ init_oedit(struct mged_state *s)
     /* do real initialization work */
     init_oedit_guts(s);
 
-    es_edclass = EDIT_CLASS_NULL;
+    s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     /* begin edit callback */
     bu_vls_strcpy(&vls, "begin_edit_callback {}");
@@ -1030,7 +1008,7 @@ oedit_reject(struct mged_state *s)
 /*
  * Gets the A, B, C of a planar equation from the command line and puts the
  * result into the array es_peqn[] at the position pointed to by the variable
- * 'es_menu' which is the plane being redefined. This function is only callable
+ * 'edit_menu' which is the plane being redefined. This function is only callable
  * when in solid edit and rotating the face of a GENARB8.
  */
 int
@@ -1134,7 +1112,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	menu_state->ms_flag = 0;
 	movedir = 0;
 	mged_set_edflag(s, -1);
-	es_edclass = EDIT_CLASS_NULL;
+	s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&s->edit_state.es_int);
     } else {
@@ -1232,7 +1210,7 @@ sedit_reject(struct mged_state *s)
     menu_state->ms_flag = 0;
     movedir = 0;
     mged_set_edflag(s, -1);
-    es_edclass = EDIT_CLASS_NULL;
+    s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->edit_state.es_int);
 }
@@ -1251,9 +1229,9 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	return TCL_ERROR;
     }
 
-    inpara = 0;
+    s->edit_state.e_inpara = 0;
     for (i = 0; i < argc; i++) {
-	es_para[ inpara++ ] = argvect[i];
+	s->edit_state.e_para[ s->edit_state.e_inpara++ ] = argvect[i];
     }
 
     sedit(s);
@@ -1262,11 +1240,11 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	vect_t diff;
 	fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
 
-	VSUB2(diff, es_para, e_axes_pos);
+	VSUB2(diff, s->edit_state.e_para, s->edit_state.e_axes_pos);
 	VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
 	VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
     } else if (SEDIT_ROTATE) {
-	VMOVE(s->edit_state.edit_absolute_model_rotate, es_para);
+	VMOVE(s->edit_state.edit_absolute_model_rotate, s->edit_state.e_para);
     } else if (SEDIT_SCALE) {
 	s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
 	if (s->edit_state.edit_absolute_scale > 0)
@@ -1374,27 +1352,27 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t key;
 
-		VSCALE(key, es_keypoint, s->dbip->dbi_base2local);
-		bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(key));
+		VSCALE(key, s->edit_state.e_keypoint, s->dbip->dbi_base2local);
+		bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", s->edit_state.e_keytag, V3ARGS(key));
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 
 	    break;
 	case 3:
-	    VSET(es_keypoint,
+	    VSET(s->edit_state.e_keypoint,
 		 atof(argv[1]) * s->dbip->dbi_local2base,
 		 atof(argv[2]) * s->dbip->dbi_local2base,
 		 atof(argv[3]) * s->dbip->dbi_local2base);
-	    es_keytag = "user-specified";
-	    es_keyfixed = 1;
+	    s->edit_state.e_keytag = "user-specified";
+	    s->edit_state.e_keyfixed = 1;
 	    break;
 	case 1:
 	    if (BU_STR_EQUAL(argv[1], "reset")) {
-		es_keytag = "";
-		es_keyfixed = 0;
-		get_solid_keypoint(s, &es_keypoint, &es_keytag,
-				   &s->edit_state.es_int, es_mat);
+		s->edit_state.e_keytag = "";
+		s->edit_state.e_keyfixed = 0;
+		get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag,
+				   &s->edit_state.es_int, s->edit_state.e_mat);
 		break;
 	    }
 	    /* fall through */
@@ -1431,7 +1409,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 		bu_vls_printf(&vls, "{{ARB MENU} {}}");
 
 		/* build "move edge" menu */
-		mip = which_menu[es_type-4];
+		mip = which_menu[s->edit_state.e_type-4];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -1441,7 +1419,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 		bu_vls_trunc(&vls2, 0);
 
 		/* build "move face" menu */
-		mip = which_menu[es_type+1];
+		mip = which_menu[s->edit_state.e_type+1];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -1451,7 +1429,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 		bu_vls_trunc(&vls2, 0);
 
 		/* build "rotate face" menu */
-		mip = which_menu[es_type+6];
+		mip = which_menu[s->edit_state.e_type+6];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -1570,7 +1548,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     /* apply matrices along the path */
     RT_DB_INTERNAL_INIT(&ces_int);
-    transform_editing_solid(s, &ces_int, es_mat, &s->edit_state.es_int, 0);
+    transform_editing_solid(s, &ces_int, s->edit_state.e_mat, &s->edit_state.es_int, 0);
 
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&ces_int);
@@ -1670,7 +1648,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     *((uint32_t *)s->edit_state.es_int.idb_ptr) = save_magic;
 
     if (context)
-	transform_editing_solid(s, &s->edit_state.es_int, es_invmat, &s->edit_state.es_int, 1);
+	transform_editing_solid(s, &s->edit_state.es_int, s->edit_state.e_invmat, &s->edit_state.es_int, 1);
 
     /* must re-calculate the face plane equations for arbs
      * TODO - why do we need to do this here, and not in edarb.c code somewhere? */
@@ -1681,13 +1659,13 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
+	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol) < 0)
 	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }
 
-    if (!es_keyfixed)
-	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    if (!s->edit_state.e_keyfixed)
+	get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -1743,8 +1721,8 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     replot_editing_solid(s);
 
     /* Establish initial keypoint */
-    es_keytag = "";
-    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    s->edit_state.e_keytag = "";
+    get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
 
     /* Reset relevant variables */
     MAT_IDN(acc_rot_sol);
@@ -1862,13 +1840,13 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
     /* Save aggregate path matrix */
-    MAT_IDN(es_mat);
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    MAT_IDN(s->edit_state.e_mat);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->edit_state.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
-    bn_mat_inv(es_invmat, es_mat);
+    bn_mat_inv(s->edit_state.e_invmat, s->edit_state.e_mat);
 
-    get_solid_keypoint(s, &es_keypoint, &strp, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, &s->edit_state.e_keypoint, &strp, &s->edit_state.es_int, s->edit_state.e_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
     update_views = 1;

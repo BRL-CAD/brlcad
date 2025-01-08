@@ -90,7 +90,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
-	    vls_solid(s, vp, &s->edit_state.es_int, es_mat);
+	    vls_solid(s, vp, &s->edit_state.es_int, s->edit_state.e_mat);
 	}
     }
 
@@ -107,7 +107,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    mat_t new_mat;
 	    /* NOT an evaluated region */
 	    /* object edit option selected */
-	    bn_mat_mul(new_mat, modelchanges, es_mat);
+	    bn_mat_mul(new_mat, modelchanges, s->edit_state.e_mat);
 
 	    vls_solid(s, vp, &s->edit_state.es_int, new_mat);
 	}
@@ -345,11 +345,11 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	int num_lines=0;
 
 	if (view_state->vs_gvp->gv_perspective <= 0)
-	    bn_mat_mul(xform, view_state->vs_model2objview, es_mat);
+	    bn_mat_mul(xform, view_state->vs_model2objview, s->edit_state.e_mat);
 	else {
 	    mat_t tmat;
 
-	    bn_mat_mul(tmat, view_state->vs_model2objview, es_mat);
+	    bn_mat_mul(tmat, view_state->vs_model2objview, s->edit_state.e_mat);
 	    bn_mat_mul(xform, perspective_mat, tmat);
 	}
 
@@ -461,7 +461,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    /* print parameter locations on screen */
 	    if (s->edit_state.global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag) {
 		/* region is a processed region */
-		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
+		MAT4X3PNT(temp, view_state->vs_model2objview, s->edit_state.e_keypoint);
 		xloc = (int)(temp[X]*GED_MAX);
 		yloc = (int)(temp[Y]*GED_MAX);
 		dm_set_fg(DMP,
@@ -561,10 +561,10 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	bu_vls_printf(&kp_vls,
 		      " Keypoint: %s %s: (%g, %g, %g)",
 		      OBJ[s->edit_state.es_int.idb_type].ft_name+3,	/* Skip ID_ */
-		      es_keytag,
-		      es_keypoint[X] * s->dbip->dbi_base2local,
-		      es_keypoint[Y] * s->dbip->dbi_base2local,
-		      es_keypoint[Z] * s->dbip->dbi_base2local);
+		      s->edit_state.e_keytag,
+		      s->edit_state.e_keypoint[X] * s->dbip->dbi_base2local,
+		      s->edit_state.e_keypoint[Y] * s->dbip->dbi_base2local,
+		      s->edit_state.e_keypoint[Z] * s->dbip->dbi_base2local);
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    dm_set_fg(DMP,
 			   color_scheme->cs_status_text2[0],

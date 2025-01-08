@@ -52,12 +52,6 @@
 #define ECMD_NMG_EKILL		11026	/* kill current edge */
 #define ECMD_NMG_LEXTRU		11027	/* Extrude loop */
 
-extern int es_mvalid;           /* es_mparam valid.  inpara must = 0 */
-extern vect_t es_mparam;        /* mouse input param.  Only when es_mvalid set */
-extern vect_t es_para; /* keyboard input param. Only when inpara set.  */
-extern int inpara;              /* es_para valid.  es_mvalid must = 0 */
-extern mat_t es_invmat;         /* inverse of es_mat KAA */
-
 struct edgeuse *es_eu=(struct edgeuse *)NULL;   /* Currently selected NMG edgeuse */
 struct loopuse *lu_copy=(struct loopuse*)NULL;  /* copy of loop to be extruded */
 plane_t lu_pl;  /* plane equation for loop to be extruded */
@@ -526,9 +520,9 @@ void ecmd_nmg_emove(struct mged_state *s)
     point_t new_pt;
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     if (!es_eu) {
 	Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
@@ -537,21 +531,21 @@ void ecmd_nmg_emove(struct mged_state *s)
     }
     NMG_CK_EDGEUSE(es_eu);
 
-    if (es_mvalid) {
-	VMOVE(new_pt, es_mparam);
-    } else if (inpara == 3) {
+    if (s->edit_state.e_mvalid) {
+	VMOVE(new_pt, s->edit_state.e_mparam);
+    } else if (s->edit_state.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(new_pt, es_para);
+	    VMOVE(new_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for edge move\n",
 		(char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara)
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara)
 	return;
 
     if (!nmg_find_fu_of_eu(es_eu) && *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
@@ -677,9 +671,9 @@ void ecmd_nmg_esplit(struct mged_state *s)
     plane_t pl;
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     if (!es_eu) {
 	Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
@@ -689,21 +683,21 @@ void ecmd_nmg_esplit(struct mged_state *s)
     NMG_CK_EDGEUSE(es_eu);
     m = nmg_find_model(&es_eu->l.magic);
     NMG_CK_MODEL(m);
-    if (es_mvalid) {
-	VMOVE(new_pt, es_mparam);
-    } else if (inpara == 3) {
+    if (s->edit_state.e_mvalid) {
+	VMOVE(new_pt, s->edit_state.e_mparam);
+    } else if (s->edit_state.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(new_pt, es_para);
+	    VMOVE(new_pt, s->edit_state.e_para);
 	}
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for edge split\n",
 		(char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara)
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara)
 	return;
 
     if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
@@ -762,26 +756,26 @@ void ecmd_nmg_lextru(struct mged_state *s)
     fastf_t area;
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (es_mvalid) {
-	VMOVE(to_pt, es_mparam);
-    } else if (inpara == 3) {
+    if (s->edit_state.e_mvalid) {
+	VMOVE(to_pt, s->edit_state.e_mparam);
+    } else if (s->edit_state.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model space */
-	    MAT4X3PNT(to_pt, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model space */
+	    MAT4X3PNT(to_pt, s->edit_state.e_invmat, s->edit_state.e_para);
 	} else {
-	    VMOVE(to_pt, es_para);
+	    VMOVE(to_pt, s->edit_state.e_para);
 	}
-    } else if (inpara == 1) {
-	VJOIN1(to_pt, lu_keypoint, es_para[0], lu_pl);
-    } else if (inpara && inpara != 3) {
+    } else if (s->edit_state.e_inpara == 1) {
+	VJOIN1(to_pt, lu_keypoint, s->edit_state.e_para[0], lu_pl);
+    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for loop extrusion\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!es_mvalid && !inpara) {
+    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara) {
 	return;
     }
 
@@ -837,7 +831,7 @@ void ecmd_nmg_lextru(struct mged_state *s)
 }
 
 
-/* XXX Should just leave desired location in es_mparam for sedit(s) */
+/* XXX Should just leave desired location in s->edit_state.e_mparam for sedit(s) */
 void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
@@ -855,7 +849,7 @@ void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec)
     tmp_tol.perp = 0.0;
     tmp_tol.para = 1 - tmp_tol.perp;
 
-    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
@@ -940,18 +934,18 @@ mged_nmg_edit_xy(
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_NMG_EPICK:
-	    /* XXX Should just leave desired location in es_mparam for mged_nmg_edit */
+	    /* XXX Should just leave desired location in s->edit_state.e_mparam for mged_nmg_edit */
 	    ecmd_nmg_epick(s, mousevec);
 	    break;
 	case ECMD_NMG_LEXTRU:
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
-              MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+              MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
               pos_view[X] = mousevec[X];
               pos_view[Y] = mousevec[Y];
               MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-              MAT4X3PNT(es_mparam, es_invmat, temp);
-              es_mvalid = 1;
+              MAT4X3PNT(s->edit_state.e_mparam, s->edit_state.e_invmat, temp);
+              s->edit_state.e_mvalid = 1;
 	      break;
 	default:
 	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);

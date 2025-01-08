@@ -64,7 +64,7 @@
 static void
 tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    es_menu = arg;
+    s->edit_state.edit_menu = arg;
     mged_set_edflag(s, PSCALE);
     // PSCALE already reset most of the flags, so for the following we just
     // need to zero scale and set the specific flag of interest.
@@ -129,11 +129,11 @@ mged_tgc_e_axes_pos(
 	point_t tgc_v;
 	vect_t tgc_h;
 
-	MAT4X3PNT(tgc_v, es_mat, tgc->v);
-	MAT4X3VEC(tgc_h, es_mat, tgc->h);
-	VADD2(curr_e_axes_pos, tgc_h, tgc_v);
+	MAT4X3PNT(tgc_v, s->edit_state.e_mat, tgc->v);
+	MAT4X3VEC(tgc_h, s->edit_state.e_mat, tgc->h);
+	VADD2(s->edit_state.curr_e_axes_pos, tgc_h, tgc_v);
     } else {
-	VMOVE(curr_e_axes_pos, es_keypoint);
+	VMOVE(s->edit_state.curr_e_axes_pos, s->edit_state.e_keypoint);
     }
 }
 
@@ -256,10 +256,10 @@ menu_tgc_scale_h(struct mged_state *s)
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->h);
     }
     VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 }
@@ -273,10 +273,10 @@ menu_tgc_scale_h_v(struct mged_state *s)
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->h);
     }
     VADD2(old_top, tgc->v, tgc->h);
     VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
@@ -293,10 +293,10 @@ menu_tgc_scale_h_cd(struct mged_state *s)
 
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->h);
     }
 
     /* calculate new c */
@@ -331,10 +331,10 @@ menu_tgc_scale_h_v_ab(struct mged_state *s)
 
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->h);
     }
 
     /* calculate new a */
@@ -368,10 +368,10 @@ menu_tgc_scale_a(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->a);
     }
     VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
 }
@@ -384,10 +384,10 @@ menu_tgc_scale_b(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->b);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->b);
     }
     VSCALE(tgc->b, tgc->b, s->edit_state.es_scale);
 }
@@ -400,10 +400,10 @@ menu_tgc_scale_c(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->c);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->c);
     }
     VSCALE(tgc->c, tgc->c, s->edit_state.es_scale);
 }
@@ -416,10 +416,10 @@ menu_tgc_scale_d(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->d);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->d);
     }
     VSCALE(tgc->d, tgc->d, s->edit_state.es_scale);
 }
@@ -432,10 +432,10 @@ menu_tgc_scale_ab(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->a);
     }
     VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
     ma = MAGNITUDE(tgc->a);
@@ -452,10 +452,10 @@ menu_tgc_scale_cd(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->c);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->c);
     }
     VSCALE(tgc->c, tgc->c, s->edit_state.es_scale);
     ma = MAGNITUDE(tgc->c);
@@ -472,10 +472,10 @@ menu_tgc_scale_abcd(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (inpara) {
-	/* take es_mat[15] (path scaling) into account */
-	es_para[0] *= es_mat[15];
-	s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
+    if (s->edit_state.e_inpara) {
+	/* take s->edit_state.e_mat[15] (path scaling) into account */
+	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
+	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(tgc->a);
     }
     VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
     ma = MAGNITUDE(tgc->a);
@@ -500,24 +500,24 @@ ecmd_tgc_mv_h(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
     RT_TGC_CK_MAGIC(tgc);
-    if (inpara) {
-	if (inpara != 3) {
+    if (s->edit_state.e_inpara) {
+	if (s->edit_state.e_inpara != 3) {
 	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
-	    inpara = 0;
+	    s->edit_state.e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
 	/* must convert to base units */
-	es_para[0] *= s->dbip->dbi_local2base;
-	es_para[1] *= s->dbip->dbi_local2base;
-	es_para[2] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model coordinates */
-	    MAT4X3PNT(work, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model coordinates */
+	    MAT4X3PNT(work, s->edit_state.e_invmat, s->edit_state.e_para);
 	    VSUB2(tgc->h, work, tgc->v);
 	} else {
-	    VSUB2(tgc->h, es_para, tgc->v);
+	    VSUB2(tgc->h, s->edit_state.e_para, tgc->v);
 	}
     }
 
@@ -562,24 +562,24 @@ ecmd_tgc_mv_hh(struct mged_state *s)
 	(struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
     RT_TGC_CK_MAGIC(tgc);
-    if (inpara) {
-	if (inpara != 3) {
+    if (s->edit_state.e_inpara) {
+	if (s->edit_state.e_inpara != 3) {
 	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
-	    inpara = 0;
+	    s->edit_state.e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
 	/* must convert to base units */
-	es_para[0] *= s->dbip->dbi_local2base;
-	es_para[1] *= s->dbip->dbi_local2base;
-	es_para[2] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+	s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
-	    /* apply es_invmat to convert to real model coordinates */
-	    MAT4X3PNT(work, es_invmat, es_para);
+	    /* apply s->edit_state.e_invmat to convert to real model coordinates */
+	    MAT4X3PNT(work, s->edit_state.e_invmat, s->edit_state.e_para);
 	    VSUB2(tgc->h, work, tgc->v);
 	} else {
-	    VSUB2(tgc->h, es_para, tgc->v);
+	    VSUB2(tgc->h, s->edit_state.e_para, tgc->v);
 	}
     }
 
@@ -607,10 +607,10 @@ ecmd_tgc_rot_h(struct mged_state *s)
     mat_t edit;
 
     RT_TGC_CK_MAGIC(tgc);
-    if (inpara) {
-	if (inpara != 3) {
+    if (s->edit_state.e_inpara) {
+	if (s->edit_state.e_inpara != 3) {
 	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
-	    inpara = 0;
+	    s->edit_state.e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
@@ -625,9 +625,9 @@ ecmd_tgc_rot_h(struct mged_state *s)
 	/* Build completely new rotation change */
 	MAT_IDN(modelchanges);
 	bn_mat_angles(modelchanges,
-		es_para[0],
-		es_para[1],
-		es_para[2]);
+		s->edit_state.e_para[0],
+		s->edit_state.e_para[1],
+		s->edit_state.e_para[2]);
 	/* Borrow incr_change matrix here */
 	bn_mat_mul(incr_change, modelchanges, invsolr);
 	MAT_COPY(acc_rot_sol, modelchanges);
@@ -641,15 +641,15 @@ ecmd_tgc_rot_h(struct mged_state *s)
 
     if (mged_variables->mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
+	bn_mat_xform_about_pnt(edit, incr_change, s->edit_state.e_keypoint);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
 	 * current edit operations, then xform back.
-	 * mat = es_invmat * edit * es_mat
+	 * mat = s->edit_state.e_invmat * edit * s->edit_state.e_mat
 	 */
-	bn_mat_mul(mat1, edit, es_mat);
-	bn_mat_mul(mat, es_invmat, mat1);
+	bn_mat_mul(mat1, edit, s->edit_state.e_mat);
+	bn_mat_mul(mat, s->edit_state.e_invmat, mat1);
 	MAT4X3VEC(tgc->h, mat, tgc->h);
     } else {
 	MAT4X3VEC(tgc->h, incr_change, tgc->h);
@@ -672,10 +672,10 @@ ecmd_tgc_rot_ab(struct mged_state *s)
     mat_t edit;
 
     RT_TGC_CK_MAGIC(tgc);
-    if (inpara) {
-	if (inpara != 3) {
+    if (s->edit_state.e_inpara) {
+	if (s->edit_state.e_inpara != 3) {
 	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
-	    inpara = 0;
+	    s->edit_state.e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
@@ -690,9 +690,9 @@ ecmd_tgc_rot_ab(struct mged_state *s)
 	/* Build completely new rotation change */
 	MAT_IDN(modelchanges);
 	bn_mat_angles(modelchanges,
-		es_para[0],
-		es_para[1],
-		es_para[2]);
+		s->edit_state.e_para[0],
+		s->edit_state.e_para[1],
+		s->edit_state.e_para[2]);
 	/* Borrow incr_change matrix here */
 	bn_mat_mul(incr_change, modelchanges, invsolr);
 	MAT_COPY(acc_rot_sol, modelchanges);
@@ -706,15 +706,15 @@ ecmd_tgc_rot_ab(struct mged_state *s)
 
     if (mged_variables->mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
+	bn_mat_xform_about_pnt(edit, incr_change, s->edit_state.e_keypoint);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
 	 * current edit operations, then xform back.
-	 * mat = es_invmat * edit * es_mat
+	 * mat = s->edit_state.e_invmat * edit * s->edit_state.e_mat
 	 */
-	bn_mat_mul(mat1, edit, es_mat);
-	bn_mat_mul(mat, es_invmat, mat1);
+	bn_mat_mul(mat1, edit, s->edit_state.e_mat);
+	bn_mat_mul(mat, s->edit_state.e_invmat, mat1);
 	MAT4X3VEC(tgc->a, mat, tgc->a);
 	MAT4X3VEC(tgc->b, mat, tgc->b);
 	MAT4X3VEC(tgc->c, mat, tgc->c);
@@ -741,34 +741,34 @@ ecmd_tgc_mv_h_mousevec(struct mged_state *s, const vect_t mousevec)
     vect_t tr_temp = VINIT_ZERO;
     vect_t temp = VINIT_ZERO;
 
-    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     /* Do NOT change pos_view[Z] ! */
     MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-    MAT4X3PNT(tr_temp, es_invmat, temp);
+    MAT4X3PNT(tr_temp, s->edit_state.e_invmat, temp);
     VSUB2(tgc->h, tr_temp, tgc->v);
 }
 
 static int
 mged_tgc_pscale(struct mged_state *s, int mode)
 {
-    if (inpara > 1) {
+    if (s->edit_state.e_inpara > 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (es_para[0] <= 0.0) {
+    if (s->edit_state.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	inpara = 0;
+	s->edit_state.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    es_para[0] *= s->dbip->dbi_local2base;
-    es_para[1] *= s->dbip->dbi_local2base;
-    es_para[2] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
+    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_TGC_SCALE_H:
@@ -825,7 +825,7 @@ mged_tgc_edit(struct mged_state *s, int edflag)
 	    mged_generic_srot(s, &s->edit_state.es_int);
 	    break;
 	case PSCALE:
-	    return mged_tgc_pscale(s, es_menu);
+	    return mged_tgc_pscale(s, s->edit_state.edit_menu);
 	case ECMD_TGC_MV_H:
 	    return ecmd_tgc_mv_h(s);
 	case ECMD_TGC_MV_HH:
