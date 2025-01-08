@@ -18,6 +18,7 @@ Material  Density(g/cm^3)  Name
    10         7.8400       Carbon Steel
    12         3.0000       Gunner
    14        10.0000       Fuel
+99999        70.8400       Kryptonite
 Weight by region name (in grams, density given in g/cm^3):
 
  Weight   Matl  LOS  Material Name  Density Name

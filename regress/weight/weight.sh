@@ -148,7 +148,6 @@ cat > .density <<EOF
 10   7.84      Carbon Steel # used for widgets
 12   3.00      Gunner
 14   10.00     Fuel
-#  Material ID too high (MAXMTLS = 32768)
 99999 70.84    Kryptonite
 EOF
 
