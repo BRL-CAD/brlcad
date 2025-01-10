@@ -818,13 +818,11 @@ rt_comb_import4(
 	    return -1;
 	}
     }
-    /* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
-    /* XXX cf: ma_cinherit, ma_minherit */
-    /* This ? is necessary to clean up old databases with grunge here */
+
+    /* May want separate inherit flags for color, shader, and material
+     * but currently all rolled into one setting.
+     */
     comb->inherit = (rp[0].c.c_inherit == DB_INH_HIGHER) ? 1 : 0;
-    /* Automatic material table lookup here? */
-    if (comb->region_flag)
-	bu_vls_printf(&comb->material, "gift%ld", comb->GIFTmater);
 
     if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
 
