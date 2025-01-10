@@ -868,7 +868,7 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	}
 
 	if (bu_vls_strlen(&comb->material) > 0) {
-	    bu_vls_printf(logstr, "material %s ", bu_vls_addr(&comb->material));
+	    bu_vls_printf(logstr, "material {%s} ", bu_vls_addr(&comb->material));
 	}
 
 	if (comb->inherit) {
