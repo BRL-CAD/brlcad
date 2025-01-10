@@ -1,13 +1,7 @@
 if(SH_EXEC)
   if(TARGET asc2g)
     brlcad_add_test(NAME regress-asc COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc.sh" ${CMAKE_SOURCE_DIR})
-
-    # 20220909CSM - temp disable during delayed testing fix
-
-    # FIXME: trip through v4 is adding a "material_name" attribute to
-    # regions because v4 import sets material = "gift#" unnecessarily
-
-    # BRLCAD_REGRESSION_TEST(regress-asc "asc2g;g2asc;gdiff;dbupgrade" TEST_DEFINED)
+    BRLCAD_REGRESSION_TEST(regress-asc "asc2g;g2asc;gdiff;dbupgrade" TEST_DEFINED)
   endif(TARGET asc2g)
 
   brlcad_add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
