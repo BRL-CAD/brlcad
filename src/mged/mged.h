@@ -168,30 +168,44 @@ struct mged_edit_state {
     // main global editing state (ugh)
     int global_editing_state;
 
+    // Primary variable used to identify specific editing operations
+    int edit_flag;
+    /* item/edit_mode selected from menu.  TODO - it seems like this
+     * may be used to "specialize" edit_flag to narrow its scope to
+     * specific operations - in which case we might be able to rename
+     * it to something more general than "menu"... */
+    int edit_menu;
+
     // MGED wants to know if we're in solid rotate,
     // translate or scale mode.  Rather than
     // keying off of primitive specific edit op
     // types, have the ops set flags:
-    int edit_flag;
-    int edit_menu;  /* item/edit_mode selected from menu */
     int solid_edit_rotate;
     int solid_edit_translate;
     int solid_edit_scale;
     int solid_edit_pick;
 
-    const char *e_keytag;	/* string identifying the keypoint */
-    int e_edclass;		/* type of editing class for this solid */
     int e_keyfixed;		/* keypoint specified by user? */
+    point_t e_keypoint;		/* center of editing xforms */
+    const char *e_keytag;	/* string identifying the keypoint */
+
     int e_mvalid;		/* e_mparam valid.  e_inpara must = 0 */
-    int e_type;			/* COMGEOM solid type */
+    vect_t e_mparam;		/* mouse input param.  Only when es_mvalid set */
+
     int e_inpara;		/* e_para valid.  e_mvalid must = 0 */
+    vect_t e_para;		/* keyboard input parameter changes */
+
+    int e_edclass;		/* type of editing class for this solid */
+    int e_type;			/* COMGEOM solid type */
+
     mat_t e_invmat;		/* inverse of e_mat KAA */
     mat_t e_mat;		/* accumulated matrix of path */
+
     point_t curr_e_axes_pos;	/* center of editing xforms */
     point_t e_axes_pos;
-    point_t e_keypoint;		/* center of editing xforms */
-    vect_t e_mparam;		/* mouse input param.  Only when es_mvalid set */
-    vect_t e_para;		/* keyboard input parameter changes */
+
+    /* Internal primitive editing information specific to primitive types. */
+    void *ipe_ptr;
 };
 
 /* global application state */
