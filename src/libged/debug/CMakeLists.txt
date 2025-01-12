@@ -7,8 +7,13 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
+# debug2c - Scanner to generate a list of debug variables used by
+# source code
+add_subdirectory(debug2c)
+settargetfolder(debug2c "Compilation Utilities")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
+set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
 add_custom_command(
   OUTPUT ${DEBUG_CMD_CPP}
   COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}

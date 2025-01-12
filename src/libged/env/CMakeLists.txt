@@ -7,6 +7,12 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
+# env2c - Scanner to generate a list of environment variables used by
+# source code
+add_subdirectory(env2c)
+settargetfolder(env2c "Compilation Utilities")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
+
 set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
 add_custom_command(
   OUTPUT ${ENV_CMD_C}

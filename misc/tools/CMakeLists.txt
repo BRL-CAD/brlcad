@@ -7,18 +7,6 @@ endfunction(SetTargetFolder)
 # The following are build or utility tools written by BRL-CAD developers
 # specifically for use with our build and maintenance processes
 
-# env2c - Scanner to generate a list of environment variables used by
-# source code
-add_subdirectory(env2c)
-settargetfolder(env2c "Compilation Utilities")
-distclean(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
-
-# debug2c - Scanner to generate a list of debug variables used by
-# source code
-add_subdirectory(debug2c)
-settargetfolder(debug2c "Compilation Utilities")
-distclean(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
-
 # yedit - console editor for Windows to be used as a fallback if
 # there are no other console options present in the environment
 add_subdirectory(yori)
