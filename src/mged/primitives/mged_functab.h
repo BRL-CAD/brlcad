@@ -149,6 +149,14 @@ struct mged_functab {
     int(*ft_edit_xy)(struct mged_state *s, int edflag, const vect_t mousevec);
 #define MGEDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct mged_state *, int, const vect_t))((void (*)(void))_func))
 
+    /* Create primitive specific editing struct */
+    void *(*ft_prim_edit_create)();
+#define MGEDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(_func) ((void *(*)()((void (*)(void))_func))
+
+    /* Destroy primitive specific editing struct */
+    void (*ft_prim_edit_destroy)(void *);
+#define MGEDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(_func) ((void(*)(void *)((void (*)(void))_func))
+
     struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 
