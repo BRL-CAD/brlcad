@@ -178,23 +178,18 @@ read_pdb(const char* filename)
 		atoms = bu_realloc(atoms, num_alloc * sizeof(pdb_atom), "pdb_atom realloc");
 	    }
 	    pdb_atom* atom = &atoms[num_atoms];
-	    strncpy(atom->record_type, line, 6);
-	    atom->record_type[6] = '\0';
+	    bu_strlcpy(atom->record_type, line, sizeof(atom->record_type));
 	    sscanf(&line[6], "%d", &atom->serial);
-	    strncpy(atom->atom_name, &line[12], 4);
-	    atom->atom_name[4] = '\0';
+	    bu_strlcpy(atom->atom_name, &line[12], sizeof(atom->atom_name));
 	    atom->alt_loc = line[16];
-	    strncpy(atom->res_name, &line[17], 3);
-	    atom->res_name[3] = '\0';
+	    bu_strlcpy(atom->res_name, &line[17], sizeof(atom->res_name));
 	    atom->chain_id = line[21];
 	    sscanf(&line[22], "%d", &atom->res_seq);
 	    atom->i_code = line[26];
 	    sscanf(&line[30], "%lf%lf%lf", &atom->x, &atom->y, &atom->z);
 	    sscanf(&line[54], "%lf%lf", &atom->occupancy, &atom->temp_factor);
-	    strncpy(atom->element, &line[76], 2);
-	    atom->element[2] = '\0';
-	    strncpy(atom->charge, &line[78], 2);
-	    atom->charge[2] = '\0';
+	    bu_strlcpy(atom->element, &line[76], sizeof(atom->element));
+	    bu_strlcpy(atom->charge, &line[78], sizeof(atom->charge));
 	    num_atoms++;
 	}
     }
