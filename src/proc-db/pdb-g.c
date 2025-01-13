@@ -17,12 +17,132 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
+/**
+ * Protein Data Bank (PDB) is a text file format used for describing
+ * the 3D structures of molecules, proteins, and nucleic acids.
+ *
+ * PDB is a fixed column format and begins with a HEADER line and is
+ * followed by other lines with additional information such as name,
+ * authors, and experimental conditions.  Each line in the PDB file
+ * begins with a 6-char record type followed by data for that record
+ * type.
+ *
+ * The header is followed by a series of records, each of which
+ * describes a single atom or group of atoms in the molecule. These
+ * records include information such as the atom's 3D position chemical
+ * identity, and connectivity to other atoms in the molecule.
+ *
+ * Here's what a water.pdb might look like:
+ *
+ @code
+HEADER    WATER MOLECULE
+ATOM      1  O   HOH     1       0.000   0.000   0.000  1.00  0.00
+ATOM      2  H1  HOH     1       0.957   0.000   0.000  1.00  0.00
+ATOM      3  H2  HOH     1       0.239   0.927   0.000  1.00  0.00
+END
+ @endcode
+ *
+ * The format allows for multiple models of the same molecule to be
+ * included in a single file, allowing for the representation of
+ * dynamic or flexible structures.  Each molecule starts with the HEADER
+ *
+ * PDB files can also contain multiple moleclues, each separated by a
+ * header record that starts with the keyword "ATOM" or "HETATM".
+ * This indicates the beginning of a new molecule and provides info
+ * about it such as its name and chain identifier.  The end of the
+ * molecule is typically marked by the start of a new header or by
+ * EOF.
+ */
 #include "common.h"
 
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/file.h"
+#include "bu/exit.h"
+
+#define MAX_ATOMS 100000
+
+
+typedef struct {
+    char record_type[7];
+    int serial;
+    char atom_name[5];
+    char alt_loc;
+    char res_name[4];
+    char chain_id;
+    int res_seq;
+    char i_code;
+    double x;
+    double y;
+    double z;
+    double occupancy;
+    double temp_factor;
+    char element[3];
+    char charge[3];
+} pdb_atom;
+
+typedef struct {
+    char* header;
+    pdb_atom* atoms;
+    int num_atoms;
+} pdb_data;
+
+
+pdb_data* read_pdb(const char* filename) {
+    FILE* fp;
+    char line[82];
+    int num_atoms = 0;
+    int num_alloc = MAX_ATOMS;
+    pdb_atom* atoms = bu_malloc(num_alloc * sizeof(pdb_atom), "pdb_atom alloc");
+    char* header = NULL;
+
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+        perror("Failed to open file");
+        return NULL;
+    }
+
+    while (fgets(line, 82, fp) != NULL) {
+        if (strncmp(line, "HEADER", 6) == 0) {
+            header = strdup(line);
+        } else if (strncmp(line, "ATOM", 4) == 0 || strncmp(line, "HETATM", 6) == 0) {
+            if (num_atoms >= num_alloc) {
+		num_alloc += MAX_ATOMS;
+		atoms = bu_realloc(atoms, num_alloc * sizeof(pdb_atom), "pdb_atom realloc");
+	    }
+	    pdb_atom* atom = &atoms[num_atoms];
+	    strncpy(atom->record_type, line, 6);
+	    atom->record_type[6] = '\0';
+	    sscanf(&line[6], "%d", &atom->serial);
+	    strncpy(atom->atom_name, &line[12], 4);
+	    atom->atom_name[4] = '\0';
+	    atom->alt_loc = line[16];
+	    strncpy(atom->res_name, &line[17], 3);
+	    atom->res_name[3] = '\0';
+	    atom->chain_id = line[21];
+	    sscanf(&line[22], "%d", &atom->res_seq);
+	    atom->i_code = line[26];
+	    sscanf(&line[30], "%lf%lf%lf", &atom->x, &atom->y, &atom->z);
+	    sscanf(&line[54], "%lf%lf", &atom->occupancy, &atom->temp_factor);
+	    strncpy(atom->element, &line[76], 2);
+	    atom->element[2] = '\0';
+	    strncpy(atom->charge, &line[78], 2);
+	    atom->charge[2] = '\0';
+	    num_atoms++;
+	}
+    }
+
+    fclose(fp);
+
+    pdb_data* data = bu_malloc(sizeof(pdb_data), "pdb_data alloc");
+
+    data->header = header;
+    data->atoms = atoms;
+    data->num_atoms = num_atoms;
+
+    return data;
+}
+
 
 void
 read_pdb(char *fileName)
@@ -65,16 +185,19 @@ main(int argc, char *argv[])
 {
     bu_setprogname(argv[0]);
 
-    if (argc < 3) {
-	fprintf(stderr, "No pdb filename or g filename given.\n");
-	return 1;
+    if (argc < 2) {
+	bu_log("Usage: %s file.pdb [file.g]\n", argv[0]);
+	bu_exit(1, "ERROR: No pdb filename given.\n");
     }
 
-    read_pdb(argv[1]);
+    /* open PDB file */
+    struct pdb_data pdb = read_pdb(argv[1]);
 
     mk_protein();
 
     write_g(argv[2]);
+
+    bu_free(pdb, "pdb_data free");
 
     return 0;
 }
