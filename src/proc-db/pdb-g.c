@@ -108,12 +108,18 @@ END
  */
 #include "common.h"
 
+#include <stdio.h>
+
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
+
+#include "vmath.h"
+#include "wdb.h"
+
 
 /* how many to allocate per set, not an upper limit */
 #define MORE_ATOMS 100000
@@ -171,7 +177,7 @@ read_pdb(const char* filename)
 
     while (bu_fgets(line, PDB_LINELEN, fp) != NULL) {
         if (bu_strncasecmp(line, "HEADER", 6) == 0) {
-            header = strdup(line);
+            header = bu_strdup(line);
         } else if (bu_strncasecmp(line, "ATOM", 4) == 0 || bu_strncasecmp(line, "HETATM", 6) == 0) {
             if (num_atoms >= num_alloc) {
 		num_alloc += MORE_ATOMS;
@@ -207,7 +213,7 @@ read_pdb(const char* filename)
 
 
 static void
-write_g(char *filename, struct pdb_data *pdbp)
+write_g(char *filename, pdb_data *pdbp)
 {
     struct rt_wdb *db_fp;
 
@@ -229,7 +235,7 @@ write_g(char *filename, struct pdb_data *pdbp)
 
     /* iterate through atoms in our PDB structure */
     for (int i = 0; i < pdbp->num_atoms; ++i) {
-        struct pdb_atom *atom = &pdbp->atoms[i];
+        pdb_atom *atom = &pdbp->atoms[i];
 
         /* create a sphere for the atom */
         point_t center;
@@ -263,13 +269,13 @@ main(int argc, char *argv[])
     }
 
     /* open PDB file */
-    struct pdb_data pdb = read_pdb(argv[1]);
+    pdb_data* pdbp = read_pdb(argv[1]);
 
-    write_g(argv[2], &pdb);
+    write_g(argv[2], pdbp);
 
-    if (pdb)
-	bu_free(pdb->atoms, "pdb_atom free");
-    bu_free(pdb, "pdb_data free");
+    if (pdbp)
+	bu_free(pdbp->atoms, "pdb_atom free");
+    bu_free(pdbp, "pdb_data free");
 
     return 0;
 }
