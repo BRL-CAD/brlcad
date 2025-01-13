@@ -65,6 +65,7 @@ target_include_directories(vegetation BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 brlcad_addexec(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
 
 set(proc-db_ignore_files
+  3NN4.pdb
   CMakeLists.txt
   caffeine.pdb
   metaballs.pl
