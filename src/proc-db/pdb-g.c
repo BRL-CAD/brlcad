@@ -42,6 +42,36 @@ ATOM      3  H2  HOH     1       0.239   0.927   0.000  1.00  0.00
 END
  @endcode
  *
+ * Here's what a caffeine.pdb might look like:
+ @code
+HEADER    CAFFEINE (1,3,7-TRIMETHYLXANTHINE) FORMULA C8H10N4O2
+HETATM    1  N1  CAF A   1      -1.250   1.250   0.000  1.00  0.00           N
+HETATM    2  C2  CAF A   1       0.000   1.500   0.000  1.00  0.00           C
+HETATM    3  O2  CAF A   1       1.200   1.300   0.000  1.00  0.00           O
+HETATM    4  N3  CAF A   1       1.500   0.000   0.000  1.00  0.00           N
+HETATM    5  C4  CAF A   1       1.000  -1.000   0.000  1.00  0.00           C
+HETATM    6  C5  CAF A   1       0.000  -1.500   0.000  1.00  0.00           C
+HETATM    7  C6  CAF A   1      -1.000  -1.000   0.000  1.00  0.00           C
+HETATM    8  O6  CAF A   1      -1.800  -2.000   0.000  1.00  0.00           O
+HETATM    9  N7  CAF A   1      -1.500   0.000   0.000  1.00  0.00           N
+HETATM   10  C8  CAF A   1      -2.300   1.000   0.000  1.00  0.00           C
+HETATM   11  H8  CAF A   1      -3.000   1.200   0.000  1.00  0.00           H
+HETATM   12  N9  CAF A   1      -2.900   2.100   0.000  1.00  0.00           N
+HETATM   13  CM1 CAF A   1      -1.800   2.200   0.000  1.00  0.00           C
+HETATM   14 HM1A CAF A   1      -1.000   2.500   0.000  1.00  0.00           H
+HETATM   15 HM1B CAF A   1      -2.400   2.900   0.000  1.00  0.00           H
+HETATM   16 HM1C CAF A   1      -2.200   1.300   0.000  1.00  0.00           H
+HETATM   17  CM3 CAF A   1       2.200   0.500   0.000  1.00  0.00           C
+HETATM   18 HM3A CAF A   1       2.700   1.200   0.000  1.00  0.00           H
+HETATM   19 HM3B CAF A   1       2.800  -0.200   0.000  1.00  0.00           H
+HETATM   20 HM3C CAF A   1       1.900   0.800   0.000  1.00  0.00           H
+HETATM   21  CM7 CAF A   1      -2.300  -0.500   0.000  1.00  0.00           C
+HETATM   22 HM7A CAF A   1      -3.200  -0.700   0.000  1.00  0.00           H
+HETATM   23 HM7B CAF A   1      -1.800  -1.300   0.000  1.00  0.00           H
+HETATM   24 HM7C CAF A   1      -2.800   0.100   0.000  1.00  0.00           H
+END
+ @endcode
+ *
  * The format allows for multiple models of the same molecule to be
  * included in a single file, allowing for the representation of
  * dynamic or flexible structures.  Each molecule starts with the HEADER
@@ -52,6 +82,27 @@ END
  * about it such as its name and chain identifier.  The end of the
  * molecule is typically marked by the start of a new header or by
  * EOF.
+ *
+ * Here's a schema of the PDF file format:
+ @code
+ Columns | Field             | Example Value        | Required?         | Notes
+-----------------------------------------------------------------------------------
+   1–6   | Record name       | ATOM / HETATM        | Yes (one or other)| "ATOM " or "HETATM"
+   7–11  | Atom serial num   | 1, 2, ...            | Yes               | Usually right-justified
+   13–16 | Atom name         | C, CA, O, N, etc.    | Yes               | E.g. " CA ", " O  ", " H1 "
+   17    | Alt. loc (altLoc) | ' ', 'A', 'B', ...   | **Optional**      | Only used for alternate conformations
+   18–20 | Residue name      | ALA, HOH, CAF, etc.  | Yes               | Typically 3-char code
+   22    | Chain ID          | A, B, ' '            | **Required**      | Can be blank if only one chain
+   23–26 | Residue seq #     | 1, 2, 345, etc.      | Yes               | Right-justified
+   27    | Insertion code    | ' ', 'A', 'B', etc.  | **Optional**      | Only used if there's an insertion
+   31–38 | X coordinate      | -12.345              | Yes               | Floating point
+   39–46 | Y coordinate      |  23.456              | Yes               | Floating point
+   47–54 | Z coordinate      |   5.678              | Yes               | Floating point
+   55–60 | Occupancy         | 1.00                 | **Required**      | Default to 1.00 if unknown
+   61–66 | B-factor          | 0.00                 | **Required**      | Default to 0.00 if unknown
+   77–78 | Element symbol    | C, N, O, Na, ...     | **Required** (v3) | Used to identify the element
+   79–80 | Charge            | 2+, 1-, ' '          | **Optional**      | Only used for charged atoms
+ @endcode
  */
 #include "common.h"
 
@@ -60,7 +111,8 @@ END
 #include "bu/file.h"
 #include "bu/exit.h"
 
-#define MAX_ATOMS 100000
+/* how many to allocate per set, not an upper limit */
+#define MORE_ATOMS 100000
 
 
 typedef struct {
@@ -92,7 +144,7 @@ pdb_data* read_pdb(const char* filename) {
     FILE* fp;
     char line[82];
     int num_atoms = 0;
-    int num_alloc = MAX_ATOMS;
+    int num_alloc = MORE_ATOMS;
     pdb_atom* atoms = bu_malloc(num_alloc * sizeof(pdb_atom), "pdb_atom alloc");
     char* header = NULL;
 
@@ -107,7 +159,7 @@ pdb_data* read_pdb(const char* filename) {
             header = strdup(line);
         } else if (strncmp(line, "ATOM", 4) == 0 || strncmp(line, "HETATM", 6) == 0) {
             if (num_atoms >= num_alloc) {
-		num_alloc += MAX_ATOMS;
+		num_alloc += MORE_ATOMS;
 		atoms = bu_realloc(atoms, num_alloc * sizeof(pdb_atom), "pdb_atom realloc");
 	    }
 	    pdb_atom* atom = &atoms[num_atoms];
