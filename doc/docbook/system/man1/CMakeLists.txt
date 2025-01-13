@@ -11,6 +11,7 @@ set(
   bot_dump.xml
   brep_simple.xml
   brlman.xml
+  btclsh.xml
   bw-fb.xml
   bw-pix.xml
   bw-png.xml
@@ -20,6 +21,7 @@ set(
   bwfilter.xml
   bwhist.xml
   bwhisteq.xml
+  bwish.xml
   bwmod.xml
   bwrect.xml
   bwrot.xml

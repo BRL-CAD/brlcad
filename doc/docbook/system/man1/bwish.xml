@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
+
+  <refmeta>
+    <refentrytitle>bwish</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>bwish</refname>
+    <refpurpose>Tcl/Tk-based interactive shell for BRL-CAD</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>bwish</command>
+      <arg choice="opt" rep="repeat"><replaceable>script</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>bwish</command> is a Tcl/Tk-based interactive shell for
+      BRL-CAD.  It supports graphical user interface capabilities
+      provided by Tk and includes command-line editing and history
+      functionality. It is particularly suited for interactive
+      scripting and development tasks in BRL-CAD.
+    </para>
+    <para>
+      The shell initializes and integrates Tcl/Tk libraries along with
+      BRL-CAD-specific commands and extensions, enabling users to
+      execute scripts or interact with the system.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><replaceable>script</replaceable></term>
+        <listitem>
+          <para>
+            Executes the provided Tcl script file and exits.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry><refentrytitle>tclsh</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsect1>
+
+  <refsect1>
+    <title>COPYRIGHT</title>
+    <para>
+      This software is Copyright (c) 1998-2024 United States
+      Government as represented by the U.S. Army Research
+      Laboratory.
+    </para>
+  </refsect1>
+
+</refentry>

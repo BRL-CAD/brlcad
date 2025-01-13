@@ -1,0 +1,67 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
+
+  <refmeta>
+    <refentrytitle>btclsh</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>btclsh</refname>
+    <refpurpose>Tcl-based interactive shell for BRL-CAD</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>btclsh</command>
+      <arg choice="opt" rep="repeat"><replaceable>script</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>btclsh</command> is a Tcl-based interactive shell for BRL-CAD. It provides command-line editing,
+      command history, and scripting capabilities. It is particularly suited for text-based interactive scripting
+      and automation in BRL-CAD environments.
+    </para>
+    <para>
+      Unlike <command>bwish</command>, <command>btclsh</command> does not require a graphical interface and
+      can be used in environments without a display server.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><replaceable>script</replaceable></term>
+        <listitem>
+          <para>
+            Executes the provided Tcl script file and exits.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry><refentrytitle>tclsh</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsect1>
+
+  <refsect1>
+    <title>COPYRIGHT</title>
+    <para>This software is Copyright (c) 1998-2024 United States Government as represented by the U.S. Army Research Laboratory.</para>
+  </refsect1>
+
+</refentry>
