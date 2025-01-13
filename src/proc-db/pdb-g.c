@@ -110,6 +110,7 @@ END
 
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
 
@@ -142,7 +143,9 @@ typedef struct {
 } pdb_data;
 
 
-pdb_data* read_pdb(const char* filename) {
+static pdb_data*
+read_pdb(const char* filename)
+{
     FILE* fp;
 #define PDB_LINELEN 81
     char line[PDB_LINELEN];
@@ -166,9 +169,9 @@ pdb_data* read_pdb(const char* filename) {
     atoms = bu_malloc(num_alloc * sizeof(pdb_atom), "pdb_atom alloc");
 
     while (bu_fgets(line, PDB_LINELEN, fp) != NULL) {
-        if (strncmp(line, "HEADER", 6) == 0) {
+        if (bu_strncasecmp(line, "HEADER", 6) == 0) {
             header = strdup(line);
-        } else if (strncmp(line, "ATOM", 4) == 0 || strncmp(line, "HETATM", 6) == 0) {
+        } else if (bu_strncasecmp(line, "ATOM", 4) == 0 || bu_strncasecmp(line, "HETATM", 6) == 0) {
             if (num_atoms >= num_alloc) {
 		num_alloc += MORE_ATOMS;
 		atoms = bu_realloc(atoms, num_alloc * sizeof(pdb_atom), "pdb_atom realloc");
@@ -207,24 +210,48 @@ pdb_data* read_pdb(const char* filename) {
 }
 
 
-void
-mk_protein(void)
+static void
+write_g(char *filename, struct pdb_data *pdbp)
 {
-    return;
-}
+    struct rt_wdb *db_fp;
 
-
-void
-write_g(char *fileName)
-{
-    if (!bu_file_exists(fileName, 0)) {
-	fprintf(stderr, "g file: %s, does not exist\n", fileName);
-	return;
+    if (!pdbp || !filename) {
+        fprintf(stderr, "ERROR: Invalid PDB data or filename.\n");
+        return;
     }
 
-    bu_log("g file: %s\n", fileName);
+    db_fp = wdb_fopen(filename);
+    if (db_fp == NULL) {
+        perror(filename);
+        return;
+    }
 
-    return;
+    mk_id_units(db_fp, "PDB Geometry Database", "mm");
+
+    struct wmember wm_hd;
+    BU_LIST_INIT(&wm_hd.l);
+
+    /* iterate through atoms in our PDB structure */
+    for (int i = 0; i < pdbp->num_atoms; ++i) {
+        struct pdb_atom *atom = &pdbp->atoms[i];
+
+        /* create a sphere for the atom */
+        point_t center;
+        VSET(center, atom->x, atom->y, atom->z);
+
+        char sphere_name[64];
+        snprintf(sphere_name, sizeof(sphere_name), "atom_%d.s", atom->serial);
+
+        mk_sph(db_fp, sphere_name, center, 1.0); // Default radius = 1.0 mm
+
+        /* add it to our combination list */
+        (void)mk_addmember(sphere_name, &wm_hd.l, NULL, WMOP_UNION);
+    }
+
+    /* create a combination for all atoms */
+    mk_lcomb(db_fp, "all_atoms.r", &wm_hd, 1, NULL, NULL, NULL, 0);
+
+    db_close(db_fp->dbip);
 }
 
 
@@ -242,9 +269,7 @@ main(int argc, char *argv[])
     /* open PDB file */
     struct pdb_data pdb = read_pdb(argv[1]);
 
-    mk_protein();
-
-    write_g(argv[2]);
+    write_g(argv[2], &pdb);
 
     if (pdb)
 	bu_free(pdb->atoms, "pdb_atom free");
