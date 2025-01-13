@@ -144,11 +144,17 @@ typedef struct {
 
 pdb_data* read_pdb(const char* filename) {
     FILE* fp;
-    char line[82];
+#define PDB_LINELEN 81
+    char line[PDB_LINELEN];
     int num_atoms = 0;
-    int num_alloc = MORE_ATOMS;
-    pdb_atom* atoms = bu_malloc(num_alloc * sizeof(pdb_atom), "pdb_atom alloc");
+    int num_alloc = 0;
+    pdb_atom* atoms = NULL;
     char* header = NULL;
+
+    if (!bu_file_exists(filename, 0)) {
+	fprintf(stderr, "ERROR: pdb file [%s] does not exist\n", filename);
+	return NULL;
+    }
 
     fp = fopen(filename, "r");
     if (fp == NULL) {
@@ -156,7 +162,10 @@ pdb_data* read_pdb(const char* filename) {
         return NULL;
     }
 
-    while (fgets(line, 82, fp) != NULL) {
+    num_alloc = MORE_ATOMS;
+    atoms = bu_malloc(num_alloc * sizeof(pdb_atom), "pdb_atom alloc");
+
+    while (bu_fgets(line, PDB_LINELEN, fp) != NULL) {
         if (strncmp(line, "HEADER", 6) == 0) {
             header = strdup(line);
         } else if (strncmp(line, "ATOM", 4) == 0 || strncmp(line, "HETATM", 6) == 0) {
@@ -199,20 +208,6 @@ pdb_data* read_pdb(const char* filename) {
 
 
 void
-read_pdb(char *fileName)
-{
-    if (!bu_file_exists(fileName, 0)) {
-	fprintf(stderr, "pdb file: %s, does not exist\n", fileName);
-	return;
-    }
-
-    bu_log("pdb file: %s\n", fileName);
-
-    return;
-}
-
-
-void
 mk_protein(void)
 {
     return;
@@ -251,6 +246,8 @@ main(int argc, char *argv[])
 
     write_g(argv[2]);
 
+    if (pdb)
+	bu_free(pdb->atoms, "pdb_atom free");
     bu_free(pdb, "pdb_data free");
 
     return 0;
