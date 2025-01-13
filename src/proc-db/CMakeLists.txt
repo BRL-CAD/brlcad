@@ -64,17 +64,18 @@ brlcad_addexec(vegetation vegetation.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 target_include_directories(vegetation BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 brlcad_addexec(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
 
-set(
-  proc-db_ignore_files
+set(proc-db_ignore_files
   CMakeLists.txt
-  twistedcube.h
+  caffeine.pdb
   metaballs.pl
   mkbuilding.h
   sgi.sh
   spiral.pl
   surfaceintersect.h
   tea.h
+  twistedcube.h
   vegetation.h
+  water.pdb
 )
 cmakefiles(${proc-db_ignore_files})
 
