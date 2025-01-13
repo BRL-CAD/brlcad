@@ -14,10 +14,13 @@ set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ge
 
 # Utility program
 set(GED_HDR_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/ged_cmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
-try_compile(${CMAKE_BINARY_DIR}/CMakeTmp
-  SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/ged_cmd_scanner.cpp
-  COPY_FILE ${GED_HDR_SCANNER}
-  OUTPUT_VARIABLE GED_SCANNER_BLD_OUT)
+try_compile(
+  ged_hdr_scanner
+  "${CMAKE_BINARY_DIR}/CMakeTmp"
+  SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/ged_cmd_scanner.cpp"
+  OUTPUT_VARIABLE GED_SCANNER_BLD_OUT
+  COPY_FILE "${GED_HDR_SCANNER}"
+  )
 if (NOT EXISTS ${GED_HDR_SCANNER})
   message(FATAL_ERROR "Unable to build ged command scanner: ${GED_SCANNER_BLD_OUT}")
 endif()
