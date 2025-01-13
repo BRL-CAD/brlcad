@@ -110,6 +110,7 @@ END
 
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/str.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
