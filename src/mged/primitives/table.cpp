@@ -39,7 +39,7 @@ extern "C" {
     extern void mged_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
     extern int mged_##name##_edit(struct mged_state *s, int edflag); \
     extern int mged_##name##_edit_xy(struct mged_state *s, int edflag, vect_t mousevec); \
-    extern void *mged_##name##_prim_edit_create(); \
+    extern void *mged_##name##_prim_edit_create(void); \
     extern void mged_##name##_prim_edit_destroy(void *); \
     extern struct menu_item *mged_##name##_menu_item(const struct bn_tol *tol); \
 

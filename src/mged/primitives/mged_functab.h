@@ -150,7 +150,7 @@ struct mged_functab {
 #define MGEDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct mged_state *, int, const vect_t))((void (*)(void))_func))
 
     /* Create primitive specific editing struct */
-    void *(*ft_prim_edit_create)();
+    void *(*ft_prim_edit_create)(void);
 #define MGEDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(_func) ((void *(*)()((void (*)(void))_func))
 
     /* Destroy primitive specific editing struct */
