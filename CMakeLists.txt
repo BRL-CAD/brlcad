@@ -115,6 +115,11 @@ if(POLICY CMP0127)
   cmake_policy(SET CMP0127 NEW)
 endif(POLICY CMP0127)
 
+# Policy CMP0177 now normalizes all installation paths
+if(POLICY CMP0177)
+  cmake_policy(SET CMP0177 NEW)
+endif(POLICY CMP0177)
+
 message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 message("CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
 
