@@ -1219,10 +1219,6 @@ if(NOT MSVC)
     check_c_flag(pedantic)
     check_cxx_flag(pedantic)
 
-    #Added to make llvm happy on FreeBSD, but a good idea anyway
-    check_c_flag(pedantic-errors)
-    #CHECK_CXX_FLAG(pedantic-errors)  #This line makes poissonrecon break, so disable for now
-
     # this catches a lot, it's good
     check_c_flag(Wall)
     check_cxx_flag(Wall)
@@ -1326,6 +1322,11 @@ if(NOT MSVC)
     # Add the flag that actually turns warnings into errors
     check_c_flag(Werror)
     check_cxx_flag(Werror)
+
+    # Turn pedantic issues into errors also
+    check_c_flag(pedantic-errors)
+    check_cxx_flag(pedantic-errors)
+
   endif(BRLCAD_ENABLE_STRICT)
 
   # End detection of flags intended for BRL-CAD use.  Make sure all variables have
