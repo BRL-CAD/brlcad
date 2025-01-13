@@ -53,7 +53,7 @@
   <refsect1>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>tclsh</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>btclsh</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
     </para>
   </refsect1>
