@@ -25,7 +25,7 @@
  * followed by other lines with additional information such as name,
  * authors, and experimental conditions.  Each line in the PDB file
  * begins with a 6-char record type followed by data for that record
- * type.
+ * type.  All lines are 80-characters long (followed by \n or \r\n).
  *
  * The header is followed by a series of records, each of which
  * describes a single atom or group of atoms in the molecule. These
@@ -35,41 +35,43 @@
  * Here's what a water.pdb might look like:
  *
  @code
-HEADER    WATER MOLECULE
-ATOM      1  O   HOH     1       0.000   0.000   0.000  1.00  0.00
-ATOM      2  H1  HOH     1       0.957   0.000   0.000  1.00  0.00
-ATOM      3  H2  HOH     1       0.239   0.927   0.000  1.00  0.00
-END
+HEADER    WATER MOLECULE                                                        
+ATOM      1  O   HOH     1       0.000   0.000   0.000  1.00  0.00              
+ATOM      2  H1  HOH     1       0.957   0.000   0.000  1.00  0.00              
+ATOM      3  H2  HOH     1       0.239   0.927   0.000  1.00  0.00              
+END                                                                             
  @endcode
+ *
+ * NOTE: THE TRAILING WHITESPACE IS INTENTIONAL AND REQUIRED FOR PDB.
  *
  * Here's what a caffeine.pdb might look like:
  @code
-HEADER    CAFFEINE (1,3,7-TRIMETHYLXANTHINE) FORMULA C8H10N4O2
-HETATM    1  N1  CAF A   1      -1.250   1.250   0.000  1.00  0.00           N
-HETATM    2  C2  CAF A   1       0.000   1.500   0.000  1.00  0.00           C
-HETATM    3  O2  CAF A   1       1.200   1.300   0.000  1.00  0.00           O
-HETATM    4  N3  CAF A   1       1.500   0.000   0.000  1.00  0.00           N
-HETATM    5  C4  CAF A   1       1.000  -1.000   0.000  1.00  0.00           C
-HETATM    6  C5  CAF A   1       0.000  -1.500   0.000  1.00  0.00           C
-HETATM    7  C6  CAF A   1      -1.000  -1.000   0.000  1.00  0.00           C
-HETATM    8  O6  CAF A   1      -1.800  -2.000   0.000  1.00  0.00           O
-HETATM    9  N7  CAF A   1      -1.500   0.000   0.000  1.00  0.00           N
-HETATM   10  C8  CAF A   1      -2.300   1.000   0.000  1.00  0.00           C
-HETATM   11  H8  CAF A   1      -3.000   1.200   0.000  1.00  0.00           H
-HETATM   12  N9  CAF A   1      -2.900   2.100   0.000  1.00  0.00           N
-HETATM   13  CM1 CAF A   1      -1.800   2.200   0.000  1.00  0.00           C
-HETATM   14 HM1A CAF A   1      -1.000   2.500   0.000  1.00  0.00           H
-HETATM   15 HM1B CAF A   1      -2.400   2.900   0.000  1.00  0.00           H
-HETATM   16 HM1C CAF A   1      -2.200   1.300   0.000  1.00  0.00           H
-HETATM   17  CM3 CAF A   1       2.200   0.500   0.000  1.00  0.00           C
-HETATM   18 HM3A CAF A   1       2.700   1.200   0.000  1.00  0.00           H
-HETATM   19 HM3B CAF A   1       2.800  -0.200   0.000  1.00  0.00           H
-HETATM   20 HM3C CAF A   1       1.900   0.800   0.000  1.00  0.00           H
-HETATM   21  CM7 CAF A   1      -2.300  -0.500   0.000  1.00  0.00           C
-HETATM   22 HM7A CAF A   1      -3.200  -0.700   0.000  1.00  0.00           H
-HETATM   23 HM7B CAF A   1      -1.800  -1.300   0.000  1.00  0.00           H
-HETATM   24 HM7C CAF A   1      -2.800   0.100   0.000  1.00  0.00           H
-END
+HEADER    CAFFEINE (1,3,7-TRIMETHYLXANTHINE) FORMULA C8H10N4O2                  
+HETATM    1  N1  CAF A   1      -1.250   1.250   0.000  1.00  0.00           N  
+HETATM    2  C2  CAF A   1       0.000   1.500   0.000  1.00  0.00           C  
+HETATM    3  O2  CAF A   1       1.200   1.300   0.000  1.00  0.00           O  
+HETATM    4  N3  CAF A   1       1.500   0.000   0.000  1.00  0.00           N  
+HETATM    5  C4  CAF A   1       1.000  -1.000   0.000  1.00  0.00           C  
+HETATM    6  C5  CAF A   1       0.000  -1.500   0.000  1.00  0.00           C  
+HETATM    7  C6  CAF A   1      -1.000  -1.000   0.000  1.00  0.00           C  
+HETATM    8  O6  CAF A   1      -1.800  -2.000   0.000  1.00  0.00           O  
+HETATM    9  N7  CAF A   1      -1.500   0.000   0.000  1.00  0.00           N  
+HETATM   10  C8  CAF A   1      -2.300   1.000   0.000  1.00  0.00           C  
+HETATM   11  H8  CAF A   1      -3.000   1.200   0.000  1.00  0.00           H  
+HETATM   12  N9  CAF A   1      -2.900   2.100   0.000  1.00  0.00           N  
+HETATM   13  CM1 CAF A   1      -1.800   2.200   0.000  1.00  0.00           C  
+HETATM   14 HM1A CAF A   1      -1.000   2.500   0.000  1.00  0.00           H  
+HETATM   15 HM1B CAF A   1      -2.400   2.900   0.000  1.00  0.00           H  
+HETATM   16 HM1C CAF A   1      -2.200   1.300   0.000  1.00  0.00           H  
+HETATM   17  CM3 CAF A   1       2.200   0.500   0.000  1.00  0.00           C  
+HETATM   18 HM3A CAF A   1       2.700   1.200   0.000  1.00  0.00           H  
+HETATM   19 HM3B CAF A   1       2.800  -0.200   0.000  1.00  0.00           H  
+HETATM   20 HM3C CAF A   1       1.900   0.800   0.000  1.00  0.00           H  
+HETATM   21  CM7 CAF A   1      -2.300  -0.500   0.000  1.00  0.00           C  
+HETATM   22 HM7A CAF A   1      -3.200  -0.700   0.000  1.00  0.00           H  
+HETATM   23 HM7B CAF A   1      -1.800  -1.300   0.000  1.00  0.00           H  
+HETATM   24 HM7C CAF A   1      -2.800   0.100   0.000  1.00  0.00           H  
+END                                                                             
  @endcode
  *
  * The format allows for multiple models of the same molecule to be
