@@ -64,10 +64,10 @@ you will be able to compile BRL-CAD.
 
 Following the build instructions in the INSTALL file.  You will need:
 
-gcc (6+, e.g. 6.0.3)
-g++ (6+, e.g. 6.0.3)
+gcc (8+, e.g. 6.0.3)
+g++ (8+, e.g. 6.0.3)
 make (e.g. gnu make 3.8.0)
-cmake (3.0.2 or newer)
+cmake (3.20 or newer)
 
 All three of those have implicit dependencies on other packages.
 

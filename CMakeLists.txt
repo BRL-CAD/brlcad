@@ -65,7 +65,7 @@
 # *               Stage 0 of 9 - Project Info               *
 # ***********************************************************
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.20)
 
 #---------------------------------------------------------------------
 # BRL-CAD's version is centrally stored in include/conf/.  See HACKING
@@ -109,6 +109,11 @@ endif(POLICY CMP0060)
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif(POLICY CMP0074)
+
+# add_test() supports arbitrary characters in test name
+if(POLICY CMP0110)
+  cmake_policy(SET CMP0110 NEW)
+endif(POLICY CMP0110)
 
 # cmake_dependent_option() supports full Condition Syntax
 if(POLICY CMP0127)
@@ -2582,23 +2587,10 @@ add_custom_target(
 )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
 
-# NOTE: after we require a minimum of 3.19, set CMP0110 NEW and
-# remove the version check
-if(${CMAKE_VERSION} VERSION_LESS "3.19")
-  if(POLICY CMP0110)
-    cmake_policy(SET CMP0110 OLD)
-  endif(POLICY CMP0110)
-  add_test(
-    NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass"
-    COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message
+add_test(
+  NAME "NOTE: some 'test' tests are expected to fail, 'regress' must pass"
+  COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message
   )
-else(${CMAKE_VERSION} VERSION_LESS "3.19")
-  cmake_policy(SET CMP0110 NEW)
-  add_test(
-    NAME "NOTE: some 'test' tests are expected to fail, 'regress' must pass"
-    COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message
-  )
-endif(${CMAKE_VERSION} VERSION_LESS "3.19")
 
 # Local Variables:
 # tab-width: 8

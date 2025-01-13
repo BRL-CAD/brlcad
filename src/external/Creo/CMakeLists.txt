@@ -18,7 +18,7 @@ set(
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 3.18)
+  cmake_minimum_required(VERSION 3.20)
   message(STATUS "CMake version = ${CMAKE_VERSION}")
 
   # Produce console log of CMake variables

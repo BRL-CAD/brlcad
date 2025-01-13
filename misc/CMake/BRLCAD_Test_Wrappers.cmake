@@ -97,9 +97,9 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
     return()
   endif(NOT BUILD_TESTING)
 
-  # CMake 3.18, cmake_language based wrapper for add_test, replaces the
-  # previous workaround for default ARGN behavior that doesn't pass through
-  # empty strings.  See https://gitlab.kitware.com/cmake/cmake/-/issues/21414
+  # cmake_language based wrapper for add_test, replaces the previous workaround
+  # for default ARGN behavior that doesn't pass through empty strings.  See
+  # https://gitlab.kitware.com/cmake/cmake/-/issues/21414
   cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
   foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
     string(APPEND test_args " [==[${_av}]==]")

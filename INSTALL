@@ -39,7 +39,7 @@ including instructions for building on Windows.
 
 Required tools:
   - Git must be 2.17 or later
-  - CMake must be 3.18 or later
+  - CMake must be 3.20 or later
   - Compiler must be C++17-compliant
     - If using Visual Studio, version 2019 (16.8+) or later
     - If using GCC/G++, version 7 or later
