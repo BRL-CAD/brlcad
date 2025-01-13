@@ -173,7 +173,7 @@ read_pdb(const char* filename)
     }
 
     num_alloc = MORE_ATOMS;
-    atoms = bu_malloc(num_alloc * sizeof(pdb_atom), "pdb_atom alloc");
+    atoms = (pdb_atom *)bu_malloc(num_alloc * sizeof(pdb_atom), "pdb_atom alloc");
 
     while (bu_fgets(line, PDB_LINELEN, fp) != NULL) {
         if (bu_strncasecmp(line, "HEADER", 6) == 0) {
@@ -181,7 +181,7 @@ read_pdb(const char* filename)
         } else if (bu_strncasecmp(line, "ATOM", 4) == 0 || bu_strncasecmp(line, "HETATM", 6) == 0) {
             if (num_atoms >= num_alloc) {
 		num_alloc += MORE_ATOMS;
-		atoms = bu_realloc(atoms, num_alloc * sizeof(pdb_atom), "pdb_atom realloc");
+		atoms = (pdb_atom *)bu_realloc(atoms, num_alloc * sizeof(pdb_atom), "pdb_atom realloc");
 	    }
 	    pdb_atom* atom = &atoms[num_atoms];
 	    bu_strlcpy(atom->record_type, line, sizeof(atom->record_type));
@@ -202,7 +202,7 @@ read_pdb(const char* filename)
 
     fclose(fp);
 
-    pdb_data* data = bu_malloc(sizeof(pdb_data), "pdb_data alloc");
+    pdb_data* data = (pdb_data *)bu_malloc(sizeof(pdb_data), "pdb_data alloc");
 
     data->header = header;
     data->atoms = atoms;
