@@ -49,8 +49,13 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     /* make sure argc and argv agree, no NULL args */
     for (int i = 0; i < argc; i++) {
 	if (!argv[i]) {
-	    bu_log("INTERNAL ERROR: ged_exec() argv[%d] is NULL (argc=%d)\n", i, argc);
-	    return BRLCAD_ERROR;
+	    if (i == (argc -1)) {
+		// NULL termination, decrement argc and move on
+		argc--;
+	    } else {
+		bu_log("INTERNAL ERROR: ged_exec() argv[%d] is NULL (argc=%d)\n", i, argc);
+		return BRLCAD_ERROR;
+	    }
 	}
     }
 
