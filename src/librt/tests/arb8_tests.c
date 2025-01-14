@@ -1,3 +1,28 @@
+/*                    A R B 8 _ T E S T S . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2025 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file arb8_tests.c
+ *
+ * Test different configurations of valid and invalid ARB8
+ *
+ */
+
 #include "common.h"
 
 #include <stdio.h>
@@ -213,14 +238,15 @@ expected_result_t expected_results[] = {
     {"SpanningCube", "Ray_Inside", 1}
 };
 
+
 // Main execution and validation
 int
 main(int ac, char *av[])
 {
-  if (ac > 1) {
-    bu_log("Usage: %s\n", av[0]);
-    return 1;
-  }
+    if (ac > 1) {
+	bu_log("Usage: %s\n", av[0]);
+	return 1;
+    }
 
     for (size_t i = 0; i < sizeof(arb8_configs) / sizeof(arb8_config_t); i++) {
         const arb8_config_t *arb = &arb8_configs[i];
@@ -266,3 +292,14 @@ main(int ac, char *av[])
 
     return 0;
 }
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
+ */
