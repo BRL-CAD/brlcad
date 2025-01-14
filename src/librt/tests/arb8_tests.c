@@ -234,7 +234,12 @@ main(int ac, char *av[])
             VSET(ap.a_ray.r_pt, ray->origin[X], ray->origin[Y], ray->origin[Z]);
             VSET(ap.a_ray.r_dir, ray->direction[X], ray->direction[Y], ray->direction[Z]);
 
-            // Call rt_arb_shot() here, set hit/miss result
+            // TODO - call rt_arb_shot() here, set hit/miss result
+	    struct soltab stp;
+	    struct xray rp;
+	    struct seg seghead;
+	    (void)(*OBJ[ID_ARB8].ft_shot)(&stp, &rp, &ap, &seghead);
+
             int hit = 0; // Placeholder
 
             // Validate against expected result
