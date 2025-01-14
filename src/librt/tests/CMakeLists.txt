@@ -74,6 +74,11 @@ brlcad_addexec(rt_lod lod.c "librt;libbg" TEST)
 # bv_polygon <-> sketch testing
 brlcad_addexec(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv" TEST)
 
+# arb8 testing
+brlcad_addexec(rt_arb8 arb8_tests.c "librt" TEST)
+brlcad_add_test(NAME rt_arb8_tests COMMAND rt_arb8)
+
+
 set(
   distcheck_files
   CMakeLists.txt
