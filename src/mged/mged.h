@@ -170,6 +170,9 @@ struct mged_edit_state {
 
 struct mged_solid_edit {
 
+    // Optional logging of messages from editing code
+    struct bu_vls *log_str;
+
     // Container to hold the intermediate state
     // of the object being edited (I think?)
     struct rt_db_internal es_int;

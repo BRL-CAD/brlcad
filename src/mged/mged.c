@@ -1842,6 +1842,8 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s-> mged_prompt);
+    bu_vls_free(s->s_edit.log_str);
+    BU_PUT(s->s_edit.log_str, struct mged_state);
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
 
@@ -1905,6 +1907,8 @@ main(int argc, char *argv[])
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
     s->s_edit.tol = &s->tol.tol;
+    BU_GET(s->s_edit.log_str, struct bu_vls);
+    bu_vls_init(s->s_edit.log_str);
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
