@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* removed obsolete rt_bot_minpieces variable from rt - Cliff Yapp
+* removed obsolete rt_bot_tri_per_piece variable from rt - Cliff Yapp
 * removed obsolete -B and -T options from nirt - Cliff Yapp
 * removed obsolete bot_minpieces command from nirt - Cliff Yapp
 * added manual page for pixcmp, bwish, btclsh - Sean Morrison
