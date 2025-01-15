@@ -266,7 +266,7 @@ ecmd_ars_pick(struct mged_state *s)
 	    VMOVE(pick_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for 'pick point'\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for 'pick point'\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
@@ -282,7 +282,7 @@ ecmd_ars_pick(struct mged_state *s)
 	    es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
     bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
     mged_print_result(s, TCL_ERROR);
     bu_vls_free(&tmp_vls);
 }
@@ -307,7 +307,7 @@ ecmd_ars_next_pt(struct mged_state *s)
 		es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 	mged_print_result(s, TCL_ERROR);
 	bu_vls_free(&tmp_vls);
     }
@@ -333,7 +333,7 @@ ecmd_ars_prev_pt(struct mged_state *s)
 		es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 	mged_print_result(s, TCL_ERROR);
 	bu_vls_free(&tmp_vls);
     }
@@ -359,7 +359,7 @@ ecmd_ars_next_crv(struct mged_state *s)
 		es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 	mged_print_result(s, TCL_ERROR);
 	bu_vls_free(&tmp_vls);
     }
@@ -385,7 +385,7 @@ ecmd_ars_prev_crv(struct mged_state *s)
 		es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 	mged_print_result(s, TCL_ERROR);
 	bu_vls_free(&tmp_vls);
     }
@@ -625,7 +625,7 @@ ecmd_ars_move_col(struct mged_state *s)
 	    VMOVE(new_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for point movement\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara) {
@@ -684,7 +684,7 @@ ecmd_ars_move_crv(struct mged_state *s)
 	    VMOVE(new_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for point movement\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara) {
@@ -742,7 +742,7 @@ ecmd_ars_move_pt(struct mged_state *s)
 	    VMOVE(new_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for point movement\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara) {
@@ -856,7 +856,7 @@ mged_ars_edit_xy(
 	    s->s_edit.e_mvalid = 1;
 	    break;
 	default:
-	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

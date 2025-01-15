@@ -131,7 +131,7 @@ ecmd_vol_csize(struct mged_state *s)
     if (s->s_edit.e_inpara == 3) {
 	VMOVE(vol->cellsize, s->s_edit.e_para);
     } else if (s->s_edit.e_inpara > 0 && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x, y, and z cell sizes are required\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x, y, and z cell sizes are required\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (s->s_edit.es_scale > 0.0) {
@@ -153,14 +153,13 @@ ecmd_vol_fsize(struct mged_state *s)
 
     if (s->s_edit.e_inpara == 3) {
 	if (stat(vol->name, &stat_buf)) {
-	    Tcl_AppendResult(s->interp, "Cannot get status of file ", vol->name, (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "Cannot get status of file %s\n", vol->name);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
 	}
 	need_size = s->s_edit.e_para[0] * s->s_edit.e_para[1] * s->s_edit.e_para[2] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
-	    Tcl_AppendResult(s->interp, "File (", vol->name,
-		    ") is too small, set file name first", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "File (%s) is too small, set file name first", vol->name);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
 	}
@@ -168,7 +167,7 @@ ecmd_vol_fsize(struct mged_state *s)
 	vol->ydim = s->s_edit.e_para[1];
 	vol->zdim = s->s_edit.e_para[2];
     } else if (s->s_edit.e_inpara > 0) {
-	Tcl_AppendResult(s->interp, "x, y, and z file sizes are required\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x, y, and z file sizes are required\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -178,13 +177,13 @@ int
 ecmd_vol_thresh_lo(struct mged_state *s)
 {
     if (s->s_edit.e_inpara != 1) {
-	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (s->s_edit.e_para[0] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
@@ -218,13 +217,13 @@ int
 ecmd_vol_thresh_hi(struct mged_state *s)
 {
     if (s->s_edit.e_inpara != 1) {
-	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (s->s_edit.e_para[0] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
@@ -292,13 +291,13 @@ static int
 mged_vol_pscale(struct mged_state *s, int mode)
 {
     if (s->s_edit.e_inpara > 1) {
-	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (s->s_edit.e_para[0] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
@@ -375,7 +374,7 @@ mged_vol_edit_xy(
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
-	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

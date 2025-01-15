@@ -373,7 +373,7 @@ mged_bspline_edit_xy(
 	    /* Leave the rest to code in ft_edit */
 	    break;
 	default:
-	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

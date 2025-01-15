@@ -263,7 +263,7 @@ ecmd_hyp_rot_h(struct mged_state *s)
     RT_HYP_CK_MAGIC(hyp);
     if (s->s_edit.e_inpara) {
 	if (s->s_edit.e_inpara != 3) {
-	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
 	    s->s_edit.e_inpara = 0;
 	    return TCL_ERROR;
 	}
@@ -319,13 +319,13 @@ static int
 mged_hyp_pscale(struct mged_state *s, int mode)
 {
     if (s->s_edit.e_inpara > 1) {
-	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (s->s_edit.e_para[0] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }

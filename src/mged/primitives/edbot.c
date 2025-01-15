@@ -234,7 +234,7 @@ ecmd_bot_mode(struct mged_state *s)
 		" { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
     }
     if (ret_tcl != TCL_OK) {
-	Tcl_AppendResult(s->interp, "Mode selection failed!\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Mode selection failed!\n");
 	return;
     }
     radio_result = Tcl_GetVar(s->interp, "_bot_mode_result", TCL_GLOBAL_ONLY);
@@ -275,7 +275,7 @@ ecmd_bot_orient(struct mged_state *s)
 		" { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
     }
     if (ret_tcl != TCL_OK) {
-	Tcl_AppendResult(s->interp, "Face orientation selection failed!\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Face orientation selection failed!\n");
 	return;
     }
     radio_result = Tcl_GetVar(s->interp, "_bot_orient_result", TCL_GLOBAL_ONLY);
@@ -287,13 +287,13 @@ ecmd_bot_thick(struct mged_state *s)
 {
 
     if (s->s_edit.e_inpara != 1) {
-	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (s->s_edit.e_para[0] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
@@ -592,7 +592,7 @@ ecmd_bot_movev(struct mged_state *s)
 	    VMOVE(new_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for point movement\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara) {
@@ -613,7 +613,7 @@ ecmd_bot_movee(struct mged_state *s)
     RT_BOT_CK_MAGIC(bot);
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0) {
-	Tcl_AppendResult(s->interp, "No BOT edge selected\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "No BOT edge selected\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -639,7 +639,7 @@ ecmd_bot_movee(struct mged_state *s)
 	    VMOVE(new_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for point movement\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara) {
@@ -663,7 +663,7 @@ ecmd_bot_movet(struct mged_state *s)
     RT_BOT_CK_MAGIC(bot);
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
-	Tcl_AppendResult(s->interp, "No BOT triangle selected\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "No BOT triangle selected\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -686,7 +686,7 @@ ecmd_bot_movet(struct mged_state *s)
 	    VMOVE(new_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for point movement\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara) {
@@ -716,7 +716,7 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
 
     tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_gvp->gv_model2view);
     if (tmp_vert < 0) {
-	Tcl_AppendResult(s->interp, "ECMD_BOT_PICKV: unable to find a vertex!\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ECMD_BOT_PICKV: unable to find a vertex!\n");
 	mged_print_result(s, TCL_ERROR);
 	return BRLCAD_ERROR;
     }
@@ -726,7 +726,7 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
     bot_verts[2] = -1;
     VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->dbip->dbi_base2local);
     sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
-    Tcl_AppendResult(s->interp, tmp_msg, (char *)NULL);
+    bu_vls_printf(s->s_edit.log_str, "%s", tmp_msg);
     mged_print_result(s, TCL_OK);
 
     return BRLCAD_OK;
@@ -748,7 +748,7 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
     pos_view[Y] = mousevec[Y];
 
     if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, view_state->vs_gvp->gv_model2view)) {
-	Tcl_AppendResult(s->interp, "ECMD_BOT_PICKE: unable to find an edge!\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ECMD_BOT_PICKE: unable to find an edge!\n");
 	mged_print_result(s, TCL_ERROR);
 	return BRLCAD_ERROR;
     }
@@ -759,7 +759,7 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
     VSCALE(from_pt, &bot->vertices[vert1*3], s->dbip->dbi_base2local);
     VSCALE(to_pt, &bot->vertices[vert2*3], s->dbip->dbi_base2local);
     sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
-    Tcl_AppendResult(s->interp, tmp_msg, (char *)NULL);
+    bu_vls_printf(s->s_edit.log_str, "%s", tmp_msg);
     mged_print_result(s, TCL_OK);
 
     return BRLCAD_OK;
@@ -929,7 +929,7 @@ mged_bot_edit_xy(
 	    s->s_edit.e_mvalid = 1;
 	    break;
 	default:
-	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

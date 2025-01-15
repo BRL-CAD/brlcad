@@ -822,8 +822,7 @@ editarb(struct mged_state *s, vect_t pos_model)
 
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol)) {
-	// TODO - write to a vls so parent code can do Tcl_AppendResult
-	bu_log("\nCannot calculate plane equations for ARB8\n");
+	bu_vls_printf(s->s_edit.log_str, "\nCannot calculate plane equations for ARB8\n");
 	bu_vls_free(&error_msg);
 	return TCL_ERROR;
     }
@@ -871,7 +870,7 @@ ecmd_arb_specific_menu(struct mged_state *s)
 	    mmenu_set(s, MENU_L1, which_menu[arb_type+6]);
 	    return BRLCAD_OK;
 	default:
-	    Tcl_AppendResult(s->interp, "Bad menu item.\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "Bad menu item.\n");
 	    mged_print_result(s, TCL_ERROR);
 	    return BRLCAD_ERROR;
     }
@@ -884,7 +883,7 @@ ecmd_arb_move_face(struct mged_state *s)
     if (s->s_edit.e_inpara) {
 
 	if (s->s_edit.e_inpara != 3) {
-	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
 	    s->s_edit.e_inpara = 0;
 	    return TCL_ERROR;
 	}
@@ -947,7 +946,7 @@ get_rotation_vertex(struct mged_state *s)
 
     while (!valid) {
 	if (Tcl_Eval(s->interp, bu_vls_addr(&cmd)) != TCL_OK) {
-	    Tcl_AppendResult(s->interp, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "get_rotation_vertex: Error reading vertex\n");
 	    /* Using default */
 	    return rt_arb_vertices[type][loc];
 	}
@@ -980,7 +979,7 @@ ecmd_arb_setup_rotface(struct mged_state *s)
 
     /* special case for arb7 */
     if (arb_type == ARB7  && pnt5) {
-	Tcl_AppendResult(s->interp, "\nFixed vertex is point 5.\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "\nFixed vertex is point 5.\n");
 	fixv = 5;
     } else {
 	fixv = get_rotation_vertex(s);
@@ -1065,8 +1064,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 	    es_peqn[s->s_edit.edit_menu][1] = cos(fb_a) * sin(rota);
 	    es_peqn[s->s_edit.edit_menu][2] = sin(fb_a);
 	} else {
-	    Tcl_AppendResult(s->interp, "Must be < rot fb | xdeg ydeg zdeg >\n",
-		    (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "Must be < rot fb | xdeg ydeg zdeg >\n");
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
 	}
@@ -1118,7 +1116,7 @@ edit_arb_element(struct mged_state *s)
     if (s->s_edit.e_inpara) {
 
 	if (s->s_edit.e_inpara != 3) {
-	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
 	    s->s_edit.e_inpara = 0;
 	    return TCL_ERROR;
 	}
@@ -1207,8 +1205,7 @@ mged_arb_edit(struct mged_state *s, int edflag)
 
     int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol)) {
-	// TODO - write to a vls so parent code can do Tcl_AppendResult
-	bu_log("\nCannot calculate plane equations for ARB8\n");
+	bu_vls_printf(s->s_edit.log_str, "\nCannot calculate plane equations for ARB8\n");
 	bu_vls_free(&error_msg);
 	return TCL_ERROR;
     }
@@ -1255,7 +1252,7 @@ arb_planecalc:
     /* must re-calculate the face plane equations for arbs */
     arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, s->s_edit.tol) < 0)
-	Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg), (char *)0);
+	bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&error_msg));
     bu_vls_free(&error_msg);
 
     return ret;
@@ -1290,7 +1287,7 @@ mged_arb_edit_xy(
 	    edarb_move_face_mousevec(s, mousevec);
 	    break;
 	default:
-	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }
@@ -1315,12 +1312,12 @@ arb_f_eqn(struct mged_state *s, int argc, const char **argv)
 	return TCL_ERROR;
 
     if (s->s_edit.es_int.idb_type != ID_ARB8) {
-	Tcl_AppendResult(s->interp, "Eqn: type must be GENARB8\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Eqn: type must be GENARB8\n");
 	return TCL_ERROR;
     }
 
     if (s->s_edit.edit_flag != ECMD_ARB_ROTATE_FACE) {
-	Tcl_AppendResult(s->interp, "Eqn: must be rotating a face\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Eqn: must be rotating a face\n");
 	return TCL_ERROR;
     }
 
@@ -1352,12 +1349,12 @@ arb_edgedir(struct mged_state *s, int argc, const char **argv)
 	return TCL_ERROR;
 
     if (s->s_edit.edit_flag != EARB) {
-	Tcl_AppendResult(s->interp, "Not moving an ARB edge\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Not moving an ARB edge\n");
 	return TCL_ERROR;
     }
 
     if (s->s_edit.es_int.idb_type != ID_ARB8) {
-	Tcl_AppendResult(s->interp, "Edgedir: solid type must be an ARB\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Edgedir: solid type must be an ARB\n");
 	return TCL_ERROR;
     }
 
@@ -1379,7 +1376,7 @@ arb_edgedir(struct mged_state *s, int argc, const char **argv)
     }
 
     if (ZERO(MAGNITUDE(slope))) {
-	Tcl_AppendResult(s->interp, "BAD slope\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "BAD slope\n");
 	return TCL_ERROR;
     }
 

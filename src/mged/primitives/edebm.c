@@ -88,17 +88,17 @@ int
 ecmd_ebm_fsize(struct mged_state *s)
 {
     if (s->s_edit.e_inpara != 2) {
-	Tcl_AppendResult(s->interp, "ERROR: two arguments needed\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: two arguments needed\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (s->s_edit.e_para[0] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: X SIZE <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: X SIZE <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     } else if (s->s_edit.e_para[1] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: Y SIZE <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: Y SIZE <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
@@ -112,21 +112,20 @@ ecmd_ebm_fsize(struct mged_state *s)
 
     if (s->s_edit.e_inpara == 2) {
 	if (stat(ebm->name, &stat_buf)) {
-	    Tcl_AppendResult(s->interp, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "Cannot get status of ebm data source %s", ebm->name);
 	    mged_print_result(s, TCL_ERROR);
 	    return BRLCAD_ERROR;
 	}
 	need_size = s->s_edit.e_para[0] * s->s_edit.e_para[1] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
-	    Tcl_AppendResult(s->interp, "File (", ebm->name,
-		    ") is too small, set data source name first", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "File (%s) is too small, set data source name first", ebm->name);
 	    mged_print_result(s, TCL_ERROR);
 	    return BRLCAD_ERROR;
 	}
 	ebm->xdim = s->s_edit.e_para[0];
 	ebm->ydim = s->s_edit.e_para[1];
     } else if (s->s_edit.e_inpara > 0) {
-	Tcl_AppendResult(s->interp, "width and length of data source are required\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "width and length of data source are required\n");
 	mged_print_result(s, TCL_ERROR);
 	return BRLCAD_ERROR;
     }
@@ -174,12 +173,12 @@ int
 ecmd_ebm_height(struct mged_state *s)
 {
     if (s->s_edit.e_inpara != 1) {
-	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
     if (s->s_edit.e_para[0] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
@@ -197,9 +196,7 @@ ecmd_ebm_height(struct mged_state *s)
     if (s->s_edit.e_inpara == 1)
 	ebm->tallness = s->s_edit.e_para[0];
     else if (s->s_edit.e_inpara > 0) {
-	Tcl_AppendResult(s->interp,
-		"extrusion depth required\n",
-		(char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "extrusion depth required\n");
 	mged_print_result(s, TCL_ERROR);
 	return BRLCAD_ERROR;
     } else if (s->s_edit.es_scale > 0.0) {
@@ -264,7 +261,7 @@ mged_ebm_edit_xy(
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
-	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

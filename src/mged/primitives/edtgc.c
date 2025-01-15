@@ -502,7 +502,7 @@ ecmd_tgc_mv_h(struct mged_state *s)
     RT_TGC_CK_MAGIC(tgc);
     if (s->s_edit.e_inpara) {
 	if (s->s_edit.e_inpara != 3) {
-	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
 	    s->s_edit.e_inpara = 0;
 	    return TCL_ERROR;
 	}
@@ -523,8 +523,7 @@ ecmd_tgc_mv_h(struct mged_state *s)
 
     /* check for zero H vector */
     if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
-	Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
-		(char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Zero H vector not allowed, resetting to +Z\n");
 	mged_print_result(s, TCL_ERROR);
 	VSET(tgc->h, 0.0, 0.0, 1.0);
 	return TCL_ERROR;
@@ -564,7 +563,7 @@ ecmd_tgc_mv_hh(struct mged_state *s)
     RT_TGC_CK_MAGIC(tgc);
     if (s->s_edit.e_inpara) {
 	if (s->s_edit.e_inpara != 3) {
-	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
 	    s->s_edit.e_inpara = 0;
 	    return TCL_ERROR;
 	}
@@ -585,8 +584,7 @@ ecmd_tgc_mv_hh(struct mged_state *s)
 
     /* check for zero H vector */
     if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
-	Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
-		(char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Zero H vector not allowed, resetting to +Z\n");
 	mged_print_result(s, TCL_ERROR);
 	VSET(tgc->h, 0.0, 0.0, 1.0);
 	return TCL_ERROR;
@@ -609,7 +607,7 @@ ecmd_tgc_rot_h(struct mged_state *s)
     RT_TGC_CK_MAGIC(tgc);
     if (s->s_edit.e_inpara) {
 	if (s->s_edit.e_inpara != 3) {
-	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
 	    s->s_edit.e_inpara = 0;
 	    return TCL_ERROR;
 	}
@@ -674,7 +672,7 @@ ecmd_tgc_rot_ab(struct mged_state *s)
     RT_TGC_CK_MAGIC(tgc);
     if (s->s_edit.e_inpara) {
 	if (s->s_edit.e_inpara != 3) {
-	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
 	    s->s_edit.e_inpara = 0;
 	    return TCL_ERROR;
 	}
@@ -754,13 +752,13 @@ static int
 mged_tgc_pscale(struct mged_state *s, int mode)
 {
     if (s->s_edit.e_inpara > 1) {
-	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (s->s_edit.e_para[0] <= 0.0) {
-	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
@@ -863,7 +861,7 @@ mged_tgc_edit_xy(
 	    ecmd_tgc_mv_h_mousevec(s, mousevec);
 	    break;
 	default:
-	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

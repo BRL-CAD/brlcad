@@ -69,7 +69,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     switch (arg) {
 	default:
-	    Tcl_AppendResult(s->interp, "nmg_ed: undefined menu event?\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "nmg_ed: undefined menu event?\n");
 	    return;
 	case ECMD_NMG_EPICK:
 	case ECMD_NMG_EMOVE:
@@ -78,7 +78,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    break;
 	case ECMD_NMG_EDEBUG:
 	    if (!es_eu) {
-		Tcl_AppendResult(s->interp, "nmg_ed: no edge selected yet\n", (char *)NULL);
+		bu_vls_printf(s->s_edit.log_str, "nmg_ed: no edge selected yet\n");
 		return;
 	    }
 
@@ -93,7 +93,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    return;
 	case ECMD_NMG_FORW:
 	    if (!es_eu) {
-		Tcl_AppendResult(s->interp, "nmg_ed: no edge selected yet\n", (char *)NULL);
+		bu_vls_printf(s->s_edit.log_str, "nmg_ed: no edge selected yet\n");
 		return;
 	    }
 	    NMG_CK_EDGEUSE(es_eu);
@@ -105,7 +105,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -125,7 +125,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -145,7 +145,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -184,13 +184,12 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		}
 
 		if (!wire_loop_count) {
-		    Tcl_AppendResult(s->interp, "No sketch (wire loop) to extrude\n",
-				     (char *)NULL);
+		    bu_vls_printf(s->s_edit.log_str, "No sketch (wire loop) to extrude\n");
 		    return;
 		}
 
 		if (wire_loop_count > 1) {
-		    Tcl_AppendResult(s->interp, "Too many wire loops!  Don't know which to extrude!\n", (char *)NULL);
+		    bu_vls_printf(s->s_edit.log_str, "Too many wire loops!  Don't know which to extrude!\n");
 		    return;
 		}
 
@@ -203,8 +202,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		area = nmg_loop_plane_area(lu, lu_pl);
 
 		if (area < 0.0) {
-		    Tcl_AppendResult(s->interp, "Cannot extrude loop with no area\n",
-				     (char *)NULL);
+		    bu_vls_printf(s->s_edit.log_str, "Cannot extrude loop with no area\n");
 		    return;
 		}
 
@@ -264,8 +262,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 					      V3ARGS(isect_pt));
 			    }
 
-			    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls),
-					     (char *)NULL);
+			    bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 			    bu_vls_free(&tmp_vls);
 			    return;
 			}
@@ -278,7 +275,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		s_tmp = BU_LIST_FIRST(shell, &r_tmp->s_hd);
 		lu_copy = nmg_dup_loop(lu, &s_tmp->l.magic, (long **)0);
 		if (!lu_copy) {
-		    Tcl_AppendResult(s->interp, "Failed to make copy of loop\n", (char *)NULL);
+		    bu_vls_printf(s->s_edit.log_str, "Failed to make copy of loop\n");
 		    nmg_km(m_tmp);
 		    return;
 		}
@@ -525,7 +522,7 @@ void ecmd_nmg_emove(struct mged_state *s)
     s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
     if (!es_eu) {
-	Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "No edge selected!\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -541,8 +538,7 @@ void ecmd_nmg_emove(struct mged_state *s)
 	    VMOVE(new_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for edge move\n",
-		(char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for edge move\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
@@ -573,7 +569,7 @@ void ecmd_nmg_emove(struct mged_state *s)
 	    /* intersect line through new_pt with plane of loop */
 	    if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &s->tol.tol) < 1) {
 		/* line does not intersect plane, don't do an esplit */
-		Tcl_AppendResult(s->interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
+		bu_vls_printf(s->s_edit.log_str, "Edge Move: Cannot place new point in plane of loop\n");
 		mged_print_result(s, TCL_ERROR);
 		return;
 	    }
@@ -592,7 +588,7 @@ void ecmd_nmg_ekill(struct mged_state *s)
     struct edge_g_lseg *eg;
 
     if (!es_eu) {
-	Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "No edge selected!\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -609,7 +605,7 @@ void ecmd_nmg_ekill(struct mged_state *s)
 
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 	    /* Currently can only kill wire edges or edges in wire loops */
-	    Tcl_AppendResult(s->interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "Currently, we can only kill wire edges or edges in wire loops\n");
 	    mged_print_result(s, TCL_ERROR);
 	    mged_set_edflag(s, IDLE);
 	    return;
@@ -626,7 +622,7 @@ void ecmd_nmg_ekill(struct mged_state *s)
 		/* refuse to delete last edge that runs
 		 * to/from same vertex
 		 */
-		Tcl_AppendResult(s->interp, "Cannot delete last edge running to/from same vertex\n", (char *)NULL);
+		bu_vls_printf(s->s_edit.log_str, "Cannot delete last edge running to/from same vertex\n");
 		mged_print_result(s, TCL_ERROR);
 		return;
 	    }
@@ -676,7 +672,7 @@ void ecmd_nmg_esplit(struct mged_state *s)
     s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
     if (!es_eu) {
-	Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "No edge selected!\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -693,8 +689,7 @@ void ecmd_nmg_esplit(struct mged_state *s)
 	    VMOVE(new_pt, s->s_edit.e_para);
 	}
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for edge split\n",
-		(char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for edge split\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
@@ -708,7 +703,7 @@ void ecmd_nmg_esplit(struct mged_state *s)
 
 	/* Currently, can only split wire edges or edges in wire loops */
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
-	    Tcl_AppendResult(s->interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
+	    bu_vls_printf(s->s_edit.log_str, "Currently, we can only split wire edges or edges in wire loops\n");
 	    mged_set_edflag(s, IDLE);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
@@ -728,7 +723,7 @@ void ecmd_nmg_esplit(struct mged_state *s)
 	    /* intersect line through new_pt with plane of loop */
 	    if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &s->tol.tol) < 1) {
 		/* line does not intersect plane, don't do an esplit */
-		Tcl_AppendResult(s->interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
+		bu_vls_printf(s->s_edit.log_str, "Edge Split: Cannot place new point in plane of loop\n");
 		mged_print_result(s, TCL_ERROR);
 		return;
 	    }
@@ -772,7 +767,7 @@ void ecmd_nmg_lextru(struct mged_state *s)
     } else if (s->s_edit.e_inpara == 1) {
 	VJOIN1(to_pt, lu_keypoint, s->s_edit.e_para[0], lu_pl);
     } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	Tcl_AppendResult(s->interp, "x y z coordinates required for loop extrusion\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for loop extrusion\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara) {
@@ -782,7 +777,7 @@ void ecmd_nmg_lextru(struct mged_state *s)
     VSUB2(extrude_vec, to_pt, lu_keypoint);
 
     if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &s->tol.tol) < 1) {
-	Tcl_AppendResult(s->interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "Cannot extrude parallel to plane of loop\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -798,7 +793,7 @@ void ecmd_nmg_lextru(struct mged_state *s)
     new_lu = nmg_dup_loop(lu_copy, &es_s->l.magic, (long **)0);
     area = nmg_loop_plane_area(new_lu, new_lu_pl);
     if (area < 0.0) {
-	Tcl_AppendResult(s->interp, "loop to be extruded as no area!\n", (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "loop to be extruded as no area!\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -854,8 +849,7 @@ void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec)
     pos_view[Y] = mousevec[Y];
     if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
 		    view_state->vs_gvp->gv_model2view, s->vlfree, &tmp_tol)) == (struct edge *)NULL) {
-	Tcl_AppendResult(s->interp, "ECMD_NMG_EPICK: unable to find an edge\n",
-		(char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "ECMD_NMG_EPICK: unable to find an edge\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -869,7 +863,7 @@ void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec)
 		"edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 		(void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 		V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_printf(s->s_edit.log_str, "%s", bu_vls_cstr(&tmp_vls));
 	mged_print_result(s, TCL_ERROR);
 	bu_vls_free(&tmp_vls);
     }
@@ -948,7 +942,7 @@ mged_nmg_edit_xy(
               s->s_edit.e_mvalid = 1;
 	      break;
 	default:
-	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);
+	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }
