@@ -159,7 +159,7 @@ writesolid(struct mged_state *s)
 
     CHECK_DBI_NULL;
 
-    struct rt_db_internal *ip = &s->edit_state.es_int;
+    struct rt_db_internal *ip = &s->s_edit.es_int;
     if (!MGED_OBJ[ip->idb_type].ft_write_params) {
 	Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	return 1;
@@ -179,7 +179,7 @@ readsolid(struct mged_state *s)
 {
     CHECK_DBI_NULL;
 
-    struct rt_db_internal *ip = &s->edit_state.es_int;
+    struct rt_db_internal *ip = &s->s_edit.es_int;
 
     if (!MGED_OBJ[ip->idb_type].ft_read_params) {
 	Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);

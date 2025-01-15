@@ -113,14 +113,14 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	status = TCL_ERROR;
 	goto end;
     }
-    if (s->edit_state.es_int.idb_type != ID_ARB8) {
+    if (s->s_edit.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Facedef: solid type must be ARB\n");
 	status = TCL_ERROR;
 	goto end;
     }
 
     /* apply s->edit_state.e_mat editing to parameters.  "new way" */
-    transform_editing_solid(s, &intern, s->edit_state.e_mat, &s->edit_state.es_int, 0);
+    transform_editing_solid(s, &intern, s->s_edit.e_mat, &s->s_edit.es_int, 0);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -303,11 +303,11 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* Transform points back before s->edit_state.e_mat changes */
     /* This is the "new way" */
-    arbo = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+    arbo = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arbo);
 
     for (i=0; i<8; i++) {
-	MAT4X3PNT(arbo->pt[i], s->edit_state.e_invmat, arb->pt[i]);
+	MAT4X3PNT(arbo->pt[i], s->s_edit.e_invmat, arb->pt[i]);
     }
     rt_db_free_internal(&intern);
 

@@ -558,9 +558,9 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
 	/* solid edit mode */
-	/* apply s->edit_state.e_mat editing to parameters */
+	/* apply s->s_edit.e_mat editing to parameters */
 	struct directory *outdp = RT_DIR_NULL;
-	transform_editing_solid(s, &intern, s->edit_state.e_mat, &s->edit_state.es_int, 0);
+	transform_editing_solid(s, &intern, s->s_edit.e_mat, &s->s_edit.es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -590,9 +590,9 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	    return TCL_ERROR;
 	}
 	/* use the solid at bottom of path (key solid) */
-	/* apply s->edit_state.e_mat and modelchanges editing to parameters */
-	bn_mat_mul(newmat, modelchanges, s->edit_state.e_mat);
-	transform_editing_solid(s, &intern, newmat, &s->edit_state.es_int, 0);
+	/* apply s->s_edit.e_mat and modelchanges editing to parameters */
+	bn_mat_mul(newmat, modelchanges, s->s_edit.e_mat);
+	transform_editing_solid(s, &intern, newmat, &s->s_edit.es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -1631,7 +1631,7 @@ mged_global_variable_setup(struct mged_state *s)
     Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_global_db_ctx.db_version, TCL_LINK_INT);
 
     Tcl_LinkVar(s->interp, "edit_class", (char *)&s->edit_state.e_edclass, TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->edit_state.edit_flag, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit.edit_flag, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 
     /* link some tcl variables to these corresponding globals */

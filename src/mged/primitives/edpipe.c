@@ -79,12 +79,12 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
     switch (arg) {
 	case MENU_PIPE_SELECT:
-	    s->edit_state.edit_menu = arg;
-	    s->edit_state.edit_flag = ECMD_PIPE_PICK;
-	    s->edit_state.solid_edit_rotate = 0;
-	    s->edit_state.solid_edit_translate = 0;
-	    s->edit_state.solid_edit_scale = 0;
-	    s->edit_state.solid_edit_pick = 1;
+	    s->s_edit.edit_menu = arg;
+	    s->s_edit.edit_flag = ECMD_PIPE_PICK;
+	    s->s_edit.solid_edit_rotate = 0;
+	    s->s_edit.solid_edit_translate = 0;
+	    s->s_edit.solid_edit_scale = 0;
+	    s->s_edit.solid_edit_pick = 1;
 	    break;
 	case MENU_PIPE_NEXT_PT:
 	    if (!es_pipe_pnt) {
@@ -98,7 +98,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    }
 	    es_pipe_pnt = next;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
-	    s->edit_state.edit_menu = arg;
+	    s->s_edit.edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
@@ -114,18 +114,18 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    }
 	    es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
-	    s->edit_state.edit_menu = arg;
+	    s->s_edit.edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
 	case MENU_PIPE_SPLIT:
 	    /* not used */
 #if 0
-	    s->edit_state.edit_flag = ECMD_PIPE_SPLIT;
-	    s->edit_state.solid_edit_rotate = 0;
-	    s->edit_state.solid_edit_translate = 1;
-	    s->edit_state.solid_edit_scale = 0;
-	    s->edit_state.solid_edit_pick = 0;
+	    s->s_edit.edit_flag = ECMD_PIPE_SPLIT;
+	    s->s_edit.solid_edit_rotate = 0;
+	    s->s_edit.solid_edit_translate = 1;
+	    s->s_edit.solid_edit_scale = 0;
+	    s->s_edit.solid_edit_pick = 0;
 #endif
 	    break;
 	case MENU_PIPE_MOV_PT:
@@ -134,12 +134,12 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		mged_set_edflag(s, IDLE);
 		return;
 	    }
-	    s->edit_state.edit_menu = arg;
-	    s->edit_state.edit_flag = ECMD_PIPE_PT_MOVE;
-	    s->edit_state.solid_edit_rotate = 0;
-	    s->edit_state.solid_edit_translate = 1;
-	    s->edit_state.solid_edit_scale = 0;
-	    s->edit_state.solid_edit_pick = 0;
+	    s->s_edit.edit_menu = arg;
+	    s->s_edit.edit_flag = ECMD_PIPE_PT_MOVE;
+	    s->s_edit.solid_edit_rotate = 0;
+	    s->s_edit.solid_edit_translate = 1;
+	    s->s_edit.solid_edit_scale = 0;
+	    s->s_edit.solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_PT_OD:
 	case MENU_PIPE_PT_ID:
@@ -149,33 +149,33 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		mged_set_edflag(s, IDLE);
 		return;
 	    }
-	    s->edit_state.edit_menu = arg;
+	    s->s_edit.edit_menu = arg;
 	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_PIPE_SCALE_OD:
 	case MENU_PIPE_SCALE_ID:
 	case MENU_PIPE_SCALE_RADIUS:
-	    s->edit_state.edit_menu = arg;
+	    s->s_edit.edit_menu = arg;
 	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_PIPE_ADD_PT:
-	    s->edit_state.edit_menu = arg;
-	    s->edit_state.edit_flag = ECMD_PIPE_PT_ADD;
-	    s->edit_state.solid_edit_rotate = 0;
-	    s->edit_state.solid_edit_translate = 1;
-	    s->edit_state.solid_edit_scale = 0;
-	    s->edit_state.solid_edit_pick = 0;
+	    s->s_edit.edit_menu = arg;
+	    s->s_edit.edit_flag = ECMD_PIPE_PT_ADD;
+	    s->s_edit.solid_edit_rotate = 0;
+	    s->s_edit.solid_edit_translate = 1;
+	    s->s_edit.solid_edit_scale = 0;
+	    s->s_edit.solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_INS_PT:
-	    s->edit_state.edit_menu = arg;
-	    s->edit_state.edit_flag = ECMD_PIPE_PT_INS;
-	    s->edit_state.solid_edit_rotate = 0;
-	    s->edit_state.solid_edit_translate = 1;
-	    s->edit_state.solid_edit_scale = 0;
-	    s->edit_state.solid_edit_pick = 0;
+	    s->s_edit.edit_menu = arg;
+	    s->s_edit.edit_flag = ECMD_PIPE_PT_INS;
+	    s->s_edit.solid_edit_rotate = 0;
+	    s->s_edit.solid_edit_translate = 1;
+	    s->s_edit.solid_edit_scale = 0;
+	    s->s_edit.solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_DEL_PT:
-	    s->edit_state.edit_menu = arg;
+	    s->s_edit.edit_menu = arg;
 	    mged_set_edflag(s, ECMD_PIPE_PT_DEL);
 	    sedit(s);
 	    break;
@@ -701,9 +701,9 @@ int
 menu_pipe_pt_od(struct mged_state *s)
 {
 
-    if (s->edit_state.e_para[0] < 0.0) {
+    if (s->s_edit.e_para[0] < 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
@@ -712,14 +712,14 @@ menu_pipe_pt_od(struct mged_state *s)
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
 	if (es_pipe_pnt->pp_od > 0.0)
-	    s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/es_pipe_pnt->pp_od;
+	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/es_pipe_pnt->pp_od;
 	else
-	    s->edit_state.es_scale = (-s->edit_state.e_para[0] * s->edit_state.e_mat[15]);
+	    s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
     }
-    pipe_seg_scale_od(s, es_pipe_pnt, s->edit_state.es_scale);
+    pipe_seg_scale_od(s, es_pipe_pnt, s->s_edit.es_scale);
 
     return 0;
 }
@@ -728,9 +728,9 @@ menu_pipe_pt_od(struct mged_state *s)
 int
 menu_pipe_pt_id(struct mged_state *s)
 {
-    if (s->edit_state.e_para[0] < 0.0) {
+    if (s->s_edit.e_para[0] < 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
@@ -739,15 +739,15 @@ menu_pipe_pt_id(struct mged_state *s)
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
 	if (es_pipe_pnt->pp_id > 0.0)
-	    s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/es_pipe_pnt->pp_id;
+	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/es_pipe_pnt->pp_id;
 	else
-	    s->edit_state.es_scale = (-s->edit_state.e_para[0] * s->edit_state.e_mat[15]);
+	    s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
     }
 
-    pipe_seg_scale_id(s, es_pipe_pnt, s->edit_state.es_scale);
+    pipe_seg_scale_id(s, es_pipe_pnt, s->s_edit.es_scale);
 
     return 0;
 }
@@ -756,9 +756,9 @@ menu_pipe_pt_id(struct mged_state *s)
 int
 menu_pipe_pt_radius(struct mged_state *s)
 {
-    if (s->edit_state.e_para[0] <= 0.0) {
+    if (s->s_edit.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
@@ -767,15 +767,15 @@ menu_pipe_pt_radius(struct mged_state *s)
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
 	if (es_pipe_pnt->pp_id > 0.0)
-	    s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/es_pipe_pnt->pp_bendradius;
+	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/es_pipe_pnt->pp_bendradius;
 	else
-	    s->edit_state.es_scale = (-s->edit_state.e_para[0] * s->edit_state.e_mat[15]);
+	    s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
     }
 
-    pipe_seg_scale_radius(s, es_pipe_pnt, s->edit_state.es_scale);
+    pipe_seg_scale_radius(s, es_pipe_pnt, s->s_edit.es_scale);
 
     return 0;
 }
@@ -784,15 +784,15 @@ menu_pipe_pt_radius(struct mged_state *s)
 int
 menu_pipe_scale_od(struct mged_state *s)
 {
-    if (s->edit_state.e_para[0] <= 0.0) {
+    if (s->s_edit.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_inpara) {
+    if (s->s_edit.e_inpara) {
 	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
+	    (struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
 	struct wdb_pipe_pnt *ps;
 
 	RT_PIPE_CK_MAGIC(pipeip);
@@ -801,7 +801,7 @@ menu_pipe_scale_od(struct mged_state *s)
 	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 	if (ps->pp_od > 0.0) {
-	    s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/ps->pp_od;
+	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_od;
 	} else {
 	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0)
 		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
@@ -811,11 +811,11 @@ menu_pipe_scale_od(struct mged_state *s)
 		return TCL_ERROR;
 	    }
 
-	    s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/ps->pp_od;
+	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_od;
 	}
     }
 
-    pipe_scale_od(s, &s->edit_state.es_int, s->edit_state.es_scale);
+    pipe_scale_od(s, &s->s_edit.es_int, s->s_edit.es_scale);
 
     return 0;
 }
@@ -824,15 +824,15 @@ menu_pipe_scale_od(struct mged_state *s)
 int
 menu_pipe_scale_id(struct mged_state *s)
 {
-    if (s->edit_state.e_para[0] < 0.0) {
+    if (s->s_edit.e_para[0] < 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_inpara) {
+    if (s->s_edit.e_inpara) {
 	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
+	    (struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
 	struct wdb_pipe_pnt *ps;
 
 	RT_PIPE_CK_MAGIC(pipeip);
@@ -841,19 +841,19 @@ menu_pipe_scale_id(struct mged_state *s)
 	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 	if (ps->pp_id > 0.0) {
-	    s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/ps->pp_id;
+	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_id;
 	} else {
 	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0)
 		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 	    /* Check if entire pipe has zero ID */
 	    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-		s->edit_state.es_scale = (-s->edit_state.e_para[0] * s->edit_state.e_mat[15]);
+		s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
 	    else
-		s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/ps->pp_id;
+		s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_id;
 	}
     }
-    pipe_scale_id(s, &s->edit_state.es_int, s->edit_state.es_scale);
+    pipe_scale_id(s, &s->s_edit.es_int, s->s_edit.es_scale);
 
     return 0;
 }
@@ -862,15 +862,15 @@ menu_pipe_scale_id(struct mged_state *s)
 int
 menu_pipe_scale_radius(struct mged_state *s)
 {
-    if (s->edit_state.e_para[0] <= 0.0) {
+    if (s->s_edit.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_inpara) {
+    if (s->s_edit.e_inpara) {
 	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
+	    (struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
 	struct wdb_pipe_pnt *ps;
 
 	RT_PIPE_CK_MAGIC(pipeip);
@@ -879,20 +879,20 @@ menu_pipe_scale_radius(struct mged_state *s)
 	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 	if (ps->pp_bendradius > 0.0) {
-	    s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/ps->pp_bendradius;
+	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_bendradius;
 	} else {
 	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0)
 		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 	    /* Check if entire pipe has zero ID */
 	    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-		s->edit_state.es_scale = (-s->edit_state.e_para[0] * s->edit_state.e_mat[15]);
+		s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
 	    else
-		s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15]/ps->pp_bendradius;
+		s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_bendradius;
 	}
     }
 
-    pipe_scale_radius(s, &s->edit_state.es_int, s->edit_state.es_scale);
+    pipe_scale_radius(s, &s->s_edit.es_int, s->s_edit.es_scale);
 
     return 0;
 }
@@ -900,30 +900,30 @@ menu_pipe_scale_radius(struct mged_state *s)
 void ecmd_pipe_pick(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->edit_state.e_mvalid) {
-	VMOVE(new_pt, s->edit_state.e_mparam);
-    } else if (s->edit_state.e_inpara == 3) {
+    if (s->s_edit.e_mvalid) {
+	VMOVE(new_pt, s->s_edit.e_mparam);
+    } else if (s->s_edit.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply s->edit_state.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
+	    /* apply s->s_edit.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
-	    VMOVE(new_pt, s->edit_state.e_para);
+	    VMOVE(new_pt, s->s_edit.e_para);
 	}
-    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
+    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for segment selection\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara)
+    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
 	return;
 
     es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
@@ -937,30 +937,30 @@ void ecmd_pipe_pick(struct mged_state *s)
 void ecmd_pipe_split(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->edit_state.e_mvalid) {
-	VMOVE(new_pt, s->edit_state.e_mparam);
-    } else if (s->edit_state.e_inpara == 3) {
+    if (s->s_edit.e_mvalid) {
+	VMOVE(new_pt, s->s_edit.e_mparam);
+    } else if (s->s_edit.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply s->edit_state.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
+	    /* apply s->s_edit.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
-	    VMOVE(new_pt, s->edit_state.e_para);
+	    VMOVE(new_pt, s->s_edit.e_para);
 	}
-    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
+    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for segment split\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara)
+    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
 	return;
 
     if (!es_pipe_pnt) {
@@ -975,30 +975,30 @@ void ecmd_pipe_split(struct mged_state *s)
 void ecmd_pipe_pt_move(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->edit_state.e_mvalid) {
-	VMOVE(new_pt, s->edit_state.e_mparam);
-    } else if (s->edit_state.e_inpara == 3) {
+    if (s->s_edit.e_mvalid) {
+	VMOVE(new_pt, s->s_edit.e_mparam);
+    } else if (s->s_edit.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply s->edit_state.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
+	    /* apply s->s_edit.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
-	    VMOVE(new_pt, s->edit_state.e_para);
+	    VMOVE(new_pt, s->s_edit.e_para);
 	}
-    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
+    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for segment movement\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara)
+    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
 	return;
 
     if (!es_pipe_pnt) {
@@ -1013,30 +1013,30 @@ void ecmd_pipe_pt_move(struct mged_state *s)
 void ecmd_pipe_pt_add(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->edit_state.e_mvalid) {
-	VMOVE(new_pt, s->edit_state.e_mparam);
-    } else if (s->edit_state.e_inpara == 3) {
+    if (s->s_edit.e_mvalid) {
+	VMOVE(new_pt, s->s_edit.e_mparam);
+    } else if (s->s_edit.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply s->edit_state.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
+	    /* apply s->s_edit.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
-	    VMOVE(new_pt, s->edit_state.e_para);
+	    VMOVE(new_pt, s->s_edit.e_para);
 	}
-    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
+    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for 'append segment'\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara)
+    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
 	return;
 
     es_pipe_pnt = pipe_add_pnt(pipeip, es_pipe_pnt, new_pt);
@@ -1045,30 +1045,30 @@ void ecmd_pipe_pt_add(struct mged_state *s)
 void ecmd_pipe_pt_ins(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->edit_state.e_mvalid) {
-	VMOVE(new_pt, s->edit_state.e_mparam);
-    } else if (s->edit_state.e_inpara == 3) {
+    if (s->s_edit.e_mvalid) {
+	VMOVE(new_pt, s->s_edit.e_mparam);
+    } else if (s->s_edit.e_inpara == 3) {
 	if (mged_variables->mv_context) {
-	    /* apply s->edit_state.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->edit_state.e_invmat, s->edit_state.e_para);
+	    /* apply s->s_edit.e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
-	    VMOVE(new_pt, s->edit_state.e_para);
+	    VMOVE(new_pt, s->s_edit.e_para);
 	}
-    } else if (s->edit_state.e_inpara && s->edit_state.e_inpara != 3) {
+    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
 	Tcl_AppendResult(s->interp, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->edit_state.e_mvalid && !s->edit_state.e_inpara)
+    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
 	return;
 
     pipe_ins_pnt(pipeip, es_pipe_pnt, new_pt);
@@ -1087,16 +1087,16 @@ void ecmd_pipe_pt_del(struct mged_state *s)
 static int
 mged_pipe_pscale(struct mged_state *s, int mode)
 {
-    if (s->edit_state.e_inpara > 1) {
+    if (s->s_edit.e_inpara > 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_PIPE_PT_OD:   /* scale OD of one pipe segment */
@@ -1123,19 +1123,19 @@ mged_pipe_edit(struct mged_state *s, int edflag)
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    return mged_generic_sscale(s, &s->edit_state.es_int);
+	    return mged_generic_sscale(s, &s->s_edit.es_int);
 	case STRANS:
 	    /* translate solid */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    mged_generic_strans(s, &s->edit_state.es_int);
+	    mged_generic_strans(s, &s->s_edit.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    mged_generic_srot(s, &s->edit_state.es_int);
+	    mged_generic_srot(s, &s->s_edit.es_int);
 	    break;
 	case PSCALE:
-	    return mged_pipe_pscale(s, s->edit_state.edit_menu);
+	    return mged_pipe_pscale(s, s->s_edit.edit_menu);
 	case ECMD_PIPE_PICK:
 	    ecmd_pipe_pick(s);
 	    break;
@@ -1168,7 +1168,7 @@ mged_pipe_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->edit_state.es_int;
+    struct rt_db_internal *ip = &s->s_edit.es_int;
 
     switch (edflag) {
 	case SSCALE:
@@ -1184,12 +1184,12 @@ mged_pipe_edit_xy(
 	case ECMD_PIPE_PT_MOVE:
 	case ECMD_PIPE_PT_ADD:
 	case ECMD_PIPE_PT_INS:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(s->edit_state.e_mparam, s->edit_state.e_invmat, temp);
-	    s->edit_state.e_mvalid = 1;
+	    MAT4X3PNT(s->s_edit.e_mparam, s->s_edit.e_invmat, temp);
+	    s->s_edit.e_mvalid = 1;
 	    break;
 	default:
 	    Tcl_AppendResult(s->interp, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label,   edflag);

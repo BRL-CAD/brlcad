@@ -3247,27 +3247,27 @@ mged_erot(struct mged_state *s,
 	save_rotate_about = mged_variables->mv_rotate_about;
 	mged_variables->mv_rotate_about = rotate_about;
 
-	save_edflag = s->edit_state.edit_flag;
-	save_rot = s->edit_state.solid_edit_rotate;
-	save_tra = s->edit_state.solid_edit_translate;
-	save_sca = s->edit_state.solid_edit_scale;
-	save_pic = s->edit_state.solid_edit_pick;
+	save_edflag = s->s_edit.edit_flag;
+	save_rot = s->s_edit.solid_edit_rotate;
+	save_tra = s->s_edit.solid_edit_translate;
+	save_sca = s->s_edit.solid_edit_scale;
+	save_pic = s->s_edit.solid_edit_pick;
 
 	if (!SEDIT_ROTATE) {
 	    mged_set_edflag(s, SROT);
 	}
 
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	MAT_COPY(incr_change, newrot);
 	bn_mat_mul2(incr_change, acc_rot_sol);
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;
-	s->edit_state.edit_flag = save_edflag;
-	s->edit_state.solid_edit_rotate = save_rot;
-	s->edit_state.solid_edit_translate = save_tra;
-	s->edit_state.solid_edit_scale = save_sca;
-	s->edit_state.solid_edit_pick = save_pic;
+	s->s_edit.edit_flag = save_edflag;
+	s->s_edit.solid_edit_rotate = save_rot;
+	s->s_edit.solid_edit_translate = save_tra;
+	s->s_edit.solid_edit_scale = save_sca;
+	s->s_edit.solid_edit_pick = save_pic;
 
     } else {
 	point_t point;
@@ -3290,7 +3290,7 @@ mged_erot(struct mged_state *s,
 		break;
 	    case 'k':
 	    default:
-		MAT4X3PNT(point, modelchanges, s->edit_state.e_keypoint);
+		MAT4X3PNT(point, modelchanges, s->s_edit.e_keypoint);
 	}
 
 	/*
@@ -3395,11 +3395,11 @@ mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
 	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
 	} else if (origin == 'k' && s->edit_state.global_editing_state == ST_S_EDIT) {
 	    /* rotate around keypoint */
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
+	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
 	} else if (origin == 'k' && s->edit_state.global_editing_state == ST_O_EDIT) {
 	    point_t kpWmc;
 
-	    MAT4X3PNT(kpWmc, modelchanges, s->edit_state.e_keypoint);
+	    MAT4X3PNT(kpWmc, modelchanges, s->s_edit.e_keypoint);
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, kpWmc);
 	} else {
 	    /* rotate around model center (0, 0, 0) */
@@ -3623,28 +3623,28 @@ mged_etran(struct mged_state *s,
 
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
 	int save_rot, save_tra, save_sca, save_pic;
-	s->edit_state.e_keyfixed = 0;
-	get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag,
-			   &s->edit_state.es_int, s->edit_state.e_mat);
-	save_edflag = s->edit_state.edit_flag;
-	save_rot = s->edit_state.solid_edit_rotate;
-	save_tra = s->edit_state.solid_edit_translate;
-	save_sca = s->edit_state.solid_edit_scale;
-	save_pic = s->edit_state.solid_edit_pick;
+	s->s_edit.e_keyfixed = 0;
+	get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag,
+			   &s->s_edit.es_int, s->s_edit.e_mat);
+	save_edflag = s->s_edit.edit_flag;
+	save_rot = s->s_edit.solid_edit_rotate;
+	save_tra = s->s_edit.solid_edit_translate;
+	save_sca = s->s_edit.solid_edit_scale;
+	save_pic = s->s_edit.solid_edit_pick;
 
 
 	if (!SEDIT_TRAN) {
 	    mged_set_edflag(s, STRANS);
 	}
 
-	VADD2(s->edit_state.e_para, delta, s->edit_state.curr_e_axes_pos);
-	s->edit_state.e_inpara = 3;
+	VADD2(s->s_edit.e_para, delta, s->s_edit.curr_e_axes_pos);
+	s->s_edit.e_inpara = 3;
 	sedit(s);
-	s->edit_state.edit_flag = save_edflag;
-	s->edit_state.solid_edit_rotate = save_rot;
-	s->edit_state.solid_edit_translate = save_tra;
-	s->edit_state.solid_edit_scale = save_sca;
-	s->edit_state.solid_edit_pick = save_pic;
+	s->s_edit.edit_flag = save_edflag;
+	s->s_edit.solid_edit_rotate = save_rot;
+	s->s_edit.solid_edit_translate = save_tra;
+	s->s_edit.solid_edit_scale = save_sca;
+	s->s_edit.solid_edit_pick = save_pic;
     } else {
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
@@ -3773,27 +3773,27 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
 	int save_edflag, save_rot, save_tra, save_sca, save_pic;
-	save_edflag = s->edit_state.edit_flag;
-	save_rot = s->edit_state.solid_edit_rotate;
-	save_tra = s->edit_state.solid_edit_translate;
-	save_sca = s->edit_state.solid_edit_scale;
-	save_pic = s->edit_state.solid_edit_pick;
+	save_edflag = s->s_edit.edit_flag;
+	save_rot = s->s_edit.solid_edit_rotate;
+	save_tra = s->s_edit.solid_edit_translate;
+	save_sca = s->s_edit.solid_edit_scale;
+	save_pic = s->s_edit.solid_edit_pick;
 
 	if (!SEDIT_SCALE) {
 	    mged_set_edflag(s, SSCALE);
 	}
 
-	s->edit_state.es_scale = sfactor;
+	s->s_edit.es_scale = sfactor;
 	old_scale = acc_sc_sol;
 	acc_sc_sol *= sfactor;
 
 	if (acc_sc_sol < MGED_SMALL_SCALE) {
 	    acc_sc_sol = old_scale;
-	    s->edit_state.edit_flag = save_edflag;
-	    s->edit_state.solid_edit_rotate = save_rot;
-	    s->edit_state.solid_edit_translate = save_tra;
-	    s->edit_state.solid_edit_scale = save_sca;
-	    s->edit_state.solid_edit_pick = save_pic;
+	    s->s_edit.edit_flag = save_edflag;
+	    s->s_edit.solid_edit_rotate = save_rot;
+	    s->s_edit.solid_edit_translate = save_tra;
+	    s->s_edit.solid_edit_scale = save_sca;
+	    s->s_edit.solid_edit_pick = save_pic;
 	    return TCL_OK;
 	}
 
@@ -3805,11 +3805,11 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
 	sedit(s);
 
-	s->edit_state.edit_flag = save_edflag;
-	s->edit_state.solid_edit_rotate = save_rot;
-	s->edit_state.solid_edit_translate = save_tra;
-	s->edit_state.solid_edit_scale = save_sca;
-	s->edit_state.solid_edit_pick = save_pic;
+	s->s_edit.edit_flag = save_edflag;
+	s->s_edit.solid_edit_rotate = save_rot;
+	s->s_edit.solid_edit_translate = save_tra;
+	s->s_edit.solid_edit_scale = save_sca;
+	s->s_edit.solid_edit_pick = save_pic;
 
     } else {
 	point_t temp;
@@ -3871,7 +3871,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
 	 */
-	VMOVE(temp, s->edit_state.e_keypoint);
+	VMOVE(temp, s->s_edit.e_keypoint);
 	MAT4X3PNT(pos_model, modelchanges, temp);
 	wrt_point(modelchanges, smat, modelchanges, pos_model);
 

@@ -47,14 +47,14 @@
 static void
 eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    s->edit_state.edit_menu = arg;
+    s->s_edit.edit_menu = arg;
     mged_set_edflag(s, PSCALE);
     if (arg == MENU_ETO_ROT_C) {
-	s->edit_state.edit_flag = ECMD_ETO_ROT_C;
-	s->edit_state.solid_edit_rotate = 1;
-	s->edit_state.solid_edit_translate = 0;
-	s->edit_state.solid_edit_scale = 0;
-	s->edit_state.solid_edit_pick = 0;
+	s->s_edit.edit_flag = ECMD_ETO_ROT_C;
+	s->s_edit.solid_edit_rotate = 1;
+	s->s_edit.solid_edit_translate = 0;
+	s->s_edit.solid_edit_scale = 0;
+	s->s_edit.solid_edit_pick = 0;
     }
 
     set_e_axes_pos(s, 1);
@@ -181,17 +181,17 @@ void
 menu_eto_r(struct mged_state *s)
 {
     struct rt_eto_internal *eto =
-	(struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_eto_internal *)s->s_edit.es_int.idb_ptr;
     fastf_t ch, cv, dh, newrad;
     vect_t Nu;
 
     RT_ETO_CK_MAGIC(eto);
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
-	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
-	newrad = s->edit_state.e_para[0];
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
+	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
+	newrad = s->s_edit.e_para[0];
     } else {
-	newrad = eto->eto_r * s->edit_state.es_scale;
+	newrad = eto->eto_r * s->s_edit.es_scale;
     }
     if (newrad < SMALL) newrad = 4*SMALL;
     VMOVE(Nu, eto->eto_N);
@@ -211,17 +211,17 @@ void
 menu_eto_rd(struct mged_state *s)
 {
     struct rt_eto_internal *eto =
-	(struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_eto_internal *)s->s_edit.es_int.idb_ptr;
     fastf_t dh, newrad, work;
     vect_t Nu;
 
     RT_ETO_CK_MAGIC(eto);
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
-	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
-	newrad = s->edit_state.e_para[0];
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
+	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
+	newrad = s->s_edit.e_para[0];
     } else {
-	newrad = eto->eto_rd * s->edit_state.es_scale;
+	newrad = eto->eto_rd * s->s_edit.es_scale;
     }
     if (newrad < SMALL) newrad = 4*SMALL;
     work = MAGNITUDE(eto->eto_C);
@@ -240,20 +240,20 @@ void
 menu_eto_scale_c(struct mged_state *s)
 {
     struct rt_eto_internal *eto =
-	(struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_eto_internal *)s->s_edit.es_int.idb_ptr;
     fastf_t ch, cv;
     vect_t Nu, Work;
 
     RT_ETO_CK_MAGIC(eto);
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
-	s->edit_state.e_para[0] *= s->edit_state.e_mat[15];
-	s->edit_state.es_scale = s->edit_state.e_para[0] / MAGNITUDE(eto->eto_C);
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
+	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
+	s->s_edit.es_scale = s->s_edit.e_para[0] / MAGNITUDE(eto->eto_C);
     }
-    if (s->edit_state.es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
+    if (s->s_edit.es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
 	VMOVE(Nu, eto->eto_N);
 	VUNITIZE(Nu);
-	VSCALE(Work, eto->eto_C, s->edit_state.es_scale);
+	VSCALE(Work, eto->eto_C, s->s_edit.es_scale);
 	/* get horiz and vert comps of C and Rd */
 	cv = VDOT(Work, Nu);
 	ch = sqrt(VDOT(Work, Work) - cv * cv);
@@ -267,16 +267,16 @@ int
 ecmd_eto_rot_c(struct mged_state *s)
 {
     struct rt_eto_internal *eto =
-	(struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_eto_internal *)s->s_edit.es_int.idb_ptr;
     mat_t mat;
     mat_t mat1;
     mat_t edit;
 
     RT_ETO_CK_MAGIC(eto);
-    if (s->edit_state.e_inpara) {
-	if (s->edit_state.e_inpara != 3) {
+    if (s->s_edit.e_inpara) {
+	if (s->s_edit.e_inpara != 3) {
 	    Tcl_AppendResult(s->interp, "ERROR: three arguments needed\n", (char *)NULL);
-	    s->edit_state.e_inpara = 0;
+	    s->s_edit.e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
@@ -291,9 +291,9 @@ ecmd_eto_rot_c(struct mged_state *s)
 	/* Build completely new rotation change */
 	MAT_IDN(modelchanges);
 	bn_mat_angles(modelchanges,
-		s->edit_state.e_para[0],
-		s->edit_state.e_para[1],
-		s->edit_state.e_para[2]);
+		s->s_edit.e_para[0],
+		s->s_edit.e_para[1],
+		s->s_edit.e_para[2]);
 	/* Borrow incr_change matrix here */
 	bn_mat_mul(incr_change, modelchanges, invsolr);
 	MAT_COPY(acc_rot_sol, modelchanges);
@@ -307,15 +307,15 @@ ecmd_eto_rot_c(struct mged_state *s)
 
     if (mged_variables->mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, incr_change, s->edit_state.e_keypoint);
+	bn_mat_xform_about_pnt(edit, incr_change, s->s_edit.e_keypoint);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
 	 * current edit operations, then xform back.
-	 * mat = s->edit_state.e_invmat * edit * s->edit_state.e_mat
+	 * mat = s->s_edit.e_invmat * edit * s->s_edit.e_mat
 	 */
-	bn_mat_mul(mat1, edit, s->edit_state.e_mat);
-	bn_mat_mul(mat, s->edit_state.e_invmat, mat1);
+	bn_mat_mul(mat1, edit, s->s_edit.e_mat);
+	bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
 
 	MAT4X3VEC(eto->eto_C, mat, eto->eto_C);
     } else {
@@ -330,22 +330,22 @@ ecmd_eto_rot_c(struct mged_state *s)
 static int
 mged_eto_pscale(struct mged_state *s, int mode)
 {
-    if (s->edit_state.e_inpara > 1) {
+    if (s->s_edit.e_inpara > 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_para[0] <= 0.0) {
+    if (s->s_edit.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_ETO_R:
@@ -368,17 +368,17 @@ mged_eto_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->edit_state.es_int);
+	    return mged_generic_sscale(s, &s->s_edit.es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->edit_state.es_int);
+	    mged_generic_strans(s, &s->s_edit.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->edit_state.es_int);
+	    mged_generic_srot(s, &s->s_edit.es_int);
 	    break;
 	case PSCALE:
-	    return mged_eto_pscale(s, s->edit_state.edit_menu);
+	    return mged_eto_pscale(s, s->s_edit.edit_menu);
 	case ECMD_ETO_ROT_C:
 	    return ecmd_eto_rot_c(s);
     }

@@ -108,7 +108,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_TOR", "tor",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tor_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tor_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_tor_edit), /* edit */
@@ -123,7 +123,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_TGC", "tgc",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos), /* s->edit_state.e_axes_pos */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos), /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tgc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tgc_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_tgc_edit),    /* edit */
@@ -138,7 +138,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_ELL", "ell",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ell_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_ell_edit), /* edit */
@@ -153,7 +153,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_ARB8", "arb8",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_arb_keypoint),     /* keypoint */
-	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_arb_e_axes_pos), /* s->edit_state.e_axes_pos */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_arb_e_axes_pos), /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_arb_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_arb_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_arb_edit),    /* edit */
@@ -168,7 +168,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_ARS", "ars",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_ars_labels),    /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_ars_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_ars_edit),    /* edit */
@@ -183,7 +183,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_HALF", "half",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_hlf_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_hlf_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -198,7 +198,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_REC", "rec",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos), /* s->edit_state.e_axes_pos */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_tgc_e_axes_pos), /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_tgc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_tgc_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_tgc_edit), /* edit */
@@ -213,7 +213,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_POLY", "poly",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -228,7 +228,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_BSPLINE", "bspline",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_bspline_labels), /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_bspline_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_bspline_edit),    /* edit */
@@ -243,7 +243,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_SPH", "sph",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ell_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_ell_edit), /* edit */
@@ -258,7 +258,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_NMG", "nmg",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_nmg_labels),    /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_nmg_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_nmg_edit),    /* edit */
@@ -273,7 +273,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_EBM", "ebm",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_ebm_edit),    /* edit */
@@ -288,7 +288,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_VOL", "vol",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_vol_edit),    /* edit */
@@ -303,7 +303,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_ARBN", "arbn",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -318,7 +318,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_PIPE", "pipe",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_pipe_labels), /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_pipe_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_pipe_edit),    /* edit */
@@ -333,7 +333,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_PARTICLE", "part",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_part_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_part_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_part_edit), /* edit */
@@ -348,7 +348,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_RPC", "rpc",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_rpc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_rpc_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_rpc_edit), /* edit */
@@ -363,7 +363,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_RHC", "rhc",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_rhc_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_rhc_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_rhc_edit), /* edit */
@@ -378,7 +378,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_EPA", "epa",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_epa_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_epa_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_epa_edit), /* edit */
@@ -393,7 +393,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_EHY", "ehy",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_ehy_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_ehy_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_ehy_edit), /* edit */
@@ -408,7 +408,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_ETO", "eto",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_eto_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_eto_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_eto_edit),    /* edit */
@@ -423,7 +423,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_GRIP", "grip",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_grp_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_grp_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_grp_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -438,7 +438,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -453,7 +453,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_HF", "hf",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -468,7 +468,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_DSP", "dsp",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_dsp_edit),    /* edit */
@@ -483,7 +483,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -498,7 +498,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_EXTRUDE", "extrude",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_extrude_keypoint),     /* keypoint */
-	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_extrude_e_axes_pos), /* s->edit_state.e_axes_pos */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_extrude_e_axes_pos), /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_extrude_edit),    /* edit */
@@ -513,7 +513,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_SUBMODEL", "submodel",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -528,7 +528,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_CLINE", "cline",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint),   /* keypoint */
-	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_cline_e_axes_pos), /* s->edit_state.e_axes_pos */
+	MGEDFUNCTAB_FUNC_E_AXES_POS_CAST(mged_cline_e_axes_pos), /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_cline_edit),    /* edit */
@@ -543,7 +543,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_BOT", "bot",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_bot_labels),    /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_bot_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_bot_edit),    /* edit */
@@ -558,7 +558,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_COMBINATION", "comb",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	NULL,  /* edit */
@@ -575,7 +575,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_UNUSED1", "UNUSED1",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	NULL,  /* edit */
@@ -590,7 +590,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	NULL,  /* edit */
@@ -607,7 +607,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "UNUSED2",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	NULL,  /* edit */
@@ -622,7 +622,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_SUPERELL", "superell",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_superell_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_superell_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_superell_edit), /* edit */
@@ -637,7 +637,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_METABALL", "metaball",
 	MGEDFUNCTAB_FUNC_LABELS_CAST(mged_metaball_labels),    /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_metaball_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_metaball_edit),    /* edit */
@@ -652,7 +652,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_BREP", "brep",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -667,7 +667,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_HYP", "hyp",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_hyp_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_hyp_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_hyp_edit),    /* edit */
@@ -682,7 +682,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_CONSTRAINT", "constrnt",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -697,7 +697,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_REVOLVE", "revolve",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -712,7 +712,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -727,7 +727,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_ANNOT", "annot",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -742,7 +742,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_HRT", "hrt",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -758,7 +758,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_DATUM", "datum",
 	NULL,  /* label */
 	MGEDFUNCTAB_FUNC_KEYPOINT_CAST(mged_generic_keypoint), /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	MGEDFUNCTAB_FUNC_WRITE_PARAMS_CAST(mged_datum_write_params), /* write_params */
 	MGEDFUNCTAB_FUNC_READ_PARAMS_CAST(mged_datum_read_params), /* read_params */
 	MGEDFUNCTAB_FUNC_EDIT_CAST(mged_generic_edit), /* edit */
@@ -774,7 +774,7 @@ const struct mged_functab MGED_OBJ[] = {
     RT_FUNCTAB_MAGIC, "ID_SCRIPT", "script",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	NULL,  /* edit */
@@ -789,7 +789,7 @@ const struct mged_functab MGED_OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_MATERIAL", "material",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	NULL,  /* edit */
@@ -804,7 +804,7 @@ const struct mged_functab MGED_OBJ[] = {
 	0L, ">ID_MAXIMUM", ">id_max",
 	NULL,  /* label */
 	NULL,  /* keypoint */
-	NULL,  /* s->edit_state.e_axes_pos */
+	NULL,  /* s->s_edit.e_axes_pos */
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	NULL,  /* edit */

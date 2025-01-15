@@ -61,25 +61,25 @@ mged_generic_sscale(
 {
     mat_t mat, mat1, scalemat;
 
-    if (s->edit_state.e_inpara > 1) {
+    if (s->s_edit.e_inpara > 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_inpara) {
+    if (s->s_edit.e_inpara) {
 	/* accumulate the scale factor */
-	s->edit_state.es_scale = s->edit_state.e_para[0] / acc_sc_sol;
-	acc_sc_sol = s->edit_state.e_para[0];
+	s->s_edit.es_scale = s->s_edit.e_para[0] / acc_sc_sol;
+	acc_sc_sol = s->s_edit.e_para[0];
     }
 
-    bn_mat_scale_about_pnt(scalemat, s->edit_state.e_keypoint, s->edit_state.es_scale);
-    bn_mat_mul(mat1, scalemat, s->edit_state.e_mat);
-    bn_mat_mul(mat, s->edit_state.e_invmat, mat1);
+    bn_mat_scale_about_pnt(scalemat, s->s_edit.e_keypoint, s->s_edit.es_scale);
+    bn_mat_mul(mat1, scalemat, s->s_edit.e_mat);
+    bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
     transform_editing_solid(s, ip, mat, ip, 1);
 
     /* reset solid scale factor */
-    s->edit_state.es_scale = 1.0;
+    s->s_edit.es_scale = 1.0;
 
     return 0;
 }
@@ -94,30 +94,30 @@ mged_generic_strans(
     static vect_t work;
     vect_t delta;
 
-    if (s->edit_state.e_inpara) {
+    if (s->s_edit.e_inpara) {
 	/* Need vector from current vertex/keypoint
 	 * to desired new location.
 	 */
 
 	/* must convert to base units */
-	s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-	s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-	s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+	s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+	s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
 	if (mged_variables->mv_context) {
-	    /* move solid so that s->edit_state.e_keypoint is at position s->edit_state.e_para */
+	    /* move solid so that s->s_edit.e_keypoint is at position s->s_edit.e_para */
 	    vect_t raw_para;
 
-	    MAT4X3PNT(raw_para, s->edit_state.e_invmat, s->edit_state.e_para);
-	    MAT4X3PNT(work, s->edit_state.e_invmat, s->edit_state.e_keypoint);
+	    MAT4X3PNT(raw_para, s->s_edit.e_invmat, s->s_edit.e_para);
+	    MAT4X3PNT(work, s->s_edit.e_invmat, s->s_edit.e_keypoint);
 	    VSUB2(delta, work, raw_para);
 	    MAT_IDN(mat);
 	    MAT_DELTAS_VEC_NEG(mat, delta);
 	} else {
-	    /* move solid to position s->edit_state.e_para */
-	    /* move solid to position s->edit_state.e_para */
-	    MAT4X3PNT(work, s->edit_state.e_invmat, s->edit_state.e_keypoint);
-	    VSUB2(delta, work, s->edit_state.e_para);
+	    /* move solid to position s->s_edit.e_para */
+	    /* move solid to position s->s_edit.e_para */
+	    MAT4X3PNT(work, s->s_edit.e_invmat, s->s_edit.e_keypoint);
+	    VSUB2(delta, work, s->s_edit.e_para);
 	    MAT_IDN(mat);
 	    MAT_DELTAS_VEC_NEG(mat, delta);
 	}
@@ -135,7 +135,7 @@ mged_generic_srot(
     point_t rot_point;
     mat_t mat, mat1, edit;
 
-    if (s->edit_state.e_inpara) {
+    if (s->s_edit.e_inpara) {
 	static mat_t invsolr;
 	/*
 	 * Keyboard parameters:  absolute x, y, z rotations,
@@ -147,9 +147,9 @@ mged_generic_srot(
 	/* Build completely new rotation change */
 	MAT_IDN(modelchanges);
 	bn_mat_angles(modelchanges,
-		s->edit_state.e_para[0],
-		s->edit_state.e_para[1],
-		s->edit_state.e_para[2]);
+		s->s_edit.e_para[0],
+		s->s_edit.e_para[1],
+		s->s_edit.e_para[2]);
 	/* Borrow incr_change matrix here */
 	bn_mat_mul(incr_change, modelchanges, invsolr);
 	MAT_COPY(acc_rot_sol, modelchanges);
@@ -176,7 +176,7 @@ mged_generic_srot(
 	    break;
 	case 'k':       /* Key Point */
 	default:
-	    VMOVE(rot_point, s->edit_state.e_keypoint);
+	    VMOVE(rot_point, s->s_edit.e_keypoint);
 	    break;
     }
 
@@ -187,12 +187,12 @@ mged_generic_srot(
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
 	 * current edit operations, then xform back.
-	 * mat = s->edit_state.e_invmat * edit * s->edit_state.e_mat
+	 * mat = s->s_edit.e_invmat * edit * s->s_edit.e_mat
 	 */
-	bn_mat_mul(mat1, edit, s->edit_state.e_mat);
-	bn_mat_mul(mat, s->edit_state.e_invmat, mat1);
+	bn_mat_mul(mat1, edit, s->s_edit.e_mat);
+	bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
     } else {
-	MAT4X3PNT(work, s->edit_state.e_invmat, rot_point);
+	MAT4X3PNT(work, s->s_edit.e_invmat, rot_point);
 	bn_mat_xform_about_pnt(mat, incr_change, work);
     }
     transform_editing_solid(s, ip, mat, ip, 1);
@@ -209,15 +209,15 @@ mged_generic_edit(
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->edit_state.es_int);
+	    mged_generic_sscale(s, &s->s_edit.es_int);
 	    break;
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->edit_state.es_int);
+	    mged_generic_strans(s, &s->s_edit.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->edit_state.es_int);
+	    mged_generic_srot(s, &s->s_edit.es_int);
 	    break;
     }
     return 0;
@@ -230,13 +230,13 @@ mged_generic_sscale_xy(
 	)
 {
     /* use mouse to get a scale factor */
-    s->edit_state.es_scale = 1.0 + 0.25 * ((fastf_t)
+    s->s_edit.es_scale = 1.0 + 0.25 * ((fastf_t)
 	    (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
     if (mousevec[Y] <= 0)
-	s->edit_state.es_scale = 1.0 / s->edit_state.es_scale;
+	s->s_edit.es_scale = 1.0 / s->s_edit.es_scale;
 
     /* accumulate scale factor */
-    acc_sc_sol *= s->edit_state.es_scale;
+    acc_sc_sol *= s->s_edit.es_scale;
 
     s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
     if (s->edit_state.edit_absolute_scale > 0)
@@ -258,11 +258,11 @@ mged_generic_strans_xy(vect_t *pos_view,
 {
     point_t pt;
     vect_t delta;
-    vect_t raw_kp = VINIT_ZERO;         /* s->edit_state.e_keypoint with s->edit_state.e_invmat applied */
+    vect_t raw_kp = VINIT_ZERO;         /* s->s_edit.e_keypoint with s->s_edit.e_invmat applied */
     vect_t raw_mp = VINIT_ZERO;         /* raw model position */
     mat_t mat;
 
-    MAT4X3PNT((*pos_view), view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
+    MAT4X3PNT((*pos_view), view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
     (*pos_view)[X] = mousevec[X];
     (*pos_view)[Y] = mousevec[Y];
     MAT4X3PNT(pt, view_state->vs_gvp->gv_view2model, (*pos_view));
@@ -270,12 +270,12 @@ mged_generic_strans_xy(vect_t *pos_view,
     /* Need vector from current vertex/keypoint
      * to desired new location.
      */
-    MAT4X3PNT(raw_mp, s->edit_state.e_invmat, pt);
-    MAT4X3PNT(raw_kp, s->edit_state.e_invmat, s->edit_state.curr_e_axes_pos);
+    MAT4X3PNT(raw_mp, s->s_edit.e_invmat, pt);
+    MAT4X3PNT(raw_kp, s->s_edit.e_invmat, s->s_edit.curr_e_axes_pos);
     VSUB2(delta, raw_kp, raw_mp);
     MAT_IDN(mat);
     MAT_DELTAS_VEC_NEG(mat, delta);
-    transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
+    transform_editing_solid(s, &s->s_edit.es_int, mat, &s->s_edit.es_int, 1);
 }
 
 void
@@ -287,11 +287,11 @@ update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
     fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
 
     MAT4X3PNT(model_pos, view_state->vs_gvp->gv_view2model, view_pos);
-    VSUB2(diff, model_pos, s->edit_state.e_axes_pos);
+    VSUB2(diff, model_pos, s->s_edit.e_axes_pos);
     VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
     VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
 
-    MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, s->edit_state.e_axes_pos);
+    MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, s->s_edit.e_axes_pos);
     VSUB2(s->edit_state.edit_absolute_view_tran, view_pos, ea_view_pos);
     VMOVE(s->edit_state.last_edit_absolute_view_tran, s->edit_state.edit_absolute_view_tran);
 }
@@ -304,7 +304,7 @@ mged_generic_edit_xy(
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->edit_state.es_int;
+    struct rt_db_internal *ip = &s->s_edit.es_int;
 
     switch (edflag) {
 	case SSCALE:
@@ -335,30 +335,30 @@ mged_generic_edit_xy(
 void
 mged_set_edflag(struct mged_state *s, int edflag)
 {
-    s->edit_state.edit_flag = edflag;
-    s->edit_state.solid_edit_pick = 0;
+    s->s_edit.edit_flag = edflag;
+    s->s_edit.solid_edit_pick = 0;
 
     switch (edflag) {
 	case SROT:
-	    s->edit_state.solid_edit_rotate = 1;
-	    s->edit_state.solid_edit_translate = 0;
-	    s->edit_state.solid_edit_scale = 0;
+	    s->s_edit.solid_edit_rotate = 1;
+	    s->s_edit.solid_edit_translate = 0;
+	    s->s_edit.solid_edit_scale = 0;
 	    break;
 	case STRANS:
-	    s->edit_state.solid_edit_rotate = 0;
-	    s->edit_state.solid_edit_translate = 1;
-	    s->edit_state.solid_edit_scale = 0;
+	    s->s_edit.solid_edit_rotate = 0;
+	    s->s_edit.solid_edit_translate = 1;
+	    s->s_edit.solid_edit_scale = 0;
 	    break;
 	case SSCALE:
 	case PSCALE:
-	    s->edit_state.solid_edit_rotate = 0;
-	    s->edit_state.solid_edit_translate = 0;
-	    s->edit_state.solid_edit_scale = 1;
+	    s->s_edit.solid_edit_rotate = 0;
+	    s->s_edit.solid_edit_translate = 0;
+	    s->s_edit.solid_edit_scale = 1;
 	    break;
 	default:
-	    s->edit_state.solid_edit_rotate = 0;
-	    s->edit_state.solid_edit_translate = 0;
-	    s->edit_state.solid_edit_scale = 0;
+	    s->s_edit.solid_edit_rotate = 0;
+	    s->s_edit.solid_edit_translate = 0;
+	    s->s_edit.solid_edit_scale = 0;
 	    break;
     }
 }

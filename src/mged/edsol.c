@@ -79,23 +79,23 @@ fastf_t es_m[3];		/* edge(line) slope */
 
 void
 set_e_axes_pos(struct mged_state *s, int both)
-    /* if (!both) then set only s->edit_state.curr_e_axes_pos, otherwise
-       set s->edit_state.e_axes_pos and s->edit_state.curr_e_axes_pos */
+    /* if (!both) then set only s->s_edit.curr_e_axes_pos, otherwise
+       set s->s_edit.e_axes_pos and s->s_edit.curr_e_axes_pos */
 {
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
-    struct rt_db_internal *ip = &s->edit_state.es_int;
+    struct rt_db_internal *ip = &s->s_edit.es_int;
 
     if (MGED_OBJ[ip->idb_type].ft_e_axes_pos) {
 	(*MGED_OBJ[ip->idb_type].ft_e_axes_pos)(s, ip, &s->tol.tol);
 	return;
     } else {
-	VMOVE(s->edit_state.curr_e_axes_pos, s->edit_state.e_keypoint);
+	VMOVE(s->s_edit.curr_e_axes_pos, s->s_edit.e_keypoint);
     }
 
     if (both) {
-	VMOVE(s->edit_state.e_axes_pos, s->edit_state.curr_e_axes_pos);
+	VMOVE(s->s_edit.e_axes_pos, s->s_edit.curr_e_axes_pos);
 
 	if (EDIT_ROTATE) {
 	    s->edit_state.e_edclass = EDIT_CLASS_ROTATE;
@@ -171,7 +171,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     if (s->edit_state.global_editing_state == ST_VIEW || s->edit_state.global_editing_state == ST_S_PICK || s->edit_state.global_editing_state == ST_O_PICK)
 	return TCL_OK;
 
-    get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
+    get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag, &s->s_edit.es_int, s->s_edit.e_mat);
     return TCL_OK;
 }
 
@@ -199,11 +199,11 @@ init_sedit(struct mged_state *s)
 	return;
     }
 
-    /* Read solid description into s->edit_state.es_int */
+    /* Read solid description into s->s_edit.es_int */
     if (!illump->s_u_data)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
+    if (rt_db_get_internal(&s->s_edit.es_int, LAST_SOLID(bdata),
 			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_sedit(",
@@ -212,30 +212,30 @@ init_sedit(struct mged_state *s)
 	} else {
 	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
 	}
-	rt_db_free_internal(&s->edit_state.es_int);
+	rt_db_free_internal(&s->s_edit.es_int);
 	return;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
-    id = s->edit_state.es_int.idb_type;
+    RT_CK_DB_INTERNAL(&s->s_edit.es_int);
+    id = s->s_edit.es_int.idb_type;
 
-    s->edit_state.edit_menu = 0;
+    s->s_edit.edit_menu = 0;
 
     // TODO - indicates we need per-primitive init of sedit state
     if (id == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
+	type = rt_arb_std_type(&s->s_edit.es_int, &s->tol.tol);
 	s->edit_state.e_type = type;
 
 	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol)) {
 	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
-	    rt_db_free_internal(&s->edit_state.es_int);
+	    rt_db_free_internal(&s->s_edit.es_int);
 	    bu_vls_free(&error_msg);
 	    return;
 	}
@@ -245,14 +245,14 @@ init_sedit(struct mged_state *s)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->edit_state.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->s_edit.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
-    bn_mat_inv(s->edit_state.e_invmat, s->edit_state.e_mat);
+    bn_mat_inv(s->s_edit.e_invmat, s->s_edit.e_mat);
 
     /* Establish initial keypoint */
-    s->edit_state.e_keytag = "";
-    get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
+    s->s_edit.e_keytag = "";
+    get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag, &s->s_edit.es_int, s->s_edit.e_mat);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -315,7 +315,7 @@ init_sedit_vars(struct mged_state *s)
 
 /*
  * All solid edit routines call this subroutine after
- * making a change to es_int or s->edit_state.e_mat.
+ * making a change to es_int or s->s_edit.e_mat.
  */
 void
 replot_editing_solid(struct mged_state *s)
@@ -343,7 +343,7 @@ replot_editing_solid(struct mged_state *s)
 		bdata = (struct ged_bv_data *)sp->s_u_data;
 		if (LAST_SOLID(bdata) == illdp) {
 		    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
-		    (void)replot_modified_solid(s, sp, &s->edit_state.es_int, mat);
+		    (void)replot_modified_solid(s, sp, &s->s_edit.es_int, mat);
 		}
 	    }
 	}
@@ -377,14 +377,14 @@ sedit_menu(struct mged_state *s) {
     mmenu_set_all(s, MENU_L1, NULL);
     chg_l2menu(s, ST_S_EDIT);
 
-    const struct rt_db_internal *ip = &s->edit_state.es_int;
+    const struct rt_db_internal *ip = &s->s_edit.es_int;
     if (MGED_OBJ[ip->idb_type].ft_menu_item) {
 	struct menu_item *mi = (*MGED_OBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
 	mmenu_set_all(s, MENU_L1, mi);
     }
 
     mged_set_edflag(s, IDLE);	/* Drop out of previous edit mode */
-    s->edit_state.edit_menu = 0;
+    s->s_edit.edit_menu = 0;
 }
 
 const char *
@@ -459,14 +459,14 @@ sedit(struct mged_state *s)
     // #define PRIM_OP_2 PRIM_OP_1+1
     // ...
     int had_method = 0;
-    const struct rt_db_internal *ip = &s->edit_state.es_int;
+    const struct rt_db_internal *ip = &s->s_edit.es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit) {
-	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, s->edit_state.edit_flag))
+	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, s->s_edit.edit_flag))
 	    return;
 	had_method = 1;
     }
 
-    switch (s->edit_state.edit_flag) {
+    switch (s->s_edit.edit_flag) {
 
 	case IDLE:
 	    /* do nothing more */
@@ -478,7 +478,7 @@ sedit(struct mged_state *s)
 		    break;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", s->edit_state.edit_flag);
+		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", s->s_edit.edit_flag);
 		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		mged_print_result(s, TCL_ERROR);
 		bu_vls_free(&tmp_vls);
@@ -486,8 +486,8 @@ sedit(struct mged_state *s)
     }
 
     /* If the keypoint changed location, find about it here */
-    if (!s->edit_state.e_keyfixed)
-	get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
+    if (!s->s_edit.e_keyfixed)
+	get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag, &s->s_edit.es_int, s->s_edit.e_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -501,8 +501,8 @@ sedit(struct mged_state *s)
 	bu_vls_free(&vls);
     }
 
-    s->edit_state.e_inpara = 0;
-    s->edit_state.e_mvalid = 0;
+    s->s_edit.e_inpara = 0;
+    s->s_edit.e_mvalid = 0;
 }
 
 
@@ -520,12 +520,12 @@ sedit(struct mged_state *s)
 void
 sedit_mouse(struct mged_state *s, const vect_t mousevec)
 {
-    if (s->edit_state.edit_flag <= 0)
+    if (s->s_edit.edit_flag <= 0)
 	return;
 
-    const struct rt_db_internal *ip = &s->edit_state.es_int;
+    const struct rt_db_internal *ip = &s->s_edit.es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit_xy)
-	 (*MGED_OBJ[ip->idb_type].ft_edit_xy)(s, s->edit_state.edit_flag, mousevec);
+	 (*MGED_OBJ[ip->idb_type].ft_edit_xy)(s, s->s_edit.edit_flag, mousevec);
 }
 
 
@@ -534,7 +534,7 @@ sedit_abs_scale(struct mged_state *s)
 {
     fastf_t old_acc_sc_sol;
 
-    if (s->edit_state.edit_flag != SSCALE && s->edit_state.edit_flag != PSCALE)
+    if (s->s_edit.edit_flag != SSCALE && s->s_edit.edit_flag != PSCALE)
 	return;
 
     old_acc_sc_sol = acc_sc_sol;
@@ -550,7 +550,7 @@ sedit_abs_scale(struct mged_state *s)
 	acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale;
     }
 
-    s->edit_state.es_scale = acc_sc_sol / old_acc_sc_sol;
+    s->s_edit.es_scale = acc_sc_sol / old_acc_sc_sol;
     sedit(s);
 }
 
@@ -622,7 +622,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
 	 */
-	VMOVE(temp, s->edit_state.e_keypoint);
+	VMOVE(temp, s->s_edit.e_keypoint);
 	MAT4X3PNT(pos_model, modelchanges, temp);
 	wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
@@ -632,7 +632,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	mat_t oldchanges;	/* temporary matrix */
 
 	/* Vector from object keypoint to cursor */
-	VMOVE(temp, s->edit_state.e_keypoint);
+	VMOVE(temp, s->s_edit.e_keypoint);
 	MAT4X3PNT(pos_view, view_state->vs_model2objview, temp);
 
 	if (movedir & RARROW)
@@ -713,7 +713,7 @@ oedit_abs_scale(struct mged_state *s)
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
-    VMOVE(temp, s->edit_state.e_keypoint);
+    VMOVE(temp, s->s_edit.e_keypoint);
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
@@ -775,9 +775,9 @@ init_oedit_guts(struct mged_state *s)
     const char *strp="";
 
     /* for safety sake */
-    s->edit_state.edit_menu = 0;
+    s->s_edit.edit_menu = 0;
     mged_set_edflag(s, -1);
-    MAT_IDN(s->edit_state.e_mat);
+    MAT_IDN(s->s_edit.e_mat);
 
     if (s->dbip == DBI_NULL || !illump) {
 	return;
@@ -790,16 +790,16 @@ init_oedit_guts(struct mged_state *s)
 	/* Have a processed (E'd) region - NO key solid.
 	 * Use the 'center' as the key
 	 */
-	VMOVE(s->edit_state.e_keypoint, illump->s_center);
+	VMOVE(s->s_edit.e_keypoint, illump->s_center);
 
-	/* The s_center takes the s->edit_state.e_mat into account already */
+	/* The s_center takes the s->s_edit.e_mat into account already */
     }
 
     /* Not an evaluated region - just a regular path ending in a solid */
     if (!illump->s_u_data)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
+    if (rt_db_get_internal(&s->s_edit.es_int, LAST_SOLID(bdata),
 			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_oedit(",
@@ -808,29 +808,29 @@ init_oedit_guts(struct mged_state *s)
 	} else {
 	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
 	}
-	rt_db_free_internal(&s->edit_state.es_int);
+	rt_db_free_internal(&s->s_edit.es_int);
 	button(s, BE_REJECT);
 	return;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
-    id = s->edit_state.es_int.idb_type;
+    RT_CK_DB_INTERNAL(&s->s_edit.es_int);
+    id = s->s_edit.es_int.idb_type;
 
     if (id == ID_ARB8) {
 	struct rt_arb_internal *arb;
 
-	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	s->edit_state.e_type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
+	s->edit_state.e_type = rt_arb_std_type(&s->s_edit.es_int, &s->tol.tol);
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->edit_state.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->s_edit.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
-    bn_mat_inv(s->edit_state.e_invmat, s->edit_state.e_mat);
+    bn_mat_inv(s->s_edit.e_invmat, s->s_edit.e_mat);
 
-    get_solid_keypoint(s, &s->edit_state.e_keypoint, &strp, &s->edit_state.es_int, s->edit_state.e_mat);
+    get_solid_keypoint(s, &s->s_edit.e_keypoint, &strp, &s->s_edit.es_int, s->s_edit.e_mat);
     init_oedit_vars(s);
 }
 
@@ -1001,7 +1001,7 @@ oedit_accept(struct mged_state *s)
 void
 oedit_reject(struct mged_state *s)
 {
-    rt_db_free_internal(&s->edit_state.es_int);
+    rt_db_free_internal(&s->s_edit.es_int);
 }
 
 
@@ -1074,8 +1074,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* make sure that any BOT solid is minimally legal */
-    if (s->edit_state.es_int.idb_type == ID_BOT) {
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
+    if (s->s_edit.es_int.idb_type == ID_BOT) {
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit.es_int.idb_ptr;
 
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode == RT_BOT_SURFACE || bot->mode == RT_BOT_SOLID) {
@@ -1099,11 +1099,11 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* Scale change on export is 1.0 -- no change */
-    if (rt_db_put_internal(dp, s->dbip, &s->edit_state.es_int, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, s->dbip, &s->s_edit.es_int, &rt_uniresource) < 0) {
 	Tcl_AppendResult(s->interp, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
-	    rt_db_free_internal(&s->edit_state.es_int);
+	    rt_db_free_internal(&s->s_edit.es_int);
 	}
 	return TCL_ERROR;				/* FAIL */
     }
@@ -1114,16 +1114,16 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	mged_set_edflag(s, -1);
 	s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
-	rt_db_free_internal(&s->edit_state.es_int);
+	rt_db_free_internal(&s->s_edit.es_int);
     } else {
-	/* XXX hack to restore s->edit_state.es_int after rt_db_put_internal blows it away */
-	/* Read solid description into s->edit_state.es_int again! Gaak! */
-	if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
+	/* XXX hack to restore s->s_edit.es_int after rt_db_put_internal blows it away */
+	/* Read solid description into s->s_edit.es_int again! Gaak! */
+	if (rt_db_get_internal(&s->s_edit.es_int, LAST_SOLID(bdata),
 			       s->dbip, NULL, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(s->interp, "sedit_apply(",
 			     LAST_SOLID(bdata)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
-	    rt_db_free_internal(&s->edit_state.es_int);
+	    rt_db_free_internal(&s->s_edit.es_int);
 	    return TCL_ERROR;
 	}
     }
@@ -1212,7 +1212,7 @@ sedit_reject(struct mged_state *s)
     mged_set_edflag(s, -1);
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
-    rt_db_free_internal(&s->edit_state.es_int);
+    rt_db_free_internal(&s->s_edit.es_int);
 }
 
 int
@@ -1222,16 +1222,16 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 
     CHECK_DBI_NULL;
 
-    if (s->edit_state.edit_flag <= 0) {
+    if (s->s_edit.edit_flag <= 0) {
 	Tcl_AppendResult(interp,
 			 "A solid editor option not selected\n",
 			 (char *)NULL);
 	return TCL_ERROR;
     }
 
-    s->edit_state.e_inpara = 0;
+    s->s_edit.e_inpara = 0;
     for (i = 0; i < argc; i++) {
-	s->edit_state.e_para[ s->edit_state.e_inpara++ ] = argvect[i];
+	s->s_edit.e_para[ s->s_edit.e_inpara++ ] = argvect[i];
     }
 
     sedit(s);
@@ -1240,11 +1240,11 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	vect_t diff;
 	fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
 
-	VSUB2(diff, s->edit_state.e_para, s->edit_state.e_axes_pos);
+	VSUB2(diff, s->s_edit.e_para, s->s_edit.e_axes_pos);
 	VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
 	VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
     } else if (SEDIT_ROTATE) {
-	VMOVE(s->edit_state.edit_absolute_model_rotate, s->edit_state.e_para);
+	VMOVE(s->edit_state.edit_absolute_model_rotate, s->s_edit.e_para);
     } else if (SEDIT_SCALE) {
 	s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
 	if (s->edit_state.edit_absolute_scale > 0)
@@ -1307,12 +1307,12 @@ label_edited_solid(
 
     // First, see if we have an edit-aware labeling method.  If we do, use it.
     if (MGED_OBJ[ip->idb_type].ft_labels) {
-	(*MGED_OBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
+	(*MGED_OBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, &s->s_edit.es_int, &s->tol.tol);
 	return;
     }
     // If there is no editing-aware labeling, use standard librt labels
     if (OBJ[ip->idb_type].ft_labels) {
-	npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
+	npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->s_edit.es_int, &s->tol.tol);
 	return;
     }
 
@@ -1352,27 +1352,27 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t key;
 
-		VSCALE(key, s->edit_state.e_keypoint, s->dbip->dbi_base2local);
-		bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", s->edit_state.e_keytag, V3ARGS(key));
+		VSCALE(key, s->s_edit.e_keypoint, s->dbip->dbi_base2local);
+		bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", s->s_edit.e_keytag, V3ARGS(key));
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 
 	    break;
 	case 3:
-	    VSET(s->edit_state.e_keypoint,
+	    VSET(s->s_edit.e_keypoint,
 		 atof(argv[1]) * s->dbip->dbi_local2base,
 		 atof(argv[2]) * s->dbip->dbi_local2base,
 		 atof(argv[3]) * s->dbip->dbi_local2base);
-	    s->edit_state.e_keytag = "user-specified";
-	    s->edit_state.e_keyfixed = 1;
+	    s->s_edit.e_keytag = "user-specified";
+	    s->s_edit.e_keyfixed = 1;
 	    break;
 	case 1:
 	    if (BU_STR_EQUAL(argv[1], "reset")) {
-		s->edit_state.e_keytag = "";
-		s->edit_state.e_keyfixed = 0;
-		get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag,
-				   &s->edit_state.es_int, s->edit_state.e_mat);
+		s->s_edit.e_keytag = "";
+		s->s_edit.e_keyfixed = 0;
+		get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag,
+				   &s->s_edit.es_int, s->s_edit.e_mat);
 		break;
 	    }
 	    /* fall through */
@@ -1392,7 +1392,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
-    struct rt_db_internal *ip = &s->edit_state.es_int;
+    struct rt_db_internal *ip = &s->s_edit.es_int;
 
     struct menu_item *mip = (struct menu_item *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1400,7 +1400,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
     if (s->edit_state.global_editing_state != ST_S_EDIT)
 	return TCL_ERROR;
 
-    switch (s->edit_state.es_int.idb_type) {
+    switch (s->s_edit.es_int.idb_type) {
 	case ID_ARB8:
 	    {
 		struct bu_vls vls2 = BU_VLS_INIT_ZERO;
@@ -1524,9 +1524,9 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
 	/* get solid type and parameters */
-	RT_CK_DB_INTERNAL(&s->edit_state.es_int);
-	RT_CK_FUNCTAB(s->edit_state.es_int.idb_meth);
-	status = s->edit_state.es_int.idb_meth->ft_get(&logstr, &s->edit_state.es_int, (char *)0);
+	RT_CK_DB_INTERNAL(&s->s_edit.es_int);
+	RT_CK_FUNCTAB(s->s_edit.es_int.idb_meth);
+	status = s->s_edit.es_int.idb_meth->ft_get(&logstr, &s->s_edit.es_int, (char *)0);
 	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
 	pto = Tcl_GetObjResult(interp);
 
@@ -1548,7 +1548,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     /* apply matrices along the path */
     RT_DB_INTERNAL_INIT(&ces_int);
-    transform_editing_solid(s, &ces_int, s->edit_state.e_mat, &s->edit_state.es_int, 0);
+    transform_editing_solid(s, &ces_int, s->s_edit.e_mat, &s->s_edit.es_int, 0);
 
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&ces_int);
@@ -1626,37 +1626,37 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    RT_CK_FUNCTAB(s->edit_state.es_int.idb_meth);
-    if (s->edit_state.es_int.idb_meth != ftp) {
+    RT_CK_FUNCTAB(s->s_edit.es_int.idb_meth);
+    if (s->s_edit.es_int.idb_meth != ftp) {
 	Tcl_AppendResult(interp,
 			 "put_sed: idb_meth type mismatch",
 			 (char *)0);
     }
 
-    save_magic = *((uint32_t *)s->edit_state.es_int.idb_ptr);
-    *((uint32_t *)s->edit_state.es_int.idb_ptr) = ftp->ft_internal_magic;
+    save_magic = *((uint32_t *)s->s_edit.es_int.idb_ptr);
+    *((uint32_t *)s->s_edit.es_int.idb_ptr) = ftp->ft_internal_magic;
     {
 	int ret;
 	struct bu_vls vlog = BU_VLS_INIT_ZERO;
 
-	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)s->edit_state.es_int.idb_ptr, NULL);
+	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)s->s_edit.es_int.idb_ptr, NULL);
 	Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
 	bu_vls_free(&vlog);
 	if (ret != BRLCAD_OK)
 	    return TCL_ERROR;
     }
-    *((uint32_t *)s->edit_state.es_int.idb_ptr) = save_magic;
+    *((uint32_t *)s->s_edit.es_int.idb_ptr) = save_magic;
 
     if (context)
-	transform_editing_solid(s, &s->edit_state.es_int, s->edit_state.e_invmat, &s->edit_state.es_int, 1);
+	transform_editing_solid(s, &s->s_edit.es_int, s->s_edit.e_invmat, &s->s_edit.es_int, 1);
 
     /* must re-calculate the face plane equations for arbs
      * TODO - why do we need to do this here, and not in edarb.c code somewhere? */
-    if (s->edit_state.es_int.idb_type == ID_ARB8) {
+    if (s->s_edit.es_int.idb_type == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
 	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol) < 0)
@@ -1664,8 +1664,8 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	bu_vls_free(&error_msg);
     }
 
-    if (!s->edit_state.e_keyfixed)
-	get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
+    if (!s->s_edit.e_keyfixed)
+	get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag, &s->s_edit.es_int, s->s_edit.e_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -1693,7 +1693,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     }
 
     /* free old copy */
-    rt_db_free_internal(&s->edit_state.es_int);
+    rt_db_free_internal(&s->s_edit.es_int);
 
     /* reset */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL;
@@ -1705,7 +1705,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     if (!illump || !illump->s_u_data)
 	return TCL_ERROR;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
+    if (rt_db_get_internal(&s->s_edit.es_int, LAST_SOLID(bdata),
 			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(interp, "sedit_reset(",
@@ -1717,12 +1717,12 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	}
 	return TCL_ERROR;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
+    RT_CK_DB_INTERNAL(&s->s_edit.es_int);
     replot_editing_solid(s);
 
     /* Establish initial keypoint */
-    s->edit_state.e_keytag = "";
-    get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
+    s->s_edit.e_keytag = "";
+    get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag, &s->s_edit.es_int, s->s_edit.e_mat);
 
     /* Reset relevant variables */
     MAT_IDN(acc_rot_sol);
@@ -1840,13 +1840,13 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
     /* Save aggregate path matrix */
-    MAT_IDN(s->edit_state.e_mat);
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->edit_state.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    MAT_IDN(s->s_edit.e_mat);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->s_edit.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
-    bn_mat_inv(s->edit_state.e_invmat, s->edit_state.e_mat);
+    bn_mat_inv(s->s_edit.e_invmat, s->s_edit.e_mat);
 
-    get_solid_keypoint(s, &s->edit_state.e_keypoint, &strp, &s->edit_state.es_int, s->edit_state.e_mat);
+    get_solid_keypoint(s, &s->s_edit.e_keypoint, &strp, &s->s_edit.es_int, s->s_edit.e_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
     update_views = 1;

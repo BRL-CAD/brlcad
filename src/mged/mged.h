@@ -115,6 +115,10 @@ struct cmdtab {
 #include "./mged_dm.h" /* _view_state */
 
 struct mged_edit_state {
+
+    // main global editing state (ugh)
+    int global_editing_state;
+
     // Rotate
     vect_t edit_absolute_model_rotate;
     vect_t edit_absolute_object_rotate;
@@ -140,7 +144,6 @@ struct mged_edit_state {
     int edit_rateflag_view_tran;
 
     // Scale
-    fastf_t es_scale;	/* scale factor */
     fastf_t edit_absolute_scale;
     fastf_t edit_rate_scale;
     int edit_rateflag_scale;
@@ -161,12 +164,16 @@ struct mged_edit_state {
     struct mged_dm *edit_rate_mt_dm;
     struct mged_dm *edit_rate_vt_dm;
 
+    int e_edclass;		/* type of editing class for this solid */
+    int e_type;			/* COMGEOM solid type */
+
+};
+
+struct mged_solid_edit {
+
     // Container to hold the intermediate state
     // of the object being edited (I think?)
     struct rt_db_internal es_int;
-
-    // main global editing state (ugh)
-    int global_editing_state;
 
     // Primary variable used to identify specific editing operations
     int edit_flag;
@@ -176,14 +183,15 @@ struct mged_edit_state {
      * it to something more general than "menu"... */
     int edit_menu;
 
-    // MGED wants to know if we're in solid rotate,
-    // translate or scale mode.  Rather than
-    // keying off of primitive specific edit op
+    // MGED wants to know if we're in solid rotate, translate or scale mode.
+    // (TODO - why?) Rather than keying off of primitive specific edit op
     // types, have the ops set flags:
     int solid_edit_rotate;
     int solid_edit_translate;
     int solid_edit_scale;
     int solid_edit_pick;
+
+    fastf_t es_scale;		/* scale factor */
 
     int e_keyfixed;		/* keypoint specified by user? */
     point_t e_keypoint;		/* center of editing xforms */
@@ -195,9 +203,6 @@ struct mged_edit_state {
     int e_inpara;		/* e_para valid.  e_mvalid must = 0 */
     vect_t e_para;		/* keyboard input parameter changes */
 
-    int e_edclass;		/* type of editing class for this solid */
-    int e_type;			/* COMGEOM solid type */
-
     mat_t e_invmat;		/* inverse of e_mat KAA */
     mat_t e_mat;		/* accumulated matrix of path */
 
@@ -206,6 +211,7 @@ struct mged_edit_state {
 
     /* Internal primitive editing information specific to primitive types. */
     void *ipe_ptr;
+
 };
 
 /* global application state */
@@ -236,6 +242,7 @@ struct mged_state {
 
     /* Editing related */
     struct mged_edit_state edit_state;
+    struct mged_solid_edit s_edit;
 };
 extern struct mged_state *MGED_STATE;
 

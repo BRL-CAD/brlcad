@@ -1022,11 +1022,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'm';
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->edit_state.edit_flag;
-	    save_rot = s->edit_state.solid_edit_rotate;
-	    save_tra = s->edit_state.solid_edit_translate;
-	    save_sca = s->edit_state.solid_edit_scale;
-	    save_pic = s->edit_state.solid_edit_pick;
+	    save_edflag = s->s_edit.edit_flag;
+	    save_rot = s->s_edit.solid_edit_rotate;
+	    save_tra = s->s_edit.solid_edit_translate;
+	    save_sca = s->s_edit.solid_edit_scale;
+	    save_pic = s->s_edit.solid_edit_pick;
 	    if (!SEDIT_ROTATE)
 		mged_set_edflag(s, SROT);
 	} else {
@@ -1047,11 +1047,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    s->edit_state.edit_flag = save_edflag;
-	    s->edit_state.solid_edit_rotate = save_rot;
-	    s->edit_state.solid_edit_translate = save_tra;
-	    s->edit_state.solid_edit_scale = save_sca;
-	    s->edit_state.solid_edit_pick = save_pic;
+	    s->s_edit.edit_flag = save_edflag;
+	    s->s_edit.solid_edit_rotate = save_rot;
+	    s->s_edit.solid_edit_translate = save_tra;
+	    s->s_edit.solid_edit_scale = save_sca;
+	    s->s_edit.solid_edit_pick = save_pic;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1065,11 +1065,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'o';
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->edit_state.edit_flag;
-	    save_rot = s->edit_state.solid_edit_rotate;
-	    save_tra = s->edit_state.solid_edit_translate;
-	    save_sca = s->edit_state.solid_edit_scale;
-	    save_pic = s->edit_state.solid_edit_pick;
+	    save_edflag = s->s_edit.edit_flag;
+	    save_rot = s->s_edit.solid_edit_rotate;
+	    save_tra = s->s_edit.solid_edit_translate;
+	    save_sca = s->s_edit.solid_edit_scale;
+	    save_pic = s->s_edit.solid_edit_pick;
 	    if (!SEDIT_ROTATE)
 		mged_set_edflag(s, SROT);
 	} else {
@@ -1090,11 +1090,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    s->edit_state.edit_flag = save_edflag;
-	    s->edit_state.solid_edit_rotate = save_rot;
-	    s->edit_state.solid_edit_translate = save_tra;
-	    s->edit_state.solid_edit_scale = save_sca;
-	    s->edit_state.solid_edit_pick = save_pic;
+	    s->s_edit.edit_flag = save_edflag;
+	    s->s_edit.solid_edit_rotate = save_rot;
+	    s->s_edit.solid_edit_translate = save_tra;
+	    s->s_edit.solid_edit_scale = save_sca;
+	    s->s_edit.solid_edit_pick = save_pic;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1108,11 +1108,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'v';
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->edit_state.edit_flag;
-	    save_rot = s->edit_state.solid_edit_rotate;
-	    save_tra = s->edit_state.solid_edit_translate;
-	    save_sca = s->edit_state.solid_edit_scale;
-	    save_pic = s->edit_state.solid_edit_pick;
+	    save_edflag = s->s_edit.edit_flag;
+	    save_rot = s->s_edit.solid_edit_rotate;
+	    save_tra = s->s_edit.solid_edit_translate;
+	    save_sca = s->s_edit.solid_edit_scale;
+	    save_pic = s->s_edit.solid_edit_pick;
 	    if (!SEDIT_ROTATE)
 		mged_set_edflag(s, SROT);
 	} else {
@@ -1133,11 +1133,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    s->edit_state.edit_flag = save_edflag;
-	    s->edit_state.solid_edit_rotate = save_rot;
-	    s->edit_state.solid_edit_translate = save_tra;
-	    s->edit_state.solid_edit_scale = save_sca;
-	    s->edit_state.solid_edit_pick = save_pic;
+	    s->s_edit.edit_flag = save_edflag;
+	    s->s_edit.solid_edit_rotate = save_rot;
+	    s->s_edit.solid_edit_translate = save_tra;
+	    s->s_edit.solid_edit_scale = save_sca;
+	    s->s_edit.solid_edit_pick = save_pic;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1151,11 +1151,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'm';
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->edit_state.edit_flag;
-	    save_rot = s->edit_state.solid_edit_rotate;
-	    save_tra = s->edit_state.solid_edit_translate;
-	    save_sca = s->edit_state.solid_edit_scale;
-	    save_pic = s->edit_state.solid_edit_pick;
+	    save_edflag = s->s_edit.edit_flag;
+	    save_rot = s->s_edit.solid_edit_rotate;
+	    save_tra = s->s_edit.solid_edit_translate;
+	    save_sca = s->s_edit.solid_edit_scale;
+	    save_pic = s->s_edit.solid_edit_pick;
 	    if (!SEDIT_TRAN)
 		mged_set_edflag(s, STRANS);
 	} else {
@@ -1175,11 +1175,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    s->edit_state.edit_flag = save_edflag;
-	    s->edit_state.solid_edit_rotate = save_rot;
-	    s->edit_state.solid_edit_translate = save_tra;
-	    s->edit_state.solid_edit_scale = save_sca;
-	    s->edit_state.solid_edit_pick = save_pic;
+	    s->s_edit.edit_flag = save_edflag;
+	    s->s_edit.solid_edit_rotate = save_rot;
+	    s->s_edit.solid_edit_translate = save_tra;
+	    s->s_edit.solid_edit_scale = save_sca;
+	    s->s_edit.solid_edit_pick = save_pic;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1193,11 +1193,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'v';
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->edit_state.edit_flag;
-	    save_rot = s->edit_state.solid_edit_rotate;
-	    save_tra = s->edit_state.solid_edit_translate;
-	    save_sca = s->edit_state.solid_edit_scale;
-	    save_pic = s->edit_state.solid_edit_pick;
+	    save_edflag = s->s_edit.edit_flag;
+	    save_rot = s->s_edit.solid_edit_rotate;
+	    save_tra = s->s_edit.solid_edit_translate;
+	    save_sca = s->s_edit.solid_edit_scale;
+	    save_pic = s->s_edit.solid_edit_pick;
 	    if (!SEDIT_TRAN)
 		mged_set_edflag(s, STRANS);
 	} else {
@@ -1217,11 +1217,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    s->edit_state.edit_flag = save_edflag;
-	    s->edit_state.solid_edit_rotate = save_rot;
-	    s->edit_state.solid_edit_translate = save_tra;
-	    s->edit_state.solid_edit_scale = save_sca;
-	    s->edit_state.solid_edit_pick = save_pic;
+	    s->s_edit.edit_flag = save_edflag;
+	    s->s_edit.solid_edit_rotate = save_rot;
+	    s->s_edit.solid_edit_translate = save_tra;
+	    s->s_edit.solid_edit_scale = save_sca;
+	    s->s_edit.solid_edit_pick = save_pic;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1230,11 +1230,11 @@ event_check(struct mged_state *s, int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->edit_state.edit_flag;
-	    save_rot = s->edit_state.solid_edit_rotate;
-	    save_tra = s->edit_state.solid_edit_translate;
-	    save_sca = s->edit_state.solid_edit_scale;
-	    save_pic = s->edit_state.solid_edit_pick;
+	    save_edflag = s->s_edit.edit_flag;
+	    save_rot = s->s_edit.solid_edit_rotate;
+	    save_tra = s->s_edit.solid_edit_translate;
+	    save_sca = s->s_edit.solid_edit_scale;
+	    save_pic = s->s_edit.solid_edit_pick;
 	    if (!SEDIT_SCALE)
 		mged_set_edflag(s, SSCALE);
 	} else {
@@ -1250,11 +1250,11 @@ event_check(struct mged_state *s, int non_blocking)
 	bu_vls_free(&vls);
 
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    s->edit_state.edit_flag = save_edflag;
-	    s->edit_state.solid_edit_rotate = save_rot;
-	    s->edit_state.solid_edit_translate = save_tra;
-	    s->edit_state.solid_edit_scale = save_sca;
-	    s->edit_state.solid_edit_pick = save_pic;
+	    s->s_edit.edit_flag = save_edflag;
+	    s->s_edit.solid_edit_rotate = save_rot;
+	    s->s_edit.solid_edit_translate = save_tra;
+	    s->s_edit.solid_edit_scale = save_sca;
+	    s->s_edit.solid_edit_pick = save_pic;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -2137,7 +2137,7 @@ main(int argc, char *argv[])
     s->edit_state.global_editing_state = ST_VIEW;
     mged_set_edflag(s, -1); /* no solid editing just now */
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
-    s->edit_state.e_inpara = newedge = 0;
+    s->s_edit.e_inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;

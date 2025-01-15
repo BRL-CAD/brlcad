@@ -55,27 +55,27 @@ extern const char * get_file_name(struct mged_state *s, char *str);
 static void
 dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    s->edit_state.edit_menu = arg;
+    s->s_edit.edit_menu = arg;
     mged_set_edflag(s, -1);
 
     switch (arg) {
 	case MENU_DSP_FNAME:
-	    s->edit_state.edit_flag = ECMD_DSP_FNAME;
+	    s->s_edit.edit_flag = ECMD_DSP_FNAME;
 	    break;
 	case MENU_DSP_FSIZE:
-	    s->edit_state.edit_flag = ECMD_DSP_FSIZE;  // Unimplemented.  Expects 2 parameters
+	    s->s_edit.edit_flag = ECMD_DSP_FSIZE;  // Unimplemented.  Expects 2 parameters
 	    break;
 	case MENU_DSP_SCALE_X:
-	    s->edit_state.edit_flag = ECMD_DSP_SCALE_X;
-	    s->edit_state.solid_edit_scale = 1;
+	    s->s_edit.edit_flag = ECMD_DSP_SCALE_X;
+	    s->s_edit.solid_edit_scale = 1;
 	    break;
 	case MENU_DSP_SCALE_Y:
-	    s->edit_state.edit_flag = ECMD_DSP_SCALE_Y;
-	    s->edit_state.solid_edit_scale = 1;
+	    s->s_edit.edit_flag = ECMD_DSP_SCALE_Y;
+	    s->s_edit.solid_edit_scale = 1;
 	    break;
 	case MENU_DSP_SCALE_ALT:
-	    s->edit_state.edit_flag = ECMD_DSP_SCALE_ALT;
-	    s->edit_state.solid_edit_scale = 1;
+	    s->s_edit.edit_flag = ECMD_DSP_SCALE_ALT;
+	    s->s_edit.solid_edit_scale = 1;
 	    break;
     }
 
@@ -106,25 +106,25 @@ dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 
     MAT_IDN(m);
 
-    if (s->edit_state.e_mvalid) {
-	bu_log("s->edit_state.e_mvalid %g %g %g\n", V3ARGS(s->edit_state.e_mparam));
+    if (s->s_edit.e_mvalid) {
+	bu_log("s->s_edit.e_mvalid %g %g %g\n", V3ARGS(s->s_edit.e_mparam));
     }
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->edit_state.e_inpara > 0) {
-	m[idx] = s->edit_state.e_para[0];
-	bu_log("Keyboard %g\n", s->edit_state.e_para[0]);
-    } else if (!ZERO(s->edit_state.es_scale)) {
-	m[idx] *= s->edit_state.es_scale;
-	bu_log("s->edit_state.es_scale %g\n", s->edit_state.es_scale);
-	s->edit_state.es_scale = 0.0;
+    if (s->s_edit.e_inpara > 0) {
+	m[idx] = s->s_edit.e_para[0];
+	bu_log("Keyboard %g\n", s->s_edit.e_para[0]);
+    } else if (!ZERO(s->s_edit.es_scale)) {
+	m[idx] *= s->s_edit.es_scale;
+	bu_log("s->s_edit.es_scale %g\n", s->s_edit.es_scale);
+	s->s_edit.es_scale = 0.0;
     }
 
-    bn_mat_xform_about_pnt(scalemat, m, s->edit_state.e_keypoint);
+    bn_mat_xform_about_pnt(scalemat, m, s->s_edit.e_keypoint);
 
     bn_mat_mul(m, dsp->dsp_stom, scalemat);
     MAT_COPY(dsp->dsp_stom, m);
@@ -137,18 +137,18 @@ dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 int
 ecmd_dsp_scale_x(struct mged_state *s)
 {
-    if (s->edit_state.e_inpara != 1) {
+    if (s->s_edit.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
-    if (s->edit_state.e_para[0] <= 0.0) {
+    if (s->s_edit.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSX);
+    dsp_scale(s, (struct rt_dsp_internal *)s->s_edit.es_int.idb_ptr, MSX);
 
     return 0;
 }
@@ -156,18 +156,18 @@ ecmd_dsp_scale_x(struct mged_state *s)
 int
 ecmd_dsp_scale_y(struct mged_state *s)
 {
-    if (s->edit_state.e_inpara != 1) {
+    if (s->s_edit.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
-    if (s->edit_state.e_para[0] <= 0.0) {
+    if (s->s_edit.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSY);
+    dsp_scale(s, (struct rt_dsp_internal *)s->s_edit.es_int.idb_ptr, MSY);
 
     return 0;
 }
@@ -175,18 +175,18 @@ ecmd_dsp_scale_y(struct mged_state *s)
 int
 ecmd_dsp_scale_alt(struct mged_state *s)
 {
-    if (s->edit_state.e_inpara != 1) {
+    if (s->s_edit.e_inpara != 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
-    if (s->edit_state.e_para[0] <= 0.0) {
+    if (s->s_edit.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSZ);
+    dsp_scale(s, (struct rt_dsp_internal *)s->s_edit.es_int.idb_ptr, MSZ);
 
     return 0;
 }
@@ -195,7 +195,7 @@ int
 ecmd_dsp_fname(struct mged_state *s)
 {
     struct rt_dsp_internal *dsp =
-	(struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_dsp_internal *)s->s_edit.es_int.idb_ptr;
     const char *fname;
     struct stat stat_buf;
     b_off_t need_size;
@@ -234,14 +234,14 @@ mged_dsp_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->edit_state.es_int);
+	    return mged_generic_sscale(s, &s->s_edit.es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->edit_state.es_int);
+	    mged_generic_strans(s, &s->s_edit.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->edit_state.es_int);
+	    mged_generic_srot(s, &s->s_edit.es_int);
 	    break;
 	case ECMD_DSP_SCALE_X:
 	    return ecmd_dsp_scale_x(s);
@@ -266,7 +266,7 @@ mged_dsp_edit_xy(
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->edit_state.es_int;
+    struct rt_db_internal *ip = &s->s_edit.es_int;
 
     switch (edflag) {
 	case SSCALE:

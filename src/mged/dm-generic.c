@@ -202,7 +202,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -214,7 +214,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -272,11 +272,11 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			int save_sca = 0;
 			int save_pic = 0;
 			if (s->edit_state.global_editing_state == ST_S_EDIT) {
-			    save_edflag = s->edit_state.edit_flag;
-			    save_rot = s->edit_state.solid_edit_rotate;
-			    save_tra = s->edit_state.solid_edit_translate;
-			    save_sca = s->edit_state.solid_edit_scale;
-			    save_pic = s->edit_state.solid_edit_pick;
+			    save_edflag = s->s_edit.edit_flag;
+			    save_rot = s->s_edit.solid_edit_rotate;
+			    save_tra = s->s_edit.solid_edit_translate;
+			    save_sca = s->s_edit.solid_edit_scale;
+			    save_pic = s->s_edit.solid_edit_pick;
 			    if (!SEDIT_TRAN)
 				mged_set_edflag(s, STRANS);
 			} else {
@@ -287,11 +287,11 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			snap_keypoint_to_grid(s);
 
 			if (s->edit_state.global_editing_state == ST_S_EDIT) {
-			    s->edit_state.edit_flag = save_edflag;
-			    s->edit_state.solid_edit_rotate = save_rot;
-			    s->edit_state.solid_edit_translate = save_tra;
-			    s->edit_state.solid_edit_scale = save_sca;
-			    s->edit_state.solid_edit_pick = save_pic;
+			    s->s_edit.edit_flag = save_edflag;
+			    s->s_edit.solid_edit_rotate = save_rot;
+			    s->s_edit.solid_edit_translate = save_tra;
+			    s->s_edit.solid_edit_scale = save_sca;
+			    s->s_edit.solid_edit_pick = save_pic;
 			} else {
 			    edobj = save_edflag;
 			}

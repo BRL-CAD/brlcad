@@ -44,7 +44,7 @@
 
 static void
 superell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b)) {
-    s->edit_state.edit_menu = arg;
+    s->s_edit.edit_menu = arg;
     mged_set_edflag(s, PSCALE);
     set_e_axes_pos(s, 1);
     return;
@@ -171,14 +171,14 @@ void
 menu_superell_scale_a(struct mged_state *s)
 {
     struct rt_superell_internal *superell =
-	(struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_superell_internal *)s->s_edit.es_int.idb_ptr;
     RT_SUPERELL_CK_MAGIC(superell);
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
-	s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15] /
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
+	s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15] /
 	    MAGNITUDE(superell->a);
     }
-    VSCALE(superell->a, superell->a, s->edit_state.es_scale);
+    VSCALE(superell->a, superell->a, s->s_edit.es_scale);
 }
 
 /* scale vector B */
@@ -186,14 +186,14 @@ void
 menu_superell_scale_b(struct mged_state *s)
 {
     struct rt_superell_internal *superell =
-	(struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_superell_internal *)s->s_edit.es_int.idb_ptr;
     RT_SUPERELL_CK_MAGIC(superell);
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
-	s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15] /
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
+	s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15] /
 	    MAGNITUDE(superell->b);
     }
-    VSCALE(superell->b, superell->b, s->edit_state.es_scale);
+    VSCALE(superell->b, superell->b, s->s_edit.es_scale);
 }
 
 /* scale vector C */
@@ -201,14 +201,14 @@ void
 menu_superell_scale_c(struct mged_state *s)
 {
     struct rt_superell_internal *superell =
-	(struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_superell_internal *)s->s_edit.es_int.idb_ptr;
     RT_SUPERELL_CK_MAGIC(superell);
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
-	s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15] /
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
+	s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15] /
 	    MAGNITUDE(superell->c);
     }
-    VSCALE(superell->c, superell->c, s->edit_state.es_scale);
+    VSCALE(superell->c, superell->c, s->s_edit.es_scale);
 }
 
 /* set A, B, and C length the same */
@@ -217,14 +217,14 @@ menu_superell_scale_abc(struct mged_state *s)
 {
     fastf_t ma, mb;
     struct rt_superell_internal *superell =
-	(struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+	(struct rt_superell_internal *)s->s_edit.es_int.idb_ptr;
     RT_SUPERELL_CK_MAGIC(superell);
-    if (s->edit_state.e_inpara) {
-	/* take s->edit_state.e_mat[15] (path scaling) into account */
-	s->edit_state.es_scale = s->edit_state.e_para[0] * s->edit_state.e_mat[15] /
+    if (s->s_edit.e_inpara) {
+	/* take s->s_edit.e_mat[15] (path scaling) into account */
+	s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15] /
 	    MAGNITUDE(superell->a);
     }
-    VSCALE(superell->a, superell->a, s->edit_state.es_scale);
+    VSCALE(superell->a, superell->a, s->s_edit.es_scale);
     ma = MAGNITUDE(superell->a);
     mb = MAGNITUDE(superell->b);
     VSCALE(superell->b, superell->b, ma/mb);
@@ -235,22 +235,22 @@ menu_superell_scale_abc(struct mged_state *s)
 static int
 mged_superell_pscale(struct mged_state *s, int mode)
 {
-    if (s->edit_state.e_inpara > 1) {
+    if (s->s_edit.e_inpara > 1) {
 	Tcl_AppendResult(s->interp, "ERROR: only one argument needed\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.e_para[0] <= 0.0) {
+    if (s->s_edit.e_para[0] <= 0.0) {
 	Tcl_AppendResult(s->interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-	s->edit_state.e_inpara = 0;
+	s->s_edit.e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_SUPERELL_SCALE_A:
@@ -276,17 +276,17 @@ mged_superell_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->edit_state.es_int);
+	    return mged_generic_sscale(s, &s->s_edit.es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->edit_state.es_int);
+	    mged_generic_strans(s, &s->s_edit.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->edit_state.es_int);
+	    mged_generic_srot(s, &s->s_edit.es_int);
 	    break;
 	case PSCALE:
-	    return mged_superell_pscale(s, s->edit_state.edit_menu);
+	    return mged_superell_pscale(s, s->s_edit.edit_menu);
     }
     return 0;
 }

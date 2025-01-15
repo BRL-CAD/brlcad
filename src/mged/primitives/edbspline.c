@@ -56,11 +56,11 @@ spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     }
     /* For example, this will set edit_flag = ECMD_VTRANS */
     if (arg == ECMD_VTRANS) {
-	s->edit_state.edit_flag = ECMD_VTRANS;
-	s->edit_state.solid_edit_rotate = 0;
-	s->edit_state.solid_edit_translate = 1;
-	s->edit_state.solid_edit_scale = 0;
-	s->edit_state.solid_edit_pick = 0;
+	s->s_edit.edit_flag = ECMD_VTRANS;
+	s->s_edit.solid_edit_rotate = 0;
+	s->s_edit.solid_edit_translate = 1;
+	s->s_edit.solid_edit_scale = 0;
+	s->s_edit.solid_edit_pick = 0;
     } else {
 	mged_set_edflag(s, arg);
     }
@@ -163,7 +163,7 @@ void
 bspline_init_sedit(struct mged_state *s)
 {
     struct rt_nurb_internal *sip =
-	(struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
+	(struct rt_nurb_internal *) s->s_edit.es_int.idb_ptr;
     struct face_g_snurb *surf;
     RT_NURB_CK_MAGIC(sip);
     spl_surfno = sip->nsrf/2;
@@ -182,12 +182,12 @@ sedit_vpick(struct mged_state *s, point_t v_pos)
     MAT4X3PNT(m_pos, view_state->vs_objview2model, v_pos);
 
     if (nurb_closest2d(&surfno, &u, &v,
-		       (struct rt_nurb_internal *)s->edit_state.es_int.idb_ptr,
+		       (struct rt_nurb_internal *)s->s_edit.es_int.idb_ptr,
 		       m_pos, view_state->vs_model2objview) >= 0) {
 	spl_surfno = surfno;
 	spl_ui = u;
 	spl_vi = v;
-	get_solid_keypoint(s, &s->edit_state.e_keypoint, &s->edit_state.e_keytag, &s->edit_state.es_int, s->edit_state.e_mat);
+	get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag, &s->s_edit.es_int, s->s_edit.e_mat);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
     view_state->vs_flag = 1;
@@ -278,23 +278,23 @@ void
 ecmd_vtrans(struct mged_state *s)
 {
     /* must convert to base units */
-    s->edit_state.e_para[0] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[1] *= s->dbip->dbi_local2base;
-    s->edit_state.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
     /* translate a vertex */
-    if (s->edit_state.e_mvalid) {
+    if (s->s_edit.e_mvalid) {
 	/* Mouse parameter:  new position in model space */
-	VMOVE(s->edit_state.e_para, s->edit_state.e_mparam);
-	s->edit_state.e_inpara = 1;
+	VMOVE(s->s_edit.e_para, s->s_edit.e_mparam);
+	s->s_edit.e_inpara = 1;
     }
-    if (s->edit_state.e_inpara) {
+    if (s->s_edit.e_inpara) {
 
 
 	/* Keyboard parameter:  new position in model space.
 	 * XXX for now, splines only here */
 	struct rt_nurb_internal *sip =
-	    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
+	    (struct rt_nurb_internal *) s->s_edit.es_int.idb_ptr;
 	struct face_g_snurb *surf;
 	fastf_t *fp;
 
@@ -303,10 +303,10 @@ ecmd_vtrans(struct mged_state *s)
 	NMG_CK_SNURB(surf);
 	fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
 	if (mged_variables->mv_context) {
-	    /* apply s->edit_state.e_invmat to convert to real model space */
-	    MAT4X3PNT(fp, s->edit_state.e_invmat, s->edit_state.e_para);
+	    /* apply s->s_edit.e_invmat to convert to real model space */
+	    MAT4X3PNT(fp, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
-	    VMOVE(fp, s->edit_state.e_para);
+	    VMOVE(fp, s->s_edit.e_para);
 	}
     }
 }
@@ -318,14 +318,14 @@ mged_bspline_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->edit_state.es_int);
+	    return mged_generic_sscale(s, &s->s_edit.es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->edit_state.es_int);
+	    mged_generic_strans(s, &s->s_edit.es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->edit_state.es_int);
+	    mged_generic_srot(s, &s->s_edit.es_int);
 	    break;
 	case ECMD_VTRANS:
 	    // I think this is bspline only??
@@ -345,7 +345,7 @@ mged_bspline_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->edit_state.es_int;
+    struct rt_db_internal *ip = &s->s_edit.es_int;
 
     switch (edflag) {
 	case SSCALE:
@@ -362,14 +362,14 @@ mged_bspline_edit_xy(
 	     * Project vertex (in solid keypoint) into view space,
 	     * replace X, Y (but NOT Z) components, and
 	     * project result back to model space.
-	     * Leave desired location in s->edit_state.e_mparam.
+	     * Leave desired location in s->s_edit.e_mparam.
 	     */
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(s->edit_state.e_mparam, s->edit_state.e_invmat, temp);
-	    s->edit_state.e_mvalid = 1;      /* s->edit_state.e_mparam is valid */
+	    MAT4X3PNT(s->s_edit.e_mparam, s->s_edit.e_invmat, temp);
+	    s->s_edit.e_mvalid = 1;      /* s->s_edit.e_mparam is valid */
 	    /* Leave the rest to code in ft_edit */
 	    break;
 	default:
