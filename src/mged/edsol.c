@@ -1754,6 +1754,230 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     return TCL_OK;
 }
 
+/* Extrude command - project an arb face */
+/* Format: extrude face distance */
+int
+f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    static int face;
+    static fastf_t dist;
+
+    CHECK_DBI_NULL;
+
+    if (argc < 3 || 3 < argc) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&vls, "help extrude");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (not_state(s, ST_S_EDIT, "Extrude"))
+	return TCL_ERROR;
+
+    if (s->s_edit.es_int.idb_type != ID_ARB8) {
+	Tcl_AppendResult(interp, "Extrude: solid type must be ARB\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
+
+    if (arb_type != ARB8 && arb_type != ARB6 && arb_type != ARB4) {
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", arb_type);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
+
+	return TCL_ERROR;
+    }
+
+    face = atoi(argv[1]);
+
+    /* get distance to project face */
+    dist = atof(argv[2]);
+    /* apply s->s_edit.e_mat[15] to get to real model space */
+    /* convert from the local unit (as input) to the base unit */
+    dist = dist * s->s_edit.e_mat[15] * s->dbip->dbi_local2base;
+
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    fastf_t es_peqn[7][4];
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol)) {
+	// TODO - write to a vls so parent code can do Tcl_AppendResult
+	bu_log("\nCannot calculate plane equations for ARB8\n");
+	bu_vls_free(&error_msg);
+	return TCL_ERROR;
+    }
+    bu_vls_free(&error_msg);
+
+    if (arb_extrude(arb, face, dist, s->s_edit.tol, es_peqn)) {
+	Tcl_AppendResult(interp, "Error extruding ARB\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    /* draw the updated solid */
+    replot_editing_solid(s);
+    update_views = 1;
+    dm_set_dirty(DMP, 1);
+
+    return TCL_OK;
+}
+
+
+/* Mirface command - mirror an arb face */
+/* Format: mirror face axis */
+int
+f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    int face;
+
+    if (argc < 3 || 3 < argc) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&vls, "help mirface");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (not_state(s, ST_S_EDIT, "Mirface"))
+	return TCL_ERROR;
+
+    if (s->s_edit.es_int.idb_type != ID_ARB8) {
+	Tcl_AppendResult(interp, "Mirface: solid type must be ARB\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    face = atoi(argv[1]);
+
+    fastf_t es_peqn[7][4];
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol)) {
+	// TODO - write to a vls so parent code can do Tcl_AppendResult
+	bu_log("\nCannot calculate plane equations for ARB8\n");
+	bu_vls_free(&error_msg);
+	return TCL_ERROR;
+    }
+    bu_vls_free(&error_msg);
+
+    if (arb_mirror_face_axis(arb, es_peqn, face, argv[2], s->s_edit.tol)) {
+	Tcl_AppendResult(interp, "Mirface: mirror operation failed\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    /* draw the updated solid */
+    replot_editing_solid(s);
+    view_state->vs_flag = 1;
+
+    return TCL_OK;
+}
+
+
+/* Edgedir command: define the direction of an arb edge being moved
+ * Format: edgedir deltax deltay deltaz OR edgedir rot fb
+*/
+int
+f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (argc < 3 || 4 < argc) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&vls, "help edgedir");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (not_state(s, ST_S_EDIT, "Edgedir"))
+	return TCL_ERROR;
+
+    return arb_edgedir(s, argc, argv);
+}
+
+/* Permute command - permute the vertex labels of an ARB
+ * Format: permute tuple */
+
+/*
+ *	     Minimum and maximum tuple lengths
+ *     ------------------------------------------------
+ *	Solid	# vertices needed	# vertices
+ *	type	 to disambiguate	in THE face
+ *     ------------------------------------------------
+ *	ARB4		3		    3
+ *	ARB5		2		    4
+ *	ARB6		2		    4
+ *	ARB7		1		    4
+ *	ARB8		3		    4
+ *     ------------------------------------------------
+ */
+int
+f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    /*
+     * 1) Why were all vars declared static?
+     * 2) Recompute plane equations?
+     */
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
+
+    if (argc < 2 || 2 < argc) {
+	bu_vls_printf(&vls, "help permute");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (not_state(s, ST_S_EDIT, "Permute"))
+	return TCL_ERROR;
+
+    if (s->s_edit.es_int.idb_type != ID_ARB8) {
+	Tcl_AppendResult(interp, "Permute: solid type must be an ARB\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    if (arb_permute(arb, argv[1], s->s_edit.tol)) {
+	Tcl_AppendResult(interp, "Permute failed.\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    /* draw the updated solid */
+    replot_editing_solid(s);
+    view_state->vs_flag = 1;
+
+    return TCL_OK;
+}
 
 
 /*

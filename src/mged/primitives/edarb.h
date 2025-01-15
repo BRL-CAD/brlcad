@@ -30,6 +30,8 @@
 
 int arb_f_eqn(struct mged_state *s, int argc, const char **argv);
 
+int arb_edgedir(struct mged_state *s, int argc, const char **argv);
+
 #endif  /* EDARB_H */
 
 /*
