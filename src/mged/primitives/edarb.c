@@ -1088,7 +1088,7 @@ ecmd_arb_move_face(struct mged_state *s)
 	struct rt_arb_internal *arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(work, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -1219,7 +1219,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 
 	    /* Borrow s->edit_state.incr_change matrix here */
 	    bn_mat_mul(s->edit_state.incr_change, s->edit_state.model_changes, invsolr);
-	    if (mged_variables->mv_context) {
+	    if (s->s_edit.mv_context) {
 		/* calculate rotations about keypoint */
 		mat_t edit;
 		bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, s->s_edit.e_keypoint);
@@ -1311,7 +1311,7 @@ edit_arb_element(struct mged_state *s)
 	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
 	vect_t work;
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(work, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {

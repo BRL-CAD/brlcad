@@ -302,7 +302,7 @@ ecmd_vtrans(struct mged_state *s)
 	surf = sip->srfs[spl_surfno];
 	NMG_CK_SNURB(surf);
 	fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(fp, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {

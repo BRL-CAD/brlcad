@@ -130,7 +130,6 @@ struct _mged_variables {
     int		mv_linewidth;
     char	mv_linestyle;
     int		mv_hot_key;
-    int		mv_context;
     int		mv_dlist;
     int		mv_use_air;
     int		mv_listen;			/* nonzero to listen on port */

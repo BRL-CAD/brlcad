@@ -534,7 +534,7 @@ void ecmd_nmg_emove(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(new_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -686,7 +686,7 @@ void ecmd_nmg_esplit(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(new_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -763,7 +763,7 @@ void ecmd_nmg_lextru(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(to_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(to_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
