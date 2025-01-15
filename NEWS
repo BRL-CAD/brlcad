@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* removed obsolete bot_minpieces command from nirt - Cliff Yapp
 * added manual page for pixcmp, bwish, btclsh - Sean Morrison
 * fixed MGED solid editing "ted" command - Cliff Yapp
 * added support for console text editing on Windows - Cliff Yapp
