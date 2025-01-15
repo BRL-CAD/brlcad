@@ -1345,7 +1345,6 @@ arb_f_eqn(struct mged_state *s, int argc, const char **argv)
 int
 arb_edgedir(struct mged_state *s, int argc, const char **argv)
 {
-    int i;
     vect_t slope;
     fastf_t rot, fb_a;
 
@@ -1373,7 +1372,7 @@ arb_edgedir(struct mged_state *s, int argc, const char **argv)
 	slope[1] = cos(fb_a) * sin(rot);
 	slope[2] = sin(fb_a);
     } else {
-	for (i=0; i<3; i++) {
+	for (int i=0; i<3; i++) {
 	    /* put edge slope in slope[] array */
 	    slope[i] = atof(argv[i+1]);
 	}
