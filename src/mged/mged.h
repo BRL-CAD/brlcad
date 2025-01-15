@@ -134,17 +134,12 @@ struct mged_edit_state {
     int edit_rateflag_view_rotate;
 
     // Translate
-    vect_t edit_absolute_model_tran;
-    vect_t edit_absolute_view_tran;
-    vect_t last_edit_absolute_model_tran;
-    vect_t last_edit_absolute_view_tran;
     vect_t edit_rate_model_tran;
     vect_t edit_rate_view_tran;
     int edit_rateflag_model_tran;
     int edit_rateflag_view_tran;
 
     // Scale
-    fastf_t edit_absolute_scale;
     fastf_t edit_rate_scale;
     int edit_rateflag_scale;
 
@@ -190,6 +185,15 @@ struct mged_solid_edit {
      * it to something more general than "menu"... */
     int edit_menu;
 
+    // Translate values used in XY mouse vector manipulation
+    vect_t edit_absolute_model_tran;
+    vect_t last_edit_absolute_model_tran;
+    vect_t edit_absolute_view_tran;
+    vect_t last_edit_absolute_view_tran;
+
+    // Scale values used in XY mouse vector manipulation
+    fastf_t edit_absolute_scale;
+
     // MGED wants to know if we're in solid rotate, translate or scale mode.
     // (TODO - why?) Rather than keying off of primitive specific edit op
     // types, have the ops set flags:
@@ -220,7 +224,7 @@ struct mged_solid_edit {
     point_t curr_e_axes_pos;	/* center of editing xforms */
     point_t e_axes_pos;
 
-    /* Flag to trigger some primitive edit opts to use keypoint */
+    /* Flag to trigger some primitive edit opts to use keypoint (and maybe other behaviors?) */
     int mv_context;
 
     /* Internal primitive editing information specific to primitive types. */

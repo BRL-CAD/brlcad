@@ -305,9 +305,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    ZERO(s->s_edit.acc_sc_sol))
 		    s->s_edit.acc_sc_sol = 1.0;
 		else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-		    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
-		    if (s->edit_state.edit_absolute_scale > 0.0)
-			s->edit_state.edit_absolute_scale /= 3.0;
+		    s->s_edit.edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
+		    if (s->s_edit.edit_absolute_scale > 0.0)
+			s->s_edit.edit_absolute_scale /= 3.0;
 		}
 
 		am_mode = AMM_SCALE;
@@ -474,9 +474,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			    ZERO(s->s_edit.acc_sc_sol))
 			    s->s_edit.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
-			    if (s->edit_state.edit_absolute_scale > 0.0)
-				s->edit_state.edit_absolute_scale /= 3.0;
+			    s->s_edit.edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
+			    if (s->s_edit.edit_absolute_scale > 0.0)
+				s->s_edit.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_X;
@@ -486,9 +486,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			    ZERO(s->s_edit.acc_sc_sol))
 			    s->s_edit.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
-			    if (s->edit_state.edit_absolute_scale > 0.0)
-				s->edit_state.edit_absolute_scale /= 3.0;
+			    s->s_edit.edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
+			    if (s->s_edit.edit_absolute_scale > 0.0)
+				s->s_edit.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Y;
@@ -498,9 +498,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			    ZERO(s->s_edit.acc_sc_sol))
 			    s->s_edit.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
-			    if (s->edit_state.edit_absolute_scale > 0.0)
-				s->edit_state.edit_absolute_scale /= 3.0;
+			    s->s_edit.edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
+			    if (s->s_edit.edit_absolute_scale > 0.0)
+				s->s_edit.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Z;

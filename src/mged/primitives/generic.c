@@ -238,9 +238,9 @@ mged_generic_sscale_xy(
     /* accumulate scale factor */
     s->s_edit.acc_sc_sol *= s->s_edit.es_scale;
 
-    s->edit_state.edit_absolute_scale = s->s_edit.acc_sc_sol - 1.0;
-    if (s->edit_state.edit_absolute_scale > 0)
-	s->edit_state.edit_absolute_scale /= 3.0;
+    s->s_edit.edit_absolute_scale = s->s_edit.acc_sc_sol - 1.0;
+    if (s->s_edit.edit_absolute_scale > 0)
+	s->s_edit.edit_absolute_scale /= 3.0;
 }
 
 /*
@@ -288,12 +288,12 @@ update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
 
     MAT4X3PNT(model_pos, view_state->vs_gvp->gv_view2model, view_pos);
     VSUB2(diff, model_pos, s->s_edit.e_axes_pos);
-    VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
-    VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
+    VSCALE(s->s_edit.edit_absolute_model_tran, diff, inv_Viewscale);
+    VMOVE(s->s_edit.last_edit_absolute_model_tran, s->s_edit.edit_absolute_model_tran);
 
     MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, s->s_edit.e_axes_pos);
-    VSUB2(s->edit_state.edit_absolute_view_tran, view_pos, ea_view_pos);
-    VMOVE(s->edit_state.last_edit_absolute_view_tran, s->edit_state.edit_absolute_view_tran);
+    VSUB2(s->s_edit.edit_absolute_view_tran, view_pos, ea_view_pos);
+    VMOVE(s->s_edit.last_edit_absolute_view_tran, s->s_edit.edit_absolute_view_tran);
 }
 
 int
