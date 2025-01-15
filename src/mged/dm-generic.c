@@ -302,8 +302,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		break;
 	    case 's':
 		if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-		    ZERO(s->edit_state.acc_sc_sol))
-		    s->edit_state.acc_sc_sol = 1.0;
+		    ZERO(s->s_edit.acc_sc_sol))
+		    s->s_edit.acc_sc_sol = 1.0;
 		else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 		    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
 		    if (s->edit_state.edit_absolute_scale > 0.0)
@@ -471,8 +471,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		switch (*argv[2]) {
 		    case 'x':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->edit_state.acc_sc_sol))
-			    s->edit_state.acc_sc_sol = 1.0;
+			    ZERO(s->s_edit.acc_sc_sol))
+			    s->s_edit.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
 			    if (s->edit_state.edit_absolute_scale > 0.0)
@@ -483,8 +483,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			break;
 		    case 'y':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->edit_state.acc_sc_sol))
-			    s->edit_state.acc_sc_sol = 1.0;
+			    ZERO(s->s_edit.acc_sc_sol))
+			    s->s_edit.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
 			    if (s->edit_state.edit_absolute_scale > 0.0)
@@ -495,8 +495,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			break;
 		    case 'z':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->edit_state.acc_sc_sol))
-			    s->edit_state.acc_sc_sol = 1.0;
+			    ZERO(s->s_edit.acc_sc_sol))
+			    s->s_edit.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
 			    if (s->edit_state.edit_absolute_scale > 0.0)

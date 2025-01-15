@@ -1202,7 +1202,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 	 * First, cancel any existing rotations,
 	 * then perform new rotation
 	 */
-	bn_mat_inv(invsolr, s->edit_state.acc_rot_sol);
+	bn_mat_inv(invsolr, s->s_edit.acc_rot_sol);
 	eqp = &es_peqn[s->s_edit.edit_menu][0];	/* s->s_edit.edit_menu==plane of interest */
 	VMOVE(work, eqp);
 	MAT4X3VEC(eqp, invsolr, work);
@@ -1210,15 +1210,15 @@ ecmd_arb_rotate_face(struct mged_state *s)
 	if (s->s_edit.e_inpara == 3) {
 	    /* 3 params:  absolute X, Y, Z rotations */
 	    /* Build completely new rotation change */
-	    MAT_IDN(s->edit_state.model_changes);
-	    bn_mat_angles(s->edit_state.model_changes,
+	    MAT_IDN(s->s_edit.model_changes);
+	    bn_mat_angles(s->s_edit.model_changes,
 		    s->s_edit.e_para[0],
 		    s->s_edit.e_para[1],
 		    s->s_edit.e_para[2]);
-	    MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
+	    MAT_COPY(s->s_edit.acc_rot_sol, s->s_edit.model_changes);
 
 	    /* Borrow s->s_edit.incr_change matrix here */
-	    bn_mat_mul(s->s_edit.incr_change, s->edit_state.model_changes, invsolr);
+	    bn_mat_mul(s->s_edit.incr_change, s->s_edit.model_changes, invsolr);
 	    if (s->s_edit.mv_context) {
 		/* calculate rotations about keypoint */
 		mat_t edit;
@@ -1237,7 +1237,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 		MAT4X3VEC(eqp, mat, work);
 	    } else {
 		VMOVE(work, eqp);
-		MAT4X3VEC(eqp, s->edit_state.model_changes, work);
+		MAT4X3VEC(eqp, s->s_edit.model_changes, work);
 	    }
 	} else if (s->s_edit.e_inpara == 2) {
 	    /* 2 parameters:  rot, fb were given */
@@ -1263,7 +1263,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 	es_peqn[s->s_edit.edit_menu][W]=VDOT(eqp, tempvec);
 
 	/* Clear out solid rotation */
-	MAT_IDN(s->edit_state.model_changes);
+	MAT_IDN(s->s_edit.model_changes);
 
     } else {
 	/* Apply incremental changes */

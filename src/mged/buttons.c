@@ -526,7 +526,7 @@ ill_common(struct mged_state *s) {
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
-    MAT_IDN(s->edit_state.model_changes);	/* No changes yet */
+    MAT_IDN(s->s_edit.model_changes);	/* No changes yet */
 
     return 1;		/* OK */
 }
@@ -938,7 +938,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     edsol = BE_S_SCALE;
     mged_set_edflag(s, SSCALE);
     mmenu_set(s, MENU_L1, NULL);
-    s->edit_state.acc_sc_sol = 1.0;
+    s->s_edit.acc_sc_sol = 1.0;
 
     set_e_axes_pos(s, 1);
     return TCL_OK;

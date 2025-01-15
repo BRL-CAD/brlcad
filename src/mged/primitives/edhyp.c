@@ -274,21 +274,21 @@ ecmd_hyp_rot_h(struct mged_state *s)
 	 * in degrees.  First, cancel any existing rotations,
 	 * then perform new rotation
 	 */
-	bn_mat_inv(invsolr, s->edit_state.acc_rot_sol);
+	bn_mat_inv(invsolr, s->s_edit.acc_rot_sol);
 
 	/* Build completely new rotation change */
-	MAT_IDN(s->edit_state.model_changes);
-	bn_mat_angles(s->edit_state.model_changes,
+	MAT_IDN(s->s_edit.model_changes);
+	bn_mat_angles(s->s_edit.model_changes,
 		s->s_edit.e_para[0],
 		s->s_edit.e_para[1],
 		s->s_edit.e_para[2]);
 	/* Borrow s->s_edit.incr_change matrix here */
-	bn_mat_mul(s->s_edit.incr_change, s->edit_state.model_changes, invsolr);
-	MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
+	bn_mat_mul(s->s_edit.incr_change, s->s_edit.model_changes, invsolr);
+	MAT_COPY(s->s_edit.acc_rot_sol, s->s_edit.model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
-	MAT_IDN(s->edit_state.model_changes);
+	MAT_IDN(s->s_edit.model_changes);
     } else {
 	/* Apply incremental changes already in s->s_edit.incr_change */
     }

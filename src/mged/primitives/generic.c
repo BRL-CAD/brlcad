@@ -69,8 +69,8 @@ mged_generic_sscale(
 
     if (s->s_edit.e_inpara) {
 	/* accumulate the scale factor */
-	s->s_edit.es_scale = s->s_edit.e_para[0] / s->edit_state.acc_sc_sol;
-	s->edit_state.acc_sc_sol = s->s_edit.e_para[0];
+	s->s_edit.es_scale = s->s_edit.e_para[0] / s->s_edit.acc_sc_sol;
+	s->s_edit.acc_sc_sol = s->s_edit.e_para[0];
     }
 
     bn_mat_scale_about_pnt(scalemat, s->s_edit.e_keypoint, s->s_edit.es_scale);
@@ -142,21 +142,21 @@ mged_generic_srot(
 	 * in degrees.  First, cancel any existing rotations,
 	 * then perform new rotation
 	 */
-	bn_mat_inv(invsolr, s->edit_state.acc_rot_sol);
+	bn_mat_inv(invsolr, s->s_edit.acc_rot_sol);
 
 	/* Build completely new rotation change */
-	MAT_IDN(s->edit_state.model_changes);
-	bn_mat_angles(s->edit_state.model_changes,
+	MAT_IDN(s->s_edit.model_changes);
+	bn_mat_angles(s->s_edit.model_changes,
 		s->s_edit.e_para[0],
 		s->s_edit.e_para[1],
 		s->s_edit.e_para[2]);
 	/* Borrow s->s_edit.incr_change matrix here */
-	bn_mat_mul(s->s_edit.incr_change, s->edit_state.model_changes, invsolr);
-	MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
+	bn_mat_mul(s->s_edit.incr_change, s->s_edit.model_changes, invsolr);
+	MAT_COPY(s->s_edit.acc_rot_sol, s->s_edit.model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
-	MAT_IDN(s->edit_state.model_changes);
+	MAT_IDN(s->s_edit.model_changes);
     } else {
 	/* Apply incremental changes already in s->s_edit.incr_change */
     }
@@ -236,9 +236,9 @@ mged_generic_sscale_xy(
 	s->s_edit.es_scale = 1.0 / s->s_edit.es_scale;
 
     /* accumulate scale factor */
-    s->edit_state.acc_sc_sol *= s->s_edit.es_scale;
+    s->s_edit.acc_sc_sol *= s->s_edit.es_scale;
 
-    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc_sol - 1.0;
+    s->edit_state.edit_absolute_scale = s->s_edit.acc_sc_sol - 1.0;
     if (s->edit_state.edit_absolute_scale > 0)
 	s->edit_state.edit_absolute_scale /= 3.0;
 }

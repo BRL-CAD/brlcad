@@ -107,7 +107,7 @@ draw_e_axes(struct mged_state *s)
 	point_t m_ap2;
 
 	MAT4X3PNT(v_ap1, view_state->vs_gvp->gv_model2view, s->s_edit.e_keypoint);
-	MAT4X3PNT(m_ap2, s->edit_state.model_changes, s->s_edit.e_keypoint);
+	MAT4X3PNT(m_ap2, s->s_edit.model_changes, s->s_edit.e_keypoint);
 	MAT4X3PNT(v_ap2, view_state->vs_gvp->gv_model2view, m_ap2);
     } else
 	return;
@@ -130,7 +130,7 @@ draw_e_axes(struct mged_state *s)
     VMOVE(gas.label_color, color_scheme->cs_edit_axes_label2);
     gas.line_width = axes_state->ax_edit_linewidth2;
 
-    bn_mat_mul(rot_mat, view_state->vs_gvp->gv_rotation, s->edit_state.acc_rot_sol);
+    bn_mat_mul(rot_mat, view_state->vs_gvp->gv_rotation, s->s_edit.acc_rot_sol);
     dm_draw_hud_axes(DMP, view_state->vs_gvp->gv_size, rot_mat, &gas);
 }
 

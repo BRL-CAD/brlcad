@@ -320,7 +320,7 @@ new_edit_mats(struct mged_state *s)
 	    continue;
 
 	set_curr_dm(s, p);
-	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, s->edit_state.model_changes);
+	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, s->s_edit.model_changes);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
 	view_state->vs_flag = 1;
     }
@@ -340,7 +340,7 @@ mged_view_callback(struct bview *gvp,
 	return;
 
     if (s->edit_state.global_editing_state != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->edit_state.model_changes);
+	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->s_edit.model_changes);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
@@ -2143,8 +2143,8 @@ main(int argc, char *argv[])
     owner = 1;
     frametime = 1;
 
-    MAT_IDN(s->edit_state.model_changes);
-    MAT_IDN(s->edit_state.acc_rot_sol);
+    MAT_IDN(s->s_edit.model_changes);
+    MAT_IDN(s->s_edit.acc_rot_sol);
 
     s->edit_state.global_editing_state = ST_VIEW;
     mged_set_edflag(s, -1); /* no solid editing just now */
