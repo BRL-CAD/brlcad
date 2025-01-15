@@ -286,28 +286,28 @@ ecmd_eto_rot_c(struct mged_state *s)
 	 * in degrees.  First, cancel any existing rotations,
 	 * then perform new rotation
 	 */
-	bn_mat_inv(invsolr, acc_rot_sol);
+	bn_mat_inv(invsolr, s->edit_state.acc_rot_sol);
 
 	/* Build completely new rotation change */
-	MAT_IDN(modelchanges);
-	bn_mat_angles(modelchanges,
+	MAT_IDN(s->edit_state.model_changes);
+	bn_mat_angles(s->edit_state.model_changes,
 		s->s_edit.e_para[0],
 		s->s_edit.e_para[1],
 		s->s_edit.e_para[2]);
-	/* Borrow incr_change matrix here */
-	bn_mat_mul(incr_change, modelchanges, invsolr);
-	MAT_COPY(acc_rot_sol, modelchanges);
+	/* Borrow s->edit_state.incr_change matrix here */
+	bn_mat_mul(s->edit_state.incr_change, s->edit_state.model_changes, invsolr);
+	MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
-	MAT_IDN(modelchanges);
+	MAT_IDN(s->edit_state.model_changes);
     } else {
-	/* Apply incremental changes already in incr_change */
+	/* Apply incremental changes already in s->edit_state.incr_change */
     }
 
     if (mged_variables->mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, incr_change, s->s_edit.e_keypoint);
+	bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, s->s_edit.e_keypoint);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
@@ -319,10 +319,10 @@ ecmd_eto_rot_c(struct mged_state *s)
 
 	MAT4X3VEC(eto->eto_C, mat, eto->eto_C);
     } else {
-	MAT4X3VEC(eto->eto_C, incr_change, eto->eto_C);
+	MAT4X3VEC(eto->eto_C, s->edit_state.incr_change, eto->eto_C);
     }
 
-    MAT_IDN(incr_change);
+    MAT_IDN(s->edit_state.incr_change);
 
     return 0;
 }

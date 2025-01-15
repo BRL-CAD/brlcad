@@ -148,6 +148,15 @@ struct mged_edit_state {
     fastf_t edit_rate_scale;
     int edit_rateflag_scale;
 
+    mat_t model_changes;	/* full changes this edit */
+    mat_t incr_change;		/* change(s) from last cycle */
+
+    /* The "accumulation" solid rotation matrix and scale factor */
+    fastf_t acc_sc_sol;		/* accumulate solid scale factor */
+    fastf_t acc_sc_obj;		/* accumulate global object scale factor */
+    fastf_t acc_sc[3];		/* accumulate local object scale factors */
+    mat_t acc_rot_sol;		/* accumulate solid rotations */
+
     // Origin
     char edit_rate_model_origin;
     char edit_rate_object_origin;
@@ -274,15 +283,6 @@ extern struct mged_state *MGED_STATE;
  *
  * These are allocated storage in dozoom.c
  */
-
-extern mat_t modelchanges;		/* full changes this edit */
-extern mat_t incr_change;		/* change(s) from last cycle */
-
-/* defined in buttons.c */
-extern fastf_t acc_sc_sol;	/* accumulate solid scale factor */
-extern fastf_t acc_sc_obj;	/* accumulate global object scale factor */
-extern fastf_t acc_sc[3];	/* accumulate local object scale factors */
-extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in mged.c */
 extern jmp_buf jmp_env;

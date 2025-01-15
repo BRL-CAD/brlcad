@@ -134,23 +134,23 @@ mged_rot_obj(struct mged_state *s, int iflag, fastf_t *argvect)
     /* find point for rotation to take place wrt */
     VMOVE(model_pt, s->s_edit.e_keypoint);
 
-    MAT4X3PNT(point, modelchanges, model_pt);
+    MAT4X3PNT(point, s->edit_state.model_changes, model_pt);
 
     /* Find absolute translation vector to go from "model_pt" to
-     * "point" without any of the rotations in "modelchanges"
+     * "point" without any of the rotations in "s->edit_state.model_changes"
      */
-    VSCALE(s_point, point, modelchanges[15]);
+    VSCALE(s_point, point, s->edit_state.model_changes[15]);
     VSUB2(v_work, s_point, model_pt);
 
-    /* REDO "modelchanges" such that:
+    /* REDO "s->edit_state.model_changes" such that:
      * 1. NO rotations (identity)
      * 2. trans == v_work
      * 3. same scale factor
      */
     MAT_IDN(temp);
     MAT_DELTAS_VEC(temp, v_work);
-    temp[15] = modelchanges[15];
-    MAT_COPY(modelchanges, temp);
+    temp[15] = s->edit_state.model_changes[15];
+    MAT_COPY(s->edit_state.model_changes, temp);
 
     /* build new rotation matrix */
     MAT_IDN(temp);
@@ -158,15 +158,15 @@ mged_rot_obj(struct mged_state *s, int iflag, fastf_t *argvect)
 
     if (iflag) {
 	/* apply accumulated rotations */
-	bn_mat_mul2(acc_rot_sol, temp);
+	bn_mat_mul2(s->edit_state.acc_rot_sol, temp);
     }
 
-    /*XXX*/ MAT_COPY(acc_rot_sol, temp); /* used to rotate solid/object axis */
+    /*XXX*/ MAT_COPY(s->edit_state.acc_rot_sol, temp); /* used to rotate solid/object axis */
 
     /* Record the new rotation matrix into the revised
-     * modelchanges matrix wrt "point"
+     * s->edit_state.model_changes matrix wrt "point"
      */
-    wrt_point(modelchanges, temp, modelchanges, point);
+    wrt_point(s->edit_state.model_changes, temp, s->edit_state.model_changes, point);
 
     new_edit_mats(s);
 
@@ -259,31 +259,31 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	default:
 	case BE_O_SCALE:
 	    /* global scaling */
-	    incr[15] = 1.0 / (atof(argv[1]) * modelchanges[15]);
+	    incr[15] = 1.0 / (atof(argv[1]) * s->edit_state.model_changes[15]);
 	    break;
 	case BE_O_XSCALE:
 	    /* local scaling ... X-axis */
-	    incr[0] = atof(argv[1]) / acc_sc[0];
-	    acc_sc[0] = atof(argv[1]);
+	    incr[0] = atof(argv[1]) / s->edit_state.acc_sc[0];
+	    s->edit_state.acc_sc[0] = atof(argv[1]);
 	    break;
 	case BE_O_YSCALE:
 	    /* local scaling ... Y-axis */
-	    incr[5] = atof(argv[1]) / acc_sc[1];
-	    acc_sc[1] = atof(argv[1]);
+	    incr[5] = atof(argv[1]) / s->edit_state.acc_sc[1];
+	    s->edit_state.acc_sc[1] = atof(argv[1]);
 	    break;
 	case BE_O_ZSCALE:
 	    /* local scaling ... Z-axis */
-	    incr[10] = atof(argv[1]) / acc_sc[2];
-	    acc_sc[2] = atof(argv[1]);
+	    incr[10] = atof(argv[1]) / s->edit_state.acc_sc[2];
+	    s->edit_state.acc_sc[2] = atof(argv[1]);
 	    break;
     }
 
     /* find point the scaling is to take place wrt */
     VMOVE(temp, s->s_edit.e_keypoint);
 
-    MAT4X3PNT(point, modelchanges, temp);
+    MAT4X3PNT(point, s->edit_state.model_changes, temp);
 
-    wrt_point(modelchanges, incr, modelchanges, point);
+    wrt_point(s->edit_state.model_changes, incr, s->edit_state.model_changes, point);
     new_edit_mats(s);
 
     return TCL_OK;
@@ -349,11 +349,11 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
     VMOVE(model_sol_pt, s->s_edit.e_keypoint);
 
-    MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
+    MAT4X3PNT(ed_sol_pt, s->edit_state.model_changes, model_sol_pt);
     VSUB2(model_incr, new_vertex, ed_sol_pt);
     MAT_DELTAS_VEC(incr, model_incr);
-    MAT_COPY(old, modelchanges);
-    bn_mat_mul(modelchanges, incr, old);
+    MAT_COPY(old, s->edit_state.model_changes);
+    bn_mat_mul(s->edit_state.model_changes, incr, old);
     new_edit_mats(s);
 
     return TCL_OK;
@@ -411,10 +411,10 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     ang = atof(argv[7]) * DEG2RAD;
 
     /* Get matrix for rotation about a point, direction vector and apply to
-     * modelchanges matrix
+     * s->edit_state.model_changes matrix
      */
     bn_mat_arb_rot(temp, specified_pt, direc, ang);
-    bn_mat_mul2(temp, modelchanges);
+    bn_mat_mul2(temp, s->edit_state.model_changes);
 
     new_edit_mats(s);
 

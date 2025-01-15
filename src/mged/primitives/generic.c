@@ -69,8 +69,8 @@ mged_generic_sscale(
 
     if (s->s_edit.e_inpara) {
 	/* accumulate the scale factor */
-	s->s_edit.es_scale = s->s_edit.e_para[0] / acc_sc_sol;
-	acc_sc_sol = s->s_edit.e_para[0];
+	s->s_edit.es_scale = s->s_edit.e_para[0] / s->edit_state.acc_sc_sol;
+	s->edit_state.acc_sc_sol = s->s_edit.e_para[0];
     }
 
     bn_mat_scale_about_pnt(scalemat, s->s_edit.e_keypoint, s->s_edit.es_scale);
@@ -142,23 +142,23 @@ mged_generic_srot(
 	 * in degrees.  First, cancel any existing rotations,
 	 * then perform new rotation
 	 */
-	bn_mat_inv(invsolr, acc_rot_sol);
+	bn_mat_inv(invsolr, s->edit_state.acc_rot_sol);
 
 	/* Build completely new rotation change */
-	MAT_IDN(modelchanges);
-	bn_mat_angles(modelchanges,
+	MAT_IDN(s->edit_state.model_changes);
+	bn_mat_angles(s->edit_state.model_changes,
 		s->s_edit.e_para[0],
 		s->s_edit.e_para[1],
 		s->s_edit.e_para[2]);
-	/* Borrow incr_change matrix here */
-	bn_mat_mul(incr_change, modelchanges, invsolr);
-	MAT_COPY(acc_rot_sol, modelchanges);
+	/* Borrow s->edit_state.incr_change matrix here */
+	bn_mat_mul(s->edit_state.incr_change, s->edit_state.model_changes, invsolr);
+	MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
-	MAT_IDN(modelchanges);
+	MAT_IDN(s->edit_state.model_changes);
     } else {
-	/* Apply incremental changes already in incr_change */
+	/* Apply incremental changes already in s->edit_state.incr_change */
     }
     /* Apply changes to solid */
     /* xlate keypoint to origin, rotate, then put back. */
@@ -182,7 +182,7 @@ mged_generic_srot(
 
     if (mged_variables->mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, incr_change, rot_point);
+	bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, rot_point);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
@@ -193,11 +193,11 @@ mged_generic_srot(
 	bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
     } else {
 	MAT4X3PNT(work, s->s_edit.e_invmat, rot_point);
-	bn_mat_xform_about_pnt(mat, incr_change, work);
+	bn_mat_xform_about_pnt(mat, s->edit_state.incr_change, work);
     }
     transform_editing_solid(s, ip, mat, ip, 1);
 
-    MAT_IDN(incr_change);
+    MAT_IDN(s->edit_state.incr_change);
 }
 
 int
@@ -236,9 +236,9 @@ mged_generic_sscale_xy(
 	s->s_edit.es_scale = 1.0 / s->s_edit.es_scale;
 
     /* accumulate scale factor */
-    acc_sc_sol *= s->s_edit.es_scale;
+    s->edit_state.acc_sc_sol *= s->s_edit.es_scale;
 
-    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
+    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc_sol - 1.0;
     if (s->edit_state.edit_absolute_scale > 0)
 	s->edit_state.edit_absolute_scale /= 3.0;
 }

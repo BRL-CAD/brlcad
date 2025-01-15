@@ -1202,7 +1202,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 	 * First, cancel any existing rotations,
 	 * then perform new rotation
 	 */
-	bn_mat_inv(invsolr, acc_rot_sol);
+	bn_mat_inv(invsolr, s->edit_state.acc_rot_sol);
 	eqp = &es_peqn[s->s_edit.edit_menu][0];	/* s->s_edit.edit_menu==plane of interest */
 	VMOVE(work, eqp);
 	MAT4X3VEC(eqp, invsolr, work);
@@ -1210,19 +1210,19 @@ ecmd_arb_rotate_face(struct mged_state *s)
 	if (s->s_edit.e_inpara == 3) {
 	    /* 3 params:  absolute X, Y, Z rotations */
 	    /* Build completely new rotation change */
-	    MAT_IDN(modelchanges);
-	    bn_mat_angles(modelchanges,
+	    MAT_IDN(s->edit_state.model_changes);
+	    bn_mat_angles(s->edit_state.model_changes,
 		    s->s_edit.e_para[0],
 		    s->s_edit.e_para[1],
 		    s->s_edit.e_para[2]);
-	    MAT_COPY(acc_rot_sol, modelchanges);
+	    MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
 
-	    /* Borrow incr_change matrix here */
-	    bn_mat_mul(incr_change, modelchanges, invsolr);
+	    /* Borrow s->edit_state.incr_change matrix here */
+	    bn_mat_mul(s->edit_state.incr_change, s->edit_state.model_changes, invsolr);
 	    if (mged_variables->mv_context) {
 		/* calculate rotations about keypoint */
 		mat_t edit;
-		bn_mat_xform_about_pnt(edit, incr_change, s->s_edit.e_keypoint);
+		bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, s->s_edit.e_keypoint);
 
 		/* We want our final matrix (mat) to xform the original solid
 		 * to the position of this instance of the solid, perform the
@@ -1232,12 +1232,12 @@ ecmd_arb_rotate_face(struct mged_state *s)
 		mat_t mat, mat1;
 		bn_mat_mul(mat1, edit, s->s_edit.e_mat);
 		bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
-		MAT_IDN(incr_change);
+		MAT_IDN(s->edit_state.incr_change);
 		/* work contains original es_peqn[s->s_edit.edit_menu][0] */
 		MAT4X3VEC(eqp, mat, work);
 	    } else {
 		VMOVE(work, eqp);
-		MAT4X3VEC(eqp, modelchanges, work);
+		MAT4X3VEC(eqp, s->edit_state.model_changes, work);
 	    }
 	} else if (s->s_edit.e_inpara == 2) {
 	    /* 2 parameters:  rot, fb were given */
@@ -1263,7 +1263,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 	es_peqn[s->s_edit.edit_menu][W]=VDOT(eqp, tempvec);
 
 	/* Clear out solid rotation */
-	MAT_IDN(modelchanges);
+	MAT_IDN(s->edit_state.model_changes);
 
     } else {
 	/* Apply incremental changes */
@@ -1272,7 +1272,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
 
 	eqp = &es_peqn[s->s_edit.edit_menu][0];
 	VMOVE(work, eqp);
-	MAT4X3VEC(eqp, incr_change, work);
+	MAT4X3VEC(eqp, s->edit_state.incr_change, work);
 
 	/* point notation of fixed vertex */
 	VMOVE(tempvec, arb->pt[fixv]);
@@ -1283,7 +1283,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
     }
 
     (void)rt_arb_calc_points(arb, s->edit_state.e_type, (const plane_t *)es_peqn, &s->tol.tol);
-    MAT_IDN(incr_change);
+    MAT_IDN(s->edit_state.incr_change);
 
     /* no need to calc_planes again */
     replot_editing_solid(s);

@@ -90,14 +90,6 @@ static int edsol;
 int edobj;		/* object editing */
 int movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
 
-/*
- * The "accumulation" solid rotation matrix and scale factor
- */
-mat_t acc_rot_sol;
-fastf_t acc_sc_sol;
-fastf_t acc_sc_obj;     /* global object scale factor --- accumulations */
-fastf_t acc_sc[3];	/* local object scale factors --- accumulations */
-
 /* flag to toggle whether we perform continuous motion tracking
  * (e.g., for a tablet)
  */
@@ -534,7 +526,7 @@ ill_common(struct mged_state *s) {
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
-    MAT_IDN(modelchanges);	/* No changes yet */
+    MAT_IDN(s->edit_state.model_changes);	/* No changes yet */
 
     return 1;		/* OK */
 }
@@ -554,10 +546,10 @@ be_o_illuminate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(ar
 	(void)chg_state(s, ST_VIEW, ST_O_PICK, "Matrix Illuminate");
     }
     /* reset accumulation local scale factors */
-    acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
+    s->edit_state.acc_sc[0] = s->edit_state.acc_sc[1] = s->edit_state.acc_sc[2] = 1.0;
 
     /* reset accumulation global scale factors */
-    acc_sc_obj = 1.0;
+    s->edit_state.acc_sc_obj = 1.0;
     return TCL_OK;
 }
 
@@ -595,7 +587,7 @@ be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
+    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
     if (s->edit_state.edit_absolute_scale > 0.0)
 	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
@@ -618,7 +610,7 @@ be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
+    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
     if (s->edit_state.edit_absolute_scale > 0.0)
 	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
@@ -641,7 +633,7 @@ be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
+    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
     if (s->edit_state.edit_absolute_scale > 0.0)
 	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
@@ -664,7 +656,7 @@ be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
+    s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
     if (s->edit_state.edit_absolute_scale > 0.0)
 	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
@@ -946,7 +938,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     edsol = BE_S_SCALE;
     mged_set_edflag(s, SSCALE);
     mmenu_set(s, MENU_L1, NULL);
-    acc_sc_sol = 1.0;
+    s->edit_state.acc_sc_sol = 1.0;
 
     set_e_axes_pos(s, 1);
     return TCL_OK;

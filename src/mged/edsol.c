@@ -116,13 +116,13 @@ set_e_axes_pos(struct mged_state *s, int both)
 
 	    if (SEDIT_SCALE) {
 		s->edit_state.edit_absolute_scale = 0.0;
-		acc_sc_sol = 1.0;
+		s->edit_state.acc_sc_sol = 1.0;
 	    }
 	} else {
 	    s->edit_state.e_edclass = EDIT_CLASS_NULL;
 	}
 
-	MAT_IDN(acc_rot_sol);
+	MAT_IDN(s->edit_state.acc_rot_sol);
 
 	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	    struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -287,8 +287,8 @@ init_sedit(struct mged_state *s)
 static void
 init_sedit_vars(struct mged_state *s)
 {
-    MAT_IDN(acc_rot_sol);
-    MAT_IDN(incr_change);
+    MAT_IDN(s->edit_state.acc_rot_sol);
+    MAT_IDN(s->edit_state.incr_change);
 
     VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
     VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
@@ -301,7 +301,7 @@ init_sedit_vars(struct mged_state *s)
     VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
     VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
     s->edit_state.edit_absolute_scale = 0.0;
-    acc_sc_sol = 1.0;
+    s->edit_state.acc_sc_sol = 1.0;
 
     VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
     VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
@@ -537,20 +537,20 @@ sedit_abs_scale(struct mged_state *s)
     if (s->s_edit.edit_flag != SSCALE && s->s_edit.edit_flag != PSCALE)
 	return;
 
-    old_acc_sc_sol = acc_sc_sol;
+    old_acc_sc_sol = s->edit_state.acc_sc_sol;
 
     if (-SMALL_FASTF < s->edit_state.edit_absolute_scale && s->edit_state.edit_absolute_scale < SMALL_FASTF)
-	acc_sc_sol = 1.0;
+	s->edit_state.acc_sc_sol = 1.0;
     else if (s->edit_state.edit_absolute_scale > 0.0)
-	acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale * 3.0;
+	s->edit_state.acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale * 3.0;
     else {
 	if ((s->edit_state.edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
 	    s->edit_state.edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
 
-	acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale;
+	s->edit_state.acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale;
     }
 
-    s->s_edit.es_scale = acc_sc_sol / old_acc_sc_sol;
+    s->s_edit.es_scale = s->edit_state.acc_sc_sol / old_acc_sc_sol;
     sedit(s);
 }
 
@@ -567,7 +567,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
     vect_t tr_temp;		/* temp translation vector */
     vect_t temp;
 
-    MAT_IDN(incr_change);
+    MAT_IDN(s->edit_state.incr_change);
     if (movedir & SARROW) {
 	/* scaling option is in effect */
 	scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
@@ -580,40 +580,40 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 	    case BE_O_SCALE:
 		/* global scaling */
-		incr_change[15] = 1.0 / scale;
+		s->edit_state.incr_change[15] = 1.0 / scale;
 
-		acc_sc_obj /= incr_change[15];
-		s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
+		s->edit_state.acc_sc_obj /= s->edit_state.incr_change[15];
+		s->edit_state.edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
 		if (s->edit_state.edit_absolute_scale > 0.0)
 		    s->edit_state.edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_XSCALE:
 		/* local scaling ... X-axis */
-		incr_change[0] = scale;
+		s->edit_state.incr_change[0] = scale;
 		/* accumulate the scale factor */
-		acc_sc[0] *= scale;
-		s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
+		s->edit_state.acc_sc[0] *= scale;
+		s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
 		if (s->edit_state.edit_absolute_scale > 0.0)
 		    s->edit_state.edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_YSCALE:
 		/* local scaling ... Y-axis */
-		incr_change[5] = scale;
+		s->edit_state.incr_change[5] = scale;
 		/* accumulate the scale factor */
-		acc_sc[1] *= scale;
-		s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
+		s->edit_state.acc_sc[1] *= scale;
+		s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
 		if (s->edit_state.edit_absolute_scale > 0.0)
 		    s->edit_state.edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_ZSCALE:
 		/* local scaling ... Z-axis */
-		incr_change[10] = scale;
+		s->edit_state.incr_change[10] = scale;
 		/* accumulate the scale factor */
-		acc_sc[2] *= scale;
-		s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
+		s->edit_state.acc_sc[2] *= scale;
+		s->edit_state.edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
 		if (s->edit_state.edit_absolute_scale > 0.0)
 		    s->edit_state.edit_absolute_scale /= 3.0;
 		break;
@@ -623,10 +623,10 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	 * NOT the view center.
 	 */
 	VMOVE(temp, s->s_edit.e_keypoint);
-	MAT4X3PNT(pos_model, modelchanges, temp);
-	wrt_point(modelchanges, incr_change, modelchanges, pos_model);
+	MAT4X3PNT(pos_model, s->edit_state.model_changes, temp);
+	wrt_point(s->edit_state.model_changes, s->edit_state.incr_change, s->edit_state.model_changes, pos_model);
 
-	MAT_IDN(incr_change);
+	MAT_IDN(s->edit_state.incr_change);
 	new_edit_mats(s);
     } else if (movedir & (RARROW|UARROW)) {
 	mat_t oldchanges;	/* temporary matrix */
@@ -641,13 +641,13 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    pos_view[Y] = mousevec[Y];
 
 	MAT4X3PNT(pos_model, view_state->vs_gvp->gv_view2model, pos_view);/* NOT objview */
-	MAT4X3PNT(tr_temp, modelchanges, temp);
+	MAT4X3PNT(tr_temp, s->edit_state.model_changes, temp);
 	VSUB2(tr_temp, pos_model, tr_temp);
-	MAT_DELTAS_VEC(incr_change, tr_temp);
-	MAT_COPY(oldchanges, modelchanges);
-	bn_mat_mul(modelchanges, incr_change, oldchanges);
+	MAT_DELTAS_VEC(s->edit_state.incr_change, tr_temp);
+	MAT_COPY(oldchanges, s->edit_state.model_changes);
+	bn_mat_mul(s->edit_state.model_changes, s->edit_state.incr_change, oldchanges);
 
-	MAT_IDN(incr_change);
+	MAT_IDN(s->edit_state.incr_change);
 	new_edit_mats(s);
 
 	update_edit_absolute_tran(s, pos_view);
@@ -684,29 +684,29 @@ oedit_abs_scale(struct mged_state *s)
 
 	case BE_O_SCALE:
 	    /* global scaling */
-	    incr_mat[15] = acc_sc_obj / scale;
-	    acc_sc_obj = scale;
+	    incr_mat[15] = s->edit_state.acc_sc_obj / scale;
+	    s->edit_state.acc_sc_obj = scale;
 	    break;
 
 	case BE_O_XSCALE:
 	    /* local scaling ... X-axis */
-	    incr_mat[0] = scale / acc_sc[0];
+	    incr_mat[0] = scale / s->edit_state.acc_sc[0];
 	    /* accumulate the scale factor */
-	    acc_sc[0] = scale;
+	    s->edit_state.acc_sc[0] = scale;
 	    break;
 
 	case BE_O_YSCALE:
 	    /* local scaling ... Y-axis */
-	    incr_mat[5] = scale / acc_sc[1];
+	    incr_mat[5] = scale / s->edit_state.acc_sc[1];
 	    /* accumulate the scale factor */
-	    acc_sc[1] = scale;
+	    s->edit_state.acc_sc[1] = scale;
 	    break;
 
 	case BE_O_ZSCALE:
 	    /* local scaling ... Z-axis */
-	    incr_mat[10] = scale / acc_sc[2];
+	    incr_mat[10] = scale / s->edit_state.acc_sc[2];
 	    /* accumulate the scale factor */
-	    acc_sc[2] = scale;
+	    s->edit_state.acc_sc[2] = scale;
 	    break;
     }
 
@@ -714,8 +714,8 @@ oedit_abs_scale(struct mged_state *s)
      * NOT the view center.
      */
     VMOVE(temp, s->s_edit.e_keypoint);
-    MAT4X3PNT(pos_model, modelchanges, temp);
-    wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
+    MAT4X3PNT(pos_model, s->edit_state.model_changes, temp);
+    wrt_point(s->edit_state.model_changes, incr_mat, s->edit_state.model_changes, pos_model);
 
     new_edit_mats(s);
 }
@@ -851,9 +851,9 @@ init_oedit_vars(struct mged_state *s)
     VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
     VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
     s->edit_state.edit_absolute_scale = 0.0;
-    acc_sc_sol = 1.0;
-    acc_sc_obj = 1.0;
-    VSETALL(acc_sc, 1.0);
+    s->edit_state.acc_sc_sol = 1.0;
+    s->edit_state.acc_sc_obj = 1.0;
+    VSETALL(s->edit_state.acc_sc, 1.0);
 
     VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
     VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
@@ -861,8 +861,8 @@ init_oedit_vars(struct mged_state *s)
     VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
     VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
 
-    MAT_IDN(modelchanges);
-    MAT_IDN(acc_rot_sol);
+    MAT_IDN(s->edit_state.model_changes);
+    MAT_IDN(s->edit_state.acc_rot_sol);
 }
 
 
@@ -896,7 +896,7 @@ oedit_apply(struct mged_state *s, int continue_editing)
      */
     mat_t topm;	/* accum matrix from pathpos 0 to i-2 */
     mat_t inv_topm;	/* inverse */
-    mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
+    mat_t deltam;	/* final "changes":  deltam = (inv_topm)(s->edit_state.model_changes)(topm) */
     mat_t tempm;
 
     if (!illump || !illump->s_u_data)
@@ -906,12 +906,12 @@ oedit_apply(struct mged_state *s, int continue_editing)
     switch (ipathpos) {
 	case 0:
 	    moveHobj(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
-		     modelchanges);
+		     s->edit_state.model_changes);
 	    break;
 	case 1:
 	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
 			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
-			  modelchanges);
+			  s->edit_state.model_changes);
 	    break;
 	default:
 	    MAT_IDN(topm);
@@ -923,7 +923,7 @@ oedit_apply(struct mged_state *s, int continue_editing)
 
 	    bn_mat_inv(inv_topm, topm);
 
-	    bn_mat_mul(tempm, modelchanges, topm);
+	    bn_mat_mul(tempm, s->edit_state.model_changes, topm);
 	    bn_mat_mul(deltam, inv_topm, tempm);
 
 	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
@@ -938,7 +938,7 @@ oedit_apply(struct mged_state *s, int continue_editing)
      * include the solids about to be replaced,
      * so we can safely fiddle the displaylist.
      */
-    modelchanges[15] = 1000000000;	/* => small ratio */
+    s->edit_state.model_changes[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
     gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
@@ -1246,7 +1246,7 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
     } else if (SEDIT_ROTATE) {
 	VMOVE(s->edit_state.edit_absolute_model_rotate, s->s_edit.e_para);
     } else if (SEDIT_SCALE) {
-	s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
+	s->edit_state.edit_absolute_scale = s->edit_state.acc_sc_sol - 1.0;
 	if (s->edit_state.edit_absolute_scale > 0)
 	    s->edit_state.edit_absolute_scale /= 3.0;
     }
@@ -1725,7 +1725,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag, &s->s_edit.es_int, s->s_edit.e_mat);
 
     /* Reset relevant variables */
-    MAT_IDN(acc_rot_sol);
+    MAT_IDN(s->edit_state.acc_rot_sol);
     VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
     VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
     VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
@@ -1737,7 +1737,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
     VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
     s->edit_state.edit_absolute_scale = 0.0;
-    acc_sc_sol = 1.0;
+    s->edit_state.acc_sc_sol = 1.0;
     VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
     VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
     VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
