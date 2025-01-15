@@ -628,20 +628,20 @@ ecmd_tgc_rot_h(struct mged_state *s)
 		s->s_edit.e_para[0],
 		s->s_edit.e_para[1],
 		s->s_edit.e_para[2]);
-	/* Borrow s->edit_state.incr_change matrix here */
-	bn_mat_mul(s->edit_state.incr_change, s->edit_state.model_changes, invsolr);
+	/* Borrow s->s_edit.incr_change matrix here */
+	bn_mat_mul(s->s_edit.incr_change, s->edit_state.model_changes, invsolr);
 	MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
 	MAT_IDN(s->edit_state.model_changes);
     } else {
-	/* Apply incremental changes already in s->edit_state.incr_change */
+	/* Apply incremental changes already in s->s_edit.incr_change */
     }
 
     if (s->s_edit.mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, s->s_edit.e_keypoint);
+	bn_mat_xform_about_pnt(edit, s->s_edit.incr_change, s->s_edit.e_keypoint);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
@@ -652,10 +652,10 @@ ecmd_tgc_rot_h(struct mged_state *s)
 	bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
 	MAT4X3VEC(tgc->h, mat, tgc->h);
     } else {
-	MAT4X3VEC(tgc->h, s->edit_state.incr_change, tgc->h);
+	MAT4X3VEC(tgc->h, s->s_edit.incr_change, tgc->h);
     }
 
-    MAT_IDN(s->edit_state.incr_change);
+    MAT_IDN(s->s_edit.incr_change);
 
     return 0;
 }
@@ -693,20 +693,20 @@ ecmd_tgc_rot_ab(struct mged_state *s)
 		s->s_edit.e_para[0],
 		s->s_edit.e_para[1],
 		s->s_edit.e_para[2]);
-	/* Borrow s->edit_state.incr_change matrix here */
-	bn_mat_mul(s->edit_state.incr_change, s->edit_state.model_changes, invsolr);
+	/* Borrow s->s_edit.incr_change matrix here */
+	bn_mat_mul(s->s_edit.incr_change, s->edit_state.model_changes, invsolr);
 	MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
 	MAT_IDN(s->edit_state.model_changes);
     } else {
-	/* Apply incremental changes already in s->edit_state.incr_change */
+	/* Apply incremental changes already in s->s_edit.incr_change */
     }
 
     if (s->s_edit.mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, s->s_edit.e_keypoint);
+	bn_mat_xform_about_pnt(edit, s->s_edit.incr_change, s->s_edit.e_keypoint);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
@@ -720,12 +720,12 @@ ecmd_tgc_rot_ab(struct mged_state *s)
 	MAT4X3VEC(tgc->c, mat, tgc->c);
 	MAT4X3VEC(tgc->d, mat, tgc->d);
     } else {
-	MAT4X3VEC(tgc->a, s->edit_state.incr_change, tgc->a);
-	MAT4X3VEC(tgc->b, s->edit_state.incr_change, tgc->b);
-	MAT4X3VEC(tgc->c, s->edit_state.incr_change, tgc->c);
-	MAT4X3VEC(tgc->d, s->edit_state.incr_change, tgc->d);
+	MAT4X3VEC(tgc->a, s->s_edit.incr_change, tgc->a);
+	MAT4X3VEC(tgc->b, s->s_edit.incr_change, tgc->b);
+	MAT4X3VEC(tgc->c, s->s_edit.incr_change, tgc->c);
+	MAT4X3VEC(tgc->d, s->s_edit.incr_change, tgc->d);
     }
-    MAT_IDN(s->edit_state.incr_change);
+    MAT_IDN(s->s_edit.incr_change);
 
     return 0;
 }

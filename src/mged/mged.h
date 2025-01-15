@@ -149,7 +149,6 @@ struct mged_edit_state {
     int edit_rateflag_scale;
 
     mat_t model_changes;	/* full changes this edit */
-    mat_t incr_change;		/* change(s) from last cycle */
 
     /* The "accumulation" solid rotation matrix and scale factor */
     fastf_t acc_sc_sol;		/* accumulate solid scale factor */
@@ -201,6 +200,7 @@ struct mged_solid_edit {
     int solid_edit_pick;
 
     fastf_t es_scale;		/* scale factor */
+    mat_t incr_change;		/* change(s) from last cycle */
 
     int e_keyfixed;		/* keypoint specified by user? */
     point_t e_keypoint;		/* center of editing xforms */

@@ -3246,8 +3246,8 @@ mged_erot(struct mged_state *s,
 	}
 
 	s->s_edit.e_inpara = 0;
-	MAT_COPY(s->edit_state.incr_change, newrot);
-	bn_mat_mul2(s->edit_state.incr_change, s->edit_state.acc_rot_sol);
+	MAT_COPY(s->s_edit.incr_change, newrot);
+	bn_mat_mul2(s->s_edit.incr_change, s->edit_state.acc_rot_sol);
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;

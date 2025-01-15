@@ -150,15 +150,15 @@ mged_generic_srot(
 		s->s_edit.e_para[0],
 		s->s_edit.e_para[1],
 		s->s_edit.e_para[2]);
-	/* Borrow s->edit_state.incr_change matrix here */
-	bn_mat_mul(s->edit_state.incr_change, s->edit_state.model_changes, invsolr);
+	/* Borrow s->s_edit.incr_change matrix here */
+	bn_mat_mul(s->s_edit.incr_change, s->edit_state.model_changes, invsolr);
 	MAT_COPY(s->edit_state.acc_rot_sol, s->edit_state.model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
 	MAT_IDN(s->edit_state.model_changes);
     } else {
-	/* Apply incremental changes already in s->edit_state.incr_change */
+	/* Apply incremental changes already in s->s_edit.incr_change */
     }
     /* Apply changes to solid */
     /* xlate keypoint to origin, rotate, then put back. */
@@ -182,7 +182,7 @@ mged_generic_srot(
 
     if (s->s_edit.mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, rot_point);
+	bn_mat_xform_about_pnt(edit, s->s_edit.incr_change, rot_point);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
@@ -193,11 +193,11 @@ mged_generic_srot(
 	bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
     } else {
 	MAT4X3PNT(work, s->s_edit.e_invmat, rot_point);
-	bn_mat_xform_about_pnt(mat, s->edit_state.incr_change, work);
+	bn_mat_xform_about_pnt(mat, s->s_edit.incr_change, work);
     }
     transform_editing_solid(s, ip, mat, ip, 1);
 
-    MAT_IDN(s->edit_state.incr_change);
+    MAT_IDN(s->s_edit.incr_change);
 }
 
 int
