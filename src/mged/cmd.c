@@ -62,6 +62,8 @@ extern void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
 extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
+
+/* Ew. Globals. */
 extern int mged_default_dlist;			/* in attach.c */
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;

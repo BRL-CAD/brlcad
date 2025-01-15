@@ -55,6 +55,7 @@
 #include "./sedit.h"
 #include "./primitives/mged_functab.h"
 
+/* Ew. Global. */
 extern int doMotion;			/* defined in buttons.c */
 
 #ifdef HAVE_X11_TYPES

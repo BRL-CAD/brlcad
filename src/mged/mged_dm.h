@@ -553,6 +553,7 @@ extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
     \
 }
 
+/* Ew.  Globals. */
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */

@@ -56,6 +56,7 @@
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
+/* Ew. Globals. */
 /* primitive specific externs.  Eventually these should all go away */
 extern int es_ars_crv;  /* curve and column identifying selected ARS point */
 extern int es_ars_col;
@@ -72,9 +73,11 @@ extern struct shell *es_s;
 
 extern struct wdb_pipe_pnt *es_pipe_pnt;
 
+/* Ew. Global. */
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
 
+/* Ew. Global. */
 fastf_t es_m[3];		/* edge(line) slope */
 
 void

@@ -209,7 +209,7 @@ struct mged_solid_edit {
     int e_mvalid;		/* e_mparam valid.  e_inpara must = 0 */
     vect_t e_mparam;		/* mouse input param.  Only when es_mvalid set */
 
-    int e_inpara;		/* e_para valid.  e_mvalid must = 0 */
+    int e_inpara;		/* parameter input from keyboard flag.  1 == e_para valid.  e_mvalid must = 0 */
     vect_t e_para;		/* keyboard input parameter changes */
 
     mat_t e_invmat;		/* inverse of e_mat KAA */
@@ -332,8 +332,9 @@ void history_setup(void);
 #define UARROW   002
 #define SARROW   004
 #define ROTARROW 010 /* Object rotation enabled */
-extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 
+/* Ew.  Globals. */
+extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 extern struct display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
 extern struct bv_scene_obj *illump; /* == 0 if none, else points to ill. solid */
 extern int ipathpos; /* path index of illuminated element */
@@ -399,6 +400,7 @@ struct cmd_list {
 };
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
 
+/* Ew.  Globals. */
 /* defined in cmd.c */
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
@@ -409,6 +411,7 @@ typedef void *Tk_Window;
 #endif
 extern Tk_Window tkwin; /* in cmd.c */
 
+/* Ew.  Globals. */
 /* defined in rtif.c */
 extern struct run_rt head_run_rt;
 
@@ -460,6 +463,7 @@ void freeDListsAll(void *, unsigned int dlist, int range);
 
 /* edarb.c */
 int editarb(struct mged_state *s, vect_t pos_model);
+/* Ew.  Global. */
 extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
@@ -526,7 +530,6 @@ void rect_image2view(struct mged_state *);
 void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* edsol.c */
-extern int inpara;	/* parameter input from keyboard flag */
 void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
     struct mged_state *s,

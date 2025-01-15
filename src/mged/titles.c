@@ -50,7 +50,7 @@ char *state_str[] = {
     "UNKNOWN",
 };
 
-
+/* Ew. Global. */
 extern mat_t perspective_mat;  /* defined in dozoom.c */
 
 /*

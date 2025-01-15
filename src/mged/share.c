@@ -69,6 +69,7 @@
     } while (0)
 
 
+/* Ew. Globals. */
 extern struct bu_structparse axes_vparse[];
 extern struct bu_structparse color_scheme_vparse[];
 extern struct bu_structparse grid_vparse[];

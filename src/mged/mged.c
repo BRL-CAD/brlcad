@@ -104,21 +104,27 @@ extern struct bu_vls *history_prev(const char *);
 extern struct bu_vls *history_cur(const char *);
 extern struct bu_vls *history_next(const char *);
 
+/* Ew. Global. */
 /* defined in dozoom.c */
 extern unsigned char geometry_default_color[];
 
+/* Ew. Global. */
 /* defined in set.c */
 extern struct _mged_variables default_mged_variables;
 
+/* Ew. Global. */
 /* defined in color_scheme.c */
 extern struct _color_scheme default_color_scheme;
 
+/* Ew. Global. */
 /* defined in grid.c */
 extern struct bv_grid_state default_grid_state;
 
+/* Ew. Global. */
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
 
+/* Ew. Global. */
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
@@ -127,6 +133,7 @@ extern struct _rubber_band default_rubber_band;
  * when we're done (which is needed so atexit() calls to bu_log() will
  * still work).
  */
+/* Ew. Global. */
 static int stdfd[2] = {1, 2};
 
 /* Container for passing I/O data through Tcl callbacks */
@@ -141,19 +148,24 @@ struct mged_state *MGED_STATE = NULL;
 /* called by numerous functions to indicate truthfully whether the
  * views need to be redrawn.
  */
+/* Ew. Global. */
 int update_views = 0;
 
 jmp_buf jmp_env;	/* For non-local gotos */
+/* Ew. Global. */
 double frametime;	/* time needed to draw last frame */
 
+/* Ew. Global. */
 struct rt_wdb rtg_headwdb;  /* head of database object list */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
+/* Ew. Global. */
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 
 
 /* The old mged gui is temporarily the default. */
+/* Ew. Global. */
 int old_mged_gui=1;
 
 static int

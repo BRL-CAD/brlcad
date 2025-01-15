@@ -54,6 +54,7 @@ extern int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx)
 extern int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 
+/* Ew. Global. */
 extern Tk_Window tkwin; /* in cmd.c */
 
 extern void init_qray(void);
