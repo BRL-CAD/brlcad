@@ -91,7 +91,12 @@ set_e_axes_pos(struct mged_state *s, int both)
     struct rt_db_internal *ip = &s->s_edit.es_int;
 
     if (MGED_OBJ[ip->idb_type].ft_e_axes_pos) {
+	bu_vls_trunc(s->s_edit.log_str, 0);
 	(*MGED_OBJ[ip->idb_type].ft_e_axes_pos)(s, ip, &s->tol.tol);
+	if (bu_vls_strlen(s->s_edit.log_str)) {
+	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit.log_str), (char *)NULL);
+	    bu_vls_trunc(s->s_edit.log_str, 0);
+	}
 	return;
     } else {
 	VMOVE(s->s_edit.curr_e_axes_pos, s->s_edit.e_keypoint);
@@ -155,7 +160,12 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
     RT_CK_DB_INTERNAL(ip);
 
     if (MGED_OBJ[ip->idb_type].ft_keypoint) {
+	bu_vls_trunc(s->s_edit.log_str, 0);
 	*strp = (*MGED_OBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, ip, &s->tol.tol);
+	if (bu_vls_strlen(s->s_edit.log_str)) {
+	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit.log_str), (char *)NULL);
+	    bu_vls_trunc(s->s_edit.log_str, 0);
+	}
 	return;
     }
 
@@ -362,7 +372,12 @@ sedit_menu(struct mged_state *s) {
 
     const struct rt_db_internal *ip = &s->s_edit.es_int;
     if (MGED_OBJ[ip->idb_type].ft_menu_item) {
+	bu_vls_trunc(s->s_edit.log_str, 0);
 	struct menu_item *mi = (*MGED_OBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
+	if (bu_vls_strlen(s->s_edit.log_str)) {
+	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit.log_str), (char *)NULL);
+	    bu_vls_trunc(s->s_edit.log_str, 0);
+	}
 	mmenu_set_all(s, MENU_L1, mi);
     }
 
@@ -444,8 +459,18 @@ sedit(struct mged_state *s)
     int had_method = 0;
     const struct rt_db_internal *ip = &s->s_edit.es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit) {
-	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, s->s_edit.edit_flag))
+	bu_vls_trunc(s->s_edit.log_str, 0);
+	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, s->s_edit.edit_flag)) {
+	    if (bu_vls_strlen(s->s_edit.log_str)) {
+		Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit.log_str), (char *)NULL);
+		bu_vls_trunc(s->s_edit.log_str, 0);
+	    }
 	    return;
+	}
+	if (bu_vls_strlen(s->s_edit.log_str)) {
+	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit.log_str), (char *)NULL);
+	    bu_vls_trunc(s->s_edit.log_str, 0);
+	}
 	had_method = 1;
     }
 
@@ -507,8 +532,14 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	return;
 
     const struct rt_db_internal *ip = &s->s_edit.es_int;
-    if (MGED_OBJ[ip->idb_type].ft_edit_xy)
-	 (*MGED_OBJ[ip->idb_type].ft_edit_xy)(s, s->s_edit.edit_flag, mousevec);
+    if (MGED_OBJ[ip->idb_type].ft_edit_xy) {
+	bu_vls_trunc(s->s_edit.log_str, 0);
+	(*MGED_OBJ[ip->idb_type].ft_edit_xy)(s, s->s_edit.edit_flag, mousevec);
+	if (bu_vls_strlen(s->s_edit.log_str)) {
+	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit.log_str), (char *)NULL);
+	    bu_vls_trunc(s->s_edit.log_str, 0);
+	}
+    }
 }
 
 
@@ -1293,7 +1324,12 @@ label_edited_solid(
 
     // First, see if we have an edit-aware labeling method.  If we do, use it.
     if (MGED_OBJ[ip->idb_type].ft_labels) {
+	bu_vls_trunc(s->s_edit.log_str, 0);
 	(*MGED_OBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, &s->s_edit.es_int, &s->tol.tol);
+	if (bu_vls_strlen(s->s_edit.log_str)) {
+	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit.log_str), (char *)NULL);
+	    bu_vls_trunc(s->s_edit.log_str, 0);
+	}
 	return;
     }
     // If there is no editing-aware labeling, use standard librt labels
@@ -1386,7 +1422,12 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 	return TCL_ERROR;
 
     if (MGED_OBJ[ip->idb_type].ft_menu_str) {
+	bu_vls_trunc(s->s_edit.log_str, 0);
 	int ret = (*MGED_OBJ[ip->idb_type].ft_menu_str)(&vls, ip, &s->tol.tol);
+	if (bu_vls_strlen(s->s_edit.log_str)) {
+	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit.log_str), (char *)NULL);
+	    bu_vls_trunc(s->s_edit.log_str, 0);
+	}
 	if (ret != BRLCAD_OK)
 	    return TCL_ERROR;
     }
