@@ -540,7 +540,7 @@ mged_arb_e_axes_pos(
        	const struct bn_tol *tol
        	)
 {
-    int i;
+    int i = 0;
     const short earb8[12][18] = earb8_edit_array;
     const short earb7[12][18] = earb7_edit_array;
     const short earb6[10][18] = earb6_edit_array;
@@ -552,78 +552,71 @@ mged_arb_e_axes_pos(
 
     int arb_type = rt_arb_std_type(ip, tol);
 
-    if (s->edit_state.global_editing_state == ST_O_EDIT) {
-	i = 0;
-    } else {
-	switch (s->s_edit.edit_flag) {
-	    case STRANS:
-		i = 0;
-		break;
-	    case EARB:
-		switch (arb_type) {
-		    case ARB5:
-			i = earb5[s->s_edit.edit_menu][0];
-			break;
-		    case ARB6:
-			i = earb6[s->s_edit.edit_menu][0];
-			break;
-		    case ARB7:
-			i = earb7[s->s_edit.edit_menu][0];
-			break;
-		    case ARB8:
-			i = earb8[s->s_edit.edit_menu][0];
-			break;
-		    default:
-			i = 0;
-			break;
-		}
-		break;
-	    case PTARB:
-		switch (arb_type) {
-		    case ARB4:
-			i = s->s_edit.edit_menu;	/* index for point 1, 2, 3 or 4 */
-			break;
-		    case ARB5:
-		    case ARB7:
-			i = 4;	/* index for point 5 */
-			break;
-		    case ARB6:
-			i = s->s_edit.edit_menu;	/* index for point 5 or 6 */
-			break;
-		    default:
-			i = 0;
-			break;
-		}
-		break;
-	    case ECMD_ARB_MOVE_FACE:
-		switch (arb_type) {
-		    case ARB4:
-			i = local_arb_faces[0][s->s_edit.edit_menu * 4];
-			break;
-		    case ARB5:
-			i = local_arb_faces[1][s->s_edit.edit_menu * 4];
-			break;
-		    case ARB6:
-			i = local_arb_faces[2][s->s_edit.edit_menu * 4];
-			break;
-		    case ARB7:
-			i = local_arb_faces[3][s->s_edit.edit_menu * 4];
-			break;
-		    case ARB8:
-			i = local_arb_faces[4][s->s_edit.edit_menu * 4];
-			break;
-		    default:
-			i = 0;
-			break;
-		}
-		break;
-	    case ECMD_ARB_ROTATE_FACE:
-		i = fixv;
-		break;
-	    default:
-		i = 0;
-		break;
-	}
+    switch (s->s_edit.edit_flag) {
+	case EARB:
+	    switch (arb_type) {
+		case ARB5:
+		    i = earb5[s->s_edit.edit_menu][0];
+		    break;
+		case ARB6:
+		    i = earb6[s->s_edit.edit_menu][0];
+		    break;
+		case ARB7:
+		    i = earb7[s->s_edit.edit_menu][0];
+		    break;
+		case ARB8:
+		    i = earb8[s->s_edit.edit_menu][0];
+		    break;
+		default:
+		    i = 0;
+		    break;
+	    }
+	    break;
+	case PTARB:
+	    switch (arb_type) {
+		case ARB4:
+		    i = s->s_edit.edit_menu;	/* index for point 1, 2, 3 or 4 */
+		    break;
+		case ARB5:
+		case ARB7:
+		    i = 4;	/* index for point 5 */
+		    break;
+		case ARB6:
+		    i = s->s_edit.edit_menu;	/* index for point 5 or 6 */
+		    break;
+		default:
+		    i = 0;
+		    break;
+	    }
+	    break;
+	case ECMD_ARB_MOVE_FACE:
+	    switch (arb_type) {
+		case ARB4:
+		    i = local_arb_faces[0][s->s_edit.edit_menu * 4];
+		    break;
+		case ARB5:
+		    i = local_arb_faces[1][s->s_edit.edit_menu * 4];
+		    break;
+		case ARB6:
+		    i = local_arb_faces[2][s->s_edit.edit_menu * 4];
+		    break;
+		case ARB7:
+		    i = local_arb_faces[3][s->s_edit.edit_menu * 4];
+		    break;
+		case ARB8:
+		    i = local_arb_faces[4][s->s_edit.edit_menu * 4];
+		    break;
+		default:
+		    i = 0;
+		    break;
+	    }
+	    break;
+	case ECMD_ARB_ROTATE_FACE:
+	    i = fixv;
+	    break;
+	default:
+	    i = 0;
+	    break;
     }
     MAT4X3PNT(s->s_edit.curr_e_axes_pos, s->s_edit.e_mat, arb->pt[i]);
 }
