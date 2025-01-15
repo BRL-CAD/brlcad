@@ -251,7 +251,7 @@ ecmd_cline_move_h(struct mged_state *s)
 	s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
 	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    MAT4X3PNT(work, s->s_edit.e_invmat, s->s_edit.e_para);
 	    VSUB2(cli->h, work, cli->v);
 	} else

@@ -585,7 +585,7 @@ ecmd_bot_movev(struct mged_state *s)
 	s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
 	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -632,7 +632,7 @@ ecmd_bot_movee(struct mged_state *s)
 	s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
 	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -679,7 +679,7 @@ ecmd_bot_movet(struct mged_state *s)
 	s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
 	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-	if (mged_variables->mv_context) {
+	if (s->s_edit.mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {

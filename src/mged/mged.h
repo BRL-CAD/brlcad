@@ -218,6 +218,9 @@ struct mged_solid_edit {
     point_t curr_e_axes_pos;	/* center of editing xforms */
     point_t e_axes_pos;
 
+    /* Flag to trigger some primitive edit opts to use keypoint */
+    int mv_context;
+
     /* Internal primitive editing information specific to primitive types. */
     void *ipe_ptr;
 
