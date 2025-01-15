@@ -1,7 +1,7 @@
 #        R E G R E S S I O N _ R E S O U R C E S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2009-2024 United States Government as represented by
+# Copyright (c) 2009-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

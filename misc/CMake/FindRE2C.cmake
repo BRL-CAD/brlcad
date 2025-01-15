@@ -62,7 +62,7 @@ find_package_handle_standard_args(RE2C DEFAULT_MSG RE2C_EXECUTABLE)
 #  ====================================================================
 #
 #=============================================================================
-# Copyright (c) 2010-2024 United States Government as represented by
+# Copyright (c) 2010-2025 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel

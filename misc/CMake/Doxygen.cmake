@@ -1,7 +1,7 @@
 #                   D O X Y G E N . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2016-2024 United States Government as represented by
+# Copyright (c) 2016-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
 /*                   B R E P _ C O B B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from Ayam:

@@ -1,7 +1,7 @@
 /*                     V I E W D E P T H . C
  * BRL-CAD
  *
- * Copyright (c) 2022-2024 United States Government as represented by
+ * Copyright (c) 2022-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
