@@ -187,7 +187,6 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
 void
 init_sedit(struct mged_state *s)
 {
-    int type;
     int id;
 
     if (s->dbip == DBI_NULL || !illump)
@@ -224,25 +223,7 @@ init_sedit(struct mged_state *s)
     s->s_edit.edit_menu = 0;
 
     // TODO - indicates we need per-primitive init of sedit state
-    if (id == ID_ARB8) {
-	struct rt_arb_internal *arb;
-	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-
-	arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
-	RT_ARB_CK_MAGIC(arb);
-
-	type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
-
-	if (rt_arb_calc_planes(&error_msg, arb, type, es_peqn, &s->tol.tol)) {
-	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
-			     "\nCannot calculate plane equations for ARB8\n",
-			     (char *)NULL);
-	    rt_db_free_internal(&s->s_edit.es_int);
-	    bu_vls_free(&error_msg);
-	    return;
-	}
-	bu_vls_free(&error_msg);
-    } else if (id == ID_BSPLINE) {
+    if (id == ID_BSPLINE) {
 	bspline_init_sedit(s);
     }
 
@@ -1576,21 +1557,6 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     if (context)
 	transform_editing_solid(s, &s->s_edit.es_int, s->s_edit.e_invmat, &s->s_edit.es_int, 1);
-
-    /* must re-calculate the face plane equations for arbs
-     * TODO - why do we need to do this here, and not in edarb.c code somewhere? */
-    if (s->s_edit.es_int.idb_type == ID_ARB8) {
-	struct rt_arb_internal *arb;
-	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-	int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
-
-	arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
-	RT_ARB_CK_MAGIC(arb);
-
-	if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol) < 0)
-	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
-	bu_vls_free(&error_msg);
-    }
 
     if (!s->s_edit.e_keyfixed)
 	get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag, &s->s_edit.es_int, s->s_edit.e_mat);

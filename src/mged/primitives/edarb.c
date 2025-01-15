@@ -818,6 +818,16 @@ editarb(struct mged_state *s, vect_t pos_model)
 {
     int ret = 0;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
+    int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
+
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol)) {
+	// TODO - write to a vls so parent code can do Tcl_AppendResult
+	bu_log("\nCannot calculate plane equations for ARB8\n");
+	bu_vls_free(&error_msg);
+	return TCL_ERROR;
+    }
+    bu_vls_free(&error_msg);
 
     ret = arb_edit(arb, es_peqn, s->s_edit.edit_menu, newedge, pos_model, s->s_edit.tol);
 
@@ -887,6 +897,15 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol)) {
+	// TODO - write to a vls so parent code can do Tcl_AppendResult
+	bu_log("\nCannot calculate plane equations for ARB8\n");
+	bu_vls_free(&error_msg);
+	return TCL_ERROR;
+    }
+    bu_vls_free(&error_msg);
+
     if (arb_extrude(arb, face, dist, s->s_edit.tol, es_peqn)) {
 	Tcl_AppendResult(interp, "Error extruding ARB\n", (char *)NULL);
 	return TCL_ERROR;
@@ -934,6 +953,16 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     RT_ARB_CK_MAGIC(arb);
 
     face = atoi(argv[1]);
+
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol)) {
+	// TODO - write to a vls so parent code can do Tcl_AppendResult
+	bu_log("\nCannot calculate plane equations for ARB8\n");
+	bu_vls_free(&error_msg);
+	return TCL_ERROR;
+    }
+    bu_vls_free(&error_msg);
 
     if (arb_mirror_face_axis(arb, es_peqn, face, argv[2], s->s_edit.tol)) {
 	Tcl_AppendResult(interp, "Mirface: mirror operation failed\n", (char *)NULL);
@@ -1438,7 +1467,16 @@ mged_arb_edit(struct mged_state *s, int edflag)
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
     int ret = 0;
-    int arb_type;
+
+    int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol)) {
+	// TODO - write to a vls so parent code can do Tcl_AppendResult
+	bu_log("\nCannot calculate plane equations for ARB8\n");
+	bu_vls_free(&error_msg);
+	return TCL_ERROR;
+    }
+    bu_vls_free(&error_msg);
+
 
     switch (edflag) {
 	case SSCALE:
