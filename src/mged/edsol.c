@@ -231,10 +231,9 @@ init_sedit(struct mged_state *s)
 	arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	type = rt_arb_std_type(&s->s_edit.es_int, &s->tol.tol);
-	s->edit_state.e_type = type;
+	type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
 
-	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol)) {
+	if (rt_arb_calc_planes(&error_msg, arb, type, es_peqn, &s->tol.tol)) {
 	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
@@ -774,7 +773,6 @@ vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, co
 static void
 init_oedit_guts(struct mged_state *s)
 {
-    int id;
     const char *strp="";
 
     /* for safety sake */
@@ -816,16 +814,6 @@ init_oedit_guts(struct mged_state *s)
 	return;				/* FAIL */
     }
     RT_CK_DB_INTERNAL(&s->s_edit.es_int);
-    id = s->s_edit.es_int.idb_type;
-
-    if (id == ID_ARB8) {
-	struct rt_arb_internal *arb;
-
-	arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
-	RT_ARB_CK_MAGIC(arb);
-
-	s->edit_state.e_type = rt_arb_std_type(&s->s_edit.es_int, &s->tol.tol);
-    }
 
     /* Save aggregate path matrix */
     (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, s->s_edit.e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
@@ -1020,6 +1008,20 @@ f_eqn(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *a
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
+
+    if (argc < 4 || 4 < argc) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&vls, "help eqn");
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (s->edit_state.global_editing_state != ST_S_EDIT) {
+	Tcl_AppendResult(s->interp, "Eqn: must be in solid edit\n", (char *)NULL);
+	return TCL_ERROR;
+    }
 
     int ret = arb_f_eqn(s, argc, argv);
     if (ret != TCL_OK)
@@ -1407,12 +1409,13 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 	case ID_ARB8:
 	    {
 		struct bu_vls vls2 = BU_VLS_INIT_ZERO;
+		int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
 
 		/* title */
 		bu_vls_printf(&vls, "{{ARB MENU} {}}");
 
 		/* build "move edge" menu */
-		mip = which_menu[s->edit_state.e_type-4];
+		mip = which_menu[arb_type-4];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -1422,7 +1425,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 		bu_vls_trunc(&vls2, 0);
 
 		/* build "move face" menu */
-		mip = which_menu[s->edit_state.e_type+1];
+		mip = which_menu[arb_type+1];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -1432,7 +1435,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 		bu_vls_trunc(&vls2, 0);
 
 		/* build "rotate face" menu */
-		mip = which_menu[s->edit_state.e_type+6];
+		mip = which_menu[arb_type+6];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -1658,11 +1661,12 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     if (s->s_edit.es_int.idb_type == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+	int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
 
 	arb = (struct rt_arb_internal *)s->s_edit.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol) < 0)
+	if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, &s->tol.tol) < 0)
 	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }

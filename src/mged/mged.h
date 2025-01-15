@@ -179,6 +179,9 @@ struct mged_solid_edit {
     // of the object being edited (I think?)
     struct rt_db_internal es_int;
 
+    // Tolerance for calculations
+    const struct bn_tol *tol;
+
     // Primary variable used to identify specific editing operations
     int edit_flag;
     /* item/edit_mode selected from menu.  TODO - it seems like this

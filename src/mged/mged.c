@@ -1904,6 +1904,7 @@ main(int argc, char *argv[])
     bu_vls_init(&s->scratchline);
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
+    s->s_edit.tol = &s->tol.tol;
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;

@@ -1078,19 +1078,19 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	case DB5_MINORTYPE_BRLCAD_ARB8:
 	    type = rt_arb_std_type(&intern, &arb_tol);
 	    switch (type) {
-		case 4:
+		case ARB4:
 		    type_match = (!bu_path_match(plan->p_un._type_data, "arb4", 0));
 		    break;
-		case 5:
+		case ARB5:
 		    type_match = (!bu_path_match(plan->p_un._type_data, "arb5", 0));
 		    break;
-		case 6:
+		case ARB6:
 		    type_match = (!bu_path_match(plan->p_un._type_data, "arb6", 0));
 		    break;
-		case 7:
+		case ARB7:
 		    type_match = (!bu_path_match(plan->p_un._type_data, "arb7", 0));
 		    break;
-		case 8:
+		case ARB8:
 		    type_match = (!bu_path_match(plan->p_un._type_data, "arb8", 0));
 		    break;
 		default:
