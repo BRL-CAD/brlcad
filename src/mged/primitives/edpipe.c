@@ -913,7 +913,7 @@ void ecmd_pipe_pick(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(new_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -950,7 +950,7 @@ void ecmd_pipe_split(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(new_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -988,7 +988,7 @@ void ecmd_pipe_pt_move(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(new_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -1026,7 +1026,7 @@ void ecmd_pipe_pt_add(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(new_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -1058,7 +1058,7 @@ void ecmd_pipe_pt_ins(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(new_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {

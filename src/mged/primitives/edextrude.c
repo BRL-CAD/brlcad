@@ -214,7 +214,7 @@ ecmd_extr_mov_h(struct mged_state *s)
 	s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
 	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model coordinates */
 	    MAT4X3PNT(work, s->s_edit.e_invmat, s->s_edit.e_para);
 	    VSUB2(extr->h, work, extr->V);
@@ -316,7 +316,7 @@ ecmd_extr_rot_h(struct mged_state *s)
 	/* Apply incremental changes already in s->edit_state.incr_change */
     }
 
-    if (s->s_edit.mv_context) {
+    if (mged_variables->mv_context) {
 	/* calculate rotations about keypoint */
 	bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, s->s_edit.e_keypoint);
 

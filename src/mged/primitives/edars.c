@@ -226,7 +226,7 @@ ecmd_ars_pick(struct mged_state *s)
     if (s->s_edit.e_mvalid) {
 	VMOVE(pick_pt, s->s_edit.e_mparam);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(pick_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -585,7 +585,7 @@ ecmd_ars_move_col(struct mged_state *s)
 	dist = DIST_PNT_PLANE(s->s_edit.e_mparam, view_pl);
 	VJOIN1(new_pt, s->s_edit.e_mparam, -dist, view_pl);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -644,7 +644,7 @@ ecmd_ars_move_crv(struct mged_state *s)
 	dist = DIST_PNT_PLANE(s->s_edit.e_mparam, view_pl);
 	VJOIN1(new_pt, s->s_edit.e_mparam, -dist, view_pl);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {
@@ -702,7 +702,7 @@ ecmd_ars_move_pt(struct mged_state *s)
 	dist = DIST_PNT_PLANE(s->s_edit.e_mparam, view_pl);
 	VJOIN1(new_pt, s->s_edit.e_mparam, -dist, view_pl);
     } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* apply s->s_edit.e_invmat to convert to real model space */
 	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
 	} else {

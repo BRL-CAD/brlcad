@@ -305,7 +305,7 @@ ecmd_eto_rot_c(struct mged_state *s)
 	/* Apply incremental changes already in s->edit_state.incr_change */
     }
 
-    if (s->s_edit.mv_context) {
+    if (mged_variables->mv_context) {
 	/* calculate rotations about keypoint */
 	bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, s->s_edit.e_keypoint);
 

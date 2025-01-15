@@ -104,7 +104,7 @@ mged_generic_strans(
 	s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
 	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
 
-	if (s->s_edit.mv_context) {
+	if (mged_variables->mv_context) {
 	    /* move solid so that s->s_edit.e_keypoint is at position s->s_edit.e_para */
 	    vect_t raw_para;
 
@@ -180,7 +180,7 @@ mged_generic_srot(
 	    break;
     }
 
-    if (s->s_edit.mv_context) {
+    if (mged_variables->mv_context) {
 	/* calculate rotations about keypoint */
 	bn_mat_xform_about_pnt(edit, s->edit_state.incr_change, rot_point);
 

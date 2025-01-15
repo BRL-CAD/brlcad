@@ -218,8 +218,6 @@ struct mged_solid_edit {
     point_t curr_e_axes_pos;	/* center of editing xforms */
     point_t e_axes_pos;
 
-    int mv_context;
-
     /* Internal primitive editing information specific to primitive types. */
     void *ipe_ptr;
 
