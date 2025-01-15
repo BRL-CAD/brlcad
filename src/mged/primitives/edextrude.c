@@ -148,6 +148,9 @@ ecmd_extr_skt_name(struct mged_state *s)
 
     RT_EXTRUDE_CK_MAGIC(extr);
 
+    // TODO.  Yikes.  OK, this needs to live somewhere else and assign the
+    // sketch name it extracts from the GUI dialog to a sketch specific editing
+    // struct.
     bu_vls_printf(&tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS",
 	    extr->sketch_name);
     ret_tcl = Tcl_Eval(s->interp, bu_vls_addr(&tcl_cmd));
@@ -165,6 +168,9 @@ ecmd_extr_skt_name(struct mged_state *s)
     sketch_name = Tcl_GetVar(s->interp, "final_sketch_name", TCL_GLOBAL_ONLY);
     if (extr->sketch_name)
 	bu_free((char *)extr->sketch_name, "extr->sketch_name");
+
+
+    // TODO - this needs to be passed in somehow rather than calling the GUI here...
     extr->sketch_name = bu_strdup(sketch_name);
 
     if (extr->skt) {

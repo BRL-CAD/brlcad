@@ -227,6 +227,8 @@ ecmd_bot_mode(struct mged_state *s)
     old_mode = bot->mode;
     sprintf(mode, " %d", old_mode - 1);
     if (dm_get_pathname(DMP)) {
+	// TODO - does this really warrant a GUI???  There are simpler ways to
+	// do this, and at a minimum the GUI call can't live here.
 	ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_mode_radio ",
 		bu_vls_addr(dm_get_pathname(DMP)), " _bot_mode_result",
 		" \"BOT Mode\"", "  \"Select the desired mode\"", mode,
@@ -268,6 +270,8 @@ ecmd_bot_orient(struct mged_state *s)
     RT_BOT_CK_MAGIC(bot);
     sprintf(orient, " %d", bot->orientation - 1);
     if (dm_get_pathname(DMP)) {
+	// TODO - does this really warrant a GUI???  There are simpler ways to
+	// do this, and at a minimum the GUI call can't live here.
 	ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_orient_radio ",
 		bu_vls_addr(dm_get_pathname(DMP)), " _bot_orient_result",
 		" \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
@@ -309,6 +313,7 @@ ecmd_bot_thick(struct mged_state *s)
     RT_BOT_CK_MAGIC(bot);
 
     if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+	// TODO - don't bother with a GUI - just return an error message.
 	if (Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 		    "{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 		    (char *)NULL) != TCL_OK)
@@ -320,7 +325,7 @@ ecmd_bot_thick(struct mged_state *s)
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
 	/* setting thickness for all faces */
-
+	// TODO - does this really warrant a GUI???
 	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 		"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
 		"{No face is selected, so this operation will modify all the faces in this BOT} ",
@@ -377,6 +382,7 @@ ecmd_bot_flags(struct mged_state *s)
     }
 
     if (dm_get_pathname(DMP)) {
+	// TODO - figure out what this is doing...
 	ret_tcl = Tcl_VarEval(s->interp,
 		"cad_list_buts",
 		" .bot_list_flags ",
@@ -421,6 +427,7 @@ ecmd_bot_fmode(struct mged_state *s)
     RT_BOT_CK_MAGIC(bot);
 
     if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+	// TODO - does this need a GUI???
 	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 		"{Cannot edit face mode in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 		(char *)NULL);
@@ -429,6 +436,7 @@ ecmd_bot_fmode(struct mged_state *s)
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
 	/* setting mode for all faces */
+	// TODO - does this need a GUI???
 	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 		"$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
 		"{No face is selected, so this operation will modify all the faces in this BOT} ",
@@ -463,6 +471,7 @@ ecmd_bot_fmode(struct mged_state *s)
 	sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
     if (dm_get_pathname(DMP)) {
+	// TODO - does this need a GUI???
 	ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
 		" _bot_fmode_result ", "\"BOT Face Mode\"",
 		" \"Select the desired face mode\"", fmode,
@@ -811,10 +820,13 @@ ecmd_bot_pickt(struct mged_state *s, const vect_t mousevec)
 	sscanf(bu_vls_addr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
 	bu_vls_free(&vls);
     } else {
+	// TODO - ugh.  Evil Tcl variable linkage.  Will need to figure out how to do this
+	// "on the fly" with temporary s_edit structure internal variables...
 	Tcl_LinkVar(s->interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
 	Tcl_LinkVar(s->interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT);
 	Tcl_LinkVar(s->interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT);
 
+	// TODO - figure out what this is doing...
 	ret_tcl = Tcl_VarEval(s->interp, "bot_face_select ", bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	if (ret_tcl != TCL_OK) {

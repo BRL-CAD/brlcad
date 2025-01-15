@@ -150,6 +150,7 @@ ecmd_ebm_fname(struct mged_state *s)
 
 	if (stat(fname, &stat_buf)) {
 	    bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
+	    // TODO - Can we just log the message here, or is SetResult important?
 	    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 	    bu_vls_free(&message);
 	    mged_print_result(s, TCL_ERROR);
@@ -158,6 +159,7 @@ ecmd_ebm_fname(struct mged_state *s)
 	need_size = ebm->xdim * ebm->ydim * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
 	    bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
+	    // TODO - Can we just log the message here, or is SetResult important?
 	    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 	    bu_vls_free(&message);
 	    mged_print_result(s, TCL_ERROR);

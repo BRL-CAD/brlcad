@@ -214,7 +214,7 @@ mged_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const st
     struct menu_item *mip = NULL;
     struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
-    /* build ARS PICK MENU Tcl list */
+    /* build ARS PICK MENU list */
 
     mip = ars_pick_menu;
     /* title */
