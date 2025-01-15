@@ -1399,97 +1399,18 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
     struct mged_state *s = ctp->s;
     struct rt_db_internal *ip = &s->s_edit.es_int;
 
-    struct menu_item *mip = (struct menu_item *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (s->edit_state.global_editing_state != ST_S_EDIT)
 	return TCL_ERROR;
 
-    switch (s->s_edit.es_int.idb_type) {
-	case ID_ARB8:
-	    {
-		struct bu_vls vls2 = BU_VLS_INIT_ZERO;
-		int arb_type = rt_arb_std_type(&s->s_edit.es_int, s->s_edit.tol);
-
-		/* title */
-		bu_vls_printf(&vls, "{{ARB MENU} {}}");
-
-		/* build "move edge" menu */
-		mip = which_menu[arb_type-4];
-		/* submenu title */
-		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
-		for (++mip; mip->menu_func != NULL; ++mip)
-		    bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
-
-		bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[1].menu_string, bu_vls_addr(&vls2));
-		bu_vls_trunc(&vls2, 0);
-
-		/* build "move face" menu */
-		mip = which_menu[arb_type+1];
-		/* submenu title */
-		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
-		for (++mip; mip->menu_func != NULL; ++mip)
-		    bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
-
-		bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[2].menu_string, bu_vls_addr(&vls2));
-		bu_vls_trunc(&vls2, 0);
-
-		/* build "rotate face" menu */
-		mip = which_menu[arb_type+6];
-		/* submenu title */
-		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
-		for (++mip; mip->menu_func != NULL; ++mip)
-		    bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
-
-		bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[3].menu_string, bu_vls_addr(&vls2));
-		bu_vls_free(&vls2);
-	    }
-
-	    break;
-	case ID_ARS:
-	    {
-		struct bu_vls vls2 = BU_VLS_INIT_ZERO;
-
-		/* build ARS PICK MENU Tcl list */
-
-		mip = ars_pick_menu;
-		/* title */
-		bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
-		for (++mip; mip->menu_func != NULL; ++mip)
-		    bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
-
-		mip = ars_menu;
-		/* title */
-		bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
-
-		/* pick vertex menu */
-		bu_vls_printf(&vls, " {{%s} {%s}}", (++mip)->menu_string,
-			      bu_vls_addr(&vls2));
-
-		for (++mip; mip->menu_func != NULL; ++mip)
-		    bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
-
-		bu_vls_free(&vls2);
-	    }
-
-	    break;
-	default:
-	    if (MGED_OBJ[ip->idb_type].ft_menu_item)
-		mip = (*MGED_OBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
-
-	    if (mip == (struct menu_item *)NULL)
-		break;
-
-	    /* title */
-	    bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
-
-	    for (++mip; mip->menu_func != NULL; ++mip)
-		bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
-
-	    break;
+    if (MGED_OBJ[ip->idb_type].ft_menu_str) {
+	int ret = (*MGED_OBJ[ip->idb_type].ft_menu_str)(&vls, ip, &s->tol.tol);
+	if (ret != BRLCAD_OK)
+	    return TCL_ERROR;
     }
 
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+    Tcl_AppendResult(interp, bu_vls_cstr(&vls), (char *)0);
     bu_vls_free(&vls);
 
     return TCL_OK;

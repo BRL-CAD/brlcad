@@ -28,7 +28,6 @@
 #include "raytrace.h"
 #include "mged.h"
 
-extern struct menu_item cntrl_menu[];
 extern struct menu_item *which_menu[];
 
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */

@@ -89,6 +89,10 @@ mged_generic_edit_xy(
 void
 mged_set_edflag(struct mged_state *s, int edflag);
 
+int
+mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol);
+
+
 struct mged_functab {
     uint32_t magic;
     char ft_name[17]; /* current longest name is 16 chars, need one element for terminating NULL */
@@ -156,6 +160,9 @@ struct mged_functab {
     /* Destroy primitive specific editing struct */
     void (*ft_prim_edit_destroy)(void *);
 #define MGEDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(_func) ((void(*)(void *)((void (*)(void))_func))
+
+    int (*ft_menu_str)(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define MGEDFUNCTAB_FUNC_MENU_STR_CAST(_func) ((int(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
     struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))

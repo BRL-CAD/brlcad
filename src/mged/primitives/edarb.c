@@ -516,6 +516,52 @@ mged_arb_menu_item(const struct bn_tol *UNUSED(tol))
     return cntrl_menu;
 }
 
+int
+mged_arb_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    if (!mstr || !ip)
+	return BRLCAD_ERROR;
+
+    struct menu_item *mip = NULL;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
+    int arb_type = rt_arb_std_type(ip, tol);
+
+    /* title */
+    bu_vls_printf(mstr, "{{ARB MENU} {}}");
+
+    /* build "move edge" menu */
+    mip = which_menu[arb_type-4];
+    /* submenu title */
+    bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
+    for (++mip; mip->menu_func != NULL; ++mip)
+	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+
+    bu_vls_printf(mstr, " {{%s} {%s}}", cntrl_menu[1].menu_string, bu_vls_addr(&vls2));
+    bu_vls_trunc(&vls2, 0);
+
+    /* build "move face" menu */
+    mip = which_menu[arb_type+1];
+    /* submenu title */
+    bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
+    for (++mip; mip->menu_func != NULL; ++mip)
+	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+
+    bu_vls_printf(mstr, " {{%s} {%s}}", cntrl_menu[2].menu_string, bu_vls_addr(&vls2));
+    bu_vls_trunc(&vls2, 0);
+
+    /* build "rotate face" menu */
+    mip = which_menu[arb_type+6];
+    /* submenu title */
+    bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
+    for (++mip; mip->menu_func != NULL; ++mip)
+	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+
+    bu_vls_printf(mstr, " {{%s} {%s}}", cntrl_menu[3].menu_string, bu_vls_addr(&vls2));
+    bu_vls_free(&vls2);
+
+    return BRLCAD_OK;
+}
+
 const char *
 mged_arb_keypoint(
 	point_t *pt,

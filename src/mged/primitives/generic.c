@@ -201,6 +201,29 @@ mged_generic_srot(
 }
 
 int
+mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    if (!mstr || !ip)
+	return BRLCAD_ERROR;
+
+    struct menu_item *mip = NULL;
+
+    if (MGED_OBJ[ip->idb_type].ft_menu_item)
+	mip = (*MGED_OBJ[ip->idb_type].ft_menu_item)(tol);
+
+    if (!mip)
+       return BRLCAD_OK;
+
+    /* title */
+    bu_vls_printf(mstr, " {{%s} {}}", mip->menu_string);
+
+    for (++mip; mip->menu_func != NULL; ++mip)
+	bu_vls_printf(mstr, " {{%s} {}}", mip->menu_string);
+
+    return BRLCAD_OK;
+}
+
+int
 mged_generic_edit(
 	struct mged_state *s,
 	int edflag

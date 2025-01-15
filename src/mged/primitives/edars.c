@@ -205,6 +205,39 @@ mged_ars_menu_item(const struct bn_tol *UNUSED(tol))
     return ars_menu;
 }
 
+int
+mged_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!mstr || !ip)
+	return BRLCAD_ERROR;
+
+    struct menu_item *mip = NULL;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
+
+    /* build ARS PICK MENU Tcl list */
+
+    mip = ars_pick_menu;
+    /* title */
+    bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+    for (++mip; mip->menu_func != NULL; ++mip)
+	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+
+    mip = ars_menu;
+    /* title */
+    bu_vls_printf(mstr, " {{%s} {}}", mip->menu_string);
+
+    /* pick vertex menu */
+    bu_vls_printf(mstr, " {{%s} {%s}}", (++mip)->menu_string,
+	    bu_vls_addr(&vls2));
+
+    for (++mip; mip->menu_func != NULL; ++mip)
+	bu_vls_printf(mstr, " {{%s} {}}", mip->menu_string);
+
+    bu_vls_free(&vls2);
+
+    return BRLCAD_OK;
+}
+
 void
 ecmd_ars_pick(struct mged_state *s)
 {

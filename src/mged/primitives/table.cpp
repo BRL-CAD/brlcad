@@ -41,6 +41,7 @@ extern "C" {
     extern int mged_##name##_edit_xy(struct mged_state *s, int edflag, vect_t mousevec); \
     extern void *mged_##name##_prim_edit_create(void); \
     extern void mged_##name##_prim_edit_destroy(void *); \
+    extern int mged_##name##_menu_str(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern struct menu_item *mged_##name##_menu_item(const struct bn_tol *tol); \
 
 MGED_DECLARE_INTERFACE(tor);
@@ -100,6 +101,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -115,6 +117,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tor_menu_item)    /* menu_item */
     },
 
@@ -130,6 +133,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_tgc_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tgc_menu_item)    /* menu_item */
     },
 
@@ -145,6 +149,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ell_menu_item)    /* menu_item */
     },
 
@@ -160,6 +165,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_arb_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_arb_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_arb_menu_item)    /* menu_item */
     },
 
@@ -175,6 +181,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_ars_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_ars_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ars_menu_item)    /* menu_item */
     },
 
@@ -190,6 +197,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -205,6 +213,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_tgc_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_tgc_menu_item)    /* menu_item */
     },
 
@@ -220,6 +229,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
  	NULL   /* menu_item */
     },
 
@@ -235,6 +245,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_bspline_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_bspline_menu_item)    /* menu_item */
     },
 
@@ -250,6 +261,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -265,6 +277,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_nmg_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_nmg_menu_item)    /* menu_item */
     },
 
@@ -280,6 +293,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_ebm_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ebm_menu_item)    /* menu_item */
     },
 
@@ -295,6 +309,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_vol_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_vol_menu_item)    /* menu_item */
     },
 
@@ -310,6 +325,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -325,6 +341,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_pipe_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_pipe_menu_item)    /* menu_item */
     },
 
@@ -340,6 +357,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_part_menu_item)    /* menu_item */
     },
 
@@ -355,6 +373,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_rpc_menu_item)    /* menu_item */
     },
 
@@ -370,6 +389,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_rhc_menu_item)    /* menu_item */
     },
 
@@ -385,6 +405,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_epa_menu_item)    /* menu_item */
     },
 
@@ -400,6 +421,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_ehy_menu_item)    /* menu_item */
     },
 
@@ -415,6 +437,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_eto_menu_item)    /* menu_item */
     },
 
@@ -430,6 +453,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -445,6 +469,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -460,6 +485,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -475,6 +501,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_dsp_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_dsp_menu_item)    /* menu_item */
     },
 
@@ -490,6 +517,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -505,6 +533,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_extrude_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_extrude_menu_item)    /* menu_item */
     },
 
@@ -520,6 +549,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -535,6 +565,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_cline_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_cline_menu_item)    /* menu_item */
     },
 
@@ -550,6 +581,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_bot_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_bot_menu_item)    /* menu_item */
     },
 
@@ -565,6 +597,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* exit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
 	NULL   /* menu_item */
     },
 
@@ -582,6 +615,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* exit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -597,6 +631,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* exit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -614,6 +649,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* exit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -629,6 +665,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_superell_menu_item)    /* menu_item */
     },
 
@@ -644,6 +681,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_metaball_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_metaball_menu_item)    /* menu_item */
     },
 
@@ -659,6 +697,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -674,6 +713,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	MGEDFUNCTAB_FUNC_MENU_STR_CAST(mged_generic_menu_str),   /* menu_str */
 	MGEDFUNCTAB_FUNC_MENU_ITEM_CAST(mged_hyp_menu_item)    /* menu_item */
     },
 
@@ -689,6 +729,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -704,6 +745,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -719,6 +761,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -734,6 +777,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -749,6 +793,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -765,6 +810,7 @@ const struct mged_functab MGED_OBJ[] = {
 	MGEDFUNCTAB_FUNC_EDITXY_CAST(mged_generic_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -781,6 +827,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* exit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -796,6 +843,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* exit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     },
 
@@ -811,6 +859,7 @@ const struct mged_functab MGED_OBJ[] = {
 	NULL,  /* exit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
+	NULL,  /* menu_str */
         NULL   /* menu_item */
     }
 };
