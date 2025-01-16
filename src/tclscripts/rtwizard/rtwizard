@@ -59,7 +59,7 @@ if {![info exists ::RtWizard::wizard_state(ne_color)]} { set ::RtWizard::wizard_
 # Occlusion mode
 if {![info exists ::RtWizard::wizard_state(occmode)]} { set ::RtWizard::wizard_state(occmode) 1 }
 # Ghost intensity
-if {![info exists ::RtWizard::wizard_state(ghost_intensity)]} { set ::RtWizard::wizard_state(ghost_intensity) 12 }
+if {![info exists ::RtWizard::wizard_state(ghost_intensity)]} { set ::RtWizard::wizard_state(ghost_intensity) 6 }
 # Pix width
 if {![info exists ::RtWizard::wizard_state(width)]} { set ::RtWizard::wizard_state(width) 512 }
 # Pix height (number of scan lines)
