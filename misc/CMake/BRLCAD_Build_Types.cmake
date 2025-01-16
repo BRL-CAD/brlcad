@@ -127,13 +127,13 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # CMake configuration types need override.  If CMAKE_BUILD_TYPE is
-# specified, use that - otherwise default to Debug.
+# specified, use that - otherwise default to Release.
 if(CMAKE_CONFIGURATION_TYPES)
   if(CMAKE_BUILD_TYPE)
     set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" CACHE STRING "Force a single build type" FORCE)
   else(CMAKE_BUILD_TYPE)
-    set(CMAKE_CONFIGURATION_TYPES "Debug" CACHE STRING "Force a single build type" FORCE)
-    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
+    set(CMAKE_CONFIGURATION_TYPES "Release" CACHE STRING "Force a single build type" FORCE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
   endif(CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
