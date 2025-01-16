@@ -192,7 +192,7 @@ endif(BRLCAD_PRINT_MSGS)
 #---------------------------------------------------------------------
 # Management of build types (this normalizes or sets CMAKE_BUILD_TYPE)
 include(BRLCAD_Build_Types)
-InitializeBuildTypes()
+InitializeBuildType()
 NormalizeBuildType()
 
 #---------------------------------------------------------------------

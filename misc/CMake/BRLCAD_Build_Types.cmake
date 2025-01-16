@@ -53,7 +53,7 @@
 
 #---------------------------------------------------------------------
 # Function to initialize Release as the default build type.
-function(InitializeBuildTypes)
+function(InitializeBuildType)
   # Release will provide users with the best performance.  Debugging
   # should be already enabled by default (elsewhere), even for
   # Release, for backtraces and debuggability.
