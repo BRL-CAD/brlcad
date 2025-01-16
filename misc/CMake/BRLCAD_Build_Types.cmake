@@ -102,43 +102,50 @@
 # be finished *before* the BRL-CAD configure is complete, we can't
 # afford to defer the build type decision to build time anymore.
 
+# BRL-CAD Build Types Configuration
+
 #---------------------------------------------------------------------
-# Normalize the build type capitalization
-if(CMAKE_BUILD_TYPE)
-  string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
-  if("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+# Function to initialize Release as the default build type.
+function(InitializeBuildTypes)
+  # Release will provide users with the best performance.  Debugging
+  # should be already enabled by default (elsewhere), even for
+  # Release, for backtraces and debuggability.
+  if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
-  endif("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-  if("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
-    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
-  endif("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
-endif(CMAKE_BUILD_TYPE)
+  endif()
+
+  # CMake configuration types need override.  If CMAKE_BUILD_TYPE is
+  # specified, use that - otherwise default to Release.
+  if(CMAKE_CONFIGURATION_TYPES)
+    if(CMAKE_BUILD_TYPE)
+      set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" CACHE STRING "Force a single build type" FORCE)
+    else()
+      set(CMAKE_CONFIGURATION_TYPES "Release" CACHE STRING "Force a single build type" FORCE)
+      set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
+    endif()
+  endif()
+
+  # Mark variables as advanced
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+  mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
+endfunction()
 
 
-# If we don't have any build type defined at all, go with Release.
-# Thinking is that for non-debugging use this will provide users with
-# the best performance.  We build with debug info enabled by default,
-# even in Release, so the main advantages of Debug building are better
-# backtraces/debugging behavior and shorter build times.  Those aren't
-# critical for normal use, so make the "default" setting the one that
-# will give new users what they most likely are expecting/wanting.
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release")
-endif(NOT CMAKE_BUILD_TYPE)
-
-# CMake configuration types need override.  If CMAKE_BUILD_TYPE is
-# specified, use that - otherwise default to Release.
-if(CMAKE_CONFIGURATION_TYPES)
+#---------------------------------------------------------------------
+# Function to normalize build type capitalization.
+function(NormalizeBuildType)
   if(CMAKE_BUILD_TYPE)
-    set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" CACHE STRING "Force a single build type" FORCE)
-  else(CMAKE_BUILD_TYPE)
-    set(CMAKE_CONFIGURATION_TYPES "Release" CACHE STRING "Force a single build type" FORCE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
-  endif(CMAKE_BUILD_TYPE)
-endif(CMAKE_CONFIGURATION_TYPES)
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
+    if("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+      set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
+    elseif("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
+      set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
+    endif()
+  endif()
 
-mark_as_advanced(CMAKE_BUILD_TYPE)
-mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
+  # Mark CMAKE_BUILD_TYPE as advanced since it is modified
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+endfunction()
 
 # Local Variables:
 # tab-width: 8
