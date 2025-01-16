@@ -1326,8 +1326,9 @@ if(NOT MSVC)
     check_cxx_flag(Werror)
 
     # Turn pedantic issues into errors also
-    check_c_flag(pedantic-errors)
-    check_cxx_flag(pedantic-errors)
+    # FIXME: need to make sure these are not getting passed to bext
+    #    check_c_flag(pedantic-errors)
+    #    check_cxx_flag(pedantic-errors)
 
   endif(BRLCAD_ENABLE_STRICT)
 
