@@ -57,6 +57,7 @@
 #ifdef HAVE_SYS_UTSNAME_H
 #  include <sys/utsname.h>
 #endif
+#include <locale.h>
 
 #include "bio.h"
 
@@ -285,6 +286,9 @@ main(int ac, char *av[])
     void (*echo)(const char *, ...) = record;
 
     bu_setprogname(av[0]);
+
+    // Force locale setting to C
+    setlocale(LC_ALL, "C");
 
     /* process the argument list for commands */
     for (arg=1; arg<ac; arg++) {
