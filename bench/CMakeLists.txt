@@ -3,7 +3,7 @@ add_subdirectory(ref)
 add_definitions(-DCONSOLE)
 
 brlcad_addexec(pixcmp pixcmp.c libbu)
-set(BARK_SOURCES benchmark.cpp compute.c run.c clean.c)
+set(BARK_SOURCES benchmark.cpp compute.cpp run.cpp clean.cpp)
 brlcad_addexec(bark "${BARK_SOURCES}" libbu NO_STRICT NO_INSTALL TEST_USESDATA)
 
 if(BUILD_TESTING)
