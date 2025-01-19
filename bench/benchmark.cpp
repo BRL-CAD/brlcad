@@ -68,7 +68,7 @@
 int bu_exec(const char *program, void *data, struct bu_vls *out, struct bu_vls *err) {if (!program || !out || !err || !data) return 1; return 0;}
 int bu_grep(const char *pattern, const char *input, int(*callback)(const char *line, void *data), void *data) {if (!pattern || !input || !data) return 1; if (!callback) bu_log("TODO: need default callback!!!\n"); return 0;}
 int bu_file_glob(const char *pattern, char **paths) {if (!pattern || !paths) return 1; return 0;}
-char *format_elapsed(double elapsed) {if (elapsed > 0) return "0 1 2"; return "-0 -1 -2";}
+const char *format_elapsed(double elapsed) {static const char* pos = "0 1 2"; static const char* neg = "-0 -1 -2"; if (elapsed > 0) return pos; return neg;}
 int perf(const struct bu_vls *vp, const char *items, const char *args[]) {if (!vp || !items || !args) return -1; return 0;}
 double calculate_vgr(const struct bu_vls *summary) {if (!summary) return -0.0; return 0.0;}
 extern int bench(const char *cmd);
