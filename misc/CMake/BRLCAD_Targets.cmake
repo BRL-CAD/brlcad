@@ -787,59 +787,37 @@ function(ADD_MAN_PAGES num inmanlist)
   endif(BRLCAD_INSTALL_DOCS)
 endfunction(ADD_MAN_PAGES)
 
-#-----------------------------------------------------------------------------
-# The default operational mode of Regression tests is to be executed
-# by a parent CMake script, which captures the I/O from the test and
-# stores it in an individual log file named after the test.  By
-# default, a custom command and CTest add_test command are set up to
-# run a configured script.  If TEST_SCRIPT is provided specifying a
-# particular script file that is used, otherwise the convention of
-# ${testname}.cmake.in in the current source directory is assumed to
-# specify the input test script.
+#--------------------------------------------------------------------
+# Regression tests are designed to be executed by a parent CMake
+# script, which captures the I/O and stores it in a log file named
+# after the test.  By default, tests use ${testname}.cmake.in in the
+# source directory unless a TEST_SCRIPT is explicitly provided.
 #
-# Particularly when configuration dependent builds are in play, a test
-# executable's location needs special handling to ensure the scripts
-# run the correct version of a program.  The standard mechanism is to
-# specify the CMake target name of the executable by supplying it via
-# the EXEC option and then pass the output of
-# $<TARGET_FILE:${${testname}_EXEC}> to the running CMake
-# script. (Note that the script must in turn post-process this value
-# to unquote it in case of special characters in pathnames.)
+# For configuration-dependent builds, specify the executable's target
+# name via the EXEC option, using $<TARGET_FILE:${${testname}_EXEC}>
+# to ensure the correct program version is run. Scripts must handle
+# unquoting paths with special characters.
 #
-# To allow for more customized test execution, the option TEST_DEFINED
-# may be passed to the function to instruct it to skip all setup for
-# add_test and custom command definitions.  It is the callers
-# responsibility to define an appropriately named test with add_test -
-# BRLCAD_REGRESSION_TEST in this mode will then perform only the
-# specific build target definition and subsequent steps for wiring the
-# test into the higher level commands.
+# The TEST_DEFINED option allows skipping add_test and custom command
+# setup, leaving test definition to the caller. BRLCAD_REGRESSION_TEST
+# will only define the build target and wire the test into
+# higher-level commands.
 #
-# Standard actions for all regression targets:
+# Standard regression test setup:
 #
-# 1.  A custom build target with the pattern regress-${testname} is
-#     defined to allow for individual execution of the regression test
-#     with "make ${testname}"
+# 1. Defines custom build target "regress-${testname}" for each test.
 #
-# 2.  A label is added identifying the test as a regression test so
-#     the top level commands "make check" and "make regress" know this
-#     particular tests is one of the tests they are supposed to
-#     execute.
+# 2. Adds a label denoting inclusion in "check" and "regress" targets.
 #
-# 3.  Any dependencies in ${depends_list} are added as build
-#     requirements to the regress and check targets.  This ensures
-#     that (unlike "make test" and CTest itself) when those targets
-#     are built the dependencies of the tests are built first.  (A
-#     default CTest run prior to building will result in all tests
-#     failing.)
+# 3. Adds ${depends_list} as build requirements, ensuring deps are
+#    built before tests run.
 #
-# 4.  If the keyword "STAND_ALONE" is passed in, a ${testname} target
-#     is defined but no other connections are made between that target
-#     and the agglomeration targets.
+# 4. STAND_ALONE keyword defines ${testname} without connecting it to
+#    the agglomeration targets (i.e., "regress").
 #
-# 5.  If a TIMEOUT argument is passed, a specific timeout tiem is set
-#     on the test. Otherwise, a default is assigned to ensure no test
-#     runs indefinitely.
-
+# 5. TIMEOUT arg sets a test timeout; otherwise a default is used.
+#
+###
 function(BRLCAD_REGRESSION_TEST testname depends_list)
   cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC;VEXEC" "" ${ARGN})
 
