@@ -96,47 +96,25 @@ define_property(
 )
 
 #---------------------------------------------------------------------
-# For situations when a local 3rd party library (say, zlib) has been
-# chosen in preference to a system version of that library, it is
-# important to ensure that the local header(s) get included before the
-# system headers.  Normally this is handled by explicitly specifying
-# the local include paths (which, being explicitly specified and
-# non-standard, are checked prior to default system locations) but
-# there are some situations (macports being a classic example) where
-# *other* "non-standard" installed copies of libraries may exist and
-# be found if those directories are included ahead of the desired
-# local copy.  An observed case:
+# When a local 3rd-party library (e.g., zlib) is used instead of a
+# system version, ensure local headers are included before system
+# headers. This is usually handled by explicitly specifying local
+# include paths, but non-standard installations (e.g., macports) can
+# introduce conflicts by including alternative versions.
 #
-# 1.  macports is installed on OSX
+# To avoid such conflicts, BRL-CAD sorts include dirs based on gcc's
+# left-to-right search order semantic
+# (http://gcc.gnu.org/onlinedocs/cpp/Search-Path.html):
 #
-# 2.  X11 is found in macports, X11 directories are set to
-#     /usr/macports based paths
+# 1. CMAKE_CURRENT_BINARY_DIR and CMAKE_CURRENT_SOURCE_DIR come first.
 #
-# 3.  These paths are mixed into the general include path lists for
-#     some BRL-CAD libs.
+# 2. BRLCAD_BINARY_DIR/include & BRLCAD_SOURCE_DIR/include are second.
 #
-# 4.  Because these paths are a) non-standard and b) contain zlib.h
-#     they result in "system" versions of zlib present in macports
-#     being found first even when the local zlib is enabled, if the
-#     macports paths happen to appear in the include directory list
-#     before the local zlib include paths.
+# 3. Paths rooted in BRLCAD_SOURCE_DIR or BRLCAD_BINARY_DIR are next.
 #
-# To mitigate this problem, BRL-CAD library include directories are
-# sorted according to the following hierarchy (using gcc's
-# left-to-right search order as a basis:
-# http://gcc.gnu.org/onlinedocs/cpp/Search-Path.html):
+# 4. All other paths are appended last.
 #
-# 1.  If CMAKE_CURRENT_BINARY_DIR or CMAKE_CURRENT_SOURCE_DIR are in
-#     the include list, they come first.
-#
-# 2.  If BRLCAD_BINARY_DIR/include or BRLCAD_SOURCE_DIR/include are
-#     present, they come second.
-#
-# 3.  For remaining paths, if the "root" path matches the
-#     BRLCAD_SOURCE_DIR or BRLCAD_BINARY_DIR paths, they are appended.
-#
-# 4.  Any remaining paths are appended.
-#
+###
 function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   if(${DIR_LIST})
     set(
@@ -296,17 +274,12 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
     brlcad_include_dirs(${execname} dep_includes PRIVATE)
   endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
-  # In some situations (usually test executables) we want to be able
-  # to force the executable to remain in the local compilation
-  # directory regardless of the global CMAKE_RUNTIME_OUTPUT_DIRECTORY
-  # setting.  The NO_INSTALL flag is used to denote such executables.
-  # If an executable isn't to be installed or needs to be installed
-  # somewhere other than the default location, the NO_INSTALL argument
-  # bypasses the standard install command call.
-  #
-  # If we *are* installing, do so to the binary directory (BIN_DIR)
+  # NO_INSTALL flag forces binaries to remain in the local compilation
+  # directory, bypassing the global CMAKE_RUNTIME_OUTPUT_DIRECTORY
+  # setting.  This is useful for test executables or when an
+  # executable is not to be installed in the default location.
   if(E_NO_INSTALL OR E_TEST)
-    # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
+    # Windows binaries need to go into the same dir as DLLs
     if(NOT WIN32 AND NOT E_TEST_USESDATA)
       set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
     endif(NOT WIN32 AND NOT E_TEST_USESDATA)
@@ -408,20 +381,12 @@ function(
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
 
-    # If the library depends on other targets in this build, not just system
-    # libraries, make sure the object targets depends them as well.  In
-    # principle this isn't always required - object compilation may be
-    # independent of the dependencies needed at link time - but if compilation
-    # DOES depends on those targets having first performed some action (like
-    # staging a header in an expected location) NOT setting this dependency
-    # explicitly will eventually cause build failures.
-    #
-    # Without setting the OBJECT dependencies, success in the above case would
-    # depend on whether or not the high level build ordering happened to run
-    # the required targets before performing this step.  That failure mode is
-    # semi-random and intermittent (top level build ordering without explicit
-    # dependencies varies depending on -j flag values) making it hard to debug.
-    # Ask me how I know.
+    # Ensure object targets depend on other build targets, not just
+    # system libs, if compilation relies on actions performed by those
+    # targets (e.g., staging headers).  Failing to set those deps can
+    # cause very hard-to-debut intermittent build failures, especially
+    # with parallel builds, as build order is not guaranteed without
+    # explicit deps.
     if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       foreach(ll ${libslist})
         if(TARGET ${ll})
@@ -563,29 +528,17 @@ if(NOT COMMAND IS_SUBPATH)
 endif(NOT COMMAND IS_SUBPATH)
 
 #---------------------------------------------------------------------
-# Files needed by BRL-CAD need to be both installed and copied into
-# the correct locations in the build directories to allow executables
-# to run at build time.  Ideally, we would like any error messages
-# returned when running from the build directory to direct back to the
-# copies of files in the source tree, since those are the ones that
-# should be edited.  On platforms that support symlinks, this is
-# possible - build directory "copies" of files are symlinks to the
-# source tree version.  On platforms without symlink support, we are
-# forced to copy the files into place in the build directories.  In
-# both cases we have a build target that is triggered if source files
-# are edited in order to allow the build system to take further
-# actions (for example, re-generating tclIndex and pkgIndex.tcl files
-# when the source .tcl files change).
+# Files needed by BRL-CAD must be installed and copied (or symlinked,
+# if supported) to the build dirs for executables to run during
+# the build. Errors during execution should reference source tree
+# files for easier editing.
 #
-# Because BRLCAD_MANAGE_FILES defines custom commands and specifies
-# the files it is to copy/symlink as dependencies, there is a
-# potential for file names to conflict with build target names. (This
-# has actually been observed with MSVC - our file INSTALL in the
-# toplevel source directory conflicts with the MSVC target named
-# INSTALL.) To avoid conflicts and make the dependencies of the custom
-# commands robust we supply full file paths as dependencies to the
-# file copying custom commands.
-
+# BRLCAD_MANAGE_FILES defines custom commands and uses full file paths
+# as dependencies to prevent conflicts with build target names (e.g.,
+# "INSTALL" file conflicts with "INSTALL" target on MSVC). This
+# ensures robust file management and triggers updates when source
+# files change (e.g., regenerating tclIndex and pkgIndex.tcl).
+###
 function(BRLCAD_MANAGE_FILES inputdata targetdir)
   cmake_parse_arguments(M "" "" "REQUIRED;TRIGGER" ${ARGN})
 
