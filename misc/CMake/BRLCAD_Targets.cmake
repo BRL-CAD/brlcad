@@ -34,14 +34,19 @@
 #
 ###
 
+
+# global property for our list of binaries
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_EXEC_FILES
+  BRIEF_DOCS "BRL-CAD binaries"
+  FULL_DOCS "List of installed BRL-CAD binary programs"
+)
+
+
 # Need sophisticated option parsing
 include(CMakeParseArguments)
 
-# When defining targets, we need to know if we have a no-error flag
-include(CheckCCompilerFlag)
-include(CheckCXXCompilerFlag)
-check_c_compiler_flag(-Wno-error NOERROR_FLAG_C)
-check_cxx_compiler_flag(-Wno-error NOERROR_FLAG_CXX)
 
 # For BRL-CAD targets, use CXX as the language if the user requests it
 function(SET_LANG_CXX SRC_FILES)
@@ -54,11 +59,13 @@ function(SET_LANG_CXX SRC_FILES)
   endif(ENABLE_ALL_CXX_COMPILE)
 endfunction(SET_LANG_CXX SRC_FILES)
 
-# See if we've got astyle
-find_program(ASTYLE_EXECUTABLE astyle HINTS "${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR}")
 
 # BRL-CAD style checking with AStyle
 function(VALIDATE_STYLE targetname srcslist)
+
+  # See if we've got astyle
+  find_program(ASTYLE_EXECUTABLE astyle HINTS "${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR}")
+
   if(BRLCAD_STYLE_VALIDATE AND ASTYLE_EXECUTABLE AND NOT "${srcslist}" STREQUAL "")
     # Find out of any of the files need to be ignored
     set(fullpath_srcslist)
@@ -88,12 +95,6 @@ function(VALIDATE_STYLE targetname srcslist)
   endif(BRLCAD_STYLE_VALIDATE AND ASTYLE_EXECUTABLE AND NOT "${srcslist}" STREQUAL "")
 endfunction(VALIDATE_STYLE)
 
-define_property(
-  GLOBAL
-  PROPERTY BRLCAD_EXEC_FILES
-  BRIEF_DOCS "BRL-CAD binaries"
-  FULL_DOCS "List of installed BRL-CAD binary programs"
-)
 
 #---------------------------------------------------------------------
 # When a local 3rd-party library (e.g., zlib) is used instead of a
@@ -178,6 +179,12 @@ function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   endif(${DIR_LIST})
 endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 
+
+###
+# wrapper for specifying include dirs.
+#
+# automatically applies SYSTEM for dirs not in the source or build
+# dir.  automatically skips duplicates.
 function(BRLCAD_INCLUDE_DIRS targetname dirlist itype)
   set(INCLUDE_DIRS)
   foreach(idr ${${dirlist}})
@@ -216,7 +223,8 @@ function(BRLCAD_INCLUDE_DIRS targetname dirlist itype)
   endforeach(inc_dir ${INCLUDE_DIRS})
 endfunction(BRLCAD_INCLUDE_DIRS)
 
-#-----------------------------------------------------------------------------
+
+#--------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 function(BRLCAD_ADDEXEC execname srcslist libslist)
@@ -316,17 +324,18 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   endif(BRLCAD_EXTRADOCS)
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
+
 #---------------------------------------------------------------------
 # Library function handles both shared and static libs, so one
 # "BRLCAD_ADDLIB" statement will cover both automatically
 function(
-  BRLCAD_ADDLIB
-  libname
-  srcslist
-  libslist
-  include_dirs
-  local_include_dirs
-)
+    BRLCAD_ADDLIB
+    libname
+    srcslist
+    libslist
+    include_dirs
+    local_include_dirs
+  )
   cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
   # Let CMAKEFILES know what's going on
@@ -487,6 +496,7 @@ function(
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 endfunction(BRLCAD_ADDLIB)
 
+
 #-----------------------------------------------------------------------------
 # We need a way to tell whether one path is a subpath of another path without
 # relying on regular expressions, since file paths may have characters in them
@@ -526,6 +536,7 @@ if(NOT COMMAND IS_SUBPATH)
     set(${result_var} 1 PARENT_SCOPE)
   endfunction(IS_SUBPATH)
 endif(NOT COMMAND IS_SUBPATH)
+
 
 #---------------------------------------------------------------------
 # Files needed by BRL-CAD must be installed and copied (or symlinked,
@@ -591,8 +602,8 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "testing for symlink ability")
     execute_process(
       COMMAND
-        ${CMAKE_COMMAND} -E create_symlink "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src"
-        "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest"
+      ${CMAKE_COMMAND} -E create_symlink "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src"
+      "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest"
       OUTPUT_QUIET # Errors are expected on some platforms (Windows) so
       ERROR_QUIET # by default quiet the output to avoid confusion
     )
@@ -705,6 +716,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   endif(${VAR_PREFIX}_EXEC)
 endfunction(BRLCAD_MANAGE_FILES)
 
+
 #-----------------------------------------------------------------------------
 # Specific uses of the BRLCAD_MANAGE_FILES functionality - these
 # cover most of the common cases in BRL-CAD.
@@ -712,6 +724,7 @@ endfunction(BRLCAD_MANAGE_FILES)
 function(BRLCAD_ADDDATA datalist targetdir)
   brlcad_manage_files(${datalist} ${DATA_DIR}/${targetdir})
 endfunction(BRLCAD_ADDDATA)
+
 
 function(ADD_DOC doclist targetdir)
   cmake_parse_arguments(A "" "" "REQUIRED" ${ARGN})
@@ -733,12 +746,14 @@ function(ADD_DOC doclist targetdir)
   endif(BRLCAD_INSTALL_DOCS)
 endfunction(ADD_DOC)
 
+
 function(ADD_MAN_PAGES num inmanlist)
   if(BRLCAD_INSTALL_DOCS)
     set(man_target_dir ${MAN_DIR}/man${num})
     brlcad_manage_files(${inmanlist} ${man_target_dir})
   endif(BRLCAD_INSTALL_DOCS)
 endfunction(ADD_MAN_PAGES)
+
 
 #--------------------------------------------------------------------
 # Regression tests are designed to be executed by a parent CMake
@@ -804,16 +819,16 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
         add_test(
           NAME ${testname}
           COMMAND
-            "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -DVEXEC=$<TARGET_FILE:${${testname}_VEXEC}> -P
-            "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake"
-        )
+          "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -DVEXEC=$<TARGET_FILE:${${testname}_VEXEC}> -P
+          "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake"
+	)
       else(TARGET ${${testname}_VEXEC})
         add_test(
           NAME ${testname}
           COMMAND
-            "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P
-            "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake"
-        )
+          "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P
+          "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake"
+	)
       endif(TARGET ${${testname}_VEXEC})
     else(TARGET ${${testname}_EXEC})
       add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
