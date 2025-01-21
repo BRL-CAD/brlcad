@@ -35,9 +35,18 @@
 #
 ###
 
+# what directory to scan
+# FIXME: should take as an arg
 DBDIR=share/db
 
-G="`find $DBDIR -name \*.g -print`"
+# prefix of the output file to use for tiled result
+OUT=tiled
+
+# size of individual tile renderings
+SZ=256
+
+# how many tiles per row (i.e., columns)
+COLS=10
 
 # Define the cleanup function to handle the signal
 cleanup() {
@@ -54,6 +63,7 @@ setopt nonomatch
 
 export i=0
 
+G="`find $DBDIR -name \*.g -print`"
 echo "$G" | while read gfile ; do
 
     trap cleanup INT
@@ -139,18 +149,26 @@ echo "$G" | while read gfile ; do
      
     echo "Rendering #$i $gfile:$found ..."
     rm -f tile.$i.$gbase.$obj.pix tile.$i.$gbase.$obj.rt.log
-    bin/rt -l3 -s128 -o tile.$i.$gbase.$obj.pix $gfile `echo $found` 2>tile.$i.$gbase.$obj.rt.log
+    bin/rt -l3 -s$SZ -o tile.$i.$gbase.$obj.pix $gfile `echo $found` 2>tile.$i.$gbase.$obj.rt.log
 
     i="`expr $i \+ 1`"
 done
 
-out=renderall
+# put them in numerical order
+sorted="`ls  -1 tile.*.pix | sort -n -k2 -t'.'`"
 
-rm -f $out.pix
-bin/pixtile -s128 -W1200 -N800 tile.*.pix | bin/pix-fb -w 1200 -n 800 -F$out.pix
+count="`echo $sorted | wc -l`"
 
-rm -f $out.png
-cat $out.pix | bin/pix-png -w 1200 -n800 -o $out.png
+width="$((SZ * COLS))"
+rows="$((count / COLS))"
+rows="$((rows + 1))"
+height="$((rows * SZ))"
+
+rm -f $OUT.pix
+bin/pixtile -s$SZ -W$width -N$height `echo $sorted` | bin/pix-fb -w $width -n $height -F$OUT.pix
+
+rm -f $OUT.png
+cat $OUT.pix | bin/pix-png -w$width -n$height -o $OUT.png
 
 #rm -f tile.*
 
