@@ -39,6 +39,7 @@ set(
   sandbox/orbit.sh
   sandbox/pametric_demo.sh
   sandbox/visibility.sh
+  sandbox/tile.sh
 )
 cmakefiles(${sh_SCRIPTS})
 cmakefiles(${noinst_SCRIPTS})
