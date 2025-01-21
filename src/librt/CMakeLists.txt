@@ -2,6 +2,7 @@ brlcad_find_package(MANIFOLD REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
+find_package_gte(REQUIRED)
 add_definitions(-DUSE_GEOGRAM)
 
 if(NOT BRLCAD_ENABLE_GCT)
@@ -371,7 +372,7 @@ set(
 )
 
 # Include directories needed by librt users
-set(RT_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
+set(RT_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} ${GTE_INCLUDE_DIR})
 
 # locally used but not needed by users of the library
 set(
