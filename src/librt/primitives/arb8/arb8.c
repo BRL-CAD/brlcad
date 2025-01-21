@@ -2424,6 +2424,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     tmp_tol.dist = RT_LEN_TOL;
     tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
 
+    *vol = 0.0;
     for (i = 0; i < 6; i++) {
 	/* a, b, c = base of the arb4 */
 	a = farb4[i][0];
