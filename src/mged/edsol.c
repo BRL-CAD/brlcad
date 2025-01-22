@@ -1317,8 +1317,6 @@ label_edited_solid(
     const mat_t xform,
     struct rt_db_internal *ip)
 {
-    int npl = 0;
-
     // TODO - is es_int the same as ip here?  If not, why not?
     RT_CK_DB_INTERNAL(ip);
 
@@ -1334,12 +1332,12 @@ label_edited_solid(
     }
     // If there is no editing-aware labeling, use standard librt labels
     if (OBJ[ip->idb_type].ft_labels) {
-	npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->s_edit.es_int, &s->tol.tol);
+	OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->s_edit.es_int, &s->tol.tol);
 	return;
     }
 
     // If we have nothing, NULL the string
-    pl[npl].str[0] = '\0';
+    pl[0].str[0] = '\0';
 }
 
 
