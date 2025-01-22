@@ -65,7 +65,6 @@ set(
   dir.c
   dspline.c
   fortray.c
-  gdiam/gdiam.cpp
   globals.c
   htbl.c
   ls.c
@@ -232,8 +231,6 @@ set(
   wdb.c
 )
 
-set_source_files_properties(gdiam/gdiam.cpp PROPERTIES COMPILE_FLAGS -w)
-
 set(
   GCT_SRCS
   primitives/bot/gct_decimation/auxiliary/mmbinsort.c
@@ -379,7 +376,6 @@ set(
   RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
-  ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
   ${REGEX_INCLUDE_DIRS}
   ${GEOGRAM_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
@@ -457,10 +453,6 @@ cmakefiles(
   vds/README
   vds/COPYING
   vds/vds.h
-  gdiam/gdiam.hpp
-  gdiam/gdiam_test.cpp
-  gdiam/LICENSE.MIT
-  gdiam/README
 )
 
 # Local Variables:

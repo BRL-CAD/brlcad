@@ -29,49 +29,6 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
-#include "gdiam.hpp"
-
-extern "C" int
-rt_bot_oriented_bbox_GDIAM(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t UNUSED(tol))
-{
-
-    struct rt_bot_internal *bot_ip;
-    gdiam_point *pnt_arr = NULL;
-    gdiam_bbox bb;
-
-    RT_CK_DB_INTERNAL(ip);
-    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
-    RT_BOT_CK_MAGIC(bot_ip);
-
-    /* BoT vertices to gdiam */
-    pnt_arr = gdiam_convert((gdiam_real *)bot_ip->vertices, bot_ip->num_vertices);
-
-    /* Calculate tight bbox */
-    bb = gdiam_approx_mvbb_grid_sample(pnt_arr, bot_ip->num_vertices, 5, 400 );
-
-    /* gdiam_bbox to struct rt_arb_internal */
-    /* 0, 0, 0 */
-    bb.get_vertex(0, 0, 0, &(bbox->pt[0][0]), &(bbox->pt[0][1]), &(bbox->pt[0][2]));
-    /* 0, 1, 0 */
-    bb.get_vertex(0, 1, 0, &(bbox->pt[1][0]), &(bbox->pt[1][1]), &(bbox->pt[1][2]));
-    /* 0, 1, 1 */
-    bb.get_vertex(0, 1, 1, &(bbox->pt[2][0]), &(bbox->pt[2][1]), &(bbox->pt[2][2]));
-    /* 0, 0, 1 */
-    bb.get_vertex(0, 0, 1, &(bbox->pt[3][0]), &(bbox->pt[3][1]), &(bbox->pt[3][2]));
-    /* 1, 0, 0 */
-    bb.get_vertex(1, 0, 0, &(bbox->pt[4][0]), &(bbox->pt[4][1]), &(bbox->pt[4][2]));
-    /* 1, 1, 0 */
-    bb.get_vertex(1, 1, 0, &(bbox->pt[5][0]), &(bbox->pt[5][1]), &(bbox->pt[5][2]));
-    /* 1, 1, 1 */
-    bb.get_vertex(1, 1, 1, &(bbox->pt[6][0]), &(bbox->pt[6][1]), &(bbox->pt[6][2]));
-    /* 1, 0, 1 */
-    bb.get_vertex(1, 0, 1, &(bbox->pt[7][0]), &(bbox->pt[7][1]), &(bbox->pt[7][2]));
-
-    /* Done with gdiam array */
-    free(pnt_arr);
-    return 0;
-}
-
 /* calc oriented bounding box using GTE */
 extern "C" int
 rt_bot_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t UNUSED(tol))
