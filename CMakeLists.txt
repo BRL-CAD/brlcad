@@ -2300,18 +2300,37 @@ function(verbose_add_subdirectory root dir)
   endif(BRLCAD_PRINT_MSGS)
 endfunction()
 
-verbose_add_subdirectory("" src)
+###
+# traverse into the source tree with intentional ordering
+###
+
+# headers before sources in case there's any preprocessing
 verbose_add_subdirectory("" include)
+
+# sources before anything else so we can use tools built
+verbose_add_subdirectory("" src)
+
+# scripts that primarily require rendering
 if(TARGET rt)
   verbose_add_subdirectory("" sh)
-endif(TARGET rt)
-verbose_add_subdirectory("" misc)
-verbose_add_subdirectory("" doc)
-verbose_add_subdirectory("" db)
-if(TARGET rt)
+  verbose_add_subdirectory("" regress)
   verbose_add_subdirectory("" bench)
 endif(TARGET rt)
-verbose_add_subdirectory("" regress)
+
+# require geometry conversion tools
+if(TARGET asc2g)
+  verbose_add_subdirectory("" db)
+endif(TARGET asc2g)
+
+# docs after we're all done with build tasks
+# NOTE: doc/docbook/resources is added separately (earlier)
+# NOTE: doc/doxygenis added separately (earlier)
+verbose_add_subdirectory("" doc)
+
+# add misc last
+# NOTE: misc/tools is added separately (earlier)
+verbose_add_subdirectory("" misc)
+
 
 # Make sure we have the target dir
 file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
