@@ -2281,24 +2281,6 @@ mark_as_advanced(BUILD_TESTING)
 # Set up the BRL-CAD wrapper around find_package
 include(BRLCAD_Find_Package)
 
-# We've done the toplevel configure steps, now add the subdirectories
-function(verbose_add_subdirectory root dir)
-  if(BRLCAD_PRINT_MSGS)
-    if(NOT "${root}" STREQUAL "")
-      message("-- Adding ${root}/${dir}...")
-    else(NOT "${root}" STREQUAL "")
-      message("-- Adding ${dir}...")
-    endif(NOT "${root}" STREQUAL "")
-  endif(BRLCAD_PRINT_MSGS)
-  add_subdirectory(${dir})
-  if(BRLCAD_PRINT_MSGS)
-    if(NOT "${root}" STREQUAL "")
-      message("-- Adding ${root}/${dir} - done")
-    else(NOT "${root}" STREQUAL "")
-      message("-- Adding ${dir} - done")
-    endif(NOT "${root}" STREQUAL "")
-  endif(BRLCAD_PRINT_MSGS)
-endfunction()
 
 ###
 # traverse into the source tree with intentional ordering

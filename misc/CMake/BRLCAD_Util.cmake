@@ -483,6 +483,30 @@ function(deps_expand seed_dir out_var)
   set(${out_var} ${fdeps} PARENT_SCOPE)
 endfunction(deps_expand)
 
+
+###
+# Function to automatically log (before and after) when subdirs are
+# added, conditioned on whether the BRLCAD_PRINT_MSGS global is set.
+###
+function(verbose_add_subdirectory root dir)
+  if(BRLCAD_PRINT_MSGS)
+    if(NOT "${root}" STREQUAL "")
+      message("-- Adding ${root}/${dir}...")
+    else(NOT "${root}" STREQUAL "")
+      message("-- Adding ${dir}...")
+    endif(NOT "${root}" STREQUAL "")
+  endif(BRLCAD_PRINT_MSGS)
+  add_subdirectory(${dir})
+  if(BRLCAD_PRINT_MSGS)
+    if(NOT "${root}" STREQUAL "")
+      message("-- Adding ${root}/${dir} - done")
+    else(NOT "${root}" STREQUAL "")
+      message("-- Adding ${dir} - done")
+    endif(NOT "${root}" STREQUAL "")
+  endif(BRLCAD_PRINT_MSGS)
+endfunction()
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
