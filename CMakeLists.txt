@@ -2286,11 +2286,13 @@ include(BRLCAD_Find_Package)
 # traverse into the source tree with intentional ordering
 ###
 
-# headers before sources in case there's any preprocessing
-verbose_add_subdirectory("" include)
-
 # sources before anything else so we can use tools built
 verbose_add_subdirectory("" src)
+
+# headers after sources - BRLCAD_COMPONENTS builds will install
+# only a subset of headers, and that logic needs to know which
+# library targets are active.
+verbose_add_subdirectory("" include)
 
 # scripts that primarily require rendering
 if(TARGET rt)
