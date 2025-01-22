@@ -1,7 +1,7 @@
 /*                       C H G V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
-#include "./primitives/mged_functab.h"
 
 
 extern void mged_color_soltab(struct mged_state *s);
@@ -59,6 +58,21 @@ int mged_mtran(struct mged_state *s, const vect_t tvec);
 int mged_otran(struct mged_state *s, const vect_t tvec);
 int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
+
+
+extern vect_t curr_e_axes_pos;
+extern long nvectors;
+
+extern vect_t e_axes_pos;
+
+fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;
+fastf_t rr_scale_factor = GED_MAX / RATE_ROT_FACTOR;
+fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
+
+double mged_abs_tol;
+double mged_rel_tol = 0.01;		/* 1%, by default */
+double mged_nrm_tol;			/* normal ang tol, radians */
+
 
 /* DEBUG -- force view center */
 /* Format: C x y z */
@@ -580,13 +594,13 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
     s->gedp->ged_destroy_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
-    if (s->edit_state.global_editing_state != ST_VIEW) {
+    if (GEOM_EDIT_STATE != ST_VIEW) {
 	button(s, BE_REJECT);
     }
 
     ged_exec_zap(s->gedp, 1, (const char **)av);
 
-    (void)chg_state(s, s->edit_state.global_editing_state, s->edit_state.global_editing_state, "zap");
+    (void)chg_state(s, GEOM_EDIT_STATE, GEOM_EDIT_STATE, "zap");
     solid_list_callback(s);
 
     s->gedp->ged_destroy_vlist_callback = tmp_callback;
@@ -614,7 +628,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     if (argc == 1) {
-	bu_vls_printf(&vls, "s->edit_state.global_editing_state=%s, ", state_str[s->edit_state.global_editing_state]);
+	bu_vls_printf(&vls, "GEOM_EDIT_STATE=%s, ", state_str[GEOM_EDIT_STATE]);
 	bu_vls_printf(&vls, "Viewscale=%f (%f mm)\n",
 		      view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local, view_state->vs_gvp->gv_scale);
 	bu_vls_printf(&vls, "s->dbip->dbi_base2local=%f\n", s->dbip->dbi_base2local);
@@ -626,7 +640,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	tclcad_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
 	tclcad_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 
-	if (s->edit_state.global_editing_state != ST_VIEW) {
+	if (GEOM_EDIT_STATE != ST_VIEW) {
 	    tclcad_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
 	    tclcad_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	}
@@ -635,7 +649,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     if (BU_STR_EQUAL(argv[1], "state")) {
-	Tcl_AppendResult(interp, state_str[s->edit_state.global_editing_state], (char *)NULL);
+	Tcl_AppendResult(interp, state_str[GEOM_EDIT_STATE], (char *)NULL);
 	return TCL_OK;
     }
 
@@ -830,7 +844,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.global_editing_state != ST_S_PICK && s->edit_state.global_editing_state != ST_O_PICK) {
+    if (GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK) {
 	state_err(s, "keyboard illuminate pick");
 	goto bail_out;
     }
@@ -933,7 +947,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     illump->s_iflag = UP;
 
     if (!illum_only) {
-	if (s->edit_state.global_editing_state == ST_O_PICK) {
+	if (GEOM_EDIT_STATE == ST_O_PICK) {
 	    ipathpos = 0;
 	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
@@ -960,7 +974,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 bail_out:
 
-    if (s->edit_state.global_editing_state != ST_VIEW) {
+    if (GEOM_EDIT_STATE != ST_VIEW) {
 	bu_vls_printf(&vls, "%s", Tcl_GetStringResult(interp));
 	button(s, BE_REJECT);
 	Tcl_ResetResult(interp);
@@ -1169,7 +1183,7 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (mged_variables->mv_rateknobs) {
-	if (s->edit_state.e_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "x = %f\n", s->edit_state.edit_rate_model_rotate[X]);
 	    bu_vls_printf(&vls, "y = %f\n", s->edit_state.edit_rate_model_rotate[Y]);
 	    bu_vls_printf(&vls, "z = %f\n", s->edit_state.edit_rate_model_rotate[Z]);
@@ -1179,13 +1193,13 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "z = %f\n", view_state->vs_rate_rotate[Z]);
 	}
 
-	if (s->edit_state.e_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "S = %f\n", s->edit_state.edit_rate_scale);
 	} else {
 	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_rate_scale);
 	}
 
-	if (s->edit_state.e_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "X = %f\n", s->edit_state.edit_rate_model_tran[X]);
 	    bu_vls_printf(&vls, "Y = %f\n", s->edit_state.edit_rate_model_tran[Y]);
 	    bu_vls_printf(&vls, "Z = %f\n", s->edit_state.edit_rate_model_tran[Z]);
@@ -1195,7 +1209,7 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "Z = %f\n", view_state->vs_rate_tran[Z]);
 	}
     } else {
-	if (s->edit_state.e_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "ax = %f\n", s->edit_state.edit_absolute_model_rotate[X]);
 	    bu_vls_printf(&vls, "ay = %f\n", s->edit_state.edit_absolute_model_rotate[Y]);
 	    bu_vls_printf(&vls, "az = %f\n", s->edit_state.edit_absolute_model_rotate[Z]);
@@ -1205,16 +1219,16 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "az = %f\n", view_state->vs_absolute_rotate[Z]);
 	}
 
-	if (s->edit_state.e_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aS = %f\n", s->s_edit.edit_absolute_scale);
+	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "aS = %f\n", s->edit_state.edit_absolute_scale);
 	} else {
 	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_gvp->gv_a_scale);
 	}
 
-	if (s->edit_state.e_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aX = %f\n", s->s_edit.edit_absolute_model_tran[X]);
-	    bu_vls_printf(&vls, "aY = %f\n", s->s_edit.edit_absolute_model_tran[Y]);
-	    bu_vls_printf(&vls, "aZ = %f\n", s->s_edit.edit_absolute_model_tran[Z]);
+	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "aX = %f\n", s->edit_state.edit_absolute_model_tran[X]);
+	    bu_vls_printf(&vls, "aY = %f\n", s->edit_state.edit_absolute_model_tran[Y]);
+	    bu_vls_printf(&vls, "aZ = %f\n", s->edit_state.edit_absolute_model_tran[Z]);
 	} else {
 	    bu_vls_printf(&vls, "aX = %f\n", view_state->vs_absolute_tran[X]);
 	    bu_vls_printf(&vls, "aY = %f\n", view_state->vs_absolute_tran[Y]);
@@ -2069,12 +2083,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit.edit_absolute_model_tran[X] += sf;
-					s->s_edit.last_edit_absolute_model_tran[X] = s->s_edit.edit_absolute_model_tran[X];
+					s->edit_state.edit_absolute_model_tran[X] += sf;
+					s->edit_state.last_edit_absolute_model_tran[X] = s->edit_state.edit_absolute_model_tran[X];
 					break;
 				    case 'v':
-					s->s_edit.edit_absolute_view_tran[X] += sf;
-					s->s_edit.last_edit_absolute_view_tran[X] = s->s_edit.edit_absolute_view_tran[X];
+					s->edit_state.edit_absolute_view_tran[X] += sf;
+					s->edit_state.last_edit_absolute_view_tran[X] = s->edit_state.edit_absolute_view_tran[X];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2092,14 +2106,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[X] = f - s->s_edit.last_edit_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit.edit_absolute_model_tran[X] = sf;
-					s->s_edit.last_edit_absolute_model_tran[X] = s->s_edit.edit_absolute_model_tran[X];
+					tvec[X] = f - s->edit_state.last_edit_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_model_tran[X] = sf;
+					s->edit_state.last_edit_absolute_model_tran[X] = s->edit_state.edit_absolute_model_tran[X];
 					break;
 				    case 'v':
-					tvec[X] = f - s->s_edit.last_edit_absolute_view_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit.edit_absolute_view_tran[X] = sf;
-					s->s_edit.last_edit_absolute_view_tran[X] = s->s_edit.edit_absolute_view_tran[X];
+					tvec[X] = f - s->edit_state.last_edit_absolute_view_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_view_tran[X] = sf;
+					s->edit_state.last_edit_absolute_view_tran[X] = s->edit_state.edit_absolute_view_tran[X];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2125,12 +2139,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit.edit_absolute_model_tran[Y] += sf;
-					s->s_edit.last_edit_absolute_model_tran[Y] = s->s_edit.edit_absolute_model_tran[Y];
+					s->edit_state.edit_absolute_model_tran[Y] += sf;
+					s->edit_state.last_edit_absolute_model_tran[Y] = s->edit_state.edit_absolute_model_tran[Y];
 					break;
 				    case 'v':
-					s->s_edit.edit_absolute_view_tran[Y] += sf;
-					s->s_edit.last_edit_absolute_view_tran[Y] = s->s_edit.edit_absolute_view_tran[Y];
+					s->edit_state.edit_absolute_view_tran[Y] += sf;
+					s->edit_state.last_edit_absolute_view_tran[Y] = s->edit_state.edit_absolute_view_tran[Y];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2148,14 +2162,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[Y] = f - s->s_edit.last_edit_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit.edit_absolute_model_tran[Y] = sf;
-					s->s_edit.last_edit_absolute_model_tran[Y] = s->s_edit.edit_absolute_model_tran[Y];
+					tvec[Y] = f - s->edit_state.last_edit_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_model_tran[Y] = sf;
+					s->edit_state.last_edit_absolute_model_tran[Y] = s->edit_state.edit_absolute_model_tran[Y];
 					break;
 				    case 'v':
-					tvec[Y] = f - s->s_edit.last_edit_absolute_view_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit.edit_absolute_view_tran[Y] = sf;
-					s->s_edit.last_edit_absolute_view_tran[Y] = s->s_edit.edit_absolute_view_tran[Y];
+					tvec[Y] = f - s->edit_state.last_edit_absolute_view_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_view_tran[Y] = sf;
+					s->edit_state.last_edit_absolute_view_tran[Y] = s->edit_state.edit_absolute_view_tran[Y];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2180,12 +2194,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit.edit_absolute_model_tran[Z] += sf;
-					s->s_edit.last_edit_absolute_model_tran[Z] = s->s_edit.edit_absolute_model_tran[Z];
+					s->edit_state.edit_absolute_model_tran[Z] += sf;
+					s->edit_state.last_edit_absolute_model_tran[Z] = s->edit_state.edit_absolute_model_tran[Z];
 					break;
 				    case 'v':
-					s->s_edit.edit_absolute_view_tran[Z] += sf;
-					s->s_edit.last_edit_absolute_view_tran[Z] = s->s_edit.edit_absolute_view_tran[Z];
+					s->edit_state.edit_absolute_view_tran[Z] += sf;
+					s->edit_state.last_edit_absolute_view_tran[Z] = s->edit_state.edit_absolute_view_tran[Z];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2203,14 +2217,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[Z] = f - s->s_edit.last_edit_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit.edit_absolute_model_tran[Z] = sf;
-					s->s_edit.last_edit_absolute_model_tran[Z] = s->s_edit.edit_absolute_model_tran[Z];
+					tvec[Z] = f - s->edit_state.last_edit_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_model_tran[Z] = sf;
+					s->edit_state.last_edit_absolute_model_tran[Z] = s->edit_state.edit_absolute_model_tran[Z];
 					break;
 				    case 'v':
-					tvec[Z] = f - s->s_edit.last_edit_absolute_view_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit.edit_absolute_view_tran[Z] = sf;
-					s->s_edit.last_edit_absolute_view_tran[Z] = s->s_edit.edit_absolute_view_tran[Z];
+					tvec[Z] = f - s->edit_state.last_edit_absolute_view_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_view_tran[Z] = sf;
+					s->edit_state.last_edit_absolute_view_tran[Z] = s->edit_state.edit_absolute_view_tran[Z];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2229,9 +2243,9 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		    case 'S':
 			if (incr_flag) {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				s->s_edit.edit_absolute_scale += f;
+				s->edit_state.edit_absolute_scale += f;
 
-				if (s->edit_state.global_editing_state == ST_S_EDIT) {
+				if (GEOM_EDIT_STATE == ST_S_EDIT) {
 				    sedit_abs_scale(s);
 				} else {
 				    oedit_abs_scale(s);
@@ -2242,9 +2256,9 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			    }
 			} else {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				s->s_edit.edit_absolute_scale = f;
+				s->edit_state.edit_absolute_scale = f;
 
-				if (s->edit_state.global_editing_state == ST_S_EDIT) {
+				if (GEOM_EDIT_STATE == ST_S_EDIT) {
 				    sedit_abs_scale(s);
 				} else {
 				    oedit_abs_scale(s);
@@ -3213,10 +3227,10 @@ mged_erot(struct mged_state *s,
 	case 'm':
 	    break;
 	case 'o':
-	    bn_mat_inv(temp1, s->s_edit.acc_rot_sol);
+	    bn_mat_inv(temp1, acc_rot_sol);
 
 	    /* transform into object rotations */
-	    bn_mat_mul(temp2, s->s_edit.acc_rot_sol, newrot);
+	    bn_mat_mul(temp2, acc_rot_sol, newrot);
 	    bn_mat_mul(newrot, temp2, temp1);
 	    break;
 	case 'v':
@@ -3228,40 +3242,30 @@ mged_erot(struct mged_state *s,
 	    break;
     }
 
-    if (s->edit_state.global_editing_state == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	char save_rotate_about;
-	int save_rot, save_tra, save_sca, save_pic;
 
 	save_rotate_about = mged_variables->mv_rotate_about;
 	mged_variables->mv_rotate_about = rotate_about;
 
-	save_edflag = s->s_edit.edit_flag;
-	save_rot = s->s_edit.solid_edit_rotate;
-	save_tra = s->s_edit.solid_edit_translate;
-	save_sca = s->s_edit.solid_edit_scale;
-	save_pic = s->s_edit.solid_edit_pick;
+	save_edflag = es_edflag;
 
 	if (!SEDIT_ROTATE) {
-	    mged_set_edflag(s, SROT);
+	    es_edflag = SROT;
 	}
 
-	s->s_edit.e_inpara = 0;
-	MAT_COPY(s->s_edit.incr_change, newrot);
-	bn_mat_mul2(s->s_edit.incr_change, s->s_edit.acc_rot_sol);
+	inpara = 0;
+	MAT_COPY(incr_change, newrot);
+	bn_mat_mul2(incr_change, acc_rot_sol);
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;
-	s->s_edit.edit_flag = save_edflag;
-	s->s_edit.solid_edit_rotate = save_rot;
-	s->s_edit.solid_edit_translate = save_tra;
-	s->s_edit.solid_edit_scale = save_sca;
-	s->s_edit.solid_edit_pick = save_pic;
-
+	es_edflag = save_edflag;
     } else {
 	point_t point;
 	vect_t work;
 
-	bn_mat_mul2(newrot, s->s_edit.acc_rot_sol);
+	bn_mat_mul2(newrot, acc_rot_sol);
 
 	/* find point for rotation to take place wrt */
 	switch (rotate_about) {
@@ -3278,13 +3282,13 @@ mged_erot(struct mged_state *s,
 		break;
 	    case 'k':
 	    default:
-		MAT4X3PNT(point, s->s_edit.model_changes, s->s_edit.e_keypoint);
+		MAT4X3PNT(point, modelchanges, es_keypoint);
 	}
 
 	/*
-	 * Apply newrot to the s->s_edit.model_changes matrix wrt "point"
+	 * Apply newrot to the modelchanges matrix wrt "point"
 	 */
-	wrt_point(s->s_edit.model_changes, newrot, s->s_edit.model_changes, point);
+	wrt_point(modelchanges, newrot, modelchanges, point);
 
 	new_edit_mats(s);
     }
@@ -3319,7 +3323,7 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_OK;
     }
 
-    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord; /* dummy argument for ged_rot_args */
 	mat_t rmat;
@@ -3381,13 +3385,13 @@ mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
 	if (origin == 'e') {
 	    /* "VR driver" method: rotate around "eye" point (0, 0, 1) viewspace */
 	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
-	} else if (origin == 'k' && s->edit_state.global_editing_state == ST_S_EDIT) {
+	} else if (origin == 'k' && GEOM_EDIT_STATE == ST_S_EDIT) {
 	    /* rotate around keypoint */
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
-	} else if (origin == 'k' && s->edit_state.global_editing_state == ST_O_EDIT) {
+	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	} else if (origin == 'k' && GEOM_EDIT_STATE == ST_O_EDIT) {
 	    point_t kpWmc;
 
-	    MAT4X3PNT(kpWmc, s->s_edit.model_changes, s->s_edit.e_keypoint);
+	    MAT4X3PNT(kpWmc, modelchanges, es_keypoint);
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, kpWmc);
 	} else {
 	    /* rotate around model center (0, 0, 0) */
@@ -3440,10 +3444,10 @@ mged_vrot_xyz(struct mged_state *s,
 	bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
 	bn_mat_mul(temp2, view_state->vs_gvp->gv_rotation, newrot);
 	bn_mat_mul(newrot, temp2, temp1);
-    } else if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) && coords == 'o') {
+    } else if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) && coords == 'o') {
 	/* first, transform object rotations into model rotations */
-	bn_mat_inv(temp1, s->s_edit.acc_rot_sol);
-	bn_mat_mul(temp2, s->s_edit.acc_rot_sol, newrot);
+	bn_mat_inv(temp1, acc_rot_sol);
+	bn_mat_mul(temp2, acc_rot_sol, newrot);
 	bn_mat_mul(newrot, temp2, temp1);
 
 	/* now transform model rotations into view rotations */
@@ -3498,7 +3502,7 @@ cmd_rot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord;
 	mat_t rmat;
@@ -3545,7 +3549,7 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_OK;
     }
 
-    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	mat_t rmat;
 
@@ -3597,7 +3601,7 @@ mged_etran(struct mged_state *s,
 	    break;
 	case 'o':
 	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
-	    MAT4X3PNT(delta, s->s_edit.acc_rot_sol, p2);
+	    MAT4X3PNT(delta, acc_rot_sol, p2);
 	    break;
 	case 'v':
 	default:
@@ -3609,34 +3613,24 @@ mged_etran(struct mged_state *s,
 	    break;
     }
 
-    if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	int save_rot, save_tra, save_sca, save_pic;
-	s->s_edit.e_keyfixed = 0;
-	get_solid_keypoint(s, &s->s_edit.e_keypoint, &s->s_edit.e_keytag,
-			   &s->s_edit.es_int, s->s_edit.e_mat);
-	save_edflag = s->s_edit.edit_flag;
-	save_rot = s->s_edit.solid_edit_rotate;
-	save_tra = s->s_edit.solid_edit_translate;
-	save_sca = s->s_edit.solid_edit_scale;
-	save_pic = s->s_edit.solid_edit_pick;
-
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	es_keyfixed = 0;
+	get_solid_keypoint(s, &es_keypoint, &es_keytag,
+			   &s->edit_state.es_int, es_mat);
+	save_edflag = es_edflag;
 
 	if (!SEDIT_TRAN) {
-	    mged_set_edflag(s, STRANS);
+	    es_edflag = STRANS;
 	}
 
-	VADD2(s->s_edit.e_para, delta, s->s_edit.curr_e_axes_pos);
-	s->s_edit.e_inpara = 3;
+	VADD2(es_para, delta, curr_e_axes_pos);
+	inpara = 3;
 	sedit(s);
-	s->s_edit.edit_flag = save_edflag;
-	s->s_edit.solid_edit_rotate = save_rot;
-	s->s_edit.solid_edit_translate = save_tra;
-	s->s_edit.solid_edit_scale = save_sca;
-	s->s_edit.solid_edit_pick = save_pic;
+	es_edflag = save_edflag;
     } else {
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
-	bn_mat_mul2(xlatemat, s->s_edit.model_changes);
+	bn_mat_mul2(xlatemat, modelchanges);
 
 	new_edit_mats(s);
 	update_views = 1;
@@ -3652,9 +3646,9 @@ mged_otran(struct mged_state *s, const vect_t tvec)
 {
     vect_t work = VINIT_ZERO;
 
-    if (s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) {
-	/* apply s->s_edit.acc_rot_sol to tvec */
-	MAT4X3PNT(work, s->s_edit.acc_rot_sol, tvec);
+    if (GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) {
+	/* apply acc_rot_sol to tvec */
+	MAT4X3PNT(work, acc_rot_sol, tvec);
     }
 
     return mged_mtran(s, work);
@@ -3716,7 +3710,7 @@ cmd_tra(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord;
 	vect_t tvec;
@@ -3759,46 +3753,34 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	return TCL_OK;
     }
 
-    if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	int save_edflag, save_rot, save_tra, save_sca, save_pic;
-	save_edflag = s->s_edit.edit_flag;
-	save_rot = s->s_edit.solid_edit_rotate;
-	save_tra = s->s_edit.solid_edit_translate;
-	save_sca = s->s_edit.solid_edit_scale;
-	save_pic = s->s_edit.solid_edit_pick;
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	int save_edflag;
+
+	save_edflag = es_edflag;
 
 	if (!SEDIT_SCALE) {
-	    mged_set_edflag(s, SSCALE);
+	    es_edflag = SSCALE;
 	}
 
-	s->s_edit.es_scale = sfactor;
-	old_scale = s->s_edit.acc_sc_sol;
-	s->s_edit.acc_sc_sol *= sfactor;
+	s->edit_state.es_scale = sfactor;
+	old_scale = acc_sc_sol;
+	acc_sc_sol *= sfactor;
 
-	if (s->s_edit.acc_sc_sol < MGED_SMALL_SCALE) {
-	    s->s_edit.acc_sc_sol = old_scale;
-	    s->s_edit.edit_flag = save_edflag;
-	    s->s_edit.solid_edit_rotate = save_rot;
-	    s->s_edit.solid_edit_translate = save_tra;
-	    s->s_edit.solid_edit_scale = save_sca;
-	    s->s_edit.solid_edit_pick = save_pic;
+	if (acc_sc_sol < MGED_SMALL_SCALE) {
+	    acc_sc_sol = old_scale;
+	    es_edflag = save_edflag;
 	    return TCL_OK;
 	}
 
-	if (s->s_edit.acc_sc_sol >= 1.0) {
-	    s->s_edit.edit_absolute_scale = (s->s_edit.acc_sc_sol - 1.0) / 3.0;
+	if (acc_sc_sol >= 1.0) {
+	    s->edit_state.edit_absolute_scale = (acc_sc_sol - 1.0) / 3.0;
 	} else {
-	    s->s_edit.edit_absolute_scale = s->s_edit.acc_sc_sol - 1.0;
+	    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
 	}
 
 	sedit(s);
 
-	s->s_edit.edit_flag = save_edflag;
-	s->s_edit.solid_edit_rotate = save_rot;
-	s->s_edit.solid_edit_translate = save_tra;
-	s->s_edit.solid_edit_scale = save_sca;
-	s->s_edit.solid_edit_pick = save_pic;
-
+	es_edflag = save_edflag;
     } else {
 	point_t temp;
 	point_t pos_model;
@@ -3811,33 +3793,33 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	switch (edobj) {
 	    case BE_O_XSCALE:			    /* local scaling ... X-axis */
 		smat[0] = sfactor;
-		old_scale = s->edit_state.acc_sc[X];
-		s->edit_state.acc_sc[X] *= sfactor;
+		old_scale = acc_sc[X];
+		acc_sc[X] *= sfactor;
 
-		if (s->edit_state.acc_sc[X] < MGED_SMALL_SCALE) {
-		    s->edit_state.acc_sc[X] = old_scale;
+		if (acc_sc[X] < MGED_SMALL_SCALE) {
+		    acc_sc[X] = old_scale;
 		    return TCL_OK;
 		}
 
 		break;
 	    case BE_O_YSCALE:			    /* local scaling ... Y-axis */
 		smat[5] = sfactor;
-		old_scale = s->edit_state.acc_sc[Y];
-		s->edit_state.acc_sc[Y] *= sfactor;
+		old_scale = acc_sc[Y];
+		acc_sc[Y] *= sfactor;
 
-		if (s->edit_state.acc_sc[Y] < MGED_SMALL_SCALE) {
-		    s->edit_state.acc_sc[Y] = old_scale;
+		if (acc_sc[Y] < MGED_SMALL_SCALE) {
+		    acc_sc[Y] = old_scale;
 		    return TCL_OK;
 		}
 
 		break;
 	    case BE_O_ZSCALE:			    /* local scaling ... Z-axis */
 		smat[10] = sfactor;
-		old_scale = s->edit_state.acc_sc[Z];
-		s->edit_state.acc_sc[Z] *= sfactor;
+		old_scale = acc_sc[Z];
+		acc_sc[Z] *= sfactor;
 
-		if (s->edit_state.acc_sc[Z] < MGED_SMALL_SCALE) {
-		    s->edit_state.acc_sc[Z] = old_scale;
+		if (acc_sc[Z] < MGED_SMALL_SCALE) {
+		    acc_sc[Z] = old_scale;
 		    return TCL_OK;
 		}
 
@@ -3845,11 +3827,11 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    case BE_O_SCALE:			     /* global scaling */
 	    default:
 		smat[15] = inv_sfactor;
-		old_scale = s->s_edit.acc_sc_sol;
-		s->s_edit.acc_sc_sol *= inv_sfactor;
+		old_scale = acc_sc_sol;
+		acc_sc_sol *= inv_sfactor;
 
-		if (s->s_edit.acc_sc_sol < MGED_SMALL_SCALE) {
-		    s->s_edit.acc_sc_sol = old_scale;
+		if (acc_sc_sol < MGED_SMALL_SCALE) {
+		    acc_sc_sol = old_scale;
 		    return TCL_OK;
 		}
 
@@ -3859,9 +3841,9 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
 	 */
-	VMOVE(temp, s->s_edit.e_keypoint);
-	MAT4X3PNT(pos_model, s->s_edit.model_changes, temp);
-	wrt_point(s->s_edit.model_changes, smat, s->s_edit.model_changes, pos_model);
+	VMOVE(temp, es_keypoint);
+	MAT4X3PNT(pos_model, modelchanges, temp);
+	wrt_point(modelchanges, smat, modelchanges, pos_model);
 
 	new_edit_mats(s);
     }
@@ -3910,7 +3892,7 @@ cmd_sca(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) && mged_variables->mv_transform == 'e') {
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) && mged_variables->mv_transform == 'e') {
 	fastf_t sf1 = 0.0; /* combined xyz scale or x scale */
 	fastf_t sf2 = 0.0; /* y scale */
 	fastf_t sf3 = 0.0; /* z scale */
@@ -3944,7 +3926,7 @@ cmd_sca(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		return TCL_OK;
 	    }
 
-	    if (s->edit_state.global_editing_state == ST_O_EDIT) {
+	    if (GEOM_EDIT_STATE == ST_O_EDIT) {
 		save_edobj = edobj;
 		edobj = BE_O_XSCALE;
 

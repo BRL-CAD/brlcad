@@ -14,14 +14,17 @@ set(
   chgmodel.c
   chgtree.c
   chgview.c
-  clone.c
   cmd.c
+  clone.c
   color_scheme.c
   columns.c
   dm-generic.c
   dodraw.c
   doevent.c
   dozoom.c
+  edarb.c
+  edars.c
+  edpipe.c
   edsol.c
   f_db.c
   facedef.c
@@ -35,34 +38,6 @@ set(
   overlay.c
   plot.c
   predictor.c
-  primitives/edarb.c
-  primitives/edars.c
-  primitives/edbot.c
-  primitives/edbspline.c
-  primitives/edcline.c
-  primitives/eddatum.c
-  primitives/eddsp.c
-  primitives/edebm.c
-  primitives/edehy.c
-  primitives/edell.c
-  primitives/edepa.c
-  primitives/edeto.c
-  primitives/edextrude.c
-  primitives/edgrip.c
-  primitives/edhalf.c
-  primitives/edhyp.c
-  primitives/edmetaball.c
-  primitives/ednmg.c
-  primitives/edpart.c
-  primitives/edpipe.c
-  primitives/edrhc.c
-  primitives/edrpc.c
-  primitives/edsuperell.c
-  primitives/edtgc.c
-  primitives/edtor.c
-  primitives/edvol.c
-  primitives/generic.c
-  primitives/table.cpp
   rect.c
   rtif.c
   scroll.c
@@ -101,11 +76,7 @@ set(
 # but I'm not sure if that would be a problem for scripting with mged.exe on
 # Windows so leave it for now...
 if(BRLCAD_ENABLE_TCL)
-  set(MGED_INCLUDE_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/primitives
-    ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
-  )
+  set(MGED_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
   brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}")
   if(TK_LIBRARY)
     target_compile_definitions(mged PRIVATE HAVE_TK=1)
@@ -137,17 +108,13 @@ set(
   f_cmd.h
   menu.h
   mged.h
-  mged.ico
-  mged.rc
   mged_dm.h
   mged_wdb.h
-  primitives/edarb.h
-  primitives/edbspline.h
-  primitives/mged_functab.h
   sedit.h
+  mged.ico
+  mged.rc
 )
 cmakefiles(${mged_ignore_files})
-
 
 # Local Variables:
 # tab-width: 8
@@ -155,4 +122,3 @@ cmakefiles(${mged_ignore_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

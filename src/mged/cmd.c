@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,8 +62,6 @@ extern void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
 extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
-
-/* Ew. Globals. */
 extern int mged_default_dlist;			/* in attach.c */
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
@@ -320,7 +318,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	(void)(*ctp->ged_func)(s->gedp, argc, (const char **)argv);
 	GED_OUTPUT;
     } else {
-	if ((argc == 1) && (s->edit_state.global_editing_state == ST_S_EDIT)) {
+	if ((argc == 1) && (GEOM_EDIT_STATE == ST_S_EDIT)) {
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
@@ -558,11 +556,11 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (s->edit_state.global_editing_state == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	/* solid edit mode */
-	/* apply s->s_edit.e_mat editing to parameters */
+	/* apply es_mat editing to parameters */
 	struct directory *outdp = RT_DIR_NULL;
-	transform_editing_solid(s, &intern, s->s_edit.e_mat, &s->s_edit.es_int, 0);
+	transform_editing_solid(s, &intern, es_mat, &s->edit_state.es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -580,7 +578,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	} else {
 	    ret = TCL_ERROR;
 	}
-    }  else if (s->edit_state.global_editing_state == ST_O_EDIT) {
+    }  else if (GEOM_EDIT_STATE == ST_O_EDIT) {
 	mat_t newmat;
 	struct directory *outdp = RT_DIR_NULL;
 
@@ -592,9 +590,9 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	    return TCL_ERROR;
 	}
 	/* use the solid at bottom of path (key solid) */
-	/* apply s->s_edit.e_mat and s->s_edit.model_changes editing to parameters */
-	bn_mat_mul(newmat, s->s_edit.model_changes, s->s_edit.e_mat);
-	transform_editing_solid(s, &intern, newmat, &s->s_edit.es_int, 0);
+	/* apply es_mat and modelchanges editing to parameters */
+	bn_mat_mul(newmat, modelchanges, es_mat);
+	transform_editing_solid(s, &intern, newmat, &s->edit_state.es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -1364,7 +1362,7 @@ f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.global_editing_state != ST_VIEW)
+    if (GEOM_EDIT_STATE != ST_VIEW)
 	button(s, BE_REJECT);
 
     quit(s);			/* Exiting time */
@@ -1632,8 +1630,8 @@ mged_global_variable_setup(struct mged_state *s)
     Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_global_db_ctx.db_upgrade, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_global_db_ctx.db_version, TCL_LINK_INT);
 
-    Tcl_LinkVar(s->interp, "edit_class", (char *)&s->edit_state.e_edclass, TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit.edit_flag, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 
     /* link some tcl variables to these corresponding globals */
