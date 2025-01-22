@@ -1,7 +1,7 @@
 /*                      U T I L I T Y 1 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,38 +70,6 @@ int idfd, rd_idfd;
 FILE *tabptr;
 
 char ctemp[7];
-
-
-/*
- *
- * No-frills edit - opens an editor on the supplied
- * file name.
- *
- */
-int
-editit(struct mged_state *s, const char *command, const char *tempfile) {
-    int argc = 5;
-    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    struct bu_vls editstring = BU_VLS_INIT_ZERO;
-
-    CHECK_DBI_NULL;
-
-    if (!get_editor_string(s, &editstring))
-	return TCL_ERROR;
-
-    av[0] = command;
-    av[1] = "-e";
-    av[2] = bu_vls_addr(&editstring);
-    av[3] = "-f";
-    av[4] = tempfile;
-    av[5] = NULL;
-
-    ged_exec(s->gedp, argc, (const char **)av);
-
-    bu_vls_free(&editstring);
-    return TCL_OK;
-}
-
 
 /*
  *

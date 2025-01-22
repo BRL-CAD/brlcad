@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -111,41 +111,14 @@ struct cmdtab {
     struct mged_state *s;
 };
 
-/* Menu structures and defines
- *
- * Each active menu is installed by having a non-null entry in
- * menu_array[] which is a pointer
- * to an array of menu items.  The first ([0]) menu item is the title
- * for the menu, and the remaining items are individual menu entries.
- */
-struct menu_item {
-    char *menu_string;
-    void (*menu_func)(struct mged_state *, int, int, int);
-    int menu_arg;
-};
-
-#define NMENU 3
-#define MENU_L1 0 /* top-level solid-edit menu */
-#define MENU_L2 1 /* second-level menu */
-#define MENU_GEN 2 /* general features (mouse buttons) */
-
-#define MENUXLIM        (-1250)         /* Value to set X lim to for menu */
-#define MENUX           (-2048+115)     /* pixel position for menu, X */
-#define MENUY           1780            /* pixel position for menu, Y */
-#define SCROLLY         (2047)          /* starting Y pos for scroll area */
-#define MENU_DY         (-104)          /* Distance between menu items */
-#define SCROLL_DY       (-100)          /* Distance between scrollers */
-
-#define TITLE_XBASE     (-2048)         /* pixel X of title line start pos */
-#define TITLE_YBASE     (-1920)         /* pixel pos of last title line */
-#define SOLID_XBASE     MENUXLIM        /* X to start display text */
-#define SOLID_YBASE     (1920)          /* pixel pos of first solid line */
-#define TEXT0_DY        (-60)           /* #pixels per line, Size 0 */
-#define TEXT1_DY        (-90)           /* #pixels per line, Size 1 */
-
+#include "./menu.h"
 #include "./mged_dm.h" /* _view_state */
 
 struct mged_edit_state {
+
+    // main global editing state (ugh)
+    int global_editing_state;
+
     // Rotate
     vect_t edit_absolute_model_rotate;
     vect_t edit_absolute_object_rotate;
@@ -161,20 +134,18 @@ struct mged_edit_state {
     int edit_rateflag_view_rotate;
 
     // Translate
-    vect_t edit_absolute_model_tran;
-    vect_t edit_absolute_view_tran;
-    vect_t last_edit_absolute_model_tran;
-    vect_t last_edit_absolute_view_tran;
     vect_t edit_rate_model_tran;
     vect_t edit_rate_view_tran;
     int edit_rateflag_model_tran;
     int edit_rateflag_view_tran;
 
     // Scale
-    fastf_t es_scale;	/* scale factor */
-    fastf_t edit_absolute_scale;
     fastf_t edit_rate_scale;
     int edit_rateflag_scale;
+
+    /* The "accumulation" solid rotation matrix and scale factor */
+    fastf_t acc_sc_obj;		/* accumulate global object scale factor */
+    fastf_t acc_sc[3];		/* accumulate local object scale factors */
 
     // Origin
     char edit_rate_model_origin;
@@ -192,9 +163,76 @@ struct mged_edit_state {
     struct mged_dm *edit_rate_mt_dm;
     struct mged_dm *edit_rate_vt_dm;
 
+    int e_edclass;		/* type of editing class for this solid */
+    int e_type;			/* COMGEOM solid type */
+
+};
+
+struct mged_solid_edit {
+
+    // Optional logging of messages from editing code
+    struct bu_vls *log_str;
+
     // Container to hold the intermediate state
     // of the object being edited (I think?)
     struct rt_db_internal es_int;
+
+    // Tolerance for calculations
+    const struct bn_tol *tol;
+
+    // Primary variable used to identify specific editing operations
+    int edit_flag;
+    /* item/edit_mode selected from menu.  TODO - it seems like this
+     * may be used to "specialize" edit_flag to narrow its scope to
+     * specific operations - in which case we might be able to rename
+     * it to something more general than "menu"... */
+    int edit_menu;
+
+    // Translate values used in XY mouse vector manipulation
+    vect_t edit_absolute_model_tran;
+    vect_t last_edit_absolute_model_tran;
+    vect_t edit_absolute_view_tran;
+    vect_t last_edit_absolute_view_tran;
+
+    // Scale values used in XY mouse vector manipulation
+    fastf_t edit_absolute_scale;
+
+    // MGED wants to know if we're in solid rotate, translate or scale mode.
+    // (TODO - why?) Rather than keying off of primitive specific edit op
+    // types, have the ops set flags:
+    int solid_edit_rotate;
+    int solid_edit_translate;
+    int solid_edit_scale;
+    int solid_edit_pick;
+
+    fastf_t es_scale;		/* scale factor */
+    mat_t incr_change;		/* change(s) from last cycle */
+    mat_t model_changes;	/* full changes this edit */
+    fastf_t acc_sc_sol;		/* accumulate solid scale factor */
+    mat_t acc_rot_sol;		/* accumulate solid rotations */
+
+    int e_keyfixed;		/* keypoint specified by user? */
+    point_t e_keypoint;		/* center of editing xforms */
+    const char *e_keytag;	/* string identifying the keypoint */
+
+    int e_mvalid;		/* e_mparam valid.  e_inpara must = 0 */
+    vect_t e_mparam;		/* mouse input param.  Only when es_mvalid set */
+
+    int e_inpara;		/* parameter input from keyboard flag.  1 == e_para valid.  e_mvalid must = 0 */
+    vect_t e_para;		/* keyboard input parameter changes */
+
+    mat_t e_invmat;		/* inverse of e_mat KAA */
+    mat_t e_mat;		/* accumulated matrix of path */
+
+    point_t curr_e_axes_pos;	/* center of editing xforms */
+    point_t e_axes_pos;
+
+    /* Flag to trigger some primitive edit opts to use keypoint (and maybe other behaviors?) */
+    int mv_context;
+
+    /* Internal primitive editing information specific to primitive types. */
+    void *ipe_ptr;
+
 };
 
 /* global application state */
@@ -225,9 +263,9 @@ struct mged_state {
 
     /* Editing related */
     struct mged_edit_state edit_state;
+    struct mged_solid_edit s_edit;
 };
 extern struct mged_state *MGED_STATE;
-
 
 /**
  * Definitions.
@@ -257,15 +295,6 @@ extern struct mged_state *MGED_STATE;
  *
  * These are allocated storage in dozoom.c
  */
-
-extern mat_t modelchanges;		/* full changes this edit */
-extern mat_t incr_change;		/* change(s) from last cycle */
-
-/* defined in buttons.c */
-extern fastf_t acc_sc_sol;	/* accumulate solid scale factor */
-extern fastf_t acc_sc_obj;	/* accumulate global object scale factor */
-extern fastf_t acc_sc[3];	/* accumulate local object scale factors */
-extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in mged.c */
 extern jmp_buf jmp_env;
@@ -315,8 +344,9 @@ void history_setup(void);
 #define UARROW   002
 #define SARROW   004
 #define ROTARROW 010 /* Object rotation enabled */
-extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 
+/* Ew.  Globals. */
+extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 extern struct display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
 extern struct bv_scene_obj *illump; /* == 0 if none, else points to ill. solid */
 extern int ipathpos; /* path index of illuminated element */
@@ -327,10 +357,6 @@ extern int edobj; /* object editing options */
 /* Flags for line type decisions */
 #define ROOT 0
 #define INNER 1
-
-/* FIXME: ugh, main global editing state */
-extern int ged_state;	  /* (defined in titles.c) */
-#define GEOM_EDIT_STATE ged_state
 
 /**
  * Editor States
@@ -386,6 +412,7 @@ struct cmd_list {
 };
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
 
+/* Ew.  Globals. */
 /* defined in cmd.c */
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
@@ -396,6 +423,7 @@ typedef void *Tk_Window;
 #endif
 extern Tk_Window tkwin; /* in cmd.c */
 
+/* Ew.  Globals. */
 /* defined in rtif.c */
 extern struct run_rt head_run_rt;
 
@@ -414,10 +442,6 @@ void mged_link_vars(struct mged_dm *p);
 void mged_slider_free_vls(struct mged_dm *p);
 int gui_setup(struct mged_state *s, const char *dstr);
 
-
-/* buttons.c */
-void btn_head_menu(struct mged_state *s, int i, int menu, int item);
-void chg_l2menu(struct mged_state *s, int i);
 
 /* chgview.c */
 int mged_svbase(struct mged_state *s);
@@ -451,6 +475,7 @@ void freeDListsAll(void *, unsigned int dlist, int range);
 
 /* edarb.c */
 int editarb(struct mged_state *s, vect_t pos_model);
+/* Ew.  Global. */
 extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
@@ -517,7 +542,6 @@ void rect_image2view(struct mged_state *);
 void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* edsol.c */
-extern int inpara;	/* parameter input from keyboard flag */
 void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
     struct mged_state *s,
@@ -555,28 +579,12 @@ void set_scroll(struct mged_state *);
 int scroll_select(struct mged_state *s, int pen_x, int pen_y, int do_func);
 int scroll_display(struct mged_state *s, int y_top);
 
-/* edpipe.c */
-void pipe_scale_od(struct mged_state *s, struct rt_db_internal *, fastf_t);
-void pipe_scale_id(struct mged_state *s, struct rt_db_internal *, fastf_t);
-void pipe_seg_scale_od(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
-void pipe_seg_scale_id(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
-void pipe_seg_scale_radius(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
-void pipe_scale_radius(struct mged_state *s, struct rt_db_internal *, fastf_t);
-struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(struct mged_state *s, const struct bu_list *, const point_t);
-struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
-void pipe_ins_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
-struct wdb_pipe_pnt *pipe_del_pnt(struct mged_state *s, struct wdb_pipe_pnt *);
-void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
-
 /* vparse.c */
 extern void mged_vls_struct_parse(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */
 extern void mged_vls_struct_parse_old(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, char *structp, int argc, const char *argv[]);
 
 /* mater.c */
 void mged_color_soltab(struct mged_state *s);
-
-/* utility1.c */
-int editit(struct mged_state *s, const char *command, const char *tempfile);
 
 int Wdb_Init(Tcl_Interp *interp);
 int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);

@@ -1,7 +1,7 @@
 /*                        A T T A C H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,10 +51,12 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+
+/* Ew. Globals. */
+
 /* Geometry display instances used by MGED */
 struct bu_ptbl active_dm_set = BU_PTBL_INIT_ZERO;  /* set of active display managers */
 struct mged_dm *mged_dm_init_state = NULL;
-
 
 extern struct _color_scheme default_color_scheme;
 extern void share_dlist(struct mged_dm *dlp2);	/* defined in share.c */

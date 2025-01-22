@@ -1,7 +1,7 @@
 /*                        T I T L E S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,6 @@
 
 #define USE_OLD_MENUS 0
 
-/* should only be accessed via STATE define in mged.h */
-int ged_state;
-
 char *state_str[] = {
     "-ZOT-",
     "VIEWING",
@@ -53,7 +50,7 @@ char *state_str[] = {
     "UNKNOWN",
 };
 
-
+/* Ew. Global. */
 extern mat_t perspective_mat;  /* defined in dozoom.c */
 
 /*
@@ -76,7 +73,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
      * Check if the illuminated solid still exists or it has been killed
      * before Accept was clicked.
      */
-    if (es_edflag >= 0 && illump != NULL && illump->s_u_data != NULL) {
+    if (s->s_edit.edit_flag >= 0 && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	dp = LAST_SOLID(bdata);
@@ -85,7 +82,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	bu_vls_strcat(vp, dp->d_namep);
 	bu_vls_strcat(vp, ": ");
 
-	vls_solid(s, vp, &s->edit_state.es_int, bn_mat_identity);
+	vls_solid(s, vp, &s->s_edit.es_int, bn_mat_identity);
 
 	if (bdata->s_fullpath.fp_len > 1) {
 	    bu_vls_strcat(vp, "\n** PATH --  ");
@@ -93,12 +90,12 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
-	    vls_solid(s, vp, &s->edit_state.es_int, es_mat);
+	    vls_solid(s, vp, &s->s_edit.es_int, s->s_edit.e_mat);
 	}
     }
 
     /* display path info for object editing also */
-    if (GEOM_EDIT_STATE == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
+    if (s->edit_state.global_editing_state == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	bu_vls_strcat(vp, "** PATH --  ");
@@ -110,9 +107,9 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    mat_t new_mat;
 	    /* NOT an evaluated region */
 	    /* object edit option selected */
-	    bn_mat_mul(new_mat, modelchanges, es_mat);
+	    bn_mat_mul(new_mat, s->s_edit.model_changes, s->s_edit.e_mat);
 
-	    vls_solid(s, vp, &s->edit_state.es_int, new_mat);
+	    vls_solid(s, vp, &s->s_edit.es_int, new_mat);
 	}
     }
 
@@ -341,22 +338,22 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (es_edflag >= 0 || (GEOM_EDIT_STATE == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
+    if (s->s_edit.edit_flag >= 0 || (s->edit_state.global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */
 	int num_lines=0;
 
 	if (view_state->vs_gvp->gv_perspective <= 0)
-	    bn_mat_mul(xform, view_state->vs_model2objview, es_mat);
+	    bn_mat_mul(xform, view_state->vs_model2objview, s->s_edit.e_mat);
 	else {
 	    mat_t tmat;
 
-	    bn_mat_mul(tmat, view_state->vs_model2objview, es_mat);
+	    bn_mat_mul(tmat, view_state->vs_model2objview, s->s_edit.e_mat);
 	    bn_mat_mul(xform, perspective_mat, tmat);
 	}
 
-	label_edited_solid(s, &num_lines, lines,  pl, 8+1, xform, &s->edit_state.es_int);
+	label_edited_solid(s, &num_lines, lines,  pl, 8+1, xform, &s->s_edit.es_int);
 
 	dm_set_fg(DMP,
 		       color_scheme->cs_geo_label[0],
@@ -411,7 +408,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 			   color_scheme->cs_state_text1[0],
 			   color_scheme->cs_state_text1[1],
 			   color_scheme->cs_state_text1[2], 1, 1.0);
-	    dm_draw_string_2d(DMP, state_str[GEOM_EDIT_STATE],
+	    dm_draw_string_2d(DMP, state_str[s->edit_state.global_editing_state],
 			      GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0);
 	} else {
 	    scroll_ybot = SCROLLY;
@@ -423,12 +420,12 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	 * Print information about object illuminated
 	 */
 	if (illump != NULL && illump->s_u_data != NULL &&
-	    (GEOM_EDIT_STATE == ST_O_PATH || GEOM_EDIT_STATE==ST_O_PICK || GEOM_EDIT_STATE==ST_S_PICK)) {
+	    (s->edit_state.global_editing_state == ST_O_PATH || s->edit_state.global_editing_state==ST_O_PICK || s->edit_state.global_editing_state==ST_S_PICK)) {
 
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
-		if (i == (size_t)ipathpos  &&  GEOM_EDIT_STATE == ST_O_PATH) {
+		if (i == (size_t)ipathpos  &&  s->edit_state.global_editing_state == ST_O_PATH) {
 		    dm_set_fg(DMP,
 				   color_scheme->cs_state_text1[0],
 				   color_scheme->cs_state_text1[1],
@@ -462,9 +459,9 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    mmenu_display(s, y);
 
 	    /* print parameter locations on screen */
-	    if (GEOM_EDIT_STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
+	    if (s->edit_state.global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag) {
 		/* region is a processed region */
-		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
+		MAT4X3PNT(temp, view_state->vs_model2objview, s->s_edit.e_keypoint);
 		xloc = (int)(temp[X]*GED_MAX);
 		yloc = (int)(temp[Y]*GED_MAX);
 		dm_set_fg(DMP,
@@ -558,16 +555,16 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
-    if (GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) {
+    if (s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) {
 	struct bu_vls kp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&kp_vls,
 		      " Keypoint: %s %s: (%g, %g, %g)",
-		      OBJ[s->edit_state.es_int.idb_type].ft_name+3,	/* Skip ID_ */
-		      es_keytag,
-		      es_keypoint[X] * s->dbip->dbi_base2local,
-		      es_keypoint[Y] * s->dbip->dbi_base2local,
-		      es_keypoint[Z] * s->dbip->dbi_base2local);
+		      OBJ[s->s_edit.es_int.idb_type].ft_name+3,	/* Skip ID_ */
+		      s->s_edit.e_keytag,
+		      s->s_edit.e_keypoint[X] * s->dbip->dbi_base2local,
+		      s->s_edit.e_keypoint[Y] * s->dbip->dbi_base2local,
+		      s->s_edit.e_keypoint[Z] * s->dbip->dbi_base2local);
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    dm_set_fg(DMP,
 			   color_scheme->cs_status_text2[0],
@@ -600,7 +597,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    bu_vls_strcat(&vls, " Path: ");
 	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
 		if (i == (size_t)ipathpos  &&
-		    (GEOM_EDIT_STATE == ST_O_PATH || GEOM_EDIT_STATE == ST_O_EDIT))
+		    (s->edit_state.global_editing_state == ST_O_PATH || s->edit_state.global_editing_state == ST_O_EDIT))
 		    bu_vls_strcat(&vls, "/__MATRIX__");
 		bu_vls_printf(&vls, "/%s",
 			      DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep);
