@@ -50,6 +50,28 @@ if(NOT BRLCAD_COMPONENTS)
   add_subdirectory(osl_shaders)
 endif(NOT BRLCAD_COMPONENTS)
 
+# add the bugs subdir as an external project so its bug "tests" are
+# not added to the main BRL-CAD "test" target
+if(TARGET mged)
+  # add_subdirectory(bugs)
+  include(ExternalProject)
+  set(BUGS_DIR ${CMAKE_CURRENT_BINARY_DIR}/bugs)
+
+  ExternalProject_Add(BrlcadBugs
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bugs
+    BINARY_DIR ${BUGS_DIR}
+    CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUGS_DIR=${BUGS_DIR} -DCMAKE_INSTALL_PREFIX=${BUGS_DIR}
+    INSTALL_COMMAND ""
+  )
+
+  # Add a custom target to run the bug tests manually
+  add_custom_target(bugs
+    COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${BUGS_DIR}
+    DEPENDS BUGS
+  )
+endif(TARGET mged)
+
+
 set(
   misc_ignore_files
   Bullet_Box_Chain_Demo.cpp
