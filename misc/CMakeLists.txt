@@ -87,6 +87,7 @@ set(
   batch-indent-region.el
   brlcad-config.in
   brlcad.spec.in
+  bugs/CMakeLists.txt
   check/adj_air.sh
   check/exp_air.sh
   check/overlaps.sh
