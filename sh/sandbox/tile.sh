@@ -37,13 +37,13 @@
 
 # what directory to scan
 # FIXME: should take as an arg
-DBDIR=share/db
+DIR=.
 
-# prefix of the output file to use for tiled result
-OUT=tiled
+# prefix name of the output pix/png files
+OUT=tile
 
 # size of individual tile renderings
-SZ=256
+SZ=64
 
 # how many tiles per row (i.e., columns)
 COLS=10
@@ -63,7 +63,7 @@ setopt nonomatch
 
 export i=0
 
-G="`find $DBDIR -name \*.g -print`"
+G="`find $DIR -name \*.g -print`"
 echo "$G" | while read gfile ; do
 
     trap cleanup INT
