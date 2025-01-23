@@ -21,7 +21,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
-          sudo apt-get install clang-tools-14
+          sudo apt-get install clang-18 clang-tools-18
           # Install X/OpenGL dev pkgs
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
           # Install tools
@@ -56,7 +56,7 @@ jobs:
       - name: Run Analyzer
         run: |
           pwd
-          export PATH=$ENV{GITHUB_WORKSPACE}:/usr/share/clang/scan-build-14/bin:/usr/share/clang/scan-build-14/libexec:$PATH
+          export PATH=$ENV{GITHUB_WORKSPACE}:/usr/share/clang/scan-build-18/bin:/usr/share/clang/scan-build-18/libexec:$PATH
           cd build_clangstatic && cp ../misc/clang-static-analyzer-run.sh .
           ./clang-static-analyzer-run.sh
 
@@ -132,7 +132,7 @@ jobs:
           find . -name '*.gcda' -exec rm {} \;
           make check
           lcov --capture --directory . --output-file coverage.info
-          lcov -r coverage.info \*\/other\/\* > coverage-2.info
+          lcov -r coverage.info \*\/bext_output\/\* > coverage-2.info
           lcov -r coverage-2.info \/usr\/\* > coverage_cad.info
           rm coverage-*.info
           #genhtml coverage_cad.info --output-directory lcov-output
