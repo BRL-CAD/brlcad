@@ -43,7 +43,7 @@
 #define MENU_ELL_SCALE_ABC	3042
 
 static void
-ell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+ell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     mged_set_edflag(s, PSCALE);

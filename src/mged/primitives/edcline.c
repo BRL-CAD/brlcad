@@ -48,7 +48,7 @@
 #define MENU_CLINE_SCALE_T	29110
 
 static void
-cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_flag = arg;
 

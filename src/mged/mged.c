@@ -2150,7 +2150,7 @@ main(int argc, char *argv[])
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s, 0, 0, 0);
+    btn_head_menu(s, 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));

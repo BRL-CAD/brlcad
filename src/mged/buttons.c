@@ -240,7 +240,7 @@ f_press(ClientData clientData,
 		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
 		if (mptr->menu_func != NULL)
-		    (*(mptr->menu_func))(s, mptr->menu_arg, menu, item);
+		    (*(mptr->menu_func))(s, mptr->menu_arg, menu, item, s);
 
 		goto next;
 	    }

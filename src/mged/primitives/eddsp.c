@@ -53,7 +53,7 @@
 extern const char * get_file_name(struct mged_state *s, char *str);
 
 static void
-dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     mged_set_edflag(s, -1);

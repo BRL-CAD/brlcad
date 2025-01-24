@@ -51,7 +51,7 @@ extern char * get_sketch_name(struct mged_state *s, const char *sk_n);
 
 /*ARGSUSED*/
 static void
-extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_flag = arg;
 

@@ -66,7 +66,7 @@
 int bot_verts[3];		/* vertices for the BOT solid */
 
 static void
-bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     s->s_edit.edit_flag = arg;

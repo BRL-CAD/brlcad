@@ -62,7 +62,7 @@
 #define MENU_TGC_SCALE_H_V_AB	2112
 
 static void
-tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     mged_set_edflag(s, PSCALE);

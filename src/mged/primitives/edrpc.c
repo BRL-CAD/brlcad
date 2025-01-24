@@ -42,7 +42,7 @@
 #define MENU_RPC_R		17045
 
 static void
-rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     mged_set_edflag(s, PSCALE);

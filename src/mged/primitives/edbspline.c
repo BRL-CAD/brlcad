@@ -46,7 +46,7 @@ static int spl_vi;
 
 /*ARGSUSED*/
 static void
-spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     /* XXX Why wasn't this done by setting edit_flag = ECMD_SPLINE_VPICK? */
     if (arg < 0) {

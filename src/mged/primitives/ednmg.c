@@ -65,7 +65,7 @@ point_t lu_keypoint;    /* keypoint of lu_copy for extrusion */
  */
 /*ARGSUSED*/
 static void
-nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     switch (arg) {
 	default:

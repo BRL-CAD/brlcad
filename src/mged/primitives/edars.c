@@ -92,7 +92,7 @@ find_ars_nearest_pnt(
 
 /*ARGSUSED*/
 static void
-ars_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+ars_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_flag = arg;
 

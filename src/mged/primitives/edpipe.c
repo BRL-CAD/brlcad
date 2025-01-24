@@ -69,7 +69,7 @@
 struct wdb_pipe_pnt *es_pipe_pnt=(struct wdb_pipe_pnt *)NULL; /* Currently selected PIPE segment */
 
 static void
-pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;

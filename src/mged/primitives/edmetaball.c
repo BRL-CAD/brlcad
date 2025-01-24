@@ -60,7 +60,7 @@
 struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
 
 static void
-metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     struct wdb_metaball_pnt *next, *prev;
 

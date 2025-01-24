@@ -47,7 +47,7 @@
 #define MENU_HYP_ROT_H		38131
 
 static void
-hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     switch (arg) {

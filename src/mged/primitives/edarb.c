@@ -61,7 +61,7 @@ int newedge;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 
 static void
-arb8_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb8_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     s->s_edit.edit_flag = EARB;
@@ -96,7 +96,7 @@ struct menu_item edge8_menu[] = {
 
 
 static void
-arb7_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb7_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     s->s_edit.edit_flag = EARB;
@@ -135,7 +135,7 @@ struct menu_item edge7_menu[] = {
 };
 
 static void
-arb6_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb6_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     s->s_edit.edit_flag = EARB;
@@ -177,7 +177,7 @@ struct menu_item edge6_menu[] = {
 };
 
 static void
-arb5_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb5_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     s->s_edit.edit_flag = EARB;
@@ -213,7 +213,7 @@ struct menu_item edge5_menu[] = {
 };
 
 static void
-arb4_point(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb4_point(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     s->s_edit.edit_flag = PTARB;
@@ -239,7 +239,7 @@ struct menu_item point4_menu[] = {
 };
 
 static void
-arb8_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb8_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     s->s_edit.edit_flag = ECMD_ARB_MOVE_FACE;
@@ -267,7 +267,7 @@ struct menu_item mv8_menu[] = {
 };
 
 static void
-arb7_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb7_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     s->s_edit.edit_flag = ECMD_ARB_MOVE_FACE;
@@ -291,7 +291,7 @@ struct menu_item mv7_menu[] = {
 };
 
 static void
-arb6_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb6_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     s->s_edit.edit_flag = ECMD_ARB_MOVE_FACE;
@@ -318,7 +318,7 @@ struct menu_item mv6_menu[] = {
 };
 
 static void
-arb5_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb5_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     s->s_edit.edit_flag = ECMD_ARB_MOVE_FACE;
@@ -345,7 +345,7 @@ struct menu_item mv5_menu[] = {
 };
 
 static void
-arb4_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb4_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     s->s_edit.edit_flag = ECMD_ARB_MOVE_FACE;
@@ -371,7 +371,7 @@ struct menu_item mv4_menu[] = {
 };
 
 static void
-arb8_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb8_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -393,7 +393,7 @@ struct menu_item rot8_menu[] = {
 };
 
 static void
-arb7_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb7_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -415,7 +415,7 @@ struct menu_item rot7_menu[] = {
 };
 
 static void
-arb6_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb6_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -436,7 +436,7 @@ struct menu_item rot6_menu[] = {
 };
 
 static void
-arb5_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb5_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -458,7 +458,7 @@ struct menu_item rot5_menu[] = {
 };
 
 static void
-arb4_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb4_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -478,7 +478,7 @@ struct menu_item rot4_menu[] = {
 };
 
 static void
-arb_control(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
+arb_control(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->s_edit.edit_menu = arg;
     mged_set_edflag(s, ECMD_ARB_SPECIFIC_MENU);

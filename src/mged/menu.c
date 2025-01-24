@@ -35,12 +35,12 @@
 #include "ged.h"
 
 
-extern void sl_halt_scroll(struct mged_state *s, int, int, int);	/* in scroll.c */
+extern void sl_halt_scroll(struct mged_state *s, int, int, int, void *);	/* in scroll.c */
 
-extern void sl_toggle_scroll(struct mged_state *s, int, int, int);
+extern void sl_toggle_scroll(struct mged_state *s, int, int, int, void *);
 
-void btn_head_menu(struct mged_state *s, int i, int menu, int item);
-void btn_item_hit(struct mged_state *s, int arg, int menu, int item);
+void btn_head_menu(struct mged_state *s, int i, int menu, int item, void *data);
+void btn_item_hit(struct mged_state *s, int arg, int menu, int item, void *data);
 
 struct menu_item first_menu[] = {
     { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
@@ -96,7 +96,7 @@ struct menu_item oed_menu[] = {
  * Called when a menu item is hit
  */
 void
-btn_item_hit(struct mged_state *s, int arg, int menu, int UNUSED(item))
+btn_item_hit(struct mged_state *s, int arg, int menu, int UNUSED(item), void *UNUSED(data))
 {
     button(s, arg);
     if (menu == MENU_GEN &&
@@ -109,7 +109,8 @@ btn_item_hit(struct mged_state *s, int arg, int menu, int UNUSED(item))
  * Also called from main() with arg 0 in init.
  */
 void
-btn_head_menu(struct mged_state *s, int i, int UNUSED(menu), int UNUSED(item)) {
+btn_head_menu(struct mged_state *s, int i, int UNUSED(menu), int UNUSED(item), void *UNUSED(data))
+{
     switch (i) {
 	case 0:
 	    mmenu_set(s, MENU_GEN, first_menu);
@@ -440,7 +441,7 @@ mmenu_select(struct mged_state *s, int pen_y, int do_func)
 	    /* It's up to the menu_func to set menu_state->ms_flag=0
 	     * if no arrow is desired */
 	    if (do_func && mptr->menu_func != NULL)
-		(*(mptr->menu_func))(s, mptr->menu_arg, menu, item);
+		(*(mptr->menu_func))(s, mptr->menu_arg, menu, item, s);
 
 	    return 1;		/* menu claims pen value */
 	}
