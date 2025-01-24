@@ -31,10 +31,11 @@ mged_state_create(void)
 {
     struct mged_state *s;
     BU_GET(s, struct mged_state);
+    s->magic = MGED_STATE_MAGIC;
+
     BU_GET(s->i, struct mged_state_impl);
     s->i->i = new MGED_Internal;
 
-    s->magic = MGED_STATE_MAGIC;
     s->classic_mged = 1;
     s->interactive = 0; /* >0 means interactive, intentionally starts
 			 * 0 to know when interactive, e.g., via -C
@@ -45,6 +46,7 @@ mged_state_create(void)
     bu_vls_init(&s->scratchline);
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
+
     s->s_edit.tol = &s->tol.tol;
     BU_GET(s->s_edit.log_str, struct bu_vls);
     bu_vls_init(s->s_edit.log_str);
@@ -72,12 +74,26 @@ mged_state_destroy(struct mged_state *s)
 }
 
 struct mged_solid_edit *
-mged_solid_edit_create(struct rt_db_internal *UNUSED(ip))
+mged_solid_edit_create(struct rt_db_internal *UNUSED(ip), struct bn_tol *tol, struct bview *v)
 {
     struct mged_solid_edit *s;
     BU_GET(s, struct mged_solid_edit);
     BU_GET(s->i, struct mged_solid_edit_impl);
     s->i->i = new MGED_SEDIT_Internal;
+    s->tol = tol;
+    s->vp = v;
+
+    MAT_IDN(s->model_changes);
+    MAT_IDN(s->acc_rot_sol);
+    s->solid_edit_rotate = 0;
+    s->solid_edit_translate = 0;
+    s->solid_edit_scale = 0;
+    s->solid_edit_pick = 0;
+    s->e_inpara = 0;
+
+    BU_GET(s->log_str, struct bu_vls);
+    bu_vls_init(s->log_str);
+
     return s;
 }
 
@@ -86,6 +102,10 @@ mged_solid_edit_destroy(struct mged_solid_edit *s)
 {
     if (!s)
 	return;
+
+    bu_vls_free(s->log_str);
+    BU_PUT(s->log_str, struct bu_vls);
+
     delete s->i->i;
     BU_PUT(s->i, struct mged_solid_edit_impl);
     BU_PUT(s, struct mged_solid_edit);

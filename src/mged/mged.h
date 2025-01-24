@@ -191,6 +191,7 @@ struct mged_solid_edit {
 
     // Tolerance for calculations
     const struct bn_tol *tol;
+    struct bview *vp;
 
     // Primary variable used to identify specific editing operations
     int edit_flag;
@@ -287,7 +288,7 @@ extern void
 mged_state_destroy(struct mged_state *s);
 
 extern struct mged_solid_edit *
-mged_solid_edit_create(struct rt_db_internal *ip);
+mged_solid_edit_create(struct rt_db_internal *ip, struct bn_tol *, struct bview *v);
 extern void
 mged_solid_edit_destroy(struct mged_solid_edit *ssed);
 
