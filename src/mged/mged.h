@@ -248,6 +248,24 @@ struct mged_solid_edit {
 
 };
 
+// TODO - need callback registration mechanism.  If sedit() is going to become
+// something like rt_solid_edit_process() then looking at the code we'll need
+// callbacks for at least:
+//
+// mged_print_results
+// set_e_axes_pos
+// replot_editing_solid
+// view_update
+//
+// in addition to allowing ECMD specific callback registrations.  Simplest thing
+// to do is probably assign the "generic" operations above some specific numbers
+// and supply a 0 obj type so we can just use the same mechanism for everything.
+//
+extern int mged_edit_clbk_set(struct mged_solid_edit *s, int obj_type, int ed_cmd, int mode, bu_clbk_t f, void *d);
+extern int mged_edit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int obj_type, int ed_cmd, int mode);
+
+
+
 /* global application state */
 struct mged_state_impl;
 struct mged_state {

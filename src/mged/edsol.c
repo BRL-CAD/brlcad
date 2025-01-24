@@ -469,14 +469,6 @@ sedit(struct mged_state *s)
     sedraw = 0;
     ++update_views;
 
-    // Handle any primitive specific flags TODO - will have to reserve integer
-    // values for the generic operations so primitive specific methods don't
-    // conflict with them.  Maybe something simple like all primitive specific
-    // edflag vals need to be >RT_EDIT_OP_GENERIC_MAX?  Primitives could then
-    // define with:
-    // #define PRIM_OP_1 RT_EDIT_OP_GENERIC_MAX+1,
-    // #define PRIM_OP_2 PRIM_OP_1+1
-    // ...
     int had_method = 0;
     const struct rt_db_internal *ip = &s->s_edit->es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit) {

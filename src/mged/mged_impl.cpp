@@ -108,6 +108,46 @@ mged_solid_edit_destroy(struct mged_solid_edit *s)
     BU_PUT(s, struct mged_solid_edit);
 }
 
+int mged_edit_clbk_set(struct mged_solid_edit *s, int obj_type, int ed_cmd, int mode, bu_clbk_t f, void *d)
+{
+    // Check for no-op case
+    if (!s || mode < 0)
+	return BRLCAD_OK;
+
+    if (!f) {
+	if (d)
+	    bu_log("data but no callback?\n");
+	bu_log("null f means clear callback\n");
+    }
+
+    if (!obj_type) {
+	bu_log("generic callback functionality");
+    }
+
+    bu_log("ed_cmd: %d, mode: %d\n", ed_cmd, mode);
+
+    // TODO - should we define functab callback to validate ed_cmd against the
+    // known primitive editing operations?  Thinking that might be preferable
+    // otherwise a mistake in the cmd will result in the callback not running
+    // as expected, which may or may not be an immediately apparent failure.
+
+    return BRLCAD_OK;
+}
+int mged_edit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int obj_type, int ed_cmd, int mode)
+{
+    // Check for no-op case
+    if (!f || !d || !s || mode < 0)
+	return BRLCAD_OK;
+
+    if (!obj_type) {
+	bu_log("generic callback functionality");
+    }
+
+    bu_log("ed_cmd: %d, mode: %d\n", ed_cmd, mode);
+
+     return BRLCAD_OK;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
