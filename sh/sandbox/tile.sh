@@ -209,12 +209,14 @@ echo "$G" | while read gfile ; do
     i="`expr $i \+ 1`"
 done
 
-echo "TILES:"
+echo "Tile Images:"
 echo "$tiles"
 
 width="$((SZ * COLS))"
 rows="$((i / COLS))"
-rows="$((rows + 1))"
+if test "x$(($i % COLS))" != "x0" ; then
+   rows="$((rows + 1))"
+fi
 height="$((rows * SZ))"
 
 rm -f $OUT.pix
@@ -222,8 +224,10 @@ bin/pixtile -s$SZ -W$width -N$height `echo $tiles` | bin/pix-fb -w $width -n $he
 
 rm -f $OUT.png
 cat $OUT.pix | bin/pix-png -w$width -n$height -o $OUT.png
+rm -f $OUT.pix
 
-#rm -f tile.*
+echo ""
+echo "Images tiled, output written to $OUT.png"
 
 # Local Variables:
 # tab-width: 8
