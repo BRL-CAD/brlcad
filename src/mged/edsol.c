@@ -428,6 +428,27 @@ get_file_name(struct mged_state *s, char *str)
     return (char *)NULL;
 }
 
+char *
+get_sketch_name(struct mged_state *s, const char *sk_n)
+{
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name   of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS", sk_n);
+    int ret_tcl = Tcl_Eval(s->interp, bu_vls_addr(&tcl_cmd));
+    if (ret_tcl != TCL_OK) {
+	bu_log("ERROR: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_free(&tcl_cmd);
+	return NULL;
+    }
+
+    if (atoi(Tcl_GetStringResult(s->interp)) == 1)
+	return NULL;
+
+    bu_vls_free(&tcl_cmd);
+
+    const char *sketch_name = Tcl_GetVar(s->interp, "final_sketch_name", TCL_GLOBAL_ONLY);
+    return bu_strdup(sketch_name);
+}
+
 /*
  * A great deal of magic takes place here, to accomplish solid editing.
  *

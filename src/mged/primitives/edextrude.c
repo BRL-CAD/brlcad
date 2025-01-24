@@ -47,6 +47,8 @@
 #define MENU_EXTR_ROT_H		27105
 #define MENU_EXTR_SKT_NAME	27106
 
+extern char * get_sketch_name(struct mged_state *s, const char *sk_n);
+
 /*ARGSUSED*/
 static void
 extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
@@ -140,38 +142,18 @@ ecmd_extr_skt_name(struct mged_state *s)
 {
     struct rt_extrude_internal *extr =
 	(struct rt_extrude_internal *)s->s_edit.es_int.idb_ptr;
-    const char *sketch_name;
-    int ret_tcl;
     struct directory *dp;
     struct rt_db_internal tmp_ip;
-    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 
     RT_EXTRUDE_CK_MAGIC(extr);
 
-    // TODO.  Yikes.  OK, this needs to live somewhere else and assign the
-    // sketch name it extracts from the GUI dialog to a sketch specific editing
-    // struct.
-    bu_vls_printf(&tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS",
-	    extr->sketch_name);
-    ret_tcl = Tcl_Eval(s->interp, bu_vls_addr(&tcl_cmd));
-    if (ret_tcl != TCL_OK) {
-	bu_log("ERROR: %s\n", Tcl_GetStringResult(s->interp));
-	bu_vls_free(&tcl_cmd);
-	return;
-    }
+    char *sketch_name = get_sketch_name(s, extr->sketch_name);
 
-    if (atoi(Tcl_GetStringResult(s->interp)) == 1)
-	return;
-
-    bu_vls_free(&tcl_cmd);
-
-    sketch_name = Tcl_GetVar(s->interp, "final_sketch_name", TCL_GLOBAL_ONLY);
     if (extr->sketch_name)
 	bu_free((char *)extr->sketch_name, "extr->sketch_name");
 
-
-    // TODO - this needs to be passed in somehow rather than calling the GUI here...
     extr->sketch_name = bu_strdup(sketch_name);
+    bu_free(sketch_name, "sketch name");
 
     if (extr->skt) {
 	/* free the old sketch */
