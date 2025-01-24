@@ -109,6 +109,7 @@ echo "Tiling COLS=$COLS tiles per row"
 
 
 export i=0
+export tiles=""
 
 G="`find $DIR -name \*.g -print`"
 echo "Geometry files:"
@@ -118,7 +119,7 @@ echo ""
 echo "$G" | while read gfile ; do
 
     trap cleanup INT
-    
+
     glower="`echo $gfile | tr '[:upper:]' '[:lower:]'`"
     if test "x$glower" = "x" ; then
         echo "ERROR: did not expect tr to fail on file $gfile"
@@ -199,24 +200,25 @@ echo "$G" | while read gfile ; do
     fi
      
     echo "Rendering #$i $gfile:$found ..."
-    rm -f tile.$i.$gbase.$obj.pix tile.$i.$gbase.$obj.rt.log
-    bin/rt -l3 -s$SZ -o tile.$i.$gbase.$obj.pix $gfile `echo $found` 2>tile.$i.$gbase.$obj.rt.log
+    tileout=tile.$i.$gbase.$obj.pix
+    tilelog=tile.$i.$gbase.$obj.rt.log
+    rm -f $tileout $tilelog
+    bin/rt -l3 -s$SZ -o $tileout $gfile `echo $found` 2>$tilelog
 
+    tiles="$tiles $tileout"
     i="`expr $i \+ 1`"
 done
 
-# put them in numerical order
-sorted="`ls  -1 tile.*.pix | sort -n -k2 -t'.'`"
-
-count="`echo $sorted | wc -l`"
+echo "TILES:"
+echo "$tiles"
 
 width="$((SZ * COLS))"
-rows="$((count / COLS))"
+rows="$((i / COLS))"
 rows="$((rows + 1))"
 height="$((rows * SZ))"
 
 rm -f $OUT.pix
-bin/pixtile -s$SZ -W$width -N$height `echo $sorted` | bin/pix-fb -w $width -n $height -F$OUT.pix
+bin/pixtile -s$SZ -W$width -N$height `echo $tiles` | bin/pix-fb -w $width -n $height -F$OUT.pix
 
 rm -f $OUT.png
 cat $OUT.pix | bin/pix-png -w$width -n$height -o $OUT.png
