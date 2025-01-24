@@ -1837,14 +1837,7 @@ mged_finish(struct mged_state *s, int exitcode)
 
     mged_global_variable_teardown(s);
 
-    s->magic = 0; // make sure anything trying to use this after free gets a magic failure
-    bu_vls_free(&s->input_str);
-    bu_vls_free(&s->input_str_prefix);
-    bu_vls_free(&s->scratchline);
-    bu_vls_free(&s-> mged_prompt);
-    bu_vls_free(s->s_edit.log_str);
-    BU_PUT(s->s_edit.log_str, struct mged_state);
-    BU_PUT(s, struct mged_state);
+    mged_state_destroy(s);
     MGED_STATE = NULL; // sanity
 
     /* 8.5 seems to have some bugs in their reference counting */
@@ -1893,22 +1886,8 @@ main(int argc, char *argv[])
     int result;
 #endif
 
-    BU_GET(MGED_STATE, struct mged_state);
+    MGED_STATE = mged_state_create();
     struct mged_state *s = MGED_STATE;
-    s->magic = MGED_STATE_MAGIC;
-    s->classic_mged = 1;
-    s->interactive = 0; /* >0 means interactive, intentionally starts
-                         * 0 to know when interactive, e.g., via -C
-                         * option
-			 */
-    bu_vls_init(&s->input_str);
-    bu_vls_init(&s->input_str_prefix);
-    bu_vls_init(&s->scratchline);
-    bu_vls_init(&s->mged_prompt);
-    s->dpy_string = NULL;
-    s->s_edit.tol = &s->tol.tol;
-    BU_GET(s->s_edit.log_str, struct bu_vls);
-    bu_vls_init(s->s_edit.log_str);
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;

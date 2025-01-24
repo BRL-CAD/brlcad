@@ -57,16 +57,12 @@
 
 #include "common.h"
 
+
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 #include <time.h>
 
-#include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#  define HAVE_X11_TYPES 1
-#endif
 #include "bu/parallel.h"
 #include "bu/list.h"
 #include "bu/str.h"
@@ -77,6 +73,17 @@
 /* Needed to define struct bv_scene_obj */
 #include "bv/defines.h"
 
+__BEGIN_DECLS
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#  define HAVE_X11_TYPES 1
+#endif
+__END_DECLS
+
+#include "mged_impl.h"
+
+__BEGIN_DECLS
 
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
@@ -168,7 +175,12 @@ struct mged_edit_state {
 
 };
 
+// Internal state
+struct mged_solid_edit_impl;
+
 struct mged_solid_edit {
+
+    struct mged_solid_edit_impl *i;
 
     // Optional logging of messages from editing code
     struct bu_vls *log_str;
@@ -236,8 +248,10 @@ struct mged_solid_edit {
 };
 
 /* global application state */
+struct mged_state_impl;
 struct mged_state {
     uint32_t magic;
+    struct mged_state_impl *i;
     struct ged *gedp;
     struct db_i *dbip;
     struct rt_wdb *wdbp;
@@ -266,6 +280,16 @@ struct mged_state {
     struct mged_solid_edit s_edit;
 };
 extern struct mged_state *MGED_STATE;
+
+extern struct mged_state *
+mged_state_create();
+extern void
+mged_state_destroy(struct mged_state *s);
+
+extern struct mged_solid_edit *
+mged_solid_edit_create(struct rt_db_internal *ip);
+extern void
+mged_solid_edit_destroy(struct mged_solid_edit *ssed);
 
 /**
  * Definitions.
@@ -589,6 +613,8 @@ void mged_color_soltab(struct mged_state *s);
 int Wdb_Init(Tcl_Interp *interp);
 int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
 void wdb_deleteProc(ClientData clientData);
+
+__END_DECLS
 
 #endif  /* MGED_MGED_H */
 

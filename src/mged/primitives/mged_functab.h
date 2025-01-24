@@ -76,6 +76,14 @@ void
 update_edit_absolute_tran(struct mged_state *s, vect_t view_pos);
 
 /* Applies only the universally supported operations */
+/* TODO - it might be possible to allow apps to register per-operation
+ * callbacks.  That would allow (say) MGED to pop up a dialog for the sketch
+ * name assignment without forcing the core op command code to be the one to do
+ * it.  We could scan the librt code for all ECMD_ defines and autogenerate a
+ * header, which would be explicitly documented to be a reflection of whatever
+ * edit operations are available for the primitives at the time.
+ * MGED could maintain an app level callback map, which would be assigned to
+ * each edit state's map when created by entering one of MGED's edit states. */
 int mged_generic_edit(struct mged_state *s, int edflag);
 
 int
