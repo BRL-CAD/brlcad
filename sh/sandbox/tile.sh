@@ -111,6 +111,10 @@ echo "Tiling COLS=$COLS tiles per row"
 export i=0
 
 G="`find $DIR -name \*.g -print`"
+echo "Geometry files:"
+echo "$G"
+echo ""
+
 echo "$G" | while read gfile ; do
 
     trap cleanup INT
