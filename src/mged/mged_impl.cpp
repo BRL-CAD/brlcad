@@ -48,7 +48,7 @@ mged_state_create(void)
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
 
-    s->s_edit = mged_solid_edit_create(NULL, &s->tol.tol, NULL);
+    s->s_edit = NULL;
 
     return s;
 }
@@ -64,7 +64,9 @@ mged_state_destroy(struct mged_state *s)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s->mged_prompt);
-    mged_solid_edit_destroy(s->s_edit);
+    if (s->s_edit)
+	mged_solid_edit_destroy(s->s_edit);
+    s->s_edit = NULL;
 
     delete s->i->i;
     BU_PUT(s->i, struct mged_state_impl);

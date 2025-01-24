@@ -358,6 +358,9 @@ mged_generic_edit_xy(
 void
 mged_set_edflag(struct mged_state *s, int edflag)
 {
+    if (!s->s_edit)
+	return;
+
     s->s_edit->edit_flag = edflag;
     s->s_edit->solid_edit_pick = 0;
 

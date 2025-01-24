@@ -258,6 +258,11 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     db_dup_full_path(&both, &lhs);
     db_append_full_path(&both, &rhs);
 
+    /* Set up solid edit state */
+    s->s_edit = mged_solid_edit_create(NULL, &s->tol.tol, view_state->vs_gvp);
+    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+    s->s_edit->mv_context = mged_variables->mv_context;
+
     /* Patterned after ill_common() ... */
     illum_gdlp = gdlp;
     illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */

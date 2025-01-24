@@ -1012,6 +1012,11 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
+    /* Set up solid edit state */
+    s->s_edit = mged_solid_edit_create(NULL, &s->tol.tol, view_state->vs_gvp);
+    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+    s->s_edit->mv_context = mged_variables->mv_context;
+
     /* Common part of illumination */
     gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
 
