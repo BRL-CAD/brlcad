@@ -48,6 +48,44 @@ SZ=64
 # how many tiles per row (i.e., columns)
 COLS=10
 
+
+# Function to parse and set script arguments
+dynamic_set_variables() {
+  for arg in "$@" ; do
+    # Check if the argument matches the KEY=value format
+    if [[ "$arg" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]] ; then
+      key="${match[1]}"
+      value="${match[2]}"
+      # Check if the key is one of the allowed variables
+      case "$key" in
+        DIR|OUT|SZ|COLS)
+          eval "$key=\"$value\""
+          ;;
+        *)
+          echo "ERROR: Unknown variable '$key'"
+          print_usage
+          return 1
+          ;;
+      esac
+    else
+      echo "ERROR: Invalid argument format: $arg"
+      print_usage
+      return 1
+    fi
+  done
+}
+
+
+print_usage() {
+  echo "Usage: $0 [DIR=<directory>] [OUT=<output_prefix>] [SZ=<tile_size>] [COLS=<columns>]"
+  echo "\nVariables:"
+  echo "  DIR   - Directory to scan"
+  echo "  OUT   - Prefix name of the output pix/png files"
+  echo "  SZ    - Square size of individual tile renderings"
+  echo "  COLS  - Number of tiles per row (i.e., columns)"
+}
+
+
 # Define the cleanup function to handle the signal
 cleanup() {
   echo "Script interrupted. Exiting..."
@@ -59,6 +97,15 @@ trap cleanup INT
 
 # zsh annoyingly blathers by default during globbing
 setopt nonomatch
+
+# call the function with script arguments
+dynamic_set_variables "$@" || exit 1
+
+# log our behavior
+echo "Scanning for .g files in DIR=$DIR"
+echo "Writing pix/png with OUT=$OUT prefix"
+echo "Rendering tiles ${SZ}x${SZ} given SZ=$SZ"
+echo "Tiling COLS=$COLS tiles per row"
 
 
 export i=0
