@@ -282,7 +282,7 @@ struct mged_state {
 extern struct mged_state *MGED_STATE;
 
 extern struct mged_state *
-mged_state_create();
+mged_state_create(void);
 extern void
 mged_state_destroy(struct mged_state *s);
 

@@ -27,7 +27,7 @@
 #include "mged.h"
 
 struct mged_state *
-mged_state_create()
+mged_state_create(void)
 {
     struct mged_state *s;
     BU_GET(s, struct mged_state);
