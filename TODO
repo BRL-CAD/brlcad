@@ -51,6 +51,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* optimize mged/libged init and exit performance.  profiling shows
+  over 90% of entire execution time to run a single command is
+  dominated by libged's dlopen/dlclose.  cumulatively about 1sec on
+  Mac, but likely extrapolates to all platforms.
+
 * convert non-planar arb's to brep objects for ray-tracing.  see how
   well it works to see if we can remove an arb limitation.
 
