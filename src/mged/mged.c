@@ -2127,13 +2127,9 @@ main(int argc, char *argv[])
     owner = 1;
     frametime = 1;
 
-    MAT_IDN(s->s_edit->model_changes);
-    MAT_IDN(s->s_edit->acc_rot_sol);
-
     s->edit_state.global_editing_state = ST_VIEW;
-    mged_set_edflag(s, -1); /* no solid editing just now */
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
-    s->s_edit->e_inpara = newedge = 0;
+    newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;

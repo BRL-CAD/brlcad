@@ -220,13 +220,14 @@ write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
 			 " TO ", newvalue, "\n", (char *)NULL);
     }
 
-    /* We don't want to expose mged_variables to the primitive editing code directly, but
-     * MGED uses "set context 1" to trigger a behavior change. Do a sync here to propagate
-     * the value to a more localized value in the editing context.  Eventually, when the
-     * editing container is dynamically created and destroyed, we'll have to first check
-     * for s_edit before doing this assignment (and always initialize it after creating an
-     * s_edit instance.) */
-    s->s_edit->mv_context = mged_variables->mv_context;
+    /* We don't want to expose mged_variables to the primitive editing code
+     * directly, but MGED uses "set context 1" to trigger a behavior change. Do
+     * a sync here to propagate the value to a more localized value in the
+     * editing context.  We have to first check for s_edit before doing this
+     * assignment (and always initialize it after creating an s_edit instance.)
+     */
+    if (s->s_edit)
+	s->s_edit->mv_context = mged_variables->mv_context;
 
     bu_vls_free(&str);
     return read_var(clientData, interp, name1, name2,
@@ -262,7 +263,8 @@ unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
     read_var(clientData, interp, name1, name2,
 	     (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
 
-    MGED_STATE->s_edit->mv_context = MGED_STATE->mged_curr_dm->dm_mged_variables->mv_context;
+    if (MGED_STATE->s_edit)
+	MGED_STATE->s_edit->mv_context = MGED_STATE->mged_curr_dm->dm_mged_variables->mv_context;
 
     return NULL;
 }
@@ -291,8 +293,6 @@ mged_variable_setup(struct mged_state *s)
 	Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
 		     (Tcl_VarTraceProc *)unset_var, (ClientData)sp);
     }
-
-    s->s_edit->mv_context = mged_variables->mv_context;
 }
 
 
@@ -318,7 +318,8 @@ f_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
-    s->s_edit->mv_context = mged_variables->mv_context;
+    if (s->s_edit)
+	s->s_edit->mv_context = mged_variables->mv_context;
 
     return TCL_OK;
 }

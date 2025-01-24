@@ -1018,6 +1018,9 @@ void
 oedit_reject(struct mged_state *s)
 {
     rt_db_free_internal(&s->s_edit->es_int);
+    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+    mged_solid_edit_destroy(s->s_edit);
+    s->s_edit = NULL;
 }
 
 
@@ -1082,6 +1085,9 @@ sedit_apply(struct mged_state *s, int accept_flag)
 
     /* make sure we are in solid edit mode */
     if (!illump) {
+	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+	mged_solid_edit_destroy(s->s_edit);
+	s->s_edit = NULL;
 	return TCL_OK;
     }
 
@@ -1094,12 +1100,19 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* write editing changes out to disc */
-    if (!illump->s_u_data)
+    if (!illump->s_u_data) {
+	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+	mged_solid_edit_destroy(s->s_edit);
+	s->s_edit = NULL;
 	return TCL_ERROR;
+    }
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     dp = LAST_SOLID(bdata);
     if (!dp) {
 	/* sanity check, unexpected error */
+	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+	mged_solid_edit_destroy(s->s_edit);
+	s->s_edit = NULL;
 	return TCL_ERROR;
     }
 
@@ -1135,6 +1148,9 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	if (accept_flag) {
 	    rt_db_free_internal(&s->s_edit->es_int);
 	}
+	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+	mged_solid_edit_destroy(s->s_edit);
+	s->s_edit = NULL;
 	return TCL_ERROR;				/* FAIL */
     }
 
@@ -1154,11 +1170,16 @@ sedit_apply(struct mged_state *s, int accept_flag)
 			     LAST_SOLID(bdata)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
 	    rt_db_free_internal(&s->s_edit->es_int);
+	    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+	    mged_solid_edit_destroy(s->s_edit);
+	    s->s_edit = NULL;
 	    return TCL_ERROR;
 	}
     }
 
-
+    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+    mged_solid_edit_destroy(s->s_edit);
+    s->s_edit = NULL;
     return TCL_OK;
 }
 
@@ -1217,8 +1238,12 @@ sedit_reject(struct mged_state *s)
 	struct display_list *gdlp;
 	struct display_list *next_gdlp;
 	struct bv_scene_obj *sp;
-	if (!illump->s_u_data)
+	if (!illump->s_u_data) {
+	    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+	    mged_solid_edit_destroy(s->s_edit);
+	    s->s_edit = NULL;
 	    return;
+	}
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
@@ -1243,6 +1268,9 @@ sedit_reject(struct mged_state *s)
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->s_edit->es_int);
+    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+    mged_solid_edit_destroy(s->s_edit);
+    s->s_edit = NULL;
 }
 
 int
