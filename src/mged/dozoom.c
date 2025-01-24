@@ -193,7 +193,7 @@ dozoom(struct mged_state *s, int which_eye)
 	mat = newmat;
     }
     dm_loadmatrix(DMP, mat, which_eye);
-    inv_viewsize /= s->s_edit.model_changes[15];
+    inv_viewsize /= s->s_edit->model_changes[15];
     dm_set_fg(DMP,
 		   color_scheme->cs_geo_hl[0],
 		   color_scheme->cs_geo_hl[1],

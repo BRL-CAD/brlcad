@@ -305,9 +305,9 @@ snap_keypoint_to_grid(struct mged_state *s)
     }
 
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
     } else {
-	MAT4X3PNT(model_pt, s->s_edit.model_changes, s->s_edit.e_axes_pos);
+	MAT4X3PNT(model_pt, s->s_edit->model_changes, s->s_edit->e_axes_pos);
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     }
     snap_to_grid(s, &view_pt[X], &view_pt[Y]);

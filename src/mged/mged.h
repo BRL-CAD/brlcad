@@ -278,7 +278,7 @@ struct mged_state {
 
     /* Editing related */
     struct mged_edit_state edit_state;
-    struct mged_solid_edit s_edit;
+    struct mged_solid_edit *s_edit;
 };
 extern struct mged_state *MGED_STATE;
 

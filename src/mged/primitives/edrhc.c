@@ -45,7 +45,7 @@
 static void
 rhc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->s_edit.edit_menu = arg;
+    s->s_edit->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
 
     set_e_axes_pos(s, 1);
@@ -172,15 +172,15 @@ void
 menu_rhc_b(struct mged_state *s)
 {
     struct rt_rhc_internal *rhc =
-	(struct rt_rhc_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_rhc_internal *)s->s_edit->es_int.idb_ptr;
     RT_RHC_CK_MAGIC(rhc);
 
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0] / MAGNITUDE(rhc->rhc_B);
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0] / MAGNITUDE(rhc->rhc_B);
     }
-    VSCALE(rhc->rhc_B, rhc->rhc_B, s->s_edit.es_scale);
+    VSCALE(rhc->rhc_B, rhc->rhc_B, s->s_edit->es_scale);
 }
 
 /* scale vector H */
@@ -188,15 +188,15 @@ void
 menu_rhc_h(struct mged_state *s)
 {
     struct rt_rhc_internal *rhc =
-	(struct rt_rhc_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_rhc_internal *)s->s_edit->es_int.idb_ptr;
     RT_RHC_CK_MAGIC(rhc);
 
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0] / MAGNITUDE(rhc->rhc_H);
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0] / MAGNITUDE(rhc->rhc_H);
     }
-    VSCALE(rhc->rhc_H, rhc->rhc_H, s->s_edit.es_scale);
+    VSCALE(rhc->rhc_H, rhc->rhc_H, s->s_edit->es_scale);
 }
 
 /* scale rectangular half-width of RHC */
@@ -204,15 +204,15 @@ void
 menu_rhc_r(struct mged_state *s)
 {
     struct rt_rhc_internal *rhc =
-	(struct rt_rhc_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_rhc_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_RHC_CK_MAGIC(rhc);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0] / rhc->rhc_r;
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0] / rhc->rhc_r;
     }
-    rhc->rhc_r *= s->s_edit.es_scale;
+    rhc->rhc_r *= s->s_edit->es_scale;
 }
 
 /* scale rectangular half-width of RHC */
@@ -220,36 +220,36 @@ void
 menu_rhc_c(struct mged_state *s)
 {
     struct rt_rhc_internal *rhc =
-	(struct rt_rhc_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_rhc_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_RHC_CK_MAGIC(rhc);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0] / rhc->rhc_c;
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0] / rhc->rhc_c;
     }
-    rhc->rhc_c *= s->s_edit.es_scale;
+    rhc->rhc_c *= s->s_edit->es_scale;
 }
 
 static int
 mged_rhc_pscale(struct mged_state *s, int mode)
 {
-    if (s->s_edit.e_inpara > 1) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara > 1) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_RHC_B:
@@ -275,17 +275,17 @@ mged_rhc_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->s_edit.es_int);
+	    return mged_generic_sscale(s, &s->s_edit->es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->s_edit.es_int);
+	    mged_generic_strans(s, &s->s_edit->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->s_edit.es_int);
+	    mged_generic_srot(s, &s->s_edit->es_int);
 	    break;
 	case PSCALE:
-	    return mged_rhc_pscale(s, s->s_edit.edit_menu);
+	    return mged_rhc_pscale(s, s->s_edit->edit_menu);
     }
     return 0;
 }

@@ -55,7 +55,7 @@ extern const char * get_file_name(struct mged_state *s, char *str);
 static void
 vol_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->s_edit.edit_menu = arg;
+    s->s_edit->edit_menu = arg;
 
     switch (arg) {
 	case MENU_VOL_FNAME:
@@ -65,25 +65,25 @@ vol_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
 	    mged_set_edflag(s, ECMD_VOL_FSIZE);
 	    break;
 	case MENU_VOL_CSIZE:
-	    s->s_edit.edit_flag = ECMD_VOL_CSIZE;
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 0;
-	    s->s_edit.solid_edit_scale = 1;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->edit_flag = ECMD_VOL_CSIZE;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 0;
+	    s->s_edit->solid_edit_scale = 1;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	case MENU_VOL_THRESH_LO:
-	    s->s_edit.edit_flag = ECMD_VOL_THRESH_LO;
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 0;
-	    s->s_edit.solid_edit_scale = 1;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->edit_flag = ECMD_VOL_THRESH_LO;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 0;
+	    s->s_edit->solid_edit_scale = 1;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	case MENU_VOL_THRESH_HI:
-	    s->s_edit.edit_flag = ECMD_VOL_THRESH_HI;
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 0;
-	    s->s_edit.solid_edit_scale = 1;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->edit_flag = ECMD_VOL_THRESH_HI;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 0;
+	    s->s_edit->solid_edit_scale = 1;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
     }
 
@@ -111,7 +111,7 @@ mged_vol_menu_item(const struct bn_tol *UNUSED(tol))
 void
 menu_vol_csize(struct mged_state *s)
 {
-    bu_log("s->s_edit.es_scale = %g\n", s->s_edit.es_scale);
+    bu_log("s->s_edit->es_scale = %g\n", s->s_edit->es_scale);
 }
 
 /* set voxel size */
@@ -119,24 +119,24 @@ void
 ecmd_vol_csize(struct mged_state *s)
 {
     struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_vol_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_VOL_CK_MAGIC(vol);
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->s_edit.e_inpara == 3) {
-	VMOVE(vol->cellsize, s->s_edit.e_para);
-    } else if (s->s_edit.e_inpara > 0 && s->s_edit.e_inpara != 3) {
-	bu_vls_printf(s->s_edit.log_str, "x, y, and z cell sizes are required\n");
+    if (s->s_edit->e_inpara == 3) {
+	VMOVE(vol->cellsize, s->s_edit->e_para);
+    } else if (s->s_edit->e_inpara > 0 && s->s_edit->e_inpara != 3) {
+	bu_vls_printf(s->s_edit->log_str, "x, y, and z cell sizes are required\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (s->s_edit.es_scale > 0.0) {
-	VSCALE(vol->cellsize, vol->cellsize, s->s_edit.es_scale);
-	s->s_edit.es_scale = 0.0;
+    } else if (s->s_edit->es_scale > 0.0) {
+	VSCALE(vol->cellsize, vol->cellsize, s->s_edit->es_scale);
+	s->s_edit->es_scale = 0.0;
     }
 }
 
@@ -145,29 +145,29 @@ void
 ecmd_vol_fsize(struct mged_state *s)
 {
     struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_vol_internal *)s->s_edit->es_int.idb_ptr;
     struct stat stat_buf;
     b_off_t need_size;
 
     RT_VOL_CK_MAGIC(vol);
 
-    if (s->s_edit.e_inpara == 3) {
+    if (s->s_edit->e_inpara == 3) {
 	if (stat(vol->name, &stat_buf)) {
-	    bu_vls_printf(s->s_edit.log_str, "Cannot get status of file %s\n", vol->name);
+	    bu_vls_printf(s->s_edit->log_str, "Cannot get status of file %s\n", vol->name);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
 	}
-	need_size = s->s_edit.e_para[0] * s->s_edit.e_para[1] * s->s_edit.e_para[2] * sizeof(unsigned char);
+	need_size = s->s_edit->e_para[0] * s->s_edit->e_para[1] * s->s_edit->e_para[2] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
-	    bu_vls_printf(s->s_edit.log_str, "File (%s) is too small, set file name first", vol->name);
+	    bu_vls_printf(s->s_edit->log_str, "File (%s) is too small, set file name first", vol->name);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
 	}
-	vol->xdim = s->s_edit.e_para[0];
-	vol->ydim = s->s_edit.e_para[1];
-	vol->zdim = s->s_edit.e_para[2];
-    } else if (s->s_edit.e_inpara > 0) {
-	bu_vls_printf(s->s_edit.log_str, "x, y, and z file sizes are required\n");
+	vol->xdim = s->s_edit->e_para[0];
+	vol->ydim = s->s_edit->e_para[1];
+	vol->zdim = s->s_edit->e_para[2];
+    } else if (s->s_edit->e_inpara > 0) {
+	bu_vls_printf(s->s_edit->log_str, "x, y, and z file sizes are required\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -176,31 +176,31 @@ ecmd_vol_fsize(struct mged_state *s)
 int
 ecmd_vol_thresh_lo(struct mged_state *s)
 {
-    if (s->s_edit.e_inpara != 1) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara != 1) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_vol_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_VOL_CK_MAGIC(vol);
 
     size_t i = vol->lo;
-    if (s->s_edit.e_inpara) {
-	i = s->s_edit.e_para[0];
-    } else if (s->s_edit.es_scale > 0.0) {
-	i = vol->lo * s->s_edit.es_scale;
-	if (i == vol->lo && s->s_edit.es_scale > 1.0) {
+    if (s->s_edit->e_inpara) {
+	i = s->s_edit->e_para[0];
+    } else if (s->s_edit->es_scale > 0.0) {
+	i = vol->lo * s->s_edit->es_scale;
+	if (i == vol->lo && s->s_edit->es_scale > 1.0) {
 	    i++;
-	} else if (i == vol->lo && s->s_edit.es_scale < 1.0) {
+	} else if (i == vol->lo && s->s_edit->es_scale < 1.0) {
 	    i--;
 	}
     }
@@ -216,31 +216,31 @@ ecmd_vol_thresh_lo(struct mged_state *s)
 int
 ecmd_vol_thresh_hi(struct mged_state *s)
 {
-    if (s->s_edit.e_inpara != 1) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara != 1) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_vol_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_VOL_CK_MAGIC(vol);
 
     size_t i = vol->hi;
-    if (s->s_edit.e_inpara) {
-	i = s->s_edit.e_para[0];
-    } else if (s->s_edit.es_scale > 0.0) {
-	i = vol->hi * s->s_edit.es_scale;
-	if (i == vol->hi && s->s_edit.es_scale > 1.0) {
+    if (s->s_edit->e_inpara) {
+	i = s->s_edit->e_para[0];
+    } else if (s->s_edit->es_scale > 0.0) {
+	i = vol->hi * s->s_edit->es_scale;
+	if (i == vol->hi && s->s_edit->es_scale > 1.0) {
 	    i++;
-	} else if (i == vol->hi && s->s_edit.es_scale < 1.0) {
+	} else if (i == vol->hi && s->s_edit->es_scale < 1.0) {
 	    i--;
 	}
     }
@@ -257,7 +257,7 @@ void
 ecmd_vol_fname(struct mged_state *s)
 {
     struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_vol_internal *)s->s_edit->es_int.idb_ptr;
     const char *fname;
     struct stat stat_buf;
     b_off_t need_size;
@@ -268,16 +268,16 @@ ecmd_vol_fname(struct mged_state *s)
     if (fname) {
 	if (stat(fname, &stat_buf)) {
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
-	    bu_vls_trunc(s->s_edit.log_str, 0);
-	    bu_vls_printf(s->s_edit.log_str, "Cannot get status of file %s\n", fname);
+	    bu_vls_trunc(s->s_edit->log_str, 0);
+	    bu_vls_printf(s->s_edit->log_str, "Cannot get status of file %s\n", fname);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
 	}
 	need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
-	    bu_vls_trunc(s->s_edit.log_str, 0);
-	    bu_vls_printf(s->s_edit.log_str, "File (%s) is too small, adjust the file size parameters first", fname);
+	    bu_vls_trunc(s->s_edit->log_str, 0);
+	    bu_vls_printf(s->s_edit->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
 	    mged_print_result(s, TCL_ERROR);
 	    return;
 	}
@@ -288,22 +288,22 @@ ecmd_vol_fname(struct mged_state *s)
 static int
 mged_vol_pscale(struct mged_state *s, int mode)
 {
-    if (s->s_edit.e_inpara > 1) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara > 1) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_VOL_CSIZE:
@@ -320,17 +320,17 @@ mged_vol_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->s_edit.es_int);
+	    return mged_generic_sscale(s, &s->s_edit->es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->s_edit.es_int);
+	    mged_generic_strans(s, &s->s_edit->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->s_edit.es_int);
+	    mged_generic_srot(s, &s->s_edit->es_int);
 	    break;
 	case PSCALE:
-	    return mged_vol_pscale(s, s->s_edit.edit_menu);
+	    return mged_vol_pscale(s, s->s_edit->edit_menu);
 	case ECMD_VOL_CSIZE:
 	    ecmd_vol_csize(s);
 	    break;
@@ -357,7 +357,7 @@ mged_vol_edit_xy(
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->s_edit.es_int;
+    struct rt_db_internal *ip = &s->s_edit->es_int;
 
     switch (edflag) {
 	case SSCALE:
@@ -372,7 +372,7 @@ mged_vol_edit_xy(
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
-	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

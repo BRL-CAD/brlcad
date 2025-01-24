@@ -44,7 +44,7 @@
 static void
 part_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->s_edit.edit_menu = arg;
+    s->s_edit->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
 
     set_e_axes_pos(s, 1);
@@ -166,15 +166,15 @@ void
 menu_part_h(struct mged_state *s)
 {
     struct rt_part_internal *part =
-	(struct rt_part_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_part_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_PART_CK_MAGIC(part);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0] / MAGNITUDE(part->part_H);
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0] / MAGNITUDE(part->part_H);
     }
-    VSCALE(part->part_H, part->part_H, s->s_edit.es_scale);
+    VSCALE(part->part_H, part->part_H, s->s_edit->es_scale);
 }
 
 /* scale v end radius */
@@ -182,15 +182,15 @@ void
 menu_part_v(struct mged_state *s)
 {
     struct rt_part_internal *part =
-	(struct rt_part_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_part_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_PART_CK_MAGIC(part);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0] / part->part_vrad;
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0] / part->part_vrad;
     }
-    part->part_vrad *= s->s_edit.es_scale;
+    part->part_vrad *= s->s_edit->es_scale;
 }
 
 /* scale h end radius */
@@ -198,36 +198,36 @@ void
 menu_part_h_end_r(struct mged_state *s)
 {
     struct rt_part_internal *part =
-	(struct rt_part_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_part_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_PART_CK_MAGIC(part);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0] / part->part_hrad;
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0] / part->part_hrad;
     }
-    part->part_hrad *= s->s_edit.es_scale;
+    part->part_hrad *= s->s_edit->es_scale;
 }
 
 static int
 mged_part_pscale(struct mged_state *s, int mode)
 {
-    if (s->s_edit.e_inpara > 1) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara > 1) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_PART_H:
@@ -250,17 +250,17 @@ mged_part_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->s_edit.es_int);
+	    return mged_generic_sscale(s, &s->s_edit->es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->s_edit.es_int);
+	    mged_generic_strans(s, &s->s_edit->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->s_edit.es_int);
+	    mged_generic_srot(s, &s->s_edit->es_int);
 	    break;
 	case PSCALE:
-	    return mged_part_pscale(s, s->s_edit.edit_menu);
+	    return mged_part_pscale(s, s->s_edit->edit_menu);
     }
     return 0;
 }

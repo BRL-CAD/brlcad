@@ -49,14 +49,14 @@
 static void
 hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->s_edit.edit_menu = arg;
+    s->s_edit->edit_menu = arg;
     switch (arg) {
 	case MENU_HYP_ROT_H:
-	    s->s_edit.edit_flag = ECMD_HYP_ROT_H;
-	    s->s_edit.solid_edit_rotate = 1;
-	    s->s_edit.solid_edit_translate = 0;
-	    s->s_edit.solid_edit_scale = 0;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->edit_flag = ECMD_HYP_ROT_H;
+	    s->s_edit->solid_edit_rotate = 1;
+	    s->s_edit->solid_edit_translate = 0;
+	    s->s_edit->solid_edit_scale = 0;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	default:
 	    mged_set_edflag(s, PSCALE);
@@ -188,15 +188,15 @@ void
 menu_hyp_h(struct mged_state *s)
 {
     struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_hyp_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_HYP_CK_MAGIC(hyp);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0];
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0];
     }
-    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->s_edit.es_scale);
+    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->s_edit->es_scale);
 }
 
 /* scale A vector of HYP */
@@ -204,15 +204,15 @@ void
 menu_hyp_scale_a(struct mged_state *s)
 {
     struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_hyp_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_HYP_CK_MAGIC(hyp);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0];
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0];
     }
-    VSCALE(hyp->hyp_A, hyp->hyp_A, s->s_edit.es_scale);
+    VSCALE(hyp->hyp_A, hyp->hyp_A, s->s_edit->es_scale);
 }
 
 /* scale B vector of HYP */
@@ -220,15 +220,15 @@ void
 menu_hyp_scale_b(struct mged_state *s)
 {
     struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_hyp_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_HYP_CK_MAGIC(hyp);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0];
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0];
     }
-    hyp->hyp_b = hyp->hyp_b * s->s_edit.es_scale;
+    hyp->hyp_b = hyp->hyp_b * s->s_edit->es_scale;
 }
 
 /* scale Neck to Base ratio of HYP */
@@ -236,16 +236,16 @@ void
 menu_hyp_c(struct mged_state *s)
 {
     struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_hyp_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_HYP_CK_MAGIC(hyp);
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0];
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0];
     }
-    if (hyp->hyp_bnr * s->s_edit.es_scale <= 1.0) {
-	hyp->hyp_bnr = hyp->hyp_bnr * s->s_edit.es_scale;
+    if (hyp->hyp_bnr * s->s_edit->es_scale <= 1.0) {
+	hyp->hyp_bnr = hyp->hyp_bnr * s->s_edit->es_scale;
     }
 }
 
@@ -254,17 +254,17 @@ int
 ecmd_hyp_rot_h(struct mged_state *s)
 {
     struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_hyp_internal *)s->s_edit->es_int.idb_ptr;
 
     mat_t mat;
     mat_t mat1;
     mat_t edit;
 
     RT_HYP_CK_MAGIC(hyp);
-    if (s->s_edit.e_inpara) {
-	if (s->s_edit.e_inpara != 3) {
-	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
-	    s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara) {
+	if (s->s_edit->e_inpara != 3) {
+	    bu_vls_printf(s->s_edit->log_str, "ERROR: three arguments needed\n");
+	    s->s_edit->e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
@@ -274,43 +274,43 @@ ecmd_hyp_rot_h(struct mged_state *s)
 	 * in degrees.  First, cancel any existing rotations,
 	 * then perform new rotation
 	 */
-	bn_mat_inv(invsolr, s->s_edit.acc_rot_sol);
+	bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 
 	/* Build completely new rotation change */
-	MAT_IDN(s->s_edit.model_changes);
-	bn_mat_angles(s->s_edit.model_changes,
-		s->s_edit.e_para[0],
-		s->s_edit.e_para[1],
-		s->s_edit.e_para[2]);
-	/* Borrow s->s_edit.incr_change matrix here */
-	bn_mat_mul(s->s_edit.incr_change, s->s_edit.model_changes, invsolr);
-	MAT_COPY(s->s_edit.acc_rot_sol, s->s_edit.model_changes);
+	MAT_IDN(s->s_edit->model_changes);
+	bn_mat_angles(s->s_edit->model_changes,
+		s->s_edit->e_para[0],
+		s->s_edit->e_para[1],
+		s->s_edit->e_para[2]);
+	/* Borrow s->s_edit->incr_change matrix here */
+	bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
+	MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
-	MAT_IDN(s->s_edit.model_changes);
+	MAT_IDN(s->s_edit->model_changes);
     } else {
-	/* Apply incremental changes already in s->s_edit.incr_change */
+	/* Apply incremental changes already in s->s_edit->incr_change */
     }
 
-    if (s->s_edit.mv_context) {
+    if (s->s_edit->mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, s->s_edit.incr_change, s->s_edit.e_keypoint);
+	bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, s->s_edit->e_keypoint);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
 	 * current edit operations, then xform back.
-	 * mat = s->s_edit.e_invmat * edit * s->s_edit.e_mat
+	 * mat = s->s_edit->e_invmat * edit * s->s_edit->e_mat
 	 */
-	bn_mat_mul(mat1, edit, s->s_edit.e_mat);
-	bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
+	bn_mat_mul(mat1, edit, s->s_edit->e_mat);
+	bn_mat_mul(mat, s->s_edit->e_invmat, mat1);
 
 	MAT4X3VEC(hyp->hyp_Hi, mat, hyp->hyp_Hi);
     } else {
-	MAT4X3VEC(hyp->hyp_Hi, s->s_edit.incr_change, hyp->hyp_Hi);
+	MAT4X3VEC(hyp->hyp_Hi, s->s_edit->incr_change, hyp->hyp_Hi);
     }
 
-    MAT_IDN(s->s_edit.incr_change);
+    MAT_IDN(s->s_edit->incr_change);
 
     return 0;
 }
@@ -318,22 +318,22 @@ ecmd_hyp_rot_h(struct mged_state *s)
 static int
 mged_hyp_pscale(struct mged_state *s, int mode)
 {
-    if (s->s_edit.e_inpara > 1) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara > 1) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_HYP_H:
@@ -359,17 +359,17 @@ mged_hyp_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->s_edit.es_int);
+	    return mged_generic_sscale(s, &s->s_edit->es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->s_edit.es_int);
+	    mged_generic_strans(s, &s->s_edit->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->s_edit.es_int);
+	    mged_generic_srot(s, &s->s_edit->es_int);
 	    break;
 	case PSCALE:
-	    return mged_hyp_pscale(s, s->s_edit.edit_menu);
+	    return mged_hyp_pscale(s, s->s_edit->edit_menu);
 	case ECMD_HYP_ROT_H:
 	    return ecmd_hyp_rot_h(s);
     }

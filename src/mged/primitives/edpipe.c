@@ -79,103 +79,103 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSE
 
     switch (arg) {
 	case MENU_PIPE_SELECT:
-	    s->s_edit.edit_menu = arg;
-	    s->s_edit.edit_flag = ECMD_PIPE_PICK;
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 0;
-	    s->s_edit.solid_edit_scale = 0;
-	    s->s_edit.solid_edit_pick = 1;
+	    s->s_edit->edit_menu = arg;
+	    s->s_edit->edit_flag = ECMD_PIPE_PICK;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 0;
+	    s->s_edit->solid_edit_scale = 0;
+	    s->s_edit->solid_edit_pick = 1;
 	    break;
 	case MENU_PIPE_NEXT_PT:
 	    if (!es_pipe_pnt) {
-		bu_vls_printf(s->s_edit.log_str, "No Pipe Segment selected\n");
+		bu_vls_printf(s->s_edit->log_str, "No Pipe Segment selected\n");
 		return;
 	    }
 	    next = BU_LIST_NEXT(wdb_pipe_pnt, &es_pipe_pnt->l);
 	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
-		bu_vls_printf(s->s_edit.log_str, "Current segment is the last\n");
+		bu_vls_printf(s->s_edit->log_str, "Current segment is the last\n");
 		return;
 	    }
 	    es_pipe_pnt = next;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
-	    s->s_edit.edit_menu = arg;
+	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
 	case MENU_PIPE_PREV_PT:
 	    if (!es_pipe_pnt) {
-		bu_vls_printf(s->s_edit.log_str, "No Pipe Segment selected\n");
+		bu_vls_printf(s->s_edit->log_str, "No Pipe Segment selected\n");
 		return;
 	    }
 	    prev = BU_LIST_PREV(wdb_pipe_pnt, &es_pipe_pnt->l);
 	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
-		bu_vls_printf(s->s_edit.log_str, "Current segment is the first\n");
+		bu_vls_printf(s->s_edit->log_str, "Current segment is the first\n");
 		return;
 	    }
 	    es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
-	    s->s_edit.edit_menu = arg;
+	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
 	    sedit(s);
 	    break;
 	case MENU_PIPE_SPLIT:
 	    /* not used */
 #if 0
-	    s->s_edit.edit_flag = ECMD_PIPE_SPLIT;
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 1;
-	    s->s_edit.solid_edit_scale = 0;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->edit_flag = ECMD_PIPE_SPLIT;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 1;
+	    s->s_edit->solid_edit_scale = 0;
+	    s->s_edit->solid_edit_pick = 0;
 #endif
 	    break;
 	case MENU_PIPE_MOV_PT:
 	    if (!es_pipe_pnt) {
-		bu_vls_printf(s->s_edit.log_str, "No Pipe Segment selected\n");
+		bu_vls_printf(s->s_edit->log_str, "No Pipe Segment selected\n");
 		mged_set_edflag(s, IDLE);
 		return;
 	    }
-	    s->s_edit.edit_menu = arg;
-	    s->s_edit.edit_flag = ECMD_PIPE_PT_MOVE;
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 1;
-	    s->s_edit.solid_edit_scale = 0;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->edit_menu = arg;
+	    s->s_edit->edit_flag = ECMD_PIPE_PT_MOVE;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 1;
+	    s->s_edit->solid_edit_scale = 0;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_PT_OD:
 	case MENU_PIPE_PT_ID:
 	case MENU_PIPE_PT_RADIUS:
 	    if (!es_pipe_pnt) {
-		bu_vls_printf(s->s_edit.log_str, "No Pipe Segment selected\n");
+		bu_vls_printf(s->s_edit->log_str, "No Pipe Segment selected\n");
 		mged_set_edflag(s, IDLE);
 		return;
 	    }
-	    s->s_edit.edit_menu = arg;
+	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_PIPE_SCALE_OD:
 	case MENU_PIPE_SCALE_ID:
 	case MENU_PIPE_SCALE_RADIUS:
-	    s->s_edit.edit_menu = arg;
+	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, PSCALE);
 	    break;
 	case MENU_PIPE_ADD_PT:
-	    s->s_edit.edit_menu = arg;
-	    s->s_edit.edit_flag = ECMD_PIPE_PT_ADD;
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 1;
-	    s->s_edit.solid_edit_scale = 0;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->edit_menu = arg;
+	    s->s_edit->edit_flag = ECMD_PIPE_PT_ADD;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 1;
+	    s->s_edit->solid_edit_scale = 0;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_INS_PT:
-	    s->s_edit.edit_menu = arg;
-	    s->s_edit.edit_flag = ECMD_PIPE_PT_INS;
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 1;
-	    s->s_edit.solid_edit_scale = 0;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->edit_menu = arg;
+	    s->s_edit->edit_flag = ECMD_PIPE_PT_INS;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 1;
+	    s->s_edit->solid_edit_scale = 0;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	case MENU_PIPE_DEL_PT:
-	    s->s_edit.edit_menu = arg;
+	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, ECMD_PIPE_PT_DEL);
 	    sedit(s);
 	    break;
@@ -233,11 +233,11 @@ pipe_scale_od(struct mged_state *s, struct rt_db_internal *db_int, fastf_t scale
 	else
 	    tmp_od = ps->pp_od*scale;
 	if (ps->pp_id > tmp_od) {
-	    bu_vls_printf(s->s_edit.log_str, "Cannot make OD less than ID\n");
+	    bu_vls_printf(s->s_edit->log_str, "Cannot make OD less than ID\n");
 	    return;
 	}
 	if (tmp_od > 2.0*ps->pp_bendradius) {
-	    bu_vls_printf(s->s_edit.log_str, "Cannot make outer radius greater than bend radius\n");
+	    bu_vls_printf(s->s_edit->log_str, "Cannot make outer radius greater than bend radius\n");
 	    return;
 	}
     }
@@ -263,11 +263,11 @@ pipe_scale_id(struct mged_state *s, struct rt_db_internal *db_int, fastf_t scale
 	else
 	    tmp_id = (-scale);
 	if (ps->pp_od < tmp_id) {
-	    bu_vls_printf(s->s_edit.log_str, "Cannot make ID greater than OD\n");
+	    bu_vls_printf(s->s_edit->log_str, "Cannot make ID greater than OD\n");
 	    return;
 	}
 	if (tmp_id > 2.0*ps->pp_bendradius) {
-	    bu_vls_printf(s->s_edit.log_str, "Cannot make inner radius greater than bend radius\n");
+	    bu_vls_printf(s->s_edit->log_str, "Cannot make inner radius greater than bend radius\n");
 	    return;
 	}
     }
@@ -296,11 +296,11 @@ pipe_seg_scale_od(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t scale)
     else
 	tmp_od = scale*ps->pp_od;
     if (ps->pp_id > tmp_od) {
-	bu_vls_printf(s->s_edit.log_str, "Cannot make OD smaller than ID\n");
+	bu_vls_printf(s->s_edit->log_str, "Cannot make OD smaller than ID\n");
 	return;
     }
     if (tmp_od > 2.0*ps->pp_bendradius) {
-	bu_vls_printf(s->s_edit.log_str, "Cannot make outer radius greater than bend radius\n");
+	bu_vls_printf(s->s_edit->log_str, "Cannot make outer radius greater than bend radius\n");
 	return;
     }
 
@@ -324,11 +324,11 @@ pipe_seg_scale_id(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t scale)
     else
 	tmp_id = (-scale);
     if (ps->pp_od < tmp_id) {
-	bu_vls_printf(s->s_edit.log_str, "Cannot make ID greater than OD\n");
+	bu_vls_printf(s->s_edit->log_str, "Cannot make ID greater than OD\n");
 	return;
     }
     if (tmp_id > 2.0*ps->pp_bendradius) {
-	bu_vls_printf(s->s_edit.log_str, "Cannot make inner radius greater than bend radius\n");
+	bu_vls_printf(s->s_edit->log_str, "Cannot make inner radius greater than bend radius\n");
 	return;
     }
 
@@ -359,7 +359,7 @@ pipe_seg_scale_radius(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t sca
 	ps->pp_bendradius = (-scale);
 
     if (ps->pp_bendradius < ps->pp_od * 0.5) {
-	bu_vls_printf(s->s_edit.log_str, "Cannot make bend radius less than pipe outer radius\n");
+	bu_vls_printf(s->s_edit->log_str, "Cannot make bend radius less than pipe outer radius\n");
 	ps->pp_bendradius = old_radius;
 	return;
     }
@@ -387,12 +387,12 @@ pipe_scale_radius(struct mged_state *s, struct rt_db_internal *db_int, fastf_t s
     for (BU_LIST_FOR(old_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	if (scale < 0.0) {
 	    if ((-scale) < old_ps->pp_od * 0.5) {
-		bu_vls_printf(s->s_edit.log_str, "Cannot make bend radius less than pipe outer radius\n");
+		bu_vls_printf(s->s_edit->log_str, "Cannot make bend radius less than pipe outer radius\n");
 		return;
 	    }
 	} else {
 	    if (old_ps->pp_bendradius * scale < old_ps->pp_od * 0.5) {
-		bu_vls_printf(s->s_edit.log_str, "Cannot make bend radius less than pipe outer radius\n");
+		bu_vls_printf(s->s_edit->log_str, "Cannot make bend radius less than pipe outer radius\n");
 		return;
 	    }
 	}
@@ -595,14 +595,14 @@ pipe_del_pnt(struct mged_state *s, struct wdb_pipe_pnt *ps)
 	prev = (struct wdb_pipe_pnt *)NULL;
 
     if (!prev && !next) {
-	bu_vls_printf(s->s_edit.log_str, "Cannot delete last point in pipe\n");
+	bu_vls_printf(s->s_edit->log_str, "Cannot delete last point in pipe\n");
 	return ps;
     }
 
     BU_LIST_DEQUEUE(&ps->l);
 
     if (rt_pipe_ck(&head->l)) {
-	bu_vls_printf(s->s_edit.log_str, "Cannot delete this point, it will result in an illegal pipe\n");
+	bu_vls_printf(s->s_edit->log_str, "Cannot delete this point, it will result in an illegal pipe\n");
 	if (next)
 	    BU_LIST_INSERT(&next->l, &ps->l)
 		else if (prev)
@@ -634,7 +634,7 @@ pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *pipeip, struct wdb_
 
     VMOVE(ps->pp_coord, new_pt);
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
-	bu_vls_printf(s->s_edit.log_str, "Cannot move point there\n");
+	bu_vls_printf(s->s_edit->log_str, "Cannot move point there\n");
 	VMOVE(ps->pp_coord, old_pt);
     }
 }
@@ -701,25 +701,25 @@ int
 menu_pipe_pt_od(struct mged_state *s)
 {
 
-    if (s->s_edit.e_para[0] < 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] < 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR < 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (!es_pipe_pnt) {
-	bu_vls_printf(s->s_edit.log_str, "pscale: no pipe segment selected for scaling\n");
+	bu_vls_printf(s->s_edit->log_str, "pscale: no pipe segment selected for scaling\n");
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
 	if (es_pipe_pnt->pp_od > 0.0)
-	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/es_pipe_pnt->pp_od;
+	    s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/es_pipe_pnt->pp_od;
 	else
-	    s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
+	    s->s_edit->es_scale = (-s->s_edit->e_para[0] * s->s_edit->e_mat[15]);
     }
-    pipe_seg_scale_od(s, es_pipe_pnt, s->s_edit.es_scale);
+    pipe_seg_scale_od(s, es_pipe_pnt, s->s_edit->es_scale);
 
     return 0;
 }
@@ -728,26 +728,26 @@ menu_pipe_pt_od(struct mged_state *s)
 int
 menu_pipe_pt_id(struct mged_state *s)
 {
-    if (s->s_edit.e_para[0] < 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] < 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR < 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (!es_pipe_pnt) {
-	bu_vls_printf(s->s_edit.log_str, "pscale: no pipe segment selected for scaling\n");
+	bu_vls_printf(s->s_edit->log_str, "pscale: no pipe segment selected for scaling\n");
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
 	if (es_pipe_pnt->pp_id > 0.0)
-	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/es_pipe_pnt->pp_id;
+	    s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/es_pipe_pnt->pp_id;
 	else
-	    s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
+	    s->s_edit->es_scale = (-s->s_edit->e_para[0] * s->s_edit->e_mat[15]);
     }
 
-    pipe_seg_scale_id(s, es_pipe_pnt, s->s_edit.es_scale);
+    pipe_seg_scale_id(s, es_pipe_pnt, s->s_edit->es_scale);
 
     return 0;
 }
@@ -756,26 +756,26 @@ menu_pipe_pt_id(struct mged_state *s)
 int
 menu_pipe_pt_radius(struct mged_state *s)
 {
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     if (!es_pipe_pnt) {
-	bu_vls_printf(s->s_edit.log_str, "pscale: no pipe segment selected for scaling\n");
+	bu_vls_printf(s->s_edit->log_str, "pscale: no pipe segment selected for scaling\n");
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
 	if (es_pipe_pnt->pp_id > 0.0)
-	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/es_pipe_pnt->pp_bendradius;
+	    s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/es_pipe_pnt->pp_bendradius;
 	else
-	    s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
+	    s->s_edit->es_scale = (-s->s_edit->e_para[0] * s->s_edit->e_mat[15]);
     }
 
-    pipe_seg_scale_radius(s, es_pipe_pnt, s->s_edit.es_scale);
+    pipe_seg_scale_radius(s, es_pipe_pnt, s->s_edit->es_scale);
 
     return 0;
 }
@@ -784,15 +784,15 @@ menu_pipe_pt_radius(struct mged_state *s)
 int
 menu_pipe_scale_od(struct mged_state *s)
 {
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_inpara) {
+    if (s->s_edit->e_inpara) {
 	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
+	    (struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
 	struct wdb_pipe_pnt *ps;
 
 	RT_PIPE_CK_MAGIC(pipeip);
@@ -801,21 +801,21 @@ menu_pipe_scale_od(struct mged_state *s)
 	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 	if (ps->pp_od > 0.0) {
-	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_od;
+	    s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/ps->pp_od;
 	} else {
 	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0)
 		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 	    if (ps->l.magic == BU_LIST_HEAD_MAGIC) {
-		bu_vls_printf(s->s_edit.log_str, "Entire pipe solid has zero OD!\n");
+		bu_vls_printf(s->s_edit->log_str, "Entire pipe solid has zero OD!\n");
 		return TCL_ERROR;
 	    }
 
-	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_od;
+	    s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/ps->pp_od;
 	}
     }
 
-    pipe_scale_od(s, &s->s_edit.es_int, s->s_edit.es_scale);
+    pipe_scale_od(s, &s->s_edit->es_int, s->s_edit->es_scale);
 
     return 0;
 }
@@ -824,15 +824,15 @@ menu_pipe_scale_od(struct mged_state *s)
 int
 menu_pipe_scale_id(struct mged_state *s)
 {
-    if (s->s_edit.e_para[0] < 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] < 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR < 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_inpara) {
+    if (s->s_edit->e_inpara) {
 	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
+	    (struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
 	struct wdb_pipe_pnt *ps;
 
 	RT_PIPE_CK_MAGIC(pipeip);
@@ -841,19 +841,19 @@ menu_pipe_scale_id(struct mged_state *s)
 	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 	if (ps->pp_id > 0.0) {
-	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_id;
+	    s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/ps->pp_id;
 	} else {
 	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0)
 		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 	    /* Check if entire pipe has zero ID */
 	    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-		s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
+		s->s_edit->es_scale = (-s->s_edit->e_para[0] * s->s_edit->e_mat[15]);
 	    else
-		s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_id;
+		s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/ps->pp_id;
 	}
     }
-    pipe_scale_id(s, &s->s_edit.es_int, s->s_edit.es_scale);
+    pipe_scale_id(s, &s->s_edit->es_int, s->s_edit->es_scale);
 
     return 0;
 }
@@ -862,15 +862,15 @@ menu_pipe_scale_id(struct mged_state *s)
 int
 menu_pipe_scale_radius(struct mged_state *s)
 {
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_inpara) {
+    if (s->s_edit->e_inpara) {
 	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
+	    (struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
 	struct wdb_pipe_pnt *ps;
 
 	RT_PIPE_CK_MAGIC(pipeip);
@@ -879,20 +879,20 @@ menu_pipe_scale_radius(struct mged_state *s)
 	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 	if (ps->pp_bendradius > 0.0) {
-	    s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_bendradius;
+	    s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/ps->pp_bendradius;
 	} else {
 	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0)
 		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 	    /* Check if entire pipe has zero ID */
 	    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-		s->s_edit.es_scale = (-s->s_edit.e_para[0] * s->s_edit.e_mat[15]);
+		s->s_edit->es_scale = (-s->s_edit->e_para[0] * s->s_edit->e_mat[15]);
 	    else
-		s->s_edit.es_scale = s->s_edit.e_para[0] * s->s_edit.e_mat[15]/ps->pp_bendradius;
+		s->s_edit->es_scale = s->s_edit->e_para[0] * s->s_edit->e_mat[15]/ps->pp_bendradius;
 	}
     }
 
-    pipe_scale_radius(s, &s->s_edit.es_int, s->s_edit.es_scale);
+    pipe_scale_radius(s, &s->s_edit->es_int, s->s_edit->es_scale);
 
     return 0;
 }
@@ -900,35 +900,35 @@ menu_pipe_scale_radius(struct mged_state *s)
 void ecmd_pipe_pick(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->s_edit.e_mvalid) {
-	VMOVE(new_pt, s->s_edit.e_mparam);
-    } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
-	    /* apply s->s_edit.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
+    if (s->s_edit->e_mvalid) {
+	VMOVE(new_pt, s->s_edit->e_mparam);
+    } else if (s->s_edit->e_inpara == 3) {
+	if (s->s_edit->mv_context) {
+	    /* apply s->s_edit->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit.e_para);
+	    VMOVE(new_pt, s->s_edit->e_para);
 	}
-    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for segment selection\n");
+    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
+	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for segment selection\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
+    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
 
     es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
     if (!es_pipe_pnt) {
-	bu_vls_printf(s->s_edit.log_str, "No PIPE segment selected\n");
+	bu_vls_printf(s->s_edit->log_str, "No PIPE segment selected\n");
 	mged_print_result(s, TCL_ERROR);
     } else
 	rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
@@ -937,34 +937,34 @@ void ecmd_pipe_pick(struct mged_state *s)
 void ecmd_pipe_split(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->s_edit.e_mvalid) {
-	VMOVE(new_pt, s->s_edit.e_mparam);
-    } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
-	    /* apply s->s_edit.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
+    if (s->s_edit->e_mvalid) {
+	VMOVE(new_pt, s->s_edit->e_mparam);
+    } else if (s->s_edit->e_inpara == 3) {
+	if (s->s_edit->mv_context) {
+	    /* apply s->s_edit->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit.e_para);
+	    VMOVE(new_pt, s->s_edit->e_para);
 	}
-    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for segment split\n");
+    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
+	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for segment split\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
+    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
 
     if (!es_pipe_pnt) {
-	bu_vls_printf(s->s_edit.log_str, "No pipe segment selected\n");
+	bu_vls_printf(s->s_edit->log_str, "No pipe segment selected\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -975,34 +975,34 @@ void ecmd_pipe_split(struct mged_state *s)
 void ecmd_pipe_pt_move(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->s_edit.e_mvalid) {
-	VMOVE(new_pt, s->s_edit.e_mparam);
-    } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
-	    /* apply s->s_edit.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
+    if (s->s_edit->e_mvalid) {
+	VMOVE(new_pt, s->s_edit->e_mparam);
+    } else if (s->s_edit->e_inpara == 3) {
+	if (s->s_edit->mv_context) {
+	    /* apply s->s_edit->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit.e_para);
+	    VMOVE(new_pt, s->s_edit->e_para);
 	}
-    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for segment movement\n");
+    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
+	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for segment movement\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
+    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
 
     if (!es_pipe_pnt) {
-	bu_vls_printf(s->s_edit.log_str, "No pipe segment selected\n");
+	bu_vls_printf(s->s_edit->log_str, "No pipe segment selected\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -1013,30 +1013,30 @@ void ecmd_pipe_pt_move(struct mged_state *s)
 void ecmd_pipe_pt_add(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->s_edit.e_mvalid) {
-	VMOVE(new_pt, s->s_edit.e_mparam);
-    } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
-	    /* apply s->s_edit.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
+    if (s->s_edit->e_mvalid) {
+	VMOVE(new_pt, s->s_edit->e_mparam);
+    } else if (s->s_edit->e_inpara == 3) {
+	if (s->s_edit->mv_context) {
+	    /* apply s->s_edit->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit.e_para);
+	    VMOVE(new_pt, s->s_edit->e_para);
 	}
-    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for 'append segment'\n");
+    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
+	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for 'append segment'\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
+    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
 
     es_pipe_pnt = pipe_add_pnt(pipeip, es_pipe_pnt, new_pt);
@@ -1045,30 +1045,30 @@ void ecmd_pipe_pt_add(struct mged_state *s)
 void ecmd_pipe_pt_ins(struct mged_state *s)
 {
     struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
-    if (s->s_edit.e_mvalid) {
-	VMOVE(new_pt, s->s_edit.e_mparam);
-    } else if (s->s_edit.e_inpara == 3) {
-	if (s->s_edit.mv_context) {
-	    /* apply s->s_edit.e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit.e_invmat, s->s_edit.e_para);
+    if (s->s_edit->e_mvalid) {
+	VMOVE(new_pt, s->s_edit->e_mparam);
+    } else if (s->s_edit->e_inpara == 3) {
+	if (s->s_edit->mv_context) {
+	    /* apply s->s_edit->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit.e_para);
+	    VMOVE(new_pt, s->s_edit->e_para);
 	}
-    } else if (s->s_edit.e_inpara && s->s_edit.e_inpara != 3) {
-	bu_vls_printf(s->s_edit.log_str, "x y z coordinates required for 'prepend segment'\n");
+    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
+	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for 'prepend segment'\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
-    } else if (!s->s_edit.e_mvalid && !s->s_edit.e_inpara)
+    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
 
     pipe_ins_pnt(pipeip, es_pipe_pnt, new_pt);
@@ -1077,7 +1077,7 @@ void ecmd_pipe_pt_ins(struct mged_state *s)
 void ecmd_pipe_pt_del(struct mged_state *s)
 {
     if (!es_pipe_pnt) {
-	bu_vls_printf(s->s_edit.log_str, "No pipe segment selected\n");
+	bu_vls_printf(s->s_edit->log_str, "No pipe segment selected\n");
 	mged_print_result(s, TCL_ERROR);
 	return;
     }
@@ -1087,16 +1087,16 @@ void ecmd_pipe_pt_del(struct mged_state *s)
 static int
 mged_pipe_pscale(struct mged_state *s, int mode)
 {
-    if (s->s_edit.e_inpara > 1) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara > 1) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
     switch (mode) {
 	case MENU_PIPE_PT_OD:   /* scale OD of one pipe segment */
@@ -1123,19 +1123,19 @@ mged_pipe_edit(struct mged_state *s, int edflag)
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    return mged_generic_sscale(s, &s->s_edit.es_int);
+	    return mged_generic_sscale(s, &s->s_edit->es_int);
 	case STRANS:
 	    /* translate solid */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    mged_generic_strans(s, &s->s_edit.es_int);
+	    mged_generic_strans(s, &s->s_edit->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    mged_generic_srot(s, &s->s_edit.es_int);
+	    mged_generic_srot(s, &s->s_edit->es_int);
 	    break;
 	case PSCALE:
-	    return mged_pipe_pscale(s, s->s_edit.edit_menu);
+	    return mged_pipe_pscale(s, s->s_edit->edit_menu);
 	case ECMD_PIPE_PICK:
 	    ecmd_pipe_pick(s);
 	    break;
@@ -1168,7 +1168,7 @@ mged_pipe_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->s_edit.es_int;
+    struct rt_db_internal *ip = &s->s_edit->es_int;
 
     switch (edflag) {
 	case SSCALE:
@@ -1184,15 +1184,15 @@ mged_pipe_edit_xy(
 	case ECMD_PIPE_PT_MOVE:
 	case ECMD_PIPE_PT_ADD:
 	case ECMD_PIPE_PT_INS:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(s->s_edit.e_mparam, s->s_edit.e_invmat, temp);
-	    s->s_edit.e_mvalid = 1;
+	    MAT4X3PNT(s->s_edit->e_mparam, s->s_edit->e_invmat, temp);
+	    s->s_edit->e_mvalid = 1;
 	    break;
 	default:
-	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

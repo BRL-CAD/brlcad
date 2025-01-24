@@ -53,26 +53,26 @@ extern char * get_sketch_name(struct mged_state *s, const char *sk_n);
 static void
 extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->s_edit.edit_flag = arg;
+    s->s_edit->edit_flag = arg;
 
     switch (arg) {
 	case ECMD_EXTR_ROT_H:
-	    s->s_edit.solid_edit_rotate = 1;
-	    s->s_edit.solid_edit_translate = 0;
-	    s->s_edit.solid_edit_scale = 0;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->solid_edit_rotate = 1;
+	    s->s_edit->solid_edit_translate = 0;
+	    s->s_edit->solid_edit_scale = 0;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	case ECMD_EXTR_SCALE_H:
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 0;
-	    s->s_edit.solid_edit_scale = 1;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 0;
+	    s->s_edit->solid_edit_scale = 1;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	case ECMD_EXTR_MOV_H:
-	    s->s_edit.solid_edit_rotate = 0;
-	    s->s_edit.solid_edit_translate = 1;
-	    s->s_edit.solid_edit_scale = 0;
-	    s->s_edit.solid_edit_pick = 0;
+	    s->s_edit->solid_edit_rotate = 0;
+	    s->s_edit->solid_edit_translate = 1;
+	    s->s_edit->solid_edit_scale = 0;
+	    s->s_edit->solid_edit_pick = 0;
 	    break;
 	default:
 	    mged_set_edflag(s, arg);
@@ -122,18 +122,18 @@ mged_extrude_e_axes_pos(
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
 {
-    if (s->s_edit.edit_flag == ECMD_EXTR_MOV_H) {
+    if (s->s_edit->edit_flag == ECMD_EXTR_MOV_H) {
 	struct rt_extrude_internal *extr = (struct rt_extrude_internal *)ip->idb_ptr;
 	point_t extr_v;
 	vect_t extr_h;
 
 	RT_EXTRUDE_CK_MAGIC(extr);
 
-	MAT4X3PNT(extr_v, s->s_edit.e_mat, extr->V);
-	MAT4X3VEC(extr_h, s->s_edit.e_mat, extr->h);
-	VADD2(s->s_edit.curr_e_axes_pos, extr_h, extr_v);
+	MAT4X3PNT(extr_v, s->s_edit->e_mat, extr->V);
+	MAT4X3VEC(extr_h, s->s_edit->e_mat, extr->h);
+	VADD2(s->s_edit->curr_e_axes_pos, extr_h, extr_v);
     } else {
-	VMOVE(s->s_edit.curr_e_axes_pos, s->s_edit.e_keypoint);
+	VMOVE(s->s_edit->curr_e_axes_pos, s->s_edit->e_keypoint);
     }
 }
 
@@ -141,7 +141,7 @@ void
 ecmd_extr_skt_name(struct mged_state *s)
 {
     struct rt_extrude_internal *extr =
-	(struct rt_extrude_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_extrude_internal *)s->s_edit->es_int.idb_ptr;
     struct directory *dp;
     struct rt_db_internal tmp_ip;
 
@@ -187,33 +187,33 @@ ecmd_extr_mov_h(struct mged_state *s)
 {
     vect_t work;
     struct rt_extrude_internal *extr =
-	(struct rt_extrude_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_extrude_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_EXTRUDE_CK_MAGIC(extr);
-    if (s->s_edit.e_inpara) {
-	if (s->s_edit.e_inpara != 3) {
-	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
-	    s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara) {
+	if (s->s_edit->e_inpara != 3) {
+	    bu_vls_printf(s->s_edit->log_str, "ERROR: three arguments needed\n");
+	    s->s_edit->e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
 	/* must convert to base units */
-	s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-	s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-	s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+	s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+	s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+	s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
-	if (s->s_edit.mv_context) {
-	    /* apply s->s_edit.e_invmat to convert to real model coordinates */
-	    MAT4X3PNT(work, s->s_edit.e_invmat, s->s_edit.e_para);
+	if (s->s_edit->mv_context) {
+	    /* apply s->s_edit->e_invmat to convert to real model coordinates */
+	    MAT4X3PNT(work, s->s_edit->e_invmat, s->s_edit->e_para);
 	    VSUB2(extr->h, work, extr->V);
 	} else {
-	    VSUB2(extr->h, s->s_edit.e_para, extr->V);
+	    VSUB2(extr->h, s->s_edit->e_para, extr->V);
 	}
     }
 
     /* check for zero H vector */
     if (MAGNITUDE(extr->h) <= SQRT_SMALL_FASTF) {
-	bu_vls_printf(s->s_edit.log_str, "Zero H vector not allowed, resetting to +Z\n");
+	bu_vls_printf(s->s_edit->log_str, "Zero H vector not allowed, resetting to +Z\n");
 	mged_print_result(s, TCL_ERROR);
 	VSET(extr->h, 0.0, 0.0, 1.0);
 	return TCL_ERROR;
@@ -225,36 +225,36 @@ ecmd_extr_mov_h(struct mged_state *s)
 int
 ecmd_extr_scale_h(struct mged_state *s)
 {
-    if (s->s_edit.e_inpara != 1) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: only one argument needed\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara != 1) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit.e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit.log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_para[0] <= 0.0) {
+	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->s_edit->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->s_edit.e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit.e_para[2] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
+    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
 
     struct rt_extrude_internal *extr =
-	(struct rt_extrude_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_extrude_internal *)s->s_edit->es_int.idb_ptr;
 
     RT_EXTRUDE_CK_MAGIC(extr);
 
-    if (s->s_edit.e_inpara) {
-	/* take s->s_edit.e_mat[15] (path scaling) into account */
-	s->s_edit.e_para[0] *= s->s_edit.e_mat[15];
-	s->s_edit.es_scale = s->s_edit.e_para[0] / MAGNITUDE(extr->h);
-	VSCALE(extr->h, extr->h, s->s_edit.es_scale);
-    } else if (s->s_edit.es_scale > 0.0) {
-	VSCALE(extr->h, extr->h, s->s_edit.es_scale);
-	s->s_edit.es_scale = 0.0;
+    if (s->s_edit->e_inpara) {
+	/* take s->s_edit->e_mat[15] (path scaling) into account */
+	s->s_edit->e_para[0] *= s->s_edit->e_mat[15];
+	s->s_edit->es_scale = s->s_edit->e_para[0] / MAGNITUDE(extr->h);
+	VSCALE(extr->h, extr->h, s->s_edit->es_scale);
+    } else if (s->s_edit->es_scale > 0.0) {
+	VSCALE(extr->h, extr->h, s->s_edit->es_scale);
+	s->s_edit->es_scale = 0.0;
     }
 
     return 0;
@@ -265,16 +265,16 @@ int
 ecmd_extr_rot_h(struct mged_state *s)
 {
     struct rt_extrude_internal *extr =
-	(struct rt_extrude_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_extrude_internal *)s->s_edit->es_int.idb_ptr;
     mat_t mat;
     mat_t mat1;
     mat_t edit;
 
     RT_EXTRUDE_CK_MAGIC(extr);
-    if (s->s_edit.e_inpara) {
-	if (s->s_edit.e_inpara != 3) {
-	    bu_vls_printf(s->s_edit.log_str, "ERROR: three arguments needed\n");
-	    s->s_edit.e_inpara = 0;
+    if (s->s_edit->e_inpara) {
+	if (s->s_edit->e_inpara != 3) {
+	    bu_vls_printf(s->s_edit->log_str, "ERROR: three arguments needed\n");
+	    s->s_edit->e_inpara = 0;
 	    return TCL_ERROR;
 	}
 
@@ -284,42 +284,42 @@ ecmd_extr_rot_h(struct mged_state *s)
 	 * in degrees.  First, cancel any existing rotations,
 	 * then perform new rotation
 	 */
-	bn_mat_inv(invsolr, s->s_edit.acc_rot_sol);
+	bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 
 	/* Build completely new rotation change */
-	MAT_IDN(s->s_edit.model_changes);
-	bn_mat_angles(s->s_edit.model_changes,
-		s->s_edit.e_para[0],
-		s->s_edit.e_para[1],
-		s->s_edit.e_para[2]);
-	/* Borrow s->s_edit.incr_change matrix here */
-	bn_mat_mul(s->s_edit.incr_change, s->s_edit.model_changes, invsolr);
-	MAT_COPY(s->s_edit.acc_rot_sol, s->s_edit.model_changes);
+	MAT_IDN(s->s_edit->model_changes);
+	bn_mat_angles(s->s_edit->model_changes,
+		s->s_edit->e_para[0],
+		s->s_edit->e_para[1],
+		s->s_edit->e_para[2]);
+	/* Borrow s->s_edit->incr_change matrix here */
+	bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
+	MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
 	/* Apply new rotation to solid */
 	/* Clear out solid rotation */
-	MAT_IDN(s->s_edit.model_changes);
+	MAT_IDN(s->s_edit->model_changes);
     } else {
-	/* Apply incremental changes already in s->s_edit.incr_change */
+	/* Apply incremental changes already in s->s_edit->incr_change */
     }
 
-    if (s->s_edit.mv_context) {
+    if (s->s_edit->mv_context) {
 	/* calculate rotations about keypoint */
-	bn_mat_xform_about_pnt(edit, s->s_edit.incr_change, s->s_edit.e_keypoint);
+	bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, s->s_edit->e_keypoint);
 
 	/* We want our final matrix (mat) to xform the original solid
 	 * to the position of this instance of the solid, perform the
 	 * current edit operations, then xform back.
-	 * mat = s->s_edit.e_invmat * edit * s->s_edit.e_mat
+	 * mat = s->s_edit->e_invmat * edit * s->s_edit->e_mat
 	 */
-	bn_mat_mul(mat1, edit, s->s_edit.e_mat);
-	bn_mat_mul(mat, s->s_edit.e_invmat, mat1);
+	bn_mat_mul(mat1, edit, s->s_edit->e_mat);
+	bn_mat_mul(mat, s->s_edit->e_invmat, mat1);
 	MAT4X3VEC(extr->h, mat, extr->h);
     } else {
-	MAT4X3VEC(extr->h, s->s_edit.incr_change, extr->h);
+	MAT4X3VEC(extr->h, s->s_edit->incr_change, extr->h);
     }
 
-    MAT_IDN(s->s_edit.incr_change);
+    MAT_IDN(s->s_edit->incr_change);
 
     return 0;
 }
@@ -332,15 +332,15 @@ ecmd_extr_mov_h_mousevec(struct mged_state *s, const vect_t mousevec)
     vect_t tr_temp = VINIT_ZERO;	/* temp translation vector */
     vect_t temp = VINIT_ZERO;
     struct rt_extrude_internal *extr =
-	(struct rt_extrude_internal *)s->s_edit.es_int.idb_ptr;
+	(struct rt_extrude_internal *)s->s_edit->es_int.idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extr);
 
-    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
+    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     /* Do NOT change pos_view[Z] ! */
     MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-    MAT4X3PNT(tr_temp, s->s_edit.e_invmat, temp);
+    MAT4X3PNT(tr_temp, s->s_edit->e_invmat, temp);
     VSUB2(extr->h, tr_temp, extr->V);
 }
 
@@ -350,14 +350,14 @@ mged_extrude_edit(struct mged_state *s, int edflag)
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->s_edit.es_int);
+	    return mged_generic_sscale(s, &s->s_edit->es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->s_edit.es_int);
+	    mged_generic_strans(s, &s->s_edit->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->s_edit.es_int);
+	    mged_generic_srot(s, &s->s_edit->es_int);
 	    break;
 	case ECMD_EXTR_SKT_NAME:
 	    ecmd_extr_skt_name(s);
@@ -381,7 +381,7 @@ mged_extrude_edit_xy(
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->s_edit.es_int;
+    struct rt_db_internal *ip = &s->s_edit->es_int;
 
     switch (edflag) {
 	case SSCALE:
@@ -397,7 +397,7 @@ mged_extrude_edit_xy(
 	    ecmd_extr_mov_h_mousevec(s, mousevec);
 	    break;
 	default:
-	    bu_vls_printf(s->s_edit.log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
 	    mged_print_result(s, TCL_ERROR);
 	    return TCL_ERROR;
     }

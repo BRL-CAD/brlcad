@@ -236,11 +236,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    mged_variables->mv_transform == 'e') {
 
 		    if (s->edit_state.global_editing_state == ST_S_EDIT) {
-			save_edflag = s->s_edit.edit_flag;
-			save_rot = s->s_edit.solid_edit_rotate;
-			save_tra = s->s_edit.solid_edit_translate;
-			save_sca = s->s_edit.solid_edit_scale;
-			save_pic = s->s_edit.solid_edit_pick;
+			save_edflag = s->s_edit->edit_flag;
+			save_rot = s->s_edit->solid_edit_rotate;
+			save_tra = s->s_edit->solid_edit_translate;
+			save_sca = s->s_edit->solid_edit_scale;
+			save_pic = s->s_edit->solid_edit_pick;
 			if (!SEDIT_ROTATE)
 			    mged_set_edflag(s, SROT);
 		    } else {
@@ -284,11 +284,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    mged_variables->mv_transform == 'e') {
 
 		    if (s->edit_state.global_editing_state == ST_S_EDIT) {
-			save_edflag = s->s_edit.edit_flag;
-			save_rot = s->s_edit.solid_edit_rotate;
-			save_tra = s->s_edit.solid_edit_translate;
-			save_sca = s->s_edit.solid_edit_scale;
-			save_pic = s->s_edit.solid_edit_pick;
+			save_edflag = s->s_edit->edit_flag;
+			save_rot = s->s_edit->solid_edit_rotate;
+			save_tra = s->s_edit->solid_edit_translate;
+			save_sca = s->s_edit->solid_edit_scale;
+			save_pic = s->s_edit->solid_edit_pick;
 			if (!SEDIT_TRAN)
 			    mged_set_edflag(s, STRANS);
 		    } else {
@@ -353,11 +353,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT && !SEDIT_SCALE) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    mged_set_edflag(s, SSCALE);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
@@ -415,11 +415,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_ROTATE)
 			mged_set_edflag(s, SROT);
 		} else {
@@ -444,11 +444,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_ROTATE)
 			mged_set_edflag(s, SROT);
 		} else {
@@ -473,11 +473,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_ROTATE)
 			mged_set_edflag(s, SROT);
 		} else {
@@ -502,11 +502,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_TRAN)
 			mged_set_edflag(s, STRANS);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
@@ -530,11 +530,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_TRAN)
 			mged_set_edflag(s, STRANS);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
@@ -558,11 +558,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_TRAN)
 			mged_set_edflag(s, STRANS);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
@@ -586,11 +586,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_SCALE)
 			mged_set_edflag(s, SSCALE);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
@@ -614,11 +614,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_SCALE)
 			mged_set_edflag(s, SSCALE);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
@@ -642,11 +642,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    if ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
 		if (s->edit_state.global_editing_state == ST_S_EDIT) {
-		    save_edflag = s->s_edit.edit_flag;
-		    save_rot = s->s_edit.solid_edit_rotate;
-		    save_tra = s->s_edit.solid_edit_translate;
-		    save_sca = s->s_edit.solid_edit_scale;
-		    save_pic = s->s_edit.solid_edit_pick;
+		    save_edflag = s->s_edit->edit_flag;
+		    save_rot = s->s_edit->solid_edit_rotate;
+		    save_tra = s->s_edit->solid_edit_translate;
+		    save_sca = s->s_edit->solid_edit_scale;
+		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_SCALE)
 			mged_set_edflag(s, SSCALE);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
@@ -718,11 +718,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
  reset_edflag:
     if (save_edflag != -1) {
 	if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	    s->s_edit.edit_flag = save_edflag ;
-	    s->s_edit.solid_edit_rotate = save_rot;
-	    s->s_edit.solid_edit_translate = save_tra;
-	    s->s_edit.solid_edit_scale = save_sca;
-	    s->s_edit.solid_edit_pick = save_pic;
+	    s->s_edit->edit_flag = save_edflag ;
+	    s->s_edit->solid_edit_rotate = save_rot;
+	    s->s_edit->solid_edit_translate = save_tra;
+	    s->s_edit->solid_edit_scale = save_sca;
+	    s->s_edit->solid_edit_pick = save_pic;
 	} else if (s->edit_state.global_editing_state == ST_O_EDIT)
 	    edobj = save_edflag;
     }

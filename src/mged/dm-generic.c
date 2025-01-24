@@ -202,7 +202,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -214,7 +214,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit.curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -272,11 +272,11 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			int save_sca = 0;
 			int save_pic = 0;
 			if (s->edit_state.global_editing_state == ST_S_EDIT) {
-			    save_edflag = s->s_edit.edit_flag;
-			    save_rot = s->s_edit.solid_edit_rotate;
-			    save_tra = s->s_edit.solid_edit_translate;
-			    save_sca = s->s_edit.solid_edit_scale;
-			    save_pic = s->s_edit.solid_edit_pick;
+			    save_edflag = s->s_edit->edit_flag;
+			    save_rot = s->s_edit->solid_edit_rotate;
+			    save_tra = s->s_edit->solid_edit_translate;
+			    save_sca = s->s_edit->solid_edit_scale;
+			    save_pic = s->s_edit->solid_edit_pick;
 			    if (!SEDIT_TRAN)
 				mged_set_edflag(s, STRANS);
 			} else {
@@ -287,11 +287,11 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			snap_keypoint_to_grid(s);
 
 			if (s->edit_state.global_editing_state == ST_S_EDIT) {
-			    s->s_edit.edit_flag = save_edflag;
-			    s->s_edit.solid_edit_rotate = save_rot;
-			    s->s_edit.solid_edit_translate = save_tra;
-			    s->s_edit.solid_edit_scale = save_sca;
-			    s->s_edit.solid_edit_pick = save_pic;
+			    s->s_edit->edit_flag = save_edflag;
+			    s->s_edit->solid_edit_rotate = save_rot;
+			    s->s_edit->solid_edit_translate = save_tra;
+			    s->s_edit->solid_edit_scale = save_sca;
+			    s->s_edit->solid_edit_pick = save_pic;
 			} else {
 			    edobj = save_edflag;
 			}
@@ -302,12 +302,12 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		break;
 	    case 's':
 		if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-		    ZERO(s->s_edit.acc_sc_sol))
-		    s->s_edit.acc_sc_sol = 1.0;
+		    ZERO(s->s_edit->acc_sc_sol))
+		    s->s_edit->acc_sc_sol = 1.0;
 		else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-		    s->s_edit.edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
-		    if (s->s_edit.edit_absolute_scale > 0.0)
-			s->s_edit.edit_absolute_scale /= 3.0;
+		    s->s_edit->edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
+		    if (s->s_edit->edit_absolute_scale > 0.0)
+			s->s_edit->edit_absolute_scale /= 3.0;
 		}
 
 		am_mode = AMM_SCALE;
@@ -471,36 +471,36 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		switch (*argv[2]) {
 		    case 'x':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit.acc_sc_sol))
-			    s->s_edit.acc_sc_sol = 1.0;
+			    ZERO(s->s_edit->acc_sc_sol))
+			    s->s_edit->acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit.edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
-			    if (s->s_edit.edit_absolute_scale > 0.0)
-				s->s_edit.edit_absolute_scale /= 3.0;
+			    s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
+			    if (s->s_edit->edit_absolute_scale > 0.0)
+				s->s_edit->edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_X;
 			break;
 		    case 'y':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit.acc_sc_sol))
-			    s->s_edit.acc_sc_sol = 1.0;
+			    ZERO(s->s_edit->acc_sc_sol))
+			    s->s_edit->acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit.edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
-			    if (s->s_edit.edit_absolute_scale > 0.0)
-				s->s_edit.edit_absolute_scale /= 3.0;
+			    s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
+			    if (s->s_edit->edit_absolute_scale > 0.0)
+				s->s_edit->edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Y;
 			break;
 		    case 'z':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit.acc_sc_sol))
-			    s->s_edit.acc_sc_sol = 1.0;
+			    ZERO(s->s_edit->acc_sc_sol))
+			    s->s_edit->acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit.edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
-			    if (s->s_edit.edit_absolute_scale > 0.0)
-				s->s_edit.edit_absolute_scale /= 3.0;
+			    s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
+			    if (s->s_edit->edit_absolute_scale > 0.0)
+				s->s_edit->edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Z;

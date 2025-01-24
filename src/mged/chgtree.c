@@ -263,7 +263,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
-    MAT_IDN(s->s_edit.model_changes);	/* No changes yet */
+    MAT_IDN(s->s_edit->model_changes);	/* No changes yet */
     (void)chg_state(s, ST_VIEW, ST_O_PICK, "internal change of state");
     /* reset accumulation local scale factors */
     s->edit_state.acc_sc[0] = s->edit_state.acc_sc[1] = s->edit_state.acc_sc[2] = 1.0;

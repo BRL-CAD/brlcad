@@ -46,13 +46,13 @@
 #define PSCALE		4	/* Scale one solid parameter by scalar */
 
 #define SEDIT_ROTATE (s->edit_state.global_editing_state == ST_S_EDIT && \
-	s->s_edit.solid_edit_rotate)
+	s->s_edit->solid_edit_rotate)
 #define SEDIT_TRAN (s->edit_state.global_editing_state == ST_S_EDIT && \
-	s->s_edit.solid_edit_translate)
+	s->s_edit->solid_edit_translate)
 #define SEDIT_SCALE (s->edit_state.global_editing_state == ST_S_EDIT && \
-	s->s_edit.solid_edit_scale)
+	s->s_edit->solid_edit_scale)
 #define SEDIT_PICK (s->edit_state.global_editing_state == ST_S_EDIT && \
-	s->s_edit.solid_edit_pick)
+	s->s_edit->solid_edit_pick)
 
 #define OEDIT_ROTATE (s->edit_state.global_editing_state == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)
