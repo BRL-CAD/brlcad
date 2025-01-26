@@ -22,13 +22,13 @@ set(
   heap.c
   hook.c
   humanize_number.c
-  vls_incr.c
-  vls_simplify.c
   list.c
   mappedfile.c
   opt.c
   parallel.c
   path_component.c
+  vls_incr.c
+  vls_simplify.c
   path_match.cpp
   process.c
   ptbl.c
@@ -80,6 +80,7 @@ validate_style("${bu_test_srcs}" bu_test)
 
 brlcad_addexec(bu_sscanf sscanf.c libbu TEST)
 brlcad_addexec(bu_gethostname gethostname.c libbu TEST)
+
 
 #
 #  ************ basename.c tests *************
@@ -529,6 +530,13 @@ brlcad_add_test(NAME bu_badmagic_diff_magic  COMMAND bu_test badmagic 1)
 brlcad_add_test(NAME bu_badmagic_normal      COMMAND bu_test badmagic 2)
 brlcad_add_test(NAME bu_badmagic_null_ptr    COMMAND bu_test badmagic 3)
 brlcad_add_test(NAME bu_badmagic_misaligned  COMMAND bu_test badmagic 4)
+
+#
+# version number testing
+#
+
+brlcad_addexec(bu_version version.c  TEST)
+brlcad_add_test(NAME bu_version_tests COMMAND bu_version)
 
 #
 #  *********** vls_incr.c tests ************
