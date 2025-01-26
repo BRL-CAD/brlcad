@@ -40,7 +40,16 @@
 
 #include <stdio.h>
 #include "brlcad_version.h"
-int main(int ac, char *av[]) { printf("%d.%d.%d\n", BRLCAD_VERSION_MAJOR, BRLCAD_VERSION_MINOR, BRLCAD_VERSION_PATCH); return 0; }
+
+int
+main(int ac, char *av[])
+{
+    printf("%d.%d.%d\n", BRLCAD_VERSION_MAJOR, BRLCAD_VERSION_MINOR, BRLCAD_VERSION_PATCH);
+    if (ac > 1)
+	return BRLCAD_VERSION_MAJOR+BRLCAD_VERSION_MINOR+BRLCAD_VERSION_PATCH;
+    else
+	return 0;
+}
 
 /*
  * Local Variables:
