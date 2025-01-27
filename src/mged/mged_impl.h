@@ -37,10 +37,10 @@ class MGED_Internal {
     public:
 	// First key is primitive type (e.g. ID_ETO), second key is ECMD_
 	// number.
-	std::map<int, std::map<int, std::pair<bu_clbk_t, void *>>> cmd_prerun_clbk;
-	std::map<int, std::map<int, std::pair<bu_clbk_t, void *>>> cmd_during_clbk;
-	std::map<int, std::map<int, std::pair<bu_clbk_t, void *>>> cmd_postrun_clbk;
-	std::map<int, std::map<int, std::pair<bu_clbk_t, void *>>> cmd_linger_clbk;
+	std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> cmd_prerun_clbk;
+	std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> cmd_during_clbk;
+	std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> cmd_postrun_clbk;
+	std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> cmd_linger_clbk;
 };
 
 #else
@@ -60,10 +60,10 @@ struct mged_state_impl {
 class MGED_SEDIT_Internal {
     public:
 	// Key is ECMD_ type, populated from MGED_Internal map
-	std::map<int, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
-	std::map<int, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
-	std::map<int, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
-	std::map<int, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
+	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
+	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
+	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
+	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
 
 	std::map<bu_clbk_t, int> clbk_recursion_depth_cnt;
 	std::map<int, int> cmd_recursion_depth_cnt;

@@ -109,44 +109,88 @@ mged_solid_edit_destroy(struct mged_solid_edit *s)
     BU_PUT(s, struct mged_solid_edit);
 }
 
-int mged_edit_clbk_set(struct mged_solid_edit *s, int obj_type, int ed_cmd, int mode, bu_clbk_t f, void *d)
+
+std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *
+mged_internal_clbk_map(MGED_Internal *i, int obj_type, int mode)
+{
+    std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> *omp;
+    switch (mode) {
+	case GED_CLBK_DURING:
+	    omp = &i->cmd_during_clbk;
+	    break;
+	case GED_CLBK_POST:
+	    omp = &i->cmd_postrun_clbk;
+	    break;
+	case GED_CLBK_LINGER:
+	    omp = &i->cmd_linger_clbk;
+	    break;
+	default:
+	    omp = &i->cmd_prerun_clbk;
+	    break;
+    }
+    std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>>::iterator o_it;
+    o_it = omp->find(obj_type);
+    if (o_it == omp->end())
+	return NULL;
+
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp = &(*omp)[obj_type];
+    return mp;
+}
+
+std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *
+mged_sedit_clbk_map(MGED_SEDIT_Internal *i, int mode)
+{
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
+    switch (mode) {
+	case GED_CLBK_DURING:
+	    mp = &i->cmd_during_clbk;
+	    break;
+	case GED_CLBK_POST:
+	    mp = &i->cmd_postrun_clbk;
+	    break;
+	case GED_CLBK_LINGER:
+	    mp = &i->cmd_linger_clbk;
+	    break;
+	default:
+	    mp = &i->cmd_prerun_clbk;
+	    break;
+    }
+
+    return mp;
+}
+
+int mged_edit_clbk_set(std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp, int ed_cmd, int menu_cmd, bu_clbk_t f, void *d)
 {
     // Check for no-op case
-    if (!s || mode < 0)
+    if (!mp)
 	return BRLCAD_OK;
 
     if (!f) {
-	if (d)
-	    bu_log("data but no callback?\n");
-	bu_log("null f means clear callback\n");
+	mp->erase(std::make_pair(ed_cmd, menu_cmd));
+	return BRLCAD_OK;
     }
 
-    if (!obj_type) {
-	bu_log("generic callback functionality");
-    }
-
-    bu_log("ed_cmd: %d, mode: %d\n", ed_cmd, mode);
-
-    // TODO - should we define functab callback to validate ed_cmd against the
-    // known primitive editing operations?  Thinking that might be preferable
-    // otherwise a mistake in the cmd will result in the callback not running
-    // as expected, which may or may not be an immediately apparent failure.
+    bu_log("ed_cmd: %d, menu_cmd: %d\n", ed_cmd, menu_cmd);
+    (*mp)[std::make_pair(ed_cmd, menu_cmd)] = std::make_pair(f, d);
 
     return BRLCAD_OK;
 }
-int mged_edit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int obj_type, int ed_cmd, int mode)
+int mged_edit_clbk_get(bu_clbk_t *f, void **d, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp, int ed_cmd, int menu_cmd)
 {
     // Check for no-op case
-    if (!f || !d || !s || mode < 0)
+    if (!f || !d || !mp)
 	return BRLCAD_OK;
 
-    if (!obj_type) {
-	bu_log("generic callback functionality");
-    }
+    if (mp->find(std::make_pair(ed_cmd,menu_cmd)) == mp->end())
+	return BRLCAD_ERROR;
 
-    bu_log("ed_cmd: %d, mode: %d\n", ed_cmd, mode);
+    std::pair<bu_clbk_t, void *> clbk_info = (*mp)[std::make_pair(ed_cmd, menu_cmd)];
 
-     return BRLCAD_OK;
+    bu_log("ed_cmd: %d, menu_cmd: %d\n", ed_cmd, menu_cmd);
+    (*f) = clbk_info.first;
+    (*d) = clbk_info.second;
+
+    return BRLCAD_OK;
 }
 
 // Local Variables:
