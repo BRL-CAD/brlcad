@@ -441,9 +441,6 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VMOVE(&bounds[i*6+3], v0);
 	VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v1);
 	VMINMAX(&bounds[i*6+0], &bounds[i*6+3], v2);
-
-	/* Prevent the RPP from being 0 thickness */
-	BBOX_NONDEGEN(&bounds[i*6+0], &bounds[i*6+3], SMALL_FASTF);
     }
     struct bu_pool *pool = hlbvh_init_pool(bot_ip->num_faces);
     // implicit return values
