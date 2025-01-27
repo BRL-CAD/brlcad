@@ -501,6 +501,7 @@ extern void view_ring_destroy(struct mged_dm *dlp);
 /* cmd.c */
 int cmdline(struct mged_state *s, struct bu_vls *vp, int record);
 int mged_print_result(int, const char **, void *, void*);
+int mged_print_str(int, const char **, void *, void*);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
 

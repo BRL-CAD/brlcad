@@ -122,10 +122,11 @@ main(int argc, const char *argv[])
     ofile << "#include \"common.h\"\n";
     ofile << "\n";
 
-    ofile << "#define ECMD_PRINT_RESULTS        10\n";
-    ofile << "#define ECMD_EAXES_POS            20\n";
-    ofile << "#define ECMD_REPLOT_EDITING_SOLID 30\n";
-    ofile << "#define ECMD_VIEW_UPDATE          40\n";
+    ofile << "#define ECMD_PRINT_STR            10\n";
+    ofile << "#define ECMD_PRINT_RESULTS        20\n";
+    ofile << "#define ECMD_EAXES_POS            30\n";
+    ofile << "#define ECMD_REPLOT_EDITING_SOLID 40\n";
+    ofile << "#define ECMD_VIEW_UPDATE          50\n";
     ofile << "\n";
 
     std::set<std::pair<std::string, long>>::iterator m_it;
