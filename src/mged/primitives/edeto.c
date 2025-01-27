@@ -57,7 +57,12 @@ eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
 	s->s_edit->solid_edit_pick = 0;
     }
 
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item eto_menu[] = {
     { "ELL-TORUS MENU", NULL, 0 },
