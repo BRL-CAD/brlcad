@@ -70,9 +70,6 @@
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
 
-extern void set_e_axes_pos(struct mged_state *s, int both);
-
-
 #endif /* MGED_SEDIT_H */
 
 /*

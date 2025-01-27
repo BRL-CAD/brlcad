@@ -80,11 +80,14 @@ int sedraw;	/* apply solid editing changes */
 /* Ew. Global. */
 fastf_t es_m[3];		/* edge(line) slope */
 
-void
-set_e_axes_pos(struct mged_state *s, int both)
+int
+set_e_axes_pos(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
     /* if (!both) then set only s->s_edit->curr_e_axes_pos, otherwise
        set s->s_edit->e_axes_pos and s->s_edit->curr_e_axes_pos */
 {
+    struct mged_state *s = (struct mged_state *)d;
+    int *flag = (int *)id;
+    int both = *flag;
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -97,7 +100,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
 	}
-	return;
+	return BRLCAD_OK;
     } else {
 	VMOVE(s->s_edit->curr_e_axes_pos, s->s_edit->e_keypoint);
     }
@@ -137,6 +140,8 @@ set_e_axes_pos(struct mged_state *s, int both)
 	    m_dmp->dm_mged_variables->mv_transform = 'e';
 	}
     }
+
+    return BRLCAD_OK;
 }
 
 /*
@@ -302,7 +307,8 @@ init_sedit_vars(struct mged_state *s)
     VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
     VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
 
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
 }
 
 
@@ -514,7 +520,8 @@ sedit(struct mged_state *s)
     if (!s->s_edit->e_keyfixed)
 	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
 
-    set_e_axes_pos(s, 0);
+    int flag = 0;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     replot_editing_solid(s);
 
     if (update_views) {
@@ -858,7 +865,8 @@ init_oedit_guts(struct mged_state *s)
 static void
 init_oedit_vars(struct mged_state *s)
 {
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
 
     VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
     VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
@@ -1645,7 +1653,8 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     if (!s->s_edit->e_keyfixed)
 	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
 
-    set_e_axes_pos(s, 0);
+    int flag = 0;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     replot_editing_solid(s);
 
     return TCL_OK;
@@ -1722,7 +1731,8 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
     VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
 
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 

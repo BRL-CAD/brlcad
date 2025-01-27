@@ -610,6 +610,8 @@ void label_edited_solid(struct mged_state *s, int *num_lines, point_t *lines, st
 void init_oedit(struct mged_state *s);
 void init_sedit(struct mged_state *s);
 
+int set_e_axes_pos(int , const char **, void *, void *);
+
 /* share.c */
 void usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2);
 

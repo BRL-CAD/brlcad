@@ -36,7 +36,6 @@
 /* external sp_hook function */
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);	/* defined in set.c */
 
-extern void set_e_axes_pos(struct mged_state *s, int both);
 extern int mged_zoom(struct mged_state *s, double val);
 extern void adc_set_scroll(struct mged_state *s);	/* defined in adc.c */
 
@@ -585,7 +584,8 @@ be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
 
     s->s_edit->edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
     if (s->s_edit->edit_absolute_scale > 0.0)
@@ -608,7 +608,8 @@ be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
 
     s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
     if (s->s_edit->edit_absolute_scale > 0.0)
@@ -631,7 +632,8 @@ be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
 
     s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
     if (s->s_edit->edit_absolute_scale > 0.0)
@@ -654,7 +656,8 @@ be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
 
     s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
     if (s->s_edit->edit_absolute_scale > 0.0)
@@ -677,7 +680,8 @@ be_o_x(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
     movedir = RARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     return TCL_OK;
 }
 
@@ -696,7 +700,8 @@ be_o_y(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
     movedir = UARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     return TCL_OK;
 }
 
@@ -715,7 +720,8 @@ be_o_xy(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), cha
     movedir = UARROW | RARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     return TCL_OK;
 }
 
@@ -734,7 +740,8 @@ be_o_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     movedir = ROTARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     return TCL_OK;
 }
 
@@ -898,7 +905,8 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     return TCL_OK;
 }
 
@@ -919,7 +927,8 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     return TCL_OK;
 }
 
@@ -940,7 +949,8 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     mmenu_set(s, MENU_L1, NULL);
     s->s_edit->acc_sc_sol = 1.0;
 
-    set_e_axes_pos(s, 1);
+    int flag = 1;
+    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
     return TCL_OK;
 }
 

@@ -73,8 +73,12 @@ arb8_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
-
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item edge8_menu[] = {
     { "ARB8 EDGES", NULL, 0 },
@@ -113,8 +117,12 @@ arb7_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
-
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item edge7_menu[] = {
     { "ARB7 EDGES", NULL, 0 },
@@ -157,8 +165,12 @@ arb6_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
-
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item edge6_menu[] = {
     { "ARB6 EDGES", NULL, 0 },
@@ -195,7 +207,12 @@ arb5_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	sedit(s);
     }
 
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item edge5_menu[] = {
     { "ARB5 EDGES", NULL, 0 },
@@ -226,7 +243,12 @@ arb4_point(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	sedit(s);
     }
 
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item point4_menu[] = {
     { "ARB4 POINTS", NULL, 0 },
@@ -252,7 +274,12 @@ arb8_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *
 	sedit(s);
     }
 
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item mv8_menu[] = {
     { "ARB8 FACES", NULL, 0 },
@@ -280,7 +307,12 @@ arb7_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *
 	sedit(s);
     }
 
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item mv7_menu[] = {
     { "ARB7 FACES", NULL, 0 },
@@ -304,7 +336,12 @@ arb6_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *
 	sedit(s);
     }
 
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item mv6_menu[] = {
     { "ARB6 FACES", NULL, 0 },
@@ -326,12 +363,17 @@ arb5_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *
     s->s_edit->solid_edit_translate = 1;
     s->s_edit->solid_edit_scale = 0;
     s->s_edit->solid_edit_pick = 0;
-     if (arg == 6) {
+    if (arg == 6) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	sedit(s);
     }
 
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item mv5_menu[] = {
     { "ARB5 FACES", NULL, 0 },
@@ -358,7 +400,12 @@ arb4_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *
 	sedit(s);
     }
 
-    set_e_axes_pos(s, 1);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 struct menu_item mv4_menu[] = {
     { "ARB4 FACES", NULL, 0 },
@@ -996,7 +1043,13 @@ ecmd_arb_setup_rotface(struct mged_state *s)
     s->s_edit->solid_edit_scale = 0;
     s->s_edit->solid_edit_pick = 0;
     view_state->vs_flag = 1;	/* draw arrow, etc. */
-    set_e_axes_pos(s, 1);
+
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
 }
 
 int
