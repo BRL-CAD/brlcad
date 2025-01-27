@@ -515,6 +515,8 @@ mged_nmg_labels(
 void ecmd_nmg_emove(struct mged_state *s)
 {
     point_t new_pt;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     /* must convert to base units */
     s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
@@ -523,7 +525,9 @@ void ecmd_nmg_emove(struct mged_state *s)
 
     if (!es_eu) {
 	bu_vls_printf(s->s_edit->log_str, "No edge selected!\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
     NMG_CK_EDGEUSE(es_eu);
@@ -539,7 +543,9 @@ void ecmd_nmg_emove(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for edge move\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
@@ -570,7 +576,9 @@ void ecmd_nmg_emove(struct mged_state *s)
 	    if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &s->tol.tol) < 1) {
 		/* line does not intersect plane, don't do an esplit */
 		bu_vls_printf(s->s_edit->log_str, "Edge Move: Cannot place new point in plane of loop\n");
-		mged_print_result(s, TCL_ERROR);
+		mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
 		return;
 	    }
 	    VJOIN1(new_pt, new_pt, dist, view_dir);
@@ -586,10 +594,14 @@ void ecmd_nmg_ekill(struct mged_state *s)
 {
     struct model *m;
     struct edge_g_lseg *eg;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     if (!es_eu) {
 	bu_vls_printf(s->s_edit->log_str, "No edge selected!\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
     NMG_CK_EDGEUSE(es_eu);
@@ -606,7 +618,9 @@ void ecmd_nmg_ekill(struct mged_state *s)
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 	    /* Currently can only kill wire edges or edges in wire loops */
 	    bu_vls_printf(s->s_edit->log_str, "Currently, we can only kill wire edges or edges in wire loops\n");
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    mged_set_edflag(s, IDLE);
 	    return;
 	}
@@ -623,7 +637,9 @@ void ecmd_nmg_ekill(struct mged_state *s)
 		 * to/from same vertex
 		 */
 		bu_vls_printf(s->s_edit->log_str, "Cannot delete last edge running to/from same vertex\n");
-		mged_print_result(s, TCL_ERROR);
+		mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
 		return;
 	    }
 	    NMG_CK_EDGEUSE(es_eu->eumate_p);
@@ -665,6 +681,8 @@ void ecmd_nmg_esplit(struct mged_state *s)
     point_t new_pt;
     fastf_t area;
     plane_t pl;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     /* must convert to base units */
     s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
@@ -673,7 +691,9 @@ void ecmd_nmg_esplit(struct mged_state *s)
 
     if (!es_eu) {
 	bu_vls_printf(s->s_edit->log_str, "No edge selected!\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
     NMG_CK_EDGEUSE(es_eu);
@@ -690,7 +710,9 @@ void ecmd_nmg_esplit(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for edge split\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
@@ -705,7 +727,9 @@ void ecmd_nmg_esplit(struct mged_state *s)
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 	    bu_vls_printf(s->s_edit->log_str, "Currently, we can only split wire edges or edges in wire loops\n");
 	    mged_set_edflag(s, IDLE);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return;
 	}
 
@@ -724,7 +748,9 @@ void ecmd_nmg_esplit(struct mged_state *s)
 	    if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &s->tol.tol) < 1) {
 		/* line does not intersect plane, don't do an esplit */
 		bu_vls_printf(s->s_edit->log_str, "Edge Split: Cannot place new point in plane of loop\n");
-		mged_print_result(s, TCL_ERROR);
+		mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
 		return;
 	    }
 	    VJOIN1(new_pt, new_pt, dist, view_dir);
@@ -749,6 +775,8 @@ void ecmd_nmg_lextru(struct mged_state *s)
     struct model *m;
     plane_t new_lu_pl;
     fastf_t area;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     /* must convert to base units */
     s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
@@ -768,7 +796,9 @@ void ecmd_nmg_lextru(struct mged_state *s)
 	VJOIN1(to_pt, lu_keypoint, s->s_edit->e_para[0], lu_pl);
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for loop extrusion\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
 	return;
@@ -778,7 +808,9 @@ void ecmd_nmg_lextru(struct mged_state *s)
 
     if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &s->tol.tol) < 1) {
 	bu_vls_printf(s->s_edit->log_str, "Cannot extrude parallel to plane of loop\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
 
@@ -794,7 +826,9 @@ void ecmd_nmg_lextru(struct mged_state *s)
     area = nmg_loop_plane_area(new_lu, new_lu_pl);
     if (area < 0.0) {
 	bu_vls_printf(s->s_edit->log_str, "loop to be extruded as no area!\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
 
@@ -835,6 +869,9 @@ void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec)
 	(struct model *)s->s_edit->es_int.idb_ptr;
     struct edge *e;
     struct bn_tol tmp_tol;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
     NMG_CK_MODEL(m);
 
     /* Picking an edge should not depend on tolerances! */
@@ -850,7 +887,9 @@ void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec)
     if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
 		    view_state->vs_gvp->gv_model2view, s->vlfree, &tmp_tol)) == (struct edge *)NULL) {
 	bu_vls_printf(s->s_edit->log_str, "ECMD_NMG_EPICK: unable to find an edge\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
     es_eu = e->eu_p;
@@ -864,7 +903,9 @@ void ecmd_nmg_epick(struct mged_state *s, const vect_t mousevec)
 		(void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 		V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
     }
 }
@@ -917,6 +958,8 @@ mged_nmg_edit_xy(
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
     struct rt_db_internal *ip = &s->s_edit->es_int;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     switch (edflag) {
 	case SSCALE:
@@ -943,7 +986,9 @@ mged_nmg_edit_xy(
 	      break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

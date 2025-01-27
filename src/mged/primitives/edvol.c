@@ -120,6 +120,8 @@ ecmd_vol_csize(struct mged_state *s)
 {
     struct rt_vol_internal *vol =
 	(struct rt_vol_internal *)s->s_edit->es_int.idb_ptr;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     RT_VOL_CK_MAGIC(vol);
 
@@ -132,7 +134,9 @@ ecmd_vol_csize(struct mged_state *s)
 	VMOVE(vol->cellsize, s->s_edit->e_para);
     } else if (s->s_edit->e_inpara > 0 && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x, y, and z cell sizes are required\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (s->s_edit->es_scale > 0.0) {
 	VSCALE(vol->cellsize, vol->cellsize, s->s_edit->es_scale);
@@ -148,19 +152,25 @@ ecmd_vol_fsize(struct mged_state *s)
 	(struct rt_vol_internal *)s->s_edit->es_int.idb_ptr;
     struct stat stat_buf;
     b_off_t need_size;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     RT_VOL_CK_MAGIC(vol);
 
     if (s->s_edit->e_inpara == 3) {
 	if (stat(vol->name, &stat_buf)) {
 	    bu_vls_printf(s->s_edit->log_str, "Cannot get status of file %s\n", vol->name);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return;
 	}
 	need_size = s->s_edit->e_para[0] * s->s_edit->e_para[1] * s->s_edit->e_para[2] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
 	    bu_vls_printf(s->s_edit->log_str, "File (%s) is too small, set file name first", vol->name);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return;
 	}
 	vol->xdim = s->s_edit->e_para[0];
@@ -168,7 +178,9 @@ ecmd_vol_fsize(struct mged_state *s)
 	vol->zdim = s->s_edit->e_para[2];
     } else if (s->s_edit->e_inpara > 0) {
 	bu_vls_printf(s->s_edit->log_str, "x, y, and z file sizes are required\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
 }
@@ -261,6 +273,8 @@ ecmd_vol_fname(struct mged_state *s)
     const char *fname;
     struct stat stat_buf;
     b_off_t need_size;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     RT_VOL_CK_MAGIC(vol);
 
@@ -270,7 +284,9 @@ ecmd_vol_fname(struct mged_state *s)
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->s_edit->log_str, 0);
 	    bu_vls_printf(s->s_edit->log_str, "Cannot get status of file %s\n", fname);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return;
 	}
 	need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
@@ -278,7 +294,9 @@ ecmd_vol_fname(struct mged_state *s)
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->s_edit->log_str, 0);
 	    bu_vls_printf(s->s_edit->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return;
 	}
 	bu_strlcpy(vol->name, fname, RT_VOL_NAME_LEN);
@@ -358,6 +376,8 @@ mged_vol_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->s_edit->es_int;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     switch (edflag) {
 	case SSCALE:
@@ -373,7 +393,9 @@ mged_vol_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

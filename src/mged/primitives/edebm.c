@@ -87,6 +87,8 @@ mged_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 int
 ecmd_ebm_fsize(struct mged_state *s)
 {
+    bu_clbk_t f = NULL;
+    void *d = NULL;
     if (s->s_edit->e_inpara != 2) {
 	bu_vls_printf(s->s_edit->log_str, "ERROR: two arguments needed\n");
 	s->s_edit->e_inpara = 0;
@@ -113,20 +115,26 @@ ecmd_ebm_fsize(struct mged_state *s)
     if (s->s_edit->e_inpara == 2) {
 	if (stat(ebm->name, &stat_buf)) {
 	    bu_vls_printf(s->s_edit->log_str, "Cannot get status of ebm data source %s", ebm->name);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
 	}
 	need_size = s->s_edit->e_para[0] * s->s_edit->e_para[1] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
 	    bu_vls_printf(s->s_edit->log_str, "File (%s) is too small, set data source name first", ebm->name);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
 	}
 	ebm->xdim = s->s_edit->e_para[0];
 	ebm->ydim = s->s_edit->e_para[1];
     } else if (s->s_edit->e_inpara > 0) {
 	bu_vls_printf(s->s_edit->log_str, "width and length of data source are required\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -141,7 +149,9 @@ ecmd_ebm_fname(struct mged_state *s)
     const char *fname;
     struct stat stat_buf;
     b_off_t need_size;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_EBM_CK_MAGIC(ebm);
 
     fname = get_file_name(s, ebm->name);
@@ -150,7 +160,9 @@ ecmd_ebm_fname(struct mged_state *s)
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->s_edit->log_str, 0);
 	    bu_vls_printf(s->s_edit->log_str, "Cannot get status of file %s\n", fname);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
 	}
 	need_size = ebm->xdim * ebm->ydim * sizeof(unsigned char);
@@ -158,7 +170,9 @@ ecmd_ebm_fname(struct mged_state *s)
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->s_edit->log_str, 0);
 	    bu_vls_printf(s->s_edit->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
 	}
 	bu_strlcpy(ebm->name, fname, RT_EBM_NAME_LEN);
@@ -170,6 +184,8 @@ ecmd_ebm_fname(struct mged_state *s)
 int
 ecmd_ebm_height(struct mged_state *s)
 {
+    bu_clbk_t f = NULL;
+    void *d = NULL;
     if (s->s_edit->e_inpara != 1) {
 	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
 	s->s_edit->e_inpara = 0;
@@ -195,7 +211,9 @@ ecmd_ebm_height(struct mged_state *s)
 	ebm->tallness = s->s_edit->e_para[0];
     else if (s->s_edit->e_inpara > 0) {
 	bu_vls_printf(s->s_edit->log_str, "extrusion depth required\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
     } else if (s->s_edit->es_scale > 0.0) {
 	ebm->tallness *= s->s_edit->es_scale;
@@ -247,7 +265,9 @@ mged_ebm_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->s_edit->es_int;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     switch (edflag) {
 	case SSCALE:
 	case PSCALE:
@@ -260,7 +280,9 @@ mged_ebm_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

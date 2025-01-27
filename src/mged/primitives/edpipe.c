@@ -902,7 +902,9 @@ void ecmd_pipe_pick(struct mged_state *s)
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
@@ -921,7 +923,9 @@ void ecmd_pipe_pick(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for segment selection\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
@@ -929,7 +933,9 @@ void ecmd_pipe_pick(struct mged_state *s)
     es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->s_edit->log_str, "No PIPE segment selected\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
     } else
 	rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 }
@@ -939,7 +945,9 @@ void ecmd_pipe_split(struct mged_state *s)
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
@@ -958,14 +966,18 @@ void ecmd_pipe_split(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for segment split\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
 
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->s_edit->log_str, "No pipe segment selected\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
 
@@ -977,7 +989,9 @@ void ecmd_pipe_pt_move(struct mged_state *s)
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
@@ -996,14 +1010,18 @@ void ecmd_pipe_pt_move(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for segment movement\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
 
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->s_edit->log_str, "No pipe segment selected\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
 
@@ -1015,7 +1033,9 @@ void ecmd_pipe_pt_add(struct mged_state *s)
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
@@ -1034,7 +1054,9 @@ void ecmd_pipe_pt_add(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for 'append segment'\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
@@ -1047,7 +1069,9 @@ void ecmd_pipe_pt_ins(struct mged_state *s)
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* must convert to base units */
@@ -1066,7 +1090,9 @@ void ecmd_pipe_pt_ins(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for 'prepend segment'\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
@@ -1076,9 +1102,13 @@ void ecmd_pipe_pt_ins(struct mged_state *s)
 
 void ecmd_pipe_pt_del(struct mged_state *s)
 {
+    bu_clbk_t f = NULL;
+    void *d = NULL;
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->s_edit->log_str, "No pipe segment selected\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
     es_pipe_pnt = pipe_del_pnt(s, es_pipe_pnt);
@@ -1169,7 +1199,9 @@ mged_pipe_edit_xy(
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
     struct rt_db_internal *ip = &s->s_edit->es_int;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     switch (edflag) {
 	case SSCALE:
 	case PSCALE:
@@ -1193,7 +1225,9 @@ mged_pipe_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

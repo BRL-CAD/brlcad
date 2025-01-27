@@ -258,10 +258,18 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     db_dup_full_path(&both, &lhs);
     db_append_full_path(&both, &rhs);
 
+
     /* Set up solid edit state */
     s->s_edit = mged_solid_edit_create(NULL, &s->tol.tol, view_state->vs_gvp);
     Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
     s->s_edit->mv_context = mged_variables->mv_context;
+
+    // TODO - this should be a sync of ALL clbks, but for testing we're just doing
+    // one right now.
+    bu_clbk_t f;
+    void *d;
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    mged_sedit_clbk_set(s->s_edit, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING, f, d);
 
     /* Patterned after ill_common() ... */
     illum_gdlp = gdlp;

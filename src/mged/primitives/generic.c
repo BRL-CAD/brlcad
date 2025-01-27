@@ -328,6 +328,8 @@ mged_generic_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->s_edit->es_int;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     switch (edflag) {
 	case SSCALE:
@@ -341,7 +343,9 @@ mged_generic_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 
