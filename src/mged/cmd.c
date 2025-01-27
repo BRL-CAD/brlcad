@@ -1305,6 +1305,18 @@ mged_print_result(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED
     return TCL_OK;
 }
 
+
+int
+mged_print_str(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
+{
+    struct mged_state *s = (struct mged_state *)d;
+
+    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
+
+    return TCL_OK;
+}
+
+
 /**
  * Let the user temporarily escape from the editor Format: %
  */

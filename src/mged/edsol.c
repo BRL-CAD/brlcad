@@ -470,33 +470,38 @@ get_sketch_name(struct mged_state *s, const char *sk_n)
  * can operate on an equal footing to mouse events.
  */
 void
-sedit(struct mged_state *s)
+sedit(struct mged_state *ms)
 {
-    if (s->dbip == DBI_NULL)
-	return;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    struct mged_solid_edit *s = ms->s_edit;
 
     sedraw = 0;
     ++update_views;
 
     int had_method = 0;
-    const struct rt_db_internal *ip = &s->s_edit->es_int;
+    const struct rt_db_internal *ip = &s->es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit) {
-	bu_vls_trunc(s->s_edit->log_str, 0);
-	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, s->s_edit->edit_flag)) {
-	    if (bu_vls_strlen(s->s_edit->log_str)) {
-		Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
-		bu_vls_trunc(s->s_edit->log_str, 0);
+	bu_vls_trunc(s->log_str, 0);
+	if ((*MGED_OBJ[ip->idb_type].ft_edit)(ms, s->edit_flag)) {
+	    if (bu_vls_strlen(s->log_str)) {
+		mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
+		bu_vls_trunc(s->log_str, 0);
 	    }
 	    return;
 	}
-	if (bu_vls_strlen(s->s_edit->log_str)) {
-	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
-	    bu_vls_trunc(s->s_edit->log_str, 0);
+	if (bu_vls_strlen(s->log_str)) {
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    bu_vls_trunc(s->log_str, 0);
 	}
 	had_method = 1;
     }
 
-    switch (s->s_edit->edit_flag) {
+    switch (s->edit_flag) {
 
 	case IDLE:
 	    /* do nothing more */
@@ -507,37 +512,45 @@ sedit(struct mged_state *s)
 		if (had_method)
 		    break;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", s->s_edit->edit_flag);
-		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_clbk_t f = NULL;
-		void *d = NULL;
-		mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+		bu_vls_sprintf(&tmp_vls, "%s", bu_vls_cstr(s->log_str));
+		bu_vls_sprintf(s->log_str, "sedit(s):  unknown edflag = %d.\n", s->edit_flag);
+		mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
+		bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
+		mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
 	    }
     }
 
     /* If the keypoint changed location, find about it here */
-    if (!s->s_edit->e_keyfixed)
-	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
+    if (!s->e_keyfixed)
+	get_solid_keypoint(ms, &s->e_keypoint, &s->e_keytag, &s->es_int, s->e_mat);
 
     int flag = 0;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
-    replot_editing_solid(0, NULL, s, NULL);
+    f = NULL; d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
+
+    f = NULL; d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
 
     if (update_views) {
-	dm_set_dirty(DMP, 1);
+	dm_set_dirty(ms->mged_curr_dm->dm_dmp, 1);
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "active_edit_callback");
-	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
+	(void)Tcl_Eval(ms->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 
-    s->s_edit->e_inpara = 0;
-    s->s_edit->e_mvalid = 0;
+    s->e_inpara = 0;
+    s->e_mvalid = 0;
 }
 
 

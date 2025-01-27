@@ -51,6 +51,7 @@ mged_state_create(void)
     s->s_edit = NULL;
 
     // Register default callbacks
+    mged_state_clbk_set(s, 0, ECMD_PRINT_STR, 0, GED_CLBK_DURING, mged_print_str, s);
     mged_state_clbk_set(s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING, mged_print_result, s);
     mged_state_clbk_set(s, 0, ECMD_EAXES_POS , 0, GED_CLBK_DURING, set_e_axes_pos, s);
     mged_state_clbk_set(s, 0, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING, replot_editing_solid, s);
