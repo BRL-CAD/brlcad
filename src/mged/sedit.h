@@ -70,11 +70,6 @@
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
 
-extern void get_solid_keypoint(struct mged_state *s, point_t *pt,
-			       const char **strp,
-			       struct rt_db_internal *ip,
-			       fastf_t *mat);
-
 extern void set_e_axes_pos(struct mged_state *s, int both);
 
 

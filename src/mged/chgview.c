@@ -3612,8 +3612,27 @@ mged_etran(struct mged_state *s,
     if (s->edit_state.global_editing_state == ST_S_EDIT) {
 	int save_rot, save_tra, save_sca, save_pic;
 	s->s_edit->e_keyfixed = 0;
-	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
-			   &s->s_edit->es_int, s->s_edit->e_mat);
+
+	// Explicit get_solid_keypoint so we can make that function
+	// private to edsol
+	struct rt_db_internal *ip = &s->s_edit->es_int;
+	fastf_t *mat = s->s_edit->e_mat;
+	point_t *pt = &s->s_edit->e_keypoint;
+	const char *strp = s->s_edit->e_keytag;
+	RT_CK_DB_INTERNAL(ip);
+	if (MGED_OBJ[ip->idb_type].ft_keypoint) {
+	    bu_vls_trunc(s->s_edit->log_str, 0);
+	    strp = (*MGED_OBJ[ip->idb_type].ft_keypoint)(pt, strp, mat, ip, &s->tol.tol);
+	    if (bu_vls_strlen(s->s_edit->log_str)) {
+		Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
+		bu_vls_trunc(s->s_edit->log_str, 0);
+	    }
+	} else {
+	    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
+	    VSETALL(*pt, 0.0);
+	    strp = "(origin)";
+	}
+
 	save_edflag = s->s_edit->edit_flag;
 	save_rot = s->s_edit->solid_edit_rotate;
 	save_tra = s->s_edit->solid_edit_translate;
