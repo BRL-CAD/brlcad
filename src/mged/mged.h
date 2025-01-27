@@ -596,7 +596,7 @@ void transform_editing_solid(
     const mat_t mat,
     struct rt_db_internal *is,		/* input solid */
     int freedbi);
-void replot_editing_solid(struct mged_state *s);
+int replot_editing_solid(int, const char **, void *, void *);
 void sedit_abs_scale(struct mged_state *s);
 void sedit_accept(struct mged_state *s);
 void sedit_mouse(struct mged_state *s, const vect_t mousevec);
