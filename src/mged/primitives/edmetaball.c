@@ -311,7 +311,9 @@ ecmd_metaball_pt_pick(struct mged_state *s)
     struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
     fastf_t min_dist = MAX_FASTF;
     vect_t dir, work;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_METABALL_CK_MAGIC(metaball);
 
     if (s->s_edit->e_mvalid) {
@@ -324,7 +326,9 @@ ecmd_metaball_pt_pick(struct mged_state *s)
 	VMOVE(new_pt, s->s_edit->e_para);
     } else if (s->s_edit->e_inpara) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for control point selection\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else {
 	return;
@@ -348,7 +352,9 @@ ecmd_metaball_pt_pick(struct mged_state *s)
 
     if (!es_metaball_pnt) {
 	bu_vls_printf(s->s_edit->log_str, "No METABALL control point selected\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
     } else {
 	rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
     }
@@ -497,7 +503,9 @@ mged_metaball_edit_xy(
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
     struct rt_db_internal *ip = &s->s_edit->es_int;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     switch (edflag) {
 	case SSCALE:
 	case PSCALE:
@@ -519,7 +527,9 @@ mged_metaball_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

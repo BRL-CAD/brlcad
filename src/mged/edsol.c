@@ -501,7 +501,11 @@ sedit(struct mged_state *s)
 
 		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", s->s_edit->edit_flag);
 		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		mged_print_result(s, TCL_ERROR);
+		bu_clbk_t f = NULL;
+		void *d = NULL;
+		mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
 		bu_vls_free(&tmp_vls);
 	    }
     }

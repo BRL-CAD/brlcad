@@ -50,6 +50,9 @@ mged_state_create(void)
 
     s->s_edit = NULL;
 
+    // Register default callbacks
+    mged_state_clbk_set(s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING, mged_print_result, s);
+
     return s;
 }
 
@@ -115,7 +118,7 @@ mged_solid_edit_destroy(struct mged_solid_edit *s)
 std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *
 mged_internal_clbk_map(MGED_Internal *i, int obj_type, int mode)
 {
-    std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> *omp;
+    std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> *omp = NULL;
     switch (mode) {
 	case GED_CLBK_DURING:
 	    omp = &i->cmd_during_clbk;
@@ -132,8 +135,9 @@ mged_internal_clbk_map(MGED_Internal *i, int obj_type, int mode)
     }
     std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>>::iterator o_it;
     o_it = omp->find(obj_type);
-    if (o_it == omp->end())
-	return NULL;
+    if (o_it == omp->end()) {
+	(*omp)[obj_type] = std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>();
+    }
 
     std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp = &(*omp)[obj_type];
     return mp;
@@ -142,7 +146,7 @@ mged_internal_clbk_map(MGED_Internal *i, int obj_type, int mode)
 std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *
 mged_sedit_clbk_map(MGED_SEDIT_Internal *i, int mode)
 {
-    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp = NULL;
     switch (mode) {
 	case GED_CLBK_DURING:
 	    mp = &i->cmd_during_clbk;
@@ -172,7 +176,6 @@ int mged_edit_clbk_set(std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *
 	return BRLCAD_OK;
     }
 
-    bu_log("ed_cmd: %d, menu_cmd: %d\n", ed_cmd, menu_cmd);
     (*mp)[std::make_pair(ed_cmd, menu_cmd)] = std::make_pair(f, d);
 
     return BRLCAD_OK;
@@ -188,12 +191,72 @@ int mged_edit_clbk_get(bu_clbk_t *f, void **d, std::map<std::pair<int, int>, std
 
     std::pair<bu_clbk_t, void *> clbk_info = (*mp)[std::make_pair(ed_cmd, menu_cmd)];
 
-    bu_log("ed_cmd: %d, menu_cmd: %d\n", ed_cmd, menu_cmd);
     (*f) = clbk_info.first;
     (*d) = clbk_info.second;
 
     return BRLCAD_OK;
 }
+
+int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d)
+{
+    // Check for no-op case
+    if (!s)
+	return BRLCAD_OK;
+
+    MGED_Internal *i = s->i->i;
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
+    mp = mged_internal_clbk_map(i, obj_type, mode);
+    if (!mp)
+	return BRLCAD_ERROR;
+
+    return mged_edit_clbk_set(mp, ed_cmd, menu_cmd, f, d);
+}
+int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode)
+{
+    // Check for no-op case
+    if (!f || !d || !s)
+	return BRLCAD_OK;
+
+    MGED_Internal *i = s->i->i;
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
+    mp = mged_internal_clbk_map(i, obj_type, mode);
+    if (!mp)
+	return BRLCAD_ERROR;
+
+    return mged_edit_clbk_get(f, d, mp, ed_cmd, menu_cmd);
+}
+
+int mged_sedit_clbk_set(struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d)
+{
+    // Check for no-op case
+    if (!s)
+	return BRLCAD_OK;
+
+    MGED_SEDIT_Internal *i = s->i->i;
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
+    mp = mged_sedit_clbk_map(i, mode);
+    if (!mp)
+	return BRLCAD_ERROR;
+
+    return mged_edit_clbk_set(mp, ed_cmd, menu_cmd, f, d);
+}
+int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode)
+{
+    // Check for no-op case
+    if (!f || !d || !s)
+	return BRLCAD_OK;
+
+    MGED_SEDIT_Internal *i = s->i->i;
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
+    mp = mged_sedit_clbk_map(i, mode);
+    if (!mp)
+	return BRLCAD_ERROR;
+
+    return mged_edit_clbk_get(f, d, mp, ed_cmd, menu_cmd);
+}
+
+
+
 
 // Local Variables:
 // tab-width: 8

@@ -567,6 +567,8 @@ ecmd_bot_movev(struct mged_state *s)
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
     int vert;
     point_t new_pt = VINIT_ZERO;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -602,7 +604,9 @@ ecmd_bot_movev(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
 	return;
@@ -618,12 +622,16 @@ ecmd_bot_movee(struct mged_state *s)
     int v1, v2;
     vect_t diff;
     point_t new_pt = VINIT_ZERO;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     RT_BOT_CK_MAGIC(bot);
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0) {
 	bu_vls_printf(s->s_edit->log_str, "No BOT edge selected\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
 
@@ -649,7 +657,9 @@ ecmd_bot_movee(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
 	return;
@@ -668,12 +678,16 @@ ecmd_bot_movet(struct mged_state *s)
     int v1, v2, v3;
     point_t new_pt = VINIT_ZERO;
     vect_t diff;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     RT_BOT_CK_MAGIC(bot);
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
 	bu_vls_printf(s->s_edit->log_str, "No BOT triangle selected\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     }
     v1 = bot_verts[0];
@@ -696,7 +710,9 @@ ecmd_bot_movet(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
 	return;
@@ -716,6 +732,8 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
     int tmp_vert;
     char tmp_msg[256];
     point_t selected_pt;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -726,7 +744,9 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
     tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_gvp->gv_model2view);
     if (tmp_vert < 0) {
 	bu_vls_printf(s->s_edit->log_str, "ECMD_BOT_PICKV: unable to find a vertex!\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -736,7 +756,9 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
     VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->dbip->dbi_base2local);
     sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
     bu_vls_printf(s->s_edit->log_str, "%s", tmp_msg);
-    mged_print_result(s, TCL_OK);
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
 
     return BRLCAD_OK;
 }
@@ -749,6 +771,8 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
     int vert1, vert2;
     char tmp_msg[256];
     point_t from_pt, to_pt;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -758,7 +782,9 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
 
     if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, view_state->vs_gvp->gv_model2view)) {
 	bu_vls_printf(s->s_edit->log_str, "ECMD_BOT_PICKE: unable to find an edge!\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -769,7 +795,9 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
     VSCALE(to_pt, &bot->vertices[vert2*3], s->dbip->dbi_base2local);
     sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
     bu_vls_printf(s->s_edit->log_str, "%s", tmp_msg);
-    mged_print_result(s, TCL_OK);
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
 
     return BRLCAD_OK;
 }
@@ -909,6 +937,8 @@ mged_bot_edit_xy(
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
     struct rt_db_internal *ip = &s->s_edit->es_int;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
 
     switch (edflag) {
 	case SSCALE:
@@ -942,7 +972,9 @@ mged_bot_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

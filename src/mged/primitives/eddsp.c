@@ -200,7 +200,9 @@ ecmd_dsp_fname(struct mged_state *s)
     struct stat stat_buf;
     b_off_t need_size;
     struct bu_vls message = BU_VLS_INIT_ZERO;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_DSP_CK_MAGIC(dsp);
 
     /* Pop-up the Tk file browser */
@@ -211,7 +213,9 @@ ecmd_dsp_fname(struct mged_state *s)
 	bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
 	Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 	bu_vls_free(&message);
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -220,7 +224,9 @@ ecmd_dsp_fname(struct mged_state *s)
 	bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
 	Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 	bu_vls_free(&message);
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
     }
     bu_vls_strcpy(&dsp->dsp_name, fname);
@@ -267,7 +273,9 @@ mged_dsp_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->s_edit->es_int;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     switch (edflag) {
 	case SSCALE:
 	case PSCALE:
@@ -282,7 +290,9 @@ mged_dsp_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

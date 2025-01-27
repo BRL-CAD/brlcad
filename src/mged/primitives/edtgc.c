@@ -498,7 +498,9 @@ ecmd_tgc_mv_h(struct mged_state *s)
     vect_t work;
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->s_edit->es_int.idb_ptr;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_TGC_CK_MAGIC(tgc);
     if (s->s_edit->e_inpara) {
 	if (s->s_edit->e_inpara != 3) {
@@ -524,7 +526,9 @@ ecmd_tgc_mv_h(struct mged_state *s)
     /* check for zero H vector */
     if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
 	bu_vls_printf(s->s_edit->log_str, "Zero H vector not allowed, resetting to +Z\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	VSET(tgc->h, 0.0, 0.0, 1.0);
 	return TCL_ERROR;
     }
@@ -559,7 +563,9 @@ ecmd_tgc_mv_hh(struct mged_state *s)
     vect_t work;
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->s_edit->es_int.idb_ptr;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_TGC_CK_MAGIC(tgc);
     if (s->s_edit->e_inpara) {
 	if (s->s_edit->e_inpara != 3) {
@@ -585,7 +591,9 @@ ecmd_tgc_mv_hh(struct mged_state *s)
     /* check for zero H vector */
     if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
 	bu_vls_printf(s->s_edit->log_str, "Zero H vector not allowed, resetting to +Z\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	VSET(tgc->h, 0.0, 0.0, 1.0);
 	return TCL_ERROR;
     }
@@ -846,7 +854,9 @@ mged_tgc_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->s_edit->es_int;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     switch (edflag) {
 	case SSCALE:
 	case PSCALE:
@@ -862,7 +872,9 @@ mged_tgc_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

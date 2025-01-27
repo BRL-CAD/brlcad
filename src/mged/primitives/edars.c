@@ -248,7 +248,9 @@ ecmd_ars_pick(struct mged_state *s)
     vect_t z_dir;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
@@ -267,7 +269,9 @@ ecmd_ars_pick(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for 'pick point'\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
 	return;
@@ -283,7 +287,9 @@ ecmd_ars_pick(struct mged_state *s)
 
     bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
     bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-    mged_print_result(s, TCL_ERROR);
+    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
     bu_vls_free(&tmp_vls);
 }
 
@@ -294,7 +300,9 @@ ecmd_ars_next_pt(struct mged_state *s)
 	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_ARS_CK_MAGIC(ars);
 
     if (es_ars_crv >= 0 && es_ars_col >= 0) {
@@ -308,7 +316,9 @@ ecmd_ars_next_pt(struct mged_state *s)
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
     }
 }
@@ -320,7 +330,9 @@ ecmd_ars_prev_pt(struct mged_state *s)
 	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_ARS_CK_MAGIC(ars);
 
     if (es_ars_crv >= 0 && es_ars_col >= 0) {
@@ -334,7 +346,9 @@ ecmd_ars_prev_pt(struct mged_state *s)
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
     }
 }
@@ -346,7 +360,9 @@ ecmd_ars_next_crv(struct mged_state *s)
 	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_ARS_CK_MAGIC(ars);
 
     if (es_ars_crv >= 0 && es_ars_col >= 0) {
@@ -360,7 +376,9 @@ ecmd_ars_next_crv(struct mged_state *s)
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
     }
 }
@@ -372,7 +390,9 @@ ecmd_ars_prev_crv(struct mged_state *s)
 	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_ARS_CK_MAGIC(ars);
 
     if (es_ars_crv >= 0 && es_ars_col >= 0) {
@@ -386,7 +406,9 @@ ecmd_ars_prev_crv(struct mged_state *s)
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
     }
 }
@@ -588,7 +610,9 @@ ecmd_ars_move_col(struct mged_state *s)
 	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt = VINIT_ZERO;
     vect_t diff;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
@@ -626,7 +650,9 @@ ecmd_ars_move_col(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
 	return;
@@ -647,7 +673,9 @@ ecmd_ars_move_crv(struct mged_state *s)
 	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt = VINIT_ZERO;
     vect_t diff;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
@@ -685,7 +713,9 @@ ecmd_ars_move_crv(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
 	return;
@@ -705,7 +735,9 @@ ecmd_ars_move_pt(struct mged_state *s)
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
     point_t new_pt = VINIT_ZERO;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
@@ -743,7 +775,9 @@ ecmd_ars_move_pt(struct mged_state *s)
 	}
     } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
 	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_print_result(s, TCL_ERROR);
+	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
 	return;
     } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
 	return;
@@ -834,7 +868,9 @@ mged_ars_edit_xy(
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
     struct rt_db_internal *ip = &s->s_edit->es_int;
-
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+ 
     switch (edflag) {
 	case SSCALE:
 	case PSCALE:
@@ -857,7 +893,9 @@ mged_ars_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_print_result(s, TCL_ERROR);
+	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
     }
 

@@ -81,6 +81,7 @@ __BEGIN_DECLS
 #endif
 __END_DECLS
 
+#include "mged_ecmds.h"
 #include "mged_impl.h"
 
 __BEGIN_DECLS
@@ -261,9 +262,11 @@ struct mged_solid_edit {
 // to do is probably assign the "generic" operations above some specific numbers
 // and supply a 0 obj type so we can just use the same mechanism for everything.
 //
-extern int mged_edit_clbk_set(struct mged_solid_edit *s, int obj_type, int ed_cmd, int mode, bu_clbk_t f, void *d);
-extern int mged_edit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int obj_type, int ed_cmd, int mode);
+extern int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
+extern int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode);
 
+extern int mged_sedit_clbk_set(struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
+extern int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode);
 
 
 /* global application state */
@@ -496,7 +499,7 @@ extern void view_ring_destroy(struct mged_dm *dlp);
 
 /* cmd.c */
 int cmdline(struct mged_state *s, struct bu_vls *vp, int record);
-void mged_print_result(struct mged_state *s, int status);
+int mged_print_result(int, const char **, void *, void*);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
 
