@@ -255,7 +255,36 @@ int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int e
     return mged_edit_clbk_get(f, d, mp, ed_cmd, menu_cmd);
 }
 
+int mged_sedit_clbk_sync(struct mged_solid_edit *se, struct mged_state *s)
+{
+    if (!se)
+	return BRLCAD_ERROR;
 
+    MGED_SEDIT_Internal *sei = se->i->i;
+    sei->cmd_prerun_clbk.clear();
+    sei->cmd_during_clbk.clear();
+    sei->cmd_postrun_clbk.clear();
+    sei->cmd_linger_clbk.clear();
+
+    if (!s)
+	return BRLCAD_OK;
+
+    int modes[4] = {GED_CLBK_PRE, GED_CLBK_DURING, GED_CLBK_POST, GED_CLBK_LINGER};
+    MGED_Internal *si = s->i->i;
+
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *emp;
+    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>::iterator mp_it;
+    for (int i = 0; i < 4; i++) {
+	mp = mged_internal_clbk_map(si, se->es_int.idb_minor_type, modes[i]);
+	emp = mged_sedit_clbk_map(sei, modes[i]);
+	for (mp_it = mp->begin(); mp_it != mp->end(); ++mp_it) {
+	    (*emp)[mp_it->first] = mp_it->second;
+	}
+    }
+
+    return BRLCAD_OK;
+}
 
 
 // Local Variables:
