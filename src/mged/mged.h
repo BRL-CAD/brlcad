@@ -268,6 +268,7 @@ extern int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int
 extern int mged_sedit_clbk_set(struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
 extern int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode);
 
+extern int mged_sedit_clbk_sync(struct mged_solid_edit *se, struct mged_state *s);
 
 /* global application state */
 struct mged_state_impl;
