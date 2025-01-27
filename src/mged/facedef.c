@@ -313,7 +313,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     rt_db_free_internal(&intern);
 
     /* draw the new solid */
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
 
  end:
     (void)signal(SIGINT, SIG_IGN);

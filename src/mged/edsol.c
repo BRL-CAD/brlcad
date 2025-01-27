@@ -316,9 +316,10 @@ init_sedit_vars(struct mged_state *s)
  * All solid edit routines call this subroutine after
  * making a change to es_int or s->s_edit->e_mat.
  */
-void
-replot_editing_solid(struct mged_state *s)
+int
+replot_editing_solid(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(id))
 {
+    struct mged_state *s = (struct mged_state *)d;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     mat_t mat;
@@ -326,10 +327,10 @@ replot_editing_solid(struct mged_state *s)
     struct directory *illdp;
 
     if (!illump) {
-	return;
+	return BRLCAD_OK;
     }
     if (!illump->s_u_data)
-	return;
+	return BRLCAD_OK;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     illdp = LAST_SOLID(bdata);
 
@@ -349,6 +350,8 @@ replot_editing_solid(struct mged_state *s)
 
 	gdlp = next_gdlp;
     }
+
+    return BRLCAD_OK;
 }
 
 
@@ -522,7 +525,7 @@ sedit(struct mged_state *s)
 
     int flag = 0;
     set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
 
     if (update_views) {
 	dm_set_dirty(DMP, 1);
@@ -1068,7 +1071,7 @@ f_eqn(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *a
 	return ret;
 
     /* draw the new version of the solid */
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
 
     /* update display information */
     view_state->vs_flag = 1;
@@ -1655,7 +1658,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     int flag = 0;
     set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
 
     return TCL_OK;
 }
@@ -1705,7 +1708,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	return TCL_ERROR;				/* FAIL */
     }
     RT_CK_DB_INTERNAL(&s->s_edit->es_int);
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
 
     /* Establish initial keypoint */
     s->s_edit->e_keytag = "";
@@ -1919,7 +1922,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* draw the updated solid */
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -1978,7 +1981,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* draw the updated solid */
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
     view_state->vs_flag = 1;
 
     return TCL_OK;
@@ -2067,7 +2070,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* draw the updated solid */
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
     view_state->vs_flag = 1;
 
     return TCL_OK;

@@ -1162,7 +1162,7 @@ ecmd_arb_rotate_face(struct mged_state *s)
     MAT_IDN(s->s_edit->incr_change);
 
     /* no need to calc_planes again */
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
 
     s->s_edit->e_inpara = 0;
 

@@ -855,7 +855,7 @@ void ecmd_nmg_lextru(struct mged_state *s)
 
     es_eu = (struct edgeuse *)NULL;
 
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
     view_state->vs_flag = 1;
 }
 
