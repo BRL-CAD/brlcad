@@ -1,0 +1,142 @@
+/*             M G E D _ E C M D _ S C A N N E R . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2018-2025 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following
+ * disclaimer in the documentation and/or other materials provided
+ * with the distribution.
+ *
+ * 3. The name of the author may not be used to endorse or promote
+ * products derived from this software without specific prior written
+ * permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/** @file mged_ecmd_scanner.cpp
+ *
+ * Generate a header with defines for all ECMD entries
+ */
+
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <regex>
+#include <string>
+#include <set>
+
+int
+process_file(
+    std::set<std::pair<std::string, long>> *mset,
+    std::string sfile
+    )
+{
+    std::ifstream fs;
+    fs.open(sfile);
+    if (!fs.is_open()) {
+	std::cerr << "Unable to open file " << sfile << "\n";
+	return EXIT_FAILURE;
+    }
+
+    std::regex define_str_regex("#define.*");
+    std::regex ecmd_str_regex(".*(ECMD_[A-Z_]+)[ \t]+([0-9]+).*");
+    std::string sline;
+    while (std::getline(fs, sline)) {
+	if (!std::regex_match(sline, define_str_regex))
+	    continue;
+	std::smatch parsevar;
+	if (std::regex_search(sline, parsevar, ecmd_str_regex)) {
+	    std::string cmd = parsevar.str(1);
+	    std::string val = parsevar.str(2);
+	    mset->insert(std::make_pair(cmd, std::stoi(val)));
+	}
+    }
+    fs.close();
+
+    return EXIT_SUCCESS;
+}
+
+int
+main(int argc, const char *argv[])
+{
+    if (argc < 3) {
+	std::cerr << "Usage: mged_ecmd_scanner file_list output_file\n";
+	return EXIT_FAILURE;
+    }
+
+
+    std::vector<std::string> sfiles;
+    std::string sfile;
+    std::ifstream fs;
+    fs.open(argv[1]);
+    if (!fs.is_open()) {
+	std::cerr << "Unable to open file list " << argv[1] << "\n";
+	return EXIT_FAILURE;
+    }
+    while (std::getline(fs, sfile)) {
+	sfiles.push_back(sfile);
+    }
+    fs.close();
+
+
+    std::set<std::pair<std::string, long>> mset;
+    for (size_t i = 0; i < sfiles.size(); i++) {
+	if (process_file(&mset, sfiles[i]) != EXIT_SUCCESS)
+	    return EXIT_FAILURE;
+    }
+
+    std::ofstream ofile;
+    ofile.open(argv[2], std::fstream::trunc);
+    if (!ofile.is_open()) {
+	std::cerr << "Unable to open output file " << argv[2] << " for writing!\n";
+	return EXIT_FAILURE;
+    }
+
+    ofile << "#include \"common.h\"\n";
+    ofile << "\n";
+
+    ofile << "#define ECMD_PRINT_RESULTS        10\n";
+    ofile << "#define ECMD_EAXES_POS            20\n";
+    ofile << "#define ECMD_REPLOT_EDITING_SOLID 30\n";
+    ofile << "#define ECMD_VIEW_UPDATE          40\n";
+    ofile << "\n";
+
+    std::set<std::pair<std::string, long>>::iterator m_it;
+    for (m_it = mset.begin(); m_it != mset.end(); ++m_it) {
+	ofile << "#define " << m_it->first << " " << m_it->second << "\n";
+    }
+
+    ofile.close();
+
+    return EXIT_SUCCESS;
+}
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s
+

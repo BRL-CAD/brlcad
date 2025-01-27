@@ -4,6 +4,37 @@ endif(BRLCAD_ENABLE_TK)
 
 find_package_tcl()
 
+# Utility program
+if(BRLCAD_ENABLE_TCL)
+  set(MGED_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/mged_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
+  try_compile(
+    ged_hdr_scanner
+    "${CMAKE_BINARY_DIR}/CMakeTmp"
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/mged_ecmd_scanner.cpp"
+    OUTPUT_VARIABLE MGED_SCANNER_BLD_OUT
+    COPY_FILE "${MGED_ECMD_SCANNER}"
+  )
+  if (NOT EXISTS ${MGED_ECMD_SCANNER})
+    message(FATAL_ERROR "Unable to build ged command scanner: ${MGED_SCANNER_BLD_OUT}")
+  endif()
+  distclean(${MGED_ECMD_SCANNER})
+
+  set(MGED_PFILE_OUT "${CMAKE_BINARY_DIR}/CMakeTmp/mged_primitive_files.txt")
+  file(GLOB MGED_PFILES "${CMAKE_CURRENT_SOURCE_DIR}/primitives/*")
+  string(REPLACE ";" "\n" MGED_PFILES "${MGED_PFILES}")
+  file(WRITE "${MGED_PFILE_OUT}" ${MGED_PFILES})
+  distclean(${MGED_PFILE_OUT})
+
+  set(MGED_ECMD_HDR "${CMAKE_CURRENT_BINARY_DIR}/mged_ecmds.h")
+  add_custom_command(
+    OUTPUT ${MGED_ECMD_HDR}
+    COMMAND ${MGED_ECMD_SCANNER} ${MGED_PFILE_OUT} ${MGED_ECMD_HDR}
+    COMMENT "[MGED_ECMD_SCANNER] Scanning for MGED editing mode flags"
+  )
+  distclean(${MGED_ECMD_HDR})
+  set_source_files_properties(mged_impl.cpp PROPERTIES OBJECT_DEPENDS ${MGED_ECMD_HDR})
+endif()
+
 set(
   MGED_SOURCES
   adc.c
@@ -111,7 +142,7 @@ if(BRLCAD_ENABLE_TCL)
   if(TK_LIBRARY)
     target_compile_definitions(mged PRIVATE HAVE_TK=1)
   endif(TK_LIBRARY)
-  target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS})
+  target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
   add_target_deps(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex TclIndexBld dm_plugins)
 
   # MGED needs the tclIndex and pkgIndex files set up correctly

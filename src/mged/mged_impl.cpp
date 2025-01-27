@@ -25,6 +25,7 @@
 #include "common.h"
 
 #include "mged.h"
+#include "./mged_ecmds.h"
 
 struct mged_state *
 mged_state_create(void)
