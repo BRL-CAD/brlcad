@@ -66,39 +66,39 @@
 int bot_verts[3];		/* vertices for the BOT solid */
 
 static void
-bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+bot_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->s_edit->edit_menu = arg;
-    s->s_edit->edit_flag = arg;
+    s->edit_menu = arg;
+    s->edit_flag = arg;
 
     switch (arg) {
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
-	    s->s_edit->solid_edit_rotate = 0;
-	    s->s_edit->solid_edit_translate = 1;
-	    s->s_edit->solid_edit_scale = 0;
-	    s->s_edit->solid_edit_pick = 0;
+	    s->solid_edit_rotate = 0;
+	    s->solid_edit_translate = 1;
+	    s->solid_edit_scale = 0;
+	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_BOT_PICKV:
 	case ECMD_BOT_PICKE:
 	case ECMD_BOT_PICKT:
-	    s->s_edit->solid_edit_rotate = 0;
-	    s->s_edit->solid_edit_translate = 0;
-	    s->s_edit->solid_edit_scale = 0;
-	    s->s_edit->solid_edit_pick = 1;
+	    s->solid_edit_rotate = 0;
+	    s->solid_edit_translate = 0;
+	    s->solid_edit_scale = 0;
+	    s->solid_edit_pick = 1;
 	    break;
 	default:
 	    mged_set_edflag(s, arg);
 	    break;
     };
 
-    sedit(s->s_edit);
+    sedit(s);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    mged_sedit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -220,10 +220,10 @@ mged_bot_keypoint(
 }
 
 void
-ecmd_bot_mode(struct mged_state *s)
+ecmd_bot_mode(struct mged_solid_edit *s)
 {
     struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
     const char *radio_result;
     char mode[10];
     int ret_tcl = TCL_ERROR;
@@ -242,7 +242,7 @@ ecmd_bot_mode(struct mged_state *s)
 		" { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
     }
     if (ret_tcl != TCL_OK) {
-	bu_vls_printf(s->s_edit->log_str, "Mode selection failed!\n");
+	bu_vls_printf(s->log_str, "Mode selection failed!\n");
 	return;
     }
     radio_result = Tcl_GetVar(s->interp, "_bot_mode_result", TCL_GLOBAL_ONLY);
@@ -265,10 +265,10 @@ ecmd_bot_mode(struct mged_state *s)
 }
 
 void
-ecmd_bot_orient(struct mged_state *s)
+ecmd_bot_orient(struct mged_solid_edit *s)
 {
     struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
     const char *radio_result;
     char orient[10];
     int ret_tcl = TCL_ERROR;
@@ -285,7 +285,7 @@ ecmd_bot_orient(struct mged_state *s)
 		" { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
     }
     if (ret_tcl != TCL_OK) {
-	bu_vls_printf(s->s_edit->log_str, "Face orientation selection failed!\n");
+	bu_vls_printf(s->log_str, "Face orientation selection failed!\n");
 	return;
     }
     radio_result = Tcl_GetVar(s->interp, "_bot_orient_result", TCL_GLOBAL_ONLY);
@@ -293,26 +293,26 @@ ecmd_bot_orient(struct mged_state *s)
 }
 
 int
-ecmd_bot_thick(struct mged_state *s)
+ecmd_bot_thick(struct mged_solid_edit *s)
 {
 
-    if (s->s_edit->e_inpara != 1) {
-	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
-	s->s_edit->e_inpara = 0;
+    if (s->e_inpara != 1) {
+	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
+	s->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit->e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit->e_inpara = 0;
+    if (s->e_para[0] <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
+    s->e_para[0] *= s->local2base;
 
     struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
     size_t face_no = 0;
     int face_state = 0;
 
@@ -340,7 +340,7 @@ ecmd_bot_thick(struct mged_state *s)
 	    return TCL_ERROR;
 
 	for (size_t i=0; i<bot->num_faces; i++)
-	    bot->thickness[i] = s->s_edit->e_para[0];
+	    bot->thickness[i] = s->e_para[0];
     } else {
 	/* setting thickness for just one face */
 
@@ -361,20 +361,20 @@ ecmd_bot_thick(struct mged_state *s)
 	    return TCL_ERROR;
 	}
 
-	bot->thickness[face_no] = s->s_edit->e_para[0];
+	bot->thickness[face_no] = s->e_para[0];
     }
 
     return 0;
 }
 
 void
-ecmd_bot_flags(struct mged_state *s)
+ecmd_bot_flags(struct mged_solid_edit *s)
 {
     int ret_tcl = TCL_ERROR;
     const char *dialog_result;
     char cur_settings[11];
     struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -420,10 +420,10 @@ ecmd_bot_flags(struct mged_state *s)
 }
 
 void
-ecmd_bot_fmode(struct mged_state *s)
+ecmd_bot_fmode(struct mged_solid_edit *s)
 {
     struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
     char fmode[10];
     const char *radio_result;
     size_t face_no = 0;
@@ -506,10 +506,10 @@ ecmd_bot_fmode(struct mged_state *s)
 }
 
 int
-ecmd_bot_fdel(struct mged_state *s)
+ecmd_bot_fdel(struct mged_solid_edit *s)
 {
     struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
 
     int j, face_no;
 
@@ -568,9 +568,9 @@ ecmd_bot_fdel(struct mged_state *s)
 }
 
 void
-ecmd_bot_movev(struct mged_state *s)
+ecmd_bot_movev(struct mged_solid_edit *s)
 {
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int vert;
     point_t new_pt = VINIT_ZERO;
     bu_clbk_t f = NULL;
@@ -594,27 +594,27 @@ ecmd_bot_movev(struct mged_state *s)
     }
 
     vert = bot_verts[0];
-    if (s->s_edit->e_mvalid) {
-	VMOVE(new_pt, s->s_edit->e_mparam);
-    } else if (s->s_edit->e_inpara == 3) {
+    if (s->e_mvalid) {
+	VMOVE(new_pt, s->e_mparam);
+    } else if (s->e_inpara == 3) {
 	/* must convert to base units */
-	s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
-	s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
-	s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
+	s->e_para[0] *= s->local2base;
+	s->e_para[1] *= s->local2base;
+	s->e_para[2] *= s->local2base;
 
-	if (s->s_edit->mv_context) {
-	    /* apply s->s_edit->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
+	if (s->mv_context) {
+	    /* apply s->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit->e_para);
+	    VMOVE(new_pt, s->e_para);
 	}
-    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
-	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    } else if (s->e_inpara && s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
-    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
+    } else if (!s->e_mvalid && !s->e_inpara) {
 	return;
     }
 
@@ -622,9 +622,9 @@ ecmd_bot_movev(struct mged_state *s)
 }
 
 void
-ecmd_bot_movee(struct mged_state *s)
+ecmd_bot_movee(struct mged_solid_edit *s)
 {
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int v1, v2;
     vect_t diff;
     point_t new_pt = VINIT_ZERO;
@@ -634,8 +634,8 @@ ecmd_bot_movee(struct mged_state *s)
     RT_BOT_CK_MAGIC(bot);
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0) {
-	bu_vls_printf(s->s_edit->log_str, "No BOT edge selected\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	bu_vls_printf(s->log_str, "No BOT edge selected\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -647,27 +647,27 @@ ecmd_bot_movee(struct mged_state *s)
     }
     v1 = bot_verts[0];
     v2 = bot_verts[1];
-    if (s->s_edit->e_mvalid) {
-	VMOVE(new_pt, s->s_edit->e_mparam);
-    } else if (s->s_edit->e_inpara == 3) {
+    if (s->e_mvalid) {
+	VMOVE(new_pt, s->e_mparam);
+    } else if (s->e_inpara == 3) {
 	/* must convert to base units */
-	s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
-	s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
-	s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
+	s->e_para[0] *= s->local2base;
+	s->e_para[1] *= s->local2base;
+	s->e_para[2] *= s->local2base;
 
-	if (s->s_edit->mv_context) {
-	    /* apply s->s_edit->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
+	if (s->mv_context) {
+	    /* apply s->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit->e_para);
+	    VMOVE(new_pt, s->e_para);
 	}
-    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
-	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    } else if (s->e_inpara && s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
-    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
+    } else if (!s->e_mvalid && !s->e_inpara) {
 	return;
     }
 
@@ -678,9 +678,9 @@ ecmd_bot_movee(struct mged_state *s)
 }
 
 void
-ecmd_bot_movet(struct mged_state *s)
+ecmd_bot_movet(struct mged_solid_edit *s)
 {
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int v1, v2, v3;
     point_t new_pt = VINIT_ZERO;
     vect_t diff;
@@ -690,8 +690,8 @@ ecmd_bot_movet(struct mged_state *s)
     RT_BOT_CK_MAGIC(bot);
 
     if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
-	bu_vls_printf(s->s_edit->log_str, "No BOT triangle selected\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	bu_vls_printf(s->log_str, "No BOT triangle selected\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -700,27 +700,27 @@ ecmd_bot_movet(struct mged_state *s)
     v2 = bot_verts[1];
     v3 = bot_verts[2];
 
-    if (s->s_edit->e_mvalid) {
-	VMOVE(new_pt, s->s_edit->e_mparam);
-    } else if (s->s_edit->e_inpara == 3) {
+    if (s->e_mvalid) {
+	VMOVE(new_pt, s->e_mparam);
+    } else if (s->e_inpara == 3) {
 	/* must convert to base units */
-	s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
-	s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
-	s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
+	s->e_para[0] *= s->local2base;
+	s->e_para[1] *= s->local2base;
+	s->e_para[2] *= s->local2base;
 
-	if (s->s_edit->mv_context) {
-	    /* apply s->s_edit->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
+	if (s->mv_context) {
+	    /* apply s->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit->e_para);
+	    VMOVE(new_pt, s->e_para);
 	}
-    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
-	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    } else if (s->e_inpara && s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
-    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
+    } else if (!s->e_mvalid && !s->e_inpara) {
 	return;
     }
 
@@ -731,10 +731,10 @@ ecmd_bot_movet(struct mged_state *s)
 }
 
 int
-ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
+ecmd_bot_pickv(struct mged_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int tmp_vert;
     char tmp_msg[256];
     point_t selected_pt;
@@ -743,14 +743,14 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
 
     RT_BOT_CK_MAGIC(bot);
 
-    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+    MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
 
-    tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_gvp->gv_model2view);
+    tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, s->vp->gv_model2view);
     if (tmp_vert < 0) {
-	bu_vls_printf(s->s_edit->log_str, "ECMD_BOT_PICKV: unable to find a vertex!\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	bu_vls_printf(s->log_str, "ECMD_BOT_PICKV: unable to find a vertex!\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -759,10 +759,10 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
     bot_verts[0] = tmp_vert;
     bot_verts[1] = -1;
     bot_verts[2] = -1;
-    VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->dbip->dbi_base2local);
+    VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->base2local);
     sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
-    bu_vls_printf(s->s_edit->log_str, "%s", tmp_msg);
-    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    bu_vls_printf(s->log_str, "%s", tmp_msg);
+    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
@@ -770,10 +770,10 @@ ecmd_bot_pickv(struct mged_state *s, const vect_t mousevec)
 }
 
 int
-ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
+ecmd_bot_picke(struct mged_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int vert1, vert2;
     char tmp_msg[256];
     point_t from_pt, to_pt;
@@ -782,13 +782,13 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
 
     RT_BOT_CK_MAGIC(bot);
 
-    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+    MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
 
-    if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, view_state->vs_gvp->gv_model2view)) {
-	bu_vls_printf(s->s_edit->log_str, "ECMD_BOT_PICKE: unable to find an edge!\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, s->vp->gv_model2view)) {
+	bu_vls_printf(s->log_str, "ECMD_BOT_PICKE: unable to find an edge!\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -797,11 +797,11 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
     bot_verts[0] = vert1;
     bot_verts[1] = vert2;
     bot_verts[2] = -1;
-    VSCALE(from_pt, &bot->vertices[vert1*3], s->dbip->dbi_base2local);
-    VSCALE(to_pt, &bot->vertices[vert2*3], s->dbip->dbi_base2local);
+    VSCALE(from_pt, &bot->vertices[vert1*3], s->base2local);
+    VSCALE(to_pt, &bot->vertices[vert2*3], s->base2local);
     sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
-    bu_vls_printf(s->s_edit->log_str, "%s", tmp_msg);
-    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    bu_vls_printf(s->log_str, "%s", tmp_msg);
+    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
@@ -809,9 +809,9 @@ ecmd_bot_picke(struct mged_state *s, const vect_t mousevec)
 }
 
 void
-ecmd_bot_pickt(struct mged_state *s, const vect_t mousevec)
+ecmd_bot_pickt(struct mged_solid_edit *s, const vect_t mousevec)
 {
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     point_t start_pt, tmp;
     vect_t dir;
     size_t i;
@@ -823,9 +823,9 @@ ecmd_bot_pickt(struct mged_state *s, const vect_t mousevec)
     RT_BOT_CK_MAGIC(bot);
 
     VSET(tmp, mousevec[X], mousevec[Y], 0.0);
-    MAT4X3PNT(start_pt, view_state->vs_gvp->gv_view2model, tmp);
+    MAT4X3PNT(start_pt, s->vp->gv_view2model, tmp);
     VSET(tmp, 0, 0, 1);
-    MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, tmp);
+    MAT4X3VEC(dir, s->vp->gv_view2model, tmp);
 
     bu_vls_strcat(&vls, " {");
     hits = 0;
@@ -874,7 +874,7 @@ ecmd_bot_pickt(struct mged_state *s, const vect_t mousevec)
 }
 
 int
-mged_bot_edit(struct mged_state *s, int edflag)
+mged_bot_edit(struct mged_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -882,20 +882,20 @@ mged_bot_edit(struct mged_state *s, int edflag)
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
-	    return mged_generic_sscale(s, &s->s_edit->es_int);
+	    return mged_generic_sscale(s, &s->es_int);
 	case STRANS:
 	    /* translate solid */
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
-	    mged_generic_strans(s, &s->s_edit->es_int);
+	    mged_generic_strans(s, &s->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
-	    mged_generic_srot(s, &s->s_edit->es_int);
+	    mged_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_BOT_MODE:
 	    ecmd_bot_mode(s);
@@ -935,14 +935,14 @@ mged_bot_edit(struct mged_state *s, int edflag)
 
 int
 mged_bot_edit_xy(
-	struct mged_state *s,
+	struct mged_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->s_edit->es_int;
+    struct rt_db_internal *ip = &s->es_int;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
@@ -969,16 +969,16 @@ mged_bot_edit_xy(
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
-	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(s->s_edit->e_mparam, s->s_edit->e_invmat, temp);
-	    s->s_edit->e_mvalid = 1;
+	    MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
+	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
+	    s->e_mvalid = 1;
 	    break;
 	default:
-	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;

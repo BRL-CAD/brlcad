@@ -28,8 +28,8 @@
 #include "raytrace.h"
 #include "mged.h"
 
-void bspline_init_sedit(struct mged_state *s);
-void sedit_vpick(struct mged_state *s, point_t v_pos);
+void bspline_init_sedit(struct mged_solid_edit *s);
+void sedit_vpick(struct mged_solid_edit *s, point_t v_pos);
 
 #endif  /* EDBSPLINE_H */
 

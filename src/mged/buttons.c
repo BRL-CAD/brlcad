@@ -239,7 +239,7 @@ f_press(ClientData clientData,
 		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
 		if (mptr->menu_func != NULL)
-		    (*(mptr->menu_func))(s, mptr->menu_arg, menu, item, s);
+		    (*(mptr->menu_func))(s->s_edit, mptr->menu_arg, menu, item, s);
 
 		goto next;
 	    }
@@ -846,7 +846,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     movedir = 0;
     edsol = 0;
     edobj = 0;
-    mged_set_edflag(s, -1);
+    mged_set_edflag(s->s_edit, -1);
     illum_gdlp = GED_DISPLAY_LIST_NULL;
     illump = NULL;		/* None selected */
 
@@ -901,7 +901,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
-    mged_set_edflag(s, SROT);
+    mged_set_edflag(s->s_edit, SROT);
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -923,7 +923,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
-    mged_set_edflag(s, STRANS);
+    mged_set_edflag(s->s_edit, STRANS);
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -945,7 +945,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
-    mged_set_edflag(s, SSCALE);
+    mged_set_edflag(s->s_edit, SSCALE);
     mmenu_set(s, MENU_L1, NULL);
     s->s_edit->acc_sc_sol = 1.0;
 

@@ -1034,7 +1034,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		mged_set_edflag(s, SROT);
+		mged_set_edflag(s->s_edit, SROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1077,7 +1077,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		mged_set_edflag(s, SROT);
+		mged_set_edflag(s->s_edit, SROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1120,7 +1120,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		mged_set_edflag(s, SROT);
+		mged_set_edflag(s->s_edit, SROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1163,7 +1163,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_TRAN)
-		mged_set_edflag(s, STRANS);
+		mged_set_edflag(s->s_edit, STRANS);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1205,7 +1205,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_TRAN)
-		mged_set_edflag(s, STRANS);
+		mged_set_edflag(s->s_edit, STRANS);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1242,7 +1242,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_SCALE)
-		mged_set_edflag(s, SSCALE);
+		mged_set_edflag(s->s_edit, SSCALE);
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -2140,7 +2140,7 @@ main(int argc, char *argv[])
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s, 0, 0, 0, s);
+    btn_head_menu(s->s_edit, 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));

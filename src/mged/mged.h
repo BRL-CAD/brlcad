@@ -242,6 +242,10 @@ struct mged_solid_edit {
     point_t curr_e_axes_pos;	/* center of editing xforms */
     point_t e_axes_pos;
 
+    // Conversion factors
+    double base2local;
+    double local2base;
+
     // Trigger for view updating
     int update_views;
 
@@ -531,7 +535,7 @@ void createDListAll(void *, struct display_list *);
 void freeDListsAll(void *, unsigned int dlist, int range);
 
 /* edarb.c */
-int editarb(struct mged_state *s, vect_t pos_model);
+int editarb(struct mged_solid_edit *s, vect_t pos_model);
 /* Ew.  Global. */
 extern int newedge;	/* new edge for arb editing */
 
@@ -611,7 +615,7 @@ void sedit_abs_scale(struct mged_state *s);
 void sedit_accept(struct mged_state *s);
 void sedit_mouse(struct mged_state *s, const vect_t mousevec);
 void sedit_reject(struct mged_state *s);
-void sedit_vpick(struct mged_state *s, point_t v_pos);
+void sedit_vpick(struct mged_solid_edit *s, point_t v_pos);
 void oedit_abs_scale(struct mged_state *s);
 void oedit_accept(struct mged_state *s);
 void oedit_reject(struct mged_state *s);

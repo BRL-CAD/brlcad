@@ -1016,6 +1016,8 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     s->s_edit = mged_solid_edit_create(NULL, &s->tol.tol, view_state->vs_gvp);
     Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
     s->s_edit->mv_context = mged_variables->mv_context;
+    s->s_edit->local2base = s->dbip->dbi_local2base;
+    s->s_edit->base2local = s->dbip->dbi_base2local;
     mged_sedit_clbk_sync(s->s_edit, s);
 
     /* Common part of illumination */
@@ -3248,7 +3250,7 @@ mged_erot(struct mged_state *s,
 	save_pic = s->s_edit->solid_edit_pick;
 
 	if (!SEDIT_ROTATE) {
-	    mged_set_edflag(s, SROT);
+	    mged_set_edflag(s->s_edit, SROT);
 	}
 
 	s->s_edit->e_inpara = 0;
@@ -3650,7 +3652,7 @@ mged_etran(struct mged_state *s,
 
 
 	if (!SEDIT_TRAN) {
-	    mged_set_edflag(s, STRANS);
+	    mged_set_edflag(s->s_edit, STRANS);
 	}
 
 	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
@@ -3798,7 +3800,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	save_pic = s->s_edit->solid_edit_pick;
 
 	if (!SEDIT_SCALE) {
-	    mged_set_edflag(s, SSCALE);
+	    mged_set_edflag(s->s_edit, SSCALE);
 	}
 
 	s->s_edit->es_scale = sfactor;

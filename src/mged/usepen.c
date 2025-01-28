@@ -538,7 +538,7 @@ f_mouse(
 	    }
 
 	case ST_S_VPICK:
-	    sedit_vpick(s, mousevec);
+	    sedit_vpick(s->s_edit, mousevec);
 	    return TCL_OK;
 
 	case ST_O_EDIT:

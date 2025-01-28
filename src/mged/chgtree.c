@@ -263,6 +263,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     s->s_edit = mged_solid_edit_create(NULL, &s->tol.tol, view_state->vs_gvp);
     Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
     s->s_edit->mv_context = mged_variables->mv_context;
+    s->s_edit->local2base = s->dbip->dbi_local2base;
+    s->s_edit->base2local = s->dbip->dbi_base2local;
     mged_sedit_clbk_sync(s->s_edit, s);
 
     /* Patterned after ill_common() ... */

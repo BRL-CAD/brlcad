@@ -46,33 +46,33 @@
 #define MENU_EBM_FSIZE		12081
 #define MENU_EBM_HEIGHT		12082
 
-extern const char * get_file_name(struct mged_state *s, char *str);
+extern const char * get_file_name(struct mged_solid_edit *s, char *str);
 
 static void
-ebm_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+ebm_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->s_edit->edit_menu = arg;
+    s->edit_menu = arg;
     mged_set_edflag(s, -1);
 
     switch (arg) {
 	case MENU_EBM_FNAME:
-	    s->s_edit->edit_flag = ECMD_EBM_FNAME;
+	    s->edit_flag = ECMD_EBM_FNAME;
 	    break;
 	case MENU_EBM_FSIZE:
-	    s->s_edit->edit_flag = ECMD_EBM_FSIZE;
+	    s->edit_flag = ECMD_EBM_FSIZE;
 	    break;
 	case MENU_EBM_HEIGHT:
-	    s->s_edit->edit_flag = ECMD_EBM_HEIGHT;
-	    s->s_edit->solid_edit_scale = 1;
+	    s->edit_flag = ECMD_EBM_HEIGHT;
+	    s->solid_edit_scale = 1;
 	    break;
     }
 
-    sedit(s->s_edit);
+    sedit(s);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    mged_state_clbk_get(&f, &d, s, 0, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    mged_sedit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -91,54 +91,54 @@ mged_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 }
 
 int
-ecmd_ebm_fsize(struct mged_state *s)
+ecmd_ebm_fsize(struct mged_solid_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
-    if (s->s_edit->e_inpara != 2) {
-	bu_vls_printf(s->s_edit->log_str, "ERROR: two arguments needed\n");
-	s->s_edit->e_inpara = 0;
+    if (s->e_inpara != 2) {
+	bu_vls_printf(s->log_str, "ERROR: two arguments needed\n");
+	s->e_inpara = 0;
 	return TCL_ERROR;
     }
 
-    if (s->s_edit->e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit->log_str, "ERROR: X SIZE <= 0\n");
-	s->s_edit->e_inpara = 0;
+    if (s->e_para[0] <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: X SIZE <= 0\n");
+	s->e_inpara = 0;
 	return TCL_ERROR;
-    } else if (s->s_edit->e_para[1] <= 0.0) {
-	bu_vls_printf(s->s_edit->log_str, "ERROR: Y SIZE <= 0\n");
-	s->s_edit->e_inpara = 0;
+    } else if (s->e_para[1] <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: Y SIZE <= 0\n");
+	s->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     struct rt_ebm_internal *ebm =
-	(struct rt_ebm_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ebm_internal *)s->es_int.idb_ptr;
     struct stat stat_buf;
     b_off_t need_size;
 
     RT_EBM_CK_MAGIC(ebm);
 
-    if (s->s_edit->e_inpara == 2) {
+    if (s->e_inpara == 2) {
 	if (stat(ebm->name, &stat_buf)) {
-	    bu_vls_printf(s->s_edit->log_str, "Cannot get status of ebm data source %s", ebm->name);
-	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    bu_vls_printf(s->log_str, "Cannot get status of ebm data source %s", ebm->name);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
 	}
-	need_size = s->s_edit->e_para[0] * s->s_edit->e_para[1] * sizeof(unsigned char);
+	need_size = s->e_para[0] * s->e_para[1] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
-	    bu_vls_printf(s->s_edit->log_str, "File (%s) is too small, set data source name first", ebm->name);
-	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    bu_vls_printf(s->log_str, "File (%s) is too small, set data source name first", ebm->name);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
 	}
-	ebm->xdim = s->s_edit->e_para[0];
-	ebm->ydim = s->s_edit->e_para[1];
-    } else if (s->s_edit->e_inpara > 0) {
-	bu_vls_printf(s->s_edit->log_str, "width and length of data source are required\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	ebm->xdim = s->e_para[0];
+	ebm->ydim = s->e_para[1];
+    } else if (s->e_inpara > 0) {
+	bu_vls_printf(s->log_str, "width and length of data source are required\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -148,10 +148,10 @@ ecmd_ebm_fsize(struct mged_state *s)
 }
 
 int
-ecmd_ebm_fname(struct mged_state *s)
+ecmd_ebm_fname(struct mged_solid_edit *s)
 {
     struct rt_ebm_internal *ebm =
-	(struct rt_ebm_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ebm_internal *)s->es_int.idb_ptr;
     const char *fname;
     struct stat stat_buf;
     b_off_t need_size;
@@ -164,9 +164,9 @@ ecmd_ebm_fname(struct mged_state *s)
     if (fname) {
 	if (stat(fname, &stat_buf)) {
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
-	    bu_vls_trunc(s->s_edit->log_str, 0);
-	    bu_vls_printf(s->s_edit->log_str, "Cannot get status of file %s\n", fname);
-	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    bu_vls_trunc(s->log_str, 0);
+	    bu_vls_printf(s->log_str, "Cannot get status of file %s\n", fname);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
@@ -174,9 +174,9 @@ ecmd_ebm_fname(struct mged_state *s)
 	need_size = ebm->xdim * ebm->ydim * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
-	    bu_vls_trunc(s->s_edit->log_str, 0);
-	    bu_vls_printf(s->s_edit->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
-	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    bu_vls_trunc(s->log_str, 0);
+	    bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
@@ -188,61 +188,61 @@ ecmd_ebm_fname(struct mged_state *s)
 }
 
 int
-ecmd_ebm_height(struct mged_state *s)
+ecmd_ebm_height(struct mged_solid_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
-    if (s->s_edit->e_inpara != 1) {
-	bu_vls_printf(s->s_edit->log_str, "ERROR: only one argument needed\n");
-	s->s_edit->e_inpara = 0;
+    if (s->e_inpara != 1) {
+	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
+	s->e_inpara = 0;
 	return TCL_ERROR;
     }
-    if (s->s_edit->e_para[0] <= 0.0) {
-	bu_vls_printf(s->s_edit->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->s_edit->e_inpara = 0;
+    if (s->e_para[0] <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->e_inpara = 0;
 	return TCL_ERROR;
     }
 
     /* must convert to base units */
-    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
+    s->e_para[0] *= s->local2base;
+    s->e_para[1] *= s->local2base;
+    s->e_para[2] *= s->local2base;
 
     struct rt_ebm_internal *ebm =
-	(struct rt_ebm_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ebm_internal *)s->es_int.idb_ptr;
 
     RT_EBM_CK_MAGIC(ebm);
 
-    if (s->s_edit->e_inpara == 1)
-	ebm->tallness = s->s_edit->e_para[0];
-    else if (s->s_edit->e_inpara > 0) {
-	bu_vls_printf(s->s_edit->log_str, "extrusion depth required\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    if (s->e_inpara == 1)
+	ebm->tallness = s->e_para[0];
+    else if (s->e_inpara > 0) {
+	bu_vls_printf(s->log_str, "extrusion depth required\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
-    } else if (s->s_edit->es_scale > 0.0) {
-	ebm->tallness *= s->s_edit->es_scale;
-	s->s_edit->es_scale = 0.0;
+    } else if (s->es_scale > 0.0) {
+	ebm->tallness *= s->es_scale;
+	s->es_scale = 0.0;
     }
 
     return BRLCAD_OK;
 }
 
 int
-mged_ebm_edit(struct mged_state *s, int edflag)
+mged_ebm_edit(struct mged_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->s_edit->es_int);
+	    return mged_generic_sscale(s, &s->es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->s_edit->es_int);
+	    mged_generic_strans(s, &s->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->s_edit->es_int);
+	    mged_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_EBM_FSIZE:    /* set file size */
 	    if (ecmd_ebm_fsize(s) != BRLCAD_OK)
@@ -264,13 +264,13 @@ mged_ebm_edit(struct mged_state *s, int edflag)
 
 int
 mged_ebm_edit_xy(
-	struct mged_state *s,
+	struct mged_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->s_edit->es_int;
+    struct rt_db_internal *ip = &s->es_int;
     bu_clbk_t f = NULL;
     void *d = NULL;
  
@@ -285,8 +285,8 @@ mged_ebm_edit_xy(
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
-	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;

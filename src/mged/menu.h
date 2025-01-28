@@ -27,6 +27,8 @@
 
 __BEGIN_DECLS
 
+struct mged_solid_edit;
+
 /* Menu structures and defines
  *
  * Each active menu is installed by having a non-null entry in
@@ -36,7 +38,7 @@ __BEGIN_DECLS
  */
 struct menu_item {
     char *menu_string;
-    void (*menu_func)(struct mged_state *, int, int, int, void *);
+    void (*menu_func)(struct mged_solid_edit *, int, int, int, void *);
     int menu_arg;
 };
 
@@ -62,7 +64,7 @@ struct menu_item {
 extern struct menu_item sed_menu[];
 extern struct menu_item oed_menu[];
 
-void btn_head_menu(struct mged_state *s, int i, int menu, int item, void *data);
+void btn_head_menu(struct mged_solid_edit *s, int i, int menu, int item, void *data);
 void chg_l2menu(struct mged_state *s, int i);
 
 extern void mmenu_init(struct mged_state *s);

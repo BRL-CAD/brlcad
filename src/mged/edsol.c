@@ -95,7 +95,7 @@ set_e_axes_pos(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 
     if (MGED_OBJ[ip->idb_type].ft_e_axes_pos) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	(*MGED_OBJ[ip->idb_type].ft_e_axes_pos)(s, ip, &s->tol.tol);
+	(*MGED_OBJ[ip->idb_type].ft_e_axes_pos)(s->s_edit, ip, &s->tol.tol);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
@@ -252,7 +252,7 @@ init_sedit(struct mged_state *s)
 
     // TODO - indicates we need per-primitive init of sedit state
     if (id == ID_BSPLINE) {
-	bspline_init_sedit(s);
+	bspline_init_sedit(s->s_edit);
     }
 
     /* Save aggregate path matrix */
@@ -279,7 +279,7 @@ init_sedit(struct mged_state *s)
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
     chg_l2menu(s, ST_S_EDIT);
-    mged_set_edflag(s, IDLE);
+    mged_set_edflag(s->s_edit, IDLE);
 
     button(s, BE_S_EDIT);	/* Drop into edit menu right away */
     init_sedit_vars(s);
@@ -403,7 +403,7 @@ sedit_menu(struct mged_state *s) {
 	mmenu_set_all(s, MENU_L1, mi);
     }
 
-    mged_set_edflag(s, IDLE);	/* Drop out of previous edit mode */
+    mged_set_edflag(s->s_edit, IDLE);	/* Drop out of previous edit mode */
     s->s_edit->edit_menu = 0;
 }
 
@@ -495,7 +495,7 @@ sedit(struct mged_solid_edit *s)
     const struct rt_db_internal *ip = &s->es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit) {
 	bu_vls_trunc(s->log_str, 0);
-	if ((*MGED_OBJ[ip->idb_type].ft_edit)(MGED_STATE, s->edit_flag)) {
+	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, s->edit_flag)) {
 	    if (bu_vls_strlen(s->log_str)) {
 		mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 		if (f)
@@ -584,7 +584,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
     const struct rt_db_internal *ip = &s->s_edit->es_int;
     if (MGED_OBJ[ip->idb_type].ft_edit_xy) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	(*MGED_OBJ[ip->idb_type].ft_edit_xy)(s, s->s_edit->edit_flag, mousevec);
+	(*MGED_OBJ[ip->idb_type].ft_edit_xy)(s->s_edit, s->s_edit->edit_flag, mousevec);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
@@ -716,7 +716,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	MAT_IDN(s->s_edit->incr_change);
 	new_edit_mats(s);
 
-	update_edit_absolute_tran(s, pos_view);
+	update_edit_absolute_tran(s->s_edit, pos_view);
     } else {
 	Tcl_AppendResult(s->interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
 	return;
@@ -841,7 +841,7 @@ init_oedit_guts(struct mged_state *s)
 
     /* for safety sake */
     s->s_edit->edit_menu = 0;
-    mged_set_edflag(s, -1);
+    mged_set_edflag(s->s_edit, -1);
     MAT_IDN(s->s_edit->e_mat);
 
     if (s->dbip == DBI_NULL || !illump) {
@@ -1091,7 +1091,7 @@ f_eqn(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *a
 	return TCL_ERROR;
     }
 
-    int ret = arb_f_eqn(s, argc, argv);
+    int ret = arb_f_eqn(s->s_edit, argc, argv);
     if (ret != TCL_OK)
 	return ret;
 
@@ -1197,7 +1197,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (accept_flag) {
 	menu_state->ms_flag = 0;
 	movedir = 0;
-	mged_set_edflag(s, -1);
+	mged_set_edflag(s->s_edit, -1);
 	s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&s->s_edit->es_int);
@@ -1310,7 +1310,7 @@ sedit_reject(struct mged_state *s)
 
     menu_state->ms_flag = 0;
     movedir = 0;
-    mged_set_edflag(s, -1);
+    mged_set_edflag(s->s_edit, -1);
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->s_edit->es_int);
@@ -2047,7 +2047,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
-    return arb_edgedir(s, argc, argv);
+    return arb_edgedir(s->s_edit, argc, argv);
 }
 
 /* Permute command - permute the vertex labels of an ARB

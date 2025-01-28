@@ -92,31 +92,31 @@ find_ars_nearest_pnt(
 
 /*ARGSUSED*/
 static void
-ars_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+ars_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->s_edit->edit_flag = arg;
+    s->edit_flag = arg;
 
     switch (arg) {
 	case ECMD_ARS_MOVE_PT:
 	case ECMD_ARS_MOVE_CRV:
 	case ECMD_ARS_MOVE_COL:
-	    s->s_edit->solid_edit_rotate = 0;
-	    s->s_edit->solid_edit_translate = 1;
-	    s->s_edit->solid_edit_scale = 0;
-	    s->s_edit->solid_edit_pick = 0;
+	    s->solid_edit_rotate = 0;
+	    s->solid_edit_translate = 1;
+	    s->solid_edit_scale = 0;
+	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_ARS_PICK:
-	    s->s_edit->solid_edit_rotate = 0;
-	    s->s_edit->solid_edit_translate = 0;
-	    s->s_edit->solid_edit_scale = 0;
-	    s->s_edit->solid_edit_pick = 1;
+	    s->solid_edit_rotate = 0;
+	    s->solid_edit_translate = 0;
+	    s->solid_edit_scale = 0;
+	    s->solid_edit_pick = 1;
 	    break;
 	default:
 	    mged_set_edflag(s, arg);
 	    break;
     };
 
-    sedit(s->s_edit);
+    sedit(s);
 }
 struct menu_item ars_pick_menu[] = {
     { "ARS PICK MENU", NULL, 0 },
@@ -239,10 +239,10 @@ mged_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const st
 }
 
 void
-ecmd_ars_pick(struct mged_state *s)
+ecmd_ars_pick(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     point_t pick_pt;
     vect_t view_dir;
     vect_t z_dir;
@@ -254,50 +254,50 @@ ecmd_ars_pick(struct mged_state *s)
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
-    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
+    s->e_para[0] *= s->local2base;
+    s->e_para[1] *= s->local2base;
+    s->e_para[2] *= s->local2base;
 
-    if (s->s_edit->e_mvalid) {
-	VMOVE(pick_pt, s->s_edit->e_mparam);
-    } else if (s->s_edit->e_inpara == 3) {
-	if (s->s_edit->mv_context) {
-	    /* apply s->s_edit->e_invmat to convert to real model space */
-	    MAT4X3PNT(pick_pt, s->s_edit->e_invmat, s->s_edit->e_para);
+    if (s->e_mvalid) {
+	VMOVE(pick_pt, s->e_mparam);
+    } else if (s->e_inpara == 3) {
+	if (s->mv_context) {
+	    /* apply s->e_invmat to convert to real model space */
+	    MAT4X3PNT(pick_pt, s->e_invmat, s->e_para);
 	} else {
-	    VMOVE(pick_pt, s->s_edit->e_para);
+	    VMOVE(pick_pt, s->e_para);
 	}
-    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
-	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for 'pick point'\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    } else if (s->e_inpara && s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for 'pick point'\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
-    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara)
+    } else if (!s->e_mvalid && !s->e_inpara)
 	return;
 
     /* Get view direction vector */
     VSET(z_dir, 0.0, 0.0, 1.0);
-    MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, z_dir);
+    MAT4X3VEC(view_dir, s->vp->gv_view2model, z_dir);
     find_ars_nearest_pnt(&es_ars_crv, &es_ars_col, ars, pick_pt, view_dir);
     VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
+    VSCALE(selected_pt, es_pt, s->base2local);
     bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 	    es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
     bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-    bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
+    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
     bu_vls_free(&tmp_vls);
 }
 
 void
-ecmd_ars_next_pt(struct mged_state *s)
+ecmd_ars_next_pt(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
     bu_clbk_t f = NULL;
@@ -310,13 +310,13 @@ ecmd_ars_next_pt(struct mged_state *s)
 	if ((size_t)es_ars_col >= ars->pts_per_curve)
 	    es_ars_col = 0;
 	VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-	VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
+	VSCALE(selected_pt, es_pt, s->base2local);
 	bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 		es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -324,10 +324,10 @@ ecmd_ars_next_pt(struct mged_state *s)
 }
 
 void
-ecmd_ars_prev_pt(struct mged_state *s)
+ecmd_ars_prev_pt(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
     bu_clbk_t f = NULL;
@@ -340,13 +340,13 @@ ecmd_ars_prev_pt(struct mged_state *s)
 	if (es_ars_col < 0)
 	    es_ars_col = ars->pts_per_curve - 1;
 	VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-	VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
+	VSCALE(selected_pt, es_pt, s->base2local);
 	bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 		es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -354,10 +354,10 @@ ecmd_ars_prev_pt(struct mged_state *s)
 }
 
 void
-ecmd_ars_next_crv(struct mged_state *s)
+ecmd_ars_next_crv(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
     bu_clbk_t f = NULL;
@@ -370,13 +370,13 @@ ecmd_ars_next_crv(struct mged_state *s)
 	if ((size_t)es_ars_crv >= ars->ncurves)
 	    es_ars_crv = 0;
 	VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-	VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
+	VSCALE(selected_pt, es_pt, s->base2local);
 	bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 		es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -384,10 +384,10 @@ ecmd_ars_next_crv(struct mged_state *s)
 }
 
 void
-ecmd_ars_prev_crv(struct mged_state *s)
+ecmd_ars_prev_crv(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     point_t selected_pt;
     bu_clbk_t f = NULL;
@@ -400,13 +400,13 @@ ecmd_ars_prev_crv(struct mged_state *s)
 	if (es_ars_crv < 0)
 	    es_ars_crv = ars->ncurves - 1;
 	VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-	VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
+	VSCALE(selected_pt, es_pt, s->base2local);
 	bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 		es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-	bu_vls_printf(s->s_edit->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -414,10 +414,10 @@ ecmd_ars_prev_crv(struct mged_state *s)
 }
 
 void
-ecmd_ars_dup_crv(struct mged_state *s)
+ecmd_ars_dup_crv(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     fastf_t **curves;
 
     RT_ARS_CK_MAGIC(ars);
@@ -454,10 +454,10 @@ ecmd_ars_dup_crv(struct mged_state *s)
 }
 
 void
-ecmd_ars_dup_col(struct mged_state *s)
+ecmd_ars_dup_col(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     fastf_t **curves;
 
     RT_ARS_CK_MAGIC(ars);
@@ -497,10 +497,10 @@ ecmd_ars_dup_col(struct mged_state *s)
 }
 
 void
-ecmd_ars_del_crv(struct mged_state *s)
+ecmd_ars_del_crv(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     fastf_t **curves;
     int k;
 
@@ -547,10 +547,10 @@ ecmd_ars_del_crv(struct mged_state *s)
 }
 
 void
-ecmd_ars_del_col(struct mged_state *s)
+ecmd_ars_del_col(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     fastf_t **curves;
 
     RT_ARS_CK_MAGIC(ars);
@@ -604,10 +604,10 @@ ecmd_ars_del_col(struct mged_state *s)
 }
 
 void
-ecmd_ars_move_col(struct mged_state *s)
+ecmd_ars_move_col(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     point_t new_pt = VINIT_ZERO;
     vect_t diff;
     bu_clbk_t f = NULL;
@@ -616,16 +616,16 @@ ecmd_ars_move_col(struct mged_state *s)
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
-    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
+    s->e_para[0] *= s->local2base;
+    s->e_para[1] *= s->local2base;
+    s->e_para[2] *= s->local2base;
 
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
     }
 
-    if (s->s_edit->e_mvalid) {
+    if (s->e_mvalid) {
 	vect_t view_dir;
 	plane_t view_pl;
 	fastf_t dist;
@@ -634,27 +634,27 @@ ecmd_ars_move_col(struct mged_state *s)
 	 * that passes through ARS point being moved
 	 */
 	VSET(view_dir, 0.0, 0.0, 1.0);
-	MAT4X3VEC(view_pl, view_state->vs_gvp->gv_view2model, view_dir);
+	MAT4X3VEC(view_pl, s->vp->gv_view2model, view_dir);
 	VUNITIZE(view_pl);
 	view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
-	/* project s->s_edit->e_mparam onto the plane */
-	dist = DIST_PNT_PLANE(s->s_edit->e_mparam, view_pl);
-	VJOIN1(new_pt, s->s_edit->e_mparam, -dist, view_pl);
-    } else if (s->s_edit->e_inpara == 3) {
-	if (s->s_edit->mv_context) {
-	    /* apply s->s_edit->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
+	/* project s->e_mparam onto the plane */
+	dist = DIST_PNT_PLANE(s->e_mparam, view_pl);
+	VJOIN1(new_pt, s->e_mparam, -dist, view_pl);
+    } else if (s->e_inpara == 3) {
+	if (s->mv_context) {
+	    /* apply s->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit->e_para);
+	    VMOVE(new_pt, s->e_para);
 	}
-    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
-	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    } else if (s->e_inpara && s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
-    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
+    } else if (!s->e_mvalid && !s->e_inpara) {
 	return;
     }
 
@@ -667,10 +667,10 @@ ecmd_ars_move_col(struct mged_state *s)
 }
 
 void
-ecmd_ars_move_crv(struct mged_state *s)
+ecmd_ars_move_crv(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     point_t new_pt = VINIT_ZERO;
     vect_t diff;
     bu_clbk_t f = NULL;
@@ -679,16 +679,16 @@ ecmd_ars_move_crv(struct mged_state *s)
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
-    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
+    s->e_para[0] *= s->local2base;
+    s->e_para[1] *= s->local2base;
+    s->e_para[2] *= s->local2base;
 
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
     }
 
-    if (s->s_edit->e_mvalid) {
+    if (s->e_mvalid) {
 	vect_t view_dir;
 	plane_t view_pl;
 	fastf_t dist;
@@ -697,27 +697,27 @@ ecmd_ars_move_crv(struct mged_state *s)
 	 * that passes through ARS point being moved
 	 */
 	VSET(view_dir, 0.0, 0.0, 1.0);
-	MAT4X3VEC(view_pl, view_state->vs_gvp->gv_view2model, view_dir);
+	MAT4X3VEC(view_pl, s->vp->gv_view2model, view_dir);
 	VUNITIZE(view_pl);
 	view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
-	/* project s->s_edit->e_mparam onto the plane */
-	dist = DIST_PNT_PLANE(s->s_edit->e_mparam, view_pl);
-	VJOIN1(new_pt, s->s_edit->e_mparam, -dist, view_pl);
-    } else if (s->s_edit->e_inpara == 3) {
-	if (s->s_edit->mv_context) {
-	    /* apply s->s_edit->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
+	/* project s->e_mparam onto the plane */
+	dist = DIST_PNT_PLANE(s->e_mparam, view_pl);
+	VJOIN1(new_pt, s->e_mparam, -dist, view_pl);
+    } else if (s->e_inpara == 3) {
+	if (s->mv_context) {
+	    /* apply s->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit->e_para);
+	    VMOVE(new_pt, s->e_para);
 	}
-    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
-	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    } else if (s->e_inpara && s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
-    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
+    } else if (!s->e_mvalid && !s->e_inpara) {
 	return;
     }
 
@@ -730,10 +730,10 @@ ecmd_ars_move_crv(struct mged_state *s)
 }
 
 void
-ecmd_ars_move_pt(struct mged_state *s)
+ecmd_ars_move_pt(struct mged_solid_edit *s)
 {
     struct rt_ars_internal *ars=
-	(struct rt_ars_internal *)s->s_edit->es_int.idb_ptr;
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
     point_t new_pt = VINIT_ZERO;
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -741,16 +741,16 @@ ecmd_ars_move_pt(struct mged_state *s)
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
-    s->s_edit->e_para[0] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[1] *= s->dbip->dbi_local2base;
-    s->s_edit->e_para[2] *= s->dbip->dbi_local2base;
+    s->e_para[0] *= s->local2base;
+    s->e_para[1] *= s->local2base;
+    s->e_para[2] *= s->local2base;
 
     if (es_ars_crv < 0 || es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
     }
 
-    if (s->s_edit->e_mvalid) {
+    if (s->e_mvalid) {
 	vect_t view_dir;
 	plane_t view_pl;
 	fastf_t dist;
@@ -759,27 +759,27 @@ ecmd_ars_move_pt(struct mged_state *s)
 	 * that passes through ARS point being moved
 	 */
 	VSET(view_dir, 0.0, 0.0, 1.0);
-	MAT4X3VEC(view_pl, view_state->vs_gvp->gv_view2model, view_dir);
+	MAT4X3VEC(view_pl, s->vp->gv_view2model, view_dir);
 	VUNITIZE(view_pl);
 	view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
-	/* project s->s_edit->e_mparam onto the plane */
-	dist = DIST_PNT_PLANE(s->s_edit->e_mparam, view_pl);
-	VJOIN1(new_pt, s->s_edit->e_mparam, -dist, view_pl);
-    } else if (s->s_edit->e_inpara == 3) {
-	if (s->s_edit->mv_context) {
-	    /* apply s->s_edit->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->s_edit->e_invmat, s->s_edit->e_para);
+	/* project s->e_mparam onto the plane */
+	dist = DIST_PNT_PLANE(s->e_mparam, view_pl);
+	VJOIN1(new_pt, s->e_mparam, -dist, view_pl);
+    } else if (s->e_inpara == 3) {
+	if (s->mv_context) {
+	    /* apply s->e_invmat to convert to real model space */
+	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
 	} else {
-	    VMOVE(new_pt, s->s_edit->e_para);
+	    VMOVE(new_pt, s->e_para);
 	}
-    } else if (s->s_edit->e_inpara && s->s_edit->e_inpara != 3) {
-	bu_vls_printf(s->s_edit->log_str, "x y z coordinates required for point movement\n");
-	mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    } else if (s->e_inpara && s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
+	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
-    } else if (!s->s_edit->e_mvalid && !s->s_edit->e_inpara) {
+    } else if (!s->e_mvalid && !s->e_inpara) {
 	return;
     }
 
@@ -787,28 +787,28 @@ ecmd_ars_move_pt(struct mged_state *s)
 }
 
 int
-mged_ars_edit(struct mged_state *s, int edflag)
+mged_ars_edit(struct mged_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->s_edit->es_int);
+	    return mged_generic_sscale(s, &s->es_int);
 	case STRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->s_edit->es_int);
+	    mged_generic_strans(s, &s->es_int);
 	    break;
 	case SROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->s_edit->es_int);
+	    mged_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
 	    menu_state->ms_flag = 0;
-	    s->s_edit->edit_flag = ECMD_ARS_PICK;
-	    s->s_edit->solid_edit_rotate = 0;
-	    s->s_edit->solid_edit_translate = 0;
-	    s->s_edit->solid_edit_scale = 0;
-	    s->s_edit->solid_edit_pick = 1;
+	    s->edit_flag = ECMD_ARS_PICK;
+	    s->solid_edit_rotate = 0;
+	    s->solid_edit_translate = 0;
+	    s->solid_edit_scale = 0;
+	    s->solid_edit_pick = 1;
 	    mmenu_set(s, MENU_L1, ars_pick_menu);
 	    break;
 	case ECMD_ARS_EDIT_MENU:
@@ -860,14 +860,14 @@ mged_ars_edit(struct mged_state *s, int edflag)
 
 int
 mged_ars_edit_xy(
-	struct mged_state *s,
+	struct mged_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->s_edit->es_int;
+    struct rt_db_internal *ip = &s->es_int;
     bu_clbk_t f = NULL;
     void *d = NULL;
  
@@ -884,16 +884,16 @@ mged_ars_edit_xy(
 	case ECMD_ARS_MOVE_PT:
 	case ECMD_ARS_MOVE_CRV:
 	case ECMD_ARS_MOVE_COL:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
-	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
-	    MAT4X3PNT(s->s_edit->e_mparam, s->s_edit->e_invmat, temp);
-	    s->s_edit->e_mvalid = 1;
+	    MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
+	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
+	    s->e_mvalid = 1;
 	    break;
 	default:
-	    bu_vls_printf(s->s_edit->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
-	    mged_state_clbk_get(&f, &d, s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
