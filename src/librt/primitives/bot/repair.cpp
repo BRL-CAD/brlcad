@@ -320,7 +320,7 @@ rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_interna
 
     std::unordered_set<size_t> rm_indices;
     for (size_t i = 0; i < BU_PTBL_LEN(rm_face_indices); i++) {
-	int ind = (int)(long)BU_PTBL_GET(rm_face_indices, i);
+	size_t ind = (size_t)(uintptr_t)BU_PTBL_GET(rm_face_indices, i);
 	rm_indices.insert(ind);
     }
 
