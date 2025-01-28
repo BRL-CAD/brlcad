@@ -3618,11 +3618,10 @@ mged_etran(struct mged_state *s,
 	struct rt_db_internal *ip = &s->s_edit->es_int;
 	fastf_t *mat = s->s_edit->e_mat;
 	point_t *pt = &s->s_edit->e_keypoint;
-	const char *strp = s->s_edit->e_keytag;
 	RT_CK_DB_INTERNAL(ip);
 	if (MGED_OBJ[ip->idb_type].ft_keypoint) {
 	    bu_vls_trunc(s->s_edit->log_str, 0);
-	    strp = (*MGED_OBJ[ip->idb_type].ft_keypoint)(pt, strp, mat, ip, &s->tol.tol);
+	    s->s_edit->e_keytag = (*MGED_OBJ[ip->idb_type].ft_keypoint)(pt, s->s_edit->e_keytag, mat, ip, &s->tol.tol);
 	    if (bu_vls_strlen(s->s_edit->log_str)) {
 		Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 		bu_vls_trunc(s->s_edit->log_str, 0);
@@ -3630,7 +3629,7 @@ mged_etran(struct mged_state *s,
 	} else {
 	    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
 	    VSETALL(*pt, 0.0);
-	    strp = "(origin)";
+	    s->s_edit->e_keytag = "(origin)";
 	}
 
 	save_edflag = s->s_edit->edit_flag;
