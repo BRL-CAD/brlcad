@@ -371,7 +371,7 @@ edit_com(struct mged_state *s,
 	}
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     if (flag_R_noresize) {
@@ -575,7 +575,7 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
 
     CHECK_DBI_NULL;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     s->gedp->ged_destroy_vlist_callback = freeDListsAll;
 
@@ -942,7 +942,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	}
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     if (path_piece) {
@@ -1037,7 +1037,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     button(s, BE_S_ILLUMINATE);	/* To ST_S_PICK */
@@ -3212,7 +3212,7 @@ mged_erot(struct mged_state *s,
     int save_edflag;
     mat_t temp1, temp2;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     switch (coords) {
@@ -3254,7 +3254,11 @@ mged_erot(struct mged_state *s,
 	s->s_edit->e_inpara = 0;
 	MAT_COPY(s->s_edit->incr_change, newrot);
 	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
+
+
+	s->s_edit->update_views = s->update_views;
 	sedit(s);
+	s->update_views = s->s_edit->update_views;
 
 	mged_variables->mv_rotate_about = save_rotate_about;
 	s->s_edit->edit_flag = save_edflag;
@@ -3651,7 +3655,9 @@ mged_etran(struct mged_state *s,
 
 	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
 	s->s_edit->e_inpara = 3;
+	s->s_edit->update_views = s->update_views;
 	sedit(s);
+	s->update_views = s->s_edit->update_views;
 	s->s_edit->edit_flag = save_edflag;
 	s->s_edit->solid_edit_rotate = save_rot;
 	s->s_edit->solid_edit_translate = save_tra;
@@ -3663,7 +3669,7 @@ mged_etran(struct mged_state *s,
 	bn_mat_mul2(xlatemat, s->s_edit->model_changes);
 
 	new_edit_mats(s);
-	update_views = 1;
+	s->update_views = 1;
 	dm_set_dirty(DMP, 1);
     }
 
@@ -3815,7 +3821,9 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    s->s_edit->edit_absolute_scale = s->s_edit->acc_sc_sol - 1.0;
 	}
 
+	s->s_edit->update_views = s->update_views;
 	sedit(s);
+	s->update_views = s->s_edit->update_views;
 
 	s->s_edit->edit_flag = save_edflag;
 	s->s_edit->solid_edit_rotate = save_rot;

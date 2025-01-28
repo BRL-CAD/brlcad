@@ -88,7 +88,7 @@ set_e_axes_pos(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
     struct mged_state *s = (struct mged_state *)d;
     int *flag = (int *)id;
     int both = *flag;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     struct rt_db_internal *ip = &s->s_edit->es_int;
@@ -477,7 +477,7 @@ sedit(struct mged_state *ms)
     struct mged_solid_edit *s = ms->s_edit;
 
     sedraw = 0;
-    ++update_views;
+    ++s->update_views;
 
     int had_method = 0;
     const struct rt_db_internal *ip = &s->es_int;
@@ -505,7 +505,7 @@ sedit(struct mged_state *ms)
 
 	case IDLE:
 	    /* do nothing more */
-	    --update_views;
+	    --s->update_views;
 	    break;
 	default:
 	    {
@@ -540,7 +540,7 @@ sedit(struct mged_state *ms)
     if (f)
 	(*f)(0, NULL, d, NULL);
 
-    if (update_views) {
+    if (s->update_views) {
 	dm_set_dirty(ms->mged_curr_dm->dm_dmp, 1);
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -605,7 +605,9 @@ sedit_abs_scale(struct mged_state *s)
     }
 
     s->s_edit->es_scale = s->s_edit->acc_sc_sol / old_acc_sc_sol;
+    s->s_edit->update_views = s->update_views;
     sedit(s);
+    s->update_views = s->s_edit->update_views;
 }
 
 
@@ -1228,8 +1230,11 @@ sedit_accept(struct mged_state *s)
 	return;
     }
 
-    if (sedraw > 0)
+    if (sedraw > 0) {
+	s->s_edit->update_views = s->update_views;
 	sedit(s);
+	s->update_views = s->s_edit->update_views;
+    }
 
     (void)sedit_apply(s, 1);
 }
@@ -1242,8 +1247,11 @@ sedit_reject(struct mged_state *s)
 	return;
     }
 
-    if (sedraw > 0)
+    if (sedraw > 0) {
+	s->s_edit->update_views = s->update_views;
 	sedit(s);
+	s->update_views = s->s_edit->update_views;
+    }
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -1320,7 +1328,9 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	s->s_edit->e_para[ s->s_edit->e_inpara++ ] = argvect[i];
     }
 
+    s->s_edit->update_views = s->update_views;
     sedit(s);
+    s->update_views = s->s_edit->update_views;
 
     if (SEDIT_TRAN) {
 	vect_t diff;
@@ -1749,7 +1759,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     int flag = 1;
     set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */
@@ -1776,8 +1786,11 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
 	return TCL_ERROR;
     }
 
-    if (sedraw > 0)
+    if (sedraw > 0) {
+	s->s_edit->update_views = s->update_views;
 	sedit(s);
+	s->update_views = s->s_edit->update_views;
+    }
 
     init_sedit_vars(s);
     (void)sedit_apply(s, 0);
@@ -1814,7 +1827,7 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     init_oedit_guts(s);
 
     new_edit_mats(s);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */
@@ -1853,7 +1866,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     get_solid_keypoint(s, &s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, s->s_edit->e_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */
@@ -1936,7 +1949,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* draw the updated solid */
     replot_editing_solid(0, NULL, s, NULL);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;

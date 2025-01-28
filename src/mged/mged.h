@@ -171,6 +171,7 @@ struct mged_edit_state {
     struct mged_dm *edit_rate_mt_dm;
     struct mged_dm *edit_rate_vt_dm;
 
+    // TODO - can we eliminate these?
     int e_edclass;		/* type of editing class for this solid */
     int e_type;			/* COMGEOM solid type */
 
@@ -241,6 +242,9 @@ struct mged_solid_edit {
     point_t curr_e_axes_pos;	/* center of editing xforms */
     point_t e_axes_pos;
 
+    // Trigger for view updating
+    int update_views;
+
     /* Flag to trigger some primitive edit opts to use keypoint (and maybe other behaviors?) */
     int mv_context;
 
@@ -301,6 +305,10 @@ struct mged_state {
     /* Editing related */
     struct mged_edit_state edit_state;
     struct mged_solid_edit *s_edit;
+
+    /* Checked by numerous functions to indicate truthfully whether the
+     * views need to be redrawn. */
+    int update_views;
 };
 extern struct mged_state *MGED_STATE;
 
