@@ -172,6 +172,7 @@ set(
   mged.ico
   mged.rc
   mged_dm.h
+  mged_ecmd_scanner.cpp
   mged_impl.h
   mged_wdb.h
   primitives/edarb.h
