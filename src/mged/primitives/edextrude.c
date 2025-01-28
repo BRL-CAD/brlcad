@@ -79,7 +79,7 @@ extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSE
 	    break;
     };
 
-    sedit(s);
+    sedit(s->s_edit);
 }
 struct menu_item extr_menu[] = {
     { "EXTRUSION MENU",	NULL, 0 },

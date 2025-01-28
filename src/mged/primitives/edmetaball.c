@@ -95,7 +95,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *U
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
-	    sedit(s);
+	    sedit(s->s_edit);
 	    break;
 	case MENU_METABALL_PREV_PT:
 	    if (!es_metaball_pnt) {
@@ -111,7 +111,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *U
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
-	    sedit(s);
+	    sedit(s->s_edit);
 	    break;
 	case MENU_METABALL_MOV_PT:
 	    if (!es_metaball_pnt) {
@@ -121,7 +121,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *U
 	    }
 	    s->s_edit->edit_menu = arg;
 	    s->s_edit->edit_flag = ECMD_METABALL_PT_MOV;
-	    sedit(s);
+	    sedit(s->s_edit);
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
 	    if (!es_metaball_pnt) {
@@ -135,7 +135,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *U
 	case MENU_METABALL_DEL_PT:
 	    s->s_edit->edit_menu = arg;
 	    s->s_edit->edit_flag = ECMD_METABALL_PT_DEL;
-	    sedit(s);
+	    sedit(s->s_edit);
 	    break;
 	case MENU_METABALL_ADD_PT:
 	    s->s_edit->edit_menu = arg;

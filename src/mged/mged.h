@@ -369,7 +369,7 @@ extern void moveHinstance(struct mged_state *s, struct directory *cdp, struct di
 extern void moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate);
 extern void quit(struct mged_state *s);
 extern void refresh(struct mged_state *s);
-extern void sedit(struct mged_state *s);
+extern void sedit(struct mged_solid_edit *s);
 extern void setview(struct mged_state *s, double a1, double a2, double a3);
 extern void adcursor(struct mged_state *s);
 extern void get_attached(struct mged_state *s);

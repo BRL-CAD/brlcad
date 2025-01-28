@@ -72,7 +72,7 @@ cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUS
 	    break;
     };
 
-    sedit(s);
+    sedit(s->s_edit);
 }
 
 struct menu_item cline_menu[] = {

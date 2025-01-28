@@ -65,7 +65,7 @@ spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	mged_set_edflag(s, arg);
     }
 
-    sedit(s);
+    sedit(s->s_edit);
 
     bu_clbk_t f = NULL;
     void *d = NULL;

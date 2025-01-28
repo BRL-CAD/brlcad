@@ -100,7 +100,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSE
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
-	    sedit(s);
+	    sedit(s->s_edit);
 	    break;
 	case MENU_PIPE_PREV_PT:
 	    if (!es_pipe_pnt) {
@@ -116,7 +116,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSE
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
-	    sedit(s);
+	    sedit(s->s_edit);
 	    break;
 	case MENU_PIPE_SPLIT:
 	    /* not used */
@@ -177,7 +177,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSE
 	case MENU_PIPE_DEL_PT:
 	    s->s_edit->edit_menu = arg;
 	    mged_set_edflag(s, ECMD_PIPE_PT_DEL);
-	    sedit(s);
+	    sedit(s->s_edit);
 	    break;
     }
 

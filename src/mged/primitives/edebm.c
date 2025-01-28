@@ -67,7 +67,7 @@ ebm_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
 	    break;
     }
 
-    sedit(s);
+    sedit(s->s_edit);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
