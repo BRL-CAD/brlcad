@@ -2321,7 +2321,7 @@ file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
 
 # If we're building on Windows with MSVC, use config_win.h file
 if(MSVC)
-  config_h_append(BRLCAD "#include \"brlcad/config_win.h\"\n")
+  config_h_append(BRLCAD "#include \"config_win.h\"\n")
 endif(MSVC)
 
 # Finalize brlcad_config.h
