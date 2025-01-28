@@ -567,7 +567,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	_pkg_perror(errlog, "pkg_open: could not find a usable WinSock DLL");
-	return (int)PKC_ERROR;
+	return -1;
     }
 
     memset((char *)&saServer, 0, sizeof(saServer));
@@ -580,14 +580,14 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 		     "pkg_permserver(%s, %d): unknown service\n",
 		     service, backlog);
 	    errlog(_pkg_errbuf);
-	    return (int)PKC_ERROR;
+	    return -1;
 	}
 	saServer.sin_port = sp->s_port;
     }
 
     if ((pkg_listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
 	_pkg_perror(errlog, "pkg_permserver: socket");
-	return (int)PKC_ERROR;
+	return -1;
     }
 
     saServer.sin_family = AF_INET;
@@ -597,7 +597,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	_pkg_perror(errlog, "pkg_permserver: bind");
 	closesocket(pkg_listenfd);
 
-	return (int)PKC_ERROR;
+	return -1;
     }
 
     if (backlog > 5)
@@ -607,7 +607,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	_pkg_perror(errlog, "pkg_permserver: listen");
 	closesocket(pkg_listenfd);
 
-	return (int)(PKC_ERROR);
+	return -1;
     }
 
     return pkg_listenfd;
