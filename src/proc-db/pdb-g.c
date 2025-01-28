@@ -240,8 +240,8 @@ write_g(char *filename, pdb_data *pdbp)
 	mk_id_units(db_fp, "PDB Geometry Database", "mm");
     }
 
-    struct wmember wm_hd;
-    BU_LIST_INIT(&wm_hd.l);
+    struct wmember wm_all_atoms;
+    BU_LIST_INIT(&wm_all_atoms.l);
 
     /* iterate through atoms in our PDB structure */
     for (int i = 0; i < pdbp->num_atoms; ++i) {
@@ -257,11 +257,11 @@ write_g(char *filename, pdb_data *pdbp)
         mk_sph(db_fp, sphere_name, center, 1.0); // Default radius = 1.0 mm
 
         /* add it to our combination list */
-        (void)mk_addmember(sphere_name, &wm_hd.l, NULL, WMOP_UNION);
+        (void)mk_addmember(sphere_name, &wm_all_atoms.l, NULL, WMOP_UNION);
     }
 
     /* create a combination for all atoms */
-    mk_lcomb(db_fp, "all_atoms.r", &wm_hd, 1, NULL, NULL, NULL, 0);
+    mk_lcomb(db_fp, "all_atoms.r", &wm_all_atoms, 1, NULL, NULL, NULL, 0);
 
     db_close(db_fp->dbip);
 }
