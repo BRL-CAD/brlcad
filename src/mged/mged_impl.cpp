@@ -55,7 +55,7 @@ mged_state_create(void)
     mged_state_clbk_set(s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING, mged_print_result, s);
     mged_state_clbk_set(s, 0, ECMD_EAXES_POS , 0, GED_CLBK_DURING, set_e_axes_pos, s);
     mged_state_clbk_set(s, 0, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING, replot_editing_solid, s);
-    //mged_state_clbk_set(s, 0, ECMD_VIEW_UPDATE, 0, GED_CLBK_DURING, ecmd_view_update, s);
+    mged_state_clbk_set(s, 0, ECMD_VIEW_UPDATE, 0, GED_CLBK_DURING, mged_view_update, s);
 
     return s;
 }

@@ -1316,6 +1316,16 @@ mged_print_str(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud
     return TCL_OK;
 }
 
+int
+mged_view_update(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
+{
+    struct mged_state *s = (struct mged_state *)d;
+
+    dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
+    (void)Tcl_Eval(s->interp, "active_edit_callback");
+
+    return TCL_OK;
+}
 
 /**
  * Let the user temporarily escape from the editor Format: %

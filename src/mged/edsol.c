@@ -553,12 +553,10 @@ sedit(struct mged_solid_edit *s)
 	(*f)(0, NULL, d, NULL);
 
     if (s->update_views) {
-	dm_set_dirty(MGED_STATE->mged_curr_dm->dm_dmp, 1);
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "active_edit_callback");
-	(void)Tcl_Eval(MGED_STATE->interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	f = NULL; d = NULL;
+	mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_UPDATE, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
     }
 
     s->e_inpara = 0;
