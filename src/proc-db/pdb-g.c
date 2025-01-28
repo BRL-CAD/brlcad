@@ -177,7 +177,11 @@ read_pdb(const char* filename)
 
     while (bu_fgets(line, PDB_LINELEN, fp) != NULL) {
         if (bu_strncasecmp(line, "HEADER", 6) == 0) {
-            header = bu_strdup(line);
+	    struct bu_vls headervls = BU_VLS_INIT_ZERO;
+	    bu_vls_strcpy(&headervls, &line[6]);
+	    bu_vls_trimspace(&headervls);
+	    header = bu_strdup(bu_vls_cstr(&headervls));
+	    bu_vls_free(&headervls);
         } else if (bu_strncasecmp(line, "ATOM", 4) == 0 || bu_strncasecmp(line, "HETATM", 6) == 0) {
             if (num_atoms >= num_alloc) {
 		num_alloc += MORE_ATOMS;
@@ -228,7 +232,12 @@ write_g(char *filename, pdb_data *pdbp)
         return;
     }
 
-    mk_id_units(db_fp, "PDB Geometry Database", "mm");
+    /* use header as database title if it exists */
+    if (pdbp->header) {
+        mk_id_units(db_fp, pdbp->header, "mm");
+    } else {
+	mk_id_units(db_fp, "PDB Geometry Database", "mm");
+    }
 
     struct wmember wm_hd;
     BU_LIST_INIT(&wm_hd.l);
