@@ -506,13 +506,13 @@ main(int argc, char **argv)
     fprintf(stderr, "pixmorph: Reading images and lines file.\n");
 
     if (pix_readpixels(picA, pa_width*pa_height, pa) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %lu pixels from %s\n",
-		(unsigned long)pa_width*pa_height, picAname);
+	fprintf(stderr, "Error reading %zu pixels from %s\n",
+		pa_width*pa_height, picAname);
 	return 1;
     }
     if (pix_readpixels(picB, pa_width*pa_height, pb) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %lu pixels from %s\n",
-		(unsigned long)pa_width*pa_height,  picBname);
+	fprintf(stderr, "Error reading %zu pixels from %s\n",
+		pa_width*pa_height,  picBname);
 	return 1;
     }
     fclose(picA);
