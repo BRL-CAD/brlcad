@@ -512,7 +512,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* serialize */
 	NULL, /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_hlf_keypoint), /* keypoint */
-	NULL, /* mat */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_hlf_mat),
 	NULL  /* perturb */
     },
 
@@ -562,7 +562,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* serialize */
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_tgc_keypoint), /* keypoint */
-	NULL, /* mat */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_tgc_mat),
 	NULL  /* perturb */
     },
 
@@ -662,7 +662,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* serialize */
 	NULL, /* label */
 	NULL, /* keypoint */
-	NULL, /* mat */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_nurb_mat),
 	NULL  /* perturb */
     },
 
@@ -712,7 +712,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* serialize */
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_ell_keypoint), /* keypoint */
-	NULL, /* mat */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_ell_mat),
 	NULL  /* perturb */
     },
 

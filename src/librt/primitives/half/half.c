@@ -609,12 +609,53 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 int
-rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_hlf_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
-    register double f, t;
-    struct rt_half_internal *hip;
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    double tmp_plane[ELEMENTS_PER_PLANE];
     point_t tmp_pt, new_pt;
 
+    struct rt_half_internal *tip = (struct rt_half_internal *)ip->idb_ptr;
+    RT_HALF_CK_MAGIC(tip);
+    struct rt_half_internal *top = (struct rt_half_internal *)rop->idb_ptr;
+    RT_HALF_CK_MAGIC(top);
+
+    HMOVE(tmp_plane, tip->eqn);
+
+    /* To apply modeling transformations, create a temporary normal
+     * vector and point on the plane.
+     */
+    VSCALE(tmp_pt, tmp_plane, tmp_plane[W]);
+
+    /* transform both the point and the vector */
+    MAT4X3VEC(top->eqn, mat, tmp_plane);
+    MAT4X3PNT(new_pt, mat, tmp_pt);
+
+    /* and calculate the new distance */
+    top->eqn[W] = VDOT(top->eqn, new_pt);
+
+    /* Verify that normal has unit length */
+    double f = MAGNITUDE(top->eqn);
+    if (f <= SMALL) {
+	bu_log("rt_hlf_mat:  bad normal, len=%g\n", f);
+	return -1;		/* BAD */
+    }
+    double t = f - 1.0;
+    if (!NEAR_ZERO(t, 0.001)) {
+	/* Restore normal to unit length */
+	f = 1/f;
+	VSCALE(top->eqn, top->eqn, f);
+	top->eqn[W] *= f;
+    }
+
+    return 0;			/* OK */
+}
+
+int
+rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+{
     /* must be double for import and export */
     double tmp_plane[ELEMENTS_PER_PLANE];
 
@@ -630,40 +671,15 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_meth = &OBJ[ID_HALF];
     BU_ALLOC(ip->idb_ptr, struct rt_half_internal);
 
-    hip = (struct rt_half_internal *)ip->idb_ptr;
+    struct rt_half_internal *hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)tmp_plane, ep->ext_buf, ELEMENTS_PER_PLANE);
+    HMOVE(hip->eqn, tmp_plane);
 
-    /* to apply modeling transformations, create a temporary normal
-     * vector and point on the plane
-     */
-    VSCALE(tmp_pt, tmp_plane, tmp_plane[W]);
-
-    /* transform both the point and the vector */
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3VEC(hip->eqn, mat, tmp_plane);
-    MAT4X3PNT(new_pt, mat, tmp_pt);
-
-    /* and calculate the new distance */
-    hip->eqn[W] = VDOT(hip->eqn, new_pt);
-
-    /* Verify that normal has unit length */
-    f = MAGNITUDE(hip->eqn);
-    if (f <= SMALL) {
-	bu_log("rt_hlf_import4:  bad normal, len=%g\n", f);
-	return -1;		/* BAD */
-    }
-    t = f - 1.0;
-    if (!NEAR_ZERO(t, 0.001)) {
-	/* Restore normal to unit length */
-	f = 1/f;
-	VSCALE(hip->eqn, hip->eqn, f);
-	hip->eqn[W] *= f;
-    }
-
-    return 0;			/* OK */
+    /* apply modeling transformations */
+    return rt_hlf_mat(ip, mat, ip);
 }
 
 

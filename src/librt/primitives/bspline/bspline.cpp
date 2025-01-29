@@ -1052,6 +1052,50 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     return 0;
 }
 
+int
+rt_nurb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_nurb_internal *tip = (struct rt_nurb_internal *)ip->idb_ptr;
+    RT_NURB_CK_MAGIC(tip);
+    struct rt_nurb_internal *top = (struct rt_nurb_internal *)rop->idb_ptr;
+    RT_NURB_CK_MAGIC(top);
+
+    if (tip->nsrf != top->nsrf)
+	return BRLCAD_ERROR;
+
+    fastf_t tmp_vec[4];
+    for (int s = 0; s < tip->nsrf; s++) {
+	struct face_g_snurb *srf = tip->srfs[s];
+	struct face_g_snurb *osrf = top->srfs[s];
+	if (srf->s_size[0] != osrf->s_size[0])
+	    return BRLCAD_ERROR;
+	if (srf->s_size[1] != osrf->s_size[1])
+	    return BRLCAD_ERROR;
+
+	for (int i=0; i < srf->s_size[0] * srf->s_size[1]; i++) {
+	    int coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	    if (coords == 3) {
+		VMOVE(tmp_vec, &srf->ctl_points[i*coords]);
+		MAT4X3PNT(&osrf->ctl_points[i*coords], mat, tmp_vec);
+	    } else if (coords == 4) {
+		HMOVE(tmp_vec, &srf->ctl_points[i*coords]);
+		MAT4X4PNT(&osrf->ctl_points[i*coords], mat, tmp_vec);
+	    } else {
+		bu_log("rt_nurb_mat: %d invalid elements per vect\n", coords);
+		return -1;
+	    }
+	}
+
+	/* bound the surface for tolerancing and other bounding box tests */
+	nmg_nurb_s_bound(top->srfs[s], top->srfs[s]->min_pt, top->srfs[s]->max_pt);
+    }
+
+    return BRLCAD_OK;
+}
+
 
 int
 rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
@@ -1061,7 +1105,6 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     int i;
     int s;
     unsigned char *cp;
-    fastf_t tmp_vec[4];
 
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -1158,25 +1201,10 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 
-	if (mat == NULL) mat = bn_mat_identity;
-	for (i=0; i<srf->s_size[0] * srf->s_size[1]; i++) {
-	    if (coords == 3) {
-		VMOVE(tmp_vec, &srf->ctl_points[i*coords]);
-		MAT4X3PNT(&srf->ctl_points[i*coords], mat, tmp_vec);
-	    } else if (coords == 4) {
-		HMOVE(tmp_vec, &srf->ctl_points[i*coords]);
-		MAT4X4PNT(&srf->ctl_points[i*coords], mat, tmp_vec);
-	    } else {
-		bu_log("rt_nurb_internal: %d invalid elements per vect\n", coords);
-		return -1;
-	    }
-	}
-
-	/* bound the surface for tolerancing and other bounding box tests */
-	nmg_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
-			sip->srfs[s]->max_pt);
     }
-    return 0;
+
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_nurb_mat(ip, mat, ip);
 }
 
 
