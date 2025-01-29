@@ -184,7 +184,7 @@ ged_dl_hash(struct display_list *dl)
 }
 
 void
-nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, struct bn_tol *tol, struct bu_list *vlfree)
+nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, const struct bn_tol *tol, struct bu_list *vlfree)
 {
     if (!gedp || !es_eu || !tol)
 	return;
