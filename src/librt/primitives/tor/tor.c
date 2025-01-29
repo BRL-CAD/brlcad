@@ -1723,9 +1723,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->r_h = rec.rh;
 
     /* Apply modeling transformations */
-    rt_tor_mat(ip, mat, ip);
-
-    return 0;
+    return rt_tor_mat(ip, mat, ip);
 }
 
 

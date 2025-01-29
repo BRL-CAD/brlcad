@@ -265,6 +265,38 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_ars_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_ars_internal *tip = (struct rt_ars_internal *)ip->idb_ptr;
+    RT_ARS_CK_MAGIC(tip);
+    struct rt_ars_internal *top = (struct rt_ars_internal *)rop->idb_ptr;
+    RT_ARS_CK_MAGIC(top);
+
+    if (tip->ncurves != top->ncurves)
+	return BRLCAD_ERROR;
+    if (tip->pts_per_curve != top->pts_per_curve)
+	return BRLCAD_ERROR;
+
+    fastf_t *fp, *ofp;
+    for (size_t i = 0; i < tip->ncurves; i++) {
+	fp = tip->curves[i];
+	ofp = top->curves[i];
+	for (size_t j = 0; j < tip->pts_per_curve; j++) {
+	    vect_t tmp_pnt;
+	    VMOVE(tmp_pnt, fp);
+	    MAT4X3PNT(ofp, mat, tmp_pnt);
+	    fp += ELEMENTS_PER_POINT;
+	    ofp += ELEMENTS_PER_POINT;
+	}
+	VMOVE(fp, top->curves[i]);	/* duplicate first point */
+    }
+
+   return BRLCAD_OK;
+}
 
 /**
  * Read all the curves in as a two dimensional array.  The caller is
@@ -314,13 +346,15 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	fp = ari->curves[i];
 	for (j = 0; j < ari->pts_per_curve; j++) {
 	    bu_cv_ntohd((unsigned char *)tmp_pnt, cp, ELEMENTS_PER_POINT);
-	    MAT4X3PNT(fp, mat, tmp_pnt);
+	    VMOVE(fp, tmp_pnt);
 	    cp += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
 	    fp += ELEMENTS_PER_POINT;
 	}
 	VMOVE(fp, ari->curves[i]);	/* duplicate first point */
     }
-    return 0;
+
+    /* Apply modeling transformations */
+    return rt_ars_mat(ip, mat, ip);
 }
 
 

@@ -1398,6 +1398,26 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_arb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_arb_internal *tip = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(tip);
+    struct rt_arb_internal *top = (struct rt_arb_internal *)rop->idb_ptr;
+    RT_ARB_CK_MAGIC(top);
+
+    point_t pt[8];
+    for (int i = 0; i < 8; i++)
+	VMOVE(pt[i], tip->pt[i]);
+    for (int i = 0; i < 8; i++)
+	MAT4X3PNT(top->pt[i], mat, pt[i]);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an arb from the db5 format and convert to the internal
@@ -1430,10 +1450,11 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 8*3);
     if (mat == NULL) mat = bn_mat_identity;
-    for (i = 0; i < 8; i++) {
-	MAT4X3PNT(aip->pt[i], mat, &vec[i*3]);
-    }
-    return 0;	/* OK */
+    for (i = 0; i < 8; i++)
+	VMOVE(aip->pt[i], &vec[i*3]);
+
+    /* Apply modeling transformations */
+    return rt_arb_mat(ip, mat, ip);
 }
 
 
