@@ -1630,6 +1630,44 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    struct rt_tor_internal *top = (struct rt_tor_internal *)rop->idb_ptr;
+    RT_TOR_CK_MAGIC(top);
+
+    double r_a, r_h;
+    vect_t v, h;
+    VMOVE(v, tip->v);
+    VMOVE(h, tip->h);
+    r_a = tip->r_a;
+    r_h = tip->r_h;
+
+    /* Apply modeling transformations */
+    MAT4X3PNT(top->v, mat, v);
+    MAT4X3VEC(top->h, mat, h);
+    VUNITIZE(top->h);			/* just to be sure */
+
+    top->r_a = r_a / mat[15];
+    top->r_h = r_h / mat[15];
+
+    /* Prepare the extra information */
+    top->r_b = top->r_a;
+
+    /* Calculate two mutually perpendicular vectors, perpendicular to N */
+    bn_vec_ortho(top->a, top->h);	 /* a has unit length */
+    VCROSS(top->b, top->h, top->a); /* |A| = |H| = 1, so |B|=1 */
+
+    VSCALE(top->a, top->a, top->r_a);
+    VSCALE(top->b, top->b, top->r_b);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Taken from the database record:
@@ -1678,23 +1716,15 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     bu_cv_ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);
 
+    /* Set up initial data */
+    VMOVE(tip->v, rec.v);
+    VMOVE(tip->h, rec.h);
+    tip->r_a = rec.ra;
+    tip->r_h = rec.rh;
+
     /* Apply modeling transformations */
-    MAT4X3PNT(tip->v, mat, rec.v);
-    MAT4X3VEC(tip->h, mat, rec.h);
-    VUNITIZE(tip->h);			/* just to be sure */
+    rt_tor_mat(ip, mat, ip);
 
-    tip->r_a = rec.ra / mat[15];
-    tip->r_h = rec.rh / mat[15];
-
-    /* Prepare the extra information */
-    tip->r_b = tip->r_a;
-
-    /* Calculate two mutually perpendicular vectors, perpendicular to N */
-    bn_vec_ortho(tip->a, tip->h);	/* a has unit length */
-    VCROSS(tip->b, tip->h, tip->a);	/* |A| = |H| = 1, so |B|=1 */
-
-    VSCALE(tip->a, tip->a, tip->r_a);
-    VSCALE(tip->b, tip->b, tip->r_b);
     return 0;
 }
 

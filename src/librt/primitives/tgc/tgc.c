@@ -1674,6 +1674,35 @@ rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_tgc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+    struct rt_tgc_internal *top = (struct rt_tgc_internal *)rop->idb_ptr;
+    RT_TGC_CK_MAGIC(top);
+
+    vect_t v, h, a, b, c, d;
+    VMOVE(v, tip->v);
+    VMOVE(h, tip->h);
+    VMOVE(a, tip->a);
+    VMOVE(b, tip->b);
+    VMOVE(c, tip->c);
+    VMOVE(d, tip->d);
+
+    MAT4X3PNT(top->v, mat, v);
+    MAT4X3VEC(top->h, mat, h);
+    MAT4X3VEC(top->a, mat, a);
+    MAT4X3VEC(top->b, mat, b);
+    MAT4X3VEC(top->c, mat, c);
+    MAT4X3VEC(top->d, mat, d);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import a TGC from the database format to the internal format.
@@ -1704,14 +1733,16 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*6);
 
+    VMOVE(tip->v, &vec[0*ELEMENTS_PER_VECT]);
+    VMOVE(tip->h, &vec[1*ELEMENTS_PER_VECT]);
+    VMOVE(tip->a, &vec[2*ELEMENTS_PER_VECT]);
+    VMOVE(tip->b, &vec[3*ELEMENTS_PER_VECT]);
+    VMOVE(tip->c, &vec[4*ELEMENTS_PER_VECT]);
+    VMOVE(tip->d, &vec[5*ELEMENTS_PER_VECT]);
+
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(tip->v, mat, &vec[0*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->h, mat, &vec[1*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->a, mat, &vec[2*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->b, mat, &vec[3*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->c, mat, &vec[4*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->d, mat, &vec[5*ELEMENTS_PER_VECT]);
+    rt_tgc_mat(ip, mat, ip);
 
     return 0;		/* OK */
 }

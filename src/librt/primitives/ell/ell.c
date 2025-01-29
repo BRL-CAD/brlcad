@@ -1342,6 +1342,30 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_ell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_ell_internal *tip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(tip);
+    struct rt_ell_internal *top = (struct rt_ell_internal *)rop->idb_ptr;
+    RT_ELL_CK_MAGIC(top);
+
+    vect_t v, a, b, c;
+    VMOVE(v, tip->v);
+    VMOVE(a, tip->a);
+    VMOVE(b, tip->b);
+    VMOVE(c, tip->c);
+
+    MAT4X3PNT(top->v, mat, v);
+    MAT4X3VEC(top->a, mat, a);
+    MAT4X3VEC(top->b, mat, b);
+    MAT4X3VEC(top->c, mat, c);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an ellipsoid/sphere from the database format to the internal
@@ -1372,14 +1396,14 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4);
 
+    VMOVE(eip->v, &vec[0*ELEMENTS_PER_VECT]);
+    VMOVE(eip->a, &vec[1*ELEMENTS_PER_VECT]);
+    VMOVE(eip->b, &vec[2*ELEMENTS_PER_VECT]);
+    VMOVE(eip->c, &vec[3*ELEMENTS_PER_VECT]);
+
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(eip->v, mat, &vec[0*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->a, mat, &vec[1*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->b, mat, &vec[2*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->c, mat, &vec[3*ELEMENTS_PER_VECT]);
-
-    return 0;		/* OK */
+    return rt_ell_mat(ip, mat, ip);
 }
 
 
