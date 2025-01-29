@@ -39,19 +39,27 @@
 #include "./edbspline.h"
 
 #define ECMD_VTRANS		9017	/* vertex translate */
+#define ECMD_SPLINE_VPICK       9018	/* vertex pick */
 
 static int spl_surfno;	/* What surf & ctl pt to edit on spline */
 static int spl_ui;
 static int spl_vi;
 
+//static point_t v_pos;  // vpick point.  TODO - needs to be in a primitive type specific struct
+
 /*ARGSUSED*/
 static void
 spline_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    /* XXX Why wasn't this done by setting edit_flag = ECMD_SPLINE_VPICK? */
+    /* XXX Why were we doing VPICK with chg_state?? */
+    //chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
     if (arg < 0) {
 	/* Enter picking state */
-	chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
+	s->edit_flag = ECMD_SPLINE_VPICK;
+	s->solid_edit_rotate = 0;
+	s->solid_edit_translate = 0;
+	s->solid_edit_scale = 0;
+	s->solid_edit_pick = 1;
 	return;
     }
     /* For example, this will set edit_flag = ECMD_VTRANS */
@@ -179,8 +187,9 @@ bspline_init_sedit(struct mged_solid_edit *s)
 }
 
 void
-sedit_vpick(struct mged_solid_edit *s, point_t v_pos)
+sedit_vpick(struct mged_solid_edit *s)
 {
+#if 0
     point_t m_pos;
     int surfno, u, v;
 
@@ -195,8 +204,11 @@ sedit_vpick(struct mged_solid_edit *s, point_t v_pos)
 	s->e_keytag = (*MGED_OBJ[ID_BSPLINE].ft_keypoint)(&s->e_keypoint, s->e_keytag, s->e_mat, &s->es_int, s->tol);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
+#endif
 
     /* draw arrow, etc. */
+    bu_clbk_t f = NULL;
+    void *d = NULL;
     int vs_flag = 1;
     mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING);
     if (f)
@@ -337,6 +349,9 @@ mged_bspline_edit(struct mged_solid_edit *s, int edflag)
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->es_int);
 	    break;
+	case ECMD_SPLINE_VPICK:
+	    sedit_vpick(s);
+	    break;
 	case ECMD_VTRANS:
 	    // I think this is bspline only??
 	    ecmd_vtrans(s);
@@ -358,7 +373,7 @@ mged_bspline_edit_xy(
     struct rt_db_internal *ip = &s->es_int;
     bu_clbk_t f = NULL;
     void *d = NULL;
- 
+
     switch (edflag) {
 	case SSCALE:
 	case PSCALE:

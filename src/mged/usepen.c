@@ -537,9 +537,12 @@ f_mouse(
 		return TCL_OK;
 	    }
 
+#if 0
+	    // TODO - this needs to be a method call, not a public function
 	case ST_S_VPICK:
 	    sedit_vpick(s->s_edit, mousevec);
 	    return TCL_OK;
+#endif
 
 	case ST_O_EDIT:
 	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')

@@ -29,7 +29,7 @@
 #include "mged.h"
 
 void bspline_init_sedit(struct mged_solid_edit *s);
-void sedit_vpick(struct mged_solid_edit *s, point_t v_pos);
+void sedit_vpick(struct mged_solid_edit *s);
 
 #endif  /* EDBSPLINE_H */
 

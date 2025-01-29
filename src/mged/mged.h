@@ -622,7 +622,6 @@ void sedit_abs_scale(struct mged_state *s);
 void sedit_accept(struct mged_state *s);
 void sedit_mouse(struct mged_state *s, const vect_t mousevec);
 void sedit_reject(struct mged_state *s);
-void sedit_vpick(struct mged_solid_edit *s, point_t v_pos);
 void oedit_abs_scale(struct mged_state *s);
 void oedit_accept(struct mged_state *s);
 void oedit_reject(struct mged_state *s);
