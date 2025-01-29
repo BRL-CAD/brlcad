@@ -259,15 +259,6 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     db_append_full_path(&both, &rhs);
 
 
-    /* Set up solid edit state */
-    s->s_edit = mged_solid_edit_create(NULL, &s->tol.tol, view_state->vs_gvp);
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
-    s->s_edit->mv_context = mged_variables->mv_context;
-    s->s_edit->local2base = s->dbip->dbi_local2base;
-    s->s_edit->base2local = s->dbip->dbi_base2local;
-    s->s_edit->vlfree = &rt_vlfree;
-    mged_sedit_clbk_sync(s->s_edit, s);
-
     /* Patterned after ill_common() ... */
     illum_gdlp = gdlp;
     illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
@@ -281,7 +272,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Find the one solid, set s_iflag UP, point illump at it */
     illump = find_solid_with_path(s, &both);
-    if (!illump) {
+    if (!illump || !illump->s_u_data) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
 	db_free_full_path(&both);
@@ -292,6 +283,17 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
     (void)chg_state(s, ST_O_PICK, ST_O_PATH, "internal change of state");
+
+
+    /* Set up solid edit state */
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    s->s_edit = mged_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+    if (s->s_edit) {
+	Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+	s->s_edit->mv_context = mged_variables->mv_context;
+	s->s_edit->vlfree = &rt_vlfree;
+	mged_sedit_clbk_sync(s->s_edit, s);
+    }
 
     /* Select the matrix */
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;

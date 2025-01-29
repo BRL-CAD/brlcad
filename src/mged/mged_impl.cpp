@@ -83,7 +83,7 @@ mged_state_destroy(struct mged_state *s)
 }
 
 struct mged_solid_edit *
-mged_solid_edit_create(struct rt_db_internal *UNUSED(ip), struct bn_tol *tol, struct bview *v)
+mged_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bview *v)
 {
     struct mged_solid_edit *s;
     BU_GET(s, struct mged_solid_edit);
@@ -92,6 +92,8 @@ mged_solid_edit_create(struct rt_db_internal *UNUSED(ip), struct bn_tol *tol, st
     s->tol = tol;
     s->vp = v;
 
+    RT_DB_INTERNAL_INIT(&s->es_int);
+
     MAT_IDN(s->model_changes);
     MAT_IDN(s->acc_rot_sol);
     s->solid_edit_rotate = 0;
@@ -99,9 +101,37 @@ mged_solid_edit_create(struct rt_db_internal *UNUSED(ip), struct bn_tol *tol, st
     s->solid_edit_scale = 0;
     s->solid_edit_pick = 0;
     s->e_inpara = 0;
+    s->edit_menu = 0;
 
     BU_GET(s->log_str, struct bu_vls);
     bu_vls_init(s->log_str);
+
+    if (!dfp || !dbip)
+	return s;
+
+    s->local2base = dbip->dbi_local2base;
+    s->base2local = dbip->dbi_base2local;
+
+    if (rt_db_get_internal(&s->es_int, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0) {
+	mged_solid_edit_destroy(s);
+	return NULL;                         /* FAIL */
+    }
+    RT_CK_DB_INTERNAL(&s->es_int);
+
+    // TODO - prim specific data creation via functab
+    if (s->es_int.idb_type == ID_BSPLINE) {
+	//bspline_init_sedit(s);
+    }
+
+    /* Save aggregate path matrix */
+    (void)db_path_to_mat(dbip, dfp, s->e_mat, dfp->fp_len-1, &rt_uniresource);
+
+    /* get the inverse matrix */
+    bn_mat_inv(s->e_invmat, s->e_mat);
+
+    /* Establish initial keypoint */
+    s->e_keytag = "";
+    get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, &s->es_int, s->e_mat);
 
     return s;
 }
@@ -111,6 +141,8 @@ mged_solid_edit_destroy(struct mged_solid_edit *s)
 {
     if (!s)
 	return;
+
+    rt_db_free_internal(&s->es_int);
 
     bu_vls_free(s->log_str);
     BU_PUT(s->log_str, struct bu_vls);

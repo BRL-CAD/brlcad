@@ -938,7 +938,15 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
 	    /* Check details, Init menu, set state=ST_S_EDIT */
-	    init_sedit(s);
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+	    s->s_edit = mged_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+	    if (s->s_edit) {
+		Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+		s->s_edit->mv_context = mged_variables->mv_context;
+		s->s_edit->vlfree = &rt_vlfree;
+		mged_sedit_clbk_sync(s->s_edit, s);
+		init_sedit(s);
+	    }
 	}
     }
 
@@ -1013,13 +1021,14 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Set up solid edit state */
-    s->s_edit = mged_solid_edit_create(NULL, &s->tol.tol, view_state->vs_gvp);
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
-    s->s_edit->mv_context = mged_variables->mv_context;
-    s->s_edit->local2base = s->dbip->dbi_local2base;
-    s->s_edit->base2local = s->dbip->dbi_base2local;
-    s->s_edit->vlfree = &rt_vlfree;
-    mged_sedit_clbk_sync(s->s_edit, s);
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    s->s_edit = mged_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+    if (s->s_edit) {
+	Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+	s->s_edit->mv_context = mged_variables->mv_context;
+	s->s_edit->vlfree = &rt_vlfree;
+	mged_sedit_clbk_sync(s->s_edit, s);
+    }
 
     /* Common part of illumination */
     gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);

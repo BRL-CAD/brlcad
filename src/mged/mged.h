@@ -328,9 +328,11 @@ extern void
 mged_state_destroy(struct mged_state *s);
 
 extern struct mged_solid_edit *
-mged_solid_edit_create(struct rt_db_internal *ip, struct bn_tol *, struct bview *v);
+mged_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
 extern void
 mged_solid_edit_destroy(struct mged_solid_edit *ssed);
+
+void get_solid_keypoint(struct mged_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
 
 /**
  * Definitions.
