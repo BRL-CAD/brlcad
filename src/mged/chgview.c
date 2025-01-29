@@ -1018,6 +1018,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     s->s_edit->mv_context = mged_variables->mv_context;
     s->s_edit->local2base = s->dbip->dbi_local2base;
     s->s_edit->base2local = s->dbip->dbi_base2local;
+    s->s_edit->vlfree = &rt_vlfree;
     mged_sedit_clbk_sync(s->s_edit, s);
 
     /* Common part of illumination */

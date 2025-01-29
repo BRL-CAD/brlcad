@@ -249,6 +249,9 @@ struct mged_solid_edit {
     // Trigger for view updating
     int update_views;
 
+    // vlfree list
+    struct bu_list *vlfree;
+
     /* Flag to trigger some primitive edit opts to use keypoint (and maybe other behaviors?) */
     int mv_context;
 
