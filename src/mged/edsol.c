@@ -368,6 +368,10 @@ replot_editing_solid(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNU
 }
 
 
+/* TODO - this needs dbip because the ft_xform routines are calling ft_export and ft_import
+ * under the hood.  Could we get away with a null dbip?  We shouldn't be writing intermediate
+ * solids to the disk, unless this routine is also responsible for writing out geometry.
+ */ 
 void
 transform_editing_solid(
     struct mged_state *s,
