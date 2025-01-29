@@ -205,10 +205,9 @@ ecmd_dsp_fname(struct mged_solid_edit *s)
     const char *fname;
     struct stat stat_buf;
     b_off_t need_size;
-    struct bu_vls message = BU_VLS_INIT_ZERO;
     bu_clbk_t f = NULL;
     void *d = NULL;
- 
+
     RT_DSP_CK_MAGIC(dsp);
 
     /* Pop-up the Tk file browser */
@@ -216,9 +215,7 @@ ecmd_dsp_fname(struct mged_solid_edit *s)
     if (! fname) return BRLCAD_OK;
 
     if (stat(fname, &stat_buf)) {
-	bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-	Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
-	bu_vls_free(&message);
+	bu_vls_printf(s->log_str, "Cannot get status of file %s\n", fname);
 	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
@@ -227,9 +224,7 @@ ecmd_dsp_fname(struct mged_solid_edit *s)
 
     need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
     if (stat_buf.st_size < need_size) {
-	bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-	Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
-	bu_vls_free(&message);
+	bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
 	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
