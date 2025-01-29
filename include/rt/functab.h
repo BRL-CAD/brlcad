@@ -288,6 +288,10 @@ struct rt_functab {
     const char *(*ft_keypoint)(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define RTFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
+    /* Apply matrix to primitive parameters */
+    int (*ft_mat)(struct rt_db_internal *, const mat_t, const struct rt_db_internal *);
+#define RTFUNCTAB_FUNC_MAT_CAST(_func) ((int (*)(struct rt_db_internal *, const mat_t, const struct rt_db_internal *))((void (*)(void))_func))
+
     /** perturb geometry parameters of primitive.  NOTE:  the oip primitive
      * returned is NOT guaranteed to be the same type as that of ip - for example,
      * ARB8 perturbations will return an ARBN primitive. */
