@@ -742,14 +742,9 @@ get_obj_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
  * !0 failure
  */
 static int
-ebm_get_data(struct rt_ebm_internal *eip, const mat_t mat, const struct db_i *dbip)
+ebm_get_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 {
-    mat_t tmp;
     char *p;
-
-    /* Apply Modelling transform */
-    bn_mat_mul(tmp, mat, eip->mat);
-    MAT_COPY(eip->mat, tmp);
 
     p = eip->name;
 
@@ -941,6 +936,25 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
+int
+rt_ebm_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_ebm_internal *tip = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(tip);
+    struct rt_ebm_internal *top = (struct rt_ebm_internal *)rop->idb_ptr;
+    RT_EBM_CK_MAGIC(top);
+
+    /* Apply transform */
+    mat_t tmp;
+    bn_mat_mul(tmp, mat, tip->mat);
+    MAT_COPY(top->mat, tmp);
+
+    return BRLCAD_OK;
+}
+
 /**
  * Read in the information from the string solid record.  Then, as a
  * service to the application, read in the bitmap and set up some of
@@ -970,7 +984,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_strcpy(&str, (const char *)ep->ext_buf);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
 	bu_vls_free(&str);
-	bu_free((char *)eip, "rt_ebm_import4: eip");
+	bu_free((char *)eip, "rt_ebm_import5: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -2;
@@ -982,7 +996,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	eip->xdim < 1 || eip->ydim < 1 || eip->mat[15] <= 0.0 ||
 	(eip->datasrc != RT_EBM_SRC_FILE && eip->datasrc != RT_EBM_SRC_OBJ)) {
 	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse, (char *)eip);
-	bu_free((char *)eip, "rt_ebm_import4: eip");
+	bu_free((char *)eip, "rt_ebm_import5: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -1;
@@ -990,10 +1004,11 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Apply modelling transforms and fetch actual data */
     if (mat == NULL) mat = bn_mat_identity;
-    if (ebm_get_data(eip, mat, dbip) != 0) {
-	bu_log("rt_ebm_import4(%d) '%s' %s\n", __LINE__,
+    rt_ebm_mat(ip, mat, ip);
+    if (ebm_get_data(eip, dbip) != 0) {
+	bu_log("rt_ebm_import5(%d) '%s' %s\n", __LINE__,
 		eip->name, "unable to load bitmap data");
-	bu_free((char *)eip, "rt_ebm_import4: eip");
+	bu_free((char *)eip, "rt_ebm_import5: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -1;

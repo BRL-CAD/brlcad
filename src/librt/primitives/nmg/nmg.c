@@ -1606,6 +1606,21 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     return 0;			/* OK */
 }
 
+int
+rt_nmg_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct model *tip = (struct model *)ip->idb_ptr;
+    NMG_CK_MODEL(tip);
+    struct model *top = (struct model *)rop->idb_ptr;
+    NMG_CK_MODEL(top);
+
+    // TODO - nmg is going to be a pain.  Lots of cases - see nmg_idisk function
+    return BRLCAD_ERROR;
+}
+
 
 int
 rt_nmg_import5(struct rt_db_internal *ip,
