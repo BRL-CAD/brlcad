@@ -64,9 +64,6 @@ metaball_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), vo
 {
     struct wdb_metaball_pnt *next, *prev;
 
-    if (s->dbip == DBI_NULL)
-	return;
-
     mged_set_edflag(s, -1);
 
     switch (arg) {

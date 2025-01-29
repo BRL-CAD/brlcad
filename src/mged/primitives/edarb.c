@@ -892,9 +892,13 @@ void
 ecmd_arb_main_menu(struct mged_solid_edit *s)
 {
     /* put up control (main) menu for GENARB8s */
-    menu_state->ms_flag = 0;
     mged_set_edflag(s, IDLE);
-    mmenu_set(s, MENU_L1, cntrl_menu);
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
+    if (!f)
+	return;
+    (*f)(0, NULL, d, cntrl_menu);
 }
 
 int
@@ -905,17 +909,25 @@ ecmd_arb_specific_menu(struct mged_solid_edit *s)
     void *d = NULL;
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
-    menu_state->ms_flag = 0;
     mged_set_edflag(s, IDLE);
     switch (s->edit_menu) {
 	case MENU_ARB_MV_EDGE:
-	    mmenu_set(s, MENU_L1, which_menu[arb_type-4]);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
+	    if (!f)
+		return BRLCAD_ERROR;
+	    (*f)(0, NULL, d, which_menu[arb_type-4]);
 	    return BRLCAD_OK;
 	case MENU_ARB_MV_FACE:
-	    mmenu_set(s, MENU_L1, which_menu[arb_type+1]);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
+	    if (!f)
+		return BRLCAD_ERROR;
+	    (*f)(0, NULL, d, which_menu[arb_type+1]);
 	    return BRLCAD_OK;
 	case MENU_ARB_ROT_FACE:
-	    mmenu_set(s, MENU_L1, which_menu[arb_type+6]);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
+	    if (!f)
+		return BRLCAD_ERROR;
+	    (*f)(0, NULL, d, which_menu[arb_type+6]);
 	    return BRLCAD_OK;
 	default:
 	    bu_vls_printf(s->log_str, "Bad menu item.\n");
@@ -1015,6 +1027,9 @@ get_rotation_vertex(struct mged_solid_edit *s)
 void
 ecmd_arb_setup_rotface(struct mged_solid_edit *s)
 {
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
@@ -1042,14 +1057,18 @@ ecmd_arb_setup_rotface(struct mged_solid_edit *s)
     s->solid_edit_translate = 0;
     s->solid_edit_scale = 0;
     s->solid_edit_pick = 0;
-    view_state->vs_flag = 1;	/* draw arrow, etc. */
 
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-    int flag = 1;
+    /* draw arrow, etc. */
+    int vs_flag = 1;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &vs_flag);
+
+    /* eaxes */
+    int e_flag = 1;
     mged_sedit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
     if (f)
-	(*f)(0, NULL, d, &flag);
+	(*f)(0, NULL, d, &e_flag);
 }
 
 int

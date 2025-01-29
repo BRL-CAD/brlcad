@@ -127,6 +127,8 @@ main(int argc, const char *argv[])
     ofile << "#define ECMD_EAXES_POS            30\n";
     ofile << "#define ECMD_REPLOT_EDITING_SOLID 40\n";
     ofile << "#define ECMD_VIEW_UPDATE          50\n";
+    ofile << "#define ECMD_VIEW_SET_FLAG        60\n";
+    ofile << "#define ECMD_MENU_SET             70\n";
     ofile << "\n";
 
     std::set<std::pair<std::string, long>>::iterator m_it;

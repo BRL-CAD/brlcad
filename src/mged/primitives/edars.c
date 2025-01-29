@@ -789,6 +789,9 @@ ecmd_ars_move_pt(struct mged_solid_edit *s)
 int
 mged_ars_edit(struct mged_solid_edit *s, int edflag)
 {
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
     switch (edflag) {
 	case SSCALE:
 	    /* scale the solid uniformly about its vertex point */
@@ -803,19 +806,23 @@ mged_ars_edit(struct mged_solid_edit *s, int edflag)
 	    break;
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
-	    menu_state->ms_flag = 0;
 	    s->edit_flag = ECMD_ARS_PICK;
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 1;
-	    mmenu_set(s, MENU_L1, ars_pick_menu);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
+	    if (!f)
+		return 0;
+	    (*f)(0, NULL, d, ars_pick_menu);
 	    break;
 	case ECMD_ARS_EDIT_MENU:
 	    /* put up main ARS edit menu */
-	    menu_state->ms_flag = 0;
 	    mged_set_edflag(s, IDLE);
-	    mmenu_set(s, MENU_L1, ars_menu);
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
+	    if (!f)
+		return 0;
+	    (*f)(0, NULL, d, ars_menu);
 	    break;
 	case ECMD_ARS_PICK:
 	    ecmd_ars_pick(s);

@@ -1327,6 +1327,18 @@ mged_view_update(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(
     return TCL_OK;
 }
 
+int
+mged_view_set_flag(int UNUSED(ac), const char **UNUSED(av), void *d, void *flagp)
+{
+    struct mged_state *s = (struct mged_state *)d;
+    int *flag = (int *)flagp;
+
+    view_state->vs_flag = *flag;
+
+    return TCL_OK;
+}
+
+
 /**
  * Let the user temporarily escape from the editor Format: %
  */

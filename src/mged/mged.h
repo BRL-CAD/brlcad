@@ -281,6 +281,9 @@ extern int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s
 
 extern int mged_sedit_clbk_sync(struct mged_solid_edit *se, struct mged_state *s);
 
+
+extern int mged_mmenu_set(int UNUSED(ac), const char **UNUSED(av), void *d, void *ms);
+
 /* global application state */
 struct mged_state_impl;
 struct mged_state {
@@ -518,6 +521,7 @@ int cmdline(struct mged_state *s, struct bu_vls *vp, int record);
 int mged_print_result(int, const char **, void *, void*);
 int mged_print_str(int, const char **, void *, void*);
 int mged_view_update(int, const char **, void *, void*);
+int mged_view_set_flag(int, const char **, void *, void*);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
 

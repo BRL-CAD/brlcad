@@ -195,7 +195,12 @@ sedit_vpick(struct mged_solid_edit *s, point_t v_pos)
 	s->e_keytag = (*MGED_OBJ[ID_BSPLINE].ft_keypoint)(&s->e_keypoint, s->e_keytag, s->e_mat, &s->es_int, s->tol);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
-    view_state->vs_flag = 1;
+
+    /* draw arrow, etc. */
+    int vs_flag = 1;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &vs_flag);
 }
 
 void

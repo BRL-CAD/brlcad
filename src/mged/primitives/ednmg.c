@@ -67,6 +67,9 @@ point_t lu_keypoint;    /* keypoint of lu_copy for extrusion */
 static void
 nmg_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
     switch (arg) {
 	default:
 	    bu_vls_printf(s->log_str, "nmg_ed: undefined menu event?\n");
@@ -89,7 +92,10 @@ nmg_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *U
 	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
 	    /* no change of state or edit_flag */
-	    view_state->vs_flag = 1;
+	    int vs_flag = 1;
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, &vs_flag);
 	    return;
 	case ECMD_NMG_FORW:
 	    if (!es_eu) {
@@ -856,7 +862,10 @@ void ecmd_nmg_lextru(struct mged_solid_edit *s)
     es_eu = (struct edgeuse *)NULL;
 
     replot_editing_solid(0, NULL, s, NULL);
-    view_state->vs_flag = 1;
+    int vs_flag = 1;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &vs_flag);
 }
 
 
