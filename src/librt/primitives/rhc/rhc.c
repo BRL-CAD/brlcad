@@ -1588,6 +1588,37 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_rhc_internal *tip = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(tip);
+    struct rt_rhc_internal *top = (struct rt_rhc_internal *)rop->idb_ptr;
+    RT_RHC_CK_MAGIC(top);
+
+    vect_t rV, rH, rB;
+    VMOVE(rV, tip->rhc_V);
+    VMOVE(rH, tip->rhc_H);
+    VMOVE(rB, tip->rhc_B);
+    double rhc_r = tip->rhc_r / mat[15];
+    double rhc_c = tip->rhc_c / mat[15];
+ 
+    if (rhc_r <= SMALL_FASTF || rhc_c <= SMALL_FASTF) {
+	bu_log("rt_rhc_mat: r or c are zero\n");
+	return BRLCAD_ERROR;
+    }
+
+    MAT4X3PNT(top->rhc_V, mat, rV);
+    MAT4X3VEC(top->rhc_H, mat, rH);
+    MAT4X3VEC(top->rhc_B, mat, rB);
+    top->rhc_r = rhc_r;
+    top->rhc_c = rhc_c;
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an RHC from the database format to the internal format.
@@ -1621,23 +1652,27 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
     /* Apply modeling transformations */
-    if (mat == NULL) {
+    if (mat == NULL)
 	mat = bn_mat_identity;
-    }
 
-    MAT4X3PNT(xip->rhc_V, mat, &vec[0 * 3]);
-    MAT4X3VEC(xip->rhc_H, mat, &vec[1 * 3]);
-    MAT4X3VEC(xip->rhc_B, mat, &vec[2 * 3]);
-    xip->rhc_r = vec[3 * 3] / mat[15];
-    xip->rhc_c = vec[3 * 3 + 1] / mat[15];
-
-    if (xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF) {
-	bu_log("rt_rhc_import4: r or c are zero\n");
-	bu_free((char *)ip->idb_ptr, "rt_rhc_import4: ip->idb_ptr");
+    /* Sanity check */ 
+    double rhc_r = vec[3 * 3] / mat[15];
+    double rhc_c = vec[3 * 3 + 1] / mat[15];
+     if (rhc_r <= SMALL_FASTF || rhc_c <= SMALL_FASTF) {
+	bu_log("rt_rhc_import5: r or c are zero\n");
+	bu_free((char *)ip->idb_ptr, "rt_rhc_import5: ip->idb_ptr");
 	return -1;
     }
 
-    return 0;			/* OK */
+     /* Assign values */
+     VMOVE(xip->rhc_V, &vec[0 * 3]);
+     VMOVE(xip->rhc_H, &vec[1 * 3]);
+     VMOVE(xip->rhc_B, &vec[2 * 3]);
+     xip->rhc_r = vec[3 * 3];
+     xip->rhc_c = vec[3 * 3 + 1];
+
+    /* Apply modeling transformations */
+     return rt_rhc_mat(ip, mat, ip);
 }
 
 
