@@ -1438,6 +1438,34 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_eto_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(tip);
+    struct rt_eto_internal *top = (struct rt_eto_internal *)rop->idb_ptr;
+    RT_ETO_CK_MAGIC(top);
+
+    vect_t eV, eN, eC;
+    double er, erd;
+    VMOVE(eV, tip->eto_V);
+    VMOVE(eN, tip->eto_N);
+    VMOVE(eC, tip->eto_C);
+    er = tip->eto_r;
+    erd = tip->eto_rd;
+
+    MAT4X3PNT(top->eto_V, mat, eV);
+    MAT4X3VEC(top->eto_N, mat, eN);
+    MAT4X3VEC(top->eto_C, mat, eC);
+    top->eto_r  = er / mat[15];
+    top->eto_rd = erd / mat[15];
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import a eto from the database format to the internal format.
@@ -1468,17 +1496,19 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
+    /* Assign values */
+    VMOVE(tip->eto_V, &vec[0*3]);
+    VMOVE(tip->eto_N, &vec[1*3]);
+    VMOVE(tip->eto_C, &vec[2*3]);
+    tip->eto_r  = vec[3*3];
+    tip->eto_rd = vec[3*3+1];
+
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(tip->eto_V, mat, &vec[0*3]);
-    MAT4X3VEC(tip->eto_N, mat, &vec[1*3]);
-    MAT4X3VEC(tip->eto_C, mat, &vec[2*3]);
-    tip->eto_r  = vec[3*3] / mat[15];
-    tip->eto_rd = vec[3*3+1] / mat[15];
+    rt_eto_mat(ip, mat, ip);
 
-    if (!eto_is_valid(tip)) {
+    if (!eto_is_valid(tip))
 	return -1;
-    }
 
     return 0;		/* OK */
 }
