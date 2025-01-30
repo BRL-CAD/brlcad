@@ -295,12 +295,60 @@ rt_joint_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     return -1;
 }
 
+int
+rt_joint_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_joint_internal *jip = (struct rt_joint_internal *)ip->idb_ptr;
+    RT_JOINT_CK_MAGIC(jip);
+    struct rt_joint_internal *jop = (struct rt_joint_internal *)rop->idb_ptr;
+    RT_JOINT_CK_MAGIC(jop);
+
+    vect_t jl, jv1, jv2;
+    MAT4X3PNT(jl, mat, jop->location);
+    MAT4X3VEC(jv1, mat, jop->vector1);
+    MAT4X3VEC(jv2, mat, jop->vector2);
+
+    /* Verify that vector1 has unit length */
+    double f = MAGNITUDE(jv1);
+    if (f <= SMALL) {
+	bu_log("rt_joint_mat:  bad vector1, len=%g\n", f);
+	return -1;		/* BAD */
+    }
+    double t = f - 1.0;
+    if (!NEAR_ZERO(t, 0.001)) {
+	/* Restore normal to unit length */
+	f = 1/f;
+	VSCALE(jv1, jv1, f);
+    }
+    /* Verify that vector2 has unit length */
+    f = MAGNITUDE(jv2);
+    if (f <= SMALL) {
+	bu_log("rt_joint_mat:  bad vector2, len=%g\n", f);
+	return -1;		/* BAD */
+    }
+    t = f - 1.0;
+    if (!NEAR_ZERO(t, 0.001)) {
+	/* Restore normal to unit length */
+	f = 1/f;
+	VSCALE(jv2, jv2, f);
+    }
+
+    VMOVE(jop->location, jl);
+    VMOVE(jop->vector1, jv1);
+    VMOVE(jop->vector2, jv2);
+    jop->value = jip->value;
+
+    return BRLCAD_OK;
+}
+
 
 int
 rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_joint_internal *jip;
-    double f, t;
 
     /* must be double for import and export */
     double vec[JOINT_FLOAT_SIZE];
@@ -322,17 +370,6 @@ rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, JOINT_FLOAT_SIZE);
 
-    /* Transform the point, and the normal */
-    if (mat == NULL) mat = bn_mat_identity;
-
-
-    MAT4X3PNT(jip->location, mat, &vec[0]);
-    MAT4X3VEC(jip->vector1, mat, &vec[3]);
-    MAT4X3VEC(jip->vector2, mat, &vec[6]);
-    if (NEAR_ZERO(mat[15], 0.001)) {
-	bu_bomb("rt_joint_import5, scale factor near zero.");
-    }
-    jip->value = vec[9];
 
     /* convert name of reference_path_1 & 2*/
     bu_vls_init(&jip->reference_path_1);
@@ -340,33 +377,18 @@ rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     bu_vls_init(&jip->reference_path_2);
     bu_vls_strcpy(&jip->reference_path_2, (char *)ep->ext_buf + JOINT_FLOAT_SIZE * SIZEOF_NETWORK_DOUBLE + bu_vls_strlen(&jip->reference_path_1) + 1);
 
-    /* Verify that vector1 has unit length */
-    f = MAGNITUDE(jip->vector1);
-    if (f <= SMALL) {
-	bu_log("rt_joint_import5:  bad vector1, len=%g\n", f);
-	return -1;		/* BAD */
-    }
-    t = f - 1.0;
-    if (!NEAR_ZERO(t, 0.001)) {
-	/* Restore normal to unit length */
-	f = 1/f;
-	VSCALE(jip->vector1, jip->vector1, f);
-    }
-    /* Verify that vector2 has unit length */
-    f = MAGNITUDE(jip->vector2);
-    if (f <= SMALL) {
-	bu_log("rt_joint_import5:  bad vector2, len=%g\n", f);
-	return -1;		/* BAD */
-    }
-    t = f - 1.0;
-    if (!NEAR_ZERO(t, 0.001)) {
-	/* Restore normal to unit length */
-	f = 1/f;
-	VSCALE(jip->vector2, jip->vector2, f);
-    }
+    /* Assign values */
+    VMOVE(jip->location, &vec[0]);
+    VMOVE(jip->vector1, &vec[3]);
+    VMOVE(jip->vector2, &vec[6]);
+    jip->value = vec[9];
 
+    /* Transform the point, and the normal */
+    if (mat == NULL) mat = bn_mat_identity;
+    if (NEAR_ZERO(mat[15], 0.001))
+	bu_bomb("rt_joint_import5, scale factor near zero.");
 
-    return 0;		/* OK */
+    return rt_joint_mat(ip, mat, ip);
 }
 
 

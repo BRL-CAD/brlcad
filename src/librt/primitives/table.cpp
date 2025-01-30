@@ -1362,55 +1362,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* serialize */
 	NULL, /* label */
 	NULL, /* keypoint */
-	NULL, /* mat */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_joint_mat),
 	NULL  /* perturb */
-#if 0
-	0, /* ft_use_rpp */
-	NULL, /* prep */
-	NULL, /* shot */
-	NULL, /* print */
-	NULL, /* norm */
-	NULL, /* piece_shot */
-	NULL, /* piece_hitsegs */
-	NULL, /* uv */
-	NULL, /* curve */
-	NULL, /* classify */
-	NULL, /* free */
-	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot), /* plot */
-	NULL, /* adaptive_plot */
-	NULL, /* vshot */
-	NULL, /* tess */
-	NULL, /* tnurb */
-	NULL, /* brep */
-	NULL, /* import5 */
-	NULL, /* export5 */
-	NULL, /* import4 */
-	NULL, /* export4 */
-	NULL, /* ifree */
-	NULL, /* describe */
-	NULL, /* xform */
-	NULL, /* parse */
-	0, /* sizeof(internal) */
-	0, /* magic */
-	NULL, /* get */
-	NULL, /* adjust */
-	NULL, /* form */
-	NULL, /* make */
-	NULL, /* params */
-	NULL, /* bbox */
-	NULL, /* volume */
-	NULL, /* surf_area */
-	NULL, /* centroid */
-	NULL, /* oriented_bbox */
-	NULL, /* find_selections */
-	NULL, /* evaluate_selection */
-	NULL, /* process_selection */
-	NULL, /* serialize */
-	NULL, /* label */
-	NULL, /* keypoint */
-	NULL, /* mat */
-	NULL  /* perturb */
-#endif
     },
 
     {
