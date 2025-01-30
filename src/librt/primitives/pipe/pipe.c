@@ -4084,6 +4084,36 @@ rt_pipe_export4(
     return 0;
 }
 
+int
+rt_pipe_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_pipe_internal *tip = (struct rt_pipe_internal *)ip->idb_ptr;
+    RT_PIPE_CK_MAGIC(tip);
+    struct rt_pipe_internal *top = (struct rt_pipe_internal *)rop->idb_ptr;
+    RT_PIPE_CK_MAGIC(top);
+
+    if (tip->pipe_count != top->pipe_count)
+	return BRLCAD_ERROR;
+
+    struct wdb_pipe_pnt *in_pipe_pnt, *out_pipe_pnt;
+    in_pipe_pnt = BU_LIST_FIRST(wdb_pipe_pnt, &tip->pipe_segs_head);
+    out_pipe_pnt = BU_LIST_FIRST(wdb_pipe_pnt, &top->pipe_segs_head);
+    while (BU_LIST_NOT_HEAD(&in_pipe_pnt->l, &tip->pipe_segs_head)) {
+	vect_t v;
+	VMOVE(v, in_pipe_pnt->pp_coord);
+	MAT4X3PNT(out_pipe_pnt->pp_coord, mat, v);
+	out_pipe_pnt->pp_id         = in_pipe_pnt->pp_id / mat[15];
+	out_pipe_pnt->pp_od         = in_pipe_pnt->pp_od / mat[15];
+	out_pipe_pnt->pp_bendradius = in_pipe_pnt->pp_bendradius / mat[15];
+	in_pipe_pnt = BU_LIST_NEXT(wdb_pipe_pnt, &in_pipe_pnt->l);
+	out_pipe_pnt = BU_LIST_NEXT(wdb_pipe_pnt, &out_pipe_pnt->l);
+    }
+
+    return BRLCAD_OK;
+}
 
 int
 rt_pipe_import5(
@@ -4136,22 +4166,21 @@ rt_pipe_import5(
      * same structures as libwdb.
      */
     BU_LIST_INIT(&pip->pipe_segs_head);
-    if (mat == NULL) {
-	mat = bn_mat_identity;
-    }
     for (i = 0; i < double_count; i += 6) {
-	/* Apply modeling transformations */
 	BU_ALLOC(ptp, struct wdb_pipe_pnt);
 	ptp->l.magic = WDB_PIPESEG_MAGIC;
-	MAT4X3PNT(ptp->pp_coord, mat, &vec[i]);
-	ptp->pp_id =		vec[i + 3] / mat[15];
-	ptp->pp_od =		vec[i + 4] / mat[15];
-	ptp->pp_bendradius =	vec[i + 5] / mat[15];
+	VMOVE(ptp->pp_coord, &vec[i]);
+	ptp->pp_id =		vec[i + 3];
+	ptp->pp_od =		vec[i + 4];
+	ptp->pp_bendradius =	vec[i + 5];
 	BU_LIST_INSERT(&pip->pipe_segs_head, &ptp->l);
     }
-
     bu_free((void *)vec, "rt_pipe_import5: vec");
-    return 0;			/* OK */
+
+    /* Apply modeling transformations */
+    if (mat == NULL)
+	mat = bn_mat_identity;
+    return rt_pipe_mat(ip, mat, ip);
 }
 
 
