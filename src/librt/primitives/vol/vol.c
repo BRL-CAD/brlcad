@@ -728,51 +728,63 @@ get_obj_data(struct rt_vol_internal *vip, const struct db_i *dbip)
  * !0 fail
  */
 static int
-get_vol_data(struct rt_vol_internal *vip, const mat_t mat, const struct db_i *dbip)
+get_vol_data(struct rt_vol_internal *vip, const struct db_i *dbip)
 {
-  mat_t tmp;
+    switch (vip->datasrc) {
+	case RT_VOL_SRC_FILE:
+	    /* Retrieve the data from an external file */
+	    if (RT_G_DEBUG & RT_DEBUG_HF)
+		bu_log("getting data from file \"%s\"\n", vip->name);
 
-  /* Apply Modelling transform */
-  bn_mat_mul(tmp, mat, vip->mat);
-  MAT_COPY(vip->mat, tmp);
+	    if(vol_file_data(vip) != 0) {
+		return 1;
+	    }
+	    else {
+		return 0;
+	    }
+	    break;
+	case RT_VOL_SRC_OBJ:
+	    /* Retrieve the data from an internal db object */
+	    if (RT_G_DEBUG & RT_DEBUG_HF)
+		bu_log("getting data from object \"%s\"\n", vip->name);
 
-  switch (vip->datasrc) {
-case RT_VOL_SRC_FILE:
-    /* Retrieve the data from an external file */
-    if (RT_G_DEBUG & RT_DEBUG_HF)
-	bu_log("getting data from file \"%s\"\n", vip->name);
-
-    if(vol_file_data(vip) != 0) {
-      return 1;
+	    if (get_obj_data(vip, dbip) != 0) {
+		return 1;
+	    } else {
+		RT_CK_DB_INTERNAL(vip->bip);
+		RT_CK_BINUNIF(vip->bip->idb_ptr);
+		return 0;
+	    }
+	    break;
+	default:
+	    bu_log("%s:%d Odd vol data src '%c' s/b '%c' or '%c'\n",
+		    __FILE__, __LINE__, vip->datasrc,
+		    RT_VOL_SRC_FILE, RT_VOL_SRC_OBJ);
     }
-    else {
-      return 0;
-    }
-    break;
-case RT_VOL_SRC_OBJ:
-    /* Retrieve the data from an internal db object */
-    if (RT_G_DEBUG & RT_DEBUG_HF)
-	bu_log("getting data from object \"%s\"\n", vip->name);
 
-    if (get_obj_data(vip, dbip) != 0) {
-	return 1;
-    } else {
-	RT_CK_DB_INTERNAL(vip->bip);
-	RT_CK_BINUNIF(vip->bip->idb_ptr);
-	return 0;
-    }
-    break;
-default:
-bu_log("%s:%d Odd vol data src '%c' s/b '%c' or '%c'\n",
-  __FILE__, __LINE__, vip->datasrc,
-  RT_VOL_SRC_FILE, RT_VOL_SRC_OBJ);
-  }
-
-  if (dbip)
-      bu_log("%s", dbip->dbi_filename);
-  return 0; //temporary
+    if (dbip)
+	bu_log("%s", dbip->dbi_filename);
+    return 0; //temporary
 }
 
+int
+rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_vol_internal *tip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(tip);
+    struct rt_vol_internal *top = (struct rt_vol_internal *)rop->idb_ptr;
+    RT_EBM_CK_MAGIC(top);
+
+    /* Apply transform */
+    mat_t tmp;
+    bn_mat_mul(tmp, mat, tip->mat);
+    MAT_COPY(top->mat, tmp);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Read in the information from the string solid record.
@@ -784,7 +796,6 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     register struct rt_vol_internal *vip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    mat_t tmat;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -829,11 +840,10 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	mat = bn_mat_identity;
 
     /* Apply any modeling transforms to get final matrix */
-    bn_mat_mul(tmat, mat, vip->mat);
-    MAT_COPY(vip->mat, tmat);
+    rt_vol_mat(ip, mat, ip);
 
-    if (get_vol_data(vip, mat, dbip) == 1)
-  bu_log("Couldn't find the associated file/object %s",vip->name);
+    if (get_vol_data(vip, dbip) == 1)
+	bu_log("Couldn't find the associated file/object %s",vip->name);
 
     return 0;
 }

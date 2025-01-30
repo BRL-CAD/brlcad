@@ -862,7 +862,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* serialize */
 	NULL, /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_vol_keypoint), /* keypoint */
-	NULL, /* mat */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_vol_mat),
 	NULL  /* perturb */
     },
 
