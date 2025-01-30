@@ -1449,6 +1449,36 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_rpc_internal *tip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(tip);
+    struct rt_rpc_internal *top = (struct rt_rpc_internal *)rop->idb_ptr;
+    RT_RPC_CK_MAGIC(top);
+
+
+    /* Sanity */
+    if (tip->rpc_r / mat[15] <= SMALL_FASTF) {
+	bu_log("rt_rpc_mat: r is zero\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* Apply modeling transformations */
+    vect_t rV, rH, rB;
+    VMOVE(rV, tip->rpc_V);
+    VMOVE(rH, tip->rpc_H);
+    VMOVE(rB, tip->rpc_B);
+    MAT4X3PNT(top->rpc_V, mat, rV);
+    MAT4X3VEC(top->rpc_H, mat, rH);
+    MAT4X3VEC(top->rpc_B, mat, rB);
+    top->rpc_r = tip->rpc_r / mat[15];
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an RPC from the database format to the internal format.
@@ -1479,20 +1509,23 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 10);
 
-    /* Apply modeling transformations */
+    /* Sanity */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->rpc_V, mat, &vec[0*3]);
-    MAT4X3VEC(xip->rpc_H, mat, &vec[1*3]);
-    MAT4X3VEC(xip->rpc_B, mat, &vec[2*3]);
-    xip->rpc_r = vec[3*3] / mat[15];
-
-    if (xip->rpc_r <= SMALL_FASTF) {
+    double rpc_r = vec[3*3] / mat[15];
+    if (rpc_r <= SMALL_FASTF) {
 	bu_log("rt_rpc_import4: r is zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_rpc_import4: ip->idp_ptr");
 	return -1;
     }
 
-    return 0;			/* OK */
+    /* Assign parameters */
+    VMOVE(xip->rpc_V, &vec[0*3]);
+    VMOVE(xip->rpc_H, &vec[1*3]);
+    VMOVE(xip->rpc_B, &vec[2*3]);
+    xip->rpc_r = vec[3*3];
+
+    /* Apply modeling transformations */
+    return rt_rpc_mat(ip, mat, ip);
 }
 
 
