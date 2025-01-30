@@ -1774,6 +1774,42 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_ehy_internal *tip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(tip);
+    struct rt_ehy_internal *top = (struct rt_ehy_internal *)rop->idb_ptr;
+    RT_EHY_CK_MAGIC(top);
+
+    vect_t eV, eH, eAu;
+    double er1, er2, ec;
+    VMOVE(eV, tip->ehy_V);
+    VMOVE(eH, tip->ehy_H);
+    VMOVE(eAu, tip->ehy_Au);
+    er1 = tip->ehy_r1 / mat[15];
+    er2 = tip->ehy_r2 / mat[15];
+    ec = tip->ehy_c / mat[15];
+
+    if (er1 <= SMALL_FASTF || er2 <= SMALL_FASTF || ec <= SMALL_FASTF) {
+	bu_log("rt_ehy_mat: r1, r2, or c are zero\n");
+	return BRLCAD_ERROR;
+    }
+
+    MAT4X3PNT(top->ehy_V, mat, eV);
+    MAT4X3VEC(top->ehy_H, mat, eH);
+    MAT4X3VEC(top->ehy_Au, mat, eAu);
+    VUNITIZE(top->ehy_Au);
+    top->ehy_r1 = er1;
+    top->ehy_r2 = er2;
+    top->ehy_c  = ec;
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an EHY from the database format to the internal format.
@@ -1804,23 +1840,27 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 3*4);
 
-    /* Apply modeling transformations */
+    /* Sanity */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->ehy_V, mat, &vec[0*3]);
-    MAT4X3VEC(xip->ehy_H, mat, &vec[1*3]);
-    MAT4X3VEC(xip->ehy_Au, mat, &vec[2*3]);
-    VUNITIZE(xip->ehy_Au);
-    xip->ehy_r1 = vec[3*3] / mat[15];
-    xip->ehy_r2 = vec[3*3+1] / mat[15];
-    xip->ehy_c  = vec[3*3+2] / mat[15];
-
-    if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
+    double ehy_r1 = vec[3*3] / mat[15];
+    double ehy_r2 = vec[3*3+1] / mat[15];
+    double ehy_c  = vec[3*3+2] / mat[15];
+    if (ehy_r1 <= SMALL_FASTF || ehy_r2 <= SMALL_FASTF || ehy_c <= SMALL_FASTF) {
 	bu_log("rt_ehy_import5: r1, r2, or c are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_ehy_import5: ip->idb_ptr");
 	return -1;
     }
 
-    return 0;			/* OK */
+    /* Assign values */
+    VMOVE(xip->ehy_V, &vec[0*3]);
+    VMOVE(xip->ehy_H, &vec[1*3]);
+    VMOVE(xip->ehy_Au, &vec[2*3]);
+    xip->ehy_r1 = vec[3*3];
+    xip->ehy_r2 = vec[3*3+1];
+    xip->ehy_c  = vec[3*3+2];
+
+    /* Apply modeling transformations */
+    return rt_ehy_mat(ip, mat, ip);
 }
 
 
