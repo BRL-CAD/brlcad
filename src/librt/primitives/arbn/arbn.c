@@ -961,6 +961,47 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     return 0;			/* OK */
 }
 
+int
+rt_arbn_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_arbn_internal *tip = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(tip);
+    struct rt_arbn_internal *top = (struct rt_arbn_internal *)rop->idb_ptr;
+    RT_ARBN_CK_MAGIC(top);
+
+    if (tip->neqn != top->neqn)
+	return BRLCAD_ERROR;
+
+    for (size_t i = 0; i < tip->neqn; i++) {
+	point_t orig_pt;
+	point_t pt;
+	vect_t norm;
+	fastf_t factor;
+
+	/* unitize the plane equation first */
+	factor = 1.0 / MAGNITUDE(tip->eqn[i]);
+	VSCALE(top->eqn[i], tip->eqn[i], factor);
+	top->eqn[i][W] = tip->eqn[i][W] * factor;
+
+	/* Pick a point on the original halfspace */
+	VSCALE(orig_pt, top->eqn[i], top->eqn[i][W]);
+
+	/* Transform the point, and the normal */
+	MAT4X3VEC(norm, mat, top->eqn[i]);
+	MAT4X3PNT(pt, mat, orig_pt);
+
+	/* Measure new distance from origin to new point */
+	VUNITIZE(norm);
+	VMOVE(top->eqn[i], norm);
+	top->eqn[i][W] = VDOT(pt, norm);
+    }
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Convert from "network" doubles to machine specific.
@@ -1008,29 +1049,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     /* Transform by the matrix, if we have one that is not the identity */
     if (mat && !bn_mat_is_identity(mat)) {
-	for (i = 0; i < aip->neqn; i++) {
-	    point_t orig_pt;
-	    point_t pt;
-	    vect_t norm;
-	    fastf_t factor;
-
-	    /* unitize the plane equation first */
-	    factor = 1.0 / MAGNITUDE(aip->eqn[i]);
-	    VSCALE(aip->eqn[i], aip->eqn[i], factor);
-	    aip->eqn[i][W] = aip->eqn[i][W] * factor;
-
-	    /* Pick a point on the original halfspace */
-	    VSCALE(orig_pt, aip->eqn[i], aip->eqn[i][W]);
-
-	    /* Transform the point, and the normal */
-	    MAT4X3VEC(norm, mat, aip->eqn[i]);
-	    MAT4X3PNT(pt, mat, orig_pt);
-
-	    /* Measure new distance from origin to new point */
-	    VUNITIZE(norm);
-	    VMOVE(aip->eqn[i], norm);
-	    aip->eqn[i][W] = VDOT(pt, norm);
-	}
+	return rt_arbn_mat(ip, mat, ip);
     }
 
     return 0;
