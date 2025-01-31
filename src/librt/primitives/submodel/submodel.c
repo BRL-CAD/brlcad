@@ -841,6 +841,19 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     return 0;
 }
 
+int
+rt_submodel_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *UNUSED(ip))
+{
+    if (!rop || !mat)
+	return BRLCAD_OK;
+
+    struct rt_submodel_internal *top = (struct rt_submodel_internal *)rop->idb_ptr;
+    RT_SUBMODEL_CK_MAGIC(top);
+
+    MAT_COPY(top->root2leaf, mat);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an SUBMODEL from the database format to the internal format.
@@ -869,7 +882,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     BU_VLS_INIT(&sip->treetop);
     sip->meth = 0;
     if (mat == NULL) mat = bn_mat_identity;
-    MAT_COPY(sip->root2leaf, mat);
+    rt_submodel_mat(ip, mat, ip);
     sip->dbip = dbip;
 
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
