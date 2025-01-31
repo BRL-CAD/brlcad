@@ -59,6 +59,15 @@ mged_state_create(void)
     mged_state_clbk_set(s, 0, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING, mged_view_set_flag, s);
     mged_state_clbk_set(s, 0, ECMD_MENU_SET, 0, GED_CLBK_DURING, mged_mmenu_set, s);
 
+    // Register primitive/ecmd specific callbacks
+    mged_state_clbk_set(s, ID_ARB8, ECMD_ARB_SETUP_ROTFACE, 0, GED_CLBK_DURING, arb_setup_rotface_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_MODE, 0, GED_CLBK_DURING, ecmd_bot_mode_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_ORIENT, 0, GED_CLBK_DURING, ecmd_bot_orient_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_THICK, 0, GED_CLBK_DURING, ecmd_bot_thick_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FLAGS, 0, GED_CLBK_DURING, ecmd_bot_flags_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FMODE, 0, GED_CLBK_DURING, ecmd_bot_fmode_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_PICKT, 0, GED_CLBK_DURING, ecmd_bot_pickt_multihit_clbk, s);
+
     return s;
 }
 

@@ -977,53 +977,6 @@ ecmd_arb_move_face(struct mged_solid_edit *s)
     return 0;
 }
 
-static int
-get_rotation_vertex(struct mged_solid_edit *s)
-{
-    int i, j;
-    int type, loc, valid;
-    int vertex = -1;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-
-    int arb_type = rt_arb_std_type(&s->es_int, s->tol);
-
-    type = arb_type - 4;
-
-    loc = s->edit_menu*4;
-    valid = 0;
-
-    bu_vls_printf(&str, "Enter fixed vertex number(");
-    for (i=0; i<4; i++) {
-	if (rt_arb_vertices[type][loc+i])
-	    bu_vls_printf(&str, "%d ", rt_arb_vertices[type][loc+i]);
-    }
-    bu_vls_printf(&str, ") [%d]: ", rt_arb_vertices[type][loc]);
-
-    const struct bu_vls *dnvp = dm_get_dname(s->mged_curr_dm->dm_dmp);
-
-    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
- {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), rt_arb_vertices[type][loc]);
-
-    while (!valid) {
-	if (Tcl_Eval(s->interp, bu_vls_addr(&cmd)) != TCL_OK) {
-	    bu_vls_printf(s->log_str, "get_rotation_vertex: Error reading vertex\n");
-	    /* Using default */
-	    return rt_arb_vertices[type][loc];
-	}
-
-	vertex = atoi(Tcl_GetVar(s->interp, "vertex_num", TCL_GLOBAL_ONLY));
-	for (j=0; j<4; j++) {
-	    if (vertex==rt_arb_vertices[type][loc+j])
-		valid = 1;
-	}
-    }
-
-    bu_vls_free(&str);
-    return vertex;
-}
-
 void
 ecmd_arb_setup_rotface(struct mged_solid_edit *s)
 {
@@ -1033,24 +986,10 @@ ecmd_arb_setup_rotface(struct mged_solid_edit *s)
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+    mged_sedit_clbk_get(&f, &d, s, ECMD_ARB_SETUP_ROTFACE, 0, GED_CLBK_DURING);
+    if (f)
+	fixv = (*f)(0, NULL, d, s);
 
-    /* check if point 5 is in the face */
-    static int pnt5 = 0;
-    for (int i=0; i<4; i++) {
-	if (rt_arb_vertices[arb_type-4][s->edit_menu*4+i]==5)
-	    pnt5=1;
-    }
-
-    /* special case for arb7 */
-    if (arb_type == ARB7  && pnt5) {
-	bu_vls_printf(s->log_str, "\nFixed vertex is point 5.\n");
-	fixv = 5;
-    } else {
-	fixv = get_rotation_vertex(s);
-    }
-
-    pr_prompt(s);
     fixv--;
     s->edit_flag = ECMD_ARB_ROTATE_FACE;
     s->solid_edit_rotate = 1;
@@ -1060,6 +999,7 @@ ecmd_arb_setup_rotface(struct mged_solid_edit *s)
 
     /* draw arrow, etc. */
     int vs_flag = 1;
+    f = NULL; d = NULL;
     mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &vs_flag);

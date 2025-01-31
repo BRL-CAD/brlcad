@@ -258,6 +258,8 @@ struct mged_solid_edit {
     /* Internal primitive editing information specific to primitive types. */
     void *ipe_ptr;
 
+    /* User pointer */
+    void *u_ptr;
 };
 
 // TODO - need callback registration mechanism.  If sedit() is going to become
@@ -282,7 +284,16 @@ extern int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s
 extern int mged_sedit_clbk_sync(struct mged_solid_edit *se, struct mged_state *s);
 
 
-extern int mged_mmenu_set(int UNUSED(ac), const char **UNUSED(av), void *d, void *ms);
+extern int mged_mmenu_set(int ac, const char **av, void *d, void *ms);
+
+extern int arb_setup_rotface_clbk(int ac, const char **av, void *d, void *d2);
+extern int ecmd_bot_mode_clbk(int ac, const char **av, void *d, void *d2);
+extern int ecmd_bot_orient_clbk(int ac, const char **av, void *d, void *d2);
+extern int ecmd_bot_thick_clbk(int ac, const char **av, void *d, void *d2);
+extern int ecmd_bot_flags_clbk(int ac, const char **av, void *d, void *d2);
+extern int ecmd_bot_fmode_clbk(int ac, const char **av, void *d, void *d2);
+extern int ecmd_bot_pickt_multihit_clbk(int ac, const char **av, void *d, void *d2);
+
 
 /* global application state */
 struct mged_state_impl;

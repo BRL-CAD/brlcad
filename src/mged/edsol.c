@@ -144,6 +144,347 @@ set_e_axes_pos(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
     return BRLCAD_OK;
 }
 
+int
+arb_setup_rotface_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
+{
+    struct mged_state *ms = (struct mged_state *)d;
+    struct mged_solid_edit *s = ms->s_edit;
+    int vertex = -1;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+    int type = arb_type - 4;
+    int loc = s->edit_menu*4;
+    int valid = 0;
+
+    /* check if point 5 is in the face */
+    static int pnt5 = 0;
+    for (int i=0; i<4; i++) {
+	if (rt_arb_vertices[arb_type-4][s->edit_menu*4+i]==5)
+	    pnt5=1;
+    }
+
+    /* special case for arb7 */
+    if (arb_type == ARB7  && pnt5) {
+	bu_vls_printf(s->log_str, "\nFixed vertex is point 5.\n");
+	pr_prompt(ms);
+	return 5;
+    }
+
+    bu_vls_printf(&str, "Enter fixed vertex number(");
+    for (int i=0; i<4; i++) {
+	if (rt_arb_vertices[type][loc+i])
+	    bu_vls_printf(&str, "%d ", rt_arb_vertices[type][loc+i]);
+    }
+    bu_vls_printf(&str, ") [%d]: ", rt_arb_vertices[type][loc]);
+
+    const struct bu_vls *dnvp = dm_get_dname(ms->mged_curr_dm->dm_dmp);
+
+    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
+	    {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
+	    (dnvp) ? bu_vls_cstr(dnvp) : "id", bu_vls_cstr(&str), rt_arb_vertices[type][loc]);
+
+    while (!valid) {
+	if (Tcl_Eval(ms->interp, bu_vls_addr(&cmd)) != TCL_OK) {
+	    bu_vls_printf(s->log_str, "get_rotation_vertex: Error reading vertex\n");
+	    /* Using default */
+	    pr_prompt(ms);
+	    return rt_arb_vertices[type][loc];
+	}
+
+	vertex = atoi(Tcl_GetVar(ms->interp, "vertex_num", TCL_GLOBAL_ONLY));
+	for (int j=0; j<4; j++) {
+	    if (vertex==rt_arb_vertices[type][loc+j])
+		valid = 1;
+	}
+    }
+
+    bu_vls_free(&cmd);
+    bu_vls_free(&str);
+
+    pr_prompt(ms);
+    return vertex;
+}
+
+int
+ecmd_bot_mode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
+{
+    struct mged_state *ms = (struct mged_state *)d;
+    struct mged_solid_edit *s = ms->s_edit;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    const char *radio_result;
+    char mode[10];
+    int ret_tcl = TCL_ERROR;
+
+    sprintf(mode, " %d", bot->mode - 1);
+    if (dm_get_pathname(ms->mged_curr_dm->dm_dmp)) {
+	ret_tcl = Tcl_VarEval(ms->interp, "cad_radio", " .bot_mode_radio ",
+		bu_vls_cstr(dm_get_pathname(ms->mged_curr_dm->dm_dmp)), " _bot_mode_result",
+		" \"BOT Mode\"", "  \"Select the desired mode\"", mode,
+		" { surface volume plate plate/nocosine }",
+		" { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
+    }
+    if (ret_tcl != TCL_OK) {
+	bu_vls_printf(s->log_str, "Mode selection failed!\n");
+	return BRLCAD_ERROR;
+    }
+    radio_result = Tcl_GetVar(ms->interp, "_bot_mode_result", TCL_GLOBAL_ONLY);
+    bot->mode = atoi(radio_result) + 1;
+
+    return BRLCAD_OK;
+}
+
+int
+ecmd_bot_orient_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
+{
+    struct mged_state *s = (struct mged_state *)d;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    const char *radio_result;
+    char orient[10];
+    int ret_tcl = TCL_ERROR;
+
+    sprintf(orient, " %d", bot->orientation - 1);
+    if (dm_get_pathname(DMP)) {
+	ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_orient_radio ",
+		bu_vls_addr(dm_get_pathname(DMP)), " _bot_orient_result",
+		" \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
+		" { none right-hand-rule left-hand-rule }",
+		" { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
+    }
+    if (ret_tcl != TCL_OK) {
+	bu_vls_printf(s->s_edit->log_str, "Face orientation selection failed!\n");
+	return BRLCAD_ERROR;
+    }
+    radio_result = Tcl_GetVar(s->interp, "_bot_orient_result", TCL_GLOBAL_ONLY);
+    bot->orientation = atoi(radio_result) + 1;
+
+    return BRLCAD_OK;
+}
+
+int
+ecmd_bot_thick_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
+{
+    struct mged_state *s = (struct mged_state *)d;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    size_t face_no = 0;
+    int face_state = 0;
+
+    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+	if (Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+		    "{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
+		    (char *)NULL) != TCL_OK)
+	{
+	    bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(s->interp));
+	}
+	return BRLCAD_ERROR;
+    }
+
+    if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
+	/* setting thickness for all faces */
+	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
+		"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
+		"{No face is selected, so this operation will modify all the faces in this BOT} ",
+		"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
+	if (atoi(Tcl_GetStringResult(s->interp)))
+	    return BRLCAD_ERROR;
+
+	for (size_t i=0; i<bot->num_faces; i++)
+	    bot->thickness[i] = s->s_edit->e_para[0];
+    } else {
+	/* setting thickness for just one face */
+
+	face_state = -1;
+	for (size_t i=0; i < bot->num_faces; i++) {
+	    if (bot_verts[0] == bot->faces[i*3] &&
+		    bot_verts[1] == bot->faces[i*3+1] &&
+		    bot_verts[2] == bot->faces[i*3+2])
+	    {
+		face_no = i;
+		face_state = 0;
+		break;
+	    }
+	}
+	if (face_state > -1) {
+	    bu_log("Cannot find face with vertices %d %d %d!\n", V3ARGS(bot_verts));
+	    return BRLCAD_ERROR;
+	}
+
+	bot->thickness[face_no] = s->s_edit->e_para[0];
+    }
+
+    return BRLCAD_OK;
+}
+
+int
+ecmd_bot_flags_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
+{
+    struct mged_state *s = (struct mged_state *)d;
+    int ret_tcl = TCL_ERROR;
+    const char *dialog_result;
+    char cur_settings[11];
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    bu_strlcpy(cur_settings, " { 0 0 }", sizeof(cur_settings));
+
+    if (bot->bot_flags & RT_BOT_USE_NORMALS)
+	cur_settings[3] = '1';
+
+    if (bot->bot_flags & RT_BOT_USE_FLOATS)
+	cur_settings[5] = '1';
+
+    if (dm_get_pathname(DMP)) {
+	// TODO - figure out what this is doing...
+	ret_tcl = Tcl_VarEval(s->interp,
+		"cad_list_buts",
+		" .bot_list_flags ",
+		bu_vls_addr(dm_get_pathname(DMP)),
+		" _bot_flags_result ",
+		cur_settings,
+		" \"BOT Flags\"",
+		" \"Select the desired flags\"",
+		" { {Use vertex normals} {Use single precision ray-tracing} }",
+		" { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use single precision to save memory} } ",
+		(char *)NULL);
+    }
+    if (ret_tcl != TCL_OK) {
+	bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(s->interp));
+	return BRLCAD_ERROR;
+    }
+    dialog_result = Tcl_GetVar(s->interp, "_bot_flags_result", TCL_GLOBAL_ONLY);
+
+    if (dialog_result[0] == '1') {
+	bot->bot_flags |= RT_BOT_USE_NORMALS;
+    } else {
+	bot->bot_flags &= ~RT_BOT_USE_NORMALS;
+    }
+    if (dialog_result[2] == '1') {
+	bot->bot_flags |= RT_BOT_USE_FLOATS;
+    } else {
+	bot->bot_flags &= ~RT_BOT_USE_FLOATS;
+    }
+
+    return BRLCAD_OK;
+}
+
+int
+ecmd_bot_fmode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
+{
+    struct mged_state *s = (struct mged_state *)d;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    char fmode[10];
+    const char *radio_result;
+    size_t face_no = 0;
+    int face_state = 0;
+    int ret_tcl = TCL_ERROR;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+		"{Cannot edit face mode in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
+		(char *)NULL);
+	return BRLCAD_ERROR;
+    }
+
+    if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
+	/* setting mode for all faces */
+	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
+		"$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
+		"{No face is selected, so this operation will modify all the faces in this BOT} ",
+		"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
+	if (atoi(Tcl_GetStringResult(s->interp)))
+	    return BRLCAD_ERROR;
+
+	face_state = -2;
+    } else {
+	/* setting thickness for just one face */
+	face_state = -1;
+	for (size_t i=0; i < bot->num_faces; i++) {
+	    if (bot_verts[0] == bot->faces[i*3] &&
+		    bot_verts[1] == bot->faces[i*3+1] &&
+		    bot_verts[2] == bot->faces[i*3+2])
+	    {
+		face_no = i;
+		face_state = 0;
+		break;
+	    }
+	}
+	if (face_state < 0) {
+	    bu_log("Cannot find face with vertices %d %d %d!\n", V3ARGS(bot_verts));
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    if (face_state > -1)
+	sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, face_no)?1:0);
+    else
+	sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
+
+    if (dm_get_pathname(DMP)) {
+	ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
+		" _bot_fmode_result ", "\"BOT Face Mode\"",
+		" \"Select the desired face mode\"", fmode,
+		" { {Thickness centered about hit point} {Thickness appended to hit point} }",
+		" { {This selection will place the plate thickness centered about the hit point} {This selection will place the plate thickness rayward of the hit point} } ",
+		(char *)NULL);
+    }
+    if (ret_tcl != TCL_OK) {
+	bu_log("ERROR: cad_radio: %s\n", Tcl_GetStringResult(s->interp));
+	return BRLCAD_ERROR;
+    }
+    radio_result = Tcl_GetVar(s->interp, "_bot_fmode_result", TCL_GLOBAL_ONLY);
+
+    if (face_state > -1) {
+	if (atoi(radio_result))
+	    BU_BITSET(bot->face_mode, face_no);
+	else
+	    BU_BITCLR(bot->face_mode, face_no);
+    } else {
+	if (atoi(radio_result)) {
+	    for (size_t i=0; i<bot->num_faces; i++)
+		BU_BITSET(bot->face_mode, i);
+	} else
+	    bu_bitv_clear(bot->face_mode);
+    }
+    
+    return BRLCAD_OK;
+}
+
+int
+ecmd_bot_pickt_multihit_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *d2)
+{
+    struct mged_state *s = (struct mged_state *)d;
+    struct mged_solid_edit *se = (struct mged_solid_edit *)d2;
+    struct bu_vls *vls = (struct bu_vls *)se->u_ptr;
+
+    // Evil Tcl variable linkage.  Will need to figure out how to do this
+    // "on the fly" with temporary s_edit structure internal variables...
+    Tcl_LinkVar(s->interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT);
+
+    int ret_tcl = Tcl_VarEval(s->interp, "bot_face_select ", bu_vls_cstr(vls), (char *)NULL);
+    int ret = BRLCAD_OK;
+    if (ret_tcl != TCL_OK) {
+	bu_log("bot_face_select failed: %s\n", Tcl_GetStringResult(s->interp));
+	bot_verts[0] = -1;
+	bot_verts[1] = -1;
+	bot_verts[2] = -1;
+	ret = BRLCAD_ERROR;
+    }
+    Tcl_UnlinkVar(s->interp, "bot_v1");
+    Tcl_UnlinkVar(s->interp, "bot_v2");
+    Tcl_UnlinkVar(s->interp, "bot_v3");
+    return ret;
+}
+
 /*
  * Keypoint in model space is established in "pt".
  * If "str" is set, then that point is used, else default

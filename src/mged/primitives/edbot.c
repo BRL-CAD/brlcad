@@ -222,31 +222,18 @@ mged_bot_keypoint(
 void
 ecmd_bot_mode(struct mged_solid_edit *s)
 {
-    struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->es_int.idb_ptr;
-    const char *radio_result;
-    char mode[10];
-    int ret_tcl = TCL_ERROR;
-    int old_mode;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
 
     RT_BOT_CK_MAGIC(bot);
-    old_mode = bot->mode;
-    sprintf(mode, " %d", old_mode - 1);
-    if (dm_get_pathname(DMP)) {
-	// TODO - does this really warrant a GUI???  There are simpler ways to
-	// do this, and at a minimum the GUI call can't live here.
-	ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_mode_radio ",
-		bu_vls_addr(dm_get_pathname(DMP)), " _bot_mode_result",
-		" \"BOT Mode\"", "  \"Select the desired mode\"", mode,
-		" { surface volume plate plate/nocosine }",
-		" { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
-    }
-    if (ret_tcl != TCL_OK) {
-	bu_vls_printf(s->log_str, "Mode selection failed!\n");
-	return;
-    }
-    radio_result = Tcl_GetVar(s->interp, "_bot_mode_result", TCL_GLOBAL_ONLY);
-    bot->mode = atoi(radio_result) + 1;
+    int old_mode = bot->mode;
+
+    // Set bot->mode using the callback
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_BOT_MODE, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, s);
+
     if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
 	if (old_mode != RT_BOT_PLATE && old_mode != RT_BOT_PLATE_NOCOS) {
 	    /* need to create some thicknesses */
@@ -267,29 +254,12 @@ ecmd_bot_mode(struct mged_solid_edit *s)
 void
 ecmd_bot_orient(struct mged_solid_edit *s)
 {
-    struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->es_int.idb_ptr;
-    const char *radio_result;
-    char orient[10];
-    int ret_tcl = TCL_ERROR;
-
-    RT_BOT_CK_MAGIC(bot);
-    sprintf(orient, " %d", bot->orientation - 1);
-    if (dm_get_pathname(DMP)) {
-	// TODO - does this really warrant a GUI???  There are simpler ways to
-	// do this, and at a minimum the GUI call can't live here.
-	ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_orient_radio ",
-		bu_vls_addr(dm_get_pathname(DMP)), " _bot_orient_result",
-		" \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
-		" { none right-hand-rule left-hand-rule }",
-		" { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
-    }
-    if (ret_tcl != TCL_OK) {
-	bu_vls_printf(s->log_str, "Face orientation selection failed!\n");
-	return;
-    }
-    radio_result = Tcl_GetVar(s->interp, "_bot_orient_result", TCL_GLOBAL_ONLY);
-    bot->orientation = atoi(radio_result) + 1;
+    // Set bot->orientation using the callback
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_BOT_ORIENT, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, s);
 }
 
 int
@@ -299,210 +269,48 @@ ecmd_bot_thick(struct mged_solid_edit *s)
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* must convert to base units */
     s->e_para[0] *= s->local2base;
 
-    struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->es_int.idb_ptr;
-    size_t face_no = 0;
-    int face_state = 0;
+    // Set bot->thickness array using the callback
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_BOT_THICK, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, s);
 
-    RT_BOT_CK_MAGIC(bot);
-
-    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-	// TODO - don't bother with a GUI - just return an error message.
-	if (Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
-		    "{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
-		    (char *)NULL) != TCL_OK)
-	{
-	    bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(s->interp));
-	}
-	return TCL_ERROR;
-    }
-
-    if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
-	/* setting thickness for all faces */
-	// TODO - does this really warrant a GUI???
-	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
-		"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
-		"{No face is selected, so this operation will modify all the faces in this BOT} ",
-		"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
-	if (atoi(Tcl_GetStringResult(s->interp)))
-	    return TCL_ERROR;
-
-	for (size_t i=0; i<bot->num_faces; i++)
-	    bot->thickness[i] = s->e_para[0];
-    } else {
-	/* setting thickness for just one face */
-
-	face_state = -1;
-	for (size_t i=0; i < bot->num_faces; i++) {
-	    if (bot_verts[0] == bot->faces[i*3] &&
-		    bot_verts[1] == bot->faces[i*3+1] &&
-		    bot_verts[2] == bot->faces[i*3+2])
-	    {
-		face_no = i;
-		face_state = 0;
-		break;
-	    }
-	}
-	if (face_state > -1) {
-	    bu_log("Cannot find face with vertices %d %d %d!\n",
-		    V3ARGS(bot_verts));
-	    return TCL_ERROR;
-	}
-
-	bot->thickness[face_no] = s->e_para[0];
-    }
-
-    return 0;
+    return BRLCAD_OK;
 }
 
 void
 ecmd_bot_flags(struct mged_solid_edit *s)
 {
-    int ret_tcl = TCL_ERROR;
-    const char *dialog_result;
-    char cur_settings[11];
-    struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->es_int.idb_ptr;
-
-    RT_BOT_CK_MAGIC(bot);
-
-    bu_strlcpy(cur_settings, " { 0 0 }", sizeof(cur_settings));
-
-    if (bot->bot_flags & RT_BOT_USE_NORMALS) {
-	cur_settings[3] = '1';
-    }
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	cur_settings[5] = '1';
-    }
-
-    if (dm_get_pathname(DMP)) {
-	// TODO - figure out what this is doing...
-	ret_tcl = Tcl_VarEval(s->interp,
-		"cad_list_buts",
-		" .bot_list_flags ",
-		bu_vls_addr(dm_get_pathname(DMP)),
-		" _bot_flags_result ",
-		cur_settings,
-		" \"BOT Flags\"",
-		" \"Select the desired flags\"",
-		" { {Use vertex normals} {Use single precision ray-tracing} }",
-		" { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use single precision to save memory} } ",
-		(char *)NULL);
-    }
-    if (ret_tcl != TCL_OK) {
-	bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(s->interp));
-	return;
-    }
-    dialog_result = Tcl_GetVar(s->interp, "_bot_flags_result", TCL_GLOBAL_ONLY);
-
-    if (dialog_result[0] == '1') {
-	bot->bot_flags |= RT_BOT_USE_NORMALS;
-    } else {
-	bot->bot_flags &= ~RT_BOT_USE_NORMALS;
-    }
-    if (dialog_result[2] == '1') {
-	bot->bot_flags |= RT_BOT_USE_FLOATS;
-    } else {
-	bot->bot_flags &= ~RT_BOT_USE_FLOATS;
-    }
+    // Set bot->thickness array using the callback
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_BOT_FLAGS, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, s);
 }
 
 void
 ecmd_bot_fmode(struct mged_solid_edit *s)
 {
-    struct rt_bot_internal *bot =
-	(struct rt_bot_internal *)s->es_int.idb_ptr;
-    char fmode[10];
-    const char *radio_result;
-    size_t face_no = 0;
-    int face_state = 0;
-    int ret_tcl = TCL_ERROR;
-
-    RT_BOT_CK_MAGIC(bot);
-
-    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-	// TODO - does this need a GUI???
-	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
-		"{Cannot edit face mode in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
-		(char *)NULL);
-	return;
-    }
-
-    if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
-	/* setting mode for all faces */
-	// TODO - does this need a GUI???
-	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
-		"$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
-		"{No face is selected, so this operation will modify all the faces in this BOT} ",
-		"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
-	if (atoi(Tcl_GetStringResult(s->interp)))
-	    return;
-
-	face_state = -2;
-    } else {
-	/* setting thickness for just one face */
-	face_state = -1;
-	for (size_t i=0; i < bot->num_faces; i++) {
-	    if (bot_verts[0] == bot->faces[i*3] &&
-		    bot_verts[1] == bot->faces[i*3+1] &&
-		    bot_verts[2] == bot->faces[i*3+2])
-	    {
-		face_no = i;
-		face_state = 0;
-		break;
-	    }
-	}
-	if (face_state < 0) {
-	    bu_log("Cannot find face with vertices %d %d %d!\n",
-		    V3ARGS(bot_verts));
-	    return;
-	}
-    }
-
-    if (face_state > -1)
-	sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, face_no)?1:0);
-    else
-	sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
-
-    if (dm_get_pathname(DMP)) {
-	// TODO - does this need a GUI???
-	ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
-		" _bot_fmode_result ", "\"BOT Face Mode\"",
-		" \"Select the desired face mode\"", fmode,
-		" { {Thickness centered about hit point} {Thickness appended to hit point} }",
-		" { {This selection will place the plate thickness centered about the hit point} {This selection will place the plate thickness rayward of the hit point} } ",
-		(char *)NULL);
-    }
-    if (ret_tcl != TCL_OK) {
-	bu_log("ERROR: cad_radio: %s\n", Tcl_GetStringResult(s->interp));
-	return;
-    }
-    radio_result = Tcl_GetVar(s->interp, "_bot_fmode_result", TCL_GLOBAL_ONLY);
-
-    if (face_state > -1) {
-	if (atoi(radio_result))
-	    BU_BITSET(bot->face_mode, face_no);
-	else
-	    BU_BITCLR(bot->face_mode, face_no);
-    } else {
-	if (atoi(radio_result)) {
-	    for (size_t i=0; i<bot->num_faces; i++)
-		BU_BITSET(bot->face_mode, i);
-	} else
-	    bu_bitv_clear(bot->face_mode);
-    }
+    // Set bot->face_mode using the callback
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_BOT_FMODE, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, s);
 }
 
 int
@@ -815,7 +623,7 @@ ecmd_bot_pickt(struct mged_solid_edit *s, const vect_t mousevec)
     point_t start_pt, tmp;
     vect_t dir;
     size_t i;
-    int hits, ret_tcl;
+    int hits;
     int v1, v2, v3;
     point_t pt1, pt2, pt3;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -851,25 +659,21 @@ ecmd_bot_pickt(struct mged_solid_edit *s, const vect_t mousevec)
 	bu_vls_free(&vls);
     }
     if (hits == 1) {
-	sscanf(bu_vls_addr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
+	sscanf(bu_vls_cstr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
 	bu_vls_free(&vls);
     } else {
-	// TODO - ugh.  Evil Tcl variable linkage.  Will need to figure out how to do this
-	// "on the fly" with temporary s_edit structure internal variables...
-	Tcl_LinkVar(s->interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
-	Tcl_LinkVar(s->interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT);
-	Tcl_LinkVar(s->interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT);
+	// Set bot->mode using the callback
+	void *usr_bk = s->u_ptr;
+	s->u_ptr = &vls;
 
-	// TODO - figure out what this is doing...
-	ret_tcl = Tcl_VarEval(s->interp, "bot_face_select ", bu_vls_addr(&vls), (char *)NULL);
+	bu_clbk_t f = NULL;
+	void *d = NULL;
+	mged_sedit_clbk_get(&f, &d, s, ECMD_BOT_PICKT, 0, GED_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, s);
+
+	s->u_ptr = usr_bk;
 	bu_vls_free(&vls);
-	if (ret_tcl != TCL_OK) {
-	    bu_log("bot_face_select failed: %s\n", Tcl_GetStringResult(s->interp));
-	    bot_verts[0] = -1;
-	    bot_verts[1] = -1;
-	    bot_verts[2] = -1;
-	    return;
-	}
     }
 }
 
