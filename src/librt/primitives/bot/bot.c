@@ -2142,6 +2142,57 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_bot_internal *tip = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(tip);
+    struct rt_bot_internal *top = (struct rt_bot_internal *)rop->idb_ptr;
+    RT_BOT_CK_MAGIC(top);
+
+    if (tip->num_vertices != top->num_vertices)
+	return BRLCAD_ERROR;
+    if (tip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
+	if (!(top->bot_flags & RT_BOT_HAS_SURFACE_NORMALS))
+	    return BRLCAD_ERROR;
+	if (tip->num_normals != top->num_vertices)
+	    return BRLCAD_ERROR;
+    }
+    if (tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
+	if (!(top->bot_flags & RT_BOT_HAS_TEXTURE_UVS))
+	    return BRLCAD_ERROR;
+	if (tip->num_uvs != top->num_uvs)
+	    return BRLCAD_ERROR;
+    }
+
+    if (tip->vertices) {
+	for (size_t i = 0; i < tip->num_vertices; i++) {
+	    vect_t tmp_v;
+	    VMOVE(tmp_v, &(tip->vertices[i*ELEMENTS_PER_POINT]));
+	    MAT4X3PNT(&(top->vertices[i*ELEMENTS_PER_POINT]), mat, tmp_v);
+	}
+    }
+    if (tip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
+	vect_t tmp_n;
+	for (size_t i = 0; i < tip->num_normals; i++) {
+	    VMOVE(tmp_n, &(tip->normals[i*ELEMENTS_PER_VECT]));
+	    MAT4X3VEC(&(top->normals[i*ELEMENTS_PER_VECT]), mat, tmp_n);
+	}
+    }
+    if (tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
+	vect_t tmp_uvs;
+	for (size_t i = 0; i < tip->num_uvs; i++) {
+	    VMOVE(tmp_uvs, &(tip->uvs[i*ELEMENTS_PER_VECT]));
+	    MAT4X3VEC(&(top->uvs[i*ELEMENTS_PER_VECT]), mat, tmp_uvs);
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
 
 int
 rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
@@ -2187,8 +2238,6 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bu_log("WARNING: BoT contains %zu vertices, %zu faces\n", bip->num_vertices, bip->num_faces);
     }
 
-    if (mat == NULL)
-	mat = bn_mat_identity;
 
     if (bip->vertices) {
 	for (i = 0; i < bip->num_vertices; i++) {
@@ -2197,7 +2246,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 	    bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_POINT);
 	    cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
-	    MAT4X3PNT(&(bip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
+	    VMOVE(&(bip->vertices[i*ELEMENTS_PER_POINT]), tmp);
 	}
     }
 
@@ -2248,7 +2297,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    for (i = 0; i < bip->num_normals; i++) {
 		bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_VECT);
 		cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-		MAT4X3VEC(&(bip->normals[i*ELEMENTS_PER_VECT]), mat, tmp);
+		VMOVE(&(bip->normals[i*ELEMENTS_PER_VECT]), tmp);
 	    }
 	}
 	if (bip->num_face_normals > 0) {
@@ -2291,7 +2340,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    for (i = 0; i < bip->num_uvs; i++) {
 		bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_VECT);
 		cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-		MAT4X3VEC(&(bip->uvs[i*ELEMENTS_PER_VECT]), mat, tmp);
+		VMOVE(&(bip->uvs[i*ELEMENTS_PER_VECT]), tmp);
 	    }
 	}
 	if (bip->num_face_uvs > 0) {
@@ -2315,7 +2364,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     bip->tie = NULL;
 
-    return 0;			/* OK */
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_bot_mat(ip, mat, ip);
 }
 
 
