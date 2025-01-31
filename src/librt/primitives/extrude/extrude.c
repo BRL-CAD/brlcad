@@ -2533,6 +2533,31 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     return 0;
 }
 
+int
+rt_extrude_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_extrude_internal *tip = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(tip);
+    struct rt_extrude_internal *top = (struct rt_extrude_internal *)rop->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(top);
+
+    vect_t V, h, u_vec, v_vec;
+    VMOVE(V, tip->V);
+    VMOVE(h, tip->h);
+    VMOVE(u_vec, tip->u_vec);
+    VMOVE(v_vec, tip->v_vec);
+
+    MAT4X3PNT(top->V, mat, V);
+    MAT4X3VEC(top->h, mat, h);
+    MAT4X3VEC(top->u_vec, mat, u_vec);
+    MAT4X3VEC(top->v_vec, mat, v_vec);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an EXTRUDE from the database format to the internal format.
@@ -2581,17 +2606,18 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     }
 
     bu_cv_ntohd((unsigned char *)tmp_vec, ptr, ELEMENTS_PER_VECT*4);
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(extrude_ip->V, mat, tmp_vec[0]);
-    MAT4X3VEC(extrude_ip->h, mat, tmp_vec[1]);
-    MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec[2]);
-    MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec[3]);
+    VMOVE(extrude_ip->V, tmp_vec[0]);
+    VMOVE(extrude_ip->h, tmp_vec[1]);
+    VMOVE(extrude_ip->u_vec, tmp_vec[2]);
+    VMOVE(extrude_ip->v_vec, tmp_vec[3]);
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
     extrude_ip->keypoint = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
     extrude_ip->sketch_name = bu_strdup((const char *)ptr);
 
-    return 0;			/* OK */
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_extrude_mat(ip, mat, ip);
 }
 
 
