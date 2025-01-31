@@ -87,12 +87,16 @@ nmg_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *U
 
 	    nmg_pr_fu_around_eu(es_eu, s->tol);
 
-	    nmg_plot_eu(s->gedp, es_eu, s->tol, s->vlfree);
+	    // plotting clbk
+	    mged_sedit_clbk_get(&f, &d, s, ECMD_NMG_EDEBUG, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, s);
 
 	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
 	    /* no change of state or edit_flag */
 	    int vs_flag = 1;
+	    f = NULL; d = NULL;
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, &vs_flag);

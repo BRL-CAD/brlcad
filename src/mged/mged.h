@@ -293,6 +293,8 @@ extern int ecmd_bot_thick_clbk(int ac, const char **av, void *d, void *d2);
 extern int ecmd_bot_flags_clbk(int ac, const char **av, void *d, void *d2);
 extern int ecmd_bot_fmode_clbk(int ac, const char **av, void *d, void *d2);
 extern int ecmd_bot_pickt_multihit_clbk(int ac, const char **av, void *d, void *d2);
+extern int ecmd_nmg_edebug_clbk(int ac, const char **av, void *d, void *d2);
+extern int ecmd_extrude_skt_name_clbk(int ac, const char **av, void *d, void *d2);
 
 
 /* global application state */

@@ -140,9 +140,7 @@ mged_extrude_e_axes_pos(
 void
 ecmd_extr_skt_name(struct mged_solid_edit *s)
 {
-    struct rt_extrude_internal *extr =
-	(struct rt_extrude_internal *)s->es_int.idb_ptr;
-    struct directory *dp;
+    struct rt_extrude_internal *extr = (struct rt_extrude_internal *)s->es_int.idb_ptr;
     struct rt_db_internal tmp_ip;
 
     RT_EXTRUDE_CK_MAGIC(extr);
@@ -165,21 +163,16 @@ ecmd_extr_skt_name(struct mged_solid_edit *s)
 	rt_db_free_internal(&tmp_ip);
     }
 
-    if ((dp = db_lookup(s->dbip, sketch_name, 0)) == RT_DIR_NULL) {
-	bu_log("Warning: %s does not exist!\n",
-		sketch_name);
-	extr->skt = (struct rt_sketch_internal *)NULL;
-    } else {
-	/* import the new sketch */
+    void *ubkup = s->u_ptr;
+    s->u_ptr = sketch_name;
 
-	if (rt_db_get_internal(&tmp_ip, dp, s->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
-	    bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
-		    sketch_name);
-	    extr->skt = (struct rt_sketch_internal *)NULL;
-	} else {
-	    extr->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
-	}
-    }
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    mged_sedit_clbk_get(&f, &d, s, ECMD_EXTR_SKT_NAME, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, s);
+
+    s->u_ptr = ubkup;
 }
 
 int

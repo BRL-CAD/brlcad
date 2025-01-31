@@ -67,6 +67,8 @@ mged_state_create(void)
     mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FLAGS, 0, GED_CLBK_DURING, ecmd_bot_flags_clbk, s);
     mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FMODE, 0, GED_CLBK_DURING, ecmd_bot_fmode_clbk, s);
     mged_state_clbk_set(s, ID_BOT, ECMD_BOT_PICKT, 0, GED_CLBK_DURING, ecmd_bot_pickt_multihit_clbk, s);
+    mged_state_clbk_set(s, ID_NMG, ECMD_NMG_EDEBUG, 0, GED_CLBK_DURING, ecmd_nmg_edebug_clbk, s);
+    mged_state_clbk_set(s, ID_EXTRUDE, ECMD_EXTR_SKT_NAME, 0, GED_CLBK_DURING, ecmd_extrude_skt_name_clbk, s);
 
     return s;
 }

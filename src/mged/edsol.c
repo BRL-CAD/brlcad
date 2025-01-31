@@ -45,6 +45,7 @@
 #include "rt/arb_edit.h"
 #include "wdb.h"
 #include "rt/db4.h"
+#include "ged/view/ged_view_tmp.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -453,7 +454,7 @@ ecmd_bot_fmode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 	} else
 	    bu_bitv_clear(bot->face_mode);
     }
-    
+
     return BRLCAD_OK;
 }
 
@@ -483,6 +484,41 @@ ecmd_bot_pickt_multihit_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, v
     Tcl_UnlinkVar(s->interp, "bot_v2");
     Tcl_UnlinkVar(s->interp, "bot_v3");
     return ret;
+}
+
+int
+ecmd_nmg_edebug_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
+{
+    struct mged_state *ms = (struct mged_state *)d;
+    struct mged_solid_edit *s = ms->s_edit;
+    nmg_plot_eu(ms->gedp, es_eu, s->tol, s->vlfree);
+    return BRLCAD_OK;
+}
+
+
+int
+ecmd_extrude_skt_name_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
+{
+    struct mged_state *s = (struct mged_state *)d;
+    struct mged_solid_edit *se = s->s_edit;
+    struct rt_extrude_internal *extr = (struct rt_extrude_internal *)se->es_int.idb_ptr;
+    char *sketch_name = (char *)se->u_ptr;
+    struct directory *dp = RT_DIR_NULL;
+    if ((dp = db_lookup(s->dbip, sketch_name, 0)) == RT_DIR_NULL) {
+	bu_log("Warning: %s does not exist!\n",	sketch_name);
+	extr->skt = (struct rt_sketch_internal *)NULL;
+    } else {
+	/* import the new sketch */
+	struct rt_db_internal tmp_ip;
+	if (rt_db_get_internal(&tmp_ip, dp, s->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+	    bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n", sketch_name);
+	    extr->skt = (struct rt_sketch_internal *)NULL;
+	} else {
+	    extr->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+	}
+    }
+
+    return BRLCAD_OK;
 }
 
 /*
