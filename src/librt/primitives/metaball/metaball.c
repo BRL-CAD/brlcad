@@ -676,7 +676,7 @@ rt_metaball_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_
     // For the moment, we only support applying a mat to a metaball in place - the
     // input and output must be the same.
     if (ip && rop != ip) {
-	bu_log("rt_metaball_mat:  alignment of points between multiple metaballs is unsupported - input metaball must be the same as the output metall.\n");
+	bu_log("rt_metaball_mat:  alignment of points between multiple metaballs is unsupported - input metaball must be the same as the output metaball.\n");
 	return BRLCAD_ERROR;
     }
 

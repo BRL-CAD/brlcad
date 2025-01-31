@@ -442,6 +442,105 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     return 0;
 }
 
+int
+rt_pnts_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !mat)
+	return BRLCAD_OK;
+
+    // For the moment, we only support applying a mat to a pnts primitive in place - the
+    // input and output must be the same.
+    if (ip && rop != ip) {
+	bu_log("rt_pnts_mat:  alignment of points between multiple pnts objects is unsupported - input pnts must be the same as the output pnts.\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)rop->idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    point_t v;
+    vect_t n;
+    switch (pnts->type) {
+	case RT_PNT_TYPE_PNT: {
+	    struct pnt *point;
+	    for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
+		VMOVE(v, point->v);
+		MAT4X3PNT(point->v, mat, v);
+	    }
+	    return BRLCAD_OK;
+	}
+	case RT_PNT_TYPE_COL: {
+	    struct pnt_color *point;
+	    for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
+		VMOVE(v, point->v);
+		MAT4X3PNT(point->v, mat, v);
+	    }
+	    return BRLCAD_OK;
+	}
+	case RT_PNT_TYPE_SCA: {
+	    struct pnt_scale *point;
+	    for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
+		VMOVE(v, point->v);
+		MAT4X3PNT(point->v, mat, v);
+	    }
+	    return BRLCAD_OK;
+	}
+	case RT_PNT_TYPE_NRM: {
+	    struct pnt_normal *point;
+	    for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
+		VMOVE(v, point->v);
+		MAT4X3PNT(point->v, mat, v);
+		VMOVE(n, point->n);
+		MAT4X3PNT(point->n, mat, n);
+	    }
+	    return BRLCAD_OK;
+	}
+	case RT_PNT_TYPE_COL_SCA: {
+	    struct pnt_color_scale *point;
+	    for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
+		VMOVE(v, point->v);
+		MAT4X3PNT(point->v, mat, v);
+	    }
+	    return BRLCAD_OK;
+	}
+	case RT_PNT_TYPE_COL_NRM: {
+	    struct pnt_color_normal *point;
+	    for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
+		VMOVE(v, point->v);
+		MAT4X3PNT(point->v, mat, v);
+		VMOVE(n, point->n);
+		MAT4X3PNT(point->n, mat, n);
+	    }
+	    return BRLCAD_OK;
+	}
+	case RT_PNT_TYPE_SCA_NRM: {
+	    struct pnt_scale_normal *point;
+	    for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
+		VMOVE(v, point->v);
+		MAT4X3PNT(point->v, mat, v);
+		VMOVE(n, point->n);
+		MAT4X3PNT(point->n, mat, n);
+	    }
+	    return BRLCAD_OK;
+	}
+	case RT_PNT_TYPE_COL_SCA_NRM: {
+	    struct pnt_color_scale_normal *point;
+	    for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
+		VMOVE(v, point->v);
+		MAT4X3PNT(point->v, mat, v);
+		VMOVE(n, point->n);
+		MAT4X3PNT(point->n, mat, n);
+	    }
+	    return BRLCAD_OK;
+	}
+	default:
+	    bu_log("rt_pnts_mat: unknown points primitive type (type=%d)\n", pnts->type);
+	    return BRLCAD_ERROR;
+    }
+
+    // Shouldn't be reached
+    return BRLCAD_ERROR;
+}
 
 /**
  * Import a pnts collection from the database format to the internal
@@ -491,9 +590,6 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	return 0;
     }
 
-    if (mat == NULL) {
-	mat = bn_mat_identity;
-    }
 
     /* get busy, deserialize the point data depending on what type of point it is */
     switch (pnts->type) {
@@ -512,7 +608,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		MAT4X3PNT(point->v, mat, v);
+		VMOVE(point->v, v);
 
 		BU_LIST_PUSH(head, &point->l);
 	    }
@@ -536,7 +632,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		MAT4X3PNT(point->v, mat, v);
+		VMOVE(point->v, v);
 
 		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
@@ -564,7 +660,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		MAT4X3PNT(point->v, mat, v);
+		VMOVE(point->v, v);
 
 		/* unpack s */
 		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
@@ -591,11 +687,11 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		MAT4X3PNT(point->v, mat, v);
+		VMOVE(point->v, v);
 
 		/* unpack n */
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		MAT4X3PNT(point->n, mat, n);
+		VMOVE(point->n, n);
 
 		BU_LIST_PUSH(head, &point->l);
 	    }
@@ -620,7 +716,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		MAT4X3PNT(point->v, mat, v);
+		VMOVE(point->v, v);
 
 		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
@@ -654,7 +750,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		MAT4X3PNT(point->v, mat, v);
+		VMOVE(point->v, v);
 
 		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
@@ -663,7 +759,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack n */
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		MAT4X3PNT(point->n, mat, n);
+		VMOVE(point->n, n);
 
 		BU_LIST_PUSH(head, &point->l);
 	    }
@@ -687,7 +783,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		MAT4X3PNT(point->v, mat, v);
+		VMOVE(point->v, v);
 
 		/* unpack s */
 		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
@@ -695,7 +791,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack n */
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		MAT4X3PNT(point->n, mat, n);
+		VMOVE(point->n, n);
 
 		BU_LIST_PUSH(head, &point->l);
 	    }
@@ -721,7 +817,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		MAT4X3PNT(point->v, mat, v);
+		VMOVE(point->v, v);
 
 		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
@@ -734,7 +830,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack n */
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		MAT4X3PNT(point->n, mat, n);
+		VMOVE(point->n, n);
 
 		BU_LIST_PUSH(head, &point->l);
 	    }
@@ -746,7 +842,9 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	    return 0;
     }
 
-    return 0;
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_pnts_mat(internal, mat, NULL);
 }
 
 
