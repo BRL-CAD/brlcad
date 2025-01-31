@@ -884,6 +884,29 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     return 0;
 }
 
+int
+rt_cline_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_cline_internal *tip = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(tip);
+    struct rt_cline_internal *top = (struct rt_cline_internal *)rop->idb_ptr;
+    RT_CLINE_CK_MAGIC(top);
+
+    vect_t cv, ch;
+    VMOVE(cv, tip->v);
+    VMOVE(ch, tip->h);
+
+    MAT4X3PNT(top->v, mat, cv);
+    MAT4X3VEC(top->h, mat, ch);
+    top->thickness = tip->thickness / mat[15];
+    top->radius = tip->radius / mat[15];
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an cline from the database format to the internal format.
@@ -914,13 +937,15 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 8);
 
-    if (mat == NULL) mat = bn_mat_identity;
-    cline_ip->thickness = vec[0] / mat[15];
-    cline_ip->radius = vec[1] / mat[15];
-    MAT4X3PNT(cline_ip->v, mat, &vec[2]);
-    MAT4X3VEC(cline_ip->h, mat, &vec[5]);
+    /* Assign values */
+    cline_ip->thickness = vec[0];
+    cline_ip->radius = vec[1];
+    VMOVE(cline_ip->v, &vec[2]);
+    VMOVE(cline_ip->h, &vec[5]);
 
-    return 0;			/* OK */
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_cline_mat(ip, mat, ip);
 }
 
 
