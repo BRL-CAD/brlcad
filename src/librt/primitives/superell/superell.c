@@ -889,6 +889,32 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     return 0;
 }
 
+int
+rt_superell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_superell_internal *tip = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(tip);
+    struct rt_superell_internal *top = (struct rt_superell_internal *)rop->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(top);
+
+    vect_t sv, sa, sb ,sc;
+
+    VMOVE(sv, tip->v);
+    VMOVE(sa, tip->a);
+    VMOVE(sb, tip->b);
+    VMOVE(sc, tip->c);
+
+    MAT4X3PNT(top->v, mat, sv);
+    MAT4X3VEC(top->a, mat, sa);
+    MAT4X3VEC(top->b, mat, sb);
+    MAT4X3VEC(top->c, mat, sc);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an superellipsoid/sphere from the database format to the
@@ -920,16 +946,17 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
 
-    /* Apply modeling transformations */
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(eip->v, mat, &vec[0*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->a, mat, &vec[1*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->b, mat, &vec[2*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->c, mat, &vec[3*ELEMENTS_PER_VECT]);
+    /* Assign values */
+    VMOVE(eip->v, &vec[0*ELEMENTS_PER_VECT]);
+    VMOVE(eip->a, &vec[1*ELEMENTS_PER_VECT]);
+    VMOVE(eip->b, &vec[2*ELEMENTS_PER_VECT]);
+    VMOVE(eip->c, &vec[3*ELEMENTS_PER_VECT]);
     eip->n = vec[4*ELEMENTS_PER_VECT];
     eip->e = vec[4*ELEMENTS_PER_VECT + 1];
 
-    return 0;		/* OK */
+    /* Apply modeling transformations */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_superell_mat(ip, mat, ip);
 }
 
 
