@@ -1458,6 +1458,28 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     return 0;
 }
 
+int
+rt_sketch_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_sketch_internal *tip = (struct rt_sketch_internal *)ip->idb_ptr;
+    RT_SKETCH_CK_MAGIC(tip);
+    struct rt_sketch_internal *top = (struct rt_sketch_internal *)rop->idb_ptr;
+    RT_SKETCH_CK_MAGIC(top);
+
+    vect_t V, u_vec, v_vec;
+    VMOVE(V, tip->V);
+    VMOVE(u_vec, tip->u_vec);
+    VMOVE(v_vec, tip->v_vec);
+    MAT4X3PNT(top->V, mat, V);
+    MAT4X3VEC(top->u_vec, mat, u_vec);
+    MAT4X3VEC(top->v_vec, mat, v_vec);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an SKETCH from the database format to the internal format.
@@ -1489,20 +1511,23 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
     ptr = ep->ext_buf;
-    if (mat == NULL) mat = bn_mat_identity;
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
-    MAT4X3PNT(sketch_ip->V, mat, v);
+    VMOVE(sketch_ip->V, v);
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
-    MAT4X3VEC(sketch_ip->u_vec, mat, v);
+    VMOVE(sketch_ip->u_vec, v);
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
-    MAT4X3VEC(sketch_ip->v_vec, mat, v);
+    VMOVE(sketch_ip->v_vec, v);
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     sketch_ip->vert_count = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
     sketch_ip->curve.count = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
+
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    rt_sketch_mat(ip, mat, ip);
 
     if (sketch_ip->vert_count) {
 	sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->vert");
