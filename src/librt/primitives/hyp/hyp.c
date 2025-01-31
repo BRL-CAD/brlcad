@@ -1219,6 +1219,31 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     return -1;
 }
 
+int
+rt_hyp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_hyp_internal *tip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(tip);
+    struct rt_hyp_internal *top = (struct rt_hyp_internal *)rop->idb_ptr;
+    RT_HYP_CK_MAGIC(top);
+
+    vect_t Vi, Hi, A;
+    VMOVE(Vi, tip->hyp_Vi);
+    VMOVE(Hi, tip->hyp_Hi);
+    VMOVE(A, tip->hyp_A);
+
+    MAT4X3PNT(top->hyp_Vi, mat, Vi);
+    MAT4X3VEC(top->hyp_Hi, mat, Hi);
+    MAT4X3VEC(top->hyp_A, mat, A);
+    top->hyp_b = (!ZERO(mat[15])) ? tip->hyp_b / mat[15] : INFINITY;
+
+    return BRLCAD_OK;
+}
+
+
 
 /**
  * Import an HYP from the database format to the internal format.
@@ -1256,19 +1281,16 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
      */
     bu_cv_ntohd((unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4);
 
-    /* Apply the modeling transformation */
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(hyp_ip->hyp_Vi, mat, &vec[0*3]);
-    MAT4X3VEC(hyp_ip->hyp_Hi, mat, &vec[1*3]);
-    MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
-
-    if (!ZERO(mat[15]))
-	hyp_ip->hyp_b = vec[9] / mat[15];
-    else
-	hyp_ip->hyp_b = INFINITY;
+    /* Assign values */
+    VMOVE(hyp_ip->hyp_Vi, &vec[0*3]);
+    VMOVE(hyp_ip->hyp_Hi, &vec[1*3]);
+    VMOVE(hyp_ip->hyp_A, &vec[2*3]);
+    hyp_ip->hyp_b = vec[9];
     hyp_ip->hyp_bnr = vec[10] ;
 
-    return 0;			/* OK */
+    /* Apply the modeling transformation */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_hyp_mat(ip, mat, ip);
 }
 
 
