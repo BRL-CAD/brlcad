@@ -154,6 +154,7 @@ extern int rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, 
 extern int rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern void rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 extern void rt_comb_ifree(struct rt_db_internal *ip);
+extern int rt_comb_mat(struct rt_db_internal *op, const mat_t mat, const struct rt_db_internal *ip);
 
 extern int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
@@ -1762,7 +1763,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* serialize */
 	NULL, /* label */
 	NULL, /* keypoint */
-	NULL, /* mat */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_comb_mat),
 	NULL  /* perturb */
     },
 

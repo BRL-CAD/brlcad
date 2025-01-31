@@ -476,6 +476,71 @@ rt_comb_export5(
     return 0;	/* OK */
 }
 
+/* We assume the calling function has already verified that
+ * mat is not an identity matrix, to avoid having to do the
+ * check over and over while walking. */
+static void
+_comb_mat_leaf(const mat_t mat, union tree *tp)
+{
+    if (!tp)
+	return;
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	        case OP_UNION:
+        case OP_INTERSECT:
+        case OP_SUBTRACT:
+        case OP_XOR:
+            _comb_mat_leaf(mat, tp->tr_b.tb_right);
+            /* fall through */
+        case OP_NOT:
+        case OP_GUARD:
+        case OP_XNOP:
+            _comb_mat_leaf(mat, tp->tr_b.tb_left);
+            break;
+        case OP_DB_LEAF:
+	    if (tp->tr_l.tl_mat) {
+		mat_t mat_tmp;
+		MAT_COPY(mat_tmp, tp->tr_l.tl_mat);
+		bn_mat_mul(tp->tr_l.tl_mat, mat, mat_tmp);
+		/* Check if we created an identity matrix */
+		if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
+		    bu_free((char *)tp->tr_l.tl_mat, "tl_mat");
+		    tp->tr_l.tl_mat = NULL;
+		}
+	    } else {
+		tp->tr_l.tl_mat = bn_mat_dup(mat);
+	    }
+	    break;
+	default:
+            bu_log("_comb_mat_leaf: unrecognized operator %d\n", tp->tr_op);
+            bu_bomb("_comb_mat_leaf\n");
+    }
+}
+
+int
+rt_comb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !mat)
+	return BRLCAD_OK;
+
+    // Identity matrix is a no-op
+    if (bn_mat_is_identity(mat))
+	return BRLCAD_OK;
+
+    // For the moment, we only support applying a mat to combs in place - the
+    // input and output must be the same.
+    if (ip && rop != ip) {
+	bu_log("rt_comb_mat:  verification of matching comb trees is unsupported - input comb must be the same as the output comb.\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)rop->idb_ptr;
+    RT_CK_COMB(comb);
+    _comb_mat_leaf(mat, comb->tree);
+
+    return BRLCAD_OK;
+}
 
 int
 rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
@@ -552,10 +617,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
 	    if (mi == (size_t)-1) {
 		/* Signal identity matrix */
-		if (!mat || bn_mat_is_identity(mat)) {
-		    tp->tr_l.tl_mat = (matp_t)NULL;
-		} else
-		    tp->tr_l.tl_mat = bn_mat_dup(mat);
+		tp->tr_l.tl_mat = (matp_t)NULL;
 	    } else {
 		mat_t diskmat;
 
@@ -569,17 +631,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
 		MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
 
-		if (!mat || bn_mat_is_identity(mat)) {
-		    tp->tr_l.tl_mat = bn_mat_dup(diskmat);
-		} else {
-		    tp->tr_l.tl_mat = (matp_t)bu_malloc(
-			sizeof(mat_t), "v5comb mat");
-		    bn_mat_mul(tp->tr_l.tl_mat, mat, diskmat);
-		    if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
-			bu_free((char *)tp->tr_l.tl_mat, "tl_mat");
-			tp->tr_l.tl_mat = (matp_t)NULL;
-		    }
-		}
+		tp->tr_l.tl_mat = bn_mat_dup(diskmat);
 	    }
 	    bu_ptbl_ins(tbl1, (long *)tp);
 	}
@@ -677,10 +729,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
 		if ((ssize_t)mi < 0) {
 		    /* Signal identity matrix */
-		    if (!mat || bn_mat_is_identity(mat)) {
-			tp->tr_l.tl_mat = (matp_t)NULL;
-		    } else
-			tp->tr_l.tl_mat = bn_mat_dup(mat);
+		    tp->tr_l.tl_mat = (matp_t)NULL;
 		} else {
 		    mat_t diskmat;
 
@@ -694,17 +743,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		    bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
 		    MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
 
-		    if (!mat || bn_mat_is_identity(mat)) {
-			tp->tr_l.tl_mat = bn_mat_dup(diskmat);
-		    } else {
-			tp->tr_l.tl_mat = (matp_t)bu_malloc(
-			    sizeof(mat_t), "v5comb mat");
-			bn_mat_mul(tp->tr_l.tl_mat, mat, diskmat);
-			if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
-			    bu_free((char *)tp->tr_l.tl_mat, "tl_mat");
-			    tp->tr_l.tl_mat = (matp_t)NULL;
-			}
-		    }
+		    tp->tr_l.tl_mat = bn_mat_dup(diskmat);
 		}
 		break;
 
@@ -759,6 +798,10 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     RT_CK_TREE(comb->tree);
 
 finish:
+
+    /* Apply transform */
+    rt_comb_mat(ip, mat, NULL);
+
     if (ip->idb_avs.magic != BU_AVS_MAGIC) return 0;	/* OK */
 
     /* Unpack the attributes */
