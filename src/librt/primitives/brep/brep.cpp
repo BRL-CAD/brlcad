@@ -2432,6 +2432,28 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     }
 }
 
+int
+rt_brep_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !mat)
+	return BRLCAD_OK;
+
+    // For the moment, we only support applying a mat to a brep in place - the
+    // input and output must be the same.
+    if (ip && rop != ip) {
+	bu_log("rt_brep_mat:  alignment of points between multiple breps is unsupported - input brep must be the same as the output brep.\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)rop->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    ON_Xform xform(mat);
+    if (!xform.IsIdentity())
+	bi->brep->Transform(xform);
+
+    return BRLCAD_OK;
+}
 
 int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
@@ -2469,15 +2491,8 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     bi->brep = ON_Brep::New(*ON_Brep::Cast(geom_comp->Geometry(NULL)));
 
-    if (mat) {
-	ON_Xform xform(mat);
-
-	if (!xform.IsIdentity()) {
-	    bi->brep->Transform(xform);
-	}
-    }
-
-    return 0;
+    /* Apply transform */
+    return rt_brep_mat(ip, mat, NULL);
 }
 
 

@@ -2067,7 +2067,7 @@ const struct rt_functab OBJ[] = {
         RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(rt_brep_prep_serialize),
 	NULL, /* label */
 	NULL, /* keypoint */
-	NULL, /* mat */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_brep_mat),
 	NULL  /* perturb */
     },
 
