@@ -76,7 +76,8 @@ mged_generic_sscale(
     bn_mat_scale_about_pnt(scalemat, s->e_keypoint, s->es_scale);
     bn_mat_mul(mat1, scalemat, s->e_mat);
     bn_mat_mul(mat, s->e_invmat, mat1);
-    transform_editing_solid(s, ip, mat, ip, 1);
+    if (OBJ[ip->idb_type].ft_mat)
+	(*OBJ[ip->idb_type].ft_mat)(ip, mat, ip);
 
     /* reset solid scale factor */
     s->es_scale = 1.0;
@@ -121,7 +122,8 @@ mged_generic_strans(
 	    MAT_IDN(mat);
 	    MAT_DELTAS_VEC_NEG(mat, delta);
 	}
-	transform_editing_solid(s, ip, mat, ip, 1);
+	if (OBJ[ip->idb_type].ft_mat)
+	    (*OBJ[ip->idb_type].ft_mat)(ip, mat, ip);
     }
 }
 
@@ -195,7 +197,8 @@ mged_generic_srot(
 	MAT4X3PNT(work, s->e_invmat, rot_point);
 	bn_mat_xform_about_pnt(mat, s->incr_change, work);
     }
-    transform_editing_solid(s, ip, mat, ip, 1);
+    if (OBJ[ip->idb_type].ft_mat)
+	(*OBJ[ip->idb_type].ft_mat)(ip, mat, ip);
 
     MAT_IDN(s->incr_change);
 }
@@ -298,7 +301,9 @@ mged_generic_strans_xy(vect_t *pos_view,
     VSUB2(delta, raw_kp, raw_mp);
     MAT_IDN(mat);
     MAT_DELTAS_VEC_NEG(mat, delta);
-    transform_editing_solid(s, &s->es_int, mat, &s->es_int, 1);
+    struct rt_db_internal *ip = &s->es_int;
+    if (OBJ[ip->idb_type].ft_mat)
+	(*OBJ[ip->idb_type].ft_mat)(ip, mat, ip);
 }
 
 void
