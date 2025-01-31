@@ -1321,7 +1321,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     if (origin != 'v' && origin != 'm' && origin != 'e' && origin != 'k') {
-	origin = mged_variables->mv_rotate_about;
+	origin = view_state->vs_gvp->gv_rotate_about;
     }
 
     /* print the current values */
@@ -3250,8 +3250,8 @@ mged_erot(struct mged_state *s,
 	char save_rotate_about;
 	int save_rot, save_tra, save_sca, save_pic;
 
-	save_rotate_about = mged_variables->mv_rotate_about;
-	mged_variables->mv_rotate_about = rotate_about;
+	save_rotate_about = view_state->vs_gvp->gv_rotate_about;
+	view_state->vs_gvp->gv_rotate_about = rotate_about;
 
 	save_edflag = s->s_edit->edit_flag;
 	save_rot = s->s_edit->solid_edit_rotate;
@@ -3272,7 +3272,7 @@ mged_erot(struct mged_state *s,
 	sedit(s->s_edit);
 	s->update_views = s->s_edit->update_views;
 
-	mged_variables->mv_rotate_about = save_rotate_about;
+	view_state->vs_gvp->gv_rotate_about = save_rotate_about;
 	s->s_edit->edit_flag = save_edflag;
 	s->s_edit->solid_edit_rotate = save_rot;
 	s->s_edit->solid_edit_translate = save_tra;

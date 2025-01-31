@@ -164,7 +164,7 @@ mged_generic_srot(
     }
     /* Apply changes to solid */
     /* xlate keypoint to origin, rotate, then put back. */
-    switch (mged_variables->mv_rotate_about) {
+    switch (s->vp->gv_rotate_about) {
 	case 'v':       /* View Center */
 	    VSET(work, 0.0, 0.0, 0.0);
 	    MAT4X3PNT(rot_point, s->vp->gv_view2model, work);
