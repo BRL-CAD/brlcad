@@ -4116,18 +4116,9 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
  * !0 failure
  */
 static int
-dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i *dbip)
+dsp_get_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
-    mat_t tmp;
-    char *p;
-
-    /* Apply Modeling transform */
-    MAT_COPY(tmp, dsp_ip->dsp_stom);
-    bn_mat_mul(dsp_ip->dsp_stom, mat, tmp);
-
-    bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
-
-    p = bu_vls_addr(&dsp_ip->dsp_name);
+    const char *p = bu_vls_cstr(&dsp_ip->dsp_name);
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
@@ -4172,6 +4163,25 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i 
     return 1;
 }
 
+int
+rt_dsp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_dsp_internal *tip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(tip);
+    struct rt_dsp_internal *top = (struct rt_dsp_internal *)rop->idb_ptr;
+    RT_DSP_CK_MAGIC(top);
+
+    mat_t tmp;
+
+    MAT_COPY(tmp, tip->dsp_stom);
+    bn_mat_mul(top->dsp_stom, mat, tmp);
+    bn_mat_inv(top->dsp_mtos, top->dsp_stom);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an DSP from the database format to the internal format.
@@ -4233,7 +4243,9 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (dsp_get_data(dsp_ip, mat, dbip)!=0) {
+    rt_dsp_mat(ip, mat, ip);
+
+    if (dsp_get_data(dsp_ip, dbip)!=0) {
 	IMPORT_FAIL("unable to load displacement map data");
     }
 
@@ -4298,7 +4310,6 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     return 0;
 }
-
 
 /**
  * Import an DSP from the database format to the internal format.
@@ -4401,8 +4412,11 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bu_vls_strncpy(&dsp_ip->dsp_name, (char *)cp,
 		   ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf));
 
+    /* Apply Modeling transform */
     if (mat == NULL) mat = bn_mat_identity;
-    if (dsp_get_data(dsp_ip, mat, dbip) != 0) {
+    rt_dsp_mat(ip, mat, ip);
+
+    if (dsp_get_data(dsp_ip, dbip) != 0) {
 	IMPORT_FAIL("unable to load displacement map data");
     }
 
