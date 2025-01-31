@@ -856,6 +856,23 @@ rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     return myret;
 }
 
+int
+rt_annot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_annot_internal *tip = (struct rt_annot_internal *)ip->idb_ptr;
+    RT_ANNOT_CK_MAGIC(tip);
+    struct rt_annot_internal *top = (struct rt_annot_internal *)rop->idb_ptr;
+    RT_ANNOT_CK_MAGIC(top);
+
+    vect_t v;
+    VMOVE(v, tip->V);
+    MAT4X3PNT(top->V, mat, v);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an annotation from the database format to the internal format.
@@ -887,9 +904,8 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     annot_ip->magic = RT_ANNOT_INTERNAL_MAGIC;
 
     ptr = ep->ext_buf;
-    if (mat == NULL) mat = bn_mat_identity;
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
-    MAT4X3PNT(annot_ip->V, mat, v);
+    VMOVE(annot_ip->V, v);
 
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     annot_ip->vert_count = ntohl(*(uint32_t *)ptr);
@@ -1048,7 +1064,9 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
-    return 0;			/* OK */
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_annot_mat(ip, mat, ip);
 }
 
 
