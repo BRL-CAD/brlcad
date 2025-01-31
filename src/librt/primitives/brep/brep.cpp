@@ -76,6 +76,7 @@ extern "C" {
     int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
     int rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
+    int rt_brep_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
     int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
