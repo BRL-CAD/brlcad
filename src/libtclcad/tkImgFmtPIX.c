@@ -319,9 +319,9 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
     for (h = blockPtr->height; h > 0; h--) {
 	pixelPtr = pixLinePtr;
 	for (w = blockPtr->width; w > 0; w--) {
-	    if ((putc(pixelPtr[0], f) == EOF)
-		|| (putc(pixelPtr[greenOffset], f) == EOF)
-		|| (putc(pixelPtr[blueOffset], f) == EOF))
+	    if ((fputc(pixelPtr[0], f) == EOF)
+		|| (fputc(pixelPtr[greenOffset], f) == EOF)
+		|| (fputc(pixelPtr[blueOffset], f) == EOF))
 	    {
 		goto writeerror;
 	    }

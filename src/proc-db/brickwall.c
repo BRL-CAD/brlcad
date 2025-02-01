@@ -380,7 +380,7 @@ int main(int ac, char **av)
 	    vert_spacing / units_conv);
 
 
-    (void)putc((int)'\n', stdout);
+    (void)fputc((int)'\n', stdout);
     gen_bricks(horiz_bricks, vert_bricks, horiz_spacing, vert_spacing);
 
     if (make_mortar && (vert_spacing > tol || horiz_spacing > tol))

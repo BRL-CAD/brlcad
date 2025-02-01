@@ -972,8 +972,8 @@ int ply_write(p_ply ply, double value) {
         } while (ply->welement < ply->nelements && !element->ninstances);
     }
     if (ply->storage_mode == PLY_ASCII) {
-        return (!spaceafter || putc(' ', ply->fp) > 0) &&
-               (!breakafter || putc('\n', ply->fp) > 0);
+        return (!spaceafter || fputc(' ', ply->fp) > 0) &&
+               (!breakafter || fputc('\n', ply->fp) > 0);
     } else {
         return 1;
     }

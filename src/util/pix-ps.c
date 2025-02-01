@@ -128,8 +128,8 @@ hexout(FILE *fp, int byte)
     high = (byte>>4) & 0xf;
     low = byte & 0xf;
 
-    putc(symbol[high], fp);
-    putc(symbol[low], fp);
+    fputc(symbol[high], fp);
+    fputc(symbol[low], fp);
 }
 
 int

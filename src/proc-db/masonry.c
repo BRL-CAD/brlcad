@@ -340,7 +340,7 @@ parse_args(int ac, char **av)
 	}
 	for (R=0; R < ac; R++)
 	    fprintf(logfile, "%s ", av[R]);
-	(void)putc('\n', logfile);
+	(void)fputc('\n', logfile);
 	(void)fclose(logfile);
     }
 

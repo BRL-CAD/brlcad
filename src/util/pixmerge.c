@@ -184,20 +184,20 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
     fprintf(stderr, "pixmerge: Selecting foreground when fg ");
-    if (wanted & LT) putc('<', stderr);
-    if (wanted & EQ) putc('=', stderr);
-    if (wanted & GT) putc('>', stderr);
+    if (wanted & LT) fputc('<', stderr);
+    if (wanted & EQ) fputc('=', stderr);
+    if (wanted & GT) fputc('>', stderr);
     if (wanted & NE) fprintf(stderr, "!=");
     if (seen_const) {
 	int i;
 
-	putc(' ', stderr);
+	fputc(' ', stderr);
 	for (i = 0; i < width; i++) {
 	    fprintf(stderr, "%d", pconst[i]);
 	    if (i < width-1)
-		putc('/', stderr);
+		fputc('/', stderr);
 	}
-	putc('\n', stderr);
+	fputc('\n', stderr);
     } else {
 	fprintf(stderr, " bg\n");
     }
