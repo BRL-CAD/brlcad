@@ -129,10 +129,10 @@ bu_crashreport_app(const char *filename, const char *argv0)
 		if (ret != len)
 		    perror("fwrite failed");
 	    }
-	}
 #ifdef HAVE_POPEN
-	(void)pclose(popenfp);
+	    (void)pclose(popenfp);
 #endif
+	}
 	popenfp = NULL;
 	path = NULL;
     }
@@ -167,10 +167,10 @@ bu_crashreport_app(const char *filename, const char *argv0)
 		if (ret != len)
 		    perror("fwrite failed");
 	    }
-	}
 #ifdef HAVE_POPEN
-	(void)pclose(popenfp);
+	    (void)pclose(popenfp);
 #endif
+	}
 	popenfp = NULL;
 	path = NULL;
     }
