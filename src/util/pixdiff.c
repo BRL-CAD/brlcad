@@ -48,8 +48,9 @@ rgb_diff(int c1, int c2, FILE *output, size_t *offmany, size_t *off1, size_t *ma
 {
     int i;
 
-    if (!output)
+    if (!output) {
 	output = stdout;
+    }
     if (!offmany || !off1 || !matching)
 	return;
 
@@ -58,14 +59,17 @@ rgb_diff(int c1, int c2, FILE *output, size_t *offmany, size_t *off1, size_t *ma
 	if (i < 0)
 	    i = -i;
 	if (i > 1) {
-	    fputc(0xFF, output);
+	    if (output)
+		fputc(0xFF, output);
 	    (*offmany)++;
 	} else {
-	    fputc(0xC0, output);
+	    if (output)
+		fputc(0xC0, output);
 	    (*off1)++;
 	}
     } else {
-	fputc(0, output);
+	if (output)
+	    fputc(0, output);
 	(*matching)++;
     }
 }
