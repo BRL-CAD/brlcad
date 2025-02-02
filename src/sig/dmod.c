@@ -112,7 +112,8 @@ get_args(int argc, char *argv[])
     } else {
 	static char *file_name = NULL;
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "rb")) == NULL) {
+	infp = fopen(file_name, "rb");
+	if (!infp) {
 	    fprintf(stderr,
 		    "%s: cannot open \"%s\" for reading\n",
 		    progname, file_name);
@@ -136,16 +137,28 @@ main(int argc, char *argv[])
     int j;
     size_t ret;
 
+    int infpfd = 1; /* default stdin */
+    int soutfd = 0; /* default stdout */
+
     double buf[BU_PAGE_SIZE] = {0.0};		/* working buffer */
 
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv) || isatty(fileno(infp))
-	|| isatty(fileno(stdout))) {
+    if (infp)
+	infpfd = fileno(infp);
+    if (stdout)
+	soutfd = fileno(stdout);
+
+    if (!get_args(argc, argv)
+	|| !infp
+	|| !stdout
+	|| isatty(infpfd)
+	|| isatty(soutfd))
+    {
 	bu_exit(1, "%s", usage);
     }
 
-    setmode(fileno(stdout), O_BINARY);
+    setmode(soutfd, O_BINARY);
 
     while ((n = fread(buf, sizeof(*buf), BU_PAGE_SIZE, infp)) > 0) {
 	for (i = 0; i < numop; i++) {
