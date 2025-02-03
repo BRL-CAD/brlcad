@@ -19,8 +19,6 @@
  */
 /** @file gen-attributes-file.cpp
  *
- * Brief description
- *
  */
 
 #include "common.h"
