@@ -1255,7 +1255,7 @@ DoFile(void)	/* returns vpl status code */
 			put_vector_char(c, &newpos);
 
 			if (debug)
-			    putc(c, stderr);
+			    fputc(c, stderr);
 		    }
 
 		    plotted = true;
