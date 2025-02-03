@@ -1633,7 +1633,7 @@ rt_nmg_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 	return BRLCAD_ERROR;
 
     // Import 
-    struct model *nm = nmg_import(&ext, mat, 5);
+    struct model *nm = nmg_import(&ext, mat, BRLCAD_DB_FORMAT_LATEST);
     nmg_km(m);
     rop->idb_ptr = nm;
 
