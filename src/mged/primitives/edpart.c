@@ -34,7 +34,6 @@
 
 #include "../mged.h"
 #include "../sedit.h"
-#include "../mged_dm.h"
 #include "./edfunctab.h"
 
 #define MENU_PART_H		16088

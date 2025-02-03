@@ -40,7 +40,6 @@
 
 #include "../mged.h"
 #include "../sedit.h"
-#include "../mged_dm.h"
 #include "./edfunctab.h"
 
 #define ECMD_PIPE_PICK		15028	/* Pick pipe point */

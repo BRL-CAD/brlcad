@@ -34,7 +34,6 @@
 
 #include "../mged.h"
 #include "../sedit.h"
-#include "../mged_dm.h"
 #include "./edfunctab.h"
 
 #define MENU_SUPERELL_SCALE_A	35113

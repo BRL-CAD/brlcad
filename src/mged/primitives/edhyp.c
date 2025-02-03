@@ -34,7 +34,6 @@
 
 #include "../mged.h"
 #include "../sedit.h"
-#include "../mged_dm.h"
 #include "./edfunctab.h"
 
 #define ECMD_HYP_ROT_H		38091

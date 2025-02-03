@@ -35,7 +35,6 @@
 
 #include "../mged.h"
 #include "../sedit.h"
-#include "../mged_dm.h"
 #include "./edfunctab.h"
 
 #define ECMD_VOL_CSIZE		13048	/* set voxel size */

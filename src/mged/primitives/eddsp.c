@@ -35,7 +35,6 @@
 
 #include "../mged.h"
 #include "../sedit.h"
-#include "../mged_dm.h"
 #include "./edfunctab.h"
 
 #define ECMD_DSP_FNAME		25056	/* set DSP file name */

@@ -36,7 +36,6 @@
 
 #include "../sedit.h"
 #include "../mged.h"
-#include "../mged_dm.h"
 #include "../cmd.h"
 #include "../menu.h"
 #include "./edfunctab.h"
