@@ -1609,16 +1609,37 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 int
 rt_nmg_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
-    if (!rop || !ip || !mat)
+    if (!rop || !mat)
 	return BRLCAD_OK;
 
-    struct model *tip = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(tip);
-    struct model *top = (struct model *)rop->idb_ptr;
-    NMG_CK_MODEL(top);
+    // For the moment, we only support applying a mat to an NMG in place - the
+    // input and output must be the same.
+    if (ip && rop != ip) {
+	bu_log("rt_nmg_mat:  alignment of points between multiple NMGs is unsupported - input NMG must be the same as the output NMG.\n");
+	return BRLCAD_ERROR;
+    }
+    struct model *m = (struct model *)rop->idb_ptr;
+    NMG_CK_MODEL(m);
 
-    // TODO - nmg is going to be a pain.  Lots of cases - see nmg_idisk function
-    return BRLCAD_ERROR;
+    /* libnmg has its own I/O routines for this that do matrix application -
+     * rather than attempt to untangle all that, we'll just do the xform
+     * export/import trick in this particular case. */
+
+    // Export
+    int local2mm = 1.0;
+    struct bu_external ext;
+    BU_EXTERNAL_INIT(&ext);
+    if (nmg_export(&ext, m, local2mm, 0) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    // Import 
+    struct model *nm = nmg_import(&ext, mat, 5);
+    nmg_km(m);
+    rop->idb_ptr = nm;
+
+    bu_free_external(&ext);
+
+    return BRLCAD_OK;
 }
 
 
