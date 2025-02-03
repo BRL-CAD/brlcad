@@ -34,7 +34,7 @@
  */
 /** @file version.c
  *
- * Brief description
+ * Unit test for compile-time versioning.
  *
  */
 
