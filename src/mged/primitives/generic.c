@@ -299,7 +299,7 @@ mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, cons
     if (!mstr || !ip)
 	return BRLCAD_ERROR;
 
-    struct menu_item *mip = NULL;
+    struct rt_solid_edit_menu_item *mip = NULL;
 
     if (EDOBJ[ip->idb_type].ft_menu_item)
 	mip = (*EDOBJ[ip->idb_type].ft_menu_item)(tol);
@@ -455,7 +455,7 @@ mged_generic_edit_xy(
 
 
 void
-mged_set_edflag(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
 {
     if (!s)
 	return;

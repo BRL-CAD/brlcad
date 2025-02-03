@@ -73,13 +73,13 @@ extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    s->solid_edit_pick = 0;
 	    break;
 	default:
-	    mged_set_edflag(s, arg);
+	    rt_solid_edit_set_edflag(s, arg);
 	    break;
     };
 
     rt_solid_edit_process(s);
 }
-struct menu_item extr_menu[] = {
+struct rt_solid_edit_menu_item extr_menu[] = {
     { "EXTRUSION MENU",	NULL, 0 },
     { "Set H",		extr_ed, ECMD_EXTR_SCALE_H },
     { "Move End H",		extr_ed, ECMD_EXTR_MOV_H },
@@ -88,7 +88,7 @@ struct menu_item extr_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_extrude_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return extr_menu;

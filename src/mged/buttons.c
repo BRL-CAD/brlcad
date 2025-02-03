@@ -195,9 +195,9 @@ f_press(ClientData clientData,
     for (i = 1; i < argc; i++) {
 	const char *str = argv[i];
 	struct buttons *bp;
-	struct menu_item **m;
+	struct rt_solid_edit_menu_item **m;
 	int menu, item;
-	struct menu_item *mptr;
+	struct rt_solid_edit_menu_item *mptr;
 
 	if (edsol && edobj) {
 	    bu_vls_printf(&vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
@@ -846,7 +846,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     movedir = 0;
     edsol = 0;
     edobj = 0;
-    mged_set_edflag(s->s_edit, -1);
+    rt_solid_edit_set_edflag(s->s_edit, -1);
     illum_gdlp = GED_DISPLAY_LIST_NULL;
     illump = NULL;		/* None selected */
 
@@ -901,7 +901,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
-    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -923,7 +923,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
-    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -945,7 +945,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
-    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
     mmenu_set(s, MENU_L1, NULL);
     s->s_edit->acc_sc_sol = 1.0;
 

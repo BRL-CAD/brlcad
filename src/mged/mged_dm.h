@@ -376,7 +376,7 @@ struct _menu_state {
     int	ms_top;
     int	ms_cur_menu;
     int	ms_cur_item;
-    struct menu_item	*ms_menus[NMENU];    /* base of menu items array */
+    struct rt_solid_edit_menu_item	*ms_menus[NMENU];    /* base of menu items array */
 };
 
 

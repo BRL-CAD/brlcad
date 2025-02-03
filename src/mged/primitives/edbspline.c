@@ -68,7 +68,7 @@ spline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
 	s->solid_edit_scale = 0;
 	s->solid_edit_pick = 0;
     } else {
-	mged_set_edflag(s, arg);
+	rt_solid_edit_set_edflag(s, arg);
     }
 
     rt_solid_edit_process(s);
@@ -80,14 +80,14 @@ spline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item spline_menu[] = {
+struct rt_solid_edit_menu_item spline_menu[] = {
     { "SPLINE MENU", NULL, 0 },
     { "Pick Vertex", spline_ed, -1 },
     { "Move Vertex", spline_ed, ECMD_VTRANS },
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_bspline_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return spline_menu;

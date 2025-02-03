@@ -93,7 +93,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    es_pipe_pnt = next;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->base2local);
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_PIPE_PREV_PT:
@@ -109,7 +109,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->base2local);
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_PIPE_SPLIT:
@@ -125,7 +125,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	case MENU_PIPE_MOV_PT:
 	    if (!es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
-		mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
 	    s->edit_menu = arg;
@@ -140,17 +140,17 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	case MENU_PIPE_PT_RADIUS:
 	    if (!es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
-		mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
 	case MENU_PIPE_SCALE_OD:
 	case MENU_PIPE_SCALE_ID:
 	case MENU_PIPE_SCALE_RADIUS:
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
 	case MENU_PIPE_ADD_PT:
 	    s->edit_menu = arg;
@@ -170,7 +170,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    break;
 	case MENU_PIPE_DEL_PT:
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, ECMD_PIPE_PT_DEL);
+	    rt_solid_edit_set_edflag(s, ECMD_PIPE_PT_DEL);
 	    rt_solid_edit_process(s);
 	    break;
     }
@@ -184,7 +184,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 }
 
 
-struct menu_item pipe_menu[] = {
+struct rt_solid_edit_menu_item pipe_menu[] = {
     { "PIPE MENU", NULL, 0 },
     { "Select Point", pipe_ed, MENU_PIPE_SELECT },
     { "Next Point", pipe_ed, MENU_PIPE_NEXT_PT },
@@ -202,7 +202,7 @@ struct menu_item pipe_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_pipe_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return pipe_menu;

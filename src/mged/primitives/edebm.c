@@ -50,7 +50,7 @@ static void
 ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, -1);
+    rt_solid_edit_set_edflag(s, -1);
 
     switch (arg) {
 	case MENU_EBM_FNAME:
@@ -74,7 +74,7 @@ ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item ebm_menu[] = {
+struct rt_solid_edit_menu_item ebm_menu[] = {
     {"EBM MENU", NULL, 0 },
     {"File Name", ebm_ed, MENU_EBM_FNAME },
     {"File Size (W N)", ebm_ed, MENU_EBM_FSIZE },
@@ -82,7 +82,7 @@ struct menu_item ebm_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ebm_menu;

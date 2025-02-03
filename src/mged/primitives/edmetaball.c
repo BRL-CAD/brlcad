@@ -62,14 +62,14 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 {
     struct wdb_metaball_pnt *next, *prev;
 
-    mged_set_edflag(s, -1);
+    rt_solid_edit_set_edflag(s, -1);
 
     switch (arg) {
 	case MENU_METABALL_SET_THRESHOLD:
 	case MENU_METABALL_SET_METHOD:
 	case MENU_METABALL_PT_SET_GOO:
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
 	case MENU_METABALL_SELECT:
 	    s->edit_menu = arg;
@@ -89,7 +89,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    es_metaball_pnt = next;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->base2local);
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_PREV_PT:
@@ -105,13 +105,13 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->base2local);
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_MOV_PT:
 	    if (!es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
-		mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
 	    s->edit_menu = arg;
@@ -121,11 +121,11 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	case MENU_METABALL_PT_FLDSTR:
 	    if (!es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
-		mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
 	case MENU_METABALL_DEL_PT:
 	    s->edit_menu = arg;
@@ -146,7 +146,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	(*f)(0, NULL, d, &flag);
 }
 
-struct menu_item metaball_menu[] = {
+struct rt_solid_edit_menu_item metaball_menu[] = {
     { "METABALL MENU", NULL, 0 },
     { "Set Threshold", metaball_ed, MENU_METABALL_SET_THRESHOLD },
     { "Set Render Method", metaball_ed, MENU_METABALL_SET_METHOD },
@@ -161,7 +161,7 @@ struct menu_item metaball_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_metaball_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return metaball_menu;

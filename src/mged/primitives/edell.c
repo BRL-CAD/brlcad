@@ -44,7 +44,7 @@ static void
 ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -53,7 +53,7 @@ ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item ell_menu[] = {
+struct rt_solid_edit_menu_item ell_menu[] = {
     { "ELLIPSOID MENU", NULL, 0 },
     { "Set A", ell_ed, MENU_ELL_SCALE_A },
     { "Set B", ell_ed, MENU_ELL_SCALE_B },
@@ -62,7 +62,7 @@ struct menu_item ell_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_ell_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ell_menu;

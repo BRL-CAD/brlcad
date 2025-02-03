@@ -129,6 +129,13 @@ struct rt_solid_edit {
 };
 
 
+struct rt_solid_edit_menu_item {
+    char *menu_string;
+    void (*menu_func)(struct rt_solid_edit *, int, int, int, void *);
+    int menu_arg;
+};
+
+
 int rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *m, int ed_cmd, int menu_cmd, int mode);
 extern struct rt_solid_edit *
 rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
@@ -190,7 +197,7 @@ mged_generic_edit_xy(
 
 
 void
-mged_set_edflag(struct rt_solid_edit *s, int edflag);
+rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag);
 
 int
 mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol);
@@ -267,8 +274,8 @@ struct mged_functab {
     int (*ft_menu_str)(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define EDFUNCTAB_FUNC_MENU_STR_CAST(_func) ((int(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
-    struct menu_item *(*ft_menu_item)(const struct bn_tol *tol);
-#define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
+    struct rt_solid_edit_menu_item *(*ft_menu_item)(const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_solid_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 
 };
 extern const struct mged_functab EDOBJ[];

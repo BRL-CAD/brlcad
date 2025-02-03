@@ -110,13 +110,13 @@ ars_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    s->solid_edit_pick = 1;
 	    break;
 	default:
-	    mged_set_edflag(s, arg);
+	    rt_solid_edit_set_edflag(s, arg);
 	    break;
     };
 
     rt_solid_edit_process(s);
 }
-struct menu_item ars_pick_menu[] = {
+struct rt_solid_edit_menu_item ars_pick_menu[] = {
     { "ARS PICK MENU", NULL, 0 },
     { "Pick Vertex", ars_ed, ECMD_ARS_PICK },
     { "Next Vertex", ars_ed, ECMD_ARS_NEXT_PT },
@@ -127,7 +127,7 @@ struct menu_item ars_pick_menu[] = {
 };
 
 
-struct menu_item ars_menu[] = {
+struct rt_solid_edit_menu_item ars_menu[] = {
     { "ARS MENU", NULL, 0 },
     { "Pick Vertex", ars_ed, ECMD_ARS_PICK_MENU },
     { "Move Point", ars_ed, ECMD_ARS_MOVE_PT },
@@ -197,7 +197,7 @@ mged_ars_keypoint(
     return strp;
 }
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_ars_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ars_menu;
@@ -209,7 +209,7 @@ mged_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const st
     if (!mstr || !ip)
 	return BRLCAD_ERROR;
 
-    struct menu_item *mip = NULL;
+    struct rt_solid_edit_menu_item *mip = NULL;
     struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
     /* build ARS PICK MENU list */
@@ -816,7 +816,7 @@ mged_ars_edit(struct rt_solid_edit *s, int edflag)
 	    break;
 	case ECMD_ARS_EDIT_MENU:
 	    /* put up main ARS edit menu */
-	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
 	    if (!f)
 		return 0;

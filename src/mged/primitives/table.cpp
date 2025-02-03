@@ -42,7 +42,7 @@ extern "C" {
     extern void *mged_##name##_prim_edit_create(void); \
     extern void mged_##name##_prim_edit_destroy(void *); \
     extern int mged_##name##_menu_str(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol); \
-    extern struct menu_item *mged_##name##_menu_item(const struct bn_tol *tol); \
+    extern struct rt_solid_edit_menu_item *mged_##name##_menu_item(const struct bn_tol *tol); \
 
 EDIT_DECLARE_INTERFACE(tor);
 EDIT_DECLARE_INTERFACE(tgc);

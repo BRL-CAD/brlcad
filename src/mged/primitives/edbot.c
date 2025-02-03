@@ -87,7 +87,7 @@ bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    s->solid_edit_pick = 1;
 	    break;
 	default:
-	    mged_set_edflag(s, arg);
+	    rt_solid_edit_set_edflag(s, arg);
 	    break;
     };
 
@@ -100,7 +100,7 @@ bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item bot_menu[] = {
+struct rt_solid_edit_menu_item bot_menu[] = {
     { "BOT MENU", NULL, 0 },
     { "Pick Vertex", bot_ed, ECMD_BOT_PICKV },
     { "Pick Edge", bot_ed, ECMD_BOT_PICKE },
@@ -117,7 +117,7 @@ struct menu_item bot_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_bot_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return bot_menu;

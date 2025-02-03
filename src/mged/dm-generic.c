@@ -278,7 +278,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			    save_sca = s->s_edit->solid_edit_scale;
 			    save_pic = s->s_edit->solid_edit_pick;
 			    if (!SEDIT_TRAN)
-				mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+				rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 			} else {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;

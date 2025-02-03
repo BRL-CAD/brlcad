@@ -43,7 +43,7 @@ static void
 rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -52,7 +52,7 @@ rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item rpc_menu[] = {
+struct rt_solid_edit_menu_item rpc_menu[] = {
     { "RPC MENU", NULL, 0 },
     { "Set B", rpc_ed, MENU_RPC_B },
     { "Set H", rpc_ed, MENU_RPC_H },
@@ -60,7 +60,7 @@ struct menu_item rpc_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_rpc_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return rpc_menu;

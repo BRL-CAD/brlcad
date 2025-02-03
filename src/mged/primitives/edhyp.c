@@ -57,7 +57,7 @@ hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    s->solid_edit_pick = 0;
 	    break;
 	default:
-	    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
     }
 
@@ -68,7 +68,7 @@ hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item  hyp_menu[] = {
+struct rt_solid_edit_menu_item  hyp_menu[] = {
     { "HYP MENU", NULL, 0 },
     { "Set H", hyp_ed, MENU_HYP_H },
     { "Set A", hyp_ed, MENU_HYP_SCALE_A },
@@ -78,7 +78,7 @@ struct menu_item  hyp_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_hyp_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return hyp_menu;

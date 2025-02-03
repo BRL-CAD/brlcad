@@ -61,8 +61,8 @@ static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_st
 /* primitive specific externs.  Eventually these should all go away */
 extern int es_ars_crv;  /* curve and column identifying selected ARS point */
 extern int es_ars_col;
-extern struct menu_item ars_menu[];
-extern struct menu_item ars_pick_menu[];
+extern struct rt_solid_edit_menu_item ars_menu[];
+extern struct rt_solid_edit_menu_item ars_pick_menu[];
 
 extern int bot_verts[3];
 
@@ -636,7 +636,7 @@ init_sedit(struct mged_state *s)
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
     chg_l2menu(s, ST_S_EDIT);
-    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_IDLE);
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_IDLE);
 
     button(s, BE_S_EDIT);	/* Drop into edit menu right away */
     init_sedit_vars(s);
@@ -756,7 +756,7 @@ sedit_menu(struct mged_state *s) {
     const struct rt_db_internal *ip = &s->s_edit->es_int;
     if (EDOBJ[ip->idb_type].ft_menu_item) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	struct menu_item *mi = (*EDOBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
+	struct rt_solid_edit_menu_item *mi = (*EDOBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
@@ -764,7 +764,7 @@ sedit_menu(struct mged_state *s) {
 	mmenu_set_all(s, MENU_L1, mi);
     }
 
-    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_IDLE);	/* Drop out of previous edit mode */
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_IDLE);	/* Drop out of previous edit mode */
     s->s_edit->edit_menu = 0;
 }
 
@@ -1109,7 +1109,7 @@ init_oedit_guts(struct mged_state *s)
 
     /* for safety sake */
     s->s_edit->edit_menu = 0;
-    mged_set_edflag(s->s_edit, -1);
+    rt_solid_edit_set_edflag(s->s_edit, -1);
     MAT_IDN(s->s_edit->e_mat);
 
     if (s->dbip == DBI_NULL || !illump) {
@@ -1465,7 +1465,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (accept_flag) {
 	menu_state->ms_flag = 0;
 	movedir = 0;
-	mged_set_edflag(s->s_edit, -1);
+	rt_solid_edit_set_edflag(s->s_edit, -1);
 	s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&s->s_edit->es_int);
@@ -1578,7 +1578,7 @@ sedit_reject(struct mged_state *s)
 
     menu_state->ms_flag = 0;
     movedir = 0;
-    mged_set_edflag(s->s_edit, -1);
+    rt_solid_edit_set_edflag(s->s_edit, -1);
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->s_edit->es_int);

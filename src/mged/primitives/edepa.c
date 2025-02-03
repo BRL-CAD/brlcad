@@ -43,7 +43,7 @@ static void
 epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -52,7 +52,7 @@ epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item epa_menu[] = {
+struct rt_solid_edit_menu_item epa_menu[] = {
     { "EPA MENU", NULL, 0 },
     { "Set H", epa_ed, MENU_EPA_H },
     { "Set A", epa_ed, MENU_EPA_R1 },
@@ -60,7 +60,7 @@ struct menu_item epa_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_epa_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return epa_menu;

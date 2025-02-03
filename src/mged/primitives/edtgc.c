@@ -63,7 +63,7 @@ static void
 tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
     // PSCALE already reset most of the flags, so for the following we just
     // need to zero scale and set the specific flag of interest.
     if (arg == MENU_TGC_ROT_H) {
@@ -95,7 +95,7 @@ tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	(*f)(0, NULL, d, &flag);
 }
 
-struct menu_item tgc_menu[] = {
+struct rt_solid_edit_menu_item tgc_menu[] = {
     { "TGC MENU", NULL, 0 },
     { "Set H",	tgc_ed, MENU_TGC_SCALE_H },
     { "Set H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
@@ -115,7 +115,7 @@ struct menu_item tgc_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_tgc_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return tgc_menu;

@@ -41,11 +41,11 @@ extern void sl_toggle_scroll(struct rt_solid_edit *, int, int, int, void *);
 void btn_head_menu(struct rt_solid_edit *s, int i, int menu, int item, void *data);
 void btn_item_hit(struct rt_solid_edit *s, int arg, int menu, int item, void *data);
 
-struct menu_item first_menu[] = {
+struct rt_solid_edit_menu_item first_menu[] = {
     { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
     { "", NULL, 0 }
 };
-struct menu_item second_menu[] = {
+struct rt_solid_edit_menu_item second_menu[] = {
     { "BUTTON MENU", btn_head_menu, 0 },	/* chg to 1st menu */
     { "REJECT Edit", btn_item_hit, BE_REJECT },
     { "ACCEPT Edit", btn_item_hit, BE_ACCEPT },
@@ -67,7 +67,7 @@ struct menu_item second_menu[] = {
     { "Matrix Illum", btn_item_hit, BE_O_ILLUMINATE },
     { "", NULL, 0 }
 };
-struct menu_item sed_menu[] = {
+struct rt_solid_edit_menu_item sed_menu[] = {
     { "*PRIMITIVE EDIT*", btn_head_menu, 2 },
     { "Edit Menu", btn_item_hit, BE_S_EDIT },
     { "Rotate", btn_item_hit, BE_S_ROTATE },
@@ -77,7 +77,7 @@ struct menu_item sed_menu[] = {
 };
 
 
-struct menu_item oed_menu[] = {
+struct rt_solid_edit_menu_item oed_menu[] = {
     { "*MATRIX EDIT*", btn_head_menu, 2 },
     { "Scale", btn_item_hit, BE_O_SCALE },
     { "X Move", btn_item_hit, BE_O_X },
@@ -180,7 +180,7 @@ cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, const char *a
     }
 
     if (argc == 2) {
-	struct menu_item **m, *mptr;
+	struct rt_solid_edit_menu_item **m, *mptr;
 
 	if (Tcl_GetInt(interp, argv[1], &index) != TCL_OK)
 	    return TCL_ERROR;
@@ -197,7 +197,7 @@ cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, const char *a
 	for (mptr = *m; mptr->menu_string[0] != '\0'; mptr++)
 	    Tcl_AppendElement(interp, mptr->menu_string);
     } else {
-	struct menu_item **m;
+	struct rt_solid_edit_menu_item **m;
 	struct bu_vls result = BU_VLS_INIT_ZERO;
 	int status;
 
@@ -232,7 +232,7 @@ int
 mged_mmenu_set(int UNUSED(ac), const char **UNUSED(av), void *d, void *ms)
 {
     struct mged_state *s = (struct mged_state *)d;
-    struct menu_item *value = (struct menu_item *)ms;
+    struct rt_solid_edit_menu_item *value = (struct rt_solid_edit_menu_item *)ms;
     int index = MENU_L1;
 
     // All uses of mmenu_set in primitives did this, so just do it here instead.
@@ -267,7 +267,7 @@ mged_mmenu_set(int UNUSED(ac), const char **UNUSED(av), void *d, void *ms)
 
 
 void
-mmenu_set(struct mged_state *s, int index, struct menu_item *value)
+mmenu_set(struct mged_state *s, int index, struct rt_solid_edit_menu_item *value)
 {
     if (!value)
 	return;
@@ -299,7 +299,7 @@ mmenu_set(struct mged_state *s, int index, struct menu_item *value)
 
 
 void
-mmenu_set_all(struct mged_state *s, int index, struct menu_item *value)
+mmenu_set_all(struct mged_state *s, int index, struct rt_solid_edit_menu_item *value)
 {
     struct cmd_list *save_cmd_list;
     struct mged_dm *save_dm_list;
@@ -321,7 +321,7 @@ mmenu_set_all(struct mged_state *s, int index, struct menu_item *value)
 
 
 void
-mged_highlight_menu_item(struct mged_state *s, struct menu_item *mptr, int y)
+mged_highlight_menu_item(struct mged_state *s, struct rt_solid_edit_menu_item *mptr, int y)
 {
     switch (mptr->menu_arg) {
 	case BV_RATE_TOGGLE:
@@ -368,8 +368,8 @@ void
 mmenu_display(struct mged_state *s, int y_top)
 {
     static int menu, item;
-    struct menu_item **m;
-    struct menu_item *mptr;
+    struct rt_solid_edit_menu_item **m;
+    struct rt_solid_edit_menu_item *mptr;
     int y = y_top;
 
     menu_state->ms_top = y - MENU_DY / 2;
@@ -387,7 +387,7 @@ mmenu_display(struct mged_state *s, int y_top)
     for (menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
 	if (*m == NULL) continue;
 	for (item=0, mptr = *m; mptr->menu_string[0] != '\0' && y > TITLE_YBASE; mptr++, y += MENU_DY, item++) {
-	    if ((*m == (struct menu_item *)second_menu
+	    if ((*m == (struct rt_solid_edit_menu_item *)second_menu
 		 && (mptr->menu_arg == BV_RATE_TOGGLE
 		     || mptr->menu_arg == BV_EDIT_TOGGLE
 		     || mptr->menu_arg == BV_EYEROT_TOGGLE)))
@@ -453,8 +453,8 @@ int
 mmenu_select(struct mged_state *s, int pen_y, int do_func)
 {
     static int menu, item;
-    struct menu_item **m;
-    struct menu_item *mptr;
+    struct rt_solid_edit_menu_item **m;
+    struct rt_solid_edit_menu_item *mptr;
     int yy;
 
     if (pen_y > menu_state->ms_top)

@@ -43,7 +43,7 @@ static void
 part_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -52,7 +52,7 @@ part_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item part_menu[] = {
+struct rt_solid_edit_menu_item part_menu[] = {
     { "Particle MENU", NULL, 0 },
     { "Set H", part_ed, MENU_PART_H },
     { "Set v", part_ed, MENU_PART_v },
@@ -60,7 +60,7 @@ struct menu_item part_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_part_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return part_menu;

@@ -326,13 +326,13 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    s->solid_edit_pick = 1;
 	    break;
 	default:
-	    mged_set_edflag(s, arg);
+	    rt_solid_edit_set_edflag(s, arg);
 	    break;
     };
 
     rt_solid_edit_process(s);
 }
-struct menu_item nmg_menu[] = {
+struct rt_solid_edit_menu_item nmg_menu[] = {
     { "NMG MENU", NULL, 0 },
     { "Pick Edge", nmg_ed, ECMD_NMG_EPICK },
     { "Move Edge", nmg_ed, ECMD_NMG_EMOVE },
@@ -346,7 +346,7 @@ struct menu_item nmg_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_nmg_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return nmg_menu;
@@ -629,7 +629,7 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    return;
 	}
 
@@ -734,7 +734,7 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
 	/* Currently, can only split wire edges or edges in wire loops */
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 	    bu_vls_printf(s->log_str, "Currently, we can only split wire edges or edges in wire loops\n");
-	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);

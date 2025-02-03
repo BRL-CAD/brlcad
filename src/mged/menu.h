@@ -28,6 +28,7 @@
 __BEGIN_DECLS
 
 struct rt_solid_edit;
+struct rt_solid_edit_menu_item;
 
 /* Menu structures and defines
  *
@@ -36,11 +37,6 @@ struct rt_solid_edit;
  * to an array of menu items.  The first ([0]) menu item is the title
  * for the menu, and the remaining items are individual menu entries.
  */
-struct menu_item {
-    char *menu_string;
-    void (*menu_func)(struct rt_solid_edit *, int, int, int, void *);
-    int menu_arg;
-};
 
 #define NMENU 3
 #define MENU_L1 0 /* top-level solid-edit menu */
@@ -61,16 +57,16 @@ struct menu_item {
 #define TEXT0_DY        (-60)           /* #pixels per line, Size 0 */
 #define TEXT1_DY        (-90)           /* #pixels per line, Size 1 */
 
-extern struct menu_item sed_menu[];
-extern struct menu_item oed_menu[];
+extern struct rt_solid_edit_menu_item sed_menu[];
+extern struct rt_solid_edit_menu_item oed_menu[];
 
 void btn_head_menu(struct rt_solid_edit *s, int i, int menu, int item, void *data);
 void chg_l2menu(struct mged_state *s, int i);
 
 extern void mmenu_init(struct mged_state *s);
 extern void mmenu_display(struct mged_state *s, int y_top);
-extern void mmenu_set(struct mged_state *s, int idx, struct menu_item *value);
-extern void mmenu_set_all(struct mged_state *s, int idx, struct menu_item *value);
+extern void mmenu_set(struct mged_state *s, int idx, struct rt_solid_edit_menu_item *value);
+extern void mmenu_set_all(struct mged_state *s, int idx, struct rt_solid_edit_menu_item *value);
 extern void sedit_menu(struct mged_state *s);
 extern int mmenu_select(struct mged_state *s, int pen_y, int do_func);
 

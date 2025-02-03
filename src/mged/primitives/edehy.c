@@ -44,7 +44,7 @@ static void
 ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -53,7 +53,7 @@ ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item ehy_menu[] = {
+struct rt_solid_edit_menu_item ehy_menu[] = {
     { "EHY MENU", NULL, 0 },
     { "Set H", ehy_ed, MENU_EHY_H },
     { "Set A", ehy_ed, MENU_EHY_R1 },
@@ -62,7 +62,7 @@ struct menu_item ehy_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_ehy_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ehy_menu;

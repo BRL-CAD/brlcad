@@ -42,7 +42,7 @@ static void
 tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -53,7 +53,7 @@ tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 
 
-struct menu_item tor_menu[] = {
+struct rt_solid_edit_menu_item tor_menu[] = {
     { "TORUS MENU", NULL, 0 },
     { "Set Radius 1", tor_ed, MENU_TOR_R1 },
     { "Set Radius 2", tor_ed, MENU_TOR_R2 },
@@ -61,7 +61,7 @@ struct menu_item tor_menu[] = {
 };
 
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_tor_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return tor_menu;

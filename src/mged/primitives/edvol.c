@@ -57,10 +57,10 @@ vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 
     switch (arg) {
 	case MENU_VOL_FNAME:
-	    mged_set_edflag(s, ECMD_VOL_FNAME);
+	    rt_solid_edit_set_edflag(s, ECMD_VOL_FNAME);
 	    break;
 	case MENU_VOL_FSIZE:
-	    mged_set_edflag(s, ECMD_VOL_FSIZE);
+	    rt_solid_edit_set_edflag(s, ECMD_VOL_FSIZE);
 	    break;
 	case MENU_VOL_CSIZE:
 	    s->edit_flag = ECMD_VOL_CSIZE;
@@ -95,7 +95,7 @@ vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	(*f)(0, NULL, d, &flag);
 }
 
-struct menu_item vol_menu[] = {
+struct rt_solid_edit_menu_item vol_menu[] = {
     {"VOL MENU", NULL, 0 },
     {"File Name", vol_ed, MENU_VOL_FNAME },
     {"File Size (X Y Z)", vol_ed, MENU_VOL_FSIZE },
@@ -105,7 +105,7 @@ struct menu_item vol_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_vol_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return vol_menu;

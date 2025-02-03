@@ -46,7 +46,7 @@ static void
 eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
     if (arg == MENU_ETO_ROT_C) {
 	s->edit_flag = ECMD_ETO_ROT_C;
 	s->solid_edit_rotate = 1;
@@ -62,7 +62,7 @@ eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item eto_menu[] = {
+struct rt_solid_edit_menu_item eto_menu[] = {
     { "ELL-TORUS MENU", NULL, 0 },
     { "Set r", eto_ed, MENU_ETO_R },
     { "Set D", eto_ed, MENU_ETO_RD },
@@ -71,7 +71,7 @@ struct menu_item eto_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_eto_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return eto_menu;

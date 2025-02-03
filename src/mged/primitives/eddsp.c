@@ -54,7 +54,7 @@ static void
 dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, -1);
+    rt_solid_edit_set_edflag(s, -1);
 
     switch (arg) {
 	case MENU_DSP_FNAME:
@@ -86,7 +86,7 @@ dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct menu_item dsp_menu[] = {
+struct rt_solid_edit_menu_item dsp_menu[] = {
     {"DSP MENU", NULL, 0 },
     {"Name", dsp_ed, MENU_DSP_FNAME },
     {"Set X", dsp_ed, MENU_DSP_SCALE_X },
@@ -95,7 +95,7 @@ struct menu_item dsp_menu[] = {
     { "", NULL, 0 }
 };
 
-struct menu_item *
+struct rt_solid_edit_menu_item *
 mged_dsp_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return dsp_menu;
