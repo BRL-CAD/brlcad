@@ -754,8 +754,6 @@ if [ "x$wrap" = "x1" ] ; then
 	echo "/${block}
 /** @file $basefilename
  *
- * Brief description
- *
  */
 " >> $FILE
     else
