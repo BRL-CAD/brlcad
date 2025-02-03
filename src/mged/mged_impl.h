@@ -33,31 +33,11 @@
 #include <set>
 #include <string>
 
-class MGED_Internal {
-    public:
-	// First key is primitive type (e.g. ID_ETO), second key is ECMD_
-	// number.
-	std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> cmd_prerun_clbk;
-	std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> cmd_during_clbk;
-	std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> cmd_postrun_clbk;
-	std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> cmd_linger_clbk;
-};
-
-#else
-
-#define MGED_Internal void
-
 #endif
-
-struct mged_state_impl {
-    MGED_Internal *i;
-};
-
-
 
 #ifdef __cplusplus
 
-class MGED_SEDIT_Internal {
+class RT_Edit_Map_Internal {
     public:
 	// Key is ECMD_ type, populated from MGED_Internal map
 	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
@@ -71,13 +51,37 @@ class MGED_SEDIT_Internal {
 
 #else
 
-#define MGED_SEDIT_Internal void
+#define RT_Edit_Map_Internal void
 
 #endif
 
-struct rt_solid_edit_impl {
-    MGED_SEDIT_Internal *i;
+struct rt_solid_edit_map {
+    RT_Edit_Map_Internal *i;
 };
+
+
+#ifdef __cplusplus
+
+class MGED_Internal {
+    public:
+
+	MGED_Internal();
+	~MGED_Internal();
+
+	// key is primitive type (e.g. ID_ETO)
+	std::map<int, rt_solid_edit_map *> cmd_map;
+};
+
+#else
+
+#define MGED_Internal void
+
+#endif
+
+struct mged_state_impl {
+    MGED_Internal *i;
+};
+
 
 // Local Variables:
 // tab-width: 8

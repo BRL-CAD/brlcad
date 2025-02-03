@@ -50,7 +50,7 @@ part_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    mged_sedit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }

@@ -268,7 +268,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
 	s->s_edit->mv_context = mged_variables->mv_context;
 	s->s_edit->vlfree = &rt_vlfree;
-	mged_sedit_clbk_sync(s->s_edit, s);
+	mged_edit_clbk_sync(s->s_edit, s);
     }
 
     /* Patterned after ill_common() ... */

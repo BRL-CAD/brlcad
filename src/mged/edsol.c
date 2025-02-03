@@ -548,7 +548,7 @@ get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, stru
 	bu_vls_trunc(s->log_str, 0);
 	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, ip, s->tol);
 	if (bu_vls_strlen(s->log_str)) {
-	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    bu_vls_trunc(s->log_str, 0);
@@ -559,7 +559,7 @@ get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, stru
     struct bu_vls ltmp = BU_VLS_INIT_ZERO;
     bu_vls_printf(&ltmp, "%s", bu_vls_cstr(s->log_str));
     bu_vls_sprintf(s->log_str, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n");
-    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
     bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&ltmp));
@@ -858,7 +858,7 @@ sedit(struct rt_solid_edit *s)
 	bu_vls_trunc(s->log_str, 0);
 	if ((*EDOBJ[ip->idb_type].ft_edit)(s, s->edit_flag)) {
 	    if (bu_vls_strlen(s->log_str)) {
-		mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+		rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		bu_vls_trunc(s->log_str, 0);
@@ -866,7 +866,7 @@ sedit(struct rt_solid_edit *s)
 	    return;
 	}
 	if (bu_vls_strlen(s->log_str)) {
-	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    bu_vls_trunc(s->log_str, 0);
@@ -887,12 +887,12 @@ sedit(struct rt_solid_edit *s)
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&tmp_vls, "%s", bu_vls_cstr(s->log_str));
 		bu_vls_sprintf(s->log_str, "sedit(s):  unknown edflag = %d.\n", s->edit_flag);
-		mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+		rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
-		mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+		rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 	    }
@@ -904,18 +904,18 @@ sedit(struct rt_solid_edit *s)
 
     int flag = 0;
     f = NULL; d = NULL;
-    mged_sedit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 
     f = NULL; d = NULL;
-    mged_sedit_clbk_get(&f, &d, s, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
     if (s->update_views) {
 	f = NULL; d = NULL;
-	mged_sedit_clbk_get(&f, &d, s, ECMD_VIEW_UPDATE, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_VIEW_UPDATE, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
     }

@@ -262,7 +262,7 @@ ecmd_cline_move_h(struct rt_solid_edit *s)
     /* check for zero H vector */
     if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
 	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	VSET(cli->h, 0.0, 0.0, 1.0);
@@ -349,7 +349,7 @@ mged_cline_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
-	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;

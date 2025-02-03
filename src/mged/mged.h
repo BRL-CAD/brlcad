@@ -177,12 +177,14 @@ struct mged_edit_state {
 
 };
 
-// Internal state
-struct rt_solid_edit_impl;
+struct rt_solid_edit_map;
+struct rt_solid_edit_map *
+rt_solid_edit_map_create();
+void rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
 
 struct rt_solid_edit {
 
-    struct rt_solid_edit_impl *i;
+    struct rt_solid_edit_map *m;
 
     // Optional logging of messages from editing code
     struct bu_vls *log_str;
@@ -262,9 +264,8 @@ struct rt_solid_edit {
     void *u_ptr;
 };
 
-// TODO - need callback registration mechanism.  If sedit() is going to become
-// something like rt_solid_edit_process() then looking at the code we'll need
-// callbacks for at least:
+// Callback registration mechanism.  sedit() is going to become
+// something like rt_solid_edit_process().  We need general methods for:
 //
 // mged_print_results
 // set_e_axes_pos
@@ -274,14 +275,10 @@ struct rt_solid_edit {
 // in addition to allowing ECMD specific callback registrations.  Simplest thing
 // to do is probably assign the "generic" operations above some specific numbers
 // and supply a 0 obj type so we can just use the same mechanism for everything.
-//
 extern int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
 extern int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode);
-
-extern int mged_sedit_clbk_set(struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
-extern int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode);
-
-extern int mged_sedit_clbk_sync(struct rt_solid_edit *se, struct mged_state *s);
+extern int rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *m, int ed_cmd, int menu_cmd, int mode);
+extern int mged_edit_clbk_sync(struct rt_solid_edit *se, struct mged_state *s);
 
 
 extern int mged_mmenu_set(int ac, const char **av, void *d, void *ms);

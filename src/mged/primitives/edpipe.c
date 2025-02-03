@@ -180,7 +180,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    mged_sedit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -925,7 +925,7 @@ void ecmd_pipe_pick(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for segment selection\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -935,7 +935,7 @@ void ecmd_pipe_pick(struct rt_solid_edit *s)
     es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No PIPE segment selected\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
     } else
@@ -968,7 +968,7 @@ void ecmd_pipe_split(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for segment split\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -977,7 +977,7 @@ void ecmd_pipe_split(struct rt_solid_edit *s)
 
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1012,7 +1012,7 @@ void ecmd_pipe_pt_move(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for segment movement\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1021,7 +1021,7 @@ void ecmd_pipe_pt_move(struct rt_solid_edit *s)
 
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1056,7 +1056,7 @@ void ecmd_pipe_pt_add(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for 'append segment'\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1092,7 +1092,7 @@ void ecmd_pipe_pt_ins(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for 'prepend segment'\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1108,7 +1108,7 @@ void ecmd_pipe_pt_del(struct rt_solid_edit *s)
     void *d = NULL;
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1227,7 +1227,7 @@ mged_pipe_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
-	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;

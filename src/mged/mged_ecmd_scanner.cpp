@@ -122,6 +122,7 @@ main(int argc, const char *argv[])
     ofile << "#include \"common.h\"\n";
     ofile << "\n";
 
+    ofile << "#define ECMD_CLEAR_CLBKS          00\n";
     ofile << "#define ECMD_PRINT_STR            10\n";
     ofile << "#define ECMD_PRINT_RESULTS        20\n";
     ofile << "#define ECMD_EAXES_POS            30\n";

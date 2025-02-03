@@ -143,7 +143,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    mged_sedit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -328,7 +328,7 @@ ecmd_metaball_pt_pick(struct rt_solid_edit *s)
 	VMOVE(new_pt, s->e_para);
     } else if (s->e_inpara) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for control point selection\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -354,7 +354,7 @@ ecmd_metaball_pt_pick(struct rt_solid_edit *s)
 
     if (!es_metaball_pnt) {
 	bu_vls_printf(s->log_str, "No METABALL control point selected\n");
-	mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
     } else {
@@ -529,7 +529,7 @@ mged_metaball_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
-	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return TCL_ERROR;
