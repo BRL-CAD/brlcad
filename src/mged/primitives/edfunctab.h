@@ -29,7 +29,6 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "mged_ecmds.h"
-#include "../mged.h"
 
 __BEGIN_DECLS
 
@@ -40,6 +39,9 @@ __BEGIN_DECLS
 #define RT_SOLID_EDIT_ROT		3	/* buttons.c */
 #define RT_SOLID_EDIT_PSCALE		4	/* Scale one solid parameter by scalar */
 
+#define CMD_OK 919
+#define CMD_BAD 920
+#define CMD_MORE 921
 
 struct rt_solid_edit_map;
 struct rt_solid_edit_map *
@@ -135,6 +137,7 @@ struct rt_solid_edit_menu_item {
     int menu_arg;
 };
 
+void rt_solid_edit_process(struct rt_solid_edit *s);
 
 int rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *m, int ed_cmd, int menu_cmd, int mode);
 extern struct rt_solid_edit *

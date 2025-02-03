@@ -24,11 +24,9 @@
 #define MGED_MENU_H
 
 #include "common.h"
+#include "./primitives/edfunctab.h"
 
 __BEGIN_DECLS
-
-struct rt_solid_edit;
-struct rt_solid_edit_menu_item;
 
 /* Menu structures and defines
  *

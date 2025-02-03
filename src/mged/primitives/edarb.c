@@ -34,8 +34,6 @@
 #include "ged.h"
 #include "rt/db4.h"
 
-#include "../mged.h"
-#include "./edfunctab.h"
 #include "./edarb.h"
 
 #define EARB			4009
@@ -867,7 +865,7 @@ editarb(struct rt_solid_edit *s, vect_t pos_model)
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, s->tol)) {
 	bu_vls_printf(s->log_str, "\nCannot calculate plane equations for ARB8\n");
 	bu_vls_free(&error_msg);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
 
@@ -943,7 +941,7 @@ ecmd_arb_move_face(struct rt_solid_edit *s)
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
 	    s->e_inpara = 0;
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* must convert to base units */
@@ -1078,10 +1076,11 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	    es_peqn[s->edit_menu][2] = sin(fb_a);
 	} else {
 	    bu_vls_printf(s->log_str, "Must be < rot fb | xdeg ydeg zdeg >\n");
+	    f = NULL; d = NULL;
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* point notation of fixed vertex */
@@ -1117,7 +1116,10 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
     MAT_IDN(s->incr_change);
 
     /* no need to calc_planes again */
-    replot_editing_solid(0, NULL, s, NULL);
+    f = NULL; d = NULL;
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
 
     s->e_inpara = 0;
 
@@ -1133,7 +1135,7 @@ edit_arb_element(struct rt_solid_edit *s)
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
 	    s->e_inpara = 0;
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* must convert to base units */
@@ -1222,7 +1224,7 @@ mged_arb_edit(struct rt_solid_edit *s, int edflag)
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, s->tol)) {
 	bu_vls_printf(s->log_str, "\nCannot calculate plane equations for ARB8\n");
 	bu_vls_free(&error_msg);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
 
@@ -1308,7 +1310,7 @@ mged_arb_edit_xy(
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     update_edit_absolute_tran(s, pos_view);
@@ -1325,16 +1327,16 @@ arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv)
     struct rt_arb_internal *arb;
 
     if (argc < 4 || 4 < argc)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (s->es_int.idb_type != ID_ARB8) {
 	bu_vls_printf(s->log_str, "Eqn: type must be GENARB8\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->edit_flag != ECMD_ARB_ROTATE_FACE) {
 	bu_vls_printf(s->log_str, "Eqn: must be rotating a face\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
@@ -1352,7 +1354,7 @@ arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv)
     if (rt_arb_calc_points(arb, arb_type, (const plane_t *)es_peqn, s->tol))
 	return CMD_BAD;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -1362,16 +1364,16 @@ arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv)
     fastf_t rot, fb_a;
 
     if (!s || !argc || !argv)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (s->edit_flag != EARB) {
 	bu_vls_printf(s->log_str, "Not moving an ARB edge\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->es_int.idb_type != ID_ARB8) {
 	bu_vls_printf(s->log_str, "Edgedir: solid type must be an ARB\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* set up slope -
@@ -1393,7 +1395,7 @@ arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv)
 
     if (ZERO(MAGNITUDE(slope))) {
 	bu_vls_printf(s->log_str, "BAD slope\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* get it done */
@@ -1401,7 +1403,7 @@ arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv)
     editarb(s, slope);
     rt_solid_edit_process(s);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 /*

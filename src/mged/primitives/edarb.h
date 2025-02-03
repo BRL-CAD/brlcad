@@ -26,7 +26,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "mged.h"
+#include "edfunctab.h"
 
 int arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv);
 
