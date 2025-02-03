@@ -83,6 +83,7 @@ __END_DECLS
 
 #include "mged_ecmds.h"
 #include "mged_impl.h"
+#include "edfunctab.h"
 
 __BEGIN_DECLS
 
@@ -177,92 +178,6 @@ struct mged_edit_state {
 
 };
 
-struct rt_solid_edit_map;
-struct rt_solid_edit_map *
-rt_solid_edit_map_create();
-void rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
-
-struct rt_solid_edit {
-
-    struct rt_solid_edit_map *m;
-
-    // Optional logging of messages from editing code
-    struct bu_vls *log_str;
-
-    // Container to hold the intermediate state
-    // of the object being edited (I think?)
-    struct rt_db_internal es_int;
-
-    // Tolerance for calculations
-    const struct bn_tol *tol;
-    struct bview *vp;
-
-    // Primary variable used to identify specific editing operations
-    int edit_flag;
-    /* item/edit_mode selected from menu.  TODO - it seems like this
-     * may be used to "specialize" edit_flag to narrow its scope to
-     * specific operations - in which case we might be able to rename
-     * it to something more general than "menu"... */
-    int edit_menu;
-
-    // Translate values used in XY mouse vector manipulation
-    vect_t edit_absolute_model_tran;
-    vect_t last_edit_absolute_model_tran;
-    vect_t edit_absolute_view_tran;
-    vect_t last_edit_absolute_view_tran;
-
-    // Scale values used in XY mouse vector manipulation
-    fastf_t edit_absolute_scale;
-
-    // MGED wants to know if we're in solid rotate, translate or scale mode.
-    // (TODO - why?) Rather than keying off of primitive specific edit op
-    // types, have the ops set flags:
-    int solid_edit_rotate;
-    int solid_edit_translate;
-    int solid_edit_scale;
-    int solid_edit_pick;
-
-    fastf_t es_scale;		/* scale factor */
-    mat_t incr_change;		/* change(s) from last cycle */
-    mat_t model_changes;	/* full changes this edit */
-    fastf_t acc_sc_sol;		/* accumulate solid scale factor */
-    mat_t acc_rot_sol;		/* accumulate solid rotations */
-
-    int e_keyfixed;		/* keypoint specified by user? */
-    point_t e_keypoint;		/* center of editing xforms */
-    const char *e_keytag;	/* string identifying the keypoint */
-
-    int e_mvalid;		/* e_mparam valid.  e_inpara must = 0 */
-    vect_t e_mparam;		/* mouse input param.  Only when es_mvalid set */
-
-    int e_inpara;		/* parameter input from keyboard flag.  1 == e_para valid.  e_mvalid must = 0 */
-    vect_t e_para;		/* keyboard input parameter changes */
-
-    mat_t e_invmat;		/* inverse of e_mat KAA */
-    mat_t e_mat;		/* accumulated matrix of path */
-
-    point_t curr_e_axes_pos;	/* center of editing xforms */
-    point_t e_axes_pos;
-
-    // Conversion factors
-    double base2local;
-    double local2base;
-
-    // Trigger for view updating
-    int update_views;
-
-    // vlfree list
-    struct bu_list *vlfree;
-
-    /* Flag to trigger some primitive edit opts to use keypoint (and maybe other behaviors?) */
-    int mv_context;
-
-    /* Internal primitive editing information specific to primitive types. */
-    void *ipe_ptr;
-
-    /* User pointer */
-    void *u_ptr;
-};
 
 // Callback registration mechanism.  sedit() is going to become
 // something like rt_solid_edit_process().  We need general methods for:
@@ -277,7 +192,6 @@ struct rt_solid_edit {
 // and supply a 0 obj type so we can just use the same mechanism for everything.
 extern int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
 extern int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode);
-extern int rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *m, int ed_cmd, int menu_cmd, int mode);
 extern int mged_edit_clbk_sync(struct rt_solid_edit *se, struct mged_state *s);
 
 
@@ -336,11 +250,6 @@ extern struct mged_state *
 mged_state_create(void);
 extern void
 mged_state_destroy(struct mged_state *s);
-
-extern struct rt_solid_edit *
-rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
-extern void
-rt_solid_edit_destroy(struct rt_solid_edit *ssed);
 
 void get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
 
