@@ -41,7 +41,7 @@
 #define MENU_TOR_R2		1022
 
 static void
-tor_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -169,7 +169,7 @@ mged_tor_read_params(
 
 /* scale radius 1 of TOR */
 void
-menu_tor_r1(struct mged_solid_edit *s)
+menu_tor_r1(struct rt_solid_edit *s)
 {
     struct rt_tor_internal *tor =
 	(struct rt_tor_internal *)s->es_int.idb_ptr;
@@ -189,7 +189,7 @@ menu_tor_r1(struct mged_solid_edit *s)
 
 /* scale radius 2 of TOR */
 void
-menu_tor_r2(struct mged_solid_edit *s)
+menu_tor_r2(struct rt_solid_edit *s)
 {
     struct rt_tor_internal *tor =
 	(struct rt_tor_internal *)s->es_int.idb_ptr;
@@ -208,7 +208,7 @@ menu_tor_r2(struct mged_solid_edit *s)
 }
 
 static int
-mged_tor_pscale(struct mged_solid_edit *s, int mode)
+mged_tor_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -240,7 +240,7 @@ mged_tor_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_tor_edit(struct mged_solid_edit *s, int edflag)
+mged_tor_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

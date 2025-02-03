@@ -149,7 +149,7 @@ int
 arb_setup_rotface_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
 {
     struct mged_state *ms = (struct mged_state *)d;
-    struct mged_solid_edit *s = ms->s_edit;
+    struct rt_solid_edit *s = ms->s_edit;
     int vertex = -1;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
@@ -211,7 +211,7 @@ int
 ecmd_bot_mode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
 {
     struct mged_state *ms = (struct mged_state *)d;
-    struct mged_solid_edit *s = ms->s_edit;
+    struct rt_solid_edit *s = ms->s_edit;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
@@ -462,7 +462,7 @@ int
 ecmd_bot_pickt_multihit_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *d2)
 {
     struct mged_state *s = (struct mged_state *)d;
-    struct mged_solid_edit *se = (struct mged_solid_edit *)d2;
+    struct rt_solid_edit *se = (struct rt_solid_edit *)d2;
     struct bu_vls *vls = (struct bu_vls *)se->u_ptr;
 
     // Evil Tcl variable linkage.  Will need to figure out how to do this
@@ -490,7 +490,7 @@ int
 ecmd_nmg_edebug_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
 {
     struct mged_state *ms = (struct mged_state *)d;
-    struct mged_solid_edit *s = ms->s_edit;
+    struct rt_solid_edit *s = ms->s_edit;
     nmg_plot_eu(ms->gedp, es_eu, s->tol, s->vlfree);
     return BRLCAD_OK;
 }
@@ -500,7 +500,7 @@ int
 ecmd_extrude_skt_name_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
 {
     struct mged_state *s = (struct mged_state *)d;
-    struct mged_solid_edit *se = s->s_edit;
+    struct rt_solid_edit *se = s->s_edit;
     struct rt_extrude_internal *extr = (struct rt_extrude_internal *)se->es_int.idb_ptr;
     char *sketch_name = (char *)se->u_ptr;
     struct directory *dp = RT_DIR_NULL;
@@ -534,7 +534,7 @@ ecmd_extrude_skt_name_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, voi
  * processed as well?
  */
 void
-get_solid_keypoint(struct mged_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -608,7 +608,7 @@ init_sedit(struct mged_state *s)
 	return;
 
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    s->s_edit = mged_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+    s->s_edit = rt_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
     if (!s->s_edit) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_sedit(",
@@ -844,7 +844,7 @@ get_sketch_name(struct mged_state *s, const char *sk_n)
  * can operate on an equal footing to mouse events.
  */
 void
-sedit(struct mged_solid_edit *s)
+sedit(struct rt_solid_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -1420,7 +1420,7 @@ oedit_reject(struct mged_state *s)
 {
     rt_db_free_internal(&s->s_edit->es_int);
     Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-    mged_solid_edit_destroy(s->s_edit);
+    rt_solid_edit_destroy(s->s_edit);
     s->s_edit = NULL;
 }
 
@@ -1487,7 +1487,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     /* make sure we are in solid edit mode */
     if (!illump) {
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-	mged_solid_edit_destroy(s->s_edit);
+	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
 	return TCL_OK;
     }
@@ -1503,7 +1503,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     /* write editing changes out to disc */
     if (!illump->s_u_data) {
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-	mged_solid_edit_destroy(s->s_edit);
+	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
 	return TCL_ERROR;
     }
@@ -1512,7 +1512,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (!dp) {
 	/* sanity check, unexpected error */
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-	mged_solid_edit_destroy(s->s_edit);
+	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
 	return TCL_ERROR;
     }
@@ -1550,7 +1550,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	    rt_db_free_internal(&s->s_edit->es_int);
 	}
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-	mged_solid_edit_destroy(s->s_edit);
+	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
 	return TCL_ERROR;				/* FAIL */
     }
@@ -1572,14 +1572,14 @@ sedit_apply(struct mged_state *s, int accept_flag)
 			     "):  solid reimport failure\n", (char *)NULL);
 	    rt_db_free_internal(&s->s_edit->es_int);
 	    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-	    mged_solid_edit_destroy(s->s_edit);
+	    rt_solid_edit_destroy(s->s_edit);
 	    s->s_edit = NULL;
 	    return TCL_ERROR;
 	}
     }
 
     Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-    mged_solid_edit_destroy(s->s_edit);
+    rt_solid_edit_destroy(s->s_edit);
     s->s_edit = NULL;
     return TCL_OK;
 }
@@ -1647,7 +1647,7 @@ sedit_reject(struct mged_state *s)
 	struct bv_scene_obj *sp;
 	if (!illump->s_u_data) {
 	    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-	    mged_solid_edit_destroy(s->s_edit);
+	    rt_solid_edit_destroy(s->s_edit);
 	    s->s_edit = NULL;
 	    return;
 	}
@@ -1676,7 +1676,7 @@ sedit_reject(struct mged_state *s)
 
     rt_db_free_internal(&s->s_edit->es_int);
     Tcl_UnlinkVar(s->interp, "edit_solid_flag");
-    mged_solid_edit_destroy(s->s_edit);
+    rt_solid_edit_destroy(s->s_edit);
     s->s_edit = NULL;
 }
 

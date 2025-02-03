@@ -92,7 +92,7 @@ find_ars_nearest_pnt(
 
 /*ARGSUSED*/
 static void
-ars_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+ars_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_flag = arg;
 
@@ -239,7 +239,7 @@ mged_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const st
 }
 
 void
-ecmd_ars_pick(struct mged_solid_edit *s)
+ecmd_ars_pick(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -294,7 +294,7 @@ ecmd_ars_pick(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_next_pt(struct mged_solid_edit *s)
+ecmd_ars_next_pt(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -324,7 +324,7 @@ ecmd_ars_next_pt(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_prev_pt(struct mged_solid_edit *s)
+ecmd_ars_prev_pt(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -354,7 +354,7 @@ ecmd_ars_prev_pt(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_next_crv(struct mged_solid_edit *s)
+ecmd_ars_next_crv(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -384,7 +384,7 @@ ecmd_ars_next_crv(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_prev_crv(struct mged_solid_edit *s)
+ecmd_ars_prev_crv(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -414,7 +414,7 @@ ecmd_ars_prev_crv(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_dup_crv(struct mged_solid_edit *s)
+ecmd_ars_dup_crv(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -454,7 +454,7 @@ ecmd_ars_dup_crv(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_dup_col(struct mged_solid_edit *s)
+ecmd_ars_dup_col(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -497,7 +497,7 @@ ecmd_ars_dup_col(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_del_crv(struct mged_solid_edit *s)
+ecmd_ars_del_crv(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -547,7 +547,7 @@ ecmd_ars_del_crv(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_del_col(struct mged_solid_edit *s)
+ecmd_ars_del_col(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -604,7 +604,7 @@ ecmd_ars_del_col(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_move_col(struct mged_solid_edit *s)
+ecmd_ars_move_col(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -667,7 +667,7 @@ ecmd_ars_move_col(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_move_crv(struct mged_solid_edit *s)
+ecmd_ars_move_crv(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -730,7 +730,7 @@ ecmd_ars_move_crv(struct mged_solid_edit *s)
 }
 
 void
-ecmd_ars_move_pt(struct mged_solid_edit *s)
+ecmd_ars_move_pt(struct rt_solid_edit *s)
 {
     struct rt_ars_internal *ars=
 	(struct rt_ars_internal *)s->es_int.idb_ptr;
@@ -787,7 +787,7 @@ ecmd_ars_move_pt(struct mged_solid_edit *s)
 }
 
 int
-mged_ars_edit(struct mged_solid_edit *s, int edflag)
+mged_ars_edit(struct rt_solid_edit *s, int edflag)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -867,7 +867,7 @@ mged_ars_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_ars_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

@@ -62,7 +62,7 @@
 #define MENU_TGC_SCALE_H_V_AB	2112
 
 static void
-tgc_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -125,7 +125,7 @@ mged_tgc_menu_item(const struct bn_tol *UNUSED(tol))
 
 void
 mged_tgc_e_axes_pos(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
 {
@@ -257,7 +257,7 @@ mged_tgc_read_params(
 
 /* scale height vector */
 void
-menu_tgc_scale_h(struct mged_solid_edit *s)
+menu_tgc_scale_h(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -272,7 +272,7 @@ menu_tgc_scale_h(struct mged_solid_edit *s)
 
 /* scale height vector (but move V) */
 void
-menu_tgc_scale_h_v(struct mged_solid_edit *s)
+menu_tgc_scale_h_v(struct rt_solid_edit *s)
 {
     point_t old_top;
 
@@ -290,7 +290,7 @@ menu_tgc_scale_h_v(struct mged_solid_edit *s)
 }
 
 void
-menu_tgc_scale_h_cd(struct mged_solid_edit *s)
+menu_tgc_scale_h_cd(struct rt_solid_edit *s)
 {
     vect_t vec1, vec2;
     vect_t c, d;
@@ -327,7 +327,7 @@ menu_tgc_scale_h_cd(struct mged_solid_edit *s)
 }
 
 void
-menu_tgc_scale_h_v_ab(struct mged_solid_edit *s)
+menu_tgc_scale_h_v_ab(struct rt_solid_edit *s)
 {
     vect_t vec1, vec2;
     vect_t a, b;
@@ -368,7 +368,7 @@ menu_tgc_scale_h_v_ab(struct mged_solid_edit *s)
 
 /* scale vector A */
 void
-menu_tgc_scale_a(struct mged_solid_edit *s)
+menu_tgc_scale_a(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -384,7 +384,7 @@ menu_tgc_scale_a(struct mged_solid_edit *s)
 
 /* scale vector B */
 void
-menu_tgc_scale_b(struct mged_solid_edit *s)
+menu_tgc_scale_b(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -400,7 +400,7 @@ menu_tgc_scale_b(struct mged_solid_edit *s)
 
 /* TGC: scale ratio "c" */
 void
-menu_tgc_scale_c(struct mged_solid_edit *s)
+menu_tgc_scale_c(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -416,7 +416,7 @@ menu_tgc_scale_c(struct mged_solid_edit *s)
 
 /* scale d for tgc */
 void
-menu_tgc_scale_d(struct mged_solid_edit *s)
+menu_tgc_scale_d(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -431,7 +431,7 @@ menu_tgc_scale_d(struct mged_solid_edit *s)
 }
 
 void
-menu_tgc_scale_ab(struct mged_solid_edit *s)
+menu_tgc_scale_ab(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -451,7 +451,7 @@ menu_tgc_scale_ab(struct mged_solid_edit *s)
 
 /* scale C and D of tgc */
 void
-menu_tgc_scale_cd(struct mged_solid_edit *s)
+menu_tgc_scale_cd(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -471,7 +471,7 @@ menu_tgc_scale_cd(struct mged_solid_edit *s)
 
 /* scale A, B, C, and D of tgc */
 void
-menu_tgc_scale_abcd(struct mged_solid_edit *s)
+menu_tgc_scale_abcd(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -498,7 +498,7 @@ menu_tgc_scale_abcd(struct mged_solid_edit *s)
  * to H vector.
  */
 int
-ecmd_tgc_mv_h(struct mged_solid_edit *s)
+ecmd_tgc_mv_h(struct rt_solid_edit *s)
 {
     float la, lb, lc, ld;	/* TGC: length of vectors */
     vect_t work;
@@ -564,7 +564,7 @@ ecmd_tgc_mv_h(struct mged_solid_edit *s)
 
 /* Move end of H of tgc - leave ends alone */
 int
-ecmd_tgc_mv_hh(struct mged_solid_edit *s)
+ecmd_tgc_mv_hh(struct rt_solid_edit *s)
 {
     vect_t work;
     struct rt_tgc_internal *tgc =
@@ -609,7 +609,7 @@ ecmd_tgc_mv_hh(struct mged_solid_edit *s)
 
 /* rotate height vector */
 int
-ecmd_tgc_rot_h(struct mged_solid_edit *s)
+ecmd_tgc_rot_h(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -674,7 +674,7 @@ ecmd_tgc_rot_h(struct mged_solid_edit *s)
 
 /* rotate surfaces AxB and CxD (tgc) */
 int
-ecmd_tgc_rot_ab(struct mged_solid_edit *s)
+ecmd_tgc_rot_ab(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -744,7 +744,7 @@ ecmd_tgc_rot_ab(struct mged_solid_edit *s)
 
 /* Use mouse to change location of point V+H */
 void
-ecmd_tgc_mv_h_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
+ecmd_tgc_mv_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -763,7 +763,7 @@ ecmd_tgc_mv_h_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 static int
-mged_tgc_pscale(struct mged_solid_edit *s, int mode)
+mged_tgc_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -822,7 +822,7 @@ mged_tgc_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_tgc_edit(struct mged_solid_edit *s, int edflag)
+mged_tgc_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -853,7 +853,7 @@ mged_tgc_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_tgc_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

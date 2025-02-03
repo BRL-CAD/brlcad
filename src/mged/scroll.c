@@ -118,7 +118,7 @@ set_scroll(struct mged_state *s)
  * Reset all scroll bars to the zero position.
  */
 void
-sl_halt_scroll(struct mged_solid_edit *UNUSED(es), int UNUSED(a), int UNUSED(b), int UNUSED(c), void *data)
+sl_halt_scroll(struct rt_solid_edit *UNUSED(es), int UNUSED(a), int UNUSED(b), int UNUSED(c), void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -130,7 +130,7 @@ sl_halt_scroll(struct mged_solid_edit *UNUSED(es), int UNUSED(a), int UNUSED(b),
 
 
 void
-sl_toggle_scroll(struct mged_solid_edit *UNUSED(es), int UNUSED(a), int UNUSED(b), int UNUSED(c), void *data)
+sl_toggle_scroll(struct rt_solid_edit *UNUSED(es), int UNUSED(a), int UNUSED(b), int UNUSED(c), void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
     mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;

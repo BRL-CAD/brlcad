@@ -178,11 +178,11 @@ struct mged_edit_state {
 };
 
 // Internal state
-struct mged_solid_edit_impl;
+struct rt_solid_edit_impl;
 
-struct mged_solid_edit {
+struct rt_solid_edit {
 
-    struct mged_solid_edit_impl *i;
+    struct rt_solid_edit_impl *i;
 
     // Optional logging of messages from editing code
     struct bu_vls *log_str;
@@ -278,10 +278,10 @@ struct mged_solid_edit {
 extern int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
 extern int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode);
 
-extern int mged_sedit_clbk_set(struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
-extern int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode);
+extern int mged_sedit_clbk_set(struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
+extern int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode);
 
-extern int mged_sedit_clbk_sync(struct mged_solid_edit *se, struct mged_state *s);
+extern int mged_sedit_clbk_sync(struct rt_solid_edit *se, struct mged_state *s);
 
 
 extern int mged_mmenu_set(int ac, const char **av, void *d, void *ms);
@@ -327,7 +327,7 @@ struct mged_state {
 
     /* Editing related */
     struct mged_edit_state edit_state;
-    struct mged_solid_edit *s_edit;
+    struct rt_solid_edit *s_edit;
 
     /* Checked by numerous functions to indicate truthfully whether the
      * views need to be redrawn. */
@@ -340,12 +340,12 @@ mged_state_create(void);
 extern void
 mged_state_destroy(struct mged_state *s);
 
-extern struct mged_solid_edit *
-mged_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
+extern struct rt_solid_edit *
+rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
 extern void
-mged_solid_edit_destroy(struct mged_solid_edit *ssed);
+rt_solid_edit_destroy(struct rt_solid_edit *ssed);
 
-void get_solid_keypoint(struct mged_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
+void get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
 
 /**
  * Definitions.
@@ -394,7 +394,7 @@ extern void moveHinstance(struct mged_state *s, struct directory *cdp, struct di
 extern void moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate);
 extern void quit(struct mged_state *s);
 extern void refresh(struct mged_state *s);
-extern void sedit(struct mged_solid_edit *s);
+extern void sedit(struct rt_solid_edit *s);
 extern void setview(struct mged_state *s, double a1, double a2, double a3);
 extern void adcursor(struct mged_state *s);
 extern void get_attached(struct mged_state *s);
@@ -557,7 +557,7 @@ void createDListAll(void *, struct display_list *);
 void freeDListsAll(void *, unsigned int dlist, int range);
 
 /* edarb.c */
-int editarb(struct mged_solid_edit *s, vect_t pos_model);
+int editarb(struct rt_solid_edit *s, vect_t pos_model);
 /* Ew.  Global. */
 extern int newedge;	/* new edge for arb editing */
 

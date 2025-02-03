@@ -61,7 +61,7 @@ int newedge;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 
 static void
-arb8_edge(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb8_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     s->edit_flag = EARB;
@@ -100,7 +100,7 @@ struct menu_item edge8_menu[] = {
 
 
 static void
-arb7_edge(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb7_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     s->edit_flag = EARB;
@@ -143,7 +143,7 @@ struct menu_item edge7_menu[] = {
 };
 
 static void
-arb6_edge(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb6_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     s->edit_flag = EARB;
@@ -189,7 +189,7 @@ struct menu_item edge6_menu[] = {
 };
 
 static void
-arb5_edge(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb5_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     s->edit_flag = EARB;
@@ -230,7 +230,7 @@ struct menu_item edge5_menu[] = {
 };
 
 static void
-arb4_point(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb4_point(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     s->edit_flag = PTARB;
@@ -261,7 +261,7 @@ struct menu_item point4_menu[] = {
 };
 
 static void
-arb8_mv_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb8_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
@@ -294,7 +294,7 @@ struct menu_item mv8_menu[] = {
 };
 
 static void
-arb7_mv_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb7_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
@@ -323,7 +323,7 @@ struct menu_item mv7_menu[] = {
 };
 
 static void
-arb6_mv_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb6_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
@@ -355,7 +355,7 @@ struct menu_item mv6_menu[] = {
 };
 
 static void
-arb5_mv_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb5_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
@@ -387,7 +387,7 @@ struct menu_item mv5_menu[] = {
 };
 
 static void
-arb4_mv_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb4_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
@@ -418,7 +418,7 @@ struct menu_item mv4_menu[] = {
 };
 
 static void
-arb8_rot_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb8_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -440,7 +440,7 @@ struct menu_item rot8_menu[] = {
 };
 
 static void
-arb7_rot_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb7_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -462,7 +462,7 @@ struct menu_item rot7_menu[] = {
 };
 
 static void
-arb6_rot_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb6_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -483,7 +483,7 @@ struct menu_item rot6_menu[] = {
 };
 
 static void
-arb5_rot_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb5_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -505,7 +505,7 @@ struct menu_item rot5_menu[] = {
 };
 
 static void
-arb4_rot_face(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb4_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg - 1;
     mged_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
@@ -525,7 +525,7 @@ struct menu_item rot4_menu[] = {
 };
 
 static void
-arb_control(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+arb_control(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, ECMD_ARB_SPECIFIC_MENU);
@@ -628,7 +628,7 @@ mged_arb_keypoint(
 
 void
 mged_arb_e_axes_pos(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	const struct rt_db_internal *ip,
        	const struct bn_tol *tol
        	)
@@ -861,7 +861,7 @@ mged_arb_read_params(
  *
  */
 int
-editarb(struct mged_solid_edit *s, vect_t pos_model)
+editarb(struct rt_solid_edit *s, vect_t pos_model)
 {
     int ret = 0;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
@@ -889,7 +889,7 @@ editarb(struct mged_solid_edit *s, vect_t pos_model)
 }
 
 void
-ecmd_arb_main_menu(struct mged_solid_edit *s)
+ecmd_arb_main_menu(struct rt_solid_edit *s)
 {
     /* put up control (main) menu for GENARB8s */
     mged_set_edflag(s, IDLE);
@@ -902,7 +902,7 @@ ecmd_arb_main_menu(struct mged_solid_edit *s)
 }
 
 int
-ecmd_arb_specific_menu(struct mged_solid_edit *s)
+ecmd_arb_specific_menu(struct rt_solid_edit *s)
 {
     /* put up specific arb edit menus */
     bu_clbk_t f = NULL;
@@ -939,7 +939,7 @@ ecmd_arb_specific_menu(struct mged_solid_edit *s)
 }
 
 int
-ecmd_arb_move_face(struct mged_solid_edit *s)
+ecmd_arb_move_face(struct rt_solid_edit *s)
 {
     /* move face through definite point */
     if (s->e_inpara) {
@@ -978,7 +978,7 @@ ecmd_arb_move_face(struct mged_solid_edit *s)
 }
 
 void
-ecmd_arb_setup_rotface(struct mged_solid_edit *s)
+ecmd_arb_setup_rotface(struct rt_solid_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -1012,7 +1012,7 @@ ecmd_arb_setup_rotface(struct mged_solid_edit *s)
 }
 
 int
-ecmd_arb_rotate_face(struct mged_solid_edit *s)
+ecmd_arb_rotate_face(struct rt_solid_edit *s)
 {
     /* rotate a GENARB8 defining plane through a fixed vertex */
     fastf_t *eqp;
@@ -1129,7 +1129,7 @@ ecmd_arb_rotate_face(struct mged_solid_edit *s)
 }
 
 int
-edit_arb_element(struct mged_solid_edit *s)
+edit_arb_element(struct rt_solid_edit *s)
 {
 
     if (s->e_inpara) {
@@ -1159,7 +1159,7 @@ edit_arb_element(struct mged_solid_edit *s)
 }
 
 void
-arb_mv_pnt_to(struct mged_solid_edit *s, const vect_t mousevec)
+arb_mv_pnt_to(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
@@ -1175,7 +1175,7 @@ arb_mv_pnt_to(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 void
-edarb_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
+edarb_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
@@ -1189,7 +1189,7 @@ edarb_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 void
-edarb_move_face_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
+edarb_move_face_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
@@ -1215,7 +1215,7 @@ edarb_move_face_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_arb_edit(struct mged_solid_edit *s, int edflag)
+mged_arb_edit(struct rt_solid_edit *s, int edflag)
 {
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
@@ -1279,7 +1279,7 @@ arb_planecalc:
 
 int
 mged_arb_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)
@@ -1322,7 +1322,7 @@ mged_arb_edit_xy(
 }
 
 int
-arb_f_eqn(struct mged_solid_edit *s, int argc, const char **argv)
+arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv)
 {
     short int i;
     vect_t tempvec;
@@ -1360,7 +1360,7 @@ arb_f_eqn(struct mged_solid_edit *s, int argc, const char **argv)
 }
 
 int
-arb_edgedir(struct mged_solid_edit *s, int argc, const char **argv)
+arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv)
 {
     vect_t slope;
     fastf_t rot, fb_a;

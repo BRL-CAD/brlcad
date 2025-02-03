@@ -34,11 +34,11 @@ extern "C" {
 #define EDIT_DECLARE_INTERFACE(name) \
     extern void mged_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels *pl, int max_pl, const mat_t xform, struct rt_db_internal *ip, struct bn_tol *); \
     extern const char *mged_##name##_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol); \
-    extern void mged_##name##_e_axes_pos(struct mged_solid_edit *s, const struct rt_db_internal *ip, const struct bn_tol *tol); \
+    extern void mged_##name##_e_axes_pos(struct rt_solid_edit *s, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void mged_##name##_write_params(struct bu_vls *p, const struct rt_db_internal *ip, const struct bn_tol *tol, fastf_t base2local); \
     extern void mged_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
-    extern int mged_##name##_edit(struct mged_solid_edit *s, int edflag); \
-    extern int mged_##name##_edit_xy(struct mged_solid_edit *s, int edflag, vect_t mousevec); \
+    extern int mged_##name##_edit(struct rt_solid_edit *s, int edflag); \
+    extern int mged_##name##_edit_xy(struct rt_solid_edit *s, int edflag, vect_t mousevec); \
     extern void *mged_##name##_prim_edit_create(void); \
     extern void mged_##name##_prim_edit_destroy(void *); \
     extern int mged_##name##_menu_str(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol); \

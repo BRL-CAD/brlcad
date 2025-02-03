@@ -43,7 +43,7 @@
 #define MENU_EHY_C		20056
 
 static void
-ehy_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -181,7 +181,7 @@ mged_ehy_read_params(
 
 /* scale height vector H */
 void
-menu_ehy_h(struct mged_solid_edit *s)
+menu_ehy_h(struct rt_solid_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
@@ -197,7 +197,7 @@ menu_ehy_h(struct mged_solid_edit *s)
 
 /* scale semimajor axis of EHY */
 void
-menu_ehy_r1(struct mged_solid_edit *s)
+menu_ehy_r1(struct rt_solid_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
@@ -216,7 +216,7 @@ menu_ehy_r1(struct mged_solid_edit *s)
 
 /* scale semiminor axis of EHY */
 void
-menu_ehy_r2(struct mged_solid_edit *s)
+menu_ehy_r2(struct rt_solid_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
@@ -235,7 +235,7 @@ menu_ehy_r2(struct mged_solid_edit *s)
 
 /* scale distance between apex of EHY & asymptotic cone */
 void
-menu_ehy_c(struct mged_solid_edit *s)
+menu_ehy_c(struct rt_solid_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
@@ -250,7 +250,7 @@ menu_ehy_c(struct mged_solid_edit *s)
 }
 
 static int
-mged_ehy_pscale(struct mged_solid_edit *s, int mode)
+mged_ehy_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -288,7 +288,7 @@ mged_ehy_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_ehy_edit(struct mged_solid_edit *s, int edflag)
+mged_ehy_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

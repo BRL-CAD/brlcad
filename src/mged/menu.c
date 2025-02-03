@@ -35,11 +35,11 @@
 #include "ged.h"
 
 
-extern void sl_halt_scroll(struct mged_solid_edit *, int, int, int, void *);	/* in scroll.c */
-extern void sl_toggle_scroll(struct mged_solid_edit *, int, int, int, void *);
+extern void sl_halt_scroll(struct rt_solid_edit *, int, int, int, void *);	/* in scroll.c */
+extern void sl_toggle_scroll(struct rt_solid_edit *, int, int, int, void *);
 
-void btn_head_menu(struct mged_solid_edit *s, int i, int menu, int item, void *data);
-void btn_item_hit(struct mged_solid_edit *s, int arg, int menu, int item, void *data);
+void btn_head_menu(struct rt_solid_edit *s, int i, int menu, int item, void *data);
+void btn_item_hit(struct rt_solid_edit *s, int arg, int menu, int item, void *data);
 
 struct menu_item first_menu[] = {
     { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
@@ -95,7 +95,7 @@ struct menu_item oed_menu[] = {
  * Called when a menu item is hit
  */
 void
-btn_item_hit(struct mged_solid_edit *UNUSED(es), int arg, int menu, int UNUSED(item), void *data)
+btn_item_hit(struct rt_solid_edit *UNUSED(es), int arg, int menu, int UNUSED(item), void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
     button(s, arg);
@@ -109,7 +109,7 @@ btn_item_hit(struct mged_solid_edit *UNUSED(es), int arg, int menu, int UNUSED(i
  * Also called from main() with arg 0 in init.
  */
 void
-btn_head_menu(struct mged_solid_edit *UNUSED(es), int i, int UNUSED(menu), int UNUSED(item), void *data)
+btn_head_menu(struct rt_solid_edit *UNUSED(es), int i, int UNUSED(menu), int UNUSED(item), void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
     switch (i) {

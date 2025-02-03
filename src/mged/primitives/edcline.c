@@ -48,7 +48,7 @@
 #define MENU_CLINE_SCALE_T	29110
 
 static void
-cline_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+cline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_flag = arg;
 
@@ -92,7 +92,7 @@ mged_cline_menu_item(const struct bn_tol *UNUSED(tol))
 
 void
 mged_cline_e_axes_pos(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol))
 {
@@ -115,7 +115,7 @@ mged_cline_e_axes_pos(
  * Scale height vector
  */
 int
-ecmd_cline_scale_h(struct mged_solid_edit *s)
+ecmd_cline_scale_h(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -155,7 +155,7 @@ ecmd_cline_scale_h(struct mged_solid_edit *s)
  * Scale radius
  */
 int
-ecmd_cline_scale_r(struct mged_solid_edit *s)
+ecmd_cline_scale_r(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -193,7 +193,7 @@ ecmd_cline_scale_r(struct mged_solid_edit *s)
  * Scale plate thickness
  */
 int
-ecmd_cline_scale_t(struct mged_solid_edit *s)
+ecmd_cline_scale_t(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -231,7 +231,7 @@ ecmd_cline_scale_t(struct mged_solid_edit *s)
  * Move end of height vector
  */
 int
-ecmd_cline_move_h(struct mged_solid_edit *s)
+ecmd_cline_move_h(struct rt_solid_edit *s)
 {
     vect_t work;
     struct rt_cline_internal *cli =
@@ -273,7 +273,7 @@ ecmd_cline_move_h(struct mged_solid_edit *s)
 }
 
 void
-ecmd_cline_move_h_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
+ecmd_cline_move_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t tr_temp = VINIT_ZERO;	/* temp translation vector */
@@ -293,7 +293,7 @@ ecmd_cline_move_h_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_cline_edit(struct mged_solid_edit *s, int edflag)
+mged_cline_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -322,7 +322,7 @@ mged_cline_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_cline_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

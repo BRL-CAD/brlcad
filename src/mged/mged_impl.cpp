@@ -85,7 +85,7 @@ mged_state_destroy(struct mged_state *s)
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s->mged_prompt);
     if (s->s_edit)
-	mged_solid_edit_destroy(s->s_edit);
+	rt_solid_edit_destroy(s->s_edit);
     s->s_edit = NULL;
 
     delete s->i->i;
@@ -93,12 +93,12 @@ mged_state_destroy(struct mged_state *s)
     BU_PUT(s, struct mged_state);
 }
 
-struct mged_solid_edit *
-mged_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bview *v)
+struct rt_solid_edit *
+rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bview *v)
 {
-    struct mged_solid_edit *s;
-    BU_GET(s, struct mged_solid_edit);
-    BU_GET(s->i, struct mged_solid_edit_impl);
+    struct rt_solid_edit *s;
+    BU_GET(s, struct rt_solid_edit);
+    BU_GET(s->i, struct rt_solid_edit_impl);
     s->i->i = new MGED_SEDIT_Internal;
     s->tol = tol;
     s->vp = v;
@@ -124,7 +124,7 @@ mged_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_to
     s->base2local = dbip->dbi_base2local;
 
     if (rt_db_get_internal(&s->es_int, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0) {
-	mged_solid_edit_destroy(s);
+	rt_solid_edit_destroy(s);
 	return NULL;                         /* FAIL */
     }
     RT_CK_DB_INTERNAL(&s->es_int);
@@ -148,7 +148,7 @@ mged_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_to
 }
 
 void
-mged_solid_edit_destroy(struct mged_solid_edit *s)
+rt_solid_edit_destroy(struct rt_solid_edit *s)
 {
     if (!s)
 	return;
@@ -159,8 +159,8 @@ mged_solid_edit_destroy(struct mged_solid_edit *s)
     BU_PUT(s->log_str, struct bu_vls);
 
     delete s->i->i;
-    BU_PUT(s->i, struct mged_solid_edit_impl);
-    BU_PUT(s, struct mged_solid_edit);
+    BU_PUT(s->i, struct rt_solid_edit_impl);
+    BU_PUT(s, struct rt_solid_edit);
 }
 
 
@@ -275,7 +275,7 @@ int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_ty
     return mged_edit_clbk_get(f, d, mp, ed_cmd, menu_cmd);
 }
 
-int mged_sedit_clbk_set(struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d)
+int mged_sedit_clbk_set(struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d)
 {
     // Check for no-op case
     if (!s)
@@ -289,7 +289,7 @@ int mged_sedit_clbk_set(struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int
 
     return mged_edit_clbk_set(mp, ed_cmd, menu_cmd, f, d);
 }
-int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int ed_cmd, int menu_cmd, int mode)
+int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode)
 {
     // Check for no-op case
     if (!f || !d || !s)
@@ -304,7 +304,7 @@ int mged_sedit_clbk_get(bu_clbk_t *f, void **d, struct mged_solid_edit *s, int e
     return mged_edit_clbk_get(f, d, mp, ed_cmd, menu_cmd);
 }
 
-int mged_sedit_clbk_sync(struct mged_solid_edit *se, struct mged_state *s)
+int mged_sedit_clbk_sync(struct rt_solid_edit *se, struct mged_state *s)
 {
     if (!se)
 	return BRLCAD_ERROR;

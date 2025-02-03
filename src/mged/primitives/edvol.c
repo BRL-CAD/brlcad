@@ -50,10 +50,10 @@
 #define MENU_VOL_THRESH_LO	13078
 #define MENU_VOL_THRESH_HI	13079
 
-extern const char * get_file_name(struct mged_solid_edit *s, char *str);
+extern const char * get_file_name(struct rt_solid_edit *s, char *str);
 
 static void
-vol_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
 
@@ -115,14 +115,14 @@ mged_vol_menu_item(const struct bn_tol *UNUSED(tol))
 
 /* scale voxel size */
 void
-menu_vol_csize(struct mged_solid_edit *s)
+menu_vol_csize(struct rt_solid_edit *s)
 {
     bu_log("s->es_scale = %g\n", s->es_scale);
 }
 
 /* set voxel size */
 void
-ecmd_vol_csize(struct mged_solid_edit *s)
+ecmd_vol_csize(struct rt_solid_edit *s)
 {
     struct rt_vol_internal *vol =
 	(struct rt_vol_internal *)s->es_int.idb_ptr;
@@ -152,7 +152,7 @@ ecmd_vol_csize(struct mged_solid_edit *s)
 
 /* set file size */
 void
-ecmd_vol_fsize(struct mged_solid_edit *s)
+ecmd_vol_fsize(struct rt_solid_edit *s)
 {
     struct rt_vol_internal *vol =
 	(struct rt_vol_internal *)s->es_int.idb_ptr;
@@ -192,7 +192,7 @@ ecmd_vol_fsize(struct mged_solid_edit *s)
 }
 
 int
-ecmd_vol_thresh_lo(struct mged_solid_edit *s)
+ecmd_vol_thresh_lo(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -232,7 +232,7 @@ ecmd_vol_thresh_lo(struct mged_solid_edit *s)
 }
 
 int
-ecmd_vol_thresh_hi(struct mged_solid_edit *s)
+ecmd_vol_thresh_hi(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -272,7 +272,7 @@ ecmd_vol_thresh_hi(struct mged_solid_edit *s)
 }
 
 void
-ecmd_vol_fname(struct mged_solid_edit *s)
+ecmd_vol_fname(struct rt_solid_edit *s)
 {
     struct rt_vol_internal *vol =
 	(struct rt_vol_internal *)s->es_int.idb_ptr;
@@ -310,7 +310,7 @@ ecmd_vol_fname(struct mged_solid_edit *s)
 }
 
 static int
-mged_vol_pscale(struct mged_solid_edit *s, int mode)
+mged_vol_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -339,7 +339,7 @@ mged_vol_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_vol_edit(struct mged_solid_edit *s, int edflag)
+mged_vol_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -375,7 +375,7 @@ mged_vol_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_vol_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

@@ -64,7 +64,7 @@ point_t lu_keypoint;    /* keypoint of lu_copy for extrusion */
  */
 /*ARGSUSED*/
 static void
-nmg_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -521,7 +521,7 @@ mged_nmg_labels(
 }
 
 
-void ecmd_nmg_emove(struct mged_solid_edit *s)
+void ecmd_nmg_emove(struct rt_solid_edit *s)
 {
     point_t new_pt;
     bu_clbk_t f = NULL;
@@ -599,7 +599,7 @@ void ecmd_nmg_emove(struct mged_solid_edit *s)
     }
 }
 
-void ecmd_nmg_ekill(struct mged_solid_edit *s)
+void ecmd_nmg_ekill(struct rt_solid_edit *s)
 {
     struct model *m;
     struct edge_g_lseg *eg;
@@ -682,7 +682,7 @@ void ecmd_nmg_ekill(struct mged_solid_edit *s)
     }
 }
 
-void ecmd_nmg_esplit(struct mged_solid_edit *s)
+void ecmd_nmg_esplit(struct rt_solid_edit *s)
 {
     struct vertex *v=(struct vertex *)NULL;
     struct edge_g_lseg *eg;
@@ -774,7 +774,7 @@ void ecmd_nmg_esplit(struct mged_solid_edit *s)
     VSUB2(eg->e_dir, es_eu->eumate_p->vu_p->v_p->vg_p->coord, new_pt);
 }
 
-void ecmd_nmg_lextru(struct mged_solid_edit *s)
+void ecmd_nmg_lextru(struct rt_solid_edit *s)
 {
     fastf_t dist;
     point_t to_pt;
@@ -873,7 +873,7 @@ void ecmd_nmg_lextru(struct mged_solid_edit *s)
 
 
 /* XXX Should just leave desired location in s->e_mparam for sedit(s) */
-void ecmd_nmg_epick(struct mged_solid_edit *s, const vect_t mousevec)
+void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
 
@@ -923,7 +923,7 @@ void ecmd_nmg_epick(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_nmg_edit(struct mged_solid_edit *s, int edflag)
+mged_nmg_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -962,7 +962,7 @@ mged_nmg_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_nmg_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

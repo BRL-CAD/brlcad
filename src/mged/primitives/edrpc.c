@@ -42,7 +42,7 @@
 #define MENU_RPC_R		17045
 
 static void
-rpc_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -166,7 +166,7 @@ mged_rpc_read_params(
 
 /* scale vector B */
 void
-menu_rpc_b(struct mged_solid_edit *s)
+menu_rpc_b(struct rt_solid_edit *s)
 {
     struct rt_rpc_internal *rpc =
 	(struct rt_rpc_internal *)s->es_int.idb_ptr;
@@ -182,7 +182,7 @@ menu_rpc_b(struct mged_solid_edit *s)
 
 /* scale vector H */
 void
-menu_rpc_h(struct mged_solid_edit *s)
+menu_rpc_h(struct rt_solid_edit *s)
 {
     struct rt_rpc_internal *rpc =
 	(struct rt_rpc_internal *)s->es_int.idb_ptr;
@@ -198,7 +198,7 @@ menu_rpc_h(struct mged_solid_edit *s)
 
 /* scale rectangular half-width of RPC */
 void
-menu_rpc_r(struct mged_solid_edit *s)
+menu_rpc_r(struct rt_solid_edit *s)
 {
     struct rt_rpc_internal *rpc =
 	(struct rt_rpc_internal *)s->es_int.idb_ptr;
@@ -213,7 +213,7 @@ menu_rpc_r(struct mged_solid_edit *s)
 }
 
 static int
-mged_rpc_pscale(struct mged_solid_edit *s, int mode)
+mged_rpc_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -248,7 +248,7 @@ mged_rpc_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_rpc_edit(struct mged_solid_edit *s, int edflag)
+mged_rpc_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

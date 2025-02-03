@@ -49,7 +49,7 @@ static int spl_vi;
 
 /*ARGSUSED*/
 static void
-spline_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+spline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     /* XXX Why were we doing VPICK with chg_state?? */
     //chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
@@ -173,7 +173,7 @@ nurb_closest2d(
 
 
 void
-bspline_init_sedit(struct mged_solid_edit *s)
+bspline_init_sedit(struct rt_solid_edit *s)
 {
     struct rt_nurb_internal *sip =
 	(struct rt_nurb_internal *) s->es_int.idb_ptr;
@@ -187,7 +187,7 @@ bspline_init_sedit(struct mged_solid_edit *s)
 }
 
 void
-sedit_vpick(struct mged_solid_edit *s)
+sedit_vpick(struct rt_solid_edit *s)
 {
 #if 0
     point_t m_pos;
@@ -297,7 +297,7 @@ mged_bspline_keypoint(
 
 // I think this is bspline only??
 void
-ecmd_vtrans(struct mged_solid_edit *s)
+ecmd_vtrans(struct rt_solid_edit *s)
 {
     /* must convert to base units */
     s->e_para[0] *= s->local2base;
@@ -335,7 +335,7 @@ ecmd_vtrans(struct mged_solid_edit *s)
 
 
 int
-mged_bspline_edit(struct mged_solid_edit *s, int edflag)
+mged_bspline_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -363,7 +363,7 @@ mged_bspline_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_bspline_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

@@ -45,7 +45,7 @@
 #define MENU_ETO_ROT_C		21060
 
 static void
-eto_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -183,7 +183,7 @@ mged_eto_read_params(
 
 /* scale radius 1 (r) of ETO */
 void
-menu_eto_r(struct mged_solid_edit *s)
+menu_eto_r(struct rt_solid_edit *s)
 {
     struct rt_eto_internal *eto =
 	(struct rt_eto_internal *)s->es_int.idb_ptr;
@@ -213,7 +213,7 @@ menu_eto_r(struct mged_solid_edit *s)
 
 /* scale Rd, ellipse semi-minor axis length, of ETO */
 void
-menu_eto_rd(struct mged_solid_edit *s)
+menu_eto_rd(struct rt_solid_edit *s)
 {
     struct rt_eto_internal *eto =
 	(struct rt_eto_internal *)s->es_int.idb_ptr;
@@ -242,7 +242,7 @@ menu_eto_rd(struct mged_solid_edit *s)
 
 /* scale vector C */
 void
-menu_eto_scale_c(struct mged_solid_edit *s)
+menu_eto_scale_c(struct rt_solid_edit *s)
 {
     struct rt_eto_internal *eto =
 	(struct rt_eto_internal *)s->es_int.idb_ptr;
@@ -269,7 +269,7 @@ menu_eto_scale_c(struct mged_solid_edit *s)
 
 /* rotate ellipse semi-major axis vector */
 int
-ecmd_eto_rot_c(struct mged_solid_edit *s)
+ecmd_eto_rot_c(struct rt_solid_edit *s)
 {
     struct rt_eto_internal *eto =
 	(struct rt_eto_internal *)s->es_int.idb_ptr;
@@ -333,7 +333,7 @@ ecmd_eto_rot_c(struct mged_solid_edit *s)
 }
 
 static int
-mged_eto_pscale(struct mged_solid_edit *s, int mode)
+mged_eto_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -368,7 +368,7 @@ mged_eto_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_eto_edit(struct mged_solid_edit *s, int edflag)
+mged_eto_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

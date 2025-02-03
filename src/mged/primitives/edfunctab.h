@@ -43,50 +43,50 @@ mged_generic_keypoint(
 /* scale the solid uniformly about its vertex point */
 int
 mged_generic_sscale(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	);
 
 /* translate solid */
 void
 mged_generic_strans(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	);
 
 /* rot solid about vertex */
 void
 mged_generic_srot(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	);
 
 void
 mged_generic_sscale_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	const vect_t mousevec
 	);
 void
 mged_generic_strans_xy(vect_t *pos_view,
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	const vect_t mousevec
 	);
 
 void
-update_edit_absolute_tran(struct mged_solid_edit *s, vect_t view_pos);
+update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos);
 
-int mged_generic_edit(struct mged_solid_edit *s, int edflag);
+int mged_generic_edit(struct rt_solid_edit *s, int edflag);
 
 int
 mged_generic_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	);
 
 
 void
-mged_set_edflag(struct mged_solid_edit *s, int edflag);
+mged_set_edflag(struct rt_solid_edit *s, int edflag);
 
 int
 mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol);
@@ -114,10 +114,10 @@ struct mged_functab {
 #define EDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
     void(*ft_e_axes_pos)(
-	    struct mged_solid_edit *s,
+	    struct rt_solid_edit *s,
 	    const struct rt_db_internal *ip,
 	    const struct bn_tol *tol);
-#define EDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(struct mged_solid_edit *s, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+#define EDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(struct rt_solid_edit *s, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
     // Written format is intended to be human editable text that will be parsed
     // by ft_read_params.  There are no guarantees of formatting consistency by
@@ -140,8 +140,8 @@ struct mged_functab {
 	    fastf_t local2base);
 #define EDFUNCTAB_FUNC_READ_PARAMS_CAST(_func) ((int(*)(struct rt_db_internal *, const char *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
 
-    int(*ft_edit)(struct mged_solid_edit *s, int edflag);
-#define EDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct mged_solid_edit *, int))((void (*)(void))_func))
+    int(*ft_edit)(struct rt_solid_edit *s, int edflag);
+#define EDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct rt_solid_edit *, int))((void (*)(void))_func))
 
     /* Translate mouse info into edit ready info.  mousevec [X] and [Y] are in
      * the range -1.0...+1.0, corresponding to viewspace.
@@ -149,8 +149,8 @@ struct mged_functab {
      * In order to allow command line commands to do the same things that a
      * mouse movements can, the preferred strategy is to store values and allow
      * ft_edit to actually do the work. */
-    int(*ft_edit_xy)(struct mged_solid_edit *s, int edflag, const vect_t mousevec);
-#define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct mged_solid_edit *, int, const vect_t))((void (*)(void))_func))
+    int(*ft_edit_xy)(struct rt_solid_edit *s, int edflag, const vect_t mousevec);
+#define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct rt_solid_edit *, int, const vect_t))((void (*)(void))_func))
 
     /* Create primitive specific editing struct */
     void *(*ft_prim_edit_create)(void);

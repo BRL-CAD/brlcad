@@ -66,7 +66,7 @@
 int bot_verts[3];		/* vertices for the BOT solid */
 
 static void
-bot_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     s->edit_flag = arg;
@@ -220,7 +220,7 @@ mged_bot_keypoint(
 }
 
 void
-ecmd_bot_mode(struct mged_solid_edit *s)
+ecmd_bot_mode(struct rt_solid_edit *s)
 {
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
 
@@ -252,7 +252,7 @@ ecmd_bot_mode(struct mged_solid_edit *s)
 }
 
 void
-ecmd_bot_orient(struct mged_solid_edit *s)
+ecmd_bot_orient(struct rt_solid_edit *s)
 {
     // Set bot->orientation using the callback
     bu_clbk_t f = NULL;
@@ -263,7 +263,7 @@ ecmd_bot_orient(struct mged_solid_edit *s)
 }
 
 int
-ecmd_bot_thick(struct mged_solid_edit *s)
+ecmd_bot_thick(struct rt_solid_edit *s)
 {
 
     if (s->e_inpara != 1) {
@@ -292,7 +292,7 @@ ecmd_bot_thick(struct mged_solid_edit *s)
 }
 
 void
-ecmd_bot_flags(struct mged_solid_edit *s)
+ecmd_bot_flags(struct rt_solid_edit *s)
 {
     // Set bot->thickness array using the callback
     bu_clbk_t f = NULL;
@@ -303,7 +303,7 @@ ecmd_bot_flags(struct mged_solid_edit *s)
 }
 
 void
-ecmd_bot_fmode(struct mged_solid_edit *s)
+ecmd_bot_fmode(struct rt_solid_edit *s)
 {
     // Set bot->face_mode using the callback
     bu_clbk_t f = NULL;
@@ -314,7 +314,7 @@ ecmd_bot_fmode(struct mged_solid_edit *s)
 }
 
 int
-ecmd_bot_fdel(struct mged_solid_edit *s)
+ecmd_bot_fdel(struct rt_solid_edit *s)
 {
     struct rt_bot_internal *bot =
 	(struct rt_bot_internal *)s->es_int.idb_ptr;
@@ -376,7 +376,7 @@ ecmd_bot_fdel(struct mged_solid_edit *s)
 }
 
 void
-ecmd_bot_movev(struct mged_solid_edit *s)
+ecmd_bot_movev(struct rt_solid_edit *s)
 {
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int vert;
@@ -430,7 +430,7 @@ ecmd_bot_movev(struct mged_solid_edit *s)
 }
 
 void
-ecmd_bot_movee(struct mged_solid_edit *s)
+ecmd_bot_movee(struct rt_solid_edit *s)
 {
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int v1, v2;
@@ -486,7 +486,7 @@ ecmd_bot_movee(struct mged_solid_edit *s)
 }
 
 void
-ecmd_bot_movet(struct mged_solid_edit *s)
+ecmd_bot_movet(struct rt_solid_edit *s)
 {
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int v1, v2, v3;
@@ -539,7 +539,7 @@ ecmd_bot_movet(struct mged_solid_edit *s)
 }
 
 int
-ecmd_bot_pickv(struct mged_solid_edit *s, const vect_t mousevec)
+ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
@@ -578,7 +578,7 @@ ecmd_bot_pickv(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 int
-ecmd_bot_picke(struct mged_solid_edit *s, const vect_t mousevec)
+ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
@@ -617,7 +617,7 @@ ecmd_bot_picke(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 void
-ecmd_bot_pickt(struct mged_solid_edit *s, const vect_t mousevec)
+ecmd_bot_pickt(struct rt_solid_edit *s, const vect_t mousevec)
 {
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     point_t start_pt, tmp;
@@ -678,7 +678,7 @@ ecmd_bot_pickt(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_bot_edit(struct mged_solid_edit *s, int edflag)
+mged_bot_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -739,7 +739,7 @@ mged_bot_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_bot_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

@@ -42,7 +42,7 @@
 #define MENU_EPA_R2		19052
 
 static void
-epa_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -172,7 +172,7 @@ mged_epa_read_params(
 
 /* scale height vector H */
 void
-menu_epa_h(struct mged_solid_edit *s)
+menu_epa_h(struct rt_solid_edit *s)
 {
     struct rt_epa_internal *epa =
 	(struct rt_epa_internal *)s->es_int.idb_ptr;
@@ -188,7 +188,7 @@ menu_epa_h(struct mged_solid_edit *s)
 
 /* scale semimajor axis of EPA */
 void
-menu_epa_r1(struct mged_solid_edit *s)
+menu_epa_r1(struct rt_solid_edit *s)
 {
     struct rt_epa_internal *epa =
 	(struct rt_epa_internal *)s->es_int.idb_ptr;
@@ -207,7 +207,7 @@ menu_epa_r1(struct mged_solid_edit *s)
 
 /* scale semiminor axis of EPA */
 void
-menu_epa_r2(struct mged_solid_edit *s)
+menu_epa_r2(struct rt_solid_edit *s)
 {
     struct rt_epa_internal *epa =
 	(struct rt_epa_internal *)s->es_int.idb_ptr;
@@ -225,7 +225,7 @@ menu_epa_r2(struct mged_solid_edit *s)
 }
 
 static int
-mged_epa_pscale(struct mged_solid_edit *s, int mode)
+mged_epa_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -260,7 +260,7 @@ mged_epa_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_epa_edit(struct mged_solid_edit *s, int edflag)
+mged_epa_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

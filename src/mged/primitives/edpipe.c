@@ -68,7 +68,7 @@
 struct wdb_pipe_pnt *es_pipe_pnt=(struct wdb_pipe_pnt *)NULL; /* Currently selected PIPE segment */
 
 static void
-pipe_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
@@ -219,7 +219,7 @@ pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps),
 
 
 void
-pipe_scale_od(struct mged_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_od(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -250,7 +250,7 @@ pipe_scale_od(struct mged_solid_edit *s, struct rt_db_internal *db_int, fastf_t 
 
 
 void
-pipe_scale_id(struct mged_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_id(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -284,7 +284,7 @@ pipe_scale_id(struct mged_solid_edit *s, struct rt_db_internal *db_int, fastf_t 
 
 
 void
-pipe_seg_scale_od(struct mged_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_od(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_od;
 
@@ -314,7 +314,7 @@ pipe_seg_scale_od(struct mged_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t sc
 
 
 void
-pipe_seg_scale_id(struct mged_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_id(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_id;
 
@@ -342,7 +342,7 @@ pipe_seg_scale_id(struct mged_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t sc
 
 
 void
-pipe_seg_scale_radius(struct mged_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_radius(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t old_radius;
     struct wdb_pipe_pnt *head;
@@ -376,7 +376,7 @@ pipe_seg_scale_radius(struct mged_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_
 
 
 void
-pipe_scale_radius(struct mged_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_radius(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct bu_list head;
     struct wdb_pipe_pnt *old_ps, *new_ps;
@@ -446,7 +446,7 @@ pipe_scale_radius(struct mged_solid_edit *s, struct rt_db_internal *db_int, fast
 
 
 struct wdb_pipe_pnt *
-find_pipe_pnt_nearest_pnt(struct mged_solid_edit *s, const struct bu_list *pipe_hd, const point_t pt)
+find_pipe_pnt_nearest_pnt(struct rt_solid_edit *s, const struct bu_list *pipe_hd, const point_t pt)
 {
     struct wdb_pipe_pnt *ps;
     struct wdb_pipe_pnt *nearest=(struct wdb_pipe_pnt *)NULL;
@@ -576,7 +576,7 @@ pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const poi
 
 
 struct wdb_pipe_pnt *
-pipe_del_pnt(struct mged_solid_edit *s, struct wdb_pipe_pnt *ps)
+pipe_del_pnt(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps)
 {
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
@@ -625,7 +625,7 @@ pipe_del_pnt(struct mged_solid_edit *s, struct wdb_pipe_pnt *ps)
 
 
 void
-pipe_move_pnt(struct mged_solid_edit *s, struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
+pipe_move_pnt(struct rt_solid_edit *s, struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
 {
     point_t old_pt;
 
@@ -700,7 +700,7 @@ mged_pipe_labels(
 
 /* scale OD of one pipe segment */
 int
-menu_pipe_pt_od(struct mged_solid_edit *s)
+menu_pipe_pt_od(struct rt_solid_edit *s)
 {
 
     if (s->e_para[0] < 0.0) {
@@ -728,7 +728,7 @@ menu_pipe_pt_od(struct mged_solid_edit *s)
 
 /* scale ID of one pipe segment */
 int
-menu_pipe_pt_id(struct mged_solid_edit *s)
+menu_pipe_pt_id(struct rt_solid_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -756,7 +756,7 @@ menu_pipe_pt_id(struct mged_solid_edit *s)
 
 /* scale bend radius at selected point */
 int
-menu_pipe_pt_radius(struct mged_solid_edit *s)
+menu_pipe_pt_radius(struct rt_solid_edit *s)
 {
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -784,7 +784,7 @@ menu_pipe_pt_radius(struct mged_solid_edit *s)
 
 /* scale entire pipe OD */
 int
-menu_pipe_scale_od(struct mged_solid_edit *s)
+menu_pipe_scale_od(struct rt_solid_edit *s)
 {
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -824,7 +824,7 @@ menu_pipe_scale_od(struct mged_solid_edit *s)
 
 /* scale entire pipe ID */
 int
-menu_pipe_scale_id(struct mged_solid_edit *s)
+menu_pipe_scale_id(struct rt_solid_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -862,7 +862,7 @@ menu_pipe_scale_id(struct mged_solid_edit *s)
 
 /* scale entire pipe bend radius */
 int
-menu_pipe_scale_radius(struct mged_solid_edit *s)
+menu_pipe_scale_radius(struct rt_solid_edit *s)
 {
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -899,7 +899,7 @@ menu_pipe_scale_radius(struct mged_solid_edit *s)
     return 0;
 }
 
-void ecmd_pipe_pick(struct mged_solid_edit *s)
+void ecmd_pipe_pick(struct rt_solid_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -942,7 +942,7 @@ void ecmd_pipe_pick(struct mged_solid_edit *s)
 	rt_pipe_pnt_print(es_pipe_pnt, s->base2local);
 }
 
-void ecmd_pipe_split(struct mged_solid_edit *s)
+void ecmd_pipe_split(struct rt_solid_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -986,7 +986,7 @@ void ecmd_pipe_split(struct mged_solid_edit *s)
     pipe_split_pnt(&pipeip->pipe_segs_head, es_pipe_pnt, new_pt);
 }
 
-void ecmd_pipe_pt_move(struct mged_solid_edit *s)
+void ecmd_pipe_pt_move(struct rt_solid_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -1030,7 +1030,7 @@ void ecmd_pipe_pt_move(struct mged_solid_edit *s)
     pipe_move_pnt(s, pipeip, es_pipe_pnt, new_pt);
 }
 
-void ecmd_pipe_pt_add(struct mged_solid_edit *s)
+void ecmd_pipe_pt_add(struct rt_solid_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -1066,7 +1066,7 @@ void ecmd_pipe_pt_add(struct mged_solid_edit *s)
     es_pipe_pnt = pipe_add_pnt(pipeip, es_pipe_pnt, new_pt);
 }
 
-void ecmd_pipe_pt_ins(struct mged_solid_edit *s)
+void ecmd_pipe_pt_ins(struct rt_solid_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -1102,7 +1102,7 @@ void ecmd_pipe_pt_ins(struct mged_solid_edit *s)
     pipe_ins_pnt(pipeip, es_pipe_pnt, new_pt);
 }
 
-void ecmd_pipe_pt_del(struct mged_solid_edit *s)
+void ecmd_pipe_pt_del(struct rt_solid_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -1117,7 +1117,7 @@ void ecmd_pipe_pt_del(struct mged_solid_edit *s)
 }
 
 static int
-mged_pipe_pscale(struct mged_solid_edit *s, int mode)
+mged_pipe_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -1149,7 +1149,7 @@ mged_pipe_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_pipe_edit(struct mged_solid_edit *s, int edflag)
+mged_pipe_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -1193,7 +1193,7 @@ mged_pipe_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_pipe_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

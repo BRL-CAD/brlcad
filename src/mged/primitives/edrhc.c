@@ -43,7 +43,7 @@
 #define MENU_RHC_C		18049
 
 static void
-rhc_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+rhc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -174,7 +174,7 @@ mged_rhc_read_params(
 
 /* scale vector B */
 void
-menu_rhc_b(struct mged_solid_edit *s)
+menu_rhc_b(struct rt_solid_edit *s)
 {
     struct rt_rhc_internal *rhc =
 	(struct rt_rhc_internal *)s->es_int.idb_ptr;
@@ -190,7 +190,7 @@ menu_rhc_b(struct mged_solid_edit *s)
 
 /* scale vector H */
 void
-menu_rhc_h(struct mged_solid_edit *s)
+menu_rhc_h(struct rt_solid_edit *s)
 {
     struct rt_rhc_internal *rhc =
 	(struct rt_rhc_internal *)s->es_int.idb_ptr;
@@ -206,7 +206,7 @@ menu_rhc_h(struct mged_solid_edit *s)
 
 /* scale rectangular half-width of RHC */
 void
-menu_rhc_r(struct mged_solid_edit *s)
+menu_rhc_r(struct rt_solid_edit *s)
 {
     struct rt_rhc_internal *rhc =
 	(struct rt_rhc_internal *)s->es_int.idb_ptr;
@@ -222,7 +222,7 @@ menu_rhc_r(struct mged_solid_edit *s)
 
 /* scale rectangular half-width of RHC */
 void
-menu_rhc_c(struct mged_solid_edit *s)
+menu_rhc_c(struct rt_solid_edit *s)
 {
     struct rt_rhc_internal *rhc =
 	(struct rt_rhc_internal *)s->es_int.idb_ptr;
@@ -237,7 +237,7 @@ menu_rhc_c(struct mged_solid_edit *s)
 }
 
 static int
-mged_rhc_pscale(struct mged_solid_edit *s, int mode)
+mged_rhc_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -275,7 +275,7 @@ mged_rhc_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_rhc_edit(struct mged_solid_edit *s, int edflag)
+mged_rhc_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

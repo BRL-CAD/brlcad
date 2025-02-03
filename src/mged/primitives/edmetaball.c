@@ -60,7 +60,7 @@
 struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
 
 static void
-metaball_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     struct wdb_metaball_pnt *next, *prev;
 
@@ -233,7 +233,7 @@ mged_metaball_keypoint(
 }
 
 int
-menu_metaball_set_threshold(struct mged_solid_edit *s)
+menu_metaball_set_threshold(struct rt_solid_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -250,7 +250,7 @@ menu_metaball_set_threshold(struct mged_solid_edit *s)
 }
 
 int
-menu_metaball_set_method(struct mged_solid_edit *s)
+menu_metaball_set_method(struct rt_solid_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -267,7 +267,7 @@ menu_metaball_set_method(struct mged_solid_edit *s)
 }
 
 int
-menu_metaball_pt_set_goo(struct mged_solid_edit *s)
+menu_metaball_pt_set_goo(struct rt_solid_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -285,7 +285,7 @@ menu_metaball_pt_set_goo(struct mged_solid_edit *s)
 }
 
 int
-menu_metaball_pt_fldstr(struct mged_solid_edit *s)
+menu_metaball_pt_fldstr(struct rt_solid_edit *s)
 {
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -304,7 +304,7 @@ menu_metaball_pt_fldstr(struct mged_solid_edit *s)
 }
 
 void
-ecmd_metaball_pt_pick(struct mged_solid_edit *s)
+ecmd_metaball_pt_pick(struct rt_solid_edit *s)
 {
     struct rt_metaball_internal *metaball=
 	(struct rt_metaball_internal *)s->es_int.idb_ptr;
@@ -363,7 +363,7 @@ ecmd_metaball_pt_pick(struct mged_solid_edit *s)
 }
 
 void
-ecmd_metaball_pt_mov(struct mged_solid_edit *s)
+ecmd_metaball_pt_mov(struct rt_solid_edit *s)
 {
     if (!es_metaball_pnt) {
 	bu_log("Must select a point to move"); return; }
@@ -377,7 +377,7 @@ ecmd_metaball_pt_mov(struct mged_solid_edit *s)
 }
 
 void
-ecmd_metaball_pt_del(struct mged_solid_edit *UNUSED(s))
+ecmd_metaball_pt_del(struct rt_solid_edit *UNUSED(s))
 {
     struct wdb_metaball_pnt *tmp = es_metaball_pnt, *p;
 
@@ -400,7 +400,7 @@ ecmd_metaball_pt_del(struct mged_solid_edit *UNUSED(s))
 }
 
 void
-ecmd_metaball_pt_add(struct mged_solid_edit *s)
+ecmd_metaball_pt_add(struct rt_solid_edit *s)
 {
     struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->es_int.idb_ptr;
     struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
@@ -425,7 +425,7 @@ ecmd_metaball_pt_add(struct mged_solid_edit *s)
 }
 
 static int
-mged_metaball_pscale(struct mged_solid_edit *s, int mode)
+mged_metaball_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -459,7 +459,7 @@ mged_metaball_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_metaball_edit(struct mged_solid_edit *s, int edflag)
+mged_metaball_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -497,7 +497,7 @@ mged_metaball_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_metaball_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

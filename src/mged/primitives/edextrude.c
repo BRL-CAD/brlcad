@@ -47,11 +47,11 @@
 #define MENU_EXTR_ROT_H		27105
 #define MENU_EXTR_SKT_NAME	27106
 
-extern char * get_sketch_name(struct mged_solid_edit *s, const char *sk_n);
+extern char * get_sketch_name(struct rt_solid_edit *s, const char *sk_n);
 
 /*ARGSUSED*/
 static void
-extr_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_flag = arg;
 
@@ -118,7 +118,7 @@ mged_extrude_keypoint(
 
 void
 mged_extrude_e_axes_pos(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
 {
@@ -138,7 +138,7 @@ mged_extrude_e_axes_pos(
 }
 
 void
-ecmd_extr_skt_name(struct mged_solid_edit *s)
+ecmd_extr_skt_name(struct rt_solid_edit *s)
 {
     struct rt_extrude_internal *extr = (struct rt_extrude_internal *)s->es_int.idb_ptr;
     struct rt_db_internal tmp_ip;
@@ -176,7 +176,7 @@ ecmd_extr_skt_name(struct mged_solid_edit *s)
 }
 
 int
-ecmd_extr_mov_h(struct mged_solid_edit *s)
+ecmd_extr_mov_h(struct rt_solid_edit *s)
 {
     vect_t work;
     struct rt_extrude_internal *extr =
@@ -220,7 +220,7 @@ ecmd_extr_mov_h(struct mged_solid_edit *s)
 }
 
 int
-ecmd_extr_scale_h(struct mged_solid_edit *s)
+ecmd_extr_scale_h(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -259,7 +259,7 @@ ecmd_extr_scale_h(struct mged_solid_edit *s)
 
 /* rotate height vector */
 int
-ecmd_extr_rot_h(struct mged_solid_edit *s)
+ecmd_extr_rot_h(struct rt_solid_edit *s)
 {
     struct rt_extrude_internal *extr =
 	(struct rt_extrude_internal *)s->es_int.idb_ptr;
@@ -323,7 +323,7 @@ ecmd_extr_rot_h(struct mged_solid_edit *s)
 
 /* Use mouse to change location of point V+H */
 void
-ecmd_extr_mov_h_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
+ecmd_extr_mov_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t tr_temp = VINIT_ZERO;	/* temp translation vector */
@@ -342,7 +342,7 @@ ecmd_extr_mov_h_mousevec(struct mged_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_extrude_edit(struct mged_solid_edit *s, int edflag)
+mged_extrude_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -372,7 +372,7 @@ mged_extrude_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_extrude_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

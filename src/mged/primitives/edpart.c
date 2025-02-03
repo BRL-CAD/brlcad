@@ -42,7 +42,7 @@
 #define MENU_PART_h		16090
 
 static void
-part_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+part_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -168,7 +168,7 @@ mged_part_read_params(
 
 /* scale vector H */
 void
-menu_part_h(struct mged_solid_edit *s)
+menu_part_h(struct rt_solid_edit *s)
 {
     struct rt_part_internal *part =
 	(struct rt_part_internal *)s->es_int.idb_ptr;
@@ -184,7 +184,7 @@ menu_part_h(struct mged_solid_edit *s)
 
 /* scale v end radius */
 void
-menu_part_v(struct mged_solid_edit *s)
+menu_part_v(struct rt_solid_edit *s)
 {
     struct rt_part_internal *part =
 	(struct rt_part_internal *)s->es_int.idb_ptr;
@@ -200,7 +200,7 @@ menu_part_v(struct mged_solid_edit *s)
 
 /* scale h end radius */
 void
-menu_part_h_end_r(struct mged_solid_edit *s)
+menu_part_h_end_r(struct rt_solid_edit *s)
 {
     struct rt_part_internal *part =
 	(struct rt_part_internal *)s->es_int.idb_ptr;
@@ -215,7 +215,7 @@ menu_part_h_end_r(struct mged_solid_edit *s)
 }
 
 static int
-mged_part_pscale(struct mged_solid_edit *s, int mode)
+mged_part_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -250,7 +250,7 @@ mged_part_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_part_edit(struct mged_solid_edit *s, int edflag)
+mged_part_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

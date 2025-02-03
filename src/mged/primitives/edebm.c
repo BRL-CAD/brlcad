@@ -46,10 +46,10 @@
 #define MENU_EBM_FSIZE		12081
 #define MENU_EBM_HEIGHT		12082
 
-extern const char * get_file_name(struct mged_solid_edit *s, char *str);
+extern const char * get_file_name(struct rt_solid_edit *s, char *str);
 
 static void
-ebm_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, -1);
@@ -91,7 +91,7 @@ mged_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 }
 
 int
-ecmd_ebm_fsize(struct mged_solid_edit *s)
+ecmd_ebm_fsize(struct rt_solid_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -148,7 +148,7 @@ ecmd_ebm_fsize(struct mged_solid_edit *s)
 }
 
 int
-ecmd_ebm_fname(struct mged_solid_edit *s)
+ecmd_ebm_fname(struct rt_solid_edit *s)
 {
     struct rt_ebm_internal *ebm =
 	(struct rt_ebm_internal *)s->es_int.idb_ptr;
@@ -188,7 +188,7 @@ ecmd_ebm_fname(struct mged_solid_edit *s)
 }
 
 int
-ecmd_ebm_height(struct mged_solid_edit *s)
+ecmd_ebm_height(struct rt_solid_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -230,7 +230,7 @@ ecmd_ebm_height(struct mged_solid_edit *s)
 }
 
 int
-mged_ebm_edit(struct mged_solid_edit *s, int edflag)
+mged_ebm_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -264,7 +264,7 @@ mged_ebm_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_ebm_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

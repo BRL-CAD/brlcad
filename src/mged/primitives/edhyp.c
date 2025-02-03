@@ -47,7 +47,7 @@
 #define MENU_HYP_ROT_H		38131
 
 static void
-hyp_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     switch (arg) {
@@ -190,7 +190,7 @@ mged_hyp_read_params(
 
 /* scale height of HYP */
 void
-menu_hyp_h(struct mged_solid_edit *s)
+menu_hyp_h(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -206,7 +206,7 @@ menu_hyp_h(struct mged_solid_edit *s)
 
 /* scale A vector of HYP */
 void
-menu_hyp_scale_a(struct mged_solid_edit *s)
+menu_hyp_scale_a(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -222,7 +222,7 @@ menu_hyp_scale_a(struct mged_solid_edit *s)
 
 /* scale B vector of HYP */
 void
-menu_hyp_scale_b(struct mged_solid_edit *s)
+menu_hyp_scale_b(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -238,7 +238,7 @@ menu_hyp_scale_b(struct mged_solid_edit *s)
 
 /* scale Neck to Base ratio of HYP */
 void
-menu_hyp_c(struct mged_solid_edit *s)
+menu_hyp_c(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -256,7 +256,7 @@ menu_hyp_c(struct mged_solid_edit *s)
 
 /* rotate hyperboloid height vector */
 int
-ecmd_hyp_rot_h(struct mged_solid_edit *s)
+ecmd_hyp_rot_h(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -321,7 +321,7 @@ ecmd_hyp_rot_h(struct mged_solid_edit *s)
 }
 
 static int
-mged_hyp_pscale(struct mged_solid_edit *s, int mode)
+mged_hyp_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -359,7 +359,7 @@ mged_hyp_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_hyp_edit(struct mged_solid_edit *s, int edflag)
+mged_hyp_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

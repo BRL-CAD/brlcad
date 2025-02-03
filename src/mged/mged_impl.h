@@ -75,7 +75,7 @@ class MGED_SEDIT_Internal {
 
 #endif
 
-struct mged_solid_edit_impl {
+struct rt_solid_edit_impl {
     MGED_SEDIT_Internal *i;
 };
 

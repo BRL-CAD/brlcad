@@ -50,10 +50,10 @@
 #define MENU_DSP_SCALE_Y	25086
 #define MENU_DSP_SCALE_ALT	25087
 
-extern const char * get_file_name(struct mged_solid_edit *s, char *str);
+extern const char * get_file_name(struct rt_solid_edit *s, char *str);
 
 static void
-dsp_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, -1);
@@ -104,7 +104,7 @@ mged_dsp_menu_item(const struct bn_tol *UNUSED(tol))
 }
 
 static void
-dsp_scale(struct mged_solid_edit *s, struct rt_dsp_internal *dsp, int idx)
+dsp_scale(struct rt_solid_edit *s, struct rt_dsp_internal *dsp, int idx)
 {
     mat_t m, scalemat;
 
@@ -141,7 +141,7 @@ dsp_scale(struct mged_solid_edit *s, struct rt_dsp_internal *dsp, int idx)
 }
 
 int
-ecmd_dsp_scale_x(struct mged_solid_edit *s)
+ecmd_dsp_scale_x(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -160,7 +160,7 @@ ecmd_dsp_scale_x(struct mged_solid_edit *s)
 }
 
 int
-ecmd_dsp_scale_y(struct mged_solid_edit *s)
+ecmd_dsp_scale_y(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -179,7 +179,7 @@ ecmd_dsp_scale_y(struct mged_solid_edit *s)
 }
 
 int
-ecmd_dsp_scale_alt(struct mged_solid_edit *s)
+ecmd_dsp_scale_alt(struct rt_solid_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -198,7 +198,7 @@ ecmd_dsp_scale_alt(struct mged_solid_edit *s)
 }
 
 int
-ecmd_dsp_fname(struct mged_solid_edit *s)
+ecmd_dsp_fname(struct rt_solid_edit *s)
 {
     struct rt_dsp_internal *dsp =
 	(struct rt_dsp_internal *)s->es_int.idb_ptr;
@@ -236,7 +236,7 @@ ecmd_dsp_fname(struct mged_solid_edit *s)
 }
 
 int
-mged_dsp_edit(struct mged_solid_edit *s, int edflag)
+mged_dsp_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:
@@ -267,7 +267,7 @@ mged_dsp_edit(struct mged_solid_edit *s, int edflag)
 
 int
 mged_dsp_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)

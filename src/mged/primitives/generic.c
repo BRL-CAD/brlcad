@@ -55,7 +55,7 @@ mged_generic_keypoint(
 
 int
 mged_generic_sscale(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	)
 {
@@ -87,7 +87,7 @@ mged_generic_sscale(
 
 void
 mged_generic_strans(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	)
 {
@@ -129,7 +129,7 @@ mged_generic_strans(
 
 void
 mged_generic_srot(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	)
 {
@@ -228,7 +228,7 @@ mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, cons
 
 int
 mged_generic_edit(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag
 	)
 {
@@ -251,7 +251,7 @@ mged_generic_edit(
 
 void
 mged_generic_sscale_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -278,7 +278,7 @@ mged_generic_sscale_xy(
  */
 void
 mged_generic_strans_xy(vect_t *pos_view,
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -307,7 +307,7 @@ mged_generic_strans_xy(vect_t *pos_view,
 }
 
 void
-update_edit_absolute_tran(struct mged_solid_edit *s, vect_t view_pos)
+update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos)
 {
     vect_t model_pos;
     vect_t ea_view_pos;
@@ -326,7 +326,7 @@ update_edit_absolute_tran(struct mged_solid_edit *s, vect_t view_pos)
 
 int
 mged_generic_edit_xy(
-	struct mged_solid_edit *s,
+	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
 	)
@@ -365,7 +365,7 @@ mged_generic_edit_xy(
 
 
 void
-mged_set_edflag(struct mged_solid_edit *s, int edflag)
+mged_set_edflag(struct rt_solid_edit *s, int edflag)
 {
     if (!s)
 	return;

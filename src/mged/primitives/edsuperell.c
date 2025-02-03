@@ -43,7 +43,7 @@
 #define MENU_SUPERELL_SCALE_ABC	35116
 
 static void
-superell_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data)) {
+superell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data)) {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
 
@@ -173,7 +173,7 @@ mged_superell_read_params(
 
 /* scale vector A */
 void
-menu_superell_scale_a(struct mged_solid_edit *s)
+menu_superell_scale_a(struct rt_solid_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -188,7 +188,7 @@ menu_superell_scale_a(struct mged_solid_edit *s)
 
 /* scale vector B */
 void
-menu_superell_scale_b(struct mged_solid_edit *s)
+menu_superell_scale_b(struct rt_solid_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -203,7 +203,7 @@ menu_superell_scale_b(struct mged_solid_edit *s)
 
 /* scale vector C */
 void
-menu_superell_scale_c(struct mged_solid_edit *s)
+menu_superell_scale_c(struct rt_solid_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -218,7 +218,7 @@ menu_superell_scale_c(struct mged_solid_edit *s)
 
 /* set A, B, and C length the same */
 void
-menu_superell_scale_abc(struct mged_solid_edit *s)
+menu_superell_scale_abc(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_superell_internal *superell =
@@ -238,7 +238,7 @@ menu_superell_scale_abc(struct mged_solid_edit *s)
 }
 
 static int
-mged_superell_pscale(struct mged_solid_edit *s, int mode)
+mged_superell_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -276,7 +276,7 @@ mged_superell_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_superell_edit(struct mged_solid_edit *s, int edflag)
+mged_superell_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

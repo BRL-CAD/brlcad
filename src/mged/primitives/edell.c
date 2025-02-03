@@ -43,7 +43,7 @@
 #define MENU_ELL_SCALE_ABC	3042
 
 static void
-ell_ed(struct mged_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     mged_set_edflag(s, PSCALE);
@@ -168,7 +168,7 @@ mged_ell_read_params(
 
 /* scale vector A */
 void
-menu_ell_scale_a(struct mged_solid_edit *s)
+menu_ell_scale_a(struct rt_solid_edit *s)
 {
     struct rt_ell_internal *ell =
 	(struct rt_ell_internal *)s->es_int.idb_ptr;
@@ -183,7 +183,7 @@ menu_ell_scale_a(struct mged_solid_edit *s)
 
 /* scale vector B */
 void
-menu_ell_scale_b(struct mged_solid_edit *s)
+menu_ell_scale_b(struct rt_solid_edit *s)
 {
     struct rt_ell_internal *ell =
 	(struct rt_ell_internal *)s->es_int.idb_ptr;
@@ -198,7 +198,7 @@ menu_ell_scale_b(struct mged_solid_edit *s)
 
 /* scale vector C */
 void
-menu_ell_scale_c(struct mged_solid_edit *s)
+menu_ell_scale_c(struct rt_solid_edit *s)
 {
     struct rt_ell_internal *ell =
 	(struct rt_ell_internal *)s->es_int.idb_ptr;
@@ -213,7 +213,7 @@ menu_ell_scale_c(struct mged_solid_edit *s)
 
 /* set A, B, and C length the same */
 void
-menu_ell_scale_abc(struct mged_solid_edit *s)
+menu_ell_scale_abc(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_ell_internal *ell =
@@ -233,7 +233,7 @@ menu_ell_scale_abc(struct mged_solid_edit *s)
 }
 
 static int
-mged_ell_pscale(struct mged_solid_edit *s, int mode)
+mged_ell_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -271,7 +271,7 @@ mged_ell_pscale(struct mged_solid_edit *s, int mode)
 }
 
 int
-mged_ell_edit(struct mged_solid_edit *s, int edflag)
+mged_ell_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case SSCALE:

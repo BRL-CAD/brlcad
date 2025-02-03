@@ -263,7 +263,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Set up solid edit state */
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    s->s_edit = mged_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+    s->s_edit = rt_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
     if (s->s_edit) {
 	Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
 	s->s_edit->mv_context = mged_variables->mv_context;
