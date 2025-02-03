@@ -1034,7 +1034,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		mged_set_edflag(s->s_edit, SROT);
+		mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1077,7 +1077,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		mged_set_edflag(s->s_edit, SROT);
+		mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1120,7 +1120,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		mged_set_edflag(s->s_edit, SROT);
+		mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1163,7 +1163,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_TRAN)
-		mged_set_edflag(s->s_edit, STRANS);
+		mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1205,7 +1205,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_TRAN)
-		mged_set_edflag(s->s_edit, STRANS);
+		mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1242,7 +1242,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    save_sca = s->s_edit->solid_edit_scale;
 	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_SCALE)
-		mged_set_edflag(s->s_edit, SSCALE);
+		mged_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)

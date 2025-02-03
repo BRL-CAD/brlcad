@@ -33,7 +33,6 @@
 #include "wdb.h"
 
 #include "../mged.h"
-#include "../sedit.h"
 #include "./edfunctab.h"
 
 const char *

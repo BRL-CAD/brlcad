@@ -33,7 +33,6 @@
 #include "wdb.h"
 
 #include "../mged.h"
-#include "../sedit.h"
 
 #include "./edfunctab.h"
 
@@ -81,7 +80,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 
     switch (s->edit_flag) {
 
-	case IDLE:
+	case RT_SOLID_EDIT_IDLE:
 	    /* do nothing more */
 	    --s->update_views;
 	    break;
@@ -324,15 +323,15 @@ mged_generic_edit(
 	)
 {
     switch (edflag) {
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    mged_generic_sscale(s, &s->es_int);
 	    break;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->es_int);
 	    break;
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->es_int);
 	    break;
@@ -428,13 +427,13 @@ mged_generic_edit_xy(
     void *d = NULL;
 
     switch (edflag) {
-	case SSCALE:
-	case PSCALE:
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    mged_generic_sscale_xy(s, mousevec);
 	    if (EDOBJ[ip->idb_type].ft_edit)
 		return (*EDOBJ[ip->idb_type].ft_edit)(s, edflag);
 	    return 0;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
@@ -465,18 +464,18 @@ mged_set_edflag(struct rt_solid_edit *s, int edflag)
     s->solid_edit_pick = 0;
 
     switch (edflag) {
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    s->solid_edit_rotate = 1;
 	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 0;
 	    break;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
 	    s->solid_edit_scale = 0;
 	    break;
-	case SSCALE:
-	case PSCALE:
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 1;

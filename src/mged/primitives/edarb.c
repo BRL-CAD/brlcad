@@ -34,7 +34,6 @@
 #include "ged.h"
 #include "rt/db4.h"
 
-#include "../sedit.h"
 #include "../mged.h"
 #include "../cmd.h"
 #include "../menu.h"
@@ -881,7 +880,7 @@ editarb(struct rt_solid_edit *s, vect_t pos_model)
     newedge = 0;
 
     if (ret) {
-	mged_set_edflag(s, IDLE);
+	mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
     }
 
     return ret;
@@ -891,7 +890,7 @@ void
 ecmd_arb_main_menu(struct rt_solid_edit *s)
 {
     /* put up control (main) menu for GENARB8s */
-    mged_set_edflag(s, IDLE);
+    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
     bu_clbk_t f = NULL;
     void *d = NULL;
     rt_solid_edit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
@@ -908,7 +907,7 @@ ecmd_arb_specific_menu(struct rt_solid_edit *s)
     void *d = NULL;
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
-    mged_set_edflag(s, IDLE);
+    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
     switch (s->edit_menu) {
 	case MENU_ARB_MV_EDGE:
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
@@ -1231,15 +1230,15 @@ mged_arb_edit(struct rt_solid_edit *s, int edflag)
 
 
     switch (edflag) {
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    ret = mged_generic_sscale(s, &s->es_int);
 	    goto arb_planecalc;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->es_int);
 	    break;
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->es_int);
 	    break;
@@ -1259,7 +1258,7 @@ mged_arb_edit(struct rt_solid_edit *s, int edflag)
 	    ret = ecmd_arb_rotate_face(s);
 	    if (ret)
 		return ret;
-	    return 1; // TODO - why is this a return rather than a break (skips sedit finalization)
+	    return 1; // TODO - why is this a return rather than a break (skips rt_solid_edit_process finalization)
 	case PTARB:     /* move an ARB point */
 	case EARB:      /* edit an ARB edge */
 	    return edit_arb_element(s);
@@ -1289,12 +1288,12 @@ mged_arb_edit_xy(
     void *d = NULL;
 
     switch (edflag) {
-	case SSCALE:
-	case PSCALE:
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    mged_generic_sscale_xy(s, mousevec);
 	    mged_arb_edit(s, edflag);
 	    return 0;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case PTARB:

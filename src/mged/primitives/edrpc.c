@@ -33,7 +33,6 @@
 #include "wdb.h"
 
 #include "../mged.h"
-#include "../sedit.h"
 #include "./edfunctab.h"
 
 #define MENU_RPC_B		17043
@@ -44,7 +43,7 @@ static void
 rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    mged_set_edflag(s, PSCALE);
+    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -250,18 +249,18 @@ int
 mged_rpc_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    return mged_generic_sscale(s, &s->es_int);
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->es_int);
 	    break;
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->es_int);
 	    break;
-	case PSCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    return mged_rpc_pscale(s, s->edit_menu);
     }
     return 0;

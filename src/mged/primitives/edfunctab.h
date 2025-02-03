@@ -34,6 +34,12 @@
 __BEGIN_DECLS
 
 
+#define RT_SOLID_EDIT_IDLE		0	/* edarb.c */
+#define RT_SOLID_EDIT_TRANS		1	/* buttons.c */
+#define RT_SOLID_EDIT_SCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
+#define RT_SOLID_EDIT_ROT		3	/* buttons.c */
+#define RT_SOLID_EDIT_PSCALE		4	/* Scale one solid parameter by scalar */
+
 
 struct rt_solid_edit_map;
 struct rt_solid_edit_map *

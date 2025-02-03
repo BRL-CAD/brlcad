@@ -242,7 +242,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 			save_sca = s->s_edit->solid_edit_scale;
 			save_pic = s->s_edit->solid_edit_pick;
 			if (!SEDIT_ROTATE)
-			    mged_set_edflag(s->s_edit, SROT);
+			    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 		    } else {
 			save_edflag = edobj;
 			edobj = BE_O_ROTATE;
@@ -290,7 +290,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 			save_sca = s->s_edit->solid_edit_scale;
 			save_pic = s->s_edit->solid_edit_pick;
 			if (!SEDIT_TRAN)
-			    mged_set_edflag(s->s_edit, STRANS);
+			    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 		    } else {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
@@ -358,7 +358,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_tra = s->s_edit->solid_edit_translate;
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
-		    mged_set_edflag(s->s_edit, SSCALE);
+		    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_SCALE;
@@ -421,7 +421,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_ROTATE)
-			mged_set_edflag(s->s_edit, SROT);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 		} else {
 		    save_edflag = edobj;
 		    edobj = BE_O_ROTATE;
@@ -450,7 +450,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_ROTATE)
-			mged_set_edflag(s->s_edit, SROT);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 		} else {
 		    save_edflag = edobj;
 		    edobj = BE_O_ROTATE;
@@ -479,7 +479,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_ROTATE)
-			mged_set_edflag(s->s_edit, SROT);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 		} else {
 		    save_edflag = edobj;
 		    edobj = BE_O_ROTATE;
@@ -508,7 +508,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_TRAN)
-			mged_set_edflag(s->s_edit, STRANS);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_X;
@@ -536,7 +536,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_TRAN)
-			mged_set_edflag(s->s_edit, STRANS);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_Y;
@@ -564,7 +564,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_TRAN)
-			mged_set_edflag(s->s_edit, STRANS);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_XY;
@@ -592,7 +592,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_SCALE)
-			mged_set_edflag(s->s_edit, SSCALE);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_XSCALE;
@@ -620,7 +620,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_SCALE)
-			mged_set_edflag(s->s_edit, SSCALE);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_YSCALE;
@@ -648,7 +648,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    save_sca = s->s_edit->solid_edit_scale;
 		    save_pic = s->s_edit->solid_edit_pick;
 		    if (!SEDIT_SCALE)
-			mged_set_edflag(s->s_edit, SSCALE);
+			mged_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
 		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_ZSCALE;

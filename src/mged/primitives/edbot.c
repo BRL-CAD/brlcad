@@ -33,7 +33,6 @@
 #include "wdb.h"
 
 #include "../mged.h"
-#include "../sedit.h"
 #include "./edfunctab.h"
 
 #define ECMD_BOT_PICKV		30061	/* pick a BOT vertex */
@@ -680,20 +679,20 @@ int
 mged_bot_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
 	    return mged_generic_sscale(s, &s->es_int);
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
 	    mged_generic_strans(s, &s->es_int);
 	    break;
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
@@ -750,12 +749,12 @@ mged_bot_edit_xy(
     void *d = NULL;
 
     switch (edflag) {
-	case SSCALE:
-	case PSCALE:
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    mged_generic_sscale_xy(s, mousevec);
 	    mged_bot_edit(s, edflag);
 	    return 0;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_BOT_PICKV:

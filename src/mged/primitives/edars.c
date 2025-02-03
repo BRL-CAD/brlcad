@@ -33,7 +33,6 @@
 #include "wdb.h"
 
 #include "../mged.h"
-#include "../sedit.h"
 #include "./edfunctab.h"
 
 #define ECMD_ARS_PICK		5034	/* select an ARS point */
@@ -792,14 +791,14 @@ mged_ars_edit(struct rt_solid_edit *s, int edflag)
     void *d = NULL;
 
     switch (edflag) {
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    return mged_generic_sscale(s, &s->es_int);
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->es_int);
 	    break;
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->es_int);
 	    break;
@@ -817,7 +816,7 @@ mged_ars_edit(struct rt_solid_edit *s, int edflag)
 	    break;
 	case ECMD_ARS_EDIT_MENU:
 	    /* put up main ARS edit menu */
-	    mged_set_edflag(s, IDLE);
+	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, GED_CLBK_DURING);
 	    if (!f)
 		return 0;
@@ -878,12 +877,12 @@ mged_ars_edit_xy(
     void *d = NULL;
  
     switch (edflag) {
-	case SSCALE:
-	case PSCALE:
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    mged_generic_sscale_xy(s, mousevec);
 	    mged_ars_edit(s, edflag);
 	    return 0;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_ARS_PICK:

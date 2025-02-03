@@ -901,7 +901,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
-    mged_set_edflag(s->s_edit, SROT);
+    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -923,7 +923,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
-    mged_set_edflag(s->s_edit, STRANS);
+    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -945,7 +945,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
-    mged_set_edflag(s->s_edit, SSCALE);
+    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
     mmenu_set(s, MENU_L1, NULL);
     s->s_edit->acc_sc_sol = 1.0;
 

@@ -39,11 +39,6 @@
 #define EDIT_CLASS_SCALE 3
 
 /* These values go in edit_flag .  Some names not changed yet */
-#define IDLE		0	/* edarb.c */
-#define STRANS		1	/* buttons.c */
-#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
-#define SROT		3	/* buttons.c */
-#define PSCALE		4	/* Scale one solid parameter by scalar */
 
 #define SEDIT_ROTATE (s->edit_state.global_editing_state == ST_S_EDIT && \
 	s->s_edit->solid_edit_rotate)

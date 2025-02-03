@@ -38,7 +38,6 @@
 #include "raytrace.h"
 #include "ged/view/ged_view_tmp.h"
 #include "../mged.h"
-#include "../sedit.h"
 #include "./edfunctab.h"
 
 #define ECMD_NMG_EPICK		11019	/* edge pick */
@@ -630,7 +629,7 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    mged_set_edflag(s, IDLE);
+	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    return;
 	}
 
@@ -735,7 +734,7 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
 	/* Currently, can only split wire edges or edges in wire loops */
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 	    bu_vls_printf(s->log_str, "Currently, we can only split wire edges or edges in wire loops\n");
-	    mged_set_edflag(s, IDLE);
+	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
@@ -926,16 +925,16 @@ int
 mged_nmg_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	    return mged_generic_sscale(s, &s->es_int);
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	    mged_generic_strans(s, &s->es_int);
 	    break;
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	    mged_generic_srot(s, &s->es_int);
@@ -974,12 +973,12 @@ mged_nmg_edit_xy(
     void *d = NULL;
 
     switch (edflag) {
-	case SSCALE:
-	case PSCALE:
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    mged_generic_sscale_xy(s, mousevec);
 	    mged_nmg_edit(s, edflag);
 	    return 0;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_NMG_EPICK:

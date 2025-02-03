@@ -33,7 +33,6 @@
 #include "wdb.h"
 
 #include "../mged.h"
-#include "../sedit.h"
 #include "./edfunctab.h"
 
 #define ECMD_HYP_ROT_H		38091
@@ -58,7 +57,7 @@ hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    s->solid_edit_pick = 0;
 	    break;
 	default:
-	    mged_set_edflag(s, PSCALE);
+	    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
     }
 
@@ -361,18 +360,18 @@ int
 mged_hyp_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    return mged_generic_sscale(s, &s->es_int);
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    mged_generic_strans(s, &s->es_int);
 	    break;
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    mged_generic_srot(s, &s->es_int);
 	    break;
-	case PSCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    return mged_hyp_pscale(s, s->edit_menu);
 	case ECMD_HYP_ROT_H:
 	    return ecmd_hyp_rot_h(s);

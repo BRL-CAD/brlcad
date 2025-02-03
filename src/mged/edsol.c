@@ -636,7 +636,7 @@ init_sedit(struct mged_state *s)
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
     chg_l2menu(s, ST_S_EDIT);
-    mged_set_edflag(s->s_edit, IDLE);
+    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_IDLE);
 
     button(s, BE_S_EDIT);	/* Drop into edit menu right away */
     init_sedit_vars(s);
@@ -764,7 +764,7 @@ sedit_menu(struct mged_state *s) {
 	mmenu_set_all(s, MENU_L1, mi);
     }
 
-    mged_set_edflag(s->s_edit, IDLE);	/* Drop out of previous edit mode */
+    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_IDLE);	/* Drop out of previous edit mode */
     s->s_edit->edit_menu = 0;
 }
 
@@ -866,7 +866,7 @@ sedit_abs_scale(struct mged_state *s)
 {
     fastf_t old_acc_sc_sol;
 
-    if (s->s_edit->edit_flag != SSCALE && s->s_edit->edit_flag != PSCALE)
+    if (s->s_edit->edit_flag != RT_SOLID_EDIT_SCALE && s->s_edit->edit_flag != RT_SOLID_EDIT_PSCALE)
 	return;
 
     old_acc_sc_sol = s->s_edit->acc_sc_sol;

@@ -39,7 +39,6 @@
 #include "wdb.h"
 
 #include "../mged.h"
-#include "../sedit.h"
 #include "./edfunctab.h"
 
 #define ECMD_PIPE_PICK		15028	/* Pick pipe point */
@@ -94,7 +93,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    es_pipe_pnt = next;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->base2local);
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, IDLE);
+	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_PIPE_PREV_PT:
@@ -110,7 +109,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->base2local);
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, IDLE);
+	    mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_PIPE_SPLIT:
@@ -126,7 +125,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	case MENU_PIPE_MOV_PT:
 	    if (!es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
-		mged_set_edflag(s, IDLE);
+		mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
 	    s->edit_menu = arg;
@@ -141,17 +140,17 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	case MENU_PIPE_PT_RADIUS:
 	    if (!es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
-		mged_set_edflag(s, IDLE);
+		mged_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, PSCALE);
+	    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
 	case MENU_PIPE_SCALE_OD:
 	case MENU_PIPE_SCALE_ID:
 	case MENU_PIPE_SCALE_RADIUS:
 	    s->edit_menu = arg;
-	    mged_set_edflag(s, PSCALE);
+	    mged_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
 	case MENU_PIPE_ADD_PT:
 	    s->edit_menu = arg;
@@ -1151,21 +1150,21 @@ int
 mged_pipe_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
 	    return mged_generic_sscale(s, &s->es_int);
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
 	    mged_generic_strans(s, &s->es_int);
 	    break;
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
 	    mged_generic_srot(s, &s->es_int);
 	    break;
-	case PSCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    return mged_pipe_pscale(s, s->edit_menu);
 	case ECMD_PIPE_PICK:
 	    ecmd_pipe_pick(s);
@@ -1204,12 +1203,12 @@ mged_pipe_edit_xy(
     void *d = NULL;
  
     switch (edflag) {
-	case SSCALE:
-	case PSCALE:
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    mged_generic_sscale_xy(s, mousevec);
 	    mged_pipe_edit(s, edflag);
 	    return 0;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_PIPE_PICK:

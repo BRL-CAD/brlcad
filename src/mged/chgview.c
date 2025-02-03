@@ -3260,7 +3260,7 @@ mged_erot(struct mged_state *s,
 	save_pic = s->s_edit->solid_edit_pick;
 
 	if (!SEDIT_ROTATE) {
-	    mged_set_edflag(s->s_edit, SROT);
+	    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	}
 
 	s->s_edit->e_inpara = 0;
@@ -3662,7 +3662,7 @@ mged_etran(struct mged_state *s,
 
 
 	if (!SEDIT_TRAN) {
-	    mged_set_edflag(s->s_edit, STRANS);
+	    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 	}
 
 	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
@@ -3810,7 +3810,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	save_pic = s->s_edit->solid_edit_pick;
 
 	if (!SEDIT_SCALE) {
-	    mged_set_edflag(s->s_edit, SSCALE);
+	    mged_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
 	}
 
 	s->s_edit->es_scale = sfactor;
