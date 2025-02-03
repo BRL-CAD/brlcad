@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/edarb.h
+/** @file edarb.h
  */
 
 #ifndef EDARB_H

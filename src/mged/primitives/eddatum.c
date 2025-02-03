@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/primitives/eddatum.c
+/** @file primitives/eddatum.c
  *
  */
 

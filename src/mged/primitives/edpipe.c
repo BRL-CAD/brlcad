@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/primitives/edpipe.c
+/** @file primitives/edpipe.c
  *
  * Functions -
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/primitives/ednmg.c
+/** @file primitives/ednmg.c
  *
  * Editing logic specific to dealing with NMG primitives.
  */

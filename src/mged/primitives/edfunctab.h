@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/primitives/edfunctab.h
+/** @file primitives/edfunctab.h
   */
 
 #ifndef EDFUNCTAB_H
