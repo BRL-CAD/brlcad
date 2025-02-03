@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file clhost.hpp
- *
- * Brief description
- *
- */
 
 #ifndef __CLHOST_H__
 #define __CLHOST_H__

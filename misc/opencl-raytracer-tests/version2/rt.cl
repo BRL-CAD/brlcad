@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt.cl
- *
- * Brief description
- *
- */
 
 #define MAX_SPHERES 10
 

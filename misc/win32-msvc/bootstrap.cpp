@@ -19,20 +19,18 @@
  */
 /** @file bootstrap.cpp
  *
- * Brief description
+ * Bootstrap app static initialization on Windows to add BRL-CAD's
+ * library install path to list of paths searched for DLLs.  This is
+ * useful in lieu of requiring PATH be set apriori, avoids registry
+ * (and associated permissions required), and avoids putting libs in
+ * same dir as binaries (i.e., consitent installation hierarchy).
  *
  */
 
 #include "common.h"
 #include "bio.h"
 
-/*
- * Bootstrap app static initialization on Windows to add BRL-CAD's
- * library install path to list of paths searched for DLLs.  This is
- * useful in lieu of requiring PATH be set apriori, avoids registry
- * (and associated permissions required), and avoids putting libs in
- * same dir as binaries (i.e., consitent installation hierarchy).
- */
+
 static bool
 bootstrap()
 {

@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file raytracer.hpp
- *
- * Brief description
- *
- */
 
 #ifndef __RAYTRACER_H__
 #define __RAYTRACER_H__

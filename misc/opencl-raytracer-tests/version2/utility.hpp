@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file utility.hpp
- *
- * Brief description
- *
- */
 
 #ifndef __UTILITY_H__
 #define __UTILITY_H__
