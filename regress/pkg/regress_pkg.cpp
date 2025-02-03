@@ -19,7 +19,7 @@
  */
 /** @file regress_pkg.cpp
  *
- * Brief description
+ * Simple client-server regression test for LIBPKG.
  *
  */
 

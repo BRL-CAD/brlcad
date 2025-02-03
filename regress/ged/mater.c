@@ -19,7 +19,7 @@
  */
 /** @file mater.c
  *
- * Brief description
+ * Regression test for the mater command.
  *
  */
 
