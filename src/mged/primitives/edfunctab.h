@@ -139,6 +139,9 @@ struct rt_solid_edit_menu_item {
 
 void rt_solid_edit_process(struct rt_solid_edit *s);
 
+
+void rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
+
 int rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *m, int ed_cmd, int menu_cmd, int mode);
 extern struct rt_solid_edit *
 rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);

@@ -31,8 +31,8 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "ged/defines.h"
 
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define V4BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local, (_pt)[W]*base2local

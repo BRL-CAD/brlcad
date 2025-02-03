@@ -32,8 +32,8 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "ged/defines.h"
 
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define ECMD_DSP_FNAME		25056	/* set DSP file name */
@@ -144,12 +144,12 @@ ecmd_dsp_scale_x(struct rt_solid_edit *s)
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, MSX);
@@ -163,12 +163,12 @@ ecmd_dsp_scale_y(struct rt_solid_edit *s)
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, MSY);
@@ -182,12 +182,12 @@ ecmd_dsp_scale_alt(struct rt_solid_edit *s)
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, MSZ);
@@ -292,7 +292,7 @@ mged_dsp_edit_xy(
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     update_edit_absolute_tran(s, pos_view);

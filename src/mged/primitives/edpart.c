@@ -31,8 +31,8 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "ged/defines.h"
 
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define MENU_PART_H		16088
@@ -218,13 +218,13 @@ mged_part_pscale(struct rt_solid_edit *s, int mode)
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* must convert to base units */

@@ -32,8 +32,8 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "ged/defines.h"
 
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define ECMD_EBM_FNAME		12053	/* set EBM file name */
@@ -96,17 +96,17 @@ ecmd_ebm_fsize(struct rt_solid_edit *s)
     if (s->e_inpara != 2) {
 	bu_vls_printf(s->log_str, "ERROR: two arguments needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: X SIZE <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     } else if (s->e_para[1] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: Y SIZE <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct rt_ebm_internal *ebm =
@@ -193,12 +193,12 @@ ecmd_ebm_height(struct rt_solid_edit *s)
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* must convert to base units */
@@ -287,7 +287,7 @@ mged_ebm_edit_xy(
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     update_edit_absolute_tran(s, pos_view);

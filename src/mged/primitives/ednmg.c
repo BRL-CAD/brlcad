@@ -36,8 +36,8 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "ged/defines.h"
 #include "ged/view/ged_view_tmp.h"
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define ECMD_NMG_EPICK		11019	/* edge pick */
@@ -863,7 +863,11 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
 
     es_eu = (struct edgeuse *)NULL;
 
-    replot_editing_solid(0, NULL, s, NULL);
+    f = NULL; d = NULL;
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
+
     int vs_flag = 1;
     rt_solid_edit_clbk_get(&f, &d, s, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING);
     if (f)
@@ -1000,7 +1004,7 @@ mged_nmg_edit_xy(
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     update_edit_absolute_tran(s, pos_view);

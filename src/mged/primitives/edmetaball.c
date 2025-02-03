@@ -31,8 +31,8 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "ged/defines.h"
 
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define ECMD_METABALL_SET_THRESHOLD	36083	/* overall metaball threshold value */
@@ -236,7 +236,7 @@ menu_metaball_set_threshold(struct rt_solid_edit *s)
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct rt_metaball_internal *ball =
@@ -253,7 +253,7 @@ menu_metaball_set_method(struct rt_solid_edit *s)
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct rt_metaball_internal *ball =
@@ -270,12 +270,12 @@ menu_metaball_pt_set_goo(struct rt_solid_edit *s)
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!es_metaball_pnt || !s->e_inpara) {
 	bu_vls_printf(s->log_str, "pscale: no metaball point selected for scaling goo\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     es_metaball_pnt->sweat *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
 
@@ -288,12 +288,12 @@ menu_metaball_pt_fldstr(struct rt_solid_edit *s)
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!es_metaball_pnt || !s->e_inpara) {
 	bu_vls_printf(s->log_str, "pscale: no metaball point selected for scaling strength\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     es_metaball_pnt->fldstr *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
@@ -428,13 +428,13 @@ mged_metaball_pscale(struct rt_solid_edit *s, int mode)
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* must convert to base units */
@@ -530,7 +530,7 @@ mged_metaball_edit_xy(
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     update_edit_absolute_tran(s, pos_view);

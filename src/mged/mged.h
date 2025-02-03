@@ -251,7 +251,6 @@ mged_state_create(void);
 extern void
 mged_state_destroy(struct mged_state *s);
 
-void get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
 
 /**
  * Definitions.

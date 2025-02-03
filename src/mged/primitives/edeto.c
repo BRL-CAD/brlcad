@@ -31,8 +31,8 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "ged/defines.h"
 
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define ECMD_ETO_ROT_C		21016
@@ -280,7 +280,7 @@ ecmd_eto_rot_c(struct rt_solid_edit *s)
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
 	    s->e_inpara = 0;
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	static mat_t invsolr;
@@ -336,13 +336,13 @@ mged_eto_pscale(struct rt_solid_edit *s, int mode)
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* must convert to base units */

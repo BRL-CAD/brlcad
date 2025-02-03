@@ -31,8 +31,8 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "ged/defines.h"
 
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define ECMD_BOT_PICKV		30061	/* pick a BOT vertex */
@@ -759,11 +759,11 @@ mged_bot_edit_xy(
 	    break;
 	case ECMD_BOT_PICKV:
 	    if (ecmd_bot_pickv(s, mousevec) != BRLCAD_OK)
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    break;
 	case ECMD_BOT_PICKE:
 	    if (ecmd_bot_picke(s, mousevec) != BRLCAD_OK)
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    break;
 	case ECMD_BOT_PICKT:
 	    ecmd_bot_pickt(s, mousevec);
@@ -783,7 +783,7 @@ mged_bot_edit_xy(
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     update_edit_absolute_tran(s, pos_view);

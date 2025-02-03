@@ -521,54 +521,6 @@ ecmd_extrude_skt_name_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, voi
     return BRLCAD_OK;
 }
 
-/*
- * Keypoint in model space is established in "pt".
- * If "str" is set, then that point is used, else default
- * for this solid is selected and set.
- * "str" may be a constant string, in either upper or lower case,
- * or it may be something complex like "(3, 4)" for an ARS or spline
- * to select a particular vertex or control point.
- *
- * XXX Perhaps this should be done via solid-specific parse tables,
- * so that solids could be pretty-printed & structprint/structparse
- * processed as well?
- */
-void
-get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
-{
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    if (!strp)
-	return;
-
-    RT_CK_DB_INTERNAL(ip);
-
-    if (EDOBJ[ip->idb_type].ft_keypoint) {
-	bu_vls_trunc(s->log_str, 0);
-	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, ip, s->tol);
-	if (bu_vls_strlen(s->log_str)) {
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    bu_vls_trunc(s->log_str, 0);
-	}
-	return;
-    }
-
-    struct bu_vls ltmp = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&ltmp, "%s", bu_vls_cstr(s->log_str));
-    bu_vls_sprintf(s->log_str, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n");
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
-    if (f)
-	(*f)(0, NULL, d, NULL);
-    bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&ltmp));
-    bu_vls_free(&ltmp);
-
-    VSETALL(*pt, 0.0);
-    *strp = "(origin)";
-}
-
 int
 f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
@@ -579,7 +531,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     if (s->edit_state.global_editing_state == ST_VIEW || s->edit_state.global_editing_state == ST_S_PICK || s->edit_state.global_editing_state == ST_O_PICK)
 	return TCL_OK;
 
-    get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
+    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
     return TCL_OK;
 }
 
@@ -884,6 +836,7 @@ sedit_abs_scale(struct mged_state *s)
 
     s->s_edit->es_scale = s->s_edit->acc_sc_sol / old_acc_sc_sol;
     s->s_edit->update_views = s->update_views;
+    sedraw = 0;
     rt_solid_edit_process(s->s_edit);
     s->update_views = s->s_edit->update_views;
 }
@@ -1153,7 +1106,7 @@ init_oedit_guts(struct mged_state *s)
     /* get the inverse matrix */
     bn_mat_inv(s->s_edit->e_invmat, s->s_edit->e_mat);
 
-    get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, s->s_edit->e_mat);
+    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, s->s_edit->e_mat);
     init_oedit_vars(s);
 }
 
@@ -1510,6 +1463,7 @@ sedit_accept(struct mged_state *s)
 
     if (sedraw > 0) {
 	s->s_edit->update_views = s->update_views;
+	sedraw = 0;
 	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
     }
@@ -1527,6 +1481,7 @@ sedit_reject(struct mged_state *s)
 
     if (sedraw > 0) {
 	s->s_edit->update_views = s->update_views;
+	sedraw = 0;
 	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
     }
@@ -1607,6 +1562,7 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
     }
 
     s->s_edit->update_views = s->update_views;
+    sedraw = 0;
     rt_solid_edit_process(s->s_edit);
     s->update_views = s->s_edit->update_views;
 
@@ -1748,7 +1704,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	    if (BU_STR_EQUAL(argv[1], "reset")) {
 		s->s_edit->e_keytag = "";
 		s->s_edit->e_keyfixed = 0;
-		get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
+		rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
 				   &s->s_edit->es_int, s->s_edit->e_mat);
 		break;
 	    }
@@ -1955,7 +1911,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	transform_editing_solid(s, &s->s_edit->es_int, s->s_edit->e_invmat, &s->s_edit->es_int, 1);
 
     if (!s->s_edit->e_keyfixed)
-	get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
+	rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
 
     int flag = 0;
     set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
@@ -2013,7 +1969,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     /* Establish initial keypoint */
     s->s_edit->e_keytag = "";
-    get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
+    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
 
     /* Reset relevant variables */
     MAT_IDN(s->s_edit->acc_rot_sol);
@@ -2066,6 +2022,7 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
 
     if (sedraw > 0) {
 	s->s_edit->update_views = s->update_views;
+	sedraw = 0;
 	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
     }
@@ -2141,7 +2098,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     /* get the inverse matrix */
     bn_mat_inv(s->s_edit->e_invmat, s->s_edit->e_mat);
 
-    get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, s->s_edit->e_mat);
+    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, s->s_edit->e_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
     s->update_views = 1;

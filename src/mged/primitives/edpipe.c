@@ -37,8 +37,8 @@
 #include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
+#include "ged/defines.h"
 
-#include "../mged.h"
 #include "./edfunctab.h"
 
 #define ECMD_PIPE_PICK		15028	/* Pick pipe point */
@@ -704,12 +704,12 @@ menu_pipe_pt_od(struct rt_solid_edit *s)
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "pscale: no pipe segment selected for scaling\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_inpara) {
@@ -731,12 +731,12 @@ menu_pipe_pt_id(struct rt_solid_edit *s)
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "pscale: no pipe segment selected for scaling\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_inpara) {
@@ -759,12 +759,12 @@ menu_pipe_pt_radius(struct rt_solid_edit *s)
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "pscale: no pipe segment selected for scaling\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_inpara) {
@@ -787,7 +787,7 @@ menu_pipe_scale_od(struct rt_solid_edit *s)
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_inpara) {
@@ -808,7 +808,7 @@ menu_pipe_scale_od(struct rt_solid_edit *s)
 
 	    if (ps->l.magic == BU_LIST_HEAD_MAGIC) {
 		bu_vls_printf(s->log_str, "Entire pipe solid has zero OD!\n");
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    s->es_scale = s->e_para[0] * s->e_mat[15]/ps->pp_od;
@@ -827,7 +827,7 @@ menu_pipe_scale_id(struct rt_solid_edit *s)
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_inpara) {
@@ -865,7 +865,7 @@ menu_pipe_scale_radius(struct rt_solid_edit *s)
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_inpara) {
@@ -1120,7 +1120,7 @@ mged_pipe_pscale(struct rt_solid_edit *s, int mode)
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* must convert to base units */
@@ -1228,7 +1228,7 @@ mged_pipe_edit_xy(
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     update_edit_absolute_tran(s, pos_view);

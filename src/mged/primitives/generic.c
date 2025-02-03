@@ -31,10 +31,58 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
-
-#include "../mged.h"
+#include "ged/defines.h"
 
 #include "./edfunctab.h"
+
+/*
+ * Keypoint in model space is established in "pt".
+ * If "str" is set, then that point is used, else default
+ * for this solid is selected and set.
+ * "str" may be a constant string, in either upper or lower case,
+ * or it may be something complex like "(3, 4)" for an ARS or spline
+ * to select a particular vertex or control point.
+ *
+ * XXX Perhaps this should be done via solid-specific parse tables,
+ * so that solids could be pretty-printed & structprint/structparse
+ * processed as well?
+ */
+void
+rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+{
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
+    if (!strp)
+	return;
+
+    RT_CK_DB_INTERNAL(ip);
+
+    if (EDOBJ[ip->idb_type].ft_keypoint) {
+	bu_vls_trunc(s->log_str, 0);
+	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, ip, s->tol);
+	if (bu_vls_strlen(s->log_str)) {
+	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    bu_vls_trunc(s->log_str, 0);
+	}
+	return;
+    }
+
+    struct bu_vls ltmp = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&ltmp, "%s", bu_vls_cstr(s->log_str));
+    bu_vls_sprintf(s->log_str, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n");
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
+    bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&ltmp));
+    bu_vls_free(&ltmp);
+
+    VSETALL(*pt, 0.0);
+    *strp = "(origin)";
+}
+
 
 /*
  * A great deal of magic takes place here, to accomplish solid editing.
@@ -53,7 +101,6 @@ rt_solid_edit_process(struct rt_solid_edit *s)
     bu_clbk_t f = NULL;
     void *d = NULL;
 
-    sedraw = 0;
     ++s->update_views;
 
     int had_method = 0;
@@ -104,7 +151,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 
     /* If the keypoint changed location, find about it here */
     if (!s->e_keyfixed)
-	get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, &s->es_int, s->e_mat);
+	rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, &s->es_int, s->e_mat);
 
     int flag = 0;
     f = NULL; d = NULL;
@@ -154,7 +201,7 @@ mged_generic_sscale(
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (s->e_inpara) {
@@ -441,7 +488,7 @@ mged_generic_edit_xy(
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     update_edit_absolute_tran(s, pos_view);

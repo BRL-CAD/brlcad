@@ -3269,6 +3269,7 @@ mged_erot(struct mged_state *s,
 
 
 	s->s_edit->update_views = s->update_views;
+	sedraw = 0;
 	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
 
@@ -3668,6 +3669,7 @@ mged_etran(struct mged_state *s,
 	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
 	s->s_edit->e_inpara = 3;
 	s->s_edit->update_views = s->update_views;
+	sedraw = 0;
 	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
 	s->s_edit->edit_flag = save_edflag;
@@ -3834,6 +3836,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	}
 
 	s->s_edit->update_views = s->update_views;
+	sedraw = 0;
 	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
 
