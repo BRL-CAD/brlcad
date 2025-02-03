@@ -17,11 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file isstgl.cpp
- *
- * Brief description
- *
- */
+
+#include "common.h"
 
 // Mac has deprecated OpenGL since 10.14
 #define GL_SILENCE_DEPRECATION 1
@@ -36,6 +33,7 @@
 
 #include <chrono>
 #include <thread>
+
 
 TIERenderer::TIERenderer(isstGL *w)
     : m_w(w)
