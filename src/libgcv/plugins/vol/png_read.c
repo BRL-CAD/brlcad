@@ -19,7 +19,7 @@
  */
 /** @file png_read.c
  *
- * Brief description
+ * Read vol data from a png image file.
  *
  */
 

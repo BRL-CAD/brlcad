@@ -19,7 +19,7 @@
  */
 /** @file view.h
  *
- * Brief description
+ * libtclcad view interface for drawing into the graphical view.
  *
  */
 

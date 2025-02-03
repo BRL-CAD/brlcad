@@ -19,7 +19,7 @@
  */
 /** @file gcv/defines.h
  *
- * Brief description
+ * Global defines for libgcv.
  *
  */
 

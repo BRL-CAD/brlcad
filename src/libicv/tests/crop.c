@@ -19,7 +19,7 @@
  */
 /** @file icv_crop.c
  *
- * Brief description
+ * Detailed unit test for cropping images.
  *
  */
 

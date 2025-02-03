@@ -19,12 +19,12 @@
  */
 /** @file gcv.c
  *
- * Brief description
+ * Main header for LIBGCV.  Includes all available public headers.
  *
  */
 
-
 #include "common.h"
+
 #include <string.h>
 
 #include "vmath.h"
@@ -46,6 +46,7 @@
 #include "rt/global.h"
 #include "rt/resource.h"
 #include "gcv/api.h"
+
 
 struct gcv_context_internal {
     struct bu_ptbl *handles;

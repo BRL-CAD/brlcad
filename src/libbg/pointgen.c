@@ -19,7 +19,8 @@
  */
 /** @file pointgen.c
  *
- * Brief description
+ * Interface for generating patterns of points.  Currently only
+ * spherical sampling.
  *
  */
 
@@ -29,6 +30,7 @@
 #include "bu/malloc.h"
 #include "bn/numgen.h"
 #include "bg/pointgen.h"
+
 
 size_t
 bg_sph_sample(point_t *pnts, size_t cnt, const point_t center, const fastf_t radius, bn_numgen n)

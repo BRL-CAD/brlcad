@@ -19,7 +19,7 @@
  */
 /** @file decimate.c
  *
- * Brief description
+ * Decimation logic.
  *
  */
 

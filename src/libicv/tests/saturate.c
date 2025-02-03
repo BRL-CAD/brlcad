@@ -19,7 +19,7 @@
  */
 /** @file icv_saturate.c
  *
- * Brief description
+ * Unit testing of saturation functionality.
  *
  */
 
