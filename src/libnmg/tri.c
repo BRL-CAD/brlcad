@@ -2209,12 +2209,12 @@ nmg_dump_model(struct model *m)
 			NMG_CK_VERTEX(eu->vu_p->v_p);
 			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 			vg = eu->vu_p->v_p->vg_p;
-			fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n",
-				(uintptr_t)r_cnt,
-				(uintptr_t)s_cnt,
-				(uintptr_t)fu_cnt,
-				(uintptr_t)lu_cnt,
-				(uintptr_t)eu_cnt,
+			fprintf(fp, "%zu %zu %zu %zu %zu %g %g %g\n",
+				r_cnt,
+				s_cnt,
+				fu_cnt,
+				lu_cnt,
+				eu_cnt,
 				V3ARGS(vg->coord));
 		    }
 		}
