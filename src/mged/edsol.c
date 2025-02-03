@@ -720,49 +720,6 @@ sedit_menu(struct mged_state *s) {
     s->s_edit->edit_menu = 0;
 }
 
-const char *
-get_file_name(struct mged_state *s, char *str)
-{
-    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-    struct bu_vls varname_vls = BU_VLS_INIT_ZERO;
-    char *dir;
-    char *fptr;
-    char *ptr1;
-    char *ptr2;
-
-    bu_vls_strcpy(&varname_vls, "mged_gui(getFileDir)");
-
-    if ((fptr=strrchr(str, '/'))) {
-	dir = (char *)bu_malloc((strlen(str)+1)*sizeof(char), "get_file_name: dir");
-	ptr1 = str;
-	ptr2 = dir;
-	while (ptr1 != fptr)
-	    *ptr2++ = *ptr1++;
-	*ptr2 = '\0';
-	Tcl_SetVar(s->interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
-	bu_free((void *)dir, "get_file_name: directory string");
-    }
-
-    if (dm_get_pathname(DMP)) {
-	bu_vls_printf(&cmd,
-		"getFile %s %s {{{All Files} {*}}} {Get File}",
-		bu_vls_addr(dm_get_pathname(DMP)),
-		bu_vls_addr(&varname_vls));
-    }
-    bu_vls_free(&varname_vls);
-
-    if (Tcl_Eval(s->interp, bu_vls_addr(&cmd))) {
-	bu_vls_free(&cmd);
-	return (char *)NULL;
-    } else if (Tcl_GetStringResult(s->interp)[0] != '\0') {
-	bu_vls_free(&cmd);
-	return Tcl_GetStringResult(s->interp);
-    } else {
-	bu_vls_free(&cmd);
-    }
-    return (char *)NULL;
-}
-
 char *
 get_sketch_name(struct mged_state *s, const char *sk_n)
 {

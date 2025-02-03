@@ -1338,6 +1338,57 @@ mged_view_set_flag(int UNUSED(ac), const char **UNUSED(av), void *d, void *flagp
     return TCL_OK;
 }
 
+int
+mged_get_filename(int ac, const char **av, void *d, void *sret)
+{
+    if (!ac || !av || !d || !sret)
+	return BRLCAD_ERROR;
+
+    char *str = bu_strdup(av[0]);
+    char **ret = (char **)sret;
+
+    struct mged_state *s = (struct mged_state *)d;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls varname_vls = BU_VLS_INIT_ZERO;
+    char *dir;
+    char *fptr;
+    char *ptr1;
+    char *ptr2;
+
+    bu_vls_strcpy(&varname_vls, "mged_gui(getFileDir)");
+
+    if ((fptr=strrchr(str, '/'))) {
+	dir = (char *)bu_malloc((strlen(str)+1)*sizeof(char), "get_file_name: dir");
+	ptr1 = str;
+	ptr2 = dir;
+	while (ptr1 != fptr)
+	    *ptr2++ = *ptr1++;
+	*ptr2 = '\0';
+	Tcl_SetVar(s->interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
+	bu_free((void *)dir, "get_file_name: directory string");
+    }
+
+    if (dm_get_pathname(DMP)) {
+	bu_vls_printf(&cmd,
+		"getFile %s %s {{{All Files} {*}}} {Get File}",
+		bu_vls_addr(dm_get_pathname(DMP)),
+		bu_vls_addr(&varname_vls));
+    }
+    bu_vls_free(&varname_vls);
+
+    if (Tcl_Eval(s->interp, bu_vls_addr(&cmd))) {
+	(*ret) = NULL;
+	goto str_ret;
+    }
+    if (Tcl_GetStringResult(s->interp)[0] != '\0') {
+	(*ret) = bu_strdup(Tcl_GetStringResult(s->interp));
+	goto str_ret;
+    }
+str_ret:
+    bu_vls_free(&cmd);
+    bu_free(str, "str");
+    return BRLCAD_OK;
+}
 
 /**
  * Let the user temporarily escape from the editor Format: %

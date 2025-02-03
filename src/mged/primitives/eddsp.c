@@ -48,8 +48,6 @@
 #define MENU_DSP_SCALE_Y	25086
 #define MENU_DSP_SCALE_ALT	25087
 
-extern const char * get_file_name(struct rt_solid_edit *s, char *str);
-
 static void
 dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
@@ -208,12 +206,18 @@ ecmd_dsp_fname(struct rt_solid_edit *s)
 
     RT_DSP_CK_MAGIC(dsp);
 
-    /* Pop-up the Tk file browser */
-    fname = get_file_name(s, bu_vls_addr(&dsp->dsp_name));
-    if (! fname) return BRLCAD_OK;
+    const char *av[2] = {NULL};
+    av[0] = bu_vls_cstr(&dsp->dsp_name);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_GET_FILENAME, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(1, (const char **)av, d, &fname);
+
+    if (! fname)
+	return BRLCAD_OK;
 
     if (stat(fname, &stat_buf)) {
 	bu_vls_printf(s->log_str, "Cannot get status of file %s\n", fname);
+	f = NULL; d = NULL;
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
@@ -223,6 +227,7 @@ ecmd_dsp_fname(struct rt_solid_edit *s)
     need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
     if (stat_buf.st_size < need_size) {
 	bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
+	f = NULL; d = NULL;
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);

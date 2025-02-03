@@ -440,6 +440,7 @@ int mged_print_result(int, const char **, void *, void*);
 int mged_print_str(int, const char **, void *, void*);
 int mged_view_update(int, const char **, void *, void*);
 int mged_view_set_flag(int, const char **, void *, void*);
+int mged_get_filename(int, const char **, void *, void*);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
 

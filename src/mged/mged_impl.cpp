@@ -70,6 +70,7 @@ mged_state_create(void)
     mged_state_clbk_set(s, 0, ECMD_VIEW_UPDATE, 0, GED_CLBK_DURING, mged_view_update, s);
     mged_state_clbk_set(s, 0, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING, mged_view_set_flag, s);
     mged_state_clbk_set(s, 0, ECMD_MENU_SET, 0, GED_CLBK_DURING, mged_mmenu_set, s);
+    mged_state_clbk_set(s, 0, ECMD_GET_FILENAME, 0, GED_CLBK_DURING, mged_get_filename, s);
 
     // Register primitive/ecmd specific callbacks
     mged_state_clbk_set(s, ID_ARB8, ECMD_ARB_SETUP_ROTFACE, 0, GED_CLBK_DURING, arb_setup_rotface_clbk, s);

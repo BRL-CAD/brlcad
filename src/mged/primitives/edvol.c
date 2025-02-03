@@ -274,7 +274,7 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 {
     struct rt_vol_internal *vol =
 	(struct rt_vol_internal *)s->es_int.idb_ptr;
-    const char *fname;
+    char *fname;
     struct stat stat_buf;
     b_off_t need_size;
     bu_clbk_t f = NULL;
@@ -282,12 +282,18 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 
     RT_VOL_CK_MAGIC(vol);
 
-    fname = get_file_name(s, vol->name);
+    const char *av[2] = {NULL};
+    av[0] = vol->name;
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_GET_FILENAME, 0, GED_CLBK_DURING);
+    if (f)
+	(*f)(1, (const char **)av, d, &fname);
+
     if (fname) {
 	if (stat(fname, &stat_buf)) {
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "Cannot get status of file %s\n", fname);
+	    f = NULL; d = NULL;
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
@@ -298,6 +304,7 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
+	    f = NULL; d = NULL;
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
