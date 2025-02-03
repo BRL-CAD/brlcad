@@ -73,7 +73,7 @@ spline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
 	mged_set_edflag(s, arg);
     }
 
-    sedit(s);
+    rt_solid_edit_process(s);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -173,7 +173,7 @@ nurb_closest2d(
 
 
 void
-bspline_init_sedit(struct rt_solid_edit *s)
+bspline_init_rt_solid_edit_process(struct rt_solid_edit *s)
 {
     struct rt_nurb_internal *sip =
 	(struct rt_nurb_internal *) s->es_int.idb_ptr;

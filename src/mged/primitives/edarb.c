@@ -71,7 +71,7 @@ arb8_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     s->solid_edit_pick = 0;
     if (arg == 12) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -115,7 +115,7 @@ arb7_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     }
     if (arg == 12) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -163,7 +163,7 @@ arb6_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     }
     if (arg == 10) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -204,7 +204,7 @@ arb5_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     }
     if (arg == 9) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
 
     bu_clbk_t f = NULL;
@@ -240,7 +240,7 @@ arb4_point(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void 
     s->solid_edit_pick = 0;
     if (arg == 5) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
 
     bu_clbk_t f = NULL;
@@ -271,7 +271,7 @@ arb8_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     s->solid_edit_pick = 0;
     if (arg == 7) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
 
     bu_clbk_t f = NULL;
@@ -304,7 +304,7 @@ arb7_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     s->solid_edit_pick = 0;
     if (arg == 7) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
 
     bu_clbk_t f = NULL;
@@ -333,7 +333,7 @@ arb6_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     s->solid_edit_pick = 0;
     if (arg == 6) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
 
     bu_clbk_t f = NULL;
@@ -365,7 +365,7 @@ arb5_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     s->solid_edit_pick = 0;
     if (arg == 6) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
 
     bu_clbk_t f = NULL;
@@ -397,7 +397,7 @@ arb4_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     s->solid_edit_pick = 0;
     if (arg == 5) {
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
-	sedit(s);
+	rt_solid_edit_process(s);
     }
 
     bu_clbk_t f = NULL;
@@ -425,7 +425,7 @@ arb8_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), vo
     if (arg == 7)
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
-    sedit(s);
+    rt_solid_edit_process(s);
 }
 struct menu_item rot8_menu[] = {
     { "ARB8 FACES", NULL, 0 },
@@ -447,7 +447,7 @@ arb7_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), vo
     if (arg == 7)
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
-    sedit(s);
+    rt_solid_edit_process(s);
 }
 struct menu_item rot7_menu[] = {
     { "ARB7 FACES", NULL, 0 },
@@ -469,7 +469,7 @@ arb6_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), vo
     if (arg == 6)
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
-    sedit(s);
+    rt_solid_edit_process(s);
 }
 struct menu_item rot6_menu[] = {
     { "ARB6 FACES", NULL, 0 },
@@ -490,7 +490,7 @@ arb5_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), vo
     if (arg == 6)
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
-    sedit(s);
+    rt_solid_edit_process(s);
 }
 
 struct menu_item rot5_menu[] = {
@@ -512,7 +512,7 @@ arb4_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), vo
     if (arg == 5)
 	mged_set_edflag(s, ECMD_ARB_MAIN_MENU);
 
-    sedit(s);
+    rt_solid_edit_process(s);
 }
 struct menu_item rot4_menu[] = {
     { "ARB4 FACES", NULL, 0 },
@@ -529,7 +529,7 @@ arb_control(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 {
     s->edit_menu = arg;
     mged_set_edflag(s, ECMD_ARB_SPECIFIC_MENU);
-    sedit(s);
+    rt_solid_edit_process(s);
 }
 struct menu_item cntrl_menu[] = {
     { "ARB MENU", NULL, 0 },
@@ -1403,7 +1403,7 @@ arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv)
     /* get it done */
     newedge = 1;
     editarb(s, slope);
-    sedit(s);
+    rt_solid_edit_process(s);
 
     return TCL_OK;
 }

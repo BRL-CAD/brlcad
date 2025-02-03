@@ -87,7 +87,7 @@ vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    break;
     }
 
-    sedit(s);
+    rt_solid_edit_process(s);
 
     bu_clbk_t f = NULL;
     void *d = NULL;

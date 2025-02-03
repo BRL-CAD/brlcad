@@ -92,7 +92,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    rt_metaball_pnt_print(es_metaball_pnt, s->base2local);
 	    s->edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
-	    sedit(s);
+	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_PREV_PT:
 	    if (!es_metaball_pnt) {
@@ -108,7 +108,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    rt_metaball_pnt_print(es_metaball_pnt, s->base2local);
 	    s->edit_menu = arg;
 	    mged_set_edflag(s, IDLE);
-	    sedit(s);
+	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_MOV_PT:
 	    if (!es_metaball_pnt) {
@@ -118,7 +118,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    }
 	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_METABALL_PT_MOV;
-	    sedit(s);
+	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
 	    if (!es_metaball_pnt) {
@@ -132,7 +132,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	case MENU_METABALL_DEL_PT:
 	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_METABALL_PT_DEL;
-	    sedit(s);
+	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_ADD_PT:
 	    s->edit_menu = arg;

@@ -833,108 +833,15 @@ get_sketch_name(struct mged_state *s, const char *sk_n)
 }
 
 /*
- * A great deal of magic takes place here, to accomplish solid editing.
- *
- * Called from mged main loop after any event handlers:
- * if (sedraw > 0) sedit(s);
- * to process any residual events that the event handlers were too
- * lazy to handle themselves.
- *
- * A lot of processing is deferred to here, so that the "p" command
- * can operate on an equal footing to mouse events.
- */
-void
-sedit(struct rt_solid_edit *s)
-{
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    sedraw = 0;
-    ++s->update_views;
-
-    int had_method = 0;
-    const struct rt_db_internal *ip = &s->es_int;
-    if (EDOBJ[ip->idb_type].ft_edit) {
-	bu_vls_trunc(s->log_str, 0);
-	if ((*EDOBJ[ip->idb_type].ft_edit)(s, s->edit_flag)) {
-	    if (bu_vls_strlen(s->log_str)) {
-		rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
-		if (f)
-		    (*f)(0, NULL, d, NULL);
-		bu_vls_trunc(s->log_str, 0);
-	    }
-	    return;
-	}
-	if (bu_vls_strlen(s->log_str)) {
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    bu_vls_trunc(s->log_str, 0);
-	}
-	had_method = 1;
-    }
-
-    switch (s->edit_flag) {
-
-	case IDLE:
-	    /* do nothing more */
-	    --s->update_views;
-	    break;
-	default:
-	    {
-		if (had_method)
-		    break;
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&tmp_vls, "%s", bu_vls_cstr(s->log_str));
-		bu_vls_sprintf(s->log_str, "sedit(s):  unknown edflag = %d.\n", s->edit_flag);
-		rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
-		if (f)
-		    (*f)(0, NULL, d, NULL);
-		bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-		bu_vls_free(&tmp_vls);
-		rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
-		if (f)
-		    (*f)(0, NULL, d, NULL);
-	    }
-    }
-
-    /* If the keypoint changed location, find about it here */
-    if (!s->e_keyfixed)
-	get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, &s->es_int, s->e_mat);
-
-    int flag = 0;
-    f = NULL; d = NULL;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
-    if (f)
-	(*f)(0, NULL, d, &flag);
-
-    f = NULL; d = NULL;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING);
-    if (f)
-	(*f)(0, NULL, d, NULL);
-
-    if (s->update_views) {
-	f = NULL; d = NULL;
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_VIEW_UPDATE, 0, GED_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-    }
-
-    s->e_inpara = 0;
-    s->e_mvalid = 0;
-}
-
-
-/*
  * Mouse (pen) press in graphics area while doing Solid Edit.
  * mousevec [X] and [Y] are in the range -1.0...+1.0, corresponding
  * to viewspace.
  *
- * In order to allow the "p" command to do the same things that
- * a mouse event can, the preferred strategy is to store the value
- * corresponding to what the "p" command would give in s->edit_state.e_mparam,
- * set s->edit_state.e_mvalid = 1, set sedraw = 1, and return, allowing sedit(s)
- * to actually do the work.
+ * In order to allow the "p" command to do the same things that a mouse event
+ * can, the preferred strategy is to store the value corresponding to what the
+ * "p" command would give in s->edit_state.e_mparam, set s->edit_state.e_mvalid
+ * = 1, set sedraw = 1, and return, allowing rt_solid_edit_process(s) to
+ * actually do the work.
  */
 void
 sedit_mouse(struct mged_state *s, const vect_t mousevec)
@@ -977,7 +884,7 @@ sedit_abs_scale(struct mged_state *s)
 
     s->s_edit->es_scale = s->s_edit->acc_sc_sol / old_acc_sc_sol;
     s->s_edit->update_views = s->update_views;
-    sedit(s->s_edit);
+    rt_solid_edit_process(s->s_edit);
     s->update_views = s->s_edit->update_views;
 }
 
@@ -1603,7 +1510,7 @@ sedit_accept(struct mged_state *s)
 
     if (sedraw > 0) {
 	s->s_edit->update_views = s->update_views;
-	sedit(s->s_edit);
+	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
     }
 
@@ -1620,7 +1527,7 @@ sedit_reject(struct mged_state *s)
 
     if (sedraw > 0) {
 	s->s_edit->update_views = s->update_views;
-	sedit(s->s_edit);
+	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
     }
 
@@ -1700,7 +1607,7 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
     }
 
     s->s_edit->update_views = s->update_views;
-    sedit(s->s_edit);
+    rt_solid_edit_process(s->s_edit);
     s->update_views = s->s_edit->update_views;
 
     if (SEDIT_TRAN) {
@@ -2159,7 +2066,7 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
 
     if (sedraw > 0) {
 	s->s_edit->update_views = s->update_views;
-	sedit(s->s_edit);
+	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
     }
 

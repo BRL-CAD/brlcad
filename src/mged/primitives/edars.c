@@ -116,7 +116,7 @@ ars_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    break;
     };
 
-    sedit(s);
+    rt_solid_edit_process(s);
 }
 struct menu_item ars_pick_menu[] = {
     { "ARS PICK MENU", NULL, 0 },

@@ -118,7 +118,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		bu_vls_free(&tmp_vls);
 	    }
 
-	    sedit(s);
+	    rt_solid_edit_process(s);
 	    return;
 	case ECMD_NMG_BACK:
 	    if (!es_eu) {
@@ -138,7 +138,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		bu_vls_free(&tmp_vls);
 	    }
 
-	    sedit(s);
+	    rt_solid_edit_process(s);
 	    return;
 	case ECMD_NMG_RADIAL:
 	    if (!es_eu) {
@@ -158,7 +158,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		bu_vls_free(&tmp_vls);
 	    }
 
-	    sedit(s);
+	    rt_solid_edit_process(s);
 	    return;
 	case ECMD_NMG_LEXTRU:
 	    {
@@ -331,7 +331,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    break;
     };
 
-    sedit(s);
+    rt_solid_edit_process(s);
 }
 struct menu_item nmg_menu[] = {
     { "NMG MENU", NULL, 0 },
@@ -662,7 +662,7 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 	nmg_movevu(next_eu->vu_p, es_eu->vu_p->v_p);
 	if (nmg_keu(es_eu)) {
 	    /* Should never happen! */
-	    bu_exit(EXIT_FAILURE,  "sedit(s): killed edge and emptied loop!\n");
+	    bu_exit(EXIT_FAILURE,  "rt_solid_edit_process(s): killed edge and emptied loop!\n");
 	}
 	es_eu = prev_eu;
 	nmg_rebound(m, s->tol);
@@ -872,7 +872,7 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
 }
 
 
-/* XXX Should just leave desired location in s->e_mparam for sedit(s) */
+/* XXX Should just leave desired location in s->e_mparam for rt_solid_edit_process(s) */
 void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
