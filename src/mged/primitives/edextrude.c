@@ -45,6 +45,7 @@
 #define MENU_EXTR_ROT_H		27105
 #define MENU_EXTR_SKT_NAME	27106
 
+// TODO - this needs to become an ECMD specific callback
 extern char * get_sketch_name(struct rt_solid_edit *s, const char *sk_n);
 
 /*ARGSUSED*/

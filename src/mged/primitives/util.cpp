@@ -52,7 +52,8 @@ rt_solid_edit_map_destroy(struct rt_solid_edit_map *o)
     BU_PUT(o, struct rt_solid_edit_map);
 }
 
-// TODO - create primitive type specific structs and shift any remaining globals into them.
+// TODO - create primitive type specific structs and shift any remaining
+// globals into them.  Probably should have the functab do the work?
 struct rt_solid_edit *
 rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bview *v)
 {
