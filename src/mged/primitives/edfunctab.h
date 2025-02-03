@@ -30,8 +30,43 @@
 #include "raytrace.h"
 #include "rt_ecmds.h"
 
-__BEGIN_DECLS
 
+
+#ifdef __cplusplus
+
+#include <algorithm>
+#include <cctype>
+#include <map>
+#include <set>
+#include <string>
+
+#endif
+
+#ifdef __cplusplus
+
+class RT_Edit_Map_Internal {
+    public:
+	// Key is ECMD_ type, populated from MGED_Internal map
+	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
+	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
+	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
+	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
+
+	std::map<bu_clbk_t, int> clbk_recursion_depth_cnt;
+	std::map<int, int> cmd_recursion_depth_cnt;
+};
+
+#else
+
+#define RT_Edit_Map_Internal void
+
+#endif
+
+struct rt_solid_edit_map {
+    RT_Edit_Map_Internal *i;
+};
+
+__BEGIN_DECLS
 
 #define RT_SOLID_EDIT_IDLE		0	/* edarb.c */
 #define RT_SOLID_EDIT_TRANS		1	/* buttons.c */
@@ -42,11 +77,6 @@ __BEGIN_DECLS
 #define CMD_OK 919
 #define CMD_BAD 920
 #define CMD_MORE 921
-
-struct rt_solid_edit_map;
-struct rt_solid_edit_map *
-rt_solid_edit_map_create();
-void rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
 
 struct rt_solid_edit {
 
@@ -130,6 +160,13 @@ struct rt_solid_edit {
     void *u_ptr;
 };
 
+struct rt_solid_edit_map *rt_solid_edit_map_create();
+void rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
+int rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
+int rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode);
+int rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im);
+int rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode);
+
 
 struct rt_solid_edit_menu_item {
     char *menu_string;
@@ -142,7 +179,6 @@ void rt_solid_edit_process(struct rt_solid_edit *s);
 
 void rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
 
-int rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *m, int ed_cmd, int menu_cmd, int mode);
 extern struct rt_solid_edit *
 rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
 extern void
