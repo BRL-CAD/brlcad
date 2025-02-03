@@ -552,13 +552,13 @@ struct rt_solid_edit_menu_item *which_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_arb_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_arb_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return cntrl_menu;
 }
 
 int
-mged_arb_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_solid_edit_arb_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     if (!mstr || !ip)
 	return BRLCAD_ERROR;
@@ -604,7 +604,7 @@ mged_arb_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const st
 }
 
 const char *
-mged_arb_keypoint(
+rt_solid_edit_arb_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
@@ -621,7 +621,7 @@ mged_arb_keypoint(
 }
 
 void
-mged_arb_e_axes_pos(
+rt_solid_edit_arb_e_axes_pos(
 	struct rt_solid_edit *s,
 	const struct rt_db_internal *ip,
        	const struct bn_tol *tol
@@ -734,7 +734,7 @@ useThisVertex(int idx, int *uvec, int *svec)
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-mged_arb_write_params(
+rt_solid_edit_arb_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *tol,
@@ -770,7 +770,7 @@ mged_arb_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-mged_arb_read_params(
+rt_solid_edit_arb_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *tol,
@@ -1213,7 +1213,7 @@ edarb_move_face_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_arb_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_arb_edit(struct rt_solid_edit *s, int edflag)
 {
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
@@ -1232,15 +1232,15 @@ mged_arb_edit(struct rt_solid_edit *s, int edflag)
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    ret = mged_generic_sscale(s, &s->es_int);
+	    ret = rt_solid_edit_generic_sscale(s, &s->es_int);
 	    goto arb_planecalc;
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_ARB_MAIN_MENU:
 	    ecmd_arb_main_menu(s);
@@ -1276,7 +1276,7 @@ arb_planecalc:
 }
 
 int
-mged_arb_edit_xy(
+rt_solid_edit_arb_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -1290,11 +1290,11 @@ mged_arb_edit_xy(
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_arb_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_arb_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case PTARB:
 	    arb_mv_pnt_to(s, mousevec);
@@ -1314,7 +1314,7 @@ mged_arb_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_arb_edit(s, edflag);
+    rt_solid_edit_arb_edit(s, edflag);
 
     return 0;
 }

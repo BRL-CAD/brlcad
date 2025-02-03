@@ -203,7 +203,7 @@ struct rt_solid_edit_menu_item pipe_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_pipe_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_pipe_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return pipe_menu;
 }
@@ -640,7 +640,7 @@ pipe_move_pnt(struct rt_solid_edit *s, struct rt_pipe_internal *pipeip, struct w
 }
 
 const char *
-mged_pipe_keypoint(
+rt_solid_edit_pipe_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
@@ -664,7 +664,7 @@ mged_pipe_keypoint(
 }
 
 void
-mged_pipe_labels(
+rt_solid_edit_pipe_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
 	struct rt_point_labels *pl,
@@ -1115,7 +1115,7 @@ void ecmd_pipe_pt_del(struct rt_solid_edit *s)
 }
 
 static int
-mged_pipe_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_pipe_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -1147,25 +1147,25 @@ mged_pipe_pscale(struct rt_solid_edit *s, int mode)
 }
 
 int
-mged_pipe_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_pipe_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_PSCALE:
-	    return mged_pipe_pscale(s, s->edit_menu);
+	    return rt_solid_edit_pipe_pscale(s, s->edit_menu);
 	case ECMD_PIPE_PICK:
 	    ecmd_pipe_pick(s);
 	    break;
@@ -1190,7 +1190,7 @@ mged_pipe_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_pipe_edit_xy(
+rt_solid_edit_pipe_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -1205,11 +1205,11 @@ mged_pipe_edit_xy(
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_pipe_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_pipe_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_PIPE_PICK:
 	case ECMD_PIPE_SPLIT:
@@ -1232,7 +1232,7 @@ mged_pipe_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_pipe_edit(s, edflag);
+    rt_solid_edit_pipe_edit(s, edflag);
 
     return 0;
 }

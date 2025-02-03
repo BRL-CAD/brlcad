@@ -87,7 +87,7 @@ struct rt_solid_edit_menu_item spline_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_bspline_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_bspline_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return spline_menu;
 }
@@ -213,7 +213,7 @@ sedit_vpick(struct rt_solid_edit *s)
 }
 
 void
-mged_bspline_labels(
+rt_solid_edit_bspline_labels(
   	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
 	struct rt_point_labels *pl,
@@ -264,7 +264,7 @@ mged_bspline_labels(
 }
 
 const char *
-mged_bspline_keypoint(
+rt_solid_edit_bspline_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
@@ -332,19 +332,19 @@ ecmd_vtrans(struct rt_solid_edit *s)
 
 
 int
-mged_bspline_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_bspline_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_SPLINE_VPICK:
 	    sedit_vpick(s);
@@ -359,7 +359,7 @@ mged_bspline_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_bspline_edit_xy(
+rt_solid_edit_bspline_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -374,11 +374,11 @@ mged_bspline_edit_xy(
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_bspline_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_bspline_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_VTRANS:
 	    /*
@@ -405,7 +405,7 @@ mged_bspline_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_bspline_edit(s, edflag);
+    rt_solid_edit_bspline_edit(s, edflag);
 
     return 0;
 }

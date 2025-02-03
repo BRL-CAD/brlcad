@@ -141,7 +141,7 @@ struct rt_solid_edit_menu_item ars_menu[] = {
 };
 
 void
-mged_ars_labels(
+rt_solid_edit_ars_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
 	struct rt_point_labels *pl,
@@ -175,7 +175,7 @@ mged_ars_labels(
 }
 
 const char *
-mged_ars_keypoint(
+rt_solid_edit_ars_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
@@ -198,13 +198,13 @@ mged_ars_keypoint(
 }
 
 struct rt_solid_edit_menu_item *
-mged_ars_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_ars_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ars_menu;
 }
 
 int
-mged_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+rt_solid_edit_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!mstr || !ip)
 	return BRLCAD_ERROR;
@@ -785,7 +785,7 @@ ecmd_ars_move_pt(struct rt_solid_edit *s)
 }
 
 int
-mged_ars_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_ars_edit(struct rt_solid_edit *s, int edflag)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -793,14 +793,14 @@ mged_ars_edit(struct rt_solid_edit *s, int edflag)
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
@@ -864,7 +864,7 @@ mged_ars_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_ars_edit_xy(
+rt_solid_edit_ars_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -879,11 +879,11 @@ mged_ars_edit_xy(
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_ars_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_ars_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_ARS_PICK:
 	case ECMD_ARS_MOVE_PT:
@@ -905,7 +905,7 @@ mged_ars_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_ars_edit(s, edflag);
+    rt_solid_edit_ars_edit(s, edflag);
 
     return 0;
 }

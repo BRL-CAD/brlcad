@@ -106,7 +106,7 @@ struct rt_solid_edit_menu_item vol_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_vol_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_vol_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return vol_menu;
 }
@@ -308,7 +308,7 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 }
 
 static int
-mged_vol_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_vol_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -337,22 +337,22 @@ mged_vol_pscale(struct rt_solid_edit *s, int mode)
 }
 
 int
-mged_vol_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_vol_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_PSCALE:
-	    return mged_vol_pscale(s, s->edit_menu);
+	    return rt_solid_edit_vol_pscale(s, s->edit_menu);
 	case ECMD_VOL_CSIZE:
 	    ecmd_vol_csize(s);
 	    break;
@@ -372,7 +372,7 @@ mged_vol_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_vol_edit_xy(
+rt_solid_edit_vol_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -389,11 +389,11 @@ mged_vol_edit_xy(
 	case ECMD_VOL_CSIZE:
 	case ECMD_VOL_THRESH_LO:
 	case ECMD_VOL_THRESH_HI:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_vol_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_vol_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
@@ -404,7 +404,7 @@ mged_vol_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_vol_edit(s, edflag);
+    rt_solid_edit_vol_edit(s, edflag);
 
     return 0;
 }

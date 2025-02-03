@@ -28,7 +28,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "mged_ecmds.h"
+#include "rt_ecmds.h"
 
 __BEGIN_DECLS
 
@@ -150,7 +150,7 @@ rt_solid_edit_destroy(struct rt_solid_edit *ssed);
 
 
 const char *
-mged_generic_keypoint(
+rt_solid_edit_generic_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
@@ -159,32 +159,32 @@ mged_generic_keypoint(
 
 /* scale the solid uniformly about its vertex point */
 int
-mged_generic_sscale(
+rt_solid_edit_generic_sscale(
 	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	);
 
 /* translate solid */
 void
-mged_generic_strans(
+rt_solid_edit_generic_strans(
 	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	);
 
 /* rot solid about vertex */
 void
-mged_generic_srot(
+rt_solid_edit_generic_srot(
 	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	);
 
 void
-mged_generic_sscale_xy(
+rt_solid_edit_generic_sscale_xy(
 	struct rt_solid_edit *s,
 	const vect_t mousevec
 	);
 void
-mged_generic_strans_xy(vect_t *pos_view,
+rt_solid_edit_generic_strans_xy(vect_t *pos_view,
 	struct rt_solid_edit *s,
 	const vect_t mousevec
 	);
@@ -192,10 +192,10 @@ mged_generic_strans_xy(vect_t *pos_view,
 void
 update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos);
 
-int mged_generic_edit(struct rt_solid_edit *s, int edflag);
+int rt_solid_edit_generic_edit(struct rt_solid_edit *s, int edflag);
 
 int
-mged_generic_edit_xy(
+rt_solid_edit_generic_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -206,10 +206,10 @@ void
 rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag);
 
 int
-mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol);
+rt_solid_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol);
 
 
-struct mged_functab {
+struct rt_solid_edit_functab {
     uint32_t magic;
     char ft_name[17]; /* current longest name is 16 chars, need one element for terminating NULL */
     char ft_label[9]; /* current longest label is 8 chars, need one element for terminating NULL */
@@ -284,7 +284,7 @@ struct mged_functab {
 #define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_solid_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 
 };
-extern const struct mged_functab EDOBJ[];
+extern const struct rt_solid_edit_functab EDOBJ[];
 
 __END_DECLS
 

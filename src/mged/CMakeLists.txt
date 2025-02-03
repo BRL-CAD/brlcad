@@ -6,18 +6,18 @@ find_package_tcl()
 
 # Utility program
 if(BRLCAD_ENABLE_TCL)
-  set(MGED_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/mged_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
+  set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
   try_compile(
     ged_hdr_scanner
     "${CMAKE_BINARY_DIR}/CMakeTmp"
-    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/mged_ecmd_scanner.cpp"
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/rt_ecmd_scanner.cpp"
     OUTPUT_VARIABLE MGED_SCANNER_BLD_OUT
-    COPY_FILE "${MGED_ECMD_SCANNER}"
+    COPY_FILE "${RT_ECMD_SCANNER}"
   )
-  if (NOT EXISTS ${MGED_ECMD_SCANNER})
+  if (NOT EXISTS ${RT_ECMD_SCANNER})
     message(FATAL_ERROR "Unable to build ged command scanner: ${MGED_SCANNER_BLD_OUT}")
   endif()
-  distclean(${MGED_ECMD_SCANNER})
+  distclean(${RT_ECMD_SCANNER})
 
   set(MGED_PFILE_OUT "${CMAKE_BINARY_DIR}/CMakeTmp/mged_primitive_files.txt")
   file(GLOB MGED_PFILES "${CMAKE_CURRENT_SOURCE_DIR}/primitives/*")
@@ -25,14 +25,14 @@ if(BRLCAD_ENABLE_TCL)
   file(WRITE "${MGED_PFILE_OUT}" ${MGED_PFILES})
   distclean(${MGED_PFILE_OUT})
 
-  set(MGED_ECMD_HDR "${CMAKE_CURRENT_BINARY_DIR}/mged_ecmds.h")
+  set(RT_ECMD_HDR "${CMAKE_CURRENT_BINARY_DIR}/rt_ecmds.h")
   add_custom_command(
-    OUTPUT ${MGED_ECMD_HDR}
-    COMMAND ${MGED_ECMD_SCANNER} ${MGED_PFILE_OUT} ${MGED_ECMD_HDR}
-    COMMENT "[MGED_ECMD_SCANNER] Scanning for MGED editing mode flags"
+    OUTPUT ${RT_ECMD_HDR}
+    COMMAND ${RT_ECMD_SCANNER} ${MGED_PFILE_OUT} ${RT_ECMD_HDR}
+    COMMENT "[RT_ECMD_SCANNER] Scanning for MGED editing mode flags"
   )
-  distclean(${MGED_ECMD_HDR})
-  set_source_files_properties(mged_impl.cpp PROPERTIES OBJECT_DEPENDS ${MGED_ECMD_HDR})
+  distclean(${RT_ECMD_HDR})
+  set_source_files_properties(mged_impl.cpp PROPERTIES OBJECT_DEPENDS ${RT_ECMD_HDR})
 endif()
 
 set(
@@ -172,7 +172,7 @@ set(
   mged.ico
   mged.rc
   mged_dm.h
-  mged_ecmd_scanner.cpp
+  rt_ecmd_scanner.cpp
   mged_impl.h
   mged_wdb.h
   primitives/edarb.h

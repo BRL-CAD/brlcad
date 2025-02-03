@@ -89,13 +89,13 @@ struct rt_solid_edit_menu_item extr_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_extrude_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_extrude_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return extr_menu;
 }
 
 const char *
-mged_extrude_keypoint(
+rt_solid_edit_extrude_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
@@ -115,7 +115,7 @@ mged_extrude_keypoint(
 }
 
 void
-mged_extrude_e_axes_pos(
+rt_solid_edit_extrude_e_axes_pos(
 	struct rt_solid_edit *s,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
@@ -340,19 +340,19 @@ ecmd_extr_mov_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_extrude_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_extrude_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_EXTR_SKT_NAME:
 	    ecmd_extr_skt_name(s);
@@ -369,7 +369,7 @@ mged_extrude_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_extrude_edit_xy(
+rt_solid_edit_extrude_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -384,11 +384,11 @@ mged_extrude_edit_xy(
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
 	case ECMD_EXTR_SCALE_H:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_extrude_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_extrude_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_EXTR_MOV_H:
 	    ecmd_extr_mov_h_mousevec(s, mousevec);
@@ -402,7 +402,7 @@ mged_extrude_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_extrude_edit(s, edflag);
+    rt_solid_edit_extrude_edit(s, edflag);
 
     return 0;
 }

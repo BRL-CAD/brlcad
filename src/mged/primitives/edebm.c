@@ -83,7 +83,7 @@ struct rt_solid_edit_menu_item ebm_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_ebm_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ebm_menu;
 }
@@ -228,19 +228,19 @@ ecmd_ebm_height(struct rt_solid_edit *s)
 }
 
 int
-mged_ebm_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_ebm_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_EBM_FSIZE:    /* set file size */
 	    if (ecmd_ebm_fsize(s) != BRLCAD_OK)
@@ -261,7 +261,7 @@ mged_ebm_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_ebm_edit_xy(
+rt_solid_edit_ebm_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -276,11 +276,11 @@ mged_ebm_edit_xy(
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
 	case ECMD_EBM_HEIGHT:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_ebm_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_ebm_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
@@ -291,7 +291,7 @@ mged_ebm_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_ebm_edit(s, edflag);
+    rt_solid_edit_ebm_edit(s, edflag);
 
     return 0;
 }

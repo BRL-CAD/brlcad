@@ -1,4 +1,4 @@
-/*             M G E D _ E C M D _ S C A N N E R . C P P
+/*             R T _ E C M D _ S C A N N E R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2018-2025 United States Government as represented by
@@ -32,7 +32,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/** @file mged_ecmd_scanner.cpp
+/** @file rt_ecmd_scanner.cpp
  *
  * Generate a header with defines for all ECMD entries
  */
@@ -87,7 +87,7 @@ int
 main(int argc, const char *argv[])
 {
     if (argc < 3) {
-	std::cerr << "Usage: mged_ecmd_scanner file_list output_file\n";
+	std::cerr << "Usage: rt_ecmd_scanner file_list output_file\n";
 	return EXIT_FAILURE;
     }
 

@@ -25,7 +25,6 @@
 #include "common.h"
 
 #include "mged.h"
-#include "./mged_ecmds.h"
 
 extern "C" struct rt_solid_edit_map *
 rt_solid_edit_map_create()

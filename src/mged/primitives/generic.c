@@ -176,7 +176,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 }
 
 const char *
-mged_generic_keypoint(
+rt_solid_edit_generic_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
@@ -191,7 +191,7 @@ mged_generic_keypoint(
 }
 
 int
-mged_generic_sscale(
+rt_solid_edit_generic_sscale(
 	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	)
@@ -223,7 +223,7 @@ mged_generic_sscale(
 }
 
 void
-mged_generic_strans(
+rt_solid_edit_generic_strans(
 	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	)
@@ -265,7 +265,7 @@ mged_generic_strans(
 }
 
 void
-mged_generic_srot(
+rt_solid_edit_generic_srot(
 	struct rt_solid_edit *s,
 	struct rt_db_internal *ip
 	)
@@ -341,7 +341,7 @@ mged_generic_srot(
 }
 
 int
-mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_solid_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     if (!mstr || !ip)
 	return BRLCAD_ERROR;
@@ -364,7 +364,7 @@ mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, cons
 }
 
 int
-mged_generic_edit(
+rt_solid_edit_generic_edit(
 	struct rt_solid_edit *s,
 	int edflag
 	)
@@ -372,22 +372,22 @@ mged_generic_edit(
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    mged_generic_sscale(s, &s->es_int);
+	    rt_solid_edit_generic_sscale(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
     }
     return 0;
 }
 
 void
-mged_generic_sscale_xy(
+rt_solid_edit_generic_sscale_xy(
 	struct rt_solid_edit *s,
 	const vect_t mousevec
 	)
@@ -414,7 +414,7 @@ mged_generic_sscale_xy(
  * Then move keypoint there.
  */
 void
-mged_generic_strans_xy(vect_t *pos_view,
+rt_solid_edit_generic_strans_xy(vect_t *pos_view,
 	struct rt_solid_edit *s,
 	const vect_t mousevec
 	)
@@ -462,7 +462,7 @@ update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos)
 }
 
 int
-mged_generic_edit_xy(
+rt_solid_edit_generic_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -476,12 +476,12 @@ mged_generic_edit_xy(
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
-	    mged_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    if (EDOBJ[ip->idb_type].ft_edit)
 		return (*EDOBJ[ip->idb_type].ft_edit)(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);

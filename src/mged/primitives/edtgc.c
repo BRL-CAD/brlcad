@@ -116,13 +116,13 @@ struct rt_solid_edit_menu_item tgc_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_tgc_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_tgc_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return tgc_menu;
 }
 
 void
-mged_tgc_e_axes_pos(
+rt_solid_edit_tgc_e_axes_pos(
 	struct rt_solid_edit *s,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
@@ -144,7 +144,7 @@ mged_tgc_e_axes_pos(
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-mged_tgc_write_params(
+rt_solid_edit_tgc_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol),
@@ -172,7 +172,7 @@ mged_tgc_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-mged_tgc_read_params(
+rt_solid_edit_tgc_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *UNUSED(tol),
@@ -761,7 +761,7 @@ ecmd_tgc_mv_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 static int
-mged_tgc_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_tgc_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -820,22 +820,22 @@ mged_tgc_pscale(struct rt_solid_edit *s, int mode)
 }
 
 int
-mged_tgc_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_tgc_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_PSCALE:
-	    return mged_tgc_pscale(s, s->edit_menu);
+	    return rt_solid_edit_tgc_pscale(s, s->edit_menu);
 	case ECMD_TGC_MV_H:
 	    return ecmd_tgc_mv_h(s);
 	case ECMD_TGC_MV_HH:
@@ -850,7 +850,7 @@ mged_tgc_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_tgc_edit_xy(
+rt_solid_edit_tgc_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -864,11 +864,11 @@ mged_tgc_edit_xy(
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_tgc_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_tgc_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
@@ -883,7 +883,7 @@ mged_tgc_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_tgc_edit(s, edflag);
+    rt_solid_edit_tgc_edit(s, edflag);
 
     return 0;
 }

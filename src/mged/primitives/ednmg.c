@@ -347,14 +347,14 @@ struct rt_solid_edit_menu_item nmg_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_nmg_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_nmg_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return nmg_menu;
 }
 
 
 const char *
-mged_nmg_keypoint(
+rt_solid_edit_nmg_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
@@ -488,7 +488,7 @@ nmg_keypoint_finalize:
 
 
 void
-mged_nmg_labels(
+rt_solid_edit_nmg_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
 	struct rt_point_labels *pl,
@@ -926,22 +926,22 @@ void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_nmg_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_nmg_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_NMG_EPICK:
 	    /* XXX Nothing to do here (yet), all done in mouse routine. */
@@ -964,7 +964,7 @@ mged_nmg_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_nmg_edit_xy(
+rt_solid_edit_nmg_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -979,14 +979,14 @@ mged_nmg_edit_xy(
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_nmg_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_nmg_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_NMG_EPICK:
-	    /* XXX Should just leave desired location in s->e_mparam for mged_nmg_edit */
+	    /* XXX Should just leave desired location in s->e_mparam for rt_solid_edit_nmg_edit */
 	    ecmd_nmg_epick(s, mousevec);
 	    break;
 	case ECMD_NMG_LEXTRU:
@@ -1008,7 +1008,7 @@ mged_nmg_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_nmg_edit(s, edflag);
+    rt_solid_edit_nmg_edit(s, edflag);
 
     return 0;
 }

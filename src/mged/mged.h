@@ -81,7 +81,6 @@ __BEGIN_DECLS
 #endif
 __END_DECLS
 
-#include "mged_ecmds.h"
 #include "mged_impl.h"
 #include "edfunctab.h"
 

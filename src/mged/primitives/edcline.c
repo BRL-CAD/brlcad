@@ -83,13 +83,13 @@ struct rt_solid_edit_menu_item cline_menu[] = {
 };
 
 struct rt_solid_edit_menu_item *
-mged_cline_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_cline_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return cline_menu;
 }
 
 void
-mged_cline_e_axes_pos(
+rt_solid_edit_cline_e_axes_pos(
 	struct rt_solid_edit *s,
 	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol))
@@ -291,19 +291,19 @@ ecmd_cline_move_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-mged_cline_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_cline_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return mged_generic_sscale(s, &s->es_int);
+	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    mged_generic_strans(s, &s->es_int);
+	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    mged_generic_srot(s, &s->es_int);
+	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_CLINE_SCALE_H:
 	    return ecmd_cline_scale_h(s);
@@ -319,7 +319,7 @@ mged_cline_edit(struct rt_solid_edit *s, int edflag)
 }
 
 int
-mged_cline_edit_xy(
+rt_solid_edit_cline_edit_xy(
 	struct rt_solid_edit *s,
 	int edflag,
 	const vect_t mousevec
@@ -336,11 +336,11 @@ mged_cline_edit_xy(
 	case ECMD_CLINE_SCALE_H:
 	case ECMD_CLINE_SCALE_T:
 	case ECMD_CLINE_SCALE_R:
-	    mged_generic_sscale_xy(s, mousevec);
-	    mged_cline_edit(s, edflag);
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_cline_edit(s, edflag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
-	    mged_generic_strans_xy(&pos_view, s, mousevec);
+	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_CLINE_MOVE_H:
 	    ecmd_cline_move_h_mousevec(s, mousevec);
@@ -354,7 +354,7 @@ mged_cline_edit_xy(
     }
 
     update_edit_absolute_tran(s, pos_view);
-    mged_cline_edit(s, edflag);
+    rt_solid_edit_cline_edit(s, edflag);
 
     return 0;
 }
