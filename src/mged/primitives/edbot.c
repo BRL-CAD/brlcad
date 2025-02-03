@@ -35,7 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
-#include "./mged_functab.h"
+#include "./edfunctab.h"
 
 #define ECMD_BOT_PICKV		30061	/* pick a BOT vertex */
 #define ECMD_BOT_PICKE		30062	/* pick a BOT edge */
@@ -781,7 +781,7 @@ mged_bot_edit_xy(
 	    s->e_mvalid = 1;
 	    break;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);

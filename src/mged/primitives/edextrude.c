@@ -35,7 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
-#include "./mged_functab.h"
+#include "./edfunctab.h"
 
 #define ECMD_EXTR_SCALE_H	27073	/* scale extrusion vector */
 #define ECMD_EXTR_MOV_H		27074	/* move end of extrusion vector */
@@ -396,7 +396,7 @@ mged_extrude_edit_xy(
 	    ecmd_extr_mov_h_mousevec(s, mousevec);
 	    break;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);

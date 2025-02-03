@@ -39,7 +39,7 @@
 #include "../mged_dm.h"
 #include "../cmd.h"
 #include "../menu.h"
-#include "./mged_functab.h"
+#include "./edfunctab.h"
 #include "./edarb.h"
 
 #define EARB			4009
@@ -1308,7 +1308,7 @@ mged_arb_edit_xy(
 	    edarb_move_face_mousevec(s, mousevec);
 	    break;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);

@@ -47,7 +47,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"
-#include "./primitives/mged_functab.h"
+#include "./primitives/edfunctab.h"
 
 int
 common_dm(struct mged_state *s, int argc, const char *argv[])

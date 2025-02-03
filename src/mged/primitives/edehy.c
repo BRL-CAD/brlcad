@@ -35,7 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
-#include "./mged_functab.h"
+#include "./edfunctab.h"
 
 #define MENU_EHY_H		20053
 #define MENU_EHY_R1		20054

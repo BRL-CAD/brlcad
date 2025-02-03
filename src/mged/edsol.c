@@ -51,7 +51,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"
-#include "./primitives/mged_functab.h"
+#include "./primitives/edfunctab.h"
 #include "./primitives/edarb.h"
 #include "./primitives/edbspline.h"
 
@@ -94,9 +94,9 @@ set_e_axes_pos(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 
     struct rt_db_internal *ip = &s->s_edit->es_int;
 
-    if (MGED_OBJ[ip->idb_type].ft_e_axes_pos) {
+    if (EDOBJ[ip->idb_type].ft_e_axes_pos) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	(*MGED_OBJ[ip->idb_type].ft_e_axes_pos)(s->s_edit, ip, &s->tol.tol);
+	(*EDOBJ[ip->idb_type].ft_e_axes_pos)(s->s_edit, ip, &s->tol.tol);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
@@ -544,9 +544,9 @@ get_solid_keypoint(struct mged_solid_edit *s, point_t *pt, const char **strp, st
 
     RT_CK_DB_INTERNAL(ip);
 
-    if (MGED_OBJ[ip->idb_type].ft_keypoint) {
+    if (EDOBJ[ip->idb_type].ft_keypoint) {
 	bu_vls_trunc(s->log_str, 0);
-	*strp = (*MGED_OBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, ip, s->tol);
+	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, ip, s->tol);
 	if (bu_vls_strlen(s->log_str)) {
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 	    if (f)
@@ -754,9 +754,9 @@ sedit_menu(struct mged_state *s) {
     chg_l2menu(s, ST_S_EDIT);
 
     const struct rt_db_internal *ip = &s->s_edit->es_int;
-    if (MGED_OBJ[ip->idb_type].ft_menu_item) {
+    if (EDOBJ[ip->idb_type].ft_menu_item) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	struct menu_item *mi = (*MGED_OBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
+	struct menu_item *mi = (*EDOBJ[ip->idb_type].ft_menu_item)(&s->tol.tol);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
@@ -854,9 +854,9 @@ sedit(struct mged_solid_edit *s)
 
     int had_method = 0;
     const struct rt_db_internal *ip = &s->es_int;
-    if (MGED_OBJ[ip->idb_type].ft_edit) {
+    if (EDOBJ[ip->idb_type].ft_edit) {
 	bu_vls_trunc(s->log_str, 0);
-	if ((*MGED_OBJ[ip->idb_type].ft_edit)(s, s->edit_flag)) {
+	if ((*EDOBJ[ip->idb_type].ft_edit)(s, s->edit_flag)) {
 	    if (bu_vls_strlen(s->log_str)) {
 		mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 		if (f)
@@ -943,9 +943,9 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	return;
 
     const struct rt_db_internal *ip = &s->s_edit->es_int;
-    if (MGED_OBJ[ip->idb_type].ft_edit_xy) {
+    if (EDOBJ[ip->idb_type].ft_edit_xy) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	(*MGED_OBJ[ip->idb_type].ft_edit_xy)(s->s_edit, s->s_edit->edit_flag, mousevec);
+	(*EDOBJ[ip->idb_type].ft_edit_xy)(s->s_edit, s->s_edit->edit_flag, mousevec);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
@@ -1771,9 +1771,9 @@ label_edited_solid(
     RT_CK_DB_INTERNAL(ip);
 
     // First, see if we have an edit-aware labeling method.  If we do, use it.
-    if (MGED_OBJ[ip->idb_type].ft_labels) {
+    if (EDOBJ[ip->idb_type].ft_labels) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	(*MGED_OBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, &s->s_edit->es_int, &s->tol.tol);
+	(*EDOBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, &s->s_edit->es_int, &s->tol.tol);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
@@ -1869,9 +1869,9 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
     if (s->edit_state.global_editing_state != ST_S_EDIT)
 	return TCL_ERROR;
 
-    if (MGED_OBJ[ip->idb_type].ft_menu_str) {
+    if (EDOBJ[ip->idb_type].ft_menu_str) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	int ret = (*MGED_OBJ[ip->idb_type].ft_menu_str)(&vls, ip, &s->tol.tol);
+	int ret = (*EDOBJ[ip->idb_type].ft_menu_str)(&vls, ip, &s->tol.tol);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);

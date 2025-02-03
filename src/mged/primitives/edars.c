@@ -35,7 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
-#include "./mged_functab.h"
+#include "./edfunctab.h"
 
 #define ECMD_ARS_PICK		5034	/* select an ARS point */
 #define ECMD_ARS_NEXT_PT	5035	/* select next ARS point in same curve */
@@ -58,7 +58,7 @@ point_t es_pt;		/* coordinates of selected ARS point */
 
 /**
  * find which vertex of an ARS is nearest *the ray from "pt" in the
- * viewing direction (for vertex selection in MGED)
+ * viewing direction (for vertex selection)
  */
 void
 find_ars_nearest_pnt(
@@ -899,7 +899,7 @@ mged_ars_edit_xy(
 	    s->e_mvalid = 1;
 	    break;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);

@@ -24,8 +24,7 @@
  * pipe_split_pnt - split a pipe segment at a given point
  *
  * find_pipe_pnt_nearest_pnt - find which segment of a pipe is nearest
- * the ray from "pt" in the viewing direction (for segment selection
- * in MGED)
+ * the ray from "pt" in the viewing direction (for segment selection)
  */
 
 #include "common.h"
@@ -42,7 +41,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
-#include "./mged_functab.h"
+#include "./edfunctab.h"
 
 #define ECMD_PIPE_PICK		15028	/* Pick pipe point */
 #define ECMD_PIPE_SPLIT		15029	/* Split a pipe segment into two */
@@ -1227,7 +1226,7 @@ mged_pipe_edit_xy(
 	    s->e_mvalid = 1;
 	    break;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);

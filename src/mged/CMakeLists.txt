@@ -177,7 +177,7 @@ set(
   mged_wdb.h
   primitives/edarb.h
   primitives/edbspline.h
-  primitives/mged_functab.h
+  primitives/edfunctab.h
   sedit.h
 )
 cmakefiles(${mged_ignore_files})

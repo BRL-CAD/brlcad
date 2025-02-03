@@ -36,7 +36,7 @@
 #include "../sedit.h"
 #include "../mged_dm.h"
 
-#include "./mged_functab.h"
+#include "./edfunctab.h"
 
 const char *
 mged_generic_keypoint(
@@ -211,8 +211,8 @@ mged_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, cons
 
     struct menu_item *mip = NULL;
 
-    if (MGED_OBJ[ip->idb_type].ft_menu_item)
-	mip = (*MGED_OBJ[ip->idb_type].ft_menu_item)(tol);
+    if (EDOBJ[ip->idb_type].ft_menu_item)
+	mip = (*EDOBJ[ip->idb_type].ft_menu_item)(tol);
 
     if (!mip)
        return BRLCAD_OK;
@@ -340,14 +340,14 @@ mged_generic_edit_xy(
 	case SSCALE:
 	case PSCALE:
 	    mged_generic_sscale_xy(s, mousevec);
-	    if (MGED_OBJ[ip->idb_type].ft_edit)
-		return (*MGED_OBJ[ip->idb_type].ft_edit)(s, edflag);
+	    if (EDOBJ[ip->idb_type].ft_edit)
+		return (*EDOBJ[ip->idb_type].ft_edit)(s, edflag);
 	    return 0;
 	case STRANS:
 	    mged_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
@@ -356,8 +356,8 @@ mged_generic_edit_xy(
 
     update_edit_absolute_tran(s, pos_view);
 
-    if (MGED_OBJ[ip->idb_type].ft_edit)
-	return (*MGED_OBJ[ip->idb_type].ft_edit)(s, edflag);
+    if (EDOBJ[ip->idb_type].ft_edit)
+	return (*EDOBJ[ip->idb_type].ft_edit)(s, edflag);
 
     return 0;
 }

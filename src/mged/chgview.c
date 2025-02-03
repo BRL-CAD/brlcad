@@ -38,7 +38,7 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
-#include "./primitives/mged_functab.h"
+#include "./primitives/edfunctab.h"
 
 
 extern void mged_color_soltab(struct mged_state *s);
@@ -3641,9 +3641,9 @@ mged_etran(struct mged_state *s,
 	fastf_t *mat = s->s_edit->e_mat;
 	point_t *pt = &s->s_edit->e_keypoint;
 	RT_CK_DB_INTERNAL(ip);
-	if (MGED_OBJ[ip->idb_type].ft_keypoint) {
+	if (EDOBJ[ip->idb_type].ft_keypoint) {
 	    bu_vls_trunc(s->s_edit->log_str, 0);
-	    s->s_edit->e_keytag = (*MGED_OBJ[ip->idb_type].ft_keypoint)(pt, s->s_edit->e_keytag, mat, ip, &s->tol.tol);
+	    s->s_edit->e_keytag = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, s->s_edit->e_keytag, mat, ip, &s->tol.tol);
 	    if (bu_vls_strlen(s->s_edit->log_str)) {
 		Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 		bu_vls_trunc(s->s_edit->log_str, 0);

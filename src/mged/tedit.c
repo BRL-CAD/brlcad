@@ -41,7 +41,7 @@
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
-#include "./primitives/mged_functab.h"
+#include "./primitives/edfunctab.h"
 
 
 #define V3BASE2LOCAL(_pt)	(_pt)[X]*s->dbip->dbi_base2local, (_pt)[Y]*s->dbip->dbi_base2local, (_pt)[Z]*s->dbip->dbi_base2local
@@ -160,13 +160,13 @@ writesolid(struct mged_state *s)
     CHECK_DBI_NULL;
 
     struct rt_db_internal *ip = &s->s_edit->es_int;
-    if (!MGED_OBJ[ip->idb_type].ft_write_params) {
+    if (!EDOBJ[ip->idb_type].ft_write_params) {
 	Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	return 1;
     }
 
     struct bu_vls params = BU_VLS_INIT_ZERO;
-    (*MGED_OBJ[ip->idb_type].ft_write_params)(&params, ip, &s->tol.tol, s->dbip->dbi_base2local);
+    (*EDOBJ[ip->idb_type].ft_write_params)(&params, ip, &s->tol.tol, s->dbip->dbi_base2local);
     fp = fopen(tmpfil, "w");
     fprintf(fp, "%s", bu_vls_cstr(&params));
     (void)fclose(fp);
@@ -181,7 +181,7 @@ readsolid(struct mged_state *s)
 
     struct rt_db_internal *ip = &s->s_edit->es_int;
 
-    if (!MGED_OBJ[ip->idb_type].ft_read_params) {
+    if (!EDOBJ[ip->idb_type].ft_read_params) {
 	Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
 	return 1;
     }
@@ -195,7 +195,7 @@ readsolid(struct mged_state *s)
     bu_vls_strncpy(&solid_in, (char *)mf->buf, mf->buflen);
     bu_close_mapped_file(mf);
 
-    if ((*MGED_OBJ[ip->idb_type].ft_read_params)(ip, bu_vls_cstr(&solid_in), &s->tol.tol, s->dbip->dbi_local2base) == BRLCAD_ERROR) {
+    if ((*EDOBJ[ip->idb_type].ft_read_params)(ip, bu_vls_cstr(&solid_in), &s->tol.tol, s->dbip->dbi_local2base) == BRLCAD_ERROR) {
 	bu_vls_free(&solid_in);
 	return 1;   /* FAIL */
     }

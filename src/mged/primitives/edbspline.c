@@ -35,7 +35,7 @@
 #include "../mged.h"
 #include "../sedit.h"
 #include "../mged_dm.h"
-#include "./mged_functab.h"
+#include "./edfunctab.h"
 #include "./edbspline.h"
 
 #define ECMD_VTRANS		9017	/* vertex translate */
@@ -201,7 +201,7 @@ sedit_vpick(struct mged_solid_edit *s)
 	spl_surfno = surfno;
 	spl_ui = u;
 	spl_vi = v;
-	s->e_keytag = (*MGED_OBJ[ID_BSPLINE].ft_keypoint)(&s->e_keypoint, s->e_keytag, s->e_mat, &s->es_int, s->tol);
+	s->e_keytag = (*EDOBJ[ID_BSPLINE].ft_keypoint)(&s->e_keypoint, s->e_keytag, s->e_mat, &s->es_int, s->tol);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
 #endif
@@ -400,7 +400,7 @@ mged_bspline_edit_xy(
 	    /* Leave the rest to code in ft_edit */
 	    break;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", MGED_OBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
 	    mged_sedit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
