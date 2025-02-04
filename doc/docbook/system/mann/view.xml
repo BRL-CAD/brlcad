@@ -99,7 +99,7 @@ subcommands:
     </term>
     <listitem>
       <para>
-	Get (without arguments) or set the eye point. Setting the eye point also changes center while keeping the
+	Get (without arguments) or set the eye point. Setting the eye point also changes the center while keeping the
 	azimuth, elevation, and view size static.
       </para>
     </listitem>
