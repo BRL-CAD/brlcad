@@ -350,10 +350,10 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 // if greater than zero will be registered to run AFTER the cmd logic is run.
 // If mode is zero, then it is intended to be used *during* command execution
 // and it will be up to the command's implementation to incorporate the
-// callback into its execution logic. A "GED_CLBK_DURING" will be a no-op
+// callback into its execution logic. A "BU_CLBK_DURING" will be a no-op
 // unless the command implementation logic of the libged command in question
 // utilizes it.  The "search" command is an example of a command that utilizes
-// a "GED_CLBK_DURING" callback. PRE and POST callbacks are handled
+// a "BU_CLBK_DURING" callback. PRE and POST callbacks are handled
 // automatically by ged_exec, and command implementations should not invoke
 // them directly. LINGER is a special case involving commands utilizing long
 // running subprocesses.
@@ -371,7 +371,7 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 // d optionally associates user supplied data with the callback.  The bu_clbk_t
 // function signature has two data pointers - this value will be supplied as
 // the second pointer argument.  (The first will usually be the ged pointer,
-// but that is not guaranteed in the GED_CLBK_DURING and GED_CLBK_LINGER cases
+// but that is not guaranteed in the BU_CLBK_DURING and BU_CLBK_LINGER cases
 // - check the command implementation to see what data it is returning via the
 // first ptr.)
 //
