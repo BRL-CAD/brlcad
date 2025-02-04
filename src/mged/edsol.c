@@ -58,10 +58,6 @@ static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_st
 
 /* Ew. Globals. */
 /* primitive specific externs.  Eventually these should all go away */
-extern int es_ars_crv;  /* curve and column identifying selected ARS point */
-extern int es_ars_col;
-extern struct rt_solid_edit_menu_item ars_menu[];
-extern struct rt_solid_edit_menu_item ars_pick_menu[];
 
 extern int bot_verts[3];
 
@@ -596,8 +592,6 @@ init_sedit(struct mged_state *s)
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     lu_copy = (struct loopuse *)NULL;
-    es_ars_crv = (-1);
-    es_ars_col = (-1);
 
     bot_verts[0] = -1;
     bot_verts[1] = -1;
@@ -1467,8 +1461,6 @@ sedit_reject(struct mged_state *s)
     bot_verts[0] = -1;
     bot_verts[1] = -1;
     bot_verts[2] = -1;
-    es_ars_crv = (-1);
-    es_ars_col = (-1);
 
     if (lu_copy) {
 	struct model *m;

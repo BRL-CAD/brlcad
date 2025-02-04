@@ -179,8 +179,8 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	NULL,  /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_ars_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_ars_edit_xy), /* edit xy */
-	NULL,  /* prim edit create */
-	NULL,  /* prim edit destroy */
+	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_solid_edit_ars_prim_edit_create),    /* prim edit create */
+	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_solid_edit_ars_prim_edit_destroy),  /* prim edit destroy */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(rt_solid_edit_ars_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_solid_edit_ars_menu_item)    /* menu_item */
     },
