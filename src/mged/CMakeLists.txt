@@ -178,6 +178,7 @@ set(
   mged_wdb.h
   primitives/edarb.h
   primitives/edbspline.h
+  primitives/ednmg.h
   primitives/edfunctab.h
   sedit.h
 )

@@ -53,6 +53,7 @@
 #include "./menu.h"
 #include "./primitives/edfunctab.h"
 #include "./primitives/edarb.h"
+#include "./primitives/ednmg.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
@@ -62,10 +63,6 @@ static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_st
 extern int bot_verts[3];
 
 extern struct wdb_metaball_pnt *es_metaball_pnt;
-
-extern struct edgeuse *es_eu;
-extern struct loopuse *lu_copy;
-extern struct shell *es_s;
 
 extern struct wdb_pipe_pnt *es_pipe_pnt;
 
@@ -486,7 +483,8 @@ ecmd_nmg_edebug_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNU
 {
     struct mged_state *ms = (struct mged_state *)d;
     struct rt_solid_edit *s = ms->s_edit;
-    nmg_plot_eu(ms->gedp, es_eu, s->tol, s->vlfree);
+    struct rt_nmg_edit *en = (struct rt_nmg_edit *)s->ipe_ptr;
+    nmg_plot_eu(ms->gedp, en->es_eu, s->tol, s->vlfree);
     return BRLCAD_OK;
 }
 
@@ -588,10 +586,8 @@ init_sedit(struct mged_state *s)
 
 
     // TODO move to solid_edit_create via functab, eliminate globals...
-    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-    lu_copy = (struct loopuse *)NULL;
 
     bot_verts[0] = -1;
     bot_verts[1] = -1;
@@ -1306,12 +1302,15 @@ sedit_apply(struct mged_state *s, int accept_flag)
 {
     struct directory *dp;
 
+    // TODO - may need a reset functab for this...
+#if 0
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     bot_verts[0] = -1;
     bot_verts[1] = -1;
     bot_verts[2] = -1;
+#endif
 
     /* make sure we are in solid edit mode */
     if (!illump) {
@@ -1319,14 +1318,6 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
 	return TCL_OK;
-    }
-
-    if (lu_copy) {
-	struct model *m;
-
-	m = nmg_find_model(&lu_copy->l.magic);
-	nmg_km(m);
-	lu_copy = (struct loopuse *)NULL;
     }
 
     /* write editing changes out to disc */
@@ -1455,19 +1446,11 @@ sedit_reject(struct mged_state *s)
 	s->update_views = s->s_edit->update_views;
     }
 
-    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     bot_verts[0] = -1;
     bot_verts[1] = -1;
     bot_verts[2] = -1;
-
-    if (lu_copy) {
-	struct model *m;
-	m = nmg_find_model(&lu_copy->l.magic);
-	nmg_km(m);
-	lu_copy = (struct loopuse *)NULL;
-    }
 
     /* Restore the original solid everywhere */
     {
@@ -1908,11 +1891,14 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     /* free old copy */
     rt_db_free_internal(&s->s_edit->es_int);
 
+#if 0
+    // TODO - may need reset functab for this...
     /* reset */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL;
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL;
     es_s = (struct shell *)NULL;
     es_eu = (struct edgeuse *)NULL;
+#endif
 
     /* read in a fresh copy */
     if (!illump || !illump->s_u_data)

@@ -50,11 +50,44 @@
 #define ECMD_NMG_EKILL		11026	/* kill current edge */
 #define ECMD_NMG_LEXTRU		11027	/* Extrude loop */
 
-struct edgeuse *es_eu=(struct edgeuse *)NULL;   /* Currently selected NMG edgeuse */
-struct loopuse *lu_copy=(struct loopuse*)NULL;  /* copy of loop to be extruded */
-plane_t lu_pl;  /* plane equation for loop to be extruded */
-struct shell *es_s=(struct shell *)NULL;        /* Shell where extrusion is to end up */
-point_t lu_keypoint;    /* keypoint of lu_copy for extrusion */
+struct rt_nmg_edit {
+    struct edgeuse *es_eu;	/* Currently selected NMG edgeuse */
+    struct loopuse *lu_copy;	/* copy of loop to be extruded */
+    plane_t lu_pl;		/* plane equation for loop to be extruded */
+    struct shell *es_s;		/* Shell where extrusion is to end up */
+    point_t lu_keypoint;	/* keypoint of lu_copy for extrusion */
+};
+
+void *
+rt_solid_edit_nmg_prim_edit_create(struct rt_solid_edit *UNUSED(s))
+{
+    struct rt_nmg_edit *e;
+    BU_GET(e, struct rt_nmg_edit);
+
+    e->es_eu = NULL;
+    e->lu_copy = NULL;
+    e->es_s = NULL;
+
+    return (void *)e;
+}
+
+void
+rt_solid_edit_nmg_prim_edit_destroy(struct rt_nmg_edit *e)
+{
+    if (!e)
+	return;
+
+    // Sanity
+    e->es_eu = NULL;
+    if (e->lu_copy) {
+	struct model *m = nmg_find_model(&e->lu_copy->l.magic);
+	nmg_km(m);
+	e->lu_copy = (struct loopuse *)NULL;
+    }
+
+    BU_PUT(e, struct rt_nmg_edit);
+}
+
 
 /*
  * Handler for events in the NMG menu.
@@ -65,6 +98,7 @@ point_t lu_keypoint;    /* keypoint of lu_copy for extrusion */
 static void
 nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
@@ -78,20 +112,20 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	case ECMD_NMG_EKILL:
 	    break;
 	case ECMD_NMG_EDEBUG:
-	    if (!es_eu) {
+	    if (!n->es_eu) {
 		bu_vls_printf(s->log_str, "nmg_ed: no edge selected yet\n");
 		return;
 	    }
 
-	    nmg_pr_fu_around_eu(es_eu, s->tol);
+	    nmg_pr_fu_around_eu(n->es_eu, s->tol);
 
 	    // plotting clbk
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_NMG_EDEBUG, 0, GED_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, s);
 
-	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
-		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
+	    if (*n->es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
+		nmg_veu(&n->es_eu->up.lu_p->down_hd, n->es_eu->up.magic_p);
 	    /* no change of state or edit_flag */
 	    int vs_flag = 1;
 	    f = NULL; d = NULL;
@@ -100,19 +134,19 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		(*f)(0, NULL, d, &vs_flag);
 	    return;
 	case ECMD_NMG_FORW:
-	    if (!es_eu) {
+	    if (!n->es_eu) {
 		bu_vls_printf(s->log_str, "nmg_ed: no edge selected yet\n");
 		return;
 	    }
-	    NMG_CK_EDGEUSE(es_eu);
-	    es_eu = BU_LIST_PNEXT_CIRC(edgeuse, es_eu);
+	    NMG_CK_EDGEUSE(n->es_eu);
+	    n->es_eu = BU_LIST_PNEXT_CIRC(edgeuse, n->es_eu);
 
 	    {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
-			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
-			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
+			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
+			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 		bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
@@ -120,19 +154,19 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    rt_solid_edit_process(s);
 	    return;
 	case ECMD_NMG_BACK:
-	    if (!es_eu) {
+	    if (!n->es_eu) {
 		bu_log("nmg_ed: no edge selected yet\n");
 		return;
 	    }
-	    NMG_CK_EDGEUSE(es_eu);
-	    es_eu = BU_LIST_PPREV_CIRC(edgeuse, es_eu);
+	    NMG_CK_EDGEUSE(n->es_eu);
+	    n->es_eu = BU_LIST_PPREV_CIRC(edgeuse, n->es_eu);
 
 	    {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
-			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
-			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
+			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
+			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 		bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
@@ -140,19 +174,19 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    rt_solid_edit_process(s);
 	    return;
 	case ECMD_NMG_RADIAL:
-	    if (!es_eu) {
+	    if (!n->es_eu) {
 		bu_log("nmg_ed: no edge selected yet\n");
 		return;
 	    }
-	    NMG_CK_EDGEUSE(es_eu);
-	    es_eu = es_eu->eumate_p->radial_p;
+	    NMG_CK_EDGEUSE(n->es_eu);
+	    n->es_eu = n->es_eu->eumate_p->radial_p;
 
 	    {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
-			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
-			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
+			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
+			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 		bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
@@ -207,7 +241,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		}
 
 		/* Make sure loop is not a crack */
-		area = nmg_loop_plane_area(lu, lu_pl);
+		area = nmg_loop_plane_area(lu, n->lu_pl);
 
 		if (area < 0.0) {
 		    bu_vls_printf(s->log_str, "Cannot extrude loop with no area\n");
@@ -281,8 +315,8 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		m_tmp = nmg_mm();
 		r_tmp = nmg_mrsv(m_tmp);
 		s_tmp = BU_LIST_FIRST(shell, &r_tmp->s_hd);
-		lu_copy = nmg_dup_loop(lu, &s_tmp->l.magic, (long **)0);
-		if (!lu_copy) {
+		n->lu_copy = nmg_dup_loop(lu, &s_tmp->l.magic, (long **)0);
+		if (!n->lu_copy) {
 		    bu_vls_printf(s->log_str, "Failed to make copy of loop\n");
 		    nmg_km(m_tmp);
 		    return;
@@ -290,7 +324,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 
 		/* Get the first vertex in the loop as the basis for extrusion */
 		eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-		VMOVE(lu_keypoint, eu->vu_p->v_p->vg_p->coord);
+		VMOVE(n->lu_keypoint, eu->vu_p->v_p->vg_p->coord);
 
 		sh = lu->up.s_p;
 
@@ -299,9 +333,9 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 
 		    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 		    NMG_CK_REGION(r);
-		    es_s = nmg_msv(r);
+		    n->es_s = nmg_msv(r);
 		} else {
-		    es_s = sh;
+		    n->es_s = sh;
 		}
 
 	    }
@@ -362,6 +396,7 @@ rt_solid_edit_nmg_keypoint(
 	const struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     const char *strp = NULL;
     point_t mpt = VINIT_ZERO;
     if (ip->idb_type != ID_NMG)
@@ -383,11 +418,11 @@ rt_solid_edit_nmg_keypoint(
     strp = "(origin)";
 
     /* XXX Try to use the first point of the selected edge */
-    if (es_eu != (struct edgeuse *)NULL &&
-	    es_eu->vu_p != (struct vertexuse *)NULL &&
-	    es_eu->vu_p->v_p != (struct vertex *)NULL &&
-	    es_eu->vu_p->v_p->vg_p != (struct vertex_g *)NULL) {
-	VMOVE(mpt, es_eu->vu_p->v_p->vg_p->coord);
+    if (n->es_eu != (struct edgeuse *)NULL &&
+	    n->es_eu->vu_p != (struct vertexuse *)NULL &&
+	    n->es_eu->vu_p->v_p != (struct vertex *)NULL &&
+	    n->es_eu->vu_p->v_p->vg_p != (struct vertex_g *)NULL) {
+	VMOVE(mpt, n->es_eu->vu_p->v_p->vg_p->coord);
 	goto nmg_keypoint_finalize;
     }
 
@@ -499,7 +534,7 @@ rt_solid_edit_nmg_labels(
 	struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
-    //struct rt_nmg_edit *a = (struct rt_nmg_edit *)s->ipe_ptr;
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     point_t pos_view;
     int npl = 0;
 #define POINT_LABEL_STR(_pt, _str) { \
@@ -508,12 +543,12 @@ rt_solid_edit_nmg_labels(
     struct model *m = (struct model *) ip->idb_ptr;
     NMG_CK_MODEL(m);
     // Conditional labeling
-    if (es_eu) {
+    if (n->es_eu) {
 	point_t cent;
-	NMG_CK_EDGEUSE(es_eu);
+	NMG_CK_EDGEUSE(n->es_eu);
 	VADD2SCALE(cent,
-		es_eu->vu_p->v_p->vg_p->coord,
-		es_eu->eumate_p->vu_p->v_p->vg_p->coord,
+		n->es_eu->vu_p->v_p->vg_p->coord,
+		n->es_eu->eumate_p->vu_p->v_p->vg_p->coord,
 		0.5);
 	MAT4X3PNT(pos_view, xform, cent);
 	POINT_LABEL_STR(pos_view, " eu");
@@ -525,6 +560,7 @@ rt_solid_edit_nmg_labels(
 
 void ecmd_nmg_emove(struct rt_solid_edit *s)
 {
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     point_t new_pt;
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -534,14 +570,14 @@ void ecmd_nmg_emove(struct rt_solid_edit *s)
     s->e_para[1] *= s->local2base;
     s->e_para[2] *= s->local2base;
 
-    if (!es_eu) {
+    if (!n->es_eu) {
 	bu_vls_printf(s->log_str, "No edge selected!\n");
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
     }
-    NMG_CK_EDGEUSE(es_eu);
+    NMG_CK_EDGEUSE(n->es_eu);
 
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
@@ -561,7 +597,7 @@ void ecmd_nmg_emove(struct rt_solid_edit *s)
     } else if (!s->e_mvalid && !s->e_inpara)
 	return;
 
-    if (!nmg_find_fu_of_eu(es_eu) && *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+    if (!nmg_find_fu_of_eu(n->es_eu) && *n->es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 	struct loopuse *lu;
 	fastf_t area;
 	plane_t pl;
@@ -569,7 +605,7 @@ void ecmd_nmg_emove(struct rt_solid_edit *s)
 	/* this edge is in a wire loop
 	 * keep the loop planar
 	 */
-	lu = es_eu->up.lu_p;
+	lu = n->es_eu->up.lu_p;
 	NMG_CK_LOOPUSE(lu);
 
 	/* get plane equation for loop */
@@ -596,34 +632,35 @@ void ecmd_nmg_emove(struct rt_solid_edit *s)
 	}
     }
 
-    if (nmg_move_edge_thru_pnt(es_eu, new_pt, s->tol) < 0) {
+    if (nmg_move_edge_thru_pnt(n->es_eu, new_pt, s->tol) < 0) {
 	VPRINT("Unable to hit", new_pt);
     }
 }
 
 void ecmd_nmg_ekill(struct rt_solid_edit *s)
 {
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     struct model *m;
     struct edge_g_lseg *eg;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
-    if (!es_eu) {
+    if (!n->es_eu) {
 	bu_vls_printf(s->log_str, "No edge selected!\n");
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
     }
-    NMG_CK_EDGEUSE(es_eu);
+    NMG_CK_EDGEUSE(n->es_eu);
 
-    m = nmg_find_model(&es_eu->l.magic);
+    m = nmg_find_model(&n->es_eu->l.magic);
 
-    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+    if (*n->es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 	struct loopuse *lu;
 	struct edgeuse *prev_eu, *next_eu;
 
-	lu = es_eu->up.lu_p;
+	lu = n->es_eu->up.lu_p;
 	NMG_CK_LOOPUSE(lu);
 
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
@@ -636,14 +673,14 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 	    return;
 	}
 
-	prev_eu = BU_LIST_PPREV_CIRC(edgeuse, &es_eu->l);
+	prev_eu = BU_LIST_PPREV_CIRC(edgeuse, &n->es_eu->l);
 	NMG_CK_EDGEUSE(prev_eu);
 
-	if (prev_eu == es_eu) {
+	if (prev_eu == n->es_eu) {
 	    /* only one edge left in the loop
 	     * make it an edge to/from same vertex
 	     */
-	    if (es_eu->vu_p->v_p == es_eu->eumate_p->vu_p->v_p) {
+	    if (n->es_eu->vu_p->v_p == n->es_eu->eumate_p->vu_p->v_p) {
 		/* refuse to delete last edge that runs
 		 * to/from same vertex
 		 */
@@ -653,20 +690,20 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 		    (*f)(0, NULL, d, NULL);
 		return;
 	    }
-	    NMG_CK_EDGEUSE(es_eu->eumate_p);
-	    nmg_movevu(es_eu->eumate_p->vu_p, es_eu->vu_p->v_p);
+	    NMG_CK_EDGEUSE(n->es_eu->eumate_p);
+	    nmg_movevu(n->es_eu->eumate_p->vu_p, n->es_eu->vu_p->v_p);
 	    return;
 	}
 
-	next_eu = BU_LIST_PNEXT_CIRC(edgeuse, &es_eu->l);
+	next_eu = BU_LIST_PNEXT_CIRC(edgeuse, &n->es_eu->l);
 	NMG_CK_EDGEUSE(next_eu);
 
-	nmg_movevu(next_eu->vu_p, es_eu->vu_p->v_p);
-	if (nmg_keu(es_eu)) {
+	nmg_movevu(next_eu->vu_p, n->es_eu->vu_p->v_p);
+	if (nmg_keu(n->es_eu)) {
 	    /* Should never happen! */
 	    bu_exit(EXIT_FAILURE,  "rt_solid_edit_process(s): killed edge and emptied loop!\n");
 	}
-	es_eu = prev_eu;
+	n->es_eu = prev_eu;
 	nmg_rebound(m, s->tol);
 
 	/* fix edge geometry for modified edge (next_eu) */
@@ -676,16 +713,17 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 	VSUB2(eg->e_dir, next_eu->eumate_p->vu_p->v_p->vg_p->coord, next_eu->vu_p->v_p->vg_p->coord);
 
 	return;
-    } else if (*es_eu->up.magic_p == NMG_SHELL_MAGIC) {
+    } else if (*n->es_eu->up.magic_p == NMG_SHELL_MAGIC) {
 	/* wire edge, just kill it */
-	(void)nmg_keu(es_eu);
-	es_eu = (struct edgeuse *)NULL;
+	(void)nmg_keu(n->es_eu);
+	n->es_eu = (struct edgeuse *)NULL;
 	nmg_rebound(m, s->tol);
     }
 }
 
 void ecmd_nmg_esplit(struct rt_solid_edit *s)
 {
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     struct vertex *v=(struct vertex *)NULL;
     struct edge_g_lseg *eg;
     struct model *m;
@@ -700,15 +738,15 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
     s->e_para[1] *= s->local2base;
     s->e_para[2] *= s->local2base;
 
-    if (!es_eu) {
+    if (!n->es_eu) {
 	bu_vls_printf(s->log_str, "No edge selected!\n");
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
     }
-    NMG_CK_EDGEUSE(es_eu);
-    m = nmg_find_model(&es_eu->l.magic);
+    NMG_CK_EDGEUSE(n->es_eu);
+    m = nmg_find_model(&n->es_eu->l.magic);
     NMG_CK_MODEL(m);
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
@@ -728,10 +766,10 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
     } else if (!s->e_mvalid && !s->e_inpara)
 	return;
 
-    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+    if (*n->es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 	struct loopuse *lu;
 
-	lu = es_eu->up.lu_p;
+	lu = n->es_eu->up.lu_p;
 	NMG_CK_LOOPUSE(lu);
 
 	/* Currently, can only split wire edges or edges in wire loops */
@@ -767,17 +805,18 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
 	    VJOIN1(new_pt, new_pt, dist, view_dir);
 	}
     }
-    es_eu = nmg_esplit(v, es_eu, 0);
-    nmg_vertex_gv(es_eu->vu_p->v_p, new_pt);
+    n->es_eu = nmg_esplit(v, n->es_eu, 0);
+    nmg_vertex_gv(n->es_eu->vu_p->v_p, new_pt);
     nmg_rebound(m, s->tol);
-    eg = es_eu->g.lseg_p;
+    eg = n->es_eu->g.lseg_p;
     NMG_CK_EDGE_G_LSEG(eg);
     VMOVE(eg->e_pt, new_pt);
-    VSUB2(eg->e_dir, es_eu->eumate_p->vu_p->v_p->vg_p->coord, new_pt);
+    VSUB2(eg->e_dir, n->es_eu->eumate_p->vu_p->v_p->vg_p->coord, new_pt);
 }
 
 void ecmd_nmg_lextru(struct rt_solid_edit *s)
 {
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     fastf_t dist;
     point_t to_pt;
     vect_t extrude_vec;
@@ -804,7 +843,7 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
 	    VMOVE(to_pt, s->e_para);
 	}
     } else if (s->e_inpara == 1) {
-	VJOIN1(to_pt, lu_keypoint, s->e_para[0], lu_pl);
+	VJOIN1(to_pt, n->lu_keypoint, s->e_para[0], n->lu_pl);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for loop extrusion\n");
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
@@ -815,9 +854,9 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
 	return;
     }
 
-    VSUB2(extrude_vec, to_pt, lu_keypoint);
+    VSUB2(extrude_vec, to_pt, n->lu_keypoint);
 
-    if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, s->tol) < 1) {
+    if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, n->lu_pl, s->tol) < 1) {
 	bu_vls_printf(s->log_str, "Cannot extrude parallel to plane of loop\n");
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
@@ -825,15 +864,15 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
 	return;
     }
 
-    if (BU_LIST_NON_EMPTY(&es_s->fu_hd)) {
+    if (BU_LIST_NON_EMPTY(&n->es_s->fu_hd)) {
 	struct nmgregion *r;
 
-	r = es_s->r_p;
-	(void) nmg_ks(es_s);
-	es_s = nmg_msv(r);
+	r = n->es_s->r_p;
+	(void) nmg_ks(n->es_s);
+	n->es_s = nmg_msv(r);
     }
 
-    new_lu = nmg_dup_loop(lu_copy, &es_s->l.magic, (long **)0);
+    new_lu = nmg_dup_loop(n->lu_copy, &n->es_s->l.magic, (long **)0);
     area = nmg_loop_plane_area(new_lu, new_lu_pl);
     if (area < 0.0) {
 	bu_vls_printf(s->log_str, "loop to be extruded as no area!\n");
@@ -864,7 +903,7 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
     nmg_rebound(m, s->tol);
     (void)nmg_ck_geometry(m, s->vlfree, s->tol);
 
-    es_eu = (struct edgeuse *)NULL;
+    n->es_eu = (struct edgeuse *)NULL;
 
     f = NULL; d = NULL;
     rt_solid_edit_clbk_get(&f, &d, s, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING);
@@ -881,6 +920,7 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
 /* XXX Should just leave desired location in s->e_mparam for rt_solid_edit_process(s) */
 void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
 {
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
 
     struct model *m =
@@ -910,16 +950,16 @@ void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
 	    (*f)(0, NULL, d, NULL);
 	return;
     }
-    es_eu = e->eu_p;
-    NMG_CK_EDGEUSE(es_eu);
+    n->es_eu = e->eu_p;
+    NMG_CK_EDGEUSE(n->es_eu);
 
     {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&tmp_vls,
 		"edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
-		(void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
-		V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
+		(void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
+		V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
@@ -931,19 +971,20 @@ void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
 int
 rt_solid_edit_nmg_edit(struct rt_solid_edit *s, int edflag)
 {
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
 	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
 	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_NMG_EPICK:
