@@ -157,7 +157,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     bu_clbk_t clbk = NULL;
     void *u1 = NULL;
     void *u2 = NULL;
-    ged_clbk_get(&clbk, &u2, gedp, "ert", GED_CLBK_LINGER);
+    ged_clbk_get(&clbk, &u2, gedp, "ert", BU_CLBK_LINGER);
 
     // We need to know the pid of the rt command that has been launched
     int rt_pid = -1;
@@ -167,7 +167,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     clbk = NULL;
     u1 = (void *)&rt_pid;
     u2 = NULL;
-    ged_clbk_get(&clbk, &u2, gedp, "ert", GED_CLBK_DURING);
+    ged_clbk_get(&clbk, &u2, gedp, "ert", BU_CLBK_DURING);
 
     if (clbk)
 	(*clbk)(argc, argv, u1, u2);

@@ -548,9 +548,9 @@ ged_clbk_set(struct ged *gedp, const char *cmd_str, int mode, bu_clbk_t f, void 
 	return (BRLCAD_ERROR | GED_UNKNOWN);
     const struct ged_cmd *cmd = cm_it->second;
 
-    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
-    cm = (mode == GED_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
-    cm = (mode == GED_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == BU_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    cm = (mode == BU_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
+    cm = (mode == BU_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
     std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
     if (c_it != cm->end())
 	ret |= GED_OVERRIDE;
@@ -578,9 +578,9 @@ ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd_str, int 
 	return (BRLCAD_ERROR | GED_UNKNOWN);
     const struct ged_cmd *cmd = cm_it->second;
 
-    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == GED_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
-    cm = (mode == GED_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
-    cm = (mode == GED_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == BU_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    cm = (mode == BU_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
+    cm = (mode == BU_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
     std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
     if (c_it == cm->end()) {
 	// Nothing set, which is fine - return NULL

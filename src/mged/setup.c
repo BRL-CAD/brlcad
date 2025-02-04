@@ -526,13 +526,13 @@ mged_setup(struct mged_state *s)
     s->gedp->ged_create_io_handler = &tclcad_create_io_handler;
     s->gedp->ged_delete_io_handler = &tclcad_delete_io_handler;
 
-    ged_clbk_set(s->gedp, "opendb", GED_CLBK_PRE, &mged_pre_opendb_clbk, (void *)&mged_global_db_ctx);
-    ged_clbk_set(s->gedp, "opendb", GED_CLBK_POST, &mged_post_opendb_clbk, (void *)&mged_global_db_ctx);
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&mged_global_db_ctx);
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_PRE, &mged_pre_opendb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_POST, &mged_post_opendb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
 
     // Register during-execution callback function for search command
-    ged_clbk_set(s->gedp, "search", GED_CLBK_DURING, &mged_db_search_callback, (void *)s->interp);
+    ged_clbk_set(s->gedp, "search", BU_CLBK_DURING, &mged_db_search_callback, (void *)s->interp);
 
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;

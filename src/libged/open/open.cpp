@@ -98,7 +98,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 	// non-standard behavior for ged_exec.
 	bu_clbk_t opendb_clbk = NULL;
 	void *opendb_clbk_data = NULL;
-	ged_clbk_get(&opendb_clbk, &opendb_clbk_data, gedp, "opendb", GED_CLBK_POST);
+	ged_clbk_get(&opendb_clbk, &opendb_clbk_data, gedp, "opendb", BU_CLBK_POST);
 	if (opendb_clbk)
 	    (*opendb_clbk)(argc, argv, (void *)gedp, opendb_clbk_data);
 

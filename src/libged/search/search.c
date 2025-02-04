@@ -366,7 +366,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     void *u1 = (void *)gedp;
     void *u2 = NULL;
 
-    if (ged_clbk_get(&clbk, &u2, gedp, argv_orig[0], GED_CLBK_DURING) == BRLCAD_ERROR) {
+    if (ged_clbk_get(&clbk, &u2, gedp, argv_orig[0], BU_CLBK_DURING) == BRLCAD_ERROR) {
 	bu_log("search cmd callback retrieval error\n");
 	return BRLCAD_ERROR;
     }
