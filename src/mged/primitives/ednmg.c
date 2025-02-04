@@ -37,6 +37,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "./edfunctab.h"
+#include "./ednmg.h"
 
 #define ECMD_NMG_EPICK		11019	/* edge pick */
 #define ECMD_NMG_EMOVE		11020	/* edge move */
@@ -47,14 +48,6 @@
 #define ECMD_NMG_ESPLIT		11025	/* split current edge */
 #define ECMD_NMG_EKILL		11026	/* kill current edge */
 #define ECMD_NMG_LEXTRU		11027	/* Extrude loop */
-
-struct rt_nmg_edit {
-    struct edgeuse *es_eu;	/* Currently selected NMG edgeuse */
-    struct loopuse *lu_copy;	/* copy of loop to be extruded */
-    plane_t lu_pl;		/* plane equation for loop to be extruded */
-    struct shell *es_s;		/* Shell where extrusion is to end up */
-    point_t lu_keypoint;	/* keypoint of lu_copy for extrusion */
-};
 
 void *
 rt_solid_edit_nmg_prim_edit_create(struct rt_solid_edit *UNUSED(s))

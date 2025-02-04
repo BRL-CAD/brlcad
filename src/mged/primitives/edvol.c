@@ -47,8 +47,6 @@
 #define MENU_VOL_THRESH_LO	13078
 #define MENU_VOL_THRESH_HI	13079
 
-extern const char * get_file_name(struct rt_solid_edit *s, char *str);
-
 static void
 vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
