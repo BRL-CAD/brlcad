@@ -203,6 +203,20 @@
  */
 typedef int(*bu_clbk_t)(int, const char**,void*,void*);
 
+/**
+ * When callbacks are used, there are different points during the execution
+ * process when the callback may need to be triggered.  Establish common
+ * definitions so various libraries can use a consistent convention.
+ */
+// Make some definitions so it's clear what callback slot we are addressing
+#define BU_CLBK_PRE -1
+#define BU_CLBK_DURING 0
+#define BU_CLBK_POST 1
+/* In some cases (rt launches are an example) the client application may need
+ * to take action when a subprocess ends, not simply when the command returns.
+ * Distinguished from BU_CLBK_POST with this setting. */
+#define BU_CLBK_LINGER 2
+
 /** @} */
 
 #endif  /* BU_DEFINES_H */

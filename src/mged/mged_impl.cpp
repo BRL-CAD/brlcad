@@ -115,13 +115,13 @@ mged_internal_clbk_map(MGED_Internal *i, int obj_type, int mode)
 {
     std::map<int, std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>> *omp;
     switch (mode) {
-	case GED_CLBK_DURING:
+	case BU_CLBK_DURING:
 	    omp = &i->cmd_during_clbk;
 	    break;
-	case GED_CLBK_POST:
+	case BU_CLBK_POST:
 	    omp = &i->cmd_postrun_clbk;
 	    break;
-	case GED_CLBK_LINGER:
+	case BU_CLBK_LINGER:
 	    omp = &i->cmd_linger_clbk;
 	    break;
 	default:
@@ -142,13 +142,13 @@ mged_sedit_clbk_map(MGED_SEDIT_Internal *i, int mode)
 {
     std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
     switch (mode) {
-	case GED_CLBK_DURING:
+	case BU_CLBK_DURING:
 	    mp = &i->cmd_during_clbk;
 	    break;
-	case GED_CLBK_POST:
+	case BU_CLBK_POST:
 	    mp = &i->cmd_postrun_clbk;
 	    break;
-	case GED_CLBK_LINGER:
+	case BU_CLBK_LINGER:
 	    mp = &i->cmd_linger_clbk;
 	    break;
 	default:

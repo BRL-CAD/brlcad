@@ -347,10 +347,10 @@ GshState::GshState()
     view_checkpoint();
 
     // Assign gsh specific open/close db handlers to the gedp
-    ged_clbk_set(gedp, "opendb", GED_CLBK_PRE, &gsh_pre_opendb_clbk, (void *)this);
-    ged_clbk_set(gedp, "opendb", GED_CLBK_POST, &gsh_post_opendb_clbk, (void *)this);
-    ged_clbk_set(gedp, "closedb", GED_CLBK_PRE, &gsh_pre_closedb_clbk, (void *)this);
-    ged_clbk_set(gedp, "closedb", GED_CLBK_POST, &gsh_post_closedb_clbk, (void *)this);
+    ged_clbk_set(gedp, "opendb", BU_CLBK_PRE, &gsh_pre_opendb_clbk, (void *)this);
+    ged_clbk_set(gedp, "opendb", BU_CLBK_POST, &gsh_post_opendb_clbk, (void *)this);
+    ged_clbk_set(gedp, "closedb", BU_CLBK_PRE, &gsh_pre_closedb_clbk, (void *)this);
+    ged_clbk_set(gedp, "closedb", BU_CLBK_POST, &gsh_post_closedb_clbk, (void *)this);
 
 
     // Assign gsh specific I/O handlers to the gedp
@@ -359,7 +359,7 @@ GshState::GshState()
     gedp->ged_io_data = (void *)this;
 
     // Tell libged how to clear the screen
-    ged_clbk_set(gedp, "clear", GED_CLBK_POST, &Gsh_ClearScreen, (void *)this);
+    ged_clbk_set(gedp, "clear", BU_CLBK_POST, &Gsh_ClearScreen, (void *)this);
 }
 
 GshState::~GshState()

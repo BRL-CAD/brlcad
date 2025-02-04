@@ -173,8 +173,8 @@ QgViewCtrl::raytrace_cmd()
     const char *av[4] = {NULL};
     struct bu_vls pid_str = BU_VLS_INIT_ZERO;
 
-    ged_clbk_set(gedp, "ert", GED_CLBK_DURING, &rt_cmd_start, (void *)this);
-    ged_clbk_set(gedp, "ert", GED_CLBK_LINGER, &rt_cmd_done, (void *)this);
+    ged_clbk_set(gedp, "ert", BU_CLBK_DURING, &rt_cmd_start, (void *)this);
+    ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, &rt_cmd_done, (void *)this);
 
     if (raytrace_running) {
 	if (pid < 0)
@@ -192,8 +192,8 @@ QgViewCtrl::raytrace_cmd()
     emit view_changed(QG_VIEW_REFRESH);
 
 cmd_cleanup:
-    ged_clbk_set(gedp, "ert", GED_CLBK_DURING, NULL, NULL);
-    ged_clbk_set(gedp, "ert", GED_CLBK_LINGER, NULL, NULL);
+    ged_clbk_set(gedp, "ert", BU_CLBK_DURING, NULL, NULL);
+    ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, NULL, NULL);
     bu_vls_free(&pid_str);
 }
 

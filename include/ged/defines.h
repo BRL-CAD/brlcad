@@ -345,18 +345,6 @@ GED_EXPORT void ged_destroy(struct ged *);
 GED_EXPORT extern void ged_init(struct ged *gedp);
 GED_EXPORT extern void ged_free(struct ged *gedp);
 
-
-
-// Make some definitions so it's clear what callback slot we are addressing
-#define GED_CLBK_PRE -1
-#define GED_CLBK_DURING 0
-#define GED_CLBK_POST 1
-
-// In some cases (rt launches in particular) the client application may need
-// to take action when the subprocess ends, not simply when the command
-// returns.  Distinguished from GED_CLBK_POST with this setting.
-#define GED_CLBK_LINGER 2
-
 // Associate a callback function pointer for a command.  If mode is less than
 // zero, function will be registered to run BEFORE actual cmd logic is run, and
 // if greater than zero will be registered to run AFTER the cmd logic is run.

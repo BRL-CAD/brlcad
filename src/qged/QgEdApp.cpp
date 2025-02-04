@@ -247,10 +247,10 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     }
 
     // Assign QGED specific open/close db handlers to the gedp
-    ged_clbk_set(mdl->gedp, "opendb", GED_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "opendb", GED_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "closedb", GED_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "closedb", GED_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
 
     // Assign QGED specific I/O handlers to the gedp
     mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
@@ -448,16 +448,16 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// If we need command-specific subprocess awareness for
 	// a command, set it up
 	if (BU_STR_EQUAL(argv[0], "ert")) {
-	    ged_clbk_set(gedp, "ert", GED_CLBK_DURING, &raytrace_start, (void *)this);
-	    ged_clbk_set(gedp, "ert", GED_CLBK_LINGER, &raytrace_done, (void *)this);
+	    ged_clbk_set(gedp, "ert", BU_CLBK_DURING, &raytrace_start, (void *)this);
+	    ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, &raytrace_done, (void *)this);
 	}
 
 	// Ask the model to execute the command
 	ret = mdl->run_cmd(msg, argc, argv);
 
 	if (BU_STR_EQUAL(argv[0], "ert")) {
-	    ged_clbk_set(gedp, "ert", GED_CLBK_DURING, NULL, NULL);
-	    ged_clbk_set(gedp, "ert", GED_CLBK_LINGER, NULL, NULL);
+	    ged_clbk_set(gedp, "ert", BU_CLBK_DURING, NULL, NULL);
+	    ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, NULL, NULL);
 	}
     } else {
 	for (int i = 0; i < argc; i++) {
