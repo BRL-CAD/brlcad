@@ -45,9 +45,6 @@
 #define MENU_EXTR_ROT_H		27105
 #define MENU_EXTR_SKT_NAME	27106
 
-// TODO - this needs to become an ECMD specific callback
-extern char * get_sketch_name(struct rt_solid_edit *s, const char *sk_n);
-
 /*ARGSUSED*/
 static void
 extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -143,8 +140,6 @@ ecmd_extr_skt_name(struct rt_solid_edit *s)
     struct rt_db_internal tmp_ip;
 
     RT_EXTRUDE_CK_MAGIC(extr);
-
-    char *sketch_name = get_sketch_name(s, extr->sketch_name);
 
     if (extr->sketch_name)
 	bu_free((char *)extr->sketch_name, "extr->sketch_name");
