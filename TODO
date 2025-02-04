@@ -51,6 +51,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* calculate maximum/minimum presented area az/el for a given model
+
 * optimize mged/libged init and exit performance.  profiling shows
   over 90% of entire execution time to run a single command is
   dominated by libged's dlopen/dlclose.  cumulatively about 1sec on
