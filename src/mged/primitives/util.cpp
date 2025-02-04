@@ -52,8 +52,6 @@ rt_solid_edit_map_destroy(struct rt_solid_edit_map *o)
     BU_PUT(o, struct rt_solid_edit_map);
 }
 
-// TODO - create primitive type specific structs and shift any remaining
-// globals into them.  Probably should have the functab do the work?
 struct rt_solid_edit *
 rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bview *v)
 {
@@ -61,6 +59,11 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     BU_GET(s, struct rt_solid_edit);
     BU_GET(s->m, struct rt_solid_edit_map);
     s->m->i = new RT_Edit_Map_Internal;
+    s->ipe_ptr = NULL;
+
+    if (dfp && DB_FULL_PATH_CUR_DIR(dfp) && EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)
+	s->ipe_ptr = (*EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)();
+
     s->tol = tol;
     s->vp = v;
 
@@ -113,6 +116,11 @@ rt_solid_edit_destroy(struct rt_solid_edit *s)
 {
     if (!s)
 	return;
+
+    struct rt_db_internal *ip = &s->es_int;
+
+    if (s->ipe_ptr && EDOBJ[ip->idb_type].ft_prim_edit_destroy)
+	 (*EDOBJ[ip->idb_type].ft_prim_edit_destroy)(s->ipe_ptr);
 
     rt_db_free_internal(&s->es_int);
 
