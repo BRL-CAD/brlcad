@@ -160,7 +160,7 @@ struct rt_solid_edit {
     void *u_ptr;
 };
 
-struct rt_solid_edit_map *rt_solid_edit_map_create();
+struct rt_solid_edit_map *rt_solid_edit_map_create(void);
 void rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
 int rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
 int rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode);

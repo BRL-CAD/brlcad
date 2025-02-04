@@ -35,7 +35,7 @@
 #include "edfunctab.h"
 
 extern "C" struct rt_solid_edit_map *
-rt_solid_edit_map_create()
+rt_solid_edit_map_create(void)
 {
     struct rt_solid_edit_map *o = NULL;
     BU_GET(o, struct rt_solid_edit_map);
