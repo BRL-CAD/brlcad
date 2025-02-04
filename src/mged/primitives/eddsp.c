@@ -198,7 +198,7 @@ ecmd_dsp_fname(struct rt_solid_edit *s)
 {
     struct rt_dsp_internal *dsp =
 	(struct rt_dsp_internal *)s->es_int.idb_ptr;
-    const char *fname;
+    const char *fname = NULL;
     struct stat stat_buf;
     b_off_t need_size;
     bu_clbk_t f = NULL;
@@ -212,7 +212,7 @@ ecmd_dsp_fname(struct rt_solid_edit *s)
     if (f)
 	(*f)(1, (const char **)av, d, &fname);
 
-    if (! fname)
+    if (!fname)
 	return BRLCAD_OK;
 
     if (stat(fname, &stat_buf)) {
