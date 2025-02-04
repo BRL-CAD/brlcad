@@ -32,8 +32,8 @@
 extern "C" {
 
 #define EDIT_DECLARE_INTERFACE(name) \
-    extern void rt_solid_edit_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels *pl, int max_pl, const mat_t xform, struct rt_db_internal *ip, struct bn_tol *); \
-    extern const char *rt_solid_edit_##name##_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol); \
+    extern void rt_solid_edit_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels *pl, int max_pl, const mat_t xform, struct rt_solid_edit *s, struct bn_tol *); \
+    extern const char *rt_solid_edit_##name##_keypoint(point_t *pt, const char *keystr, const mat_t mat, struct rt_solid_edit *s, const struct bn_tol *tol); \
     extern void rt_solid_edit_##name##_e_axes_pos(struct rt_solid_edit *s, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void rt_solid_edit_##name##_write_params(struct bu_vls *p, const struct rt_db_internal *ip, const struct bn_tol *tol, fastf_t base2local); \
     extern void rt_solid_edit_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
@@ -243,8 +243,8 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	NULL,  /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_bspline_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_bspline_edit_xy), /* edit xy */
-	NULL,  /* prim edit create */
-	NULL,  /* prim edit destroy */
+	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_solid_edit_bspline_prim_edit_create),    /* prim edit create */
+	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_solid_edit_bspline_prim_edit_destroy),  /* prim edit destroy */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(rt_solid_edit_generic_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_solid_edit_bspline_menu_item)    /* menu_item */
     },

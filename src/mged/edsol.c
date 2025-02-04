@@ -53,7 +53,6 @@
 #include "./menu.h"
 #include "./primitives/edfunctab.h"
 #include "./primitives/edarb.h"
-#include "./primitives/edbspline.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
@@ -550,7 +549,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     if (s->edit_state.global_editing_state == ST_VIEW || s->edit_state.global_editing_state == ST_S_PICK || s->edit_state.global_editing_state == ST_O_PICK)
 	return TCL_OK;
 
-    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
+    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, s->s_edit->e_mat);
     return TCL_OK;
 }
 
@@ -1082,7 +1081,7 @@ init_oedit_guts(struct mged_state *s)
     /* get the inverse matrix */
     bn_mat_inv(s->s_edit->e_invmat, s->s_edit->e_mat);
 
-    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, s->s_edit->e_mat);
+    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &strp, s->s_edit->e_mat);
     init_oedit_vars(s);
 }
 
@@ -1612,7 +1611,7 @@ label_edited_solid(
     // First, see if we have an edit-aware labeling method.  If we do, use it.
     if (EDOBJ[ip->idb_type].ft_labels) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	(*EDOBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, &s->s_edit->es_int, &s->tol.tol);
+	(*EDOBJ[ip->idb_type].ft_labels)(num_lines, lines, pl, max_pl, xform, s->s_edit, &s->tol.tol);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
@@ -1680,8 +1679,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	    if (BU_STR_EQUAL(argv[1], "reset")) {
 		s->s_edit->e_keytag = "";
 		s->s_edit->e_keyfixed = 0;
-		rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
-				   &s->s_edit->es_int, s->s_edit->e_mat);
+		rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, s->s_edit->e_mat);
 		break;
 	    }
 	    /* fall through */
@@ -1887,7 +1885,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	transform_editing_solid(s, &s->s_edit->es_int, s->s_edit->e_invmat, &s->s_edit->es_int, 1);
 
     if (!s->s_edit->e_keyfixed)
-	rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
+	rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, s->s_edit->e_mat);
 
     int flag = 0;
     set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
@@ -1945,7 +1943,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     /* Establish initial keypoint */
     s->s_edit->e_keytag = "";
-    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, &s->s_edit->es_int, s->s_edit->e_mat);
+    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &s->s_edit->e_keytag, s->s_edit->e_mat);
 
     /* Reset relevant variables */
     MAT_IDN(s->s_edit->acc_rot_sol);
@@ -2074,7 +2072,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     /* get the inverse matrix */
     bn_mat_inv(s->s_edit->e_invmat, s->s_edit->e_mat);
 
-    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, s->s_edit->e_mat);
+    rt_get_solid_keypoint(s->s_edit, &s->s_edit->e_keypoint, &strp, s->s_edit->e_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
     s->update_views = 1;

@@ -40,9 +40,10 @@ rt_solid_edit_grp_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *tol)
 {
+    struct rt_db_internal *ip = &s->es_int;
     const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
     if (!strp) {
 	static const char *c_str = "C";

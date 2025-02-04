@@ -3644,7 +3644,7 @@ mged_etran(struct mged_state *s,
 	RT_CK_DB_INTERNAL(ip);
 	if (EDOBJ[ip->idb_type].ft_keypoint) {
 	    bu_vls_trunc(s->s_edit->log_str, 0);
-	    s->s_edit->e_keytag = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, s->s_edit->e_keytag, mat, ip, &s->tol.tol);
+	    s->s_edit->e_keytag = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, s->s_edit->e_keytag, mat, s->s_edit, &s->tol.tol);
 	    if (bu_vls_strlen(s->s_edit->log_str)) {
 		Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 		bu_vls_trunc(s->s_edit->log_str, 0);

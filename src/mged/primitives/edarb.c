@@ -608,9 +608,10 @@ rt_solid_edit_arb_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *tol)
 {
+    struct rt_db_internal *ip = &s->es_int;
     if (*keystr == 'V') {
 	const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
 	return strp;

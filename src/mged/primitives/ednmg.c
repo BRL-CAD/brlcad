@@ -358,9 +358,10 @@ rt_solid_edit_nmg_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *UNUSED(tol))
 {
+    struct rt_db_internal *ip = &s->es_int;
     const char *strp = NULL;
     point_t mpt = VINIT_ZERO;
     if (ip->idb_type != ID_NMG)
@@ -494,9 +495,11 @@ rt_solid_edit_nmg_labels(
 	struct rt_point_labels *pl,
 	int UNUSED(max_pl),
 	const mat_t xform,
-	struct rt_db_internal *ip,
+	struct rt_solid_edit*s,
 	struct bn_tol *UNUSED(tol))
 {
+    struct rt_db_internal *ip = &s->es_int;
+    //struct rt_nmg_edit *a = (struct rt_nmg_edit *)s->ipe_ptr;
     point_t pos_view;
     int npl = 0;
 #define POINT_LABEL_STR(_pt, _str) { \

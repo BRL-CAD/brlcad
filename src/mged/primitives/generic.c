@@ -48,7 +48,7 @@
  * processed as well?
  */
 void
-rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, fastf_t *mat)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -56,11 +56,12 @@ rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, s
     if (!strp)
 	return;
 
+    struct rt_db_internal *ip = &s->es_int;
     RT_CK_DB_INTERNAL(ip);
 
     if (EDOBJ[ip->idb_type].ft_keypoint) {
 	bu_vls_trunc(s->log_str, 0);
-	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, ip, s->tol);
+	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, s, s->tol);
 	if (bu_vls_strlen(s->log_str)) {
 	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_STR, 0, GED_CLBK_DURING);
 	    if (f)
@@ -151,7 +152,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 
     /* If the keypoint changed location, find about it here */
     if (!s->e_keyfixed)
-	rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, &s->es_int, s->e_mat);
+	rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, s->e_mat);
 
     int flag = 0;
     f = NULL; d = NULL;
@@ -180,9 +181,10 @@ rt_solid_edit_generic_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *tol)
 {
+    struct rt_db_internal *ip = &s->es_int;
     static const char *vert_str = "V";
     const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
     if (strp)

@@ -61,9 +61,6 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     s->m->i = new RT_Edit_Map_Internal;
     s->ipe_ptr = NULL;
 
-    if (dfp && DB_FULL_PATH_CUR_DIR(dfp) && EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)
-	s->ipe_ptr = (*EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)();
-
     s->tol = tol;
     s->vp = v;
 
@@ -81,8 +78,16 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     BU_GET(s->log_str, struct bu_vls);
     bu_vls_init(s->log_str);
 
-    if (!dfp || !dbip)
+    if (!dfp || !dbip) {
+
+	// It's preferable to have an existing rt_db_internal to set up the
+	// prim specific , but if we don't have it we still need to stub in an
+	// empty struct so the logic has *something* to work with.
+	if (dfp && DB_FULL_PATH_CUR_DIR(dfp) && EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)
+	    s->ipe_ptr = (*EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)(NULL);
+
 	return s;
+    }
 
     s->local2base = dbip->dbi_local2base;
     s->base2local = dbip->dbi_base2local;
@@ -93,10 +98,9 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     }
     RT_CK_DB_INTERNAL(&s->es_int);
 
-    // TODO - prim specific data creation via functab
-    if (s->es_int.idb_type == ID_BSPLINE) {
-	//bspline_init_sedit(s);
-    }
+    // OK, we have the internal now, set up prim specific struct, if any
+    if (dfp && DB_FULL_PATH_CUR_DIR(dfp) && EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)
+	s->ipe_ptr = (*EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)(s);
 
     /* Save aggregate path matrix */
     (void)db_path_to_mat(dbip, dfp, s->e_mat, dfp->fp_len-1, &rt_uniresource);
@@ -106,7 +110,7 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
 
     /* Establish initial keypoint */
     s->e_keytag = "";
-    rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, &s->es_int, s->e_mat);
+    rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, s->e_mat);
 
     return s;
 }

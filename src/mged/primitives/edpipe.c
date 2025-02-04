@@ -644,9 +644,10 @@ rt_solid_edit_pipe_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *UNUSED(tol))
 {
+    struct rt_db_internal *ip = &s->es_int;
     static const char *strp = "V";
     point_t mpt = VINIT_ZERO;
     RT_CK_DB_INTERNAL(ip);
@@ -670,9 +671,11 @@ rt_solid_edit_pipe_labels(
 	struct rt_point_labels *pl,
 	int UNUSED(max_pl),
 	const mat_t xform,
-	struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	struct bn_tol *UNUSED(tol))
 {
+    struct rt_db_internal *ip = &s->es_int;
+    //struct rt_pipe_edit *a = (struct rt_pipe_edit *)s->ipe_ptr;
     point_t pos_view;
     int npl = 0;
 

@@ -38,11 +38,33 @@
 #define ECMD_VTRANS		9017	/* vertex translate */
 #define ECMD_SPLINE_VPICK       9018	/* vertex pick */
 
-static int spl_surfno;	/* What surf & ctl pt to edit on spline */
-static int spl_ui;
-static int spl_vi;
+void *
+rt_solid_edit_bspline_prim_edit_create(struct rt_solid_edit *s)
+{
+    struct rt_bspline_edit *e;
+    BU_GET(e, struct rt_bspline_edit);
+    if (!s)
+	return (void *)e;
 
-//static point_t v_pos;  // vpick point.  TODO - needs to be in a primitive type specific struct
+    // If we have the solid edit, do some more setup
+    struct rt_nurb_internal *sip = (struct rt_nurb_internal *) s->es_int.idb_ptr;
+    RT_NURB_CK_MAGIC(sip);
+    e->spl_surfno = sip->nsrf/2;
+    struct face_g_snurb *surf = sip->srfs[e->spl_surfno];
+    NMG_CK_SNURB(surf);
+    e->spl_ui = surf->s_size[1]/2;
+    e->spl_vi = surf->s_size[0]/2;
+
+    return (void *)e;
+}
+
+void
+rt_solid_edit_bspline_prim_edit_destroy(struct rt_bspline_edit *e)
+{
+    if (!e)
+	return;
+    BU_PUT(e, struct rt_bspline_edit);
+}
 
 /*ARGSUSED*/
 static void
@@ -168,21 +190,6 @@ nurb_closest2d(
 }
 
 
-
-void
-bspline_init_rt_solid_edit_process(struct rt_solid_edit *s)
-{
-    struct rt_nurb_internal *sip =
-	(struct rt_nurb_internal *) s->es_int.idb_ptr;
-    struct face_g_snurb *surf;
-    RT_NURB_CK_MAGIC(sip);
-    spl_surfno = sip->nsrf/2;
-    surf = sip->srfs[spl_surfno];
-    NMG_CK_SNURB(surf);
-    spl_ui = surf->s_size[1]/2;
-    spl_vi = surf->s_size[0]/2;
-}
-
 void
 sedit_vpick(struct rt_solid_edit *s)
 {
@@ -219,10 +226,12 @@ rt_solid_edit_bspline_labels(
 	struct rt_point_labels *pl,
 	int UNUSED(max_pl),
 	const mat_t xform,
-	struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	struct bn_tol *UNUSED(tol)
     )
 {
+    struct rt_db_internal *ip = &s->es_int;
+    struct rt_bspline_edit *b = (struct rt_bspline_edit *)s->ipe_ptr;
     point_t pos_view;
     int npl = 0;
 
@@ -239,11 +248,9 @@ rt_solid_edit_bspline_labels(
     RT_NURB_CK_MAGIC(sip);
 
     // Conditional labeling
-    struct face_g_snurb *surf;
-    fastf_t *fp;
-    surf = sip->srfs[spl_surfno];
+    struct face_g_snurb *surf = sip->srfs[b->spl_surfno];
     NMG_CK_SNURB(surf);
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
+    fastf_t *fp = &RT_NURB_GET_CONTROL_POINT(surf, b->spl_ui, b->spl_vi);
     MAT4X3PNT(pos_view, xform, fp);
     POINT_LABEL(pos_view, 'V');
 
@@ -268,9 +275,11 @@ rt_solid_edit_bspline_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *UNUSED(tol))
 {
+    struct rt_db_internal *ip = &s->es_int;
+    struct rt_bspline_edit *b = (struct rt_bspline_edit *)s->ipe_ptr;
     point_t mpt = VINIT_ZERO;
     static char buf[BUFSIZ];
 
@@ -282,12 +291,12 @@ rt_solid_edit_bspline_keypoint(
     fastf_t *fp;
 
     RT_NURB_CK_MAGIC(sip);
-    surf = sip->srfs[spl_surfno];
+    surf = sip->srfs[b->spl_surfno];
     NMG_CK_SNURB(surf);
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
+    fp = &RT_NURB_GET_CONTROL_POINT(surf, b->spl_ui, b->spl_vi);
     VMOVE(mpt, fp);
     sprintf(buf, "Surf %d, index %d,%d",
-	    spl_surfno, spl_ui, spl_vi);
+	    b->spl_surfno, b->spl_ui, b->spl_vi);
     MAT4X3PNT(*pt, mat, mpt);
     return (const char *)buf;
 }
@@ -296,6 +305,8 @@ rt_solid_edit_bspline_keypoint(
 void
 ecmd_vtrans(struct rt_solid_edit *s)
 {
+    struct rt_bspline_edit *b = (struct rt_bspline_edit *)s->ipe_ptr;
+
     /* must convert to base units */
     s->e_para[0] *= s->local2base;
     s->e_para[1] *= s->local2base;
@@ -318,9 +329,9 @@ ecmd_vtrans(struct rt_solid_edit *s)
 	fastf_t *fp;
 
 	RT_NURB_CK_MAGIC(sip);
-	surf = sip->srfs[spl_surfno];
+	surf = sip->srfs[b->spl_surfno];
 	NMG_CK_SNURB(surf);
-	fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
+	fp = &RT_NURB_GET_CONTROL_POINT(surf, b->spl_ui, b->spl_vi);
 	if (s->mv_context) {
 	    /* apply s->e_invmat to convert to real model space */
 	    MAT4X3PNT(fp, s->e_invmat, s->e_para);

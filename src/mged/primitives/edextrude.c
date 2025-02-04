@@ -97,9 +97,10 @@ rt_solid_edit_extrude_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *tol)
 {
+    struct rt_db_internal *ip = &s->es_int;
     const char *strp = NULL;
     struct rt_extrude_internal *extr = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extr);

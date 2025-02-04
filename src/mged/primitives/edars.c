@@ -147,9 +147,11 @@ rt_solid_edit_ars_labels(
 	struct rt_point_labels *pl,
 	int max_pl,
 	const mat_t xform,
-	struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	struct bn_tol *tol)
 {
+    struct rt_db_internal *ip = &s->es_int;
+    //struct rt_ars_edit *a = (struct rt_ars_edit *)s->ipe_ptr;
     point_t work;
     int npl = 0;
 
@@ -179,9 +181,10 @@ rt_solid_edit_ars_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *UNUSED(tol))
 {
+    struct rt_db_internal *ip = &s->es_int;
     point_t mpt = VINIT_ZERO;
     static const char *strp = "V";
     struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;

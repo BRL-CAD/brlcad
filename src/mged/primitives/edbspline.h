@@ -28,7 +28,14 @@
 #include "raytrace.h"
 #include "edfunctab.h"
 
-void bspline_init_rt_solid_edit_process(struct rt_solid_edit *s);
+struct rt_bspline_edit {
+    int spl_surfno;	/* What surf & ctl pt to edit on spline */
+    int spl_ui;
+    int spl_vi;
+
+    point_t v_pos;  // vpick point.
+};
+
 void sedit_vpick(struct rt_solid_edit *s);
 
 #endif  /* EDBSPLINE_H */

@@ -130,9 +130,11 @@ rt_solid_edit_bot_labels(
 	struct rt_point_labels *pl,
 	int UNUSED(max_pl),
 	const mat_t xform,
-	struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	struct bn_tol *UNUSED(tol))
 {
+    struct rt_db_internal *ip = &s->es_int;
+    //struct rt_bot_edit *a = (struct rt_bot_edit *)s->ipe_ptr;
     point_t pos_view;
     int npl = 0;
 
@@ -202,9 +204,10 @@ rt_solid_edit_bot_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *tol)
 {
+    struct rt_db_internal *ip = &s->es_int;
     const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
     // If we're editing, use that position instead
     if (bot_verts[0] > -1) {

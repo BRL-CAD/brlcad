@@ -177,7 +177,7 @@ struct rt_solid_edit_menu_item {
 void rt_solid_edit_process(struct rt_solid_edit *s);
 
 
-void rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
+void rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, fastf_t *mat);
 
 extern struct rt_solid_edit *
 rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
@@ -190,7 +190,7 @@ rt_solid_edit_generic_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	const struct rt_db_internal *ip,
+	struct rt_solid_edit *s,
 	const struct bn_tol *tol);
 
 /* scale the solid uniformly about its vertex point */
@@ -255,16 +255,16 @@ struct rt_solid_edit_functab {
 	    struct rt_point_labels *pl,
 	    int max_pl,
 	    const mat_t xform,
-	    struct rt_db_internal *ip,
+	    struct rt_solid_edit *s,
 	    struct bn_tol *tol);
-#define EDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_db_internal *, struct bn_tol *))((void (*)(void))_func))
+#define EDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_solid_edit *, struct bn_tol *))((void (*)(void))_func))
 
     const char *(*ft_keypoint)(point_t *pt,
 	    const char *keystr,
 	    const mat_t mat,
-	    const struct rt_db_internal *ip,
+	    struct rt_solid_edit *s,
 	    const struct bn_tol *tol);
-#define EDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+#define EDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, struct rt_solid_edit *, const struct bn_tol *))((void (*)(void))_func))
 
     void(*ft_e_axes_pos)(
 	    struct rt_solid_edit *s,
@@ -306,12 +306,12 @@ struct rt_solid_edit_functab {
 #define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct rt_solid_edit *, int, const vect_t))((void (*)(void))_func))
 
     /* Create primitive specific editing struct */
-    void *(*ft_prim_edit_create)(void);
-#define EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(_func) ((void *(*)()((void (*)(void))_func))
+    void *(*ft_prim_edit_create)(struct rt_solid_edit *s);
+#define EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(_func) ((void *(*)(struct rt_solid_edit *))((void (*)(void))_func))
 
     /* Destroy primitive specific editing struct */
     void (*ft_prim_edit_destroy)(void *);
-#define EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(_func) ((void(*)(void *)((void (*)(void))_func))
+#define EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(_func) ((void(*)(void *))((void (*)(void))_func))
 
     int (*ft_menu_str)(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define EDFUNCTAB_FUNC_MENU_STR_CAST(_func) ((int(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
