@@ -53,6 +53,7 @@
 #include "./menu.h"
 #include "./primitives/edfunctab.h"
 #include "./primitives/edarb.h"
+#include "./primitives/edbot.h"
 #include "./primitives/ednmg.h"
 #include "./primitives/edpipe.h"
 
@@ -60,9 +61,6 @@ static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_st
 
 /* Ew. Globals. */
 /* primitive specific externs.  Eventually these should all go away */
-
-extern int bot_verts[3];
-
 extern struct wdb_metaball_pnt *es_metaball_pnt;
 
 /* Ew. Global. */
@@ -262,6 +260,7 @@ ecmd_bot_thick_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 {
     struct mged_state *s = (struct mged_state *)d;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->s_edit->ipe_ptr;
     RT_BOT_CK_MAGIC(bot);
 
     size_t face_no = 0;
@@ -277,7 +276,7 @@ ecmd_bot_thick_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 	return BRLCAD_ERROR;
     }
 
-    if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
+    if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0 || b->bot_verts[2] < 0) {
 	/* setting thickness for all faces */
 	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 		"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
@@ -293,9 +292,9 @@ ecmd_bot_thick_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 
 	face_state = -1;
 	for (size_t i=0; i < bot->num_faces; i++) {
-	    if (bot_verts[0] == bot->faces[i*3] &&
-		    bot_verts[1] == bot->faces[i*3+1] &&
-		    bot_verts[2] == bot->faces[i*3+2])
+	    if (b->bot_verts[0] == bot->faces[i*3] &&
+		    b->bot_verts[1] == bot->faces[i*3+1] &&
+		    b->bot_verts[2] == bot->faces[i*3+2])
 	    {
 		face_no = i;
 		face_state = 0;
@@ -303,7 +302,7 @@ ecmd_bot_thick_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 	    }
 	}
 	if (face_state > -1) {
-	    bu_log("Cannot find face with vertices %d %d %d!\n", V3ARGS(bot_verts));
+	    bu_log("Cannot find face with vertices %d %d %d!\n", V3ARGS(b->bot_verts));
 	    return BRLCAD_ERROR;
 	}
 
@@ -370,6 +369,7 @@ ecmd_bot_fmode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 {
     struct mged_state *s = (struct mged_state *)d;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->s_edit->es_int.idb_ptr;
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->s_edit->ipe_ptr;
     char fmode[10];
     const char *radio_result;
     size_t face_no = 0;
@@ -385,7 +385,7 @@ ecmd_bot_fmode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 	return BRLCAD_ERROR;
     }
 
-    if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
+    if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0 || b->bot_verts[2] < 0) {
 	/* setting mode for all faces */
 	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 		"$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
@@ -399,9 +399,9 @@ ecmd_bot_fmode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 	/* setting thickness for just one face */
 	face_state = -1;
 	for (size_t i=0; i < bot->num_faces; i++) {
-	    if (bot_verts[0] == bot->faces[i*3] &&
-		    bot_verts[1] == bot->faces[i*3+1] &&
-		    bot_verts[2] == bot->faces[i*3+2])
+	    if (b->bot_verts[0] == bot->faces[i*3] &&
+		    b->bot_verts[1] == bot->faces[i*3+1] &&
+		    b->bot_verts[2] == bot->faces[i*3+2])
 	    {
 		face_no = i;
 		face_state = 0;
@@ -409,7 +409,7 @@ ecmd_bot_fmode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
 	    }
 	}
 	if (face_state < 0) {
-	    bu_log("Cannot find face with vertices %d %d %d!\n", V3ARGS(bot_verts));
+	    bu_log("Cannot find face with vertices %d %d %d!\n", V3ARGS(b->bot_verts));
 	    return BRLCAD_ERROR;
 	}
     }
@@ -454,21 +454,22 @@ ecmd_bot_pickt_multihit_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, v
 {
     struct mged_state *s = (struct mged_state *)d;
     struct rt_solid_edit *se = (struct rt_solid_edit *)d2;
+    struct rt_bot_edit *b = (struct rt_bot_edit *)se->ipe_ptr;
     struct bu_vls *vls = (struct bu_vls *)se->u_ptr;
 
     // Evil Tcl variable linkage.  Will need to figure out how to do this
     // "on the fly" with temporary s_edit structure internal variables...
-    Tcl_LinkVar(s->interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "bot_v1", (char *)&b->bot_verts[0], TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "bot_v2", (char *)&b->bot_verts[1], TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "bot_v3", (char *)&b->bot_verts[2], TCL_LINK_INT);
 
     int ret_tcl = Tcl_VarEval(s->interp, "bot_face_select ", bu_vls_cstr(vls), (char *)NULL);
     int ret = BRLCAD_OK;
     if (ret_tcl != TCL_OK) {
 	bu_log("bot_face_select failed: %s\n", Tcl_GetStringResult(s->interp));
-	bot_verts[0] = -1;
-	bot_verts[1] = -1;
-	bot_verts[2] = -1;
+	b->bot_verts[0] = -1;
+	b->bot_verts[1] = -1;
+	b->bot_verts[2] = -1;
 	ret = BRLCAD_ERROR;
     }
     Tcl_UnlinkVar(s->interp, "bot_v1");
@@ -586,10 +587,6 @@ init_sedit(struct mged_state *s)
 
     // TODO move to solid_edit_create via functab, eliminate globals...
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-
-    bot_verts[0] = -1;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
 
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
@@ -1309,9 +1306,6 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	(*EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)(s->s_edit);
 
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-    bot_verts[0] = -1;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
 
     /* make sure we are in solid edit mode */
     if (!illump) {
@@ -1448,9 +1442,6 @@ sedit_reject(struct mged_state *s)
     }
 
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-    bot_verts[0] = -1;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
 
     /* Restore the original solid everywhere */
     {

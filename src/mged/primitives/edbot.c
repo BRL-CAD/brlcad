@@ -33,6 +33,7 @@
 #include "wdb.h"
 #include "ged/defines.h"
 
+#include "./edbot.h"
 #include "./edfunctab.h"
 
 #define ECMD_BOT_PICKV		30061	/* pick a BOT vertex */
@@ -61,7 +62,42 @@
 #define MENU_BOT_DELETE_TRI	30101
 #define MENU_BOT_FLAGS		30102
 
-int bot_verts[3];		/* vertices for the BOT solid */
+void *
+rt_solid_edit_bot_prim_edit_create(struct rt_solid_edit *UNUSED(s))
+{
+    struct rt_bot_edit *b;
+    BU_GET(b, struct rt_bot_edit);
+
+    b->bot_verts[0] = -1;
+    b->bot_verts[1] = -1;
+    b->bot_verts[2] = -1;
+
+    return (void *)b;
+}
+
+void
+rt_solid_edit_bot_prim_edit_destroy(struct rt_bot_edit *b)
+{
+    if (!b)
+	return;
+
+    b->bot_verts[0] = -1;
+    b->bot_verts[1] = -1;
+    b->bot_verts[2] = -1;
+
+    BU_PUT(b, struct rt_bot_edit);
+}
+
+void
+rt_solid_edit_bot_prim_edit_reset(struct rt_solid_edit *s)
+{
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
+    b->bot_verts[0] = -1;
+    b->bot_verts[1] = -1;
+    b->bot_verts[2] = -1;
+}
+
+
 
 static void
 bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -134,7 +170,7 @@ rt_solid_edit_bot_labels(
 	struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
-    //struct rt_bot_edit *a = (struct rt_bot_edit *)s->ipe_ptr;
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     point_t pos_view;
     int npl = 0;
 
@@ -145,9 +181,9 @@ rt_solid_edit_bot_labels(
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 
     // Conditional labeling
-    if (bot_verts[2] > -1 &&
-	    bot_verts[1] > -1 &&
-	    bot_verts[0] > -1)
+    if (b->bot_verts[2] > -1 &&
+	    b->bot_verts[1] > -1 &&
+	    b->bot_verts[0] > -1)
     {
 
 	RT_BOT_CK_MAGIC(bot);
@@ -157,9 +193,9 @@ rt_solid_edit_bot_labels(
 	point_t p1, p2, p3;
 	fastf_t one_third = 1.0/3.0;
 
-	MAT4X3PNT(p1, xform, &bot->vertices[bot_verts[0]*3]);
-	MAT4X3PNT(p2, xform, &bot->vertices[bot_verts[1]*3]);
-	MAT4X3PNT(p3, xform, &bot->vertices[bot_verts[2]*3]);
+	MAT4X3PNT(p1, xform, &bot->vertices[b->bot_verts[0]*3]);
+	MAT4X3PNT(p2, xform, &bot->vertices[b->bot_verts[1]*3]);
+	MAT4X3PNT(p3, xform, &bot->vertices[b->bot_verts[2]*3]);
 	VADD3(mid_pt, p1, p2, p3);
 
 	VSCALE(mid_pt, mid_pt, one_third);
@@ -172,26 +208,26 @@ rt_solid_edit_bot_labels(
 	VMOVE(lines[4], mid_pt);
 	VMOVE(lines[5], p3);
 
-    } else if (bot_verts[1] > -1 && bot_verts[0] > -1) {
+    } else if (b->bot_verts[1] > -1 && b->bot_verts[0] > -1) {
 
 	RT_BOT_CK_MAGIC(bot);
 
 	/* editing an edge */
 	point_t mid_pt;
 
-	VBLEND2(mid_pt, 0.5, &bot->vertices[bot_verts[0]*3],
-		0.5, &bot->vertices[bot_verts[1]*3]);
+	VBLEND2(mid_pt, 0.5, &bot->vertices[b->bot_verts[0]*3],
+		0.5, &bot->vertices[b->bot_verts[1]*3]);
 
 	MAT4X3PNT(pos_view, xform, mid_pt);
 	POINT_LABEL_STR(pos_view, "edge");
 
     }
-    if (bot_verts[0] > -1) {
+    if (b->bot_verts[0] > -1) {
 
 	RT_BOT_CK_MAGIC(bot);
 
 	/* editing something, always label the vertex (this is the keypoint) */
-	MAT4X3PNT(pos_view, xform, &bot->vertices[bot_verts[0]*3]);
+	MAT4X3PNT(pos_view, xform, &bot->vertices[b->bot_verts[0]*3]);
 	POINT_LABEL_STR(pos_view, "pt");
     }
 
@@ -207,14 +243,15 @@ rt_solid_edit_bot_keypoint(
 	struct rt_solid_edit *s,
 	const struct bn_tol *tol)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     struct rt_db_internal *ip = &s->es_int;
     const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
     // If we're editing, use that position instead
-    if (bot_verts[0] > -1) {
+    if (b->bot_verts[0] > -1) {
 	point_t mpt = VINIT_ZERO;
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
-	VMOVE(mpt, &bot->vertices[bot_verts[0]*3]);
+	VMOVE(mpt, &bot->vertices[b->bot_verts[0]*3]);
 	MAT4X3PNT(*pt, mat, mpt);
     }
     return strp;
@@ -319,21 +356,22 @@ ecmd_bot_fdel(struct rt_solid_edit *s)
 {
     struct rt_bot_internal *bot =
 	(struct rt_bot_internal *)s->es_int.idb_ptr;
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
 
     int j, face_no;
 
     RT_BOT_CK_MAGIC(bot);
 
-    if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
+    if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0 || b->bot_verts[2] < 0) {
 	bu_log("No Face selected!\n");
 	return BRLCAD_ERROR;
     }
 
     face_no = -1;
     for (size_t i=0; i < bot->num_faces; i++) {
-	if (bot_verts[0] == bot->faces[i*3] &&
-		bot_verts[1] == bot->faces[i*3+1] &&
-		bot_verts[2] == bot->faces[i*3+2])
+	if (b->bot_verts[0] == bot->faces[i*3] &&
+		b->bot_verts[1] == bot->faces[i*3+1] &&
+		b->bot_verts[2] == bot->faces[i*3+2])
 	{
 	    face_no = i;
 	    break;
@@ -369,9 +407,9 @@ ecmd_bot_fdel(struct rt_solid_edit *s)
 	bu_bitv_free(bot->face_mode);
 	bot->face_mode = new_bitv;
     }
-    bot_verts[0] = -1;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
+    b->bot_verts[0] = -1;
+    b->bot_verts[1] = -1;
+    b->bot_verts[2] = -1;
 
     return BRLCAD_OK;
 }
@@ -379,6 +417,7 @@ ecmd_bot_fdel(struct rt_solid_edit *s)
 void
 ecmd_bot_movev(struct rt_solid_edit *s)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int vert;
     point_t new_pt = VINIT_ZERO;
@@ -387,22 +426,22 @@ ecmd_bot_movev(struct rt_solid_edit *s)
 
     RT_BOT_CK_MAGIC(bot);
 
-    if (bot_verts[0] < 0) {
+    if (b->bot_verts[0] < 0) {
 	bu_log("No BOT point selected\n");
 	return;
     }
 
-    if (bot_verts[1] >= 0 && bot_verts[2] >= 0) {
+    if (b->bot_verts[1] >= 0 && b->bot_verts[2] >= 0) {
 	bu_log("A triangle is selected, not a BOT point!\n");
 	return;
     }
 
-    if (bot_verts[1] >= 0) {
+    if (b->bot_verts[1] >= 0) {
 	bu_log("An edge is selected, not a BOT point!\n");
 	return;
     }
 
-    vert = bot_verts[0];
+    vert = b->bot_verts[0];
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
     } else if (s->e_inpara == 3) {
@@ -433,6 +472,7 @@ ecmd_bot_movev(struct rt_solid_edit *s)
 void
 ecmd_bot_movee(struct rt_solid_edit *s)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int v1, v2;
     vect_t diff;
@@ -442,7 +482,7 @@ ecmd_bot_movee(struct rt_solid_edit *s)
 
     RT_BOT_CK_MAGIC(bot);
 
-    if (bot_verts[0] < 0 || bot_verts[1] < 0) {
+    if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0) {
 	bu_vls_printf(s->log_str, "No BOT edge selected\n");
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
@@ -450,12 +490,12 @@ ecmd_bot_movee(struct rt_solid_edit *s)
 	return;
     }
 
-    if (bot_verts[2] >= 0) {
+    if (b->bot_verts[2] >= 0) {
 	bu_log("A triangle is selected, not a BOT edge!\n");
 	return;
     }
-    v1 = bot_verts[0];
-    v2 = bot_verts[1];
+    v1 = b->bot_verts[0];
+    v2 = b->bot_verts[1];
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
     } else if (s->e_inpara == 3) {
@@ -489,6 +529,7 @@ ecmd_bot_movee(struct rt_solid_edit *s)
 void
 ecmd_bot_movet(struct rt_solid_edit *s)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int v1, v2, v3;
     point_t new_pt = VINIT_ZERO;
@@ -498,16 +539,16 @@ ecmd_bot_movet(struct rt_solid_edit *s)
 
     RT_BOT_CK_MAGIC(bot);
 
-    if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
+    if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0 || b->bot_verts[2] < 0) {
 	bu_vls_printf(s->log_str, "No BOT triangle selected\n");
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
     }
-    v1 = bot_verts[0];
-    v2 = bot_verts[1];
-    v3 = bot_verts[2];
+    v1 = b->bot_verts[0];
+    v2 = b->bot_verts[1];
+    v3 = b->bot_verts[2];
 
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
@@ -542,6 +583,7 @@ ecmd_bot_movet(struct rt_solid_edit *s)
 int
 ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int tmp_vert;
@@ -565,9 +607,9 @@ ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
 	return BRLCAD_ERROR;
     }
 
-    bot_verts[0] = tmp_vert;
-    bot_verts[1] = -1;
-    bot_verts[2] = -1;
+    b->bot_verts[0] = tmp_vert;
+    b->bot_verts[1] = -1;
+    b->bot_verts[2] = -1;
     VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->base2local);
     sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
     bu_vls_printf(s->log_str, "%s", tmp_msg);
@@ -581,6 +623,7 @@ ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
 int
 ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int vert1, vert2;
@@ -603,9 +646,9 @@ ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
 	return BRLCAD_ERROR;
     }
 
-    bot_verts[0] = vert1;
-    bot_verts[1] = vert2;
-    bot_verts[2] = -1;
+    b->bot_verts[0] = vert1;
+    b->bot_verts[1] = vert2;
+    b->bot_verts[2] = -1;
     VSCALE(from_pt, &bot->vertices[vert1*3], s->base2local);
     VSCALE(to_pt, &bot->vertices[vert2*3], s->base2local);
     sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
@@ -621,6 +664,7 @@ void
 ecmd_bot_pickt(struct rt_solid_edit *s, const vect_t mousevec)
 {
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     point_t start_pt, tmp;
     vect_t dir;
     size_t i;
@@ -654,13 +698,13 @@ ecmd_bot_pickt(struct rt_solid_edit *s, const vect_t mousevec)
     bu_vls_strcat(&vls, " } ");
 
     if (hits == 0) {
-	bot_verts[0] = -1;
-	bot_verts[1] = -1;
-	bot_verts[2] = -1;
+	b->bot_verts[0] = -1;
+	b->bot_verts[1] = -1;
+	b->bot_verts[2] = -1;
 	bu_vls_free(&vls);
     }
     if (hits == 1) {
-	sscanf(bu_vls_cstr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
+	sscanf(bu_vls_cstr(&vls), " { { %d %d %d", &b->bot_verts[0], &b->bot_verts[1], &b->bot_verts[2]);
 	bu_vls_free(&vls);
     } else {
 	// Set bot->mode using the callback
@@ -681,25 +725,26 @@ ecmd_bot_pickt(struct rt_solid_edit *s, const vect_t mousevec)
 int
 rt_solid_edit_bot_edit(struct rt_solid_edit *s, int edflag)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    bot_verts[0] = -1;
-	    bot_verts[1] = -1;
-	    bot_verts[2] = -1;
+	    b->bot_verts[0] = -1;
+	    b->bot_verts[1] = -1;
+	    b->bot_verts[2] = -1;
 	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    bot_verts[0] = -1;
-	    bot_verts[1] = -1;
-	    bot_verts[2] = -1;
+	    b->bot_verts[0] = -1;
+	    b->bot_verts[1] = -1;
+	    b->bot_verts[2] = -1;
 	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    bot_verts[0] = -1;
-	    bot_verts[1] = -1;
-	    bot_verts[2] = -1;
+	    b->bot_verts[0] = -1;
+	    b->bot_verts[1] = -1;
+	    b->bot_verts[2] = -1;
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_BOT_MODE:
