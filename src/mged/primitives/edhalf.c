@@ -31,7 +31,6 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
-#include "ged/defines.h"
 
 #include "./edfunctab.h"
 

@@ -63,25 +63,25 @@ mged_state_create(void)
     s->s_edit = NULL;
 
     // Register default callbacks
-    mged_state_clbk_set(s, 0, ECMD_PRINT_STR, 0, GED_CLBK_DURING, mged_print_str, s);
-    mged_state_clbk_set(s, 0, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING, mged_print_result, s);
-    mged_state_clbk_set(s, 0, ECMD_EAXES_POS , 0, GED_CLBK_DURING, set_e_axes_pos, s);
-    mged_state_clbk_set(s, 0, ECMD_REPLOT_EDITING_SOLID, 0, GED_CLBK_DURING, replot_editing_solid, s);
-    mged_state_clbk_set(s, 0, ECMD_VIEW_UPDATE, 0, GED_CLBK_DURING, mged_view_update, s);
-    mged_state_clbk_set(s, 0, ECMD_VIEW_SET_FLAG, 0, GED_CLBK_DURING, mged_view_set_flag, s);
-    mged_state_clbk_set(s, 0, ECMD_MENU_SET, 0, GED_CLBK_DURING, mged_mmenu_set, s);
-    mged_state_clbk_set(s, 0, ECMD_GET_FILENAME, 0, GED_CLBK_DURING, mged_get_filename, s);
+    mged_state_clbk_set(s, 0, ECMD_PRINT_STR, 0, BU_CLBK_DURING, mged_print_str, s);
+    mged_state_clbk_set(s, 0, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING, mged_print_result, s);
+    mged_state_clbk_set(s, 0, ECMD_EAXES_POS , 0, BU_CLBK_DURING, set_e_axes_pos, s);
+    mged_state_clbk_set(s, 0, ECMD_REPLOT_EDITING_SOLID, 0, BU_CLBK_DURING, replot_editing_solid, s);
+    mged_state_clbk_set(s, 0, ECMD_VIEW_UPDATE, 0, BU_CLBK_DURING, mged_view_update, s);
+    mged_state_clbk_set(s, 0, ECMD_VIEW_SET_FLAG, 0, BU_CLBK_DURING, mged_view_set_flag, s);
+    mged_state_clbk_set(s, 0, ECMD_MENU_SET, 0, BU_CLBK_DURING, mged_mmenu_set, s);
+    mged_state_clbk_set(s, 0, ECMD_GET_FILENAME, 0, BU_CLBK_DURING, mged_get_filename, s);
 
     // Register primitive/ecmd specific callbacks
-    mged_state_clbk_set(s, ID_ARB8, ECMD_ARB_SETUP_ROTFACE, 0, GED_CLBK_DURING, arb_setup_rotface_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_MODE, 0, GED_CLBK_DURING, ecmd_bot_mode_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_ORIENT, 0, GED_CLBK_DURING, ecmd_bot_orient_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_THICK, 0, GED_CLBK_DURING, ecmd_bot_thick_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FLAGS, 0, GED_CLBK_DURING, ecmd_bot_flags_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FMODE, 0, GED_CLBK_DURING, ecmd_bot_fmode_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_PICKT, 0, GED_CLBK_DURING, ecmd_bot_pickt_multihit_clbk, s);
-    mged_state_clbk_set(s, ID_NMG, ECMD_NMG_EDEBUG, 0, GED_CLBK_DURING, ecmd_nmg_edebug_clbk, s);
-    mged_state_clbk_set(s, ID_EXTRUDE, ECMD_EXTR_SKT_NAME, 0, GED_CLBK_DURING, ecmd_extrude_skt_name_clbk, s);
+    mged_state_clbk_set(s, ID_ARB8, ECMD_ARB_SETUP_ROTFACE, 0, BU_CLBK_DURING, arb_setup_rotface_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_MODE, 0, BU_CLBK_DURING, ecmd_bot_mode_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_ORIENT, 0, BU_CLBK_DURING, ecmd_bot_orient_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_THICK, 0, BU_CLBK_DURING, ecmd_bot_thick_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FLAGS, 0, BU_CLBK_DURING, ecmd_bot_flags_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FMODE, 0, BU_CLBK_DURING, ecmd_bot_fmode_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_PICKT, 0, BU_CLBK_DURING, ecmd_bot_pickt_multihit_clbk, s);
+    mged_state_clbk_set(s, ID_NMG, ECMD_NMG_EDEBUG, 0, BU_CLBK_DURING, ecmd_nmg_edebug_clbk, s);
+    mged_state_clbk_set(s, ID_EXTRUDE, ECMD_EXTR_SKT_NAME, 0, BU_CLBK_DURING, ecmd_extrude_skt_name_clbk, s);
 
     return s;
 }

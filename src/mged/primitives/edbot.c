@@ -31,7 +31,6 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
-#include "ged/defines.h"
 
 #include "./edbot.h"
 #include "./edfunctab.h"
@@ -132,7 +131,7 @@ bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -268,7 +267,7 @@ ecmd_bot_mode(struct rt_solid_edit *s)
     // Set bot->mode using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_MODE, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_MODE, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 
@@ -295,7 +294,7 @@ ecmd_bot_orient(struct rt_solid_edit *s)
     // Set bot->orientation using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_ORIENT, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_ORIENT, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 }
@@ -322,7 +321,7 @@ ecmd_bot_thick(struct rt_solid_edit *s)
     // Set bot->thickness array using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_THICK, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_THICK, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 
@@ -335,7 +334,7 @@ ecmd_bot_flags(struct rt_solid_edit *s)
     // Set bot->thickness array using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_FLAGS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_FLAGS, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 }
@@ -346,7 +345,7 @@ ecmd_bot_fmode(struct rt_solid_edit *s)
     // Set bot->face_mode using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_FMODE, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_FMODE, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 }
@@ -458,7 +457,7 @@ ecmd_bot_movev(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -484,7 +483,7 @@ ecmd_bot_movee(struct rt_solid_edit *s)
 
     if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0) {
 	bu_vls_printf(s->log_str, "No BOT edge selected\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -512,7 +511,7 @@ ecmd_bot_movee(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -541,7 +540,7 @@ ecmd_bot_movet(struct rt_solid_edit *s)
 
     if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0 || b->bot_verts[2] < 0) {
 	bu_vls_printf(s->log_str, "No BOT triangle selected\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -566,7 +565,7 @@ ecmd_bot_movet(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -601,7 +600,7 @@ ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
     tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, s->vp->gv_model2view);
     if (tmp_vert < 0) {
 	bu_vls_printf(s->log_str, "ECMD_BOT_PICKV: unable to find a vertex!\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -613,7 +612,7 @@ ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
     VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->base2local);
     sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
     bu_vls_printf(s->log_str, "%s", tmp_msg);
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
@@ -640,7 +639,7 @@ ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
 
     if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, s->vp->gv_model2view)) {
 	bu_vls_printf(s->log_str, "ECMD_BOT_PICKE: unable to find an edge!\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -653,7 +652,7 @@ ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
     VSCALE(to_pt, &bot->vertices[vert2*3], s->base2local);
     sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
     bu_vls_printf(s->log_str, "%s", tmp_msg);
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
@@ -713,7 +712,7 @@ ecmd_bot_pickt(struct rt_solid_edit *s, const vect_t mousevec)
 
 	bu_clbk_t f = NULL;
 	void *d = NULL;
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_PICKT, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_BOT_PICKT, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, s);
 
@@ -828,7 +827,7 @@ rt_solid_edit_bot_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;

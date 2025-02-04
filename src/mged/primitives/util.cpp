@@ -31,7 +31,6 @@
 #include "bu/malloc.h"
 #include "bu/vls.h"
 #include "raytrace.h"
-#include "ged/defines.h"
 #include "edfunctab.h"
 
 extern "C" struct rt_solid_edit_map *
@@ -146,13 +145,13 @@ rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int menu_cm
 
     std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp = NULL;
     switch (mode) {
-	case GED_CLBK_DURING:
+	case BU_CLBK_DURING:
 	    mp = &i->cmd_during_clbk;
 	    break;
-	case GED_CLBK_POST:
+	case BU_CLBK_POST:
 	    mp = &i->cmd_postrun_clbk;
 	    break;
-	case GED_CLBK_LINGER:
+	case BU_CLBK_LINGER:
 	    mp = &i->cmd_linger_clbk;
 	    break;
 	default:
@@ -185,13 +184,13 @@ rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em,
     RT_Edit_Map_Internal *i = em->i;
     std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
     switch (mode) {
-	case GED_CLBK_DURING:
+	case BU_CLBK_DURING:
 	    mp = &i->cmd_during_clbk;
 	    break;
-	case GED_CLBK_POST:
+	case BU_CLBK_POST:
 	    mp = &i->cmd_postrun_clbk;
 	    break;
-	case GED_CLBK_LINGER:
+	case BU_CLBK_LINGER:
 	    mp = &i->cmd_linger_clbk;
 	    break;
 	default:
@@ -231,20 +230,20 @@ rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *i
     if (!im)
 	return BRLCAD_OK;
 
-    int modes[4] = {GED_CLBK_PRE, GED_CLBK_DURING, GED_CLBK_POST, GED_CLBK_LINGER};
+    int modes[4] = {BU_CLBK_PRE, BU_CLBK_DURING, BU_CLBK_POST, BU_CLBK_LINGER};
     std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *ip;
     std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *op;
     for (int i = 0; i < 4; i++) {
 	switch (modes[i]) {
-	    case GED_CLBK_DURING:
+	    case BU_CLBK_DURING:
 		ip = &im->i->cmd_during_clbk;
 		op = &om->i->cmd_during_clbk;
 		break;
-	    case GED_CLBK_POST:
+	    case BU_CLBK_POST:
 		ip = &im->i->cmd_postrun_clbk;
 		op = &om->i->cmd_postrun_clbk;
 		break;
-	    case GED_CLBK_LINGER:
+	    case BU_CLBK_LINGER:
 		ip = &im->i->cmd_linger_clbk;
 		op = &om->i->cmd_linger_clbk;
 		break;

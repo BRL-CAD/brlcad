@@ -32,7 +32,6 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
-#include "ged/defines.h"
 
 #include "./edfunctab.h"
 
@@ -80,7 +79,7 @@ dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -208,7 +207,7 @@ ecmd_dsp_fname(struct rt_solid_edit *s)
 
     const char *av[2] = {NULL};
     av[0] = bu_vls_cstr(&dsp->dsp_name);
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_GET_FILENAME, 0, GED_CLBK_DURING);
+    rt_solid_edit_clbk_get(&f, &d, s, ECMD_GET_FILENAME, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(1, (const char **)av, d, &fname);
 
@@ -218,7 +217,7 @@ ecmd_dsp_fname(struct rt_solid_edit *s)
     if (stat(fname, &stat_buf)) {
 	bu_vls_printf(s->log_str, "Cannot get status of file %s\n", fname);
 	f = NULL; d = NULL;
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -228,7 +227,7 @@ ecmd_dsp_fname(struct rt_solid_edit *s)
     if (stat_buf.st_size < need_size) {
 	bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
 	f = NULL; d = NULL;
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -294,7 +293,7 @@ rt_solid_edit_dsp_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
+	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
