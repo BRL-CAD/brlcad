@@ -31,11 +31,18 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
-
-#include "./edbspline.h"
+#include "edfunctab.h"
 
 #define ECMD_VTRANS		9017	/* vertex translate */
 #define ECMD_SPLINE_VPICK       9018	/* vertex pick */
+
+struct rt_bspline_edit {
+    int spl_surfno;	/* What surf & ctl pt to edit on spline */
+    int spl_ui;
+    int spl_vi;
+
+    point_t v_pos;  // vpick point.
+};
 
 void *
 rt_solid_edit_bspline_prim_edit_create(struct rt_solid_edit *s)

@@ -2123,7 +2123,6 @@ main(int argc, char *argv[])
 
     s->edit_state.global_editing_state = ST_VIEW;
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
-    newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;

@@ -47,11 +47,29 @@
 #define MENU_ARB_MV_FACE	4037
 #define MENU_ARB_ROT_FACE	4038
 
-fastf_t es_peqn[7][4]; /* ARBs defining plane equations */
+struct rt_arb8_edit {
+    fastf_t es_peqn[7][4]; /* ARBs defining plane equations */
+    int newedge;
+    short int fixv;	   /* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
+};
 
-int newedge;
+void *
+rt_solid_edit_arb_prim_edit_create(struct rt_solid_edit *UNUSED(s))
+{
+    struct rt_arb8_edit *a;
+    BU_GET(a, struct rt_arb8_edit);
+    a->newedge = 0;
+    return (void *)a;
+}
 
-short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
+void
+rt_solid_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
+{
+    if (!a)
+	return;
+    BU_PUT(a, struct rt_arb8_edit);
+}
+
 
 static void
 arb8_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -627,6 +645,7 @@ rt_solid_edit_arb_e_axes_pos(
        	const struct bn_tol *tol
        	)
 {
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
     int i = 0;
     const short earb8[12][18] = earb8_edit_array;
     const short earb7[12][18] = earb7_edit_array;
@@ -699,7 +718,7 @@ rt_solid_edit_arb_e_axes_pos(
 	    }
 	    break;
 	case ECMD_ARB_ROTATE_FACE:
-	    i = fixv;
+	    i = a->fixv;
 	    break;
 	default:
 	    i = 0;
@@ -858,22 +877,23 @@ int
 editarb(struct rt_solid_edit *s, vect_t pos_model)
 {
     int ret = 0;
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, s->tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, a->es_peqn, s->tol)) {
 	bu_vls_printf(s->log_str, "\nCannot calculate plane equations for ARB8\n");
 	bu_vls_free(&error_msg);
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
 
-    ret = arb_edit(arb, es_peqn, s->edit_menu, newedge, pos_model, s->tol);
+    ret = arb_edit(arb, a->es_peqn, s->edit_menu, a->newedge, pos_model, s->tol);
 
     // arb_edit doesn't zero out our global any more as a library call, so
     // reset once operation is complete.
-    newedge = 0;
+    a->newedge = 0;
 
     if (ret) {
 	rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
@@ -935,6 +955,8 @@ ecmd_arb_specific_menu(struct rt_solid_edit *s)
 int
 ecmd_arb_move_face(struct rt_solid_edit *s)
 {
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
+
     /* move face through definite point */
     if (s->e_inpara) {
 
@@ -960,12 +982,12 @@ ecmd_arb_move_face(struct rt_solid_edit *s)
 	    VMOVE(work, s->e_para);
 	}
 	/* change D of planar equation */
-	es_peqn[s->edit_menu][W]=VDOT(&es_peqn[s->edit_menu][0], work);
+	a->es_peqn[s->edit_menu][W]=VDOT(&a->es_peqn[s->edit_menu][0], work);
 	/* find new vertices, put in record in vector notation */
 
 	int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
-	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)es_peqn, s->tol);
+	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
     }
 
     return 0;
@@ -974,6 +996,7 @@ ecmd_arb_move_face(struct rt_solid_edit *s)
 void
 ecmd_arb_setup_rotface(struct rt_solid_edit *s)
 {
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
@@ -982,9 +1005,9 @@ ecmd_arb_setup_rotface(struct rt_solid_edit *s)
 
     rt_solid_edit_clbk_get(&f, &d, s, ECMD_ARB_SETUP_ROTFACE, 0, BU_CLBK_DURING);
     if (f)
-	fixv = (*f)(0, NULL, d, s);
+	a->fixv = (*f)(0, NULL, d, s);
 
-    fixv--;
+    a->fixv--;
     s->edit_flag = ECMD_ARB_ROTATE_FACE;
     s->solid_edit_rotate = 1;
     s->solid_edit_translate = 0;
@@ -1008,6 +1031,8 @@ ecmd_arb_setup_rotface(struct rt_solid_edit *s)
 int
 ecmd_arb_rotate_face(struct rt_solid_edit *s)
 {
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
+
     /* rotate a GENARB8 defining plane through a fixed vertex */
     fastf_t *eqp;
     bu_clbk_t f = NULL;
@@ -1029,7 +1054,7 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	 * then perform new rotation
 	 */
 	bn_mat_inv(invsolr, s->acc_rot_sol);
-	eqp = &es_peqn[s->edit_menu][0];	/* s->edit_menu==plane of interest */
+	eqp = &a->es_peqn[s->edit_menu][0];	/* s->edit_menu==plane of interest */
 	VMOVE(work, eqp);
 	MAT4X3VEC(eqp, invsolr, work);
 
@@ -1059,7 +1084,7 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 		bn_mat_mul(mat1, edit, s->e_mat);
 		bn_mat_mul(mat, s->e_invmat, mat1);
 		MAT_IDN(s->incr_change);
-		/* work contains original es_peqn[s->edit_menu][0] */
+		/* work contains original a->es_peqn[s->edit_menu][0] */
 		MAT4X3VEC(eqp, mat, work);
 	    } else {
 		VMOVE(work, eqp);
@@ -1071,9 +1096,9 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	    fb_a  = s->e_para[1] * DEG2RAD;
 
 	    /* calculate normal vector (length = 1) from rot, struct fb */
-	    es_peqn[s->edit_menu][0] = cos(fb_a) * cos(rota);
-	    es_peqn[s->edit_menu][1] = cos(fb_a) * sin(rota);
-	    es_peqn[s->edit_menu][2] = sin(fb_a);
+	    a->es_peqn[s->edit_menu][0] = cos(fb_a) * cos(rota);
+	    a->es_peqn[s->edit_menu][1] = cos(fb_a) * sin(rota);
+	    a->es_peqn[s->edit_menu][2] = sin(fb_a);
 	} else {
 	    bu_vls_printf(s->log_str, "Must be < rot fb | xdeg ydeg zdeg >\n");
 	    f = NULL; d = NULL;
@@ -1084,11 +1109,11 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	}
 
 	/* point notation of fixed vertex */
-	VMOVE(tempvec, arb->pt[fixv]);
+	VMOVE(tempvec, arb->pt[a->fixv]);
 
 	/* set D of planar equation to anchor at fixed vertex */
 	/* s->edit_menu == plane of interest */
-	es_peqn[s->edit_menu][W]=VDOT(eqp, tempvec);
+	a->es_peqn[s->edit_menu][W]=VDOT(eqp, tempvec);
 
 	/* Clear out solid rotation */
 	MAT_IDN(s->model_changes);
@@ -1098,21 +1123,21 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	static vect_t tempvec;
 	vect_t work;
 
-	eqp = &es_peqn[s->edit_menu][0];
+	eqp = &a->es_peqn[s->edit_menu][0];
 	VMOVE(work, eqp);
 	MAT4X3VEC(eqp, s->incr_change, work);
 
 	/* point notation of fixed vertex */
-	VMOVE(tempvec, arb->pt[fixv]);
+	VMOVE(tempvec, arb->pt[a->fixv]);
 
 	/* set D of planar equation to anchor at fixed vertex */
 	/* s->edit_menu == plane of interest */
-	es_peqn[s->edit_menu][W]=VDOT(eqp, tempvec);
+	a->es_peqn[s->edit_menu][W]=VDOT(eqp, tempvec);
     }
 
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
-    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)es_peqn, s->tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
     MAT_IDN(s->incr_change);
 
     /* no need to calc_planes again */
@@ -1189,6 +1214,7 @@ edarb_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 void
 edarb_move_face_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 {
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
     vect_t pos_model = VINIT_ZERO;	/* Rotated screen space pos */
@@ -1198,7 +1224,7 @@ edarb_move_face_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(pos_model, s->e_invmat, temp);
     /* change D of planar equation */
-    es_peqn[s->edit_menu][W]=VDOT(&es_peqn[s->edit_menu][0], pos_model);
+    a->es_peqn[s->edit_menu][W]=VDOT(&a->es_peqn[s->edit_menu][0], pos_model);
     /* calculate new vertices, put in record as vectors */
     {
 	struct rt_arb_internal *arb=
@@ -1208,7 +1234,7 @@ edarb_move_face_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 
 	int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
-	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)es_peqn, s->tol);
+	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
     }
 }
 
@@ -1217,11 +1243,12 @@ rt_solid_edit_arb_edit(struct rt_solid_edit *s, int edflag)
 {
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
     RT_ARB_CK_MAGIC(arb);
     int ret = 0;
 
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
-    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, s->tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, a->es_peqn, s->tol)) {
 	bu_vls_printf(s->log_str, "\nCannot calculate plane equations for ARB8\n");
 	bu_vls_free(&error_msg);
 	return BRLCAD_ERROR;
@@ -1268,7 +1295,7 @@ arb_planecalc:
 
     /* must re-calculate the face plane equations for arbs */
     arb_type = rt_arb_std_type(&s->es_int, s->tol);
-    if (rt_arb_calc_planes(&error_msg, arb, arb_type, es_peqn, s->tol) < 0)
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, a->es_peqn, s->tol) < 0)
 	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&error_msg));
     bu_vls_free(&error_msg);
 
@@ -1320,11 +1347,12 @@ rt_solid_edit_arb_edit_xy(
 }
 
 int
-arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv)
+rt_arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv)
 {
     short int i;
     vect_t tempvec;
     struct rt_arb_internal *arb;
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
 
     if (argc < 4 || 4 < argc)
 	return BRLCAD_ERROR;
@@ -1344,24 +1372,25 @@ arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv)
 
     /* get the A, B, C from the command line */
     for (i=0; i<3; i++)
-	es_peqn[s->edit_menu][i]= atof(argv[i+1]);
-    VUNITIZE(&es_peqn[s->edit_menu][0]);
+	a->es_peqn[s->edit_menu][i]= atof(argv[i+1]);
+    VUNITIZE(&a->es_peqn[s->edit_menu][0]);
 
-    VMOVE(tempvec, arb->pt[fixv]);
-    es_peqn[s->edit_menu][W]=VDOT(es_peqn[s->edit_menu], tempvec);
+    VMOVE(tempvec, arb->pt[a->fixv]);
+    a->es_peqn[s->edit_menu][W]=VDOT(a->es_peqn[s->edit_menu], tempvec);
 
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
-    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)es_peqn, s->tol))
+    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol))
 	return CMD_BAD;
 
     return BRLCAD_OK;
 }
 
 int
-arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv)
+rt_arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv)
 {
     vect_t slope;
     fastf_t rot, fb_a;
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
 
     if (!s || !argc || !argv)
 	return BRLCAD_ERROR;
@@ -1399,7 +1428,7 @@ arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv)
     }
 
     /* get it done */
-    newedge = 1;
+    a->newedge = 1;
     editarb(s, slope);
     rt_solid_edit_process(s);
 

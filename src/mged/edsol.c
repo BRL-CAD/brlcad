@@ -1269,7 +1269,7 @@ f_eqn(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *a
 	return TCL_ERROR;
     }
 
-    int ret = arb_f_eqn(s->s_edit, argc, argv);
+    int ret = rt_arb_f_eqn(s->s_edit, argc, argv);
     if (ret != TCL_OK)
 	return ret;
 
@@ -2199,7 +2199,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
-    return arb_edgedir(s->s_edit, argc, argv);
+    return rt_arb_edgedir(s->s_edit, argc, argv);
 }
 
 /* Permute command - permute the vertex labels of an ARB
