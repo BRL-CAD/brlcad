@@ -502,16 +502,35 @@ ecmd_extrude_skt_name_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, voi
     struct mged_state *s = (struct mged_state *)d;
     struct rt_solid_edit *se = s->s_edit;
     struct rt_extrude_internal *extr = (struct rt_extrude_internal *)se->es_int.idb_ptr;
-    char *sketch_name = (char *)se->u_ptr;
+
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name     of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS", extr->sketch_name);
+    int ret_tcl = Tcl_Eval(s->interp, bu_vls_addr(&tcl_cmd));
+    if (ret_tcl != TCL_OK) {
+	bu_log("ERROR: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_free(&tcl_cmd);
+	return BRLCAD_ERROR;
+    }
+
+    if (atoi(Tcl_GetStringResult(s->interp)) == 1)
+	return BRLCAD_ERROR;
+
+    bu_vls_free(&tcl_cmd);
+
+    if (extr->sketch_name)
+	bu_free((char *)extr->sketch_name, "extr->sketch_name");
+
+    extr->sketch_name = bu_strdup(Tcl_GetVar(s->interp, "final_sketch_name", TCL_GLOBAL_ONLY));
+
     struct directory *dp = RT_DIR_NULL;
-    if ((dp = db_lookup(s->dbip, sketch_name, 0)) == RT_DIR_NULL) {
-	bu_log("Warning: %s does not exist!\n",	sketch_name);
+    if ((dp = db_lookup(s->dbip, extr->sketch_name, 0)) == RT_DIR_NULL) {
+	bu_log("Warning: %s does not exist!\n",	extr->sketch_name);
 	extr->skt = (struct rt_sketch_internal *)NULL;
     } else {
 	/* import the new sketch */
 	struct rt_db_internal tmp_ip;
 	if (rt_db_get_internal(&tmp_ip, dp, s->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
-	    bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n", sketch_name);
+	    bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n", extr->sketch_name);
 	    extr->skt = (struct rt_sketch_internal *)NULL;
 	} else {
 	    extr->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;

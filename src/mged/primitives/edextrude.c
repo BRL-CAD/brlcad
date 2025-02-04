@@ -141,12 +141,6 @@ ecmd_extr_skt_name(struct rt_solid_edit *s)
 
     RT_EXTRUDE_CK_MAGIC(extr);
 
-    if (extr->sketch_name)
-	bu_free((char *)extr->sketch_name, "extr->sketch_name");
-
-    extr->sketch_name = bu_strdup(sketch_name);
-    bu_free(sketch_name, "sketch name");
-
     if (extr->skt) {
 	/* free the old sketch */
 	RT_DB_INTERNAL_INIT(&tmp_ip);
@@ -157,16 +151,11 @@ ecmd_extr_skt_name(struct rt_solid_edit *s)
 	rt_db_free_internal(&tmp_ip);
     }
 
-    void *ubkup = s->u_ptr;
-    s->u_ptr = sketch_name;
-
     bu_clbk_t f = NULL;
     void *d = NULL;
     rt_solid_edit_clbk_get(&f, &d, s, ECMD_EXTR_SKT_NAME, 0, GED_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
-
-    s->u_ptr = ubkup;
 }
 
 int
