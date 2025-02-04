@@ -1,4 +1,4 @@
-/*                         E D N M G . H
+/*                         E D P I P E . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2025 United States Government as represented by
@@ -17,25 +17,21 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ednmg.h
+/** @file edpipe.h
  */
 
-#ifndef EDNMG_H
-#define EDNMG_H
+#ifndef EDPIPE_H
+#define EDPIPE_H
 
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 
-struct rt_nmg_edit {
-    struct edgeuse *es_eu;      /* Currently selected NMG edgeuse */
-    struct loopuse *lu_copy;    /* copy of loop to be extruded */
-    plane_t lu_pl;              /* plane equation for loop to be extruded */
-    struct shell *es_s;         /* Shell where extrusion is to end up */
-    point_t lu_keypoint;        /* keypoint of lu_copy for extrusion */
+struct rt_pipe_edit {
+    struct wdb_pipe_pnt *es_pipe_pnt; /* Currently selected PIPE segment */
 };
 
-#endif  /* EDNMG_H */
+#endif  /* EDPIPE_H */
 
 /*
  * Local Variables:

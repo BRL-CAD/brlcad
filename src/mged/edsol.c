@@ -54,6 +54,7 @@
 #include "./primitives/edfunctab.h"
 #include "./primitives/edarb.h"
 #include "./primitives/ednmg.h"
+#include "./primitives/edpipe.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
@@ -63,8 +64,6 @@ static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_st
 extern int bot_verts[3];
 
 extern struct wdb_metaball_pnt *es_metaball_pnt;
-
-extern struct wdb_pipe_pnt *es_pipe_pnt;
 
 /* Ew. Global. */
 /* data for solid editing */
@@ -586,7 +585,6 @@ init_sedit(struct mged_state *s)
 
 
     // TODO move to solid_edit_create via functab, eliminate globals...
-    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 
     bot_verts[0] = -1;
@@ -974,46 +972,50 @@ oedit_abs_scale(struct mged_state *s)
 
 
 void
-vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
+vls_solid(struct mged_state *ms, struct bu_vls *vp, struct rt_solid_edit *s, const mat_t mat)
 {
+    struct rt_db_internal *ip = &ms->s_edit->es_int;
     struct rt_db_internal intern;
     int id;
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (s->dbip == DBI_NULL)
+    if (ms->dbip == DBI_NULL)
 	return;
 
     BU_CK_VLS(vp);
     RT_CK_DB_INTERNAL(ip);
 
     id = ip->idb_type;
-    transform_editing_solid(s, &intern, mat, (struct rt_db_internal *)ip, 0);
+    transform_editing_solid(ms, &intern, mat, (struct rt_db_internal *)ip, 0);
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
-	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, s->dbip->dbi_base2local) < 0)
-	    Tcl_AppendResult(s->interp, "vls_solid: describe error\n", (char *)NULL);
+	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, ms->dbip->dbi_base2local) < 0)
+	    Tcl_AppendResult(ms->interp, "vls_solid: describe error\n", (char *)NULL);
     } else {
-	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, s->dbip->dbi_base2local) < 0)
-	    Tcl_AppendResult(s->interp, "vls_solid: describe error\n", (char *)NULL);
+	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, ms->dbip->dbi_base2local) < 0)
+	    Tcl_AppendResult(ms->interp, "vls_solid: describe error\n", (char *)NULL);
     }
 
-    if (id == ID_PIPE && es_pipe_pnt) {
-	struct rt_pipe_internal *pipeip;
-	struct wdb_pipe_pnt *ps=(struct wdb_pipe_pnt *)NULL;
-	int seg_no = 0;
+    if (id == ID_PIPE) {
+	struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+	if (p->es_pipe_pnt) {
+	    struct rt_pipe_internal *pipeip;
+	    struct wdb_pipe_pnt *ps=(struct wdb_pipe_pnt *)NULL;
+	    int seg_no = 0;
 
-	pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
-	RT_PIPE_CK_MAGIC(pipeip);
+	    pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
+	    RT_PIPE_CK_MAGIC(pipeip);
 
-	for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	    seg_no++;
-	    if (ps == es_pipe_pnt)
-		break;
+	    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
+		seg_no++;
+		if (ps == p->es_pipe_pnt)
+		    break;
+	    }
+
+	    if (ps == p->es_pipe_pnt)
+		rt_vls_pipe_pnt(vp, seg_no, &intern, ms->dbip->dbi_base2local);
 	}
-
-	if (ps == es_pipe_pnt)
-	    rt_vls_pipe_pnt(vp, seg_no, &intern, s->dbip->dbi_base2local);
     }
 
     rt_db_free_internal(&intern);
@@ -1306,7 +1308,6 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)
 	(*EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)(s->s_edit);
 
-    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     bot_verts[0] = -1;
     bot_verts[1] = -1;
@@ -1446,7 +1447,6 @@ sedit_reject(struct mged_state *s)
 	s->update_views = s->s_edit->update_views;
     }
 
-    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     bot_verts[0] = -1;
     bot_verts[1] = -1;
@@ -1896,7 +1896,6 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	(*EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)(s->s_edit);
 
     /* reset */
-    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL;
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL;
 
     /* read in a fresh copy */

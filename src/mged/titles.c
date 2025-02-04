@@ -82,7 +82,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	bu_vls_strcat(vp, dp->d_namep);
 	bu_vls_strcat(vp, ": ");
 
-	vls_solid(s, vp, &s->s_edit->es_int, bn_mat_identity);
+	vls_solid(s, vp, s->s_edit, bn_mat_identity);
 
 	if (bdata->s_fullpath.fp_len > 1) {
 	    bu_vls_strcat(vp, "\n** PATH --  ");
@@ -90,7 +90,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
-	    vls_solid(s, vp, &s->s_edit->es_int, s->s_edit->e_mat);
+	    vls_solid(s, vp, s->s_edit, s->s_edit->e_mat);
 	}
     }
 
@@ -109,7 +109,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    /* object edit option selected */
 	    bn_mat_mul(new_mat, s->s_edit->model_changes, s->s_edit->e_mat);
 
-	    vls_solid(s, vp, &s->s_edit->es_int, new_mat);
+	    vls_solid(s, vp, s->s_edit, new_mat);
 	}
     }
 

@@ -179,6 +179,7 @@ set(
   primitives/edarb.h
   primitives/edbspline.h
   primitives/ednmg.h
+  primitives/edpipe.h
   primitives/edfunctab.h
   sedit.h
 )

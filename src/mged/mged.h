@@ -529,7 +529,7 @@ void rect_image2view(struct mged_state *);
 void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* edsol.c */
-void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
+void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_solid_edit *S, const mat_t mat);
 void transform_editing_solid(
     struct mged_state *s,
     struct rt_db_internal *os,		/* output solid */
