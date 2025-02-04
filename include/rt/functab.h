@@ -309,6 +309,95 @@ RT_EXPORT extern const struct rt_functab OBJ[];
 
 RT_EXPORT extern const struct rt_functab *rt_get_functab_by_label(const char *label);
 
+
+
+////////////////////////////////////////////////////////////////////////////////////
+/* Second table specific to editing functionality.  Eventually this may simply fold
+ * into the main librt table, but currently (in 2025) we're in early testing so
+ * keeping things separate for now. */
+struct rt_solid_edit_functab {
+    uint32_t magic;
+    char ft_name[17]; /* current longest name is 16 chars, need one element for terminating NULL */
+    char ft_label[9]; /* current longest label is 8 chars, need one element for terminating NULL */
+
+    void (*ft_labels)(int *num_lines,
+            point_t *lines,
+            struct rt_point_labels *pl,
+            int max_pl,
+            const mat_t xform,
+            struct rt_solid_edit *s,
+            struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_solid_edit *, struct bn_tol *))((void (*)(void))_func))
+
+    const char *(*ft_keypoint)(point_t *pt,
+            const char *keystr,
+            const mat_t mat,
+            struct rt_solid_edit *s,
+            const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, struct rt_solid_edit *, const struct bn_tol *))((void (*)(void))_func))
+
+    void(*ft_e_axes_pos)(
+            struct rt_solid_edit *s,
+            const struct rt_db_internal *ip,
+            const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(struct rt_solid_edit *s, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
+    // Written format is intended to be human editable text that will be parsed
+    // by ft_read_params.  There are no guarantees of formatting consistency by
+    // this API, so external apps should not rely on this format being
+    // consistent release-to-release.  The only API guarantee is that
+    // ft_write_params output for a given BRL-CAD version is readable by
+    // ft_read_params.
+    void(*ft_write_params)(
+            struct bu_vls *p,
+            const struct rt_db_internal *ip,
+            const struct bn_tol *tol,
+            fastf_t base2local);
+#define EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(_func) ((void(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
+
+    // Parse ft_write_params output and assign numerical values to ip.
+    int(*ft_read_params)(
+            struct rt_db_internal *ip,
+            const char *fc,
+            const struct bn_tol *tol,
+            fastf_t local2base);
+#define EDFUNCTAB_FUNC_READ_PARAMS_CAST(_func) ((int(*)(struct rt_db_internal *, const char *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
+
+    int(*ft_edit)(struct rt_solid_edit *s, int edflag);
+#define EDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct rt_solid_edit *, int))((void (*)(void))_func))
+
+    /* Translate mouse info into edit ready info.  mousevec [X] and [Y] are in
+     * the range -1.0...+1.0, corresponding to viewspace.
+     *
+     * In order to allow command line commands to do the same things that a
+     * mouse movements can, the preferred strategy is to store values and allow
+     * ft_edit to actually do the work. */
+    int(*ft_edit_xy)(struct rt_solid_edit *s, int edflag, const vect_t mousevec);
+#define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct rt_solid_edit *, int, const vect_t))((void (*)(void))_func))
+
+    /* Create primitive specific editing struct */
+    void *(*ft_prim_edit_create)(struct rt_solid_edit *s);
+#define EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(_func) ((void *(*)(struct rt_solid_edit *))((void (*)(void))_func))
+
+    /* Destroy primitive specific editing struct */
+    void (*ft_prim_edit_destroy)(void *);
+#define EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(_func) ((void(*)(void *))((void (*)(void))_func))
+
+    /* Create primitive specific editing struct */
+    void (*ft_prim_edit_reset)(struct rt_solid_edit *s);
+#define EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(_func) ((void(*)(struct rt_solid_edit *))((void (*)(void))_func))
+
+    int (*ft_menu_str)(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_MENU_STR_CAST(_func) ((int(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
+    struct rt_solid_edit_menu_item *(*ft_menu_item)(const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_solid_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
+
+};
+
+extern const struct rt_solid_edit_functab EDOBJ[];
+
+
 __END_DECLS
 
 #endif /* RT_FUNCTAB_H */
