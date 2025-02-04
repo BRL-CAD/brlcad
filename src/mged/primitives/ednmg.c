@@ -88,6 +88,13 @@ rt_solid_edit_nmg_prim_edit_destroy(struct rt_nmg_edit *e)
     BU_PUT(e, struct rt_nmg_edit);
 }
 
+void
+rt_solid_edit_nmg_prim_edit_reset(struct rt_solid_edit *s)
+{
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
+    n->es_eu = NULL;
+    n->es_s = NULL;
+}
 
 /*
  * Handler for events in the NMG menu.

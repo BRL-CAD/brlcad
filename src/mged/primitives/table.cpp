@@ -39,8 +39,9 @@ extern "C" {
     extern void rt_solid_edit_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
     extern int rt_solid_edit_##name##_edit(struct rt_solid_edit *s, int edflag); \
     extern int rt_solid_edit_##name##_edit_xy(struct rt_solid_edit *s, int edflag, vect_t mousevec); \
-    extern void *rt_solid_edit_##name##_prim_edit_create(void); \
+    extern void *rt_solid_edit_##name##_prim_edit_create(struct rt_solid_edit *s); \
     extern void rt_solid_edit_##name##_prim_edit_destroy(void *); \
+    extern void rt_solid_edit_##name##_prim_edit_reset(struct rt_solid_edit *s); \
     extern int rt_solid_edit_##name##_menu_str(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern struct rt_solid_edit_menu_item *rt_solid_edit_##name##_menu_item(const struct bn_tol *tol); \
 
@@ -288,7 +289,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_nmg_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_solid_edit_nmg_prim_edit_create),    /* prim edit create */
 	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_solid_edit_nmg_prim_edit_destroy),  /* prim edit destroy */
-       	NULL,  /* prim edit reset*/
+	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_solid_edit_nmg_prim_edit_reset),  /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(rt_solid_edit_generic_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_solid_edit_nmg_menu_item)    /* menu_item */
     },

@@ -314,8 +314,8 @@ struct rt_solid_edit_functab {
 #define EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(_func) ((void(*)(void *))((void (*)(void))_func))
 
     /* Create primitive specific editing struct */
-    void *(*ft_prim_edit_reset)(struct rt_solid_edit *s);
-#define EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(_func) ((void *(*)(struct rt_solid_edit *))((void (*)(void))_func))
+    void (*ft_prim_edit_reset)(struct rt_solid_edit *s);
+#define EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(_func) ((void(*)(struct rt_solid_edit *))((void (*)(void))_func))
 
     int (*ft_menu_str)(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define EDFUNCTAB_FUNC_MENU_STR_CAST(_func) ((int(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))

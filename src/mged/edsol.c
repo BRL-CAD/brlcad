@@ -1302,15 +1302,15 @@ sedit_apply(struct mged_state *s, int accept_flag)
 {
     struct directory *dp;
 
-    // TODO - may need a reset functab for this...
-#if 0
-    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+    /* reset internal variables */
+    if (EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)
+	(*EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)(s->s_edit);
+
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     bot_verts[0] = -1;
     bot_verts[1] = -1;
     bot_verts[2] = -1;
-#endif
 
     /* make sure we are in solid edit mode */
     if (!illump) {
@@ -1891,14 +1891,13 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     /* free old copy */
     rt_db_free_internal(&s->s_edit->es_int);
 
-#if 0
-    // TODO - may need reset functab for this...
+    /* reset internal variables */
+    if (EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)
+	(*EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)(s->s_edit);
+
     /* reset */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL;
     es_metaball_pnt = (struct wdb_metaball_pnt *)NULL;
-    es_s = (struct shell *)NULL;
-    es_eu = (struct edgeuse *)NULL;
-#endif
 
     /* read in a fresh copy */
     if (!illump || !illump->s_u_data)
