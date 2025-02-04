@@ -1,4 +1,4 @@
-/*                    M G E D _ F U N C T A B . H
+/*                    E D F U N C T A B . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2025 United States Government as represented by
@@ -29,8 +29,6 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "rt_ecmds.h"
-
-
 
 #ifdef __cplusplus
 
