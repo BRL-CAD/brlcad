@@ -30,9 +30,9 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "rt/primitives/bot.h"
 #include "wdb.h"
 
-#include "./edbot.h"
 #include "./edfunctab.h"
 
 #define ECMD_BOT_PICKV		30061	/* pick a BOT vertex */

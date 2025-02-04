@@ -32,6 +32,12 @@
 
 __BEGIN_DECLS
 
+/* PIPE specific editing info */
+struct rt_pipe_edit {
+    struct wdb_pipe_pnt *es_pipe_pnt; /* Currently selected PIPE segment */
+};
+
+
 RT_EXPORT extern void rt_vls_pipe_pnt(struct bu_vls *vp,
 				    int seg_no,
 				    const struct rt_db_internal *ip,

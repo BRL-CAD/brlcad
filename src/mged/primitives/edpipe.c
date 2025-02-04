@@ -35,9 +35,9 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/pipe.h"
 #include "wdb.h"
 
-#include "./edpipe.h"
 #include "./edfunctab.h"
 
 #define ECMD_PIPE_PICK		15028	/* Pick pipe point */

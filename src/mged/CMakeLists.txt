@@ -177,9 +177,6 @@ set(
   mged_impl.h
   mged_wdb.h
   primitives/edarb.h
-  primitives/edbot.h
-  primitives/ednmg.h
-  primitives/edpipe.h
   primitives/edfunctab.h
   sedit.h
 )

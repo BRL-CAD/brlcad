@@ -45,6 +45,9 @@
 #include "rt/arb_edit.h"
 #include "wdb.h"
 #include "rt/db4.h"
+#include "rt/primitives/bot.h"
+#include "rt/primitives/nmg.h"
+#include "rt/primitives/pipe.h"
 #include "ged/view/ged_view_tmp.h"
 
 #include "./mged.h"
@@ -53,9 +56,6 @@
 #include "./menu.h"
 #include "./primitives/edfunctab.h"
 #include "./primitives/edarb.h"
-#include "./primitives/edbot.h"
-#include "./primitives/ednmg.h"
-#include "./primitives/edpipe.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 

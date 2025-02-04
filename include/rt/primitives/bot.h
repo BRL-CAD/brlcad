@@ -89,6 +89,10 @@ typedef struct _triangle_s {
     size_t face_id;
 } triangle_s;
 
+// BoT specific editing info
+struct rt_bot_edit {
+    int bot_verts[3];           /* vertices for the BOT solid */
+};
 
 /* bot.c */
 RT_EXPORT extern size_t rt_bot_get_edge_list(const struct rt_bot_internal *bot,
