@@ -55,11 +55,45 @@
 #define MENU_METABALL_DEL_PT		30125
 #define MENU_METABALL_ADD_PT		30126
 
-struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
+struct rt_metaball_edit {
+    struct wdb_metaball_pnt *es_metaball_pnt; /* Currently selected METABALL Point */
+};
+
+void *
+rt_solid_edit_metaball_prim_edit_create(struct rt_solid_edit *UNUSED(s))
+{
+    struct rt_metaball_edit *m;
+    BU_GET(m, struct rt_metaball_edit);
+
+    m->es_metaball_pnt = NULL;
+
+    return (void *)m;
+}
+
+void
+rt_solid_edit_metaball_prim_edit_destroy(struct rt_metaball_edit *m)
+{
+    if (!m)
+	return;
+
+    // Sanity
+    m->es_metaball_pnt = NULL;
+
+    BU_PUT(m, struct rt_metaball_edit);
+}
+
+void
+rt_solid_edit_metaball_prim_edit_reset(struct rt_solid_edit *s)
+{
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
+    m->es_metaball_pnt = NULL;
+}
+
 
 static void
 metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct wdb_metaball_pnt *next, *prev;
 
     rt_solid_edit_set_edflag(s, -1);
@@ -77,39 +111,39 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    s->solid_edit_pick = 1;
 	    break;
 	case MENU_METABALL_NEXT_PT:
-	    if (!es_metaball_pnt) {
+	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		return;
 	    }
-	    next = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
+	    next = BU_LIST_NEXT(wdb_metaball_pnt, &m->es_metaball_pnt->l);
 	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
 		bu_vls_printf(s->log_str, "Current point is the last\n");
 		return;
 	    }
-	    es_metaball_pnt = next;
-	    rt_metaball_pnt_print(es_metaball_pnt, s->base2local);
+	    m->es_metaball_pnt = next;
+	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
 	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_PREV_PT:
-	    if (!es_metaball_pnt) {
+	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		return;
 	    }
-	    prev = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
+	    prev = BU_LIST_PREV(wdb_metaball_pnt, &m->es_metaball_pnt->l);
 	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
 		bu_vls_printf(s->log_str, "Current point is the first\n");
 		return;
 	    }
-	    es_metaball_pnt = prev;
-	    rt_metaball_pnt_print(es_metaball_pnt, s->base2local);
+	    m->es_metaball_pnt = prev;
+	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
 	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_MOV_PT:
-	    if (!es_metaball_pnt) {
+	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
@@ -119,7 +153,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    rt_solid_edit_process(s);
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
-	    if (!es_metaball_pnt) {
+	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
@@ -179,7 +213,7 @@ rt_solid_edit_metaball_labels(
 	struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
-    //struct rt_metaball_edit *b = (struct rt_metaball_edit *)s->ipe_ptr;
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     point_t pos_view;
     int npl = 0;
 
@@ -194,10 +228,10 @@ rt_solid_edit_metaball_labels(
 
     RT_METABALL_CK_MAGIC(metaball);
 
-    if (es_metaball_pnt) {
-	BU_CKMAG(es_metaball_pnt, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
+    if (m->es_metaball_pnt) {
+	BU_CKMAG(m->es_metaball_pnt, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
 
-	MAT4X3PNT(pos_view, xform, es_metaball_pnt->coord);
+	MAT4X3PNT(pos_view, xform, m->es_metaball_pnt->coord);
 	POINT_LABEL_STR(pos_view, "pt");
     }
 
@@ -212,6 +246,7 @@ rt_solid_edit_metaball_keypoint(
 	struct rt_solid_edit *s,
 	const struct bn_tol *UNUSED(tol))
 {
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct rt_db_internal *ip = &s->es_int;
     RT_CK_DB_INTERNAL(ip);
     point_t mpt = VINIT_ZERO;
@@ -222,11 +257,11 @@ rt_solid_edit_metaball_keypoint(
     struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(metaball);
 
-    if (es_metaball_pnt==NULL) {
+    if (m->es_metaball_pnt==NULL) {
 	snprintf(buf, BUFSIZ, "no point selected");
     } else {
-	VMOVE(mpt, es_metaball_pnt->coord);
-	snprintf(buf, BUFSIZ, "V %f", es_metaball_pnt->fldstr);
+	VMOVE(mpt, m->es_metaball_pnt->coord);
+	snprintf(buf, BUFSIZ, "V %f", m->es_metaball_pnt->fldstr);
     }
 
     MAT4X3PNT(*pt, mat, mpt);
@@ -270,17 +305,18 @@ menu_metaball_set_method(struct rt_solid_edit *s)
 int
 menu_metaball_pt_set_goo(struct rt_solid_edit *s)
 {
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
-    if (!es_metaball_pnt || !s->e_inpara) {
+    if (!m->es_metaball_pnt || !s->e_inpara) {
 	bu_vls_printf(s->log_str, "pscale: no metaball point selected for scaling goo\n");
 	return BRLCAD_ERROR;
     }
-    es_metaball_pnt->sweat *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
+    m->es_metaball_pnt->sweat *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
 
     return 0;
 }
@@ -288,18 +324,19 @@ menu_metaball_pt_set_goo(struct rt_solid_edit *s)
 int
 menu_metaball_pt_fldstr(struct rt_solid_edit *s)
 {
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
-    if (!es_metaball_pnt || !s->e_inpara) {
+    if (!m->es_metaball_pnt || !s->e_inpara) {
 	bu_vls_printf(s->log_str, "pscale: no metaball point selected for scaling strength\n");
 	return BRLCAD_ERROR;
     }
 
-    es_metaball_pnt->fldstr *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
+    m->es_metaball_pnt->fldstr *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
 
     return 0;
 }
@@ -309,6 +346,7 @@ ecmd_metaball_pt_pick(struct rt_solid_edit *s)
 {
     struct rt_metaball_internal *metaball=
 	(struct rt_metaball_internal *)s->es_int.idb_ptr;
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     point_t new_pt;
     struct wdb_metaball_pnt *ps;
     struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
@@ -316,7 +354,7 @@ ecmd_metaball_pt_pick(struct rt_solid_edit *s)
     vect_t dir, work;
     bu_clbk_t f = NULL;
     void *d = NULL;
- 
+
     RT_METABALL_CK_MAGIC(metaball);
 
     if (s->e_mvalid) {
@@ -351,22 +389,23 @@ ecmd_metaball_pt_pick(struct rt_solid_edit *s)
 	}
     }
 
-    es_metaball_pnt = nearest;
+    m->es_metaball_pnt = nearest;
 
-    if (!es_metaball_pnt) {
+    if (!m->es_metaball_pnt) {
 	bu_vls_printf(s->log_str, "No METABALL control point selected\n");
 	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, GED_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
     } else {
-	rt_metaball_pnt_print(es_metaball_pnt, s->base2local);
+	rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
     }
 }
 
 void
 ecmd_metaball_pt_mov(struct rt_solid_edit *s)
 {
-    if (!es_metaball_pnt) {
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
+    if (!m->es_metaball_pnt) {
 	bu_log("Must select a point to move"); return; }
     if (s->e_inpara != 3) {
 	bu_log("Must provide dx dy dz"); return; }
@@ -374,35 +413,37 @@ ecmd_metaball_pt_mov(struct rt_solid_edit *s)
     s->e_para[0] *= s->local2base;
     s->e_para[1] *= s->local2base;
     s->e_para[2] *= s->local2base;
-    VADD2(es_metaball_pnt->coord, es_metaball_pnt->coord, s->e_para);
+    VADD2(m->es_metaball_pnt->coord, m->es_metaball_pnt->coord, s->e_para);
 }
 
 void
-ecmd_metaball_pt_del(struct rt_solid_edit *UNUSED(s))
+ecmd_metaball_pt_del(struct rt_solid_edit *s)
 {
-    struct wdb_metaball_pnt *tmp = es_metaball_pnt, *p;
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
+    struct wdb_metaball_pnt *tmp = m->es_metaball_pnt, *p;
 
-    if (es_metaball_pnt == NULL) {
+    if (m->es_metaball_pnt == NULL) {
 	bu_log("No point selected");
 	return;
     }
-    p = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
+    p = BU_LIST_PREV(wdb_metaball_pnt, &m->es_metaball_pnt->l);
     if (p->l.magic == BU_LIST_HEAD_MAGIC) {
-	es_metaball_pnt = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
+	m->es_metaball_pnt = BU_LIST_NEXT(wdb_metaball_pnt, &m->es_metaball_pnt->l);
 	/* 0 point metaball... allow it for now. */
-	if (es_metaball_pnt->l.magic == BU_LIST_HEAD_MAGIC)
-	    es_metaball_pnt = NULL;
+	if (m->es_metaball_pnt->l.magic == BU_LIST_HEAD_MAGIC)
+	    m->es_metaball_pnt = NULL;
     } else
-	es_metaball_pnt = p;
+	m->es_metaball_pnt = p;
     BU_LIST_DQ(&tmp->l);
     free(tmp);
-    if (!es_metaball_pnt)
+    if (!m->es_metaball_pnt)
 	bu_log("WARNING: Last point of this metaball has been deleted.");
 }
 
 void
 ecmd_metaball_pt_add(struct rt_solid_edit *s)
 {
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->es_int.idb_ptr;
     struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 
@@ -417,12 +458,12 @@ ecmd_metaball_pt_add(struct rt_solid_edit *s)
     s->e_para[1] *= s->local2base;
     s->e_para[2] *= s->local2base;
 
-    es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
+    m->es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
     VMOVE(n->coord, s->e_para);
     n->l.magic = WDB_METABALLPT_MAGIC;
     n->fldstr = 1.0;
-    BU_LIST_APPEND(&es_metaball_pnt->l, &n->l);
-    es_metaball_pnt = n;
+    BU_LIST_APPEND(&m->es_metaball_pnt->l, &n->l);
+    m->es_metaball_pnt = n;
 }
 
 static int
@@ -462,19 +503,20 @@ rt_solid_edit_metaball_pscale(struct rt_solid_edit *s, int mode)
 int
 rt_solid_edit_metaball_edit(struct rt_solid_edit *s, int edflag)
 {
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
+	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 	    return rt_solid_edit_generic_sscale(s, &s->es_int);
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
-	    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
+	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 	    rt_solid_edit_generic_strans(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
-	    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
+	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_PSCALE:

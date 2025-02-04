@@ -59,10 +59,6 @@
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
-/* Ew. Globals. */
-/* primitive specific externs.  Eventually these should all go away */
-extern struct wdb_metaball_pnt *es_metaball_pnt;
-
 /* Ew. Global. */
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
@@ -584,9 +580,6 @@ init_sedit(struct mged_state *s)
 	return;				/* FAIL */
     }
 
-
-    // TODO move to solid_edit_create via functab, eliminate globals...
-    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
@@ -1305,8 +1298,6 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)
 	(*EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)(s->s_edit);
 
-    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-
     /* make sure we are in solid edit mode */
     if (!illump) {
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
@@ -1440,8 +1431,6 @@ sedit_reject(struct mged_state *s)
 	rt_solid_edit_process(s->s_edit);
 	s->update_views = s->s_edit->update_views;
     }
-
-    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 
     /* Restore the original solid everywhere */
     {
@@ -1885,9 +1874,6 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     /* reset internal variables */
     if (EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)
 	(*EDOBJ[s->s_edit->es_int.idb_type].ft_prim_edit_reset)(s->s_edit);
-
-    /* reset */
-    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL;
 
     /* read in a fresh copy */
     if (!illump || !illump->s_u_data)
