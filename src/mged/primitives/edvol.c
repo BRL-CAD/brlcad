@@ -87,7 +87,7 @@ vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -135,7 +135,7 @@ ecmd_vol_csize(struct rt_solid_edit *s)
 	VMOVE(vol->cellsize, s->e_para);
     } else if (s->e_inpara > 0 && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x, y, and z cell sizes are required\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -161,7 +161,7 @@ ecmd_vol_fsize(struct rt_solid_edit *s)
     if (s->e_inpara == 3) {
 	if (stat(vol->name, &stat_buf)) {
 	    bu_vls_printf(s->log_str, "Cannot get status of file %s\n", vol->name);
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return;
@@ -169,7 +169,7 @@ ecmd_vol_fsize(struct rt_solid_edit *s)
 	need_size = s->e_para[0] * s->e_para[1] * s->e_para[2] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
 	    bu_vls_printf(s->log_str, "File (%s) is too small, set file name first", vol->name);
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return;
@@ -179,7 +179,7 @@ ecmd_vol_fsize(struct rt_solid_edit *s)
 	vol->zdim = s->e_para[2];
     } else if (s->e_inpara > 0) {
 	bu_vls_printf(s->log_str, "x, y, and z file sizes are required\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -281,7 +281,7 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 
     const char *av[2] = {NULL};
     av[0] = vol->name;
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_GET_FILENAME, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_GET_FILENAME, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(1, (const char **)av, d, &fname);
 
@@ -291,7 +291,7 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "Cannot get status of file %s\n", fname);
 	    f = NULL; d = NULL;
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return;
@@ -302,7 +302,7 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
 	    f = NULL; d = NULL;
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return;
@@ -401,7 +401,7 @@ rt_solid_edit_vol_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;

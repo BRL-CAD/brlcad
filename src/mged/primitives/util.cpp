@@ -226,7 +226,7 @@ rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em,
 }
 
 int
-rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode)
+rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode)
 {
     return rt_solid_edit_map_clbk_get(f, d, s->m, ed_cmd, menu_cmd, mode);
 }

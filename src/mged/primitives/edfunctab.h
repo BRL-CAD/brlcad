@@ -48,7 +48,6 @@ void rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
 int rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
 int rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode);
 int rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im);
-int rt_solid_edit_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode);
 
 
 void rt_solid_edit_process(struct rt_solid_edit *s);

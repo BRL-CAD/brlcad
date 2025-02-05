@@ -300,7 +300,7 @@ ecmd_ars_pick(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for 'pick point'\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -318,7 +318,7 @@ ecmd_ars_pick(struct rt_solid_edit *s)
 
     bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", a->es_ars_col, a->es_ars_crv, V3ARGS(selected_pt));
     bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
     bu_vls_free(&tmp_vls);
@@ -348,7 +348,7 @@ ecmd_ars_next_pt(struct rt_solid_edit *s)
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", a->es_ars_col, a->es_ars_crv, V3ARGS(selected_pt));
 	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -379,7 +379,7 @@ ecmd_ars_prev_pt(struct rt_solid_edit *s)
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", a->es_ars_col, a->es_ars_crv, V3ARGS(selected_pt));
 	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -410,7 +410,7 @@ ecmd_ars_next_crv(struct rt_solid_edit *s)
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", a->es_ars_col, a->es_ars_crv, V3ARGS(selected_pt));
 	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -441,7 +441,7 @@ ecmd_ars_prev_crv(struct rt_solid_edit *s)
 
 	bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", a->es_ars_col, a->es_ars_crv, V3ARGS(selected_pt));
 	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -690,7 +690,7 @@ ecmd_ars_move_col(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -754,7 +754,7 @@ ecmd_ars_move_crv(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -817,7 +817,7 @@ ecmd_ars_move_pt(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -853,7 +853,7 @@ rt_solid_edit_ars_edit(struct rt_solid_edit *s, int edflag)
 	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 1;
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
 	    if (!f)
 		return 0;
 	    (*f)(0, NULL, d, ars_pick_menu);
@@ -861,7 +861,7 @@ rt_solid_edit_ars_edit(struct rt_solid_edit *s, int edflag)
 	case ECMD_ARS_EDIT_MENU:
 	    /* put up main ARS edit menu */
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_MENU_SET, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
 	    if (!f)
 		return 0;
 	    (*f)(0, NULL, d, ars_menu);
@@ -942,7 +942,7 @@ rt_solid_edit_ars_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
-	    rt_solid_edit_clbk_get(&f, &d, s, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
