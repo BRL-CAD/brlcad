@@ -93,8 +93,8 @@ set(
   primitives/edtgc.c
   primitives/edtor.c
   primitives/edvol.c
-  primitives/generic.c
-  primitives/table.cpp
+  primitives/edgeneric.c
+  primitives/edtable.cpp
   rect.c
   rtif.c
   scroll.c

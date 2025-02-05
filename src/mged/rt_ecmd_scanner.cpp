@@ -34,7 +34,7 @@
  */
 /** @file rt_ecmd_scanner.cpp
  *
- * Generate a header with defines for all ECMD entries
+ * Generate a header with defines for all available primitive edit operations.
  */
 
 #include <cstdio>

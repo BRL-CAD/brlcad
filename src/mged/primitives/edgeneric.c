@@ -1,4 +1,4 @@
-/*                         G E N E R I C . C
+/*                         E D G E N E R I C . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2025 United States Government as represented by
@@ -17,8 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file primitives/generic.c
+/** @file primitives/edgeneric.c
  *
+ * Editing routines not specific to any one primitive.
  */
 
 #include "common.h"

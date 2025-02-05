@@ -1,4 +1,4 @@
-/*                       T A B L E . C P P
+/*                       E D T A B L E . C P P
  * BRL-CAD
  *
  * Copyright (c) 1989-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file primitives/table.cpp
+/** @file primitives/edtable.cpp
  *
  * Per-primitive methods for solid editing.
  *
