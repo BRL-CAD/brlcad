@@ -137,7 +137,7 @@ rt_solid_edit_generic_strans_xy(vect_t *pos_view,
 	);
 
 void
-update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos);
+rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos);
 
 int rt_solid_edit_generic_edit(struct rt_solid_edit *s, int edflag);
 

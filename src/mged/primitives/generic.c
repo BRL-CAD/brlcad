@@ -445,7 +445,7 @@ rt_solid_edit_generic_strans_xy(vect_t *pos_view,
 }
 
 void
-update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos)
+rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos)
 {
     vect_t model_pos;
     vect_t ea_view_pos;
@@ -492,7 +492,7 @@ rt_solid_edit_generic_edit_xy(
 	    return BRLCAD_ERROR;
     }
 
-    update_edit_absolute_tran(s, pos_view);
+    rt_update_edit_absolute_tran(s, pos_view);
 
     if (EDOBJ[ip->idb_type].ft_edit)
 	return (*EDOBJ[ip->idb_type].ft_edit)(s, edflag);

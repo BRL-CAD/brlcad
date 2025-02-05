@@ -890,7 +890,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	MAT_IDN(s->s_edit->incr_change);
 	new_edit_mats(s);
 
-	update_edit_absolute_tran(s->s_edit, pos_view);
+	rt_update_edit_absolute_tran(s->s_edit, pos_view);
     } else {
 	Tcl_AppendResult(s->interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
 	return;

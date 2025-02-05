@@ -1049,7 +1049,7 @@ rt_solid_edit_nmg_edit_xy(
 	    return BRLCAD_ERROR;
     }
 
-    update_edit_absolute_tran(s, pos_view);
+    rt_update_edit_absolute_tran(s, pos_view);
     rt_solid_edit_nmg_edit(s, edflag);
 
     return 0;

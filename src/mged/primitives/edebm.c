@@ -293,7 +293,7 @@ rt_solid_edit_ebm_edit_xy(
 	    return BRLCAD_ERROR;
     }
 
-    update_edit_absolute_tran(s, pos_view);
+    rt_update_edit_absolute_tran(s, pos_view);
     rt_solid_edit_ebm_edit(s, edflag);
 
     return 0;
