@@ -33,7 +33,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
 #define ECMD_EBM_FNAME		12053	/* set EBM file name */
 #define ECMD_EBM_FSIZE		12054	/* set EBM file size */

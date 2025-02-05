@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
 #define ECMD_TGC_MV_H		2005
 #define ECMD_TGC_MV_HH		2006

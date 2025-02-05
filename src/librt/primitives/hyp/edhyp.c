@@ -1,4 +1,4 @@
-/*                         E D E T O . C
+/*                         E D H Y P . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file primitives/edeto.c
+/** @file primitives/edhyp.c
  *
  */
 
@@ -32,26 +32,32 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
-#define ECMD_ETO_ROT_C		21016
+#define ECMD_HYP_ROT_H		38091
+#define ECMD_HYP_ROT_A		38092
 
-#define MENU_ETO_R		21057
-#define MENU_ETO_RD		21058
-#define MENU_ETO_SCALE_C	21059
-#define MENU_ETO_ROT_C		21060
+#define MENU_HYP_H              38127
+#define MENU_HYP_SCALE_A        38128
+#define MENU_HYP_SCALE_B	38129
+#define MENU_HYP_C		38130
+#define MENU_HYP_ROT_H		38131
 
 static void
-eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
-    if (arg == MENU_ETO_ROT_C) {
-	s->edit_flag = ECMD_ETO_ROT_C;
-	s->solid_edit_rotate = 1;
-	s->solid_edit_translate = 0;
-	s->solid_edit_scale = 0;
-	s->solid_edit_pick = 0;
+    switch (arg) {
+	case MENU_HYP_ROT_H:
+	    s->edit_flag = ECMD_HYP_ROT_H;
+	    s->solid_edit_rotate = 1;
+	    s->solid_edit_translate = 0;
+	    s->solid_edit_scale = 0;
+	    s->solid_edit_pick = 0;
+	    break;
+	default:
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    break;
     }
 
     bu_clbk_t f = NULL;
@@ -61,38 +67,39 @@ eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct rt_solid_edit_menu_item eto_menu[] = {
-    { "ELL-TORUS MENU", NULL, 0 },
-    { "Set r", eto_ed, MENU_ETO_R },
-    { "Set D", eto_ed, MENU_ETO_RD },
-    { "Set C", eto_ed, MENU_ETO_SCALE_C },
-    { "Rotate C", eto_ed, MENU_ETO_ROT_C },
+struct rt_solid_edit_menu_item  hyp_menu[] = {
+    { "HYP MENU", NULL, 0 },
+    { "Set H", hyp_ed, MENU_HYP_H },
+    { "Set A", hyp_ed, MENU_HYP_SCALE_A },
+    { "Set B", hyp_ed, MENU_HYP_SCALE_B },
+    { "Set c", hyp_ed, MENU_HYP_C },
+    { "Rotate H", hyp_ed, MENU_HYP_ROT_H },
     { "", NULL, 0 }
 };
 
 struct rt_solid_edit_menu_item *
-rt_solid_edit_eto_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_hyp_menu_item(const struct bn_tol *UNUSED(tol))
 {
-    return eto_menu;
+    return hyp_menu;
 }
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-rt_solid_edit_eto_write_params(
+rt_solid_edit_hyp_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol),
 	fastf_t base2local)
 {
-    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
-    RT_ETO_CK_MAGIC(eto);
+    struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hyp);
 
-    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_V));
-    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_N));
-    bu_vls_printf(p, "Semi-major axis: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_C));
-    bu_vls_printf(p, "Semi-minor length: %.9f\n", eto->eto_rd * base2local);
-    bu_vls_printf(p, "Radius of rotation: %.9f\n", eto->eto_r * base2local);
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(hyp->hyp_Vi));
+    bu_vls_printf(p, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL(hyp->hyp_Hi));
+    bu_vls_printf(p, "Semi-major axis: %.9f %.9f %.9f\n", V3BASE2LOCAL(hyp->hyp_A));
+    bu_vls_printf(p, "Semi-minor length: %.9f\n", hyp->hyp_b * base2local);
+    bu_vls_printf(p, "Ratio of Neck to Base: %.9f\n", hyp->hyp_bnr);
 }
 
 #define read_params_line_incr \
@@ -106,7 +113,7 @@ rt_solid_edit_eto_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-rt_solid_edit_eto_read_params(
+rt_solid_edit_hyp_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *UNUSED(tol),
@@ -116,8 +123,8 @@ rt_solid_edit_eto_read_params(
     double a = 0.0;
     double b = 0.0;
     double c = 0.0;
-    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
-    RT_ETO_CK_MAGIC(eto);
+    struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hyp);
 
     if (!fc)
 	return BRLCAD_ERROR;
@@ -144,137 +151,118 @@ rt_solid_edit_eto_read_params(
     while (lc && strchr(lc, ':')) lc++;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(eto->eto_V, a, b, c);
-    VSCALE(eto->eto_V, eto->eto_V, local2base);
+    VSET(hyp->hyp_Vi, a, b, c);
+    VSCALE(hyp->hyp_Vi, hyp->hyp_Vi, local2base);
 
-    // Set up Normal line
+    // Set up Height line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(eto->eto_N, a, b, c);
-    VUNITIZE(eto->eto_N);
+    VSET(hyp->hyp_Hi, a, b, c);
+    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, local2base);
 
     // Set up Semi-major axis line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(eto->eto_C, a, b, c);
-    VSCALE(eto->eto_C, eto->eto_C, local2base);
+    VSET(hyp->hyp_A, a, b, c);
+    VSCALE(hyp->hyp_A, hyp->hyp_A, local2base);
 
     // Set up Semi-minor length line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);
-    eto->eto_rd = a * local2base;
+    hyp->hyp_b = a * local2base;
 
-    // Set up Radius of rotation line
+    // Set up Ratio of Neck to Base line
     read_params_line_incr;
 
     sscanf(lc, "%lf", &a);
-    eto->eto_r = a * local2base;
+    hyp->hyp_bnr = a;
 
     // Cleanup
     bu_free(wc, "wc");
     return BRLCAD_OK;
 }
 
-/* scale radius 1 (r) of ETO */
+/* scale height of HYP */
 void
-menu_eto_r(struct rt_solid_edit *s)
+menu_hyp_h(struct rt_solid_edit *s)
 {
-    struct rt_eto_internal *eto =
-	(struct rt_eto_internal *)s->es_int.idb_ptr;
-    fastf_t ch, cv, dh, newrad;
-    vect_t Nu;
+    struct rt_hyp_internal *hyp =
+	(struct rt_hyp_internal *)s->es_int.idb_ptr;
 
-    RT_ETO_CK_MAGIC(eto);
+    RT_HYP_CK_MAGIC(hyp);
     if (s->e_inpara) {
 	/* take s->e_mat[15] (path scaling) into account */
 	s->e_para[0] *= s->e_mat[15];
-	newrad = s->e_para[0];
-    } else {
-	newrad = eto->eto_r * s->es_scale;
+	s->es_scale = s->e_para[0];
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
-    VMOVE(Nu, eto->eto_N);
-    VUNITIZE(Nu);
-    /* get horiz and vert components of C and Rd */
-    cv = VDOT(eto->eto_C, Nu);
-    ch = sqrt(VDOT(eto->eto_C, eto->eto_C) - cv * cv);
-    /* angle between C and Nu */
-    dh = eto->eto_rd * cv / MAGNITUDE(eto->eto_C);
-    /* make sure revolved ellipse doesn't overlap itself */
-    if (ch <= newrad && dh <= newrad)
-	eto->eto_r = newrad;
+    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->es_scale);
 }
 
-/* scale Rd, ellipse semi-minor axis length, of ETO */
+/* scale A vector of HYP */
 void
-menu_eto_rd(struct rt_solid_edit *s)
+menu_hyp_scale_a(struct rt_solid_edit *s)
 {
-    struct rt_eto_internal *eto =
-	(struct rt_eto_internal *)s->es_int.idb_ptr;
-    fastf_t dh, newrad, work;
-    vect_t Nu;
+    struct rt_hyp_internal *hyp =
+	(struct rt_hyp_internal *)s->es_int.idb_ptr;
 
-    RT_ETO_CK_MAGIC(eto);
+    RT_HYP_CK_MAGIC(hyp);
     if (s->e_inpara) {
 	/* take s->e_mat[15] (path scaling) into account */
 	s->e_para[0] *= s->e_mat[15];
-	newrad = s->e_para[0];
-    } else {
-	newrad = eto->eto_rd * s->es_scale;
+	s->es_scale = s->e_para[0];
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
-    work = MAGNITUDE(eto->eto_C);
-    if (newrad <= work) {
-	VMOVE(Nu, eto->eto_N);
-	VUNITIZE(Nu);
-	dh = newrad * VDOT(eto->eto_C, Nu) / work;
-	/* make sure revolved ellipse doesn't overlap itself */
-	if (dh <= eto->eto_r)
-	    eto->eto_rd = newrad;
-    }
+    VSCALE(hyp->hyp_A, hyp->hyp_A, s->es_scale);
 }
 
-/* scale vector C */
+/* scale B vector of HYP */
 void
-menu_eto_scale_c(struct rt_solid_edit *s)
+menu_hyp_scale_b(struct rt_solid_edit *s)
 {
-    struct rt_eto_internal *eto =
-	(struct rt_eto_internal *)s->es_int.idb_ptr;
-    fastf_t ch, cv;
-    vect_t Nu, Work;
+    struct rt_hyp_internal *hyp =
+	(struct rt_hyp_internal *)s->es_int.idb_ptr;
 
-    RT_ETO_CK_MAGIC(eto);
+    RT_HYP_CK_MAGIC(hyp);
     if (s->e_inpara) {
 	/* take s->e_mat[15] (path scaling) into account */
 	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(eto->eto_C);
+	s->es_scale = s->e_para[0];
     }
-    if (s->es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
-	VMOVE(Nu, eto->eto_N);
-	VUNITIZE(Nu);
-	VSCALE(Work, eto->eto_C, s->es_scale);
-	/* get horiz and vert comps of C and Rd */
-	cv = VDOT(Work, Nu);
-	ch = sqrt(VDOT(Work, Work) - cv * cv);
-	if (ch <= eto->eto_r)
-	    VMOVE(eto->eto_C, Work);
+    hyp->hyp_b = hyp->hyp_b * s->es_scale;
+}
+
+/* scale Neck to Base ratio of HYP */
+void
+menu_hyp_c(struct rt_solid_edit *s)
+{
+    struct rt_hyp_internal *hyp =
+	(struct rt_hyp_internal *)s->es_int.idb_ptr;
+
+    RT_HYP_CK_MAGIC(hyp);
+    if (s->e_inpara) {
+	/* take s->e_mat[15] (path scaling) into account */
+	s->e_para[0] *= s->e_mat[15];
+	s->es_scale = s->e_para[0];
+    }
+    if (hyp->hyp_bnr * s->es_scale <= 1.0) {
+	hyp->hyp_bnr = hyp->hyp_bnr * s->es_scale;
     }
 }
 
-/* rotate ellipse semi-major axis vector */
+/* rotate hyperboloid height vector */
 int
-ecmd_eto_rot_c(struct rt_solid_edit *s)
+ecmd_hyp_rot_h(struct rt_solid_edit *s)
 {
-    struct rt_eto_internal *eto =
-	(struct rt_eto_internal *)s->es_int.idb_ptr;
+    struct rt_hyp_internal *hyp =
+	(struct rt_hyp_internal *)s->es_int.idb_ptr;
+
     mat_t mat;
     mat_t mat1;
     mat_t edit;
 
-    RT_ETO_CK_MAGIC(eto);
+    RT_HYP_CK_MAGIC(hyp);
     if (s->e_inpara) {
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
@@ -319,9 +307,9 @@ ecmd_eto_rot_c(struct rt_solid_edit *s)
 	bn_mat_mul(mat1, edit, s->e_mat);
 	bn_mat_mul(mat, s->e_invmat, mat1);
 
-	MAT4X3VEC(eto->eto_C, mat, eto->eto_C);
+	MAT4X3VEC(hyp->hyp_Hi, mat, hyp->hyp_Hi);
     } else {
-	MAT4X3VEC(eto->eto_C, s->incr_change, eto->eto_C);
+	MAT4X3VEC(hyp->hyp_Hi, s->incr_change, hyp->hyp_Hi);
     }
 
     MAT_IDN(s->incr_change);
@@ -330,7 +318,7 @@ ecmd_eto_rot_c(struct rt_solid_edit *s)
 }
 
 static int
-rt_solid_edit_eto_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_hyp_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -350,14 +338,17 @@ rt_solid_edit_eto_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_ETO_R:
-	    menu_eto_r(s);
+	case MENU_HYP_H:
+	    menu_hyp_h(s);
 	    break;
-	case MENU_ETO_RD:
-	    menu_eto_rd(s);
+	case MENU_HYP_SCALE_A:
+	    menu_hyp_scale_a(s);
 	    break;
-	case MENU_ETO_SCALE_C:
-	    menu_eto_scale_c(s);
+	case MENU_HYP_SCALE_B:
+	    menu_hyp_scale_b(s);
+	    break;
+	case MENU_HYP_C:
+	    menu_hyp_c(s);
 	    break;
     };
 
@@ -365,7 +356,7 @@ rt_solid_edit_eto_pscale(struct rt_solid_edit *s, int mode)
 }
 
 int
-rt_solid_edit_eto_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_hyp_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
@@ -380,9 +371,9 @@ rt_solid_edit_eto_edit(struct rt_solid_edit *s, int edflag)
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_PSCALE:
-	    return rt_solid_edit_eto_pscale(s, s->edit_menu);
-	case ECMD_ETO_ROT_C:
-	    return ecmd_eto_rot_c(s);
+	    return rt_solid_edit_hyp_pscale(s, s->edit_menu);
+	case ECMD_HYP_ROT_H:
+	    return ecmd_hyp_rot_h(s);
     }
     return 0;
 }

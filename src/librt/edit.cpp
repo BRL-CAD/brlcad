@@ -35,26 +35,6 @@ extern "C" {
 #include "rt/functab.h"
 }
 
-/* Stub in EDOBJ until we get all the logic migrated. */
-const struct rt_solid_edit_functab EDOBJ[] = {
-    {
-        /* 0: unused, for sanity checking. */
-        RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
-        NULL,  /* label */
-        NULL,  /* keypoint */
-        NULL,  /* s->e_axes_pos */
-        NULL,  /* write_params */
-        NULL,  /* read_params */
-        NULL,  /* edit */
-        NULL,  /* exit xy */
-        NULL,  /* prim edit create */
-        NULL,  /* prim edit destroy */
-        NULL,  /* prim edit reset*/
-        NULL,  /* menu_str */
-        NULL   /* menu_item */
-    }
-};
-
 class RT_Edit_Map_Internal {
     public:
         // Key is ECMD_ type, populated from MGED_Internal map

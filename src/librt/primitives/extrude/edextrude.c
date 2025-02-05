@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
 #define ECMD_EXTR_SCALE_H	27073	/* scale extrusion vector */
 #define ECMD_EXTR_MOV_H		27074	/* move end of extrusion vector */

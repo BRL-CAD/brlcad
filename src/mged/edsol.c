@@ -42,9 +42,9 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "rt/arb_edit.h"
 #include "wdb.h"
 #include "rt/db4.h"
+#include "rt/primitives/arb8.h"
 #include "rt/primitives/bot.h"
 #include "rt/primitives/nmg.h"
 #include "rt/primitives/pipe.h"
@@ -54,7 +54,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"
-#include "./primitives/edarb.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 

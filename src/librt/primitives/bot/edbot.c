@@ -33,7 +33,7 @@
 #include "rt/primitives/bot.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
 #define ECMD_BOT_PICKV		30061	/* pick a BOT vertex */
 #define ECMD_BOT_PICKE		30062	/* pick a BOT edge */

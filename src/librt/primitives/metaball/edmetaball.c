@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
 #define ECMD_METABALL_SET_THRESHOLD	36083	/* overall metaball threshold value */
 #define ECMD_METABALL_SET_METHOD	36084	/* set the rendering method */

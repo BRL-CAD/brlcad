@@ -61,7 +61,6 @@
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
-#include "rt/arb_edit.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"

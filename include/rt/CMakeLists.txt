@@ -4,7 +4,6 @@ set(
   rt_headers
   anim.h
   application.h
-  arb_edit.h
   binunif.h
   boolweave.h
   calc.h

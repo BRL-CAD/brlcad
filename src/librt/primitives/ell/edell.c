@@ -1,4 +1,4 @@
-/*                         E D R P C . C
+/*                         E D E L L . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file primitives/edrpc.c
+/** @file primitives/edell.c
  *
  */
 
@@ -32,14 +32,15 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
-#define MENU_RPC_B		17043
-#define MENU_RPC_H		17044
-#define MENU_RPC_R		17045
+#define MENU_ELL_SCALE_A	3039
+#define MENU_ELL_SCALE_B	3040
+#define MENU_ELL_SCALE_C	3041
+#define MENU_ELL_SCALE_ABC	3042
 
 static void
-rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
@@ -51,38 +52,38 @@ rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct rt_solid_edit_menu_item rpc_menu[] = {
-    { "RPC MENU", NULL, 0 },
-    { "Set B", rpc_ed, MENU_RPC_B },
-    { "Set H", rpc_ed, MENU_RPC_H },
-    { "Set r", rpc_ed, MENU_RPC_R },
+struct rt_solid_edit_menu_item ell_menu[] = {
+    { "ELLIPSOID MENU", NULL, 0 },
+    { "Set A", ell_ed, MENU_ELL_SCALE_A },
+    { "Set B", ell_ed, MENU_ELL_SCALE_B },
+    { "Set C", ell_ed, MENU_ELL_SCALE_C },
+    { "Set A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
     { "", NULL, 0 }
 };
 
 struct rt_solid_edit_menu_item *
-rt_solid_edit_rpc_menu_item(const struct bn_tol *UNUSED(tol))
+rt_solid_edit_ell_menu_item(const struct bn_tol *UNUSED(tol))
 {
-    return rpc_menu;
+    return ell_menu;
 }
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-rt_solid_edit_rpc_write_params(
+rt_solid_edit_ell_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol),
 	fastf_t base2local)
 {
-    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
-    RT_RPC_CK_MAGIC(rpc);
+    struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
 
-    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(rpc->rpc_V));
-    bu_vls_printf(p, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL(rpc->rpc_H));
-    bu_vls_printf(p, "Breadth: %.9f %.9f %.9f\n", V3BASE2LOCAL(rpc->rpc_B));
-    bu_vls_printf(p, "Half-width: %.9f\n", rpc->rpc_r * base2local);
+    bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(ell->v));
+    bu_vls_printf(p, "A: %.9f %.9f %.9f\n", V3BASE2LOCAL(ell->a));
+    bu_vls_printf(p, "B: %.9f %.9f %.9f\n", V3BASE2LOCAL(ell->b));
+    bu_vls_printf(p, "C: %.9f %.9f %.9f\n", V3BASE2LOCAL(ell->c));
 }
-
 
 #define read_params_line_incr \
     lc = (ln) ? (ln + lcj) : NULL; \
@@ -95,7 +96,7 @@ rt_solid_edit_rpc_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-rt_solid_edit_rpc_read_params(
+rt_solid_edit_ell_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *UNUSED(tol),
@@ -105,8 +106,8 @@ rt_solid_edit_rpc_read_params(
     double a = 0.0;
     double b = 0.0;
     double c = 0.0;
-    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
-    RT_RPC_CK_MAGIC(rpc);
+    struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
 
     if (!fc)
 	return BRLCAD_ERROR;
@@ -133,84 +134,103 @@ rt_solid_edit_rpc_read_params(
     while (lc && strchr(lc, ':')) lc++;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(rpc->rpc_V, a, b, c);
-    VSCALE(rpc->rpc_V, rpc->rpc_V, local2base);
+    VSET(ell->v, a, b, c);
+    VSCALE(ell->v, ell->v, local2base);
 
-    // Set up Height line
+    // Set up A line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(rpc->rpc_H, a, b, c);
-    VSCALE(rpc->rpc_H, rpc->rpc_H, local2base);
+    VSET(ell->a, a, b, c);
+    VSCALE(ell->a, ell->a, local2base);
 
-    // Set up Breadth line
+    // Set up B line
     read_params_line_incr;
 
     sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(rpc->rpc_B, a, b, c);
-    VSCALE(rpc->rpc_B, rpc->rpc_B, local2base);
+    VSET(ell->b, a, b, c);
+    VSCALE(ell->b, ell->b, local2base);
 
-    // Set up Half-width line
+    // Set up C line
     read_params_line_incr;
 
-    sscanf(lc, "%lf", &a);
-    rpc->rpc_r = a * local2base;
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(ell->c, a, b, c);
+    VSCALE(ell->c, ell->c, local2base);
 
     // Cleanup
     bu_free(wc, "wc");
     return BRLCAD_OK;
 }
 
+/* scale vector A */
+void
+menu_ell_scale_a(struct rt_solid_edit *s)
+{
+    struct rt_ell_internal *ell =
+	(struct rt_ell_internal *)s->es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+    if (s->e_inpara) {
+	/* take s->e_mat[15] (path scaling) into account */
+	s->es_scale = s->e_para[0] * s->e_mat[15] /
+	    MAGNITUDE(ell->a);
+    }
+    VSCALE(ell->a, ell->a, s->es_scale);
+}
+
 /* scale vector B */
 void
-menu_rpc_b(struct rt_solid_edit *s)
+menu_ell_scale_b(struct rt_solid_edit *s)
 {
-    struct rt_rpc_internal *rpc =
-	(struct rt_rpc_internal *)s->es_int.idb_ptr;
-    RT_RPC_CK_MAGIC(rpc);
-
+    struct rt_ell_internal *ell =
+	(struct rt_ell_internal *)s->es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
     if (s->e_inpara) {
 	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(rpc->rpc_B);
+	s->es_scale = s->e_para[0] * s->e_mat[15] /
+	    MAGNITUDE(ell->b);
     }
-    VSCALE(rpc->rpc_B, rpc->rpc_B, s->es_scale);
+    VSCALE(ell->b, ell->b, s->es_scale);
 }
 
-/* scale vector H */
+/* scale vector C */
 void
-menu_rpc_h(struct rt_solid_edit *s)
+menu_ell_scale_c(struct rt_solid_edit *s)
 {
-    struct rt_rpc_internal *rpc =
-	(struct rt_rpc_internal *)s->es_int.idb_ptr;
-
-    RT_RPC_CK_MAGIC(rpc);
+    struct rt_ell_internal *ell =
+	(struct rt_ell_internal *)s->es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
     if (s->e_inpara) {
 	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(rpc->rpc_H);
+	s->es_scale = s->e_para[0] * s->e_mat[15] /
+	    MAGNITUDE(ell->c);
     }
-    VSCALE(rpc->rpc_H, rpc->rpc_H, s->es_scale);
+    VSCALE(ell->c, ell->c, s->es_scale);
 }
 
-/* scale rectangular half-width of RPC */
+/* set A, B, and C length the same */
 void
-menu_rpc_r(struct rt_solid_edit *s)
+menu_ell_scale_abc(struct rt_solid_edit *s)
 {
-    struct rt_rpc_internal *rpc =
-	(struct rt_rpc_internal *)s->es_int.idb_ptr;
-
-    RT_RPC_CK_MAGIC(rpc);
+    fastf_t ma, mb;
+    struct rt_ell_internal *ell =
+	(struct rt_ell_internal *)s->es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
     if (s->e_inpara) {
 	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / rpc->rpc_r;
+	s->es_scale = s->e_para[0] * s->e_mat[15] /
+	    MAGNITUDE(ell->a);
     }
-    rpc->rpc_r *= s->es_scale;
+    VSCALE(ell->a, ell->a, s->es_scale);
+    ma = MAGNITUDE(ell->a);
+    mb = MAGNITUDE(ell->b);
+    VSCALE(ell->b, ell->b, ma/mb);
+    mb = MAGNITUDE(ell->c);
+    VSCALE(ell->c, ell->c, ma/mb);
 }
 
 static int
-rt_solid_edit_rpc_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_ell_pscale(struct rt_solid_edit *s, int mode)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -230,14 +250,17 @@ rt_solid_edit_rpc_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_RPC_B:
-	    menu_rpc_b(s);
+	case MENU_ELL_SCALE_A:
+	    menu_ell_scale_a(s);
 	    break;
-	case MENU_RPC_H:
-	    menu_rpc_h(s);
+	case MENU_ELL_SCALE_B:
+	    menu_ell_scale_b(s);
 	    break;
-	case MENU_RPC_R:
-	    menu_rpc_r(s);
+	case MENU_ELL_SCALE_C:
+	    menu_ell_scale_c(s);
+	    break;
+	case MENU_ELL_SCALE_ABC:
+	    menu_ell_scale_abc(s);
 	    break;
     };
 
@@ -245,7 +268,7 @@ rt_solid_edit_rpc_pscale(struct rt_solid_edit *s, int mode)
 }
 
 int
-rt_solid_edit_rpc_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_ell_edit(struct rt_solid_edit *s, int edflag)
 {
     switch (edflag) {
 	case RT_SOLID_EDIT_SCALE:
@@ -260,7 +283,7 @@ rt_solid_edit_rpc_edit(struct rt_solid_edit *s, int edflag)
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case RT_SOLID_EDIT_PSCALE:
-	    return rt_solid_edit_rpc_pscale(s, s->edit_menu);
+	    return rt_solid_edit_ell_pscale(s, s->edit_menu);
     }
     return 0;
 }

@@ -33,7 +33,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
 #define ECMD_DSP_FNAME		25056	/* set DSP file name */
 #define ECMD_DSP_FSIZE		25057	/* set DSP file size */

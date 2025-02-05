@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "rt/arb_edit.h"
+#include "rt/primitives/arb8.h"
 #include "../ged_private.h"
 #include "./ged_edit.h"
 

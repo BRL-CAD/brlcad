@@ -396,7 +396,7 @@ struct rt_solid_edit_functab {
 
 };
 
-extern const struct rt_solid_edit_functab EDOBJ[];
+RT_EXPORT extern const struct rt_solid_edit_functab EDOBJ[];
 
 
 __END_DECLS

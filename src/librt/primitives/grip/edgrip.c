@@ -1,4 +1,4 @@
-/*                         E D D A T U M . C
+/*                         E D G R I P . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file primitives/eddatum.c
+/** @file primitives/edgrip.c
  *
  */
 
@@ -32,28 +32,40 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
+
+const char *
+rt_solid_edit_grp_keypoint(
+	point_t *pt,
+	const char *keystr,
+	const mat_t mat,
+	struct rt_solid_edit *s,
+	const struct bn_tol *tol)
+{
+    struct rt_db_internal *ip = &s->es_int;
+    const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
+    if (!strp) {
+	static const char *c_str = "C";
+	strp = OBJ[ip->idb_type].ft_keypoint(pt, c_str, mat, ip, tol);
+    }
+    return strp;
+}
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-rt_solid_edit_datum_write_params(
+rt_solid_edit_grp_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
-	const struct bn_tol *UNUSED(tol),
+       	const struct bn_tol *UNUSED(tol),
 	fastf_t base2local)
 {
-    struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
-    RT_DATUM_CK_MAGIC(datum);
+    struct rt_grip_internal *grip = (struct rt_grip_internal *)ip->idb_ptr;
+    RT_GRIP_CK_MAGIC(grip);
 
-    do {
-	if (!ZERO(datum->w))
-	    bu_vls_printf(p, "Plane: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir) %.9f (scale)\n", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir), datum->w);
-	else if (!ZERO(MAGNITUDE(datum->dir)))
-	    bu_vls_printf(p, "Line: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir)\n", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir));
-	else
-	    bu_vls_printf(p, "Point: %.9f %.9f %.9f\n", V3BASE2LOCAL(datum->pnt));
-    } while ((datum = datum->next));
+    bu_vls_printf(p, "Center: %.9f %.9f %.9f\n", V3BASE2LOCAL(grip->center));
+    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL(grip->normal));
+    bu_vls_printf(p, "Magnitude: %.9f\n", grip->mag*base2local);
 }
 
 #define read_params_line_incr \
@@ -67,7 +79,7 @@ rt_solid_edit_datum_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-rt_solid_edit_datum_read_params(
+rt_solid_edit_grp_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *UNUSED(tol),
@@ -77,12 +89,8 @@ rt_solid_edit_datum_read_params(
     double a = 0.0;
     double b = 0.0;
     double c = 0.0;
-    double d = 0.0;
-    double e = 0.0;
-    double f = 0.0;
-    double g = 0.0;
-    struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
-    RT_DATUM_CK_MAGIC(datum);
+    struct rt_grip_internal *grip = (struct rt_grip_internal *)ip->idb_ptr;
+    RT_GRIP_CK_MAGIC(grip);
 
     if (!fc)
 	return BRLCAD_ERROR;
@@ -100,41 +108,29 @@ rt_solid_edit_datum_read_params(
     char *ln = NULL;
     char *wc = bu_strdup(fc);
     char *lc = wc;
-    int first_line = 1;
 
-    // Set up initial line
+    // Set up initial line (Center)
     ln = strchr(lc, tc);
     if (ln) *ln = '\0';
 
     // Trim off prefixes, if user left them in
     while (lc && strchr(lc, ':')) lc++;
 
-    do {
-	if (!first_line) {
-	    read_params_line_incr;
-	} else {
-	    first_line = 0;
-	}
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(grip->center, a, b, c);
+    VSCALE(grip->center, grip->center, local2base);
 
-	if (bu_strncasecmp(lc, "point", strlen("point")) == 0) {
-	    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-	    VSET(datum->pnt, a, b, c);
-	    VSCALE(datum->pnt, datum->pnt, local2base);
-	} else if (bu_strncasecmp(lc, "line", strlen("line")) == 0) {
-	    sscanf(lc, "%lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f);
-	    VSET(datum->pnt, a, b, c);
-	    VSET(datum->dir, d, e, f);
-	    VSCALE(datum->pnt, datum->pnt, local2base);
-	    VSCALE(datum->dir, datum->dir, local2base);
-	} else if (bu_strncasecmp(lc, "plane", strlen("plane")) == 0) {
-	    sscanf(lc, "%lf %lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f, &g);
-	    VSET(datum->pnt, a, b, c);
-	    VSET(datum->dir, d, e, f);
-	    VSCALE(datum->pnt, datum->pnt, local2base);
-	    VSCALE(datum->dir, datum->dir, local2base);
-	    datum->w = g;
-	}
-    } while ((datum = datum->next));
+    // Set up Normal line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+    VSET(grip->normal, a, b, c);
+
+    // Set up Magnitude line
+    read_params_line_incr;
+
+    sscanf(lc, "%lf", &a);
+    grip->mag = a * local2base;
 
     // Cleanup
     bu_free(wc, "wc");

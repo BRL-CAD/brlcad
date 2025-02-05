@@ -28,7 +28,7 @@
 #include "vmath.h"
 
 #include "bg/polygon.h"
-#include "rt/arb_edit.h"
+#include "rt/primitives/arb8.h"
 #include "rt/geom.h"
 #include "ged/defines.h"
 #include "../ged_private.h"

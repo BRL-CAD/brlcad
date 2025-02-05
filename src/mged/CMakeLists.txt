@@ -4,37 +4,6 @@ endif(BRLCAD_ENABLE_TK)
 
 find_package_tcl()
 
-# Utility program
-if(BRLCAD_ENABLE_TCL)
-  set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
-  try_compile(
-    ged_hdr_scanner
-    "${CMAKE_BINARY_DIR}/CMakeTmp"
-    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/rt_ecmd_scanner.cpp"
-    OUTPUT_VARIABLE MGED_SCANNER_BLD_OUT
-    COPY_FILE "${RT_ECMD_SCANNER}"
-  )
-  if (NOT EXISTS ${RT_ECMD_SCANNER})
-    message(FATAL_ERROR "Unable to build ged command scanner: ${MGED_SCANNER_BLD_OUT}")
-  endif()
-  distclean(${RT_ECMD_SCANNER})
-
-  set(MGED_PFILE_OUT "${CMAKE_BINARY_DIR}/CMakeTmp/mged_primitive_files.txt")
-  file(GLOB MGED_PFILES "${CMAKE_CURRENT_SOURCE_DIR}/primitives/*")
-  string(REPLACE ";" "\n" MGED_PFILES "${MGED_PFILES}")
-  file(WRITE "${MGED_PFILE_OUT}" ${MGED_PFILES})
-  distclean(${MGED_PFILE_OUT})
-
-  set(RT_ECMD_HDR "${CMAKE_CURRENT_BINARY_DIR}/rt_ecmds.h")
-  add_custom_command(
-    OUTPUT ${RT_ECMD_HDR}
-    COMMAND ${RT_ECMD_SCANNER} ${MGED_PFILE_OUT} ${RT_ECMD_HDR}
-    COMMENT "[RT_ECMD_SCANNER] Scanning for MGED editing mode flags"
-  )
-  distclean(${RT_ECMD_HDR})
-  set_source_files_properties(mged_impl.cpp PROPERTIES OBJECT_DEPENDS ${RT_ECMD_HDR})
-endif()
-
 set(
   MGED_SOURCES
   adc.c
@@ -67,34 +36,6 @@ set(
   overlay.c
   plot.c
   predictor.c
-  primitives/edarb.c
-  primitives/edars.c
-  primitives/edbot.c
-  primitives/edbspline.c
-  primitives/edcline.c
-  primitives/eddatum.c
-  primitives/eddsp.c
-  primitives/edebm.c
-  primitives/edehy.c
-  primitives/edell.c
-  primitives/edepa.c
-  primitives/edeto.c
-  primitives/edextrude.c
-  primitives/edgrip.c
-  primitives/edhalf.c
-  primitives/edhyp.c
-  primitives/edmetaball.c
-  primitives/ednmg.c
-  primitives/edpart.c
-  primitives/edpipe.c
-  primitives/edrhc.c
-  primitives/edrpc.c
-  primitives/edsuperell.c
-  primitives/edtgc.c
-  primitives/edtor.c
-  primitives/edvol.c
-  primitives/edgeneric.c
-  primitives/edtable.cpp
   rect.c
   rtif.c
   scroll.c
@@ -135,7 +76,6 @@ set(
 if(BRLCAD_ENABLE_TCL)
   set(MGED_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/primitives
     ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
   )
   brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}")
@@ -172,11 +112,8 @@ set(
   mged.ico
   mged.rc
   mged_dm.h
-  rt_ecmd_scanner.cpp
   mged_impl.h
   mged_wdb.h
-  primitives/edarb.h
-  primitives/edit_private.h
   sedit.h
 )
 cmakefiles(${mged_ignore_files})

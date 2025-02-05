@@ -18,6 +18,71 @@ if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
 endif(BRLCAD_ENABLE_OPENCL)
 
+
+set(
+  LIBRT_PRIMEDIT_SOURCES
+  primitives/arb8/edarb.c
+  primitives/ars/edars.c
+  primitives/bot/edbot.c
+  primitives/bspline/edbspline.c
+  primitives/cline/edcline.c
+  primitives/datum/eddatum.c
+  primitives/dsp/eddsp.c
+  primitives/ebm/edebm.c
+  primitives/ehy/edehy.c
+  primitives/ell/edell.c
+  primitives/epa/edepa.c
+  primitives/eto/edeto.c
+  primitives/extrude/edextrude.c
+  primitives/grip/edgrip.c
+  primitives/half/edhalf.c
+  primitives/hyp/edhyp.c
+  primitives/metaball/edmetaball.c
+  primitives/nmg/ednmg.c
+  primitives/part/edpart.c
+  primitives/pipe/edpipe.c
+  primitives/rhc/edrhc.c
+  primitives/rpc/edrpc.c
+  primitives/superell/edsuperell.c
+  primitives/tgc/edtgc.c
+  primitives/tor/edtor.c
+  primitives/vol/edvol.c
+)
+
+set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
+try_compile(
+  ged_hdr_scanner
+  "${CMAKE_BINARY_DIR}/CMakeTmp"
+  SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp"
+  OUTPUT_VARIABLE RT_SCANNER_BLD_OUT
+  COPY_FILE "${RT_ECMD_SCANNER}"
+)
+if (NOT EXISTS ${RT_ECMD_SCANNER})
+  message(FATAL_ERROR "Unable to build ged command scanner: ${RT_SCANNER_BLD_OUT}")
+endif()
+distclean(${RT_ECMD_SCANNER})
+
+set(RT_PFILE_OUT "${CMAKE_BINARY_DIR}/CMakeTmp/rt_primitive_files.txt")
+set(RT_PFILE_IN)
+foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
+  list(APPEND RT_PFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/${esf})
+endforeach()
+string(REPLACE ";" "\n" RT_PFILES "${RT_PFILE_IN}")
+file(WRITE "${RT_PFILE_OUT}" ${RT_PFILES})
+distclean(${RT_PFILE_OUT})
+
+set(RT_ECMD_HDR "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad/rt/rt_ecmds.h")
+add_custom_command(
+  OUTPUT ${RT_ECMD_HDR}
+  COMMAND ${RT_ECMD_SCANNER} ${RT_PFILE_OUT} ${RT_ECMD_HDR}
+  COMMENT "[RT_ECMD_SCANNER] Scanning for RT editing mode flags"
+)
+distclean(${RT_ECMD_HDR})
+foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
+  set_source_files_properties(${esf} PROPERTIES OBJECT_DEPENDS ${RT_ECMD_HDR})
+endforeach()
+
+
 # FIXME: needs materialX
 #  material/materialX.cpp
 set(
@@ -77,11 +142,11 @@ set(
   op.c
   pr.c
   prep.cpp
+  ${LIBRT_PRIMEDIT_SOURCES}
   primitives/annot/annot.c
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c
-  primitives/arb8/arb_edit.c
   primitives/arbn/arbn.c
   primitives/arbn/arbn_brep.cpp
   primitives/arbn/arbn_mirror.c
@@ -112,6 +177,8 @@ set(
   primitives/ebm/ebm.c
   primitives/ebm/ebm_brep.cpp
   primitives/ebm/ebm_mirror.c
+  primitives/edgeneric.c
+  primitives/edtable.cpp
   primitives/ehy/ehy.c
   primitives/ehy/ehy_brep.cpp
   primitives/ell/ell.c
@@ -279,9 +346,11 @@ set(
   primitives/brep/brep_local.h
   primitives/datum/datum.h
   primitives/dsp/dsp.h
+  primitives/edit_private.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
   primitives/revolve/revolve.h
+  primitives/rt_ecmd_scanner.cpp
   primitives/sph/benchmark.sh
   primitives/xxx/xxx.h
   primitives/bool.cl
@@ -410,26 +479,26 @@ if(MUSL_LD)
   message(
     "WARNING: MUSL LibC Detected.  Protecting BRL-CAD's librt.
 
-     MUSL's dynamic linker erroneously overrides AT RUNTIME 'librt'
-     references regardless of rpath or search logic specified during
-     compilation and linking.  MUSL claims POSIX allows this despite
-     POSIX not defining any dynamic linker behavior whatsoever. They
-     (reportedly) do so to ease porting glibc-assuming apps to their
-     libc, auto-converting those linked with -lm, -lpthread, -lrt
-     and such during runtime loading regardless of search path logic.
+    MUSL's dynamic linker erroneously overrides AT RUNTIME 'librt'
+    references regardless of rpath or search logic specified during
+    compilation and linking.  MUSL claims POSIX allows this despite
+    POSIX not defining any dynamic linker behavior whatsoever. They
+    (reportedly) do so to ease porting glibc-assuming apps to their
+    libc, auto-converting those linked with -lm, -lpthread, -lrt
+    and such during runtime loading regardless of search path logic.
 
-     Legacy mention in POSIX 'c99' man page would allow (only) the
-     c99 tool to treat BRL-CAD's librt as undefined (not C++, fort77,
-     or other tools like ld), however clang/gcc/c99 compiling and
-     linking are all well-behaved. Issue reported with suggestion to
-     only override as fallback behavior in July 2022.
+    Legacy mention in POSIX 'c99' man page would allow (only) the
+    c99 tool to treat BRL-CAD's librt as undefined (not C++, fort77,
+    or other tools like ld), however clang/gcc/c99 compiling and
+    linking are all well-behaved. Issue reported with suggestion to
+    only override as fallback behavior in July 2022.
 
-     Until MUSL changes (see root/ldso/dynlink.c), a workaround is
-     employed to avoid user action.  Setting LD_PRELOAD also works.
+    Until MUSL changes (see root/ldso/dynlink.c), a workaround is
+    employed to avoid user action.  Setting LD_PRELOAD also works.
 
-     WARNING: MUSL ENVIRONMENT UNSUPPORTED. DO NOT RELY ON 'librt_'
-     WORKAROUND. PLEASE REPORT IF YOU DEVELOP AGAINST BRL-CAD LIBRT
-     AND ENCOUNTER THIS MESSAGE: devs@brlcad.org"
+    WARNING: MUSL ENVIRONMENT UNSUPPORTED. DO NOT RELY ON 'librt_'
+    WORKAROUND. PLEASE REPORT IF YOU DEVELOP AGAINST BRL-CAD LIBRT
+    AND ENCOUNTER THIS MESSAGE: devs@brlcad.org"
   )
   set_target_properties(librt PROPERTIES OUTPUT_NAME "librt_")
 endif(MUSL_LD)

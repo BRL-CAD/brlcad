@@ -29,7 +29,7 @@
 
 #include "bu/cmd.h"
 #include "rt/geom.h"
-#include "rt/arb_edit.h"
+#include "rt/primitives/arb8.h"
 #include "raytrace.h"
 
 #include "../ged_private.h"

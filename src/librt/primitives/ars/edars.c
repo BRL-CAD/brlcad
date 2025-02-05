@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edit_private.h"
+#include "../edit_private.h"
 
 #define ECMD_ARS_PICK		5034	/* select an ARS point */
 #define ECMD_ARS_NEXT_PT	5035	/* select next ARS point in same curve */
