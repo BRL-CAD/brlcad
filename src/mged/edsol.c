@@ -1270,8 +1270,8 @@ f_eqn(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *a
     }
 
     int ret = rt_arb_f_eqn(s->s_edit, argc, argv);
-    if (ret != TCL_OK)
-	return ret;
+    if (ret != BRLCAD_OK)
+	return CMD_BAD;
 
     /* draw the new version of the solid */
     replot_editing_solid(0, NULL, s, NULL);

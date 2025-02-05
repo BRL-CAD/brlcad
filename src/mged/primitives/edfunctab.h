@@ -43,16 +43,6 @@
 
 __BEGIN_DECLS
 
-#define RT_SOLID_EDIT_IDLE		0	/* edarb.c */
-#define RT_SOLID_EDIT_TRANS		1	/* buttons.c */
-#define RT_SOLID_EDIT_SCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
-#define RT_SOLID_EDIT_ROT		3	/* buttons.c */
-#define RT_SOLID_EDIT_PSCALE		4	/* Scale one solid parameter by scalar */
-
-#define CMD_OK 919
-#define CMD_BAD 920
-#define CMD_MORE 921
-
 struct rt_solid_edit_map *rt_solid_edit_map_create(void);
 void rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
 int rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);

@@ -1380,7 +1380,7 @@ rt_arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv)
 
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
     if (rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol))
-	return CMD_BAD;
+	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
 }

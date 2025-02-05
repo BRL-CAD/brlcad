@@ -137,6 +137,12 @@ RT_EXPORT extern int rt_db_lookup_internal(struct db_i *dbip,
 /////////////////////////////////////////////////////////////////
 // The following define an "editing" equivalent to rt_db_internal
 
+#define RT_SOLID_EDIT_IDLE              0
+#define RT_SOLID_EDIT_TRANS             1
+#define RT_SOLID_EDIT_SCALE             2       /* Scale whole solid by scalar */
+#define RT_SOLID_EDIT_ROT               3
+#define RT_SOLID_EDIT_PSCALE            4       /* Scale one solid parameter by scalar */
+
 struct rt_solid_edit_map;
 
 struct rt_solid_edit {
