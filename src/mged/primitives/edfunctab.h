@@ -41,30 +41,6 @@
 
 #endif
 
-#ifdef __cplusplus
-
-class RT_Edit_Map_Internal {
-    public:
-	// Key is ECMD_ type, populated from MGED_Internal map
-	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
-	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
-	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
-	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
-
-	std::map<bu_clbk_t, int> clbk_recursion_depth_cnt;
-	std::map<int, int> cmd_recursion_depth_cnt;
-};
-
-#else
-
-#define RT_Edit_Map_Internal void
-
-#endif
-
-struct rt_solid_edit_map {
-    RT_Edit_Map_Internal *i;
-};
-
 __BEGIN_DECLS
 
 #define RT_SOLID_EDIT_IDLE		0	/* edarb.c */
