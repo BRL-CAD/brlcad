@@ -35,9 +35,7 @@ extern "C" {
 #include "rt/functab.h"
 }
 
-/* Stub in defines and EDOBJ until we get all the logic migrated. */
-#define ECMD_CLEAR_CLBKS 0
-#define ECMD_PRINT_STR   10
+/* Stub in EDOBJ until we get all the logic migrated. */
 const struct rt_solid_edit_functab EDOBJ[] = {
     {
         /* 0: unused, for sanity checking. */
@@ -347,7 +345,150 @@ rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, f
 }
 
 
+void
+rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos)
+{
+    vect_t model_pos;
+    vect_t ea_view_pos;
+    vect_t diff;
+    fastf_t inv_Viewscale = 1/s->vp->gv_scale;
 
+    MAT4X3PNT(model_pos, s->vp->gv_view2model, view_pos);
+    VSUB2(diff, model_pos, s->e_axes_pos);
+    VSCALE(s->edit_absolute_model_tran, diff, inv_Viewscale);
+    VMOVE(s->last_edit_absolute_model_tran, s->edit_absolute_model_tran);
+
+    MAT4X3PNT(ea_view_pos, s->vp->gv_model2view, s->e_axes_pos);
+    VSUB2(s->edit_absolute_view_tran, view_pos, ea_view_pos);
+    VMOVE(s->last_edit_absolute_view_tran, s->edit_absolute_view_tran);
+}
+
+
+void
+rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
+{
+    if (!s)
+	return;
+
+    s->edit_flag = edflag;
+    s->solid_edit_pick = 0;
+
+    switch (edflag) {
+	case RT_SOLID_EDIT_ROT:
+	    s->solid_edit_rotate = 1;
+	    s->solid_edit_translate = 0;
+	    s->solid_edit_scale = 0;
+	    break;
+	case RT_SOLID_EDIT_TRANS:
+	    s->solid_edit_rotate = 0;
+	    s->solid_edit_translate = 1;
+	    s->solid_edit_scale = 0;
+	    break;
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
+	    s->solid_edit_rotate = 0;
+	    s->solid_edit_translate = 0;
+	    s->solid_edit_scale = 1;
+	    break;
+	default:
+	    s->solid_edit_rotate = 0;
+	    s->solid_edit_translate = 0;
+	    s->solid_edit_scale = 0;
+	    break;
+    }
+}
+
+
+/*
+ * A great deal of magic takes place here, to accomplish solid editing.
+ *
+ * Called from mged main loop after any event handlers:
+ * if (sedraw > 0) rt_solid_edit_process(s);
+ * to process any residual events that the event handlers were too
+ * lazy to handle themselves.
+ *
+ * A lot of processing is deferred to here, so that the "p" command
+ * can operate on an equal footing to mouse events.
+ */
+void
+rt_solid_edit_process(struct rt_solid_edit *s)
+{
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
+    ++s->update_views;
+
+    int had_method = 0;
+    const struct rt_db_internal *ip = &s->es_int;
+    if (EDOBJ[ip->idb_type].ft_edit) {
+	bu_vls_trunc(s->log_str, 0);
+	if ((*EDOBJ[ip->idb_type].ft_edit)(s, s->edit_flag)) {
+	    if (bu_vls_strlen(s->log_str)) {
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
+		bu_vls_trunc(s->log_str, 0);
+	    }
+	    return;
+	}
+	if (bu_vls_strlen(s->log_str)) {
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    bu_vls_trunc(s->log_str, 0);
+	}
+	had_method = 1;
+    }
+
+    switch (s->edit_flag) {
+
+	case RT_SOLID_EDIT_IDLE:
+	    /* do nothing more */
+	    --s->update_views;
+	    break;
+	default:
+	    {
+		if (had_method)
+		    break;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&tmp_vls, "%s", bu_vls_cstr(s->log_str));
+		bu_vls_sprintf(s->log_str, "rt_solid_edit_process:  unknown edflag = %d.\n", s->edit_flag);
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
+		bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
+		bu_vls_free(&tmp_vls);
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+		if (f)
+		    (*f)(0, NULL, d, NULL);
+	    }
+    }
+
+    /* If the keypoint changed location, find about it here */
+    if (!s->e_keyfixed)
+	rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, s->e_mat);
+
+    int flag = 0;
+    f = NULL; d = NULL;
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
+
+    f = NULL; d = NULL;
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, 0, BU_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
+
+    if (s->update_views) {
+	f = NULL; d = NULL;
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, 0, BU_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
+    }
+
+    s->e_inpara = 0;
+    s->e_mvalid = 0;
+}
 
 
 // Local Variables:

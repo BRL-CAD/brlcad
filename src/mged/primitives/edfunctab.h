@@ -43,9 +43,6 @@
 
 __BEGIN_DECLS
 
-void rt_solid_edit_process(struct rt_solid_edit *s);
-
-
 const char *
 rt_solid_edit_generic_keypoint(
 	point_t *pt,
@@ -86,9 +83,6 @@ rt_solid_edit_generic_strans_xy(vect_t *pos_view,
 	const vect_t mousevec
 	);
 
-void
-rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos);
-
 int rt_solid_edit_generic_edit(struct rt_solid_edit *s, int edflag);
 
 int
@@ -97,10 +91,6 @@ rt_solid_edit_generic_edit_xy(
 	int edflag,
 	const vect_t mousevec
 	);
-
-
-void
-rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag);
 
 int
 rt_solid_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol);

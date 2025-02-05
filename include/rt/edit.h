@@ -136,7 +136,21 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
 RT_EXPORT extern void
 rt_solid_edit_destroy(struct rt_solid_edit *s);
 
-/* Functions for working with editing callback maps */
+/* Logic for working with editing callback maps.
+ *
+ * Editing callback maps allow applications to register logic to be executed for particular
+ * commands or the pre-defined standard registration points which are general to all commands,
+ * per the defines below. */
+#define ECMD_CLEAR_CLBKS           0
+#define ECMD_PRINT_STR            10
+#define ECMD_PRINT_RESULTS        20
+#define ECMD_EAXES_POS            30
+#define ECMD_REPLOT_EDITING_SOLID 40
+#define ECMD_VIEW_UPDATE          50
+#define ECMD_VIEW_SET_FLAG        60
+#define ECMD_MENU_SET             70
+#define ECMD_GET_FILENAME         80
+
 RT_EXPORT extern struct rt_solid_edit_map *
 rt_solid_edit_map_create(void);
 RT_EXPORT extern void
@@ -149,12 +163,25 @@ RT_EXPORT extern int
 rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im);
 
 
-
+/* Functions for manipulating rt_solid_edit data */
 RT_EXPORT extern void
 rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, fastf_t *mat);
 
+RT_EXPORT extern void
+rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos);
+
+RT_EXPORT extern void
+rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag);
 
 
+/* Equivalent to sedit - run editing logic after input data is set in
+ * rt_solid_edit container */
+RT_EXPORT extern void
+rt_solid_edit_process(struct rt_solid_edit *s);
+
+
+/* Edit menu items encode information about specific edit operations, as well
+ * as info documenting them.  Edit functab methods use this data type. */
 struct rt_solid_edit_menu_item {
     char *menu_string;
     void (*menu_func)(struct rt_solid_edit *, int, int, int, void *);
