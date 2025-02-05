@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 const char *
 rt_solid_edit_grp_keypoint(

@@ -33,7 +33,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define ECMD_VOL_CSIZE		13048	/* set voxel size */
 #define ECMD_VOL_FSIZE		13049	/* set VOL file dimensions */

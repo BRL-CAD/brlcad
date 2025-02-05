@@ -53,7 +53,6 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
-#include "./primitives/edfunctab.h"
 
 /* Ew. Global. */
 extern int doMotion;			/* defined in buttons.c */

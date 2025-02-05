@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define ECMD_ETO_ROT_C		21016
 

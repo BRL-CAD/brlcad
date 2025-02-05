@@ -27,7 +27,7 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 extern "C" {
 

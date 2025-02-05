@@ -176,7 +176,7 @@ set(
   mged_impl.h
   mged_wdb.h
   primitives/edarb.h
-  primitives/edfunctab.h
+  primitives/edit_private.h
   sedit.h
 )
 cmakefiles(${mged_ignore_files})

@@ -26,7 +26,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "edfunctab.h"
+#include "edit_private.h"
 
 int rt_arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv);
 int rt_arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv);

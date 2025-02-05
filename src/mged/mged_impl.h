@@ -24,7 +24,7 @@
 
 #include "common.h"
 #include "bu.h"
-#include "edfunctab.h"
+#include "rt/edit.h"
 
 #ifdef __cplusplus
 

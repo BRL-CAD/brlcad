@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define MENU_SUPERELL_SCALE_A	35113
 #define MENU_SUPERELL_SCALE_B	35114

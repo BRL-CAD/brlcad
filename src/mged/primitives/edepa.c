@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define MENU_EPA_H		19050
 #define MENU_EPA_R1		19051

@@ -1,4 +1,4 @@
-/*                    E D F U N C T A B . H
+/*                  E D I T _ P R I V A T E . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2025 United States Government as represented by
@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file primitives/edfunctab.h
+/** @file primitives/edit_private.h
   */
 
-#ifndef EDFUNCTAB_H
-#define EDFUNCTAB_H
+#ifndef EDIT_PRIVATE_H
+#define EDIT_PRIVATE_H
 
 #include "common.h"
 
@@ -31,16 +31,6 @@
 #include "rt/edit.h"
 #include "rt_ecmds.h"
 
-#ifdef __cplusplus
-
-#include <algorithm>
-#include <cctype>
-#include <map>
-#include <set>
-#include <string>
-
-#endif
-
 __BEGIN_DECLS
 
 const char *
@@ -49,7 +39,8 @@ rt_solid_edit_generic_keypoint(
 	const char *keystr,
 	const mat_t mat,
 	struct rt_solid_edit *s,
-	const struct bn_tol *tol);
+	const struct bn_tol *tol
+	);
 
 /* scale the solid uniformly about its vertex point */
 int
@@ -93,12 +84,16 @@ rt_solid_edit_generic_edit_xy(
 	);
 
 int
-rt_solid_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol);
+rt_solid_edit_generic_menu_str(
+	struct bu_vls *mstr,
+       	const struct rt_db_internal *ip,
+       	const struct bn_tol *tol
+	);
 
 
 __END_DECLS
 
-#endif  /* EDFUNCTAB_H */
+#endif  /* EDIT_PRIVATE_H */
 
 /*
  * Local Variables:

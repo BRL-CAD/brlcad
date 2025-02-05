@@ -41,8 +41,6 @@
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
-#include "./primitives/edfunctab.h"
-
 
 #define V3BASE2LOCAL(_pt)	(_pt)[X]*s->dbip->dbi_base2local, (_pt)[Y]*s->dbip->dbi_base2local, (_pt)[Z]*s->dbip->dbi_base2local
 

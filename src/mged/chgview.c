@@ -38,8 +38,6 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
-#include "./primitives/edfunctab.h"
-
 
 extern void mged_color_soltab(struct mged_state *s);
 

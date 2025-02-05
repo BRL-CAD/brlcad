@@ -54,7 +54,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"
-#include "./primitives/edfunctab.h"
 #include "./primitives/edarb.h"
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);

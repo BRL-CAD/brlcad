@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define MENU_RHC_B		18046
 #define MENU_RHC_H		18047

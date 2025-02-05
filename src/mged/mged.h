@@ -82,7 +82,7 @@ __BEGIN_DECLS
 __END_DECLS
 
 #include "mged_impl.h"
-#include "edfunctab.h"
+#include "rt/edit.h"
 
 __BEGIN_DECLS
 

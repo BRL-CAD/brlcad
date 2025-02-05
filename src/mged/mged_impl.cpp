@@ -25,6 +25,7 @@
 #include "common.h"
 
 #include "mged.h"
+#include "rt_ecmds.h"
 
 MGED_Internal::MGED_Internal()
 {

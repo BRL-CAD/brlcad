@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define ECMD_HYP_ROT_H		38091
 #define ECMD_HYP_ROT_A		38092

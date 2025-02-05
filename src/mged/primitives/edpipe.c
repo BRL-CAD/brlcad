@@ -38,7 +38,7 @@
 #include "rt/primitives/pipe.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define ECMD_PIPE_PICK		15028	/* Pick pipe point */
 #define ECMD_PIPE_SPLIT		15029	/* Split a pipe segment into two */

@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define MENU_ELL_SCALE_A	3039
 #define MENU_ELL_SCALE_B	3040

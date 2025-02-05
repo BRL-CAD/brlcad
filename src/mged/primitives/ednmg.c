@@ -37,7 +37,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/primitives/nmg.h"
-#include "./edfunctab.h"
+#include "./edit_private.h"
 
 #define ECMD_NMG_EPICK		11019	/* edge pick */
 #define ECMD_NMG_EMOVE		11020	/* edge move */

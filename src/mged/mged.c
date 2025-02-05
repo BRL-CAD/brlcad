@@ -81,7 +81,6 @@
 #include "./menu.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
-#include "./primitives/edfunctab.h"
 #include "./f_cmd.h" // for f_opendb
 #include "brlcad_ident.h"
 

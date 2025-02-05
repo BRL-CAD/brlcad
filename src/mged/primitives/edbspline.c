@@ -31,7 +31,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
-#include "edfunctab.h"
+#include "edit_private.h"
 
 #define ECMD_VTRANS		9017	/* vertex translate */
 #define ECMD_SPLINE_VPICK       9018	/* vertex pick */

@@ -24,7 +24,7 @@
 #define MGED_MENU_H
 
 #include "common.h"
-#include "./primitives/edfunctab.h"
+#include "rt/edit.h"
 
 __BEGIN_DECLS
 
