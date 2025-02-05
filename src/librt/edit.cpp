@@ -1,4 +1,4 @@
-/*                       U T I L . C P P
+/*                       E D I T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2019-2025 United States Government as represented by
@@ -17,21 +17,45 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util.cpp
+/** @file edit.cpp
  *
- * Implementation of callbacks, rt_solid_state and map create/destroy
- * functions.
+ * Implementation of .g geometry editing logic not specific to individual
+ * primitives.
  */
 
 #include "common.h"
 
 #include <map>
 
+extern "C" {
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
-#include "raytrace.h"
-#include "edfunctab.h"
+#include "rt/db_internal.h"
+#include "rt/functab.h"
+}
+
+/* Stub in defines and EDOBJ until we get all the logic migrated. */
+#define ECMD_CLEAR_CLBKS 0
+#define ECMD_PRINT_STR   10
+const struct rt_solid_edit_functab EDOBJ[] = {
+    {
+        /* 0: unused, for sanity checking. */
+        RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
+        NULL,  /* label */
+        NULL,  /* keypoint */
+        NULL,  /* s->e_axes_pos */
+        NULL,  /* write_params */
+        NULL,  /* read_params */
+        NULL,  /* edit */
+        NULL,  /* exit xy */
+        NULL,  /* prim edit create */
+        NULL,  /* prim edit destroy */
+        NULL,  /* prim edit reset*/
+        NULL,  /* menu_str */
+        NULL   /* menu_item */
+    }
+};
 
 class RT_Edit_Map_Internal {
     public:
@@ -226,12 +250,6 @@ rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em,
 }
 
 int
-rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit *s, int ed_cmd, int menu_cmd, int mode)
-{
-    return rt_solid_edit_map_clbk_get(f, d, s->m, ed_cmd, menu_cmd, mode);
-}
-
-int
 rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im)
 {
     // Check for no-op case
@@ -277,6 +295,60 @@ rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *i
 
     return BRLCAD_OK;
 }
+
+
+/*
+ * Keypoint in model space is established in "pt".
+ * If "str" is set, then that point is used, else default
+ * for this solid is selected and set.
+ * "str" may be a constant string, in either upper or lower case,
+ * or it may be something complex like "(3, 4)" for an ARS or spline
+ * to select a particular vertex or control point.
+ *
+ * XXX Perhaps this should be done via solid-specific parse tables,
+ * so that solids could be pretty-printed & structprint/structparse
+ * processed as well?
+ */
+void
+rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, fastf_t *mat)
+{
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
+    if (!strp)
+	return;
+
+    struct rt_db_internal *ip = &s->es_int;
+    RT_CK_DB_INTERNAL(ip);
+
+    if (EDOBJ[ip->idb_type].ft_keypoint) {
+	bu_vls_trunc(s->log_str, 0);
+	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, s, s->tol);
+	if (bu_vls_strlen(s->log_str)) {
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    bu_vls_trunc(s->log_str, 0);
+	}
+	return;
+    }
+
+    struct bu_vls ltmp = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&ltmp, "%s", bu_vls_cstr(s->log_str));
+    bu_vls_sprintf(s->log_str, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n");
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
+    bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&ltmp));
+    bu_vls_free(&ltmp);
+
+    VSETALL(*pt, 0.0);
+    *strp = "(origin)";
+}
+
+
+
+
 
 // Local Variables:
 // tab-width: 8

@@ -95,7 +95,6 @@ set(
   primitives/edvol.c
   primitives/generic.c
   primitives/table.cpp
-  primitives/util.cpp
   rect.c
   rtif.c
   scroll.c

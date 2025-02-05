@@ -1,3 +1,5 @@
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 brlcad_find_package(MANIFOLD REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
@@ -64,6 +66,7 @@ set(
   db_walk.c
   dir.c
   dspline.c
+  edit.cpp
   fortray.c
   globals.c
   htbl.c

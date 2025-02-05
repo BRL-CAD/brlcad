@@ -227,11 +227,39 @@ struct rt_solid_edit {
     void *u_ptr;
 };
 
+/** Create and initialize an rt_solid_edit struct */
+RT_EXPORT extern struct rt_solid_edit *
+rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
+
+/** Free a rt_solid_edit struct */
+RT_EXPORT extern void
+rt_solid_edit_destroy(struct rt_solid_edit *s);
+
+/* Functions for working with editing callback maps */
+RT_EXPORT extern struct rt_solid_edit_map *
+rt_solid_edit_map_create(void);
+RT_EXPORT extern void
+rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
+RT_EXPORT extern int
+rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
+RT_EXPORT extern int
+rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode);
+RT_EXPORT extern int
+rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im);
+
+
+
+RT_EXPORT extern void
+rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, fastf_t *mat);
+
+
+
 struct rt_solid_edit_menu_item {
     char *menu_string;
     void (*menu_func)(struct rt_solid_edit *, int, int, int, void *);
     int menu_arg;
 };
+
 
 
 

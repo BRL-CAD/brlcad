@@ -34,55 +34,6 @@
 
 #include "./edfunctab.h"
 
-/*
- * Keypoint in model space is established in "pt".
- * If "str" is set, then that point is used, else default
- * for this solid is selected and set.
- * "str" may be a constant string, in either upper or lower case,
- * or it may be something complex like "(3, 4)" for an ARS or spline
- * to select a particular vertex or control point.
- *
- * XXX Perhaps this should be done via solid-specific parse tables,
- * so that solids could be pretty-printed & structprint/structparse
- * processed as well?
- */
-void
-rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, fastf_t *mat)
-{
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    if (!strp)
-	return;
-
-    struct rt_db_internal *ip = &s->es_int;
-    RT_CK_DB_INTERNAL(ip);
-
-    if (EDOBJ[ip->idb_type].ft_keypoint) {
-	bu_vls_trunc(s->log_str, 0);
-	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, s, s->tol);
-	if (bu_vls_strlen(s->log_str)) {
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    bu_vls_trunc(s->log_str, 0);
-	}
-	return;
-    }
-
-    struct bu_vls ltmp = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&ltmp, "%s", bu_vls_cstr(s->log_str));
-    bu_vls_sprintf(s->log_str, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n");
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
-    if (f)
-	(*f)(0, NULL, d, NULL);
-    bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&ltmp));
-    bu_vls_free(&ltmp);
-
-    VSETALL(*pt, 0.0);
-    *strp = "(origin)";
-}
-
 
 /*
  * A great deal of magic takes place here, to accomplish solid editing.
