@@ -23,6 +23,7 @@ set(
   defines.h
   directory.h
   dspline.h
+  edit.h
   func.h
   functab.h
   geom.h

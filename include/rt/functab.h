@@ -43,6 +43,7 @@
 #include "rt/application.h"
 #include "rt/db_internal.h"
 #include "rt/db_instance.h"
+#include "rt/edit.h"
 #include "rt/hit.h"
 #include "rt/misc.h"
 #include "rt/resource.h"

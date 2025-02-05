@@ -31,7 +31,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
-#include "rt/db_internal.h"
+#include "rt/edit.h"
 #include "rt/functab.h"
 }
 

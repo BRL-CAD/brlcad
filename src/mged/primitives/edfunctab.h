@@ -28,7 +28,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rt/functab.h"
-#include "rt/db_internal.h"
+#include "rt/edit.h"
 #include "rt_ecmds.h"
 
 #ifdef __cplusplus
@@ -44,12 +44,6 @@
 __BEGIN_DECLS
 
 void rt_solid_edit_process(struct rt_solid_edit *s);
-
-
-extern struct rt_solid_edit *
-rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
-extern void
-rt_solid_edit_destroy(struct rt_solid_edit *ssed);
 
 
 const char *
