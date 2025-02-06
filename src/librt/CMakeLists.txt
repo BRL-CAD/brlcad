@@ -49,6 +49,11 @@ set(
   primitives/vol/edvol.c
 )
 
+# NOTE - for now this is an internal, build-only header and
+# does not have install logic associated with it.  Eventually,
+# if this API proves out and becomes stable, we may end up
+# installing rt_ecmds.h.  Applications external to the main
+# BRL-CAD build may also want to exploit the callback API.
 set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
 try_compile(
   ged_hdr_scanner
