@@ -333,8 +333,10 @@ mged_view_callback(struct bview *gvp,
 	return;
 
     if (s->edit_state.global_editing_state != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->s_edit->model_changes);
-	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+	if (s->s_edit) {
+	    bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->s_edit->model_changes);
+	    bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+	}
     }
     vsp->vs_flag = 1;
     dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
