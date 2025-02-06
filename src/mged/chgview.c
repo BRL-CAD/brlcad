@@ -936,14 +936,16 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
 	    /* Check details, Init menu, set state=ST_S_EDIT */
-	    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-	    s->s_edit = rt_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
-	    if (s->s_edit) {
-		Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
-		s->s_edit->mv_context = mged_variables->mv_context;
-		s->s_edit->vlfree = &rt_vlfree;
-		mged_edit_clbk_sync(s->s_edit, s);
-		init_sedit(s);
+	    if (!s->s_edit) {
+		struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+		s->s_edit = rt_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+		if (s->s_edit) {
+		    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+		    s->s_edit->mv_context = mged_variables->mv_context;
+		    s->s_edit->vlfree = &rt_vlfree;
+		    mged_edit_clbk_sync(s->s_edit, s);
+		    init_sedit(s);
+		}
 	    }
 	}
     }
@@ -1056,16 +1058,17 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    /* Set up solid edit state */
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    s->s_edit = rt_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
-    if (s->s_edit) {
-	Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
-	s->s_edit->mv_context = mged_variables->mv_context;
-	s->s_edit->vlfree = &rt_vlfree;
-	mged_edit_clbk_sync(s->s_edit, s);
+    /* Set up solid edit state, if f_ill hasn't already done so. */
+    if (!s->s_edit) {
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+	s->s_edit = rt_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+	if (s->s_edit) {
+	    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+	    s->s_edit->mv_context = mged_variables->mv_context;
+	    s->s_edit->vlfree = &rt_vlfree;
+	    mged_edit_clbk_sync(s->s_edit, s);
+	}
     }
-
 
     return TCL_OK;
 }
