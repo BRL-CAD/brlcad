@@ -39,10 +39,6 @@
 #define ECMD_EBM_FSIZE		12054	/* set EBM file size */
 #define ECMD_EBM_HEIGHT		12055	/* set EBM extrusion depth */
 
-#define MENU_EBM_FNAME		12080
-#define MENU_EBM_FSIZE		12081
-#define MENU_EBM_HEIGHT		12082
-
 static void
 ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
@@ -50,13 +46,13 @@ ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     rt_solid_edit_set_edflag(s, -1);
 
     switch (arg) {
-	case MENU_EBM_FNAME:
+	case ECMD_EBM_FNAME:
 	    s->edit_flag = ECMD_EBM_FNAME;
 	    break;
-	case MENU_EBM_FSIZE:
+	case ECMD_EBM_FSIZE:
 	    s->edit_flag = ECMD_EBM_FSIZE;
 	    break;
-	case MENU_EBM_HEIGHT:
+	case ECMD_EBM_HEIGHT:
 	    s->edit_flag = ECMD_EBM_HEIGHT;
 	    s->solid_edit_scale = 1;
 	    break;
@@ -73,9 +69,9 @@ ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item ebm_menu[] = {
     {"EBM MENU", NULL, 0 },
-    {"File Name", ebm_ed, MENU_EBM_FNAME },
-    {"File Size (W N)", ebm_ed, MENU_EBM_FSIZE },
-    {"Extrude Depth", ebm_ed, MENU_EBM_HEIGHT },
+    {"File Name", ebm_ed, ECMD_EBM_FNAME },
+    {"File Size (W N)", ebm_ed, ECMD_EBM_FSIZE },
+    {"Extrude Depth", ebm_ed, ECMD_EBM_HEIGHT },
     { "", NULL, 0 }
 };
 

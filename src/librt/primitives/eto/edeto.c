@@ -35,19 +35,16 @@
 #include "../edit_private.h"
 
 #define ECMD_ETO_ROT_C		21016
-
-#define MENU_ETO_R		21057
-#define MENU_ETO_RD		21058
-#define MENU_ETO_SCALE_C	21059
-#define MENU_ETO_ROT_C		21060
+#define ECMD_ETO_R		21057
+#define ECMD_ETO_RD		21058
+#define ECMD_ETO_SCALE_C	21059
 
 static void
 eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
-    if (arg == MENU_ETO_ROT_C) {
-	s->edit_flag = ECMD_ETO_ROT_C;
+    if (arg == ECMD_ETO_ROT_C) {
 	s->solid_edit_rotate = 1;
 	s->solid_edit_translate = 0;
 	s->solid_edit_scale = 0;
@@ -63,10 +60,10 @@ eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item eto_menu[] = {
     { "ELL-TORUS MENU", NULL, 0 },
-    { "Set r", eto_ed, MENU_ETO_R },
-    { "Set D", eto_ed, MENU_ETO_RD },
-    { "Set C", eto_ed, MENU_ETO_SCALE_C },
-    { "Rotate C", eto_ed, MENU_ETO_ROT_C },
+    { "Set r", eto_ed, ECMD_ETO_R },
+    { "Set D", eto_ed, ECMD_ETO_RD },
+    { "Set C", eto_ed, ECMD_ETO_SCALE_C },
+    { "Rotate C", eto_ed, ECMD_ETO_ROT_C },
     { "", NULL, 0 }
 };
 
@@ -180,7 +177,7 @@ rt_solid_edit_eto_read_params(
 
 /* scale radius 1 (r) of ETO */
 void
-menu_eto_r(struct rt_solid_edit *s)
+ecmd_eto_r(struct rt_solid_edit *s)
 {
     struct rt_eto_internal *eto =
 	(struct rt_eto_internal *)s->es_int.idb_ptr;
@@ -210,7 +207,7 @@ menu_eto_r(struct rt_solid_edit *s)
 
 /* scale Rd, ellipse semi-minor axis length, of ETO */
 void
-menu_eto_rd(struct rt_solid_edit *s)
+ecmd_eto_rd(struct rt_solid_edit *s)
 {
     struct rt_eto_internal *eto =
 	(struct rt_eto_internal *)s->es_int.idb_ptr;
@@ -239,7 +236,7 @@ menu_eto_rd(struct rt_solid_edit *s)
 
 /* scale vector C */
 void
-menu_eto_scale_c(struct rt_solid_edit *s)
+ecmd_eto_scale_c(struct rt_solid_edit *s)
 {
     struct rt_eto_internal *eto =
 	(struct rt_eto_internal *)s->es_int.idb_ptr;
@@ -350,14 +347,14 @@ rt_solid_edit_eto_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_ETO_R:
-	    menu_eto_r(s);
+	case ECMD_ETO_R:
+	    ecmd_eto_r(s);
 	    break;
-	case MENU_ETO_RD:
-	    menu_eto_rd(s);
+	case ECMD_ETO_RD:
+	    ecmd_eto_rd(s);
 	    break;
-	case MENU_ETO_SCALE_C:
-	    menu_eto_scale_c(s);
+	case ECMD_ETO_SCALE_C:
+	    ecmd_eto_scale_c(s);
 	    break;
     };
 

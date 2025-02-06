@@ -43,9 +43,9 @@
 #define ECMD_ARB_SETUP_ROTFACE	4014
 #define ECMD_ARB_ROTATE_FACE	4015
 
-#define MENU_ARB_MV_EDGE	4036
-#define MENU_ARB_MV_FACE	4037
-#define MENU_ARB_ROT_FACE	4038
+#define ECMD_ARB_MV_EDGE	4036
+#define ECMD_ARB_MV_FACE	4037
+#define ECMD_ARB_ROT_FACE	4038
 
 struct rt_arb8_edit {
     fastf_t es_peqn[7][4]; /* ARBs defining plane equations */
@@ -544,9 +544,9 @@ arb_control(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 }
 struct rt_solid_edit_menu_item cntrl_menu[] = {
     { "ARB MENU", NULL, 0 },
-    { "Move Edges", arb_control, MENU_ARB_MV_EDGE },
-    { "Move Faces", arb_control, MENU_ARB_MV_FACE },
-    { "Rotate Faces", arb_control, MENU_ARB_ROT_FACE },
+    { "Move Edges", arb_control, ECMD_ARB_MV_EDGE },
+    { "Move Faces", arb_control, ECMD_ARB_MV_FACE },
+    { "Rotate Faces", arb_control, ECMD_ARB_ROT_FACE },
     { "", NULL, 0 }
 };
 
@@ -925,19 +925,19 @@ ecmd_arb_specific_menu(struct rt_solid_edit *s)
 
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
     switch (s->edit_menu) {
-	case MENU_ARB_MV_EDGE:
+	case ECMD_ARB_MV_EDGE:
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
 	    if (!f)
 		return BRLCAD_ERROR;
 	    (*f)(0, NULL, d, which_menu[arb_type-4]);
 	    return BRLCAD_OK;
-	case MENU_ARB_MV_FACE:
+	case ECMD_ARB_MV_FACE:
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
 	    if (!f)
 		return BRLCAD_ERROR;
 	    (*f)(0, NULL, d, which_menu[arb_type+1]);
 	    return BRLCAD_OK;
-	case MENU_ARB_ROT_FACE:
+	case ECMD_ARB_ROT_FACE:
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
 	    if (!f)
 		return BRLCAD_ERROR;

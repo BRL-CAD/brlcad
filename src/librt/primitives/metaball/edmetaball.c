@@ -34,25 +34,18 @@
 
 #include "../edit_private.h"
 
-#define ECMD_METABALL_SET_THRESHOLD	36083	/* overall metaball threshold value */
-#define ECMD_METABALL_SET_METHOD	36084	/* set the rendering method */
-#define ECMD_METABALL_PT_PICK		36085	/* pick a metaball control point */
-#define ECMD_METABALL_PT_MOV		36086	/* move a metaball control point */
-#define ECMD_METABALL_PT_FLDSTR		36087	/* set a metaball control point field strength */
-#define ECMD_METABALL_PT_DEL		36088	/* delete a metaball control point */
+#define ECMD_METABALL_PT_NEXT		30121
+#define ECMD_METABALL_PT_PREV		30122
 #define ECMD_METABALL_PT_ADD		36089	/* add a metaball control point */
+#define ECMD_METABALL_PT_DEL		36088	/* delete a metaball control point */
+#define ECMD_METABALL_PT_FLDSTR		36087	/* set a metaball control point field strength */
+#define ECMD_METABALL_PT_MOV		36086	/* move a metaball control point */
+#define ECMD_METABALL_PT_PICK		36085	/* pick a metaball control point */
+#define ECMD_METABALL_PT_SET_GOO	30119
 #define ECMD_METABALL_RMET		36090	/* set the metaball render method */
-
-#define MENU_METABALL_SET_THRESHOLD	30117
-#define MENU_METABALL_SET_METHOD	30118
-#define MENU_METABALL_PT_SET_GOO	30119
-#define MENU_METABALL_SELECT		30120
-#define MENU_METABALL_NEXT_PT		30121
-#define MENU_METABALL_PREV_PT		30122
-#define MENU_METABALL_MOV_PT		30123
-#define MENU_METABALL_PT_FLDSTR		30124
-#define MENU_METABALL_DEL_PT		30125
-#define MENU_METABALL_ADD_PT		30126
+#define ECMD_METABALL_SELECT		30120
+#define ECMD_METABALL_SET_METHOD	36084	/* set the rendering method */
+#define ECMD_METABALL_SET_THRESHOLD	36083	/* overall metaball threshold value */
 
 struct rt_metaball_edit {
     struct wdb_metaball_pnt *es_metaball_pnt; /* Currently selected METABALL Point */
@@ -98,18 +91,18 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
     rt_solid_edit_set_edflag(s, -1);
 
     switch (arg) {
-	case MENU_METABALL_SET_THRESHOLD:
-	case MENU_METABALL_SET_METHOD:
-	case MENU_METABALL_PT_SET_GOO:
+	case ECMD_METABALL_SET_THRESHOLD:
+	case ECMD_METABALL_SET_METHOD:
+	case ECMD_METABALL_PT_SET_GOO:
 	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
-	case MENU_METABALL_SELECT:
+	case ECMD_METABALL_SELECT:
 	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_METABALL_PT_PICK;
 	    s->solid_edit_pick = 1;
 	    break;
-	case MENU_METABALL_NEXT_PT:
+	case ECMD_METABALL_PT_NEXT:
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		return;
@@ -125,7 +118,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
-	case MENU_METABALL_PREV_PT:
+	case ECMD_METABALL_PT_PREV:
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		return;
@@ -141,7 +134,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
-	case MENU_METABALL_MOV_PT:
+	case ECMD_METABALL_PT_MOV:
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
@@ -151,7 +144,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    s->edit_flag = ECMD_METABALL_PT_MOV;
 	    rt_solid_edit_process(s);
 	    break;
-	case MENU_METABALL_PT_FLDSTR:
+	case ECMD_METABALL_PT_FLDSTR:
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
@@ -160,12 +153,12 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
-	case MENU_METABALL_DEL_PT:
+	case ECMD_METABALL_PT_DEL:
 	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_METABALL_PT_DEL;
 	    rt_solid_edit_process(s);
 	    break;
-	case MENU_METABALL_ADD_PT:
+	case ECMD_METABALL_PT_ADD:
 	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_METABALL_PT_ADD;
 	    break;
@@ -181,16 +174,16 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 
 struct rt_solid_edit_menu_item metaball_menu[] = {
     { "METABALL MENU", NULL, 0 },
-    { "Set Threshold", metaball_ed, MENU_METABALL_SET_THRESHOLD },
-    { "Set Render Method", metaball_ed, MENU_METABALL_SET_METHOD },
-    { "Select Point", metaball_ed, MENU_METABALL_SELECT },
-    { "Next Point", metaball_ed, MENU_METABALL_NEXT_PT },
-    { "Previous Point", metaball_ed, MENU_METABALL_PREV_PT },
-    { "Move Point", metaball_ed, MENU_METABALL_MOV_PT },
-    { "Scale Point fldstr", metaball_ed, MENU_METABALL_PT_FLDSTR },
-    { "Scale Point \"goo\" value", metaball_ed, MENU_METABALL_PT_SET_GOO },
-    { "Delete Point", metaball_ed, MENU_METABALL_DEL_PT },
-    { "Add Point", metaball_ed, MENU_METABALL_ADD_PT },
+    { "Set Threshold", metaball_ed, ECMD_METABALL_SET_THRESHOLD },
+    { "Set Render Method", metaball_ed, ECMD_METABALL_SET_METHOD },
+    { "Select Point", metaball_ed, ECMD_METABALL_SELECT },
+    { "Next Point", metaball_ed, ECMD_METABALL_PT_NEXT },
+    { "Previous Point", metaball_ed, ECMD_METABALL_PT_PREV },
+    { "Move Point", metaball_ed, ECMD_METABALL_PT_MOV },
+    { "Scale Point fldstr", metaball_ed, ECMD_METABALL_PT_FLDSTR },
+    { "Scale Point \"goo\" value", metaball_ed, ECMD_METABALL_PT_SET_GOO },
+    { "Delete Point", metaball_ed, ECMD_METABALL_PT_DEL },
+    { "Add Point", metaball_ed, ECMD_METABALL_PT_ADD },
     { "", NULL, 0 }
 };
 
@@ -268,7 +261,7 @@ rt_solid_edit_metaball_keypoint(
 }
 
 int
-menu_metaball_set_threshold(struct rt_solid_edit *s)
+ecmd_metaball_set_threshold(struct rt_solid_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -285,7 +278,7 @@ menu_metaball_set_threshold(struct rt_solid_edit *s)
 }
 
 int
-menu_metaball_set_method(struct rt_solid_edit *s)
+ecmd_metaball_set_method(struct rt_solid_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -302,7 +295,7 @@ menu_metaball_set_method(struct rt_solid_edit *s)
 }
 
 int
-menu_metaball_pt_set_goo(struct rt_solid_edit *s)
+ecmd_metaball_pt_set_goo(struct rt_solid_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (s->e_para[0] < 0.0) {
@@ -321,7 +314,7 @@ menu_metaball_pt_set_goo(struct rt_solid_edit *s)
 }
 
 int
-menu_metaball_pt_fldstr(struct rt_solid_edit *s)
+ecmd_metaball_pt_fldstr(struct rt_solid_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (s->e_para[0] <= 0.0) {
@@ -486,14 +479,14 @@ rt_solid_edit_metaball_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_METABALL_SET_THRESHOLD:
-	    return menu_metaball_set_threshold(s);
-	case MENU_METABALL_SET_METHOD:
-	    return menu_metaball_set_method(s);
-	case MENU_METABALL_PT_SET_GOO:
-	    return menu_metaball_pt_set_goo(s);
-	case MENU_METABALL_PT_FLDSTR:
-	    return menu_metaball_pt_fldstr(s);
+	case ECMD_METABALL_SET_THRESHOLD:
+	    return ecmd_metaball_set_threshold(s);
+	case ECMD_METABALL_SET_METHOD:
+	    return ecmd_metaball_set_method(s);
+	case ECMD_METABALL_PT_SET_GOO:
+	    return ecmd_metaball_pt_set_goo(s);
+	case ECMD_METABALL_PT_FLDSTR:
+	    return ecmd_metaball_pt_fldstr(s);
     };
 
     return 0;

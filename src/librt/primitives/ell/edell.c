@@ -34,10 +34,10 @@
 
 #include "../edit_private.h"
 
-#define MENU_ELL_SCALE_A	3039
-#define MENU_ELL_SCALE_B	3040
-#define MENU_ELL_SCALE_C	3041
-#define MENU_ELL_SCALE_ABC	3042
+#define ECMD_ELL_SCALE_A	3039
+#define ECMD_ELL_SCALE_B	3040
+#define ECMD_ELL_SCALE_C	3041
+#define ECMD_ELL_SCALE_ABC	3042
 
 static void
 ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -54,10 +54,10 @@ ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item ell_menu[] = {
     { "ELLIPSOID MENU", NULL, 0 },
-    { "Set A", ell_ed, MENU_ELL_SCALE_A },
-    { "Set B", ell_ed, MENU_ELL_SCALE_B },
-    { "Set C", ell_ed, MENU_ELL_SCALE_C },
-    { "Set A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
+    { "Set A", ell_ed, ECMD_ELL_SCALE_A },
+    { "Set B", ell_ed, ECMD_ELL_SCALE_B },
+    { "Set C", ell_ed, ECMD_ELL_SCALE_C },
+    { "Set A,B,C", ell_ed, ECMD_ELL_SCALE_ABC },
     { "", NULL, 0 }
 };
 
@@ -165,7 +165,7 @@ rt_solid_edit_ell_read_params(
 
 /* scale vector A */
 void
-menu_ell_scale_a(struct rt_solid_edit *s)
+ecmd_ell_scale_a(struct rt_solid_edit *s)
 {
     struct rt_ell_internal *ell =
 	(struct rt_ell_internal *)s->es_int.idb_ptr;
@@ -180,7 +180,7 @@ menu_ell_scale_a(struct rt_solid_edit *s)
 
 /* scale vector B */
 void
-menu_ell_scale_b(struct rt_solid_edit *s)
+ecmd_ell_scale_b(struct rt_solid_edit *s)
 {
     struct rt_ell_internal *ell =
 	(struct rt_ell_internal *)s->es_int.idb_ptr;
@@ -195,7 +195,7 @@ menu_ell_scale_b(struct rt_solid_edit *s)
 
 /* scale vector C */
 void
-menu_ell_scale_c(struct rt_solid_edit *s)
+ecmd_ell_scale_c(struct rt_solid_edit *s)
 {
     struct rt_ell_internal *ell =
 	(struct rt_ell_internal *)s->es_int.idb_ptr;
@@ -210,7 +210,7 @@ menu_ell_scale_c(struct rt_solid_edit *s)
 
 /* set A, B, and C length the same */
 void
-menu_ell_scale_abc(struct rt_solid_edit *s)
+ecmd_ell_scale_abc(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_ell_internal *ell =
@@ -250,17 +250,17 @@ rt_solid_edit_ell_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_ELL_SCALE_A:
-	    menu_ell_scale_a(s);
+	case ECMD_ELL_SCALE_A:
+	    ecmd_ell_scale_a(s);
 	    break;
-	case MENU_ELL_SCALE_B:
-	    menu_ell_scale_b(s);
+	case ECMD_ELL_SCALE_B:
+	    ecmd_ell_scale_b(s);
 	    break;
-	case MENU_ELL_SCALE_C:
-	    menu_ell_scale_c(s);
+	case ECMD_ELL_SCALE_C:
+	    ecmd_ell_scale_c(s);
 	    break;
-	case MENU_ELL_SCALE_ABC:
-	    menu_ell_scale_abc(s);
+	case ECMD_ELL_SCALE_ABC:
+	    ecmd_ell_scale_abc(s);
 	    break;
     };
 

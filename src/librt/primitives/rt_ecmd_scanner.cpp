@@ -59,19 +59,12 @@ process_file(
 
     std::regex define_str_regex("#define.*");
     std::regex ecmd_str_regex(".*(ECMD_[A-Z_]+)[ \t]+([0-9]+).*");
-    std::regex menu_str_regex(".*(MENU_[A-Z_]+)[ \t]+([0-9]+).*");
     std::string sline;
     while (std::getline(fs, sline)) {
 	if (!std::regex_match(sline, define_str_regex))
 	    continue;
 	std::smatch parsevar;
 	if (std::regex_search(sline, parsevar, ecmd_str_regex)) {
-	    std::string cmd = parsevar.str(1);
-	    std::string val = parsevar.str(2);
-	    mset->insert(std::make_pair(cmd, std::stoi(val)));
-	    continue;
-	}
-	if (std::regex_search(sline, parsevar, menu_str_regex)) {
 	    std::string cmd = parsevar.str(1);
 	    std::string val = parsevar.str(2);
 	    mset->insert(std::make_pair(cmd, std::stoi(val)));

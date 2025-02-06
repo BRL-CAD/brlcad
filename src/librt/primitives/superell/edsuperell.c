@@ -34,10 +34,10 @@
 
 #include "../edit_private.h"
 
-#define MENU_SUPERELL_SCALE_A	35113
-#define MENU_SUPERELL_SCALE_B	35114
-#define MENU_SUPERELL_SCALE_C	35115
-#define MENU_SUPERELL_SCALE_ABC	35116
+#define ECMD_SUPERELL_SCALE_A	35113
+#define ECMD_SUPERELL_SCALE_B	35114
+#define ECMD_SUPERELL_SCALE_C	35115
+#define ECMD_SUPERELL_SCALE_ABC	35116
 
 static void
 superell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data)) {
@@ -53,10 +53,10 @@ superell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 }
 struct rt_solid_edit_menu_item superell_menu[] = {
     { "SUPERELLIPSOID MENU", NULL, 0 },
-    { "Set A", superell_ed, MENU_SUPERELL_SCALE_A },
-    { "Set B", superell_ed, MENU_SUPERELL_SCALE_B },
-    { "Set C", superell_ed, MENU_SUPERELL_SCALE_C },
-    { "Set A,B,C", superell_ed, MENU_SUPERELL_SCALE_ABC },
+    { "Set A", superell_ed, ECMD_SUPERELL_SCALE_A },
+    { "Set B", superell_ed, ECMD_SUPERELL_SCALE_B },
+    { "Set C", superell_ed, ECMD_SUPERELL_SCALE_C },
+    { "Set A,B,C", superell_ed, ECMD_SUPERELL_SCALE_ABC },
     { "", NULL, 0 }
 };
 
@@ -170,7 +170,7 @@ rt_solid_edit_superell_read_params(
 
 /* scale vector A */
 void
-menu_superell_scale_a(struct rt_solid_edit *s)
+ecmd_superell_scale_a(struct rt_solid_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -185,7 +185,7 @@ menu_superell_scale_a(struct rt_solid_edit *s)
 
 /* scale vector B */
 void
-menu_superell_scale_b(struct rt_solid_edit *s)
+ecmd_superell_scale_b(struct rt_solid_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -200,7 +200,7 @@ menu_superell_scale_b(struct rt_solid_edit *s)
 
 /* scale vector C */
 void
-menu_superell_scale_c(struct rt_solid_edit *s)
+ecmd_superell_scale_c(struct rt_solid_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -215,7 +215,7 @@ menu_superell_scale_c(struct rt_solid_edit *s)
 
 /* set A, B, and C length the same */
 void
-menu_superell_scale_abc(struct rt_solid_edit *s)
+ecmd_superell_scale_abc(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_superell_internal *superell =
@@ -255,17 +255,17 @@ rt_solid_edit_superell_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_SUPERELL_SCALE_A:
-	    menu_superell_scale_a(s);
+	case ECMD_SUPERELL_SCALE_A:
+	    ecmd_superell_scale_a(s);
 	    break;
-	case MENU_SUPERELL_SCALE_B:
-	    menu_superell_scale_b(s);
+	case ECMD_SUPERELL_SCALE_B:
+	    ecmd_superell_scale_b(s);
 	    break;
-	case MENU_SUPERELL_SCALE_C:
-	    menu_superell_scale_c(s);
+	case ECMD_SUPERELL_SCALE_C:
+	    ecmd_superell_scale_c(s);
 	    break;
-	case MENU_SUPERELL_SCALE_ABC:
-	    menu_superell_scale_abc(s);
+	case ECMD_SUPERELL_SCALE_ABC:
+	    ecmd_superell_scale_abc(s);
 	    break;
     };
 

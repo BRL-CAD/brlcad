@@ -48,19 +48,6 @@
 #define ECMD_BOT_FDEL		30071	/* delete current face */
 #define ECMD_BOT_FLAGS		30072	/* set BOT flags */
 
-#define MENU_BOT_PICKV		30091
-#define MENU_BOT_PICKE		30092
-#define MENU_BOT_PICKT		30093
-#define MENU_BOT_MOVEV		30094
-#define MENU_BOT_MOVEE		30095
-#define MENU_BOT_MOVET		30096
-#define MENU_BOT_MODE		30097
-#define MENU_BOT_ORIENT		30098
-#define MENU_BOT_THICK		30099
-#define MENU_BOT_FMODE		30100
-#define MENU_BOT_DELETE_TRI	30101
-#define MENU_BOT_FLAGS		30102
-
 void *
 rt_solid_edit_bot_prim_edit_create(struct rt_solid_edit *UNUSED(s))
 {

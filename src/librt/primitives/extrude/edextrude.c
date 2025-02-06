@@ -39,11 +39,6 @@
 #define ECMD_EXTR_ROT_H		27075	/* rotate extrusion vector */
 #define ECMD_EXTR_SKT_NAME	27076	/* set sketch that the extrusion uses */
 
-#define MENU_EXTR_SCALE_H	27103
-#define MENU_EXTR_MOV_H		27104
-#define MENU_EXTR_ROT_H		27105
-#define MENU_EXTR_SKT_NAME	27106
-
 /*ARGSUSED*/
 static void
 extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))

@@ -41,12 +41,6 @@
 #define ECMD_DSP_SCALE_Y        25059	/* Scale DSP y size */
 #define ECMD_DSP_SCALE_ALT      25060	/* Scale DSP Altitude size */
 
-#define MENU_DSP_FNAME		25083
-#define MENU_DSP_FSIZE		25084	/* Not implemented yet */
-#define MENU_DSP_SCALE_X	25085
-#define MENU_DSP_SCALE_Y	25086
-#define MENU_DSP_SCALE_ALT	25087
-
 static void
 dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
@@ -54,21 +48,21 @@ dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     rt_solid_edit_set_edflag(s, -1);
 
     switch (arg) {
-	case MENU_DSP_FNAME:
+	case ECMD_DSP_FNAME:
 	    s->edit_flag = ECMD_DSP_FNAME;
 	    break;
-	case MENU_DSP_FSIZE:
+	case ECMD_DSP_FSIZE:
 	    s->edit_flag = ECMD_DSP_FSIZE;  // Unimplemented.  Expects 2 parameters
 	    break;
-	case MENU_DSP_SCALE_X:
+	case ECMD_DSP_SCALE_X:
 	    s->edit_flag = ECMD_DSP_SCALE_X;
 	    s->solid_edit_scale = 1;
 	    break;
-	case MENU_DSP_SCALE_Y:
+	case ECMD_DSP_SCALE_Y:
 	    s->edit_flag = ECMD_DSP_SCALE_Y;
 	    s->solid_edit_scale = 1;
 	    break;
-	case MENU_DSP_SCALE_ALT:
+	case ECMD_DSP_SCALE_ALT:
 	    s->edit_flag = ECMD_DSP_SCALE_ALT;
 	    s->solid_edit_scale = 1;
 	    break;
@@ -85,10 +79,10 @@ dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item dsp_menu[] = {
     {"DSP MENU", NULL, 0 },
-    {"Name", dsp_ed, MENU_DSP_FNAME },
-    {"Set X", dsp_ed, MENU_DSP_SCALE_X },
-    {"Set Y", dsp_ed, MENU_DSP_SCALE_Y },
-    {"Set ALT", dsp_ed, MENU_DSP_SCALE_ALT },
+    {"Name", dsp_ed, ECMD_DSP_FNAME },
+    {"Set X", dsp_ed, ECMD_DSP_SCALE_X },
+    {"Set Y", dsp_ed, ECMD_DSP_SCALE_Y },
+    {"Set ALT", dsp_ed, ECMD_DSP_SCALE_ALT },
     { "", NULL, 0 }
 };
 

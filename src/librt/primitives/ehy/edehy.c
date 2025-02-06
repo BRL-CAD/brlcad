@@ -34,10 +34,10 @@
 
 #include "../edit_private.h"
 
-#define MENU_EHY_H		20053
-#define MENU_EHY_R1		20054
-#define MENU_EHY_R2		20055
-#define MENU_EHY_C		20056
+#define ECMD_EHY_H		20053
+#define ECMD_EHY_R1		20054
+#define ECMD_EHY_R2		20055
+#define ECMD_EHY_C		20056
 
 static void
 ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -54,10 +54,10 @@ ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item ehy_menu[] = {
     { "EHY MENU", NULL, 0 },
-    { "Set H", ehy_ed, MENU_EHY_H },
-    { "Set A", ehy_ed, MENU_EHY_R1 },
-    { "Set B", ehy_ed, MENU_EHY_R2 },
-    { "Set c", ehy_ed, MENU_EHY_C },
+    { "Set H", ehy_ed, ECMD_EHY_H },
+    { "Set A", ehy_ed, ECMD_EHY_R1 },
+    { "Set B", ehy_ed, ECMD_EHY_R2 },
+    { "Set c", ehy_ed, ECMD_EHY_C },
     { "", NULL, 0 }
 };
 
@@ -178,7 +178,7 @@ rt_solid_edit_ehy_read_params(
 
 /* scale height vector H */
 void
-menu_ehy_h(struct rt_solid_edit *s)
+ecmd_ehy_h(struct rt_solid_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
@@ -194,7 +194,7 @@ menu_ehy_h(struct rt_solid_edit *s)
 
 /* scale semimajor axis of EHY */
 void
-menu_ehy_r1(struct rt_solid_edit *s)
+ecmd_ehy_r1(struct rt_solid_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
@@ -213,7 +213,7 @@ menu_ehy_r1(struct rt_solid_edit *s)
 
 /* scale semiminor axis of EHY */
 void
-menu_ehy_r2(struct rt_solid_edit *s)
+ecmd_ehy_r2(struct rt_solid_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
@@ -232,7 +232,7 @@ menu_ehy_r2(struct rt_solid_edit *s)
 
 /* scale distance between apex of EHY & asymptotic cone */
 void
-menu_ehy_c(struct rt_solid_edit *s)
+ecmd_ehy_c(struct rt_solid_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
@@ -267,17 +267,17 @@ rt_solid_edit_ehy_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_EHY_H:
-	    menu_ehy_h(s);
+	case ECMD_EHY_H:
+	    ecmd_ehy_h(s);
 	    break;
-	case MENU_EHY_R1:
-	    menu_ehy_r1(s);
+	case ECMD_EHY_R1:
+	    ecmd_ehy_r1(s);
 	    break;
-	case MENU_EHY_R2:
-	    menu_ehy_r2(s);
+	case ECMD_EHY_R2:
+	    ecmd_ehy_r2(s);
 	    break;
-	case MENU_EHY_C:
-	    menu_ehy_c(s);
+	case ECMD_EHY_C:
+	    ecmd_ehy_c(s);
 	    break;
     };
 

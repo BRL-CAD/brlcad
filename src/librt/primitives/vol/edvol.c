@@ -41,39 +41,33 @@
 #define ECMD_VOL_THRESH_HI	13051	/* set VOL threshold (hi) */
 #define ECMD_VOL_FNAME		13052	/* set VOL file name */
 
-#define MENU_VOL_FNAME		13075
-#define MENU_VOL_FSIZE		13076
-#define MENU_VOL_CSIZE		13077
-#define MENU_VOL_THRESH_LO	13078
-#define MENU_VOL_THRESH_HI	13079
-
 static void
 vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
 
     switch (arg) {
-	case MENU_VOL_FNAME:
+	case ECMD_VOL_FNAME:
 	    rt_solid_edit_set_edflag(s, ECMD_VOL_FNAME);
 	    break;
-	case MENU_VOL_FSIZE:
+	case ECMD_VOL_FSIZE:
 	    rt_solid_edit_set_edflag(s, ECMD_VOL_FSIZE);
 	    break;
-	case MENU_VOL_CSIZE:
+	case ECMD_VOL_CSIZE:
 	    s->edit_flag = ECMD_VOL_CSIZE;
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 1;
 	    s->solid_edit_pick = 0;
 	    break;
-	case MENU_VOL_THRESH_LO:
+	case ECMD_VOL_THRESH_LO:
 	    s->edit_flag = ECMD_VOL_THRESH_LO;
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 1;
 	    s->solid_edit_pick = 0;
 	    break;
-	case MENU_VOL_THRESH_HI:
+	case ECMD_VOL_THRESH_HI:
 	    s->edit_flag = ECMD_VOL_THRESH_HI;
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 0;
@@ -94,11 +88,11 @@ vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 
 struct rt_solid_edit_menu_item vol_menu[] = {
     {"VOL MENU", NULL, 0 },
-    {"File Name", vol_ed, MENU_VOL_FNAME },
-    {"File Size (X Y Z)", vol_ed, MENU_VOL_FSIZE },
-    {"Voxel Size (X Y Z)", vol_ed, MENU_VOL_CSIZE },
-    {"Threshold (low)", vol_ed, MENU_VOL_THRESH_LO },
-    {"Threshold (hi)", vol_ed, MENU_VOL_THRESH_HI },
+    {"File Name", vol_ed, ECMD_VOL_FNAME },
+    {"File Size (X Y Z)", vol_ed, ECMD_VOL_FSIZE },
+    {"Voxel Size (X Y Z)", vol_ed, ECMD_VOL_CSIZE },
+    {"Threshold (low)", vol_ed, ECMD_VOL_THRESH_LO },
+    {"Threshold (hi)", vol_ed, ECMD_VOL_THRESH_HI },
     { "", NULL, 0 }
 };
 
@@ -106,13 +100,6 @@ struct rt_solid_edit_menu_item *
 rt_solid_edit_vol_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return vol_menu;
-}
-
-/* scale voxel size */
-void
-menu_vol_csize(struct rt_solid_edit *s)
-{
-    bu_log("s->es_scale = %g\n", s->es_scale);
 }
 
 /* set voxel size */
@@ -332,8 +319,8 @@ rt_solid_edit_vol_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_VOL_CSIZE:
-	    menu_vol_csize(s);
+	case ECMD_VOL_CSIZE:
+	    ecmd_vol_csize(s);
 	    break;
     };
 

@@ -36,56 +36,50 @@
 
 #define ECMD_TGC_MV_H		2005
 #define ECMD_TGC_MV_HH		2006
-#define ECMD_TGC_ROT_H		2007
+#define ECMD_TGC_MV_H_CD	2081 /* move end of tgc, while scaling CD */
+#define ECMD_TGC_MV_H_V_AB	2082 /* move vertex end of tgc, while scaling AB */
 #define ECMD_TGC_ROT_AB		2008
-#define ECMD_TGC_MV_H_CD	2081	/* move end of tgc, while scaling CD */
-#define ECMD_TGC_MV_H_V_AB	2082	/* move vertex end of tgc, while scaling AB */
-
-#define MENU_TGC_ROT_H		2023
-#define MENU_TGC_ROT_AB 	2024
-#define MENU_TGC_MV_H		2025
-#define MENU_TGC_MV_HH		2026
-#define MENU_TGC_SCALE_H	2027
-#define MENU_TGC_SCALE_H_V	2028
-#define MENU_TGC_SCALE_A	2029
-#define MENU_TGC_SCALE_B	2030
-#define MENU_TGC_SCALE_C	2031
-#define MENU_TGC_SCALE_D	2032
-#define MENU_TGC_SCALE_AB	2033
-#define MENU_TGC_SCALE_CD	2034
-#define MENU_TGC_SCALE_ABCD	2035
-
-#define MENU_TGC_SCALE_H_CD	2111
-#define MENU_TGC_SCALE_H_V_AB	2112
+#define ECMD_TGC_ROT_H		2007
+#define ECMD_TGC_SCALE_A	2029
+#define ECMD_TGC_SCALE_AB	2033
+#define ECMD_TGC_SCALE_ABCD	2035
+#define ECMD_TGC_SCALE_B	2030
+#define ECMD_TGC_SCALE_C	2031
+#define ECMD_TGC_SCALE_CD	2034
+#define ECMD_TGC_SCALE_D	2032
+#define ECMD_TGC_SCALE_H	2027
+#define ECMD_TGC_SCALE_H_CD	2111
+#define ECMD_TGC_SCALE_H_V	2028
+#define ECMD_TGC_SCALE_H_V_AB	2112
 
 static void
 tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
+    s->edit_flag = arg;
     s->edit_menu = arg;
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
-    // PSCALE already reset most of the flags, so for the following we just
-    // need to zero scale and set the specific flag of interest.
-    if (arg == MENU_TGC_ROT_H) {
-	s->edit_flag = ECMD_TGC_ROT_H;
-	s->solid_edit_rotate = 1;
-	s->solid_edit_scale = 0;
-    }
-    if (arg == MENU_TGC_ROT_AB) {
-	s->edit_flag = ECMD_TGC_ROT_AB;
-    	s->solid_edit_rotate = 1;
-	s->solid_edit_scale = 0;
-    }
-    if (arg == MENU_TGC_MV_H) {
-	s->edit_flag = ECMD_TGC_MV_H;
-	s->solid_edit_translate = 1;
-	s->solid_edit_scale = 0;
-    }
-    if (arg == MENU_TGC_MV_HH) {
-	s->edit_flag = ECMD_TGC_MV_HH;
-	s->solid_edit_translate = 1;
-	s->solid_edit_scale = 0;
-    }
 
+    // Most of the commands are scale, so set those flags by default.  That
+    // will handle most of the flag resetting as well, so we just need to zero
+    // and set specific flags of interest in the other cases.
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+
+    switch(arg) {
+	case ECMD_TGC_MV_H:
+	case ECMD_TGC_MV_HH:
+	case ECMD_TGC_MV_H_CD:
+	case ECMD_TGC_MV_H_V_AB:
+	    s->solid_edit_scale = 0;
+	    s->solid_edit_translate = 1;
+	    break;
+	case ECMD_TGC_ROT_AB:
+	case ECMD_TGC_ROT_H:
+	    s->solid_edit_scale = 0;
+	    s->solid_edit_rotate = 1;
+	    break;
+
+    };
+
+    // If we need to update edit axes positions, do so.
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
@@ -96,21 +90,21 @@ tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 
 struct rt_solid_edit_menu_item tgc_menu[] = {
     { "TGC MENU", NULL, 0 },
-    { "Set H",	tgc_ed, MENU_TGC_SCALE_H },
-    { "Set H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
-    { "Set H (adj C,D)",	tgc_ed, MENU_TGC_SCALE_H_CD },
-    { "Set H (move V, adj A,B)", tgc_ed, MENU_TGC_SCALE_H_V_AB },
-    { "Set A",	tgc_ed, MENU_TGC_SCALE_A },
-    { "Set B",	tgc_ed, MENU_TGC_SCALE_B },
-    { "Set C",	tgc_ed, MENU_TGC_SCALE_C },
-    { "Set D",	tgc_ed, MENU_TGC_SCALE_D },
-    { "Set A,B",	tgc_ed, MENU_TGC_SCALE_AB },
-    { "Set C,D",	tgc_ed, MENU_TGC_SCALE_CD },
-    { "Set A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
-    { "Rotate H",	tgc_ed, MENU_TGC_ROT_H },
-    { "Rotate AxB",	tgc_ed, MENU_TGC_ROT_AB },
-    { "Move End H(rt)", tgc_ed, MENU_TGC_MV_H },
-    { "Move End H", tgc_ed, MENU_TGC_MV_HH },
+    { "Set H",	tgc_ed, ECMD_TGC_SCALE_H },
+    { "Set H (move V)", tgc_ed, ECMD_TGC_SCALE_H_V },
+    { "Set H (adj C,D)",	tgc_ed, ECMD_TGC_SCALE_H_CD },
+    { "Set H (move V, adj A,B)", tgc_ed, ECMD_TGC_SCALE_H_V_AB },
+    { "Set A",	tgc_ed, ECMD_TGC_SCALE_A },
+    { "Set B",	tgc_ed, ECMD_TGC_SCALE_B },
+    { "Set C",	tgc_ed, ECMD_TGC_SCALE_C },
+    { "Set D",	tgc_ed, ECMD_TGC_SCALE_D },
+    { "Set A,B",	tgc_ed, ECMD_TGC_SCALE_AB },
+    { "Set C,D",	tgc_ed, ECMD_TGC_SCALE_CD },
+    { "Set A,B,C,D", tgc_ed, ECMD_TGC_SCALE_ABCD },
+    { "Rotate H",	tgc_ed, ECMD_TGC_ROT_H },
+    { "Rotate AxB",	tgc_ed, ECMD_TGC_ROT_AB },
+    { "Move End H(rt)", tgc_ed, ECMD_TGC_MV_H },
+    { "Move End H", tgc_ed, ECMD_TGC_MV_HH },
     { "", NULL, 0 }
 };
 
@@ -254,7 +248,7 @@ rt_solid_edit_tgc_read_params(
 
 /* scale height vector */
 void
-menu_tgc_scale_h(struct rt_solid_edit *s)
+ecmd_tgc_scale_h(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -269,7 +263,7 @@ menu_tgc_scale_h(struct rt_solid_edit *s)
 
 /* scale height vector (but move V) */
 void
-menu_tgc_scale_h_v(struct rt_solid_edit *s)
+ecmd_tgc_scale_h_v(struct rt_solid_edit *s)
 {
     point_t old_top;
 
@@ -287,7 +281,7 @@ menu_tgc_scale_h_v(struct rt_solid_edit *s)
 }
 
 void
-menu_tgc_scale_h_cd(struct rt_solid_edit *s)
+ecmd_tgc_scale_h_cd(struct rt_solid_edit *s)
 {
     vect_t vec1, vec2;
     vect_t c, d;
@@ -324,7 +318,7 @@ menu_tgc_scale_h_cd(struct rt_solid_edit *s)
 }
 
 void
-menu_tgc_scale_h_v_ab(struct rt_solid_edit *s)
+ecmd_tgc_scale_h_v_ab(struct rt_solid_edit *s)
 {
     vect_t vec1, vec2;
     vect_t a, b;
@@ -365,7 +359,7 @@ menu_tgc_scale_h_v_ab(struct rt_solid_edit *s)
 
 /* scale vector A */
 void
-menu_tgc_scale_a(struct rt_solid_edit *s)
+ecmd_tgc_scale_a(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -381,7 +375,7 @@ menu_tgc_scale_a(struct rt_solid_edit *s)
 
 /* scale vector B */
 void
-menu_tgc_scale_b(struct rt_solid_edit *s)
+ecmd_tgc_scale_b(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -397,7 +391,7 @@ menu_tgc_scale_b(struct rt_solid_edit *s)
 
 /* TGC: scale ratio "c" */
 void
-menu_tgc_scale_c(struct rt_solid_edit *s)
+ecmd_tgc_scale_c(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -413,7 +407,7 @@ menu_tgc_scale_c(struct rt_solid_edit *s)
 
 /* scale d for tgc */
 void
-menu_tgc_scale_d(struct rt_solid_edit *s)
+ecmd_tgc_scale_d(struct rt_solid_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -428,7 +422,7 @@ menu_tgc_scale_d(struct rt_solid_edit *s)
 }
 
 void
-menu_tgc_scale_ab(struct rt_solid_edit *s)
+ecmd_tgc_scale_ab(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -448,7 +442,7 @@ menu_tgc_scale_ab(struct rt_solid_edit *s)
 
 /* scale C and D of tgc */
 void
-menu_tgc_scale_cd(struct rt_solid_edit *s)
+ecmd_tgc_scale_cd(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -468,7 +462,7 @@ menu_tgc_scale_cd(struct rt_solid_edit *s)
 
 /* scale A, B, C, and D of tgc */
 void
-menu_tgc_scale_abcd(struct rt_solid_edit *s)
+ecmd_tgc_scale_abcd(struct rt_solid_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -503,7 +497,7 @@ ecmd_tgc_mv_h(struct rt_solid_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
- 
+
     RT_TGC_CK_MAGIC(tgc);
     if (s->e_inpara) {
 	if (s->e_inpara != 3) {
@@ -568,7 +562,7 @@ ecmd_tgc_mv_hh(struct rt_solid_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
- 
+
     RT_TGC_CK_MAGIC(tgc);
     if (s->e_inpara) {
 	if (s->e_inpara != 3) {
@@ -782,38 +776,38 @@ rt_solid_edit_tgc_pscale(struct rt_solid_edit *s, int mode)
     }
 
     switch (mode) {
-	case MENU_TGC_SCALE_H:
-	    menu_tgc_scale_h(s);
+	case ECMD_TGC_SCALE_H:
+	    ecmd_tgc_scale_h(s);
 	    break;
-	case MENU_TGC_SCALE_H_V:
-	    menu_tgc_scale_h_v(s);
+	case ECMD_TGC_SCALE_H_V:
+	    ecmd_tgc_scale_h_v(s);
 	    break;
-	case MENU_TGC_SCALE_H_CD:
-	    menu_tgc_scale_h_cd(s);
+	case ECMD_TGC_SCALE_H_CD:
+	    ecmd_tgc_scale_h_cd(s);
 	    break;
-	case MENU_TGC_SCALE_H_V_AB:
-	    menu_tgc_scale_h_v_ab(s);
+	case ECMD_TGC_SCALE_H_V_AB:
+	    ecmd_tgc_scale_h_v_ab(s);
 	    break;
-	case MENU_TGC_SCALE_A:
-	    menu_tgc_scale_a(s);
+	case ECMD_TGC_SCALE_A:
+	    ecmd_tgc_scale_a(s);
 	    break;
-	case MENU_TGC_SCALE_B:
-	    menu_tgc_scale_b(s);
+	case ECMD_TGC_SCALE_B:
+	    ecmd_tgc_scale_b(s);
 	    break;
-	case MENU_TGC_SCALE_C:
-	    menu_tgc_scale_c(s);
+	case ECMD_TGC_SCALE_C:
+	    ecmd_tgc_scale_c(s);
 	    break;
-	case MENU_TGC_SCALE_D:
-	    menu_tgc_scale_d(s);
+	case ECMD_TGC_SCALE_D:
+	    ecmd_tgc_scale_d(s);
 	    break;
-	case MENU_TGC_SCALE_AB:
-	    menu_tgc_scale_ab(s);
+	case ECMD_TGC_SCALE_AB:
+	    ecmd_tgc_scale_ab(s);
 	    break;
-	case MENU_TGC_SCALE_CD:
-	    menu_tgc_scale_cd(s);
+	case ECMD_TGC_SCALE_CD:
+	    ecmd_tgc_scale_cd(s);
 	    break;
-	case MENU_TGC_SCALE_ABCD:
-	    menu_tgc_scale_abcd(s);
+	case ECMD_TGC_SCALE_ABCD:
+	    ecmd_tgc_scale_abcd(s);
 	    break;
     };
 

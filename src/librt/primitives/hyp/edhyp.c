@@ -37,27 +37,19 @@
 #define ECMD_HYP_ROT_H		38091
 #define ECMD_HYP_ROT_A		38092
 
-#define MENU_HYP_H              38127
-#define MENU_HYP_SCALE_A        38128
-#define MENU_HYP_SCALE_B	38129
-#define MENU_HYP_C		38130
-#define MENU_HYP_ROT_H		38131
+#define ECMD_HYP_H              38127
+#define ECMD_HYP_SCALE_A        38128
+#define ECMD_HYP_SCALE_B	38129
+#define ECMD_HYP_C		38130
 
 static void
 hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     s->edit_menu = arg;
-    switch (arg) {
-	case MENU_HYP_ROT_H:
-	    s->edit_flag = ECMD_HYP_ROT_H;
-	    s->solid_edit_rotate = 1;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
-	    break;
-	default:
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
-	    break;
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    if (arg == ECMD_HYP_ROT_H) {
+	s->solid_edit_scale = 0;
+	s->solid_edit_rotate = 1;
     }
 
     bu_clbk_t f = NULL;
@@ -69,11 +61,11 @@ hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item  hyp_menu[] = {
     { "HYP MENU", NULL, 0 },
-    { "Set H", hyp_ed, MENU_HYP_H },
-    { "Set A", hyp_ed, MENU_HYP_SCALE_A },
-    { "Set B", hyp_ed, MENU_HYP_SCALE_B },
-    { "Set c", hyp_ed, MENU_HYP_C },
-    { "Rotate H", hyp_ed, MENU_HYP_ROT_H },
+    { "Set H", hyp_ed, ECMD_HYP_H },
+    { "Set A", hyp_ed, ECMD_HYP_SCALE_A },
+    { "Set B", hyp_ed, ECMD_HYP_SCALE_B },
+    { "Set c", hyp_ed, ECMD_HYP_C },
+    { "Rotate H", hyp_ed, ECMD_HYP_ROT_H },
     { "", NULL, 0 }
 };
 
@@ -187,7 +179,7 @@ rt_solid_edit_hyp_read_params(
 
 /* scale height of HYP */
 void
-menu_hyp_h(struct rt_solid_edit *s)
+ecmd_hyp_h(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -203,7 +195,7 @@ menu_hyp_h(struct rt_solid_edit *s)
 
 /* scale A vector of HYP */
 void
-menu_hyp_scale_a(struct rt_solid_edit *s)
+ecmd_hyp_scale_a(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -219,7 +211,7 @@ menu_hyp_scale_a(struct rt_solid_edit *s)
 
 /* scale B vector of HYP */
 void
-menu_hyp_scale_b(struct rt_solid_edit *s)
+ecmd_hyp_scale_b(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -235,7 +227,7 @@ menu_hyp_scale_b(struct rt_solid_edit *s)
 
 /* scale Neck to Base ratio of HYP */
 void
-menu_hyp_c(struct rt_solid_edit *s)
+ecmd_hyp_c(struct rt_solid_edit *s)
 {
     struct rt_hyp_internal *hyp =
 	(struct rt_hyp_internal *)s->es_int.idb_ptr;
@@ -338,17 +330,17 @@ rt_solid_edit_hyp_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_HYP_H:
-	    menu_hyp_h(s);
+	case ECMD_HYP_H:
+	    ecmd_hyp_h(s);
 	    break;
-	case MENU_HYP_SCALE_A:
-	    menu_hyp_scale_a(s);
+	case ECMD_HYP_SCALE_A:
+	    ecmd_hyp_scale_a(s);
 	    break;
-	case MENU_HYP_SCALE_B:
-	    menu_hyp_scale_b(s);
+	case ECMD_HYP_SCALE_B:
+	    ecmd_hyp_scale_b(s);
 	    break;
-	case MENU_HYP_C:
-	    menu_hyp_c(s);
+	case ECMD_HYP_C:
+	    ecmd_hyp_c(s);
 	    break;
     };
 

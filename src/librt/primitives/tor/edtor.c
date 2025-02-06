@@ -34,8 +34,8 @@
 
 #include "../edit_private.h"
 
-#define MENU_TOR_R1		1021
-#define MENU_TOR_R2		1022
+#define ECMD_TOR_R1		1021
+#define ECMD_TOR_R2		1022
 
 static void
 tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -54,8 +54,8 @@ tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 
 struct rt_solid_edit_menu_item tor_menu[] = {
     { "TORUS MENU", NULL, 0 },
-    { "Set Radius 1", tor_ed, MENU_TOR_R1 },
-    { "Set Radius 2", tor_ed, MENU_TOR_R2 },
+    { "Set Radius 1", tor_ed, ECMD_TOR_R1 },
+    { "Set Radius 2", tor_ed, ECMD_TOR_R2 },
     { "", NULL, 0 }
 };
 
@@ -166,7 +166,7 @@ rt_solid_edit_tor_read_params(
 
 /* scale radius 1 of TOR */
 void
-menu_tor_r1(struct rt_solid_edit *s)
+ecmd_tor_r1(struct rt_solid_edit *s)
 {
     struct rt_tor_internal *tor =
 	(struct rt_tor_internal *)s->es_int.idb_ptr;
@@ -186,7 +186,7 @@ menu_tor_r1(struct rt_solid_edit *s)
 
 /* scale radius 2 of TOR */
 void
-menu_tor_r2(struct rt_solid_edit *s)
+ecmd_tor_r2(struct rt_solid_edit *s)
 {
     struct rt_tor_internal *tor =
 	(struct rt_tor_internal *)s->es_int.idb_ptr;
@@ -225,11 +225,11 @@ rt_solid_edit_tor_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_TOR_R1:
-	    menu_tor_r1(s);
+	case ECMD_TOR_R1:
+	    ecmd_tor_r1(s);
 	    break;
-	case MENU_TOR_R2:
-	    menu_tor_r2(s);
+	case ECMD_TOR_R2:
+	    ecmd_tor_r2(s);
 	    break;
     };
 

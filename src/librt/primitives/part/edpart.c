@@ -34,9 +34,9 @@
 
 #include "../edit_private.h"
 
-#define MENU_PART_H		16088
-#define MENU_PART_v		16089
-#define MENU_PART_h		16090
+#define ECMD_PART_H		16088
+#define ECMD_PART_v		16089
+#define ECMD_PART_h		16090
 
 static void
 part_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -53,9 +53,9 @@ part_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 }
 struct rt_solid_edit_menu_item part_menu[] = {
     { "Particle MENU", NULL, 0 },
-    { "Set H", part_ed, MENU_PART_H },
-    { "Set v", part_ed, MENU_PART_v },
-    { "Set h", part_ed, MENU_PART_h },
+    { "Set H", part_ed, ECMD_PART_H },
+    { "Set v", part_ed, ECMD_PART_v },
+    { "Set h", part_ed, ECMD_PART_h },
     { "", NULL, 0 }
 };
 
@@ -165,7 +165,7 @@ rt_solid_edit_part_read_params(
 
 /* scale vector H */
 void
-menu_part_h(struct rt_solid_edit *s)
+ecmd_part_h(struct rt_solid_edit *s)
 {
     struct rt_part_internal *part =
 	(struct rt_part_internal *)s->es_int.idb_ptr;
@@ -181,7 +181,7 @@ menu_part_h(struct rt_solid_edit *s)
 
 /* scale v end radius */
 void
-menu_part_v(struct rt_solid_edit *s)
+ecmd_part_v(struct rt_solid_edit *s)
 {
     struct rt_part_internal *part =
 	(struct rt_part_internal *)s->es_int.idb_ptr;
@@ -197,7 +197,7 @@ menu_part_v(struct rt_solid_edit *s)
 
 /* scale h end radius */
 void
-menu_part_h_end_r(struct rt_solid_edit *s)
+ecmd_part_h_end_r(struct rt_solid_edit *s)
 {
     struct rt_part_internal *part =
 	(struct rt_part_internal *)s->es_int.idb_ptr;
@@ -232,14 +232,14 @@ rt_solid_edit_part_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_PART_H:
-	    menu_part_h(s);
+	case ECMD_PART_H:
+	    ecmd_part_h(s);
 	    break;
-	case MENU_PART_v:
-	    menu_part_v(s);
+	case ECMD_PART_v:
+	    ecmd_part_v(s);
 	    break;
-	case MENU_PART_h:
-	    menu_part_h_end_r(s);
+	case ECMD_PART_h:
+	    ecmd_part_h_end_r(s);
 	    break;
     };
 

@@ -39,11 +39,6 @@
 #define ECMD_CLINE_SCALE_R	29079	/* scale radius */
 #define ECMD_CLINE_SCALE_T	29080	/* scale thickness */
 
-#define MENU_CLINE_SCALE_H	29107
-#define MENU_CLINE_MOVE_H	29108
-#define MENU_CLINE_SCALE_R	29109
-#define MENU_CLINE_SCALE_T	29110
-
 static void
 cline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {

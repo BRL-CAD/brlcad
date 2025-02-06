@@ -34,9 +34,9 @@
 
 #include "../edit_private.h"
 
-#define MENU_RPC_B		17043
-#define MENU_RPC_H		17044
-#define MENU_RPC_R		17045
+#define ECMD_RPC_B		17043
+#define ECMD_RPC_H		17044
+#define ECMD_RPC_R		17045
 
 static void
 rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -53,9 +53,9 @@ rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item rpc_menu[] = {
     { "RPC MENU", NULL, 0 },
-    { "Set B", rpc_ed, MENU_RPC_B },
-    { "Set H", rpc_ed, MENU_RPC_H },
-    { "Set r", rpc_ed, MENU_RPC_R },
+    { "Set B", rpc_ed, ECMD_RPC_B },
+    { "Set H", rpc_ed, ECMD_RPC_H },
+    { "Set r", rpc_ed, ECMD_RPC_R },
     { "", NULL, 0 }
 };
 
@@ -163,7 +163,7 @@ rt_solid_edit_rpc_read_params(
 
 /* scale vector B */
 void
-menu_rpc_b(struct rt_solid_edit *s)
+ecmd_rpc_b(struct rt_solid_edit *s)
 {
     struct rt_rpc_internal *rpc =
 	(struct rt_rpc_internal *)s->es_int.idb_ptr;
@@ -179,7 +179,7 @@ menu_rpc_b(struct rt_solid_edit *s)
 
 /* scale vector H */
 void
-menu_rpc_h(struct rt_solid_edit *s)
+ecmd_rpc_h(struct rt_solid_edit *s)
 {
     struct rt_rpc_internal *rpc =
 	(struct rt_rpc_internal *)s->es_int.idb_ptr;
@@ -195,7 +195,7 @@ menu_rpc_h(struct rt_solid_edit *s)
 
 /* scale rectangular half-width of RPC */
 void
-menu_rpc_r(struct rt_solid_edit *s)
+ecmd_rpc_r(struct rt_solid_edit *s)
 {
     struct rt_rpc_internal *rpc =
 	(struct rt_rpc_internal *)s->es_int.idb_ptr;
@@ -230,14 +230,14 @@ rt_solid_edit_rpc_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_RPC_B:
-	    menu_rpc_b(s);
+	case ECMD_RPC_B:
+	    ecmd_rpc_b(s);
 	    break;
-	case MENU_RPC_H:
-	    menu_rpc_h(s);
+	case ECMD_RPC_H:
+	    ecmd_rpc_h(s);
 	    break;
-	case MENU_RPC_R:
-	    menu_rpc_r(s);
+	case ECMD_RPC_R:
+	    ecmd_rpc_r(s);
 	    break;
     };
 

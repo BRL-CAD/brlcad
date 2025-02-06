@@ -34,9 +34,9 @@
 
 #include "../edit_private.h"
 
-#define MENU_EPA_H		19050
-#define MENU_EPA_R1		19051
-#define MENU_EPA_R2		19052
+#define ECMD_EPA_H		19050
+#define ECMD_EPA_R1		19051
+#define ECMD_EPA_R2		19052
 
 static void
 epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -53,9 +53,9 @@ epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item epa_menu[] = {
     { "EPA MENU", NULL, 0 },
-    { "Set H", epa_ed, MENU_EPA_H },
-    { "Set A", epa_ed, MENU_EPA_R1 },
-    { "Set B", epa_ed, MENU_EPA_R2 },
+    { "Set H", epa_ed, ECMD_EPA_H },
+    { "Set A", epa_ed, ECMD_EPA_R1 },
+    { "Set B", epa_ed, ECMD_EPA_R2 },
     { "", NULL, 0 }
 };
 
@@ -169,7 +169,7 @@ rt_solid_edit_epa_read_params(
 
 /* scale height vector H */
 void
-menu_epa_h(struct rt_solid_edit *s)
+ecmd_epa_h(struct rt_solid_edit *s)
 {
     struct rt_epa_internal *epa =
 	(struct rt_epa_internal *)s->es_int.idb_ptr;
@@ -185,7 +185,7 @@ menu_epa_h(struct rt_solid_edit *s)
 
 /* scale semimajor axis of EPA */
 void
-menu_epa_r1(struct rt_solid_edit *s)
+ecmd_epa_r1(struct rt_solid_edit *s)
 {
     struct rt_epa_internal *epa =
 	(struct rt_epa_internal *)s->es_int.idb_ptr;
@@ -204,7 +204,7 @@ menu_epa_r1(struct rt_solid_edit *s)
 
 /* scale semiminor axis of EPA */
 void
-menu_epa_r2(struct rt_solid_edit *s)
+ecmd_epa_r2(struct rt_solid_edit *s)
 {
     struct rt_epa_internal *epa =
 	(struct rt_epa_internal *)s->es_int.idb_ptr;
@@ -242,14 +242,14 @@ rt_solid_edit_epa_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_EPA_H:
-	    menu_epa_h(s);
+	case ECMD_EPA_H:
+	    ecmd_epa_h(s);
 	    break;
-	case MENU_EPA_R1:
-	    menu_epa_r1(s);
+	case ECMD_EPA_R1:
+	    ecmd_epa_r1(s);
 	    break;
-	case MENU_EPA_R2:
-	    menu_epa_r2(s);
+	case ECMD_EPA_R2:
+	    ecmd_epa_r2(s);
 	    break;
     };
 

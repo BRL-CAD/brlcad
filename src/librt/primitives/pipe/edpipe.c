@@ -47,20 +47,19 @@
 #define ECMD_PIPE_PT_DEL	15032	/* Delete a pipe point */
 #define ECMD_PIPE_PT_MOVE	15033	/* Move a pipe point */
 
-#define MENU_PIPE_SELECT	15061
-#define MENU_PIPE_NEXT_PT	15062
-#define MENU_PIPE_PREV_PT	15063
-#define MENU_PIPE_SPLIT		15064
-#define MENU_PIPE_PT_OD		15065
-#define MENU_PIPE_PT_ID		15066
-#define MENU_PIPE_SCALE_OD	15067
-#define MENU_PIPE_SCALE_ID	15068
-#define MENU_PIPE_ADD_PT	15069
-#define MENU_PIPE_INS_PT	15070
-#define MENU_PIPE_DEL_PT	15071
-#define MENU_PIPE_MOV_PT	15072
-#define MENU_PIPE_PT_RADIUS	15073
-#define MENU_PIPE_SCALE_RADIUS	15074
+#define ECMD_PIPE_SELECT	15061
+#define ECMD_PIPE_NEXT_PT	15062
+#define ECMD_PIPE_PREV_PT	15063
+#define ECMD_PIPE_PT_OD		15065
+#define ECMD_PIPE_PT_ID		15066
+#define ECMD_PIPE_SCALE_OD	15067
+#define ECMD_PIPE_SCALE_ID	15068
+#define ECMD_PIPE_ADD_PT	15069
+#define ECMD_PIPE_INS_PT	15070
+#define ECMD_PIPE_DEL_PT	15071
+#define ECMD_PIPE_MOV_PT	15072
+#define ECMD_PIPE_PT_RADIUS	15073
+#define ECMD_PIPE_SCALE_RADIUS	15074
 
 void *
 rt_solid_edit_pipe_prim_edit_create(struct rt_solid_edit *UNUSED(s))
@@ -101,7 +100,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
     struct wdb_pipe_pnt *prev;
 
     switch (arg) {
-	case MENU_PIPE_SELECT:
+	case ECMD_PIPE_SELECT:
 	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_PIPE_PICK;
 	    s->solid_edit_rotate = 0;
@@ -109,7 +108,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 1;
 	    break;
-	case MENU_PIPE_NEXT_PT:
+	case ECMD_PIPE_NEXT_PT:
 	    if (!p->es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
 		return;
@@ -125,7 +124,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
-	case MENU_PIPE_PREV_PT:
+	case ECMD_PIPE_PREV_PT:
 	    if (!p->es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
 		return;
@@ -141,17 +140,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
-	case MENU_PIPE_SPLIT:
-	    /* not used */
-#if 0
-	    s->edit_flag = ECMD_PIPE_SPLIT;
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
-#endif
-	    break;
-	case MENU_PIPE_MOV_PT:
+	case ECMD_PIPE_MOV_PT:
 	    if (!p->es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
@@ -164,9 +153,9 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 0;
 	    break;
-	case MENU_PIPE_PT_OD:
-	case MENU_PIPE_PT_ID:
-	case MENU_PIPE_PT_RADIUS:
+	case ECMD_PIPE_PT_OD:
+	case ECMD_PIPE_PT_ID:
+	case ECMD_PIPE_PT_RADIUS:
 	    if (!p->es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
@@ -175,13 +164,13 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
-	case MENU_PIPE_SCALE_OD:
-	case MENU_PIPE_SCALE_ID:
-	case MENU_PIPE_SCALE_RADIUS:
+	case ECMD_PIPE_SCALE_OD:
+	case ECMD_PIPE_SCALE_ID:
+	case ECMD_PIPE_SCALE_RADIUS:
 	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
-	case MENU_PIPE_ADD_PT:
+	case ECMD_PIPE_ADD_PT:
 	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_PIPE_PT_ADD;
 	    s->solid_edit_rotate = 0;
@@ -189,7 +178,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 0;
 	    break;
-	case MENU_PIPE_INS_PT:
+	case ECMD_PIPE_INS_PT:
 	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_PIPE_PT_INS;
 	    s->solid_edit_rotate = 0;
@@ -197,7 +186,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 0;
 	    break;
-	case MENU_PIPE_DEL_PT:
+	case ECMD_PIPE_DEL_PT:
 	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, ECMD_PIPE_PT_DEL);
 	    rt_solid_edit_process(s);
@@ -215,19 +204,19 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 
 struct rt_solid_edit_menu_item pipe_menu[] = {
     { "PIPE MENU", NULL, 0 },
-    { "Select Point", pipe_ed, MENU_PIPE_SELECT },
-    { "Next Point", pipe_ed, MENU_PIPE_NEXT_PT },
-    { "Previous Point", pipe_ed, MENU_PIPE_PREV_PT },
-    { "Move Point", pipe_ed, MENU_PIPE_MOV_PT },
-    { "Delete Point", pipe_ed, MENU_PIPE_DEL_PT },
-    { "Append Point", pipe_ed, MENU_PIPE_ADD_PT },
-    { "Prepend Point", pipe_ed, MENU_PIPE_INS_PT },
-    { "Set Point OD", pipe_ed, MENU_PIPE_PT_OD },
-    { "Set Point ID", pipe_ed, MENU_PIPE_PT_ID },
-    { "Set Point Bend", pipe_ed, MENU_PIPE_PT_RADIUS },
-    { "Set Pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
-    { "Set Pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
-    { "Set Pipe Bend", pipe_ed, MENU_PIPE_SCALE_RADIUS },
+    { "Select Point", pipe_ed, ECMD_PIPE_SELECT },
+    { "Next Point", pipe_ed, ECMD_PIPE_NEXT_PT },
+    { "Previous Point", pipe_ed, ECMD_PIPE_PREV_PT },
+    { "Move Point", pipe_ed, ECMD_PIPE_MOV_PT },
+    { "Delete Point", pipe_ed, ECMD_PIPE_DEL_PT },
+    { "Append Point", pipe_ed, ECMD_PIPE_ADD_PT },
+    { "Prepend Point", pipe_ed, ECMD_PIPE_INS_PT },
+    { "Set Point OD", pipe_ed, ECMD_PIPE_PT_OD },
+    { "Set Point ID", pipe_ed, ECMD_PIPE_PT_ID },
+    { "Set Point Bend", pipe_ed, ECMD_PIPE_PT_RADIUS },
+    { "Set Pipe OD", pipe_ed, ECMD_PIPE_SCALE_OD },
+    { "Set Pipe ID", pipe_ed, ECMD_PIPE_SCALE_ID },
+    { "Set Pipe Bend", pipe_ed, ECMD_PIPE_SCALE_RADIUS },
     { "", NULL, 0 }
 };
 
@@ -731,7 +720,7 @@ rt_solid_edit_pipe_labels(
 
 /* scale OD of one pipe segment */
 int
-menu_pipe_pt_od(struct rt_solid_edit *s)
+ecmd_pipe_pt_od(struct rt_solid_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
 
@@ -760,7 +749,7 @@ menu_pipe_pt_od(struct rt_solid_edit *s)
 
 /* scale ID of one pipe segment */
 int
-menu_pipe_pt_id(struct rt_solid_edit *s)
+ecmd_pipe_pt_id(struct rt_solid_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
 
@@ -790,7 +779,7 @@ menu_pipe_pt_id(struct rt_solid_edit *s)
 
 /* scale bend radius at selected point */
 int
-menu_pipe_pt_radius(struct rt_solid_edit *s)
+ecmd_pipe_pt_radius(struct rt_solid_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
 
@@ -820,7 +809,7 @@ menu_pipe_pt_radius(struct rt_solid_edit *s)
 
 /* scale entire pipe OD */
 int
-menu_pipe_scale_od(struct rt_solid_edit *s)
+ecmd_pipe_scale_od(struct rt_solid_edit *s)
 {
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -860,7 +849,7 @@ menu_pipe_scale_od(struct rt_solid_edit *s)
 
 /* scale entire pipe ID */
 int
-menu_pipe_scale_id(struct rt_solid_edit *s)
+ecmd_pipe_scale_id(struct rt_solid_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -898,7 +887,7 @@ menu_pipe_scale_id(struct rt_solid_edit *s)
 
 /* scale entire pipe bend radius */
 int
-menu_pipe_scale_radius(struct rt_solid_edit *s)
+ecmd_pipe_scale_radius(struct rt_solid_edit *s)
 {
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -1173,18 +1162,18 @@ rt_solid_edit_pipe_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_PIPE_PT_OD:   /* scale OD of one pipe segment */
-	    return menu_pipe_pt_od(s);
-	case MENU_PIPE_PT_ID:   /* scale ID of one pipe segment */
-	    return menu_pipe_pt_id(s);
-	case MENU_PIPE_PT_RADIUS:       /* scale bend radius at selected point */
-	    return menu_pipe_pt_radius(s);
-	case MENU_PIPE_SCALE_OD:        /* scale entire pipe OD */
-	    return menu_pipe_scale_od(s);
-	case MENU_PIPE_SCALE_ID:        /* scale entire pipe ID */
-	    return menu_pipe_scale_id(s);
-	case MENU_PIPE_SCALE_RADIUS:    /* scale entire pipr bend radius */
-	    return menu_pipe_scale_radius(s);
+	case ECMD_PIPE_PT_OD:   /* scale OD of one pipe segment */
+	    return ecmd_pipe_pt_od(s);
+	case ECMD_PIPE_PT_ID:   /* scale ID of one pipe segment */
+	    return ecmd_pipe_pt_id(s);
+	case ECMD_PIPE_PT_RADIUS:       /* scale bend radius at selected point */
+	    return ecmd_pipe_pt_radius(s);
+	case ECMD_PIPE_SCALE_OD:        /* scale entire pipe OD */
+	    return ecmd_pipe_scale_od(s);
+	case ECMD_PIPE_SCALE_ID:        /* scale entire pipe ID */
+	    return ecmd_pipe_scale_id(s);
+	case ECMD_PIPE_SCALE_RADIUS:    /* scale entire pipr bend radius */
+	    return ecmd_pipe_scale_radius(s);
     };
 
     return 0;

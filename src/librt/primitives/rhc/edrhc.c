@@ -34,10 +34,10 @@
 
 #include "../edit_private.h"
 
-#define MENU_RHC_B		18046
-#define MENU_RHC_H		18047
-#define MENU_RHC_R		18048
-#define MENU_RHC_C		18049
+#define ECMD_RHC_B		18046
+#define ECMD_RHC_H		18047
+#define ECMD_RHC_R		18048
+#define ECMD_RHC_C		18049
 
 static void
 rhc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -54,10 +54,10 @@ rhc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 }
 struct rt_solid_edit_menu_item rhc_menu[] = {
     { "RHC MENU", NULL, 0 },
-    { "Set B", rhc_ed, MENU_RHC_B },
-    { "Set H", rhc_ed, MENU_RHC_H },
-    { "Set r", rhc_ed, MENU_RHC_R },
-    { "Set c", rhc_ed, MENU_RHC_C },
+    { "Set B", rhc_ed, ECMD_RHC_B },
+    { "Set H", rhc_ed, ECMD_RHC_H },
+    { "Set r", rhc_ed, ECMD_RHC_R },
+    { "Set c", rhc_ed, ECMD_RHC_C },
     { "", NULL, 0 }
 };
 
@@ -171,7 +171,7 @@ rt_solid_edit_rhc_read_params(
 
 /* scale vector B */
 void
-menu_rhc_b(struct rt_solid_edit *s)
+ecmd_rhc_b(struct rt_solid_edit *s)
 {
     struct rt_rhc_internal *rhc =
 	(struct rt_rhc_internal *)s->es_int.idb_ptr;
@@ -187,7 +187,7 @@ menu_rhc_b(struct rt_solid_edit *s)
 
 /* scale vector H */
 void
-menu_rhc_h(struct rt_solid_edit *s)
+ecmd_rhc_h(struct rt_solid_edit *s)
 {
     struct rt_rhc_internal *rhc =
 	(struct rt_rhc_internal *)s->es_int.idb_ptr;
@@ -203,7 +203,7 @@ menu_rhc_h(struct rt_solid_edit *s)
 
 /* scale rectangular half-width of RHC */
 void
-menu_rhc_r(struct rt_solid_edit *s)
+ecmd_rhc_r(struct rt_solid_edit *s)
 {
     struct rt_rhc_internal *rhc =
 	(struct rt_rhc_internal *)s->es_int.idb_ptr;
@@ -219,7 +219,7 @@ menu_rhc_r(struct rt_solid_edit *s)
 
 /* scale rectangular half-width of RHC */
 void
-menu_rhc_c(struct rt_solid_edit *s)
+ecmd_rhc_c(struct rt_solid_edit *s)
 {
     struct rt_rhc_internal *rhc =
 	(struct rt_rhc_internal *)s->es_int.idb_ptr;
@@ -254,17 +254,17 @@ rt_solid_edit_rhc_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[2] *= s->local2base;
 
     switch (mode) {
-	case MENU_RHC_B:
-	    menu_rhc_b(s);
+	case ECMD_RHC_B:
+	    ecmd_rhc_b(s);
 	    break;
-	case MENU_RHC_H:
-	    menu_rhc_h(s);
+	case ECMD_RHC_H:
+	    ecmd_rhc_h(s);
 	    break;
-	case MENU_RHC_R:
-	    menu_rhc_r(s);
+	case ECMD_RHC_R:
+	    ecmd_rhc_r(s);
 	    break;
-	case MENU_RHC_C:
-	    menu_rhc_c(s);
+	case ECMD_RHC_C:
+	    ecmd_rhc_c(s);
 	    break;
     };
 
