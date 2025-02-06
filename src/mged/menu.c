@@ -269,9 +269,6 @@ mged_mmenu_set(int UNUSED(ac), const char **UNUSED(av), void *d, void *ms)
 void
 mmenu_set(struct mged_state *s, int index, struct rt_solid_edit_menu_item *value)
 {
-    if (!value)
-	return;
-
     Tcl_DString ds_menu;
     struct bu_vls menu_string = BU_VLS_INIT_ZERO;
 

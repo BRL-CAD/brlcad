@@ -1237,6 +1237,8 @@ oedit_reject(struct mged_state *s)
     Tcl_UnlinkVar(s->interp, "edit_solid_flag");
     rt_solid_edit_destroy(s->s_edit);
     s->s_edit = NULL;
+    mmenu_set(s, MENU_L1, NULL);
+    mmenu_set(s, MENU_L2, NULL);
 }
 
 
@@ -1301,6 +1303,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
 	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
+	mmenu_set(s, MENU_L1, NULL);
+	mmenu_set(s, MENU_L2, NULL);
 	return TCL_OK;
     }
 
@@ -1309,6 +1313,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
 	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
+	mmenu_set(s, MENU_L1, NULL);
+	mmenu_set(s, MENU_L2, NULL);
 	return TCL_ERROR;
     }
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
@@ -1318,6 +1324,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
 	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
+	mmenu_set(s, MENU_L1, NULL);
+	mmenu_set(s, MENU_L2, NULL);
 	return TCL_ERROR;
     }
 
@@ -1356,6 +1364,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	Tcl_UnlinkVar(s->interp, "edit_solid_flag");
 	rt_solid_edit_destroy(s->s_edit);
 	s->s_edit = NULL;
+	mmenu_set(s, MENU_L1, NULL);
+	mmenu_set(s, MENU_L2, NULL);
 	return TCL_ERROR;				/* FAIL */
     }
 
@@ -1378,6 +1388,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
 	    rt_solid_edit_destroy(s->s_edit);
 	    s->s_edit = NULL;
+	    mmenu_set(s, MENU_L1, NULL);
+	    mmenu_set(s, MENU_L2, NULL);
 	    return TCL_ERROR;
 	}
     }
@@ -1385,6 +1397,8 @@ sedit_apply(struct mged_state *s, int accept_flag)
     Tcl_UnlinkVar(s->interp, "edit_solid_flag");
     rt_solid_edit_destroy(s->s_edit);
     s->s_edit = NULL;
+    mmenu_set(s, MENU_L1, NULL);
+    mmenu_set(s, MENU_L2, NULL);
     return TCL_OK;
 }
 
@@ -1439,6 +1453,8 @@ sedit_reject(struct mged_state *s)
 	    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
 	    rt_solid_edit_destroy(s->s_edit);
 	    s->s_edit = NULL;
+	    mmenu_set(s, MENU_L1, NULL);
+	    mmenu_set(s, MENU_L2, NULL);
 	    return;
 	}
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
@@ -1468,6 +1484,8 @@ sedit_reject(struct mged_state *s)
     Tcl_UnlinkVar(s->interp, "edit_solid_flag");
     rt_solid_edit_destroy(s->s_edit);
     s->s_edit = NULL;
+    mmenu_set(s, MENU_L1, NULL);
+    mmenu_set(s, MENU_L2, NULL);
 }
 
 int
