@@ -285,9 +285,9 @@ rt_solid_edit_ehy_pscale(struct rt_solid_edit *s, int mode)
 }
 
 int
-rt_solid_edit_ehy_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_ehy_edit(struct rt_solid_edit *s)
 {
-    switch (edflag) {
+    switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    return rt_solid_edit_generic_sscale(s, &s->es_int);

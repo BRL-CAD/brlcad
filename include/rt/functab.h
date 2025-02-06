@@ -364,8 +364,8 @@ struct rt_solid_edit_functab {
             fastf_t local2base);
 #define EDFUNCTAB_FUNC_READ_PARAMS_CAST(_func) ((int(*)(struct rt_db_internal *, const char *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
 
-    int(*ft_edit)(struct rt_solid_edit *s, int edflag);
-#define EDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct rt_solid_edit *, int))((void (*)(void))_func))
+    int(*ft_edit)(struct rt_solid_edit *s);
+#define EDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct rt_solid_edit *))((void (*)(void))_func))
 
     /* Translate mouse info into edit ready info.  mousevec [X] and [Y] are in
      * the range -1.0...+1.0, corresponding to viewspace.

@@ -1239,7 +1239,7 @@ edarb_move_face_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-rt_solid_edit_arb_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_arb_edit(struct rt_solid_edit *s)
 {
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
@@ -1256,7 +1256,7 @@ rt_solid_edit_arb_edit(struct rt_solid_edit *s, int edflag)
     bu_vls_free(&error_msg);
 
 
-    switch (edflag) {
+    switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    ret = rt_solid_edit_generic_sscale(s, &s->es_int);
@@ -1317,7 +1317,7 @@ rt_solid_edit_arb_edit_xy(
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
-	    rt_solid_edit_arb_edit(s, s->edit_flag);
+	    rt_solid_edit_arb_edit(s);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
 	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
@@ -1340,7 +1340,7 @@ rt_solid_edit_arb_edit_xy(
     }
 
     rt_update_edit_absolute_tran(s, pos_view);
-    rt_solid_edit_arb_edit(s, s->edit_flag);
+    rt_solid_edit_arb_edit(s);
 
     return 0;
 }

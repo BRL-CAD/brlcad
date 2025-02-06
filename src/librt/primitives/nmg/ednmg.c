@@ -967,10 +967,10 @@ void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-rt_solid_edit_nmg_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_nmg_edit(struct rt_solid_edit *s)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
-    switch (edflag) {
+    switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
@@ -1021,7 +1021,7 @@ rt_solid_edit_nmg_edit_xy(
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
-	    rt_solid_edit_nmg_edit(s, s->edit_flag);
+	    rt_solid_edit_nmg_edit(s);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
 	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
@@ -1049,7 +1049,7 @@ rt_solid_edit_nmg_edit_xy(
     }
 
     rt_update_edit_absolute_tran(s, pos_view);
-    rt_solid_edit_nmg_edit(s, s->edit_flag);
+    rt_solid_edit_nmg_edit(s);
 
     return 0;
 }

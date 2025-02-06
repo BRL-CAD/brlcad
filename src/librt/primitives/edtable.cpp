@@ -37,7 +37,7 @@ extern "C" {
     extern void rt_solid_edit_##name##_e_axes_pos(struct rt_solid_edit *s, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void rt_solid_edit_##name##_write_params(struct bu_vls *p, const struct rt_db_internal *ip, const struct bn_tol *tol, fastf_t base2local); \
     extern void rt_solid_edit_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
-    extern int rt_solid_edit_##name##_edit(struct rt_solid_edit *s, int edflag); \
+    extern int rt_solid_edit_##name##_edit(struct rt_solid_edit *s); \
     extern int rt_solid_edit_##name##_edit_xy(struct rt_solid_edit *s, vect_t mousevec); \
     extern void *rt_solid_edit_##name##_prim_edit_create(struct rt_solid_edit *s); \
     extern void rt_solid_edit_##name##_prim_edit_destroy(void *); \

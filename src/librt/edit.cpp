@@ -402,7 +402,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
     const struct rt_db_internal *ip = &s->es_int;
     if (EDOBJ[ip->idb_type].ft_edit) {
 	bu_vls_trunc(s->log_str, 0);
-	if ((*EDOBJ[ip->idb_type].ft_edit)(s, s->edit_flag)) {
+	if ((*EDOBJ[ip->idb_type].ft_edit)(s)) {
 	    if (bu_vls_strlen(s->log_str)) {
 		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
 		if (f)

@@ -349,9 +349,9 @@ ecmd_vtrans(struct rt_solid_edit *s)
 
 
 int
-rt_solid_edit_bspline_edit(struct rt_solid_edit *s, int edflag)
+rt_solid_edit_bspline_edit(struct rt_solid_edit *s)
 {
-    switch (edflag) {
+    switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    return rt_solid_edit_generic_sscale(s, &s->es_int);
@@ -391,7 +391,7 @@ rt_solid_edit_bspline_edit_xy(
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
-	    rt_solid_edit_bspline_edit(s, s->edit_flag);
+	    rt_solid_edit_bspline_edit(s);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
 	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
@@ -421,7 +421,7 @@ rt_solid_edit_bspline_edit_xy(
     }
 
     rt_update_edit_absolute_tran(s, pos_view);
-    rt_solid_edit_bspline_edit(s, s->edit_flag);
+    rt_solid_edit_bspline_edit(s);
 
     return 0;
 }
