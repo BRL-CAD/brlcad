@@ -55,6 +55,8 @@ struct rt_point_labels {
     point_t pt;
 };
 
+#define RT_POINT_LABELS_INIT { {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'}, VINIT_ZERO }
+
 /**
  * reduce an object into some form of simpler representation
  */
