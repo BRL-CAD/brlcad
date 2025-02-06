@@ -523,8 +523,9 @@ ill_common(struct mged_state *s) {
     illump->s_iflag = UP;
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
-    movedir = 0;		/* No edit modes set */
-    MAT_IDN(s->s_edit->model_changes);	/* No changes yet */
+    movedir = 0;	/* No edit modes set */
+    if (s->s_edit)
+	MAT_IDN(s->s_edit->model_changes); /* No changes yet */
 
     return 1;		/* OK */
 }
