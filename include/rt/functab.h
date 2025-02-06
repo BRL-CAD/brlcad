@@ -373,8 +373,8 @@ struct rt_solid_edit_functab {
      * In order to allow command line commands to do the same things that a
      * mouse movements can, the preferred strategy is to store values and allow
      * ft_edit to actually do the work. */
-    int(*ft_edit_xy)(struct rt_solid_edit *s, int edflag, const vect_t mousevec);
-#define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct rt_solid_edit *, int, const vect_t))((void (*)(void))_func))
+    int(*ft_edit_xy)(struct rt_solid_edit *s, const vect_t mousevec);
+#define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct rt_solid_edit *, const vect_t))((void (*)(void))_func))
 
     /* Create primitive specific editing struct */
     void *(*ft_prim_edit_create)(struct rt_solid_edit *s);

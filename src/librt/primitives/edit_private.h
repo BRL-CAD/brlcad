@@ -79,7 +79,6 @@ int rt_solid_edit_generic_edit(struct rt_solid_edit *s, int edflag);
 int
 rt_solid_edit_generic_edit_xy(
 	struct rt_solid_edit *s,
-	int edflag,
 	const vect_t mousevec
 	);
 

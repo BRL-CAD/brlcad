@@ -378,7 +378,6 @@ rt_solid_edit_bspline_edit(struct rt_solid_edit *s, int edflag)
 int
 rt_solid_edit_bspline_edit_xy(
 	struct rt_solid_edit *s,
-	int edflag,
 	const vect_t mousevec
 	)
 {
@@ -388,11 +387,11 @@ rt_solid_edit_bspline_edit_xy(
     bu_clbk_t f = NULL;
     void *d = NULL;
 
-    switch (edflag) {
+    switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
-	    rt_solid_edit_bspline_edit(s, edflag);
+	    rt_solid_edit_bspline_edit(s, s->edit_flag);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
 	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
@@ -414,7 +413,7 @@ rt_solid_edit_bspline_edit_xy(
 	    /* Leave the rest to code in ft_edit */
 	    break;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, edflag);
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
@@ -422,7 +421,7 @@ rt_solid_edit_bspline_edit_xy(
     }
 
     rt_update_edit_absolute_tran(s, pos_view);
-    rt_solid_edit_bspline_edit(s, edflag);
+    rt_solid_edit_bspline_edit(s, s->edit_flag);
 
     return 0;
 }

@@ -755,7 +755,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
     const struct rt_db_internal *ip = &s->s_edit->es_int;
     if (EDOBJ[ip->idb_type].ft_edit_xy) {
 	bu_vls_trunc(s->s_edit->log_str, 0);
-	(*EDOBJ[ip->idb_type].ft_edit_xy)(s->s_edit, s->s_edit->edit_flag, mousevec);
+	(*EDOBJ[ip->idb_type].ft_edit_xy)(s->s_edit, mousevec);
 	if (bu_vls_strlen(s->s_edit->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
 	    bu_vls_trunc(s->s_edit->log_str, 0);
