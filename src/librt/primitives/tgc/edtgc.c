@@ -865,14 +865,22 @@ rt_solid_edit_tgc_edit_xy(
 	    break;
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
+	case ECMD_TGC_MV_H_CD:
+	case ECMD_TGC_MV_H_V_AB:
 	    ecmd_tgc_mv_h_mousevec(s, mousevec);
 	    break;
-	default:
+	case ECMD_TGC_ROT_H:
+	case ECMD_TGC_ROT_AB:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
+	default:
+	    // Everything else should be a scale
+	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_solid_edit_tgc_edit(s);
+	    return 0;
     }
 
     rt_update_edit_absolute_tran(s, pos_view);
