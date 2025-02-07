@@ -82,7 +82,7 @@ arb8_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -127,7 +127,7 @@ arb7_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -176,7 +176,7 @@ arb6_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -219,7 +219,7 @@ arb5_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -256,7 +256,7 @@ arb4_point(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void 
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -288,7 +288,7 @@ arb8_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -322,7 +322,7 @@ arb7_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -352,7 +352,7 @@ arb6_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -385,7 +385,7 @@ arb5_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -418,7 +418,7 @@ arb4_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
@@ -919,7 +919,7 @@ ecmd_arb_main_menu(struct rt_solid_edit *s)
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, BU_CLBK_DURING);
     if (!f)
 	return;
     (*f)(0, NULL, d, cntrl_menu);
@@ -938,26 +938,26 @@ ecmd_arb_specific_menu(struct rt_solid_edit *s)
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
     switch (aint->edit_menu) {
 	case ECMD_ARB_MV_EDGE:
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, BU_CLBK_DURING);
 	    if (!f)
 		return BRLCAD_ERROR;
 	    (*f)(0, NULL, d, which_menu[arb_type-4]);
 	    return BRLCAD_OK;
 	case ECMD_ARB_MV_FACE:
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, BU_CLBK_DURING);
 	    if (!f)
 		return BRLCAD_ERROR;
 	    (*f)(0, NULL, d, which_menu[arb_type+1]);
 	    return BRLCAD_OK;
 	case ECMD_ARB_ROT_FACE:
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, BU_CLBK_DURING);
 	    if (!f)
 		return BRLCAD_ERROR;
 	    (*f)(0, NULL, d, which_menu[arb_type+6]);
 	    return BRLCAD_OK;
 	default:
 	    bu_vls_printf(s->log_str, "Bad menu item.\n");
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
@@ -1015,7 +1015,7 @@ ecmd_arb_setup_rotface(struct rt_solid_edit *s)
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_ARB_SETUP_ROTFACE, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_ARB_SETUP_ROTFACE, BU_CLBK_DURING);
     if (f)
 	a->fixv = (*f)(0, NULL, d, s);
 
@@ -1029,13 +1029,13 @@ ecmd_arb_setup_rotface(struct rt_solid_edit *s)
     /* draw arrow, etc. */
     int vs_flag = 1;
     f = NULL; d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &vs_flag);
 
     /* eaxes */
     int e_flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &e_flag);
 }
@@ -1114,7 +1114,7 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	} else {
 	    bu_vls_printf(s->log_str, "Must be < rot fb | xdeg ydeg zdeg >\n");
 	    f = NULL; d = NULL;
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
@@ -1154,7 +1154,7 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 
     /* no need to calc_planes again */
     f = NULL; d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
@@ -1345,7 +1345,7 @@ rt_solid_edit_arb_edit_xy(
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;

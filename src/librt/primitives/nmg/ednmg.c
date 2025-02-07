@@ -118,7 +118,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    nmg_pr_fu_around_eu(n->es_eu, s->tol);
 
 	    // plotting clbk
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_NMG_EDEBUG, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_NMG_EDEBUG, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, s);
 
@@ -127,7 +127,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    /* no change of state or edit_flag */
 	    int vs_flag = 1;
 	    f = NULL; d = NULL;
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, &vs_flag);
 	    return;
@@ -570,7 +570,7 @@ void ecmd_nmg_emove(struct rt_solid_edit *s)
 
     if (!n->es_eu) {
 	bu_vls_printf(s->log_str, "No edge selected!\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -588,7 +588,7 @@ void ecmd_nmg_emove(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for edge move\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -621,7 +621,7 @@ void ecmd_nmg_emove(struct rt_solid_edit *s)
 	    if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, s->tol) < 1) {
 		/* line does not intersect plane, don't do an esplit */
 		bu_vls_printf(s->log_str, "Edge Move: Cannot place new point in plane of loop\n");
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		return;
@@ -645,7 +645,7 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 
     if (!n->es_eu) {
 	bu_vls_printf(s->log_str, "No edge selected!\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -664,7 +664,7 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 	    /* Currently can only kill wire edges or edges in wire loops */
 	    bu_vls_printf(s->log_str, "Currently, we can only kill wire edges or edges in wire loops\n");
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
@@ -683,7 +683,7 @@ void ecmd_nmg_ekill(struct rt_solid_edit *s)
 		 * to/from same vertex
 		 */
 		bu_vls_printf(s->log_str, "Cannot delete last edge running to/from same vertex\n");
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		return;
@@ -738,7 +738,7 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
 
     if (!n->es_eu) {
 	bu_vls_printf(s->log_str, "No edge selected!\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -757,7 +757,7 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for edge split\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -774,7 +774,7 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
 	if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 	    bu_vls_printf(s->log_str, "Currently, we can only split wire edges or edges in wire loops\n");
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return;
@@ -795,7 +795,7 @@ void ecmd_nmg_esplit(struct rt_solid_edit *s)
 	    if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, s->tol) < 1) {
 		/* line does not intersect plane, don't do an esplit */
 		bu_vls_printf(s->log_str, "Edge Split: Cannot place new point in plane of loop\n");
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		return;
@@ -844,7 +844,7 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
 	VJOIN1(to_pt, n->lu_keypoint, s->e_para[0], n->lu_pl);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for loop extrusion\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -856,7 +856,7 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
 
     if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, n->lu_pl, s->tol) < 1) {
 	bu_vls_printf(s->log_str, "Cannot extrude parallel to plane of loop\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -874,7 +874,7 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
     area = nmg_loop_plane_area(new_lu, new_lu_pl);
     if (area < 0.0) {
 	bu_vls_printf(s->log_str, "loop to be extruded as no area!\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -904,12 +904,12 @@ void ecmd_nmg_lextru(struct rt_solid_edit *s)
     n->es_eu = (struct edgeuse *)NULL;
 
     f = NULL; d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
     int vs_flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &vs_flag);
 }
@@ -943,7 +943,7 @@ void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
     if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
 		    s->vp->gv_model2view, s->vlfree, &tmp_tol)) == (struct edge *)NULL) {
 	bu_vls_printf(s->log_str, "ECMD_NMG_EPICK: unable to find an edge\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -959,7 +959,7 @@ void ecmd_nmg_epick(struct rt_solid_edit *s, const vect_t mousevec)
 		(void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
 		V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
@@ -1042,7 +1042,7 @@ rt_solid_edit_nmg_edit_xy(
 	      break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;

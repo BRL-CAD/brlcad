@@ -64,25 +64,25 @@ mged_state_create(void)
     s->s_edit = NULL;
 
     // Register default callbacks
-    mged_state_clbk_set(s, 0, ECMD_PRINT_STR, 0, BU_CLBK_DURING, mged_print_str, s);
-    mged_state_clbk_set(s, 0, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING, mged_print_result, s);
-    mged_state_clbk_set(s, 0, ECMD_EAXES_POS , 0, BU_CLBK_DURING, set_e_axes_pos, s);
-    mged_state_clbk_set(s, 0, ECMD_REPLOT_EDITING_SOLID, 0, BU_CLBK_DURING, replot_editing_solid, s);
-    mged_state_clbk_set(s, 0, ECMD_VIEW_UPDATE, 0, BU_CLBK_DURING, mged_view_update, s);
-    mged_state_clbk_set(s, 0, ECMD_VIEW_SET_FLAG, 0, BU_CLBK_DURING, mged_view_set_flag, s);
-    mged_state_clbk_set(s, 0, ECMD_MENU_SET, 0, BU_CLBK_DURING, mged_mmenu_set, s);
-    mged_state_clbk_set(s, 0, ECMD_GET_FILENAME, 0, BU_CLBK_DURING, mged_get_filename, s);
+    mged_state_clbk_set(s, 0, ECMD_PRINT_STR, BU_CLBK_DURING, mged_print_str, s);
+    mged_state_clbk_set(s, 0, ECMD_PRINT_RESULTS, BU_CLBK_DURING, mged_print_result, s);
+    mged_state_clbk_set(s, 0, ECMD_EAXES_POS , BU_CLBK_DURING, set_e_axes_pos, s);
+    mged_state_clbk_set(s, 0, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING, replot_editing_solid, s);
+    mged_state_clbk_set(s, 0, ECMD_VIEW_UPDATE, BU_CLBK_DURING, mged_view_update, s);
+    mged_state_clbk_set(s, 0, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING, mged_view_set_flag, s);
+    mged_state_clbk_set(s, 0, ECMD_MENU_SET, BU_CLBK_DURING, mged_mmenu_set, s);
+    mged_state_clbk_set(s, 0, ECMD_GET_FILENAME, BU_CLBK_DURING, mged_get_filename, s);
 
     // Register primitive/ecmd specific callbacks
-    mged_state_clbk_set(s, ID_ARB8, ECMD_ARB_SETUP_ROTFACE, 0, BU_CLBK_DURING, arb_setup_rotface_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_MODE, 0, BU_CLBK_DURING, ecmd_bot_mode_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_ORIENT, 0, BU_CLBK_DURING, ecmd_bot_orient_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_THICK, 0, BU_CLBK_DURING, ecmd_bot_thick_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FLAGS, 0, BU_CLBK_DURING, ecmd_bot_flags_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FMODE, 0, BU_CLBK_DURING, ecmd_bot_fmode_clbk, s);
-    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_PICKT, 0, BU_CLBK_DURING, ecmd_bot_pickt_multihit_clbk, s);
-    mged_state_clbk_set(s, ID_NMG, ECMD_NMG_EDEBUG, 0, BU_CLBK_DURING, ecmd_nmg_edebug_clbk, s);
-    mged_state_clbk_set(s, ID_EXTRUDE, ECMD_EXTR_SKT_NAME, 0, BU_CLBK_DURING, ecmd_extrude_skt_name_clbk, s);
+    mged_state_clbk_set(s, ID_ARB8, ECMD_ARB_SETUP_ROTFACE, BU_CLBK_DURING, arb_setup_rotface_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_MODE, BU_CLBK_DURING, ecmd_bot_mode_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_ORIENT, BU_CLBK_DURING, ecmd_bot_orient_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_THICK, BU_CLBK_DURING, ecmd_bot_thick_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FLAGS, BU_CLBK_DURING, ecmd_bot_flags_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_FMODE, BU_CLBK_DURING, ecmd_bot_fmode_clbk, s);
+    mged_state_clbk_set(s, ID_BOT, ECMD_BOT_PICKT, BU_CLBK_DURING, ecmd_bot_pickt_multihit_clbk, s);
+    mged_state_clbk_set(s, ID_NMG, ECMD_NMG_EDEBUG, BU_CLBK_DURING, ecmd_nmg_edebug_clbk, s);
+    mged_state_clbk_set(s, ID_EXTRUDE, ECMD_EXTR_SKT_NAME, BU_CLBK_DURING, ecmd_extrude_skt_name_clbk, s);
 
     return s;
 }
@@ -121,7 +121,7 @@ mged_internal_clbk_map(MGED_Internal *i, int obj_type)
     return omap;
 }
 
-int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d)
+int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int mode, bu_clbk_t f, void *d)
 {
     // Check for no-op case
     if (!s)
@@ -132,10 +132,10 @@ int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int menu
     if (!mp)
 	return BRLCAD_ERROR;
 
-    return rt_solid_edit_map_clbk_set(mp, ed_cmd, menu_cmd, mode, f, d);
+    return rt_solid_edit_map_clbk_set(mp, ed_cmd, mode, f, d);
 }
 
-int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode)
+int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int mode)
 {
     // Check for no-op case
     if (!f || !d || !s)
@@ -146,7 +146,7 @@ int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_ty
     if (!mp)
 	return BRLCAD_ERROR;
 
-    return rt_solid_edit_map_clbk_get(f, d, mp, ed_cmd, menu_cmd, mode);
+    return rt_solid_edit_map_clbk_get(f, d, mp, ed_cmd, mode);
 }
 
 
