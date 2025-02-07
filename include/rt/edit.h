@@ -156,8 +156,9 @@ rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int mode, b
 RT_EXPORT extern int
 rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int mode);
 RT_EXPORT extern int
-rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im);
-
+rt_solid_edit_map_clear(struct rt_solid_edit_map *m);
+RT_EXPORT extern int
+rt_solid_edit_map_copy(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im);
 
 /* Functions for manipulating rt_solid_edit data */
 RT_EXPORT extern void
