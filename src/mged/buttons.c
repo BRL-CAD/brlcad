@@ -846,7 +846,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     movedir = 0;
     edsol = 0;
     edobj = 0;
-    rt_solid_edit_set_edflag(s->s_edit, -1);
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
     illum_gdlp = GED_DISPLAY_LIST_NULL;
     illump = NULL;		/* None selected */
 
