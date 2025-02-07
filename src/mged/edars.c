@@ -1,7 +1,7 @@
-/*                         M A T E R . C
+/*                         E D A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1996-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,41 +17,58 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/mater.c
- *
- * Code to deal with establishing and maintaining the tables which map
- * region ID codes into worthwhile material information (colors and
- * outboard database "handles").
- *
- * It is expected that entries on this mater list will be sorted in
- * strictly ascending order, with no overlaps (i.e., monotonically
- * increasing).
+/** @file mged/edars.c
  *
  */
 
 #include "common.h"
 
-#include <stdlib.h>
+#include <math.h>
 #include <string.h>
 
 #include "vmath.h"
-#include "rt/db4.h"
+#include "nmg.h"
 #include "raytrace.h"
+#include "rt/geom.h"
+#include "wdb.h"
 
 #include "./mged.h"
+#include "./sedit.h"
 #include "./mged_dm.h"
 
 
-/*
- * Pass through the solid table and set pointer to appropriate
- * mater structure.
+/**
+ * find which vertex of an ARS is nearest *the ray from "pt" in the
+ * viewing direction (for vertex selection in MGED)
  */
 void
-mged_color_soltab(struct mged_state *s)
+find_ars_nearest_pnt(
+    int *crv,
+    int *col,
+    struct rt_ars_internal *ars,
+    point_t pick_pt,
+    vect_t dir)
 {
-    dl_color_soltab(s->gedp->ged_gdp->gd_headDisplay);
-    update_views = 1;		/* re-write control list with new colors */
-    dm_set_dirty(DMP, 1);
+    size_t i, j;
+    int closest_i=0, closest_j=0;
+    fastf_t min_dist_sq=MAX_FASTF;
+
+    RT_ARS_CK_MAGIC(ars);
+
+    for (i=0; i<ars->ncurves; i++) {
+	for (j=0; j<ars->pts_per_curve; j++) {
+	    fastf_t dist_sq;
+
+	    dist_sq = bg_distsq_line3_pnt3(pick_pt, dir, &ars->curves[i][j*3]);
+	    if (dist_sq < min_dist_sq) {
+		min_dist_sq = dist_sq;
+		closest_i = i;
+		closest_j = j;
+	    }
+	}
+    }
+    *crv = closest_i;
+    *col = closest_j;
 }
 
 

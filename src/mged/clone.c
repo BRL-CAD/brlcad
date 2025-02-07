@@ -1,7 +1,7 @@
 /*	                  C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2025 United States Government as represented by
+ * Copyright (c) 2005-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -309,7 +309,6 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	if ((dp == RT_DIR_NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
 	    Tcl_AppendResult(s->interp, "An error has occurred while adding a new object to the database.\n", (char *)NULL);
 	    Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
-	    return;
 	}
 
 	/* get an in-memory reference to the object being copied */

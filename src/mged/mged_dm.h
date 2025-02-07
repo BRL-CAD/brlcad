@@ -1,7 +1,7 @@
 /*			M G E D _ D M . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
-#include "menu.h"
 
 struct scroll_item {
     char *scroll_string;
@@ -376,7 +375,7 @@ struct _menu_state {
     int	ms_top;
     int	ms_cur_menu;
     int	ms_cur_item;
-    struct rt_solid_edit_menu_item	*ms_menus[NMENU];    /* base of menu items array */
+    struct menu_item	*ms_menus[NMENU];    /* base of menu items array */
 };
 
 
@@ -553,9 +552,9 @@ extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
     \
 }
 
-/* Ew.  Globals. */
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
+extern int update_views;		/* defined in mged.c */
 extern struct bu_ptbl active_dm_set;	/* defined in attach.c */
 extern struct mged_dm *mged_dm_init_state;
 

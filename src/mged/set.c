@@ -1,7 +1,7 @@
 /*                           S E T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -220,15 +220,6 @@ write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
 			 " TO ", newvalue, "\n", (char *)NULL);
     }
 
-    /* We don't want to expose mged_variables to the primitive editing code
-     * directly, but MGED uses "set context 1" to trigger a behavior change. Do
-     * a sync here to propagate the value to a more localized value in the
-     * editing context.  We have to first check for s_edit before doing this
-     * assignment (and always initialize it after creating an s_edit instance.)
-     */
-    if (s->s_edit)
-	s->s_edit->mv_context = mged_variables->mv_context;
-
     bu_vls_free(&str);
     return read_var(clientData, interp, name1, name2,
 		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
@@ -262,10 +253,6 @@ unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const ch
 		 (ClientData)sp);
     read_var(clientData, interp, name1, name2,
 	     (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
-
-    if (MGED_STATE->s_edit)
-	MGED_STATE->s_edit->mv_context = MGED_STATE->mged_curr_dm->dm_mged_variables->mv_context;
-
     return NULL;
 }
 
@@ -317,9 +304,6 @@ f_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			      (char *)mged_variables, argc, argv);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
-
-    if (s->s_edit)
-	s->s_edit->mv_context = mged_variables->mv_context;
 
     return TCL_OK;
 }

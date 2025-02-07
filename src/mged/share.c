@@ -1,7 +1,7 @@
 /*                         S H A R E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,6 @@
     } while (0)
 
 
-/* Ew. Globals. */
 extern struct bu_structparse axes_vparse[];
 extern struct bu_structparse color_scheme_vparse[];
 extern struct bu_structparse grid_vparse[];
@@ -89,8 +88,8 @@ void free_all_resources(struct mged_dm *dlp);
  *		ADC AXES COLOR_SCHEMES DISPLAY_LISTS GRID MENU MGED_VARIABLES RUBBER_BAND VIEW
  *
  * EXAMPLES
- *	share rs->edit_state.e_type p1 p2	--->	causes 'p1' to share its resource of type 'rs->edit_state.e_type' with 'p2'
- *	share -u rs->edit_state.e_type p	--->	causes 'p' to no longer share resource of type 'rs->edit_state.e_type'
+ *	share res_type p1 p2	--->	causes 'p1' to share its resource of type 'res_type' with 'p2'
+ *	share -u res_type p	--->	causes 'p' to no longer share resource of type 'res_type'
  */
 int
 f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
@@ -275,7 +274,7 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 
 /*
  * SYNOPSIS
- *	rset [rs->edit_state.e_type [res [vals]]]
+ *	rset [res_type [res [vals]]]
  *
  * DESCRIPTION
  *	Provides a mechanism to set resource values for some resource.
@@ -283,7 +282,6 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
  * EXAMPLES
  *	rset c bg 0 0 50	--->	sets the background color to dark blue
  */
-// TODO - is e_type actually used here?
 int
 f_rset (ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
@@ -295,19 +293,19 @@ f_rset (ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 
     /* print values for all resources */
     if (argc == 1) {
-	mged_vls_struct_parse(s, &vls, "Axes, rs->edit_state.e_type - ax", axes_vparse,
+	mged_vls_struct_parse(s, &vls, "Axes, res_type - ax", axes_vparse,
 			      (const char *)axes_state, argc, argv);
 	bu_vls_printf(&vls, "\n");
-	mged_vls_struct_parse(s, &vls, "Color Schemes, rs->edit_state.e_type - c", color_scheme_vparse,
+	mged_vls_struct_parse(s, &vls, "Color Schemes, res_type - c", color_scheme_vparse,
 			      (const char *)color_scheme, argc, argv);
 	bu_vls_printf(&vls, "\n");
-	mged_vls_struct_parse(s, &vls, "Grid, rs->edit_state.e_type - g", grid_vparse,
+	mged_vls_struct_parse(s, &vls, "Grid, res_type - g", grid_vparse,
 			      (const char *)grid_state, argc, argv);
 	bu_vls_printf(&vls, "\n");
-	mged_vls_struct_parse(s, &vls, "Rubber Band, rs->edit_state.e_type - r", rubber_band_vparse,
+	mged_vls_struct_parse(s, &vls, "Rubber Band, res_type - r", rubber_band_vparse,
 			      (const char *)rubber_band, argc, argv);
 	bu_vls_printf(&vls, "\n");
-	mged_vls_struct_parse(s, &vls, "MGED Variables, rs->edit_state.e_type - var", mged_vparse,
+	mged_vls_struct_parse(s, &vls, "MGED Variables, res_type - var", mged_vparse,
 			      (const char *)mged_variables, argc, argv);
 
 	Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);

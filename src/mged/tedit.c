@@ -1,7 +1,7 @@
 /*                         T E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,9 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+
 #define V3BASE2LOCAL(_pt)	(_pt)[X]*s->dbip->dbi_base2local, (_pt)[Y]*s->dbip->dbi_base2local, (_pt)[Z]*s->dbip->dbi_base2local
+#define V4BASE2LOCAL(_pt)	(_pt)[X]*s->dbip->dbi_base2local, (_pt)[Y]*s->dbip->dbi_base2local, (_pt)[Z]*s->dbip->dbi_base2local, (_pt)[W]*s->dbip->dbi_base2local
 
 /* editors to test, in order of discovery preference (EDITOR overrides) */
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
@@ -62,40 +64,18 @@
 
 static char tmpfil[MAXPATHLEN] = {0};
 
+/* used in handling different arb types */
+static int numUnique = 0;
+static int cgtype = 8;
+static int uvec[8];
+static int svec[11];
+static int j;
+
+
 int writesolid(struct mged_state *), readsolid(struct mged_state *);
 
-/*
- *
- * No-frills edit - opens an editor on the supplied
- * file name.
- *
- */
 int
-editit(struct mged_state *s, const char *tempfile) {
-    int argc = 5;
-    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    struct bu_vls editstring = BU_VLS_INIT_ZERO;
-
-    CHECK_DBI_NULL;
-
-    if (!get_editor_string(s, &editstring))
-	return TCL_ERROR;
-
-    av[0] = "editit";
-    av[1] = "-e";
-    av[2] = bu_vls_addr(&editstring);
-    av[3] = "-f";
-    av[4] = tempfile;
-    av[5] = NULL;
-
-    ged_exec(s->gedp, argc, (const char **)av);
-
-    bu_vls_free(&editstring);
-    return TCL_OK;
-}
-
-int
-f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char **UNUSED(argv))
+f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
@@ -131,14 +111,14 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char **UNUSED
 
     (void)fclose(fp);
 
-    if (editit(s, tmpfil) == TCL_OK) {
+    if (editit(s, argv[0], tmpfil) == TCL_OK) {
 	if (readsolid(s)) {
 	    bu_file_delete(tmpfil);
 	    return TCL_ERROR;
 	}
 
 	/* Update the display */
-	replot_editing_solid(0, NULL, s, NULL);
+	replot_editing_solid(s);
 	view_state->vs_flag = 1;
 	Tcl_AppendResult(interp, "done\n", (char *)NULL);
     }
@@ -149,57 +129,784 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char **UNUSED
 }
 
 
+/*
+ * given the index of a vertex of the arb currently being edited,
+ * return 1 if this vertex should appear in the editor
+ * return 0 if this vertex is a duplicate of one of the above
+ */
+static int
+useThisVertex(int idx)
+{
+    int i;
+
+    for (i=0; i<8 && uvec[i] != -1; i++) {
+	if (uvec[i] == idx) return 1;
+    }
+
+    if (svec[0] != 0 && idx == svec[2]) return 1;
+
+    if (svec[1] != 0 && idx == svec[2+svec[0]]) return 1;
+
+    return 0;
+}
+
+
 /* Write numerical parameters of a solid into a file */
 int
 writesolid(struct mged_state *s)
 {
+    int i;
     FILE *fp;
+    char *eol = "\n";
 
     CHECK_DBI_NULL;
 
-    struct rt_db_internal *ip = &s->s_edit->es_int;
-    if (!EDOBJ[ip->idb_type].ft_write_params) {
-	Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
-	return 1;
+    fp = fopen(tmpfil, "w");
+
+    /* Print solid parameters, 1 vector or point per line */
+    switch (s->edit_state.es_int.idb_type) {
+	struct rt_tor_internal *tor;
+	struct rt_tgc_internal *tgc;
+	struct rt_ell_internal *ell;
+	struct rt_arb_internal *arb;
+	struct rt_half_internal *haf;
+	struct rt_grip_internal *grip;
+	struct rt_rpc_internal *rpc;
+	struct rt_rhc_internal *rhc;
+	struct rt_epa_internal *epa;
+	struct rt_ehy_internal *ehy;
+	struct rt_hyp_internal *hyp;
+	struct rt_eto_internal *eto;
+	struct rt_part_internal *part;
+	struct rt_superell_internal *superell;
+	struct rt_datum_internal *datum;
+
+	default:
+	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
+	    (void)fclose(fp);
+	    return 1;
+	case ID_TOR:
+	    tor = (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->v), eol);
+	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->h), eol);
+	    fprintf(fp, "radius_1: %.9f%s", tor->r_a*s->dbip->dbi_base2local, eol);
+	    fprintf(fp, "radius_2: %.9f%s", tor->r_h*s->dbip->dbi_base2local, eol);
+	    break;
+	case ID_TGC:
+	case ID_REC:
+	    tgc = (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->v), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->h), eol);
+	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->a), eol);
+	    fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->b), eol);
+	    fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->c), eol);
+	    fprintf(fp, "D: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->d), eol);
+	    break;
+	case ID_ELL:
+	case ID_SPH:
+	    ell = (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->v), eol);
+	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->a), eol);
+	    fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->b), eol);
+	    fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->c), eol);
+	    break;
+	case ID_ARB8:
+	    for (j=0; j<8; j++) uvec[j] = -1;
+	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+	    numUnique = rt_arb_get_cgtype(&cgtype, arb, &s->tol.tol, uvec, svec);
+	    j = 0;
+	    for (i=0; i<8; i++) {
+		if (useThisVertex(i)) {
+		    j++;
+		    fprintf(fp, "pt[%d]: %.9f %.9f %.9f%s",
+				  j, V3BASE2LOCAL(arb->pt[i]), eol);
+		}
+	    }
+	    break;
+	case ID_HALF:
+	    haf = (struct rt_half_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Plane: %.9f %.9f %.9f %.9f%s", V4BASE2LOCAL(haf->eqn), eol);
+	    break;
+	case ID_GRIP:
+	    grip = (struct rt_grip_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Center: %.9f %.9f %.9f%s", V3BASE2LOCAL(grip->center), eol);
+	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(grip->normal), eol);
+	    fprintf(fp, "Magnitude: %.9f%s", grip->mag*s->dbip->dbi_base2local, eol);
+	    break;
+	case ID_PARTICLE:
+	    part = (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(part->part_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(part->part_H), eol);
+	    fprintf(fp, "v radius: %.9f%s", part->part_vrad * s->dbip->dbi_base2local, eol);
+	    fprintf(fp, "h radius: %.9f%s", part->part_hrad * s->dbip->dbi_base2local, eol);
+	    break;
+	case ID_RPC:
+	    rpc = (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_H), eol);
+	    fprintf(fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_B), eol);
+	    fprintf(fp, "Half-width: %.9f%s", rpc->rpc_r * s->dbip->dbi_base2local, eol);
+	    break;
+	case ID_RHC:
+	    rhc = (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_H), eol);
+	    fprintf(fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_B), eol);
+	    fprintf(fp, "Half-width: %.9f%s", rhc->rhc_r * s->dbip->dbi_base2local, eol);
+	    fprintf(fp, "Dist_to_asymptotes: %.9f%s", rhc->rhc_c * s->dbip->dbi_base2local, eol);
+	    break;
+	case ID_EPA:
+	    epa = (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(epa->epa_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(epa->epa_H), eol);
+	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS(epa->epa_Au), eol);
+	    fprintf(fp, "Semi-major length: %.9f%s", epa->epa_r1 * s->dbip->dbi_base2local, eol);
+	    fprintf(fp, "Semi-minor length: %.9f%s", epa->epa_r2 * s->dbip->dbi_base2local, eol);
+	    break;
+	case ID_EHY:
+	    ehy = (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(ehy->ehy_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(ehy->ehy_H), eol);
+	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS(ehy->ehy_Au), eol);
+	    fprintf(fp, "Semi-major length: %.9f%s", ehy->ehy_r1 * s->dbip->dbi_base2local, eol);
+	    fprintf(fp, "Semi-minor length: %.9f%s", ehy->ehy_r2 * s->dbip->dbi_base2local, eol);
+	    fprintf(fp, "Dist to asymptotes: %.9f%s", ehy->ehy_c * s->dbip->dbi_base2local, eol);
+	    break;
+	case ID_HYP:
+	    hyp = (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_Vi), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_Hi), eol);
+	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_A), eol);
+	    fprintf(fp, "Semi-minor length: %.9f%s", hyp->hyp_b * s->dbip->dbi_base2local, eol);
+	    fprintf(fp, "Ratio of Neck to Base: %.9f%s", hyp->hyp_bnr, eol);
+	    break;
+	case ID_ETO:
+	    eto = (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_V), eol);
+	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_N), eol);
+	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_C), eol);
+	    fprintf(fp, "Semi-minor length: %.9f%s", eto->eto_rd * s->dbip->dbi_base2local, eol);
+	    fprintf(fp, "Radius of rotation: %.9f%s", eto->eto_r * s->dbip->dbi_base2local, eol);
+	    break;
+	case ID_SUPERELL:
+	    superell = (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->v), eol);
+	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->a), eol);
+	    fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->b), eol);
+	    fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->c), eol);
+	    fprintf(fp, "<n, e>: <%.9f, %.9f>%s", superell->n, superell->e, eol);
+	    break;
+	case ID_DATUM:
+	    datum = (struct rt_datum_internal *)s->edit_state.es_int.idb_ptr;
+	    do {
+		if (!ZERO(datum->w))
+		    fprintf(fp, "Plane: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir) %.9f (scale)%s", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir), datum->w, eol);
+		else if (!ZERO(MAGNITUDE(datum->dir)))
+		    fprintf(fp, "Line: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir)%s", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir), eol);
+		else
+		    fprintf(fp, "Point: %.9f %.9f %.9f%s", V3BASE2LOCAL(datum->pnt), eol);
+	    } while ((datum = datum->next));
+
+	    break;
     }
 
-    struct bu_vls params = BU_VLS_INIT_ZERO;
-    (*EDOBJ[ip->idb_type].ft_write_params)(&params, ip, &s->tol.tol, s->dbip->dbi_base2local);
-    fp = fopen(tmpfil, "w");
-    fprintf(fp, "%s", bu_vls_cstr(&params));
     (void)fclose(fp);
     return 0;
 }
+
+
+static char *
+Get_next_line(FILE *fp)
+{
+    static char line[RT_MAXLINE];
+    size_t i;
+    size_t len;
+
+    if (bu_fgets(line, sizeof(line), fp) == NULL)
+	return (char *)NULL;
+
+    len = strlen(line);
+
+    i = 0;
+    while (i<len && line[i++] != ':');
+
+    if (i == len || line[i] == '\0')
+	return (char *)NULL;
+
+    return &line[i];
+}
+
 
 /* Read numerical parameters of solid from file */
 int
 readsolid(struct mged_state *s)
 {
+    int i;
+    FILE *fp;
+    int ret_val=0;
+
     CHECK_DBI_NULL;
 
-    struct rt_db_internal *ip = &s->s_edit->es_int;
-
-    if (!EDOBJ[ip->idb_type].ft_read_params) {
-	Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
-	return 1;
-    }
-
-    struct bu_vls solid_in = BU_VLS_INIT_ZERO;
-    struct bu_mapped_file *mf = bu_open_mapped_file(tmpfil, (char *)NULL);
-    if (!mf) {
-	bu_log("cannot read temporary file \"%s\"\n", tmpfil);
+    fp = fopen(tmpfil, "r");
+    if (fp == NULL) {
+	perror(tmpfil);
 	return 1;	/* FAIL */
     }
-    bu_vls_strncpy(&solid_in, (char *)mf->buf, mf->buflen);
-    bu_close_mapped_file(mf);
 
-    if ((*EDOBJ[ip->idb_type].ft_read_params)(ip, bu_vls_cstr(&solid_in), &s->tol.tol, s->dbip->dbi_local2base) == BRLCAD_ERROR) {
-	bu_vls_free(&solid_in);
-	return 1;   /* FAIL */
+    switch (s->edit_state.es_int.idb_type) {
+	struct rt_tor_internal *tor;
+	struct rt_tgc_internal *tgc;
+	struct rt_ell_internal *ell;
+	struct rt_arb_internal *arb;
+	struct rt_half_internal *haf;
+	struct rt_grip_internal *grip;
+	struct rt_rpc_internal *rpc;
+	struct rt_rhc_internal *rhc;
+	struct rt_epa_internal *epa;
+	struct rt_ehy_internal *ehy;
+	struct rt_hyp_internal *hyp;
+	struct rt_eto_internal *eto;
+	struct rt_part_internal *part;
+	struct rt_superell_internal *superell;
+	struct rt_datum_internal *datum;
+
+	char *str;
+	double a, b, c, d, e, f, g;
+
+	default:
+	    Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
+	    ret_val = 1;
+	    break;
+	case ID_TOR:
+	    tor = (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(tor->v, a, b, c);
+	    VSCALE(tor->v, tor->v, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(tor->h, a, b, c);
+	    VUNITIZE(tor->h);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    tor->r_a = a * s->dbip->dbi_local2base;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    tor->r_h = a * s->dbip->dbi_local2base;
+	    break;
+	case ID_TGC:
+	case ID_REC:
+	    tgc = (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(tgc->v, a, b, c);
+	    VSCALE(tgc->v, tgc->v, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(tgc->h, a, b, c);
+	    VSCALE(tgc->h, tgc->h, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(tgc->a, a, b, c);
+	    VSCALE(tgc->a, tgc->a, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(tgc->b, a, b, c);
+	    VSCALE(tgc->b, tgc->b, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(tgc->c, a, b, c);
+	    VSCALE(tgc->c, tgc->c, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(tgc->d, a, b, c);
+	    VSCALE(tgc->d, tgc->d, s->dbip->dbi_local2base);
+
+	    break;
+	case ID_ELL:
+	case ID_SPH:
+	    ell = (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+
+	    fprintf(stderr, "ID_SPH\n");
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(ell->v, a, b, c);
+	    VSCALE(ell->v, ell->v, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(ell->a, a, b, c);
+	    VSCALE(ell->a, ell->a, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(ell->b, a, b, c);
+	    VSCALE(ell->b, ell->b, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(ell->c, a, b, c);
+	    VSCALE(ell->c, ell->c, s->dbip->dbi_local2base);
+	    break;
+	case ID_ARB8:
+	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+	    for (i=0; i<8; i++) {
+		/* only read vertices that we wrote */
+		if (useThisVertex(i)) {
+		    if ((str=Get_next_line(fp)) == NULL) {
+			ret_val = 1;
+			break;
+		    }
+		    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+		    VSET(arb->pt[i], a, b, c);
+		    VSCALE(arb->pt[i], arb->pt[i], s->dbip->dbi_local2base);
+		}
+	    }
+	    /* fill in the duplicate vertices
+	     * (based on rt_arb_get_cgtype called in writesolid)
+	     */
+	    if (svec[0] != -1) {
+		for (i=1; i<svec[0]; i++) {
+		    int start = 2;
+		    VMOVE(arb->pt[svec[start+i]], arb->pt[svec[start]]);
+		}
+	    }
+	    if (svec[1] != -1) {
+		int start = 2 + svec[0];
+		for (i=1; i<svec[1]; i++) {
+		    VMOVE(arb->pt[svec[start+i]], arb->pt[svec[start]]);
+		}
+	    }
+	    break;
+	case ID_HALF:
+	    haf = (struct rt_half_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf %lf", &a, &b, &c, &d);
+	    VSET(haf->eqn, a, b, c);
+	    haf->eqn[W] = d * s->dbip->dbi_local2base;
+	    break;
+	case ID_GRIP:
+	    grip = (struct rt_grip_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(grip->center, a, b, c);
+	    VSCALE(grip->center, grip->center, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(grip->normal, a, b, c);
+	    break;
+	case ID_PARTICLE:
+	    part = (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(part->part_V, a, b, c);
+	    VSCALE(part->part_V, part->part_V, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(part->part_H, a, b, c);
+	    VSCALE(part->part_H, part->part_H, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    part->part_vrad = a * s->dbip->dbi_local2base;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    part->part_hrad = a * s->dbip->dbi_local2base;
+
+	    break;
+	case ID_RPC:
+	    rpc = (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(rpc->rpc_V, a, b, c);
+	    VSCALE(rpc->rpc_V, rpc->rpc_V, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(rpc->rpc_H, a, b, c);
+	    VSCALE(rpc->rpc_H, rpc->rpc_H, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(rpc->rpc_B, a, b, c);
+	    VSCALE(rpc->rpc_B, rpc->rpc_B, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    rpc->rpc_r = a * s->dbip->dbi_local2base;
+	    break;
+	case ID_RHC:
+	    rhc = (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(rhc->rhc_V, a, b, c);
+	    VSCALE(rhc->rhc_V, rhc->rhc_V, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(rhc->rhc_H, a, b, c);
+	    VSCALE(rhc->rhc_H, rhc->rhc_H, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(rhc->rhc_B, a, b, c);
+	    VSCALE(rhc->rhc_B, rhc->rhc_B, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    rhc->rhc_r = a * s->dbip->dbi_local2base;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    rhc->rhc_c = a * s->dbip->dbi_local2base;
+	    break;
+	case ID_EPA:
+	    epa = (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(epa->epa_V, a, b, c);
+	    VSCALE(epa->epa_V, epa->epa_V, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(epa->epa_H, a, b, c);
+	    VSCALE(epa->epa_H, epa->epa_H, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(epa->epa_Au, a, b, c);
+	    VUNITIZE(epa->epa_Au);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    epa->epa_r1 = a * s->dbip->dbi_local2base;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    epa->epa_r2 = a * s->dbip->dbi_local2base;
+	    break;
+	case ID_EHY:
+	    ehy = (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(ehy->ehy_V, a, b, c);
+	    VSCALE(ehy->ehy_V, ehy->ehy_V, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(ehy->ehy_H, a, b, c);
+	    VSCALE(ehy->ehy_H, ehy->ehy_H, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(ehy->ehy_Au, a, b, c);
+	    VUNITIZE(ehy->ehy_Au);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    ehy->ehy_r1 = a * s->dbip->dbi_local2base;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    ehy->ehy_r2 = a * s->dbip->dbi_local2base;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    ehy->ehy_c = a * s->dbip->dbi_local2base;
+	    break;
+	case ID_HYP:
+	    hyp = (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(hyp->hyp_Vi, a, b, c);
+	    VSCALE(hyp->hyp_Vi, hyp->hyp_Vi, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(hyp->hyp_Hi, a, b, c);
+	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(hyp->hyp_A, a, b, c);
+	    VSCALE(hyp->hyp_A, hyp->hyp_A, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    hyp->hyp_b = a * s->dbip->dbi_local2base;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    hyp->hyp_bnr = a;
+
+	    break;
+	case ID_ETO:
+	    eto = (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(eto->eto_V, a, b, c);
+	    VSCALE(eto->eto_V, eto->eto_V, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(eto->eto_N, a, b, c);
+	    VUNITIZE(eto->eto_N);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(eto->eto_C, a, b, c);
+	    VSCALE(eto->eto_C, eto->eto_C, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    eto->eto_rd = a * s->dbip->dbi_local2base;
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf", &a);
+	    eto->eto_r = a * s->dbip->dbi_local2base;
+	    break;
+	case ID_SUPERELL:
+	    superell = (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+
+	    fprintf(stderr, "ID_SUPERELL\n");
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(superell->v, a, b, c);
+	    VSCALE(superell->v, superell->v, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(superell->a, a, b, c);
+	    VSCALE(superell->a, superell->a, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(superell->b, a, b, c);
+	    VSCALE(superell->b, superell->b, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    VSET(superell->c, a, b, c);
+	    VSCALE(superell->c, superell->c, s->dbip->dbi_local2base);
+
+	    if ((str=Get_next_line(fp)) == NULL) {
+		ret_val = 1;
+		break;
+	    }
+	    (void) sscanf(str, "%lf %lf", &superell->n, &superell->e);
+	    break;
+	case ID_DATUM:
+	    datum = (struct rt_datum_internal *)s->edit_state.es_int.idb_ptr;
+	    do {
+		if ((str=Get_next_line(fp)) == NULL) {
+		    ret_val = 1;
+		    break;
+		}
+		if (bu_strncasecmp(str, "point", strlen("point")) == 0) {
+		    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+		    VSET(datum->pnt, a, b, c);
+		    VSCALE(datum->pnt, datum->pnt, s->dbip->dbi_local2base);
+		} else if (bu_strncasecmp(str, "line", strlen("line")) == 0) {
+		    sscanf(str, "%lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f);
+		    VSET(datum->pnt, a, b, c);
+		    VSET(datum->dir, d, e, f);
+		    VSCALE(datum->pnt, datum->pnt, s->dbip->dbi_local2base);
+		    VSCALE(datum->dir, datum->dir, s->dbip->dbi_local2base);
+		} else if (bu_strncasecmp(str, "plane", strlen("plane")) == 0) {
+		    sscanf(str, "%lf %lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f, &g);
+		    VSET(datum->pnt, a, b, c);
+		    VSET(datum->dir, d, e, f);
+		    VSCALE(datum->pnt, datum->pnt, s->dbip->dbi_local2base);
+		    VSCALE(datum->dir, datum->dir, s->dbip->dbi_local2base);
+		    datum->w = g;
+		}
+	    } while ((datum = datum->next));
+
+	    break;
     }
 
-    bu_vls_free(&solid_in);
-    return 0;
+    (void)fclose(fp);
+    return ret_val;
 }
 
 
