@@ -155,10 +155,17 @@ int mged_edit_clbk_sync(struct rt_solid_edit *se, struct mged_state *s)
     if (!se)
 	return BRLCAD_ERROR;
 
+
     MGED_Internal *i = s->i->i;
+
+    rt_solid_edit_map_clear(se->m);
+
+    struct rt_solid_edit_map *gmp = mged_internal_clbk_map(i, 0);
+    rt_solid_edit_map_copy(se->m, gmp);
+
     struct rt_solid_edit_map *mp = mged_internal_clbk_map(i, s->s_edit->es_int.idb_type);
 
-    return rt_solid_edit_map_sync(se->m, mp);
+    return rt_solid_edit_map_copy(se->m, mp);
 }
 
 

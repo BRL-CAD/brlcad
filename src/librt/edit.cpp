@@ -227,21 +227,27 @@ rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em,
 }
 
 int
-rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im)
+rt_solid_edit_map_clear(struct rt_solid_edit_map *m)
 {
     // Check for no-op case
-    if (!om)
+    if (!m)
 	return BRLCAD_OK;
 
-    om->i->cmd_prerun_clbk.clear();
-    om->i->cmd_during_clbk.clear();
-    om->i->cmd_postrun_clbk.clear();
-    om->i->cmd_linger_clbk.clear();
+    m->i->cmd_prerun_clbk.clear();
+    m->i->cmd_during_clbk.clear();
+    m->i->cmd_postrun_clbk.clear();
+    m->i->cmd_linger_clbk.clear();
+    return BRLCAD_OK;
+}
 
-    if (!im)
+int
+rt_solid_edit_map_copy(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im)
+{
+    // Check for no-op case
+    if (!om || !im)
 	return BRLCAD_OK;
 
-    int modes[4] = {BU_CLBK_PRE, BU_CLBK_DURING, BU_CLBK_POST, BU_CLBK_LINGER};
+    const int modes[4] = {BU_CLBK_PRE, BU_CLBK_DURING, BU_CLBK_POST, BU_CLBK_LINGER};
     std::map<int, std::pair<bu_clbk_t, void *>> *ip;
     std::map<int, std::pair<bu_clbk_t, void *>> *op;
     for (int i = 0; i < 4; i++) {
