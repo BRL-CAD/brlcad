@@ -42,6 +42,7 @@
 
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
+/* Ew. Global. */
 extern const struct pkg_switch pkg_switch[];
 
 /*
