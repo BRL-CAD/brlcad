@@ -405,6 +405,14 @@ __BEGIN_DECLS
     {4,4}, \
 }
 
+struct rt_arb8_edit {
+    fastf_t es_peqn[7][4]; /* ARBs defining plane equations */
+    int newedge;
+    short int fixv;	   /* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
+    int edit_menu;
+};
+
+
 /**
  * EXT4TO6():   extrudes face pt1 pt2 pt3 of an ARB4 "distance"
  * to produce ARB6

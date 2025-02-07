@@ -40,24 +40,19 @@
 
 #include "../edit_private.h"
 
-#define ECMD_PIPE_PICK		15028	/* Pick pipe point */
+#define ECMD_PIPE_SELECT	15028	/* Pick pipe point */
 #define ECMD_PIPE_SPLIT		15029	/* Split a pipe segment into two */
 #define ECMD_PIPE_PT_ADD	15030	/* Add a pipe point to end of pipe */
 #define ECMD_PIPE_PT_INS	15031	/* Add a pipe point to start of pipe */
 #define ECMD_PIPE_PT_DEL	15032	/* Delete a pipe point */
 #define ECMD_PIPE_PT_MOVE	15033	/* Move a pipe point */
 
-#define ECMD_PIPE_SELECT	15061
 #define ECMD_PIPE_NEXT_PT	15062
 #define ECMD_PIPE_PREV_PT	15063
 #define ECMD_PIPE_PT_OD		15065
 #define ECMD_PIPE_PT_ID		15066
 #define ECMD_PIPE_SCALE_OD	15067
 #define ECMD_PIPE_SCALE_ID	15068
-#define ECMD_PIPE_ADD_PT	15069
-#define ECMD_PIPE_INS_PT	15070
-#define ECMD_PIPE_DEL_PT	15071
-#define ECMD_PIPE_MOV_PT	15072
 #define ECMD_PIPE_PT_RADIUS	15073
 #define ECMD_PIPE_SCALE_RADIUS	15074
 
@@ -98,11 +93,11 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
+    s->edit_flag = arg;
 
     switch (arg) {
 	case ECMD_PIPE_SELECT:
-	    s->edit_menu = arg;
-	    s->edit_flag = ECMD_PIPE_PICK;
+	    s->edit_flag = ECMD_PIPE_SELECT;
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 0;
@@ -120,7 +115,6 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    }
 	    p->es_pipe_pnt = next;
 	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
-	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
@@ -136,17 +130,15 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    }
 	    p->es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
-	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
-	case ECMD_PIPE_MOV_PT:
+	case ECMD_PIPE_PT_MOVE:
 	    if (!p->es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    s->edit_menu = arg;
 	    s->edit_flag = ECMD_PIPE_PT_MOVE;
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
@@ -161,33 +153,26 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
 	case ECMD_PIPE_SCALE_OD:
 	case ECMD_PIPE_SCALE_ID:
 	case ECMD_PIPE_SCALE_RADIUS:
-	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
-	case ECMD_PIPE_ADD_PT:
-	    s->edit_menu = arg;
-	    s->edit_flag = ECMD_PIPE_PT_ADD;
+	case ECMD_PIPE_PT_ADD:
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
 	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 0;
 	    break;
-	case ECMD_PIPE_INS_PT:
-	    s->edit_menu = arg;
-	    s->edit_flag = ECMD_PIPE_PT_INS;
+	case ECMD_PIPE_PT_INS:
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
 	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 0;
 	    break;
-	case ECMD_PIPE_DEL_PT:
-	    s->edit_menu = arg;
+	case ECMD_PIPE_PT_DEL:
 	    rt_solid_edit_set_edflag(s, ECMD_PIPE_PT_DEL);
 	    rt_solid_edit_process(s);
 	    break;
@@ -207,10 +192,10 @@ struct rt_solid_edit_menu_item pipe_menu[] = {
     { "Select Point", pipe_ed, ECMD_PIPE_SELECT },
     { "Next Point", pipe_ed, ECMD_PIPE_NEXT_PT },
     { "Previous Point", pipe_ed, ECMD_PIPE_PREV_PT },
-    { "Move Point", pipe_ed, ECMD_PIPE_MOV_PT },
-    { "Delete Point", pipe_ed, ECMD_PIPE_DEL_PT },
-    { "Append Point", pipe_ed, ECMD_PIPE_ADD_PT },
-    { "Prepend Point", pipe_ed, ECMD_PIPE_INS_PT },
+    { "Move Point", pipe_ed, ECMD_PIPE_PT_MOVE},
+    { "Delete Point", pipe_ed, ECMD_PIPE_PT_DEL},
+    { "Append Point", pipe_ed, ECMD_PIPE_PT_ADD},
+    { "Prepend Point", pipe_ed, ECMD_PIPE_PT_INS},
     { "Set Point OD", pipe_ed, ECMD_PIPE_PT_OD },
     { "Set Point ID", pipe_ed, ECMD_PIPE_PT_ID },
     { "Set Point Bend", pipe_ed, ECMD_PIPE_PT_RADIUS },
@@ -1148,7 +1133,7 @@ void ecmd_pipe_pt_del(struct rt_solid_edit *s)
 }
 
 static int
-rt_solid_edit_pipe_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_pipe_pscale(struct rt_solid_edit *s)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -1161,7 +1146,7 @@ rt_solid_edit_pipe_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[1] *= s->local2base;
     s->e_para[2] *= s->local2base;
 
-    switch (mode) {
+    switch (s->edit_flag) {
 	case ECMD_PIPE_PT_OD:   /* scale OD of one pipe segment */
 	    return ecmd_pipe_pt_od(s);
 	case ECMD_PIPE_PT_ID:   /* scale ID of one pipe segment */
@@ -1198,9 +1183,7 @@ rt_solid_edit_pipe_edit(struct rt_solid_edit *s)
 	    p->es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset p->es_pipe_pnt */
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_PSCALE:
-	    return rt_solid_edit_pipe_pscale(s, s->edit_menu);
-	case ECMD_PIPE_PICK:
+	case ECMD_PIPE_SELECT:
 	    ecmd_pipe_pick(s);
 	    break;
 	case ECMD_PIPE_SPLIT:
@@ -1218,6 +1201,8 @@ rt_solid_edit_pipe_edit(struct rt_solid_edit *s)
 	case ECMD_PIPE_PT_DEL:
 	    ecmd_pipe_pt_del(s);
 	    break;
+    	default:
+	    return rt_solid_edit_pipe_pscale(s);
     }
 
     return 0;
@@ -1244,7 +1229,7 @@ rt_solid_edit_pipe_edit_xy(
 	case RT_SOLID_EDIT_TRANS:
 	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
-	case ECMD_PIPE_PICK:
+	case ECMD_PIPE_SELECT:
 	case ECMD_PIPE_SPLIT:
 	case ECMD_PIPE_PT_MOVE:
 	case ECMD_PIPE_PT_ADD:

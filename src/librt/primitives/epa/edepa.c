@@ -41,8 +41,8 @@
 static void
 epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    s->edit_flag = arg;
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -222,7 +222,7 @@ ecmd_epa_r2(struct rt_solid_edit *s)
 }
 
 static int
-rt_solid_edit_epa_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_epa_pscale(struct rt_solid_edit *s)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -241,7 +241,7 @@ rt_solid_edit_epa_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[1] *= s->local2base;
     s->e_para[2] *= s->local2base;
 
-    switch (mode) {
+    switch (s->edit_flag) {
 	case ECMD_EPA_H:
 	    ecmd_epa_h(s);
 	    break;
@@ -271,9 +271,10 @@ rt_solid_edit_epa_edit(struct rt_solid_edit *s)
 	    /* rot solid about vertex */
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_PSCALE:
-	    return rt_solid_edit_epa_pscale(s, s->edit_menu);
+	default:
+	    return rt_solid_edit_epa_pscale(s);
     }
+
     return 0;
 }
 

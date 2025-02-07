@@ -42,21 +42,11 @@
 static void
 ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
     rt_solid_edit_set_edflag(s, -1);
+    s->edit_flag = arg;
 
-    switch (arg) {
-	case ECMD_EBM_FNAME:
-	    s->edit_flag = ECMD_EBM_FNAME;
-	    break;
-	case ECMD_EBM_FSIZE:
-	    s->edit_flag = ECMD_EBM_FSIZE;
-	    break;
-	case ECMD_EBM_HEIGHT:
-	    s->edit_flag = ECMD_EBM_HEIGHT;
-	    s->solid_edit_scale = 1;
-	    break;
-    }
+    if (arg == ECMD_EBM_HEIGHT)
+	s->solid_edit_scale = 1;
 
     rt_solid_edit_process(s);
 

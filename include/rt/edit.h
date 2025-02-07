@@ -61,13 +61,8 @@ struct rt_solid_edit {
     const struct bn_tol *tol;
     struct bview *vp;
 
-    // Primary variable used to identify specific editing operations
+    // Current editing operation
     int edit_flag;
-    /* item/edit_mode selected from menu.  TODO - it seems like this
-     * may be used to "specialize" edit_flag to narrow its scope to
-     * specific operations - in which case we might be able to rename
-     * it to something more general than "menu"... */
-    int edit_menu;
 
     // Translate values used in XY mouse vector manipulation
     vect_t edit_absolute_model_tran;
