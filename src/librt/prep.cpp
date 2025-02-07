@@ -211,6 +211,21 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 					 rtip->rti_dbip->dbi_uses, ncpu);
 
     bu_semaphore_acquire(RT_SEM_RESULTS);	/* start critical section */
+
+    /*
+     * Check if we're going to try using rt_uniresource.  If we're also asking
+     * for more than one CPU, that's not gonna fly.
+     */
+    resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
+    if (!resp)
+	resp = &rt_uniresource;
+
+    if (ncpu > 1 && resp == &rt_uniresource) {
+	bu_log("ERROR: attempting a parallel prep, but the resource being used is rt_uniresource.  Caller will need to allocate their own resource structures for parallel raytracing.\n");
+	bu_semaphore_release(RT_SEM_RESULTS);
+	return;
+    }
+
     if (!rtip->needprep) {
 	bu_log("WARNING: rt_prep_parallel(%s, %d) invoked a second time, ignored",
 	       rtip->rti_dbip->dbi_filename,
@@ -264,11 +279,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
     rtip->rti_radius = 0.5 * MAGNITUDE(diag);
 
-    /* If a resource structure has been provided for us, use it. */
-    resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
+    /* Check our resource struct. */
     RT_CK_RESOURCE(resp);
 
     /* Build array of region pointers indexed by reg_bit.  Optimize
