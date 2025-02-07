@@ -567,16 +567,18 @@ init_sedit(struct mged_state *s)
 	return;
 
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    s->s_edit = rt_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
     if (!s->s_edit) {
-	if (bdata->s_fullpath.fp_len > 0) {
-	    Tcl_AppendResult(s->interp, "init_sedit(",
-		    LAST_SOLID(bdata)->d_namep,
-		    "):  solid import failure\n", (char *)NULL);
-	} else {
-	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	s->s_edit = rt_solid_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+	if (!s->s_edit) {
+	    if (bdata->s_fullpath.fp_len > 0) {
+		Tcl_AppendResult(s->interp, "init_sedit(",
+			LAST_SOLID(bdata)->d_namep,
+			"):  solid import failure\n", (char *)NULL);
+	    } else {
+		Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	    }
+	    return;				/* FAIL */
 	}
-	return;				/* FAIL */
     }
 
 
