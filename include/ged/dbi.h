@@ -39,10 +39,12 @@
 #define GED_DBI_H
 
 #include "common.h"
+#include "vmath.h"
 #include "bu/vls.h"
 
 #ifdef __cplusplus
 #include <set>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
