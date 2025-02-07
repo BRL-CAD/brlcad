@@ -816,10 +816,13 @@ rt_solid_edit_tgc_pscale(struct rt_solid_edit *s)
 int
 rt_solid_edit_tgc_edit(struct rt_solid_edit *s)
 {
+    int ret = 0;
+
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
+	    ret = rt_solid_edit_generic_sscale(s, &s->es_int);
+	    break;
 	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    rt_solid_edit_generic_strans(s, &s->es_int);
@@ -829,18 +832,28 @@ rt_solid_edit_tgc_edit(struct rt_solid_edit *s)
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_TGC_MV_H:
-	    return ecmd_tgc_mv_h(s);
+	    ret = ecmd_tgc_mv_h(s);
+	    break;
 	case ECMD_TGC_MV_HH:
-	    return ecmd_tgc_mv_hh(s);
+	    ret = ecmd_tgc_mv_hh(s);
+	    break;
 	case ECMD_TGC_ROT_H:
-	    return ecmd_tgc_rot_h(s);
+	    ret = ecmd_tgc_rot_h(s);
+	    break;
 	case ECMD_TGC_ROT_AB:
-	    return ecmd_tgc_rot_ab(s);
+	    ret = ecmd_tgc_rot_ab(s);
+	    break;
 	default:
-	    return rt_solid_edit_tgc_pscale(s);
+	    ret = rt_solid_edit_tgc_pscale(s);
     }
 
-    return 0;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, NULL);
+
+    return ret;
 }
 
 int
@@ -858,7 +871,6 @@ rt_solid_edit_tgc_edit_xy(
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
-	    rt_solid_edit_tgc_edit(s);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
 	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
@@ -879,12 +891,10 @@ rt_solid_edit_tgc_edit_xy(
 	default:
 	    // Everything else should be a scale
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
-	    rt_solid_edit_tgc_edit(s);
 	    return 0;
     }
 
     rt_update_edit_absolute_tran(s, pos_view);
-    rt_solid_edit_tgc_edit(s);
 
     return 0;
 }

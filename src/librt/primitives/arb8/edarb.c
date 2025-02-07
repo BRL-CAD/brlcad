@@ -1329,7 +1329,6 @@ rt_solid_edit_arb_edit_xy(
 	case RT_SOLID_EDIT_SCALE:
 	case RT_SOLID_EDIT_PSCALE:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
-	    rt_solid_edit_arb_edit(s);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
 	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
@@ -1352,7 +1351,6 @@ rt_solid_edit_arb_edit_xy(
     }
 
     rt_update_edit_absolute_tran(s, pos_view);
-    rt_solid_edit_arb_edit(s);
 
     return 0;
 }
