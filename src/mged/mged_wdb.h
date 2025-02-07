@@ -1,7 +1,7 @@
 /*                     M G E D _ W D B . H
  * BRL-CAD
  *
- * Copyright (c) 2024 United States Government as represented by
+ * Copyright (c) 2024-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
