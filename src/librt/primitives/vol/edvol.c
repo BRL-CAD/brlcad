@@ -258,7 +258,7 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 {
     struct rt_vol_internal *vol =
 	(struct rt_vol_internal *)s->es_int.idb_ptr;
-    char *fname;
+    char *fname = NULL;
     struct stat stat_buf;
     b_off_t need_size;
     bu_clbk_t f = NULL;

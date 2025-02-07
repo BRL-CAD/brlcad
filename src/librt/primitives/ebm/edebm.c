@@ -142,7 +142,7 @@ int
 ecmd_ebm_fname(struct rt_solid_edit *s)
 {
     struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)s->es_int.idb_ptr;
-    const char *fname;
+    const char *fname = NULL;
     struct stat stat_buf;
     b_off_t need_size;
     bu_clbk_t f = NULL;
