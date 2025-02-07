@@ -1016,7 +1016,7 @@ init_oedit_guts(struct mged_state *s)
     const char *strp="";
 
     /* for safety sake */
-    rt_solid_edit_set_edflag(s->s_edit, -1);
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
     MAT_IDN(s->s_edit->e_mat);
 
     if (s->dbip == DBI_NULL || !illump) {
@@ -1371,7 +1371,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (accept_flag) {
 	menu_state->ms_flag = 0;
 	movedir = 0;
-	rt_solid_edit_set_edflag(s->s_edit, -1);
+	rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
 	s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&s->s_edit->es_int);
@@ -1476,7 +1476,7 @@ sedit_reject(struct mged_state *s)
 
     menu_state->ms_flag = 0;
     movedir = 0;
-    rt_solid_edit_set_edflag(s->s_edit, -1);
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->s_edit->es_int);
