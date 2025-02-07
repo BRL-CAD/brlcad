@@ -55,13 +55,12 @@
 static void
 tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_flag = arg;
-    s->edit_menu = arg;
-
     // Most of the commands are scale, so set those flags by default.  That
     // will handle most of the flag resetting as well, so we just need to zero
     // and set specific flags of interest in the other cases.
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+
+    s->edit_flag = arg;
 
     switch(arg) {
 	case ECMD_TGC_MV_H:
@@ -754,7 +753,7 @@ ecmd_tgc_mv_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 static int
-rt_solid_edit_tgc_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_tgc_pscale(struct rt_solid_edit *s)
 {
     if (s->e_inpara) {
 	if (s->e_inpara > 1) {
@@ -775,7 +774,7 @@ rt_solid_edit_tgc_pscale(struct rt_solid_edit *s, int mode)
 	s->e_para[2] *= s->local2base;
     }
 
-    switch (mode) {
+    switch (s->edit_flag) {
 	case ECMD_TGC_SCALE_H:
 	    ecmd_tgc_scale_h(s);
 	    break;
@@ -829,8 +828,6 @@ rt_solid_edit_tgc_edit(struct rt_solid_edit *s)
 	    /* rot solid about vertex */
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_PSCALE:
-	    return rt_solid_edit_tgc_pscale(s, s->edit_menu);
 	case ECMD_TGC_MV_H:
 	    return ecmd_tgc_mv_h(s);
 	case ECMD_TGC_MV_HH:
@@ -839,6 +836,8 @@ rt_solid_edit_tgc_edit(struct rt_solid_edit *s)
 	    return ecmd_tgc_rot_h(s);
 	case ECMD_TGC_ROT_AB:
 	    return ecmd_tgc_rot_ab(s);
+	default:
+	    return rt_solid_edit_tgc_pscale(s);
     }
 
     return 0;
