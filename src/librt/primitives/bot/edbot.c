@@ -88,24 +88,18 @@ rt_solid_edit_bot_prim_edit_reset(struct rt_solid_edit *s)
 static void
 bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
+    rt_solid_edit_set_edflag(s, -1);
     s->edit_flag = arg;
 
     switch (arg) {
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
-	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_BOT_PICKV:
 	case ECMD_BOT_PICKE:
 	case ECMD_BOT_PICKT:
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 1;
 	    break;
 	default:

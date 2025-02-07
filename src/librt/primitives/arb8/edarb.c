@@ -47,12 +47,6 @@
 #define ECMD_ARB_MV_FACE	4037
 #define ECMD_ARB_ROT_FACE	4038
 
-struct rt_arb8_edit {
-    fastf_t es_peqn[7][4]; /* ARBs defining plane equations */
-    int newedge;
-    short int fixv;	   /* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
-};
-
 void *
 rt_solid_edit_arb_prim_edit_create(struct rt_solid_edit *UNUSED(s))
 {
@@ -74,7 +68,8 @@ rt_solid_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
 static void
 arb8_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg;
     s->edit_flag = EARB;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -113,7 +108,8 @@ struct rt_solid_edit_menu_item edge8_menu[] = {
 static void
 arb7_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg;
     s->edit_flag = EARB;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -122,7 +118,7 @@ arb7_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     if (arg == 11) {
 	/* move point 5 */
 	s->edit_flag = PTARB;
-	s->edit_menu = 4;	/* location of point */
+	aint->edit_menu = 4;	/* location of point */
     }
     if (arg == 12) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -156,7 +152,8 @@ struct rt_solid_edit_menu_item edge7_menu[] = {
 static void
 arb6_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg;
     s->edit_flag = EARB;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -165,12 +162,12 @@ arb6_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
      if (arg == 8) {
 	/* move point 5, location = 4 */
 	s->edit_flag = PTARB;
-	s->edit_menu = 4;
+	aint->edit_menu = 4;
     }
     if (arg == 9) {
 	/* move point 6, location = 6 */
 	s->edit_flag = PTARB;
-	s->edit_menu = 6;
+	aint->edit_menu = 6;
     }
     if (arg == 10) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -202,7 +199,8 @@ struct rt_solid_edit_menu_item edge6_menu[] = {
 static void
 arb5_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg;
     s->edit_flag = EARB;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -211,7 +209,7 @@ arb5_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     if (arg == 8) {
 	/* move point 5 at location 4 */
 	s->edit_flag = PTARB;
-	s->edit_menu = 4;
+	aint->edit_menu = 4;
     }
     if (arg == 9) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -243,7 +241,8 @@ struct rt_solid_edit_menu_item edge5_menu[] = {
 static void
 arb4_point(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg;
     s->edit_flag = PTARB;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -274,7 +273,8 @@ struct rt_solid_edit_menu_item point4_menu[] = {
 static void
 arb8_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -307,7 +307,8 @@ struct rt_solid_edit_menu_item mv8_menu[] = {
 static void
 arb7_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -336,7 +337,8 @@ struct rt_solid_edit_menu_item mv7_menu[] = {
 static void
 arb6_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -368,7 +370,8 @@ struct rt_solid_edit_menu_item mv6_menu[] = {
 static void
 arb5_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -400,7 +403,8 @@ struct rt_solid_edit_menu_item mv5_menu[] = {
 static void
 arb4_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     s->edit_flag = ECMD_ARB_MOVE_FACE;
     s->solid_edit_rotate = 0;
     s->solid_edit_translate = 1;
@@ -431,7 +435,8 @@ struct rt_solid_edit_menu_item mv4_menu[] = {
 static void
 arb8_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 7)
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -453,7 +458,8 @@ struct rt_solid_edit_menu_item rot8_menu[] = {
 static void
 arb7_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 7)
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -475,7 +481,8 @@ struct rt_solid_edit_menu_item rot7_menu[] = {
 static void
 arb6_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 6)
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -496,7 +503,8 @@ struct rt_solid_edit_menu_item rot6_menu[] = {
 static void
 arb5_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 6)
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -518,7 +526,8 @@ struct rt_solid_edit_menu_item rot5_menu[] = {
 static void
 arb4_rot_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg - 1;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
     if (arg == 5)
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -538,7 +547,8 @@ struct rt_solid_edit_menu_item rot4_menu[] = {
 static void
 arb_control(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+    aint->edit_menu = arg;
     rt_solid_edit_set_edflag(s, ECMD_ARB_SPECIFIC_MENU);
     rt_solid_edit_process(s);
 }
@@ -662,16 +672,16 @@ rt_solid_edit_arb_e_axes_pos(
 	case EARB:
 	    switch (arb_type) {
 		case ARB5:
-		    i = earb5[s->edit_menu][0];
+		    i = earb5[a->edit_menu][0];
 		    break;
 		case ARB6:
-		    i = earb6[s->edit_menu][0];
+		    i = earb6[a->edit_menu][0];
 		    break;
 		case ARB7:
-		    i = earb7[s->edit_menu][0];
+		    i = earb7[a->edit_menu][0];
 		    break;
 		case ARB8:
-		    i = earb8[s->edit_menu][0];
+		    i = earb8[a->edit_menu][0];
 		    break;
 		default:
 		    i = 0;
@@ -681,14 +691,14 @@ rt_solid_edit_arb_e_axes_pos(
 	case PTARB:
 	    switch (arb_type) {
 		case ARB4:
-		    i = s->edit_menu;	/* index for point 1, 2, 3 or 4 */
+		    i = a->edit_menu;	/* index for point 1, 2, 3 or 4 */
 		    break;
 		case ARB5:
 		case ARB7:
 		    i = 4;	/* index for point 5 */
 		    break;
 		case ARB6:
-		    i = s->edit_menu;	/* index for point 5 or 6 */
+		    i = a->edit_menu;	/* index for point 5 or 6 */
 		    break;
 		default:
 		    i = 0;
@@ -698,19 +708,19 @@ rt_solid_edit_arb_e_axes_pos(
 	case ECMD_ARB_MOVE_FACE:
 	    switch (arb_type) {
 		case ARB4:
-		    i = local_arb_faces[0][s->edit_menu * 4];
+		    i = local_arb_faces[0][a->edit_menu * 4];
 		    break;
 		case ARB5:
-		    i = local_arb_faces[1][s->edit_menu * 4];
+		    i = local_arb_faces[1][a->edit_menu * 4];
 		    break;
 		case ARB6:
-		    i = local_arb_faces[2][s->edit_menu * 4];
+		    i = local_arb_faces[2][a->edit_menu * 4];
 		    break;
 		case ARB7:
-		    i = local_arb_faces[3][s->edit_menu * 4];
+		    i = local_arb_faces[3][a->edit_menu * 4];
 		    break;
 		case ARB8:
-		    i = local_arb_faces[4][s->edit_menu * 4];
+		    i = local_arb_faces[4][a->edit_menu * 4];
 		    break;
 		default:
 		    i = 0;
@@ -889,7 +899,7 @@ editarb(struct rt_solid_edit *s, vect_t pos_model)
     }
     bu_vls_free(&error_msg);
 
-    ret = arb_edit(arb, a->es_peqn, s->edit_menu, a->newedge, pos_model, s->tol);
+    ret = arb_edit(arb, a->es_peqn, a->edit_menu, a->newedge, pos_model, s->tol);
 
     // arb_edit doesn't zero out our global any more as a library call, so
     // reset once operation is complete.
@@ -918,13 +928,15 @@ ecmd_arb_main_menu(struct rt_solid_edit *s)
 int
 ecmd_arb_specific_menu(struct rt_solid_edit *s)
 {
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
+
     /* put up specific arb edit menus */
     bu_clbk_t f = NULL;
     void *d = NULL;
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
-    switch (s->edit_menu) {
+    switch (aint->edit_menu) {
 	case ECMD_ARB_MV_EDGE:
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, 0, BU_CLBK_DURING);
 	    if (!f)
@@ -982,7 +994,7 @@ ecmd_arb_move_face(struct rt_solid_edit *s)
 	    VMOVE(work, s->e_para);
 	}
 	/* change D of planar equation */
-	a->es_peqn[s->edit_menu][W]=VDOT(&a->es_peqn[s->edit_menu][0], work);
+	a->es_peqn[a->edit_menu][W]=VDOT(&a->es_peqn[a->edit_menu][0], work);
 	/* find new vertices, put in record in vector notation */
 
 	int arb_type = rt_arb_std_type(&s->es_int, s->tol);
@@ -1054,7 +1066,7 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	 * then perform new rotation
 	 */
 	bn_mat_inv(invsolr, s->acc_rot_sol);
-	eqp = &a->es_peqn[s->edit_menu][0];	/* s->edit_menu==plane of interest */
+	eqp = &a->es_peqn[a->edit_menu][0];	/* a->edit_menu==plane of interest */
 	VMOVE(work, eqp);
 	MAT4X3VEC(eqp, invsolr, work);
 
@@ -1084,7 +1096,7 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 		bn_mat_mul(mat1, edit, s->e_mat);
 		bn_mat_mul(mat, s->e_invmat, mat1);
 		MAT_IDN(s->incr_change);
-		/* work contains original a->es_peqn[s->edit_menu][0] */
+		/* work contains original a->es_peqn[a->edit_menu][0] */
 		MAT4X3VEC(eqp, mat, work);
 	    } else {
 		VMOVE(work, eqp);
@@ -1096,9 +1108,9 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	    fb_a  = s->e_para[1] * DEG2RAD;
 
 	    /* calculate normal vector (length = 1) from rot, struct fb */
-	    a->es_peqn[s->edit_menu][0] = cos(fb_a) * cos(rota);
-	    a->es_peqn[s->edit_menu][1] = cos(fb_a) * sin(rota);
-	    a->es_peqn[s->edit_menu][2] = sin(fb_a);
+	    a->es_peqn[a->edit_menu][0] = cos(fb_a) * cos(rota);
+	    a->es_peqn[a->edit_menu][1] = cos(fb_a) * sin(rota);
+	    a->es_peqn[a->edit_menu][2] = sin(fb_a);
 	} else {
 	    bu_vls_printf(s->log_str, "Must be < rot fb | xdeg ydeg zdeg >\n");
 	    f = NULL; d = NULL;
@@ -1112,8 +1124,8 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	VMOVE(tempvec, arb->pt[a->fixv]);
 
 	/* set D of planar equation to anchor at fixed vertex */
-	/* s->edit_menu == plane of interest */
-	a->es_peqn[s->edit_menu][W]=VDOT(eqp, tempvec);
+	/* a->edit_menu == plane of interest */
+	a->es_peqn[a->edit_menu][W]=VDOT(eqp, tempvec);
 
 	/* Clear out solid rotation */
 	MAT_IDN(s->model_changes);
@@ -1123,7 +1135,7 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	static vect_t tempvec;
 	vect_t work;
 
-	eqp = &a->es_peqn[s->edit_menu][0];
+	eqp = &a->es_peqn[a->edit_menu][0];
 	VMOVE(work, eqp);
 	MAT4X3VEC(eqp, s->incr_change, work);
 
@@ -1131,8 +1143,8 @@ ecmd_arb_rotate_face(struct rt_solid_edit *s)
 	VMOVE(tempvec, arb->pt[a->fixv]);
 
 	/* set D of planar equation to anchor at fixed vertex */
-	/* s->edit_menu == plane of interest */
-	a->es_peqn[s->edit_menu][W]=VDOT(eqp, tempvec);
+	/* a->edit_menu == plane of interest */
+	a->es_peqn[a->edit_menu][W]=VDOT(eqp, tempvec);
     }
 
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
@@ -1188,7 +1200,7 @@ arb_mv_pnt_to(struct rt_solid_edit *s, const vect_t mousevec)
     vect_t temp = VINIT_ZERO;
     vect_t pos_model = VINIT_ZERO;	/* Rotated screen space pos */
     /* move an arb point to indicated point */
-    /* point is located at es_values[s->edit_menu*3] */
+    /* point is located at es_values[a->edit_menu*3] */
     MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
@@ -1224,7 +1236,7 @@ edarb_move_face_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(pos_model, s->e_invmat, temp);
     /* change D of planar equation */
-    a->es_peqn[s->edit_menu][W]=VDOT(&a->es_peqn[s->edit_menu][0], pos_model);
+    a->es_peqn[a->edit_menu][W]=VDOT(&a->es_peqn[a->edit_menu][0], pos_model);
     /* calculate new vertices, put in record as vectors */
     {
 	struct rt_arb_internal *arb=
@@ -1371,11 +1383,11 @@ rt_arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv)
 
     /* get the A, B, C from the command line */
     for (i=0; i<3; i++)
-	a->es_peqn[s->edit_menu][i]= atof(argv[i+1]);
-    VUNITIZE(&a->es_peqn[s->edit_menu][0]);
+	a->es_peqn[a->edit_menu][i]= atof(argv[i+1]);
+    VUNITIZE(&a->es_peqn[a->edit_menu][0]);
 
     VMOVE(tempvec, arb->pt[a->fixv]);
-    a->es_peqn[s->edit_menu][W]=VDOT(a->es_peqn[s->edit_menu], tempvec);
+    a->es_peqn[a->edit_menu][W]=VDOT(a->es_peqn[a->edit_menu], tempvec);
 
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
     if (rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol))

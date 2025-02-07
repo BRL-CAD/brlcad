@@ -133,18 +133,19 @@ arb_setup_rotface_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *U
 {
     struct mged_state *ms = (struct mged_state *)d;
     struct rt_solid_edit *s = ms->s_edit;
+    struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     int vertex = -1;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
     int type = arb_type - 4;
-    int loc = s->edit_menu*4;
+    int loc = aint->edit_menu*4;
     int valid = 0;
 
     /* check if point 5 is in the face */
     static int pnt5 = 0;
     for (int i=0; i<4; i++) {
-	if (rt_arb_vertices[arb_type-4][s->edit_menu*4+i]==5)
+	if (rt_arb_vertices[arb_type-4][aint->edit_menu*4+i]==5)
 	    pnt5=1;
     }
 
@@ -711,7 +712,6 @@ sedit_menu(struct mged_state *s) {
     }
 
     rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_IDLE);	/* Drop out of previous edit mode */
-    s->s_edit->edit_menu = 0;
 }
 
 char *
@@ -1016,7 +1016,6 @@ init_oedit_guts(struct mged_state *s)
     const char *strp="";
 
     /* for safety sake */
-    s->s_edit->edit_menu = 0;
     rt_solid_edit_set_edflag(s->s_edit, -1);
     MAT_IDN(s->s_edit->e_mat);
 

@@ -44,8 +44,8 @@
 static void
 dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
     rt_solid_edit_set_edflag(s, -1);
+    s->edit_flag = arg;
 
     switch (arg) {
 	case ECMD_DSP_FNAME:

@@ -44,35 +44,22 @@
 static void
 vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_menu = arg;
+    rt_solid_edit_set_edflag(s, -1);
+    s->edit_flag = arg;
 
     switch (arg) {
 	case ECMD_VOL_FNAME:
-	    rt_solid_edit_set_edflag(s, ECMD_VOL_FNAME);
 	    break;
 	case ECMD_VOL_FSIZE:
-	    rt_solid_edit_set_edflag(s, ECMD_VOL_FSIZE);
 	    break;
 	case ECMD_VOL_CSIZE:
-	    s->edit_flag = ECMD_VOL_CSIZE;
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 1;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_VOL_THRESH_LO:
-	    s->edit_flag = ECMD_VOL_THRESH_LO;
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 1;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_VOL_THRESH_HI:
-	    s->edit_flag = ECMD_VOL_THRESH_HI;
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 1;
-	    s->solid_edit_pick = 0;
 	    break;
     }
 
@@ -133,7 +120,7 @@ ecmd_vol_csize(struct rt_solid_edit *s)
 }
 
 /* set file size */
-void
+int
 ecmd_vol_fsize(struct rt_solid_edit *s)
 {
     struct rt_vol_internal *vol =
@@ -151,7 +138,7 @@ ecmd_vol_fsize(struct rt_solid_edit *s)
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	need_size = s->e_para[0] * s->e_para[1] * s->e_para[2] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
@@ -159,7 +146,7 @@ ecmd_vol_fsize(struct rt_solid_edit *s)
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	vol->xdim = s->e_para[0];
 	vol->ydim = s->e_para[1];
@@ -169,8 +156,10 @@ ecmd_vol_fsize(struct rt_solid_edit *s)
 	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
+
+    return BRLCAD_OK;
 }
 
 int
@@ -253,7 +242,7 @@ ecmd_vol_thresh_hi(struct rt_solid_edit *s)
     return 0;
 }
 
-void
+int
 ecmd_vol_fname(struct rt_solid_edit *s)
 {
     struct rt_vol_internal *vol =
@@ -281,7 +270,7 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
@@ -292,14 +281,16 @@ ecmd_vol_fname(struct rt_solid_edit *s)
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_strlcpy(vol->name, fname, RT_VOL_NAME_LEN);
     }
+
+    return BRLCAD_OK;
 }
 
 static int
-rt_solid_edit_vol_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_vol_pscale(struct rt_solid_edit *s)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -318,7 +309,7 @@ rt_solid_edit_vol_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[1] *= s->local2base;
     s->e_para[2] *= s->local2base;
 
-    switch (mode) {
+    switch (s->edit_flag) {
 	case ECMD_VOL_CSIZE:
 	    ecmd_vol_csize(s);
 	    break;
@@ -342,21 +333,16 @@ rt_solid_edit_vol_edit(struct rt_solid_edit *s)
 	    /* rot solid about vertex */
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_PSCALE:
-	    return rt_solid_edit_vol_pscale(s, s->edit_menu);
-	case ECMD_VOL_CSIZE:
-	    ecmd_vol_csize(s);
-	    break;
 	case ECMD_VOL_FSIZE:
-	    ecmd_vol_fsize(s);
-	    break;
+	    return ecmd_vol_fsize(s);
 	case ECMD_VOL_THRESH_LO:
 	    return ecmd_vol_thresh_lo(s);
 	case ECMD_VOL_THRESH_HI:
 	    return ecmd_vol_thresh_hi(s);
 	case ECMD_VOL_FNAME:
-	    ecmd_vol_fname(s);
-	    break;
+	    return ecmd_vol_fname(s);
+	default:
+	    return rt_solid_edit_vol_pscale(s);
     }
 
     return 0;

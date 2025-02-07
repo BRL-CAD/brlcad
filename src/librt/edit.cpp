@@ -90,7 +90,6 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     s->solid_edit_scale = 0;
     s->solid_edit_pick = 0;
     s->e_inpara = 0;
-    s->edit_menu = 0;
 
     BU_GET(s->log_str, struct bu_vls);
     bu_vls_init(s->log_str);

@@ -43,7 +43,6 @@
 #define ECMD_METABALL_PT_PICK		36085	/* pick a metaball control point */
 #define ECMD_METABALL_PT_SET_GOO	30119
 #define ECMD_METABALL_RMET		36090	/* set the metaball render method */
-#define ECMD_METABALL_SELECT		30120
 #define ECMD_METABALL_SET_METHOD	36084	/* set the rendering method */
 #define ECMD_METABALL_SET_THRESHOLD	36083	/* overall metaball threshold value */
 
@@ -89,17 +88,15 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
     struct wdb_metaball_pnt *next, *prev;
 
     rt_solid_edit_set_edflag(s, -1);
+    s->edit_flag = arg;
 
     switch (arg) {
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_PT_SET_GOO:
-	    s->edit_menu = arg;
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    s->solid_edit_scale = 1;
 	    break;
-	case ECMD_METABALL_SELECT:
-	    s->edit_menu = arg;
-	    s->edit_flag = ECMD_METABALL_PT_PICK;
+	case ECMD_METABALL_PT_PICK:
 	    s->solid_edit_pick = 1;
 	    break;
 	case ECMD_METABALL_PT_NEXT:
@@ -114,7 +111,6 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    }
 	    m->es_metaball_pnt = next;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
-	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
@@ -130,7 +126,6 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    }
 	    m->es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
-	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 	    rt_solid_edit_process(s);
 	    break;
@@ -140,8 +135,6 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    s->edit_menu = arg;
-	    s->edit_flag = ECMD_METABALL_PT_MOV;
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
@@ -150,17 +143,12 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    s->edit_menu = arg;
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
 	    break;
 	case ECMD_METABALL_PT_DEL:
-	    s->edit_menu = arg;
-	    s->edit_flag = ECMD_METABALL_PT_DEL;
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_ADD:
-	    s->edit_menu = arg;
-	    s->edit_flag = ECMD_METABALL_PT_ADD;
 	    break;
     }
 
@@ -176,7 +164,7 @@ struct rt_solid_edit_menu_item metaball_menu[] = {
     { "METABALL MENU", NULL, 0 },
     { "Set Threshold", metaball_ed, ECMD_METABALL_SET_THRESHOLD },
     { "Set Render Method", metaball_ed, ECMD_METABALL_SET_METHOD },
-    { "Select Point", metaball_ed, ECMD_METABALL_SELECT },
+    { "Select Point", metaball_ed, ECMD_METABALL_PT_PICK},
     { "Next Point", metaball_ed, ECMD_METABALL_PT_NEXT },
     { "Previous Point", metaball_ed, ECMD_METABALL_PT_PREV },
     { "Move Point", metaball_ed, ECMD_METABALL_PT_MOV },
@@ -459,7 +447,7 @@ ecmd_metaball_pt_add(struct rt_solid_edit *s)
 }
 
 static int
-rt_solid_edit_metaball_pscale(struct rt_solid_edit *s, int mode)
+rt_solid_edit_metaball_pscale(struct rt_solid_edit *s)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -478,7 +466,7 @@ rt_solid_edit_metaball_pscale(struct rt_solid_edit *s, int mode)
     s->e_para[1] *= s->local2base;
     s->e_para[2] *= s->local2base;
 
-    switch (mode) {
+    switch (s->edit_flag) {
 	case ECMD_METABALL_SET_THRESHOLD:
 	    return ecmd_metaball_set_threshold(s);
 	case ECMD_METABALL_SET_METHOD:
@@ -511,8 +499,6 @@ rt_solid_edit_metaball_edit(struct rt_solid_edit *s)
 	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 	    rt_solid_edit_generic_srot(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_PSCALE:
-	    return rt_solid_edit_metaball_pscale(s, s->edit_menu);
 	case ECMD_METABALL_PT_PICK:
 	    ecmd_metaball_pt_pick(s);
 	    break;
@@ -525,6 +511,8 @@ rt_solid_edit_metaball_edit(struct rt_solid_edit *s)
 	case ECMD_METABALL_PT_ADD:
 	    ecmd_metaball_pt_add(s);
 	    break;
+	default:
+	    return rt_solid_edit_metaball_pscale(s);
     }
 
     return 0;
