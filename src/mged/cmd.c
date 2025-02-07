@@ -62,6 +62,8 @@ extern void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
 extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
+
+/* Ew. Globals. */
 extern int mged_default_dlist;			/* in attach.c */
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
@@ -318,7 +320,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	(void)(*ctp->ged_func)(s->gedp, argc, (const char **)argv);
 	GED_OUTPUT;
     } else {
-	if ((argc == 1) && (GEOM_EDIT_STATE == ST_S_EDIT)) {
+	if ((argc == 1) && (s->edit_state.global_editing_state == ST_S_EDIT)) {
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
@@ -360,7 +362,7 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	return TCL_ERROR;
 
     solid_list_callback(s);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -434,7 +436,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     if (ret)
 	return TCL_ERROR;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -556,11 +558,11 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+    if (s->edit_state.global_editing_state == ST_S_EDIT) {
 	/* solid edit mode */
-	/* apply es_mat editing to parameters */
+	/* apply s->s_edit->e_mat editing to parameters */
 	struct directory *outdp = RT_DIR_NULL;
-	transform_editing_solid(s, &intern, es_mat, &s->edit_state.es_int, 0);
+	transform_editing_solid(s, &intern, s->s_edit->e_mat, &s->s_edit->es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -578,7 +580,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	} else {
 	    ret = TCL_ERROR;
 	}
-    }  else if (GEOM_EDIT_STATE == ST_O_EDIT) {
+    }  else if (s->edit_state.global_editing_state == ST_O_EDIT) {
 	mat_t newmat;
 	struct directory *outdp = RT_DIR_NULL;
 
@@ -590,9 +592,9 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	    return TCL_ERROR;
 	}
 	/* use the solid at bottom of path (key solid) */
-	/* apply es_mat and modelchanges editing to parameters */
-	bn_mat_mul(newmat, modelchanges, es_mat);
-	transform_editing_solid(s, &intern, newmat, &s->edit_state.es_int, 0);
+	/* apply s->s_edit->e_mat and s->s_edit->model_changes editing to parameters */
+	bn_mat_mul(newmat, s->s_edit->model_changes, s->s_edit->e_mat);
+	transform_editing_solid(s, &intern, newmat, &s->s_edit->es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -1283,9 +1285,10 @@ end:
 }
 
 
-void
-mged_print_result(struct mged_state *s, int UNUSED(status))
+int
+mged_print_result(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
 {
+    struct mged_state *s = (struct mged_state *)d;
     size_t len;
     const char *result = Tcl_GetStringResult(s->interp);
 
@@ -1298,6 +1301,93 @@ mged_print_result(struct mged_state *s, int UNUSED(status))
     }
 
     Tcl_ResetResult(s->interp);
+
+    return TCL_OK;
+}
+
+
+int
+mged_print_str(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
+{
+    struct mged_state *s = (struct mged_state *)d;
+
+    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
+
+    return TCL_OK;
+}
+
+int
+mged_view_update(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
+{
+    struct mged_state *s = (struct mged_state *)d;
+
+    dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
+    (void)Tcl_Eval(s->interp, "active_edit_callback");
+
+    return TCL_OK;
+}
+
+int
+mged_view_set_flag(int UNUSED(ac), const char **UNUSED(av), void *d, void *flagp)
+{
+    struct mged_state *s = (struct mged_state *)d;
+    int *flag = (int *)flagp;
+
+    view_state->vs_flag = *flag;
+
+    return TCL_OK;
+}
+
+int
+mged_get_filename(int ac, const char **av, void *d, void *sret)
+{
+    if (!ac || !av || !d || !sret)
+	return BRLCAD_ERROR;
+
+    char *str = bu_strdup(av[0]);
+    char **ret = (char **)sret;
+
+    struct mged_state *s = (struct mged_state *)d;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls varname_vls = BU_VLS_INIT_ZERO;
+    char *dir;
+    char *fptr;
+    char *ptr1;
+    char *ptr2;
+
+    bu_vls_strcpy(&varname_vls, "mged_gui(getFileDir)");
+
+    if ((fptr=strrchr(str, '/'))) {
+	dir = (char *)bu_malloc((strlen(str)+1)*sizeof(char), "get_file_name: dir");
+	ptr1 = str;
+	ptr2 = dir;
+	while (ptr1 != fptr)
+	    *ptr2++ = *ptr1++;
+	*ptr2 = '\0';
+	Tcl_SetVar(s->interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
+	bu_free((void *)dir, "get_file_name: directory string");
+    }
+
+    if (dm_get_pathname(DMP)) {
+	bu_vls_printf(&cmd,
+		"getFile %s %s {{{All Files} {*}}} {Get File}",
+		bu_vls_addr(dm_get_pathname(DMP)),
+		bu_vls_addr(&varname_vls));
+    }
+    bu_vls_free(&varname_vls);
+
+    if (Tcl_Eval(s->interp, bu_vls_addr(&cmd))) {
+	(*ret) = NULL;
+	goto str_ret;
+    }
+    if (Tcl_GetStringResult(s->interp)[0] != '\0') {
+	(*ret) = bu_strdup(Tcl_GetStringResult(s->interp));
+	goto str_ret;
+    }
+str_ret:
+    bu_vls_free(&cmd);
+    bu_free(str, "str");
+    return BRLCAD_OK;
 }
 
 /**
@@ -1362,7 +1452,7 @@ f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (GEOM_EDIT_STATE != ST_VIEW)
+    if (s->edit_state.global_editing_state != ST_VIEW)
 	button(s, BE_REJECT);
 
     quit(s);			/* Exiting time */
@@ -1630,8 +1720,7 @@ mged_global_variable_setup(struct mged_state *s)
     Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_global_db_ctx.db_upgrade, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_global_db_ctx.db_version, TCL_LINK_INT);
 
-    Tcl_LinkVar(s->interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_class", (char *)&s->edit_state.e_edclass, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 
     /* link some tcl variables to these corresponding globals */
@@ -1859,7 +1948,7 @@ cmd_units(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     set_localunit_TclVar(s);
     sf = s->dbip->dbi_base2local / sf;
     update_grids(s,sf);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;

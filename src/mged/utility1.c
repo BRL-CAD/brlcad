@@ -71,7 +71,6 @@ FILE *tabptr;
 
 char ctemp[7];
 
-
 /*
  *
  * control routine for editing color

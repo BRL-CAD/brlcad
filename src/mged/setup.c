@@ -54,6 +54,7 @@ extern int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx)
 extern int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 
+/* Ew. Global. */
 extern Tk_Window tkwin; /* in cmd.c */
 
 extern void init_qray(void);
@@ -574,7 +575,7 @@ mged_setup(struct mged_state *s)
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[GEOM_EDIT_STATE], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[s->edit_state.global_editing_state], TCL_GLOBAL_ONLY);
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);
