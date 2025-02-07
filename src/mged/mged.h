@@ -189,8 +189,8 @@ struct mged_edit_state {
 // in addition to allowing ECMD specific callback registrations.  Simplest thing
 // to do is probably assign the "generic" operations above some specific numbers
 // and supply a 0 obj type so we can just use the same mechanism for everything.
-extern int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d);
-extern int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int menu_cmd, int mode);
+extern int mged_state_clbk_set(struct mged_state *s, int obj_type, int ed_cmd, int mode, bu_clbk_t f, void *d);
+extern int mged_state_clbk_get(bu_clbk_t *f, void **d, struct mged_state *s, int obj_type, int ed_cmd, int mode);
 extern int mged_edit_clbk_sync(struct rt_solid_edit *se, struct mged_state *s);
 
 

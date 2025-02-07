@@ -38,10 +38,10 @@ extern "C" {
 class RT_Edit_Map_Internal {
     public:
         // Key is ECMD_ type, populated from MGED_Internal map
-        std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
-        std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
-        std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
-        std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
+        std::map<int, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
+        std::map<int, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
+        std::map<int, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
+        std::map<int, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
 
         std::map<bu_clbk_t, int> clbk_recursion_depth_cnt;
         std::map<int, int> cmd_recursion_depth_cnt;
@@ -153,14 +153,14 @@ rt_solid_edit_destroy(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode, bu_clbk_t f, void *d)
+rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int mode, bu_clbk_t f, void *d)
 {
     if (!em)
 	return BRLCAD_OK;
 
     RT_Edit_Map_Internal *i = em->i;
 
-    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp = NULL;
+    std::map<int, std::pair<bu_clbk_t, void *>> *mp = NULL;
     switch (mode) {
 	case BU_CLBK_DURING:
 	    mp = &i->cmd_during_clbk;
@@ -182,24 +182,24 @@ rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int menu_cm
     }
 
     if (!f) {
-	mp->erase(std::make_pair(ed_cmd, menu_cmd));
+	mp->erase(ed_cmd);
 	return BRLCAD_OK;
     }
 
-    (*mp)[std::make_pair(ed_cmd, menu_cmd)] = std::make_pair(f, d);
+    (*mp)[ed_cmd] = std::make_pair(f, d);
 
     return BRLCAD_OK;
 }
 
 int
-rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int menu_cmd, int mode)
+rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int mode)
 {
     // Check for no-op case
     if (!f || !d || !em)
 	return BRLCAD_OK;
 
     RT_Edit_Map_Internal *i = em->i;
-    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *mp;
+    std::map<int, std::pair<bu_clbk_t, void *>> *mp;
     switch (mode) {
 	case BU_CLBK_DURING:
 	    mp = &i->cmd_during_clbk;
@@ -215,10 +215,10 @@ rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em,
 	    break;
     }
 
-    if (mp->find(std::make_pair(ed_cmd,menu_cmd)) == mp->end())
+    if (mp->find(ed_cmd) == mp->end())
 	return BRLCAD_ERROR;
 
-    std::pair<bu_clbk_t, void *> clbk_info = (*mp)[std::make_pair(ed_cmd, menu_cmd)];
+    std::pair<bu_clbk_t, void *> clbk_info = (*mp)[ed_cmd];
 
     (*f) = clbk_info.first;
     (*d) = clbk_info.second;
@@ -242,8 +242,8 @@ rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *i
 	return BRLCAD_OK;
 
     int modes[4] = {BU_CLBK_PRE, BU_CLBK_DURING, BU_CLBK_POST, BU_CLBK_LINGER};
-    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *ip;
-    std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>> *op;
+    std::map<int, std::pair<bu_clbk_t, void *>> *ip;
+    std::map<int, std::pair<bu_clbk_t, void *>> *op;
     for (int i = 0; i < 4; i++) {
 	switch (modes[i]) {
 	    case BU_CLBK_DURING:
@@ -264,7 +264,7 @@ rt_solid_edit_map_sync(struct rt_solid_edit_map *om, struct rt_solid_edit_map *i
 		break;
 	}
 
-	std::map<std::pair<int, int>, std::pair<bu_clbk_t, void *>>::iterator mp_it;
+	std::map<int, std::pair<bu_clbk_t, void *>>::iterator mp_it;
 	for (mp_it = ip->begin(); mp_it != ip->end(); ++mp_it) {
 	    (*op)[mp_it->first] = mp_it->second;
 	}
@@ -302,7 +302,7 @@ rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, f
 	bu_vls_trunc(s->log_str, 0);
 	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, s, s->tol);
 	if (bu_vls_strlen(s->log_str)) {
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    bu_vls_trunc(s->log_str, 0);
@@ -313,7 +313,7 @@ rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, f
     struct bu_vls ltmp = BU_VLS_INIT_ZERO;
     bu_vls_printf(&ltmp, "%s", bu_vls_cstr(s->log_str));
     bu_vls_sprintf(s->log_str, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n");
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
     bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&ltmp));
@@ -403,7 +403,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 	bu_vls_trunc(s->log_str, 0);
 	if ((*EDOBJ[ip->idb_type].ft_edit)(s)) {
 	    if (bu_vls_strlen(s->log_str)) {
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		bu_vls_trunc(s->log_str, 0);
@@ -411,7 +411,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 	    return;
 	}
 	if (bu_vls_strlen(s->log_str)) {
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    bu_vls_trunc(s->log_str, 0);
@@ -432,12 +432,12 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&tmp_vls, "%s", bu_vls_cstr(s->log_str));
 		bu_vls_sprintf(s->log_str, "rt_solid_edit_process:  unknown edflag = %d.\n", s->edit_flag);
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, 0, BU_CLBK_DURING);
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, 0, BU_CLBK_DURING);
+		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 	    }
@@ -449,18 +449,18 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 
     int flag = 0;
     f = NULL; d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 
     f = NULL; d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, 0, BU_CLBK_DURING);
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
     if (s->update_views) {
 	f = NULL; d = NULL;
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, 0, BU_CLBK_DURING);
+	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
     }
