@@ -21,6 +21,9 @@
  *
  * Implementation of .g geometry editing logic not specific to individual
  * primitives.
+ *
+ * TODO - study get, put, and adjust to see how they relate (or don't)
+ * to the other edit codes.
  */
 
 #include "common.h"
