@@ -1127,10 +1127,12 @@ rt_solid_edit_pipe_pscale(struct rt_solid_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
+    if (s->e_inpara) {
+	/* must convert to base units */
+	s->e_para[0] *= s->local2base;
+	s->e_para[1] *= s->local2base;
+	s->e_para[2] *= s->local2base;
+    }
 
     switch (s->edit_flag) {
 	case ECMD_PIPE_PT_OD:   /* scale OD of one pipe segment */
