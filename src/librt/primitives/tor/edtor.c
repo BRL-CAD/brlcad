@@ -42,6 +42,15 @@ tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 {
     rt_solid_edit_set_edflag(s, arg);
 
+    switch (arg) {
+	case ECMD_TOR_R1:
+	case ECMD_TOR_R2:
+	    s->solid_edit_scale = 1;
+	    break;
+	default:
+	    break;
+    };
+
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
@@ -212,16 +221,18 @@ rt_solid_edit_tor_pscale(struct rt_solid_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
+    if (s->e_inpara) {
+	if (s->e_para[0] <= 0.0) {
+	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	    s->e_inpara = 0;
+	    return BRLCAD_ERROR;
+	}
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
+	/* must convert to base units */
+	s->e_para[0] *= s->local2base;
+	s->e_para[1] *= s->local2base;
+	s->e_para[2] *= s->local2base;
+    }
 
     switch (s->edit_flag) {
 	case ECMD_TOR_R1:
