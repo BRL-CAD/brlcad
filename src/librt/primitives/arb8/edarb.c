@@ -61,6 +61,13 @@ rt_solid_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
     BU_PUT(a, struct rt_arb8_edit);
 }
 
+void
+rt_solid_edit_arb_set_edit_mode(struct rt_solid_edit *UNUSED(s), int UNUSED(mode))
+{
+    // TODO - the multiple menu structure of ARB8 will make this callback
+    // tricky.  May actually want to set up ECMDs for all individual faces
+    // and edges so we can adjust how the logic flows for this...
+}
 
 static void
 arb8_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
@@ -80,6 +87,7 @@ arb8_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
 struct rt_solid_edit_menu_item edge8_menu[] = {
     { "ARB8 EDGES", NULL, 0 },
     { "Move Edge 12", arb8_edge, 0 },

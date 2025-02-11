@@ -38,12 +38,12 @@
 #define ECMD_EPA_R1		19051
 #define ECMD_EPA_R2		19052
 
-static void
-epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_epa_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_EPA_H:
 	case ECMD_EPA_R1:
 	case ECMD_EPA_R2:
@@ -61,6 +61,13 @@ epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
+static void
+epa_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_epa_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item epa_menu[] = {
     { "EPA MENU", NULL, 0 },
     { "Set H", epa_ed, ECMD_EPA_H },

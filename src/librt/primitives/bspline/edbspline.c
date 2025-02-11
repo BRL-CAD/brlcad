@@ -19,6 +19,8 @@
  */
 /** @file primitives/edbspline.c
  *
+ *  TODO - this whole bspline editing logic needs a re-look, or better still we
+ *  should just translate these into brep objects and do any editing there.
  */
 
 #include "common.h"
@@ -70,6 +72,31 @@ rt_solid_edit_bspline_prim_edit_destroy(struct rt_bspline_edit *e)
     if (!e)
 	return;
     BU_PUT(e, struct rt_bspline_edit);
+}
+
+void
+rt_solid_edit_bspline_set_edit_mode(struct rt_solid_edit *s, int mode)
+{
+    /* XXX Why were we doing VPICK with chg_state?? */
+    //chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
+    if (mode < 0) {
+	/* Enter picking state */
+	rt_solid_edit_set_edflag(s, ECMD_SPLINE_VPICK);
+	s->solid_edit_pick = 1;
+	return;
+    }
+
+    rt_solid_edit_set_edflag(s, mode);
+    if (mode == ECMD_VTRANS)
+	s->solid_edit_translate = 1;
+
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
+
 }
 
 /*ARGSUSED*/

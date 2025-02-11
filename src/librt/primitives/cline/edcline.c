@@ -39,12 +39,12 @@
 #define ECMD_CLINE_SCALE_R	29079	/* scale radius */
 #define ECMD_CLINE_SCALE_T	29080	/* scale thickness */
 
-static void
-cline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_cline_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_CLINE_MOVE_H:
 	    s->solid_edit_translate = 1;
 	    break;
@@ -58,6 +58,12 @@ cline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *U
     };
 
     rt_solid_edit_process(s);
+}
+
+static void
+cline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_cline_set_edit_mode(s, arg);
 }
 
 struct rt_solid_edit_menu_item cline_menu[] = {
