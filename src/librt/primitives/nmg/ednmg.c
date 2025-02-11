@@ -87,22 +87,17 @@ rt_solid_edit_nmg_prim_edit_reset(struct rt_solid_edit *s)
     n->es_s = NULL;
 }
 
-/*
- * Handler for events in the NMG menu.
- * Mostly just set appropriate state flags to prepare us for user's
- * next event.
- */
-/*ARGSUSED*/
-static void
-nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+
+void
+rt_solid_edit_nmg_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	default:
 	    bu_vls_printf(s->log_str, "nmg_ed: undefined menu event?\n");
 	    return;
@@ -349,10 +344,24 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    }
 	    break;
     }
+}
+
+
+/*
+ * Handler for events in the NMG menu.
+ * Mostly just set appropriate state flags to prepare us for user's
+ * next event.
+ */
+/*ARGSUSED*/
+static void
+nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_nmg_set_edit_mode(s, arg);
 
     // TODO - should we really be calling this here?
     rt_solid_edit_process(s);
 }
+
 struct rt_solid_edit_menu_item nmg_menu[] = {
     { "NMG MENU", NULL, 0 },
     { "Pick Edge", nmg_ed, ECMD_NMG_EPICK },

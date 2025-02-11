@@ -52,17 +52,17 @@
 #define ECMD_TGC_SCALE_H_V	2028
 #define ECMD_TGC_SCALE_H_V_AB	2112
 
-static void
-tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_tgc_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
     // Most of the commands are scale, so set those flags by default.  That
     // will handle most of the flag resetting as well, so we just need to zero
     // and set specific flags of interest in the other cases.
     rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
 
-    s->edit_flag = arg;
+    s->edit_flag = mode;
 
-    switch(arg) {
+    switch(mode) {
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
 	case ECMD_TGC_MV_H_CD:
@@ -85,6 +85,13 @@ tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
+
+}
+
+static void
+tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_tgc_set_edit_mode(s, arg);
 }
 
 struct rt_solid_edit_menu_item tgc_menu[] = {

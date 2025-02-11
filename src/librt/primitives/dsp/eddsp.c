@@ -41,12 +41,12 @@
 #define ECMD_DSP_SCALE_Y        25059	/* Scale DSP y size */
 #define ECMD_DSP_SCALE_ALT      25060	/* Scale DSP Altitude size */
 
-static void
-dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_dsp_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_DSP_SCALE_X:
 	case ECMD_DSP_SCALE_Y:
 	case ECMD_DSP_SCALE_ALT:
@@ -65,6 +65,13 @@ dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
+static void
+dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_dsp_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item dsp_menu[] = {
     {"DSP MENU", NULL, 0 },
     {"Name", dsp_ed, ECMD_DSP_FNAME },

@@ -39,12 +39,12 @@
 #define ECMD_ETO_RD		21058
 #define ECMD_ETO_SCALE_C	21059
 
-static void
-eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_eto_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_ETO_R:
 	case ECMD_ETO_RD:
 	case ECMD_ETO_SCALE_C:
@@ -63,6 +63,13 @@ eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
+static void
+eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_eto_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item eto_menu[] = {
     { "ELL-TORUS MENU", NULL, 0 },
     { "Set r", eto_ed, ECMD_ETO_R },

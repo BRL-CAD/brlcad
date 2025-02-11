@@ -41,6 +41,32 @@
 #define ECMD_VOL_THRESH_HI	13051	/* set VOL threshold (hi) */
 #define ECMD_VOL_FNAME		13052	/* set VOL file name */
 
+void
+rt_solid_edit_vol_set_edit_mode(struct rt_solid_edit *s, int mode)
+{
+    rt_solid_edit_set_edflag(s, mode);
+
+    switch (mode) {
+	case ECMD_VOL_FNAME:
+	    break;
+	case ECMD_VOL_FSIZE:
+	    break;
+	case ECMD_VOL_CSIZE:
+	case ECMD_VOL_THRESH_LO:
+	case ECMD_VOL_THRESH_HI:
+	    s->solid_edit_scale = 1;
+	    break;
+    }
+
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
+
+}
+
 static void
 vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
@@ -58,6 +84,7 @@ vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    break;
     }
 
+    // TODO - should we be calling this here?
     rt_solid_edit_process(s);
 
     bu_clbk_t f = NULL;
