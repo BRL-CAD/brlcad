@@ -274,7 +274,8 @@ rt_solid_edit_dsp_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
+	case ECMD_DSP_FNAME:
+	case ECMD_DSP_FSIZE:
 	case ECMD_DSP_SCALE_X:
 	case ECMD_DSP_SCALE_Y:
 	case ECMD_DSP_SCALE_ALT:

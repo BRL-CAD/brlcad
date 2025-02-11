@@ -1019,7 +1019,11 @@ rt_solid_edit_nmg_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
+	case ECMD_NMG_EDEBUG:
+	case ECMD_NMG_FORW:
+	case ECMD_NMG_BACK:
+	case ECMD_NMG_RADIAL:
+	case ECMD_NMG_EKILL:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
@@ -1029,9 +1033,9 @@ rt_solid_edit_nmg_edit_xy(
 	    /* XXX Should just leave desired location in s->e_mparam for rt_solid_edit_nmg_edit */
 	    ecmd_nmg_epick(s, mousevec);
 	    break;
-	case ECMD_NMG_LEXTRU:
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
+	case ECMD_NMG_LEXTRU:
               MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
               pos_view[X] = mousevec[X];
               pos_view[Y] = mousevec[Y];
