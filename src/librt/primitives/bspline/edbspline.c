@@ -80,23 +80,14 @@ spline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     //chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
     if (arg < 0) {
 	/* Enter picking state */
-	s->edit_flag = ECMD_SPLINE_VPICK;
-	s->solid_edit_rotate = 0;
-	s->solid_edit_translate = 0;
-	s->solid_edit_scale = 0;
+	rt_solid_edit_set_edflag(s, ECMD_SPLINE_VPICK);
 	s->solid_edit_pick = 1;
 	return;
     }
-    /* For example, this will set edit_flag = ECMD_VTRANS */
-    if (arg == ECMD_VTRANS) {
-	s->edit_flag = ECMD_VTRANS;
-	s->solid_edit_rotate = 0;
+
+    rt_solid_edit_set_edflag(s, arg);
+    if (arg == ECMD_VTRANS)
 	s->solid_edit_translate = 1;
-	s->solid_edit_scale = 0;
-	s->solid_edit_pick = 0;
-    } else {
-	rt_solid_edit_set_edflag(s, arg);
-    }
 
     rt_solid_edit_process(s);
 

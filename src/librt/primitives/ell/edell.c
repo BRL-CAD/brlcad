@@ -42,8 +42,7 @@
 static void
 ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
-    s->edit_flag = arg;
+    rt_solid_edit_set_edflag(s, arg);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -294,7 +293,7 @@ rt_solid_edit_ell_edit_xy(
         struct rt_solid_edit *s,
         const vect_t mousevec
         )
-{  
+{
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->es_int;
     bu_clbk_t f = NULL;

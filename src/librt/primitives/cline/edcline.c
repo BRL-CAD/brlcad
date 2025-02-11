@@ -42,22 +42,16 @@
 static void
 cline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_flag = arg;
+    rt_solid_edit_set_edflag(s, arg);
 
     switch (arg) {
 	case ECMD_CLINE_MOVE_H:
-	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_CLINE_SCALE_H:
 	case ECMD_CLINE_SCALE_R:
 	case ECMD_CLINE_SCALE_T:
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 1;
-	    s->solid_edit_pick = 0;
 	    break;
 	default:
 	    rt_solid_edit_set_edflag(s, arg);

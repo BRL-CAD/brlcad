@@ -88,8 +88,7 @@ rt_solid_edit_bot_prim_edit_reset(struct rt_solid_edit *s)
 static void
 bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_DEFAULT);
-    s->edit_flag = arg;
+    rt_solid_edit_set_edflag(s, arg);
 
     switch (arg) {
 	case ECMD_BOT_MOVEV:
@@ -103,7 +102,6 @@ bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    s->solid_edit_pick = 1;
 	    break;
 	default:
-	    rt_solid_edit_set_edflag(s, arg);
 	    break;
     };
 

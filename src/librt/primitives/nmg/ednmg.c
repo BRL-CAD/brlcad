@@ -339,26 +339,19 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    }
 	    break;
     }
-    /* For example, this will set edit_flagflag = ECMD_NMG_EPICK */
-    s->edit_flag = arg;
+
+    rt_solid_edit_set_edflag(s, arg);
 
     switch (arg) {
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
 	case ECMD_NMG_LEXTRU:
-	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_NMG_EPICK:
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 1;
 	    break;
 	default:
-	    rt_solid_edit_set_edflag(s, arg);
 	    break;
     };
 

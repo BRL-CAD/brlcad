@@ -44,27 +44,15 @@
 static void
 dsp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_DEFAULT);
-    s->edit_flag = arg;
+    rt_solid_edit_set_edflag(s, arg);
 
     switch (arg) {
-	case ECMD_DSP_FNAME:
-	    s->edit_flag = ECMD_DSP_FNAME;
-	    break;
-	case ECMD_DSP_FSIZE:
-	    s->edit_flag = ECMD_DSP_FSIZE;  // Unimplemented.  Expects 2 parameters
-	    break;
 	case ECMD_DSP_SCALE_X:
-	    s->edit_flag = ECMD_DSP_SCALE_X;
-	    s->solid_edit_scale = 1;
-	    break;
 	case ECMD_DSP_SCALE_Y:
-	    s->edit_flag = ECMD_DSP_SCALE_Y;
+	case ECMD_DSP_SCALE_ALT:
 	    s->solid_edit_scale = 1;
 	    break;
-	case ECMD_DSP_SCALE_ALT:
-	    s->edit_flag = ECMD_DSP_SCALE_ALT;
-	    s->solid_edit_scale = 1;
+	default:
 	    break;
     }
 

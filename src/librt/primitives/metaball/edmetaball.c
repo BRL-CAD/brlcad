@@ -87,8 +87,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct wdb_metaball_pnt *next, *prev;
 
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_DEFAULT);
-    s->edit_flag = arg;
+    rt_solid_edit_set_edflag(s, arg);
 
     switch (arg) {
 	case ECMD_METABALL_SET_THRESHOLD:
