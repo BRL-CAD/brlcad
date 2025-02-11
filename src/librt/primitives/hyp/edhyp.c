@@ -45,7 +45,7 @@
 static void
 hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
     s->edit_flag = arg;
     if (arg == ECMD_HYP_ROT_H) {
 	s->solid_edit_scale = 0;

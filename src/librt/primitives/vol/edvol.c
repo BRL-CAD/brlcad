@@ -361,7 +361,6 @@ rt_solid_edit_vol_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
 	case ECMD_VOL_CSIZE:
 	case ECMD_VOL_THRESH_LO:
 	case ECMD_VOL_THRESH_HI:
