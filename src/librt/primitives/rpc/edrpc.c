@@ -38,12 +38,12 @@
 #define ECMD_RPC_H		17044
 #define ECMD_RPC_R		17045
 
-static void
-rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_rpc_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_RPC_B:
 	case ECMD_RPC_H:
 	case ECMD_RPC_R:
@@ -60,6 +60,13 @@ rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
+static void
+rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_rpc_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item rpc_menu[] = {
     { "RPC MENU", NULL, 0 },
     { "Set B", rpc_ed, ECMD_RPC_B },

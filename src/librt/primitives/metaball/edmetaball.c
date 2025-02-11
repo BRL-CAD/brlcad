@@ -80,6 +80,78 @@ rt_solid_edit_metaball_prim_edit_reset(struct rt_solid_edit *s)
     m->es_metaball_pnt = NULL;
 }
 
+void
+rt_solid_edit_metaball_set_edit_mode(struct rt_solid_edit *s, int mode)
+{
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
+    struct wdb_metaball_pnt *next, *prev;
+
+    rt_solid_edit_set_edflag(s, mode);
+
+    switch (mode) {
+	case ECMD_METABALL_SET_THRESHOLD:
+	case ECMD_METABALL_SET_METHOD:
+	case ECMD_METABALL_PT_SET_GOO:
+	    s->solid_edit_scale = 1;
+	    break;
+	case ECMD_METABALL_PT_PICK:
+	    s->solid_edit_pick = 1;
+	    break;
+	case ECMD_METABALL_PT_NEXT:
+	    if (!m->es_metaball_pnt) {
+		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
+		return;
+	    }
+	    next = BU_LIST_NEXT(wdb_metaball_pnt, &m->es_metaball_pnt->l);
+	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
+		bu_vls_printf(s->log_str, "Current point is the last\n");
+		return;
+	    }
+	    m->es_metaball_pnt = next;
+	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    break;
+	case ECMD_METABALL_PT_PREV:
+	    if (!m->es_metaball_pnt) {
+		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
+		return;
+	    }
+	    prev = BU_LIST_PREV(wdb_metaball_pnt, &m->es_metaball_pnt->l);
+	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
+		bu_vls_printf(s->log_str, "Current point is the first\n");
+		return;
+	    }
+	    m->es_metaball_pnt = prev;
+	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    break;
+	case ECMD_METABALL_PT_MOV:
+	    if (!m->es_metaball_pnt) {
+		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
+		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		return;
+	    }
+	    break;
+	case ECMD_METABALL_PT_FLDSTR:
+	    s->solid_edit_scale = 1;
+	    if (!m->es_metaball_pnt) {
+		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
+		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		return;
+	    }
+	    break;
+	case ECMD_METABALL_PT_DEL:
+	case ECMD_METABALL_PT_ADD:
+	    break;
+    }
+
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+    int flag = 1;
+    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    if (f)
+	(*f)(0, NULL, d, &flag);
+}
 
 static void
 metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))

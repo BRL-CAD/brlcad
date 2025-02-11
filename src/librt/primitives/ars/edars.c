@@ -116,13 +116,12 @@ find_ars_nearest_pnt(
     *col = closest_j;
 }
 
-/*ARGSUSED*/
-static void
-ars_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_ars_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_ARS_MOVE_PT:
 	case ECMD_ARS_MOVE_CRV:
 	case ECMD_ARS_MOVE_COL:
@@ -134,9 +133,18 @@ ars_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	default:
 	    break;
     };
+}
 
+/*ARGSUSED*/
+static void
+ars_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_ars_set_edit_mode(s, arg);
+
+    // TODO - should we be calling this here?
     rt_solid_edit_process(s);
 }
+
 struct rt_solid_edit_menu_item ars_pick_menu[] = {
     { "ARS PICK MENU", NULL, 0 },
     { "Pick Vertex", ars_ed, ECMD_ARS_PICK },

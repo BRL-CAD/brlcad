@@ -39,12 +39,12 @@
 #define ECMD_SUPERELL_SCALE_C	35115
 #define ECMD_SUPERELL_SCALE_ABC	35116
 
-static void
-superell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_superell_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_SUPERELL_SCALE_A:
 	case ECMD_SUPERELL_SCALE_B:
 	case ECMD_SUPERELL_SCALE_C:
@@ -62,6 +62,13 @@ superell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
+static void
+superell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_superell_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item superell_menu[] = {
     { "SUPERELLIPSOID MENU", NULL, 0 },
     { "Set A", superell_ed, ECMD_SUPERELL_SCALE_A },

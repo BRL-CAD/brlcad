@@ -87,15 +87,15 @@ rt_solid_edit_pipe_prim_edit_reset(struct rt_solid_edit *s)
 }
 
 
-static void
-pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_pipe_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_PIPE_SELECT:
 	    s->solid_edit_pick = 1;
 	    break;
@@ -174,6 +174,11 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	(*f)(0, NULL, d, &flag);
 }
 
+static void
+pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_pipe_set_edit_mode(s, arg);
+}
 
 struct rt_solid_edit_menu_item pipe_menu[] = {
     { "PIPE MENU", NULL, 0 },

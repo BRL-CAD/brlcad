@@ -39,12 +39,12 @@
 #define ECMD_EBM_FSIZE		12054	/* set EBM file size */
 #define ECMD_EBM_HEIGHT		12055	/* set EBM extrusion depth */
 
-static void
-ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_ebm_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    if (arg == ECMD_EBM_HEIGHT)
+    if (mode == ECMD_EBM_HEIGHT)
 	s->solid_edit_scale = 1;
 
     rt_solid_edit_process(s);
@@ -56,6 +56,13 @@ ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
+static void
+ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_ebm_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item ebm_menu[] = {
     {"EBM MENU", NULL, 0 },
     {"File Name", ebm_ed, ECMD_EBM_FNAME },

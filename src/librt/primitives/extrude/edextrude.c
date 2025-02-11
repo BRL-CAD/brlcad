@@ -39,13 +39,12 @@
 #define ECMD_EXTR_ROT_H		27075	/* rotate extrusion vector */
 #define ECMD_EXTR_SKT_NAME	27076	/* set sketch that the extrusion uses */
 
-/*ARGSUSED*/
-static void
-extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_extrude_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_EXTR_ROT_H:
 	    s->solid_edit_rotate = 1;
 	    break;
@@ -61,6 +60,13 @@ extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 
     rt_solid_edit_process(s);
 }
+
+static void
+extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_extrude_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item extr_menu[] = {
     { "EXTRUSION MENU",	NULL, 0 },
     { "Set H",		extr_ed, ECMD_EXTR_SCALE_H },

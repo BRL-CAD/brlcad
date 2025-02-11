@@ -39,11 +39,12 @@
 #define ECMD_EHY_R2		20055
 #define ECMD_EHY_C		20056
 
-static void
-ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_ehy_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
-    switch (arg) {
+    rt_solid_edit_set_edflag(s, mode);
+
+    switch (mode) {
 	case ECMD_EHY_H:
 	case ECMD_EHY_R1:
 	case ECMD_EHY_R2:
@@ -61,6 +62,13 @@ ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
+static void
+ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_ehy_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item ehy_menu[] = {
     { "EHY MENU", NULL, 0 },
     { "Set H", ehy_ed, ECMD_EHY_H },

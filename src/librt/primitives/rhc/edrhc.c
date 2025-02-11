@@ -39,12 +39,12 @@
 #define ECMD_RHC_R		18048
 #define ECMD_RHC_C		18049
 
-static void
-rhc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_rhc_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_RHC_B:
 	case ECMD_RHC_H:
 	case ECMD_RHC_R:
@@ -62,6 +62,13 @@ rhc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
+
+static void
+rhc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_rhc_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item rhc_menu[] = {
     { "RHC MENU", NULL, 0 },
     { "Set B", rhc_ed, ECMD_RHC_B },

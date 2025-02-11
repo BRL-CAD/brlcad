@@ -39,12 +39,12 @@
 #define ECMD_ELL_SCALE_C	3041
 #define ECMD_ELL_SCALE_ABC	3042
 
-static void
-ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_ell_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_ELL_SCALE_A:
 	case ECMD_ELL_SCALE_B:
 	case ECMD_ELL_SCALE_C:
@@ -61,7 +61,15 @@ ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
+
 }
+
+static void
+ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_ell_set_edit_mode(s, arg);
+}
+
 struct rt_solid_edit_menu_item ell_menu[] = {
     { "ELLIPSOID MENU", NULL, 0 },
     { "Set A", ell_ed, ECMD_ELL_SCALE_A },
