@@ -393,8 +393,8 @@ struct rt_solid_edit_functab {
 
     /* Set up a particular solid editing mode.  Does any internal setup needed
      * to prepare for the specified editing operation. */
-    int(*ft_set_edit_mode)(struct rt_solid_edit *s, int mode);
-#define EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(_func) ((int(*)(struct rt_solid_edit *, int))((void (*)(void))_func))
+    void (*ft_set_edit_mode)(struct rt_solid_edit *s, int mode);
+#define EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(_func) ((void(*)(struct rt_solid_edit *, int))((void (*)(void))_func))
 
     struct rt_solid_edit_menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_solid_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))

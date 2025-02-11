@@ -37,12 +37,12 @@
 #define ECMD_TOR_R1		1021
 #define ECMD_TOR_R2		1022
 
-static void
-tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+void
+rt_solid_edit_tor_set_edit_mode(struct rt_solid_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_solid_edit_set_edflag(s, mode);
 
-    switch (arg) {
+    switch (mode) {
 	case ECMD_TOR_R1:
 	case ECMD_TOR_R2:
 	    s->solid_edit_scale = 1;
@@ -57,6 +57,13 @@ tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
+
+}
+
+static void
+tor_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+{
+    rt_solid_edit_tor_set_edit_mode(s, arg);
 }
 
 
