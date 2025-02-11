@@ -120,25 +120,18 @@ find_ars_nearest_pnt(
 static void
 ars_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    s->edit_flag = arg;
+    rt_solid_edit_set_edflag(s, arg);
 
     switch (arg) {
 	case ECMD_ARS_MOVE_PT:
 	case ECMD_ARS_MOVE_CRV:
 	case ECMD_ARS_MOVE_COL:
-	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_ARS_PICK:
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 1;
 	    break;
 	default:
-	    rt_solid_edit_set_edflag(s, arg);
 	    break;
     };
 
@@ -848,10 +841,7 @@ rt_solid_edit_ars_edit(struct rt_solid_edit *s)
 	    break;
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
-	    s->edit_flag = ECMD_ARS_PICK;
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 0;
+	    rt_solid_edit_set_edflag(s, ECMD_ARS_PICK);
 	    s->solid_edit_pick = 1;
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, BU_CLBK_DURING);
 	    if (!f)

@@ -93,14 +93,10 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
-    s->edit_flag = arg;
+    rt_solid_edit_set_edflag(s, arg);
 
     switch (arg) {
 	case ECMD_PIPE_SELECT:
-	    s->edit_flag = ECMD_PIPE_SELECT;
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 0;
 	    s->solid_edit_pick = 1;
 	    break;
 	case ECMD_PIPE_NEXT_PT:
@@ -139,11 +135,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    s->edit_flag = ECMD_PIPE_PT_MOVE;
-	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_PIPE_PT_OD:
 	case ECMD_PIPE_PT_ID:
@@ -161,19 +153,13 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
 	    break;
 	case ECMD_PIPE_PT_ADD:
-	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_PIPE_PT_INS:
-	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_pick = 0;
 	    break;
 	case ECMD_PIPE_PT_DEL:
-	    rt_solid_edit_set_edflag(s, ECMD_PIPE_PT_DEL);
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    break;
     }
