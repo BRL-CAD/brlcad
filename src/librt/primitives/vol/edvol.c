@@ -52,11 +52,7 @@ vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	case ECMD_VOL_FSIZE:
 	    break;
 	case ECMD_VOL_CSIZE:
-	    s->solid_edit_scale = 1;
-	    break;
 	case ECMD_VOL_THRESH_LO:
-	    s->solid_edit_scale = 1;
-	    break;
 	case ECMD_VOL_THRESH_HI:
 	    s->solid_edit_scale = 1;
 	    break;
@@ -92,27 +88,28 @@ rt_solid_edit_vol_menu_item(const struct bn_tol *UNUSED(tol))
 void
 ecmd_vol_csize(struct rt_solid_edit *s)
 {
-    struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->es_int.idb_ptr;
+    struct rt_vol_internal *vol = (struct rt_vol_internal *)s->es_int.idb_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
     RT_VOL_CK_MAGIC(vol);
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
+    // Specified numerical input
+    if (s_>e_inpara) {
+	if (s->e_inpara != 3) {
+	    bu_vls_printf(s->log_str, "x, y, and z cell sizes are required\n");
+	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return;
+	} else {
+	    VMOVE(vol->cellsize, s->e_para);
+	    return;
+	}
+    }
 
-    if (s->e_inpara == 3) {
-	VMOVE(vol->cellsize, s->e_para);
-    } else if (s->e_inpara > 0 && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x, y, and z cell sizes are required\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
-    } else if (s->es_scale > 0.0) {
+    // XY coord (usually mouse) based scaling
+    if (s->es_scale > 0.0) {
 	VSCALE(vol->cellsize, vol->cellsize, s->es_scale);
 	s->es_scale = 0.0;
     }
@@ -297,16 +294,18 @@ rt_solid_edit_vol_pscale(struct rt_solid_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
+    if (s->e_inpara) {
+	if (s->e_para[0] <= 0.0) {
+	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	    s->e_inpara = 0;
+	    return BRLCAD_ERROR;
+	}
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
+	/* must convert to base units */
+	s->e_para[0] *= s->local2base;
+	s->e_para[1] *= s->local2base;
+	s->e_para[2] *= s->local2base;
+    }
 
     switch (s->edit_flag) {
 	case ECMD_VOL_CSIZE:
