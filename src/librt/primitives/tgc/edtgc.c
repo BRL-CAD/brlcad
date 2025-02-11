@@ -58,7 +58,7 @@ tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     // Most of the commands are scale, so set those flags by default.  That
     // will handle most of the flag resetting as well, so we just need to zero
     // and set specific flags of interest in the other cases.
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
 
     s->edit_flag = arg;
 

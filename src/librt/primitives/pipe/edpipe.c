@@ -153,12 +153,12 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
 	    break;
 	case ECMD_PIPE_SCALE_OD:
 	case ECMD_PIPE_SCALE_ID:
 	case ECMD_PIPE_SCALE_RADIUS:
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_PSCALE);
+	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
 	    break;
 	case ECMD_PIPE_PT_ADD:
 	    s->solid_edit_rotate = 0;

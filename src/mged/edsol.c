@@ -777,7 +777,7 @@ sedit_abs_scale(struct mged_state *s)
 {
     fastf_t old_acc_sc_sol;
 
-    if (s->s_edit->edit_flag != RT_SOLID_EDIT_SCALE && s->s_edit->edit_flag != RT_SOLID_EDIT_PSCALE)
+    if (s->s_edit->edit_flag != RT_SOLID_EDIT_SCALE && !s->s_edit->solid_edit_scale)
 	return;
 
     old_acc_sc_sol = s->s_edit->acc_sc_sol;
