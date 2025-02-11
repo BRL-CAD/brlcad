@@ -370,7 +370,6 @@ rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
 	    s->solid_edit_scale = 0;
 	    break;
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
 	    s->solid_edit_rotate = 0;
 	    s->solid_edit_translate = 0;
 	    s->solid_edit_scale = 1;
