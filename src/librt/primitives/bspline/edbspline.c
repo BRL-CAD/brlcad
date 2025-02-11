@@ -389,7 +389,7 @@ rt_solid_edit_bspline_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
+	case ECMD_SPLINE_VPICK:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
