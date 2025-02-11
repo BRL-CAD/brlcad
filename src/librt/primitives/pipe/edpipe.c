@@ -1222,7 +1222,15 @@ rt_solid_edit_pipe_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
+	case ECMD_PIPE_NEXT_PT:
+	case ECMD_PIPE_PREV_PT:
+	case ECMD_PIPE_PT_OD:
+	case ECMD_PIPE_PT_ID:
+	case ECMD_PIPE_SCALE_OD:
+	case ECMD_PIPE_SCALE_ID:
+	case ECMD_PIPE_PT_RADIUS:
+	case ECMD_PIPE_SCALE_RADIUS:
+	case ECMD_PIPE_PT_DEL:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
@@ -1230,9 +1238,9 @@ rt_solid_edit_pipe_edit_xy(
 	    break;
 	case ECMD_PIPE_SELECT:
 	case ECMD_PIPE_SPLIT:
-	case ECMD_PIPE_PT_MOVE:
 	case ECMD_PIPE_PT_ADD:
 	case ECMD_PIPE_PT_INS:
+	case ECMD_PIPE_PT_MOVE:
 	    MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];

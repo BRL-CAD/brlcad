@@ -294,6 +294,39 @@ rt_solid_edit_superell_edit(struct rt_solid_edit *s)
     return 0;
 }
 
+int
+rt_solid_edit_superell_edit_xy(
+        struct rt_solid_edit *s,
+        const vect_t mousevec
+        )
+{
+    vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
+    struct rt_db_internal *ip = &s->es_int;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
+    switch (s->edit_flag) {
+        case RT_SOLID_EDIT_SCALE:
+	case ECMD_SUPERELL_SCALE_A:
+	case ECMD_SUPERELL_SCALE_B:
+	case ECMD_SUPERELL_SCALE_C:
+	case ECMD_SUPERELL_SCALE_ABC:
+            rt_solid_edit_generic_sscale_xy(s, mousevec);
+            return 0;
+        case RT_SOLID_EDIT_TRANS:
+            rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+            rt_update_edit_absolute_tran(s, pos_view);
+            return 0;
+        default:
+            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
+            rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+            if (f)
+                (*f)(0, NULL, d, NULL);
+            return BRLCAD_ERROR;
+    }
+}
+
+
 /*
  * Local Variables:
  * mode: C

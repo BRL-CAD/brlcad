@@ -361,8 +361,9 @@ rt_solid_edit_extrude_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
 	case ECMD_EXTR_SCALE_H:
+	case ECMD_EXTR_ROT_H:
+	case ECMD_EXTR_SKT_NAME:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:

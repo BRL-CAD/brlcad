@@ -869,7 +869,16 @@ rt_solid_edit_tgc_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
+	case ECMD_TGC_SCALE_AB:
+	case ECMD_TGC_SCALE_ABCD:  
+	case ECMD_TGC_SCALE_B:
+	case ECMD_TGC_SCALE_C:
+	case ECMD_TGC_SCALE_CD:
+	case ECMD_TGC_SCALE_D:
+	case ECMD_TGC_SCALE_H:
+	case ECMD_TGC_SCALE_H_CD:
+	case ECMD_TGC_SCALE_H_V:
+	case ECMD_TGC_SCALE_H_V_AB:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:

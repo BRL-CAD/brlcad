@@ -532,7 +532,14 @@ rt_solid_edit_metaball_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
+	case ECMD_METABALL_PT_NEXT:
+	case ECMD_METABALL_PT_PREV:
+	case ECMD_METABALL_PT_DEL:
+	case ECMD_METABALL_PT_FLDSTR:
+	case ECMD_METABALL_PT_SET_GOO:
+	case ECMD_METABALL_RMET:
+	case ECMD_METABALL_SET_METHOD:
+	case ECMD_METABALL_SET_THRESHOLD:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:

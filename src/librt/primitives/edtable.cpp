@@ -116,7 +116,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_tor_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_tor_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_tor_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_tor_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -150,7 +150,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_ell_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_ell_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_ell_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_ell_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -269,7 +269,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_ell_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_ell_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_ell_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_ell_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -371,7 +371,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_part_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_part_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_part_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_part_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -388,7 +388,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_rpc_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_rpc_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_rpc_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_rpc_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -405,7 +405,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_rhc_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_rhc_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_rhc_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_rhc_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -422,7 +422,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_epa_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_epa_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_epa_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_epa_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -439,7 +439,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_ehy_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_ehy_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_ehy_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_ehy_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -456,7 +456,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_eto_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_eto_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_eto_edit),    /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_eto_edit_xy), /* edit xy */
 	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -473,7 +473,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_grp_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_grp_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_generic_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy - TODO - probably should have parameters for this one... */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -541,7 +541,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_generic_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy - TODO - probably need more for this one, see GUI editors in MGED and Archer */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -698,7 +698,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_superell_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_superell_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_superell_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_superell_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -732,7 +732,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	NULL,  /* write_params */
 	NULL,  /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_generic_edit), /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy - TODO - see Archer brep editing, we'll almost certainly need more here. */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
@@ -749,7 +749,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(rt_solid_edit_hyp_write_params), /* write_params */
 	EDFUNCTAB_FUNC_READ_PARAMS_CAST(rt_solid_edit_hyp_read_params), /* read_params */
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_solid_edit_hyp_edit),    /* edit */
-	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_generic_edit_xy), /* edit xy */
+	EDFUNCTAB_FUNC_EDITXY_CAST(rt_solid_edit_hyp_edit_xy), /* edit xy */
        	NULL,  /* prim edit create */
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/

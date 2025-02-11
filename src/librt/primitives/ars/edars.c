@@ -921,7 +921,16 @@ rt_solid_edit_ars_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
+	case ECMD_ARS_NEXT_PT:
+	case ECMD_ARS_PREV_PT:
+	case ECMD_ARS_NEXT_CRV:
+	case ECMD_ARS_PREV_CRV:
+	case ECMD_ARS_DEL_CRV:
+	case ECMD_ARS_DEL_COL:
+	case ECMD_ARS_DUP_CRV:
+	case ECMD_ARS_DUP_COL:
+	case ECMD_ARS_PICK_MENU:
+	case ECMD_ARS_EDIT_MENU:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:

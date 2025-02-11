@@ -262,7 +262,8 @@ rt_solid_edit_ebm_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
+	case ECMD_EBM_FNAME:
+	case ECMD_EBM_FSIZE:
 	case ECMD_EBM_HEIGHT:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;

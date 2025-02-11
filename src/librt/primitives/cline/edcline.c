@@ -325,10 +325,9 @@ rt_solid_edit_cline_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PSCALE:
 	case ECMD_CLINE_SCALE_H:
-	case ECMD_CLINE_SCALE_T:
 	case ECMD_CLINE_SCALE_R:
+	case ECMD_CLINE_SCALE_T:
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_SOLID_EDIT_TRANS:
