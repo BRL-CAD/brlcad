@@ -112,6 +112,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    p->es_pipe_pnt = next;
 	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_PIPE_PREV_PT:
@@ -127,6 +128,7 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    p->es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_PIPE_PT_MOVE:
@@ -145,12 +147,12 @@ pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
+	    s->solid_edit_scale = 1;
 	    break;
 	case ECMD_PIPE_SCALE_OD:
 	case ECMD_PIPE_SCALE_ID:
 	case ECMD_PIPE_SCALE_RADIUS:
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
+	    s->solid_edit_scale = 1;
 	    break;
 	case ECMD_PIPE_PT_ADD:
 	    s->solid_edit_translate = 1;

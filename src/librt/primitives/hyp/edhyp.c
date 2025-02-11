@@ -46,8 +46,21 @@ static void
 hyp_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     rt_solid_edit_set_edflag(s, arg);
-    if (arg == ECMD_HYP_ROT_H)
-	s->solid_edit_rotate = 1;
+
+    switch (arg) {
+	case ECMD_HYP_H:
+	case ECMD_HYP_SCALE_A:
+	case ECMD_HYP_SCALE_B:
+	case ECMD_HYP_C:
+	    s->solid_edit_scale = 1;
+	    break;
+	case ECMD_HYP_ROT_H:
+	case ECMD_HYP_ROT_A:
+	    s->solid_edit_rotate = 1;
+	    break;
+	default:
+	    break;
+    };
 
     bu_clbk_t f = NULL;
     void *d = NULL;

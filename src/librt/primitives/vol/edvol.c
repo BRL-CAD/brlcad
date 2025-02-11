@@ -95,7 +95,7 @@ ecmd_vol_csize(struct rt_solid_edit *s)
     RT_VOL_CK_MAGIC(vol);
 
     // Specified numerical input
-    if (s_>e_inpara) {
+    if (s->e_inpara) {
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "x, y, and z cell sizes are required\n");
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);

@@ -43,6 +43,16 @@ rpc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 {
     rt_solid_edit_set_edflag(s, arg);
 
+    switch (arg) {
+	case ECMD_RPC_B:
+	case ECMD_RPC_H:
+	case ECMD_RPC_R:
+	    s->solid_edit_scale = 1;
+	    break;
+	default:
+	    break;
+    };
+
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
