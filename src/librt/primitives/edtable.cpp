@@ -43,7 +43,7 @@ extern "C" {
     extern void rt_solid_edit_##name##_prim_edit_destroy(void *); \
     extern void rt_solid_edit_##name##_prim_edit_reset(struct rt_solid_edit *s); \
     extern int rt_solid_edit_##name##_menu_str(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol); \
-    extern int rt_solid_edit_##name##_set_edit_mode(struct rt_solid_edit *s, int mode); \
+    extern void rt_solid_edit_##name##_set_edit_mode(struct rt_solid_edit *s, int mode); \
     extern struct rt_solid_edit_menu_item *rt_solid_edit_##name##_menu_item(const struct bn_tol *tol); \
 
 EDIT_DECLARE_INTERFACE(tor);
@@ -123,7 +123,7 @@ const struct rt_solid_edit_functab EDOBJ[] = {
 	NULL,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
 	EDFUNCTAB_FUNC_MENU_STR_CAST(rt_solid_edit_generic_menu_str),   /* menu_str */
-	NULL,  /* set edit mode */
+	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_solid_edit_tor_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_solid_edit_tor_menu_item)    /* menu_item */
     },
 
