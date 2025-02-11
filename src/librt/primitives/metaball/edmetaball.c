@@ -111,6 +111,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    m->es_metaball_pnt = next;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_PREV:
@@ -126,6 +127,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    m->es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
 	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_MOV:
@@ -134,17 +136,19 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
+	    s->solid_edit_scale = 1;
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
 	    break;
 	case ECMD_METABALL_PT_DEL:
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_ADD:

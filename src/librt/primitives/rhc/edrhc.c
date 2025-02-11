@@ -44,6 +44,17 @@ rhc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 {
     rt_solid_edit_set_edflag(s, arg);
 
+    switch (arg) {
+	case ECMD_RHC_B:
+	case ECMD_RHC_H:
+	case ECMD_RHC_R:
+	case ECMD_RHC_C:
+	    s->solid_edit_scale = 1;
+	    break;
+	default:
+	    break;
+    };
+
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;

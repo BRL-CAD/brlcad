@@ -100,13 +100,19 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
     bu_clbk_t f = NULL;
     void *d = NULL;
 
+    rt_solid_edit_set_edflag(s, arg);
+
     switch (arg) {
 	default:
 	    bu_vls_printf(s->log_str, "nmg_ed: undefined menu event?\n");
 	    return;
 	case ECMD_NMG_EPICK:
+	    s->solid_edit_pick = 1;
+	    break;
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
+	    s->solid_edit_translate = 1;
+	    break;
 	case ECMD_NMG_EKILL:
 	    break;
 	case ECMD_NMG_EDEBUG:
@@ -149,6 +155,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		bu_vls_free(&tmp_vls);
 	    }
 
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    return;
 	case ECMD_NMG_BACK:
@@ -169,6 +176,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		bu_vls_free(&tmp_vls);
 	    }
 
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    return;
 	case ECMD_NMG_RADIAL:
@@ -189,6 +197,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		bu_vls_free(&tmp_vls);
 	    }
 
+	    // TODO - should we really be calling this here?
 	    rt_solid_edit_process(s);
 	    return;
 	case ECMD_NMG_LEXTRU:
@@ -201,6 +210,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 		struct edgeuse *eu;
 		fastf_t area;
 		int wire_loop_count = 0;
+		s->solid_edit_translate = 1;
 
 		m = (struct model *)s->es_int.idb_ptr;
 		NMG_CK_MODEL(m);
@@ -340,21 +350,7 @@ nmg_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	    break;
     }
 
-    rt_solid_edit_set_edflag(s, arg);
-
-    switch (arg) {
-	case ECMD_NMG_EMOVE:
-	case ECMD_NMG_ESPLIT:
-	case ECMD_NMG_LEXTRU:
-	    s->solid_edit_translate = 1;
-	    break;
-	case ECMD_NMG_EPICK:
-	    s->solid_edit_pick = 1;
-	    break;
-	default:
-	    break;
-    };
-
+    // TODO - should we really be calling this here?
     rt_solid_edit_process(s);
 }
 struct rt_solid_edit_menu_item nmg_menu[] = {

@@ -44,6 +44,17 @@ ell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 {
     rt_solid_edit_set_edflag(s, arg);
 
+    switch (arg) {
+	case ECMD_ELL_SCALE_A:
+	case ECMD_ELL_SCALE_B:
+	case ECMD_ELL_SCALE_C:
+	case ECMD_ELL_SCALE_ABC:
+	    s->solid_edit_scale = 1;
+	    break;
+	default:
+	    break;
+    };
+
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;

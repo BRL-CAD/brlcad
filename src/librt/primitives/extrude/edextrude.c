@@ -56,7 +56,6 @@ extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 	    s->solid_edit_translate = 1;
 	    break;
 	default:
-	    rt_solid_edit_set_edflag(s, arg);
 	    break;
     };
 
