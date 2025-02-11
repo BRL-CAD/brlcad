@@ -43,6 +43,16 @@ static void
 ehy_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     rt_solid_edit_set_edflag(s, arg);
+    switch (arg) {
+	case ECMD_EHY_H:
+	case ECMD_EHY_R1:
+	case ECMD_EHY_R2:
+	case ECMD_EHY_C:
+	    s->solid_edit_scale = 1;
+	    break;
+	default:
+	    break;
+    };
 
     bu_clbk_t f = NULL;
     void *d = NULL;

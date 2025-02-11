@@ -43,6 +43,16 @@ part_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UN
 {
     rt_solid_edit_set_edflag(s, arg);
 
+    switch (arg) {
+	case ECMD_PART_H:
+	case ECMD_PART_v:
+	case ECMD_PART_h:
+	    s->solid_edit_scale = 1;
+	    break;
+	default:
+	    break;
+    };
+
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;

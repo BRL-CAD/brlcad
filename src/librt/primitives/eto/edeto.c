@@ -43,8 +43,18 @@ static void
 eto_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     rt_solid_edit_set_edflag(s, arg);
-    if (arg == ECMD_ETO_ROT_C)
-	s->solid_edit_rotate = 1;
+
+    switch (arg) {
+	case ECMD_ETO_R:
+	case ECMD_ETO_RD:
+	case ECMD_ETO_SCALE_C:
+	    s->solid_edit_scale = 1;
+	    break;
+	case ECMD_ETO_ROT_C:
+	    s->solid_edit_rotate = 1;
+	default:
+	    break;
+    };
 
     bu_clbk_t f = NULL;
     void *d = NULL;
