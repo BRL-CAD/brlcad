@@ -25,6 +25,28 @@
  * the GED selection state, if we have a default one set and
  * the edit command doesn't explicitly specify an object or objects
  * to operate on.
+ *
+ * In the long term we want this command to pull the necessary info for each
+ * primitive type from librt.  If we also want to enable the various options
+ * for rotate, translate and scale developed in the edit.c file, there will be
+ * a fair bit of design work to think through.  Probably the option parsing for
+ * rotate, translate and scale should actually reside in librt, and be
+ * available via the primitive edit functab in some fashion along with parameter
+ * specific command line parsing.
+ *
+ * The current librt editing API (as of 2025) is most likely no in shape to
+ * properly support what we would want in an edit command, and that is
+ * deliberately not the initial focus of that effort.  The initial goal is to
+ * extract MGED's primitive editing abilities into a form that is both testable
+ * with non-GUI inputs and functional (or a least as functional as it was
+ * previously) within MGED itself.  That's one reason that API should not be
+ * considered stable - it is intended to eventually be the canonical API for
+ * all geometry changes, and that will undoubtedly require maturing it beyond
+ * its current "extracted from MGED" form.  However, because of how invasive
+ * and difficult the migration out of MGED proved, we can't afford to try to
+ * tackle too many goals at once - the first order of business is testable
+ * primitive editing on MGED's level of capability. We will proceed further
+ * once that milestone is achieved.
  */
 
 #include "common.h"
