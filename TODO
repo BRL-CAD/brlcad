@@ -51,6 +51,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement nirt flag to report a secondary ray fired in the direction
+  of the hit point surface normal.
+
 * calculate maximum/minimum presented area az/el for a given model
 
 * optimize mged/libged init and exit performance.  profiling shows
