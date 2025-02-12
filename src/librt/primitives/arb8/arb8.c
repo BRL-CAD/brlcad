@@ -229,24 +229,7 @@ clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
 #endif /* USE_OPENCL */
 
 
-/* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
- * stolen from mged/arbs.c */
 
-/**
- * determines COMGEOM arb types from GED general arbs
- *
- * Inputs -
- *
- * Returns number of distinct edge vectors (number of entries in uvec array)
- *
- * Implicit returns -
- * *cgtype - Comgeom type (number range 4..8;  ARB4 .. ARB8).
- * uvec[8] - indices of unique vertices (return value is the number of valid entries)
- * svec[11] - Entries [0] and [1] are special (they are the counts of duplicates)
- *            entries 2-10 are 2 lists of duplicate vertices
- *            entry[0] gives length of first list (starts at entry[2])
- *            entry[1] gives length of second list (starts at entry[2+entry[0]])
- */
 int
 rt_arb_get_cgtype(
     int *cgtype,
@@ -346,22 +329,6 @@ rt_arb_get_cgtype(
 }
 
 
-/**
- * Given an ARB in internal form, return its specific ARB type.
- *
- * Set tol.dist = 0.0001 to obtain past behavior.
- *
- * Returns -
- * 0 Error in input ARB
- * 4 ARB4
- * 5 ARB5
- * 6 ARB6
- * 7 ARB7
- * 8 ARB8
- *
- * Implicit return -
- * rt_arb_internal pt[] array reorganized into GIFT "standard" order.
- */
 int
 rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -386,10 +353,6 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 }
 
 
-/**
- * Find the center point for the arb in the rt_db_internal structure,
- * and return it as a point_t.
- */
 void
 rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
@@ -1879,11 +1842,6 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 /* --- General ARB8 utility routines --- */
 
-/**
- * Takes the planes[] array and intersects the planes to find the
- * vertices of a GENARB8.  The vertices are stored into arb->pt[].
- * This is an analog of rt_arb_calc_planes().
- */
 int
 rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol)
 {
@@ -1967,13 +1925,6 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 }
 
 
-/**
- * Finds the intersection point of three faces of an ARB.
- *
- * Returns -
- * 0 success, value is in 'point'
- * -1 failure
- */
 int
 rt_arb_3face_intersect(
     point_t point,
@@ -1994,17 +1945,6 @@ rt_arb_3face_intersect(
 }
 
 
-/**
- * Calculate the plane (face) equations for an arb output previously
- * went to es_peqn[i].
- *
- * Returns -
- * -1 Failure
- * 0 OK
- *
- * Note -
- * This function migrated from mged/edsol.c.
- */
 int
 rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 		   struct rt_arb_internal *arb,
@@ -2045,14 +1985,6 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 }
 
 
-/**
- * Moves an arb edge (end1, end2) with bounding planes bp1 and bp2
- * through point "thru".  The edge has (non-unit) slope "dir".  Note
- * that the fact that the normals here point in rather than out makes
- * no difference for computing the correct intercepts.  After the
- * intercepts are found, they should be checked against the other
- * faces to make sure that they are always "inside".
- */
 int
 rt_arb_move_edge(struct bu_vls *error_msg_ret,
 		 struct rt_arb_internal *arb,
@@ -2080,44 +2012,6 @@ rt_arb_move_edge(struct bu_vls *error_msg_ret,
 
     return 0;
 }
-
-
-/**
- * An ARB edge is moved by finding the direction of the line
- * containing the edge and the 2 "bounding" planes.  The new edge is
- * found by intersecting the new line location with the bounding
- * planes.  The two "new" planes thus defined are calculated and the
- * affected points are calculated by intersecting planes.  This keeps
- * ALL faces planar.
- *
- * Note: This code came from mged/edarb.c (written mostly by Keith
- * Applin) and was modified to live here.
- *
- */
-
-/* The storage for the "specific" ARB types is :
- *
- * ARB4 0 1 2 0 3 3 3 3
- * ARB5 0 1 2 3 4 4 4 4
- * ARB6 0 1 2 3 4 4 5 5
- * ARB7 0 1 2 3 4 5 6 4
- * ARB8 0 1 2 3 4 5 6 7
- */
-
-/*
- * ARB6 0 1 2 3 4 5 5 4
- */
-
-/* Another summary of how the vertices of ARBs are stored:
- *
- * Vertices:	1	2	3	4	5	6	7	8
- * Location----------------------------------------------------------------
- *	ARB8	0	1	2	3	4	5	6	7
- *	ARB7	0	1	2	3	4, 7	5	6
- *	ARB6	0	1	2	3	4, 5	6, 7
- * 	ARB5	0	1	2	3	4, 5, 6, 7
- *	ARB4	0, 3	1	2	4, 5, 6, 7
- */
 
 
 #define RT_ARB_EDIT_EDGE 0
