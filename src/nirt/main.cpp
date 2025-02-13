@@ -74,7 +74,7 @@ extern "C" {
 /* state for -M reading */
 #define RMAT_SAW_EYE    0x01
 #define RMAT_SAW_ORI    0x02
-#define RMAT_SAW_VR     0x03
+#define RMAT_SAW_VR     0x04
 
 #define NIRT_PROMPT "nirt> "
 #define IO_DATA_NULL { stdout, NULL, stderr, NULL, 0 }
