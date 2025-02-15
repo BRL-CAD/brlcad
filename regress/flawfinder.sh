@@ -42,25 +42,33 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+# Set up log file
 if test "x$LOGFILE" = "x" ; then
     LOGFILE=`pwd`/flawfinder.log
-    rm -f $LOGFILE
+    rm -f "$LOGFILE" || { echo "Failed to remove old log file."; exit 1; }
+    touch "$LOGFILE" || { echo "Failed to create log file."; exit 1; }
 fi
 log "=== TESTING flawfinder ==="
 
+# Check for flawfinder
 if test ! -f "$PATH_TO_THIS/../misc/flawfinder" ; then
     log "Unable to find flawfinder in misc directory, aborting"
     exit 1
 fi
 
-if test "x`env python -V 2>&1 | awk '{print $1}'`" != "xPython" ; then
-    log "No python available, skipping"
+# Check for Python (2.x or 3.x)
+if ! command -v python > /dev/null 2>&1 && ! command -v python3 > /dev/null 2>&1; then
+    log "No Python available, skipping"
     exit 0
 fi
 
+# Find source files
 SRCFILES="`find $PATH_TO_THIS/../src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.git.*'`"
+
+# Run flawfinder
 run ${PATH_TO_THIS}/../misc/flawfinder --context --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${SRCFILES} | grep -v running
 
+# Analyze results
 NUMBER_WRONG=0
 if test "x`grep \"No hits found.\" $LOGFILE`" = "x" ; then
     NUMBER_WRONG="`grep \"Hits = \" $LOGFILE | awk '{print $3}'`"
@@ -68,12 +76,12 @@ fi
 
 if test "x$NUMBER_WRONG" = "x0" ; then
     log "-> flawfinder.sh succeeded"
+    exit 0
 else
     log "-> flawfinder.sh FAILED, see $LOGFILE"
     cat "$LOGFILE"
+    exit 1
 fi
-
-exit $NUMBER_WRONG
 
 # Local Variables:
 # mode: sh
