@@ -10,7 +10,7 @@ set(
   util.cpp
 )
 
-brlcad_find_package(MANIFOLD REQUIRED)
+brlcad_find_package(manifold REQUIRED)
 
 brlcad_find_package(pugixml)
 brlcad_find_package(assimp)
@@ -22,11 +22,11 @@ endif(TARGET assimp::assimp AND TARGET pugixml::pugixml)
 brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
 add_definitions(-DUSE_GEOGRAM)
 
-set(INCLUDE_DIRS ${GEOGRAM_INCLUDE_DIR} ${MANIFOLD_INCLUDE_DIRS})
+set(INCLUDE_DIRS ${GEOGRAM_INCLUDE_DIR})
 
 ged_subprocess_library(facetize_process SHARED ${GED_TESS_SRCS})
 target_include_directories(facetize_process SYSTEM PRIVATE ${INCLUDE_DIRS})
-target_link_libraries(facetize_process libged;${MANIFOLD_LIBRARIES};${ASSETIMPORT_LIBRARIES};${GEOGRAM_LIBRARY})
+target_link_libraries(facetize_process libged;manifold::manifold;${ASSETIMPORT_LIBRARIES};${GEOGRAM_LIBRARY})
 set_property(TARGET facetize_process APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
 validate_style(facetize_process ${GED_TESS_SRCS})
 plugin_setup(facetize_process ged_exec)
