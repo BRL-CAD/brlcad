@@ -29,7 +29,6 @@
 #include "bn.h"
 #include "rt/functab.h"
 #include "rt/edit.h"
-#include "rt/rt_ecmds.h"
 
 __BEGIN_DECLS
 
