@@ -259,7 +259,7 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 
 	struct conversion_state state = CONVERSION_STATE_ZERO;
 
-	struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_DISK);
+	struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
 	//generate list to hold scene geometry
 	BU_LIST_INIT(&state.scene.l);
