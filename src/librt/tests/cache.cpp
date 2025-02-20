@@ -233,7 +233,7 @@ create_test_g_file(long int test_num, const char *gfile)
 }
 
 static struct rt_i *
-build_rtip(long int test_num, const char *gfile, const char *objname, int stage_num, int do_parallel, int ncpus)
+build_rtip(long int test_num, const char *gfile, const char *objname, int stage_num, int do_parallel, int ncpus, struct resource *resp)
 {
     struct rt_i *rtip = RTI_NULL;
 
@@ -252,6 +252,10 @@ build_rtip(long int test_num, const char *gfile, const char *objname, int stage_
 	if (rt_gettrees(rtip, 1, (const char **)&objname, ncpus) < 0) {
 	    bu_exit(1, "Test %ld: rt_getrees in stage %d failed\n", test_num, stage_num);
 	}
+	/* We're doing parallel prep, so we can't use rt_uniresource */
+	for (int i = 0; i < ncpus; i++) {
+	    rt_init_resource(&resp[i], i, rtip);
+	}
 	rt_prep_parallel(rtip, ncpus);
     }
 
@@ -269,6 +273,7 @@ test_subprocess(int ac, char *av[])
     const char *cache_dir;
     const char *cname;
     size_t ncpus = (bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
+    struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
 
     if (ac != 6) {
 	bu_exit(1, "rt_cache subprocess command invoked incorrectly");
@@ -283,7 +288,7 @@ test_subprocess(int ac, char *av[])
 
     bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, cache_dir, NULL), 1);
 
-    rtip_stage_1 = build_rtip(test_num, gfile, cname, process_num*1000 + 1, 1, (int)ncpus);
+    rtip_stage_1 = build_rtip(test_num, gfile, cname, process_num*1000 + 1, 1, (int)ncpus, resp);
 
     // Confirm the presence of the expected number of file(s) in the cache
     size_t cc = cache_count(cache_dir, 1);
@@ -295,11 +300,13 @@ test_subprocess(int ac, char *av[])
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache definitely in place */
-    rtip_stage_2 = build_rtip(test_num, gfile, cname, process_num*1000 + 2, 1, (int)ncpus);
+    rtip_stage_2 = build_rtip(test_num, gfile, cname, process_num*1000 + 2, 1, (int)ncpus, resp);
     rt_clean(rtip_stage_2);
     rt_free_rti(rtip_stage_2);
 
     bu_log("Test %ld(process %ld): PASSED\n", test_num, process_num);
+
+    bu_free(resp, "resp");
 
     return 0;
 }
@@ -456,7 +463,8 @@ test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int d
     db_close(dbip);
 
     if (!subprocess_cnt) {
-	rtip_stage_1 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 1, do_parallel, (int)ncpus);
+	struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
+	rtip_stage_1 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 1, do_parallel, (int)ncpus, resp);
 
 	// Confirm the presence of the expected number of file(s) in the cache
 	size_t cc = cache_count(bu_vls_cstr(&cache_dir), 0);
@@ -469,9 +477,10 @@ test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int d
 	rt_free_rti(rtip_stage_1);
 
 	/*** Now, do it again with the cache in place */
-	rtip_stage_2 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 2, do_parallel, (int)ncpus);
+	rtip_stage_2 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 2, do_parallel, (int)ncpus, resp);
 	rt_clean(rtip_stage_2);
 	rt_free_rti(rtip_stage_2);
+	bu_free(resp, "resp");
     } else {
 	long int expected = (different_content) ? obj_cnt : 1;
 	struct subprocess_data **sdata = (struct subprocess_data **)bu_calloc(subprocess_cnt, sizeof(struct subprocess_data *), "launch data array");
