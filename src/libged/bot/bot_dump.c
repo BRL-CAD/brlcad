@@ -58,14 +58,12 @@
 
 static char usage[] = "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
 
-
-struct _ged_bot_dump_client_data {
-    struct ged *gedp;
-    FILE *fp;
-    int fd;
-    char *file_ext;
+enum otype {
+    OTYPE_DXF = 1,
+    OTYPE_OBJ,
+    OTYPE_SAT,
+    OTYPE_STL
 };
-
 
 struct _ged_obj_material {
     struct bu_list l;
@@ -76,7 +74,14 @@ struct _ged_obj_material {
     fastf_t a;
 };
 
+struct _ged_bot_dump_client_data {
+    struct ged *gedp;
+    FILE *fp;
+    int fd;
+    char *file_ext;
+};
 
+// TODO - ew, globals.  Need to shove these into the client data state.
 static int using_dbot_dump;
 struct bu_list HeadObjMaterials = BU_LIST_INIT_ZERO;
 struct bu_vls obj_materials_file = BU_VLS_INIT_ZERO;
@@ -86,13 +91,6 @@ int curr_obj_red;
 int curr_obj_green;
 int curr_obj_blue;
 fastf_t curr_obj_alpha;
-
-enum otype {
-    OTYPE_DXF = 1,
-    OTYPE_OBJ,
-    OTYPE_SAT,
-    OTYPE_STL
-};
 
 static enum otype output_type;
 static int binary;
