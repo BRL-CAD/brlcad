@@ -51,6 +51,19 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* replace src/bext submodule with a SHA1 stored in the top level
+  CMakeLists.txt file.  Having the submodule active is proving
+  a bit problematic.  While it does allow for a recursive clone,
+  working with it has been challenging.  The most critical feature
+  it provides is allowing git bisect to work, and we can achieve
+  that with a SHA1 stored in the top level.  Will need to update
+  the cloning logic accordingly.
+
+* adjust build logic to not delete the in-build-dir checkout and
+  build directories by default.  Makes it too hard to debug when
+  something goes wrong.  Update the CI system logic to explicitly
+  remove the outputs (where we need to for space reasons).
+
 * calculate maximum/minimum presented area az/el for a given model
 
 * optimize mged/libged init and exit performance.  profiling shows
