@@ -64,6 +64,7 @@ target_link_libraries(ged-bot ${BOT_LIBS})
 cmakefiles(
   CMakeLists.txt
   ${BOT_SRCS}
+  bot_dump_gltf.cpp
 )
 
 # Local Variables:
