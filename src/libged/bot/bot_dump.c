@@ -1430,7 +1430,10 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
     char *file_ext = NULL;
     FILE *fp = (FILE *)0;
     int fd = -1;
-    const char *cmd_name;
+
+    /* save the command name */
+    const char *cmd_name = argv[0];
+
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -1442,7 +1445,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
+	bu_vls_printf(gedp->ged_result_str, usage, cmd_name);
 	return GED_HELP;
     }
 
@@ -1452,7 +1455,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
 
     if (bu_optind != argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return BRLCAD_ERROR;
     }
 
@@ -1463,7 +1466,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", cmd_name, usage);
 	    return BRLCAD_ERROR;
 	}
 	fp = stdout;
@@ -1479,7 +1482,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    /* Open binary output file */
 	    fd = open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	    if (fd < 0) {
-		perror(argv[0]);
+		perror(cmd_name);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
 		return BRLCAD_ERROR;
 	    }
@@ -1521,10 +1524,37 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 		    break;
 	    }
 	}
-    }
 
-    /* save the command name */
-    cmd_name = argv[0];
+	if (output_type == OTYPE_OBJ) {
+	    char *cp;
+
+	    bu_vls_trunc(&obj_materials_file, 0);
+
+	    cp = strrchr(output_file, '.');
+	    if (!cp)
+		bu_vls_printf(&obj_materials_file, "%s.mtl", output_file);
+	    else {
+		/* ignore everything after the last '.' */
+		*cp = '\0';
+		bu_vls_printf(&obj_materials_file, "%s.mtl", output_file);
+		*cp = '.';
+	    }
+
+	    BU_LIST_INIT(&HeadObjMaterials);
+
+	    obj_materials_fp = fopen(bu_vls_addr(&obj_materials_file), "wb+");
+	    if (obj_materials_fp == NULL) {
+		bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&obj_materials_file));
+		bu_vls_free(&obj_materials_file);
+		fclose(fp);
+		return BRLCAD_ERROR;
+	    }
+
+	    num_obj_materials = 0;
+
+	    fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
+	}
+    }
 
     if (output_directory) {
 	switch (output_type) {
@@ -1579,34 +1609,6 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 		file_ext = ".stl";
 		break;
 	}
-    } else if (output_type == OTYPE_OBJ) {
-	char *cp;
-
-	bu_vls_trunc(&obj_materials_file, 0);
-
-	cp = strrchr(output_file, '.');
-	if (!cp)
-	    bu_vls_printf(&obj_materials_file, "%s.mtl", output_file);
-	else {
-	    /* ignore everything after the last '.' */
-	    *cp = '\0';
-	    bu_vls_printf(&obj_materials_file, "%s.mtl", output_file);
-	    *cp = '.';
-	}
-
-	BU_LIST_INIT(&HeadObjMaterials);
-
-	obj_materials_fp = fopen(bu_vls_addr(&obj_materials_file), "wb+");
-	if (obj_materials_fp == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&obj_materials_file));
-	    bu_vls_free(&obj_materials_file);
-	    fclose(fp);
-	    return BRLCAD_ERROR;
-	}
-
-	num_obj_materials = 0;
-
-	fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
     }
 
     dl_botdump(gedp->ged_gdp->gd_headDisplay, gedp->dbip, fp, fd, file_ext, output_type, &curr_obj_red, &curr_obj_green, &curr_obj_blue, &curr_obj_alpha);
@@ -1614,35 +1616,36 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
     data_dump(gedp, fp);
 
     if (output_file) {
-	if (binary && output_type == OTYPE_STL) {
-	    unsigned char tot_buffer[4];
+	switch (output_type) {
+	    case OTYPE_STL:
+		if (binary) {
+		    unsigned char tot_buffer[4];
 
-	    /* Re-position pointer to 80th byte */
-	    bu_lseek(fd, 80, SEEK_SET);
+		    /* Re-position pointer to 80th byte */
+		    bu_lseek(fd, 80, SEEK_SET);
 
-	    /* Write out number of triangles */
-	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
-	    lswap((unsigned int *)tot_buffer);
-	    ret = write(fd, tot_buffer, 4);
-	    if (ret < 0) {
-		perror("write");
-	    }
+		    /* Write out number of triangles */
+		    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
+		    lswap((unsigned int *)tot_buffer);
+		    ret = write(fd, tot_buffer, 4);
+		    if (ret < 0) {
+			perror("write");
+		    }
 
-	    close(fd);
-	} else {
-	    /* end of layers section, start of ENTITIES SECTION */
-	    switch (output_type) {
-		case OTYPE_DXF:
-		    fprintf(fp, "0\nENDSEC\n0\nEOF\n");
-		    break;
-		case OTYPE_SAT:
-		    fprintf(fp, "End-of-ACIS-data\n");
-		    break;
-		default:
-		    break;
-	    }
-
-	    fclose(fp);
+		    close(fd);
+		}
+		break;
+	    case OTYPE_DXF:
+		fprintf(fp, "0\nENDSEC\n0\nEOF\n");
+		fclose(fp);
+		break;
+	    case OTYPE_SAT:
+		fprintf(fp, "End-of-ACIS-data\n");
+		fclose(fp);
+		break;
+	    default:
+		fclose(fp);
+		break;
 	}
     }
 
