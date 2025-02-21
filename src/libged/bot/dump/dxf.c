@@ -27,6 +27,47 @@
 
 #include "./ged_bot_dump.h"
 
+int
+dxf_setup(struct _ged_bot_dump_client_data *d, const char *fname, const char *objname, const char *gname)
+{
+    if (!d)
+	return BRLCAD_ERROR;
+
+    struct ged *gedp = d->gedp;
+
+    d->fp = fopen(fname, "wb+");
+    if (d->fp == NULL) {
+	perror("dxf_setup");
+	bu_vls_printf(gedp->ged_result_str, "Cannot open DXF ascii output file (%s) for writing\n", fname);
+	return BRLCAD_ERROR;
+    }
+
+    /* output DXF header and start of TABLES section */
+    if (gname) {
+	fprintf(d->fp,
+		"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+		objname, gname);
+    } else {
+	fprintf(d->fp,
+		"0\nSECTION\n2\nHEADER\n999\n%s (All Bots)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+		objname);
+    }
+
+    return BRLCAD_OK;
+}
+
+int
+dxf_finish(struct _ged_bot_dump_client_data *d)
+{
+    if (!d)
+	return BRLCAD_ERROR;
+
+    fprintf(d->fp, "0\nENDSEC\n0\nEOF\n");
+    fclose(d->fp);
+
+    return BRLCAD_OK;
+}
+
 void
 dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name)
 {

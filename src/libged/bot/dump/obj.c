@@ -62,6 +62,36 @@ obj_get_material(struct bot_dump_obj *o, int red, int green, int blue, fastf_t t
     return gomp;
 }
 
+int
+obj_setup(struct _ged_bot_dump_client_data *d, const char *fname)
+{
+    if (!d)
+	return BRLCAD_ERROR;
+
+    struct ged *gedp = d->gedp;
+
+    d->fp = fopen(fname, "wb+");
+    if (d->fp == NULL) {
+	perror("obj_setup");
+	bu_vls_printf(gedp->ged_result_str, "Cannot open OBJ ascii output file (%s) for writing\n", fname);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+int
+obj_finish(struct _ged_bot_dump_client_data *d)
+{
+    if (!d)
+	return BRLCAD_ERROR;
+
+    fclose(d->fp);
+
+    return BRLCAD_OK;
+}
+
 
 void
 obj_free_materials(struct bot_dump_obj *o)
@@ -133,15 +163,15 @@ obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
 
     if (d->normals) {
 	for (i = 0; i < num_faces; i++) {
-	    fprintf(fp, "f %d//%d %d//%d %d//%d\n", faces[3*i]+d->v_offset, i+1, faces[3*i+1]+d->v_offset, i+1, faces[3*i+2]+d->v_offset, i+1);
+	    fprintf(fp, "f %d//%d %d//%d %d//%d\n", faces[3*i]+d->obj.v_offset, i+1, faces[3*i+1]+d->obj.v_offset, i+1, faces[3*i+2]+d->obj.v_offset, i+1);
 	}
     } else {
 	for (i = 0; i < num_faces; i++) {
-	    fprintf(fp, "f %d %d %d\n", faces[3*i]+d->v_offset, faces[3*i+1]+d->v_offset, faces[3*i+2]+d->v_offset);
+	    fprintf(fp, "f %d %d %d\n", faces[3*i]+d->obj.v_offset, faces[3*i+1]+d->obj.v_offset, faces[3*i+2]+d->obj.v_offset);
 	}
     }
 
-    d->v_offset += num_vertices;
+    d->obj.v_offset += num_vertices;
 }
 
 
@@ -204,18 +234,18 @@ write_data_arrows(struct _ged_bot_dump_client_data *d, struct bv_data_arrow_stat
 	}
 
 	for (i = 0; i < gdasp->gdas_num_points; i += 2) {
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset, (i/2*6)+d->v_offset+1);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+2);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+4);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+5);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+2, (i/2*6)+d->v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+3, (i/2*6)+d->v_offset+4);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+4, (i/2*6)+d->v_offset+5);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+5, (i/2*6)+d->v_offset+2);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset, (i/2*6)+d->obj.v_offset+1);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset+1, (i/2*6)+d->obj.v_offset+2);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset+1, (i/2*6)+d->obj.v_offset+3);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset+1, (i/2*6)+d->obj.v_offset+4);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset+1, (i/2*6)+d->obj.v_offset+5);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset+2, (i/2*6)+d->obj.v_offset+3);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset+3, (i/2*6)+d->obj.v_offset+4);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset+4, (i/2*6)+d->obj.v_offset+5);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->obj.v_offset+5, (i/2*6)+d->obj.v_offset+2);
 	}
 
-	d->v_offset += ((gdasp->gdas_num_points/2)*6);
+	d->obj.v_offset += ((gdasp->gdas_num_points/2)*6);
     }
 }
 
@@ -286,13 +316,13 @@ write_data_axes(struct _ged_bot_dump_client_data *d, struct bv_data_axes_state *
 	}
 
 	for (i = 0; i < bndasp->num_points; ++i) {
-	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset, (i*6)+d->v_offset+1);
-	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset+2, (i*6)+d->v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset+4, (i*6)+d->v_offset+5);
+	    fprintf(fp, "l %d %d\n", (i*6)+d->obj.v_offset, (i*6)+d->obj.v_offset+1);
+	    fprintf(fp, "l %d %d\n", (i*6)+d->obj.v_offset+2, (i*6)+d->obj.v_offset+3);
+	    fprintf(fp, "l %d %d\n", (i*6)+d->obj.v_offset+4, (i*6)+d->obj.v_offset+5);
 	}
 
 
-	d->v_offset += (bndasp->num_points*6);
+	d->obj.v_offset += (bndasp->num_points*6);
     }
 }
 
@@ -327,10 +357,10 @@ write_data_lines(struct _ged_bot_dump_client_data *d, struct bv_data_line_state 
 	}
 
 	for (i = 0; i < gdlsp->gdls_num_points; i += 2) {
-	    fprintf(fp, "l %d %d\n", i+d->v_offset, i+d->v_offset+1);
+	    fprintf(fp, "l %d %d\n", i+d->obj.v_offset, i+d->obj.v_offset+1);
 	}
 
-	d->v_offset += gdlsp->gdls_num_points;
+	d->obj.v_offset += gdlsp->gdls_num_points;
     }
 }
 

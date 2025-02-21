@@ -39,7 +39,8 @@
 __BEGIN_DECLS
 
 enum otype {
-    OTYPE_DXF = 1,
+    OTYPE_UNSET = 0,
+    OTYPE_DXF,
     OTYPE_OBJ,
     OTYPE_SAT,
     OTYPE_STL
@@ -63,6 +64,7 @@ struct bot_dump_obj {
     int curr_obj_green;
     int curr_obj_blue;
     fastf_t curr_obj_alpha;
+    int v_offset;
 };
 
 struct bot_dump_sat {
@@ -79,18 +81,19 @@ struct _ged_bot_dump_client_data {
     struct ged *gedp;
     FILE *fp;
     int fd;
-    char *file_ext;
+    const char *file_ext;
 
     int using_dbot_dump;
+    int view_data;
+    int material_info;
 
     enum otype output_type;
     int binary;
     int normals;
     fastf_t cfactor;
-    char *output_file;	/* output filename */
-    char *output_directory;	/* directory name to hold output files */
+    struct bu_vls output_file;	/* output filename */
+    struct bu_vls output_directory;	/* directory name to hold output files */
     unsigned int total_faces;
-    int v_offset;
 
     // Format specific info
     struct bot_dump_obj obj;
@@ -99,15 +102,23 @@ struct _ged_bot_dump_client_data {
 
 #define V3ARGS_SCALE(_a) (_a)[X]*d->cfactor, (_a)[Y]*d->cfactor, (_a)[Z]*d->cfactor
 
+extern int dxf_setup(struct _ged_bot_dump_client_data *d, const char *fname, const char *objname, const char *gname);
+extern int dxf_finish(struct _ged_bot_dump_client_data *d);
 extern void dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
 
+extern int obj_setup(struct _ged_bot_dump_client_data *d, const char *fname);
+extern int obj_finish(struct _ged_bot_dump_client_data *d);
 extern void obj_free_materials(struct bot_dump_obj *o);
 extern void obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
 extern void obj_write_data(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp);
 
+extern int sat_setup(struct _ged_bot_dump_client_data *d, const char *fname);
+extern int sat_finish(struct _ged_bot_dump_client_data *d);
 extern void sat_write_header(FILE *fp);
 extern void sat_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
 
+extern int stl_setup(struct _ged_bot_dump_client_data *d, const char *fname);
+extern int stl_finish(struct _ged_bot_dump_client_data *d);
 extern void stl_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
 extern void stl_write_bot_binary(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, int fd, char *name);
 

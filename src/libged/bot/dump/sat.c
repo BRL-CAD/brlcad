@@ -34,6 +34,7 @@
 
 #include "./ged_bot_dump.h"
 
+
 void
 sat_write_header(FILE *fp)
 {
@@ -55,6 +56,39 @@ sat_write_header(FILE *fp)
 
     /* FIXME: this includes abs tolerance info, should probably output ours */
     fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+}
+
+int
+sat_setup(struct _ged_bot_dump_client_data *d, const char *fname)
+{
+    if (!d)
+	return BRLCAD_ERROR;
+
+    struct ged *gedp = d->gedp;
+
+    d->fp = fopen(fname, "wb+");
+    if (d->fp == NULL) {
+	perror("sat_setup");
+	bu_vls_printf(gedp->ged_result_str, "Cannot open SAT ascii output file (%s) for writing\n", fname);
+	return BRLCAD_ERROR;
+    }
+
+    sat_write_header(d->fp);
+
+    return BRLCAD_OK;
+}
+
+
+int
+sat_finish(struct _ged_bot_dump_client_data *d)
+{
+    if (!d)
+	return BRLCAD_ERROR;
+
+    fprintf(d->fp, "End-of-ACIS-data\n");
+    fclose(d->fp);
+
+    return BRLCAD_OK;
 }
 
 void

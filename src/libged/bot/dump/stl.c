@@ -40,6 +40,83 @@ lswap(unsigned int *v)
 	| ((r & 0xff000000) >> 24);
 }
 
+int
+stl_setup(struct _ged_bot_dump_client_data *d, const char *fname)
+{
+    int ret = BRLCAD_OK;
+
+    if (!d)
+	return BRLCAD_ERROR;
+
+    struct ged *gedp = d->gedp;
+
+    if (d->binary) {
+	char buf[81];       /* need exactly 80 chars for header */
+
+	/* Open binary output file */
+	d->fd = open(fname, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+	if (d->fd < 0) {
+	    perror("stl_setup open");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot open STL binary output file (%s) for writing\n", fname);
+	    return BRLCAD_ERROR;
+	}
+
+	/* Write out STL header if output file is binary */
+	memset(buf, 0, sizeof(buf));
+	bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
+	ret = write(d->fd, &buf, 80);
+	if (ret < 0) {
+	    perror("write");
+	}
+
+	/* write a place keeper for the number of triangles */
+	memset(buf, 0, 4);
+	ret = write(d->fd, &buf, 4);
+	if (ret < 0) {
+	    perror("write");
+	}
+    } else {
+	d->fp = fopen(fname, "wb+");
+	if (d->fp == NULL) {
+	    perror("stl_setup fopen");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot open STL ascii output file (%s) for writing\n", fname);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    return (ret != BRLCAD_OK) ? BRLCAD_ERROR : BRLCAD_OK;
+}
+
+int
+stl_finish(struct _ged_bot_dump_client_data *d)
+{
+    int ret = BRLCAD_OK;
+
+    if (!d)
+	return BRLCAD_ERROR;
+
+    if (d->binary) {
+	unsigned char tot_buffer[4];
+
+	/* Re-position pointer to 80th byte */
+	bu_lseek(d->fd, 80, SEEK_SET);
+
+	/* Write out number of triangles */
+	*(uint32_t *)tot_buffer = htonl((unsigned long)d->total_faces);
+	lswap((unsigned int *)tot_buffer);
+	ret = write(d->fd, tot_buffer, 4);
+	if (ret < 0) {
+	    perror("write");
+	}
+
+	close(d->fd);
+    } else {
+	fclose(d->fp);
+    }
+
+    return (ret != BRLCAD_OK) ? BRLCAD_ERROR : BRLCAD_OK;
+}
+
 void
 stl_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name)
 {
